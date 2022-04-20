@@ -142,6 +142,7 @@
 <span class="kn">from</span> <span class="nn">common.models.mixins.validity</span> <span class="kn">import</span> <span class="n">ValidityStartQueryset</span>
 <span class="kn">from</span> <span class="nn">common.models.tracked_qs</span> <span class="kn">import</span> <span class="n">TrackedModelQuerySet</span>
 <span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_relations</span>
+<span class="kn">from</span> <span class="nn">common.models.utils</span> <span class="kn">import</span> <span class="n">get_current_transaction</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">classproperty</span>
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
 
@@ -270,17 +271,22 @@
         <span class="k">if</span> <span class="n">transaction</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">request</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">workbaskets.models</span> <span class="kn">import</span> <span class="n">WorkBasket</span>
-
-            <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
-                <span class="n">transaction</span><span class="o">=</span><span class="n">WorkBasket</span><span class="o">.</span><span class="n">get_current_transaction</span><span class="p">(</span><span class="n">request</span><span class="p">),</span>
-            <span class="p">)</span>
+        <span class="c1"># if a global transaction variable is available, filter objects approved up to this</span>
+        <span class="k">if</span> <span class="n">get_current_transaction</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">latest_approved</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">get_description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">(</span><span class="n">transaction</span><span class="o">=</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">autocomplete_label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">description</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_description</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">description</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">description</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span>
 </pre></div>
 
 
