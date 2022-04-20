@@ -104,10 +104,6 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     def __str__(self):
         return self.item_id
 
-    @property
-    def autocomplete_label(self):
-        return f"{self} - {self.get_description().description}"
-
     def get_dependent_measures(self, transaction=None):
         return self.measures.model.objects.filter(
             goods_nomenclature__sid=self.sid,

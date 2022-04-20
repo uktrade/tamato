@@ -154,7 +154,7 @@ def test_measure_detail_conditions(client, valid_user):
 
     assert (
         cells[0].text
-        == f"{certificate.code}:\n        {certificate.get_description().description}"
+        == f"{certificate.code}:\n        {certificate.get_description(transaction=certificate.transaction).description}"
     )
     assert cells[1].text == certificate_condition.action.description
     assert cells[2].text == "-"

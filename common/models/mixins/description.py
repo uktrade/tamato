@@ -13,6 +13,7 @@ from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_relations
+from common.models.utils import get_current_transaction
 from common.util import classproperty
 from common.validators import UpdateType
 
@@ -141,14 +142,19 @@ class DescribedMixin:
         if transaction:
             return query.approved_up_to_transaction(transaction)
 
-        if request:
-            from workbaskets.models import WorkBasket
-
-            return query.approved_up_to_transaction(
-                transaction=WorkBasket.get_current_transaction(request),
-            )
+        # if a global transaction variable is available, filter objects approved up to this
+        if get_current_transaction():
+            return query.current()
 
         return query.latest_approved()
 
     def get_description(self, transaction=None):
         return self.get_descriptions(transaction=transaction).last()
+
+    @property
+    def autocomplete_label(self):
+        description = self.get_description()
+        if not description:
+            return f"{self}"
+
+        return f"{self} - {description.description}"

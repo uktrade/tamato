@@ -1349,7 +1349,7 @@ def test_ME56(reference_nonexistent_record):
     """The referenced certificate must exist."""
 
     def delete_certificate(c):
-        c.get_descriptions().first().delete()
+        c.get_descriptions(transaction=c.transaction).first().delete()
         c.delete()
 
     with reference_nonexistent_record(

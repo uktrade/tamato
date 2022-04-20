@@ -23,7 +23,7 @@ def footnote_core_data(footnote_detail, footnote_NC000):
     ft = f.footnote_type
 
     assert str(f) in content
-    assert f.get_description().description in content
+    assert f.get_description(transaction=f.transaction).description in content
     assert str(ft) in content
     assert f"{f.valid_between.lower:%d %b %Y}" in content
 

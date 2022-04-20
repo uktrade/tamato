@@ -241,6 +241,7 @@ class FootnoteDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin):
     described_footnote = subfactory(
         FootnoteFactory,
         description=None,
+        transaction=factory.SelfAttribute("..transaction"),
     )
     sid = numeric_sid()
 
@@ -417,6 +418,7 @@ class GeographicalAreaDescriptionFactory(TrackedModelMixin, ValidityStartFactory
     described_geographicalarea = subfactory(
         GeographicalAreaFactory,
         description=None,
+        transaction=factory.SelfAttribute("..transaction"),
     )
     description = short_description()
 
@@ -453,6 +455,7 @@ class CertificateDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMixin
     described_certificate = subfactory(
         CertificateFactory,
         description=None,
+        transaction=factory.SelfAttribute("..transaction"),
     )
     description = short_description()
 
@@ -471,7 +474,10 @@ class TestModelDescription1Factory(TrackedModelMixin, ValidityStartFactoryMixin)
     class Meta:
         model = TestModelDescription1
 
-    described_record = subfactory(TestModel1Factory)
+    described_record = subfactory(
+        TestModel1Factory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     description = factory.Faker("text", max_nb_chars=500)
 
 
@@ -522,7 +528,10 @@ class AdditionalCodeDescriptionFactory(TrackedModelMixin, ValidityStartFactoryMi
         model = "additional_codes.AdditionalCodeDescription"
 
     sid = numeric_sid()
-    described_additionalcode = subfactory(AdditionalCodeFactory)
+    described_additionalcode = subfactory(
+        AdditionalCodeFactory,
+        transaction=factory.SelfAttribute("..transaction"),
+    )
     description = short_description()
 
 
@@ -602,6 +611,7 @@ class GoodsNomenclatureDescriptionFactory(TrackedModelMixin, ValidityStartFactor
     described_goods_nomenclature = subfactory(
         GoodsNomenclatureFactory,
         description=None,
+        transaction=factory.SelfAttribute("..transaction"),
     )
     description = short_description()
 

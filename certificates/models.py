@@ -80,10 +80,6 @@ class Certificate(TrackedModel, ValidityMixin, DescribedMixin):
     def __str__(self):
         return self.code
 
-    @property
-    def autocomplete_label(self):
-        return f"{self} - {self.get_description().description}"
-
 
 class CertificateDescription(DescriptionMixin, TrackedModel):
     record_code = "205"
