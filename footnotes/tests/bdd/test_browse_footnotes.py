@@ -24,6 +24,6 @@ def footnotes_list(footnotes_search, footnote_NC000):
     result = results[0]
     assert (
         result["label"]
-        == f"{footnote_NC000} - {footnote_NC000.get_description().description}"
+        == f"{footnote_NC000} - {footnote_NC000.get_description(transaction=footnote_NC000.transaction).description}"
         and result["value"] == footnote_NC000.pk
     )

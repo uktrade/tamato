@@ -90,10 +90,6 @@ class Footnote(TrackedModel, ValidityMixin, DescribedMixin):
     def __str__(self):
         return f"{self.footnote_type.footnote_type_id}{self.footnote_id}"
 
-    @property
-    def autocomplete_label(self):
-        return f"{self} - {self.get_description().description}"
-
     class Meta:
         ordering = ["footnote_type__footnote_type_id", "footnote_id"]
 

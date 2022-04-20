@@ -333,7 +333,7 @@ class MeasureUpdate(
         associations = FootnoteAssociationMeasure.objects.approved_up_to_transaction(
             tx,
         ).filter(
-            footnoted_measure=measure,
+            footnoted_measure__sid=measure.sid,
         )
 
         return [a.associated_footnote for a in associations]
