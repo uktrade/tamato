@@ -234,6 +234,8 @@ def test_measure_forms_conditions_applicable_duty(
     date_ranges,
     duty_sentence_parser,
 ):
+    """Tests that applicable_duty form field handles simple and complex duty
+    sentence strings, raising an error, if an invalid string is passed."""
     action = factories.MeasureActionFactory.create()
     condition_code = factories.MeasureConditionCodeFactory.create()
     data = {

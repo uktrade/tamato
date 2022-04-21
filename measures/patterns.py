@@ -277,6 +277,13 @@ class MeasureCreationPattern:
         measure,
         parser,
     ):
+        """
+        Creates condition from data dict, component_sequence_number, and
+        measure.
+
+        If applicable_duty field is passed in data, uses parser to create
+        measure condition components from newly created condition
+        """
         condition = MeasureCondition(
             sid=self.measure_condition_sid_counter(),
             component_sequence_number=component_sequence_number,
@@ -295,9 +302,6 @@ class MeasureCreationPattern:
         condition.clean()
         condition.save()
 
-        # XXX the design doesn't show whether the condition duty_amount field
-        # should handle duty_expression, monetary_unit or measurements, so this
-        # code assumes some sensible(?) defaults
         if data.get("applicable_duty"):
             components = parser.parse(data["applicable_duty"])
             for c in components:

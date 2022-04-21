@@ -295,6 +295,14 @@ def test_measure_update_create_conditions(
     duty_sentence_parser,
     erga_omnes,
 ):
+    """
+    Tests that measure condition and condition component objects are created for
+    a measure without any pre-existing conditions, after posting to the measure
+    edit endpoint.
+
+    Also tests that related objects (certificate and condition code) are
+    present.
+    """
     measure = Measure.objects.with_duty_sentence().first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
@@ -332,7 +340,16 @@ def test_measure_update_edit_conditions(
     duty_sentence_parser,
     erga_omnes,
 ):
+    """
+    Tests that measure condition and condition component objects are created for
+    a measure with pre-existing conditions, after posting to the measure edit
+    endpoint.
+
+    Checks that previous conditions are removed and new field values are
+    correct.
+    """
     measure = Measure.objects.with_duty_sentence().first()
+    previous_condition = measure.conditions.last()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
@@ -349,6 +366,7 @@ def test_measure_update_edit_conditions(
 
     condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
 
+    assert condition != previous_condition
     assert condition.required_certificate == None
     assert condition.duty_amount == 3
 
@@ -365,6 +383,14 @@ def test_measure_update_remove_conditions(
     duty_sentence_parser,
     erga_omnes,
 ):
+    """
+    Tests that a 200 code is returned after posting to the measure edit endpoint
+    with delete field in data.
+
+    Checks that 302 is returned after posting an empty conditions form to edit
+    endpoint and that the updated measure has no currently approved conditions
+    associated with it.
+    """
     measure = Measure.objects.with_duty_sentence().first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
@@ -401,6 +427,9 @@ def test_measure_update_invalid_conditions(
     duty_sentence_parser,
     erga_omnes,
 ):
+    """Tests that html contains appropriate form validation errors after posting
+    to measure edit endpoint with compound reference_price and an invalid
+    applicable_duty string."""
     measure_edit_conditions_data["form-0-reference_price"] = "3.5% + 11 GBP / 100 kg"
     measure_edit_conditions_data["form-0-applicable_duty"] = "invalid"
     measure = Measure.objects.with_duty_sentence().first()

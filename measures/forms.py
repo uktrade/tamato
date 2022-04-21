@@ -154,6 +154,9 @@ class MeasureConditionComponentDuty(Field):
 
 
 class MeasureValidityForm(ValidityPeriodForm):
+    """A form for working with `start_date` and `end_date` logic where the
+    `valid_between` field does not already exist on the form."""
+
     class Meta:
         model = models.Measure
         fields = [
@@ -235,12 +238,22 @@ class MeasureConditionsForm(forms.ModelForm):
         )
 
     def get_start_date(self, data):
+        """Validates that the day, month, and year start_date fields are present
+        in data and then returns the start_date datetime object."""
         validity_form = MeasureValidityForm(data=data)
         validity_form.is_valid()
 
         return validity_form.cleaned_data["valid_between"].lower
 
     def clean_applicable_duty(self):
+        """
+        Gets applicable_duty from cleaned data.
+
+        If form is used as part of `MeasureCreateWizard`, we expect
+        `measure_start_date` to be passed in. If not, then we get start date
+        from other data in the measure edit form. Uses `DutySentenceParser` to
+        check that applicable_duty is a valid duty string.
+        """
         applicable_duty = self.cleaned_data["applicable_duty"]
         measure_start_date = (
             self.initial.get("measure_start_date")
@@ -483,11 +496,14 @@ class MeasureForm(ValidityPeriodForm):
                 transaction=instance.transaction,
             )
 
+        # Extract conditions data from MeasureForm data
         conditions_data = MeasureConditionsFormSet(self.data).cleaned_data
-
         workbasket = WorkBasket.current(self.request)
+
+        # Delete all existing conditions from the measure instance
         for condition in instance.conditions.all():
             condition.new_version(workbasket=workbasket, update_type=UpdateType.DELETE)
+
         if conditions_data:
             measure_creation_pattern = MeasureCreationPattern(
                 workbasket=workbasket,
@@ -498,10 +514,12 @@ class MeasureForm(ValidityPeriodForm):
                 component_output=models.MeasureConditionComponent,
             )
 
+            # Loop over conditions_data, starting at 1 because component_sequence_number has to start at 1
             for component_sequence_number, condition_data in enumerate(
                 conditions_data,
                 start=1,
             ):
+                # Create conditions and measure condition components, using instance as `dependent_measure`
                 measure_creation_pattern.create_condition_and_components(
                     condition_data,
                     component_sequence_number,
@@ -512,12 +530,11 @@ class MeasureForm(ValidityPeriodForm):
         return instance
 
     def is_valid(self) -> bool:
+        """Check that measure conditions data is valid before calling super() on
+        the rest of the form data."""
         conditions_formset = MeasureConditionsFormSet(self.data)
 
         if not conditions_formset.is_valid():
-            # for error in conditions_formset.errors[0]:
-            #     self.add_error(field=None, error=conditions_formset.errors[0][error])
-
             return False
 
         return super().is_valid()
