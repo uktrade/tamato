@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import date
 from typing import Type
 
@@ -230,3 +231,113 @@ def delete_form_for(for_model: Type) -> Type[DeleteForm]:
             fields = ()
 
     return ModelDeleteForm
+
+
+class FormSet(forms.BaseFormSet):
+    """
+    Adds the ability to add another form to the formset on submit.
+
+    If the form POST data contains an "ADD" field with the value "1", the formset
+    will be redisplayed with a new empty form appended.
+
+    Deleting a subform will also redisplay the formset, with the order of the forms
+    preserved.
+    """
+
+    extra = 0
+    can_order = False
+    can_delete = True
+    max_num = 1000
+    min_num = 0
+    absolute_max = 1000
+    validate_min = False
+    validate_max = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If we have form data, then capture the any user "add form" or
+        # "delete form" actions.
+        self.formset_action = None
+        if f"{self.prefix}-ADD" in self.data:
+            self.formset_action = "ADD"
+        else:
+            for field in self.data:
+                if field.endswith("-DELETE"):
+                    self.formset_action = "DELETE"
+                    break
+
+        data = self.data.copy()
+
+        formset_initial = defaultdict(dict)
+        delete_forms = []
+        for field, value in self.data.items():
+
+            # filter out non-field data
+            if field.startswith(f"{self.prefix}-"):
+                form, field_name = field.rsplit("-", 1)
+
+                # remove from data, so we can rebuild later
+                if form != self.prefix:
+                    del data[field]
+
+                # group by subform
+                if value:
+                    formset_initial[form].update({field_name: value})
+
+                if field_name == "DELETE" and value == "1":
+                    delete_forms.append(form)
+
+        # ignore management form
+        try:
+            del formset_initial[self.prefix]
+        except KeyError:
+            pass
+
+        # ignore deleted forms
+        for form in delete_forms:
+            del formset_initial[form]
+
+            # leave DELETE field in data for is_valid
+            data[f"{form}-DELETE"] = 1
+
+        for i, (form, form_initial) in enumerate(formset_initial.items()):
+            for field, value in form_initial.items():
+
+                # convert submitted value to python object
+                form_field = self.form.declared_fields.get(field)
+                if form_field:
+                    form_initial[field] = form_field.widget.value_from_datadict(
+                        form_initial,
+                        {},
+                        field,
+                    )
+
+                # reinsert into data, with updated numbering
+                data[f"{self.prefix}-{i}-{field}"] = value
+
+        self.initial = list(formset_initial.values())
+        num_initial = len(self.initial)
+
+        if num_initial < 1:
+            data[f"{self.prefix}-ADD"] = "1"
+
+        # update management data
+        data[f"{self.prefix}-INITIAL_FORMS"] = num_initial
+        data[f"{self.prefix}-TOTAL_FORMS"] = num_initial
+        self.data = data
+
+    def is_valid(self):
+        """Invalidates the formset if "Add another" or "Delete" are submitted,
+        to redisplay the formset with an extra empty form or the selected form
+        removed."""
+        # Re-present the form to show the result of adding another form or
+        # deleting an existing one.
+        if self.formset_action == "ADD" or self.formset_action == "DELETE":
+            return False
+
+        # An empty set of forms is valid.
+        if self.total_form_count() == 0 and self.min_num == 0:
+            return True
+
+        return super().is_valid()

@@ -17,7 +17,6 @@ from rest_framework.reverse import reverse
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
-from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -26,7 +25,6 @@ from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
-from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
@@ -225,34 +223,12 @@ class MeasureCreateWizard(
             ):
                 if not condition_data["DELETE"]:
 
-                    condition = MeasureCondition(
-                        sid=measure_creation_pattern.measure_condition_sid_counter(),
-                        component_sequence_number=component_sequence_number,
-                        dependent_measure=measure,
-                        update_type=UpdateType.CREATE,
-                        transaction=measure.transaction,
-                        duty_amount=condition_data.get("duty_amount"),
-                        condition_code=condition_data["condition_code"],
-                        action=condition_data.get("action"),
-                        required_certificate=condition_data.get("required_certificate"),
-                        monetary_unit=condition_data.get("monetary_unit"),
-                        condition_measurement=condition_data.get(
-                            "condition_measurement",
-                        ),
+                    measure_creation_pattern.create_condition_and_components(
+                        condition_data,
+                        component_sequence_number,
+                        measure,
+                        parser,
                     )
-                    condition.clean()
-                    condition.save()
-
-                    # XXX the design doesn't show whether the condition duty_amount field
-                    # should handle duty_expression, monetary_unit or measurements, so this
-                    # code assumes some sensible(?) defaults
-                    if condition_data.get("applicable_duty"):
-                        components = parser.parse(condition_data["applicable_duty"])
-                        for c in components:
-                            c.condition = condition
-                            c.transaction = condition.transaction
-                            c.update_type = UpdateType.CREATE
-                            c.save()
 
             created_measures.append(measure)
 
@@ -284,7 +260,6 @@ class MeasureCreateWizard(
         current_step = self.storage.current_step
         initial_data = super().get_form_initial(step)
         duty_steps = ["commodities", "conditions"]
-
         if current_step in duty_steps and step in duty_steps:
             # At each step get_form_initial is called for every step, avoid a loop
             details_data = self.get_cleaned_data_for_step("measure_details")
@@ -363,6 +338,14 @@ class MeasureUpdate(
 
         return [a.associated_footnote for a in associations]
 
+    def get_conditions(self, measure):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return (
+            measure.conditions.with_duty_sentence()
+            .with_reference_price_string()
+            .approved_up_to_transaction(tx)
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         initial = self.request.session.get(
@@ -377,6 +360,27 @@ class MeasureUpdate(
         context["no_form_tags"].form_tag = False
         context["footnotes"] = self.get_footnotes(context["measure"])
 
+        if self.request.POST:
+            conditions_formset = forms.MeasureConditionsFormSet(self.request.POST)
+        else:
+            conditions_formset = forms.MeasureConditionsFormSet()
+        conditions = self.get_conditions(context["measure"])
+        form_fields = conditions_formset.form.Meta.fields
+        # conditions_formset.initial = []
+        for condition in conditions:
+            initial_dict = {}
+            for field in form_fields:
+                if hasattr(condition, field):
+                    initial_dict[field] = getattr(condition, field)
+
+            initial_dict["applicable_duty"] = condition.condition_string
+            initial_dict["reference_price"] = condition.reference_price_string
+            conditions_formset.initial.append(initial_dict)
+
+        if self.request.POST:
+            conditions_formset.initial.append(self.request.POST)
+
+        context["conditions_formset"] = conditions_formset
         return context
 
     def get_result_object(self, form):
