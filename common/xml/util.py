@@ -91,7 +91,12 @@ def renumber_transactions(envelope: ElementTree.Element, start_from: int):
     )
 
 
-def renumber_records(envelope: ElementTree.Element, start_from: int, record_name: str):
+def renumber_records(
+    envelope: ElementTree.Element,
+    start_from: int,
+    record_name: str,
+    record_attribute: str,
+):
     """
     Renumbers the integer values found in TARIC XML records matching paths with
     numbers that start from the passed integer.
@@ -114,15 +119,20 @@ def renumber_records(envelope: ElementTree.Element, start_from: int, record_name
         for record in transaction.findall(".//oub:record", nsmap):
             update_type = get(record.find(".//oub:update.type", namespaces=nsmap))
 
-            for tag in record.findall(f".//{record_name}", nsmap):
+            # First find any records that are CREATEd and match the record name,
+            # because only matching records containing the attribute are
+            # introducing a new value.
+            for tag in record.findall(f".//{record_name}/{record_attribute}", nsmap):
                 current_value = get(tag)
-
                 if update_type == UpdateType.CREATE:
                     if not add_value:
                         add_value = start_from - current_value
 
                     remaps[current_value] = current_value + add_value
 
+            # Now update identified any and all attributes in other records.
+            for tag in record.findall(f".//{record_attribute}", nsmap):
+                current_value = get(tag)
                 if current_value in remaps:
                     set(tag, remaps[current_value])
 
