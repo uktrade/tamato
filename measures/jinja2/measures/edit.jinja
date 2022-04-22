@@ -31,6 +31,10 @@
       }) }}
 {% endset %}
 
+{% set conditions_html %}
+      {% include "measures/create-conditions-formset.jinja" %}
+{% endset %}
+
 {% set footnotes_html %}
     
     {% include "measures/create-footnotes-formset.jinja" %}
@@ -157,6 +161,13 @@
                         "heading": {"text": "Measure validity period"},
                         "content": {
                             "html": validity_period_html
+                        },
+                        "summary": {}
+                    },
+                    {
+                        "heading": {"text": "Conditions"},
+                        "content": {
+                            "html": conditions_html
                         },
                         "summary": {}
                     },
