@@ -61,7 +61,7 @@ def test_measure_form_invalid_conditions_data(
     assert not measure_form.is_valid()
 
 
-def test_measure_forms_details_valid_data(measure_type, regulation):
+def test_measure_forms_details_valid_data(measure_type, regulation, erga_omnes):
     data = {
         "measure_type": measure_type.pk,
         "generating_regulation": regulation.pk,
@@ -69,6 +69,7 @@ def test_measure_forms_details_valid_data(measure_type, regulation):
         "start_date_0": 2,
         "start_date_1": 4,
         "start_date_2": 2021,
+        "geographical_area": erga_omnes.pk,
     }
     form = forms.MeasureDetailsForm(data, prefix="")
     assert form.is_valid()
@@ -92,7 +93,7 @@ def test_measure_forms_details_invalid_data():
     assert not form.is_valid()
 
 
-def test_measure_forms_details_invalid_date_range(measure_type, regulation):
+def test_measure_forms_details_invalid_date_range(measure_type, regulation, erga_omnes):
     data = {
         "measure_type": measure_type.pk,
         "generating_regulation": regulation.pk,
@@ -100,6 +101,7 @@ def test_measure_forms_details_invalid_date_range(measure_type, regulation):
         "start_date_0": 1,
         "start_date_1": 1,
         "start_date_2": 2000,
+        "geographical_area": erga_omnes.pk,
     }
     form = forms.MeasureDetailsForm(data, prefix="")
     # In the real wizard view the prefix will be populated with the name of the form. It's left blank here to make the mock form data simpler

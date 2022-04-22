@@ -138,6 +138,9 @@ class GeographicalAreaFormMixin(forms.Form):
         self.fields["geo_group"].initial = geo_group.pk if geo_group else None
         self.fields["geo_area"].initial = geo_area.pk if geo_area else None
 
+        if not cleaned_data["geographical_area"]:
+            raise ValidationError("A Geographical area must be selected")
+
         return cleaned_data
 
 
