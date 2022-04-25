@@ -160,7 +160,7 @@ Environment variables
 
     (default ``False``)
 
-    Do call the HMRC API notification endpoint after each upload
+    Do not call the HMRC API notification endpoint after each upload
 
 .. envvar:: DJANGO_SETTINGS_MODULE
 
