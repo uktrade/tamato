@@ -468,6 +468,26 @@ def generate_test_import_xml(obj: dict) -> BytesIO:
     return BytesIO(xml.encode())
 
 
+def export_workbasket(valid_user_api_client, workbasket):
+    response = valid_user_api_client.get(
+        reverse(
+            "workbaskets:workbasket-detail",
+            kwargs={"pk": workbasket.pk},
+        ),
+        {"format": "xml"},
+    )
+
+    assert response.status_code == 200
+    return etree.XML(response.content)  # type: ignore
+
+
+def serialize_xml(xml: etree._Element) -> BytesIO:
+    io = BytesIO()
+    xml.getroottree().write(io, encoding="utf-8")
+    io.seek(0)
+    return io
+
+
 def taric_xml_record_codes(xml):
     """Yields tuples of (record_code, subrecord_code)"""
     records = xml.xpath(".//*[local-name() = 'record']")
@@ -495,10 +515,9 @@ def validate_taric_xml(
 
     def decorator(func):
         def wraps(
-            api_client,
+            valid_user_api_client,
             taric_schema,
             approved_transaction,
-            valid_user,
             *args,
             **kwargs,
         ):
@@ -515,20 +534,10 @@ def validate_taric_xml(
                 transaction=approved_transaction, **factory_kwargs or {}
             )
 
-            api_client.force_login(user=valid_user)
-            response = api_client.get(
-                reverse(
-                    "workbaskets:workbasket-detail",
-                    kwargs={"pk": approved_transaction.workbasket.pk},
-                ),
-                {"format": "xml"},
+            xml = export_workbasket(
+                workbasket=approved_transaction.workbasket,
+                valid_user_api_client=valid_user_api_client,
             )
-
-            assert response.status_code == 200
-
-            content = response.content
-
-            xml = etree.XML(content)
 
             taric_schema.validate(xml)
 

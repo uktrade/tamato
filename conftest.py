@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import dataclass
+from functools import partial
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -41,6 +42,7 @@ from common.tests import factories
 from common.tests.models import model_with_history
 from common.tests.util import Dates
 from common.tests.util import assert_records_match
+from common.tests.util import export_workbasket
 from common.tests.util import generate_test_import_xml
 from common.tests.util import get_form_data
 from common.tests.util import make_duplicate_record
@@ -551,7 +553,27 @@ def use_delete_form(valid_user_api_client: APIClient):
 
 
 @pytest.fixture
-def run_xml_import(valid_user, settings):
+def import_xml(valid_user):
+    def run_import(xml, workflow_status=WorkflowStatus.PUBLISHED, record_group=None):
+        process_taric_xml_stream(
+            xml,
+            workbasket_id=None,
+            workbasket_status=workflow_status,
+            partition_scheme=get_partition_scheme(),
+            username=valid_user.username,
+            record_group=record_group,
+        )
+
+    return run_import
+
+
+@pytest.fixture
+def export_xml(valid_user_api_client):
+    return partial(export_workbasket, valid_user_api_client=valid_user_api_client)
+
+
+@pytest.fixture
+def run_xml_import(import_xml, settings):
     """
     Returns a function for checking a model can be imported correctly.
 
@@ -591,14 +613,7 @@ def run_xml_import(valid_user, settings):
             serializer(model, context={"format": "xml"}).data,
         )
 
-        process_taric_xml_stream(
-            xml,
-            workbasket_id=None,
-            workbasket_status=workflow_status,
-            partition_scheme=get_partition_scheme(),
-            username=valid_user.username,
-            record_group=record_group,
-        )
+        import_xml(xml, workflow_status, record_group)
 
         db_kwargs = model.get_identifying_fields()
         workbasket = WorkBasket.objects.last()

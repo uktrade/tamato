@@ -31,11 +31,15 @@ class MeasureSheetRowFactory(factory.Factory):
     measure_type_description = factory.SelfAttribute("measure.measure_type.description")
     duty_sentence = factory.sequence(lambda n: f"{n}.00%")
     origin_description = factory.LazyAttribute(
-        lambda m: m.measure.geographical_area.get_description().description,
+        lambda m: m.measure.geographical_area.get_description(
+            transaction=m.measure.geographical_area.transaction,
+        ).description,
     )
     excluded_origin_descriptions = factory.LazyAttribute(
         lambda m: random.choice(MeasureSheetRow.separators).join(
-            e.excluded_geographical_area.get_description().description
+            e.excluded_geographical_area.get_description(
+                transaction=e.excluded_geographical_area.transaction,
+            ).description
             for e in m.measure.exclusions.all()
         ),
     )

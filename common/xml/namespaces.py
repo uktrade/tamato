@@ -11,3 +11,11 @@ nsmap = {
     TARIC_MESSAGE: "urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0",
     XML_SCHEMA: "http://www.w3.org/2001/XMLSchema",
 }
+
+
+def register():
+    # Necessary to get ElementTree to output XML with the familiar prefixes.
+    from xml.etree import ElementTree
+
+    for prefix in (ENVELOPE, TARIC_MESSAGE):
+        ElementTree.register_namespace(prefix, nsmap[prefix])
