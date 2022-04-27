@@ -612,6 +612,8 @@ class MeasureCommodityAndDutiesForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        # remove measure_start_date from kwargs here because superclass will not be expecting it
+        self.measure_start_date = kwargs.pop("measure_start_date")
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
@@ -636,9 +638,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         duties = cleaned_data.get("duties", "")
-        measure_start_date = self.initial.get("measure_start_date")
-        if measure_start_date is not None and duties:
-            validate_duties(duties, measure_start_date)
+        validate_duties(duties, self.measure_start_date)
 
         return cleaned_data
 
