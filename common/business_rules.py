@@ -11,11 +11,11 @@ from typing import Iterable
 from typing import Iterator
 from typing import Mapping
 from typing import Optional
+from typing import Set
 from typing import Type
 from typing import Union
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
 from common.models.mixins.validity import ValidityMixin
@@ -55,6 +55,9 @@ class BusinessRuleViolation(Exception):
             message = self.default_message()
 
         super().__init__(message, model)
+
+
+ALL_RULES: Set[Type[BusinessRule]] = set()
 
 
 class BusinessRuleBase(type):
@@ -102,6 +105,8 @@ class BusinessRuleBase(type):
             "__doc__",
             getattr(new_class, "__doc__", None),
         )
+
+        ALL_RULES.add(new_class)
 
         return new_class
 
@@ -173,43 +178,6 @@ class BusinessRule(metaclass=BusinessRuleBase):
             model=model,
             message=message,
         )
-
-
-class BusinessRuleChecker:
-    """Runs all business rules governing a specified collection of model
-    instances and collects all violations."""
-
-    def __init__(self, models: Iterable[TrackedModel], transaction):
-        self.models = models
-        self.transaction = transaction
-
-    def validate(self):
-        """
-        Run business rules against the specified models in the given
-        transaction.
-
-        :raises ValidationError: All rule violations are raised in a single
-            ValidationError
-        """
-        violations = []
-
-        for model in self.models:
-            for rule in model.business_rules:
-                try:
-                    rule(self.transaction).validate(model)
-                except BusinessRuleViolation as violation:
-                    violations.append(violation)
-
-            for rule in model.indirect_business_rules:
-                rule_instance = rule(self.transaction)
-                for linked_model in rule.get_linked_models(model, self.transaction):
-                    try:
-                        rule_instance.validate(linked_model)
-                    except BusinessRuleViolation as violation:
-                        violations.append(violation)
-
-        if any(violations):
-            raise ValidationError(violations)
 
 
 def only_applicable_after(cutoff: Union[date, datetime, str]):

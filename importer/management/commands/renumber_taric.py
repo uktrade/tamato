@@ -11,12 +11,22 @@ class Command(BaseCommand):
         parser.add_argument("file", type=str, help="The XML file to renumber, in place")
         parser.add_argument("number", type=int, help="The number to start from")
         parser.add_argument(
-            "tag",
+            "record",
             type=str,
-            help="TARIC tag name to renumber, with XML namespace",
+            help="TARIC record name to renumber, with XML namespace",
+        )
+        parser.add_argument(
+            "attribute",
+            type=str,
+            help="TARIC record attribute to renumber, with XML namespace",
         )
         return super().add_arguments(parser)
 
     def handle(self, *args, **options):
         with rewrite(options["file"]) as root:
-            renumber_records(root, options["number"], options["tag"])
+            renumber_records(
+                root,
+                options["number"],
+                options["record"],
+                options["attribute"],
+            )
