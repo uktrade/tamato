@@ -150,8 +150,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#cross-cutting-modules">Cross-Cutting Modules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#module-importer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">importer</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-checks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">checks</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id2"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -218,8 +219,9 @@
 <li><a class="reference internal" href="#cross-cutting-modules">Cross-Cutting Modules</a><ul>
 <li><a class="reference internal" href="#module-importer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">importer</span></code></a></li>
 <li><a class="reference internal" href="#module-exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a></li>
+<li><a class="reference internal" href="#module-checks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">checks</span></code></a></li>
 <li><a class="reference internal" href="#module-hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a></li>
-<li><a class="reference internal" href="#id2"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
+<li><a class="reference internal" href="#id4"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -695,6 +697,60 @@ these envelopes are marshalled to CDS.</p>
 <p>See the documentation on <a class="reference internal" href="../exporter/index.html#the-exporter"><span class="std std-ref">the exporter</span></a> for a full
 description.</p>
 </section>
+<section id="module-checks">
+<span id="checks"></span><h3><a class="reference internal" href="#module-checks" title="checks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">checks</span></code></a><a class="headerlink" href="#module-checks" title="Permalink to this headline">¶</a></h3>
+<p>The <a href="#id2"><span class="problematic" id="id3">``</span></a>checks` subsystem runs background checks against models.</p>
+<p>Users are able to produce models using the UI that do not pass validation of
+TARIC business rules. When they do this, they need to be informed of the issues
+so that they can go and manually correct them. Business rule checking is slow,
+so running all of the rules to find and display errors cannot be run during a
+single web request.</p>
+<p>So the requirements on the checks subsystem are:</p>
+<ol class="arabic simple">
+<li><p>Show the user all of the errors in their (1000+) model changes in the UI.</p></li>
+<li><p>When the user has finished all of their editing, allow the final output to be
+downloaded quickly without them having to wait for the checks to run.</p></li>
+</ol>
+<p>Checks are designed to be run asynchronously using Celery. Synchronous checking
+is available but is only designed for use in testing, debugging or within a
+single database transaction in a Jupyter notebook.</p>
+<p>Whilst the checks are designed to run business rules, this is not hard-coded and
+it is easy to implement new types of checks that aren’t business rule focused if
+desired. Any new business rules that are implemented will automatically be
+picked up.</p>
+<p>In order to make web requests fast, the checks system includes a cache of what
+checks have have been run, whether any have failed, and how. Like any cache,
+checks can become outdated if transactions in draft are modified. The system
+includes the ability to detect this and re-run new checks accordingly.</p>
+<p>The system is designed to be tolerant towards background tasks being killed at
+any point during their execution. The system does not assume that a task will be
+completed if it is started. The database therefore is the only stateful part of
+the system and only what is present in the database controls the execution of
+new checks and whether or not a workbasket is valid and can be sent. This is
+achieved by gathering metadata unique to the data to be processed and verifying
+that the data hasn’t been edited in the meantime by checking that the metadata
+has the same values as it had at the beginning.</p>
+<p>The system is also designed to be tolerant of poor integration with the rest of
+the app. It does not require that all of the places that edit transactions also
+know how to start checks. Instead, a scheduled task is used to hunt for
+transactions that have not been checked yet and pre-emptively check them. This
+means that developers on the whole do not need to think about how to start
+checks and can just leave the system to run checks at appropriate times.</p>
+<p>The assumptions in the system are:</p>
+<ol class="arabic simple">
+<li><p>Transactions are immutable once they have been approved (i.e. they enter a
+partition in <code class="docutils literal notranslate"><span class="pre">TransactionPartition.approved_partitions()</span></code>). Checks against
+approved transactions will not be checked again.</p></li>
+<li><p>There is at least one transaction in an approved partition.</p></li>
+<li><p>Changes made to a draft transaction take the form of a removal or an addition
+of a model – models are never edited directly. Unpicking this assumption is
+hard, so it’s recommended that the system sticks to this if it can.</p></li>
+<li><p>Checks can be run independently of each other and do not modify data.
+(Actually, checks can modify data as long as they do it in the manner
+described in point #3 – all of other checks will then immediately be
+invalidated, so in the worst case this is a waste of resources.)</p></li>
+</ol>
+</section>
 <section id="module-hmrc_sdes">
 <span id="hmrc-sdes"></span><h3><a class="reference internal" href="#module-hmrc_sdes" title="hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a><a class="headerlink" href="#module-hmrc_sdes" title="Permalink to this headline">¶</a></h3>
 <p>Provides the ability to communicate with HMRC’s Secure Data Exchange Service
@@ -705,8 +761,8 @@ then notify SDES via an HTTPS API that a file is ready to be downloaded. This
 module makes available the API client library to make the call.</p>
 <p>More information about SDES is available from <a class="reference external" href="https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/secure-data-exchange-notifications/1.0">the HMRC developer hub</a>.</p>
 </section>
-<section id="id2">
-<h3><a class="reference internal" href="#module-taric" title="taric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<section id="id4">
+<h3><a class="reference internal" href="#module-taric" title="taric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <span class="target" id="module-taric"></span><p>Implements models used by the <a class="reference internal" href="#module-exporter" title="exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a> to keep track of which
 envelopes the system has generated and which transactions they contained.</p>
 </section>

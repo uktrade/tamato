@@ -133,8 +133,6 @@
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
 
-<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.core.serializers.json</span> <span class="kn">import</span> <span class="n">DjangoJSONEncoder</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
@@ -351,25 +349,6 @@
         <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span><span class="o">.</span><span class="n">save_drafts</span><span class="p">(</span><span class="n">partition_scheme</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">refresh_from_db</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span></div>
-
-<div class="viewcode-block" id="Transaction.clean"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate business rules against contained TrackedModels.&quot;&quot;&quot;</span>
-
-        <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">SKIP_VALIDATION</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRuleChecker</span>
-        <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRuleViolation</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">BusinessRuleChecker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-        <span class="k">except</span> <span class="n">BusinessRuleViolation</span> <span class="k">as</span> <span class="n">violation</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">violation</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Transaction.to_json"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>

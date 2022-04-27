@@ -253,10 +253,10 @@
 </li>
       <li><a href="importer/parsers_and_namespaces.html#importer.parsers.BooleanElement">BooleanElement (class in importer.parsers)</a>
 </li>
-      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.build">build() (importer.handlers.BaseHandler method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.build">build() (importer.handlers.BaseHandler method)</a>
+</li>
       <li><a href="api/common/common.models.html#common.models.DescriptionMixin.business_rules">business_rules (common.models.DescriptionMixin attribute)</a>
 
       <ul>
@@ -266,8 +266,6 @@
       <li><a href="business_rules/common.html#common.business_rules.BusinessRule">BusinessRule (class in common.business_rules)</a>
 </li>
       <li><a href="business_rules/common.html#common.business_rules.BusinessRuleBase">BusinessRuleBase (class in common.business_rules)</a>
-</li>
-      <li><a href="business_rules/common.html#common.business_rules.BusinessRuleChecker">BusinessRuleChecker (class in common.business_rules)</a>
 </li>
       <li><a href="business_rules/common.html#common.business_rules.BusinessRuleViolation">BusinessRuleViolation</a>
 </li>
@@ -341,13 +339,26 @@
 </li>
       <li><a href="business_rules/certificates.html#certificates.business_rules.CET2.Violation">CET2.Violation</a>
 </li>
-      <li><a href="business_rules/measures.html#measures.business_rules.ME32.clashing_measures">clashing_measures() (measures.business_rules.ME32 method)</a>
-</li>
-      <li><a href="api/common/common.models.html#common.models.Transaction.clean">clean() (common.models.Transaction method)</a>
+      <li>
+    checks
 
       <ul>
-        <li><a href="importer/handlers.html#importer.handlers.BaseHandler.clean">(importer.handlers.BaseHandler method)</a>
+        <li><a href="architecture/index.html#module-checks">module</a>
 </li>
+      </ul></li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.checks">checks (common.models.TrackedModel attribute)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.Transaction.checks">(common.models.Transaction attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="business_rules/measures.html#measures.business_rules.ME32.clashing_measures">clashing_measures() (measures.business_rules.ME32 method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="importer/handlers.html#importer.handlers.BaseHandler.clean">clean() (importer.handlers.BaseHandler method)</a>
+
+      <ul>
         <li><a href="importer/parsers_and_namespaces.html#importer.parsers.BooleanElement.clean">(importer.parsers.BooleanElement method)</a>
 </li>
         <li><a href="importer/parsers_and_namespaces.html#importer.parsers.CompoundElement.clean">(importer.parsers.CompoundElement method)</a>
@@ -357,8 +368,6 @@
         <li><a href="importer/parsers_and_namespaces.html#importer.parsers.ElementParser.clean">(importer.parsers.ElementParser method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="importer/nursery.html#importer.nursery.TariffObjectNursery.clear_cache">clear_cache() (importer.nursery.TariffObjectNursery method)</a>
 </li>
       <li>
@@ -1199,10 +1208,10 @@
 </li>
       <li><a href="business_rules/measures.html#measures.business_rules.ME60">ME60 (class in measures.business_rules)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="business_rules/measures.html#measures.business_rules.ME60.Violation">ME60.Violation</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="business_rules/measures.html#measures.business_rules.ME61">ME61 (class in measures.business_rules)</a>
 </li>
       <li><a href="business_rules/measures.html#measures.business_rules.ME61.Violation">ME61.Violation</a>
@@ -1332,6 +1341,8 @@
         <li><a href="architecture/index.html#module-certificates">certificates</a>
 </li>
         <li><a href="business_rules/certificates.html#module-certificates.business_rules">certificates.business_rules</a>
+</li>
+        <li><a href="architecture/index.html#module-checks">checks</a>
 </li>
         <li><a href="architecture/index.html#module-commodities">commodities</a>
 </li>
@@ -1901,10 +1912,10 @@
 </li>
       <li><a href="api/common/common.models.html#common.models.TimestampedMixin.Meta">TimestampedMixin.Meta (class in common.models)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/common/common.models.html#common.models.Transaction.to_json">to_json() (common.models.Transaction method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/common/common.models.html#common.models.Transaction.tracked_models">tracked_models (common.models.Transaction attribute)</a>
 </li>
       <li><a href="api/common/common.models.html#common.models.TrackedModel">TrackedModel (class in common.models)</a>
@@ -1929,6 +1940,12 @@
 </li>
       <li><a href="api/common/common.models.html#common.models.TrackedModel.transaction_id">transaction_id (common.models.TrackedModel attribute)</a>
 </li>
+      <li><a href="api/common/common.models.html#common.models.TrackedModel.transactioncheck_set">transactioncheck_set (common.models.TrackedModel attribute)</a>
+
+      <ul>
+        <li><a href="api/common/common.models.html#common.models.Transaction.transactioncheck_set">(common.models.Transaction attribute)</a>
+</li>
+      </ul></li>
       <li><a href="api/common/common.models.html#common.models.Transaction.transactiongroup_set">transactiongroup_set (common.models.Transaction attribute)</a>
 </li>
       <li><a href="importer/taric.html#importer.taric.TransactionParser">TransactionParser (class in importer.taric)</a>
@@ -1985,8 +2002,6 @@
         <li><a href="business_rules/commodities.html#commodities.business_rules.NIG7.validate">(commodities.business_rules.NIG7 method)</a>
 </li>
         <li><a href="business_rules/common.html#common.business_rules.BusinessRule.validate">(common.business_rules.BusinessRule method)</a>
-</li>
-        <li><a href="business_rules/common.html#common.business_rules.BusinessRuleChecker.validate">(common.business_rules.BusinessRuleChecker method)</a>
 </li>
         <li><a href="business_rules/common.html#common.business_rules.DescriptionsRules.validate">(common.business_rules.DescriptionsRules method)</a>
 </li>
