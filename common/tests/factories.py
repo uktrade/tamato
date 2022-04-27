@@ -149,18 +149,31 @@ class TransactionFactory(factory.django.DjangoModelFactory):
     workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
     composite_key = factory.Sequence(str)
 
+    class Params:
+        approved = factory.Trait(
+            partition=TransactionPartition.REVISION,
+        )
+
+        seed = factory.Trait(
+            partition=TransactionPartition.SEED_FILE,
+        )
+
+        draft = factory.Trait(
+            partition=TransactionPartition.DRAFT,
+            workbasket=factory.SubFactory(WorkBasketFactory),
+        )
+
 
 class SeedFileTransactionFactory(TransactionFactory):
-    partition = TransactionPartition.SEED_FILE
+    seed = True
 
 
 class ApprovedTransactionFactory(TransactionFactory):
-    partition = TransactionPartition.REVISION
+    approved = True
 
 
 class UnapprovedTransactionFactory(TransactionFactory):
-    partition = TransactionPartition.DRAFT
-    workbasket = factory.SubFactory(WorkBasketFactory)
+    draft = True
 
 
 class VersionGroupFactory(factory.django.DjangoModelFactory):

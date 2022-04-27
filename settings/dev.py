@@ -5,7 +5,7 @@ from settings.common import *
 DEBUG = True
 
 # Allow all hostnames to access the server
-ALLOWED_HOSTS = "*"
+ALLOWED_HOSTS = ["*"]
 
 # Enable Django debug toolbar
 if is_truthy(os.environ.get("ENABLE_DJANGO_DEBUG_TOOLBAR")):

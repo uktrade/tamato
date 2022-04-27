@@ -154,7 +154,13 @@ Environment variables
 
 .. envvar:: MINIO_SECRET_KEY
 
-    Password for local MinIO instance 
+    Password for local MinIO instance
+
+.. envvar:: EXPORTER_DISABLE_NOTIFICATIONS
+
+    (default ``False``)
+
+    Do not call the HMRC API notification endpoint after each upload
 
 .. envvar:: DJANGO_SETTINGS_MODULE
 

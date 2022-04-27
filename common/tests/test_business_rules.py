@@ -4,11 +4,9 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-from django.core.exceptions import ValidationError
 
 from commodities.models.orm import GoodsNomenclatureDescription
 from common.business_rules import BusinessRule
-from common.business_rules import BusinessRuleChecker
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import NoBlankDescription
 from common.business_rules import NoOverlapping
@@ -54,28 +52,6 @@ def add_business_rules(model, rules=None, indirect=False):
         new=rules,
     ):
         yield
-
-
-def test_business_rules_validation():
-    model = factories.TestModel1Factory.create()
-
-    with add_business_rules(model, [TestRule]):
-        BusinessRuleChecker([model], model.transaction).validate()
-
-    assert TestRule.validate.called_with(model)
-
-
-def test_indirect_business_rule_validation():
-    model = factories.TestModel3Factory.create()
-
-    with add_business_rules(model, [TestRule]), add_business_rules(
-        model.linked_model,
-        [TestRule],
-        indirect=True,
-    ):
-        BusinessRuleChecker([model.linked_model], model.transaction).validate()
-
-    assert TestRule.validate.called_with(model)
 
 
 @pytest.fixture(
@@ -171,16 +147,14 @@ def test_prevent_delete_if_in_use(approved_transaction):
     with approved_transaction:
         model = factories.TestModel3Factory.create()
 
-    with add_business_rules(model, [TestInUse]):
+    # skips because not a DELETE
+    TestInUse(model.transaction).validate(model)
 
-        # skips because not a DELETE
-        BusinessRuleChecker([model], model.transaction).validate()
+    workbasket = factories.WorkBasketFactory.create()
+    model = model.new_version(workbasket, update_type=UpdateType.DELETE)
+    model.in_use = MagicMock(return_value=True)
 
-        workbasket = factories.WorkBasketFactory.create()
-        model = model.new_version(workbasket, update_type=UpdateType.DELETE)
-        model.in_use = MagicMock(return_value=True)
-
-        with pytest.raises(ValidationError):
-            BusinessRuleChecker([model], model.transaction).validate()
+    with pytest.raises(TestInUse.Violation):
+        TestInUse(model.transaction).validate(model)
 
     assert model.in_use.called

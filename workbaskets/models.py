@@ -14,6 +14,7 @@ from django.db.models import Subquery
 from django_fsm import FSMField
 from django_fsm import transition
 
+from checks.models import TransactionCheck
 from common.models.mixins import TimestampedMixin
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
@@ -322,7 +323,14 @@ class WorkBasket(TimestampedMixin):
     )
     def submit_for_approval(self):
         self.full_clean()
-        self.clean_transactions()
+
+        if not self.transactions.exists():
+            return
+
+        if self.unchecked_or_errored_transactions.exists():
+            raise ValidationError(
+                "Transactions have not yet been fully checked or contain errors",
+            )
 
     @transition(
         field=status,
@@ -432,17 +440,6 @@ class WorkBasket(TimestampedMixin):
 
         return Transaction.approved.last()
 
-    def clean_transactions(self):
-        errors = []
-        for txn in self.transactions.order_by("order"):
-            try:
-                txn.clean()
-            except ValidationError as e:
-                errors.extend(e.error_list)
-
-        if any(errors):
-            raise ValidationError(errors)
-
     def new_transaction(self, **kwargs):
         """Create a new transaction in this workbasket."""
         if "order" not in kwargs:
@@ -478,3 +475,15 @@ class WorkBasket(TimestampedMixin):
         recent approved transaction if no transactions are in the workbasket.
         """
         return self.transactions.last() or Transaction.approved.last()
+
+    @property
+    def unchecked_or_errored_transactions(self):
+        return self.transactions.exclude(
+            pk__in=TransactionCheck.objects.requires_update(False)
+            .filter(
+                completed=True,
+                successful=True,
+                transaction__workbasket=self,
+            )
+            .values("transaction__pk"),
+        )
