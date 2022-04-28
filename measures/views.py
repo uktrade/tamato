@@ -371,7 +371,10 @@ class MeasureUpdate(
             initial_dict = {}
             for field in form_fields:
                 if hasattr(condition, field):
-                    initial_dict[field] = getattr(condition, field)
+                    value = getattr(condition, field)
+                    if hasattr(value, "pk"):
+                        value = value.pk
+                    initial_dict[field] = value
 
             initial_dict["applicable_duty"] = condition.condition_string
             initial_dict["reference_price"] = condition.reference_price_string
