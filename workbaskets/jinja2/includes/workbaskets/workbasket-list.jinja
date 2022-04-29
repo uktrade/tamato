@@ -2,47 +2,41 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 
-<div class="filter-layout">
-  <form class="filter-layout__filters" method="get" action="{{ url("workbaskets:workbasket-ui-list") }}">
-    {{ govukInput({
-      "id": "search",
-      "name": "search",
-      "label": {
-        "text": "Search",
-        "classes": "govuk-label--m",
-        "attributes": {}
-      },
-      "formGroup": {}
-    }) }}
+{% set table_rows = [] %}
+{% for workbasket in object_list %}
+  {% set workbasket_link -%}
+    <a href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk}) }}">{{ workbasket.title }}</a>
+  {%- endset -%}
+  {{ table_rows.append([
+    {"text": workbasket.pk},
+    {"html": workbasket_link},
+    {"text": workbasket.reason},
+    {"text": workbasket.tracked_models.count()},
+    {
+      "html": "<span title=\"{:%d %b %y %H:%M}\">{:%d %b %y}</span>".format(
+        workbasket.created_at,
+        workbasket.created_at,
+      )
+    },
+    {
+      "html": "<span title=\"{:%d %b %y %H:%M}\">{:%d %b %y}</span>".format(
+        workbasket.updated_at,
+        workbasket.updated_at,
+      )
+    },
+    {"text": workbasket.get_status_display()},
+  ]) or "" }}
+{% endfor %}
 
-    {{ govukButton({"text": "Filter"}) }}
-  </form>
-
-  <div class="filter-layout__content">
-    {% set table_rows = [] %}
-    {% for workbasket in workbaskets %}
-      {% set workbasket_link -%}
-        <a href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.id}) }}">{{ workbasket.title }}</a>
-      {%- endset -%}
-      {{ table_rows.append([
-        {"html": workbasket_link},
-        {"text": workbasket.reason},
-        {"text": workbasket.author.username},
-        {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)},
-        {"text": "{:%d %b %y %H:%M}".format(workbasket.updated_at)},
-        {"text": workbasket.get_status_display()},
-      ]) or "" }}
-    {% endfor %}
-    {{ govukTable({
-      "head": [
-        {"text": "Title"},
-        {"text": "Reason"},
-        {"text": "Owner"},
-        {"text": "Created"},
-        {"text": "Updated"},
-        {"text": "Status"},
-      ],
-      "rows": table_rows
-    }) }}
-  </div>
-</div>
+{{ govukTable({
+  "head": [
+    {"text": "ID"},
+    {"text": "Title"},
+    {"text": "Reason"},
+    {"text": "Changes count"},
+    {"text": "Created"},
+    {"text": "Updated*"},
+    {"text": "Status"},
+  ],
+  "rows": table_rows
+}) }}

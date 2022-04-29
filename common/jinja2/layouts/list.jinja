@@ -21,7 +21,9 @@
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">
     Search for {{object_list.model._meta.verbose_name_plural}}.
+    {% if not ommit_create_link %}
     Alternatively, <a class="govuk-link" href="{{ create_url }}">create a new {{ object_list.model._meta.verbose_name }}</a>.
+    {% endif %}
   </p>
 
   <div class="filter-layout">

@@ -42,10 +42,6 @@
           {"text": workbasket.reason or ""}
         ],
         [
-          {"text": "User"},
-          {"text": workbasket.author.fullname or ""}
-        ],
-        [
           {"text": "Created"},
           {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)}
         ],
@@ -57,17 +53,13 @@
           {"text": "Workbasket status"},
           {"text": workbasket.get_status_display()}
         ],
-        [
-          {"text": "Activity summary"},
-          {"text": ""}
-        ]
       ]
     }) }}
   {% endset %}
 
   {% set activities_html %}
     <h2 class="govuk-heading-l">Workbasket activities</h2>
-    <p class="govuk-body">This workbasket contains the following {# workbasket.items.count() #} changes:</p>
+    <p class="govuk-body">This workbasket contains the following {{ workbasket.tracked_models.count() }} changes:</p>
     {% set activity_groups = [] %}
     {% for group_name, group_items in workbasketitem_groups %}
       {% set table %}
@@ -89,21 +81,6 @@
     }) }}
   {% endset %}
 
-  {% set history_html %}
-    <h2 class="govuk-heading-l">Workbasket history</h2>
-    <p class="govuk-body">The table below shows the actions that have been performed on
-    this workbasket.</p>
-    {{ govukTable({
-      "head": [
-        {"text": "Date"},
-        {"text": "User"},
-        {"text": "Event type"},
-        {"text": "Description"}
-      ],
-      "rows": []
-    }) }}
-  {% endset %}
-
   {{ govukTabs({
     "items": [
       {
@@ -118,13 +95,6 @@
         "id": "activities",
         "panel": {
           "html": activities_html
-        }
-      },
-      {
-        "label": "Workbasket history",
-        "id": "history",
-        "panel": {
-          "html": history_html
         }
       }
     ]
