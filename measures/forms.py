@@ -1,4 +1,3 @@
-import datetime
 import logging
 
 from crispy_forms_gds.helper import FormHelper
@@ -54,7 +53,7 @@ class MeasureValidityForm(ValidityPeriodForm):
         ]
 
 
-class MeasureConditionsForm(forms.ModelForm):
+class MeasureConditionsFormMixin(forms.ModelForm):
     class Meta:
         model = models.MeasureCondition
         fields = [
@@ -127,6 +126,44 @@ class MeasureConditionsForm(forms.ModelForm):
             ),
         )
 
+    def conditions_clean(self, cleaned_data, measure_start_date):
+        """
+        We get the reference_price from cleaned_data and the measure_start_date
+        from the form's initial data.
+
+        If both are present, we call validate_duties with measure_start_date.
+        Then, if reference_price is provided, we use DutySentenceParser with
+        measure_start_date, if present, or the current_date, to check that we
+        are dealing with a simple duty (i.e. only one component). We then update
+        cleaned_data with key-value pairs created from this single, unsaved
+        component.
+        """
+        price = cleaned_data.get("reference_price")
+
+        if price and measure_start_date is not None:
+            validate_duties(price, measure_start_date)
+
+        if price:
+            parser = DutySentenceParser.get(measure_start_date)
+            components = parser.parse(price)
+            if len(components) > 1:
+                raise ValidationError(
+                    "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+                )
+            cleaned_data["duty_amount"] = components[0].duty_amount
+            cleaned_data["monetary_unit"] = components[0].monetary_unit
+            cleaned_data["condition_measurement"] = components[0].component_measurement
+
+        # The JS autocomplete does not allow for clearing unnecessary certificates
+        # In case of a user changing data, the information is cleared here.
+        condition_code = cleaned_data.get("condition_code")
+        if condition_code and not condition_code.accepts_certificate:
+            cleaned_data["required_certificate"] = None
+
+        return cleaned_data
+
+
+class MeasureConditionsForm(MeasureConditionsFormMixin):
     def get_start_date(self, data):
         """Validates that the day, month, and year start_date fields are present
         in data and then returns the start_date datetime object."""
@@ -139,18 +176,14 @@ class MeasureConditionsForm(forms.ModelForm):
         """
         Gets applicable_duty from cleaned data.
 
-        We get start date from other data in the measure edit form.
-        Uses `DutySentenceParser` to check that applicable_duty is
-        a valid duty string.
+        We get start date from other data in the measure edit form. Uses
+        `DutySentenceParser` to check that applicable_duty is a valid duty
+        string.
         """
         applicable_duty = self.cleaned_data["applicable_duty"]
-        measure_start_date = (
-            self.initial.get("measure_start_date")
-            if self.initial.get("measure_start_date")
-            else self.get_start_date(self.data)
-        )
-        if applicable_duty and measure_start_date is not None:
-            validate_duties(applicable_duty, measure_start_date)
+
+        if applicable_duty and self.get_start_date(self.data) is not None:
+            validate_duties(applicable_duty, self.get_start_date(self.data))
 
         return applicable_duty
 
@@ -167,44 +200,16 @@ class MeasureConditionsForm(forms.ModelForm):
         component.
         """
         cleaned_data = super().clean()
-        price = cleaned_data.get("reference_price")
-        measure_start_date = measure_start_date = (
-            self.initial.get("measure_start_date")
-            if self.initial.get("measure_start_date")
-            else self.get_start_date(self.data)
-        )
-        if price and measure_start_date is not None:
-            validate_duties(price, measure_start_date)
+        measure_start_date = self.get_start_date(self.data)
 
-        if price:
-            start_date = (
-                measure_start_date if measure_start_date else datetime.date.today()
-            )
-            parser = DutySentenceParser.get(start_date)
-            components = parser.parse(price)
-            if len(components) > 1:
-                raise ValidationError(
-                    "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
-                )
-            cleaned_data["duty_amount"] = components[0].duty_amount
-            cleaned_data["monetary_unit"] = components[0].monetary_unit
-            cleaned_data["condition_measurement"] = components[0].component_measurement
-
-        # The JS autocomplete does not allow for clearing unnecessary certificates
-        # In case of a user changing data, the information is cleared here.
-        condition_code = cleaned_data.get("condition_code")
-        if condition_code and not condition_code.accepts_certificate:
-            cleaned_data["required_certificate"] = None
-
-        return cleaned_data
+        return self.conditions_clean(cleaned_data, measure_start_date)
 
 
 class MeasureConditionsFormSet(FormSet):
     form = MeasureConditionsForm
 
 
-class MeasureConditionsWizardStepForm(MeasureConditionsForm):
-
+class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
     # override methods that use form kwargs
     def __init__(self, *args, **kwargs):
         self.measure_start_date = kwargs.pop("measure_start_date")
@@ -214,8 +219,9 @@ class MeasureConditionsWizardStepForm(MeasureConditionsForm):
         """
         Gets applicable_duty from cleaned data.
 
-        We expect `measure_start_date` to be passed in. Uses `DutySentenceParser` to check that applicable_duty is
-        a valid duty string.
+        We expect `measure_start_date` to be passed in. Uses
+        `DutySentenceParser` to check that applicable_duty is a valid duty
+        string.
         """
         applicable_duty = self.cleaned_data["applicable_duty"]
 
@@ -230,33 +236,13 @@ class MeasureConditionsWizardStepForm(MeasureConditionsForm):
         from form kwargs.
 
         If reference_price is provided, we use DutySentenceParser with
-        measure_start_date to check that we are dealing with a simple duty
-        (i.e. only one component). We then update cleaned_data with key-value
-        pairs created from this single, unsaved component.
+        measure_start_date to check that we are dealing with a simple duty (i.e.
+        only one component). We then update cleaned_data with key-value pairs
+        created from this single, unsaved component.
         """
         cleaned_data = super().clean()
-        price = cleaned_data.get("reference_price")
-        if price:
-            validate_duties(price, self.measure_start_date)
 
-        if price:
-            parser = DutySentenceParser.get(self.measure_start_date)
-            components = parser.parse(price)
-            if len(components) > 1:
-                raise ValidationError(
-                    "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
-                )
-            cleaned_data["duty_amount"] = components[0].duty_amount
-            cleaned_data["monetary_unit"] = components[0].monetary_unit
-            cleaned_data["condition_measurement"] = components[0].component_measurement
-
-        # The JS autocomplete does not allow for clearing unnecessary certificates
-        # In case of a user changing data, the information is cleared here.
-        condition_code = cleaned_data.get("condition_code")
-        if condition_code and not condition_code.accepts_certificate:
-            cleaned_data["required_certificate"] = None
-
-        return cleaned_data
+        return self.conditions_clean(cleaned_data, self.measure_start_date)
 
 
 class MeasureConditionsWizardStepFormSet(FormSet):
