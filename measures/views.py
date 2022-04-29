@@ -112,7 +112,7 @@ class MeasureCreateWizard(
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
         (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
-        (CONDITIONS, forms.MeasureConditionsFormSet),
+        (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
         (FOOTNOTES, forms.MeasureFootnotesFormSet),
         (SUMMARY, forms.MeasureReviewForm),
     ]
@@ -258,7 +258,7 @@ class MeasureCreateWizard(
 
     def get_form_kwargs(self, step):
         kwargs = {}
-        if step == self.COMMODITIES:
+        if step == self.COMMODITIES or step == self.CONDITIONS:
             # duty sentence validation requires the measure start date so pass it to form kwargs here
             valid_between = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(
                 "valid_between"

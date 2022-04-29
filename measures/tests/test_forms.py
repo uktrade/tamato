@@ -141,8 +141,9 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
         "duties": duties,
         "commodity": commodity,
     }
-    initial_data = {"measure_start_date": date_ranges.normal}
-    form = forms.MeasureCommodityAndDutiesForm(data, prefix="", initial=initial_data)
+    form = forms.MeasureCommodityAndDutiesForm(
+        data, prefix="", measure_start_date=date_ranges.normal
+    )
     assert form.is_valid() == is_valid
 
 
@@ -158,12 +159,39 @@ def test_measure_forms_conditions_form_valid_data():
     assert form.is_valid()
 
 
+def test_measure_forms_conditions_wizard_form_valid_data(date_ranges):
+    condition_code = factories.MeasureConditionCodeFactory.create()
+    action = factories.MeasureActionFactory.create()
+    data = {
+        "condition_code": condition_code.pk,
+        "action": action.pk,
+    }
+    form = forms.MeasureConditionsWizardStepForm(
+        data, prefix="", measure_start_date=date_ranges.normal
+    )
+
+    assert form.is_valid()
+
+
 def test_measure_forms_conditions_form_invalid_data():
     action = factories.MeasureActionFactory.create()
     data = {
         "action": action.pk,
     }
     form = forms.MeasureConditionsForm(data, prefix="")
+
+    assert not form.is_valid()
+    assert form.errors["condition_code"][0] == "This field is required."
+
+
+def test_measure_forms_conditions_wizard_form_invalid_data(date_ranges):
+    action = factories.MeasureActionFactory.create()
+    data = {
+        "action": action.pk,
+    }
+    form = forms.MeasureConditionsWizardStepForm(
+        data, prefix="", measure_start_date=date_ranges.normal
+    )
 
     assert not form.is_valid()
     assert form.errors["condition_code"][0] == "This field is required."
@@ -183,6 +211,27 @@ def test_measure_forms_conditions_valid_duty(date_ranges, duty_sentence_parser):
     }
     initial_data = {"measure_start_date": date_ranges.normal}
     form = forms.MeasureConditionsForm(data, prefix="", initial=initial_data)
+    form.is_valid()
+
+    assert form.cleaned_data["duty_amount"] == 11
+    assert form.cleaned_data["monetary_unit"].code == "GBP"
+    assert (
+        form.cleaned_data["condition_measurement"].measurement_unit.abbreviation
+        == "100 kg"
+    )
+
+
+def test_measure_forms_conditions_wizard_valid_duty(date_ranges, duty_sentence_parser):
+    action = factories.MeasureActionFactory.create()
+    condition_code = factories.MeasureConditionCodeFactory.create()
+    data = {
+        "condition_code": condition_code.pk,
+        "reference_price": "11 GBP / 100 kg",
+        "action": action.pk,
+    }
+    form = forms.MeasureConditionsWizardStepForm(
+        data, prefix="", measure_start_date=date_ranges.normal
+    )
     form.is_valid()
 
     assert form.cleaned_data["duty_amount"] == 11
@@ -227,6 +276,37 @@ def test_measure_forms_conditions_invalid_duty(
 
 
 @pytest.mark.parametrize(
+    "reference_price, message",
+    [
+        ("invalid duty", "Enter a valid duty sentence."),
+        (
+            "3.5 % + 11 GBP / 100 kg",
+            "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+        ),
+    ],
+)
+def test_measure_forms_conditions_wizard_invalid_duty(
+    reference_price,
+    message,
+    date_ranges,
+    duty_sentence_parser,
+):
+    action = factories.MeasureActionFactory.create()
+    condition_code = factories.MeasureConditionCodeFactory.create()
+    data = {
+        "condition_code": condition_code.pk,
+        "reference_price": reference_price,
+        "action": action.pk,
+    }
+    form = forms.MeasureConditionsWizardStepForm(
+        data, prefix="", measure_start_date=date_ranges.normal
+    )
+
+    assert not form.is_valid()
+    assert message in form.errors["__all__"]
+
+
+@pytest.mark.parametrize(
     "applicable_duty, is_valid",
     [("33 GBP/100kg", True), ("3.5% + 11 GBP / 100 kg", True), ("invalid duty", False)],
 )
@@ -247,6 +327,35 @@ def test_measure_forms_conditions_applicable_duty(
     }
     initial_data = {"measure_start_date": date_ranges.normal}
     form = forms.MeasureConditionsForm(data, prefix="", initial=initial_data)
+
+    assert form.is_valid() == is_valid
+
+    if not is_valid:
+        assert "Enter a valid duty sentence." in form.errors["applicable_duty"]
+
+
+@pytest.mark.parametrize(
+    "applicable_duty, is_valid",
+    [("33 GBP/100kg", True), ("3.5% + 11 GBP / 100 kg", True), ("invalid duty", False)],
+)
+def test_measure_forms_conditions_wizard_applicable_duty(
+    applicable_duty,
+    is_valid,
+    date_ranges,
+    duty_sentence_parser,
+):
+    """Tests that applicable_duty form field handles simple and complex duty
+    sentence strings, raising an error, if an invalid string is passed."""
+    action = factories.MeasureActionFactory.create()
+    condition_code = factories.MeasureConditionCodeFactory.create()
+    data = {
+        "condition_code": condition_code.pk,
+        "action": action.pk,
+        "applicable_duty": applicable_duty,
+    }
+    form = forms.MeasureConditionsWizardStepForm(
+        data, prefix="", measure_start_date=date_ranges.normal
+    )
 
     assert form.is_valid() == is_valid
 
@@ -285,4 +394,37 @@ def test_measure_forms_conditions_clears_unneeded_certificate(date_ranges):
         initial=initial_data,
     )
     form_expects_no_certificate.is_valid()
-    assert form_expects_no_certificate.cleaned_data["required_certificate"] == None
+    assert form_expects_no_certificate.cleaned_data["required_certificate"] is None
+
+
+def test_measure_forms_conditions_wizard_clears_unneeded_certificate(date_ranges):
+    """Tests that measure conditions form removes certificates that are not
+    expected by the measure condition code."""
+    certificate = factories.CertificateFactory.create()
+    code_with_certificate = factories.MeasureConditionCodeFactory(
+        accepts_certificate=True,
+    )
+    code_without_certificate = factories.MeasureConditionCodeFactory(
+        accepts_certificate=False,
+    )
+    action = factories.MeasureActionFactory.create()
+
+    data = {
+        "required_certificate": certificate.pk,
+        "action": action.pk,
+    }
+    form_expects_certificate = forms.MeasureConditionsWizardStepForm(
+        dict(data, **{"condition_code": code_with_certificate.pk}),
+        prefix="",
+        measure_start_date=date_ranges.normal,
+    )
+    form_expects_certificate.is_valid()
+    assert form_expects_certificate.cleaned_data["required_certificate"] == certificate
+
+    form_expects_no_certificate = forms.MeasureConditionsWizardStepForm(
+        dict(data, **{"condition_code": code_without_certificate.pk}),
+        prefix="",
+        measure_start_date=date_ranges.normal,
+    )
+    form_expects_no_certificate.is_valid()
+    assert form_expects_no_certificate.cleaned_data["required_certificate"] is None
