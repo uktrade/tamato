@@ -142,7 +142,9 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
         "commodity": commodity,
     }
     form = forms.MeasureCommodityAndDutiesForm(
-        data, prefix="", measure_start_date=date_ranges.normal
+        data,
+        prefix="",
+        measure_start_date=date_ranges.normal,
     )
     assert form.is_valid() == is_valid
 
@@ -167,7 +169,9 @@ def test_measure_forms_conditions_wizard_form_valid_data(date_ranges):
         "action": action.pk,
     }
     form = forms.MeasureConditionsWizardStepForm(
-        data, prefix="", measure_start_date=date_ranges.normal
+        data,
+        prefix="",
+        measure_start_date=date_ranges.normal,
     )
 
     assert form.is_valid()
@@ -190,7 +194,9 @@ def test_measure_forms_conditions_wizard_form_invalid_data(date_ranges):
         "action": action.pk,
     }
     form = forms.MeasureConditionsWizardStepForm(
-        data, prefix="", measure_start_date=date_ranges.normal
+        data,
+        prefix="",
+        measure_start_date=date_ranges.normal,
     )
 
     assert not form.is_valid()
@@ -230,7 +236,9 @@ def test_measure_forms_conditions_wizard_valid_duty(date_ranges, duty_sentence_p
         "action": action.pk,
     }
     form = forms.MeasureConditionsWizardStepForm(
-        data, prefix="", measure_start_date=date_ranges.normal
+        data,
+        prefix="",
+        measure_start_date=date_ranges.normal,
     )
     form.is_valid()
 
@@ -298,8 +306,12 @@ def test_measure_forms_conditions_wizard_invalid_duty(
         "reference_price": reference_price,
         "action": action.pk,
     }
+    initial_data = {"measure_start_date": date_ranges.normal}
     form = forms.MeasureConditionsWizardStepForm(
-        data, prefix="", measure_start_date=date_ranges.normal
+        data,
+        prefix="",
+        measure_start_date=date_ranges.normal,
+        initial=initial_data,
     )
 
     assert not form.is_valid()
@@ -354,7 +366,9 @@ def test_measure_forms_conditions_wizard_applicable_duty(
         "applicable_duty": applicable_duty,
     }
     form = forms.MeasureConditionsWizardStepForm(
-        data, prefix="", measure_start_date=date_ranges.normal
+        data,
+        prefix="",
+        measure_start_date=date_ranges.normal,
     )
 
     assert form.is_valid() == is_valid
