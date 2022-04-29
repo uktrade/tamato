@@ -255,8 +255,9 @@ class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
                     "duty_amount",
                     Case(
                         When(
-                            monetary_unit__isnull=True,
-                            then=Value(""),
+                            monetary_unit=None,
+                            duty_amount__isnull=False,
+                            then=Value("%"),
                         ),
                         default=Concat(
                             Value(" "),
@@ -265,23 +266,37 @@ class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
                     ),
                     Case(
                         When(
-                            condition_measurement__measurement_unit__code__isnull=True,
+                            Q(condition_measurement=None)
+                            | Q(
+                                condition_measurement__measurement_unit=None,
+                            )
+                            | Q(
+                                condition_measurement__measurement_unit__abbreviation=None,
+                            ),
                             then=Value(""),
                         ),
+                        When(
+                            monetary_unit__isnull=True,
+                            then=F(
+                                "condition_measurement__measurement_unit__abbreviation",
+                            ),
+                        ),
                         default=Concat(
-                            Value(" "),
-                            F("condition_measurement__measurement_unit__code"),
+                            Value(" / "),
+                            F(
+                                "condition_measurement__measurement_unit__abbreviation",
+                            ),
                         ),
                     ),
                     Case(
                         When(
-                            condition_measurement__measurement_unit_qualifier__code__isnull=True,
+                            condition_measurement__measurement_unit_qualifier__abbreviation=None,
                             then=Value(""),
                         ),
                         default=Concat(
-                            Value(" "),
+                            Value(" / "),
                             F(
-                                "condition_measurement__measurement_unit_qualifier__code",
+                                "condition_measurement__measurement_unit_qualifier__abbreviation",
                             ),
                         ),
                     ),

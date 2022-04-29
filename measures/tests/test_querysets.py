@@ -11,6 +11,8 @@ import pytest
 
 from common.tests import factories
 from measures.models import Measure
+from measures.models import MeasureCondition
+from measures.validators import validate_duties
 
 pytestmark = pytest.mark.django_db
 
@@ -131,3 +133,98 @@ def test_get_measures_not_current():
 
     assert previous_measure in qs
     assert current_measure not in qs
+
+
+@pytest.mark.parametrize(
+    "create_kwargs, expected",
+    [
+        ({"duty_amount": None}, ""),
+        ({"duty_amount": 8.000, "monetary_unit": None}, "8.000%"),
+        ({"duty_amount": 33.000, "monetary_unit__code": "GBP"}, "33.000 GBP"),
+    ],
+)
+def test_with_reference_price_string_no_measurement(
+    create_kwargs,
+    expected,
+    duty_sentence_parser,
+):
+    condition = factories.MeasureConditionFactory.create(**create_kwargs)
+    qs = MeasureCondition.objects.with_reference_price_string()
+    price_condition = qs.first()
+
+    assert price_condition.reference_price_string == expected
+    validate_duties(
+        price_condition.reference_price_string,
+        condition.dependent_measure.valid_between.lower,
+    )
+
+
+@pytest.mark.parametrize(
+    "measurement_kwargs, condition_kwargs, expected",
+    [
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier__abbreviation": "lactic.",
+            },
+            {"duty_amount": 33.000, "monetary_unit__code": "GBP"},
+            "33.000 GBP / 100 kg / lactic.",
+        ),
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier": None,
+            },
+            {"duty_amount": 33.000, "monetary_unit__code": "GBP"},
+            "33.000 GBP / 100 kg",
+        ),
+    ],
+)
+def test_with_reference_price_string_measurement(
+    measurement_kwargs,
+    condition_kwargs,
+    expected,
+    duty_sentence_parser,
+):
+    condition_measurement = factories.MeasurementFactory.create(**measurement_kwargs)
+    condition = factories.MeasureConditionFactory.create(
+        condition_measurement=condition_measurement, **condition_kwargs
+    )
+    qs = MeasureCondition.objects.with_reference_price_string()
+    price_condition = qs.first()
+
+    assert price_condition.reference_price_string == expected
+    validate_duties(
+        price_condition.reference_price_string,
+        condition.dependent_measure.valid_between.lower,
+    )
+
+
+# Should we support supplementary unit with qualifier as valid reference price?
+# Don't think so
+# See reversible_duty_sentence_data in measures/tests/conftest for comparison
+
+# def test_with_reference_price_string_measurement_unit_code_and_qualifier_no_duty_amount_or_monetary_unit(duty_sentence_parser):
+#     condition_measurement = factories.MeasurementFactory.create(
+#         measurement_unit__abbreviation="100 kg",
+#         measurement_unit_qualifier__abbreviation="lactic."
+#     )
+#     condition = factories.MeasureConditionFactory.create(
+#         duty_amount=None,
+#         monetary_unit=None,
+#         condition_measurement=condition_measurement,
+#         )
+#     qs = MeasureCondition.objects.with_reference_price_string()
+#     price_condition = qs.first()
+
+#     assert price_condition.reference_price_string == "100 kg / lactic."
+#     validate_duties(price_condition.reference_price_string, condition.dependent_measure.valid_between.lower)
+
+
+# Supplementary unit (no qualifier)
+# def test_with_reference_price_string_measurement_unit_code_no_qualifier_or_monetary_unit(duty_sentence_parser):
+#     pass
+
+# Can you have a monetary unit with a measurement unit qualifier but no measurement unit code ?
+# def test_with_reference_price_string_monetary_unit_measurement_unit_qualifier_no_code_or_monetary_unit(duty_sentence_parser):
+#     pass
