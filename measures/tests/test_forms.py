@@ -150,24 +150,30 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
 
 
 def test_measure_forms_conditions_form_valid_data():
+    """Tests that MeasureConditionsForm is valid when initialised with minimal
+    required fields."""
     condition_code = factories.MeasureConditionCodeFactory.create()
     action = factories.MeasureActionFactory.create()
     data = {
         "condition_code": condition_code.pk,
         "action": action.pk,
     }
+    # MeasureConditionsForm.__init__ expects prefix kwarg for instantiating crispy forms `Layout` object
     form = forms.MeasureConditionsForm(data, prefix="")
 
     assert form.is_valid()
 
 
 def test_measure_forms_conditions_wizard_form_valid_data(date_ranges):
+    """Tests that MeasureConditionsWizardStepForm is valid when initialised with
+    minimal required fields."""
     condition_code = factories.MeasureConditionCodeFactory.create()
     action = factories.MeasureActionFactory.create()
     data = {
         "condition_code": condition_code.pk,
         "action": action.pk,
     }
+    # MeasureConditionsForm.__init__ expects prefix kwarg for instantiating crispy forms `Layout` object
     form = forms.MeasureConditionsWizardStepForm(
         data,
         prefix="",
@@ -178,6 +184,8 @@ def test_measure_forms_conditions_wizard_form_valid_data(date_ranges):
 
 
 def test_measure_forms_conditions_form_invalid_data():
+    """Tests that MeasureConditionsForm raises a validation error when a
+    required field is missing."""
     action = factories.MeasureActionFactory.create()
     data = {
         "action": action.pk,
@@ -189,6 +197,8 @@ def test_measure_forms_conditions_form_invalid_data():
 
 
 def test_measure_forms_conditions_wizard_form_invalid_data(date_ranges):
+    """Tests that MeasureConditionsWizardStepForm raises a validation error when
+    a required field is missing."""
     action = factories.MeasureActionFactory.create()
     data = {
         "action": action.pk,
@@ -305,6 +315,9 @@ def test_measure_forms_conditions_wizard_invalid_duty(
     date_ranges,
     duty_sentence_parser,
 ):
+    """Tests that, given an invalid or compound duty string,
+    MeasureConditionsWizardStepForm.clean raises a ValidationError with the
+    appropriate error message."""
     action = factories.MeasureActionFactory.create()
     condition_code = factories.MeasureConditionCodeFactory.create()
     data = {
@@ -388,7 +401,7 @@ def test_measure_forms_conditions_wizard_applicable_duty(
 
 
 def test_measure_forms_conditions_clears_unneeded_certificate(date_ranges):
-    """Tests that measure conditions form removes certificates that are not
+    """Tests that MeasureConditionsForm removes certificates that are not
     expected by the measure condition code."""
     certificate = factories.CertificateFactory.create()
     code_with_certificate = factories.MeasureConditionCodeFactory(
@@ -417,13 +430,13 @@ def test_measure_forms_conditions_clears_unneeded_certificate(date_ranges):
         prefix="",
         initial=initial_data,
     )
-    form_expects_no_certificate.is_valid()
+    assert form_expects_no_certificate.is_valid()
     assert form_expects_no_certificate.cleaned_data["required_certificate"] is None
 
 
 def test_measure_forms_conditions_wizard_clears_unneeded_certificate(date_ranges):
-    """Tests that measure conditions form removes certificates that are not
-    expected by the measure condition code."""
+    """Tests that MeasureConditionsWizardStepForm removes certificates that are
+    not expected by the measure condition code."""
     certificate = factories.CertificateFactory.create()
     code_with_certificate = factories.MeasureConditionCodeFactory(
         accepts_certificate=True,
@@ -450,5 +463,5 @@ def test_measure_forms_conditions_wizard_clears_unneeded_certificate(date_ranges
         prefix="",
         measure_start_date=date_ranges.normal,
     )
-    form_expects_no_certificate.is_valid()
+    assert form_expects_no_certificate.is_valid()
     assert form_expects_no_certificate.cleaned_data["required_certificate"] is None
