@@ -5,7 +5,9 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 
+
 {% set page_title = "View workbasket" %}
+
 
 {% block beforeContent %}
   {{ govukBreadcrumbs({
@@ -42,6 +44,10 @@
           {"text": workbasket.reason or ""}
         ],
         [
+          {"text": "Number of changes"},
+          {"text": workbasket.tracked_models.count()}
+        ],
+        [
           {"text": "Created"},
           {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)}
         ],
@@ -57,28 +63,17 @@
     }) }}
   {% endset %}
 
-  {% set activities_html %}
-    <h2 class="govuk-heading-l">Workbasket activities</h2>
+  {% set workbasket_changes %}
+    {% set object_list = workbasket.tracked_models %}
+
+    <h2 class="govuk-heading-l">Workbasket changes</h2>
     <p class="govuk-body">This workbasket contains the following {{ workbasket.tracked_models.count() }} changes:</p>
-    {% set activity_groups = [] %}
-    {% for group_name, group_items in workbasketitem_groups %}
-      {% set table %}
-        {% with object_list = group_items %}
-          {% include "includes/" ~ group_name ~ "_list.jinja" %}
-        {% endwith %}
-      {% endset %}
-      {{ activity_groups.append(
-        {
-          "heading": {"text": group_name|capitalize},
-          "content": {"html": table},
-          "summary": {}
-        }
-      ) or "" }}
-    {% endfor %}
-    {{ govukAccordion({
-      "id": "workbasket-{{ workbasket.pk }}-activities-accordion",
-      "items": activity_groups
-    }) }}
+
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+        {% include "includes/workbaskets/workbasket-items-accordion.jinja" %}
+        </div>
+    </div>
   {% endset %}
 
   {{ govukTabs({
@@ -91,10 +86,10 @@
         }
       },
       {
-        "label": "Workbasket activities",
+        "label": "Workbasket changes",
         "id": "activities",
         "panel": {
-          "html": activities_html
+          "html": workbasket_changes
         }
       }
     ]
