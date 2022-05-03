@@ -6,25 +6,21 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 
-{% set page_title = "View workbasket" %}
+{% set page_title = "Work basket: " ~ workbasket.title %}
 
 
-{% block beforeContent %}
+{% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("index")},
-      {"text": "Workbaskets", "href": url("workbaskets:workbasket-ui-list")},
+      {"text": "Find and edit work baskets", "href": url("workbaskets:workbasket-ui-list")},
       {"text": page_title}
     ]
   }) }}
 {% endblock %}
 
 {% block content %}
-  <span class="govuk-caption-xl">Work Basket</span>
-  <h1 class="govuk-heading-xl">{{ workbasket.title }}</h1>
-  <p class="govuk-body">
-    You are viewing this work basket in read-only mode.
-  </p>
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
   {% set detail_html %}
     <h2 class="govuk-heading-l">About this Workbasket</h2>
@@ -79,14 +75,14 @@
   {{ govukTabs({
     "items": [
       {
-        "label": "Workbasket detail",
+        "label": "Details",
         "id": "detail",
         "panel": {
           "html": detail_html
         }
       },
       {
-        "label": "Workbasket changes",
+        "label": "Changes",
         "id": "activities",
         "panel": {
           "html": workbasket_changes
