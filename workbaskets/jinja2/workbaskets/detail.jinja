@@ -45,7 +45,7 @@
           ],
           [
               {"text": "Number of changes"},
-              {"text": workbasket.tracked_models.count()}
+              {"text": '{0:,}'.format(workbasket.tracked_models.count()) }
           ],
           [
               {"text": "Created"},
@@ -69,8 +69,12 @@
 
       <h2 class="govuk-heading-l">Changes</h2>
 
-      {% set object_list = workbasket.tracked_models %}
+      {% set object_list = page_obj %}
+      {% set items_name = "changes" %}
+
+      {% include "includes/common/pagination-list-summary.jinja" %}
       {% include "includes/workbaskets/workbasket-items-accordion.jinja" %}
+      {% include "includes/common/pagination.jinja" %}
     </div>
   </div>
 {% endblock %}

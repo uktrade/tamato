@@ -36,11 +36,7 @@
 
     <div class="filter-layout__content">
       {% if paginator.count > 0 %}
-        {% set objects_count = '{0:,}'.format(paginator.count) %}
-        {% if paginator.limit_breached %}
-          {% set objects_count = objects_count ~ '+' %}
-        {% endif %}
-        <p class="govuk-body">{{ objects_count }} {{ object_list.model._meta.verbose_name_plural if paginator.count > 1 else object_list.model._meta.verbose_name }}</p>
+        {% include "includes/common/pagination-list-summary.jinja" %}
       {% endif %}
       {% if object_list %}
         {% include list_include %}
