@@ -148,6 +148,9 @@ def test_with_reference_price_string_no_measurement(
     expected,
     duty_sentence_parser,
 ):
+    """Tests that different combinations of duty_amount and monetary_unit
+    produce the expect reference_price_string and that this string represents a
+    valid duty sentence."""
     condition = factories.MeasureConditionFactory.create(**create_kwargs)
     qs = MeasureCondition.objects.with_reference_price_string()
     price_condition = qs.first()
@@ -178,6 +181,28 @@ def test_with_reference_price_string_no_measurement(
             {"duty_amount": 33.000, "monetary_unit__code": "GBP"},
             "33.000 GBP / 100 kg",
         ),
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier__abbreviation": "lactic.",
+            },
+            {
+                "duty_amount": None,
+                "monetary_unit": None,
+            },
+            "",
+        ),
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier": None,
+            },
+            {
+                "duty_amount": None,
+                "monetary_unit": None,
+            },
+            "",
+        ),
     ],
 )
 def test_with_reference_price_string_measurement(
@@ -186,6 +211,15 @@ def test_with_reference_price_string_measurement(
     expected,
     duty_sentence_parser,
 ):
+    """
+    Tests that different combinations of duty_amount, monetary_unit, and
+    measurement produce the expect reference_price_string and that this string
+    represents a valid duty sentence.
+
+    The final two scenarios record the fact that this queryset, unlike
+    ``duty_sentence_string``, does not support supplementary units and these
+    expressions should evaluate to an empty string.
+    """
     condition_measurement = factories.MeasurementFactory.create(**measurement_kwargs)
     condition = factories.MeasureConditionFactory.create(
         condition_measurement=condition_measurement, **condition_kwargs
@@ -198,33 +232,3 @@ def test_with_reference_price_string_measurement(
         price_condition.reference_price_string,
         condition.dependent_measure.valid_between.lower,
     )
-
-
-# Should we support supplementary unit with qualifier as valid reference price?
-# Don't think so
-# See reversible_duty_sentence_data in measures/tests/conftest for comparison
-
-# def test_with_reference_price_string_measurement_unit_code_and_qualifier_no_duty_amount_or_monetary_unit(duty_sentence_parser):
-#     condition_measurement = factories.MeasurementFactory.create(
-#         measurement_unit__abbreviation="100 kg",
-#         measurement_unit_qualifier__abbreviation="lactic."
-#     )
-#     condition = factories.MeasureConditionFactory.create(
-#         duty_amount=None,
-#         monetary_unit=None,
-#         condition_measurement=condition_measurement,
-#         )
-#     qs = MeasureCondition.objects.with_reference_price_string()
-#     price_condition = qs.first()
-
-#     assert price_condition.reference_price_string == "100 kg / lactic."
-#     validate_duties(price_condition.reference_price_string, condition.dependent_measure.valid_between.lower)
-
-
-# Supplementary unit (no qualifier)
-# def test_with_reference_price_string_measurement_unit_code_no_qualifier_or_monetary_unit(duty_sentence_parser):
-#     pass
-
-# Can you have a monetary unit with a measurement unit qualifier but no measurement unit code ?
-# def test_with_reference_price_string_monetary_unit_measurement_unit_qualifier_no_code_or_monetary_unit(duty_sentence_parser):
-#     pass
