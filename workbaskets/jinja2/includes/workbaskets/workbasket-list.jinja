@@ -2,10 +2,13 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set table_rows = [] %}
+{%- set table_rows = [] -%}
 {% for workbasket in object_list %}
-  {% set workbasket_link -%}
-    <a href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk}) }}">{{ workbasket.title }}</a>
+  {%- set workbasket_link -%}
+    <a
+      class="govuk-link"
+      href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk}) }}"
+    >{{ workbasket.title }}</a>
   {%- endset -%}
   {{ table_rows.append([
     {"text": workbasket.pk},
