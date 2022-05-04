@@ -7,42 +7,6 @@
 
 
 {% set page_title = "Work basket: " ~ workbasket.title %}
-{% set detail_html %}
-    <h2 class="govuk-heading-l">About this Workbasket</h2>
-    {{ govukTable({
-        "firstCellIsHeader": true,
-        "rows": [
-        [
-            {"text": "Workbasket ID"},
-            {"text": workbasket.pk}
-        ],
-        [
-            {"text": "Workbasket name"},
-            {"text": workbasket.title},
-        ],
-        [
-            {"text": "Reason"},
-            {"text": workbasket.reason or ""}
-        ],
-        [
-            {"text": "Number of changes"},
-            {"text": workbasket.tracked_models.count()}
-        ],
-        [
-            {"text": "Created"},
-            {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)}
-        ],
-        [
-            {"text": "Last amended"},
-            {"text": "{:%d %b %y %H:%M}".format(workbasket.updated_at)}
-        ],
-        [
-            {"text": "Workbasket status"},
-            {"text": workbasket.get_status_display()}
-        ],
-        ]
-    }) }}
-{% endset %}
 
 
 {% block breadcrumb %}
@@ -55,24 +19,56 @@
   }) }}
 {% endblock %}
 
+
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
-  {{ govukTabs({
-    "items": [
-      {
-        "label": "Details",
-        "id": "detail",
-        "panel": {
-          "html": detail_html
-        }
-      },
-    ]
-  }) }}
-
-  <div class="govuk-grid-row">
+  <div class="govuk-grid-row govuk-!-margin-bottom-6">
     <div class="govuk-grid-column-full">
-    <h2 class="govuk-heading-l">Workbasket changes</h2>
+
+      <h2 class="govuk-heading-l">Details</h2>
+
+      {{ govukTable({
+          "firstCellIsHeader": true,
+          "rows": [
+          [
+              {"text": "Workbasket ID"},
+              {"text": workbasket.pk}
+          ],
+          [
+              {"text": "Workbasket name"},
+              {"text": workbasket.title},
+          ],
+          [
+              {"text": "Reason"},
+              {"text": workbasket.reason or ""}
+          ],
+          [
+              {"text": "Number of changes"},
+              {"text": workbasket.tracked_models.count()}
+          ],
+          [
+              {"text": "Created"},
+              {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)}
+          ],
+          [
+              {"text": "Last amended"},
+              {"text": "{:%d %b %y %H:%M}".format(workbasket.updated_at)}
+          ],
+          [
+              {"text": "Workbasket status"},
+              {"text": workbasket.get_status_display()}
+          ],
+          ]
+      }) }}
+    </div>
+  </div>
+
+  <div class="govuk-grid-row govuk-!-margin-bottom-5">
+    <div class="govuk-grid-column-full">
+
+      <h2 class="govuk-heading-l">Changes</h2>
+
       {% set object_list = workbasket.tracked_models %}
       {% include "includes/workbaskets/workbasket-items-accordion.jinja" %}
     </div>
