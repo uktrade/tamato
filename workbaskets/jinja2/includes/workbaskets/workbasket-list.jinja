@@ -4,15 +4,15 @@
 
 {%- set table_rows = [] -%}
 {% for workbasket in object_list %}
-  {%- set workbasket_link -%}
+  {%- set workbasket_linked_id -%}
     <a
       class="govuk-link"
       href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk}) }}"
-    >{{ workbasket.title }}</a>
+    >{{ workbasket.pk }}</a>
   {%- endset -%}
   {{ table_rows.append([
-    {"text": workbasket.pk},
-    {"html": workbasket_link},
+    {"text": workbasket_linked_id},
+    {"html": workbasket.title},
     {"text": workbasket.reason},
     {"text": workbasket.tracked_models.count()},
     {
