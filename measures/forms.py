@@ -1,4 +1,3 @@
-import datetime
 import logging
 
 from crispy_forms_gds.helper import FormHelper
@@ -54,7 +53,7 @@ class MeasureValidityForm(ValidityPeriodForm):
         ]
 
 
-class MeasureConditionsForm(forms.ModelForm):
+class MeasureConditionsFormMixin(forms.ModelForm):
     class Meta:
         model = models.MeasureCondition
         fields = [
@@ -127,35 +126,7 @@ class MeasureConditionsForm(forms.ModelForm):
             ),
         )
 
-    def get_start_date(self, data):
-        """Validates that the day, month, and year start_date fields are present
-        in data and then returns the start_date datetime object."""
-        validity_form = MeasureValidityForm(data=data)
-        validity_form.is_valid()
-
-        return validity_form.cleaned_data["valid_between"].lower
-
-    def clean_applicable_duty(self):
-        """
-        Gets applicable_duty from cleaned data.
-
-        If form is used as part of `MeasureCreateWizard`, we expect
-        `measure_start_date` to be passed in. If not, then we get start date
-        from other data in the measure edit form. Uses `DutySentenceParser` to
-        check that applicable_duty is a valid duty string.
-        """
-        applicable_duty = self.cleaned_data["applicable_duty"]
-        measure_start_date = (
-            self.initial.get("measure_start_date")
-            if self.initial.get("measure_start_date")
-            else self.get_start_date(self.data)
-        )
-        if applicable_duty and measure_start_date is not None:
-            validate_duties(applicable_duty, measure_start_date)
-
-        return applicable_duty
-
-    def clean(self):
+    def conditions_clean(self, cleaned_data, measure_start_date):
         """
         We get the reference_price from cleaned_data and the measure_start_date
         from the form's initial data.
@@ -167,21 +138,13 @@ class MeasureConditionsForm(forms.ModelForm):
         cleaned_data with key-value pairs created from this single, unsaved
         component.
         """
-        cleaned_data = super().clean()
         price = cleaned_data.get("reference_price")
-        measure_start_date = measure_start_date = (
-            self.initial.get("measure_start_date")
-            if self.initial.get("measure_start_date")
-            else self.get_start_date(self.data)
-        )
+
         if price and measure_start_date is not None:
             validate_duties(price, measure_start_date)
 
         if price:
-            start_date = (
-                measure_start_date if measure_start_date else datetime.date.today()
-            )
-            parser = DutySentenceParser.get(start_date)
+            parser = DutySentenceParser.get(measure_start_date)
             components = parser.parse(price)
             if len(components) > 1:
                 raise ValidationError(
@@ -200,8 +163,90 @@ class MeasureConditionsForm(forms.ModelForm):
         return cleaned_data
 
 
+class MeasureConditionsForm(MeasureConditionsFormMixin):
+    def get_start_date(self, data):
+        """Validates that the day, month, and year start_date fields are present
+        in data and then returns the start_date datetime object."""
+        validity_form = MeasureValidityForm(data=data)
+        validity_form.is_valid()
+
+        return validity_form.cleaned_data["valid_between"].lower
+
+    def clean_applicable_duty(self):
+        """
+        Gets applicable_duty from cleaned data.
+
+        We get start date from other data in the measure edit form. Uses
+        `DutySentenceParser` to check that applicable_duty is a valid duty
+        string.
+        """
+        applicable_duty = self.cleaned_data["applicable_duty"]
+
+        if applicable_duty and self.get_start_date(self.data) is not None:
+            validate_duties(applicable_duty, self.get_start_date(self.data))
+
+        return applicable_duty
+
+    def clean(self):
+        """
+        We get the reference_price from cleaned_data and the measure_start_date
+        from the form's initial data.
+
+        If both are present, we call validate_duties with measure_start_date.
+        Then, if reference_price is provided, we use DutySentenceParser with
+        measure_start_date, if present, or the current_date, to check that we
+        are dealing with a simple duty (i.e. only one component). We then update
+        cleaned_data with key-value pairs created from this single, unsaved
+        component.
+        """
+        cleaned_data = super().clean()
+        measure_start_date = self.get_start_date(self.data)
+
+        return self.conditions_clean(cleaned_data, measure_start_date)
+
+
 class MeasureConditionsFormSet(FormSet):
     form = MeasureConditionsForm
+
+
+class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
+    # override methods that use form kwargs
+    def __init__(self, *args, **kwargs):
+        self.measure_start_date = kwargs.pop("measure_start_date")
+        super().__init__(*args, **kwargs)
+
+    def clean_applicable_duty(self):
+        """
+        Gets applicable_duty from cleaned data.
+
+        We expect `measure_start_date` to be passed in. Uses
+        `DutySentenceParser` to check that applicable_duty is a valid duty
+        string.
+        """
+        applicable_duty = self.cleaned_data["applicable_duty"]
+
+        if applicable_duty and self.measure_start_date is not None:
+            validate_duties(applicable_duty, self.measure_start_date)
+
+        return applicable_duty
+
+    def clean(self):
+        """
+        We get the reference_price from cleaned_data and the measure_start_date
+        from form kwargs.
+
+        If reference_price is provided, we use DutySentenceParser with
+        measure_start_date to check that we are dealing with a simple duty (i.e.
+        only one component). We then update cleaned_data with key-value pairs
+        created from this single, unsaved component.
+        """
+        cleaned_data = super().clean()
+
+        return self.conditions_clean(cleaned_data, self.measure_start_date)
+
+
+class MeasureConditionsWizardStepFormSet(FormSet):
+    form = MeasureConditionsWizardStepForm
 
 
 class MeasureForm(ValidityPeriodForm):
@@ -634,6 +679,8 @@ class MeasureCommodityAndDutiesForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        # remove measure_start_date from kwargs here because superclass will not be expecting it
+        self.measure_start_date = kwargs.pop("measure_start_date")
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
@@ -658,9 +705,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         duties = cleaned_data.get("duties", "")
-        measure_start_date = self.initial.get("measure_start_date")
-        if measure_start_date is not None and duties:
-            validate_duties(duties, measure_start_date)
+        validate_duties(duties, self.measure_start_date)
 
         return cleaned_data
 

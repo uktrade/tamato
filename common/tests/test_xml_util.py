@@ -30,7 +30,12 @@ def test_record_renumbering_produces_valid_import_data(import_xml, export_xml):
         assert not type(instance).objects.filter(sid=instance.sid + 2).exists()
 
     xml = export_xml(workbasket=workbasket)
-    renumber_records(xml, second.sid + 1, "oub:additional.code.sid")
+    renumber_records(
+        xml,
+        second.sid + 1,
+        "oub:additional.code",
+        "oub:additional.code.sid",
+    )
     import_xml(serialize_xml(xml))
 
     for instance in (first, second):
@@ -38,6 +43,28 @@ def test_record_renumbering_produces_valid_import_data(import_xml, export_xml):
         assert new_instance.type == instance.type
         assert new_instance.code == instance.code
         assert new_instance.version_group != instance.version_group
+
+
+def test_record_renumbering_only_renumbers_correct_records(import_xml, export_xml):
+    """
+    Tests that when the renumbering function is used, only records that are
+    identified *by* the ID number is renumbered, and adding attributes that.
+
+    *reference* the record do not trigger renumbering.
+    """
+    measure = factories.MeasureFactory.create()
+    with transaction.atomic():
+        model = factories.FootnoteAssociationMeasureFactory.create(
+            footnoted_measure=measure,
+        )
+        xml = export_xml(workbasket=model.transaction.workbasket)
+        transaction.set_rollback(True)
+
+    assert not measure.footnotes.exists()
+
+    renumber_records(xml, measure.sid + 1, "oub:measure", "oub:measure.sid")
+    import_xml(serialize_xml(xml))
+    assert measure.footnotes.exists()
 
 
 def test_transaction_renumbering_produces_valid_import_data(import_xml, export_xml):

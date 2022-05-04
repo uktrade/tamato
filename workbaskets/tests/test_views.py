@@ -10,6 +10,7 @@ from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
 from workbaskets.models import WorkBasket
+from workbaskets.tests.util import assert_workbasket_valid
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -19,11 +20,13 @@ pytestmark = pytest.mark.django_db
 @patch("exporter.tasks.upload_workbaskets")
 def test_submit_workbasket(
     mock_upload,
+    approved_transaction,
     unapproved_transaction,
     valid_user,
     client,
 ):
     workbasket = unapproved_transaction.workbasket
+    assert_workbasket_valid(workbasket)
 
     url = reverse(
         "workbaskets:workbasket-ui-submit",
@@ -36,7 +39,7 @@ def test_submit_workbasket(
     assert response.status_code == 302
     assert response.url == reverse("index")
 
-    workbasket = WorkBasket.objects.get(pk=workbasket.pk)
+    workbasket.refresh_from_db()
 
     assert workbasket.approver is not None
     assert "workbasket" not in client.session
@@ -72,6 +75,8 @@ def test_edit_after_submit(
             update_type=UpdateType.CREATE,
         )
     assert footnote.transaction.workbasket == workbasket
+
+    assert_workbasket_valid(workbasket)
 
     # create workbaskets in different unapproved states
     # to check that the system doesn't select these

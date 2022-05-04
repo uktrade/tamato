@@ -114,7 +114,7 @@ class MeasureCreateWizard(
         (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
         (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
-        (CONDITIONS, forms.MeasureConditionsFormSet),
+        (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
         (FOOTNOTES, forms.MeasureFootnotesFormSet),
         (SUMMARY, forms.MeasureReviewForm),
     ]
@@ -263,26 +263,16 @@ class MeasureCreateWizard(
         context["no_form_tags"].form_tag = False
         return context
 
-    def get_form_initial(self, step):
-        current_step = self.storage.current_step
-        initial_data = super().get_form_initial(step)
-        duty_steps = ["commodities", "conditions"]
-        if current_step in duty_steps and step in duty_steps:
-            # At each step get_form_initial is called for every step, avoid a loop
-            details_data = self.get_cleaned_data_for_step("measure_details")
-
-            # Data may not be present if the user has skipped forward.
-            valid_between = details_data.get("valid_between") if details_data else None
-
-            # The user may go through the wizard in any order, handle the case where there is no
-            # date by defaulting to None (no lower bound)
-            measure_start_date = valid_between.lower if valid_between else None
-            return {
-                "measure_start_date": measure_start_date,
-                **initial_data,
-            }
-
-        return initial_data
+    def get_form_kwargs(self, step):
+        kwargs = {}
+        if step == self.COMMODITIES or step == self.CONDITIONS:
+            # duty sentence validation requires the measure start date so pass it to form kwargs here
+            valid_between = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(
+                "valid_between"
+            )
+            # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
+            kwargs["form_kwargs"] = {"measure_start_date": valid_between.lower}
+        return kwargs
 
     def get_form(self, step=None, data=None, files=None):
         form = super().get_form(step, data, files)

@@ -624,7 +624,7 @@ def test_measure_form_wizard_create_measures(
     """
     In this implementation goods_nomenclature is a FK of Measure, so there is one measure
     for each commodity specified in formset-commodities.
-    
+
     Verify that the expected measures were created.
     """
     assert len(measure_data) == 2
@@ -696,7 +696,7 @@ def test_measure_form_wizard_create_measures(
 
 
 @pytest.mark.parametrize("step", ["commodities", "conditions"])
-def test_measure_create_wizard_get_form_initial(
+def test_measure_create_wizard_get_form_kwargs(
     step,
     session_request,
     measure_type,
@@ -722,7 +722,7 @@ def test_measure_create_wizard_get_form_initial(
         instance_dict={"measure_details": None},
     )
     wizard.form_list = OrderedDict(wizard.form_list)
-    form_initial = wizard.get_form_initial(step)
+    form_kwargs = wizard.get_form_kwargs(step)
 
-    assert "measure_start_date" in form_initial
-    assert form_initial["measure_start_date"] == date(2021, 4, 2)
+    assert "measure_start_date" in form_kwargs["form_kwargs"]
+    assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)

@@ -98,7 +98,7 @@ class WorkBasketAdmin(admin.ModelAdmin):
         instance = form.save(commit=False)
         if not change or not instance.author:
             instance.author = request.user
-            instance.save()
+        instance.save()
         form.save_m2m()
 
         transition = form.cleaned_data.get("transition")
