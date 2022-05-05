@@ -545,7 +545,6 @@ class MeasureCreateStartForm(forms.Form):
 
 
 class MeasureDetailsForm(
-    GeographicalAreaFormMixin,
     ValidityPeriodForm,
     forms.Form,
 ):
@@ -554,7 +553,6 @@ class MeasureDetailsForm(
         fields = [
             "measure_type",
             "generating_regulation",
-            "geographical_area",
             "order_number",
             "valid_between",
         ]
@@ -582,15 +580,12 @@ class MeasureDetailsForm(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["geographical_area"].required = False
-
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             "measure_type",
             "generating_regulation",
-            GeographicalAreaSelect("geographical_area"),
             "order_number",
             "start_date",
             "end_date",
@@ -599,11 +594,6 @@ class MeasureDetailsForm(
 
     def clean(self):
         cleaned_data = super().clean()
-
-        cleaned_data[self.prefix + "geographical_area"] = cleaned_data.pop(
-            self.prefix + "geo_area",
-            None,
-        )
 
         if "measure_type" in cleaned_data and "valid_between" in cleaned_data:
             measure_type = cleaned_data["measure_type"]
@@ -616,6 +606,38 @@ class MeasureDetailsForm(
                     f"{measure_type.valid_between} does not contain {cleaned_data['valid_between']}",
                 )
 
+        return cleaned_data
+
+
+class MeasureGeographicalAreaForm(
+    GeographicalAreaFormMixin,
+    forms.ModelForm,
+):
+    class Meta:
+        model = models.Measure
+        fields = [
+            "geographical_area",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["geographical_area"].required = False
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            GeographicalAreaSelect("geographical_area"),
+            Submit("submit", "Continue"),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data[self.prefix + "geographical_area"] = cleaned_data.pop(
+            self.prefix + "geo_area",
+            None,
+        )
         return cleaned_data
 
 

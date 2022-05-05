@@ -485,10 +485,16 @@ def test_measure_form_wizard_finish(
                 "measure_create_wizard-current_step": "measure_details",
                 "measure_details-measure_type": measure_type.pk,
                 "measure_details-generating_regulation": regulation.pk,
-                "measure_details-geo_area_type": "ERGA_OMNES",
                 "measure_details-start_date_0": 2,
                 "measure_details-start_date_1": 4,
                 "measure_details-start_date_2": 2021,
+            },
+            "next_step": "geographical_area",
+        },
+        {
+            "data": {
+                "measure_create_wizard-current_step": "geographical_area",
+                "geographical_area-geo_area_type": "ERGA_OMNES",
             },
             "next_step": "commodities",
         },
@@ -525,8 +531,8 @@ def test_measure_form_wizard_finish(
             kwargs={"step": step_data["data"]["measure_create_wizard-current_step"]},
         )
         response = valid_user_client.post(url, step_data["data"])
-
         assert response.status_code == 302
+
         assert response.url == reverse(
             "measure-ui-create",
             kwargs={"step": step_data["next_step"]},

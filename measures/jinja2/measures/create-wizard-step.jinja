@@ -1,8 +1,7 @@
 {% extends "layouts/form.jinja" %}
 {% from "components/step-by-step-nav/macro.jinja" import step_by_step_nav %}
 
-{% set current_step = wizard.steps.step0 + 1 %}
-{% set page_title = current_step ~ ". " ~ step_metadata[wizard.steps.current].title %}
+{% set page_title = step_metadata[wizard.steps.current].title %}
 {% set page_subtitle = "Create a new measure" %}
 {% set info = "Create a new measure" %}
 
