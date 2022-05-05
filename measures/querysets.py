@@ -249,14 +249,19 @@ class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
         Returns a MeasureCondition queryset annotated with
         ``reference_price_string`` query expression.
 
-        This expression should evaluate to a valid reference price string (https://uktrade.github.io/tariff-data-manual/documentation/data-structures/measure-conditions.html#condition-codes)
+        This expression should evaluate to a valid reference price string
+        (https://uktrade.github.io/tariff-data-manual/documentation/data-structures/measure-conditions.html#condition-codes)
+
         If a condition has no duty_amount value, then this expression evaluates to an empty string value ("").
         Else it returns the result of three Case() expressions chained together.
         The first Case() expression evaluates to "%" if the condition has a duty amount and no monetary unit,
         else " ".
-        The second evaluates to "" when a condition has no condition_measurement or its measurement has no measurement unit or the measurement unit has no abbreviation,
+
+        The second evaluates to "" when a condition has no condition_measurement
+        or its measurement has no measurement unit or the measurement unit has no abbreviation,
         else, if it has no monetary unit, the measurement unit abbreviation is returned,
         else, if it has a monetary unit, the abbreviation is returned prefixed by " / ".
+
         The third evaluates to "" when a measurement unit qualifier has no abbreviation,
         else the unit qualifier abbreviation is returned prefixed by " / ".
         """
