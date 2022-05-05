@@ -39,7 +39,7 @@ def test_measure_conditions_list():
         .with_duty_sentence()
         .get(pk=cond.pk)
     )
-    assert cond.reference_price_string == "48.100 EUR DTN"
+    assert cond.reference_price_string == "48.100 EUR / 100 kg"
     assert cond.condition_string == "2.500%"
 
 
@@ -84,7 +84,7 @@ def test_stringify_measure_condition():
         .with_duty_sentence()
         .get(pk=cond.pk)
     )
-    assert cond.reference_price_string == "0.000 EUR DTN"
+    assert cond.reference_price_string == "0.000 EUR / 100 kg"
     assert cond.condition_string == "2.500% + 37.800 EUR / 100 kg"
 
 

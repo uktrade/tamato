@@ -245,6 +245,26 @@ class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin, ValidityQuerySet
 
 class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
     def with_reference_price_string(self):
+        """
+        Returns a MeasureCondition queryset annotated with
+        ``reference_price_string`` query expression.
+
+        This expression should evaluate to a valid reference price string
+        (https://uktrade.github.io/tariff-data-manual/documentation/data-structures/measure-conditions.html#condition-codes)
+
+        If a condition has no duty_amount value, then this expression evaluates to an empty string value ("").
+        Else it returns the result of three Case() expressions chained together.
+        The first Case() expression evaluates to "%" if the condition has a duty amount and no monetary unit,
+        else " ".
+
+        The second evaluates to "" when a condition has no condition_measurement
+        or its measurement has no measurement unit or the measurement unit has no abbreviation,
+        else, if it has no monetary unit, the measurement unit abbreviation is returned,
+        else, if it has a monetary unit, the abbreviation is returned prefixed by " / ".
+
+        The third evaluates to "" when a measurement unit qualifier has no abbreviation,
+        else the unit qualifier abbreviation is returned prefixed by " / ".
+        """
         return self.annotate(
             reference_price_string=Case(
                 When(
@@ -255,8 +275,9 @@ class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
                     "duty_amount",
                     Case(
                         When(
-                            monetary_unit__isnull=True,
-                            then=Value(""),
+                            monetary_unit=None,
+                            duty_amount__isnull=False,
+                            then=Value("%"),
                         ),
                         default=Concat(
                             Value(" "),
@@ -265,23 +286,37 @@ class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
                     ),
                     Case(
                         When(
-                            condition_measurement__measurement_unit__code__isnull=True,
+                            Q(condition_measurement__isnull=True)
+                            | Q(
+                                condition_measurement__measurement_unit__isnull=True,
+                            )
+                            | Q(
+                                condition_measurement__measurement_unit__abbreviation__isnull=True,
+                            ),
                             then=Value(""),
                         ),
+                        When(
+                            monetary_unit__isnull=True,
+                            then=F(
+                                "condition_measurement__measurement_unit__abbreviation",
+                            ),
+                        ),
                         default=Concat(
-                            Value(" "),
-                            F("condition_measurement__measurement_unit__code"),
+                            Value(" / "),
+                            F(
+                                "condition_measurement__measurement_unit__abbreviation",
+                            ),
                         ),
                     ),
                     Case(
                         When(
-                            condition_measurement__measurement_unit_qualifier__code__isnull=True,
+                            condition_measurement__measurement_unit_qualifier__abbreviation__isnull=True,
                             then=Value(""),
                         ),
                         default=Concat(
-                            Value(" "),
+                            Value(" / "),
                             F(
-                                "condition_measurement__measurement_unit_qualifier__code",
+                                "condition_measurement__measurement_unit_qualifier__abbreviation",
                             ),
                         ),
                     ),

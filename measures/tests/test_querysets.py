@@ -11,6 +11,8 @@ import pytest
 
 from common.tests import factories
 from measures.models import Measure
+from measures.models import MeasureCondition
+from measures.validators import validate_duties
 
 pytestmark = pytest.mark.django_db
 
@@ -131,3 +133,102 @@ def test_get_measures_not_current():
 
     assert previous_measure in qs
     assert current_measure not in qs
+
+
+@pytest.mark.parametrize(
+    "create_kwargs, expected",
+    [
+        ({"duty_amount": None}, ""),
+        ({"duty_amount": 8.000, "monetary_unit": None}, "8.000%"),
+        ({"duty_amount": 33.000, "monetary_unit__code": "GBP"}, "33.000 GBP"),
+    ],
+)
+def test_with_reference_price_string_no_measurement(
+    create_kwargs,
+    expected,
+    duty_sentence_parser,
+):
+    """Tests that different combinations of duty_amount and monetary_unit
+    produce the expect reference_price_string and that this string represents a
+    valid duty sentence."""
+    condition = factories.MeasureConditionFactory.create(**create_kwargs)
+    qs = MeasureCondition.objects.with_reference_price_string()
+    price_condition = qs.first()
+
+    assert price_condition.reference_price_string == expected
+    validate_duties(
+        price_condition.reference_price_string,
+        condition.dependent_measure.valid_between.lower,
+    )
+
+
+@pytest.mark.parametrize(
+    "measurement_kwargs, condition_kwargs, expected",
+    [
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier__abbreviation": "lactic.",
+            },
+            {"duty_amount": 33.000, "monetary_unit__code": "GBP"},
+            "33.000 GBP / 100 kg / lactic.",
+        ),
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier": None,
+            },
+            {"duty_amount": 33.000, "monetary_unit__code": "GBP"},
+            "33.000 GBP / 100 kg",
+        ),
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier__abbreviation": "lactic.",
+            },
+            {
+                "duty_amount": None,
+                "monetary_unit": None,
+            },
+            "",
+        ),
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier": None,
+            },
+            {
+                "duty_amount": None,
+                "monetary_unit": None,
+            },
+            "",
+        ),
+    ],
+)
+def test_with_reference_price_string_measurement(
+    measurement_kwargs,
+    condition_kwargs,
+    expected,
+    duty_sentence_parser,
+):
+    """
+    Tests that different combinations of duty_amount, monetary_unit, and
+    measurement produce the expect reference_price_string and that this string
+    represents a valid duty sentence.
+
+    The final two scenarios record the fact that this queryset, unlike
+    ``duty_sentence_string``, does not support supplementary units and these
+    expressions should evaluate to an empty string.
+    """
+    condition_measurement = factories.MeasurementFactory.create(**measurement_kwargs)
+    condition = factories.MeasureConditionFactory.create(
+        condition_measurement=condition_measurement, **condition_kwargs
+    )
+    qs = MeasureCondition.objects.with_reference_price_string()
+    price_condition = qs.first()
+
+    assert price_condition.reference_price_string == expected
+    validate_duties(
+        price_condition.reference_price_string,
+        condition.dependent_measure.valid_between.lower,
+    )
