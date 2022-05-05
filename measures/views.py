@@ -100,6 +100,7 @@ class MeasureCreateWizard(
 
     START = "start"
     MEASURE_DETAILS = "measure_details"
+    GEOGRAPHICAL_AREA = "geographical_area"
     COMMODITIES = "commodities"
     ADDITIONAL_CODE = "additional_code"
     CONDITIONS = "conditions"
@@ -110,6 +111,7 @@ class MeasureCreateWizard(
     form_list = [
         (START, forms.MeasureCreateStartForm),
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
+        (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
         (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
         (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
@@ -120,6 +122,7 @@ class MeasureCreateWizard(
     templates = {
         START: "measures/create-start.jinja",
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
+        GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
         COMMODITIES: "measures/create-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
         CONDITIONS: "measures/create-formset.jinja",
@@ -136,6 +139,10 @@ class MeasureCreateWizard(
         MEASURE_DETAILS: {
             "title": "Enter the basic data",
             "link_text": "Measure details",
+        },
+        GEOGRAPHICAL_AREA: {
+            "title": "Select the geographical area",
+            "link_text": "Geographical areas",
         },
         COMMODITIES: {
             "title": "Select commodities and enter the duties",
