@@ -286,12 +286,12 @@ class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
                     ),
                     Case(
                         When(
-                            Q(condition_measurement=None)
+                            Q(condition_measurement__isnull=True)
                             | Q(
-                                condition_measurement__measurement_unit=None,
+                                condition_measurement__measurement_unit__isnull=True,
                             )
                             | Q(
-                                condition_measurement__measurement_unit__abbreviation=None,
+                                condition_measurement__measurement_unit__abbreviation__isnull=True,
                             ),
                             then=Value(""),
                         ),
@@ -310,7 +310,7 @@ class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
                     ),
                     Case(
                         When(
-                            condition_measurement__measurement_unit_qualifier__abbreviation=None,
+                            condition_measurement__measurement_unit_qualifier__abbreviation__isnull=True,
                             then=Value(""),
                         ),
                         default=Concat(
