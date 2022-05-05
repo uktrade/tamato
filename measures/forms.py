@@ -27,6 +27,7 @@ from footnotes.models import Footnote
 from geo_areas.forms import GeographicalAreaFormMixin
 from geo_areas.forms import GeographicalAreaSelect
 from geo_areas.models import GeographicalArea
+from geo_areas.util import with_description_string
 from measures import models
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
@@ -289,16 +290,20 @@ class MeasureForm(ValidityPeriodForm):
         required=False,
     )
     geographical_area_group = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.filter(
-            area_code=1,
+        queryset=with_description_string(
+            GeographicalArea.objects.filter(
+                area_code=1,
+            ),
         ),
         required=False,
         widget=forms.Select(attrs={"class": "govuk-select"}),
         empty_label=None,
     )
     geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.exclude(
-            area_code=1,
+        queryset=with_description_string(
+            GeographicalArea.objects.exclude(
+                area_code=1,
+            ),
         ),
         widget=forms.Select(attrs={"class": "govuk-select"}),
         required=False,
@@ -324,9 +329,7 @@ class MeasureForm(ValidityPeriodForm):
         self.initial_geographical_area = self.instance.geographical_area
 
         for field in ["geographical_area_group", "geographical_area_country_or_region"]:
-            self.fields[
-                field
-            ].label_from_instance = lambda obj: obj.structure_description
+            self.fields[field].label_from_instance = lambda obj: obj.description
 
         if self.instance.geographical_area.is_group():
             self.fields[
