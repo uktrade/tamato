@@ -39,8 +39,8 @@ class Migration(migrations.Migration):
                         max_length=3,
                         validators=[
                             django.core.validators.RegexValidator(
-                                "^[A-Z0-9][A-Z0-9][A-Z0-9]$"
-                            )
+                                "^[A-Z0-9][A-Z0-9][A-Z0-9]$",
+                            ),
                         ],
                     ),
                 ),
@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
                         db_index=True,
                         max_length=1,
                         validators=[
-                            django.core.validators.RegexValidator("^[A-Z0-9]$")
+                            django.core.validators.RegexValidator("^[A-Z0-9]$"),
                         ],
                     ),
                 ),
@@ -85,7 +85,7 @@ class Migration(migrations.Migration):
                             (1, "Additional codes"),
                             (3, "Meursing additional codes"),
                             (4, "Export refund for processed agricultural goods"),
-                        ]
+                        ],
                     ),
                 ),
             ],

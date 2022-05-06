@@ -46,7 +46,8 @@ class Migration(migrations.Migration):
                 (
                     "envelope",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT, to="taric.envelope"
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="taric.envelope",
                     ),
                 ),
             ],
