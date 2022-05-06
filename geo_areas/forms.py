@@ -7,6 +7,7 @@ from common.forms import CreateDescriptionForm
 from common.forms import delete_form_for
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
+from geo_areas.util import with_description_string
 from geo_areas.validators import AreaCode
 
 
@@ -74,7 +75,7 @@ class GeographicalAreaFormMixin(forms.Form):
         self.transaction = tx
         super().__init__(*args, **kwargs)
 
-        self.fields["geo_group"].queryset = (
+        self.fields["geo_group"].queryset = with_description_string(
             GeographicalArea.objects.filter(
                 area_code=AreaCode.GROUP,
             )
@@ -82,13 +83,13 @@ class GeographicalAreaFormMixin(forms.Form):
             .approved_up_to_transaction(tx)
             .with_latest_links("descriptions")
             .prefetch_related("descriptions")
-            .order_by("descriptions__description")
+            .order_by("descriptions__description"),
             # descriptions__description" should make this implicitly distinct()
         )
         # self.fields[
         #     "geo_group_exclusions"
         # ].queryset = GeographicalArea.objects.approved_up_to_transaction(tx)
-        self.fields["geo_area"].queryset = (
+        self.fields["geo_area"].queryset = with_description_string(
             GeographicalArea.objects.exclude(
                 area_code=AreaCode.GROUP,
             )
@@ -96,14 +97,12 @@ class GeographicalAreaFormMixin(forms.Form):
             .approved_up_to_transaction(tx)
             .with_latest_links("descriptions")
             .prefetch_related("descriptions")
-            .order_by("descriptions__description")
+            .order_by("descriptions__description"),
             # descriptions__description" should make this implicitly distinct()
         )
 
         for field in ["geo_group", "geo_area"]:
-            self.fields[
-                field
-            ].label_from_instance = lambda obj: obj.structure_description
+            self.fields[field].label_from_instance = lambda obj: obj.description
 
     def clean(self):
         cleaned_data = super().clean()

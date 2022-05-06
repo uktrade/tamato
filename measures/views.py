@@ -100,6 +100,7 @@ class MeasureCreateWizard(
 
     START = "start"
     MEASURE_DETAILS = "measure_details"
+    GEOGRAPHICAL_AREA = "geographical_area"
     COMMODITIES = "commodities"
     ADDITIONAL_CODE = "additional_code"
     CONDITIONS = "conditions"
@@ -110,9 +111,10 @@ class MeasureCreateWizard(
     form_list = [
         (START, forms.MeasureCreateStartForm),
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
+        (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
         (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
-        (CONDITIONS, forms.MeasureConditionsFormSet),
+        (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
         (FOOTNOTES, forms.MeasureFootnotesFormSet),
         (SUMMARY, forms.MeasureReviewForm),
     ]
@@ -120,6 +122,7 @@ class MeasureCreateWizard(
     templates = {
         START: "measures/create-start.jinja",
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
+        GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
         COMMODITIES: "measures/create-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
         CONDITIONS: "measures/create-formset.jinja",
@@ -136,6 +139,10 @@ class MeasureCreateWizard(
         MEASURE_DETAILS: {
             "title": "Enter the basic data",
             "link_text": "Measure details",
+        },
+        GEOGRAPHICAL_AREA: {
+            "title": "Select the geographical area",
+            "link_text": "Geographical areas",
         },
         COMMODITIES: {
             "title": "Select commodities and enter the duties",
@@ -256,26 +263,16 @@ class MeasureCreateWizard(
         context["no_form_tags"].form_tag = False
         return context
 
-    def get_form_initial(self, step):
-        current_step = self.storage.current_step
-        initial_data = super().get_form_initial(step)
-        duty_steps = ["commodities", "conditions"]
-        if current_step in duty_steps and step in duty_steps:
-            # At each step get_form_initial is called for every step, avoid a loop
-            details_data = self.get_cleaned_data_for_step("measure_details")
-
-            # Data may not be present if the user has skipped forward.
-            valid_between = details_data.get("valid_between") if details_data else None
-
-            # The user may go through the wizard in any order, handle the case where there is no
-            # date by defaulting to None (no lower bound)
-            measure_start_date = valid_between.lower if valid_between else None
-            return {
-                "measure_start_date": measure_start_date,
-                **initial_data,
-            }
-
-        return initial_data
+    def get_form_kwargs(self, step):
+        kwargs = {}
+        if step == self.COMMODITIES or step == self.CONDITIONS:
+            # duty sentence validation requires the measure start date so pass it to form kwargs here
+            valid_between = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(
+                "valid_between"
+            )
+            # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
+            kwargs["form_kwargs"] = {"measure_start_date": valid_between.lower}
+        return kwargs
 
     def get_form(self, step=None, data=None, files=None):
         form = super().get_form(step, data, files)
@@ -371,7 +368,10 @@ class MeasureUpdate(
             initial_dict = {}
             for field in form_fields:
                 if hasattr(condition, field):
-                    initial_dict[field] = getattr(condition, field)
+                    value = getattr(condition, field)
+                    if hasattr(value, "pk"):
+                        value = value.pk
+                    initial_dict[field] = value
 
             initial_dict["applicable_duty"] = condition.condition_string
             initial_dict["reference_price"] = condition.reference_price_string
