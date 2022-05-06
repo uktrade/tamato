@@ -1,0 +1,13 @@
+{% set objects_count = '{0:,}'.format(paginator.count) %}
+{% if paginator.limit_breached %}
+  {% set objects_count = objects_count ~ '+' %}
+{% endif %}
+<p class="govuk-body">
+  {{ objects_count }}
+  {# Polymorphic TrackedModelsQuerySet instances don't have a valid `model`. #}
+  {% if object_list.model %}
+    {{ object_list.model._meta.verbose_name_plural if paginator.count > 1 else object_list.model._meta.verbose_name }}
+  {% else %}
+    {{ items_name if items_name else "items" }}
+  {% endif %}
+</p>
