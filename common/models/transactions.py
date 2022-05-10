@@ -29,6 +29,9 @@ class TransactionPartition(models.IntegerChoices):
     from approved transactions SEED_FILE, REVISION
     then ending with DRAFT.
 
+    ARCHIVED Transactions are special, and accompany archived workbaskets and are not considered
+    for business rule checks, and have the highest order number.
+
     This system enables a simple filter for "approved" transactions, by checking
     for <= HIGHEST_APPROVED_PARTITION, this is currently set to REVISION,
     which is implemented in TransactionQuerySet.approved().
@@ -37,6 +40,7 @@ class TransactionPartition(models.IntegerChoices):
     SEED_FILE = 1, "Seed"
     REVISION = 2, "Revision"
     DRAFT = 3, "Draft"
+    ARCHIVED = 4, "Archived"
 
     @classmethod
     def get_highest_approved_partition(cls):

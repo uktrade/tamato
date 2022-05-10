@@ -38,6 +38,20 @@ class TransactionPartitionScheme:
 
     __metaclass__ = ABCMeta
 
+    @staticmethod
+    def get_unapproved_partition(status: WorkflowStatus) -> TransactionPartition:
+        """
+        Map unapproved WorkflowStatuses to TransactionPartitions.
+
+        All unapproved statuses map to DRAFT except ARCHIVED which is
+        in its own partition so the system can do filter it out in views
+        and updates.
+        """
+        if status == WorkflowStatus.ARCHIVED:
+            return TransactionPartition.ARCHIVED
+
+        return TransactionPartition.DRAFT
+
     @abstractmethod
     def get_approved_partition(self) -> TransactionPartition:
         pass
@@ -76,8 +90,8 @@ class SeedFirstTransactionPartitionScheme(TransactionPartitionScheme):
         :return:  TransactionPartition that maps to the workbasket status.
         """
         if status not in WorkflowStatus.approved_statuses():
-            # Bail out early if not approved and avoid query in the next if block.
-            return TransactionPartition.DRAFT
+            # Bail out early if not approved and avoid query get_approved_partition.
+            return self.get_unapproved_partition(status)
 
         return self.get_approved_partition()
 
@@ -125,8 +139,8 @@ class UserTransactionPartitionScheme(TransactionPartitionScheme):
         :return:  TransactionPartition that maps to the workbasket status.
         """
         if status not in WorkflowStatus.approved_statuses():
-            # Bail out early if not approved and avoid query in the next if block.
-            return TransactionPartition.DRAFT
+            # Bail out early if not approved and avoid query get_approved_partition.
+            return self.get_unapproved_partition(status)
 
         return self.get_approved_partition()
 
@@ -306,6 +320,7 @@ class WorkBasket(TimestampedMixin):
     )
     def archive(self):
         """Mark a workbasket as no longer in use."""
+        self.transactions.update(status=TransactionPartition.ARCHIVED)
 
     @transition(
         field=status,
@@ -315,6 +330,7 @@ class WorkBasket(TimestampedMixin):
     )
     def unarchive(self):
         """Restore a workbasket to an in use state."""
+        self.transactions.update(status=TransactionPartition.DRAFT)
 
     @transition(
         field=status,
