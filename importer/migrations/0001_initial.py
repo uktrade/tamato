@@ -44,7 +44,8 @@ class Migration(migrations.Migration):
                 (
                     "dependencies",
                     models.ManyToManyField(
-                        through="importer.BatchDependencies", to="importer.ImportBatch"
+                        through="importer.BatchDependencies",
+                        to="importer.ImportBatch",
                     ),
                 ),
             ],

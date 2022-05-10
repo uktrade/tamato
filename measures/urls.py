@@ -14,14 +14,16 @@ ui_patterns = [
     path(
         "create/",
         views.MeasureCreateWizard.as_view(
-            url_name="measure-ui-create", done_step_name="complete"
+            url_name="measure-ui-create",
+            done_step_name="complete",
         ),
         name="measure-ui-create",
     ),
     path(
         "create/<step>/",
         views.MeasureCreateWizard.as_view(
-            url_name="measure-ui-create", done_step_name="complete"
+            url_name="measure-ui-create",
+            done_step_name="complete",
         ),
         name="measure-ui-create",
     ),

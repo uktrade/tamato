@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                         db_index=True,
                         max_length=3,
                         validators=[
-                            django.core.validators.RegexValidator("^[A-Z0-9]{3}$")
+                            django.core.validators.RegexValidator("^[A-Z0-9]{3}$"),
                         ],
                     ),
                 ),
@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                         db_index=True,
                         max_length=1,
                         validators=[
-                            django.core.validators.RegexValidator("^[A-Z0-9]{1}$")
+                            django.core.validators.RegexValidator("^[A-Z0-9]{1}$"),
                         ],
                     ),
                 ),

@@ -1,6 +1,5 @@
 from settings.common import *
 
-
 # Enable debugging
 DEBUG = True
 

@@ -8,7 +8,7 @@ setup(
     version="0.0.1",
     description="UK Tariff Management Tool",
     maintainer="Department for International Trade",
-    maintainer_email="webops@digital.trade.gov.uk",
+    maintainer_email="webops@digital.trade.gov.uk",  # /PS-IGNORE
     url="https://github.com/uktrade/tamato",
     packages=setuptools.find_packages(),
     install_requires=[
