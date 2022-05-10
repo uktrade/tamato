@@ -314,7 +314,7 @@ class MeasureForm(ValidityPeriodForm):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        WorkBasket.get_current_transaction(self.request)
+        tx = WorkBasket.get_current_transaction(self.request)
 
         if not hasattr(self.instance, "duty_sentence"):
             raise AttributeError(
@@ -329,6 +329,14 @@ class MeasureForm(ValidityPeriodForm):
         self.initial_geographical_area = self.instance.geographical_area
 
         for field in ["geographical_area_group", "geographical_area_country_or_region"]:
+            self.fields[field].queryset = (
+                self.fields[field]
+                .queryset.as_at_today()
+                .approved_up_to_transaction(tx)
+                .with_latest_links("descriptions")
+                .prefetch_related("descriptions")
+                .order_by("description")
+            )
             self.fields[field].label_from_instance = lambda obj: obj.description
 
         if self.instance.geographical_area.is_group():

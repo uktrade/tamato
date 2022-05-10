@@ -7,13 +7,13 @@ from geo_areas import util
 pytestmark = pytest.mark.django_db
 
 
-def test_with_description_returns_empty_string():
+def test_with_description_excludes_empty():
     factories.GeographicalAreaDescriptionFactory.create(description=None)
     geo_area = util.with_description_string(
         models.GeographicalArea.objects.all(),
     ).first()
 
-    assert geo_area.description == ""
+    assert geo_area is None
 
 
 def test_with_description_returns_description_string():
