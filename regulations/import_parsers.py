@@ -168,7 +168,7 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
     enacting_regulation__regulation_id = TextElement(Tag("modification.regulation.id"))
     enacting_regulation__published_at = TextElement(Tag("published.date"))
     enacting_regulation__official_journal_number = TextElement(
-        Tag("officialjournal.number")
+        Tag("officialjournal.number"),
     )
     enacting_regulation__official_journal_page = IntElement(Tag("officialjournal.page"))
     enacting_regulation__valid_between_lower = ValidityMixin.valid_between_lower
@@ -177,7 +177,7 @@ class ModificationRegulationParser(ValidityMixin, Writable, ElementParser):
     target_regulation__role_type = TextElement(Tag("base.regulation.role"))
     target_regulation__regulation_id = TextElement(Tag("base.regulation.id"))
     enacting_regulation__replacement_indicator = IntElement(
-        Tag("replacement.indicator")
+        Tag("replacement.indicator"),
     )
     enacting_regulation__stopped = BooleanElement(Tag("stopped.flag"))
     enacting_regulation__information_text = CompoundElement(
@@ -224,21 +224,21 @@ class FullTemporaryStopRegulationParser(ValidityMixin, Writable, ElementParser):
     tag = Tag("full.temporary.stop.regulation")
 
     enacting_regulation__role_type = IntElement(
-        Tag("full.temporary.stop.regulation.role")
+        Tag("full.temporary.stop.regulation.role"),
     )
     enacting_regulation__regulation_id = TextElement(
-        Tag("full.temporary.stop.regulation.id")
+        Tag("full.temporary.stop.regulation.id"),
     )
     enacting_regulation__published_at = TextElement(Tag("published.date"))
     enacting_regulation__official_journal_number = TextElement(
-        Tag("officialjournal.number")
+        Tag("officialjournal.number"),
     )
     enacting_regulation__official_journal_page = IntElement(Tag("officialjournal.page"))
     enacting_regulation__valid_between_lower = ValidityMixin.valid_between_lower
     enacting_regulation__valid_between_upper = ValidityMixin.valid_between_upper
     effective_end_date = TextElement(Tag("effective.enddate"))
     enacting_regulation__replacement_indicator = IntElement(
-        Tag("replacement.indicator")
+        Tag("replacement.indicator"),
     )
     enacting_regulation__information_text = CompoundElement(
         Tag("information.text"),

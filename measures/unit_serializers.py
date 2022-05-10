@@ -10,7 +10,7 @@ from measures import validators
 @TrackedModelSerializer.register_polymorphic_model
 class MeasurementUnitSerializer(TrackedModelSerializerMixin, ValiditySerializerMixin):
     code = serializers.CharField(
-        validators=[validators.measurement_unit_code_validator]
+        validators=[validators.measurement_unit_code_validator],
     )
 
     class Meta:
@@ -32,10 +32,11 @@ class MeasurementUnitSerializer(TrackedModelSerializerMixin, ValiditySerializerM
 
 @TrackedModelSerializer.register_polymorphic_model
 class MeasurementUnitQualifierSerializer(
-    TrackedModelSerializerMixin, ValiditySerializerMixin
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
 ):
     code = serializers.CharField(
-        validators=[validators.measurement_unit_qualifier_code_validator]
+        validators=[validators.measurement_unit_qualifier_code_validator],
     )
 
     class Meta:

@@ -3,7 +3,6 @@ from typing import Callable
 
 from rest_framework.renderers import TemplateHTMLRenderer
 
-
 Counter = Callable[[], int]
 
 
