@@ -18,7 +18,8 @@ def test_duty_expression_xml(xml):
     assert xml.find(".//oub:duty.expression.description", nsmap) is not None
     assert (
         xml.findtext(
-            ".//oub:duty.expression.description/oub:language.id", namespaces=nsmap
+            ".//oub:duty.expression.description/oub:language.id",
+            namespaces=nsmap,
         )
         == "EN"
     )
@@ -40,7 +41,8 @@ def test_measure_action_xml(xml):
     assert xml.find(".//oub:measure.action.description", nsmap) is not None
     assert (
         xml.findtext(
-            ".//oub:measure.action.description/oub:language.id", namespaces=nsmap
+            ".//oub:measure.action.description/oub:language.id",
+            namespaces=nsmap,
         )
         == "EN"
     )
@@ -85,7 +87,8 @@ def test_measure_type_xml(xml):
     assert xml.find(".//oub:measure.type.description", nsmap) is not None
     assert (
         xml.findtext(
-            ".//oub:measure.type.description/oub:language.id", namespaces=nsmap
+            ".//oub:measure.type.description/oub:language.id",
+            namespaces=nsmap,
         )
         == "EN"
     )
@@ -97,7 +100,8 @@ def test_measure_type_series_xml(xml):
     assert xml.find(".//oub:measure.type.series.description", nsmap) is not None
     assert (
         xml.findtext(
-            ".//oub:measure.type.series.description/oub:language.id", namespaces=nsmap
+            ".//oub:measure.type.series.description/oub:language.id",
+            namespaces=nsmap,
         )
         == "EN"
     )
@@ -114,7 +118,8 @@ def test_measurement_unit_xml(xml):
     assert xml.find(".//oub:measurement.unit.description", nsmap) is not None
     assert (
         xml.findtext(
-            ".//oub:measurement.unit.description/oub:language.id", namespaces=nsmap
+            ".//oub:measurement.unit.description/oub:language.id",
+            namespaces=nsmap,
         )
         == "EN"
     )
@@ -139,7 +144,8 @@ def test_monetary_unit_xml(xml):
     assert xml.find(".//oub:monetary.unit.description", nsmap) is not None
     assert (
         xml.findtext(
-            ".//oub:monetary.unit.description/oub:language.id", namespaces=nsmap
+            ".//oub:monetary.unit.description/oub:language.id",
+            namespaces=nsmap,
         )
         == "EN"
     )

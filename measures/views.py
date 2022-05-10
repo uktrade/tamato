@@ -268,7 +268,7 @@ class MeasureCreateWizard(
         if step == self.COMMODITIES or step == self.CONDITIONS:
             # duty sentence validation requires the measure start date so pass it to form kwargs here
             valid_between = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(
-                "valid_between"
+                "valid_between",
             )
             # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
             kwargs["form_kwargs"] = {"measure_start_date": valid_between.lower}

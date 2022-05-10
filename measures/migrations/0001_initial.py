@@ -156,7 +156,10 @@ class Migration(migrations.Migration):
                 (
                     "dead_additional_code",
                     models.CharField(
-                        blank=True, db_index=True, max_length=16, null=True
+                        blank=True,
+                        db_index=True,
+                        max_length=16,
+                        null=True,
                     ),
                 ),
                 (
@@ -167,7 +170,7 @@ class Migration(migrations.Migration):
                         max_length=6,
                         null=True,
                         validators=[
-                            django.core.validators.RegexValidator("^[0-9]{6}$")
+                            django.core.validators.RegexValidator("^[0-9]{6}$"),
                         ],
                     ),
                 ),
@@ -282,13 +285,16 @@ class Migration(migrations.Migration):
                 (
                     "component_sequence_number",
                     models.PositiveSmallIntegerField(
-                        validators=[common.validators.NumberRangeValidator(1, 999)]
+                        validators=[common.validators.NumberRangeValidator(1, 999)],
                     ),
                 ),
                 (
                     "duty_amount",
                     models.DecimalField(
-                        blank=True, decimal_places=3, max_digits=10, null=True
+                        blank=True,
+                        decimal_places=3,
+                        max_digits=10,
+                        null=True,
                     ),
                 ),
                 (
@@ -328,7 +334,7 @@ class Migration(migrations.Migration):
                         db_index=True,
                         max_length=2,
                         validators=[
-                            django.core.validators.RegexValidator("^[A-Z][A-Z ]?$")
+                            django.core.validators.RegexValidator("^[A-Z][A-Z ]?$"),
                         ],
                     ),
                 ),
@@ -361,7 +367,7 @@ class Migration(migrations.Migration):
                         db_index=True,
                         max_length=3,
                         validators=[
-                            django.core.validators.RegexValidator("^[A-Z0-9]{3}$")
+                            django.core.validators.RegexValidator("^[A-Z0-9]{3}$"),
                         ],
                     ),
                 ),
@@ -427,7 +433,7 @@ class Migration(migrations.Migration):
                         db_index=True,
                         max_length=2,
                         validators=[
-                            django.core.validators.RegexValidator("^[A-Z][A-Z ]?$")
+                            django.core.validators.RegexValidator("^[A-Z][A-Z ]?$"),
                         ],
                     ),
                 ),
@@ -440,7 +446,7 @@ class Migration(migrations.Migration):
                                 "Only 1 measure at export and 1 at import from the series",
                             ),
                             (1, "All measure types in the series to be considered"),
-                        ]
+                        ],
                     ),
                 ),
                 ("description", common.fields.ShortDescription()),
@@ -472,7 +478,7 @@ class Migration(migrations.Migration):
                         db_index=True,
                         max_length=3,
                         validators=[
-                            django.core.validators.RegexValidator("^[A-Z]{3}$")
+                            django.core.validators.RegexValidator("^[A-Z]{3}$"),
                         ],
                     ),
                 ),
@@ -506,21 +512,21 @@ class Migration(migrations.Migration):
                         max_length=6,
                         validators=[
                             django.core.validators.RegexValidator(
-                                "^[0-9]{3}|[0-9]{6}|[A-Z]{3}$"
-                            )
+                                "^[0-9]{3}|[0-9]{6}|[A-Z]{3}$",
+                            ),
                         ],
                     ),
                 ),
                 (
                     "trade_movement_code",
                     models.PositiveSmallIntegerField(
-                        choices=[(0, "Import"), (1, "Export"), (2, "Import/Export")]
+                        choices=[(0, "Import"), (1, "Export"), (2, "Import/Export")],
                     ),
                 ),
                 (
                     "priority_code",
                     models.PositiveSmallIntegerField(
-                        validators=[common.validators.NumberRangeValidator(1, 9)]
+                        validators=[common.validators.NumberRangeValidator(1, 9)],
                     ),
                 ),
                 (
@@ -530,13 +536,13 @@ class Migration(migrations.Migration):
                 (
                     "origin_destination_code",
                     models.PositiveSmallIntegerField(
-                        choices=[(0, "Import"), (1, "Export"), (2, "Import/Export")]
+                        choices=[(0, "Import"), (1, "Export"), (2, "Import/Export")],
                     ),
                 ),
                 (
                     "order_number_capture_code",
                     models.PositiveSmallIntegerField(
-                        choices=[(1, "Mandatory"), (2, "Not permitted")]
+                        choices=[(1, "Mandatory"), (2, "Not permitted")],
                     ),
                 ),
                 (
@@ -550,7 +556,7 @@ class Migration(migrations.Migration):
                             (10, "TARIC"),
                         ],
                         validators=[
-                            measures.validators.validate_measure_explosion_level
+                            measures.validators.validate_measure_explosion_level,
                         ],
                     ),
                 ),
@@ -667,7 +673,10 @@ class Migration(migrations.Migration):
                 (
                     "duty_amount",
                     models.DecimalField(
-                        blank=True, decimal_places=3, max_digits=10, null=True
+                        blank=True,
+                        decimal_places=3,
+                        max_digits=10,
+                        null=True,
                     ),
                 ),
                 (
@@ -775,7 +784,10 @@ class Migration(migrations.Migration):
                 (
                     "duty_amount",
                     models.DecimalField(
-                        blank=True, decimal_places=3, max_digits=10, null=True
+                        blank=True,
+                        decimal_places=3,
+                        max_digits=10,
+                        null=True,
                     ),
                 ),
                 (
@@ -822,7 +834,8 @@ class Migration(migrations.Migration):
             model_name="measure",
             name="measure_type",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT, to="measures.measuretype"
+                on_delete=django.db.models.deletion.PROTECT,
+                to="measures.measuretype",
             ),
         ),
     ]

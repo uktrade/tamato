@@ -15,7 +15,8 @@ class Migration(migrations.Migration):
             model_name="quotaevent",
             name="data",
             field=models.JSONField(
-                default=dict, encoder=django.core.serializers.json.DjangoJSONEncoder
+                default=dict,
+                encoder=django.core.serializers.json.DjangoJSONEncoder,
             ),
         ),
     ]
