@@ -74,6 +74,7 @@ def measure_worksheet(measure_rows):
     return worksheet
 
 
+@pytest.mark.django_db(reset_sequences=True, transaction=True)
 def test_measure_sheet_importer(measure_worksheet, measures):
     workbasket = factories.WorkBasketFactory.create()
     imported_measures = list(
@@ -101,6 +102,7 @@ def test_measure_sheet_importer(measure_worksheet, measures):
         )
 
 
+@pytest.mark.django_db(reset_sequences=True, transaction=True)
 @pytest.mark.parametrize(
     "value",
     (

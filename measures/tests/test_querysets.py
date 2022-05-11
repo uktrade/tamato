@@ -17,6 +17,7 @@ from measures.validators import validate_duties
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.django_db(reset_sequences=True, transaction=True)
 @pytest.mark.parametrize(
     "component_factory,model_factory,field",
     (
@@ -75,7 +76,7 @@ def test_duty_sentence_generation(
     test_instance = model_factory._meta.model.objects.with_duty_sentence().get()
     assert test_instance.duty_sentence == expected
 
-
+@pytest.mark.django_db(reset_sequences=True, transaction=True)
 def test_measures_not_in_effect(date_ranges):
     """Tests that only measures whose validity_field_name
     (`db_effective_valid_between` in this case) does not contain the selected
@@ -90,6 +91,7 @@ def test_measures_not_in_effect(date_ranges):
     assert ineffective_measure in qs
 
 
+@pytest.mark.django_db(reset_sequences=True, transaction=True)
 def test_get_measures_no_longer_in_effect(date_ranges):
     """Tests that only measures whose validity_field_name
     (`db_effective_valid_between` in this case) does not contain the selected
@@ -106,6 +108,7 @@ def test_get_measures_no_longer_in_effect(date_ranges):
     assert measure_no_longer_in_effect in qs
 
 
+@pytest.mark.django_db(reset_sequences=True, transaction=True)
 def test_get_measures_not_yet_in_effect(date_ranges):
     """Tests that only measures whose validity_field_name
     (`db_effective_valid_between` in this case) begins after the selected date
@@ -122,6 +125,7 @@ def test_get_measures_not_yet_in_effect(date_ranges):
     assert measure_no_longer_in_effect not in qs
 
 
+@pytest.mark.django_db(reset_sequences=True, transaction=True)
 def test_get_measures_not_current():
     """Tests that only measures which are not the latest approved version are
     returned."""
@@ -135,6 +139,7 @@ def test_get_measures_not_current():
     assert current_measure not in qs
 
 
+@pytest.mark.django_db(reset_sequences=True, transaction=True)
 @pytest.mark.parametrize(
     "create_kwargs, expected",
     [
@@ -162,6 +167,7 @@ def test_with_reference_price_string_no_measurement(
     )
 
 
+@pytest.mark.django_db(reset_sequences=True, transaction=True)
 @pytest.mark.parametrize(
     "measurement_kwargs, condition_kwargs, expected",
     [
