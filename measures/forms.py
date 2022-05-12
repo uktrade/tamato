@@ -293,7 +293,7 @@ class MeasureForm(ValidityPeriodForm):
         queryset=with_description_string(
             GeographicalArea.objects.filter(
                 area_code=1,
-            ),
+            ).exclude(descriptions__description__isnull=True),
         ),
         required=False,
         widget=forms.Select(attrs={"class": "govuk-select"}),
@@ -303,6 +303,7 @@ class MeasureForm(ValidityPeriodForm):
         queryset=with_description_string(
             GeographicalArea.objects.exclude(
                 area_code=1,
+                descriptions__description__isnull=True,
             ),
         ),
         widget=forms.Select(attrs={"class": "govuk-select"}),
