@@ -79,6 +79,7 @@ class GeographicalAreaFormMixin(forms.Form):
             GeographicalArea.objects.filter(
                 area_code=AreaCode.GROUP,
             )
+            .exclude(descriptions__description__isnull=True)
             .as_at_today()
             .approved_up_to_transaction(tx)
             .with_latest_links("descriptions")
@@ -92,6 +93,7 @@ class GeographicalAreaFormMixin(forms.Form):
         self.fields["geo_area"].queryset = with_description_string(
             GeographicalArea.objects.exclude(
                 area_code=AreaCode.GROUP,
+                descriptions__description__isnull=True,
             )
             .as_at_today()
             .approved_up_to_transaction(tx)
