@@ -86,12 +86,14 @@ norecursedirs = [
     "docs",
     "*.egg-info",
     ".git",
+    "htmlcov",
     ".local",
+    ".ipynb_checkpoints",
     "node_modules",
     "prof",
     "__pycache__",
+    "static",
     "run",
     "venv",
 ]
 addopts = "-n=auto"
-pythonpath = ". src"
