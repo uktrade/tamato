@@ -42,7 +42,7 @@ parsec==3.8
 psycopg2-binary==2.9.1
 pygments>=2.8
 pytest==7.1.2
-pytest-bdd==5.0.0
+pytest-bdd==4.1.0
 pytest-celery==0.0.0
 pytest-cov==3.0.0
 pytest-django==4.5.2
