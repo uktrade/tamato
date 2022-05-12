@@ -30,7 +30,6 @@ from geo_areas.models import GeographicalArea
 from geo_areas.util import with_description_string
 from measures import models
 from measures.parsers import DutySentenceParser
-from measures.patterns import MeasureCreationPattern
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -65,6 +64,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
             "required_certificate",
             "action",
             "applicable_duty",
+            "condition_sid",
         ]
 
     condition_code = forms.ModelChoiceField(
@@ -93,6 +93,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         label="Duty",
         required=False,
     )
+    condition_sid = forms.CharField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -102,9 +103,12 @@ class MeasureConditionsFormMixin(forms.ModelForm):
 
         self.helper.layout = Layout(
             Fieldset(
-                Field(
-                    "condition_code",
-                    template="components/measure_condition_code/template.jinja",
+                Div(
+                    Field(
+                        "condition_code",
+                        template="components/measure_condition_code/template.jinja",
+                    ),
+                    "condition_sid",
                 ),
                 Div(
                     Field("reference_price", css_class="govuk-input"),
@@ -165,6 +169,16 @@ class MeasureConditionsFormMixin(forms.ModelForm):
 
 
 class MeasureConditionsForm(MeasureConditionsFormMixin):
+    # condition_sid = forms.CharField(required=False)
+
+    # class Meta:
+    #     model = models.MeasureCondition
+    #     fields = MeasureConditionsFormMixin.Meta.fields + ["condition_sid"]
+
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     breakpoint()
+
     def get_start_date(self, data):
         """Validates that the day, month, and year start_date fields are present
         in data and then returns the start_date datetime object."""
@@ -444,35 +458,37 @@ class MeasureForm(ValidityPeriodForm):
             )
 
         # Extract conditions data from MeasureForm data
-        conditions_data = MeasureConditionsFormSet(self.data).cleaned_data
-        workbasket = WorkBasket.current(self.request)
+        # formset = MeasureConditionsFormSet(self.data)
 
-        # Delete all existing conditions from the measure instance
-        for condition in instance.conditions.all():
-            condition.new_version(workbasket=workbasket, update_type=UpdateType.DELETE)
+        # conditions_data = formset.cleaned_data /PS-IGNORE
+        # workbasket = WorkBasket.current(self.request)
 
-        if conditions_data:
-            measure_creation_pattern = MeasureCreationPattern(
-                workbasket=workbasket,
-                base_date=instance.valid_between.lower,
-            )
-            parser = DutySentenceParser.get(
-                instance.valid_between.lower,
-                component_output=models.MeasureConditionComponent,
-            )
+        # # Delete all existing conditions from the measure instance
+        # for condition in instance.conditions.all():
+        #     condition.new_version(workbasket=workbasket, update_type=UpdateType.DELETE)
 
-            # Loop over conditions_data, starting at 1 because component_sequence_number has to start at 1
-            for component_sequence_number, condition_data in enumerate(
-                conditions_data,
-                start=1,
-            ):
-                # Create conditions and measure condition components, using instance as `dependent_measure`
-                measure_creation_pattern.create_condition_and_components(
-                    condition_data,
-                    component_sequence_number,
-                    instance,
-                    parser,
-                )
+        # if conditions_data:
+        #     measure_creation_pattern = MeasureCreationPattern(
+        #         workbasket=workbasket,
+        #         base_date=instance.valid_between.lower,
+        #     )
+        #     parser = DutySentenceParser.get(
+        #         instance.valid_between.lower,
+        #         component_output=models.MeasureConditionComponent,
+        #     )
+
+        #     # Loop over conditions_data, starting at 1 because component_sequence_number has to start at 1 /PS-IGNORE
+        #     for component_sequence_number, condition_data in enumerate(
+        #         conditions_data, /PS-IGNORE
+        #         start=1,
+        #     ):
+        #         # Create conditions and measure condition components, using instance as `dependent_measure`
+        #         measure_creation_pattern.create_condition_and_components(
+        #             condition_data,
+        #             component_sequence_number,
+        #             instance,
+        #             parser,
+        #         )
 
         return instance
 

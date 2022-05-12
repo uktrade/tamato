@@ -288,7 +288,7 @@ class MeasureCreationPattern:
             sid=self.measure_condition_sid_counter(),
             component_sequence_number=component_sequence_number,
             dependent_measure=measure,
-            update_type=UpdateType.CREATE,
+            update_type=data.get("update_type") or UpdateType.CREATE,
             transaction=measure.transaction,
             duty_amount=data.get("duty_amount"),
             condition_code=data["condition_code"],
@@ -299,6 +299,9 @@ class MeasureCreationPattern:
                 "condition_measurement",
             ),
         )
+        if data.get("version_group"):
+            condition.version_group = data.get("version_group")
+
         condition.clean()
         condition.save()
 

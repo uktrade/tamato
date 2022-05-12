@@ -17,6 +17,7 @@ from rest_framework.reverse import reverse
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -363,7 +364,7 @@ class MeasureUpdate(
             conditions_formset = forms.MeasureConditionsFormSet()
         conditions = self.get_conditions(context["measure"])
         form_fields = conditions_formset.form.Meta.fields
-        # conditions_formset.initial = []
+        conditions_formset.initial = []
         for condition in conditions:
             initial_dict = {}
             for field in form_fields:
@@ -375,10 +376,11 @@ class MeasureUpdate(
 
             initial_dict["applicable_duty"] = condition.condition_string
             initial_dict["reference_price"] = condition.reference_price_string
+            initial_dict["condition_sid"] = condition.sid
             conditions_formset.initial.append(initial_dict)
 
-        if self.request.POST:
-            conditions_formset.initial.append(self.request.POST)
+        # if self.request.POST:
+        #     conditions_formset.initial.append(self.request.POST)
 
         context["conditions_formset"] = conditions_formset
         return context
@@ -386,6 +388,60 @@ class MeasureUpdate(
     def get_result_object(self, form):
         obj = super().get_result_object(form)
         form.instance = obj
+        formset = self.get_context_data()["conditions_formset"]
+
+        excluded_sids = []
+        conditions_data = []
+        existing_conditions = obj.conditions.all()
+
+        for f in formset.forms:
+            f.is_valid()
+            condition_data = f.cleaned_data
+            # If the form has changed but all that's changed is "condition_sid",
+            # this means that measure hasn't been deleted or update
+            # all that needs to be updated is the dependent_measure, so that it points at latest version of measure
+            if f.has_changed() and "condition_sid" in f.changed_data:
+                excluded_sids.append(f.initial["condition_sid"])
+                update_type = UpdateType.UPDATE
+                condition_data["version_group"] = existing_conditions.get(
+                    sid=f.initial["condition_sid"],
+                ).version_group
+            # If changed and condition_sid not in changed_data, then this is a newly created condition
+            elif f.has_changed() and "condition_sid" not in f.changed_data:
+                update_type = UpdateType.CREATE
+
+            condition_data["update_type"] = update_type
+            conditions_data.append(condition_data)
+
+        # conditions_data = formset.cleaned_data /PS-IGNORE
+        workbasket = WorkBasket.current(self.request)
+
+        # Delete all existing conditions from the measure instance
+        for condition in obj.conditions.exclude(sid__in=excluded_sids):
+            condition.new_version(workbasket=workbasket, update_type=UpdateType.DELETE)
+
+        if conditions_data:
+            measure_creation_pattern = MeasureCreationPattern(
+                workbasket=workbasket,
+                base_date=obj.valid_between.lower,
+            )
+            parser = DutySentenceParser.get(
+                obj.valid_between.lower,
+                component_output=MeasureConditionComponent,
+            )
+
+            # Loop over conditions_data, starting at 1 because component_sequence_number has to start at 1
+            for component_sequence_number, condition_data in enumerate(
+                conditions_data,
+                start=1,
+            ):
+                # Create conditions and measure condition components, using instance as `dependent_measure`
+                measure_creation_pattern.create_condition_and_components(
+                    condition_data,
+                    component_sequence_number,
+                    obj,
+                    parser,
+                )
         form.save(commit=False)
 
         return obj
