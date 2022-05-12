@@ -87,14 +87,14 @@ class Migration(migrations.Migration):
                 (
                     "maximum_precision",
                     models.PositiveSmallIntegerField(
-                        validators=[quotas.validators.validate_max_precision]
+                        validators=[quotas.validators.validate_max_precision],
                     ),
                 ),
                 ("quota_critical", models.BooleanField(default=False)),
                 (
                     "quota_critical_threshold",
                     models.PositiveSmallIntegerField(
-                        validators=[quotas.validators.validate_percentage]
+                        validators=[quotas.validators.validate_percentage],
                     ),
                 ),
                 ("description", common.fields.ShortDescription()),
@@ -154,14 +154,14 @@ class Migration(migrations.Migration):
                         db_index=True,
                         max_length=6,
                         validators=[
-                            django.core.validators.RegexValidator("^[0-9]{6}$")
+                            django.core.validators.RegexValidator("^[0-9]{6}$"),
                         ],
                     ),
                 ),
                 (
                     "mechanism",
                     models.PositiveSmallIntegerField(
-                        choices=[(0, "First come, first served"), (1, "Licensed")]
+                        choices=[(0, "First come, first served"), (1, "Licensed")],
                     ),
                 ),
                 (
@@ -172,7 +172,7 @@ class Migration(migrations.Migration):
                             (1, "Autonomous"),
                             (2, "Preferential"),
                             (3, "Safeguard"),
-                        ]
+                        ],
                     ),
                 ),
             ],
@@ -426,7 +426,7 @@ class Migration(migrations.Migration):
                                 8,
                                 "Block the allocations for a quota after its reopening due to a balance transfer",
                             ),
-                        ]
+                        ],
                     ),
                 ),
                 ("description", common.fields.ShortDescription()),

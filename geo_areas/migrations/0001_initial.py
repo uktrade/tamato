@@ -38,8 +38,8 @@ class Migration(migrations.Migration):
                         max_length=4,
                         validators=[
                             django.core.validators.RegexValidator(
-                                "^[A-Z0-9]{2}$|^[A-Z0-9]{4}$"
-                            )
+                                "^[A-Z0-9]{2}$|^[A-Z0-9]{4}$",
+                            ),
                         ],
                     ),
                 ),
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                             (0, "Country"),
                             (1, "Geographical Area Group"),
                             (2, "Region"),
-                        ]
+                        ],
                     ),
                 ),
             ],
@@ -149,7 +149,9 @@ class Migration(migrations.Migration):
             model_name="geographicalarea",
             constraint=models.CheckConstraint(
                 check=models.Q(
-                    ("area_code", 1), ("parent__isnull", True), _connector="OR"
+                    ("area_code", 1),
+                    ("parent__isnull", True),
+                    _connector="OR",
                 ),
                 name="only_groups_have_parents",
             ),

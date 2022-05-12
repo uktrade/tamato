@@ -38,8 +38,8 @@ class Migration(migrations.Migration):
                         max_length=5,
                         validators=[
                             django.core.validators.RegexValidator(
-                                "^([0-9]{3}|[0-9]{5})$"
-                            )
+                                "^([0-9]{3}|[0-9]{5})$",
+                            ),
                         ],
                     ),
                 ),
@@ -71,8 +71,8 @@ class Migration(migrations.Migration):
                         max_length=3,
                         validators=[
                             django.core.validators.RegexValidator(
-                                "^[A-Z0-9]{2}[A-Z0-9 ]?$"
-                            )
+                                "^[A-Z0-9]{2}[A-Z0-9 ]?$",
+                            ),
                         ],
                     ),
                 ),
@@ -89,7 +89,7 @@ class Migration(migrations.Migration):
                             (7, "Other measures"),
                             (8, "Meursing Heading"),
                             (9, "Dynamic footnote"),
-                        ]
+                        ],
                     ),
                 ),
                 ("description", common.fields.ShortDescription()),
@@ -136,7 +136,8 @@ class Migration(migrations.Migration):
             model_name="footnote",
             name="footnote_type",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT, to="footnotes.footnotetype"
+                on_delete=django.db.models.deletion.PROTECT,
+                to="footnotes.footnotetype",
             ),
         ),
     ]
