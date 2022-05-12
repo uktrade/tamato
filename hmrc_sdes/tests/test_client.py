@@ -8,7 +8,6 @@ import pytest
 from common.tests import factories
 from hmrc_sdes.api_client import HmrcSdesClient
 
-
 pytestmark = pytest.mark.django_db
 
 
@@ -68,7 +67,7 @@ def test_api_call(responses, settings):
     settings.HMRC["client_id"] = os.environ.get("HMRC_API_CLIENT_ID")
     settings.HMRC["client_secret"] = os.environ.get("HMRC_API_CLIENT_SECRET")
     settings.HMRC["service_reference_number"] = os.environ.get(
-        "HMRC_API_SERVICE_REFERENCE_NUMBER"
+        "HMRC_API_SERVICE_REFERENCE_NUMBER",
     )
 
     # fetches OAuth2 access token on instantiation
