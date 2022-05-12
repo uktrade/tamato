@@ -94,7 +94,6 @@ def required_certificates_data(measure_data: Dict, order_number_objects) -> Dict
     }
 
 
-@pytest.mark.django_db(reset_sequences=True, transaction=True)
 def test_sid_is_next_highest(
     measure_data,
     measure_creation_pattern: MeasureCreationPattern,
@@ -111,14 +110,10 @@ def test_sid_is_next_highest(
     assert expected_sids == actual_sids
 
 
-@pytest.mark.django_db(reset_sequences=True, transaction=True)
 def test_condition_sid_is_next_highest(
     authorised_use_measure_data,
     measure_creation_pattern: MeasureCreationPattern,
 ):
-    # reset_sequences for this test, test failures were observed with as
-    # MeasureActionFactory generated a code with 4 digits when the maximum
-    # allowed was three.
     condition = factories.MeasureConditionFactory()
     measure = measure_creation_pattern.create(**authorised_use_measure_data)
     assert measure.conditions.first().sid == condition.sid + 1

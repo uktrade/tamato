@@ -72,8 +72,7 @@ run: collectstatic migrate
 test-fast:
 	@echo
 	@echo "> Running tests..."
-	@echo ${PYTHON} -m pytest -x -n=auto --dist=loadfile --pdb
-	@${PYTHON} -m pytest -x -n=auto --dist=loadfile -s --pdb
+	@${PYTHON} -m pytest -x -n=auto --dist=loadfile
 
 test:
 	@echo
