@@ -2,8 +2,10 @@ from crispy_forms_gds.layout import Field
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.forms.formsets import formset_factory
 
 from common.forms import CreateDescriptionForm
+from common.forms import FormSet
 from common.forms import delete_form_for
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
@@ -28,6 +30,50 @@ class GeographicalAreaCreateDescriptionForm(CreateDescriptionForm):
         fields = ("described_geographicalarea", "description", "validity_start")
 
 
+class GeoAreaForm(forms.Form):
+    geo_area = forms.ModelChoiceField(
+        label="",
+        queryset=GeographicalArea.objects.all(),
+        help_text="Select a country or region.",
+        required=False,
+        widget=forms.Select(attrs={"class": "govuk-select"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        tx = kwargs.pop("transaction", None)
+        self.transaction = tx
+        super().__init__(*args, **kwargs)
+        self.fields["geo_area"].queryset = with_latest_description_string(
+            GeographicalArea.objects.exclude(
+                area_code=AreaCode.GROUP,
+                descriptions__description__isnull=True,
+            )
+            .as_at_today()
+            .approved_up_to_transaction(tx)
+            .with_latest_links("descriptions")
+            .prefetch_related("descriptions")
+            .order_by("descriptions__description"),
+            # descriptions__description" should make this implicitly distinct()
+        )
+        for field in ["geo_area"]:
+            self.fields[field].label_from_instance = lambda obj: obj.description
+
+    def clean(self, *args, **kwargs):
+        cleaned_data = super().clean()
+        return cleaned_data
+
+
+GeoAreaFormSet = formset_factory(
+    GeoAreaForm,
+    formset=FormSet,
+    min_num=1,
+    max_num=2,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
+
+
 class GeographicalAreaFormMixin(forms.Form):
     """
     Adds a geographical area selection field.
@@ -37,14 +83,14 @@ class GeographicalAreaFormMixin(forms.Form):
          multiple geographical areas to exclude,
       2. A group of countries, containing an autocomplete field for the primary group, and
          another subfield for exclusions from that group,
-      3. A single country or region, containing an autocomplete field for the country or
-         region
+      3. Specific countries or regions, containing a formset with 1 autocomplete field for the country or
+         region. A maximum of 2 can be added.
     """
 
     class GeoAreaType(models.TextChoices):
         ERGA_OMNES = "ERGA_OMNES", "All countries (erga omnes)"
         GROUP = "GROUP", "A group of countries"
-        COUNTRY = "COUNTRY", "A single country or region"
+        COUNTRY = "COUNTRY", "Specific countries or regions"
 
     geo_area_type = forms.ChoiceField(choices=GeoAreaType.choices, required=False)
     erga_omnes_exclusions = forms.ModelMultipleChoiceField(
@@ -62,12 +108,6 @@ class GeographicalAreaFormMixin(forms.Form):
         queryset=GeographicalArea.objects.all(),
         help_text="Select country exclusions.",
         required=False,
-    )
-    geo_area = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.all(),
-        help_text="Select a country or region.",
-        required=False,
-        widget=forms.Select(attrs={"class": "govuk-select"}),
     )
 
     def __init__(self, *args, **kwargs):
@@ -90,20 +130,8 @@ class GeographicalAreaFormMixin(forms.Form):
         # self.fields[
         #     "geo_group_exclusions"
         # ].queryset = GeographicalArea.objects.approved_up_to_transaction(tx)
-        self.fields["geo_area"].queryset = with_latest_description_string(
-            GeographicalArea.objects.exclude(
-                area_code=AreaCode.GROUP,
-                descriptions__description__isnull=True,
-            )
-            .as_at_today()
-            .approved_up_to_transaction(tx)
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
-        )
 
-        for field in ["geo_group", "geo_area"]:
+        for field in ["geo_group"]:
             self.fields[field].label_from_instance = lambda obj: obj.description
 
     def clean(self):
@@ -133,11 +161,10 @@ class GeographicalAreaFormMixin(forms.Form):
 
         if geo_area_type == self.GeoAreaType.COUNTRY:
             if not geo_area:
-                raise ValidationError({"geo_area": "A country or region is required."})
+                raise ValidationError("One or more countries or regions is required.")
             cleaned_data["geographical_area"] = geo_area
 
         self.fields["geo_group"].initial = geo_group.pk if geo_group else None
-        self.fields["geo_area"].initial = geo_area.pk if geo_area else None
 
         if not cleaned_data["geographical_area"]:
             raise ValidationError("A Geographical area must be selected")

@@ -20,6 +20,7 @@ from common.serializers import AutoCompleteSerializer
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from geo_areas import forms as geo_area_forms
 from measures import forms
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
@@ -122,7 +123,8 @@ class MeasureCreateWizard(
     templates = {
         START: "measures/create-start.jinja",
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
-        GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
+        # GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
+        GEOGRAPHICAL_AREA: "measures/create-wizard-step-geo-area.jinja",
         COMMODITIES: "measures/create-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
         CONDITIONS: "measures/create-formset.jinja",
@@ -261,6 +263,18 @@ class MeasureCreateWizard(
             context["form"].is_bound = False
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
+        form_prefix = "geo_area_formset"
+        # TODO: move this formset inside the form for this step so we can do nested validation
+        if self.storage.current_step == self.GEOGRAPHICAL_AREA:
+            if self.request.POST:
+                context["geo_area_formset"] = geo_area_forms.GeoAreaFormSet(
+                    self.request.POST,
+                    prefix=form_prefix,
+                )
+            else:
+                context["geo_area_formset"] = geo_area_forms.GeoAreaFormSet(
+                    prefix=form_prefix
+                )
         return context
 
     def get_form_kwargs(self, step):

@@ -25,7 +25,6 @@ from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.forms import GeographicalAreaFormMixin
-from geo_areas.forms import GeographicalAreaSelect
 from geo_areas.models import GeographicalArea
 from geo_areas.util import with_latest_description_string
 from measures import models
@@ -635,13 +634,12 @@ class MeasureGeographicalAreaForm(
 
         self.fields["geographical_area"].required = False
 
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
-        self.helper.layout = Layout(
-            GeographicalAreaSelect("geographical_area"),
-            Submit("submit", "Continue"),
-        )
+        # self.helper = FormHelper(self)
+        # self.helper.label_size = Size.SMALL
+        # self.helper.legend_size = Size.SMALL
+        # self.helper.layout = Layout(
+        #     Submit("submit", "Continue"),
+        # )
 
     def clean(self):
         cleaned_data = super().clean()
