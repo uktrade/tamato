@@ -380,13 +380,19 @@ class MeasureUpdate(
             initial_dict["condition_sid"] = condition.sid
             conditions_formset.initial.append(initial_dict)
 
-        # if self.request.POST:
-        #     conditions_formset.initial.append(self.request.POST)
-
         context["conditions_formset"] = conditions_formset
         return context
 
     def create_conditions(self, obj):
+        """
+        Gets condition formset from context data, loops over these forms and
+        validates the data, checking for the condition_sid field in the data to
+        indicate whether an existing condition is being updated or a new one
+        created from scratch.
+
+        Then deletes any existing conditions that are not being updated,
+        before calling the MeasureCreationPattern.create_condition_and_components with the appropriate parser and condition data.
+        """
         formset = self.get_context_data()["conditions_formset"]
         excluded_sids = []
         conditions_data = []
@@ -414,10 +420,9 @@ class MeasureUpdate(
             condition_data["update_type"] = update_type
             conditions_data.append(condition_data)
 
-        # conditions_data = formset.cleaned_data /PS-IGNORE
         workbasket = WorkBasket.current(self.request)
 
-        # Delete all existing conditions from the measure instance, except those of existing that need to be updated
+        # Delete all existing conditions from the measure instance, except those that need to be updated
         for condition in existing_conditions.exclude(sid__in=excluded_sids):
             condition.new_version(
                 workbasket=workbasket,
