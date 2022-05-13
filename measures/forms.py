@@ -30,6 +30,7 @@ from geo_areas.models import GeographicalArea
 from geo_areas.util import with_description_string
 from measures import models
 from measures.parsers import DutySentenceParser
+from measures.util import diff_components
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -169,16 +170,6 @@ class MeasureConditionsFormMixin(forms.ModelForm):
 
 
 class MeasureConditionsForm(MeasureConditionsFormMixin):
-    # condition_sid = forms.CharField(required=False)
-
-    # class Meta:
-    #     model = models.MeasureCondition
-    #     fields = MeasureConditionsFormMixin.Meta.fields + ["condition_sid"]
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     breakpoint()
-
     def get_start_date(self, data):
         """Validates that the day, month, and year start_date fields are present
         in data and then returns the start_date datetime object."""
@@ -429,10 +420,13 @@ class MeasureForm(ValidityPeriodForm):
             self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
             != self.cleaned_data["duty_sentence"]
         ):
-            self.instance.diff_components(
+            diff_components(
+                instance,
                 self.cleaned_data["duty_sentence"],
                 self.cleaned_data["valid_between"].lower,
                 WorkBasket.current(self.request),
+                models.MeasureComponent,
+                "component_measure",
             )
 
         footnote_pks = [

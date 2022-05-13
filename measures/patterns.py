@@ -32,10 +32,12 @@ from measures.models import MeasureAction
 from measures.models import MeasureComponent
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionCode
+from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasureType
 from measures.parsers import ConditionSentenceParser
 from measures.parsers import DutySentenceParser
+from measures.util import diff_components
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
@@ -276,6 +278,7 @@ class MeasureCreationPattern:
         component_sequence_number,
         measure,
         parser,
+        workbasket,
     ):
         """
         Creates condition from data dict, component_sequence_number, and
@@ -306,12 +309,20 @@ class MeasureCreationPattern:
         condition.save()
 
         if data.get("applicable_duty"):
-            components = parser.parse(data["applicable_duty"])
-            for c in components:
-                c.condition = condition
-                c.transaction = condition.transaction
-                c.update_type = UpdateType.CREATE
-                c.save()
+            diff_components(
+                condition,
+                data.get("applicable_duty"),
+                measure.valid_between.lower,
+                workbasket,
+                MeasureConditionComponent,
+                "condition",
+            )
+            # components = parser.parse(data["applicable_duty"])
+            # for c in components:
+            #     c.condition = condition
+            #     c.transaction = condition.transaction
+            #     c.update_type = UpdateType.CREATE
+            #     c.save()
 
     @transaction.atomic
     def create_measure_tracked_models(

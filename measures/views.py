@@ -385,21 +385,21 @@ class MeasureUpdate(
         context["conditions_formset"] = conditions_formset
         return context
 
-    def get_result_object(self, form):
-        obj = super().get_result_object(form)
-        form.instance = obj
+    def create_conditions(self, obj):
         formset = self.get_context_data()["conditions_formset"]
-
         excluded_sids = []
         conditions_data = []
-        existing_conditions = obj.conditions.all()
+        workbasket = WorkBasket.current(self.request)
+        existing_conditions = obj.conditions.approved_up_to_transaction(
+            workbasket.get_current_transaction(self.request),
+        )
 
         for f in formset.forms:
             f.is_valid()
             condition_data = f.cleaned_data
-            # If the form has changed but all that's changed is "condition_sid",
-            # this means that measure hasn't been deleted or update
-            # all that needs to be updated is the dependent_measure, so that it points at latest version of measure
+            # If the form has changed and "condition_sid" is in the changed data,
+            # this means that the condition is preexisting and needs to updated
+            # so that its dependent_measure points to the latest version of measure
             if f.has_changed() and "condition_sid" in f.changed_data:
                 excluded_sids.append(f.initial["condition_sid"])
                 update_type = UpdateType.UPDATE
@@ -416,8 +416,8 @@ class MeasureUpdate(
         # conditions_data = formset.cleaned_data /PS-IGNORE
         workbasket = WorkBasket.current(self.request)
 
-        # Delete all existing conditions from the measure instance
-        for condition in obj.conditions.exclude(sid__in=excluded_sids):
+        # Delete all existing conditions from the measure instance, except those of existing that need to be updated
+        for condition in existing_conditions.exclude(sid__in=excluded_sids):
             condition.new_version(workbasket=workbasket, update_type=UpdateType.DELETE)
 
         if conditions_data:
@@ -441,7 +441,13 @@ class MeasureUpdate(
                     component_sequence_number,
                     obj,
                     parser,
+                    workbasket,
                 )
+
+    def get_result_object(self, form):
+        obj = super().get_result_object(form)
+        form.instance = obj
+        self.create_conditions(obj)
         form.save(commit=False)
 
         return obj
