@@ -172,5 +172,5 @@ def remove_transactions(
 
     for transaction in envelope.findall("./env:transaction", nsmap):
         if element_contains(transaction, element_name, element_values):
-            logger.debug("Removing transaction", transaction.attrib["id"])
+            logger.debug("Removing transaction %s", transaction.attrib["id"])
             envelope.remove(transaction)
