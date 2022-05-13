@@ -317,12 +317,6 @@ class MeasureCreationPattern:
                 MeasureConditionComponent,
                 "condition",
             )
-            # components = parser.parse(data["applicable_duty"])
-            # for c in components:
-            #     c.condition = condition
-            #     c.transaction = condition.transaction
-            #     c.update_type = UpdateType.CREATE
-            #     c.save()
 
     @transaction.atomic
     def create_measure_tracked_models(

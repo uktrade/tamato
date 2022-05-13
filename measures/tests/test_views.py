@@ -353,6 +353,7 @@ def test_measure_update_edit_conditions(
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
+    transaction_count = Transaction.objects.count()
     measure_edit_conditions_data["form-0-required_certificate"] = ""
     measure_edit_conditions_data["form-0-reference_price"] = "3%"
     measure_edit_conditions_data["form-0-applicable_duty"] = "10 GBP / 100 kg"
@@ -362,6 +363,8 @@ def test_measure_update_edit_conditions(
         sid=measure.sid,
     )
 
+    # We expect one transaction for updating the measure and updating the condition, one for deleting a component, and one for updating a component
+    assert Transaction.objects.count() == transaction_count + 3
     assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 1
 
     condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
@@ -369,11 +372,13 @@ def test_measure_update_edit_conditions(
     assert condition != previous_condition
     assert condition.required_certificate == None
     assert condition.duty_amount == 3
+    assert condition.update_type == UpdateType.UPDATE
 
     components = condition.components.approved_up_to_transaction(tx).all()
 
     assert components.count() == 1
     assert components.first().duty_amount == 10
+    assert components.first().update_type == UpdateType.UPDATE
 
 
 def test_measure_update_remove_conditions(
@@ -407,10 +412,12 @@ def test_measure_update_remove_conditions(
     measure_edit_conditions_data["form-0-action"] = ""
     measure_edit_conditions_data["form-0-applicable_duty"] = ""
     del measure_edit_conditions_data["FORM-0-DELETE"]
-
+    transaction_count = Transaction.objects.count()
     response = client.post(url, data=measure_edit_conditions_data)
 
     assert response.status_code == 302
+    # We expect one transaction for the measure update and condition deletion
+    assert Transaction.objects.count() == transaction_count + 1
 
     tx = Transaction.objects.last()
     updated_measure = Measure.objects.approved_up_to_transaction(tx).get(

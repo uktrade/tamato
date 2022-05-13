@@ -183,9 +183,9 @@ class MeasureCreateWizard(
     def create_measures(self, data):
         """Returns a list of the created measures."""
         measure_start_date = data["valid_between"].lower
-
+        workbasket = WorkBasket.current(self.request)
         measure_creation_pattern = MeasureCreationPattern(
-            workbasket=WorkBasket.current(self.request),
+            workbasket=workbasket,
             base_date=measure_start_date,
             defaults={
                 "generating_regulation": data["generating_regulation"],
@@ -236,6 +236,7 @@ class MeasureCreateWizard(
                         component_sequence_number,
                         measure,
                         parser,
+                        workbasket,
                     )
 
             created_measures.append(measure)
@@ -418,7 +419,11 @@ class MeasureUpdate(
 
         # Delete all existing conditions from the measure instance, except those of existing that need to be updated
         for condition in existing_conditions.exclude(sid__in=excluded_sids):
-            condition.new_version(workbasket=workbasket, update_type=UpdateType.DELETE)
+            condition.new_version(
+                workbasket=workbasket,
+                update_type=UpdateType.DELETE,
+                transaction=obj.transaction,
+            )
 
         if conditions_data:
             measure_creation_pattern = MeasureCreationPattern(
