@@ -1,14 +1,16 @@
 [project]
 name = "tamato"
 version = "0.0.1"
-requires_python = ">=3.8"
-license = "MIT"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
 description = "UK Tariff Management Tool"
 authors = [
-    "Department for International Trade <webops@digital.trade.gov.uk>",
+    {email = "webops@digital.trade.gov.uk"},
+    {name = "Department for International Trade"}
 ]
 maintainers = [
-    "Department for International Trade <webops@digital.trade.gov.uk>",
+    {email = "webops@digital.trade.gov.uk"},
+    {name = "Department for International Trade"}
 ]
 readme = "README.md"
 dependencies = [
@@ -84,10 +86,13 @@ norecursedirs = [
     "docs",
     "*.egg-info",
     ".git",
+    "htmlcov",
     ".local",
+    ".ipynb_checkpoints",
     "node_modules",
     "prof",
     "__pycache__",
+    "static",
     "run",
     "venv",
 ]

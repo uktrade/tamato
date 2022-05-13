@@ -956,10 +956,22 @@ class MeasureConditionCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
 
 
 class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
+    """
+    MeasureActions in the TaMaTo are essentially fixed, it
+    would be more realistic to test using a fixed list, however it
+    is convenient.
+
+    As MeasureActionFactory is used in tests, it is possible to
+    generate more than 999 MeasureActions, to avoid creating MeasureAction codes
+    with four digits, which is not allowed, the code wraps back to 000 every 1000
+    iterations.
+    """
+
     class Meta:
         model = "measures.MeasureAction"
 
-    code = factory.Sequence(lambda x: f"{x + 1:02d}")
+    # Code should only contain 3 digits, modulo 1000 is used to wrap it.
+    code = factory.Sequence(lambda x: f"{x + 1 % 1000:02d}")
     description = short_description()
 
 
