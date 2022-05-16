@@ -563,7 +563,8 @@ def test_measure_form_wizard_create_measures(
 
     commodity3 = factories.GoodsNomenclatureFactory.create()
     footnote1, footnote2 = factories.FootnoteFactory.create_batch(2)
-    geo_area = factories.GeographicalAreaFactory.create()
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
     (
         condition_code1,
         condition_code2,
@@ -574,7 +575,7 @@ def test_measure_form_wizard_create_measures(
     form_data = {
         "measure_type": measure_type,
         "generating_regulation": regulation,
-        "geographical_area": geo_area,
+        "geo_area_list": [geo_area1, geo_area2],
         "order_number": None,
         "valid_between": date_ranges.normal,
         "formset-commodities": [
@@ -627,10 +628,14 @@ def test_measure_form_wizard_create_measures(
 
     Verify that the expected measures were created.
     """
-    assert len(measure_data) == 2
-    assert set(measures.values_list("pk", "goods_nomenclature_id")) == {
-        (measure_data[0].pk, commodity1.pk),
-        (measure_data[1].pk, commodity2.pk),
+    assert len(measure_data) == 4
+    assert set(
+        measures.values_list("pk", "goods_nomenclature_id", "geographical_area_id")
+    ) == {
+        (measure_data[0].pk, commodity1.pk, geo_area1.pk),
+        (measure_data[1].pk, commodity1.pk, geo_area2.pk),
+        (measure_data[2].pk, commodity2.pk, geo_area1.pk),
+        (measure_data[3].pk, commodity2.pk, geo_area2.pk),
     }
 
     assert set(
@@ -643,6 +648,8 @@ def test_measure_form_wizard_create_measures(
     assert set(measures.values_list("pk", "footnotes")) == {
         (measure_data[0].pk, footnote1.pk),
         (measure_data[1].pk, footnote1.pk),
+        (measure_data[2].pk, footnote1.pk),
+        (measure_data[3].pk, footnote1.pk),
     }
 
     # Each created measure contains the supplied condition codes where DELETE=False
@@ -676,6 +683,24 @@ def test_measure_form_wizard_create_measures(
             monetary_units["GBP"].pk,
         ),
         (measure_data[1].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[2].pk,
+            1,
+            condition_code1.pk,
+            Decimal("4.000"),
+            measurements[("DTN", None)].pk,
+            monetary_units["GBP"].pk,
+        ),
+        (measure_data[2].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[3].pk,
+            1,
+            condition_code1.pk,
+            Decimal("4.000"),
+            measurements[("DTN", None)].pk,
+            monetary_units["GBP"].pk,
+        ),
+        (measure_data[3].pk, 2, condition_code2.pk, None, None, None),
     }
 
     # Verify that MeasureComponents were created for each formset-condition containing an applicable-duty
@@ -692,6 +717,12 @@ def test_measure_form_wizard_create_measures(
         (measure_data[1].pk, None, None),
         (measure_data[1].pk, Decimal("8.800"), None),
         (measure_data[1].pk, Decimal("1.700"), "EUR"),
+        (measure_data[2].pk, None, None),
+        (measure_data[2].pk, Decimal("8.800"), None),
+        (measure_data[2].pk, Decimal("1.700"), "EUR"),
+        (measure_data[3].pk, None, None),
+        (measure_data[3].pk, Decimal("8.800"), None),
+        (measure_data[3].pk, Decimal("1.700"), "EUR"),
     }
 
 

@@ -725,57 +725,51 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
         if self.subform.is_valid():
             geo_area_list = [item["geo_area"] for item in self.subform.cleaned_data]
 
-        cleaned_data[self.prefix + "geographical_area"] = cleaned_data.pop(
-            self.prefix + "geo_area",
-            None,
-        )
-
         geo_area_type = cleaned_data.pop("geo_area_type", None)
         erga_omnes_exclusions = cleaned_data.pop("erga_omnes_exclusions", None)
         geo_group = cleaned_data.pop("geo_group", None)
         geo_group_exclusions = cleaned_data.pop("geo_group_exclusions", None)
 
         if geo_area_type == self.GeoAreaType.ERGA_OMNES:
-            cleaned_data["geographical_area"] = (
-                GeographicalArea.objects.approved_up_to_transaction(self.transaction)
-                .erga_omnes()
-                .get()
-            )
+            cleaned_data["geo_area_list"] = [
+                (
+                    GeographicalArea.objects.approved_up_to_transaction(
+                        self.transaction
+                    )
+                    .erga_omnes()
+                    .get()
+                )
+            ]
             cleaned_data["geo_area_exclusions"] = erga_omnes_exclusions
 
         self.fields["geo_area_type"].initial = geo_area_type
 
         # Don't try to validate the whole form when user clicks add or delete on the country subform
-        if not set(self.data.keys()).intersection(
+        subform_submit = set(self.data.keys()).intersection(
             {
                 f"{self.subform_prefix}-0-DELETE",
                 f"{self.subform_prefix}-1-DELETE",  # subform has max 2 items
                 f"{self.subform_prefix}-ADD",
             }
-        ):
+        )
 
-            if geo_area_type == self.GeoAreaType.GROUP:
-                if not geo_group:
-                    raise ValidationError({"geo_group": "A country group is required."})
-                cleaned_data["geo_area_list"] = [geo_group]
-                cleaned_data["geo_area_exclusions"] = geo_group_exclusions
+        if geo_area_type == self.GeoAreaType.GROUP:
+            if not geo_group and not subform_submit:
+                raise ValidationError({"geo_group": "A country group is required."})
+            cleaned_data["geo_area_list"] = [geo_group]
+            cleaned_data["geo_area_exclusions"] = geo_group_exclusions
 
-            if geo_area_type == self.GeoAreaType.COUNTRY:
-                if not geo_area_list:
-                    raise ValidationError(
-                        "One or more countries or regions is required."
-                    )
-                cleaned_data["geo_area_list"] = geo_area_list
+        if geo_area_type == self.GeoAreaType.COUNTRY:
+            if not geo_area_list and not subform_submit:
+                raise ValidationError("One or more countries or regions is required.")
+            cleaned_data["geo_area_list"] = geo_area_list
 
-            self.fields["geo_group"].initial = geo_group.pk if geo_group else None
+        self.fields["geo_group"].initial = geo_group.pk if geo_group else None
 
-            if not cleaned_data["geo_area_list"]:
-                raise ValidationError("A Geographical area must be selected")
+        if not cleaned_data["geo_area_list"] and not subform_submit:
+            raise ValidationError("A Geographical area must be selected")
 
         return cleaned_data
-
-    def is_valid(self):
-        return super().is_valid() and self.subform.is_valid()
 
 
 class MeasureAdditionalCodeForm(forms.ModelForm):
