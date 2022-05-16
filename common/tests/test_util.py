@@ -6,6 +6,7 @@ from common import util
 from common.tests import factories
 from common.tests import models
 from common.tests.util import Dates
+from common.tests.util import wrap_numbers_over_max_digits
 
 pytestmark = pytest.mark.django_db
 
@@ -242,3 +243,27 @@ def test_get_next_id_handles_empty_queryset():
     next_id = util.get_next_id(qs, id_field, 3)
 
     assert next_id == "001"
+
+
+@pytest.mark.parametrize(
+    "number, max_digits, expected",
+    (
+        (0, 2, 0),
+        (-9, 2, -9),
+        (-10, 2, 0),
+        (99, 2, 99),
+        (100, 2, 0),
+        (0, 3, 0),
+        (-99, 3, -99),
+        (-100, 3, 0),
+        (999, 3, 999),
+        (1000, 3, 0),
+    ),
+)
+def test_wrap_numbers_over_max_digits(number, max_digits, expected):
+    """Test some edge cases for wrap_int_at_max_digits.
+
+    Negative numbers use a digit for the sign, which is reflected in
+    the test data.
+    """
+    assert wrap_numbers_over_max_digits(number, max_digits) == expected
