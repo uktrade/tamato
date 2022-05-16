@@ -122,7 +122,6 @@ class MeasureCreateWizard(
     templates = {
         START: "measures/create-start.jinja",
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
-        # GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
         GEOGRAPHICAL_AREA: "measures/create-wizard-step-geo-area.jinja",
         COMMODITIES: "measures/create-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
