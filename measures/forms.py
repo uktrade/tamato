@@ -696,8 +696,8 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
         tx = kwargs.pop("transaction", None)
         self.transaction = tx
         super().__init__(*args, **kwargs)
-
-        self.subform = GeoAreaFormSet(data=self.data)
+        self.subform_prefix = "geo_area_formset"
+        self.subform = GeoAreaFormSet(data=self.data, prefix=self.subform_prefix)
 
         self.fields["geographical_area"].required = False
 
@@ -746,21 +746,32 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
 
         self.fields["geo_area_type"].initial = geo_area_type
 
-        if geo_area_type == self.GeoAreaType.GROUP:
-            if not geo_group:
-                raise ValidationError({"geo_group": "A country group is required."})
-            cleaned_data["geo_area_list"] = [geo_group]
-            cleaned_data["geo_area_exclusions"] = geo_group_exclusions
+        # Don't try to validate the whole form when user clicks add or delete on the country subform
+        if not set(self.data.keys()).intersection(
+            {
+                f"{self.subform_prefix}-0-DELETE",
+                f"{self.subform_prefix}-1-DELETE",  # subform has max 2 items
+                f"{self.subform_prefix}-ADD",
+            }
+        ):
 
-        if geo_area_type == self.GeoAreaType.COUNTRY:
-            if not geo_area_list:
-                raise ValidationError("One or more countries or regions is required.")
-            cleaned_data["geo_area_list"] = geo_area_list
+            if geo_area_type == self.GeoAreaType.GROUP:
+                if not geo_group:
+                    raise ValidationError({"geo_group": "A country group is required."})
+                cleaned_data["geo_area_list"] = [geo_group]
+                cleaned_data["geo_area_exclusions"] = geo_group_exclusions
 
-        self.fields["geo_group"].initial = geo_group.pk if geo_group else None
+            if geo_area_type == self.GeoAreaType.COUNTRY:
+                if not geo_area_list:
+                    raise ValidationError(
+                        "One or more countries or regions is required."
+                    )
+                cleaned_data["geo_area_list"] = geo_area_list
 
-        if not cleaned_data["geo_area_list"]:
-            raise ValidationError("A Geographical area must be selected")
+            self.fields["geo_group"].initial = geo_group.pk if geo_group else None
+
+            if not cleaned_data["geo_area_list"]:
+                raise ValidationError("A Geographical area must be selected")
 
         return cleaned_data
 
