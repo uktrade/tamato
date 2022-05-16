@@ -20,7 +20,6 @@ from common.serializers import AutoCompleteSerializer
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
-from geo_areas import forms as geo_area_forms
 from measures import forms
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
@@ -197,27 +196,27 @@ class MeasureCreateWizard(
 
         for commodity_data in data.get("formset-commodities", []):
             if not commodity_data["DELETE"]:
+                for geo_area in data["geo_area_list"]:
 
-                measure_data = {
-                    "measure_type": data["measure_type"],
-                    # TODO: iterate over geo area list
-                    "geographical_area": data["geographical_area"],
-                    "exclusions": data.get("geo_area_exclusions", []),
-                    "goods_nomenclature": commodity_data["commodity"],
-                    "additional_code": data["additional_code"],
-                    "order_number": data["order_number"],
-                    "validity_start": measure_start_date,
-                    "validity_end": data["valid_between"].upper,
-                    "footnotes": [
-                        item["footnote"]
-                        for item in data.get("formset-footnotes", [])
-                        if not item["DELETE"]
-                    ],
-                    # condition_sentence here, or handle separately and duty_sentence after?
-                    "duty_sentence": commodity_data["duties"],
-                }
+                    measure_data = {
+                        "measure_type": data["measure_type"],
+                        "geographical_area": geo_area,
+                        "exclusions": data.get("geo_area_exclusions", []),
+                        "goods_nomenclature": commodity_data["commodity"],
+                        "additional_code": data["additional_code"],
+                        "order_number": data["order_number"],
+                        "validity_start": measure_start_date,
+                        "validity_end": data["valid_between"].upper,
+                        "footnotes": [
+                            item["footnote"]
+                            for item in data.get("formset-footnotes", [])
+                            if not item["DELETE"]
+                        ],
+                        # condition_sentence here, or handle separately and duty_sentence after?
+                        "duty_sentence": commodity_data["duties"],
+                    }
 
-                measures_data.append(measure_data)
+                    measures_data.append(measure_data)
 
         created_measures = []
 
