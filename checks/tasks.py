@@ -10,6 +10,7 @@ from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
+from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
