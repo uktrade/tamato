@@ -8,9 +8,7 @@ Data migration to move transactions in ARCHIVED workbaskets to the ARCHIVED tran
 
 
 def get_archived_workbasket_transactions(apps):
-    """
-    Return Transactions belonging to archived Workbaskets.
-    """
+    """Return Transactions belonging to archived Workbaskets."""
     from workbaskets.validators import WorkflowStatus
 
     Transaction = apps.get_model("common", "Transaction")
@@ -21,31 +19,33 @@ def get_archived_workbasket_transactions(apps):
 
 
 def move_archived_workbasket_transaction_to_archived_partition(apps, schemaeditor):
-    """
-    Move Transactions belonging to archived Workbaskets to the ARCHIVED Partition.
-    """
+    """Move Transactions belonging to archived Workbaskets to the ARCHIVED
+    Partition."""
     from common.models.transactions import TransactionPartition
 
-    get_archived_workbasket_transactions(apps).update(partition=TransactionPartition.ARCHIVED)
+    get_archived_workbasket_transactions(apps).update(
+        partition=TransactionPartition.ARCHIVED,
+    )
 
 
 def move_archived_workbasket_transaction_to_draft_partition(apps, schemaeditor):
-    """
-    Move Transactions belonging to archived Workbaskets to the ARCHIVED Partition.
-    """
+    """Move Transactions belonging to archived Workbaskets to the ARCHIVED
+    Partition."""
     from common.models.transactions import TransactionPartition
 
-    get_archived_workbasket_transactions(apps).update(partition=TransactionPartition.DRAFT)
+    get_archived_workbasket_transactions(apps).update(
+        partition=TransactionPartition.DRAFT,
+    )
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('common', '0006_transaction_add_archive_partition_schema'),
+        ("common", "0006_transaction_add_archive_partition_schema"),
     ]
 
     operations = [
         migrations.RunPython(
             move_archived_workbasket_transaction_to_draft_partition,
-            reverse_code=move_archived_workbasket_transaction_to_draft_partition
-        )
+            reverse_code=move_archived_workbasket_transaction_to_draft_partition,
+        ),
     ]

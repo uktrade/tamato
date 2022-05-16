@@ -958,13 +958,12 @@ class MeasureConditionCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
 
 class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
     """
-    MeasureActions in the TaMaTo are essentially fixed, it
-    would be more realistic to test using a fixed list, however it
-    is convenient.
+    MeasureActions in the TaMaTo are essentially fixed, it would be more
+    realistic to test using a fixed list, however it is convenient.
 
-    As MeasureActionFactory is used in tests, it is possible to
-    generate more than 999 MeasureActions, to avoid creating MeasureAction codes
-    with four digits, which is not allowed, the code wraps back to 000 every 1000
+    As MeasureActionFactory is used in tests, it is possible to generate more
+    than 999 MeasureActions, to avoid creating MeasureAction codes with four
+    digits, which is not allowed, the code wraps back to 000 every 1000
     iterations.
     """
 

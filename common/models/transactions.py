@@ -27,7 +27,7 @@ class TransactionPartition(models.IntegerChoices):
 
     The numbers chosen increment by "era" of transaction, starting
     from approved transactions SEED_FILE, REVISION
-    then ending with DRAFT.
+    then ending with DRAFT and ARCHIVED.
 
     ARCHIVED Transactions are special, and accompany archived workbaskets and are not considered
     for business rule checks, and have the highest order number.

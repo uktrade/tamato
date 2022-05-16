@@ -43,9 +43,8 @@ class TransactionPartitionScheme:
         """
         Map unapproved WorkflowStatuses to TransactionPartitions.
 
-        All unapproved statuses map to DRAFT except ARCHIVED which is
-        in its own partition so the system can do filter it out in views
-        and updates.
+        All unapproved statuses map to DRAFT except ARCHIVED which is in its own
+        partition so the system can do filter it out in views and updates.
         """
         if status == WorkflowStatus.ARCHIVED:
             return TransactionPartition.ARCHIVED
@@ -319,8 +318,9 @@ class WorkBasket(TimestampedMixin):
         custom={"label": "Archive"},
     )
     def archive(self):
-        """Mark a workbasket as no longer in use."""
-        self.transactions.update(status=TransactionPartition.ARCHIVED)
+        """Mark a workbasket as no longer in use, contained transactions are
+        also marked as archived."""
+        self.transactions.update(partition=TransactionPartition.ARCHIVED)
 
     @transition(
         field=status,
@@ -329,8 +329,9 @@ class WorkBasket(TimestampedMixin):
         custom={"label": "Unarchive"},
     )
     def unarchive(self):
-        """Restore a workbasket to an in use state."""
-        self.transactions.update(status=TransactionPartition.DRAFT)
+        """Restore a workbasket to an in use state and restore contained
+        transactions,"""
+        self.transactions.update(partition=TransactionPartition.DRAFT)
 
     @transition(
         field=status,
