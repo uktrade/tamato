@@ -798,3 +798,18 @@ def assert_transaction_order(transactions):
     assert sorted(transactions, key=lambda o: (o.partition, o.order)) == list(
         transactions,
     ), "Transactions should be in the order partition, order"
+
+
+def wrap_numbers_over_max_digits(number: int, max_digits):
+    """
+    Wrap a number if it is too large to fit in the given number of digits.
+
+    Negative numbers use one of the digits for the sign.
+    """
+    assert max_digits > 0
+
+    if number >= 0:
+        return number % (10**max_digits)
+
+    # For negative numbers one digit is reserved for the sign.
+    return number % -(10 ** (max_digits - 1))

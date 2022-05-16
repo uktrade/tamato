@@ -15,6 +15,7 @@ from common.tests.models import TestModel2
 from common.tests.models import TestModel3
 from common.tests.models import TestModelDescription1
 from common.tests.util import Dates
+from common.tests.util import wrap_numbers_over_max_digits
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
@@ -971,7 +972,7 @@ class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "measures.MeasureAction"
 
     # Code should only contain 3 digits, modulo 1000 is used to wrap it.
-    code = factory.Sequence(lambda x: f"{x + 1 % 1000:02d}")
+    code = factory.Sequence(lambda x: f"{wrap_numbers_over_max_digits(x, 3):02d}")
     description = short_description()
 
 
