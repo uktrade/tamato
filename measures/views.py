@@ -200,6 +200,7 @@ class MeasureCreateWizard(
 
                 measure_data = {
                     "measure_type": data["measure_type"],
+                    # TODO: iterate over geo area list
                     "geographical_area": data["geographical_area"],
                     "exclusions": data.get("geo_area_exclusions", []),
                     "goods_nomenclature": commodity_data["commodity"],
@@ -263,18 +264,6 @@ class MeasureCreateWizard(
             context["form"].is_bound = False
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
-        form_prefix = "geo_area_formset"
-        # TODO: move this formset inside the form for this step so we can do nested validation
-        if self.storage.current_step == self.GEOGRAPHICAL_AREA:
-            if self.request.POST:
-                context["geo_area_formset"] = geo_area_forms.GeoAreaFormSet(
-                    self.request.POST,
-                    prefix=form_prefix,
-                )
-            else:
-                context["geo_area_formset"] = geo_area_forms.GeoAreaFormSet(
-                    prefix=form_prefix
-                )
         return context
 
     def get_form_kwargs(self, step):

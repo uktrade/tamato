@@ -23,28 +23,28 @@
 
 {% set option_html.COUNTRY -%}
 
-  {{ crispy(geo_area_formset.management_form, no_form_tags) }}
+  {{ crispy(form.subform.management_form, no_form_tags) }}
 
-  {% for form in geo_area_formset %}
-    {% if form.geo_area.data %}
-      {{ crispy(form, no_form_tags) }}
+  {% for f in form.subform %}
+    {% if f.geo_area.data %}
+      {{ crispy(f, no_form_tags) }}
       {{ govukButton({
         "text": "Delete",
         "classes": "govuk-button--secondary",
         "value": "1",
-        "name": geo_area_formset.prefix ~ "-" ~ loop.index0 ~ "-DELETE",
+        "name": form.subform.prefix ~ "-" ~ loop.index0 ~ "-DELETE",
       }) }}
     {% endif %}
   {% endfor %}
 
-  {% if geo_area_formset.initial|length < geo_area_formset.max_num %}
-    {{ crispy(geo_area_formset.empty_form, no_form_tags)|replace("__prefix__", geo_area_formset.forms|length)|safe }}
-    {% if geo_area_formset.initial|length < geo_area_formset.max_num - 1 %}
+  {% if form.subform.initial|length < form.subform.max_num %}
+    {{ crispy(form.subform.empty_form, no_form_tags)|replace("__prefix__", form.subform.forms|length)|safe }}
+    {% if form.subform.initial|length < form.subform.max_num - 1 %}
         {{ govukButton({
           "text": "Add another",
           "classes": "govuk-button--secondary",
           "value": "1",
-          "name": geo_area_formset.prefix ~ "-ADD",
+          "name": form.subform.prefix ~ "-ADD",
         }) }}
     {% endif %}
   {% endif %}

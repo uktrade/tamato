@@ -68,6 +68,15 @@
     ]) }}
   {% endcall %}
 
+  {% call(rows, data) review_step("geographical_area") %}
+    {% for item in data.geo_area_list %}
+    {{ rows.extend([
+      ("Geographical area", item.get_description().description|safe),
+    ]) }}
+    {% endfor %}
+
+  {% endcall %}
+
   {% call(rows, data) review_step("commodities") %}
     {% for item in data %}
       {{ rows.extend([
