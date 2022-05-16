@@ -1,16 +1,9 @@
 from crispy_forms_gds.layout import Field
-from django import forms
-from django.core.exceptions import ValidationError
-from django.db import models
-from django.forms.formsets import formset_factory
 
 from common.forms import CreateDescriptionForm
-from common.forms import FormSet
 from common.forms import delete_form_for
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
-from geo_areas.util import with_latest_description_string
-from geo_areas.validators import AreaCode
 
 
 class GeographicalAreaCreateDescriptionForm(CreateDescriptionForm):

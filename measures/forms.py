@@ -27,7 +27,6 @@ from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
-from geo_areas.util import with_description_string
 from geo_areas.util import with_latest_description_string
 from geo_areas.validators import AreaCode
 from measures import models
