@@ -5,6 +5,7 @@ from typing import Type
 
 from common.models import TrackedModel
 from common.validators import UpdateType
+from measures.models import MeasureComponent
 from workbaskets.models import WorkBasket
 
 
@@ -28,8 +29,8 @@ def diff_components(
     duty_sentence: str,
     start_date: date,
     workbasket: WorkBasket,
-    component_output: Type[TrackedModel],
-    reverse_attribute: str,
+    component_output: Type[TrackedModel] = MeasureComponent,
+    reverse_attribute: str = "component_measure",
 ):
     from measures.parsers import DutySentenceParser
 
