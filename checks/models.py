@@ -2,11 +2,12 @@ from django.db import models
 from django.db.models import fields
 
 from checks.querysets import TransactionCheckQueryset
+from common.models.mixins import TimestampedMixin
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 
 
-class TransactionCheck(models.Model):
+class TransactionCheck(TimestampedMixin):
     """
     Represents an in-progress or completed check of a transaction for
     correctness.
@@ -111,7 +112,7 @@ class TransactionCheck(models.Model):
         )
 
 
-class TrackedModelCheck(models.Model):
+class TrackedModelCheck(TimestampedMixin):
     """
     Represents the result of running a single check against a single model.
 
