@@ -61,12 +61,6 @@
       ("Measure end date", "{:%d/%m/%Y}".format(data["valid_between"].upper) if data["valid_between"] and data["valid_between"].upper else "-"),
     ]) }}
   {% endcall %}
-  
-  {% call(rows, data) review_step("geographical_area") %}
-    {{ rows.extend([
-      ("Geographical area", data["geographical_area"].get_description().description|safe),
-    ]) }}
-  {% endcall %}
 
   {% call(rows, data) review_step("geographical_area") %}
     {% for item in data.geo_area_list %}
