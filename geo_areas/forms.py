@@ -7,7 +7,7 @@ from common.forms import CreateDescriptionForm
 from common.forms import delete_form_for
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
-from geo_areas.util import with_description_string
+from geo_areas.util import with_latest_description_string
 from geo_areas.validators import AreaCode
 
 
@@ -75,7 +75,7 @@ class GeographicalAreaFormMixin(forms.Form):
         self.transaction = tx
         super().__init__(*args, **kwargs)
 
-        self.fields["geo_group"].queryset = with_description_string(
+        self.fields["geo_group"].queryset = with_latest_description_string(
             GeographicalArea.objects.filter(
                 area_code=AreaCode.GROUP,
             )
@@ -90,7 +90,7 @@ class GeographicalAreaFormMixin(forms.Form):
         # self.fields[
         #     "geo_group_exclusions"
         # ].queryset = GeographicalArea.objects.approved_up_to_transaction(tx)
-        self.fields["geo_area"].queryset = with_description_string(
+        self.fields["geo_area"].queryset = with_latest_description_string(
             GeographicalArea.objects.exclude(
                 area_code=AreaCode.GROUP,
                 descriptions__description__isnull=True,
