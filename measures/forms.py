@@ -27,7 +27,7 @@ from footnotes.models import Footnote
 from geo_areas.forms import GeographicalAreaFormMixin
 from geo_areas.forms import GeographicalAreaSelect
 from geo_areas.models import GeographicalArea
-from geo_areas.util import with_description_string
+from geo_areas.util import with_latest_description_string
 from measures import models
 from measures.parsers import DutySentenceParser
 from measures.util import diff_components
@@ -295,20 +295,19 @@ class MeasureForm(ValidityPeriodForm):
         required=False,
     )
     geographical_area_group = forms.ModelChoiceField(
-        queryset=with_description_string(
+        queryset=with_latest_description_string(
             GeographicalArea.objects.filter(
                 area_code=1,
-            ).exclude(descriptions__description__isnull=True),
+            ),
         ),
         required=False,
         widget=forms.Select(attrs={"class": "govuk-select"}),
         empty_label=None,
     )
     geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=with_description_string(
+        queryset=with_latest_description_string(
             GeographicalArea.objects.exclude(
                 area_code=1,
-                descriptions__description__isnull=True,
             ),
         ),
         widget=forms.Select(attrs={"class": "govuk-select"}),
@@ -341,7 +340,7 @@ class MeasureForm(ValidityPeriodForm):
                 .approved_up_to_transaction(tx)
                 .with_latest_links("descriptions")
                 .prefetch_related("descriptions")
-                .order_by("description")
+                .order_by("descriptions__description")
             )
             self.fields[field].label_from_instance = lambda obj: obj.description
 
