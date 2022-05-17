@@ -745,13 +745,7 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
         self.fields["geo_area_type"].initial = geo_area_type
 
         # Don't try to validate the whole form when user clicks add or delete on the country subform
-        subform_submit = set(self.data.keys()).intersection(
-            {
-                f"{self.subform_prefix}-0-DELETE",
-                f"{self.subform_prefix}-1-DELETE",  # subform has max 2 items
-                f"{self.subform_prefix}-ADD",
-            }
-        )
+        subform_submit = not self.subform.is_valid()
 
         if geo_area_type == self.GeoAreaType.GROUP:
             if not geo_group and not subform_submit:
@@ -770,6 +764,12 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
             raise ValidationError("A Geographical area must be selected")
 
         return cleaned_data
+
+    def is_valid(self):
+        geo_area_type = self.data.get(f"{self.prefix}-geo_area_type", None)
+        if geo_area_type == self.GeoAreaType.COUNTRY:
+            return super().is_valid() and self.subform.is_valid()
+        return super().is_valid()
 
 
 class MeasureAdditionalCodeForm(forms.ModelForm):
