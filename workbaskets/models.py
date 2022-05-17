@@ -413,6 +413,15 @@ class WorkBasket(TimestampedMixin):
     def tracked_models(self) -> TrackedModelQuerySet:
         return TrackedModel.objects.filter(transaction__workbasket=self)
 
+    @property
+    def tracked_model_check_errors(self):  # -> TrackedModelCheckQuerySet:
+        from checks.models import TrackedModelCheck
+
+        return TrackedModelCheck.objects.filter(
+            transaction_check__transaction__workbasket=self,
+            successful=False,
+        )
+
     @classmethod
     def load_from_session(cls, session):
         if "workbasket" not in session:

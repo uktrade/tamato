@@ -28,6 +28,8 @@
       )
     },
     {"text": workbasket.get_status_display()},
+    {"text": workbasket.unchecked_or_errored_transactions.count() < 1},
+    {"text": workbasket.tracked_model_check_errors.count()},
   ]) or "" }}
 {% endfor %}
 
@@ -40,6 +42,8 @@
     {"text": "Created"},
     {"text": "Updated*"},
     {"text": "Status"},
+    {"text": "Successfully validated"},
+    {"text": "Error count"},
   ],
   "rows": table_rows
 }) }}
