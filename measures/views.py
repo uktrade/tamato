@@ -17,6 +17,7 @@ from rest_framework.reverse import reverse
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -182,9 +183,9 @@ class MeasureCreateWizard(
     def create_measures(self, data):
         """Returns a list of the created measures."""
         measure_start_date = data["valid_between"].lower
-
+        workbasket = WorkBasket.current(self.request)
         measure_creation_pattern = MeasureCreationPattern(
-            workbasket=WorkBasket.current(self.request),
+            workbasket=workbasket,
             base_date=measure_start_date,
             defaults={
                 "generating_regulation": data["generating_regulation"],
@@ -235,6 +236,7 @@ class MeasureCreateWizard(
                         component_sequence_number,
                         measure,
                         parser,
+                        workbasket,
                     )
 
             created_measures.append(measure)
@@ -363,7 +365,7 @@ class MeasureUpdate(
             conditions_formset = forms.MeasureConditionsFormSet()
         conditions = self.get_conditions(context["measure"])
         form_fields = conditions_formset.form.Meta.fields
-        # conditions_formset.initial = []
+        conditions_formset.initial = []
         for condition in conditions:
             initial_dict = {}
             for field in form_fields:
@@ -375,17 +377,87 @@ class MeasureUpdate(
 
             initial_dict["applicable_duty"] = condition.condition_string
             initial_dict["reference_price"] = condition.reference_price_string
+            initial_dict["condition_sid"] = condition.sid
             conditions_formset.initial.append(initial_dict)
-
-        if self.request.POST:
-            conditions_formset.initial.append(self.request.POST)
 
         context["conditions_formset"] = conditions_formset
         return context
 
+    def create_conditions(self, obj):
+        """
+        Gets condition formset from context data, loops over these forms and
+        validates the data, checking for the condition_sid field in the data to
+        indicate whether an existing condition is being updated or a new one
+        created from scratch.
+
+        Then deletes any existing conditions that are not being updated,
+        before calling the MeasureCreationPattern.create_condition_and_components with the appropriate parser and condition data.
+        """
+        formset = self.get_context_data()["conditions_formset"]
+        excluded_sids = []
+        conditions_data = []
+        workbasket = WorkBasket.current(self.request)
+        existing_conditions = obj.conditions.approved_up_to_transaction(
+            workbasket.get_current_transaction(self.request),
+        )
+
+        for f in formset.forms:
+            f.is_valid()
+            condition_data = f.cleaned_data
+            # If the form has changed and "condition_sid" is in the changed data,
+            # this means that the condition is preexisting and needs to updated
+            # so that its dependent_measure points to the latest version of measure
+            if f.has_changed() and "condition_sid" in f.changed_data:
+                excluded_sids.append(f.initial["condition_sid"])
+                update_type = UpdateType.UPDATE
+                condition_data["version_group"] = existing_conditions.get(
+                    sid=f.initial["condition_sid"],
+                ).version_group
+            # If changed and condition_sid not in changed_data, then this is a newly created condition
+            elif f.has_changed() and "condition_sid" not in f.changed_data:
+                update_type = UpdateType.CREATE
+
+            condition_data["update_type"] = update_type
+            conditions_data.append(condition_data)
+
+        workbasket = WorkBasket.current(self.request)
+
+        # Delete all existing conditions from the measure instance, except those that need to be updated
+        for condition in existing_conditions.exclude(sid__in=excluded_sids):
+            condition.new_version(
+                workbasket=workbasket,
+                update_type=UpdateType.DELETE,
+                transaction=obj.transaction,
+            )
+
+        if conditions_data:
+            measure_creation_pattern = MeasureCreationPattern(
+                workbasket=workbasket,
+                base_date=obj.valid_between.lower,
+            )
+            parser = DutySentenceParser.get(
+                obj.valid_between.lower,
+                component_output=MeasureConditionComponent,
+            )
+
+            # Loop over conditions_data, starting at 1 because component_sequence_number has to start at 1
+            for component_sequence_number, condition_data in enumerate(
+                conditions_data,
+                start=1,
+            ):
+                # Create conditions and measure condition components, using instance as `dependent_measure`
+                measure_creation_pattern.create_condition_and_components(
+                    condition_data,
+                    component_sequence_number,
+                    obj,
+                    parser,
+                    workbasket,
+                )
+
     def get_result_object(self, form):
         obj = super().get_result_object(form)
         form.instance = obj
+        self.create_conditions(obj)
         form.save(commit=False)
 
         return obj
