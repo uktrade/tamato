@@ -348,6 +348,7 @@ CELERY_TRACK_STARTED = True
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+CELERYD_POOL_RESTARTS = True  # Restart worker if it dies
 
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
