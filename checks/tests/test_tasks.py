@@ -3,6 +3,7 @@ from itertools import zip_longest
 from unittest import mock
 
 import pytest
+from pytest_django.asserts import assertQuerysetEqual  # type: ignore
 
 from checks import tasks
 from checks.models import TransactionCheck
@@ -10,6 +11,7 @@ from checks.tests import factories
 from checks.tests.util import assert_requires_update
 from common.models.transactions import TransactionPartition
 from common.tests import factories as common_factories
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -178,3 +180,41 @@ def test_detecting_of_transactions_to_update():
 
     assert set(t.task for t in workflow.tasks) == {tasks.check_transaction.name}
     assert set(t.args[0] for t in workflow.tasks) == expected_transaction_ids
+
+
+@pytest.mark.parametrize("include_archived", [True, False])
+@pytest.mark.parametrize(
+    "transaction_partition", [TransactionPartition.DRAFT, TransactionPartition.REVISION]
+)
+def test_archived_workbasket_checks(include_archived, transaction_partition):
+    """
+    Verify transactions in ARCHIVED workbaskets do not require checking unless
+    include_archived is True.
+    """
+    head_transaction = common_factories.ApprovedTransactionFactory.create()
+
+    # Transaction that requires update in DRAFT or REVISION
+    transaction_check = factories.StaleTransactionCheckFactory.create(
+        transaction__partition=transaction_partition,
+        head_transaction=head_transaction,
+    )
+
+    all_checks = TransactionCheck.objects.filter(pk=transaction_check.pk)
+    initial_require_update = all_checks.requires_update(True, include_archived)
+
+    # Initially the transaction should require update.
+    assert initial_require_update.count() == 1
+    assert initial_require_update.get().pk == transaction_check.pk
+
+    # Set workbasket status to ARCHIVED and verify requires_update only returns their transaction checks if
+    # include_archived is True
+    transaction_check.transaction.workbasket.status = WorkflowStatus.ARCHIVED
+    transaction_check.transaction.workbasket.save()
+
+    checks_require_update = all_checks.requires_update(True, include_archived)
+
+    if include_archived:
+        assert checks_require_update.count() == 1
+        assert checks_require_update.get().pk == transaction_check.pk
+    else:
+        assert checks_require_update.count() == 0

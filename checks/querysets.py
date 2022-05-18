@@ -114,7 +114,7 @@ class TransactionCheckQueryset(CTEQuerySet):
             self.freshness_filter,
         )
 
-    def requires_update(self, requirement=True):
+    def requires_update(self, requirement=True, include_archived=False):
         """
         A ``TransactionCheck`` requires an update if it or any check on a
         transaction before it in order is stale or no longer current.
@@ -122,12 +122,23 @@ class TransactionCheckQueryset(CTEQuerySet):
         If a ``TransactionCheck`` on an earlier transaction is stale, it means
         that transaction has been modified since the check was done, which could
         also invalidate any checks of any subsequent transactions.
+
+        By default transactions in ARCHIVED workbaskets are ignored, since these
+        workbaskets exist outside of the normal workflow.
         """
 
-        # First work out for each check whether it alone requires an update, by
+        if include_archived:
+            ignore_filter = {}
+        else:
+            ignore_filter = {"transaction__workbasket__status": "ARCHIVED"}
+
+        # First filtering out any objects we should ignore,
+        # work out for each check whether it alone requires an update, by
         # seeing whether it is stale or not current.
         basic_info = With(
-            self.model.objects.annotate(**self.freshness_annotations).annotate(
+            self.model.objects.exclude(**ignore_filter)
+            .annotate(**self.freshness_annotations)
+            .annotate(
                 requires_update=self.requires_update_annotation,
             ),
             name="basic_info",
