@@ -13,7 +13,33 @@
 
 {% set option_html = namespace() %}
 {% set option_html.ERGA_OMNES -%}
-  {# form.erga_omnes_exclusions #}
+
+  {{ crispy(form.erga_omnes_exclusions_subform.management_form, no_form_tags) }}
+
+  {% for f in form.erga_omnes_exclusions_subform %}
+    {% if f.erga_omnes_exclusion.data %}
+      {{ crispy(f, no_form_tags) }}
+      {{ govukButton({
+        "text": "Delete",
+        "classes": "govuk-button--secondary",
+        "value": "1",
+        "name": form.erga_omnes_exclusions_subform.prefix ~ "-" ~ loop.index0 ~ "-DELETE",
+      }) }}
+    {% endif %}
+  {% endfor %}
+
+  {% if form.erga_omnes_exclusions_subform.initial|length < form.erga_omnes_exclusions_subform.max_num %}
+    {{ crispy(form.erga_omnes_exclusions_subform.empty_form, no_form_tags)|replace("__prefix__", form.erga_omnes_exclusions_subform.forms|length)|safe }}
+    {% if form.erga_omnes_exclusions_subform.initial|length < form.erga_omnes_exclusions_subform.max_num - 1 %}
+        {{ govukButton({
+          "text": "Add another",
+          "classes": "govuk-button--secondary",
+          "value": "1",
+          "name": form.erga_omnes_exclusions_subform.prefix ~ "-ADD",
+        }) }}
+    {% endif %}
+  {% endif %}
+
 {%- endset %}
 
 {% set option_html.GROUP -%}
@@ -23,28 +49,28 @@
 
 {% set option_html.COUNTRY -%}
 
-  {{ crispy(form.subform.management_form, no_form_tags) }}
+  {{ crispy(form.geo_area_subform.management_form, no_form_tags) }}
 
-  {% for f in form.subform %}
+  {% for f in form.geo_area_subform %}
     {% if f.geo_area.data %}
       {{ crispy(f, no_form_tags) }}
       {{ govukButton({
         "text": "Delete",
         "classes": "govuk-button--secondary",
         "value": "1",
-        "name": form.subform.prefix ~ "-" ~ loop.index0 ~ "-DELETE",
+        "name": form.geo_area_subform.prefix ~ "-" ~ loop.index0 ~ "-DELETE",
       }) }}
     {% endif %}
   {% endfor %}
 
-  {% if form.subform.initial|length < form.subform.max_num %}
-    {{ crispy(form.subform.empty_form, no_form_tags)|replace("__prefix__", form.subform.forms|length)|safe }}
-    {% if form.subform.initial|length < form.subform.max_num - 1 %}
+  {% if form.geo_area_subform.initial|length < form.geo_area_subform.max_num %}
+    {{ crispy(form.geo_area_subform.empty_form, no_form_tags)|replace("__prefix__", form.geo_area_subform.forms|length)|safe }}
+    {% if form.geo_area_subform.initial|length < form.geo_area_subform.max_num - 1 %}
         {{ govukButton({
           "text": "Add another",
           "classes": "govuk-button--secondary",
           "value": "1",
-          "name": form.subform.prefix ~ "-ADD",
+          "name": form.geo_area_subform.prefix ~ "-ADD",
         }) }}
     {% endif %}
   {% endif %}
