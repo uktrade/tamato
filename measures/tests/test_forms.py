@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from common.tests import factories
+from geo_areas.validators import AreaCode
 from measures import forms
 from measures.forms import MeasureForm
 from measures.models import Measure
@@ -73,6 +74,99 @@ def test_measure_forms_details_valid_data(measure_type, regulation, erga_omnes):
     }
     form = forms.MeasureDetailsForm(data, prefix="")
     assert form.is_valid()
+
+
+def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
+    data = {
+        "geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.ERGA_OMNES,
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix="")
+    assert form.is_valid()
+
+
+def test_measure_forms_geo_area_valid_data_geo_group():
+    geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
+    data = {
+        "geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.GROUP,
+        "geo_group": geo_group.pk,
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix="")
+    assert form.is_valid()
+
+
+def test_measure_forms_geo_area_valid_data_countries():
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+    data = {
+        "geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.COUNTRY,
+        "geo_area_formset-0-geo_area": geo_area1.pk,
+        "geo_area_formset-1-geo_area": geo_area2.pk,
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix="")
+    assert form.is_valid()
+
+
+def test_measure_forms_geo_area_valid_data_countries_delete():
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+    prefix = "geographical_area"
+    data = {
+        f"{prefix}-geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.COUNTRY,
+        "geo_area_formset-0-geo_area": geo_area1.pk,
+        "geo_area_formset-1-geo_area": geo_area2.pk,
+        "geo_area_formset-1-DELETE": "on",
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix=prefix)
+    assert not form.is_valid()
+
+
+def test_measure_forms_geo_area_valid_data_countries_add():
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    prefix = "geographical_area"
+    data = {
+        f"{prefix}-geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.COUNTRY,
+        "geo_area_formset-0-geo_area": geo_area1.pk,
+        "geo_area_formset-ADD": "1",
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix=prefix)
+    assert not form.is_valid()
+
+
+def test_measure_forms_geo_area_invalid_data_geo_group():
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    data = {
+        "geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.GROUP,
+        "geo_group": "",
+        "geo_area_formset-0-geo_area": geo_area1.pk,
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix="")
+    assert not form.is_valid()
+    assert "A country group is required." in form.errors["geo_group"][0]
+
+
+@pytest.mark.parametrize(
+    "data,error",
+    [
+        (
+            {
+                "geographical_area-geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.COUNTRY,
+                "geo_area_formset-0-geo_area": "",
+            },
+            "One or more countries or regions is required.",
+        ),
+        (
+            {
+                "geographical_area-geo_area_type": "",
+                "geo_area_formset-0-geo_area": "",
+            },
+            "A Geographical area must be selected",
+        ),
+    ],
+)
+def test_measure_forms_geo_area_invalid_data(data, error):
+    form = forms.MeasureGeographicalAreaForm(data, prefix="geographical_area")
+    assert not form.is_valid()
+    assert error in form.errors["__all__"][0]
 
 
 def test_measure_forms_details_invalid_data():

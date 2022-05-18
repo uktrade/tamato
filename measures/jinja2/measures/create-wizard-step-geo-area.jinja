@@ -1,0 +1,90 @@
+{% extends "measures/create-wizard-step.jinja" %}
+
+{% from "components/radios/macro.njk" import govukRadios %}
+{% from "components/details/macro.njk" import govukDetails %}
+{% from "components/fieldset/macro.njk" import govukFieldset %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = step_metadata[wizard.steps.current].title %}
+{% set page_subtitle = "Create a new measure" %}
+{% set info = "Create a new measure" %}
+
+{% block form %}
+
+{% set option_html = namespace() %}
+{% set option_html.ERGA_OMNES -%}
+  {# form.erga_omnes_exclusions #}
+{%- endset %}
+
+{% set option_html.GROUP -%}
+  {{ form.geo_group }}
+  {# form.geo_group_exclusions #}
+{%- endset %}
+
+{% set option_html.COUNTRY -%}
+
+  {{ crispy(form.subform.management_form, no_form_tags) }}
+
+  {% for f in form.subform %}
+    {% if f.geo_area.data %}
+      {{ crispy(f, no_form_tags) }}
+      {{ govukButton({
+        "text": "Delete",
+        "classes": "govuk-button--secondary",
+        "value": "1",
+        "name": form.subform.prefix ~ "-" ~ loop.index0 ~ "-DELETE",
+      }) }}
+    {% endif %}
+  {% endfor %}
+
+  {% if form.subform.initial|length < form.subform.max_num %}
+    {{ crispy(form.subform.empty_form, no_form_tags)|replace("__prefix__", form.subform.forms|length)|safe }}
+    {% if form.subform.initial|length < form.subform.max_num - 1 %}
+        {{ govukButton({
+          "text": "Add another",
+          "classes": "govuk-button--secondary",
+          "value": "1",
+          "name": form.subform.prefix ~ "-ADD",
+        }) }}
+    {% endif %}
+  {% endif %}
+
+{%- endset %}
+
+{% set radios = [] %}
+{% for value, label in form.GeoAreaType.choices %}
+  {{ radios.append({
+    "value": value,
+    "text": label,
+    "checked": form.geo_area_type.initial and value in form.geo_area_type.initial,
+    "conditional": {
+      "html": option_html[value]
+    } if option_html[value] else {}
+  }) or "" }}
+{% endfor %}
+
+{{ govukRadios({
+  "idPrefix": form.add_prefix("geo_area_type"),
+  "name": form.add_prefix("geo_area_type"),
+  "fieldset": {
+    "legend": {
+      "text": form.geo_area_type.label,
+      "classes": "govuk-fieldset__legend--s",
+    }
+  },
+  "items": radios,
+}) }}
+
+{{ govukDetails({
+  "summaryText": "Help with geography",
+  "text": "Choose the geographical area to which the measure applies. This can be a specific country or a group of countries, and exclusions can be specified. The measure will only apply to imports from or exports to the selected area."
+}) }}
+
+{{ govukButton({
+  "text": "Continue",
+  "classes": "govuk-button--primary",
+  "value": "Continue",
+  "name": "submit",
+}) }}
+
+{% endblock %}
