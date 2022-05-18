@@ -15,7 +15,7 @@
 {% set option_html = namespace() %}
 {% set option_html.ERGA_OMNES -%}
 
-  {{ subform(subform=form.erga_omnes_exclusions_subform, field_name="erga_omnes_exclusion", no_form_tags=no_form_tags) }}
+  {{ subform(subform=form.erga_omnes_exclusions_subform, field_name="erga_omnes_exclusion", field_plural="countries/regions to exclude", no_form_tags=no_form_tags) }}
 
 {%- endset %}
 
@@ -26,7 +26,7 @@
 
 {% set option_html.COUNTRY -%}
 
-  {{ subform(subform=form.geo_area_subform, field_name="geo_area", no_form_tags=no_form_tags) }}
+  {{ subform(subform=form.geo_area_subform, field_name="geo_area", field_plural="countries/regions", no_form_tags=no_form_tags) }}
 
 {%- endset %}
 
@@ -41,6 +41,8 @@
     } if option_html[value] else {}
   }) or "" }}
 {% endfor %}
+
+<p class="govuk-body">The measure will only apply to imports from or exports to the selected area. You can specify exclusions.</p>
 
 {{ govukRadios({
   "idPrefix": form.add_prefix("geo_area_type"),

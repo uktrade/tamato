@@ -602,7 +602,6 @@ class GeoAreaForm(forms.Form):
     geo_area = forms.ModelChoiceField(
         label="",
         queryset=GeographicalArea.objects.all(),
-        help_text="Select a country or region.",
         required=False,
         widget=forms.Select(attrs={"class": "govuk-select"}),
     )
@@ -628,9 +627,9 @@ class GeoAreaForm(forms.Form):
 
 class ErgaOmnesExclusionsForm(forms.Form):
     erga_omnes_exclusion = forms.ModelChoiceField(
-        label="Select a country to be excluded",
+        label="",
         queryset=GeographicalArea.objects.all(),
-        help_text="To exclude countries, enter them below.",
+        help_text="Select a country to be excluded:",
         required=False,
     )
 
@@ -687,7 +686,9 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
         GROUP = "GROUP", "A group of countries"
         COUNTRY = "COUNTRY", "Specific countries or regions"
 
-    geo_area_type = forms.ChoiceField(choices=GeoAreaType.choices, required=False)
+    geo_area_type = forms.ChoiceField(
+        label="", choices=GeoAreaType.choices, required=False
+    )
     geo_group = forms.ModelChoiceField(
         queryset=GeographicalArea.objects.all(),
         help_text="Select a country group.",
