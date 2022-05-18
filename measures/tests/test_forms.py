@@ -144,26 +144,29 @@ def test_measure_forms_geo_area_invalid_data_geo_group():
     assert "A country group is required." in form.errors["geo_group"][0]
 
 
-def test_measure_forms_geo_area_invalid_data_countries():
-    prefix = "geographical_area"
-    data = {
-        f"{prefix}-geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.COUNTRY,
-        "geo_area_formset-0-geo_area": "",
-    }
-    form = forms.MeasureGeographicalAreaForm(data, prefix=prefix)
+@pytest.mark.parametrize(
+    "data,error",
+    [
+        (
+            {
+                "geographical_area-geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.COUNTRY,
+                "geo_area_formset-0-geo_area": "",
+            },
+            "One or more countries or regions is required.",
+        ),
+        (
+            {
+                "geographical_area-geo_area_type": "",
+                "geo_area_formset-0-geo_area": "",
+            },
+            "A Geographical area must be selected",
+        ),
+    ],
+)
+def test_measure_forms_geo_area_invalid_data(data, error):
+    form = forms.MeasureGeographicalAreaForm(data, prefix="geographical_area")
     assert not form.is_valid()
-    assert "One or more countries or regions is required." in form.errors["__all__"][0]
-
-
-def test_measure_forms_geo_area_invalid_data():
-    prefix = "geographical_area"
-    data = {
-        f"{prefix}-geo_area_type": "",
-        "geo_area_formset-0-geo_area": "",
-    }
-    form = forms.MeasureGeographicalAreaForm(data, prefix=prefix)
-    assert not form.is_valid()
-    assert "A Geographical area must be selected" in form.errors["__all__"][0]
+    assert error in form.errors["__all__"][0]
 
 
 def test_measure_forms_details_invalid_data():
