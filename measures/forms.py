@@ -742,7 +742,7 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
         self.geo_area_subform = GeoAreaFormSet(
             data=self.data, prefix=self.geo_area_subform_prefix
         )
-        self.geo_group_exclusions_subform_prefix = "geo_area_formset"
+        self.geo_group_exclusions_subform_prefix = "geo_group_exclusions_formset"
         self.geo_group_exclusions_subform = GeoGroupExclusionsFormSet(
             data=self.data, prefix=self.geo_group_exclusions_subform_prefix
         )
