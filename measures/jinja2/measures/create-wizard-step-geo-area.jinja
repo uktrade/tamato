@@ -20,8 +20,11 @@
 {%- endset %}
 
 {% set option_html.GROUP -%}
+  <div class="govuk-form-group">
   {{ form.geo_group }}
-  {# form.geo_group_exclusions #}
+  </div>
+  {{ subform(subform=form.geo_group_exclusions_subform, field_name="geo_group_exclusion", field_plural="countries/regions", no_form_tags=no_form_tags) }}
+
 {%- endset %}
 
 {% set option_html.COUNTRY -%}

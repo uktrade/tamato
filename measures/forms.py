@@ -653,6 +653,34 @@ class ErgaOmnesExclusionsForm(forms.Form):
         ].label_from_instance = lambda obj: obj.description
 
 
+class GeoGroupExclusionsForm(forms.Form):
+    geo_group_exclusion = forms.ModelChoiceField(
+        label="",
+        queryset=GeographicalArea.objects.all(),
+        help_text="Select a country to be excluded:",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        tx = kwargs.pop("transaction", None)
+        self.transaction = tx
+        super().__init__(*args, **kwargs)
+        self.fields["geo_group_exclusion"].queryset = with_latest_description_string(
+            GeographicalArea.objects.exclude(
+                descriptions__description__isnull=True,
+            )
+            .as_at_today()
+            .approved_up_to_transaction(tx)
+            .with_latest_links("descriptions")
+            .prefetch_related("descriptions")
+            .order_by("descriptions__description"),
+            # descriptions__description" should make this implicitly distinct()
+        )
+        self.fields[
+            "geo_group_exclusion"
+        ].label_from_instance = lambda obj: obj.description
+
+
 GeoAreaFormSet = formset_factory(
     GeoAreaForm,
     formset=FormSet,
@@ -665,6 +693,16 @@ GeoAreaFormSet = formset_factory(
 
 ErgaOmnesExclusionsFormSet = formset_factory(
     ErgaOmnesExclusionsForm,
+    formset=FormSet,
+    min_num=1,
+    max_num=10,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
+
+GeoGroupExclusionsFormSet = formset_factory(
+    GeoGroupExclusionsForm,
     formset=FormSet,
     min_num=1,
     max_num=10,
@@ -695,11 +733,6 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
         required=False,
         widget=forms.Select(attrs={"class": "govuk-select"}),
     )
-    geo_group_exclusions = forms.ModelMultipleChoiceField(
-        queryset=GeographicalArea.objects.all(),
-        help_text="Select country exclusions.",
-        required=False,
-    )
 
     def __init__(self, *args, **kwargs):
         tx = kwargs.pop("transaction", None)
@@ -708,6 +741,10 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
         self.geo_area_subform_prefix = "geo_area_formset"
         self.geo_area_subform = GeoAreaFormSet(
             data=self.data, prefix=self.geo_area_subform_prefix
+        )
+        self.geo_group_exclusions_subform_prefix = "geo_area_formset"
+        self.geo_group_exclusions_subform = GeoGroupExclusionsFormSet(
+            data=self.data, prefix=self.geo_group_exclusions_subform_prefix
         )
         self.erga_omnes_exclusions_subform_prefix = "erga_omnes_exclusions_formset"
         self.erga_omnes_exclusions_subform = ErgaOmnesExclusionsFormSet(
@@ -750,10 +787,15 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
                 for item in self.erga_omnes_exclusions_subform.cleaned_data
             ]
 
+        geo_group_exclusions = None
+        if self.geo_group_exclusions_subform.is_valid():
+            geo_group_exclusions = [
+                item["geo_group_exclusion"]
+                for item in self.geo_group_exclusions_subform.cleaned_data
+            ]
+
         geo_area_type = cleaned_data.pop("geo_area_type", None)
-        # erga_omnes_exclusions = cleaned_data.pop("erga_omnes_exclusions", None)
         geo_group = cleaned_data.pop("geo_group", None)
-        geo_group_exclusions = cleaned_data.pop("geo_group_exclusions", None)
 
         if geo_area_type == self.GeoAreaType.ERGA_OMNES:
             cleaned_data["geo_area_list"] = [
@@ -774,9 +816,6 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
             "ADD",
             "DELETE",
         ]
-
-        if geo_area_type == self.GeoAreaType.ERGA_OMNES:
-            cleaned_data["geo_area_exclusions"] = erga_omnes_exclusions
 
         if geo_area_type == self.GeoAreaType.GROUP:
             if not geo_group and not geo_area_subform_submit:
@@ -807,6 +846,14 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
             ]:
                 return (
                     super().is_valid() and self.erga_omnes_exclusions_subform.is_valid()
+                )
+        elif geo_area_type == self.GeoAreaType.GROUP:
+            if self.geo_group_exclusions_subform.formset_action in [
+                "ADD",
+                "DELETE",
+            ]:
+                return (
+                    super().is_valid() and self.geo_group_exclusions_subform.is_valid()
                 )
         return super().is_valid()
 
