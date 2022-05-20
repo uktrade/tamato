@@ -71,6 +71,7 @@ class CertificateList(CertificateMixin, TamatoListView):
 
 
 class CertificateCreate(DraftCreateView):
+    """UI endpoint for creating Certificates."""  # /PS-IGNORE
 
     template_name = "certificates/create.jinja"
     form_class = forms.CertificateCreateForm
