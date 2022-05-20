@@ -22,14 +22,14 @@ class CertificateCreateForm(ValidityPeriodForm):
 
     certificate_type = forms.ModelChoiceField(
         label="Certificate type",
-        help_text="Some sort of help text will go here",
+        help_text="Selecting the right certificate type will determine whether it can be associated with measures, commodity codes, or both",
         queryset=models.CertificateType.objects.latest_approved(),
         empty_label="Select a certificate type",
     )
 
     description = forms.CharField(
         label="Certificate description",
-        help_text="Some sort of help text will go here.",
+        help_text="You may enter HTML formatting if required. See the guide below for more information.",
         widget=forms.Textarea,
     )
 
