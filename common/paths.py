@@ -82,7 +82,5 @@ def get_ui_paths(
                 url = pattern + ("/" if pattern else "") + pathname
 
                 paths.append(path(url, view.as_view(), name=name))
-            else:
-                logger.debug("No action %s for %s", classname, app_name)
 
     return paths
