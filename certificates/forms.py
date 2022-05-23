@@ -68,15 +68,11 @@ class CertificateCreateForm(ValidityPeriodForm):
     def save(self, commit=True):
         instance = super(CertificateCreateForm, self).save(commit=False)
 
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
-
+        current_transaction = WorkBasket.get_current_transaction(self.request)
         instance.sid = get_next_id(
             models.Certificate.objects.filter(
                 certificate_type__sid=instance.certificate_type.sid,
-            ).approved_up_to_transaction(tx),
+            ).approved_up_to_transaction(current_transaction),
             instance._meta.get_field("sid"),
             max_len=3,
         )
