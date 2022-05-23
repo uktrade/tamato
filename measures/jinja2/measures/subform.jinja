@@ -1,0 +1,33 @@
+{% from "components/button/macro.njk" import govukButton %}
+
+{% macro subform(subform, field_name, field_plural, no_form_tags) %}
+  {{ crispy(subform.management_form, no_form_tags) }}
+
+  {% if subform.initial|length == subform.max_num - 1 %}
+    <p class="govuk-hint">You can only select up to {{ subform.max_num }} {{ field_plural }} at this time.</p>
+  {% endif %}
+
+  {% for f in subform %}
+    {% if f[field_name].data %}
+      {{ crispy(f, no_form_tags) }}
+      {{ govukButton({
+        "text": "Delete",
+        "classes": "govuk-button--secondary",
+        "value": "1",
+        "name": subform.prefix ~ "-" ~ loop.index0 ~ "-DELETE",
+      }) }}
+    {% endif %}
+  {% endfor %}
+
+  {% if subform.initial|length < subform.max_num %}
+    {{ crispy(subform.empty_form, no_form_tags)|replace("__prefix__", subform.forms|length)|safe }}
+    {% if subform.initial|length < subform.max_num - 1 %}
+        {{ govukButton({
+          "text": "Add another",
+          "classes": "govuk-button--secondary",
+          "value": "1",
+          "name": subform.prefix ~ "-ADD",
+        }) }}
+    {% endif %}
+  {% endif %}
+{% endmacro %}
