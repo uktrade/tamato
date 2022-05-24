@@ -484,7 +484,7 @@ class WorkBasket(TimestampedMixin):
             successful=False,
         )
 
-    def delete_all_checks(self):
+    def delete_checks(self):
         """Delete all TrackedModelCheck and TransactionCheck instances related
         to the WorkBasket."""
         TrackedModelCheck.objects.filter(

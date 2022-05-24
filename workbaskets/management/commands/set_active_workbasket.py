@@ -32,21 +32,33 @@ class Command(WorkBasketCommandMixin, BaseCommand):
             and new_workbasket.status != WorkflowStatus.EDITING
         ):
             self.stdout.write(
-                f"WorkBasket {new_workbasket.pk} must have status of ARCHIVED or EDITING.",
+                self.style.ERROR(
+                    f"Error: WorkBasket {new_workbasket.pk} must have status "
+                    "of ARCHIVED or EDITING.",
+                ),
             )
             self.output_workbasket(new_workbasket)
-            exit(0)
+            self.stdout.write("Exiting.")
+            exit(1)
 
         old_workbaskets = WorkBasket.objects.filter(
             status=WorkflowStatus.EDITING,
         ).exclude(pk=new_workbasket.pk)
 
-        new_workbasket.status = WorkflowStatus.EDITING
-        new_workbasket.save()
-
-        self.stdout.write(
-            f"WorkBaskets {new_workbasket.pk} now in EDITING status:",
-        )
+        if new_workbasket.status == WorkflowStatus.EDITING:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"WorkBaskets {new_workbasket.pk} already in EDITING " "status.",
+                ),
+            )
+        else:
+            new_workbasket.status = WorkflowStatus.EDITING
+            new_workbasket.save()
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"WorkBaskets {new_workbasket.pk} now in EDITING status.",
+                ),
+            )
         self.output_workbasket(new_workbasket)
 
         # Bulk update doesn't call WorkBasket.save(), so iterate and save for
@@ -56,10 +68,12 @@ class Command(WorkBasketCommandMixin, BaseCommand):
                 w.status = WorkflowStatus.ARCHIVED
                 w.save()
                 self.stdout.write(
-                    f"Transitioned WorkBasket {w.pk} to ARCHIVED status:",
+                    self.style.SUCCESS(
+                        f"Transitioned WorkBasket {w.pk} to ARCHIVED status.",
+                    ),
                 )
                 self.output_workbasket(w)
         else:
             self.stdout.write(
-                f"No WorkBaskets transitioned to ARCHIVED status.",
+                "No WorkBaskets transitioned to ARCHIVED status.",
             )

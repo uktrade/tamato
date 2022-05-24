@@ -28,13 +28,23 @@ class Command(WorkBasketCommandMixin, BaseCommand):
         self.stdout.write(
             f"Starting business rule checks against WorkBasket {workbasket}...",
         )
-        workbasket.delete_all_checks()
+        workbasket.delete_checks()
+        # Generate new TransactionCheck and TrackedModelCheck instances for
+        # this WorkBasket.
         check_workbasket_sync(workbasket)
-
         check_errors = workbasket.tracked_model_check_errors
-        self.stdout.write(f"{check_errors.count()} error(s) found.")
-        for error in check_errors:
-            message = error.message if error.message else "(Error message unavailable)"
+        if check_errors:
             self.stdout.write(
-                f"{error.check_name} {error.model} {message}.",
+                self.style.ERROR(f"{check_errors.count()} error(s) found."),
             )
+            for error in check_errors:
+                message = (
+                    error.message if error.message else "(Error message unavailable)"
+                )
+                self.stdout.write(
+                    self.style.NOTICE(
+                        f"{error.check_name} {error.model} {message}.",
+                    ),
+                )
+        else:
+            self.stdout.write(self.style.SUCCESS("No errors found."))
