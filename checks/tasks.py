@@ -1,7 +1,7 @@
-import logging
 from itertools import cycle
 
 from celery import group
+from celery.utils.log import get_task_logger
 
 from checks.checks import applicable_to
 from checks.models import TransactionCheck
@@ -10,9 +10,9 @@ from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
-from workbaskets.validators import WorkflowStatus
 
-logger = logging.getLogger(__name__)
+# Celery logger adds the task id and status and outputs via the worker.
+logger = get_task_logger(__name__)
 
 
 @app.task(time_limit=60)
