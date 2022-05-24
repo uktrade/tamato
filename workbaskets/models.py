@@ -14,6 +14,7 @@ from django.db.models import Subquery
 from django_fsm import FSMField
 from django_fsm import transition
 
+from checks.models import TrackedModelCheck
 from checks.models import TransactionCheck
 from common.models.mixins import TimestampedMixin
 from common.models.tracked_qs import TrackedModelQuerySet
@@ -475,6 +476,23 @@ class WorkBasket(TimestampedMixin):
         recent approved transaction if no transactions are in the workbasket.
         """
         return self.transactions.last() or Transaction.approved.last()
+
+    @property
+    def tracked_model_check_errors(self):
+        return TrackedModelCheck.objects.filter(
+            transaction_check__transaction__workbasket=self,
+            successful=False,
+        )
+
+    def delete_checks(self):
+        """Delete all TrackedModelCheck and TransactionCheck instances related
+        to the WorkBasket."""
+        TrackedModelCheck.objects.filter(
+            transaction_check__transaction__workbasket=self,
+        ).delete()
+        TransactionCheck.objects.filter(
+            transaction__workbasket=self,
+        ).delete()
 
     @property
     def unchecked_or_errored_transactions(self):
