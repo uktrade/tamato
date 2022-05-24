@@ -146,9 +146,16 @@ def check_transaction_sync(transaction: Transaction):
         is_transaction_check_complete(check.pk)
 
 
-@app.task(bind=True)
+@app.task(bind=True, rate_limit="1/m")
 def update_checks(self):
-    """Triggers checking for any transaction that requires an update."""
+    """Triggers checking for any transaction that requires an update.
+
+    A rate limit is specified here to mitigate instances where this
+    task stacks up and prevents other tasks from running by monopolising
+    the worker.
+
+    TODO: Ensure this task is *not* stacking up and blocking the worker!
+    """
 
     ids_require_update = (
         Transaction.objects.exclude(
