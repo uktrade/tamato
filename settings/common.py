@@ -357,7 +357,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "check_any_unchecked_transactions": {
         "task": "checks.tasks.update_checks",
-        "schedule": timedelta(seconds=15),
+        "schedule": timedelta(seconds=60),
     },
 }
 

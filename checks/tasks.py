@@ -1,7 +1,7 @@
-import logging
 from itertools import cycle
 
 from celery import group
+from celery.utils.log import get_task_logger
 
 from checks.checks import applicable_to
 from checks.models import TransactionCheck
@@ -10,9 +10,9 @@ from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
-from workbaskets.validators import WorkflowStatus
 
-logger = logging.getLogger(__name__)
+# Celery logger adds the task id and status and outputs via the worker.
+logger = get_task_logger(__name__)
 
 
 @app.task(time_limit=60)
@@ -146,9 +146,16 @@ def check_transaction_sync(transaction: Transaction):
         is_transaction_check_complete(check.pk)
 
 
-@app.task(bind=True)
+@app.task(bind=True, rate_limit="1/m")
 def update_checks(self):
-    """Triggers checking for any transaction that requires an update."""
+    """Triggers checking for any transaction that requires an update.
+
+    A rate limit is specified here to mitigate instances where this
+    task stacks up and prevents other tasks from running by monopolising
+    the worker.
+
+    TODO: Ensure this task is *not* stacking up and blocking the worker!
+    """
 
     ids_require_update = (
         Transaction.objects.exclude(

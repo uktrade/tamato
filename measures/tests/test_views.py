@@ -502,6 +502,7 @@ def test_measure_form_wizard_finish(
             "data": {
                 "measure_create_wizard-current_step": "geographical_area",
                 "geographical_area-geo_area_type": "ERGA_OMNES",
+                "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": "",
             },
             "next_step": "commodities",
         },

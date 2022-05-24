@@ -84,6 +84,65 @@ def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
     assert form.is_valid()
 
 
+def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions(erga_omnes):
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+    data = {
+        "geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.ERGA_OMNES,
+        "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
+        "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": geo_area2.pk,
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix="")
+    assert form.is_valid()
+
+
+def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_delete(erga_omnes):
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    data = {
+        "geographical_area-geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.ERGA_OMNES,
+        "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
+        "erga_omnes_exclusions_formset-0-DELETE": "1",
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix="geographical_area")
+    assert not form.is_valid()
+
+
+def test_measure_forms_geo_area_valid_data_geo_group_exclusions(erga_omnes):
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
+    data = {
+        "geographical_area-geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.GROUP,
+        "geographical_area-geo_group": geo_group.pk,
+        "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix="geographical_area")
+    assert form.is_valid()
+
+
+def test_measure_forms_geo_area_valid_data_geo_group_exclusions_delete(erga_omnes):
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
+    data = {
+        "geographical_area-geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.GROUP,
+        "geographical_area-geo_group": geo_group.pk,
+        "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
+        "geo_group_exclusions_formset-0-DELETE": "1",
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix="geographical_area")
+    assert not form.is_valid()
+
+
+def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_add(erga_omnes):
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    data = {
+        "geo_area_type": forms.MeasureGeographicalAreaForm.GeoAreaType.ERGA_OMNES,
+        "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
+        "erga_omnes_exclusions_formset-ADD": "1",
+    }
+    form = forms.MeasureGeographicalAreaForm(data, prefix="geographical_area")
+    assert not form.is_valid()
+
+
 def test_measure_forms_geo_area_valid_data_geo_group():
     geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     data = {

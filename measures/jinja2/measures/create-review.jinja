@@ -68,6 +68,11 @@
       ("Geographical area", item.get_description().description|safe),
     ]) }}
     {% endfor %}
+    {% for item in data.geo_area_exclusions %}
+    {{ rows.extend([
+      ("Excluded geographical area", item.get_description().description|safe),
+    ]) }}
+    {% endfor %}
 
   {% endcall %}
 
