@@ -65,7 +65,7 @@ def is_transaction_check_complete(check_id: int) -> bool:
 
     if check.completed:
         check.successful = not check.model_checks.filter(successful=False).exists()
-        logger.info("Completed checking transaction %s", check.transaction.id)
+        logger.info("Completed checking %s", check.transaction.summary)
 
     check.save()
     return check.completed
@@ -108,15 +108,14 @@ def check_transaction(self, transaction_id: int):
     check, model_ids = setup_or_resume_transaction_check(transaction)
     if check.completed and not any(model_ids):
         logger.debug(
-            "Skipping check of transaction %s "
-            "because an up-to-date check already exists",
-            transaction_id,
+            "Skipping check of %s " "because an up-to-date check already exists",
+            transaction.summary,
         )
         return
 
     # Create a workflow: firstly run all of the model checks (in parallel) and
     # then once they are all done see if the transaction check is now complete.
-    logger.info("Beginning check of transaction %s", transaction_id)
+    logger.info("Beginning check of %s", transaction.summary)
     workflow = group(
         check_model.si(*args) for args in zip(model_ids, cycle([check.pk]))
     ) | is_transaction_check_complete.si(check.pk)
@@ -140,7 +139,7 @@ def check_transaction_sync(transaction: Transaction):
             transaction.pk,
         )
     else:
-        logger.info("Beginning syncronous check of transaction %s", transaction.pk)
+        logger.info("Beginning synchronous check of %s", transaction.summary)
         for model_id in model_ids:
             check_model(model_id, check.pk)
         is_transaction_check_complete(check.pk)
@@ -148,7 +147,8 @@ def check_transaction_sync(transaction: Transaction):
 
 @app.task(bind=True, rate_limit="1/m")
 def update_checks(self):
-    """Triggers checking for any transaction that requires an update.
+    """
+    Triggers checking for any transaction that requires an update.
 
     A rate limit is specified here to mitigate instances where this
     task stacks up and prevents other tasks from running by monopolising

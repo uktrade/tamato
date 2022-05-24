@@ -2,8 +2,10 @@ from unittest import mock
 
 import pytest
 
+from common.models.utils import LazyString
 from common.models.utils import LazyValue
 from common.models.utils import get_current_transaction
+from common.models.utils import lazy_string
 from common.models.utils import override_current_transaction
 from common.models.utils import set_current_transaction
 from common.tests import factories
@@ -19,6 +21,18 @@ def test_lazy_value():
     assert val.value == 0
     assert val.value == 1
     assert val.value == 2
+
+
+def test_lazy_string():
+    """Verify the lazy_string decorator returns a LazyString, and evaluates to
+    the expected string."""
+
+    @lazy_string
+    def hello():
+        return "hello world"
+
+    assert isinstance(hello(), LazyString)
+    assert str(hello()) == "hello world"
 
 
 def test_get_current_transaction_from_thread_locals():

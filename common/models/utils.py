@@ -2,6 +2,7 @@ import contextlib
 import threading
 from typing import FrozenSet
 
+import wrapt
 from django.db.models import Value
 
 _thread_locals = threading.local()
@@ -51,6 +52,25 @@ class LazyTransaction(LazyValue):
     """Proxy to support lazily evaluated Transaction instances."""
 
     allow_list = frozenset({"order", "partition", "workbasket_id"})
+
+
+class LazyString:
+    """
+    Wrapper around a function that returns a string.
+
+    Useful for logging messages that are expensive to construct.
+    """
+
+    def __init__(self, func):
+        self.func = func
+
+    def __str__(self):
+        return self.func()
+
+
+@wrapt.decorator
+def lazy_string(wrapped, instance, *args, **kwargs):
+    return LazyString(wrapped)
 
 
 def get_current_transaction():

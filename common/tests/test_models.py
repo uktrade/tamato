@@ -11,6 +11,7 @@ from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
+from common.models.utils import LazyString
 from common.tests import factories
 from common.tests import models
 from common.tests.factories import TestModel1Factory
@@ -680,3 +681,18 @@ def test_copy_nested_field_two_levels_deep():
     )
 
     assert copied_measure.conditions.first().components.first().duty_amount == 0
+
+
+def test_transaction_summary(approved_transaction):
+    """Verify that transaction.summary returns a LazyString which evaluates to a
+    string with the expected fields."""
+    # It's tricky to test lazy evaluation here, verifying an instance of LazyString works as a stand-in.
+    assert isinstance(approved_transaction.summary, LazyString)
+
+    expected_summary = (
+        f"transaction {approved_transaction.partition}, {approved_transaction.pk} "
+        f"in workbasket {approved_transaction.workbasket.pk} "
+        f"with status {approved_transaction.workbasket.status}"
+    )
+
+    assert str(approved_transaction.summary) == expected_summary

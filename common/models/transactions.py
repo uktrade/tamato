@@ -11,6 +11,7 @@ from django_fsm import FSMIntegerField
 from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
+from common.models.utils import lazy_string
 from common.renderers import counter_generator
 
 logger = getLogger(__name__)
@@ -249,6 +250,35 @@ class Transaction(TimestampedMixin):
     def add_to_transaction(self, instance, **kwargs):
         if hasattr(instance, "transaction"):
             instance.transaction = self
+
+    @lazy_string
+    def _get_summary(self):
+        """
+        Return a short summary of the transaction.
+
+        Attempts a balance between readability and enough information to debug
+        issues, so contains the pk and status of the transaction and workbasket.
+
+        Stringification is lazily evaluated, so this property can be passed to loggers.
+        """
+        return (
+            f"transaction {self.partition}, {self.pk} "
+            f"in workbasket {self.workbasket.pk} "
+            f"with status {self.workbasket.status}"
+        )
+
+    @property
+    def summary(self):
+        """
+        Return a short summary of the transaction.
+
+        Attempts a balance between readability and enough information to debug
+        issues, so contains the pk and status of the transaction and workbasket.
+
+        Stringification is lazily evaluated, so this property can be passed to loggers.
+        """
+        # This is not decorated with lazy_string because it doesn't work with properties
+        return self._get_summary()
 
 
 class TransactionGroup(models.Model):
