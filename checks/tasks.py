@@ -108,7 +108,7 @@ def check_transaction(self, transaction_id: int):
     check, model_ids = setup_or_resume_transaction_check(transaction)
     if check.completed and not any(model_ids):
         logger.debug(
-            "Skipping check of %s " "because an up-to-date check already exists",
+            "Skipping check of %s because an up-to-date check already exists",
             transaction.summary,
         )
         return

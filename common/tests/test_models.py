@@ -690,9 +690,8 @@ def test_transaction_summary(approved_transaction):
     assert isinstance(approved_transaction.summary, LazyString)
 
     expected_summary = (
-        f"transaction {approved_transaction.partition}, {approved_transaction.pk} "
-        f"in workbasket {approved_transaction.workbasket.pk} "
-        f"with status {approved_transaction.workbasket.status}"
+        f"transaction: {approved_transaction.partition}, {approved_transaction.pk} "
+        f"in workbasket: {approved_transaction.workbasket.status}, {approved_transaction.workbasket.pk}"
     )
 
     assert str(approved_transaction.summary) == expected_summary

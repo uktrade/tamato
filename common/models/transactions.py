@@ -262,9 +262,8 @@ class Transaction(TimestampedMixin):
         Stringification is lazily evaluated, so this property can be passed to loggers.
         """
         return (
-            f"transaction {self.partition}, {self.pk} "
-            f"in workbasket {self.workbasket.pk} "
-            f"with status {self.workbasket.status}"
+            f"transaction: {self.partition}, {self.pk} "
+            f"in workbasket: {self.workbasket.status}, {self.workbasket.pk}"
         )
 
     @property
@@ -273,9 +272,11 @@ class Transaction(TimestampedMixin):
         Return a short summary of the transaction.
 
         Attempts a balance between readability and enough information to debug
-        issues, so contains the pk and status of the transaction and workbasket.
+        issues, so contains the partion, order for transactions and pk, status
+        for workbaskets.
 
-        Stringification is lazily evaluated, so this property can be passed to loggers.
+        Stringification happens lazily so this property is suitable for use
+        when logging.
         """
         # This is not decorated with lazy_string because it doesn't work with properties
         return self._get_summary()
