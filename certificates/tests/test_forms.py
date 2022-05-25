@@ -16,11 +16,11 @@ from common.util import TaricDateRange
 pytestmark = pytest.mark.django_db
 
 
-def test_form_save_creates_new_certificate_sid_and_certificate_type_sid_combo(
+def test_form_save_creates_new_certificate(
     session_with_workbasket,
 ):
-    """Tests that two certificates of the same type are created with different
-    sid's."""
+    """Tests that the certificate create form creates a new certificate, and
+    that two certificates of the same type are created with different sid's."""
 
     certificate_type = factories.CertificateTypeFactory.create()
     valid_between = TaricDateRange(
@@ -33,17 +33,22 @@ def test_form_save_creates_new_certificate_sid_and_certificate_type_sid_combo(
         sid="001",
     )
 
-    data = {
+    certificate_b_data = {
         "certificate_type": certificate_type.pk,
         "start_date_0": 2,
         "start_date_1": 2,
         "start_date_2": 2022,
         "description": "A participation certificate",
     }
-    form = forms.CertificateCreateForm(data=data, request=session_with_workbasket)
+    form = forms.CertificateCreateForm(
+        data=certificate_b_data,
+        request=session_with_workbasket,
+    )
     certificate_b = form.save(commit=False)
 
+    assert certificate_a.certificate_type == certificate_b.certificate_type
     assert certificate_a.sid != certificate_b.sid
+    assert certificate_b.sid == "002"
 
 
 @pytest.mark.parametrize(
@@ -72,5 +77,13 @@ def test_form_save_creates_new_certificate_sid_and_certificate_type_sid_combo(
     ),
 )
 def test_certificate_create_form(use_create_form, new_data, expected_valid):
+    """
+    Tests that if invalid data is passed to the create certificate form, a
+    validation error is raised.
+
+    In this particular test, the first test case is empty, and we assign
+    "expected_valid" to be false. The second test case passes in valid data, and
+    we assign "expected_valid" to be true.
+    """
     with raises_if(ValidationError, not expected_valid):
         use_create_form(models.Certificate, new_data)
