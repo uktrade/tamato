@@ -355,10 +355,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
         "schedule": timedelta(minutes=30),
     },
-    "check_any_unchecked_transactions": {
-        "task": "checks.tasks.update_checks",
-        "schedule": timedelta(seconds=60),
-    },
 }
 
 # -- Google Tag Manager
