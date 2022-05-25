@@ -1,6 +1,6 @@
 FROM node:lts-buster-slim AS jsdeps
 
-RUN apt-get update -y
+RUN apt-get update -y --fix-missing
 RUN apt-get install -y g++ build-essential python3 libmagic1
 
 COPY . .
