@@ -52,21 +52,13 @@ class CertificateCreateForm(ValidityPeriodForm):
             Submit("submit", "Save"),
         )
 
-    def clean(self):
-        cleaned_data = super().clean()
-
-        if self.errors:
-            return cleaned_data
-
-        cleaned_data["certificate_description"] = models.CertificateDescription(
-            description=cleaned_data["description"],
-            validity_start=cleaned_data["valid_between"].lower,
-        )
-
-        return cleaned_data
-
     def save(self, commit=True):
         instance = super(CertificateCreateForm, self).save(commit=False)
+
+        self.cleaned_data["certificate_description"] = models.CertificateDescription(
+            description=self.cleaned_data["description"],
+            validity_start=self.cleaned_data["valid_between"].lower,
+        )
 
         current_transaction = WorkBasket.get_current_transaction(self.request)
         instance.sid = get_next_id(
