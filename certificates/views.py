@@ -1,7 +1,6 @@
 from typing import Type
 
 from django.db import transaction
-from django.http import HttpResponseRedirect
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -90,7 +89,7 @@ class CertificateCreate(DraftCreateView):
         description.update_type = UpdateType.CREATE
         description.transaction = transaction
         description.save()
-        return HttpResponseRedirect(self.get_success_url())
+        return super().form_valid(form)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
