@@ -2,6 +2,7 @@ import random
 import time
 from io import BytesIO
 from logging import getLogger
+from typing import Optional
 from typing import Sequence
 
 from common.celery import app
@@ -124,7 +125,7 @@ def find_and_run_next_batch_chunks(
     workbasket_status: str,
     partition_scheme_setting: str,
     username: str,
-    record_group: Sequence[str] = None,
+    record_group: Optional[Sequence[str]] = None,
 ):
     """
     Finds the next set of chunks for a batch to run.

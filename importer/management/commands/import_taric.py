@@ -1,8 +1,11 @@
+from typing import Sequence
+
 from django.core.management import BaseCommand
 
 from importer.management.commands.chunk_taric import chunk_taric
 from importer.management.commands.chunk_taric import setup_batch
 from importer.management.commands.run_import_batch import run_batch
+from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.validators import WorkflowStatus
 
@@ -15,6 +18,7 @@ def import_taric(
     name: str,
     split_codes: bool = False,
     dependencies=None,
+    record_group: Sequence[str] = None,
 ):
     batch = setup_batch(
         batch_name=name,
@@ -24,7 +28,13 @@ def import_taric(
     with open(taric3_file, "rb") as seed_file:
         batch = chunk_taric(seed_file, batch)
 
-    run_batch(batch.name, status, partition_scheme_setting, username)
+    run_batch(
+        batch.name,
+        status,
+        partition_scheme_setting,
+        username,
+        record_group=record_group,
+    )
 
 
 class Command(BaseCommand):
@@ -78,8 +88,17 @@ class Command(BaseCommand):
             help="List of batches that need to finish before the current batch can run",
             action="append",
         )
+        parser.add_argument(
+            "-c",
+            "--commodities",
+            help="Only import commodities",
+            action="store_true",
+        )
 
     def handle(self, *args, **options):
+        record_group = (
+            TARIC_RECORD_GROUPS["commodities"] if options["commodities"] else None
+        )
         import_taric(
             taric3_file=options["taric3_file"],
             username=options["username"],
@@ -88,4 +107,5 @@ class Command(BaseCommand):
             name=options["name"],
             split_codes=options["split_codes"],
             dependencies=options["dependencies"],
+            record_group=record_group,
         )
