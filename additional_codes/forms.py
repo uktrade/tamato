@@ -139,9 +139,9 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
         tx = WorkBasket.get_current_transaction(self.request)
 
         highest_sid = (
-            models.AdditionalCode.objects.filter(type__sid=instance.type.sid)
-            .approved_up_to_transaction(tx)
-            .aggregate(Max("sid"))["sid__max"]
+            models.AdditionalCode.objects.approved_up_to_transaction(tx).aggregate(
+                Max("sid"),
+            )["sid__max"]
         ) or 0
         instance.sid = highest_sid + 1
 
