@@ -538,6 +538,9 @@ def test_measure_form_wizard_finish(
             "measure-ui-create",
             kwargs={"step": step_data["data"]["measure_create_wizard-current_step"]},
         )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
         response = valid_user_client.post(url, step_data["data"])
         assert response.status_code == 302
 
@@ -638,7 +641,7 @@ def test_measure_form_wizard_create_measures(
     """
     assert len(measure_data) == 4
     assert set(
-        measures.values_list("pk", "goods_nomenclature_id", "geographical_area_id")
+        measures.values_list("pk", "goods_nomenclature_id", "geographical_area_id"),
     ) == {
         (measure_data[0].pk, commodity1.pk, geo_area1.pk),
         (measure_data[1].pk, commodity1.pk, geo_area2.pk),
