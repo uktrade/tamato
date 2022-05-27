@@ -1128,3 +1128,4 @@ TrackedModelCheck
 f"Error
 TransactionCheck
 Restart
+MeasureFootnoteAssociation
