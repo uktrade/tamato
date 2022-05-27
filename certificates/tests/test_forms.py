@@ -44,6 +44,49 @@ def test_form_save_creates_new_certificate(
     assert certificate_b.sid == "002"
 
 
+def test_certificate_type_does_not_increment_id(
+    session_with_workbasket,
+):
+    """Tests that when two certificates are made with different types, the sids
+    are not incremented."""
+
+    certificate_type_a = factories.CertificateTypeFactory.create()
+    certificate_type_b = factories.CertificateTypeFactory.create()
+
+    certificates = [
+        {
+            "certificate_type": certificate_type_a.pk,
+            "start_date_0": 2,
+            "start_date_1": 2,
+            "start_date_2": 2022,
+            "description": "certificate 1",
+        },
+        {
+            "certificate_type": certificate_type_b.pk,
+            "start_date_0": 2,
+            "start_date_1": 2,
+            "start_date_2": 2022,
+            "description": "certificate 2",
+        },
+    ]
+    completed_certificates = []
+
+    for certificate in certificates:
+        form = forms.CertificateCreateForm(
+            data=certificate,
+            request=session_with_workbasket,
+        )
+        saved_certificate = form.save(commit=False)
+        completed_certificates.append(saved_certificate)
+
+    assert (
+        completed_certificates[0].certificate_type
+        != completed_certificates[1].certificate_type
+    )
+    assert completed_certificates[0].sid == "001"
+    assert completed_certificates[1].sid == "001"
+
+
 def test_certificate_create_form_validates_data(session_with_workbasket):
     """A test to check that the create form validates data and ciphers out
     incorrect submissions."""
