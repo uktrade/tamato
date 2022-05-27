@@ -444,12 +444,31 @@ class MeasureForm(ValidityPeriodForm):
                 .approved_up_to_transaction(instance.transaction)
                 .first()
             )
-            models.FootnoteAssociationMeasure.objects.create(
-                footnoted_measure=instance,
-                associated_footnote=footnote,
-                update_type=UpdateType.CREATE,
-                transaction=instance.transaction,
+
+            existing_association = (
+                models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
+                    instance.transaction,
+                )
+                .filter(
+                    footnoted_measure__sid=instance.sid,
+                    associated_footnote__footnote_id=footnote.footnote_id,
+                    associated_footnote__footnote_type__footnote_type_id=footnote.footnote_type.footnote_type_id,
+                )
+                .first()
             )
+            if existing_association:
+                existing_association.new_version(
+                    workbasket=WorkBasket.current(self.request),
+                    transaction=instance.transaction,
+                    footnoted_measure=instance,
+                )
+            else:
+                models.FootnoteAssociationMeasure.objects.create(
+                    footnoted_measure=instance,
+                    associated_footnote=footnote,
+                    update_type=UpdateType.CREATE,
+                    transaction=instance.transaction,
+                )
 
         return instance
 
@@ -725,7 +744,9 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
         COUNTRY = "COUNTRY", "Specific countries or regions"
 
     geo_area_type = forms.ChoiceField(
-        label="", choices=GeoAreaType.choices, required=False
+        label="",
+        choices=GeoAreaType.choices,
+        required=False,
     )
     geo_group = forms.ModelChoiceField(
         queryset=GeographicalArea.objects.all(),
@@ -740,15 +761,18 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.geo_area_subform_prefix = "geo_area_formset"
         self.geo_area_subform = GeoAreaFormSet(
-            data=self.data, prefix=self.geo_area_subform_prefix
+            data=self.data,
+            prefix=self.geo_area_subform_prefix,
         )
         self.geo_group_exclusions_subform_prefix = "geo_group_exclusions_formset"
         self.geo_group_exclusions_subform = GeoGroupExclusionsFormSet(
-            data=self.data, prefix=self.geo_group_exclusions_subform_prefix
+            data=self.data,
+            prefix=self.geo_group_exclusions_subform_prefix,
         )
         self.erga_omnes_exclusions_subform_prefix = "erga_omnes_exclusions_formset"
         self.erga_omnes_exclusions_subform = ErgaOmnesExclusionsFormSet(
-            data=self.data, prefix=self.erga_omnes_exclusions_subform_prefix
+            data=self.data,
+            prefix=self.erga_omnes_exclusions_subform_prefix,
         )
 
         self.fields["geographical_area"].required = False
@@ -801,11 +825,11 @@ class MeasureGeographicalAreaForm(forms.ModelForm):
             cleaned_data["geo_area_list"] = [
                 (
                     GeographicalArea.objects.approved_up_to_transaction(
-                        self.transaction
+                        self.transaction,
                     )
                     .erga_omnes()
                     .get()
-                )
+                ),
             ]
             cleaned_data["geo_area_exclusions"] = erga_omnes_exclusions
 
