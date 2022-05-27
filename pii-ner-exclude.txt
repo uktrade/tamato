@@ -1129,3 +1129,4 @@ f"Error
 TransactionCheck
 Restart
 MeasureFootnoteAssociation
+CELERY_TASK_ALWAYS_EAGER"
