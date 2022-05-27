@@ -561,6 +561,9 @@ def test_measure_form_wizard_finish(
             "measure-ui-create",
             kwargs={"step": step_data["data"]["measure_create_wizard-current_step"]},
         )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
         response = valid_user_client.post(url, step_data["data"])
         assert response.status_code == 302
 
