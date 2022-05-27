@@ -20,6 +20,13 @@ from workbaskets.models import WorkBasket
 class CertificateCreateForm(ValidityPeriodForm):
     """The form for creating a new certificate."""
 
+    sid = forms.CharField(
+        label="Certificate identifer",
+        help_text="If another government department has supplied you with a 3 letter identifer, enter it in here.",
+        widget=forms.TextInput,
+        required=False,
+    )
+
     certificate_type = forms.ModelChoiceField(
         label="Certificate type",
         help_text="Selecting the right certificate type will determine whether it can be associated with measures, commodity codes, or both",
@@ -45,6 +52,7 @@ class CertificateCreateForm(ValidityPeriodForm):
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
+            "sid",
             "certificate_type",
             "start_date",
             Field.textarea("description", rows=5),
@@ -53,6 +61,7 @@ class CertificateCreateForm(ValidityPeriodForm):
         )
 
     def save(self, commit=True):
+
         instance = super(CertificateCreateForm, self).save(commit=False)
 
         self.cleaned_data["certificate_description"] = models.CertificateDescription(
@@ -61,13 +70,17 @@ class CertificateCreateForm(ValidityPeriodForm):
         )
 
         current_transaction = WorkBasket.get_current_transaction(self.request)
-        instance.sid = get_next_id(
-            models.Certificate.objects.filter(
-                certificate_type__sid=instance.certificate_type.sid,
-            ).approved_up_to_transaction(current_transaction),
-            instance._meta.get_field("sid"),
-            max_len=3,
-        )
+        if self.cleaned_data["sid"]:
+            instance.sid = self.cleaned_data["sid"]
+        else:
+            instance.sid = get_next_id(
+                models.Certificate.objects.filter(
+                    sid__regex=r"^[0-9]*$",
+                    certificate_type__sid=instance.certificate_type.sid,
+                ).approved_up_to_transaction(current_transaction),
+                instance._meta.get_field("sid"),
+                max_len=3,
+            )
         if commit:
             instance.save()
         return instance
