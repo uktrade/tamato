@@ -19,6 +19,8 @@ from common.tests.util import view_urlpattern_ids
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from measures.business_rules import ME70
+from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
@@ -286,6 +288,27 @@ def test_measure_update_get_footnotes(session_with_workbasket):
     footnotes = view.get_footnotes(association.footnoted_measure)
 
     assert len(footnotes) == 0
+
+
+# https://uktrade.atlassian.net/browse/TP2000-340
+def test_measure_update_updates_footnote_association(measure_form, client, valid_user):
+    """Tests that when updating a measure with an existing footnote the
+    MeasureFootnoteAssociation linking the measure and footnote is updated to
+    point at the new, updated version of the measure."""
+    post_data = measure_form.data
+    post_data = {k: v for k, v in post_data.items() if v is not None}
+    post_data["update_type"] = 1
+    assoc = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure_form.instance,
+    )
+    url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
+    client.force_login(valid_user)
+    client.post(url, data=post_data)
+    new_assoc = FootnoteAssociationMeasure.objects.last()
+
+    ME70(new_assoc.transaction).validate(new_assoc)
+    assert new_assoc.update_type == UpdateType.UPDATE
+    assert new_assoc.version_group == assoc.version_group
 
 
 def test_measure_update_create_conditions(
@@ -638,7 +661,7 @@ def test_measure_form_wizard_create_measures(
     """
     assert len(measure_data) == 4
     assert set(
-        measures.values_list("pk", "goods_nomenclature_id", "geographical_area_id")
+        measures.values_list("pk", "goods_nomenclature_id", "geographical_area_id"),
     ) == {
         (measure_data[0].pk, commodity1.pk, geo_area1.pk),
         (measure_data[1].pk, commodity1.pk, geo_area2.pk),
