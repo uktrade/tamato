@@ -10,11 +10,76 @@ from django.core.exceptions import ValidationError
 from certificates import models
 from common.forms import CreateDescriptionForm
 from common.forms import DescriptionForm
+from common.forms import DescriptionHelpBox
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
+from common.util import get_next_id
+from workbaskets.models import WorkBasket
+
+
+class CertificateCreateForm(ValidityPeriodForm):
+    """The form for creating a new certificate."""
+
+    certificate_type = forms.ModelChoiceField(
+        label="Certificate type",
+        help_text="Selecting the right certificate type will determine whether it can be associated with measures, commodity codes, or both",
+        queryset=models.CertificateType.objects.latest_approved(),
+        empty_label="Select a certificate type",
+    )
+
+    description = forms.CharField(
+        label="Certificate description",
+        help_text="You may enter HTML formatting if required. See the guide below for more information.",
+        widget=forms.Textarea,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        self.fields[
+            "certificate_type"
+        ].label_from_instance = lambda obj: f"{obj.sid} - {obj.description}"
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "certificate_type",
+            "start_date",
+            Field.textarea("description", rows=5),
+            DescriptionHelpBox(),
+            Submit("submit", "Save"),
+        )
+
+    def save(self, commit=True):
+        instance = super(CertificateCreateForm, self).save(commit=False)
+
+        self.cleaned_data["certificate_description"] = models.CertificateDescription(
+            description=self.cleaned_data["description"],
+            validity_start=self.cleaned_data["valid_between"].lower,
+        )
+
+        current_transaction = WorkBasket.get_current_transaction(self.request)
+        instance.sid = get_next_id(
+            models.Certificate.objects.filter(
+                certificate_type__sid=instance.certificate_type.sid,
+            ).approved_up_to_transaction(current_transaction),
+            instance._meta.get_field("sid"),
+            max_len=3,
+        )
+        if commit:
+            instance.save()
+        return instance
+
+    class Meta:
+        model = models.Certificate
+        fields = ("certificate_type", "valid_between")
 
 
 class CertificateForm(ValidityPeriodForm):
+    """The form for editing a certificate."""
+
     code = forms.CharField(
         label="Certificate ID",
         required=False,

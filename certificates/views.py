@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.db import transaction
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -11,6 +12,7 @@ from certificates.filters import CertificateFilterBackend
 from certificates.serializers import CertificateTypeSerializer
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -65,6 +67,38 @@ class CertificateList(CertificateMixin, TamatoListView):
         "sid",
         "descriptions__description",
     ]
+
+
+class CertificateCreate(DraftCreateView):
+    """UI endpoint for creating Certificates."""  # /PS-IGNORE
+
+    template_name = "certificates/create.jinja"
+    form_class = forms.CertificateCreateForm
+
+    @transaction.atomic
+    def form_valid(self, form):
+        transaction = self.get_transaction()
+        transaction.save()
+        self.object = form.save(commit=False)
+        self.object.update_type = UpdateType.CREATE
+        self.object.transaction = transaction
+        self.object.save()
+
+        description = form.cleaned_data["certificate_description"]
+        description.described_certificate = self.object
+        description.update_type = UpdateType.CREATE
+        description.transaction = transaction
+        description.save()
+        return super().form_valid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
+class CertificateConfirmCreate(CertificateMixin, TrackedModelDetailView):
+    template_name = "common/confirm_create.jinja"
 
 
 class CertificateDetail(CertificateMixin, TrackedModelDetailView):
