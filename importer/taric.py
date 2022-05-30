@@ -85,6 +85,7 @@ class MessageParser(ElementParser):
         :param data: A dict of parsed element, mapping field names to values
         :param transaction_id: The primary key of the transaction to add records to
         """
+        logger.debug("Saving message id: %s", data.get("id"))
         for record_data in data.get("record", []):
             self.record.save(record_data, transaction_id)
 
