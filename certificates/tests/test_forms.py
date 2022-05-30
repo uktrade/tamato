@@ -111,3 +111,70 @@ def test_certificate_create_form_validates_data(session_with_workbasket):
     assert form.errors["certificate_type"] == error_string
     assert form.errors["start_date"] == date_error_string
     assert not form.is_valid()
+
+
+def test_certificate_create_with_custom_sid(session_with_workbasket):
+    """Tests that a certificate can be created with a custom sid inputted by the
+    user."""
+    certificate_type = factories.CertificateTypeFactory.create()
+    data = {
+        "certificate_type": certificate_type.pk,
+        "start_date_0": 2,
+        "start_date_1": 2,
+        "start_date_2": 2022,
+        "description": "A participation certificate",
+        "sid": "A01",
+    }
+    form = forms.CertificateCreateForm(
+        data=data,
+        request=session_with_workbasket,
+    )
+    certificate = form.save(commit=False)
+
+    assert certificate.sid == "A01"
+
+
+def test_certificate_create_ignores_non_numeric_sid(session_with_workbasket):
+    """Tests that a certificate is created with a numeric sid when a certificate
+    of the same type with a non-numeric sid already exists."""
+    certificate_type = factories.CertificateTypeFactory.create()
+    factories.CertificateFactory.create(certificate_type=certificate_type, sid="A01")
+    data = {
+        "certificate_type": certificate_type.pk,
+        "start_date_0": 2,
+        "start_date_1": 2,
+        "start_date_2": 2022,
+        "description": "A participation certificate",
+    }
+    form = forms.CertificateCreateForm(
+        data=data,
+        request=session_with_workbasket,
+    )
+    certificate = form.save(commit=False)
+
+    assert certificate.sid == "001"
+
+
+def test_validation_error_raised_for_duplicate_sid(session_with_workbasket):
+    """Tests that a validation error is raised on create when a certificate of
+    the same type with the same sid already exists."""
+    certificate_type = factories.CertificateTypeFactory.create()
+    factories.CertificateFactory.create(certificate_type=certificate_type, sid="A01")
+    data = {
+        "certificate_type": certificate_type.pk,
+        "start_date_0": 2,
+        "start_date_1": 2,
+        "start_date_2": 2022,
+        "description": "A participation certificate",
+        "sid": "A01",
+    }
+    form = forms.CertificateCreateForm(
+        data=data,
+        request=session_with_workbasket,
+    )
+
+    assert not form.is_valid()
+    assert (
+        f"Certificate with sid A01 and type {certificate_type} already exists."
+        in form.errors["sid"]
+    )
