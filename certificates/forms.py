@@ -52,16 +52,31 @@ class CertificateCreateForm(ValidityPeriodForm):
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            "sid",
             "certificate_type",
+            "sid",
             "start_date",
             Field.textarea("description", rows=5),
             DescriptionHelpBox(),
             Submit("submit", "Save"),
         )
 
-    def save(self, commit=True):
+    def clean_sid(self):
+        sid = self.cleaned_data["sid"]
+        if sid:
+            certificate_type = self.cleaned_data["certificate_type"]
+            tx = WorkBasket.get_current_transaction(self.request)
+            if (
+                models.Certificate.objects.approved_up_to_transaction(tx)
+                .filter(sid=sid, certificate_type=certificate_type)
+                .exists()
+            ):
+                raise ValidationError(
+                    f"Certificate with sid {sid} and type {certificate_type} already exists.",
+                )
 
+        return sid
+
+    def save(self, commit=True):
         instance = super(CertificateCreateForm, self).save(commit=False)
 
         self.cleaned_data["certificate_description"] = models.CertificateDescription(
@@ -69,10 +84,9 @@ class CertificateCreateForm(ValidityPeriodForm):
             validity_start=self.cleaned_data["valid_between"].lower,
         )
 
-        current_transaction = WorkBasket.get_current_transaction(self.request)
-        if self.cleaned_data["sid"]:
-            instance.sid = self.cleaned_data["sid"]
-        else:
+        if not instance.sid:
+            current_transaction = WorkBasket.get_current_transaction(self.request)
+            # Filter certificate by type and find the highest sid, using regex to ignore legacy, non-numeric identifiers
             instance.sid = get_next_id(
                 models.Certificate.objects.filter(
                     sid__regex=r"^[0-9]*$",
@@ -81,13 +95,14 @@ class CertificateCreateForm(ValidityPeriodForm):
                 instance._meta.get_field("sid"),
                 max_len=3,
             )
+
         if commit:
             instance.save()
         return instance
 
     class Meta:
         model = models.Certificate
-        fields = ("certificate_type", "valid_between")
+        fields = ("certificate_type", "valid_between", "sid")
 
 
 class CertificateForm(ValidityPeriodForm):
