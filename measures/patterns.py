@@ -316,6 +316,7 @@ class MeasureCreationPattern:
                 workbasket,
                 MeasureConditionComponent,
                 "condition",
+                transaction=condition.transaction,
             )
 
     @transaction.atomic

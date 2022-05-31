@@ -4,6 +4,7 @@ from math import floor
 from typing import Type
 
 from common.models import TrackedModel
+from common.models.transactions import Transaction
 from common.validators import UpdateType
 from measures.models import MeasureComponent
 from workbaskets.models import WorkBasket
@@ -31,6 +32,7 @@ def diff_components(
     workbasket: WorkBasket,
     component_output: Type[TrackedModel] = MeasureComponent,
     reverse_attribute: str = "component_measure",
+    transaction: Type[Transaction] = None,
 ):
     from measures.parsers import DutySentenceParser
 
@@ -46,7 +48,7 @@ def diff_components(
     new_by_id = {c.duty_expression.id: c for c in new_components}
     old_by_id = {c.duty_expression.id: c for c in old_components}
     all_ids = set(new_by_id.keys()) | set(old_by_id.keys())
-    update_transaction = None
+    update_transaction = transaction if transaction else None
     for id in all_ids:
         new = new_by_id.get(id)
         old = old_by_id.get(id)
@@ -64,7 +66,9 @@ def diff_components(
             # Component exists only in new set - CREATE it
             new.update_type = UpdateType.CREATE
             setattr(new, reverse_attribute, instance)
-            new.transaction = workbasket.new_transaction()
+            new.transaction = (
+                transaction if transaction else workbasket.new_transaction()
+            )
             new.save()
 
         elif old:

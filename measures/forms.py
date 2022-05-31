@@ -427,6 +427,7 @@ class MeasureForm(ValidityPeriodForm):
                 WorkBasket.current(self.request),
                 models.MeasureComponent,
                 "component_measure",
+                transaction=instance.transaction,
             )
 
         footnote_pks = [
