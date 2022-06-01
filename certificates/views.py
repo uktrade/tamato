@@ -84,12 +84,17 @@ class CertificateCreate(DraftCreateView):
         self.object.transaction = transaction
         self.object.save()
 
+        return super().form_valid(form)
+
+    def get_result_object(self, form):
+        object = super().get_result_object(form)
         description = form.cleaned_data["certificate_description"]
         description.described_certificate = self.object
         description.update_type = UpdateType.CREATE
-        description.transaction = transaction
+        description.transaction = object.transaction
         description.save()
-        return super().form_valid(form)
+
+        return object
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
