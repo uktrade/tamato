@@ -60,12 +60,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "-S",
             "--status",
-            choices=[
-                WorkflowStatus.EDITING.value,
-                WorkflowStatus.PROPOSED.value,
-                WorkflowStatus.APPROVED.value,
-                WorkflowStatus.PUBLISHED.value,
-            ],
+            choices=WorkflowStatus.values,
             help="The status of the workbaskets containing the import changes.",
             type=str,
         )
