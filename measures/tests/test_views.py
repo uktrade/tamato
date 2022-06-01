@@ -22,6 +22,7 @@ from common.views import TrackedModelDetailMixin
 from measures.business_rules import ME70
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
+from measures.models import MeasureCondition
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
@@ -250,6 +251,7 @@ def test_measure_update_duty_sentence(
         assert components.exists()
         assert components.count() == 1
         assert components.first().duty_amount == 10.000
+        assert components.first().transaction == measure.transaction
 
 
 # https://uktrade.atlassian.net/browse/TP2000-144
@@ -386,8 +388,8 @@ def test_measure_update_edit_conditions(
         sid=measure.sid,
     )
 
-    # We expect one transaction for updating the measure and updating the condition, one for deleting a component, and one for updating a component
-    assert Transaction.objects.count() == transaction_count + 3
+    # We expect one transaction for updating the measure and updating the condition, one for deleting a component and updating a component
+    assert Transaction.objects.count() == transaction_count + 2
     assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 1
 
     condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
@@ -400,8 +402,12 @@ def test_measure_update_edit_conditions(
     components = condition.components.approved_up_to_transaction(tx).all()
 
     assert components.count() == 1
-    assert components.first().duty_amount == 10
-    assert components.first().update_type == UpdateType.UPDATE
+
+    component = components.first()
+
+    assert component.duty_amount == 10
+    assert component.update_type == UpdateType.UPDATE
+    assert component.transaction == condition.transaction
 
 
 def test_measure_update_remove_conditions(
@@ -758,6 +764,17 @@ def test_measure_form_wizard_create_measures(
         (measure_data[3].pk, Decimal("8.800"), None),
         (measure_data[3].pk, Decimal("1.700"), "EUR"),
     }
+
+    sids = measures.values_list("sid")
+    conditions = MeasureCondition.objects.filter(
+        dependent_measure__sid__in=sids,
+    ).exclude(components__isnull=True)
+
+    # Check that condition components are created with same transaction as their components, to avoid an ActionRequiresDuty rule violation
+    # https://uktrade.atlassian.net/browse/TP2000-344
+    assert set(conditions.values_list("transaction")) == set(
+        conditions.values_list("components__transaction"),
+    )
 
 
 @pytest.mark.parametrize("step", ["commodities", "conditions"])
