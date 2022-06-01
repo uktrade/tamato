@@ -47,6 +47,7 @@ def test_certificate_create_form_creates_certificate_description_object(
 
     assert certificate.sid == certificate_description.described_certificate.sid
     assert certificate_description.validity_start == datetime.date(2022, 2, 2)
+    assert certificate.transaction == certificate_description.transaction
 
 
 @pytest.mark.parametrize(
