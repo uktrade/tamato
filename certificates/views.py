@@ -86,6 +86,7 @@ class CertificateCreate(DraftCreateView):
 
         return super().form_valid(form)
 
+    @transaction.atomic
     def get_result_object(self, form):
         object = super().get_result_object(form)
         description = form.cleaned_data["certificate_description"]
