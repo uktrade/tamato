@@ -34,6 +34,19 @@ def diff_components(
     reverse_attribute: str = "component_measure",
     transaction: Type[Transaction] = None,
 ):
+    """
+    Takes a start_date and component_output (MeasureComponent is the default)
+    and creates an instance of DutySentenceParser.
+
+    Expects a duty_sentence string and passes this to parser to generate a list
+    of new components. Then compares this list with existing components on the
+    model instance (either a Measure or a MeasureCondition) and determines
+    whether existing components are to be updated, created, or deleted.
+    Optionally accepts a Transaction, which should be passed when the method is
+    called during the creation of a measure or condition, to minimise the number
+    of transactions and avoid business rule violations (e.g.
+    ActionRequiresDuty).
+    """
     from measures.parsers import DutySentenceParser
 
     parser = DutySentenceParser.get(
