@@ -1,10 +1,10 @@
 """
-This is a "run once" script to transition imports out of their RUNNING status
-that can be correctly manipulated via existing Django management commands.
+This is a "run once" script to transition imports out of their RUNNING status so
+that they may be correctly manipulated via existing Django management commands
+or re-imported.
 
-In order to run this script, from a Tamato virtualenv:
-
-    python manage.py runscript data_patches.TP2000_338_set_chunks_status
+Run this script from a Tamato virtualenv:     python manage.py runscript
+data_patches.TP2000_338_set_chunks_status
 """
 
 
@@ -20,11 +20,11 @@ from importer.models import ImporterXMLChunk
 @atomic
 def set_chunks_status(batch, status):
     """
-    Transition chunks of a batch import to status.
+    Transition chunks of a batch import to the given status.
 
-    If any chunks for a batch are in DONE status then more sophisticated remaial
-    effor is required than this function offers and so an exception will be
-    raised.
+    If any chunks for a batch are in DONE status then more sophisticated
+    remedial effort is required than this function offers and so an exception
+    will be raised.
     """
     batch_chunks = ImporterXMLChunk.objects.filter(batch=batch)
     print(f"'{batch}' has {batch_chunks.count()} chunk(s).")
