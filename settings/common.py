@@ -357,6 +357,10 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+SQLITE_EXCLUDED_APPS = [
+    "checks",
+]
+
 # -- Google Tag Manager
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID")
 
