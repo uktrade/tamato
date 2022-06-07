@@ -2,6 +2,7 @@ from unittest.mock import patch
 from urllib.parse import urlparse
 
 import factory
+import freezegun
 import pytest
 from pytest_django.asserts import assertQuerysetEqual  # type: ignore
 
@@ -14,6 +15,7 @@ from common.models.transactions import TransactionPartition
 from common.models.utils import LazyString
 from common.tests import factories
 from common.tests import models
+from common.tests.factories import EnvelopeFactory
 from common.tests.factories import TestModel1Factory
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
@@ -24,6 +26,7 @@ from footnotes.models import FootnoteType
 from measures.models import MeasureCondition
 from regulations.models import Group
 from regulations.models import Regulation
+from taric.models import Envelope
 from workbaskets.tasks import check_workbasket_sync
 
 pytestmark = pytest.mark.django_db
@@ -695,3 +698,30 @@ def test_transaction_summary(approved_transaction):
     )
 
     assert str(approved_transaction.summary) == expected_summary
+
+
+@freezegun.freeze_time("2023-01-01")
+@pytest.mark.parametrize(
+    "year,first_envelope_id,next_envelope_id",
+    [
+        (2023, "230001", "230002"),
+        (2023, "239998", "239999"),
+    ],
+)
+def test_next_envelope_id(year, first_envelope_id, next_envelope_id):
+    """Verify that envelope ID is made up of two digits of the year and a 4
+    digit counter starting from 0001."""
+    with freezegun.freeze_time(f"{year}-01-01"):
+        assert EnvelopeFactory.create(envelope_id=first_envelope_id)
+        assert Envelope.next_envelope_id() == next_envelope_id
+
+
+def test_next_envelope_id_overflow():
+    """Since the counter contains 4 digits, 9999 envelopes can be created a
+    year, attempting to create more should raise a ValueError."""
+
+    with freezegun.freeze_time("2023-01-01"):
+        assert EnvelopeFactory.create(envelope_id="239999").envelope_id == "239999"
+
+        with pytest.raises(ValueError):
+            Envelope.next_envelope_id()
