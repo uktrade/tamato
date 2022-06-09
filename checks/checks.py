@@ -1,5 +1,6 @@
 from functools import cached_property
 from typing import Collection
+from typing import Dict
 from typing import Iterator
 from typing import Optional
 from typing import Tuple
@@ -89,30 +90,71 @@ class BusinessRuleChecker(Checker):
 
     This class is expected to be sub-typed for a specific rule by a call to
     ``of()``.
+
+    Attributes:
+        checker_cache (dict): (class attribute)  Cache of Business checkers created by ``of()``.
     """
 
     rule: Type[BusinessRule]
 
+    _checker_cache: Dict[str, BusinessRule] = {}
+
     @classmethod
     def of(cls: Type, rule_type: Type[BusinessRule]) -> Type:
-        """Returns a new checker class that can run the supplied rule."""
+        """
+        Return a subclass of a Checker, e.g. BusinessRuleChecker,
+        IndirectBusinessRuleChecker that runs the passed in business rule.
 
-        class RuleChecker(cls):
+        Example, creating a BusinessRuleChecker for ME32:
+
+        >>> BusinessRuleChecker.of(measures.business_rules.ME32)
+        <class 'checks.checks.BusinessRuleCheckerOf[measures.business_rules.ME32]'>
+
+        This API is usually called by .applicable_to, however this docstring should
+        illustrate what it does.
+
+        Checkers are created once and then cached in _checker_cache.
+
+        As well as a small performance improvement, caching aids debugging by ensuring
+        the same checker instance is returned if the same cls is passed to ``of``.
+        """
+        checker_name = f"{cls.__name__}Of[{rule_type.__module__}.{rule_type.__name__}]"
+
+        # If the checker class was already created, return it.
+        checker_class = cls._checker_cache.get(checker_name)
+        if checker_class is not None:
+            return checker_class
+
+        # No existing checker was found, so create it:
+
+        class BusinessRuleCheckerOf(cls):
+            # Creating this class explicitly in code is more readable than using type(...)
+            # Once created the name will be mangled to include the rule to be checked.
+
+            f"""Apply the following checks as specified in {rule_type.__name__}"""
             rule = rule_type
 
-        RuleChecker.__name__ = (
-            f"{cls.__name__}[{rule_type.__module__}.{rule_type.__name__}]"
-        )
-        return RuleChecker
+            def __repr__(self):
+                return f"<{checker_name}>"
+
+        BusinessRuleCheckerOf.__name__ = checker_name
+
+        cls._checker_cache[checker_name] = BusinessRuleCheckerOf
+        return BusinessRuleCheckerOf
 
     @classmethod
     def checkers_for(cls: Type[Self], model: TrackedModel) -> Collection[Self]:
+        """If the rule attribute on this BusinessRuleChecker matches any in the
+        supplied TrackedModel instance's business_rules, return it in a list,
+        otherwise there are no matches so return an empty list."""
         if cls.rule in model.business_rules:
             return [cls()]
-        else:
-            return []
+        return []
 
     def run(self, model: TrackedModel) -> CheckResult:
+        """
+        :return CheckResult, a Tuple(rule_passed: str, violation_reason: Optional[str]).
+        """
         transaction = get_current_transaction()
         try:
             self.rule(transaction).validate(model)
@@ -127,8 +169,8 @@ class IndirectBusinessRuleChecker(BusinessRuleChecker):
     the model being checked, and for which a change in the checked model could
     result in a business rule failure against the linked model.
 
-    This class is expected to be sub-typed for a specific rule by a call to
-    ``of()``.
+    This is a base class: subclasses for checking specific rules are created by
+    calling ``of()``.
     """
 
     rule: Type[BusinessRule]
@@ -146,6 +188,8 @@ class IndirectBusinessRuleChecker(BusinessRuleChecker):
 
     @classmethod
     def checkers_for(cls: Type[Self], model: TrackedModel) -> Collection[Self]:
+        """Return a set of IndirectBusinessRuleCheckers for every model found on
+        rule.get_linked_models."""
         rules = set()
         transaction = get_current_transaction()
         if cls.rule in model.indirect_business_rules:
@@ -154,20 +198,29 @@ class IndirectBusinessRuleChecker(BusinessRuleChecker):
         return rules
 
     def run(self, model: TrackedModel) -> CheckResult:
+        """
+        Return the result of running super.run, passing self.linked_model, and.
+
+        return it as a CheckResult - a Tuple(rule_passed: str, violation_reason: Optional[str])
+        """
         result, message = super().run(self.linked_model)
         message = f"{self.linked_model}: " + message if message else None
         return result, message
 
 
 def checker_types() -> Iterator[Type[Checker]]:
-    """Returns all of the registered Checker types."""
+    """
+    Return all registered Checker types.
+
+    See ``checks.checks.BusinessRuleChecker.of``.
+    """
     for rule in ALL_RULES:
         yield BusinessRuleChecker.of(rule)
         yield IndirectBusinessRuleChecker.of(rule)
 
 
 def applicable_to(model: TrackedModel) -> Iterator[Checker]:
-    """Returns all of the Checker instances that should be applicable to the
-    passed model, with the names that should be recorded against them."""
+    """Return instances of any Checker classes applicable to the supplied
+    TrackedModel instance."""
     for checker_type in checker_types():
         yield from checker_type.checkers_for(model)

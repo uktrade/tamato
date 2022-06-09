@@ -324,6 +324,7 @@ def workbasket():
     ],
 )
 def trackedmodel_factory(request):
+    """Fixture that provides every TrackedModel class."""
     return request.param
 
 
