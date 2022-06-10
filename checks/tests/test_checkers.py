@@ -14,6 +14,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_all_business_rules_have_a_checker(trackedmodel_factory):
+    """Verify that each BusinessRule has a corresponding Checker."""
     checkers = set(checker.rule for checker in checker_types())
     model_type = trackedmodel_factory._meta.model
     model_rules = set(
@@ -23,6 +24,8 @@ def test_all_business_rules_have_a_checker(trackedmodel_factory):
 
 
 def test_business_rules_validation():
+    """Verify that ``Checker.apply`` calls ``validate`` on it's matching
+    BusinessRule."""
     model = factories.TestModel1Factory.create()
     check = checks.tests.factories.TransactionCheckFactory(
         transaction=model.transaction,
@@ -30,6 +33,10 @@ def test_business_rules_validation():
 
     with add_business_rules(type(model), TestRule):
         checker_type = BusinessRuleChecker.of(TestRule)
+
+        # Verify the cache returns the same object if .of is called a second time.
+        assert checker_type is BusinessRuleChecker.of(TestRule)
+
         checkers = checker_type.checkers_for(model)
 
     for checker in checkers:
@@ -55,6 +62,10 @@ def test_indirect_business_rule_validation():
         indirect=True,
     ):
         checker_type = IndirectBusinessRuleChecker.of(TestRule)
+
+        # Verify the cache returns the same object if .of is called a second time.
+        assert checker_type is IndirectBusinessRuleChecker.of(TestRule)
+
         checkers = checker_type.checkers_for(model)
 
     # Assert every checker has a unique name.

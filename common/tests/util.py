@@ -93,6 +93,7 @@ def raises_if(exception, expected):
 def add_business_rules(
     model: Type[TrackedModel], *rules: Type[BusinessRule], indirect=False
 ):
+    """Attach BusinessRules to a TrackedModel."""
     target = f"{'indirect_' if indirect else ''}business_rules"
     rules = (*rules, *getattr(model, target, []))
     with patch.object(model, target, new=rules):
