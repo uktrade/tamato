@@ -1,8 +1,13 @@
 import sys
+import time
 from itertools import count
 from pathlib import Path
+from typing import Any
 from typing import Dict
+from typing import Generator
 from typing import List
+from typing import Sequence
+from typing import Tuple
 
 
 def dit_filename_generator(start=1):
@@ -128,9 +133,22 @@ def exceptions_as_messages(
 ) -> Dict[int, List[str]]:
     """
     :param error_dict: dict of lists of exceptions.
-    :return: dict of lists of human readable strings containing the exception name.
+    :return: dict of lists of human-readable strings containing the exception name.
     """
     new_errors = {}
     for k, errors in error_dict.items():
         new_errors[k] = [f"raised an {exc}" for exc in errors]
     return new_errors
+
+
+def item_timer(items: Sequence[Any]) -> Generator[Tuple[float, Any], None, None]:
+    """
+    :param items: Sequence of items.
+
+    Iterates over the items and yield a tuple of (time_taken, item).
+    """
+    start_time = time.time()
+    for o in items:
+        time_taken = time.time() - start_time
+        yield time_taken, o
+        start_time = time.time()
