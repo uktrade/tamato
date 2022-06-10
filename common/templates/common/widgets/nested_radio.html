@@ -1,0 +1,62 @@
+{% load crispy_forms_tags crispy_forms_gds crispy_forms_utils debug %}
+
+<div class="govuk-radios__item">
+	<input data-aria-controls="conditional-{{ widget.attrs.id }}" class="govuk-radios__input" type="{{ widget.type }}" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
+	<label{% if widget.attrs.id %} id="{{ widget.attrs.id }}-label" for="{{ widget.attrs.id }}"{% endif %} class="govuk-label govuk-radios__label">
+		{{ widget.label }}
+	</label>
+</div>
+
+{% if widget.nested_forms %}
+<div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-{{ widget.attrs.id }}">
+
+	{% for nested_form in widget.nested_forms %}
+
+		{% with nested_form.management_form as form %}
+			{% if form_show_errors %}
+				{% if form.non_field_errors %}
+				<div class="alert alert-block alert-danger">
+					{% if form_error_title %}<h4 class="alert-heading">{{ form_error_title }}</h4>{% endif %}
+					<ul>
+						{{ form.non_field_errors|unordered_list }}
+					</ul>
+				</div>
+				{% endif %}
+			{% endif %}
+
+			{% for field in form %}
+				{% include "gds/field.html" %}
+			{% endfor %}
+		{% endwith %}
+
+		{% if nested_form.is_formset %}
+
+			{% if form.initial|length < form.max_num %}
+				<p class="govuk-hint">You can only select up to {{ subform.max_num }} at this time.</p>
+			{% endif %}
+
+			{% for form in nested_form %}
+				{% for field in form %}
+					{% include "gds/field.html" %}
+					{% if field.data %}
+						{% include "common/widgets/formset_delete_button.html" with prefix=form.prefix %}
+					{% endif %}
+				{% endfor %}
+			{% endfor %}
+
+			{% for field in nested_form.empty_form %}
+				{% include "gds/field.html" %}
+			{% endfor %}
+
+			{% include "common/widgets/formset_add_button.html" with prefix=nested_form.prefix %}
+
+		{% else %}
+			{% for field in nested_form %}
+				{% include "gds/field.html" with field=field %}
+			{% endfor %}
+		{% endif %}
+
+
+	{% endfor %}
+</div>
+{% endif %}
