@@ -735,6 +735,15 @@ def valid_between_start_delta(**delta) -> Callable[[TrackedModel], Dict[str, int
     )
 
 
+def valid_between_end_delta(**delta) -> Callable[[TrackedModel], Dict[str, int]]:
+    """Returns updated form data with the delta added to the "upper" date of the
+    model's valid between."""
+    return lambda model: date_post_data(
+        "end_date",
+        model.valid_between.upper + relativedelta(**delta),
+    )
+
+
 def validity_start_delta(**delta) -> Callable[[TrackedModel], Dict[str, int]]:
     """Returns updated form data with the delta added to the "validity start"
     date of the model."""
