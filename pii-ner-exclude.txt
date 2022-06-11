@@ -1137,5 +1137,6 @@ CheckResult
 Checkers
 self.linked_model
 "Attach BusinessRules
-WorkBasketOutputFormat Enum
+WorkBasketOutputFormat
 param kwargs:
+Enum
