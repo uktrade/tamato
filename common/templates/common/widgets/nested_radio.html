@@ -37,8 +37,8 @@
 
 			{% for form in nested_form %}
 				{% for field in form %}
-					{% include "gds/field.html" %}
 					{% if field.data %}
+						{% include "gds/field.html" %}
 						{% include "common/widgets/formset_delete_button.html" with prefix=form.prefix %}
 					{% endif %}
 				{% endfor %}
@@ -51,9 +51,11 @@
 			{% include "common/widgets/formset_add_button.html" with prefix=nested_form.prefix %}
 
 		{% else %}
-			{% for field in nested_form %}
-				{% include "gds/field.html" with field=field %}
-			{% endfor %}
+			{% with nested_form as form %}
+				{% for field in form %}
+					{% include "gds/field.html" with field=field %}
+				{% endfor %}
+			{% endwith %}
 		{% endif %}
 
 
