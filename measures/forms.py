@@ -54,7 +54,7 @@ class GeoGroupForm(forms.Form):
     geographical_area_group = forms.ModelChoiceField(
         label="",
         queryset=None,  # populated in __init__
-        required=False,
+        error_messages={"required": "A country group is required."},
     )
 
     def __init__(self, *args, **kwargs):
@@ -125,7 +125,6 @@ class GeoGroupExclusionsForm(forms.Form):
     def __init__(self, *args, **kwargs):
         tx = kwargs.pop("transaction", None)
         self.transaction = tx
-        self.prefix = "geo_group_exclusion_form"
         super().__init__(*args, **kwargs)
         self.fields["geo_group_exclusion"].queryset = with_latest_description_string(
             GeographicalArea.objects.exclude(
@@ -158,7 +157,7 @@ ErgaOmnesExclusionsFormSet = formset_factory(
     ErgaOmnesExclusionsForm,
     prefix="erga_omnes_exclusions_formset",
     formset=FormSet,
-    min_num=1,
+    min_num=0,
     max_num=10,
     extra=1,
     validate_min=True,
@@ -169,7 +168,7 @@ GeoGroupExclusionsFormSet = formset_factory(
     GeoGroupExclusionsForm,
     prefix="geo_group_exclusions_formset",
     formset=FormSet,
-    min_num=1,
+    min_num=0,
     max_num=10,
     extra=1,
     validate_min=True,
@@ -187,7 +186,7 @@ class CountryRegionForm(forms.Form):
                 descriptions__description__isnull=True,
             ),
         ),
-        required=False,
+        error_messages={"required": "A country or region is required."},
     )
 
     def __init__(self, *args, **kwargs):
@@ -587,14 +586,16 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
         )
 
         geographical_area_fields = {
-            "all": erga_omnes_instance,
-            "group": cleaned_data.get("geographical_area_group"),
-            "single": cleaned_data.get("geographical_area_country_or_region"),
+            GeoAreaType.ERGA_OMNES: erga_omnes_instance,
+            GeoAreaType.GROUP: cleaned_data.get("geographical_area_group"),
+            GeoAreaType.COUNTRY: cleaned_data.get(
+                "geographical_area_country_or_region",
+            ),
         }
 
-        if self.data.get("geographical_area_choice"):
+        if self.data.get("geo_area"):
             cleaned_data["geographical_area"] = geographical_area_fields[
-                self.data.get("geographical_area_choice")
+                self.data.get("geo_area")
             ]
 
         cleaned_data["sid"] = self.instance.sid
