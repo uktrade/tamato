@@ -442,20 +442,6 @@ class FormSet(forms.BaseFormSet):
 
         return super().is_valid()
 
-    @property
-    def empty_form(self):
-        form = self.form(
-            auto_id=self.auto_id,
-            prefix=self.add_prefix(
-                len(self.forms),
-            ),  # override this method to add the correct prefix here instead of "__prefix__"
-            empty_permitted=True,
-            use_required_attribute=False,
-            **self.get_form_kwargs(None),
-        )
-        self.add_fields(form, None)
-        return form
-
 
 def formset_factory(
     form,
