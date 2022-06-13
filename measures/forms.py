@@ -484,30 +484,6 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
             GeoAreaType.COUNTRY.value: [CountryRegionForm],
         },
     )
-    geographical_area = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.all(),
-        required=False,
-    )
-    geographical_area_group = forms.ModelChoiceField(
-        queryset=with_latest_description_string(
-            GeographicalArea.objects.filter(
-                area_code=1,
-            ),
-        ),
-        required=False,
-        widget=forms.Select(attrs={"class": "govuk-select"}),
-        empty_label=None,
-    )
-    geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=with_latest_description_string(
-            GeographicalArea.objects.exclude(
-                area_code=1,
-            ),
-        ),
-        widget=forms.Select(attrs={"class": "govuk-select"}),
-        required=False,
-        empty_label=None,
-    )
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -524,17 +500,6 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
         self.request.session[
             f"instance_duty_sentence_{self.instance.sid}"
         ] = self.instance.duty_sentence
-
-        for field in ["geographical_area_group", "geographical_area_country_or_region"]:
-            self.fields[field].queryset = (
-                self.fields[field]
-                .queryset.as_at_today()
-                .approved_up_to_transaction(tx)
-                .with_latest_links("descriptions")
-                .prefetch_related("descriptions")
-                .order_by("descriptions__description")
-            )
-            self.fields[field].label_from_instance = lambda obj: obj.description
 
         if self.instance.geographical_area.is_all_countries():
             self.initial["geo_area"] = GeoAreaType.ERGA_OMNES.value
