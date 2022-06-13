@@ -33,6 +33,7 @@ from geo_areas.util import with_latest_description_string
 from geo_areas.validators import AreaCode
 from measures import models
 from measures.parsers import DutySentenceParser
+from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
@@ -42,10 +43,29 @@ from workbaskets.models import WorkBasket
 logger = logging.getLogger(__name__)
 
 
+ERGA_OMNES_EXCLUSIONS_PREFIX = "erga_omnes_exclusions"
+ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX = (
+    f"{ERGA_OMNES_EXCLUSIONS_PREFIX}_formset"  # /PS-IGNORE
+)
+GROUP_EXCLUSIONS_PREFIX = "geo_group_exclusions"
+GROUP_EXCLUSIONS_FORMSET_PREFIX = f"{GROUP_EXCLUSIONS_PREFIX}_formset"
+
+
 class GeoAreaType(TextChoices):
     ERGA_OMNES = "ERGA_OMNES", "All countries (erga omnes)"
     GROUP = "GROUP", "A group of countries"
     COUNTRY = "COUNTRY", "Specific countries or regions"
+
+
+FORMSET_PREFIX_MAPPING = {
+    GeoAreaType.ERGA_OMNES: ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
+    GeoAreaType.GROUP: GROUP_EXCLUSIONS_FORMSET_PREFIX,
+}
+
+FIELD_NAME_MAPPING = {
+    GeoAreaType.ERGA_OMNES: "erga_omnes_exclusion",
+    GeoAreaType.GROUP: "geo_group_exclusion",
+}
 
 
 class GeoGroupForm(forms.Form):
@@ -83,7 +103,7 @@ class GeoGroupForm(forms.Form):
 
 
 class ErgaOmnesExclusionsForm(forms.Form):
-    prefix = "erga_omnes_exclusions"
+    prefix = ERGA_OMNES_EXCLUSIONS_PREFIX
 
     erga_omnes_exclusion = forms.ModelChoiceField(
         label="",
@@ -113,7 +133,7 @@ class ErgaOmnesExclusionsForm(forms.Form):
 
 
 class GeoGroupExclusionsForm(forms.Form):
-    prefix = "geo_group_exclusions"
+    prefix = GROUP_EXCLUSIONS_PREFIX
 
     geo_group_exclusion = forms.ModelChoiceField(
         label="",
@@ -155,7 +175,7 @@ GeoGroupFormSet = formset_factory(
 
 ErgaOmnesExclusionsFormSet = formset_factory(
     ErgaOmnesExclusionsForm,
-    prefix="erga_omnes_exclusions_formset",
+    prefix=ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
     formset=FormSet,
     min_num=0,
     max_num=10,
@@ -166,7 +186,7 @@ ErgaOmnesExclusionsFormSet = formset_factory(
 
 GeoGroupExclusionsFormSet = formset_factory(
     GeoGroupExclusionsForm,
-    prefix="geo_group_exclusions_formset",
+    prefix=GROUP_EXCLUSIONS_FORMSET_PREFIX,
     formset=FormSet,
     min_num=0,
     max_num=10,
@@ -438,7 +458,6 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
             "goods_nomenclature",
             "additional_code",
             "order_number",
-            "geographical_area",
         )
 
     measure_type = AutoCompleteField(
@@ -559,9 +578,18 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
         }
 
         if self.data.get("geo_area"):
+            geo_area_choice = self.data.get("geo_area")
             cleaned_data["geographical_area"] = geographical_area_fields[
-                self.data.get("geo_area")
+                geo_area_choice
             ]
+            exclusions = cleaned_data.get(FORMSET_PREFIX_MAPPING[geo_area_choice])
+            if exclusions:
+                cleaned_data["exclusions"] = [
+                    exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
+                    for exclusion in cleaned_data[
+                        FORMSET_PREFIX_MAPPING[geo_area_choice]
+                    ]
+                ]
 
         cleaned_data["sid"] = self.instance.sid
 
@@ -577,6 +605,23 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
             instance.save()
 
         sid = instance.sid
+
+        measure_creation_pattern = MeasureCreationPattern(
+            workbasket=WorkBasket.current(self.request),
+            base_date=instance.valid_between.lower,
+            defaults={
+                "generating_regulation": self.cleaned_data["generating_regulation"],
+            },
+        )
+
+        for exclusion in self.cleaned_data["exclusions"]:
+            create = (
+                measure_creation_pattern.create_measure_excluded_geographical_areas(
+                    instance,
+                    exclusion,
+                )
+            )
+            next(create)
 
         if (
             self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
