@@ -21,21 +21,25 @@
   {% for form in forms %}
     {% for field, errors in form.errors.items() %}
       {% for error in errors.data %}
+      {% if error.message|length > 1 %}
         {{ error_list.append({
           "text": error.message,
           "href": "#" ~ (form.prefix ~ "-" if form.prefix else "") ~ field ~ ("_" ~ error.subfield if error.subfield is defined else ""),
         }) or "" }}
+      {% endif %}
       {% endfor %}
     {% endfor %}
   {% endfor %}
-  {{ govukErrorSummary({
-    "titleText": "There is a problem",
-    "errorList": error_list
-  }) }}
+  {% if error_list|length > 0 %}
+    {{ govukErrorSummary({
+      "titleText": "There is a problem",
+      "errorList": error_list
+    }) }}
+  {% endif %}
 {% endmacro %}
 
 {% macro django_form(action="", method="post") %}
-  <form method="{{ method }}" action="{{ action }}">
+  <form method="{{ method }}" action="{{ action }}" novalidate="">
     {% if method|lower == "post" %}{{ csrf_input }}{% endif %}
     {% set formset = form if form.forms else None %}
     {% set forms = formset.forms if formset else [form] %}
