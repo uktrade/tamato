@@ -9,6 +9,7 @@ from lxml import etree
 from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
+from exporter.util import item_timer
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
@@ -29,11 +30,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "envelope_id",
-            help="Override first envelope id [6 digit number].",
-            type=int,
-            default=None,
+            help="Override first envelope id [6 digit number] or auto for to use the next available.",
+            type=str,
+            default="auto",
             action="store",
-            nargs="?",
+            nargs=1,
         )
 
         parser.add_argument(
@@ -56,6 +57,21 @@ class Command(BaseCommand):
             action="store",
         )
 
+        parser.add_argument(
+            "--max-envelope-size",
+            help=f"Set the maximum envelope size in bytes, defaults to settings.EXPORTER_MAXIMUM_ENVELOPE_SIZE [{settings.EXPORTER_MAXIMUM_ENVELOPE_SIZE}].",
+            type=int,
+            default=settings.EXPORTER_MAXIMUM_ENVELOPE_SIZE,
+            action="store",
+        )
+
+        parser.add_argument(
+            "--disable-splitting",
+            help="Do not split envelopes larger than MAX_ENVELOPE_SIZE, overrides --max-envelope-size.",
+            default=False,
+            action="store_true",
+        )
+
     @atomic
     def handle(self, *args, **options):
         workbasket_ids = options.get("workbasket_ids")
@@ -76,10 +92,17 @@ class Command(BaseCommand):
                 f"Nothing to upload:  {workbaskets.count()} Workbaskets APPROVED but none contain any transactions.",
             )
 
-        if options.get("envelope_id") is not None:
-            envelope_id = int(options.get("envelope_id"))
-        else:
+        if options.get("envelope_id") == ["auto"]:
             envelope_id = int(Envelope.next_envelope_id())
+        else:
+            envelope_id = int(options.get("envelope_id")[0])
+
+        # Setting max_envelope_size to 0, also disables splitting - so normalise 0 to None:
+        max_envelope_size = (
+            None
+            if options.get("disable_splitting")
+            else int(options.get("max_envelope_size") or None)
+        )
 
         directory = options.get("directory", ".")
 
@@ -87,10 +110,12 @@ class Command(BaseCommand):
         serializer = MultiFileEnvelopeTransactionSerializer(
             output_file_constructor,
             envelope_id=envelope_id,
-            max_envelope_size=settings.EXPORTER_MAXIMUM_ENVELOPE_SIZE,
+            max_envelope_size=max_envelope_size,
         )
         errors = False
-        for rendered_envelope in serializer.split_render_transactions(transactions):
+        for time_to_render, rendered_envelope in item_timer(
+            serializer.split_render_transactions(transactions),
+        ):
             envelope_file = rendered_envelope.output
             if not rendered_envelope.transactions:
                 self.stdout.write(
@@ -108,7 +133,7 @@ class Command(BaseCommand):
                 else:
                     total_transactions = len(rendered_envelope.transactions)
                     self.stdout.write(
-                        f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions in {envelope_file.tell()} bytes.",
+                        f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
                     )
         if errors:
             sys.exit(1)
