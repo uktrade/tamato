@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -6,6 +7,8 @@ from django.core.management import BaseCommand
 from django.db.transaction import atomic
 from lxml import etree
 
+from common.models import Transaction
+from common.models.utils import override_current_transaction
 from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
@@ -16,6 +19,8 @@ from workbaskets.validators import WorkflowStatus
 
 # VARIATION_SELECTOR enables emoji presentation
 WARNING_SIGN_EMOJI = "\N{WARNING SIGN}\N{VARIATION SELECTOR-16}"
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -48,7 +53,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "workbasket_ids",
             help=(
-                "Override the default selection of APPROVED workbaskets "
+                "Override the default selection of 'all workbaskets with status APPROVED'"
                 "with a comma-separated list of workbasket ids."
             ),
             nargs="*",
@@ -72,6 +77,13 @@ class Command(BaseCommand):
             action="store_true",
         )
 
+        parser.add_argument(
+            "--replay",
+            help="Output transactions as at the time the workbasket was published, by setting current_transaction to "
+            "one before the specified workbasket.",
+            action="store_true",
+        )
+
     @atomic
     def handle(self, *args, **options):
         workbasket_ids = options.get("workbasket_ids")
@@ -84,7 +96,6 @@ class Command(BaseCommand):
         if not workbaskets:
             sys.exit("Nothing to upload:  No workbaskets with status APPROVED.")
 
-        # transactions:  will be serialized, then added to an envelope for uploaded.
         transactions = workbaskets.ordered_transactions()
 
         if not transactions:
@@ -106,6 +117,54 @@ class Command(BaseCommand):
 
         directory = options.get("directory", ".")
 
+        # 'replay' sets the current transaction to the one 'before' the specified workbasket
+        # to allow the system to export the data as it was when the workbasket was first published.
+        replay_from_tx = None
+        if options.get("replay"):
+            replay_from_tx = Transaction.objects.filter(
+                pk=transactions[0].pk - 1,
+            ).last()
+
+        if replay_from_tx is None:
+            # No replay, just serialize the transactions.
+            if not self.do_serialize_envelopes(
+                directory,
+                envelope_id,
+                max_envelope_size,
+                transactions,
+            ):
+                sys.exit(1)
+        else:
+            # Simulate latest_transaction being set to replay_from_tx
+            if not set(
+                workbaskets.values_list("status", flat=True).distinct(),
+            ).issubset(WorkflowStatus.approved_statuses()):
+                sys.exit(
+                    "Replay only applies to approved workbaskets.",
+                )
+
+            with override_current_transaction(replay_from_tx):
+                logging.debug("Replay from transaction: %s", replay_from_tx)
+                if not self.do_serialize_envelopes(
+                    directory,
+                    envelope_id,
+                    max_envelope_size,
+                    transactions,
+                ):
+                    sys.exit(1)
+
+    def do_serialize_envelopes(
+        self,
+        directory,
+        envelope_id,
+        max_envelope_size,
+        transactions,
+    ):
+        """
+        Serialize transactions to a series of files.
+
+        :return: True if no errors occurred.
+        """
         output_file_constructor = dit_file_generator(directory, envelope_id)
         serializer = MultiFileEnvelopeTransactionSerializer(
             output_file_constructor,
@@ -128,12 +187,11 @@ class Command(BaseCommand):
                     validate_envelope(envelope_file)
                 except etree.DocumentInvalid:
                     self.stdout.write(
-                        f"{envelope_file.name} {WARNING_SIGN_EMOJI}️ Envelope invalid:",
+                        f"{envelope_file.name} {WARNING_SIGN_EMOJI} ️ XML invalid.",
                     )
                 else:
                     total_transactions = len(rendered_envelope.transactions)
                     self.stdout.write(
                         f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
                     )
-        if errors:
-            sys.exit(1)
+        return not errors

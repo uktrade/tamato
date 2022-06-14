@@ -45,7 +45,6 @@ class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
         self,
         output_constructor: callable,
         envelope_id=1,
-        benchmark=False,
         *args,
         **kwargs,
     ) -> None:
