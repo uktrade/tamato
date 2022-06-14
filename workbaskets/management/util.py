@@ -28,7 +28,7 @@ class WorkBasketCommandMixin:
 
     def _output_workbasket_compact(self, workbasket, show_transaction_info, **kwargs):
         self.stdout.write(
-            f"{workbasket.pk}, {first_line_of(workbasket.title)}, {first_line_of(workbasket.reason) or '-'}",
+            f"{workbasket.pk}, {first_line_of(workbasket.title)}, {first_line_of(workbasket.reason) or '-'}, {workbasket.status}",
             ending="" if show_transaction_info else "\n",
         )
         if show_transaction_info:
@@ -60,7 +60,7 @@ class WorkBasketCommandMixin:
         """
         if output_format == WorkBasketOutputFormat.COMPACT:
             self.stdout.write(
-                "pk, title, reason",
+                "pk, title, reason, status",
                 ending="" if show_transaction_info else "\n",
             )
             if show_transaction_info:
