@@ -27,8 +27,8 @@ from common.widgets import RadioNestedWidget
 
 class BindNestedFormMixin:
     def bind_nested_forms(self, *args, **kwargs):
-        # This method must be called after the subclass's __init__ in order to pass up-to-date initial data to the subforms
-        kwargs.pop("instance")  # this mixin does not support ModelForm as subforms
+        if kwargs.get("instance"):
+            kwargs.pop("instance")  # this mixin does not support ModelForm as subforms
 
         for name, field in self.fields.items():
 
@@ -43,6 +43,14 @@ class BindNestedFormMixin:
                     all_forms[choice] = nested_forms
                 field.bind_nested_forms(all_forms)
 
+    def is_valid(self):
+        # Mark the form as invalid without raising an error to get it
+        # to redisplay when a nested formset ADD/DELETE is submitted
+        for field in self.fields.values():
+            if isinstance(field, RadioNested) and field.nested_formset_submit:
+                return False
+        return super().is_valid()
+
     def clean(self):
         super().clean()
         cleaned_data = self.cleaned_data.copy()
@@ -50,12 +58,13 @@ class BindNestedFormMixin:
         for field_name in self.cleaned_data.keys():  # /PS-IGNORE
             field = self.fields[field_name]
             if isinstance(field, RadioNested):  # /PS-IGNORE
-                # only need to clean data for the nested forms for the checked radio option
-                checked_option = cleaned_data[field_name]
-                if all(
-                    [form.is_valid() for form in field.nested_forms[checked_option]],
-                ):
-                    for form in field.nested_forms[checked_option]:
+                all_forms = [
+                    form
+                    for form_list in field.nested_forms.values()
+                    for form in form_list
+                ]
+                for form in all_forms:
+                    if form.is_valid():
                         data = form.cleaned_data
                         if isinstance(form, FormSet):
                             # cleaned_data from a formset is a list
@@ -66,10 +75,12 @@ class BindNestedFormMixin:
 
 class RadioNested(TypedChoiceField):
     MESSAGE_FORM_MIXIN = "This field requires the form to use BindNestedFormMixin"
+    MESSAGE_BIND_FORMS = "Nested forms must be instantiated with bind_nested_forms in the subclass's __init__"
     widget = RadioNestedWidget
 
     def __init__(self, nested_forms=None, *args, **kwargs):
         self.nested_forms = nested_forms
+        self.nested_formset_submit = False
         super().__init__(*args, **kwargs)
         self.widget.nested_forms = nested_forms
 
@@ -80,18 +91,22 @@ class RadioNested(TypedChoiceField):
     def validate(self, value):
         super().validate(value)
         # only need to validate the nested form of the selected option
-        for form in self.nested_forms[value]:
-            if not form.is_valid():
-                if isinstance(form, FormSet):
-                    # if add or delete are submitted raise an empty message to redisplay the form
-                    if form.formset_action is not None:
-                        raise ValidationError(message="")
-                    for error_list in form.errors:
-                        for e in error_list:
+        if value:
+            for form in self.nested_forms[value]:
+                assert isinstance(form, forms.Form) or isinstance(
+                    form,
+                    FormSet,
+                ), self.MESSAGE_BIND_FORMS
+                if not form.is_valid():
+                    if isinstance(form, FormSet):
+                        if form.formset_action is not None:
+                            self.nested_formset_submit = True
+                        for error_list in [form.errors] + form.non_form_errors():
+                            for e in error_list:
+                                raise ValidationError(e)
+                    else:
+                        for e in form.errors.values():
                             raise ValidationError(e)
-                else:
-                    for e in form.errors.values():
-                        raise ValidationError(e)
 
     def get_bound_field(self, form, field_name):
         assert isinstance(form, BindNestedFormMixin), self.MESSAGE_FORM_MIXIN
