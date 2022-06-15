@@ -93,6 +93,11 @@ def test_edit_after_submit(
     )
     assert response.status_code == 302
 
+    # edit the footnote description start date, to avoid FO4 violation
+    description = footnote.descriptions.first()
+    description.validity_start = date_ranges.later.lower
+    description.save(force_write=True)
+
     # edit the footnote
     response = valid_user_client.post(
         footnote.get_url("edit"),

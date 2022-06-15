@@ -93,6 +93,7 @@ def raises_if(exception, expected):
 def add_business_rules(
     model: Type[TrackedModel], *rules: Type[BusinessRule], indirect=False
 ):
+    """Attach BusinessRules to a TrackedModel."""
     target = f"{'indirect_' if indirect else ''}business_rules"
     rules = (*rules, *getattr(model, target, []))
     with patch.object(model, target, new=rules):
@@ -731,6 +732,15 @@ def valid_between_start_delta(**delta) -> Callable[[TrackedModel], Dict[str, int
     return lambda model: date_post_data(
         "start_date",
         model.valid_between.lower + relativedelta(**delta),
+    )
+
+
+def valid_between_end_delta(**delta) -> Callable[[TrackedModel], Dict[str, int]]:
+    """Returns updated form data with the delta added to the "upper" date of the
+    model's valid between."""
+    return lambda model: date_post_data(
+        "end_date",
+        model.valid_between.upper + relativedelta(**delta),
     )
 
 

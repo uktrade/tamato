@@ -144,7 +144,7 @@ class FootnoteUpdate(
 
     validate_business_rules = (
         business_rules.FO2,
-        # business_rules.FO4,  # XXX should it be checked here?
+        business_rules.FO4,
         business_rules.FO5,
         business_rules.FO6,
         business_rules.FO9,

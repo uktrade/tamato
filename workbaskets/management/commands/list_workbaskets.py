@@ -6,6 +6,7 @@ from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 
 from workbaskets.management.util import WorkBasketCommandMixin
+from workbaskets.management.util import WorkBasketOutputFormat
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
@@ -27,11 +28,54 @@ class Command(WorkBasketCommandMixin, BaseCommand):
             ),
         )
 
+        approved_statuses = [
+            status.name for status in WorkflowStatus.approved_statuses()
+        ]
+        parser.add_argument(
+            "-a",
+            "--approved-statuses",
+            dest="approved",
+            action="store_true",
+            help=f"List workbaskets with ANY of the approved statuses, equivalent to: [{', '.join(approved_statuses)}]",
+        )
+
+        parser.add_argument(
+            "-c",
+            "--compact",
+            action="store_true",
+            help="Output one workbasket per line.",
+        )
+
+        parser.add_argument(
+            "-t",
+            "--transactions",
+            action="store_true",
+            help="Output first / last transactions.",
+        )
+
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
-        workbaskets = WorkBasket.objects.all()
+        workbaskets = WorkBasket.objects.order_by("updated_at").all()
+
+        workbasket_statuses = set()
         if options["status"]:
+            workbasket_statuses.update(options["status"])
+
+        if options.get("approved_statuses"):
+            workbasket_statuses.update(WorkflowStatus.approved_statuses())
+
+        if workbasket_statuses:
             workbaskets = workbaskets.filter(status__in=options["status"])
 
-        for w in workbaskets:
-            self.stdout.write(f"WorkBasket {w}:")
-            self.output_workbasket(w)
+        output_format = (
+            WorkBasketOutputFormat.COMPACT
+            if options["compact"]
+            else WorkBasketOutputFormat.READABLE
+        )
+
+        show_transaction_info = options["transactions"]
+
+        self.output_workbaskets(
+            workbaskets,
+            show_transaction_info,
+            output_format=output_format,
+        )
