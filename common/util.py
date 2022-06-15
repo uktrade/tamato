@@ -57,14 +57,17 @@ else:
         return classmethod(property(fn))
 
 
-def is_truthy(value: str) -> bool:
+def is_truthy(value: Optional[str, bool]) -> bool:
     """
     Check whether a string represents a True boolean value.
 
     :param value str: The value to check
     :rtype: bool
     """
-    return str(value).lower() not in ("", "n", "no", "off", "f", "false", "0")
+    if not value:
+        return False
+
+    return str(value).lower() not in ("n", "no", "off", "f", "false", "0")
 
 
 def strint(value: Union[int, str, float]) -> str:

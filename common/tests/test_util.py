@@ -14,6 +14,9 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.parametrize(
     "value, expected",
     [
+        (None, False),
+        (False, False),
+        (True, True),
         ("", False),
         ("n", False),
         ("no", False),
@@ -261,9 +264,10 @@ def test_get_next_id_handles_empty_queryset():
     ),
 )
 def test_wrap_numbers_over_max_digits(number, max_digits, expected):
-    """Test some edge cases for wrap_int_at_max_digits.
+    """
+    Test some edge cases for wrap_int_at_max_digits.
 
-    Negative numbers use a digit for the sign, which is reflected in
-    the test data.
+    Negative numbers use a digit for the sign, which is reflected in the test
+    data.
     """
     assert wrap_numbers_over_max_digits(number, max_digits) == expected
