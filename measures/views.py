@@ -196,7 +196,7 @@ class MeasureCreateWizard(
         measures_data = []
 
         for commodity_data in data.get("formset-commodities", []):
-            if not commodity_data["DELETE"]:
+            if not commodity_data.get("DELETE"):
                 for geo_area in data["geo_area_list"]:
 
                     measure_data = {
@@ -211,7 +211,7 @@ class MeasureCreateWizard(
                         "footnotes": [
                             item["footnote"]
                             for item in data.get("formset-footnotes", [])
-                            if not item["DELETE"]
+                            if not item.get("DELETE")
                         ],
                         # condition_sentence here, or handle separately and duty_sentence after?
                         "duty_sentence": commodity_data["duties"],
@@ -231,7 +231,7 @@ class MeasureCreateWizard(
                 data.get("formset-conditions", []),
                 start=1,
             ):
-                if not condition_data["DELETE"]:
+                if not condition_data.get("DELETE"):
 
                     measure_creation_pattern.create_condition_and_components(
                         condition_data,
