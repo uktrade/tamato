@@ -641,11 +641,15 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
             },
         )
 
-        for exclusion in self.cleaned_data["exclusions"]:
-            yield from measure_creation_pattern.create_measure_excluded_geographical_areas(
-                instance,
-                exclusion,
-            )
+        if self.cleaned_data.get("exclusions"):
+            for exclusion in self.cleaned_data.get("exclusions"):
+                pattern = (
+                    measure_creation_pattern.create_measure_excluded_geographical_areas(
+                        instance,
+                        exclusion,
+                    )
+                )
+                next(pattern)
 
         if (
             self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
