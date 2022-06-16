@@ -46,10 +46,13 @@ class BindNestedFormMixin:
     def is_valid(self):
         # Mark the form as invalid without raising an error to get it
         # to redisplay when a nested formset ADD/DELETE is submitted
-        for field in self.fields.values():
-            if isinstance(field, RadioNested) and field.nested_formset_submit:
-                return False
-        return super().is_valid()
+        is_valid = super().is_valid()
+        nested_formset_submit = [
+            field.nested_formset_submit
+            for field in self.fields.values()
+            if isinstance(field, RadioNested)
+        ]
+        return is_valid and not any(nested_formset_submit)
 
     def clean(self):
         super().clean()
@@ -91,6 +94,7 @@ class RadioNested(TypedChoiceField):
     def validate(self, value):
         super().validate(value)
         # only need to validate the nested form of the selected option
+        nested_formset_submit = []
         if value:
             for form in self.nested_forms[value]:
                 assert isinstance(form, forms.Form) or isinstance(
@@ -100,13 +104,16 @@ class RadioNested(TypedChoiceField):
                 if not form.is_valid():
                     if isinstance(form, FormSet):
                         if form.formset_action is not None:
-                            self.nested_formset_submit = True
-                        for error_list in [form.errors] + form.non_form_errors():
-                            for e in error_list:
-                                raise ValidationError(e)
+                            nested_formset_submit.append(True)
+                        for errors in form.errors + form.non_form_errors():
+                            for e in errors.values():
+                                if e:
+                                    raise ValidationError(e)
                     else:
                         for e in form.errors.values():
                             raise ValidationError(e)
+
+        self.nested_formset_submit = any(nested_formset_submit)
 
     def get_bound_field(self, form, field_name):
         assert isinstance(form, BindNestedFormMixin), self.MESSAGE_FORM_MIXIN
