@@ -53,6 +53,7 @@ def test_radio_nested_form_validation():
         },
     )
     assert not form.is_valid()
+    assert "geo_area" in form.errors
 
     form = RadioNestedForm(
         {
@@ -70,6 +71,7 @@ def test_radio_nested_form_validation():
     )
     assert form.is_valid() is False
     assert "other_field" in form.errors
+    assert "geo_area" in form.errors
 
     form = RadioNestedForm(
         {
@@ -89,6 +91,17 @@ def test_radio_nested_form_validation():
         },
     )
     assert form.is_valid()
+
+    form = RadioNestedForm(
+        {
+            "other_field": "thing",
+            "geo_area": RadioNestedForm.COUNTRY,
+            "geo_group_formset-0-field": "France",
+            "geo_group_formset-1-field": "Germany",
+            "geo_group_formset-ADD": "1",
+        },
+    )
+    assert not form.is_valid()
 
     form = RadioNestedForm(
         {
