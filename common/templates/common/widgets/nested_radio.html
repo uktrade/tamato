@@ -1,4 +1,4 @@
-{% load crispy_forms_tags crispy_forms_gds crispy_forms_utils debug %}
+{% load crispy_forms_tags crispy_forms_gds crispy_forms_utils %}
 
 <div class="govuk-radios__item">
 	<input data-aria-controls="conditional-{{ widget.attrs.id }}" class="govuk-radios__input" type="{{ widget.type }}" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
@@ -30,9 +30,8 @@
 		{% endwith %}
 
 		{% if nested_form.is_formset %}
-
-			{% if form.initial|length < form.max_num %}
-				<p class="govuk-hint">You can only select up to {{ subform.max_num }} at this time.</p>
+			{% if nested_form.initial|length == nested_form.max_num %}
+				<p class="govuk-hint">You can only select up to {{ nested_form.max_num }} at this time.</p>
 			{% endif %}
 
 			{% for form in nested_form %}
@@ -44,11 +43,14 @@
 				{% endfor %}
 			{% endfor %}
 
-			{% for field in nested_form.empty_form %}
-				{% include "gds/field.html" %}
-			{% endfor %}
+			{% if nested_form.initial|length < nested_form.max_num %}
+				{% for field in nested_form.empty_form %}
+					{% include "gds/field.html" %}
+				{% endfor %}
 
-			{% include "common/widgets/formset_add_button.html" with prefix=nested_form.prefix %}
+				{% include "common/widgets/formset_add_button.html" with prefix=nested_form.prefix %}
+
+			{% endif %}
 
 		{% else %}
 			{% with nested_form as form %}
