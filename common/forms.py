@@ -43,16 +43,16 @@ class BindNestedFormMixin:
                     all_forms[choice] = nested_forms
                 field.bind_nested_forms(all_forms)
 
-    def is_valid(self):
-        # Mark the form as invalid without raising an error to get it
-        # to redisplay when a nested formset ADD/DELETE is submitted
-        is_valid = super().is_valid()
+    def formset_submit(self):
         nested_formset_submit = [
             field.nested_formset_submit
             for field in self.fields.values()
             if isinstance(field, RadioNested)
         ]
-        return is_valid and not any(nested_formset_submit)
+        return any(nested_formset_submit)
+
+    def is_valid(self):
+        return super().is_valid() and not self.formset_submit()
 
     def clean(self):
         super().clean()
@@ -105,10 +105,13 @@ class RadioNested(TypedChoiceField):
                     if isinstance(form, FormSet):
                         if form.formset_action is not None:
                             nested_formset_submit.append(True)
-                        for errors in form.errors + form.non_form_errors():
+                        for errors in form.errors:
                             for e in errors.values():
                                 if e:
                                     raise ValidationError(e)
+                        for e in form.non_form_errors():
+                            if e:
+                                raise ValidationError(e)
                     else:
                         for e in form.errors.values():
                             raise ValidationError(e)

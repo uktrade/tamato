@@ -50,7 +50,7 @@ ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX = (
 GROUP_EXCLUSIONS_PREFIX = "geo_group_exclusions"
 GROUP_EXCLUSIONS_FORMSET_PREFIX = f"{GROUP_EXCLUSIONS_PREFIX}_formset"
 
-GEO_GROUP_PREFIX = "geographical_area_groups"
+GEO_GROUP_PREFIX = "geographical_area_group"
 GEO_GROUP_FORMSET_PREFIX = f"{GEO_GROUP_PREFIX}_formset"
 
 COUNTRY_REGION_PREFIX = "country_region"
@@ -63,8 +63,8 @@ class GeoAreaType(TextChoices):
     COUNTRY = "COUNTRY", "Specific countries or regions"
 
 
-FORMSET_PREFIX_MAPPING = {
-    GeoAreaType.GROUP: GEO_GROUP_FORMSET_PREFIX,
+SUBFORM_PREFIX_MAPPING = {
+    GeoAreaType.GROUP: GEO_GROUP_PREFIX,
     GeoAreaType.COUNTRY: COUNTRY_REGION_FORMSET_PREFIX,
 }
 
@@ -911,25 +911,32 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
         }
 
         if geo_area_choice:
-            if geo_area_choice == GeoAreaType.ERGA_OMNES:
-                cleaned_data["geo_area_list"] = [self.erga_omnes_instance]
+            if not self.formset_submit():
 
-            else:
-                cleaned_data["geo_area_list"] = [
-                    g[geographical_area_fields[geo_area_choice]]
-                    for g in cleaned_data.get(FORMSET_PREFIX_MAPPING[geo_area_choice])
-                ]
+                if geo_area_choice == GeoAreaType.ERGA_OMNES:
+                    cleaned_data["geo_area_list"] = [self.erga_omnes_instance]
 
-            exclusions = cleaned_data.get(
-                EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
-            )
-            if exclusions:
-                cleaned_data["geo_area_exclusions"] = [
-                    exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
-                    for exclusion in cleaned_data[
-                        EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
+                elif geo_area_choice == GeoAreaType.GROUP:
+                    data_key = SUBFORM_PREFIX_MAPPING[geo_area_choice]
+                    cleaned_data["geo_area_list"] = cleaned_data[data_key]
+
+                elif geo_area_choice == GeoAreaType.COUNTRY:
+                    field_name = geographical_area_fields[geo_area_choice]
+                    data_key = SUBFORM_PREFIX_MAPPING[geo_area_choice]
+                    cleaned_data["geo_area_list"] = [
+                        geo_area[field_name] for geo_area in cleaned_data[data_key]
                     ]
-                ]
+
+                exclusions = cleaned_data.get(
+                    EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
+                )
+                if exclusions:
+                    cleaned_data["geo_area_exclusions"] = [
+                        exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
+                        for exclusion in cleaned_data[
+                            EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
+                        ]
+                    ]
 
         return cleaned_data
 
