@@ -152,16 +152,28 @@
 <span class="sd">    Transactions are partitioned into global groupings based on type.</span>
 
 <span class="sd">    Within a partition, a transactions order applies, to obtain a global</span>
-<span class="sd">    ordering a order_by(&quot;partition&quot;, &quot;order&quot;) must be used.</span>
+<span class="sd">    ordering call .order_by(&quot;partition&quot;, &quot;order&quot;).</span>
 
 <span class="sd">    The numbers chosen increment by &quot;era&quot; of transaction, starting</span>
-<span class="sd">    from approved transactions SEED_FILE and REVISION</span>
+<span class="sd">    from approved transactions SEED_FILE, REVISION</span>
 <span class="sd">    then ending with DRAFT.</span>
+
+<span class="sd">    This system enables a simple filter for &quot;approved&quot; transactions, by checking</span>
+<span class="sd">    for &lt;= HIGHEST_APPROVED_PARTITION, this is currently set to REVISION,</span>
+<span class="sd">    which is implemented in TransactionQuerySet.approved().</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">SEED_FILE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Seed&quot;</span>
     <span class="n">REVISION</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Revision&quot;</span>
     <span class="n">DRAFT</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;Draft&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_highest_approved_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the highest approved partition, this is used by</span>
+<span class="sd">        TransactionQuerySet.approved() to filter approved partitions using a</span>
+<span class="sd">        comparison operator as opposed to &quot;in&quot;.&quot;&quot;&quot;</span>
+        <span class="c1"># This is a function, not a const as duplicate are not allowed in an Enum.</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">REVISION</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">approved_partitions</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
@@ -184,21 +196,18 @@
 <span class="k">class</span> <span class="nc">TransactionQueryset</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns all of the tracked models contained in the transactions in</span>
-<span class="sd">        the queryset.&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;Returns all tracked models referenced by transactions in this</span>
+<span class="sd">        queryset.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">transaction__in</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">approved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Currently approved Transactions are SEED_FILE and REVISION this can be</span>
-<span class="sd">        more efficiently expressed as != DRAFT.</span>
-
-<span class="sd">        Using exclude(DRAFT) should be marginally more efficient than</span>
-<span class="sd">        filter(partition__in=TransactionPartition.approved_partitions())</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">partition</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">DRAFT</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;Currently approved Transactions are SEED_FILE and REVISION this can</span>
+<span class="sd">        be.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">partition__lte</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">get_highest_approved_partition</span><span class="p">(),</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">preorder_negative_transactions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -210,42 +219,52 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">order</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">order</span> <span class="o">=</span> <span class="n">PREEMPTIVE_TRANSACTION_SEED</span>
-            <span class="k">for</span> <span class="n">tx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="n">transactions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tx</span> <span class="ow">in</span> <span class="n">transactions</span><span class="p">:</span>
                 <span class="n">order</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">tx</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span>
-                <span class="n">tx</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+            <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_update</span><span class="p">(</span><span class="n">transactions</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;order&quot;</span><span class="p">])</span>
 
     <span class="nd">@atomic</span>
-    <span class="k">def</span> <span class="nf">apply_transaction_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">move_to_end_of_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Reorder transactions in the workbasket.</span>
+<span class="sd">        Update Transaction partition and order fields to place them at the end</span>
+<span class="sd">        of the specified partition.</span>
 
-<span class="sd">        Note that transaction orders may not be contiguous,</span>
-<span class="sd">        e.g. when the workbasket has preemptive transactions</span>
-<span class="sd">        (created by the commodity code change handler).</span>
-
-<span class="sd">        TODO: Enhance this method to order based on partitions also.</span>
+<span class="sd">        Transaction order is updated to be contiguous.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="c1"># Ensure order of the transactions in this query to start at the end of the existing approved partition.</span>
-        <span class="n">existing_tx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">partition</span><span class="o">=</span><span class="n">partition_scheme</span><span class="o">.</span><span class="n">get_approved_partition</span><span class="p">(),</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+        <span class="n">transactions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;partition&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Ensure order of the transactions in this query to start at end of the partition.</span>
+        <span class="c1"># The order_by here is redundant - as it&#39;s the natural order of Transaction,</span>
+        <span class="c1"># but it&#39;s included for clarity.</span>
+        <span class="n">existing_tx</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">partition</span><span class="o">=</span><span class="n">partition</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk__in</span><span class="o">=</span><span class="n">transactions</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">last</span><span class="p">()</span>
+        <span class="p">)</span>
         <span class="n">order_start</span> <span class="o">=</span> <span class="n">existing_tx</span><span class="o">.</span><span class="n">order</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">existing_tx</span> <span class="k">else</span> <span class="mi">1</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="s2">&quot;Update draft transactions in query starting from </span><span class="si">%s</span><span class="s2"> &quot;</span>
+            <span class="s2">&quot;Update transactions in query starting from </span><span class="si">%s</span><span class="s2"> &quot;</span>
             <span class="s2">&quot;to start after transaction </span><span class="si">%s</span><span class="s2">. order_start: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="n">transactions</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
             <span class="n">existing_tx</span><span class="o">.</span><span class="n">pk</span> <span class="k">if</span> <span class="n">existing_tx</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">order_start</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">counter</span> <span class="o">=</span> <span class="n">counter_generator</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">order_start</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">tx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">tx</span> <span class="ow">in</span> <span class="n">transactions</span><span class="p">:</span>
             <span class="n">tx</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">counter</span><span class="p">()</span>
-            <span class="n">tx</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="n">tx</span><span class="o">.</span><span class="n">partition</span> <span class="o">=</span> <span class="n">partition</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_update</span><span class="p">(</span><span class="n">transactions</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;partition&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">])</span>
 
     <span class="nd">@atomic</span>
     <span class="k">def</span> <span class="nf">save_drafts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">):</span>
@@ -283,8 +302,7 @@
             <span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="n">obj</span>
             <span class="n">version_group</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">apply_transaction_order</span><span class="p">(</span><span class="n">partition_scheme</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">partition</span><span class="o">=</span><span class="n">approved_partition</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">move_to_end_of_partition</span><span class="p">(</span><span class="n">approved_partition</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Transaction"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction">[docs]</a><span class="k">class</span> <span class="nc">Transaction</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
