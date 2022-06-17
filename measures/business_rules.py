@@ -1026,7 +1026,7 @@ class ActionRequiresDuty(BusinessRule):
 
     def validate(self, condition):
         components = condition.components.approved_up_to_transaction(self.transaction)
-        components_have_duty = any([c.duty_amount for c in components])
+        components_have_duty = any([c.duty_amount is not None for c in components])
         if condition.action.requires_duty and not components_have_duty:
             raise self.violation(
                 message=f"Condition with action code {condition.action.code} must have at least one component with a duty amount",
