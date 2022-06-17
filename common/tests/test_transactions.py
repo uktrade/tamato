@@ -2,6 +2,7 @@
 import pytest
 
 from common.models.transactions import Transaction
+from common.models.transactions import TransactionPartition
 from common.tests import factories
 from workbaskets.models import get_partition_scheme
 
@@ -38,7 +39,7 @@ def test_tracked_models_are_sorted_correctly():
     order, i.e. ordered first by transaction order and then in record code
     order."""
     transaction_first = factories.TransactionFactory(
-        partition=partition_scheme.get_partition("PROPOSED"),
+        partition=TransactionPartition.DRAFT,
         order=2,
     )
     factories.MeasureFactory.create(
@@ -83,28 +84,43 @@ def test_pre_ordering_of_querysets_with_negative_transaction_orders():
     ids = (transaction_first.id, transaction_second.id)
     qs = Transaction.objects.filter(id__in=ids)
 
-    qs.apply_transaction_order(partition_scheme)
+    qs.move_to_end_of_partition(TransactionPartition.DRAFT)
 
     assert all(tx.order > 0 for tx in qs.all())
 
 
-def test_ordering_of_querysets_with_negative_transaction_orders():
-    """Asserts that querysets with negative or very large tx orders are ordered
-    correctly."""
-    transaction_first = factories.TransactionFactory(
-        partition=partition_scheme.get_partition("PROPOSED"),
+def test_move_end_of_partition_sets_order_and_partition():
+    """
+    Verify that move_to_end_of_partition moves the transaction to the end of the
+    specified partition.
+
+    Tests with negative and very large transaction numbers.
+    """
+    tx1 = factories.TransactionFactory(
+        partition=TransactionPartition.DRAFT,
         order=-1,
     )
 
-    transaction_second = factories.TransactionFactory(
-        partition=partition_scheme.get_partition("PROPOSED"),
+    tx2 = factories.TransactionFactory(
+        partition=TransactionPartition.DRAFT,
         order=99,
     )
 
-    ids = (transaction_first.id, transaction_second.id)
-    qs = Transaction.objects.filter(id__in=ids)
+    # Create a pre-existing transaction.
+    factories.TransactionFactory(partition=TransactionPartition.REVISION, order=10)
 
-    qs.apply_transaction_order(partition_scheme)
-    assert sorted(tx.order for tx in qs.all()) == [1, 2]
-    assert qs.get(pk=transaction_first.pk).order == 1
-    assert qs.get(pk=transaction_second.pk).order == 2
+    qs = Transaction.objects.filter(id__in=(tx1.id, tx2.id))
+    qs.move_to_end_of_partition(TransactionPartition.REVISION)
+
+    qs = Transaction.objects.filter(id__in=(tx1.id, tx2.id))
+
+    # Verify the partition was updated
+    assert set(qs.values_list("partition", flat=True)) == {
+        TransactionPartition.REVISION,
+    }
+
+    # Verify order has moved to the end of the partition.
+    assert list(qs.values_list("pk", "order")) == [
+        (tx1.pk, 11),
+        (tx2.pk, 12),
+    ]
