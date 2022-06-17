@@ -26,6 +26,12 @@ from common.widgets import RadioNestedWidget
 
 
 class BindNestedFormMixin:
+    """
+    Form classes that use the RadioNested form field must inherit from this.
+
+    in order to instantiate and validate nested forms.
+    """
+
     def bind_nested_forms(self, *args, **kwargs):
         if kwargs.get("instance"):
             kwargs.pop("instance")  # this mixin does not support ModelForm as subforms
@@ -77,6 +83,30 @@ class BindNestedFormMixin:
 
 
 class RadioNested(TypedChoiceField):
+    """
+    Radio buttons with a dictionary of nested forms that are displayed when the
+    option is selected. Multiple or zero forms or formsets can be nested under
+    each option.
+
+    Example usage:
+
+    can_contact = RadioNested(
+        label="Can we contact you?",
+        choices=[("YES", "Yes"), ("NO", "No")],
+        nested_forms={
+            "YES": [ContactTimePreferenceForm, ContactMethodDetailsFormSet],
+            "NO": [],
+        },
+    )
+
+    In the form class bind_nested_forms must be called after super().__init__:
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # kwargs for the nested forms can be modified here
+        self.bind_nested_forms(*args, **kwargs)
+    """
+
     MESSAGE_FORM_MIXIN = "This field requires the form to use BindNestedFormMixin"
     MESSAGE_BIND_FORMS = "Nested forms must be instantiated with bind_nested_forms in the subclass's __init__"
     widget = RadioNestedWidget
