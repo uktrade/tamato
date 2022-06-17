@@ -277,6 +277,13 @@ def test_new_version_retains_related_objects(sample_model):
         sample_model.transaction.workbasket,
     )
     assert new_model.descriptions.get() == description
+    assert sample_model.descriptions.get() == description
+    assert type(sample_model).objects.filter(descriptions__isnull=False).exists()
+    assert (
+        type(sample_model).objects.filter(descriptions__isnull=False).first()
+        == new_model
+    )
+    assert not type(sample_model).objects.filter(descriptions__isnull=True).exists()
 
 
 def test_current_as_of(sample_model):
