@@ -1700,6 +1700,18 @@ def test_ActionRequiresDuty_ignores_outdated_components():
         business_rules.ActionRequiresDuty(condition.transaction).validate(condition)
 
 
+# https://uktrade.atlassian.net/browse/TP2000-369  /PS-IGNORE
+def test_ActionRequiresDuty_accepts_0_percent_duty():
+    condition = factories.MeasureConditionFactory.create(action__requires_duty=True)
+    factories.MeasureConditionComponentFactory.create(
+        condition=condition,
+        duty_amount=0.000,
+        transaction=condition.transaction,
+    )
+
+    business_rules.ActionRequiresDuty(condition.transaction).validate(condition)
+
+
 @pytest.mark.parametrize(
     ("applicability_code", "amount", "error_expected"),
     [
