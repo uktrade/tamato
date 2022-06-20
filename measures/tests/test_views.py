@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
+from django.forms.models import model_to_dict
 from django.urls import reverse
 
 from common.models.transactions import Transaction
@@ -823,3 +824,36 @@ def test_measure_create_wizard_get_form_kwargs(
 
     assert "measure_start_date" in form_kwargs["form_kwargs"]
     assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
+
+
+def test_measure_form_creates_exclusions(
+    erga_omnes,
+    session_with_workbasket,
+    valid_user,
+    client,
+):
+    excluded_country1 = factories.GeographicalAreaFactory.create()
+    excluded_country2 = factories.GeographicalAreaFactory.create()
+    factories.GeographicalAreaFactory.create()
+    measure = factories.MeasureFactory.create(geographical_area=erga_omnes)
+    data = {k: v for k, v in model_to_dict(measure).items() if v is not None}
+    start_date = data["valid_between"].lower
+    data.update(
+        start_date_0=start_date.day,
+        start_date_1=start_date.month,
+        start_date_2=start_date.year,
+    )
+    exclusions_data = {
+        "geo_area": "ERGA_OMNES",
+        "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": excluded_country1.pk,
+        "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": excluded_country2.pk,
+    }
+    data.update(exclusions_data)
+    client.force_login(valid_user)
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    response = client.post(url, data)
+    assert response.status_code == 302
+    assert measure.exclusions.all().count() == 2
+    assert not set(
+        [e.excluded_geographical_area for e in measure.exclusions.all()],
+    ).difference({excluded_country1, excluded_country2})
