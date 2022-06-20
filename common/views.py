@@ -192,6 +192,11 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         return super().form_valid(form)
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
+class MyWorkbasketView(DashboardView):
+    template_name = "common/my-workbasket.jinja"
+
+
 class HealthCheckResponse(HttpResponse):
     """
     Formatted HTTP response for healthcheck.

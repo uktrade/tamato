@@ -15,6 +15,7 @@ register_converter(NumericSIDConverter, "sid")
 
 urlpatterns = [
     path("", views.DashboardView.as_view(), name="index"),
+    path("my-workbasket/", views.MyWorkbasketView.as_view(), name="my-workbasket"),
     path("healthcheck", views.healthcheck, name="healthcheck"),
     path("login", views.LoginView.as_view(), name="login"),
     path("logout", views.LogoutView.as_view(), name="logout"),
