@@ -1,4 +1,4 @@
 {% extends "common/index.jinja" %}
 
-{% block page_title %}Workbasket {{ request.session.workbasket.id }}{% endblock %}
+{% block page_title %}Workbasket {{ request.session.workbasket.id }}{% if request.session.workbasket.title %} - {{ request.session.workbasket.title }}{% endif %}{% endblock %}
 {% block page_subtitle %}What would you like to do?{% endblock %}
