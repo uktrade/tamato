@@ -1,5 +1,13 @@
 {%- extends "includes/common/tabs/core_data.jinja" -%}
 
+{% set geographical_exclusions %}
+{% if object.exclusions.all() %}
+	{% for exclusion in object.exclusions.all() %}
+		{{ exclusion.excluded_geographical_area.get_description().description }}{{ ", " if not loop.last else "" }}
+	{% endfor %}
+{% else %}-{% endif %}
+{% endset %}
+
 {% block data %}
 	{{ govukSummaryList({
 		"rows": [
@@ -41,6 +49,11 @@
         {
             "key": {"text": "Geographical area"},
             "value": {"text":  object.geographical_area.area_id ~ " - " ~ object.geographical_area.get_description().description if object.geographical_area else '-'},
+            "actions": {"items": []}
+        },
+        {
+            "key": {"text": "Geographical area exclusions"},
+            "value": {"text":  geographical_exclusions },
             "actions": {"items": []}
         },
         {
