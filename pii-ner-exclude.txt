@@ -49,7 +49,7 @@ Scrapy
 Sphinx
 PyBuilder
 Jupyter Notebook
-#   
+#
 PEP 582
 Celery
 env/
@@ -190,11 +190,11 @@ name="footnote.description.period.sid
 footnote.description.period.sid
 ADR
 ORM
-Column        | Type                    | Description             
+Column        | Type                    | Description
 FK
 NULL
-Column      | Type                     | Description              
-Boolean                  
+Column      | Type                     | Description
+Boolean
 Object
 Transaction
 WorkBaskets
@@ -752,7 +752,7 @@ name="quota.suspension.period.sid
 type="QuotaBlockedStateCode"/>
 name="target.quota.definition.sid
 Minimal
-BUILDDIR      
+BUILDDIR
 Makefile
 Tariff Managers
 https://www.manage-trade-tariffs.trade.gov.uk/
@@ -983,9 +983,9 @@ Hacky
 antidumping.regulation.role
 complete.abrogation.regulation.id
 the Tariff Management Tool
-CDS                 
-AWAITING_CDS_UPLOAD_EDIT       
-AWAITING_CDS_UPLOAD_DELETE     
+CDS
+AWAITING_CDS_UPLOAD_EDIT
+AWAITING_CDS_UPLOAD_DELETE
 tracked_model_workbasket_schema_updated.png
 AbortController
 Activity Stream
@@ -1006,6 +1006,7 @@ A ``TransactionCheck`` is considered "
 A ``TransactionCheck`` requires
 VersionGroups
 Replacements
+RadioNested
 components__component_measurement__measurement_unit
 Parsers for TARIC
 Parser
@@ -1137,5 +1138,6 @@ CheckResult
 Checkers
 self.linked_model
 "Attach BusinessRules
-WorkBasketOutputFormat Enum
+WorkBasketOutputFormat
 param kwargs:
+Enum

@@ -23,16 +23,28 @@ class TransactionPartition(models.IntegerChoices):
     Transactions are partitioned into global groupings based on type.
 
     Within a partition, a transactions order applies, to obtain a global
-    ordering a order_by("partition", "order") must be used.
+    ordering call .order_by("partition", "order").
 
     The numbers chosen increment by "era" of transaction, starting
-    from approved transactions SEED_FILE and REVISION
+    from approved transactions SEED_FILE, REVISION
     then ending with DRAFT.
+
+    This system enables a simple filter for "approved" transactions, by checking
+    for <= HIGHEST_APPROVED_PARTITION, this is currently set to REVISION,
+    which is implemented in TransactionQuerySet.approved().
     """
 
     SEED_FILE = 1, "Seed"
     REVISION = 2, "Revision"
     DRAFT = 3, "Draft"
+
+    @classmethod
+    def get_highest_approved_partition(cls):
+        """Return the highest approved partition, this is used by
+        TransactionQuerySet.approved() to filter approved partitions using a
+        comparison operator as opposed to "in"."""
+        # This is a function, not a const as duplicate are not allowed in an Enum.
+        return cls.REVISION
 
     @classmethod
     def approved_partitions(cls):
@@ -55,21 +67,18 @@ class TransactionsAlreadyApproved(Exception):
 class TransactionQueryset(models.QuerySet):
     @property
     def tracked_models(self):
-        """Returns all of the tracked models contained in the transactions in
-        the queryset."""
+        """Returns all tracked models referenced by transactions in this
+        queryset."""
         return self.model.tracked_models.rel.related_model.objects.filter(
             transaction__in=self,
         )
 
     def approved(self):
-        """
-        Currently approved Transactions are SEED_FILE and REVISION this can be
-        more efficiently expressed as != DRAFT.
-
-        Using exclude(DRAFT) should be marginally more efficient than
-        filter(partition__in=TransactionPartition.approved_partitions())
-        """
-        return self.exclude(partition=TransactionPartition.DRAFT)
+        """Currently approved Transactions are SEED_FILE and REVISION this can
+        be."""
+        return self.filter(
+            partition__lte=TransactionPartition.get_highest_approved_partition(),
+        )
 
     def preorder_negative_transactions(self) -> None:
         """
@@ -81,42 +90,52 @@ class TransactionQueryset(models.QuerySet):
         """
         if self.count() and self.order_by("order").first().order < 0:
             order = PREEMPTIVE_TRANSACTION_SEED
-            for tx in self.order_by("order").all():
+            transactions = self.order_by("order")
+            for tx in transactions:
                 order += 1
                 tx.order = order
-                tx.save()
+
+            type(self).objects.bulk_update(transactions, ["order"])
 
     @atomic
-    def apply_transaction_order(self, partition_scheme) -> None:
+    def move_to_end_of_partition(self, partition) -> None:
         """
-        Reorder transactions in the workbasket.
+        Update Transaction partition and order fields to place them at the end
+        of the specified partition.
 
-        Note that transaction orders may not be contiguous,
-        e.g. when the workbasket has preemptive transactions
-        (created by the commodity code change handler).
-
-        TODO: Enhance this method to order based on partitions also.
+        Transaction order is updated to be contiguous.
         """
 
-        # Ensure order of the transactions in this query to start at the end of the existing approved partition.
-        existing_tx = self.model.objects.filter(
-            partition=partition_scheme.get_approved_partition(),
-        ).last()
+        transactions = self.order_by("partition", "order")
+
+        # Ensure order of the transactions in this query to start at end of the partition.
+        # The order_by here is redundant - as it's the natural order of Transaction,
+        # but it's included for clarity.
+        existing_tx = (
+            self.model.objects.order_by("order")
+            .filter(
+                partition=partition,
+            )
+            .exclude(pk__in=transactions.values_list("pk", flat=True))
+            .last()
+        )
         order_start = existing_tx.order + 1 if existing_tx else 1
 
         logger.debug(
-            "Update draft transactions in query starting from %s "
+            "Update transactions in query starting from %s "
             "to start after transaction %s. order_start: %s",
-            self.order_by("order").first().pk,
+            transactions.first().pk,
             existing_tx.pk if existing_tx else None,
             order_start,
         )
 
         counter = counter_generator(start=order_start)
 
-        for tx in self.order_by("order").all():
+        for tx in transactions:
             tx.order = counter()
-            tx.save()
+            tx.partition = partition
+
+        self.model.objects.bulk_update(transactions, ["partition", "order"])
 
     @atomic
     def save_drafts(self, partition_scheme):
@@ -154,8 +173,7 @@ class TransactionQueryset(models.QuerySet):
             version_group.current_version = obj
             version_group.save()
 
-        self.apply_transaction_order(partition_scheme)
-        self.update(partition=approved_partition)
+        self.move_to_end_of_partition(approved_partition)
 
 
 class Transaction(TimestampedMixin):

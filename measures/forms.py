@@ -13,16 +13,18 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
-from django.forms.formsets import formset_factory
 from django.template import loader
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.fields import AutoCompleteField
+from common.forms import BindNestedFormMixin
 from common.forms import FormSet
+from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
+from common.forms import formset_factory
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
@@ -31,6 +33,7 @@ from geo_areas.util import with_latest_description_string
 from geo_areas.validators import AreaCode
 from measures import models
 from measures.parsers import DutySentenceParser
+from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
@@ -38,6 +41,218 @@ from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
+
+
+ERGA_OMNES_EXCLUSIONS_PREFIX = "erga_omnes_exclusions"
+ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX = (
+    f"{ERGA_OMNES_EXCLUSIONS_PREFIX}_formset"  # /PS-IGNORE
+)
+GROUP_EXCLUSIONS_PREFIX = "geo_group_exclusions"
+GROUP_EXCLUSIONS_FORMSET_PREFIX = f"{GROUP_EXCLUSIONS_PREFIX}_formset"
+
+GEO_GROUP_PREFIX = "geographical_area_group"
+GEO_GROUP_FORMSET_PREFIX = f"{GEO_GROUP_PREFIX}_formset"
+
+COUNTRY_REGION_PREFIX = "country_region"
+COUNTRY_REGION_FORMSET_PREFIX = f"{COUNTRY_REGION_PREFIX}_formset"
+
+
+class GeoAreaType(TextChoices):
+    ERGA_OMNES = "ERGA_OMNES", "All countries (erga omnes)"
+    GROUP = "GROUP", "A group of countries"
+    COUNTRY = "COUNTRY", "Specific countries or regions"
+
+
+SUBFORM_PREFIX_MAPPING = {
+    GeoAreaType.GROUP: GEO_GROUP_PREFIX,
+    GeoAreaType.COUNTRY: COUNTRY_REGION_FORMSET_PREFIX,
+}
+
+EXCLUSIONS_FORMSET_PREFIX_MAPPING = {
+    GeoAreaType.ERGA_OMNES: ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
+    GeoAreaType.GROUP: GROUP_EXCLUSIONS_FORMSET_PREFIX,
+    GeoAreaType.COUNTRY: None,
+}
+
+FIELD_NAME_MAPPING = {
+    GeoAreaType.ERGA_OMNES: "erga_omnes_exclusion",
+    GeoAreaType.GROUP: "geo_group_exclusion",
+}
+
+
+class GeoGroupForm(forms.Form):
+    prefix = GEO_GROUP_PREFIX
+
+    geographical_area_group = forms.ModelChoiceField(
+        label="",
+        queryset=None,  # populated in __init__
+        error_messages={"required": "A country group is required."},
+    )
+
+    def __init__(self, *args, **kwargs):
+        tx = kwargs.pop("transaction", None)
+        self.transaction = tx
+        super().__init__(*args, **kwargs)
+        self.fields[
+            "geographical_area_group"
+        ].queryset = with_latest_description_string(
+            GeographicalArea.objects.exclude(
+                descriptions__description__isnull=True,
+            )
+            .as_at_today()
+            .approved_up_to_transaction(tx)
+            .with_latest_links("descriptions")
+            .prefetch_related("descriptions")
+            .order_by("descriptions__description"),
+            # descriptions__description" should make this implicitly distinct()
+        )
+        self.fields[
+            "geographical_area_group"
+        ].label_from_instance = lambda obj: obj.description
+
+        if self.initial.get("geo_area") == GeoAreaType.GROUP.value:
+            self.initial["geographical_area_group"] = self.initial["geographical_area"]
+
+
+class ErgaOmnesExclusionsForm(forms.Form):
+    prefix = ERGA_OMNES_EXCLUSIONS_PREFIX
+
+    erga_omnes_exclusion = forms.ModelChoiceField(
+        label="",
+        queryset=GeographicalArea.objects.all(),
+        help_text="Select a country to be excluded:",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        tx = kwargs.pop("transaction", None)
+        self.transaction = tx
+        super().__init__(*args, **kwargs)
+        self.fields["erga_omnes_exclusion"].queryset = with_latest_description_string(
+            GeographicalArea.objects.exclude(
+                descriptions__description__isnull=True,
+            )
+            .as_at_today()
+            .approved_up_to_transaction(tx)
+            .with_latest_links("descriptions")
+            .prefetch_related("descriptions")
+            .order_by("descriptions__description"),
+            # descriptions__description" should make this implicitly distinct()
+        )
+        self.fields[
+            "erga_omnes_exclusion"
+        ].label_from_instance = lambda obj: obj.description
+
+
+class GeoGroupExclusionsForm(forms.Form):
+    prefix = GROUP_EXCLUSIONS_PREFIX
+
+    geo_group_exclusion = forms.ModelChoiceField(
+        label="",
+        queryset=GeographicalArea.objects.all(),
+        help_text="Select a country to be excluded:",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        tx = kwargs.pop("transaction", None)
+        self.transaction = tx
+        super().__init__(*args, **kwargs)
+        self.fields["geo_group_exclusion"].queryset = with_latest_description_string(
+            GeographicalArea.objects.exclude(
+                descriptions__description__isnull=True,
+            )
+            .as_at_today()
+            .approved_up_to_transaction(tx)
+            .with_latest_links("descriptions")
+            .prefetch_related("descriptions")
+            .order_by("descriptions__description"),
+            # descriptions__description" should make this implicitly distinct()
+        )
+        self.fields[
+            "geo_group_exclusion"
+        ].label_from_instance = lambda obj: obj.description
+
+
+GeoGroupFormSet = formset_factory(
+    GeoGroupForm,
+    prefix=GEO_GROUP_FORMSET_PREFIX,
+    formset=FormSet,
+    min_num=1,
+    max_num=2,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
+
+ErgaOmnesExclusionsFormSet = formset_factory(
+    ErgaOmnesExclusionsForm,
+    prefix=ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
+    formset=FormSet,
+    min_num=0,
+    max_num=10,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
+
+GeoGroupExclusionsFormSet = formset_factory(
+    GeoGroupExclusionsForm,
+    prefix=GROUP_EXCLUSIONS_FORMSET_PREFIX,
+    formset=FormSet,
+    min_num=0,
+    max_num=10,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
+
+
+class CountryRegionForm(forms.Form):
+    prefix = COUNTRY_REGION_PREFIX
+
+    geographical_area_country_or_region = forms.ModelChoiceField(
+        queryset=with_latest_description_string(
+            GeographicalArea.objects.exclude(
+                area_code=AreaCode.GROUP,
+                descriptions__description__isnull=True,
+            ),
+        ),
+        error_messages={"required": "A country or region is required."},
+    )
+
+    def __init__(self, *args, **kwargs):
+        tx = kwargs.pop("transaction", None)
+        self.transaction = tx
+        super().__init__(*args, **kwargs)
+        self.fields["geographical_area_country_or_region"].queryset = (
+            self.fields["geographical_area_country_or_region"]
+            .queryset.as_at_today()
+            .approved_up_to_transaction(tx)
+            .with_latest_links("descriptions")
+            .prefetch_related("descriptions")
+            .order_by("descriptions__description")
+        )
+        self.fields[
+            "geographical_area_country_or_region"
+        ].label_from_instance = lambda obj: obj.description
+
+        if self.initial.get("geo_area") == GeoAreaType.COUNTRY.value:
+            self.initial["geographical_area_country_or_region"] = self.initial[
+                "geographical_area"
+            ]
+
+
+CountryRegionFormSet = formset_factory(
+    CountryRegionForm,
+    prefix=COUNTRY_REGION_FORMSET_PREFIX,
+    formset=FormSet,
+    min_num=1,
+    max_num=2,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
 
 
 class MeasureConditionComponentDuty(Field):
@@ -213,6 +428,7 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
 
 
 class MeasureConditionsFormSet(FormSet):
+    prefix = "measure-conditions-formset"
     form = MeasureConditionsForm
 
 
@@ -256,7 +472,18 @@ class MeasureConditionsWizardStepFormSet(FormSet):
     form = MeasureConditionsWizardStepForm
 
 
-class MeasureForm(ValidityPeriodForm):
+class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
+    class Meta:
+        model = models.Measure
+        fields = (
+            "valid_between",
+            "measure_type",
+            "generating_regulation",
+            "goods_nomenclature",
+            "additional_code",
+            "order_number",
+        )
+
     measure_type = AutoCompleteField(
         label="Measure type",
         help_text="Select the regulation which provides the legal basis for the measure.",
@@ -291,29 +518,15 @@ class MeasureForm(ValidityPeriodForm):
         queryset=QuotaOrderNumber.objects.all(),
         required=False,
     )
-    geographical_area = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.all(),
-        required=False,
-    )
-    geographical_area_group = forms.ModelChoiceField(
-        queryset=with_latest_description_string(
-            GeographicalArea.objects.filter(
-                area_code=1,
-            ),
-        ),
-        required=False,
-        widget=forms.Select(attrs={"class": "govuk-select"}),
-        empty_label=None,
-    )
-    geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=with_latest_description_string(
-            GeographicalArea.objects.exclude(
-                area_code=1,
-            ),
-        ),
-        widget=forms.Select(attrs={"class": "govuk-select"}),
-        required=False,
-        empty_label=None,
+    geo_area = RadioNested(
+        label="Geographical area",
+        choices=GeoAreaType.choices,
+        nested_forms={
+            GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
+            GeoAreaType.GROUP.value: [GeoGroupForm, GeoGroupExclusionsFormSet],
+            GeoAreaType.COUNTRY.value: [CountryRegionForm],
+        },
+        error_messages={"required": "A Geographical area must be selected"},
     )
 
     def __init__(self, *args, **kwargs):
@@ -332,28 +545,14 @@ class MeasureForm(ValidityPeriodForm):
             f"instance_duty_sentence_{self.instance.sid}"
         ] = self.instance.duty_sentence
 
-        self.initial_geographical_area = self.instance.geographical_area
+        if self.instance.geographical_area.is_all_countries():
+            self.initial["geo_area"] = GeoAreaType.ERGA_OMNES.value
 
-        for field in ["geographical_area_group", "geographical_area_country_or_region"]:
-            self.fields[field].queryset = (
-                self.fields[field]
-                .queryset.as_at_today()
-                .approved_up_to_transaction(tx)
-                .with_latest_links("descriptions")
-                .prefetch_related("descriptions")
-                .order_by("descriptions__description")
-            )
-            self.fields[field].label_from_instance = lambda obj: obj.description
+        elif self.instance.geographical_area.is_group():
+            self.initial["geo_area"] = GeoAreaType.GROUP.value
 
-        if self.instance.geographical_area.is_group():
-            self.fields[
-                "geographical_area_group"
-            ].initial = self.instance.geographical_area
-
-        if self.instance.geographical_area.is_single_region_or_country():
-            self.fields[
-                "geographical_area_country_or_region"
-            ].initial = self.instance.geographical_area
+        else:
+            self.initial["geo_area"] = GeoAreaType.COUNTRY.value
 
         # If no footnote keys are stored in the session for a measure,
         # store all the pks of a measure's footnotes on the session, using the measure sid as key
@@ -369,6 +568,11 @@ class MeasureForm(ValidityPeriodForm):
             self.request.session[f"instance_footnotes_{self.instance.sid}"] = [
                 a.associated_footnote.pk for a in associations
             ]
+
+        nested_forms_initial = {**self.initial}
+        nested_forms_initial["geographical_area"] = self.instance.geographical_area
+        kwargs.pop("initial")
+        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
 
     def clean_duty_sentence(self):
         duty_sentence = self.cleaned_data["duty_sentence"]
@@ -391,15 +595,28 @@ class MeasureForm(ValidityPeriodForm):
         )
 
         geographical_area_fields = {
-            "all": erga_omnes_instance,
-            "group": cleaned_data.get("geographical_area_group"),
-            "single": cleaned_data.get("geographical_area_country_or_region"),
+            GeoAreaType.ERGA_OMNES: erga_omnes_instance,
+            GeoAreaType.GROUP: cleaned_data.get("geographical_area_group"),
+            GeoAreaType.COUNTRY: cleaned_data.get(
+                "geographical_area_country_or_region",
+            ),
         }
 
-        if self.data.get("geographical_area_choice"):
+        if self.data.get("geo_area"):
+            geo_area_choice = self.data.get("geo_area")
             cleaned_data["geographical_area"] = geographical_area_fields[
-                self.data.get("geographical_area_choice")
+                geo_area_choice
             ]
+            exclusions = cleaned_data.get(
+                EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
+            )
+            if exclusions:
+                cleaned_data["exclusions"] = [
+                    exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
+                    for exclusion in cleaned_data[
+                        EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
+                    ]
+                ]
 
         cleaned_data["sid"] = self.instance.sid
 
@@ -415,6 +632,24 @@ class MeasureForm(ValidityPeriodForm):
             instance.save()
 
         sid = instance.sid
+
+        measure_creation_pattern = MeasureCreationPattern(
+            workbasket=WorkBasket.current(self.request),
+            base_date=instance.valid_between.lower,
+            defaults={
+                "generating_regulation": self.cleaned_data["generating_regulation"],
+            },
+        )
+
+        if self.cleaned_data.get("exclusions"):
+            for exclusion in self.cleaned_data.get("exclusions"):
+                pattern = (
+                    measure_creation_pattern.create_measure_excluded_geographical_areas(
+                        instance,
+                        exclusion,
+                    )
+                )
+                next(pattern)
 
         if (
             self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
@@ -483,18 +718,6 @@ class MeasureForm(ValidityPeriodForm):
             return False
 
         return super().is_valid()
-
-    class Meta:
-        model = models.Measure
-        fields = (
-            "valid_between",
-            "measure_type",
-            "generating_regulation",
-            "goods_nomenclature",
-            "additional_code",
-            "order_number",
-            "geographical_area",
-        )
 
 
 class MeasureFilterForm(forms.Form):
@@ -619,269 +842,107 @@ class MeasureDetailsForm(
         return cleaned_data
 
 
-class GeoAreaForm(forms.Form):
-    geo_area = forms.ModelChoiceField(
-        label="",
-        queryset=GeographicalArea.objects.all(),
-        required=False,
-        widget=forms.Select(attrs={"class": "govuk-select"}),
-    )
-
-    def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
-        super().__init__(*args, **kwargs)
-        self.fields["geo_area"].queryset = with_latest_description_string(
-            GeographicalArea.objects.exclude(
-                area_code=AreaCode.GROUP,
-                descriptions__description__isnull=True,
-            )
-            .as_at_today()
-            .approved_up_to_transaction(tx)
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
-        )
-        self.fields["geo_area"].label_from_instance = lambda obj: obj.description
-
-
-class ErgaOmnesExclusionsForm(forms.Form):
-    erga_omnes_exclusion = forms.ModelChoiceField(
-        label="",
-        queryset=GeographicalArea.objects.all(),
-        help_text="Select a country to be excluded:",
-        required=False,
-    )
-
-    def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
-        super().__init__(*args, **kwargs)
-        self.fields["erga_omnes_exclusion"].queryset = with_latest_description_string(
-            GeographicalArea.objects.exclude(
-                descriptions__description__isnull=True,
-            )
-            .as_at_today()
-            .approved_up_to_transaction(tx)
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
-        )
-        self.fields[
-            "erga_omnes_exclusion"
-        ].label_from_instance = lambda obj: obj.description
-
-
-class GeoGroupExclusionsForm(forms.Form):
-    geo_group_exclusion = forms.ModelChoiceField(
-        label="",
-        queryset=GeographicalArea.objects.all(),
-        help_text="Select a country to be excluded:",
-        required=False,
-    )
-
-    def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
-        super().__init__(*args, **kwargs)
-        self.fields["geo_group_exclusion"].queryset = with_latest_description_string(
-            GeographicalArea.objects.exclude(
-                descriptions__description__isnull=True,
-            )
-            .as_at_today()
-            .approved_up_to_transaction(tx)
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
-        )
-        self.fields[
-            "geo_group_exclusion"
-        ].label_from_instance = lambda obj: obj.description
-
-
-GeoAreaFormSet = formset_factory(
-    GeoAreaForm,
-    formset=FormSet,
-    min_num=1,
-    max_num=2,
-    extra=1,
-    validate_min=True,
-    validate_max=True,
-)
-
-ErgaOmnesExclusionsFormSet = formset_factory(
-    ErgaOmnesExclusionsForm,
-    formset=FormSet,
-    min_num=1,
-    max_num=10,
-    extra=1,
-    validate_min=True,
-    validate_max=True,
-)
-
-GeoGroupExclusionsFormSet = formset_factory(
-    GeoGroupExclusionsForm,
-    formset=FormSet,
-    min_num=1,
-    max_num=10,
-    extra=1,
-    validate_min=True,
-    validate_max=True,
-)
-
-
-class MeasureGeographicalAreaForm(forms.ModelForm):
-    class Meta:
-        model = models.Measure
-        fields = [
-            "geographical_area",
-        ]
-
-    class GeoAreaType(TextChoices):
-        ERGA_OMNES = "ERGA_OMNES", "All countries (erga omnes)"
-        GROUP = "GROUP", "A group of countries"
-        COUNTRY = "COUNTRY", "Specific countries or regions"
-
-    geo_area_type = forms.ChoiceField(
+class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
+    geo_area = RadioNested(
         label="",
         choices=GeoAreaType.choices,
-        required=False,
-    )
-    geo_group = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.all(),
-        help_text="Select a country group.",
-        required=False,
-        widget=forms.Select(attrs={"class": "govuk-select"}),
+        nested_forms={
+            GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
+            GeoAreaType.GROUP.value: [GeoGroupForm, GeoGroupExclusionsFormSet],
+            GeoAreaType.COUNTRY.value: [CountryRegionFormSet],
+        },
+        error_messages={"required": "A Geographical area must be selected"},
     )
 
     def __init__(self, *args, **kwargs):
         tx = kwargs.pop("transaction", None)
         self.transaction = tx
         super().__init__(*args, **kwargs)
-        self.geo_area_subform_prefix = "geo_area_formset"
-        self.geo_area_subform = GeoAreaFormSet(
-            data=self.data,
-            prefix=self.geo_area_subform_prefix,
-        )
-        self.geo_group_exclusions_subform_prefix = "geo_group_exclusions_formset"
-        self.geo_group_exclusions_subform = GeoGroupExclusionsFormSet(
-            data=self.data,
-            prefix=self.geo_group_exclusions_subform_prefix,
-        )
-        self.erga_omnes_exclusions_subform_prefix = "erga_omnes_exclusions_formset"
-        self.erga_omnes_exclusions_subform = ErgaOmnesExclusionsFormSet(
-            data=self.data,
-            prefix=self.erga_omnes_exclusions_subform_prefix,
+
+        kwargs.pop("initial")
+
+        self.fields["geo_area"].initial = self.data.get(f"{self.prefix}-geo_area")
+
+        geographical_area_fields = {
+            GeoAreaType.ERGA_OMNES: self.erga_omnes_instance,
+            GeoAreaType.GROUP: self.data.get(f"{self.prefix}-geographical_area_group"),
+            GeoAreaType.COUNTRY: self.data.get(
+                f"{self.prefix}-geographical_area_country_or_region",
+            ),
+        }
+
+        nested_forms_initial = {}
+
+        if self.fields["geo_area"].initial:
+            nested_forms_initial["geographical_area"] = geographical_area_fields[
+                self.fields["geo_area"].initial
+            ]
+
+        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "geo_area",
+            HTML.details(
+                "Help with geography",
+                (
+                    "Choose the geographical area to which the measure applies. This can be a specific country "
+                    "or a group of countries, and exclusions can be specified. The measure will only apply to imports "
+                    "from or exports to the selected area."
+                ),
+            ),
+            Submit("submit", "Continue"),
         )
 
-        self.fields["geographical_area"].required = False
-
-        self.fields["geo_group"].queryset = with_latest_description_string(
-            GeographicalArea.objects.filter(
-                area_code=AreaCode.GROUP,
-            )
-            .exclude(descriptions__description__isnull=True)
-            .as_at_today()
-            .approved_up_to_transaction(tx)
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
+    @property
+    def erga_omnes_instance(self):
+        return (
+            GeographicalArea.objects.approved_up_to_transaction(self.transaction)
+            .erga_omnes()
+            .get()
         )
-        # self.fields[
-        #     "geo_group_exclusions"
-        # ].queryset = GeographicalArea.objects.approved_up_to_transaction(tx)
-
-        for field in ["geo_group"]:
-            self.fields[field].label_from_instance = lambda obj: obj.description
 
     def clean(self):
         cleaned_data = super().clean()
-        geo_area_list = None
-        if self.geo_area_subform.is_valid():
-            geo_area_list = [
-                item["geo_area"] for item in self.geo_area_subform.cleaned_data
-            ]
 
-        erga_omnes_exclusions = None
-        if self.erga_omnes_exclusions_subform.is_valid():
-            erga_omnes_exclusions = [
-                item["erga_omnes_exclusion"]
-                for item in self.erga_omnes_exclusions_subform.cleaned_data
-            ]
+        geo_area_choice = self.cleaned_data.get("geo_area")
 
-        geo_group_exclusions = None
-        if self.geo_group_exclusions_subform.is_valid():
-            geo_group_exclusions = [
-                item["geo_group_exclusion"]
-                for item in self.geo_group_exclusions_subform.cleaned_data
-            ]
+        geographical_area_fields = {
+            GeoAreaType.GROUP: "geographical_area_group",
+            GeoAreaType.COUNTRY: "geographical_area_country_or_region",
+        }
 
-        geo_area_type = cleaned_data.pop("geo_area_type", None)
-        geo_group = cleaned_data.pop("geo_group", None)
+        if geo_area_choice:
+            if not self.formset_submit():
 
-        if geo_area_type == self.GeoAreaType.ERGA_OMNES:
-            cleaned_data["geo_area_list"] = [
-                (
-                    GeographicalArea.objects.approved_up_to_transaction(
-                        self.transaction,
-                    )
-                    .erga_omnes()
-                    .get()
-                ),
-            ]
-            cleaned_data["geo_area_exclusions"] = erga_omnes_exclusions
+                if geo_area_choice == GeoAreaType.ERGA_OMNES:
+                    cleaned_data["geo_area_list"] = [self.erga_omnes_instance]
 
-        self.fields["geo_area_type"].initial = geo_area_type
+                elif geo_area_choice == GeoAreaType.GROUP:
+                    data_key = SUBFORM_PREFIX_MAPPING[geo_area_choice]
+                    cleaned_data["geo_area_list"] = cleaned_data[data_key]
 
-        # Don't try to validate the whole form when user clicks add or delete on the country geo_area_subform
-        geo_area_subform_submit = self.geo_area_subform.formset_action in [
-            "ADD",
-            "DELETE",
-        ]
+                elif geo_area_choice == GeoAreaType.COUNTRY:
+                    field_name = geographical_area_fields[geo_area_choice]
+                    data_key = SUBFORM_PREFIX_MAPPING[geo_area_choice]
+                    cleaned_data["geo_area_list"] = [
+                        geo_area[field_name] for geo_area in cleaned_data[data_key]
+                    ]
 
-        if geo_area_type == self.GeoAreaType.GROUP:
-            if not geo_group and not geo_area_subform_submit:
-                raise ValidationError({"geo_group": "A country group is required."})
-            cleaned_data["geo_area_list"] = [geo_group]
-            cleaned_data["geo_area_exclusions"] = geo_group_exclusions
-
-        if geo_area_type == self.GeoAreaType.COUNTRY:
-            if not geo_area_list and not geo_area_subform_submit:
-                raise ValidationError("One or more countries or regions is required.")
-            cleaned_data["geo_area_list"] = geo_area_list
-
-        self.fields["geo_group"].initial = geo_group.pk if geo_group else None
-
-        if not cleaned_data.get("geo_area_list") and not geo_area_subform_submit:
-            raise ValidationError("A Geographical area must be selected")
+                exclusions = cleaned_data.get(
+                    EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
+                )
+                if exclusions:
+                    cleaned_data["geo_area_exclusions"] = [
+                        exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
+                        for exclusion in cleaned_data[
+                            EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
+                        ]
+                    ]
 
         return cleaned_data
-
-    def is_valid(self):
-        geo_area_type = self.data.get(f"{self.prefix}-geo_area_type", None)
-        if geo_area_type == self.GeoAreaType.COUNTRY:
-            return super().is_valid() and self.geo_area_subform.is_valid()
-        elif geo_area_type == self.GeoAreaType.ERGA_OMNES:
-            if self.erga_omnes_exclusions_subform.formset_action in [
-                "ADD",
-                "DELETE",
-            ]:
-                return (
-                    super().is_valid() and self.erga_omnes_exclusions_subform.is_valid()
-                )
-        elif geo_area_type == self.GeoAreaType.GROUP:
-            if self.geo_group_exclusions_subform.formset_action in [
-                "ADD",
-                "DELETE",
-            ]:
-                return (
-                    super().is_valid() and self.geo_group_exclusions_subform.is_valid()
-                )
-        return super().is_valid()
 
 
 class MeasureAdditionalCodeForm(forms.ModelForm):
@@ -953,8 +1014,16 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         return cleaned_data
 
 
-class MeasureCommodityAndDutiesFormSet(FormSet):
-    form = MeasureCommodityAndDutiesForm
+MeasureCommodityAndDutiesFormSet = formset_factory(
+    MeasureCommodityAndDutiesForm,
+    prefix="measure_commodities_duties_formset",
+    formset=FormSet,
+    min_num=1,
+    max_num=100,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
 
 
 class MeasureFootnotesForm(forms.Form):
