@@ -12,6 +12,16 @@ def first_line_of(s: str) -> str:
 
 
 class WorkBasketCommandMixin:
+    def get_transaction_span(self, transactions):
+        """
+        Return a string representing the span from first to last transaction.
+
+        Hyphens are output if there are no transactions.
+        """
+        first_tx = transactions.first().pk if transactions else None
+        last_tx = transactions.last().pk if transactions else None
+        return f"{first_tx or '-'} - {last_tx or '-'}"
+
     def _output_workbasket_readable(
         self, workbasket, show_transaction_info, indent=4, **kwargs
     ):
@@ -23,7 +33,8 @@ class WorkBasketCommandMixin:
         self.stdout.write(f"{spaces}status: {workbasket.status}")
         if show_transaction_info:
             self.stdout.write(
-                f"{spaces}transactions: {workbasket.transactions.first().pk} - {workbasket.transactions.last().pk}",
+                f"{spaces}transactions: "
+                + self.get_transaction_span(workbasket.transactions),
             )
 
     def _output_workbasket_compact(self, workbasket, show_transaction_info, **kwargs):
@@ -33,7 +44,7 @@ class WorkBasketCommandMixin:
         )
         if show_transaction_info:
             self.stdout.write(
-                f", {workbasket.transactions.first().pk} - {workbasket.transactions.last().pk}",
+                ", " + self.get_transaction_span(workbasket.transactions),
             )
 
     def output_workbasket(

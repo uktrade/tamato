@@ -1,6 +1,8 @@
+import ast
 import logging
 from typing import Any
 from typing import Optional
+from typing import Sequence
 
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
@@ -53,6 +55,13 @@ class Command(WorkBasketCommandMixin, BaseCommand):
             help="Output first / last transactions.",
         )
 
+        parser.add_argument(
+            "workbasket_ids",
+            help=("Comma-separated list of workbasket ids to filter to"),
+            nargs="?",
+            type=ast.literal_eval,
+        )
+
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
         workbaskets = WorkBasket.objects.order_by("updated_at").all()
 
@@ -65,6 +74,14 @@ class Command(WorkBasketCommandMixin, BaseCommand):
 
         if workbasket_statuses:
             workbaskets = workbaskets.filter(status__in=options["status"])
+
+        if options.get("workbasket_ids"):
+            # Filter by id
+            ids = options["workbasket_ids"]
+            if isinstance(ids, int):
+                workbaskets = workbaskets.filter(pk=ids)
+            elif isinstance(ids, Sequence):
+                workbaskets = workbaskets.filter(pk__in=ids)
 
         output_format = (
             WorkBasketOutputFormat.COMPACT
