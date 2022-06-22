@@ -343,6 +343,10 @@ def erga_omnes():
 def measure_form_data():
     measure = factories.MeasureFactory.create()
     data = model_to_dict(measure)
+    data["geo_area"] = "COUNTRY"
+    data["country_region-geographical_area_country_or_region"] = data[
+        "geographical_area"
+    ]
     start_date = data["valid_between"].lower
     data.update(
         start_date_0=start_date.day,
@@ -362,14 +366,14 @@ def measure_edit_conditions_data(measure_form_data):
     action = factories.MeasureActionFactory.create()
     edit_data = {k: v for k, v in measure_form_data.items() if v is not None}
     edit_data["update_type"] = 1
-    edit_data["form-TOTAL_FORMS"] = 1
-    edit_data["form-INITIAL_FORMS"] = 1
-    edit_data["form-MIN_NUM_FORMS"] = 0
-    edit_data["form-MAX_NUM_FORMS"] = 1000
-    edit_data["form-0-condition_code"] = condition_code.pk
-    edit_data["form-0-required_certificate"] = certificate.pk
-    edit_data["form-0-action"] = action.pk
-    edit_data["form-0-applicable_duty"] = "3.5% + 11 GBP / 100 kg"
+    edit_data["measure-conditions-formset-TOTAL_FORMS"] = 1
+    edit_data["measure-conditions-formset-INITIAL_FORMS"] = 1
+    edit_data["measure-conditions-formset-MIN_NUM_FORMS"] = 0
+    edit_data["measure-conditions-formset-MAX_NUM_FORMS"] = 1000
+    edit_data["measure-conditions-formset-0-condition_code"] = condition_code.pk
+    edit_data["measure-conditions-formset-0-required_certificate"] = certificate.pk
+    edit_data["measure-conditions-formset-0-action"] = action.pk
+    edit_data["measure-conditions-formset-0-applicable_duty"] = "3.5% + 11 GBP / 100 kg"
 
     return edit_data
 
@@ -380,6 +384,7 @@ def measure_form(measure_form_data, session_with_workbasket, erga_omnes):
         data=measure_form_data,
         instance=Measure.objects.with_duty_sentence().first(),
         request=session_with_workbasket,
+        initial={},
     )
 
 

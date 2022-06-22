@@ -123,7 +123,7 @@ class MeasureCreateWizard(
     templates = {
         START: "measures/create-start.jinja",
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
-        GEOGRAPHICAL_AREA: "measures/create-wizard-step-geo-area.jinja",
+        GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
         COMMODITIES: "measures/create-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
         CONDITIONS: "measures/create-formset.jinja",
@@ -144,6 +144,7 @@ class MeasureCreateWizard(
         GEOGRAPHICAL_AREA: {
             "title": "Select the geographical area",
             "link_text": "Geographical areas",
+            "info": "The measure will only apply to imports from or exports to the selected area. You can specify exclusions.",
         },
         COMMODITIES: {
             "title": "Select commodities and enter the duties",
@@ -195,7 +196,7 @@ class MeasureCreateWizard(
         measures_data = []
 
         for commodity_data in data.get("formset-commodities", []):
-            if not commodity_data["DELETE"]:
+            if not commodity_data.get("DELETE"):
                 for geo_area in data["geo_area_list"]:
 
                     measure_data = {
@@ -210,7 +211,7 @@ class MeasureCreateWizard(
                         "footnotes": [
                             item["footnote"]
                             for item in data.get("formset-footnotes", [])
-                            if not item["DELETE"]
+                            if not item.get("DELETE")
                         ],
                         # condition_sentence here, or handle separately and duty_sentence after?
                         "duty_sentence": commodity_data["duties"],
@@ -230,7 +231,7 @@ class MeasureCreateWizard(
                 data.get("formset-conditions", []),
                 start=1,
             ):
-                if not condition_data["DELETE"]:
+                if not condition_data.get("DELETE"):
 
                     measure_creation_pattern.create_condition_and_components(
                         condition_data,

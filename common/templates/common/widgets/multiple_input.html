@@ -1,0 +1,20 @@
+<div class="govuk-radios" data-module="govuk-radios">
+  {% with id=widget.attrs.id %}
+  <div{% if id %} id="{{ id }}"{% endif %}{% if widget.attrs.class %} class="{{ widget.attrs.class }}"{% endif %}>
+    {% for group, options, index in widget.optgroups %}
+      {% if group %}
+      <div class="govuk-form-group"{% if id %} id="{{ id }}_{{ index }}"{% endif %}>
+        <label{% if id %} id="{{ id }}-{% filter force_escape|lower %}{{ group }}{% endfilter %}-label"{% endif %} class="govuk-label govuk-radios__label">
+          {{ group }}
+      </label>
+      {% endif %}
+      {% for option in options %}
+        {% include option.template_name with widget=option %}
+      {% endfor %}
+      {% if group %}
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endwith %}
+</div>

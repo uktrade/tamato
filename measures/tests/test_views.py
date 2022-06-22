@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
+from django.forms.models import model_to_dict
 from django.urls import reverse
 
 from common.models.transactions import Transaction
@@ -343,13 +344,18 @@ def test_measure_update_create_conditions(
 
     assert (
         condition.condition_code.pk
-        == measure_edit_conditions_data["form-0-condition_code"]
+        == measure_edit_conditions_data["measure-conditions-formset-0-condition_code"]
     )
     assert (
         condition.required_certificate.pk
-        == measure_edit_conditions_data["form-0-required_certificate"]
+        == measure_edit_conditions_data[
+            "measure-conditions-formset-0-required_certificate"
+        ]
     )
-    assert condition.action.pk == measure_edit_conditions_data["form-0-action"]
+    assert (
+        condition.action.pk
+        == measure_edit_conditions_data["measure-conditions-formset-0-action"]
+    )
 
     components = condition.components.approved_up_to_transaction(tx).all()
 
@@ -379,9 +385,13 @@ def test_measure_update_edit_conditions(
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
     transaction_count = Transaction.objects.count()
-    measure_edit_conditions_data["form-0-required_certificate"] = ""
-    measure_edit_conditions_data["form-0-reference_price"] = "3%"
-    measure_edit_conditions_data["form-0-applicable_duty"] = "10 GBP / 100 kg"
+    measure_edit_conditions_data[
+        "measure-conditions-formset-0-required_certificate"
+    ] = ""
+    measure_edit_conditions_data["measure-conditions-formset-0-reference_price"] = "3%"
+    measure_edit_conditions_data[
+        "measure-conditions-formset-0-applicable_duty"
+    ] = "10 GBP / 100 kg"
     client.post(url, data=measure_edit_conditions_data)
     tx = Transaction.objects.last()
     updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
@@ -429,18 +439,20 @@ def test_measure_update_remove_conditions(
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
-    measure_edit_conditions_data["FORM-0-DELETE"] = 1
+    measure_edit_conditions_data["measure-conditions-formset-0-DELETE"] = 1
     response = client.post(url, data=measure_edit_conditions_data)
 
     assert response.status_code == 200
 
-    measure_edit_conditions_data["form-TOTAL_FORMS"] = 0
-    measure_edit_conditions_data["form-INITIAL_FORMS"] = 0
-    measure_edit_conditions_data["form-0-condition_code"] = ""
-    measure_edit_conditions_data["form-0-required_certificate"] = ""
-    measure_edit_conditions_data["form-0-action"] = ""
-    measure_edit_conditions_data["form-0-applicable_duty"] = ""
-    del measure_edit_conditions_data["FORM-0-DELETE"]
+    measure_edit_conditions_data["measure-conditions-formset-TOTAL_FORMS"] = 0
+    measure_edit_conditions_data["measure-conditions-formset-INITIAL_FORMS"] = 0
+    measure_edit_conditions_data["measure-conditions-formset-0-condition_code"] = ""
+    measure_edit_conditions_data[
+        "measure-conditions-formset-0-required_certificate"
+    ] = ""
+    measure_edit_conditions_data["measure-conditions-formset-0-action"] = ""
+    measure_edit_conditions_data["measure-conditions-formset-0-applicable_duty"] = ""
+    del measure_edit_conditions_data["measure-conditions-formset-0-DELETE"]
     transaction_count = Transaction.objects.count()
     response = client.post(url, data=measure_edit_conditions_data)
 
@@ -466,8 +478,12 @@ def test_measure_update_invalid_conditions(
     """Tests that html contains appropriate form validation errors after posting
     to measure edit endpoint with compound reference_price and an invalid
     applicable_duty string."""
-    measure_edit_conditions_data["form-0-reference_price"] = "3.5% + 11 GBP / 100 kg"
-    measure_edit_conditions_data["form-0-applicable_duty"] = "invalid"
+    measure_edit_conditions_data[
+        "measure-conditions-formset-0-reference_price"
+    ] = "3.5% + 11 GBP / 100 kg"
+    measure_edit_conditions_data[
+        "measure-conditions-formset-0-applicable_duty"
+    ] = "invalid"
     measure = Measure.objects.with_duty_sentence().first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
@@ -482,9 +498,9 @@ def test_measure_update_invalid_conditions(
     ul = page.find_all("ul", {"class": "govuk-list govuk-error-summary__list"})[0]
     a_tags = ul.findChildren("a")
 
-    assert a_tags[0].attrs["href"] == "#form-0-applicable_duty"
+    assert a_tags[0].attrs["href"] == "#measure-conditions-formset-0-applicable_duty"
     assert a_tags[0].text == "Enter a valid duty sentence."
-    assert a_tags[1].attrs["href"] == "#form-0-__all__"
+    assert a_tags[1].attrs["href"] == "#measure-conditions-formset-0-__all__"
     assert (
         a_tags[1].text
         == "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
@@ -530,7 +546,7 @@ def test_measure_form_wizard_finish(
         {
             "data": {
                 "measure_create_wizard-current_step": "geographical_area",
-                "geographical_area-geo_area_type": "ERGA_OMNES",
+                "geographical_area-geo_area": "ERGA_OMNES",
                 "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": "",
             },
             "next_step": "commodities",
@@ -538,10 +554,10 @@ def test_measure_form_wizard_finish(
         {
             "data": {
                 "measure_create_wizard-current_step": "commodities",
-                "commodities-0-commodity": commodity1.pk,
-                "commodities-0-duties": "33 GBP/100kg",
-                "commodities-1-commodity": commodity2.pk,
-                "commodities-1-duties": "40 GBP/100kg",
+                "measure_commodities_duties_formset-0-commodity": commodity1.pk,  # /PS-IGNORE
+                "measure_commodities_duties_formset-0-duties": "33 GBP/100kg",  # /PS-IGNORE
+                "measure_commodities_duties_formset-1-commodity": commodity2.pk,
+                "measure_commodities_duties_formset-1-duties": "40 GBP/100kg",
             },
             "next_step": "additional_code",
         },
@@ -808,3 +824,36 @@ def test_measure_create_wizard_get_form_kwargs(
 
     assert "measure_start_date" in form_kwargs["form_kwargs"]
     assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
+
+
+def test_measure_form_creates_exclusions(
+    erga_omnes,
+    session_with_workbasket,
+    valid_user,
+    client,
+):
+    excluded_country1 = factories.GeographicalAreaFactory.create()
+    excluded_country2 = factories.GeographicalAreaFactory.create()
+    factories.GeographicalAreaFactory.create()
+    measure = factories.MeasureFactory.create(geographical_area=erga_omnes)
+    data = {k: v for k, v in model_to_dict(measure).items() if v is not None}
+    start_date = data["valid_between"].lower
+    data.update(
+        start_date_0=start_date.day,
+        start_date_1=start_date.month,
+        start_date_2=start_date.year,
+    )
+    exclusions_data = {
+        "geo_area": "ERGA_OMNES",
+        "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": excluded_country1.pk,
+        "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": excluded_country2.pk,
+    }
+    data.update(exclusions_data)
+    client.force_login(valid_user)
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    response = client.post(url, data)
+    assert response.status_code == 302
+    assert measure.exclusions.all().count() == 2
+    assert not set(
+        [e.excluded_geographical_area for e in measure.exclusions.all()],
+    ).difference({excluded_country1, excluded_country2})

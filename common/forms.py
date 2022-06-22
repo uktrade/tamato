@@ -12,12 +12,145 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
+from django.forms import TypedChoiceField
+from django.forms import formsets
+from django.forms.renderers import get_default_renderer
+from django.forms.utils import ErrorList
 from django.forms.widgets import Widget
 from django.template import loader
 from django.utils.safestring import mark_safe
 
 from common.util import TaricDateRange
 from common.util import get_model_indefinite_article
+from common.widgets import RadioNestedWidget
+
+
+class BindNestedFormMixin:
+    """
+    Form classes that use the RadioNested form field must inherit from this.
+
+    in order to instantiate and validate nested forms.
+    """
+
+    def bind_nested_forms(self, *args, **kwargs):
+        if kwargs.get("instance"):
+            kwargs.pop("instance")  # this mixin does not support ModelForm as subforms
+
+        for name, field in self.fields.items():
+
+            if isinstance(field, RadioNested):
+                all_forms = {}
+                for choice, form_list in field.nested_forms.items():
+                    nested_forms = []
+
+                    for form_class in form_list:
+                        bound_form = form_class(*args, **kwargs)
+                        nested_forms.append(bound_form)
+                    all_forms[choice] = nested_forms
+                field.bind_nested_forms(all_forms)
+
+    def formset_submit(self):
+        nested_formset_submit = [
+            field.nested_formset_submit
+            for field in self.fields.values()
+            if isinstance(field, RadioNested)
+        ]
+        return any(nested_formset_submit)
+
+    def is_valid(self):
+        return super().is_valid() and not self.formset_submit()
+
+    def clean(self):
+        super().clean()
+        cleaned_data = self.cleaned_data.copy()
+
+        for field_name in self.cleaned_data.keys():  # /PS-IGNORE
+            field = self.fields[field_name]
+            if isinstance(field, RadioNested):  # /PS-IGNORE
+                all_forms = [
+                    form
+                    for form_list in field.nested_forms.values()
+                    for form in form_list
+                ]
+                for form in all_forms:
+                    if form.is_valid():
+                        data = form.cleaned_data
+                        if isinstance(form, FormSet):
+                            # cleaned_data from a formset is a list
+                            data = {form.prefix: form.cleaned_data}
+                        cleaned_data.update(data)
+        return cleaned_data
+
+
+class RadioNested(TypedChoiceField):
+    """
+    Radio buttons with a dictionary of nested forms that are displayed when the
+    option is selected. Multiple or zero forms or formsets can be nested under
+    each option.
+
+    Example usage:
+
+    can_contact = RadioNested(
+        label="Can we contact you?",
+        choices=[("YES", "Yes"), ("NO", "No")],
+        nested_forms={
+            "YES": [ContactTimePreferenceForm, ContactMethodDetailsFormSet],
+            "NO": [],
+        },
+    )
+
+    In the form class bind_nested_forms must be called after super().__init__:
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # kwargs for the nested forms can be modified here
+        self.bind_nested_forms(*args, **kwargs)
+    """
+
+    MESSAGE_FORM_MIXIN = "This field requires the form to use BindNestedFormMixin"
+    MESSAGE_BIND_FORMS = "Nested forms must be instantiated with bind_nested_forms in the subclass's __init__"
+    widget = RadioNestedWidget
+
+    def __init__(self, nested_forms=None, *args, **kwargs):
+        self.nested_forms = nested_forms
+        self.nested_formset_submit = False
+        super().__init__(*args, **kwargs)
+        self.widget.nested_forms = nested_forms
+
+    def bind_nested_forms(self, forms):
+        self.nested_forms = forms
+        self.widget.bind_nested_forms(forms)
+
+    def validate(self, value):
+        super().validate(value)
+        # only need to validate the nested form of the selected option
+        nested_formset_submit = []
+        if value:
+            for form in self.nested_forms[value]:
+                assert isinstance(form, forms.Form) or isinstance(
+                    form,
+                    FormSet,
+                ), self.MESSAGE_BIND_FORMS
+                if not form.is_valid():
+                    if isinstance(form, FormSet):
+                        if form.formset_action is not None:
+                            nested_formset_submit.append(True)
+                        for errors in form.errors:
+                            for e in errors.values():
+                                if e:
+                                    raise ValidationError(e)
+                        for e in form.non_form_errors():
+                            if e:
+                                raise ValidationError(e)
+                    else:
+                        for e in form.errors.values():
+                            raise ValidationError(e)
+
+        self.nested_formset_submit = any(nested_formset_submit)
+
+    def get_bound_field(self, form, field_name):
+        assert isinstance(form, BindNestedFormMixin), self.MESSAGE_FORM_MIXIN
+        return super().get_bound_field(form, field_name)
 
 
 class DescriptionHelpBox(Div):
@@ -252,18 +385,40 @@ class FormSet(forms.BaseFormSet):
     absolute_max = 1000
     validate_min = False
     validate_max = False
+    prefix = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        data=None,
+        files=None,
+        auto_id="id_%s",
+        prefix=None,  # not used but expected by the base class
+        initial=None,
+        error_class=ErrorList,
+        form_kwargs=None,
+    ):
+        # Not calling super().__init__() here because it overwrites any custom prefix we try to
+        # pass to the formset and its subforms with the default value from the above 'prefix' kwarg
+        self.prefix = self.prefix or self.get_default_prefix()
+        self.is_bound = data is not None or files is not None
+        self.auto_id = auto_id
+        self.data = data or {}
+        self.files = files or {}
+        self.initial = initial
+        self.form_kwargs = form_kwargs or {}
+        self.error_class = error_class
+        self._errors = None
+        self._non_form_errors = None
 
         # If we have form data, then capture the any user "add form" or
         # "delete form" actions.
         self.formset_action = None
+        self.is_formset = True  # required by templates
         if f"{self.prefix}-ADD" in self.data:
             self.formset_action = "ADD"
         else:
             for field in self.data:
-                if field.endswith("-DELETE"):
+                if self.prefix in field and field.endswith("-DELETE"):
                     self.formset_action = "DELETE"
                     break
 
@@ -341,3 +496,52 @@ class FormSet(forms.BaseFormSet):
             return True
 
         return super().is_valid()
+
+
+def formset_factory(
+    form,
+    prefix=None,
+    formset=forms.BaseFormSet,
+    extra=1,
+    can_order=False,
+    can_delete=False,
+    max_num=None,
+    validate_max=False,
+    min_num=None,
+    validate_min=False,
+    absolute_max=None,
+    can_delete_extra=True,
+    renderer=None,
+):
+    """
+    Return a FormSet for the given form class.  # /PS-IGNORE.
+
+    This function is basically the same as the one in django but adds 'prefix'
+    to the formset's attrs.
+    """
+    if min_num is None:
+        min_num = formsets.DEFAULT_MIN_NUM
+    if max_num is None:
+        max_num = formsets.DEFAULT_MAX_NUM
+    # absolute_max is a hard limit on forms instantiated, to prevent
+    # memory-exhaustion attacks. Default to max_num + DEFAULT_MAX_NUM
+    # (which is 2 * DEFAULT_MAX_NUM if max_num is None in the first place).
+    if absolute_max is None:
+        absolute_max = max_num + formsets.DEFAULT_MAX_NUM
+    if max_num > absolute_max:
+        raise ValueError("'absolute_max' must be greater or equal to 'max_num'.")
+    attrs = {
+        "form": form,
+        "prefix": prefix,
+        "extra": extra,
+        "can_order": can_order,  # /PS-IGNORE
+        "can_delete": can_delete,
+        "can_delete_extra": can_delete_extra,
+        "min_num": min_num,
+        "max_num": max_num,
+        "absolute_max": absolute_max,
+        "validate_min": validate_min,
+        "validate_max": validate_max,
+        "renderer": renderer or get_default_renderer(),
+    }
+    return type(form.__name__ + "FormSet", (formset,), attrs)
