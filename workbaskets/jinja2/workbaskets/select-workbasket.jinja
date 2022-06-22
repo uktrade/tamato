@@ -1,0 +1,51 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set create_url = create_url or "create" %}
+
+{% set page_title = "Edit an existing workbasket" %}
+{% set list_include = "includes/workbaskets/edit-workbasket-list.jinja" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  <nav class="workbasket-filters">
+    <ul class="govuk-list">
+      <li>
+        <a href="{{ request.path }}?status=" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if not request.GET.status %}selected-link{% endif %}">All</a>
+      </li>
+      <li>
+        <a href="{{ request.path }}?status=EDITING" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'EDITING' %}selected-link{% endif %}">Editing</a>
+      </li>
+      <li>
+        <a href="{{ request.path }}?status=REVIEWED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'REVIEWED' %}selected-link{% endif %}">Reviewed</a>
+      </li>
+      <li>
+        <a href="{{ request.path }}?status=PUBLISHED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'PUBLISHED' %}selected-link{% endif %}">Published</a>
+      </li>
+    </ul>
+  </nav>
+
+  {% if object_list %}
+    {% include list_include %}
+  {% else %}
+    <p class="govuk-body">There are no results for your search, please:</p>
+    <ul class="govuk-list govuk-list--bullet">
+      <li>check the spelling of your keywords</li>
+      <li>use more general keywords</li>
+      <li>select or deselect different filters</li>
+      <li>get help via our <a class="govuk-link" href="#">support and feedback form</a></li>
+    </ul>
+  {% endif %}
+  {% include "includes/common/pagination.jinja" %}
+{% endblock %}

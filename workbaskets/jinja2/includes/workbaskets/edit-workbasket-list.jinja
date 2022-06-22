@@ -1,0 +1,39 @@
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{%- set table_rows = [] -%}
+{% for workbasket in object_list %}
+  {%- set workbasket_linked_title -%}
+    {% if workbasket.status != 'EDITING' %}
+      {{ workbasket.title }}
+    {% else %}
+      <a
+        class="govuk-link"
+        href="{{ url('my-workbasket') }}?workbasket={{ workbasket.pk }}&edit=1" {# /PS-IGNORE #}
+      >{{ workbasket.title }}</a>
+    {% endif %}
+  {%- endset -%}
+  {%- set workbasket_status -%}
+    <span class="status-badge">{{ workbasket.status }}</a>
+  {%- endset -%}
+
+  {{ table_rows.append([
+    {"html": workbasket_linked_title},
+    {"text": workbasket.pk},
+    {"text": workbasket.reason},
+    {"text": '{0:,}'.format(workbasket.tracked_models.count()) },
+    {"text": workbasket_status},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "Title"},
+    {"text": "ID"},
+    {"text": "Notes"},
+    {"text": "Number of changes"},
+    {"text": "Status"},
+  ],
+  "rows": table_rows
+}) }}

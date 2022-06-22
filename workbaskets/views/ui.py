@@ -52,6 +52,10 @@ class WorkBasketList(WithPaginationListView):
         return WorkBasket.objects.order_by("-updated_at")
 
 
+class SelectWorkbasketView(WorkBasketList):
+    template_name = "workbaskets/select-workbasket.jinja"
+
+
 class WorkBasketDetail(DetailView):
     """UI endpoint for viewing a specified workbasket."""
 
