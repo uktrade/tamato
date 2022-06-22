@@ -3,7 +3,6 @@
 
 {% block page_title %}Workbasket {{ request.session.workbasket.id }}{% if request.session.workbasket.title %} - {{ request.session.workbasket.title }}{% endif %}{% endblock %}
 {% block page_subtitle %}What would you like to do?{% endblock %}
-{% set page_title %}Workbasket {{ request.session.workbasket.id }}{% endset %}
 
 {% block breadcrumb %}
   {% if request.GET.edit %}
