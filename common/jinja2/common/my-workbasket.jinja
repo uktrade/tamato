@@ -1,4 +1,24 @@
 {% extends "common/index.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% block page_title %}Workbasket {{ request.session.workbasket.id }}{% if request.session.workbasket.title %} - {{ request.session.workbasket.title }}{% endif %}{% endblock %}
 {% block page_subtitle %}What would you like to do?{% endblock %}
+
+{% block breadcrumb %}
+  {% if request.GET.edit %}
+    {{ govukBreadcrumbs({
+      "items": [
+        {"text": "Home", "href": url("index")},
+        {"text": "Edit an existing workbasket", "href": url("workbaskets:select-workbasket")},
+        {"text": "Workbasket " ~ request.session.workbasket.id }
+      ]
+    }) }}
+  {% else %}
+    {{ govukBreadcrumbs({
+      "items": [
+        {"text": "Home", "href": url("index")},
+        {"text": "Workbasket " ~ request.session.workbasket.id }
+      ]
+    }) }}
+  {% endif %}
+{% endblock %}

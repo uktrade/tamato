@@ -24,7 +24,10 @@ target.quota.definition.sid
 MeasureType
 ImportBatch
 BatchDependencies
+MeasureActions
+MeasureAction
 Quota
+url('my
 SID
 the Euro ISO
 the Euro Definition

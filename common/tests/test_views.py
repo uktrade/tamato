@@ -132,9 +132,73 @@ def test_dashboard_view_uploaded_envelope_dates():
 def test_dashboard_view_latest_upload():
     view = DashboardView()
 
-    assert view.latest_upload == None
+    assert view.latest_upload is None
 
     factories.UploadFactory.create()
     latest_upload = factories.UploadFactory.create()
 
     assert view.latest_upload == latest_upload
+
+
+def test_my_workbasket_page_sets_workbasket(valid_user_client, workbasket):
+    response = valid_user_client.get(
+        f"{reverse('my-workbasket')}?workbasket={workbasket.pk}",
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    assert workbasket.title in soup.select(".govuk-heading-xl")[0].text
+    assert str(workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
+
+
+def test_my_workbasket_page_displays_breadcrumb(valid_user_client, workbasket):
+    response = valid_user_client.get(
+        f"{reverse('my-workbasket')}?workbasket={workbasket.pk}&edit=1",
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    breadcrumb_links = [
+        element.text for element in soup.select(".govuk-breadcrumbs__link")
+    ]
+    assert "Edit an existing workbasket" in breadcrumb_links
+
+
+def test_my_workbasket_page_hides_breadcrumb(valid_user_client, workbasket):
+    response = valid_user_client.get(
+        f"{reverse('my-workbasket')}?workbasket={workbasket.pk}&edit=",
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    breadcrumb_links = [
+        element.text for element in soup.select(".govuk-breadcrumbs__link")
+    ]
+    assert "Edit an existing workbasket" not in breadcrumb_links
+
+
+def test_my_workbasket_page_creates_new_workbasket(valid_user_client):
+    assert WorkBasket.objects.is_not_approved().count() == 0
+    response = valid_user_client.get(reverse("my-workbasket"))
+    assert response.status_code == 200
+    assert WorkBasket.objects.is_not_approved().count() == 1
+
+
+def test_select_workbasket_page_200(valid_user_client):
+    factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.PUBLISHED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.APPROVED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.PROPOSED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.ERRORED)
+    valid_statuses = {
+        WorkflowStatus.EDITING,
+        WorkflowStatus.APPROVED,
+        WorkflowStatus.PROPOSED,
+        WorkflowStatus.ERRORED,
+    }
+    response = valid_user_client.get(reverse("workbaskets:select-workbasket"))
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    statuses = [
+        element.text for element in soup.select(".govuk-table__row .status-badge")
+    ]
+    assert len(statuses) == 4
+    assert not set(statuses).difference(valid_statuses)

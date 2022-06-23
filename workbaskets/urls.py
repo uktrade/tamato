@@ -46,4 +46,9 @@ ui_patterns = [
 urlpatterns = [
     path("workbaskets/", include(ui_patterns)),
     path("api/", include(api_router.urls)),
+    path(
+        "select-workbasket/",
+        ui_views.SelectWorkbasketView.as_view(),
+        name="select-workbasket",
+    ),
 ]
