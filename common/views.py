@@ -84,14 +84,14 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     """
 
     form_class = SelectableObjectsForm
-    template_name = "common/index.jinja"
+    template_name = "common/dashboard.jinja"
 
     # Form action mappings to URL names.
     action_success_url_names = {
         "publish-all": "workbaskets:workbasket-ui-submit",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
-        "page-prev": "index",
-        "page-next": "index",
+        "page-prev": "dashboard",
+        "page-next": "dashboard",
     }
 
     @property
@@ -158,7 +158,7 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
                 reverse(self.action_success_url_names[form_action]),
                 form_action,
             )
-        return reverse("index")
+        return reverse("dashboard")
 
     def get_initial(self):
         store = SessionStore(

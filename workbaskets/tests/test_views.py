@@ -37,7 +37,7 @@ def test_submit_workbasket(
     response = client.get(url)
 
     assert response.status_code == 302
-    assert response.url == reverse("index")
+    assert response.url == reverse("dashboard")
 
     workbasket.refresh_from_db()
 
