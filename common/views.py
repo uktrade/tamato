@@ -197,7 +197,7 @@ class MyWorkbasketView(DashboardView):
     template_name = "common/my-workbasket.jinja"
 
     def dispatch(self, request, *args, **kwargs):
-        workbasket_pk = request.GET["workbasket"]
+        workbasket_pk = request.GET.get("workbasket")
 
         if workbasket_pk:
             workbasket = WorkBasket.objects.get(pk=workbasket_pk)
