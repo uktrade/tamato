@@ -18,7 +18,6 @@
     {"text": workbasket.pk},
     {"html": workbasket_linked_title},
     {"text": workbasket.reason},
-    {"text": '{0:,}'.format(workbasket.tracked_models.count()) },
     {"text": workbasket_status},
   ]) or "" }}
 {% endfor %}
@@ -28,7 +27,6 @@
     {"text": "Workbasket number"},
     {"text": "TOPS/Jira number"},
     {"text": "Description"},
-    {"text": "Number of changes"},
     {"text": "Status"},
   ],
   "rows": table_rows
