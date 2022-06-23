@@ -5,14 +5,10 @@
 {%- set table_rows = [] -%}
 {% for workbasket in object_list %}
   {%- set workbasket_linked_title -%}
-    {% if workbasket.status != 'EDITING' %}
-      {{ workbasket.title }}
-    {% else %}
-      <a
-        class="govuk-link"
-        href="{{ url('my-workbasket') }}?workbasket={{ workbasket.pk }}&edit=1" {# /PS-IGNORE #}
-      >{{ workbasket.title }}</a>
-    {% endif %}
+    <a
+      class="govuk-link"
+      href="{{ url('my-workbasket') }}?workbasket={{ workbasket.pk }}&edit=1"
+    >{{ workbasket.title }}</a>
   {%- endset -%}
   {%- set workbasket_status -%}
     <span class="status-badge">{{ workbasket.status }}</a>

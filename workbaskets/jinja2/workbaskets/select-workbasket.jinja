@@ -26,10 +26,10 @@
         <a href="{{ request.path }}?status=EDITING" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'EDITING' %}selected-link{% endif %}">Editing</a>
       </li>
       <li>
-        <a href="{{ request.path }}?status=REVIEWED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'REVIEWED' %}selected-link{% endif %}">Reviewed</a>
+        <a href="{{ request.path }}?status=PROPOSED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'PROPOSED' %}selected-link{% endif %}">Proposed</a>
       </li>
       <li>
-        <a href="{{ request.path }}?status=PUBLISHED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'PUBLISHED' %}selected-link{% endif %}">Published</a>
+        <a href="{{ request.path }}?status=APPROVED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'APPROVED' %}selected-link{% endif %}">Approved</a>
       </li>
     </ul>
   </nav>
@@ -37,13 +37,7 @@
   {% if object_list %}
     {% include list_include %}
   {% else %}
-    <p class="govuk-body">There are no results for your search, please:</p>
-    <ul class="govuk-list govuk-list--bullet">
-      <li>check the spelling of your keywords</li>
-      <li>use more general keywords</li>
-      <li>select or deselect different filters</li>
-      <li>get help via our <a class="govuk-link" href="#">support and feedback form</a></li>
-    </ul>
+    <p class="govuk-body">There are no workbaskets with this status.</p>
   {% endif %}
   {% include "includes/common/pagination.jinja" %}
 {% endblock %}

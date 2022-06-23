@@ -22,6 +22,7 @@ from exporter.models import Upload
 from workbaskets import tasks
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
+from workbaskets.validators import WorkflowStatus
 
 
 class WorkBasketFilter(TamatoFilter):
@@ -54,6 +55,13 @@ class WorkBasketList(WithPaginationListView):
 
 class SelectWorkbasketView(WorkBasketList):
     template_name = "workbaskets/select-workbasket.jinja"
+
+    def get_queryset(self):
+        return (
+            WorkBasket.objects.exclude(status=WorkflowStatus.PUBLISHED)
+            .exclude(status=WorkflowStatus.ARCHIVED)
+            .order_by("-updated_at")
+        )
 
 
 class WorkBasketDetail(DetailView):
