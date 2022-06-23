@@ -1,14 +1,16 @@
 .workbasket-filters {
-  border: 1px solid black;
-  padding: 5px 15px;
-  margin-bottom: 25px;
+
+  > * {
+    display: inline-block;
+  }
 
   .govuk-list {
     margin: 0;
 
     li {
       display: inline-block;
-      padding-right: 30px;
+      padding-right: 25px;
+      padding-left: 25px;
     }
   }
 
