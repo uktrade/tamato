@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from hashlib import sha256
 from typing import List
 
 from django.db.models import Case
@@ -350,3 +351,12 @@ class TrackedModelQuerySet(
                 qs = model_type.objects.none()
 
         return qs.distinct()
+
+    def content_hash(self):
+        """
+        :return: Combined sha256 hash for all contained TrackedModels.
+        """
+        sha = sha256()
+        for o in self:
+            sha.update(o.content_hash())
+        return sha.digest()

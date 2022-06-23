@@ -11,7 +11,6 @@ from typing import Iterable
 from typing import Iterator
 from typing import Mapping
 from typing import Optional
-from typing import Set
 from typing import Type
 from typing import Union
 
@@ -57,7 +56,7 @@ class BusinessRuleViolation(Exception):
         super().__init__(message, model)
 
 
-ALL_RULES: Set[Type[BusinessRule]] = set()
+ALL_RULES: Dict[str, Type[BusinessRule]] = {}
 
 
 class BusinessRuleBase(type):
@@ -106,7 +105,10 @@ class BusinessRuleBase(type):
             getattr(new_class, "__doc__", None),
         )
 
-        ALL_RULES.add(new_class)
+        assert (
+            name not in ALL_RULES
+        ), f"Business Rules Must Have Unique Names: {new_class} == {ALL_RULES[name]}"
+        ALL_RULES[name] = new_class
 
         return new_class
 

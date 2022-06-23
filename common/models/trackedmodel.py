@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from hashlib import sha256
+from json import dumps
 from typing import Any
 from typing import Dict
 from typing import Iterable
@@ -658,3 +660,22 @@ class TrackedModel(PolymorphicModel):
         if not prefix:
             prefix = cls._meta.verbose_name.replace(" ", "_")
         return prefix
+
+    def content_hash(self):
+        """
+        Hash of the user editable content, used by business rule checks for
+        result caching.
+
+        :return: 32 character sha256 'digest', see hashlib.sha256.
+        """
+        content = {
+            field.name: str(getattr(self, field.name)) for field in self.copyable_fields
+        }
+
+        # The json encoder ensures a somewhat regular format and everything
+        # passed to it must be hashable.
+        hashable = dumps(content).encode("utf-8")
+
+        sha = sha256()
+        sha.update(hashable)
+        return sha.digest()
