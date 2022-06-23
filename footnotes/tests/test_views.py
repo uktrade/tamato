@@ -13,7 +13,8 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from footnotes.models import Footnote
 from footnotes.views import FootnoteList
-from workbaskets.tasks import check_workbasket_sync
+
+# from workbaskets.tasks import check_workbasket_sync  # TODO
 
 pytestmark = pytest.mark.django_db
 

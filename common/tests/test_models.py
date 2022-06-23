@@ -28,7 +28,8 @@ from measures.models import MeasureExcludedGeographicalArea
 from regulations.models import Group
 from regulations.models import Regulation
 from taric.models import Envelope
-from workbaskets.tasks import check_workbasket_sync
+
+# from workbaskets.tasks import check_workbasket_sync  # TODO
 
 pytestmark = pytest.mark.django_db
 

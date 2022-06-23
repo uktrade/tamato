@@ -1,5 +1,6 @@
 from workbaskets.models import WorkBasket
-from workbaskets.tasks import check_workbasket_sync
+
+# from workbaskets.tasks import check_workbasket_sync  # TODO
 
 
 def assert_workbasket_valid(workbasket: WorkBasket):

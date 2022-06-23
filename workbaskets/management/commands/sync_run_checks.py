@@ -7,7 +7,8 @@ from django.core.management.base import CommandParser
 
 from workbaskets.management.util import WorkBasketCommandMixin
 from workbaskets.models import WorkBasket
-from workbaskets.tasks import check_workbasket_sync
+
+# from workbaskets.tasks import check_workbasket_sync  # TODO
 
 logger = logging.getLogger(__name__)
 

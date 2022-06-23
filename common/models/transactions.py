@@ -95,7 +95,7 @@ class TransactionQueryset(models.QuerySet):
                 order += 1
                 tx.order = order
 
-            type(self).objects.bulk_update(transactions, ["order"])
+            self.model.objects.bulk_update(transactions, ["order"])
 
     @atomic
     def move_to_end_of_partition(self, partition) -> None:

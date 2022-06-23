@@ -79,3 +79,40 @@ def get_deferred_set_fields(class_: type[Model]) -> Set[Field]:
         and hasattr(field.remote_field, "through")
         and field.remote_field.through._meta.auto_created
     }
+
+
+def get_field_hashable_string(value):
+    """
+    Given a field return a hashable string, containing the fields type and
+    value, ensuring uniqueness across types.
+
+    For fields that are TrackedModels, delegate to their content_hash method.
+    For non TrackedModels return a combination of type and value.
+    """
+    from common.models.trackedmodel import TrackedModel
+
+    value_type = type(value)
+    if isinstance(value, TrackedModel):
+        # For TrackedModel fields use their content_hash, the type is still included as a debugging aid.
+        value_hash = value.content_hash().hexdigest()
+        return (
+            f"{value_type.__module__}:{value_type.__name__}.content_hash={value_hash}"
+        )
+
+    return f"{value_type.__module__}:{value_type.__name__}={value}"
+
+
+def get_field_hashable_strings(instance, fields):
+    """
+    Given a model instance, return a dict of {field names: hashable string},
+
+    This calls `get_field_hashable_string` to generate strings unique to the type and value of the fields.
+
+    :param instance: The model instance to generate hashes for.
+    :param fields: The fields to get use in the hash.
+    :return:  Dictionary of {field_name: hash}
+    """
+    return {
+        field.name: get_field_hashable_string(getattr(instance, field.name))
+        for field in fields
+    }

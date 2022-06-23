@@ -65,11 +65,12 @@ class LazyString:
         self.func = func
 
     def __str__(self):
-        return self.func()
+        return str(self.func())
 
 
 @wrapt.decorator
 def lazy_string(wrapped, instance, *args, **kwargs):
+    """Decorator that will evaluate the wrapped function when stringified."""
     return LazyString(wrapped)
 
 

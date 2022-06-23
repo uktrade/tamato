@@ -1,3 +1,5 @@
+import ast
+import itertools
 import os
 import sys
 
@@ -52,7 +54,7 @@ class Command(BaseCommand):
                 "with a comma-separated list of workbasket ids."
             ),
             nargs="*",
-            type=int,
+            type=ast.literal_eval,
             default=None,
             action="store",
         )
@@ -76,7 +78,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         workbasket_ids = options.get("workbasket_ids")
         if workbasket_ids:
-            query = dict(id__in=workbasket_ids)
+            query = dict(id__in=itertools.chain.from_iterable(workbasket_ids))
         else:
             query = dict(status=WorkflowStatus.APPROVED)
 
