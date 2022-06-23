@@ -12,7 +12,7 @@ from common.tests.factories import ApprovedTransactionFactory
 from common.tests.factories import SeedFileTransactionFactory
 from common.tests.factories import TransactionFactory
 from common.tests.factories import WorkBasketFactory
-from common.tests.util import TestRule
+from common.tests.util import TestRule1
 from common.tests.util import add_business_rules
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
@@ -330,10 +330,10 @@ def test_workbasket_clean_does_not_run_business_rules():
     moderate sized workbasket will time out a web request."""
 
     model = factories.TestModel1Factory.create()
-    with add_business_rules(type(model), TestRule):
+    with add_business_rules(type(model), TestRule1):
         model.transaction.workbasket.full_clean()
 
-    assert TestRule.validate.not_called()
+    assert TestRule1.validate.not_called()
 
 
 def test_current_transaction_returns_last_approved_transaction(

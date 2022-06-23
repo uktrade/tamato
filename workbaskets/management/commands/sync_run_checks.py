@@ -5,9 +5,9 @@ from typing import Optional
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 
+from checks.tasks import check_workbasket_sync
 from workbaskets.management.util import WorkBasketCommandMixin
 from workbaskets.models import WorkBasket
-from workbaskets.tasks import check_workbasket_sync
 
 logger = logging.getLogger(__name__)
 

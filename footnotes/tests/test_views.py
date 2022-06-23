@@ -1,6 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 
+from checks.tasks import check_workbasket_sync
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
@@ -13,7 +14,6 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from footnotes.models import Footnote
 from footnotes.views import FootnoteList
-from workbaskets.tasks import check_workbasket_sync
 
 pytestmark = pytest.mark.django_db
 

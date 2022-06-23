@@ -78,15 +78,11 @@ requires_update_importer = pytest.mark.skipif(
 
 
 @contextlib.contextmanager
-def raises_if(exception, expected):
-    try:
-        yield
-    except exception:
-        if not expected:
-            raise
+def raises_if(exception, expected, *args, **kwargs):
+    if expected:
+        yield from pytest.raises(exception, *args, **kwargs)
     else:
-        if expected:
-            pytest.fail(f"Did not raise {exception}")
+        yield
 
 
 @contextlib.contextmanager
@@ -96,11 +92,16 @@ def add_business_rules(
     """Attach BusinessRules to a TrackedModel."""
     target = f"{'indirect_' if indirect else ''}business_rules"
     rules = (*rules, *getattr(model, target, []))
-    with patch.object(model, target, new=rules):
-        yield
+    with patch.object(model, target, new=tuple(rules)):
+        yield model
 
 
-class TestRule(BusinessRule):
+class TestRule1(BusinessRule):
+    __test__ = False
+    validate = MagicMock()
+
+
+class TestRule2(BusinessRule):
     __test__ = False
     validate = MagicMock()
 

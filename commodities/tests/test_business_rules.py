@@ -1,7 +1,7 @@
 import pytest
 from django.db import DataError
 
-from checks.tasks import check_transaction_sync
+# from checks.tasks import check_transaction_sync  # TODO
 from commodities import business_rules
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories

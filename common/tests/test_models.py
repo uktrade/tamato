@@ -8,6 +8,7 @@ from pytest_django.asserts import assertQuerysetEqual  # type: ignore
 
 import common.exceptions
 import workbaskets.models
+from checks.tasks import check_workbasket_sync
 from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
 from common.models.transactions import Transaction
@@ -28,7 +29,6 @@ from measures.models import MeasureExcludedGeographicalArea
 from regulations.models import Group
 from regulations.models import Regulation
 from taric.models import Envelope
-from workbaskets.tasks import check_workbasket_sync
 
 pytestmark = pytest.mark.django_db
 

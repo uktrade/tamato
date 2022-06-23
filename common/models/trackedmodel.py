@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from hashlib import sha256
 from json import dumps
 from typing import Any
@@ -31,6 +32,7 @@ from common.models.managers import CurrentTrackedModelManager
 from common.models.managers import TrackedModelManager
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_deferred_set_fields
+from common.models.tracked_utils import get_field_hashable_strings
 from common.models.tracked_utils import get_models_linked_to
 from common.models.tracked_utils import get_relations
 from common.models.tracked_utils import get_subrecord_relations
@@ -108,8 +110,8 @@ class TrackedModel(PolymorphicModel):
     default, filters to the 'current' transaction.
     """
 
-    business_rules: Iterable = ()
-    indirect_business_rules: Iterable = ()
+    business_rules: Sequence = ()
+    indirect_business_rules: Sequence = ()
 
     record_code: int
     """
@@ -661,6 +663,7 @@ class TrackedModel(PolymorphicModel):
             prefix = cls._meta.verbose_name.replace(" ", "_")
         return prefix
 
+    @lru_cache(maxsize=None)
     def content_hash(self):
         """
         Hash of the user editable content, used by business rule checks for
@@ -668,14 +671,12 @@ class TrackedModel(PolymorphicModel):
 
         :return: 32 character sha256 'digest', see hashlib.sha256.
         """
-        content = {
-            field.name: str(getattr(self, field.name)) for field in self.copyable_fields
-        }
-
-        # The json encoder ensures a somewhat regular format and everything
-        # passed to it must be hashable.
-        hashable = dumps(content).encode("utf-8")
+        # The json encoder ensures a somewhat regular format and ensures only simple data types can be passed in,
+        # in testing the speed of json encoding is around the same speed as stringifying.
+        hashable = dumps(get_field_hashable_strings(self, self.copyable_fields)).encode(
+            "utf-8",
+        )
 
         sha = sha256()
         sha.update(hashable)
-        return sha.digest()
+        return sha

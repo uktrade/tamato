@@ -331,8 +331,8 @@ AWS_DEFAULT_ACL = None
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_REGION_NAME = "eu-west-2"
 
+# For info on celery settings see the docs at https://docs.celeryq.dev/en/stable/userguide/configuration.html
 # Pickle could be used as a serializer here, as this always runs in a DMZ
-
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
 
 if VCAP_SERVICES.get("redis"):
@@ -350,12 +350,29 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 
-CELERY_BEAT_SCHEDULE = {
-    "sqlite_export": {
-        "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
-        "schedule": timedelta(minutes=30),
-    },
-}
+CELERY_RESULT_EXTENDED = True  # Adds Task name, args, kwargs to results.
+
+# The following settings are usually useful for development, but not for production.
+CELERY_TASK_ALWAYS_EAGER = is_truthy(os.environ.get("CELERY_TASK_ALWAYS_EAGER", "N"))
+CELERY_TASK_EAGER_PROPAGATES = is_truthy(
+    os.environ.get("CELERY_TASK_EAGER_PROPAGATES", "N"),
+)
+CELERY_TASK_REMOTE_TRACEBACKS = is_truthy(
+    os.environ.get("CELERY_TASK_REMOTE_TRACEBACKS", "N"),
+)
+
+CELERY_BEAT_SCHEDULE = {}
+if False:
+    CELERY_BEAT_SCHEDULE = {
+        "sqlite_export": {
+            "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
+            "schedule": timedelta(minutes=30),
+        },
+    }
+
+RAISE_BUSINESS_RULE_FAILURES = is_truthy(
+    os.environ.get("RAISE_BUSINESS_RULE_FAILURES", "N"),
+)
 
 SQLITE_EXCLUDED_APPS = [
     "checks",

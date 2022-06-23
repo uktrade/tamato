@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from hashlib import sha256
+from itertools import chain
 from typing import List
 
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Case
 from django.db.models import CharField
 from django.db.models import F
@@ -23,6 +25,9 @@ from common.querysets import TransactionPartitionQuerySet
 from common.querysets import ValidityQuerySet
 from common.util import resolve_path
 from common.validators import UpdateType
+
+PK_INTERVAL_CHUNK_SIZE = 1024 * 64
+"""Default chunk size for primary key intervals, see: `as_pk_intervals.`"""
 
 
 class TrackedModelQuerySet(
@@ -352,11 +357,142 @@ class TrackedModelQuerySet(
 
         return qs.distinct()
 
+    def as_pk_intervals(self, chunk_size=PK_INTERVAL_CHUNK_SIZE):
+        """
+        Given a sequence of primary keys, return interval tuples
+        of: ((first_pk, last_pk), ...)
+
+        By default[1] this provides a much smaller wire format, than, for instance sending all primary keys, thus being sutable for use in Celery.
+        In the happy case, a single interval will be returned, but in the case of a large number of primary keys, multiple intervals will be returned - determined by chunk_size, gaps in the original data set will also generate more intervals.  Gaps may be generated when users delete items workbaskets.
+
+
+        Chunking is provided to make it easy to chunk up data for consumers of this data (e.g. a celery task on the other end).
+
+        Unscientifically testing this on a developers' laptop with the seed workbasket (pk=1) with > 9m models, this takes 9.2 seconds, to generate 3426 interval pairs, with 128kb chunks this generates 3430 pairs.
+
+        [1]  Under a pathological case, where every primary key iterated by more than one, this would be worse.
+        """
+        qs = self
+        if qs.query.order_by != ("pk",):
+            qs = self.order_by("pk")
+
+        pks = qs.values_list("pk", flat=True)
+
+        model_iterator = iter(pks)
+
+        try:
+            pk = next(model_iterator)
+        except StopIteration:
+            return
+
+        first_pk = pk
+        item_count = 0
+        try:
+            while True:
+                item_count += 1
+                last_pk = pk
+                pk = next(model_iterator)
+                if (item_count > chunk_size) or (pk > last_pk + 1):
+                    # Yield an interval tuple of (first_pk, last_pk) if the amount of items is more than the chunk size,
+                    # or if the pks are not contiguous.
+                    yield first_pk, last_pk
+                    first_pk = pk
+                    item_count = 0
+        except StopIteration:
+            pass
+
+        yield first_pk, pk
+
+    def from_pk_intervals(self, *pk_intervals):
+        """
+        Returns a queryset of TrackedModel objects that match the primary key
+        tuples, (start, end)
+
+        To generate data in this format call as_pk_ranges on a queryset.
+        """
+        q = Q()
+        for first_pk, last_pk in pk_intervals:
+            q |= Q(pk__gte=first_pk, pk__lte=last_pk)
+
+        if not q:
+            # An empty filter would match everything, so return an empty queryset in that case.
+            return self.none()
+
+        return self.filter(q)
+
+    @classmethod
+    def _content_hash(cls, models):
+        """
+        Implementation of content hashing, shared by content_hash and
+        content_hash_fast, should not be called directly, instead `content_hash`
+        or `content_hash_fast` should be called which impose order on the
+        models.
+
+        Code is shared in this private method so the naive and fast
+        implementations return the same hash.
+        """
+        sha = sha256()
+        for o in models:
+            sha.update(o.content_hash().digest())
+        return sha
+
     def content_hash(self):
         """
         :return: Combined sha256 hash for all contained TrackedModels.
+
+        Ordering is by TrackedModel primary key, so the hash will be stable across multiple queries.
         """
-        sha = sha256()
-        for o in self:
-            sha.update(o.content_hash())
-        return sha.digest()
+        return self._content_hash(self.order_by("pk").iterator())
+
+    def group_by_type(self):
+        """Yield a sequence of query sets, where each queryset contains only one
+        Polymorphic ctype, enabling the use of prefetch and select_related on
+        them."""
+        pks = self.values_list("pk", flat=True)
+        polymorphic_ctypes = (
+            self.non_polymorphic()
+            .distinct("polymorphic_ctype_id")
+            .values_list("polymorphic_ctype", flat=True)
+        )
+
+        for polymorphic_ctype in polymorphic_ctypes:
+            # Query contenttypes to get the concrete class instance
+            klass = ContentType.objects.get_for_id(polymorphic_ctype).model_class()
+            yield klass.objects.filter(pk__in=pks)
+
+    def select_related_copyable_fields(self):
+        """Split models into separate querysets, using group_by_type and call
+        select_related on any related fields found in the `copyable_fields`
+        attribute."""
+        pks = self.values_list("pk", flat=True)
+        for qs in self.group_by_type():
+            # Work out which fields from copyable_fields may be use in select_related
+            related_fields = [
+                field.name
+                for field in qs.model.copyable_fields
+                if hasattr(field, "related_query_name")
+            ]
+            yield qs.select_related(*related_fields).filter(pk__in=pks)
+
+    def content_hash_fast(self):
+        """
+        Use `select_related_copyable_fields` to call select_related on fields
+        that will be hashed.
+
+        This increases the speed a little more than 2x, at the expense of keeping the data in memory.
+        On this developers' laptop 2.3 seconds vs 6.5 for the naive implementation in `content_hash`,
+        for larger amounts of data the difference got bigger, 23 seconds vs 90, though this may
+        because more types of data were represented.
+
+        For larger workbaskets batching should be used to keep memory usage withing reasonable bounds.
+
+        The hash value returned here should be the same as that from `content_hash`.
+        """
+        # Fetch data using select_related, at this point the ordering
+        # will have been lost.
+        all_models = chain(*self.select_related_copyable_fields())
+
+        # Sort the data using trackedmodel_ptr_id, since the previous step outputs
+        # an iterable, sorted is used, instead of order_by on a queryset.
+        sorted_models = sorted(all_models, key=lambda o: o.trackedmodel_ptr_id)
+        return self._content_hash(sorted_models)
