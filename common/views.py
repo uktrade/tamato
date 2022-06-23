@@ -47,8 +47,7 @@ class WorkbasketActionView(FormView, View):
 
     def get_success_url(self):
         if self.request.POST["workbasket_action"] == "EDIT":
-            return reverse("index")
-        # return reverse("index")
+            return reverse("workbaskets:select-workbasket")
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
