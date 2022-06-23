@@ -183,6 +183,7 @@ def test_my_workbasket_page_creates_new_workbasket(valid_user_client):
 
 def test_select_workbasket_page_200(valid_user_client):
     factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.SENT)
     factories.WorkBasketFactory.create(status=WorkflowStatus.PUBLISHED)
     factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
     factories.WorkBasketFactory.create(status=WorkflowStatus.APPROVED)
