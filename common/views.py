@@ -20,12 +20,14 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import generic
+from django.views.generic import FormView
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.base import View
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
+from common import forms
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models import TrackedModel
@@ -37,6 +39,16 @@ from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
+
+
+class WorkbasketActionView(FormView, View):
+    template_name = "common/workbasket_action.jinja"
+    form_class = forms.WorkbasketActionForm
+
+    def get_success_url(self):
+        if self.request.POST["workbasket_action"] == "EDIT":
+            return reverse("index")
+        # return reverse("index")
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
