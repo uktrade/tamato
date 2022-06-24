@@ -356,6 +356,7 @@ def test_measure_update_create_conditions(
         condition.action.pk
         == measure_edit_conditions_data["measure-conditions-formset-0-action"]
     )
+    assert condition.update_type == UpdateType.CREATE
 
     components = condition.components.approved_up_to_transaction(tx).all()
 
@@ -380,11 +381,15 @@ def test_measure_update_edit_conditions(
     correct.
     """
     measure = Measure.objects.with_duty_sentence().first()
-    previous_condition = measure.conditions.last()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
     transaction_count = Transaction.objects.count()
+    tx = Transaction.objects.last()
+    measure_with_condition = Measure.objects.approved_up_to_transaction(tx).get(
+        sid=measure.sid,
+    )
+    previous_condition = measure_with_condition.conditions.last()
     measure_edit_conditions_data[
         "measure-conditions-formset-0-required_certificate"
     ] = ""
@@ -404,10 +409,11 @@ def test_measure_update_edit_conditions(
 
     condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
 
-    assert condition != previous_condition
+    assert condition.pk != previous_condition.pk
     assert condition.required_certificate == None
     assert condition.duty_amount == 3
     assert condition.update_type == UpdateType.UPDATE
+    assert condition.sid == previous_condition.sid
 
     components = condition.components.approved_up_to_transaction(tx).all()
 
@@ -418,6 +424,37 @@ def test_measure_update_edit_conditions(
     assert component.duty_amount == 10
     assert component.update_type == UpdateType.UPDATE
     assert component.transaction == condition.transaction
+
+
+# The measure edit form will always show changes until we fix this bug https://uktrade.atlassian.net/browse/TP2000-247 /PS-IGNORE
+# When fixed, we should uncomment and add logic to prevent updates when there are no changes to a condition
+
+# def test_measure_update_no_conditions_changes(
+#     client,
+#     valid_user,
+#     measure_edit_conditions_data, /PS-IGNORE
+#     duty_sentence_parser,
+#     erga_omnes,
+# ):
+#     measure = Measure.objects.with_duty_sentence().first()
+#     url = reverse("measure-ui-edit", args=(measure.sid,))
+#     client.force_login(valid_user) /PS-IGNORE
+#     client.post(url, data=measure_edit_conditions_data) /PS-IGNORE
+#     tx = Transaction.objects.last()
+#     measure_with_condition = Measure.objects.approved_up_to_transaction(tx).get( /PS-IGNORE
+#         sid=measure.sid, /PS-IGNORE
+#     )
+#     previous_condition = measure_with_condition.conditions.approved_up_to_transaction(tx).first()
+#     client.post(url, data=measure_edit_conditions_data) /PS-IGNORE
+#     tx = Transaction.objects.last()
+#     updated_measure = Measure.objects.approved_up_to_transaction(tx).get( /PS-IGNORE
+#         sid=measure.sid, /PS-IGNORE
+#     )
+#     condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
+
+#     assert condition.pk == previous_condition.pk
+#     assert condition.update_type == UpdateType.CREATE
+#     assert condition.sid == previous_condition.sid /PS-IGNORE
 
 
 def test_measure_update_remove_conditions(

@@ -288,7 +288,7 @@ class MeasureCreationPattern:
         measure condition components from newly created condition
         """
         condition = MeasureCondition(
-            sid=self.measure_condition_sid_counter(),
+            sid=data.get("sid") or self.measure_condition_sid_counter(),
             component_sequence_number=component_sequence_number,
             dependent_measure=measure,
             update_type=data.get("update_type") or UpdateType.CREATE,
