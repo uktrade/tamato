@@ -415,6 +415,7 @@ class MeasureUpdate(
                 condition_data["version_group"] = existing_conditions.get(
                     sid=f.initial["condition_sid"],
                 ).version_group
+                condition_data["sid"] = f.initial["condition_sid"]
             # If changed and condition_sid not in changed_data, then this is a newly created condition
             elif f.has_changed() and "condition_sid" not in f.changed_data:
                 update_type = UpdateType.CREATE
