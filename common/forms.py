@@ -155,9 +155,6 @@ class RadioNested(TypedChoiceField):
 
 
 class WorkbasketActionForm(forms.Form):
-    class Meta:
-        fields = ("workbasket_action",)
-
     class WorkbasketActions(TextChoices):
         EDIT = "EDIT", "Edit an existing workbasket"
 
