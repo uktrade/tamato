@@ -15,20 +15,18 @@
   {%- endset -%}
 
   {{ table_rows.append([
-    {"html": workbasket_linked_title},
     {"text": workbasket.pk},
+    {"html": workbasket_linked_title},
     {"text": workbasket.reason},
-    {"text": '{0:,}'.format(workbasket.tracked_models.count()) },
     {"text": workbasket_status},
   ]) or "" }}
 {% endfor %}
 
 {{ govukTable({
   "head": [
-    {"text": "Title"},
-    {"text": "ID"},
-    {"text": "Notes"},
-    {"text": "Number of changes"},
+    {"text": "Workbasket number"},
+    {"text": "TOPS/Jira number"},
+    {"text": "Description"},
     {"text": "Status"},
   ],
   "rows": table_rows

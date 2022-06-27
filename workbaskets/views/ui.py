@@ -60,6 +60,7 @@ class SelectWorkbasketView(WorkBasketList):
         return (
             WorkBasket.objects.exclude(status=WorkflowStatus.PUBLISHED)
             .exclude(status=WorkflowStatus.ARCHIVED)
+            .exclude(status=WorkflowStatus.SENT)
             .order_by("-updated_at")
         )
 
