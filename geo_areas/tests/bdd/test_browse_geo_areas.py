@@ -22,4 +22,10 @@ def geo_area_list(geo_area_search):
     results = geo_area_search.json()["results"]
     assert len(results) == 1
     result = results[0]
-    assert result["value"] == 1001
+    assert result["value"] == 2222
+
+
+@then("the search should return nothing")
+def geo_area_list_empty(geo_area_search):
+    results = geo_area_search.json()["results"]
+    assert len(results) == 0
