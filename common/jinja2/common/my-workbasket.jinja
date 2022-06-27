@@ -1,4 +1,4 @@
-{% extends "common/index.jinja" %}
+{% extends "common/dashboard.jinja" %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% block page_title %}Workbasket {{ request.session.workbasket.id }}{% if request.session.workbasket.title %} - {{ request.session.workbasket.title }}{% endif %}{% endblock %}
@@ -8,7 +8,7 @@
   {% if request.GET.edit %}
     {{ govukBreadcrumbs({
       "items": [
-        {"text": "Home", "href": url("index")},
+        {"text": "Home", "href": url("dashboard")},
         {"text": "Edit an existing workbasket", "href": url("workbaskets:select-workbasket")},
         {"text": "Workbasket " ~ request.session.workbasket.id }
       ]
@@ -16,7 +16,7 @@
   {% else %}
     {{ govukBreadcrumbs({
       "items": [
-        {"text": "Home", "href": url("index")},
+        {"text": "Home", "href": url("dashboard")},
         {"text": "Workbasket " ~ request.session.workbasket.id }
       ]
     }) }}

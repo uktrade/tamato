@@ -15,45 +15,68 @@ from workbaskets.validators import WorkflowStatus
 pytestmark = pytest.mark.django_db
 
 
-def test_index_creates_workbasket_if_needed(valid_user_client, approved_workbasket):
-    assert WorkBasket.objects.is_not_approved().count() == 0
+def test_index_displays_workbasket_action_form(valid_user_client):
     response = valid_user_client.get(reverse("index"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert "What would you like to do?" in page.select("legend")[0].text
+    assert "Edit an existing workbasket" in page.select("label")[0].text
+
+
+def test_workbasket_action_form_response_redirects_user(
+    valid_user,
+    client,
+):
+    data = {
+        "workbasket_action": "EDIT",
+    }
+    client.force_login(valid_user)
+    response = client.post(reverse("index"), data)
+    assert response.status_code == 302
+    assert response.url == reverse("workbaskets:select-workbasket")
+
+
+def test_dashboard_creates_workbasket_if_needed(valid_user_client, approved_workbasket):
+    assert WorkBasket.objects.is_not_approved().count() == 0
+    response = valid_user_client.get(reverse("dashboard"))
     assert response.status_code == 200
     assert WorkBasket.objects.is_not_approved().count() == 1
 
 
-def test_index_doesnt_creates_workbasket_if_not_needed(
+def test_dashboard_doesnt_creates_workbasket_if_not_needed(
     valid_user_client,
     new_workbasket,
 ):
     assert WorkBasket.objects.is_not_approved().count() == 1
-    response = valid_user_client.get(reverse("index"))
+    response = valid_user_client.get(reverse("dashboard"))
     assert response.status_code == 200
     assert WorkBasket.objects.is_not_approved().count() == 1
 
 
-def test_index_workbasket_unaffected_by_archived_workbasket(
+def test_dashboard_workbasket_unaffected_by_archived_workbasket(
     valid_user_client,
 ):
-    response = valid_user_client.get(reverse("index"))
+    response = valid_user_client.get(reverse("dashboard"))
     assert response.status_code == 200
     view = response.context_data["view"]
     view_workbasket = view.workbasket
 
     factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
-    response = valid_user_client.get(reverse("index"))
+    response = valid_user_client.get(reverse("dashboard"))
     assert response.status_code == 200
     view = response.context_data["view"]
     assert view.workbasket == view_workbasket
 
     factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-    response = valid_user_client.get(reverse("index"))
+    response = valid_user_client.get(reverse("dashboard"))
     assert response.status_code == 200
     view = response.context_data["view"]
     assert view.workbasket == view_workbasket
 
 
-def test_index_displays_objects_in_current_workbasket(
+def test_dashboard_displays_objects_in_current_workbasket(
     valid_user_client,
     workbasket,
 ):
@@ -62,7 +85,7 @@ def test_index_displays_objects_in_current_workbasket(
     with workbasket.new_transaction():
         GoodsNomenclatureFactory.create()
 
-    response = valid_user_client.get(reverse("index"))
+    response = valid_user_client.get(reverse("dashboard"))
     page = BeautifulSoup(
         response.content.decode(response.charset),
         features="lxml",
@@ -72,14 +95,14 @@ def test_index_displays_objects_in_current_workbasket(
         assert page.find("input", {"name": field_name})
 
 
-def test_index_with_each_type_of_object_in_current_workbasket(
+def test_dashboard_with_each_type_of_object_in_current_workbasket(
     valid_user_client,
     workbasket,
     trackedmodel_factory,
 ):
     with workbasket.new_transaction():
         trackedmodel_factory.create()
-    response = valid_user_client.get(reverse("index"))
+    response = valid_user_client.get(reverse("dashboard"))
     assert response.status_code == 200
 
 
@@ -109,7 +132,7 @@ def test_handles_multiple_unapproved_workbaskets(valid_user_client, new_workbask
 
     assert WorkBasket.objects.is_not_approved().count() == 2
 
-    response = valid_user_client.get(reverse("index"))
+    response = valid_user_client.get(reverse("dashboard"))
 
     assert response.status_code == 200
 

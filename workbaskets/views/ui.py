@@ -109,7 +109,7 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
     permission_required = "workbaskets.change_workbasket"
 
     def get_redirect_url(self, *args, **kwargs) -> str:
-        return reverse("index")
+        return reverse("dashboard")
 
     def get(self, *args, **kwargs):
         workbasket: WorkBasket = self.get_object()
@@ -166,7 +166,7 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
             # The user has cancelled out of the deletion process.
-            return redirect("index")
+            return redirect("dashboard")
 
         # By reverse ordering on record_code + subrecord_code we're able to
         # delete child entities first, avoiding protected foreign key

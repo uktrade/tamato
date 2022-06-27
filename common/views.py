@@ -17,15 +17,18 @@ from django.db.models import Model
 from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import generic
+from django.views.generic import FormView
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.base import View
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
+from common import forms
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models import TrackedModel
@@ -37,6 +40,15 @@ from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
+
+
+class WorkbasketActionView(FormView, View):
+    template_name = "common/workbasket_action.jinja"
+    form_class = forms.WorkbasketActionForm
+
+    def form_valid(self, form):
+        if form.cleaned_data["workbasket_action"] == "EDIT":
+            return redirect(reverse("workbaskets:select-workbasket"))
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
@@ -73,14 +85,14 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     """
 
     form_class = SelectableObjectsForm
-    template_name = "common/index.jinja"
+    template_name = "common/dashboard.jinja"
 
     # Form action mappings to URL names.
     action_success_url_names = {
         "publish-all": "workbaskets:workbasket-ui-submit",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
-        "page-prev": "index",
-        "page-next": "index",
+        "page-prev": "dashboard",
+        "page-next": "dashboard",
     }
 
     @property
@@ -147,7 +159,7 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
                 reverse(self.action_success_url_names[form_action]),
                 form_action,
             )
-        return reverse("index")
+        return reverse("dashboard")
 
     def get_initial(self):
         store = SessionStore(
