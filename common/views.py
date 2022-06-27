@@ -17,6 +17,7 @@ from django.db.models import Model
 from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import generic
@@ -45,9 +46,9 @@ class WorkbasketActionView(FormView, View):
     template_name = "common/workbasket_action.jinja"
     form_class = forms.WorkbasketActionForm
 
-    def get_success_url(self):
-        if self.request.POST["workbasket_action"] == "EDIT":
-            return reverse("workbaskets:select-workbasket")
+    def form_valid(self, form):
+        if form.cleaned_data["workbasket_action"] == "EDIT":
+            return redirect(reverse("workbaskets:select-workbasket"))
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
