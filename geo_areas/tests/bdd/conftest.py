@@ -7,17 +7,19 @@ from common.tests import factories
     "geographical_area 2222 with a description and area_code 0",
     target_fixture="geographical_area_2222",
 )
-def geographical_area_2222():
+def geographical_area_2222(date_ranges):
     area = factories.GeographicalAreaFactory(id=2222, area_id=3333, area_code=0)
     factories.GeographicalAreaDescriptionFactory(
         described_geographicalarea=area,
         description="This is 2222",
+        validity_start=date_ranges.big.lower,
     )
     factories.GeographicalAreaDescriptionFactory(
         described_geographicalarea=factories.GeographicalMembershipFactory(
             member=area,
         ).geo_group,
         description="random group description",
+        validity_start=date_ranges.later.lower,
     )
     return area
 
@@ -26,11 +28,12 @@ def geographical_area_2222():
     "geographical_area 4444 with a description and area_code 1",
     target_fixture="geographical_area_4444",
 )
-def geographical_area_4444(geographical_area_2222):
+def geographical_area_4444(geographical_area_2222, date_ranges):
     area = factories.GeographicalAreaFactory(id=4444, area_id=5555, area_code=1)
     factories.GeographicalAreaDescriptionFactory(
         described_geographicalarea=area,
         description="This is 4444",
+        validity_start=date_ranges.earlier.lower,
     )
     factories.GeographicalMembershipFactory(
         member=geographical_area_2222,

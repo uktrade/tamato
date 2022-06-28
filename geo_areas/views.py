@@ -14,6 +14,7 @@ from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
+from geo_areas.util import with_latest_description_string
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
 from workbaskets.views.generic import DraftDeleteView
@@ -22,8 +23,10 @@ from workbaskets.views.generic import DraftDeleteView
 class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows geographical areas to be viewed."""
 
-    queryset = GeographicalArea.objects.latest_approved().prefetch_related(
-        "descriptions",
+    queryset = with_latest_description_string(
+        GeographicalArea.objects.prefetch_related(
+            "descriptions",
+        ),
     )
     serializer_class = AutoCompleteSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -35,8 +38,11 @@ class GeoAreaMixin:
     model: Type[TrackedModel] = GeographicalArea
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return GeographicalArea.objects.approved_up_to_transaction(tx)
+        return with_latest_description_string(
+            GeographicalArea.objects.prefetch_related(
+                "descriptions",
+            ),
+        )
 
 
 class GeoAreaDescriptionMixin:
