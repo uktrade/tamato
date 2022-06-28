@@ -10,7 +10,7 @@
 {% block beforeContent %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Home", "href": url("dashboard")},
+      {"text": "Home", "href": url("index")},
       {"text": "Find and edit " ~ described_object._meta.verbose_name_plural, "href": described_object.get_url("list")},
       {"text": described_object._meta.verbose_name|capitalize ~ ": " ~ described_object|string, "href": described_object.get_url()},
       {"text": page_title}
@@ -34,13 +34,13 @@
       <p class="govuk-body">To complete your task you must publish your change. </p>
       {{ govukButton({
         "text": "Go to your tariff changes",
-        "href": url("dashboard"),
+        "href": url("index"),
         "classes": "govuk-button--secondary"
       }) }}
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ described_object.get_url() }}">View {{ described_object._meta.verbose_name }} {{ described_object|string }}</a></li>
         <li><a class="govuk-link" href="{{ described_object.get_url("list") }}">Manage more {{ described_object._meta.verbose_name_plural }}</a></li>
-        <li><a class="govuk-link" href="{{ url("dashboard") }}">Return to main menu</a></li>
+        <li><a class="govuk-link" href="{{ url("index") }}">Return to main menu</a></li>
       </ul>
     </div>
   </div>
