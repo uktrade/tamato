@@ -23,6 +23,7 @@
     {% set table_rows = [] %}
     {% for condition in conditions -%}
         {{ table_rows.append([
+            {"text": condition.sid },
             {"text": requirement(condition) },
             {"text": condition.action.description},
             {"text": condition.duty_sentence if condition.duty_sentence else '-'},
@@ -30,6 +31,7 @@
     {% endfor %}
     {{ govukTable({
     "head": [
+        {"text": "SID"},
         {"text": "Required certificate or amount", "classes": "govuk-!-width-two-thirds"},
         {"text": "Action"},
         {"text": "Applicable duties"},
@@ -41,4 +43,3 @@
 {% if has_conditions %}
     <p class="govuk-body">This measure has no conditions.</p>
 {% endif %}
-

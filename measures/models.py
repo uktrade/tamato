@@ -669,6 +669,8 @@ class MeasureCondition(TrackedModel):
 
     record_code = "430"
     subrecord_code = "10"
+    url_pattern_name_prefix = "measure"
+    url_suffix = "#conditions"
 
     identifying_fields = ("sid",)
 

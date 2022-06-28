@@ -141,8 +141,15 @@ class TrackedModel(PolymorphicModel):
     model, but in places where this does not exist models can declare their own.
     (Note that because multiple versions of each model will exist this does not
     actually equate to a ``UNIQUE`` constraint in the database.)
-    
+
     TrackedModel itself defaults to ("pk",) as it does not have an SID.
+    """
+
+    url_suffix = ""
+    """
+    This is to add a link within a page for get_url() e.g. for linking to a
+    Measure's conditions tab. If url_suffix is set to '#conditions' the output
+    detail url will be /measures/12345678/#conditions
     """
 
     def new_version(
@@ -623,10 +630,11 @@ class TrackedModel(PolymorphicModel):
         if action not in ["list", "create"]:
             kwargs = self.get_identifying_fields()
         try:
-            return reverse(
+            url = reverse(
                 f"{self.get_url_pattern_name_prefix()}-ui-{action}",
                 kwargs=kwargs,
             )
+            return f"{url}{self.url_suffix}"
         except NoReverseMatch:
             return None
 
