@@ -24,13 +24,13 @@
       <p class="govuk-body">To complete your task you must publish your change. </p>
       {{ govukButton({
         "text": "Go to your tariff changes",
-        "href": url("index"),
+        "href": url("my-workbasket"),
         "classes": "govuk-button--secondary"
       }) }}
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ object.get_url() }}">View {{ object._meta.verbose_name }} {{ object|string }}</a></li>
         <li><a href="{{ object.get_url("list") }}">Manage more {{ object._meta.verbose_name_plural }}</a></li>
-        <li><a href="{{ url("index") }}">Return to main menu</a></li>
+        <li><a href="{{ url("my-workbasket") }}">Return to main menu</a></li>
       </ul>
     </div>
   </div>
