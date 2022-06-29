@@ -270,8 +270,15 @@
 <span class="sd">    model, but in places where this does not exist models can declare their own.</span>
 <span class="sd">    (Note that because multiple versions of each model will exist this does not</span>
 <span class="sd">    actually equate to a ``UNIQUE`` constraint in the database.)</span>
-<span class="sd">    </span>
+
 <span class="sd">    TrackedModel itself defaults to (&quot;pk&quot;,) as it does not have an SID.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">url_suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This is to add a link within a page for get_url() e.g. for linking to a</span>
+<span class="sd">    Measure&#39;s conditions tab. If url_suffix is set to &#39;#conditions&#39; the output</span>
+<span class="sd">    detail url will be /measures/12345678/#conditions</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="TrackedModel.new_version"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.new_version">[docs]</a>    <span class="k">def</span> <span class="nf">new_version</span><span class="p">(</span>
@@ -752,10 +759,11 @@
         <span class="k">if</span> <span class="n">action</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">,</span> <span class="s2">&quot;create&quot;</span><span class="p">]:</span>
             <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_url_pattern_name_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2">-ui-</span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">url</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">url_suffix</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">except</span> <span class="n">NoReverseMatch</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span></div>
 
