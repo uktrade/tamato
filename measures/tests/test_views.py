@@ -151,7 +151,7 @@ def test_measure_detail_conditions(client, valid_user):
     )
 
     # ignore everything above the first condition row
-    cells = page.select("table > tbody > tr:first-child > td")
+    cells = page.select("#conditions table > tbody > tr:first-child > td")
     certificate = certificate_condition.required_certificate
 
     assert cells[0].text == str(certificate_condition.sid)
@@ -162,14 +162,14 @@ def test_measure_detail_conditions(client, valid_user):
     assert cells[2].text == certificate_condition.action.description
     assert cells[3].text == "-"
 
-    cells = page.select("table > tbody > tr:nth-child(2) > td")
+    cells = page.select("#conditions table > tbody > tr:nth-child(2) > td")
 
     assert cells[0].text == str(amount_condition.sid)
     assert (
         cells[1].text
         == f"\n    1000.000\n        {amount_condition.monetary_unit.code}"
     )
-    rows = page.select("table > tbody > tr")
+    rows = page.select("#conditions table > tbody > tr")
     assert len(rows) == 2
 
 
@@ -204,7 +204,6 @@ def test_measure_detail_footnotes(client, valid_user):
         response.content.decode(response.charset),
         "html.parser",
     )
-
     rows = page.select("#footnotes table > tbody > tr")
     assert len(rows) == 2
 
@@ -241,6 +240,28 @@ def test_measure_detail_no_footnotes(client, valid_user):
         page.select("#footnotes .govuk-body")[0].text
         == "This measure has no footnotes."
     )
+
+
+def test_measure_detail_version_control(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    measure.new_version(measure.transaction.workbasket)
+    measure.new_version(measure.transaction.workbasket)
+
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#versions"
+    client.force_login(valid_user)
+    response = client.get(url)
+    soup = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    rows = soup.select("#versions table > tbody > tr")
+    assert len(rows) == 3
+
+    update_types = {
+        cell.text
+        for cell in soup.select("#versions table > tbody > tr > td:first-child")
+    }
+    assert update_types == {"Create", "Update"}
 
 
 @pytest.mark.parametrize(
