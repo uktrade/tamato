@@ -91,8 +91,8 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     action_success_url_names = {
         "publish-all": "workbaskets:workbasket-ui-submit",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
-        "page-prev": "dashboard",
-        "page-next": "dashboard",
+        "page-prev": "index",
+        "page-next": "index",
     }
 
     @property
@@ -159,7 +159,7 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
                 reverse(self.action_success_url_names[form_action]),
                 form_action,
             )
-        return reverse("dashboard")
+        return reverse("index")
 
     def get_initial(self):
         store = SessionStore(

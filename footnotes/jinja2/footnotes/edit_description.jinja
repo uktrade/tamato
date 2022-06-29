@@ -9,7 +9,7 @@
 {% block beforeContent %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Home", "href": url("dashboard")},
+      {"text": "Home", "href": url("index")},
       {"text": "Footnotes", "href": url("footnote-ui-list")},
       {"text": "Footnote " ~ object.described_footnote|string, "href": object.described_footnote.get_url()},
       {"text": page_title}
