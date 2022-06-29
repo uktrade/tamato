@@ -409,6 +409,9 @@ def test_trackedmodel_get_url(trackedmodel_factory):
         # None is returned for models that have no URL
         return
 
+    if instance.url_suffix:
+        assert instance.url_suffix in url
+
     assert len(url)
 
     # Verify URL is not local

@@ -150,27 +150,27 @@ def test_measure_detail_conditions(client, valid_user):
         page.find("h3").text == f"{condition_code.code}: {condition_code.description}"
     )
 
-    rows = page.find("table").findChildren(["th", "tr"])
     # ignore everything above the first condition row
-    first_row = rows[4]
-    cells = first_row.findChildren(["td"])
+    cells = page.select("table > tbody > tr:first-child > td")
     certificate = certificate_condition.required_certificate
 
+    assert cells[0].text == str(certificate_condition.sid)
     assert (
-        cells[0].text
+        cells[1].text
         == f"{certificate.code}:\n        {certificate.get_description(transaction=certificate.transaction).description}"
     )
-    assert cells[1].text == certificate_condition.action.description
-    assert cells[2].text == "-"
+    assert cells[2].text == certificate_condition.action.description
+    assert cells[3].text == "-"
 
-    second_row = rows[5]
-    cells = second_row.findChildren(["td"])
+    cells = page.select("table > tbody > tr:nth-child(2) > td")
 
+    assert cells[0].text == str(amount_condition.sid)
     assert (
-        cells[0].text
+        cells[1].text
         == f"\n    1000.000\n        {amount_condition.monetary_unit.code}"
     )
-    assert len(rows) == 6
+    rows = page.select("table > tbody > tr")
+    assert len(rows) == 2
 
 
 @pytest.mark.parametrize(
@@ -532,8 +532,7 @@ def test_measure_update_invalid_conditions(
         response.content.decode(response.charset),
         features="lxml",
     )
-    ul = page.find_all("ul", {"class": "govuk-list govuk-error-summary__list"})[0]
-    a_tags = ul.findChildren("a")
+    a_tags = page.select("ul.govuk-list.govuk-error-summary__list a")
 
     assert a_tags[0].attrs["href"] == "#measure-conditions-formset-0-applicable_duty"
     assert a_tags[0].text == "Enter a valid duty sentence."
