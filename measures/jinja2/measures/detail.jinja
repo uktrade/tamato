@@ -8,6 +8,7 @@
 {% set core_data_tab_html %}{% include "includes/measures/tabs/core_data.jinja" %}{% endset %}
 {% set conditions_tab_html %}{% include "includes/measures/tabs/conditions.jinja" %}{% endset %}
 {% set footnotes_tab_html %}{% include "includes/measures/tabs/footnotes.jinja" %}{% endset %}
+{% set version_control_tab_html %}{% include "includes/measures/tabs/version_control.jinja" %}{% endset %}
 
 {% set tabs = {
     "items": [
@@ -30,6 +31,13 @@
         "id": "footnotes",
         "panel": {
           "html": footnotes_tab_html
+        }
+      },
+      {
+        "label": "Version control",
+        "id": "versions",
+        "panel": {
+          "html": version_control_tab_html
         }
       }
     ]

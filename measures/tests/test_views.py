@@ -204,7 +204,6 @@ def test_measure_detail_footnotes(client, valid_user):
         response.content.decode(response.charset),
         "html.parser",
     )
-
     rows = page.select("#footnotes table > tbody > tr")
     assert len(rows) == 2
 
@@ -241,6 +240,27 @@ def test_measure_detail_no_footnotes(client, valid_user):
         page.select("#footnotes .govuk-body")[0].text
         == "This measure has no footnotes."
     )
+
+
+def test_measure_detail_version_control(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    measure.new_version(measure.transaction.workbasket)
+    measure.new_version(measure.transaction.workbasket)
+
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#versions"
+    client.force_login(valid_user)
+    response = client.get(url)
+    soup = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    rows = soup.select("table > tbody > tr")
+    assert len(rows) == 3
+
+    update_types = {
+        cell.text for cell in soup.select("table > tbody > tr > td:first-child")
+    }
+    assert update_types == {"Create", "Update"}
 
 
 @pytest.mark.parametrize(
