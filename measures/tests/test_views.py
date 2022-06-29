@@ -151,7 +151,7 @@ def test_measure_detail_conditions(client, valid_user):
     )
 
     # ignore everything above the first condition row
-    cells = page.select("table > tbody > tr:first-child > td")
+    cells = page.select("#conditions table > tbody > tr:first-child > td")
     certificate = certificate_condition.required_certificate
 
     assert cells[0].text == str(certificate_condition.sid)
@@ -162,14 +162,14 @@ def test_measure_detail_conditions(client, valid_user):
     assert cells[2].text == certificate_condition.action.description
     assert cells[3].text == "-"
 
-    cells = page.select("table > tbody > tr:nth-child(2) > td")
+    cells = page.select("#conditions table > tbody > tr:nth-child(2) > td")
 
     assert cells[0].text == str(amount_condition.sid)
     assert (
         cells[1].text
         == f"\n    1000.000\n        {amount_condition.monetary_unit.code}"
     )
-    rows = page.select("table > tbody > tr")
+    rows = page.select("#conditions table > tbody > tr")
     assert len(rows) == 2
 
 
@@ -254,11 +254,12 @@ def test_measure_detail_version_control(client, valid_user):
         response.content.decode(response.charset),
         "html.parser",
     )
-    rows = soup.select("table > tbody > tr")
+    rows = soup.select("#versions table > tbody > tr")
     assert len(rows) == 3
 
     update_types = {
-        cell.text for cell in soup.select("table > tbody > tr > td:first-child")
+        cell.text
+        for cell in soup.select("#versions table > tbody > tr > td:first-child")
     }
     assert update_types == {"Create", "Update"}
 
