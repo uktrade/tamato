@@ -227,6 +227,22 @@ def test_measure_detail_footnotes(client, valid_user):
     }
 
 
+def test_measure_detail_no_footnotes(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#footnotes"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    assert (
+        page.select("#footnotes .govuk-body")[0].text
+        == "This measure has no footnotes."
+    )
+
+
 @pytest.mark.parametrize(
     ("view", "url_pattern"),
     get_class_based_view_urls_matching_url(

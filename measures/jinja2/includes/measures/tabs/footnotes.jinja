@@ -2,23 +2,21 @@
 
 <h2 class="govuk-heading-l">Footnotes</h2>
 
-{% set has_footnotes = false %}
-{% set table_rows = [] %}
-{% for footnote in object.footnotes.all() %}
-  {% set has_footnotes = true %}
-  {{ table_rows.append([
-      {"text": create_link(footnote.get_url(), footnote|string) },
-      {"text": footnote.descriptions.first().description },
-    ]) or "" }}
-{% endfor %}
-  {{ govukTable({
-  "head": [
-      {"text": "SID"},
-      {"text": "Description"},
-  ],
-  "rows": table_rows
-  }) }}
-
-{% if has_footnotes %}
+{% if object.footnotes.all() %}
+  {% set table_rows = [] %}
+  {% for footnote in object.footnotes.all() %}
+    {{ table_rows.append([
+        {"text": create_link(footnote.get_url(), footnote|string) },
+        {"text": footnote.descriptions.first().description },
+      ]) or "" }}
+  {% endfor %}
+    {{ govukTable({
+    "head": [
+        {"text": "SID"},
+        {"text": "Description"},
+    ],
+    "rows": table_rows
+    }) }}
+{% else %}
     <p class="govuk-body">This measure has no footnotes.</p>
 {% endif %}
