@@ -173,6 +173,22 @@ def test_measure_detail_conditions(client, valid_user):
     assert len(rows) == 2
 
 
+def test_measure_detail_no_conditions(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#conditions"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    assert (
+        page.select("#conditions .govuk-body")[0].text
+        == "This measure has no conditions."
+    )
+
+
 def test_measure_detail_footnotes(client, valid_user):
     measure = factories.MeasureFactory.create()
     footnote1 = factories.FootnoteAssociationMeasureFactory.create(
