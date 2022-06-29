@@ -173,6 +173,76 @@ def test_measure_detail_conditions(client, valid_user):
     assert len(rows) == 2
 
 
+def test_measure_detail_no_conditions(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#conditions"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    assert (
+        page.select("#conditions .govuk-body")[0].text
+        == "This measure has no conditions."
+    )
+
+
+def test_measure_detail_footnotes(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    footnote1 = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    ).associated_footnote
+    footnote2 = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    ).associated_footnote
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#footnotes"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    rows = page.select("#footnotes table > tbody > tr")
+    assert len(rows) == 2
+
+    first_column_links = page.select(
+        "#footnotes table > tbody > tr > td:first-child > a",
+    )
+    assert {link.text for link in first_column_links} == {
+        str(footnote1),
+        str(footnote2),
+    }
+    assert {link.get("href") for link in first_column_links} == {
+        footnote1.get_url(),
+        footnote2.get_url(),
+    }
+
+    second_column = page.select("#footnotes table > tbody > tr > td:nth-child(2)")
+    assert {cell.text for cell in second_column} == {
+        footnote1.descriptions.first().description,
+        footnote2.descriptions.first().description,
+    }
+
+
+def test_measure_detail_no_footnotes(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#footnotes"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    assert (
+        page.select("#footnotes .govuk-body")[0].text
+        == "This measure has no footnotes."
+    )
+
+
 @pytest.mark.parametrize(
     ("view", "url_pattern"),
     get_class_based_view_urls_matching_url(

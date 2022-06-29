@@ -90,6 +90,7 @@ class MeasureDetail(MeasureMixin, TrackedModelDetailView):
 
         context = super().get_context_data(**kwargs)
         context["condition_groups"] = condition_groups
+        context["has_conditions"] = bool(len(conditions))
         return context
 
 
