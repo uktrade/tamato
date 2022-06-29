@@ -532,8 +532,7 @@ def test_measure_update_invalid_conditions(
         response.content.decode(response.charset),
         features="lxml",
     )
-    ul = page.find_all("ul", {"class": "govuk-list govuk-error-summary__list"})[0]
-    a_tags = ul.findChildren("a")
+    a_tags = page.select("ul.govuk-list.govuk-error-summary__list a")
 
     assert a_tags[0].attrs["href"] == "#measure-conditions-formset-0-applicable_duty"
     assert a_tags[0].text == "Enter a valid duty sentence."
