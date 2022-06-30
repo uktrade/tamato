@@ -17,6 +17,11 @@ ui_patterns = [
         name="workbasket-ui-list",
     ),
     path(
+        "create-workbasket/",
+        ui_views.WorkBasketCreate.as_view(),
+        name="workbasket-ui-create",
+    ),
+    path(
         f"<pk>/",
         ui_views.WorkBasketDetail.as_view(),
         name="workbasket-ui-detail",

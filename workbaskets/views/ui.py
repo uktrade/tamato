@@ -19,10 +19,12 @@ from common.filters import TamatoFilter
 from common.pagination import build_pagination_list
 from common.views import WithPaginationListView
 from exporter.models import Upload
+from workbaskets import forms
 from workbaskets import tasks
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.validators import WorkflowStatus
+from workbaskets.views.generic import DraftCreateView
 
 
 class WorkBasketFilter(TamatoFilter):
@@ -51,6 +53,13 @@ class WorkBasketList(WithPaginationListView):
 
     def get_queryset(self):
         return WorkBasket.objects.order_by("-updated_at")
+
+
+class WorkBasketCreate(DraftCreateView):
+    """UI endpoint for creating workbaskets."""
+
+    template_name = "workbaskets/create.jinja"
+    form_class = forms.WorkbasketCreateForm
 
 
 class SelectWorkbasketView(WorkBasketList):
