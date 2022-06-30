@@ -242,6 +242,20 @@ def test_measure_detail_no_footnotes(client, valid_user):
     )
 
 
+def test_measure_detail_quota_order_number(client, valid_user):
+    quota_order_number = factories.QuotaOrderNumberFactory.create()
+    measure = factories.MeasureFactory.create(order_number=quota_order_number)
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid})
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    items = [element.text.strip() for element in page.select("#core-data dl dd")]
+    assert str(quota_order_number) in items
+
+
 def test_measure_detail_version_control(client, valid_user):
     measure = factories.MeasureFactory.create()
     measure.new_version(measure.transaction.workbasket)
