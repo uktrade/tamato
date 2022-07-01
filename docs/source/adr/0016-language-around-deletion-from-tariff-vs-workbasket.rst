@@ -33,10 +33,11 @@ under the system as-is, every SID used has a chance of clashing with another in 
 Decision
 --------
 
-Always use the word "remove" when removing items from a workbasket, and "delete" for actions that would delete
-data from the tariff.
+Always ensure that removing items from the workbasket and deleting from the tariff are dis-ambiguated by using language "Remove from the workbasket", and "Delete from the tariff".
 
-Longer examples:
+"Remove" and "delete" are consistently used as extra context.
+
+Longer examples can have context about 'what' is being taken from 'where':
 
  - "Remove footnote C099 from workbasket #299".
  - "Delete footnote C099 from the tariff".
