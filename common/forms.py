@@ -156,7 +156,11 @@ class RadioNested(TypedChoiceField):
 
 class WorkbasketActionForm(forms.Form):
     class WorkbasketActions(TextChoices):
-        EDIT = "EDIT", "Edit an existing workbasket"
+        EDIT = (
+            "EDIT",
+            "Edit an existing workbasket",
+        )
+        CREATE = "CREATE", "Create a new workbasket"
 
     workbasket_action = forms.ChoiceField(
         label="What would you like to do?",

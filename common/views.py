@@ -49,6 +49,8 @@ class WorkbasketActionView(FormView, View):
     def form_valid(self, form):
         if form.cleaned_data["workbasket_action"] == "EDIT":
             return redirect(reverse("workbaskets:select-workbasket"))
+        elif form.cleaned_data["workbasket_action"] == "CREATE":
+            return redirect(reverse("workbaskets:workbasket-ui-create"))
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
