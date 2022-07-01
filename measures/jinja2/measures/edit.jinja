@@ -36,7 +36,7 @@
 {% endset %}
 
 {% set footnotes_html %}
-    
+
     {% include "measures/create-footnotes-formset.jinja" %}
 
 {% endset %}
@@ -56,38 +56,7 @@
 {% endset %}
 
 {% set geographical_area_html %}
-    {{ govukRadios({
-        "idPrefix": "geographical_area_choice",
-        "name": "geographical_area_choice",
-        "fieldset": {
-            "legend": {
-                "text": "Geographical area",
-            }
-        },
-        "items": [
-            {
-                "value": "all",
-                "text": "Erga Omnes (all countries)",
-                "checked": form.initial_geographical_area.is_all_countries(),
-            },
-            {
-                "value": "group",
-                "text": "A group of countries",
-                "conditional": {
-                    "html": form.geographical_area_group 
-                },
-                "checked": form.initial_geographical_area.is_group() and not form.initial_geographical_area.is_all_countries(),
-            },
-            {
-                "value": "single",
-                "text": "A single country or region",
-                "conditional": {
-                    "html": form.geographical_area_country_or_region 
-                },
-                "checked": form.initial_geographical_area.is_single_region_or_country(),
-            }
-        ]
-    }) }}
+    {{ form.geo_area }}
     {{ govukDetails({
       "summaryText": "Help with geography",
       "text": "Choose the geographical area to which the measure applies. This can be a specific country or a group of countries, and exclusions can be specified. The measure will only apply to imports from or exports to the selected area."
