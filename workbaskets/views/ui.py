@@ -18,7 +18,6 @@ from django.views.generic.list import ListView
 
 from common.filters import TamatoFilter
 from common.pagination import build_pagination_list
-from common.validators import UpdateType
 from common.views import WithPaginationListView
 from exporter.models import Upload
 from workbaskets import forms
@@ -67,7 +66,6 @@ class WorkBasketCreate(DraftCreateView):
         user = get_user_model().objects.get(username=self.request.user.username)
         self.object = form.save(commit=False)
         self.object.author = user
-        self.object.update_type = UpdateType.CREATE
         self.object.save()
         return HttpResponseRedirect(
             f"{reverse('my-workbasket')}?workbasket={self.object.pk}&edit=1",
