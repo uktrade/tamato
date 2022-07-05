@@ -6,8 +6,16 @@ def with_latest_description_string(qs):
     date, filtered by this date and then annotated with that latest description
     object's description field value."""
     return (
-        qs.annotate(latest_description_date=models.Max("descriptions__validity_start"))
-        .filter(descriptions__validity_start=models.F("latest_description_date"))
+        qs.annotate(
+            latest_transaction_order=models.Max(
+                "descriptions__version_group__current_version__transaction__order",
+            ),
+        )
+        .filter(
+            descriptions__version_group__current_version__transaction__order=models.F(
+                "latest_transaction_order",
+            ),
+        )
         .annotate(
             description=models.F(
                 "descriptions__description",
