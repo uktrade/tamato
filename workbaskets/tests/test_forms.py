@@ -1,18 +1,15 @@
 import pytest
 from django import forms
 
-from common.forms import BindNestedFormMixin
-
 pytestmark = pytest.mark.django_db
 
 
-class WorkBasketForm(BindNestedFormMixin, forms.Form):
+class WorkBasketForm(forms.Form):
     title = forms.CharField()
     reason = forms.CharField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.bind_nested_forms(*args, **kwargs)
 
 
 def test_workbasket_form_validation():
