@@ -9,11 +9,34 @@ from common.tests import factories
 from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
-from workbaskets.models import WorkBasket
+from workbaskets import models
 from workbaskets.tests.util import assert_workbasket_valid
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
+
+
+def test_workbasket_create_form_creates_workbasket_object(
+    valid_user_api_client,
+):
+
+    # Post a form
+    create_url = reverse("workbaskets:workbasket-ui-create")
+
+    form_data = {
+        "title": "My new workbasket",
+        "reason": "Making a new workbasket",
+    }
+
+    response = valid_user_api_client.post(create_url, form_data)
+    #  get the workbasket we have made, and make sure it matches title and description
+    workbasket = models.WorkBasket.objects.filter(
+        title=form_data["title"],
+    )[0]
+
+    assert f"workbasket={workbasket.id}" in response.url
+    assert workbasket.title == form_data["title"]
+    assert workbasket.reason == form_data["reason"]
 
 
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)

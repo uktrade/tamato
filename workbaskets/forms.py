@@ -15,13 +15,14 @@ class WorkbasketCreateForm(forms.ModelForm):
     title = forms.CharField(
         label="Tops/Jira number",
         widget=forms.TextInput,
-        required=False,
+        required=True,
     )
 
     reason = forms.CharField(
         label="Description",
         help_text="Add your notes here. You may enter HTML formatting if required. See the guide below for more information.",
         widget=forms.Textarea,
+        required=True,
     )
 
     def __init__(self, *args, **kwargs):
