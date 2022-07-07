@@ -115,7 +115,7 @@ Installing
     $ npm install
     $ npm run build
 
-Those using Mac m1 laptops may have problems with installing certain packages (e.g. psycopg2 and lxml) in this fashion. In this scenario you should try the following, substituting your own python version:
+Those using Mac m1 laptops may have problems installing certain packages (e.g. psycopg2 and lxml) via requirements-dev.txt. In this scenario you should run the following from a rosetta terminal (see `this article <https://www.courier.com/blog/tips-and-tricks-to-setup-your-apple-m1-for-development/>`_  ), substituting your own python version as appropriate:
 
 .. code:: sh
 
