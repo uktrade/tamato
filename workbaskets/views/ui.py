@@ -1,6 +1,7 @@
 import boto3
 from botocore.client import Config
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import ProtectedError
@@ -19,10 +20,12 @@ from common.filters import TamatoFilter
 from common.pagination import build_pagination_list
 from common.views import WithPaginationListView
 from exporter.models import Upload
+from workbaskets import forms
 from workbaskets import tasks
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.validators import WorkflowStatus
+from workbaskets.views.generic import DraftCreateView
 
 
 class WorkBasketFilter(TamatoFilter):
@@ -51,6 +54,27 @@ class WorkBasketList(WithPaginationListView):
 
     def get_queryset(self):
         return WorkBasket.objects.order_by("-updated_at")
+
+
+class WorkBasketCreate(DraftCreateView):
+    """UI endpoint for creating workbaskets."""
+
+    template_name = "workbaskets/create.jinja"
+    form_class = forms.WorkbasketCreateForm
+
+    def form_valid(self, form):
+        user = get_user_model().objects.get(username=self.request.user.username)
+        self.object = form.save(commit=False)
+        self.object.author = user
+        self.object.save()
+        return HttpResponseRedirect(
+            f"{reverse('my-workbasket')}?workbasket={self.object.pk}&edit=1",
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
 
 class SelectWorkbasketView(WorkBasketList):

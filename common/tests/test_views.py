@@ -23,19 +23,36 @@ def test_index_displays_workbasket_action_form(valid_user_client):
     page = BeautifulSoup(str(response.content), "html.parser")
     assert "What would you like to do?" in page.select("legend")[0].text
     assert "Edit an existing workbasket" in page.select("label")[0].text
+    assert "Create a new workbasket" in page.select("label")[1].text
 
 
+@pytest.mark.parametrize(
+    ("data", "response_url"),
+    (
+        (
+            {
+                "workbasket_action": "EDIT",
+            },
+            "workbaskets:select-workbasket",
+        ),
+        (
+            {
+                "workbasket_action": "CREATE",
+            },
+            "workbaskets:workbasket-ui-create",
+        ),
+    ),
+)
 def test_workbasket_action_form_response_redirects_user(
     valid_user,
     client,
+    data,
+    response_url,
 ):
-    data = {
-        "workbasket_action": "EDIT",
-    }
     client.force_login(valid_user)
     response = client.post(reverse("index"), data)
     assert response.status_code == 302
-    assert response.url == reverse("workbaskets:select-workbasket")
+    assert response.url == reverse(response_url)
 
 
 def test_dashboard_creates_workbasket_if_needed(valid_user_client, approved_workbasket):
