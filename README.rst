@@ -115,6 +115,18 @@ Installing
     $ npm install
     $ npm run build
 
+Those using Mac m1 laptops may have problems with installing certain packages (e.g. psycopg2 and lxml) in this fashion. In this scenario you should try the following, substituting your own python version:
+
+.. code:: sh
+
+    $ pip uninstall psycopg2
+    $ brew install postgresql
+    $ export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
+    $ export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib -L${HOME}/.pyenv/versions/3.8.10/lib"
+    $ arch -arm64 pip install psycopg2 --no-binary :all:
+
+Credit due to armenzg and his `answer here <https://github.com/psycopg/psycopg2/issues/1286#issuecomment-914286206>`_ .
+
 Running
 ~~~~~~~
 
