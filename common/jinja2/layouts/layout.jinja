@@ -9,17 +9,30 @@
   {{ page_title }} | {{ service_name }}
 {% endblock %}
 
+{% set workbasket_svg %}
+<svg width="25" height="25" viewBox="0 0 362 360" fill="none" xmlns="http://www.w3.org/2000/svg"> {# /PS-IGNORE #}
+<path d="M316.75 135H295.332L239.343 37.5601L213.158 52.4401L260.595 135H101.405L148.858 52.4401L122.658 37.5601L66.6686 135H45.2502C42.9319 135.003 40.6452 135.536 38.5676 136.559C36.4899 137.582 34.6771 139.067 33.2696 140.899C31.862 142.731 30.8976 144.861 30.4511 147.123C30.0046 149.386 30.088 151.72 30.6948 153.945L72.9131 307.905C74.6681 314.247 78.4654 319.842 83.7233 323.833C88.9811 327.823 95.4096 329.99 102.024 330H259.992C273.536 330 285.513 320.925 289.102 307.875L331.321 153.93C331.935 151.704 332.023 149.367 331.578 147.102C331.133 144.836 330.168 142.704 328.757 140.871C327.346 139.038 325.528 137.554 323.446 136.536C321.363 135.517 319.071 134.992 316.75 135ZM259.977 300V315V300H102.024L65.0094 165H296.991L259.977 300Z" fill="white"/> {# /PS-IGNORE #}
+<path d="M135.75 195H165.917V270H135.75V195ZM196.083 195H226.25V270H196.083V195Z" fill="white"/> {# /PS-IGNORE #}
+</svg>
+{% endset %}
+
 {% block header %}
-  {{ govukHeader({
-    "serviceName": service_name,
-    "serviceUrl": "#",
-    "navigation": [
-      {
-        "href": url("logout") if request.user.is_authenticated else settings.LOGIN_URL,
-        "text": "Sign out" if request.user.is_authenticated else "Sign In"
-      }
-    ]
-  }) }}
+{% set workbasket_html %}
+  <a href="{{ url('my-workbasket') }}" class="govuk-header__link workbasket-link">Workbasket  {{ get_current_workbasket(request).id }} {{ workbasket_svg }}</a>
+{% endset %}
+
+{{ govukHeader({
+  "homepageUrl": "https://gov.uk/",
+  "serviceName": service_name,
+  "serviceUrl": "/",
+  "navigation": [
+    { "html": workbasket_html } if get_current_workbasket(request) else "",
+    {
+      "href": url("logout") if request.user.is_authenticated else settings.LOGIN_URL,
+      "text": "Sign out" if request.user.is_authenticated else "Sign In"
+    },
+  ]
+}) }}
 {% endblock %}
 {% block beforeContent %}
   {{ govukPhaseBanner({
@@ -31,4 +44,3 @@
   {% block breadcrumb %}
   {% endblock %}
 {% endblock %}
-
