@@ -27,6 +27,11 @@ ui_patterns = [
         name="workbasket-ui-detail",
     ),
     path(
+        f"<pk>/confirm-create/",
+        ui_views.WorkBasketConfirmCreate.as_view(),
+        name="workbasket-ui-confirm-create",
+    ),
+    path(
         f"<pk>/submit/",
         ui_views.WorkBasketSubmit.as_view(),
         name="workbasket-ui-submit",

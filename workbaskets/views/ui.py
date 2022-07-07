@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.urls import reverse_lazy
+from django.views.generic import CreateView
 from django.views.generic.base import RedirectView
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
@@ -25,7 +26,6 @@ from workbaskets import tasks
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.validators import WorkflowStatus
-from workbaskets.views.generic import DraftCreateView
 
 
 class WorkBasketFilter(TamatoFilter):
@@ -56,7 +56,13 @@ class WorkBasketList(WithPaginationListView):
         return WorkBasket.objects.order_by("-updated_at")
 
 
-class WorkBasketCreate(DraftCreateView):
+class WorkBasketConfirmCreate(DetailView):
+    template_name = "workbaskets/confirm_create.jinja"
+    model = WorkBasket
+    queryset = WorkBasket.objects.all()
+
+
+class WorkBasketCreate(CreateView):
     """UI endpoint for creating workbaskets."""
 
     template_name = "workbaskets/create.jinja"
@@ -67,8 +73,11 @@ class WorkBasketCreate(DraftCreateView):
         self.object = form.save(commit=False)
         self.object.author = user
         self.object.save()
-        return HttpResponseRedirect(
-            f"{reverse('my-workbasket')}?workbasket={self.object.pk}&edit=1",
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-confirm-create",
+                kwargs={"pk": self.object.pk},
+            ),
         )
 
     def get_form_kwargs(self):
