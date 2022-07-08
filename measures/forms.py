@@ -90,7 +90,8 @@ class GeoGroupForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
+        form_kwargs = kwargs.pop("form_kwargs", None)
+        tx = form_kwargs.get("transaction")
         self.transaction = tx
         super().__init__(*args, **kwargs)
         self.fields[
@@ -126,7 +127,6 @@ class ErgaOmnesExclusionsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
         self.fields["erga_omnes_exclusion"].queryset = with_latest_description_string(
             GeographicalArea.objects.exclude(
@@ -156,7 +156,6 @@ class GeoGroupExclusionsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
         self.fields["geo_group_exclusion"].queryset = with_latest_description_string(
             GeographicalArea.objects.exclude(
@@ -223,7 +222,9 @@ class CountryRegionForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         tx = kwargs.pop("transaction", None)
-        self.transaction = tx
+        form_kwargs = kwargs.pop("form_kwargs", None)
+        if form_kwargs and not tx:
+            tx = form_kwargs.get("transaction")
         super().__init__(*args, **kwargs)
         self.fields["geographical_area_country_or_region"].queryset = (
             self.fields["geographical_area_country_or_region"]
@@ -572,6 +573,7 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
         nested_forms_initial = {**self.initial}
         nested_forms_initial["geographical_area"] = self.instance.geographical_area
         kwargs.pop("initial")
+        kwargs["form_kwargs"] = {"transaction": tx}
         self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
 
     def clean_duty_sentence(self):
@@ -877,7 +879,7 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
             nested_forms_initial["geographical_area"] = geographical_area_fields[
                 self.fields["geo_area"].initial
             ]
-
+        kwargs["form_kwargs"] = {"transaction": self.transaction}
         self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
 
         self.helper = FormHelper(self)
