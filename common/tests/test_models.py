@@ -714,12 +714,26 @@ def test_copy_saved_related_models():
 
     assert measure.exclusions.count() == 3
     assert copied_measure.exclusions.count() == 2
-    # assert exclusion_1 in measure.exclusions.all()
-    # assert exclusion_1 not in copied_measure.exclusions.all()
-    # assert exclusion_2 in measure.exclusions.all()
-    # assert exclusion_2 in copied_measure.exclusions.all()
-    # assert exclusion_3 in measure.exclusions.all() /PS-IGNORE
-    # assert exclusion_3 in copied_measure.exclusions.all() /PS-IGNORE
+    assert exclusion_1 in measure.exclusions.all()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_1.modified_measure.sid,
+    ).exists()
+    assert exclusion_2 in measure.exclusions.all()
+    assert copied_measure.exclusions.filter(
+        modified_measure__sid=copied_measure.sid,
+        excluded_geographical_area=exclusion_2.excluded_geographical_area,
+    ).exists()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_2.modified_measure.sid,
+    ).exists()
+    assert exclusion_3 in measure.exclusions.all()
+    assert copied_measure.exclusions.filter(
+        modified_measure__sid=copied_measure.sid,
+        excluded_geographical_area=exclusion_3.excluded_geographical_area,
+    ).exists()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_3.modified_measure.sid,
+    ).exists()
 
 
 def test_transaction_summary(approved_transaction):

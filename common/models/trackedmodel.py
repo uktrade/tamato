@@ -470,40 +470,42 @@ class TrackedModel(PolymorphicModel):
         # the new model substituted in place of this one. It's done this way to
         # give these related models a chance to increment SIDs, etc.
         for field in get_subrecord_relations(self.__class__):
-            pass
+            ignore = False
             # Check if user passed related model into overrides argument
             if field.name in subrecord_fields.keys():
-                # If user passed a new unsaved model, set the remote field value equal to self for each model passed
-                # e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `self`
+                # If user passed a new unsaved model, set the remote field value equal to new_object for each model passed
+                # e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `new_object`
                 if subrecord_fields[field.name]:
                     for subrecord in subrecord_fields[field.name]:
                         remote_field = [
                             f for f in self._meta.get_fields() if f.name == field.name
                         ][0].remote_field.name
                         if not subrecord.pk:
-
                             setattr(subrecord, remote_field, new_object)
                             subrecord.save()
                         else:
+                            # If user passed a saved object, create a copy of that object with remote_field pointing at the new copied object
+                            # set ignore to True, so that duplicate copies are not made below
                             subrecord.copy(transaction, **{remote_field: new_object})
+                            ignore = True
                 # Else, if an empty or None value is passed, set ignore to True, so that related models are not copied
                 # e.g. if an existing Measure with two conditions is copied with conditions=[], the copy will have no conditions
                 else:
-                    pass
+                    ignore = True
 
-            # queryset = getattr(self, field.get_accessor_name())
-            # reverse_field_name = field.field.name
-            # kwargs = {reverse_field_name: new_object}
-            # nested_fields = {
-            #     k.split("__", 1)[1]: v /PS-IGNORE
-            #     for (k, v) in subrecord_fields.items()
-            #     if field.name in k and field.name != k
-            # }
-            # kwargs.update(nested_fields) /PS-IGNORE
+            queryset = getattr(self, field.get_accessor_name())
+            reverse_field_name = field.field.name
+            kwargs = {reverse_field_name: new_object}
+            nested_fields = {
+                k.split("__", 1)[1]: v
+                for (k, v) in subrecord_fields.items()
+                if field.name in k and field.name != k
+            }
+            kwargs.update(nested_fields)
 
-            # if not ignore:
-            #     for model in queryset.approved_up_to_transaction(transaction):
-            #         model.copy(transaction, **kwargs)
+            if not ignore:
+                for model in queryset.approved_up_to_transaction(transaction):
+                    model.copy(transaction, **kwargs)
 
         return new_object
 
