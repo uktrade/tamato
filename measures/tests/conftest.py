@@ -10,6 +10,8 @@ import requests
 from django.core.exceptions import ValidationError
 from django.forms.models import model_to_dict
 
+from common.models.transactions import Transaction
+from common.models.utils import set_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
@@ -380,6 +382,7 @@ def measure_edit_conditions_data(measure_form_data):
 
 @pytest.fixture
 def measure_form(measure_form_data, session_with_workbasket, erga_omnes):
+    set_current_transaction(Transaction.objects.last())
     return MeasureForm(
         data=measure_form_data,
         instance=Measure.objects.with_duty_sentence().first(),
