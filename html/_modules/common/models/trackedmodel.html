@@ -602,15 +602,21 @@
             <span class="n">ignore</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="c1"># Check if user passed related model into overrides argument</span>
             <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">subrecord_fields</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="c1"># If user passed a new unsaved model, set the remote field value equal to self for each model passed</span>
-                <span class="c1"># e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `self`</span>
+                <span class="c1"># If user passed a new unsaved model, set the remote field value equal to new_object for each model passed</span>
+                <span class="c1"># e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `new_object`</span>
                 <span class="k">if</span> <span class="n">subrecord_fields</span><span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">]:</span>
                     <span class="k">for</span> <span class="n">subrecord</span> <span class="ow">in</span> <span class="n">subrecord_fields</span><span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">]:</span>
                         <span class="n">remote_field</span> <span class="o">=</span> <span class="p">[</span>
                             <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span>
                         <span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">name</span>
-                        <span class="nb">setattr</span><span class="p">(</span><span class="n">subrecord</span><span class="p">,</span> <span class="n">remote_field</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-                        <span class="n">subrecord</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">subrecord</span><span class="o">.</span><span class="n">pk</span><span class="p">:</span>
+                            <span class="nb">setattr</span><span class="p">(</span><span class="n">subrecord</span><span class="p">,</span> <span class="n">remote_field</span><span class="p">,</span> <span class="n">new_object</span><span class="p">)</span>
+                            <span class="n">subrecord</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="c1"># If user passed a saved object, create a copy of that object with remote_field pointing at the new copied object</span>
+                            <span class="c1"># set ignore to True, so that duplicate copies are not made below</span>
+                            <span class="n">subrecord</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">transaction</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">remote_field</span><span class="p">:</span> <span class="n">new_object</span><span class="p">})</span>
+                            <span class="n">ignore</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="c1"># Else, if an empty or None value is passed, set ignore to True, so that related models are not copied</span>
                 <span class="c1"># e.g. if an existing Measure with two conditions is copied with conditions=[], the copy will have no conditions</span>
                 <span class="k">else</span><span class="p">:</span>
