@@ -94,7 +94,7 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
             GeographicalMembership.objects.filter(
                 Q(geo_group__sid=self.sid) | Q(member__sid=self.sid),
             )
-            .latest_approved()
+            .current()
             .select_related("member", "geo_group")
         )
 
