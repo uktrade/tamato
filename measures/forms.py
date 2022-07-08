@@ -221,6 +221,7 @@ class CountryRegionForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        # Depending on whether it is used a part of a formset or independently, transaction will be passed directly into kwargs or as part of form_kwargs
         tx = kwargs.pop("transaction", None)
         form_kwargs = kwargs.pop("form_kwargs", None)
         if form_kwargs and not tx:
