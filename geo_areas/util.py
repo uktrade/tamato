@@ -7,14 +7,14 @@ def with_latest_description_string(qs):
     latest description object's description field value."""
     return (
         qs.annotate(
-            current_version=models.Max(
+            description_current_version=models.Max(
                 "descriptions__version_group__current_version__pk",
             ),
             latest_description_date=models.Max("descriptions__validity_start"),
         )
         .filter(
             descriptions__version_group__current_version__pk=models.F(
-                "current_version",
+                "description_current_version",
             ),
             descriptions__validity_start=models.F("latest_description_date"),
         )
