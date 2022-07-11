@@ -1,0 +1,37 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title %}Workbasket {{ request.session.workbasket.id }}{% endset %}
+{% set page_subtitle %}At a glance{% endset %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("index")},
+      {"text": "Edit an existing workbasket", "href": url("workbaskets:select-workbasket")},
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - At a glance" }
+    ]
+  }) }}
+{% endblock %}
+
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+    {{ page_title }}
+  </h1>
+  <h2 class="govuk-caption-xl govuk-!-margin-bottom-6">
+    {{ page_subtitle }}
+  </h2>
+  <div class="govuk-grid-row govuk-!-margin-bottom-3">
+    <div class="govuk-grid-column-two-thirds">
+      <ul class="govuk-list govuk-list--bullet">
+        <li>Status: {{ workbasket.status.title() }}</li>
+        {% set change_count = workbasket.tracked_models.count() %}
+        <li>{{ change_count }} change{{ pluralize(change_count) }} found</li>
+      </ul>
+    </div>
+  </div>
+  <a href="{{ url('review-workbasket') }}" class="govuk-button govuk-button--primary">Review workbasket</a>
+  <a href="{{ url('edit-workbasket') }}?edit=1" class="govuk-button govuk-button--primary">Edit workbasket</a>
+{% endblock %}

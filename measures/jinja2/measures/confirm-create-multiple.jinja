@@ -41,13 +41,13 @@
       <p class="govuk-body">To complete your task you must publish your change. </p>
       {{ govukButton({
         "text": "Go to your tariff changes",
-        "href": url("my-workbasket"),
+        "href": url("edit-workbasket"),
         "classes": "govuk-button--secondary"
       }) }}
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ created_measures.0.get_url('create') }}">Create a new measure</a></li>
         <li><a href="{{ created_measures.0.get_url('list') }}">Manage more {{ created_measures.0._meta.verbose_name_plural }}</a></li>
-        <li><a href="{{ url('my-workbasket') }}">Return to main menu</a></li>
+        <li><a href="{{ url('edit-workbasket') }}">Return to main menu</a></li>
       </ul>
     </div>
   </div>

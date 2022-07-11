@@ -18,7 +18,7 @@
 
 {% block header %}
 {% set workbasket_html %}
-  <a href="{{ url('my-workbasket') }}" class="govuk-header__link workbasket-link">Workbasket  {{ get_current_workbasket(request).id }} {{ workbasket_svg }}</a>
+  <a href="{{ url('preview-workbasket') }}" class="govuk-header__link workbasket-link">Workbasket  {{ get_current_workbasket(request).id }} {{ workbasket_svg }}</a>
 {% endset %}
 
 {{ govukHeader({

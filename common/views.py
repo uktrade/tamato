@@ -207,8 +207,40 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class MyWorkbasketView(DashboardView):
-    template_name = "common/my-workbasket.jinja"
+class EditWorkbasketView(DashboardView):
+    template_name = "common/edit-workbasket.jinja"
+
+    def dispatch(self, request, *args, **kwargs):
+        workbasket_pk = request.GET.get("workbasket")
+
+        if workbasket_pk:
+            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
+
+            if workbasket:
+                workbasket.save_to_session(request.session)
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class PreviewWorkbasketView(DashboardView):
+    template_name = "common/preview-workbasket.jinja"
+
+    def dispatch(self, request, *args, **kwargs):
+        workbasket_pk = request.GET.get("workbasket")
+
+        if workbasket_pk:
+            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
+
+            if workbasket:
+                workbasket.save_to_session(request.session)
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class ReviewWorkbasketView(DashboardView):
+    template_name = "common/review-workbasket.jinja"
 
     def dispatch(self, request, *args, **kwargs):
         workbasket_pk = request.GET.get("workbasket")
