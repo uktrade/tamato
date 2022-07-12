@@ -10,14 +10,14 @@
       "items": [
         {"text": "Home", "href": url("index")},
         {"text": "Edit an existing workbasket", "href": url("workbaskets:select-workbasket")},
-        {"text": "Workbasket " ~ request.session.workbasket.id }
+        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
       ]
     }) }}
   {% else %}
     {{ govukBreadcrumbs({
       "items": [
         {"text": "Home", "href": url("index")},
-        {"text": "Workbasket " ~ request.session.workbasket.id }
+        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
       ]
     }) }}
   {% endif %}

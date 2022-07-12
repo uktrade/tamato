@@ -42,7 +42,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {% if change_count %}
-        <h2 class="govuk-body">Select a component you would like to view:</h2>
+        <h2 class="govuk-body">Select a component you would like to edit or remove:</h2>
       {% else %}
         <h2 class="govuk-body">There is nothing in your workbasket yet.</h2>
         <a href="{{ url('edit-workbasket') }}?edit=1" class="govuk-button govuk-button--primary">Edit workbasket</a>
@@ -82,36 +82,6 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       {% if form.fields %}
-        {% set actions_details_html %}
-          <div class="govuk-grid-row">
-            <div class="govuk-grid-column-one-third">
-              <button
-                value="publish-all"
-                name="form-action"
-                class="govuk-link fake-link"
-                data-module="govuk-button"
-                role="link"
-              >
-                Publish <strong>all</strong> changes
-              </button>
-            </div>
-            <div class="govuk-grid-column-one-third">
-              <button
-                value="remove-selected"
-                name="form-action"
-                class="govuk-link fake-link"
-                data-module="govuk-button"
-                role="link"
-              >
-                Remove <strong>selected</strong> changes
-              </button>
-            </div>
-          </div>
-        {%- endset%}
-        {{ govukDetails({
-          "summaryText": "Actions on changes below",
-          "html": actions_details_html
-        }) }}
 
         {% set table_rows = [] %}
         {% for field in form %}
@@ -152,5 +122,7 @@
       {% endif %}
     </div>
   </div>
+
+  <button value="remove-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Remove</button>
 </form>
 {% endif %}
