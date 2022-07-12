@@ -3,6 +3,7 @@ import xml.etree.ElementTree as etree
 import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
+from django.urls import reverse_lazy
 
 from common.tests import factories
 from common.tests.factories import GoodsNomenclatureFactory
@@ -22,8 +23,8 @@ def test_index_displays_workbasket_action_form(valid_user_client):
 
     page = BeautifulSoup(str(response.content), "html.parser")
     assert "What would you like to do?" in page.select("legend")[0].text
-    assert "Edit an existing workbasket" in page.select("label")[0].text
-    assert "Create a new workbasket" in page.select("label")[1].text
+    assert "Edit an existing workbasket" in page.select("label")[1].text
+    assert "Create a new workbasket" in page.select("label")[0].text
 
 
 @pytest.mark.parametrize(
@@ -190,9 +191,25 @@ def test_my_workbasket_page_sets_workbasket(valid_user_client, workbasket):
     assert str(workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
 
 
-def test_my_workbasket_page_displays_breadcrumb(valid_user_client, workbasket):
+@pytest.mark.parametrize(
+    "url",
+    [
+        reverse_lazy("edit-workbasket"),
+        reverse_lazy("preview-workbasket"),
+        reverse_lazy("review-workbasket"),
+    ],
+)
+def test_workbasket_pages_set_workbasket(url, valid_user_client, workbasket):
     response = valid_user_client.get(
-        f"{reverse('my-workbasket')}?workbasket={workbasket.pk}&edit=1",
+        f"{url}?workbasket={workbasket.pk}",
+    )
+    assert response.status_code == 200
+    assert str(workbasket.id) in str(response.content)
+
+
+def test_edit_workbasket_page_displays_breadcrumb(valid_user_client, workbasket):
+    response = valid_user_client.get(
+        f"{reverse('edit-workbasket')}?workbasket={workbasket.pk}&edit=1",
     )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
@@ -202,9 +219,9 @@ def test_my_workbasket_page_displays_breadcrumb(valid_user_client, workbasket):
     assert "Edit an existing workbasket" in breadcrumb_links
 
 
-def test_my_workbasket_page_hides_breadcrumb(valid_user_client, workbasket):
+def test_edit_workbasket_page_hides_breadcrumb(valid_user_client, workbasket):
     response = valid_user_client.get(
-        f"{reverse('my-workbasket')}?workbasket={workbasket.pk}&edit=",
+        f"{reverse('edit-workbasket')}?workbasket={workbasket.pk}&edit=",
     )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
@@ -214,9 +231,9 @@ def test_my_workbasket_page_hides_breadcrumb(valid_user_client, workbasket):
     assert "Edit an existing workbasket" not in breadcrumb_links
 
 
-def test_my_workbasket_page_creates_new_workbasket(valid_user_client):
+def test_edit_workbasket_page_creates_new_workbasket(valid_user_client):
     assert WorkBasket.objects.is_not_approved().count() == 0
-    response = valid_user_client.get(reverse("my-workbasket"))
+    response = valid_user_client.get(reverse("edit-workbasket"))
     assert response.status_code == 200
     assert WorkBasket.objects.is_not_approved().count() == 1
 

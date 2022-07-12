@@ -10,6 +10,7 @@ from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
 from workbaskets import models
+from workbaskets.models import WorkBasket
 from workbaskets.tests.util import assert_workbasket_valid
 from workbaskets.validators import WorkflowStatus
 
@@ -34,7 +35,7 @@ def test_workbasket_create_form_creates_workbasket_object(
         title=form_data["title"],
     )[0]
 
-    assert f"workbasket={workbasket.id}" in response.url
+    assert str(workbasket.id) in response.url
     assert workbasket.title == form_data["title"]
     assert workbasket.reason == form_data["reason"]
 
