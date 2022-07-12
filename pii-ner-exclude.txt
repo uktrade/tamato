@@ -1141,3 +1141,18 @@ self.linked_model
 WorkBasketOutputFormat
 param kwargs:
 Enum
+7930d36f
+*** measure_qs = <
+CharField\n
+OuterRef\n
+django.db.models.functions.comparison
+Cast\n
+django.db.models.functions.text
+measure_sid = 20185730\n
+measure_qs
+measure_qs}\")\n
+kernelspec
+*** measure_qs.count
+*** components_qs
+components_qs}\")\n
+measure_qs)\n
