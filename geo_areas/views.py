@@ -14,7 +14,6 @@ from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
-from geo_areas.util import with_latest_description_string
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
 from workbaskets.views.generic import DraftDeleteView
@@ -23,22 +22,21 @@ from workbaskets.views.generic import DraftDeleteView
 class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows geographical areas to be viewed."""
 
-    queryset = with_latest_description_string(
-        GeographicalArea.objects.all().prefetch_related(
-            "descriptions",
-        ),
+    queryset = GeographicalArea.objects.latest_approved().prefetch_related(
+        "descriptions",
     )
     serializer_class = AutoCompleteSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_class = GeographicalAreaFilter
-    search_fields = ["sid", "area_code", "descriptions__description"]
+    search_fields = ["sid", "area_code"]
 
 
 class GeoAreaMixin:
     model: Type[TrackedModel] = GeographicalArea
 
     def get_queryset(self):
-        return with_latest_description_string(GeographicalArea.objects.all())
+        tx = WorkBasket.get_current_transaction(self.request)
+        return GeographicalArea.objects.approved_up_to_transaction(tx)
 
 
 class GeoAreaDescriptionMixin:
@@ -63,21 +61,16 @@ class GeoAreaCreateDescriptionMixin:
 class GeoAreaList(GeoAreaMixin, TamatoListView):
     template_name = "geo_areas/list.jinja"
     filterset_class = GeographicalAreaFilter
-    search_fields = ["sid", "area_code", "descriptions__description"]
+    search_fields = ["sid", "descriptions__description"]
 
 
 class GeoAreaDetail(GeoAreaMixin, TrackedModelDetailView):
     template_name = "geo_areas/detail.jinja"
 
 
-class GeoAreaDelete(TrackedModelDetailMixin, DraftDeleteView):
+class GeoAreaDelete(GeoAreaMixin, TrackedModelDetailMixin, DraftDeleteView):
     form_class = forms.GeographicalAreaDeleteForm
     success_path = "list"
-    model: Type[TrackedModel] = GeographicalArea
-
-    def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return GeographicalArea.objects.approved_up_to_transaction(tx)
 
     validate_business_rules = (
         business_rules.GA21,
