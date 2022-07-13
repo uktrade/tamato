@@ -158,7 +158,17 @@ class DutySentenceMixin(QuerySet):
         )
 
     def with_duty_sentence(self) -> QuerySet:
-        # NOTE: Assumes MeasuresQuerySet is filtered by current.
+        # NOTE:
+        # ###
+        # Assumes MeasuresQuerySet is filtered by current and that we can
+        # therefore safely join elements of a MeasureComponent queryset by
+        # the associated Measure's version_group (since that will have been
+        # filtered by current too).
+        #
+        # Alternatively, we could first annotate instances in the Measure
+        # queryset with the MeasureComponent's transaction ID as at each
+        # Measure's transaction via a subquery. Then join the aggregated
+        # MeasureComponents with the Measures by transaction ID.
 
         # Get the version groups of those measures that components must be
         # joined to - this narrows to a relevant, more manageable components
