@@ -18,13 +18,14 @@ from django_cte.cte import With
 
 from common.fields import TaricDateRangeField
 from common.models.tracked_qs import TrackedModelQuerySet
+from common.models.utils import get_current_transaction
 from common.querysets import ValidityQuerySet
 from common.util import EndDate
 from common.util import StartDate
 
 
 class DutySentenceMixin(QuerySet):
-    def with_duty_sentence(self) -> QuerySet:
+    def old_with_duty_sentence(self) -> QuerySet:
         """
         Annotates the query set with a human-readable string that represents the
         aggregation of all of the linked components into a single duty sentence.
@@ -155,6 +156,129 @@ class DutySentenceMixin(QuerySet):
                 ordering="components__duty_expression__sid",
             ),
         )
+
+    def with_duty_sentence(self) -> QuerySet:
+        # NOTE: Assumes MeasuresQuerySet is filtered by current.
+
+        # Get the version groups of those measures that components must be
+        # joined to - this narrows to a relevant, more manageable components
+        # queryset for CTE construction.
+        measure_version_group_ids = set(
+            self.values_list("version_group_id", flat=True),
+        )
+
+        # Avoid circular dependency.
+        from measures.models import MeasureComponent
+
+        # TODO: we should use TrackedModelQuerySet.current() in place of this.
+        current_transaction = get_current_transaction()
+
+        components_qs = (
+            MeasureComponent.objects.filter(
+                component_measure__version_group__id__in=measure_version_group_ids,
+            )
+            .approved_up_to_transaction(
+                # Is transaction filtering really the right approach when some other
+                # attribute could equally well have been applied to filter measure_qs?
+                current_transaction,
+            )
+            .annotate(
+                measure_version_group_id=F("component_measure__version_group_id"),
+            )
+            .values(
+                "transaction",
+                "measure_version_group_id",
+            )
+            .annotate(
+                duty_sentence=StringAgg(
+                    expression=Trim(
+                        Concat(
+                            Case(
+                                When(
+                                    Q(duty_expression__prefix__isnull=True)
+                                    | Q(duty_expression__prefix=""),
+                                    then=Value(""),
+                                ),
+                                default=Concat(
+                                    F("duty_expression__prefix"),
+                                    Value(" "),
+                                ),
+                            ),
+                            "duty_amount",
+                            Case(
+                                When(
+                                    monetary_unit=None,
+                                    duty_amount__isnull=False,
+                                    then=Value("%"),
+                                ),
+                                When(
+                                    duty_amount__isnull=True,
+                                    then=Value(""),
+                                ),
+                                default=Concat(
+                                    Value(" "),
+                                    F("monetary_unit__code"),
+                                ),
+                            ),
+                            Case(
+                                When(
+                                    Q(component_measurement=None)
+                                    | Q(component_measurement__measurement_unit=None)
+                                    | Q(
+                                        component_measurement__measurement_unit__abbreviation=None,
+                                    ),
+                                    then=Value(""),
+                                ),
+                                When(
+                                    monetary_unit__isnull=True,
+                                    then=F(
+                                        "component_measurement__measurement_unit__abbreviation",
+                                    ),
+                                ),
+                                default=Concat(
+                                    Value(" / "),
+                                    F(
+                                        "component_measurement__measurement_unit__abbreviation",
+                                    ),
+                                ),
+                            ),
+                            Case(
+                                When(
+                                    component_measurement__measurement_unit_qualifier__abbreviation=None,
+                                    then=Value(""),
+                                ),
+                                default=Concat(
+                                    Value(" / "),
+                                    F(
+                                        "component_measurement__measurement_unit_qualifier__abbreviation",
+                                    ),
+                                ),
+                            ),
+                            output_field=CharField(),
+                        ),
+                    ),
+                    delimiter=" ",
+                    ordering="duty_expression__sid",
+                ),
+            )
+        )
+
+        cte = With(components_qs)
+
+        joined_measure_qs = (
+            cte.join(
+                self,
+                version_group_id=cte.col.measure_version_group_id,
+            )
+            .with_cte(
+                cte,
+            )
+            .annotate(
+                duty_sentence=cte.col.duty_sentence,
+            )
+        )
+
+        return joined_measure_qs
 
 
 class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin, ValidityQuerySet):
