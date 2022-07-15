@@ -13,9 +13,12 @@ from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
 from django.views.generic.base import RedirectView
+from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.base import TemplateView
+from django.views.generic.base import View
 from django.views.generic.detail import DetailView
 from django.views.generic.detail import SingleObjectMixin
+from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
 from common.filters import TamatoFilter
@@ -312,7 +315,7 @@ class PreviewWorkbasketView(TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class ReviewWorkbasketView(DashboardView):
+class ReviewWorkbasketView(TemplateResponseMixin, FormMixin, View):
     template_name = "common/review-workbasket.jinja"
 
     def dispatch(self, request, *args, **kwargs):
@@ -325,3 +328,121 @@ class ReviewWorkbasketView(DashboardView):
                 workbasket.save_to_session(request.session)
 
         return super().dispatch(request, *args, **kwargs)
+
+    form_class = forms.SelectableObjectsForm
+
+    # Form action mappings to URL names.
+    action_success_url_names = {
+        "publish-all": "workbaskets:workbasket-ui-submit",
+        "remove-selected": "workbaskets:workbasket-ui-delete-changes",
+        "page-prev": "workbaskets:review-workbasket",
+        "page-next": "workbaskets:review-workbasket",
+    }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    @property
+    def paginator(self):
+        return Paginator(self.workbasket.tracked_models, per_page=10)
+
+    @property
+    def latest_upload(self):
+        return Upload.objects.order_by("created_date").last()
+
+    @property
+    def uploaded_envelope_dates(self):
+        """Gets a list of all transactions from the `latest_approved_workbasket`
+        in the order they were updated and returns a dict with the first and
+        last transactions as values for "start" and "end" keys respectively."""
+        if self.latest_upload:
+            transactions = self.latest_upload.envelope.transactions.order_by(
+                "updated_at",
+            )
+            return {
+                "start": transactions.first().updated_at,
+                "end": transactions.last().updated_at,
+            }
+        return None
+
+    def _append_url_page_param(self, url, form_action):
+        """Based upon 'form_action', append a 'page' URL parameter to the given
+        url param and return the result."""
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_number = 1
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+        return f"{url}?page={page_number}"
+
+    def get(self, request, *args, **kwargs):
+        """Service GET requests by displaying the page and form."""
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request, *args, **kwargs):
+        """Manage POST requests, which can either be requests to change the
+        paged form data while preserving the user's form changes, or finally
+        submit the form data for processing."""
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        if form_action in ("publish-all", "remove-selected"):
+            return reverse(
+                self.action_success_url_names[form_action],
+                kwargs={"pk": self.workbasket.pk},
+            )
+        elif form_action in ("page-prev", "page-next"):
+            return self._append_url_page_param(
+                reverse(self.action_success_url_names[form_action]),
+                form_action,
+            )
+        return reverse("index")
+
+    def get_initial(self):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        return store.data.copy()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        context.update(
+            {
+                "workbasket": self.workbasket,
+                "page_obj": page,
+                "uploaded_envelope_dates": self.uploaded_envelope_dates,
+            },
+        )
+        return context
+
+    def form_valid(self, form):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        to_add = {
+            key: value for key, value in form.cleaned_data_no_prefix.items() if value
+        }
+        to_remove = {
+            key: value
+            for key, value in form.cleaned_data_no_prefix.items()
+            if key not in to_add
+        }
+        store.add_items(to_add)
+        store.remove_items(to_remove)
+        return super().form_valid(form)
