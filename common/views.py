@@ -93,8 +93,8 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
     action_success_url_names = {
         "publish-all": "workbaskets:workbasket-ui-submit",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
-        "page-prev": "index",
-        "page-next": "index",
+        "page-prev": "workbaskets:review-workbasket",
+        "page-next": "workbaskets:review-workbasket",
     }
 
     @property
@@ -204,54 +204,6 @@ class DashboardView(TemplateResponseMixin, FormMixin, View):
         store.add_items(to_add)
         store.remove_items(to_remove)
         return super().form_valid(form)
-
-
-@method_decorator(require_current_workbasket, name="dispatch")
-class EditWorkbasketView(DashboardView):
-    template_name = "common/edit-workbasket.jinja"
-
-    def dispatch(self, request, *args, **kwargs):
-        workbasket_pk = request.GET.get("workbasket")
-
-        if workbasket_pk:
-            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
-
-            if workbasket:
-                workbasket.save_to_session(request.session)
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-@method_decorator(require_current_workbasket, name="dispatch")
-class PreviewWorkbasketView(DashboardView):
-    template_name = "common/preview-workbasket.jinja"
-
-    def dispatch(self, request, *args, **kwargs):
-        workbasket_pk = request.GET.get("workbasket")
-
-        if workbasket_pk:
-            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
-
-            if workbasket:
-                workbasket.save_to_session(request.session)
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-@method_decorator(require_current_workbasket, name="dispatch")
-class ReviewWorkbasketView(DashboardView):
-    template_name = "common/review-workbasket.jinja"
-
-    def dispatch(self, request, *args, **kwargs):
-        workbasket_pk = request.GET.get("workbasket")
-
-        if workbasket_pk:
-            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
-
-            if workbasket:
-                workbasket.save_to_session(request.session)
-
-        return super().dispatch(request, *args, **kwargs)
 
 
 class HealthCheckResponse(HttpResponse):

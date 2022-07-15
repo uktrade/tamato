@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
 from django.views.generic.base import RedirectView
 from django.views.generic.base import TemplateView
@@ -19,6 +20,7 @@ from django.views.generic.list import ListView
 
 from common.filters import TamatoFilter
 from common.pagination import build_pagination_list
+from common.views import DashboardView
 from common.views import WithPaginationListView
 from exporter.models import Upload
 from workbaskets import forms
@@ -26,6 +28,7 @@ from workbaskets import tasks
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.validators import WorkflowStatus
+from workbaskets.views.decorators import require_current_workbasket
 
 
 class WorkBasketFilter(TamatoFilter):
@@ -269,3 +272,56 @@ def download_envelope(request):
     )
 
     return HttpResponseRedirect(url)
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class EditWorkbasketView(DashboardView):
+    template_name = "common/edit-workbasket.jinja"
+
+    def dispatch(self, request, *args, **kwargs):
+        workbasket_pk = request.GET.get("workbasket")
+
+        if workbasket_pk:
+            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
+
+            if workbasket:
+                workbasket.save_to_session(request.session)
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class PreviewWorkbasketView(TemplateView):
+    template_name = "common/preview-workbasket.jinja"
+
+    def dispatch(self, request, *args, **kwargs):
+        workbasket_pk = request.GET.get("workbasket")
+
+        if workbasket_pk:
+            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
+
+            if workbasket:
+                workbasket.save_to_session(request.session)
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["workbasket"] = WorkBasket.load_from_session(self.request.session)
+        return context
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class ReviewWorkbasketView(DashboardView):
+    template_name = "common/review-workbasket.jinja"
+
+    def dispatch(self, request, *args, **kwargs):
+        workbasket_pk = request.GET.get("workbasket")
+
+        if workbasket_pk:
+            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
+
+            if workbasket:
+                workbasket.save_to_session(request.session)
+
+        return super().dispatch(request, *args, **kwargs)
