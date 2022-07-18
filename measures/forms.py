@@ -29,7 +29,7 @@ from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
-from geo_areas.util import with_latest_description_string
+from geo_areas.util import with_current_description_order
 from geo_areas.validators import AreaCode
 from measures import models
 from measures.parsers import DutySentenceParser
@@ -93,7 +93,7 @@ class GeoGroupForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields[
             "geographical_area_group"
-        ].queryset = with_latest_description_string(
+        ].queryset = with_current_description_order(
             GeographicalArea.objects.exclude(
                 descriptions__description__isnull=True,
             )
@@ -124,7 +124,7 @@ class ErgaOmnesExclusionsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["erga_omnes_exclusion"].queryset = with_latest_description_string(
+        self.fields["erga_omnes_exclusion"].queryset = with_current_description_order(
             GeographicalArea.objects.exclude(
                 descriptions__description__isnull=True,
             )
@@ -152,7 +152,7 @@ class GeoGroupExclusionsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["geo_group_exclusion"].queryset = with_latest_description_string(
+        self.fields["geo_group_exclusion"].queryset = with_current_description_order(
             GeographicalArea.objects.exclude(
                 descriptions__description__isnull=True,
             )
@@ -206,7 +206,7 @@ class CountryRegionForm(forms.Form):
     prefix = COUNTRY_REGION_PREFIX
 
     geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=with_latest_description_string(
+        queryset=with_current_description_order(
             GeographicalArea.objects.exclude(
                 area_code=AreaCode.GROUP,
                 descriptions__description__isnull=True,
@@ -217,14 +217,21 @@ class CountryRegionForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["geographical_area_country_or_region"].queryset = (
-            self.fields["geographical_area_country_or_region"]
-            .queryset.as_at_today()
-            .current()
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description")
+        self.fields[
+            "geographical_area_country_or_region"
+        ].queryset = with_current_description_order(
+            GeographicalArea.objects.as_at_today().current(),
+        ).order_by(
+            "description",
         )
+        # self.fields["geographical_area_country_or_region"].queryset = (
+        #     self.fields["geographical_area_country_or_region"]
+        #     .queryset.as_at_today()
+        #     .current()
+        #     .with_latest_links("descriptions")
+        #     .prefetch_related("descriptions")
+        #     .order_by("descriptions__description")
+
         self.fields[
             "geographical_area_country_or_region"
         ].label_from_instance = lambda obj: obj.description

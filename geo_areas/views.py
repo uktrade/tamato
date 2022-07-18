@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.db import models
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -14,6 +15,7 @@ from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
+from geo_areas.util import with_current_description_order
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
 from workbaskets.views.generic import DraftDeleteView
@@ -62,6 +64,13 @@ class GeoAreaList(GeoAreaMixin, TamatoListView):
     template_name = "geo_areas/list.jinja"
     filterset_class = GeographicalAreaFilter
     search_fields = ["sid", "descriptions__description"]
+
+    def get_queryset(self):
+        return with_current_description_order(GeographicalArea.objects.all()).filter(
+            descriptions__version_group__current_version__transaction__order=models.F(
+                "current_description_order",
+            ),
+        )
 
 
 class GeoAreaDetail(GeoAreaMixin, TrackedModelDetailView):
