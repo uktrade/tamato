@@ -181,9 +181,9 @@ def test_dashboard_view_latest_upload():
     assert view.latest_upload == latest_upload
 
 
-def test_my_workbasket_page_sets_workbasket(valid_user_client, workbasket):
+def test_edit_workbasket_page_sets_workbasket(valid_user_client, workbasket):
     response = valid_user_client.get(
-        f"{reverse('my-workbasket')}?workbasket={workbasket.pk}",
+        f"{reverse('workbaskets:edit-workbasket')}?workbasket={workbasket.pk}",
     )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
@@ -194,9 +194,9 @@ def test_my_workbasket_page_sets_workbasket(valid_user_client, workbasket):
 @pytest.mark.parametrize(
     "url",
     [
-        reverse_lazy("edit-workbasket"),
-        reverse_lazy("preview-workbasket"),
-        reverse_lazy("review-workbasket"),
+        reverse_lazy("workbaskets:edit-workbasket"),
+        reverse_lazy("workbaskets:preview-workbasket"),
+        reverse_lazy("workbaskets:review-workbasket"),
     ],
 )
 def test_workbasket_pages_set_workbasket(url, valid_user_client, workbasket):
@@ -209,7 +209,7 @@ def test_workbasket_pages_set_workbasket(url, valid_user_client, workbasket):
 
 def test_edit_workbasket_page_displays_breadcrumb(valid_user_client, workbasket):
     response = valid_user_client.get(
-        f"{reverse('edit-workbasket')}?workbasket={workbasket.pk}&edit=1",
+        f"{reverse('workbaskets:edit-workbasket')}?workbasket={workbasket.pk}&edit=1",
     )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
@@ -221,7 +221,7 @@ def test_edit_workbasket_page_displays_breadcrumb(valid_user_client, workbasket)
 
 def test_edit_workbasket_page_hides_breadcrumb(valid_user_client, workbasket):
     response = valid_user_client.get(
-        f"{reverse('edit-workbasket')}?workbasket={workbasket.pk}&edit=",
+        f"{reverse('workbaskets:edit-workbasket')}?workbasket={workbasket.pk}&edit=",
     )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
@@ -233,7 +233,7 @@ def test_edit_workbasket_page_hides_breadcrumb(valid_user_client, workbasket):
 
 def test_edit_workbasket_page_creates_new_workbasket(valid_user_client):
     assert WorkBasket.objects.is_not_approved().count() == 0
-    response = valid_user_client.get(reverse("edit-workbasket"))
+    response = valid_user_client.get(reverse("workbaskets:edit-workbasket"))
     assert response.status_code == 200
     assert WorkBasket.objects.is_not_approved().count() == 1
 

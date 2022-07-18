@@ -7,7 +7,7 @@
   {%- set workbasket_linked_pk -%}
     <a
       class="govuk-link"
-      href="{{ url('review-workbasket') }}?workbasket={{ workbasket.pk }}&edit=1"
+      href="{{ url('workbaskets:review-workbasket') }}?workbasket={{ workbasket.pk }}&edit=1"
     >{{ workbasket.pk }}</a>
   {%- endset -%}
   {%- set workbasket_status -%}

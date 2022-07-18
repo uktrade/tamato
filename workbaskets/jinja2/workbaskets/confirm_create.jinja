@@ -22,7 +22,7 @@
         "text": "You have created a new workbasket",
         "classes": "govuk-!-margin-bottom-7"
       }) }}
-      <a href="{{ url('edit-workbasket') }}?workbasket={{ object.id }}" class="govuk-button govuk-button--primary">Continue to workbasket</a>
+      <a href="{{ url('workbaskets:edit-workbasket') }}?workbasket={{ object.id }}" class="govuk-button govuk-button--primary">Continue to workbasket</a>
     </div>
   </div>
 {% endblock %}
