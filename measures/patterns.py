@@ -228,20 +228,16 @@ class MeasureCreationPattern:
                 m.member
                 for m in GeographicalMembership.objects.as_at(
                     measure.valid_between.lower,
-                )
-                .filter(
+                ).filter(
                     geo_group=measure.geographical_area,
                 )
-                .all()
             )
-            for membership in (
-                GeographicalMembership.objects.as_at(measure.valid_between.lower)
-                .filter(geo_group=exclusion)
-                .all()
-            ):
+            for membership in GeographicalMembership.objects.as_at(
+                measure.valid_between.lower,
+            ).filter(geo_group=exclusion):
                 member = membership.member
-                assert (
-                    member in measure_origins
+                assert member.sid in list(
+                    m.sid for m in measure_origins
                 ), f"{member.area_id} not in {list(x.area_id for x in measure_origins)}"
                 yield MeasureExcludedGeographicalArea.objects.create(
                     modified_measure=measure,
