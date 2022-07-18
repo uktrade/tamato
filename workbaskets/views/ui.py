@@ -71,6 +71,7 @@ class WorkBasketConfirmCreate(DetailView):
 class WorkBasketCreate(CreateView):
     """UI endpoint for creating workbaskets."""
 
+    permission_required = "workbaskets.add_workbasket"
     template_name = "workbaskets/create.jinja"
     form_class = forms.WorkbasketCreateForm
 
@@ -94,6 +95,7 @@ class WorkBasketCreate(CreateView):
 
 class SelectWorkbasketView(WorkBasketList):
     template_name = "workbaskets/select-workbasket.jinja"
+    permission_required = "workbaskets.change_workbasket"
 
     def get_queryset(self):
         return (
@@ -280,6 +282,7 @@ def download_envelope(request):
 @method_decorator(require_current_workbasket, name="dispatch")
 class EditWorkbasketView(DashboardView):
     template_name = "common/edit-workbasket.jinja"
+    permission_required = "workbaskets.change_workbasket"
 
     def dispatch(self, request, *args, **kwargs):
         workbasket_pk = request.GET.get("workbasket")
