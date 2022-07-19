@@ -2,14 +2,18 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+from bs4 import BeautifulSoup
 from django.test import override_settings
 from django.urls import reverse
+from django.urls import reverse_lazy
 
 from common.tests import factories
+from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
 from workbaskets import models
+from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.tests.util import assert_workbasket_valid
 from workbaskets.validators import WorkflowStatus
@@ -61,7 +65,7 @@ def test_submit_workbasket(
     response = client.get(url)
 
     assert response.status_code == 302
-    assert response.url == reverse("dashboard")
+    assert response.url == reverse("index")
 
     workbasket.refresh_from_db()
 
@@ -181,3 +185,107 @@ def test_download(
 
         assert response.status_code == 302
         assert expected_url in response.url
+
+
+def test_review_workbasket_displays_objects_in_current_workbasket(
+    valid_user_client,
+    session_workbasket,
+):
+    """Verify that changes in the current workbasket are displayed on the bulk
+    selection form of the review workbasket page."""
+
+    with session_workbasket.new_transaction():
+        GoodsNomenclatureFactory.create()
+
+    response = valid_user_client.get(reverse("workbaskets:review-workbasket"))
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        features="lxml",
+    )
+    for obj in session_workbasket.tracked_models.all():
+        field_name = SelectableObjectsForm.field_name_for_object(obj)
+        assert page.find("input", {"name": field_name})
+
+
+def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbasket):
+    response = valid_user_client.get(
+        f"{reverse('workbaskets:edit-workbasket')}?workbasket={session_workbasket.pk}",
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    assert session_workbasket.title in soup.select(".govuk-heading-xl")[0].text
+    assert str(session_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        reverse_lazy("workbaskets:edit-workbasket"),
+        reverse_lazy("workbaskets:preview-workbasket"),
+        reverse_lazy("workbaskets:review-workbasket"),
+    ],
+)
+def test_workbasket_pages_set_workbasket(url, valid_user_client, session_workbasket):
+    response = valid_user_client.get(
+        f"{url}?workbasket={session_workbasket.pk}",
+    )
+    assert response.status_code == 200
+    assert str(session_workbasket.id) in str(response.content)
+
+
+def test_edit_workbasket_page_displays_breadcrumb(
+    valid_user_client,
+    session_workbasket,
+):
+    response = valid_user_client.get(
+        f"{reverse('workbaskets:edit-workbasket')}?workbasket={session_workbasket.pk}&edit=1",
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    breadcrumb_links = [
+        element.text for element in soup.select(".govuk-breadcrumbs__link")
+    ]
+    assert "Edit an existing workbasket" in breadcrumb_links
+
+
+def test_edit_workbasket_page_hides_breadcrumb(valid_user_client, session_workbasket):
+    response = valid_user_client.get(
+        f"{reverse('workbaskets:edit-workbasket')}?workbasket={session_workbasket.pk}&edit=",
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    breadcrumb_links = [
+        element.text for element in soup.select(".govuk-breadcrumbs__link")
+    ]
+    assert "Edit an existing workbasket" not in breadcrumb_links
+
+
+def test_edit_workbasket_page_creates_new_workbasket(valid_user_client):
+    assert WorkBasket.objects.is_not_approved().count() == 0
+    response = valid_user_client.get(reverse("workbaskets:edit-workbasket"))
+    assert response.status_code == 200
+    assert WorkBasket.objects.is_not_approved().count() == 1
+
+
+def test_select_workbasket_page_200(valid_user_client):
+    factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.SENT)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.PUBLISHED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.APPROVED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.PROPOSED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.ERRORED)
+    valid_statuses = {
+        WorkflowStatus.EDITING,
+        WorkflowStatus.APPROVED,
+        WorkflowStatus.PROPOSED,
+        WorkflowStatus.ERRORED,
+    }
+    response = valid_user_client.get(reverse("workbaskets:select-workbasket"))
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    statuses = [
+        element.text for element in soup.select(".govuk-table__row .status-badge")
+    ]
+    assert len(statuses) == 4
+    assert not set(statuses).difference(valid_statuses)

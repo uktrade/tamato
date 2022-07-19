@@ -23,7 +23,6 @@ from django.views.generic.list import ListView
 
 from common.filters import TamatoFilter
 from common.pagination import build_pagination_list
-from common.views import DashboardView
 from common.views import WithPaginationListView
 from exporter.models import Upload
 from workbaskets import forms
@@ -151,7 +150,7 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
     permission_required = "workbaskets.change_workbasket"
 
     def get_redirect_url(self, *args, **kwargs) -> str:
-        return reverse("dashboard")
+        return reverse("index")
 
     def get(self, *args, **kwargs):
         workbasket: WorkBasket = self.get_object()
@@ -208,7 +207,7 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
             # The user has cancelled out of the deletion process.
-            return redirect("dashboard")
+            return redirect("index")
 
         # By reverse ordering on record_code + subrecord_code we're able to
         # delete child entities first, avoiding protected foreign key
@@ -280,7 +279,7 @@ def download_envelope(request):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class EditWorkbasketView(DashboardView):
+class EditWorkbasketView(TemplateView):
     template_name = "common/edit-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
 
