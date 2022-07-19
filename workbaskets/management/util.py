@@ -39,7 +39,7 @@ class WorkBasketCommandMixin:
     def output_workbasket(
         self,
         workbasket,
-        show_transaction_info,
+        show_transaction_info=False,
         output_format=WorkBasketOutputFormat.READABLE,
         **kwargs,
     ):
