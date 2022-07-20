@@ -14,9 +14,7 @@ from common.path_converters import NumericSIDConverter
 register_converter(NumericSIDConverter, "sid")
 
 urlpatterns = [
-    path("dashboard", views.DashboardView.as_view(), name="dashboard"),
-    path("my-workbasket/", views.MyWorkbasketView.as_view(), name="my-workbasket"),
-    path("", views.WorkbasketActionView.as_view(), name="index"),
+    path("", views.HomeView.as_view(), name="home"),
     path("healthcheck", views.healthcheck, name="healthcheck"),
     path("login", views.LoginView.as_view(), name="login"),
     path("logout", views.LogoutView.as_view(), name="logout"),

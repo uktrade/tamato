@@ -154,7 +154,7 @@ class RadioNested(TypedChoiceField):
         return super().get_bound_field(form, field_name)
 
 
-class WorkbasketActionForm(forms.Form):
+class HomeForm(forms.Form):
     class WorkbasketActions(TextChoices):
         CREATE = "CREATE", "Create a new workbasket"
         EDIT = (

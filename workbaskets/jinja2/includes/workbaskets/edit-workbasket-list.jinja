@@ -4,19 +4,19 @@
 
 {%- set table_rows = [] -%}
 {% for workbasket in object_list %}
-  {%- set workbasket_linked_title -%}
+  {%- set workbasket_linked_pk -%}
     <a
       class="govuk-link"
-      href="{{ url('my-workbasket') }}?workbasket={{ workbasket.pk }}&edit=1"
-    >{{ workbasket.title }}</a>
+      href="{{ url('workbaskets:review-workbasket') }}?workbasket={{ workbasket.pk }}&edit=1"
+    >{{ workbasket.pk }}</a>
   {%- endset -%}
   {%- set workbasket_status -%}
     <span class="status-badge">{{ workbasket.status }}</a>
   {%- endset -%}
 
   {{ table_rows.append([
-    {"text": workbasket.pk},
-    {"html": workbasket_linked_title},
+    {"text": workbasket_linked_pk},
+    {"html": workbasket.title},
     {"text": workbasket.reason},
     {"text": workbasket_status},
   ]) or "" }}
@@ -24,8 +24,8 @@
 
 {{ govukTable({
   "head": [
-    {"text": "Workbasket number"},
-    {"text": "TOPS/Jira number"},
+    {"text": "Number"},
+    {"text": "TOPS/Jira"},
     {"text": "Description"},
     {"text": "Status"},
   ],

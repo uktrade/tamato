@@ -10,10 +10,15 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.generic import CreateView
 from django.views.generic.base import RedirectView
+from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.base import TemplateView
+from django.views.generic.base import View
 from django.views.generic.detail import DetailView
 from django.views.generic.detail import SingleObjectMixin
+from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
 from common.filters import TamatoFilter
@@ -25,7 +30,7 @@ from workbaskets import tasks
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.validators import WorkflowStatus
-from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.decorators import require_current_workbasket
 
 
 class WorkBasketFilter(TamatoFilter):
@@ -56,9 +61,16 @@ class WorkBasketList(WithPaginationListView):
         return WorkBasket.objects.order_by("-updated_at")
 
 
-class WorkBasketCreate(DraftCreateView):
+class WorkBasketConfirmCreate(DetailView):
+    template_name = "workbaskets/confirm_create.jinja"
+    model = WorkBasket
+    queryset = WorkBasket.objects.all()
+
+
+class WorkBasketCreate(CreateView):
     """UI endpoint for creating workbaskets."""
 
+    permission_required = "workbaskets.add_workbasket"
     template_name = "workbaskets/create.jinja"
     form_class = forms.WorkbasketCreateForm
 
@@ -67,8 +79,11 @@ class WorkBasketCreate(DraftCreateView):
         self.object = form.save(commit=False)
         self.object.author = user
         self.object.save()
-        return HttpResponseRedirect(
-            f"{reverse('my-workbasket')}?workbasket={self.object.pk}&edit=1",
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-confirm-create",
+                kwargs={"pk": self.object.pk},
+            ),
         )
 
     def get_form_kwargs(self):
@@ -79,6 +94,7 @@ class WorkBasketCreate(DraftCreateView):
 
 class SelectWorkbasketView(WorkBasketList):
     template_name = "workbaskets/select-workbasket.jinja"
+    permission_required = "workbaskets.change_workbasket"
 
     def get_queryset(self):
         return (
@@ -134,7 +150,7 @@ class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView)
     permission_required = "workbaskets.change_workbasket"
 
     def get_redirect_url(self, *args, **kwargs) -> str:
-        return reverse("dashboard")
+        return reverse("home")
 
     def get(self, *args, **kwargs):
         workbasket: WorkBasket = self.get_object()
@@ -191,7 +207,7 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
             # The user has cancelled out of the deletion process.
-            return redirect("dashboard")
+            return redirect("home")
 
         # By reverse ordering on record_code + subrecord_code we're able to
         # delete child entities first, avoiding protected foreign key
@@ -260,3 +276,175 @@ def download_envelope(request):
     )
 
     return HttpResponseRedirect(url)
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class EditWorkbasketView(TemplateView):
+    template_name = "workbaskets/edit-workbasket.jinja"
+    permission_required = "workbaskets.change_workbasket"
+
+    def dispatch(self, request, *args, **kwargs):
+        workbasket_pk = request.GET.get("workbasket")
+
+        if workbasket_pk:
+            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
+
+            if workbasket:
+                workbasket.save_to_session(request.session)
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class PreviewWorkbasketView(TemplateView):
+    template_name = "workbaskets/preview-workbasket.jinja"
+
+    def dispatch(self, request, *args, **kwargs):
+        workbasket_pk = request.GET.get("workbasket")
+
+        if workbasket_pk:
+            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
+
+            if workbasket:
+                workbasket.save_to_session(request.session)
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["workbasket"] = WorkBasket.load_from_session(self.request.session)
+        return context
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class ReviewWorkbasketView(TemplateResponseMixin, FormMixin, View):
+    template_name = "workbaskets/review-workbasket.jinja"
+
+    def dispatch(self, request, *args, **kwargs):
+        workbasket_pk = request.GET.get("workbasket")
+
+        if workbasket_pk:
+            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
+
+            if workbasket:
+                workbasket.save_to_session(request.session)
+
+        return super().dispatch(request, *args, **kwargs)
+
+    form_class = forms.SelectableObjectsForm
+
+    # Form action mappings to URL names.
+    action_success_url_names = {
+        "publish-all": "workbaskets:workbasket-ui-submit",
+        "remove-selected": "workbaskets:workbasket-ui-delete-changes",
+        "page-prev": "workbaskets:review-workbasket",
+        "page-next": "workbaskets:review-workbasket",
+    }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    @property
+    def paginator(self):
+        return Paginator(self.workbasket.tracked_models, per_page=10)
+
+    @property
+    def latest_upload(self):
+        return Upload.objects.order_by("created_date").last()
+
+    @property
+    def uploaded_envelope_dates(self):
+        """Gets a list of all transactions from the `latest_approved_workbasket`
+        in the order they were updated and returns a dict with the first and
+        last transactions as values for "start" and "end" keys respectively."""
+        if self.latest_upload:
+            transactions = self.latest_upload.envelope.transactions.order_by(
+                "updated_at",
+            )
+            return {
+                "start": transactions.first().updated_at,
+                "end": transactions.last().updated_at,
+            }
+        return None
+
+    def _append_url_page_param(self, url, form_action):
+        """Based upon 'form_action', append a 'page' URL parameter to the given
+        url param and return the result."""
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_number = 1
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+        return f"{url}?page={page_number}"
+
+    def get(self, request, *args, **kwargs):
+        """Service GET requests by displaying the page and form."""
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request, *args, **kwargs):
+        """Manage POST requests, which can either be requests to change the
+        paged form data while preserving the user's form changes, or finally
+        submit the form data for processing."""
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        if form_action in ("publish-all", "remove-selected"):
+            return reverse(
+                self.action_success_url_names[form_action],
+                kwargs={"pk": self.workbasket.pk},
+            )
+        elif form_action in ("page-prev", "page-next"):
+            return self._append_url_page_param(
+                reverse(self.action_success_url_names[form_action]),
+                form_action,
+            )
+        return reverse("home")
+
+    def get_initial(self):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        return store.data.copy()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        context.update(
+            {
+                "workbasket": self.workbasket,
+                "page_obj": page,
+                "uploaded_envelope_dates": self.uploaded_envelope_dates,
+            },
+        )
+        return context
+
+    def form_valid(self, form):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        to_add = {
+            key: value for key, value in form.cleaned_data_no_prefix.items() if value
+        }
+        to_remove = {
+            key: value
+            for key, value in form.cleaned_data_no_prefix.items()
+            if key not in to_add
+        }
+        store.add_items(to_add)
+        store.remove_items(to_remove)
+        return super().form_valid(form)
