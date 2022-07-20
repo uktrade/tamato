@@ -35,9 +35,9 @@ from common.validators import UpdateType
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
-class WorkbasketActionView(FormView, View):
+class HomeView(FormView, View):
     template_name = "common/workbasket_action.jinja"
-    form_class = forms.WorkbasketActionForm
+    form_class = forms.HomeForm
 
     def form_valid(self, form):
         if form.cleaned_data["workbasket_action"] == "EDIT":

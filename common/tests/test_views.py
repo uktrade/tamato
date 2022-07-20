@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_index_displays_workbasket_action_form(valid_user_client):
-    response = valid_user_client.get(reverse("index"))
+    response = valid_user_client.get(reverse("home"))
 
     assert response.status_code == 200
 
@@ -44,7 +44,7 @@ def test_workbasket_action_form_response_redirects_user(
     response_url,
 ):
     client.force_login(valid_user)
-    response = client.post(reverse("index"), data)
+    response = client.post(reverse("home"), data)
     assert response.status_code == 302
     assert response.url == reverse(response_url)
 

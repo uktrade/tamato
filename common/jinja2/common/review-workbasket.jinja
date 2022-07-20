@@ -8,7 +8,7 @@
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Home", "href": url("index")},
+      {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:select-workbasket")},
       {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary" }
     ]
