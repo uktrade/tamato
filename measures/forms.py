@@ -29,7 +29,7 @@ from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
-from geo_areas.util import with_current_description_order
+from geo_areas.util import with_current_description
 from geo_areas.validators import AreaCode
 from measures import models
 from measures.parsers import DutySentenceParser
@@ -91,19 +91,13 @@ class GeoGroupForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields[
-            "geographical_area_group"
-        ].queryset = with_current_description_order(
-            GeographicalArea.objects.exclude(
-                descriptions__description__isnull=True,
-            )
+        self.fields["geographical_area_group"].queryset = (
+            with_current_description(GeographicalArea.objects.current())
+            .filter(area_code=AreaCode.GROUP)
             .as_at_today()
-            .current()
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
+            .order_by("description")
         )
+        # descriptions__description" should make this implicitly distinct()
         self.fields[
             "geographical_area_group"
         ].label_from_instance = lambda obj: obj.description
@@ -124,16 +118,10 @@ class ErgaOmnesExclusionsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["erga_omnes_exclusion"].queryset = with_current_description_order(
-            GeographicalArea.objects.exclude(
-                descriptions__description__isnull=True,
-            )
+        self.fields["erga_omnes_exclusion"].queryset = (
+            with_current_description(GeographicalArea.objects.current())
             .as_at_today()
-            .current()
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
+            .order_by("description")
         )
         self.fields[
             "erga_omnes_exclusion"
@@ -152,16 +140,10 @@ class GeoGroupExclusionsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["geo_group_exclusion"].queryset = with_current_description_order(
-            GeographicalArea.objects.exclude(
-                descriptions__description__isnull=True,
-            )
+        self.fields["geo_group_exclusion"].queryset = (
+            with_current_description(GeographicalArea.objects.current())
             .as_at_today()
-            .current()
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
+            .order_by("description")
         )
         self.fields[
             "geo_group_exclusion"
@@ -206,31 +188,21 @@ class CountryRegionForm(forms.Form):
     prefix = COUNTRY_REGION_PREFIX
 
     geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=with_current_description_order(
-            GeographicalArea.objects.exclude(
-                area_code=AreaCode.GROUP,
-                descriptions__description__isnull=True,
-            ),
+        queryset=GeographicalArea.objects.exclude(
+            area_code=AreaCode.GROUP,
+            descriptions__description__isnull=True,
         ),
         error_messages={"required": "A country or region is required."},
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields[
-            "geographical_area_country_or_region"
-        ].queryset = with_current_description_order(
-            GeographicalArea.objects.as_at_today().current(),
-        ).order_by(
-            "description",
+        self.fields["geographical_area_country_or_region"].queryset = (
+            with_current_description(GeographicalArea.objects.current())
+            .exclude(area_code=AreaCode.GROUP)
+            .as_at_today()
+            .order_by("description")
         )
-        # self.fields["geographical_area_country_or_region"].queryset = (
-        #     self.fields["geographical_area_country_or_region"]
-        #     .queryset.as_at_today()
-        #     .current()
-        #     .with_latest_links("descriptions")
-        #     .prefetch_related("descriptions")
-        #     .order_by("descriptions__description")
 
         self.fields[
             "geographical_area_country_or_region"

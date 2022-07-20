@@ -1,6 +1,5 @@
 from typing import Type
 
-from django.db import models
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -15,7 +14,7 @@ from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
-from geo_areas.util import with_current_description_order
+from geo_areas.util import with_current_description
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
 from workbaskets.views.generic import DraftDeleteView
@@ -24,8 +23,10 @@ from workbaskets.views.generic import DraftDeleteView
 class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows geographical areas to be viewed."""
 
-    queryset = GeographicalArea.objects.latest_approved().prefetch_related(
-        "descriptions",
+    queryset = with_current_description(
+        GeographicalArea.objects.latest_approved().prefetch_related(
+            "descriptions",
+        ),
     )
     serializer_class = AutoCompleteSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -63,14 +64,10 @@ class GeoAreaCreateDescriptionMixin:
 class GeoAreaList(GeoAreaMixin, TamatoListView):
     template_name = "geo_areas/list.jinja"
     filterset_class = GeographicalAreaFilter
-    search_fields = ["sid", "descriptions__description"]
+    filterset_class.search_fields = ["area_id", "description"]
 
     def get_queryset(self):
-        return with_current_description_order(GeographicalArea.objects.all()).filter(
-            descriptions__version_group__current_version__transaction__order=models.F(
-                "current_description_order",
-            ),
-        )
+        return with_current_description(GeographicalArea.objects.current())
 
 
 class GeoAreaDetail(GeoAreaMixin, TrackedModelDetailView):

@@ -1,45 +1,15 @@
-from django.db import models
+from django.db.models import OuterRef
+from django.db.models import Subquery
+
+from geo_areas.models import GeographicalAreaDescription
 
 
-# def with_latest_description_string(qs): /PS-IGNORE
-#     """Returns a queryset annotated with the latest validity_start date and
-#     latest transaction order number, filtered by these values and then annotated
-#     with that latest description object's description field value."""
-#     return (
-#         qs.annotate(
-#             latest_transaction_order=models.Max(
-#                 "descriptions__version_group__current_version__transaction__order",
-#             ),
-#             latest_description_date=models.Max("descriptions__validity_start"),
-#         )
-#         .filter(
-#             descriptions__version_group__current_version__transaction__order=models.F(
-#                 "latest_transaction_order",
-#             ),
-#             descriptions__validity_start=models.F("latest_description_date"),
-#         )
-#         .annotate(
-#             description=models.F(
-#                 "descriptions__description",
-#             ),
-#         )
-#     )
-def with_current_description_order(qs):
-    return (
-        qs.annotate(
-            current_description_order=models.Max(
-                "descriptions__version_group__current_version__transaction__order",
-            ),
-        )
-        # .filter(
-        #     descriptions__version_group__current_version__transaction__order=models.F(
-        #         "latest_transaction_order",
-        #     ),
-        #     descriptions__validity_start=models.F("latest_description_date"),
-        # )
-        # .annotate(
-        #     description=models.F(
-        #         "descriptions__description",
-        #     ),
-        # )
+def with_current_description(qs):
+    current_descriptions = (
+        GeographicalAreaDescription.objects.current()
+        .filter(described_geographicalarea__version_group=OuterRef("version_group"))
+        .order_by("transaction__order")
+    )
+    return qs.annotate(
+        description=Subquery(current_descriptions.values("description")[:1]),
     )
