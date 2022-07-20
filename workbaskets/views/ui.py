@@ -280,7 +280,7 @@ def download_envelope(request):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class EditWorkbasketView(TemplateView):
-    template_name = "common/edit-workbasket.jinja"
+    template_name = "workbaskets/edit-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
 
     def dispatch(self, request, *args, **kwargs):
@@ -297,7 +297,7 @@ class EditWorkbasketView(TemplateView):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class PreviewWorkbasketView(TemplateView):
-    template_name = "common/preview-workbasket.jinja"
+    template_name = "workbaskets/preview-workbasket.jinja"
 
     def dispatch(self, request, *args, **kwargs):
         workbasket_pk = request.GET.get("workbasket")
@@ -318,7 +318,7 @@ class PreviewWorkbasketView(TemplateView):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class ReviewWorkbasketView(TemplateResponseMixin, FormMixin, View):
-    template_name = "common/review-workbasket.jinja"
+    template_name = "workbaskets/review-workbasket.jinja"
 
     def dispatch(self, request, *args, **kwargs):
         workbasket_pk = request.GET.get("workbasket")
