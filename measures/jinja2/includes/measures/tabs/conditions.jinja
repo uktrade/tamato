@@ -16,29 +16,28 @@
 
 <h2 class="govuk-heading-l">Conditions</h2>
 
-{% set has_conditions = false %}
-{% for condition_code, conditions in condition_groups %}
-    <h3 class="govuk-heading-m">{{ condition_code.code }}: {{ condition_code.description }}</h3>
-    {% set has_conditions = true %}
-    {% set table_rows = [] %}
-    {% for condition in conditions -%}
-        {{ table_rows.append([
-            {"text": requirement(condition) },
-            {"text": condition.action.description},
-            {"text": condition.duty_sentence if condition.duty_sentence else '-'},
-        ]) or "" }}
-    {% endfor %}
-    {{ govukTable({
-    "head": [
-        {"text": "Required certificate or amount", "classes": "govuk-!-width-two-thirds"},
-        {"text": "Action"},
-        {"text": "Applicable duties"},
-    ],
-    "rows": table_rows
-    }) }}
-{% endfor %}
-
 {% if has_conditions %}
-    <p class="govuk-body">This measure has no conditions.</p>
+  {% for condition_code, conditions in condition_groups %}
+      <h3 class="govuk-heading-m">{{ condition_code.code }}: {{ condition_code.description }}</h3>
+      {% set table_rows = [] %}
+      {% for condition in conditions -%}
+          {{ table_rows.append([
+              {"text": condition.sid },
+              {"text": requirement(condition) },
+              {"text": condition.action.description},
+              {"text": condition.duty_sentence if condition.duty_sentence else '-'},
+          ]) or "" }}
+      {% endfor %}
+      {{ govukTable({
+      "head": [
+          {"text": "SID"},
+          {"text": "Required certificate or amount", "classes": "govuk-!-width-two-thirds"},
+          {"text": "Action"},
+          {"text": "Applicable duties"},
+      ],
+      "rows": table_rows
+      }) }}
+  {% endfor %}
+{% else %}
+  <p class="govuk-body">This measure has no conditions.</p>
 {% endif %}
-

@@ -1,5 +1,7 @@
 import pytest
 
+from common.models.transactions import Transaction
+from common.models.utils import set_current_transaction
 from common.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -24,6 +26,7 @@ def test_get_current_memberships_on_groups(membership_data, expected):
     group = factories.GeoGroupFactory()
     for data in membership_data(group):
         factories.GeographicalMembershipFactory(**data)
+    set_current_transaction(Transaction.objects.last())
 
     assert len(group.get_current_memberships()) == expected
 
@@ -47,6 +50,7 @@ def test_get_current_memberships_on_areas(membership_data, expected):
     area = factories.CountryFactory()
     for data in membership_data(area):
         factories.GeographicalMembershipFactory(**data)
+    set_current_transaction(Transaction.objects.last())
 
     assert len(area.get_current_memberships()) == expected
 
@@ -56,6 +60,7 @@ def test_get_current_memberships_when_region_and_country_share_sid():
     region = factories.RegionFactory.create(sid=country.sid)
     country_membership = factories.GeographicalMembershipFactory.create(member=country)
     region_membership = factories.GeographicalMembershipFactory.create(member=region)
+    set_current_transaction(Transaction.objects.last())
     country_memberships = country.get_current_memberships()
     region_memberships = region.get_current_memberships()
 

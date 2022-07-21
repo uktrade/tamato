@@ -150,27 +150,132 @@ def test_measure_detail_conditions(client, valid_user):
         page.find("h3").text == f"{condition_code.code}: {condition_code.description}"
     )
 
-    rows = page.find("table").findChildren(["th", "tr"])
     # ignore everything above the first condition row
-    first_row = rows[4]
-    cells = first_row.findChildren(["td"])
+    cells = page.select("#conditions table > tbody > tr:first-child > td")
     certificate = certificate_condition.required_certificate
 
+    assert cells[0].text == str(certificate_condition.sid)
     assert (
-        cells[0].text
+        cells[1].text
         == f"{certificate.code}:\n        {certificate.get_description(transaction=certificate.transaction).description}"
     )
-    assert cells[1].text == certificate_condition.action.description
-    assert cells[2].text == "-"
+    assert cells[2].text == certificate_condition.action.description
+    assert cells[3].text == "-"
 
-    second_row = rows[5]
-    cells = second_row.findChildren(["td"])
+    cells = page.select("#conditions table > tbody > tr:nth-child(2) > td")
 
+    assert cells[0].text == str(amount_condition.sid)
     assert (
-        cells[0].text
+        cells[1].text
         == f"\n    1000.000\n        {amount_condition.monetary_unit.code}"
     )
-    assert len(rows) == 6
+    rows = page.select("#conditions table > tbody > tr")
+    assert len(rows) == 2
+
+
+def test_measure_detail_no_conditions(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#conditions"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    assert (
+        page.select("#conditions .govuk-body")[0].text
+        == "This measure has no conditions."
+    )
+
+
+def test_measure_detail_footnotes(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    footnote1 = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    ).associated_footnote
+    footnote2 = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    ).associated_footnote
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#footnotes"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    rows = page.select("#footnotes table > tbody > tr")
+    assert len(rows) == 2
+
+    first_column_links = page.select(
+        "#footnotes table > tbody > tr > td:first-child > a",
+    )
+    assert {link.text for link in first_column_links} == {
+        str(footnote1),
+        str(footnote2),
+    }
+    assert {link.get("href") for link in first_column_links} == {
+        footnote1.get_url(),
+        footnote2.get_url(),
+    }
+
+    second_column = page.select("#footnotes table > tbody > tr > td:nth-child(2)")
+    assert {cell.text for cell in second_column} == {
+        footnote1.descriptions.first().description,
+        footnote2.descriptions.first().description,
+    }
+
+
+def test_measure_detail_no_footnotes(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#footnotes"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    assert (
+        page.select("#footnotes .govuk-body")[0].text
+        == "This measure has no footnotes."
+    )
+
+
+def test_measure_detail_quota_order_number(client, valid_user):
+    quota_order_number = factories.QuotaOrderNumberFactory.create()
+    measure = factories.MeasureFactory.create(order_number=quota_order_number)
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid})
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    items = [element.text.strip() for element in page.select("#core-data dl dd")]
+    assert str(quota_order_number) in items
+
+
+def test_measure_detail_version_control(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    measure.new_version(measure.transaction.workbasket)
+    measure.new_version(measure.transaction.workbasket)
+
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#versions"
+    client.force_login(valid_user)
+    response = client.get(url)
+    soup = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    rows = soup.select("#versions table > tbody > tr")
+    assert len(rows) == 3
+
+    update_types = {
+        cell.text
+        for cell in soup.select("#versions table > tbody > tr > td:first-child")
+    }
+    assert update_types == {"Create", "Update"}
 
 
 @pytest.mark.parametrize(
@@ -356,6 +461,7 @@ def test_measure_update_create_conditions(
         condition.action.pk
         == measure_edit_conditions_data["measure-conditions-formset-0-action"]
     )
+    assert condition.update_type == UpdateType.CREATE
 
     components = condition.components.approved_up_to_transaction(tx).all()
 
@@ -380,11 +486,15 @@ def test_measure_update_edit_conditions(
     correct.
     """
     measure = Measure.objects.with_duty_sentence().first()
-    previous_condition = measure.conditions.last()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
     transaction_count = Transaction.objects.count()
+    tx = Transaction.objects.last()
+    measure_with_condition = Measure.objects.approved_up_to_transaction(tx).get(
+        sid=measure.sid,
+    )
+    previous_condition = measure_with_condition.conditions.last()
     measure_edit_conditions_data[
         "measure-conditions-formset-0-required_certificate"
     ] = ""
@@ -404,10 +514,11 @@ def test_measure_update_edit_conditions(
 
     condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
 
-    assert condition != previous_condition
+    assert condition.pk != previous_condition.pk
     assert condition.required_certificate == None
     assert condition.duty_amount == 3
     assert condition.update_type == UpdateType.UPDATE
+    assert condition.sid == previous_condition.sid
 
     components = condition.components.approved_up_to_transaction(tx).all()
 
@@ -418,6 +529,37 @@ def test_measure_update_edit_conditions(
     assert component.duty_amount == 10
     assert component.update_type == UpdateType.UPDATE
     assert component.transaction == condition.transaction
+
+
+# The measure edit form will always show changes until we fix this bug https://uktrade.atlassian.net/browse/TP2000-247 /PS-IGNORE
+# When fixed, we should uncomment and add logic to prevent updates when there are no changes to a condition
+
+# def test_measure_update_no_conditions_changes(
+#     client,
+#     valid_user,
+#     measure_edit_conditions_data, /PS-IGNORE
+#     duty_sentence_parser,
+#     erga_omnes,
+# ):
+#     measure = Measure.objects.with_duty_sentence().first()
+#     url = reverse("measure-ui-edit", args=(measure.sid,))
+#     client.force_login(valid_user) /PS-IGNORE
+#     client.post(url, data=measure_edit_conditions_data) /PS-IGNORE
+#     tx = Transaction.objects.last()
+#     measure_with_condition = Measure.objects.approved_up_to_transaction(tx).get( /PS-IGNORE
+#         sid=measure.sid, /PS-IGNORE
+#     )
+#     previous_condition = measure_with_condition.conditions.approved_up_to_transaction(tx).first()
+#     client.post(url, data=measure_edit_conditions_data) /PS-IGNORE
+#     tx = Transaction.objects.last()
+#     updated_measure = Measure.objects.approved_up_to_transaction(tx).get( /PS-IGNORE
+#         sid=measure.sid, /PS-IGNORE
+#     )
+#     condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
+
+#     assert condition.pk == previous_condition.pk
+#     assert condition.update_type == UpdateType.CREATE
+#     assert condition.sid == previous_condition.sid /PS-IGNORE
 
 
 def test_measure_update_remove_conditions(
@@ -495,8 +637,7 @@ def test_measure_update_invalid_conditions(
         response.content.decode(response.charset),
         features="lxml",
     )
-    ul = page.find_all("ul", {"class": "govuk-list govuk-error-summary__list"})[0]
-    a_tags = ul.findChildren("a")
+    a_tags = page.select("ul.govuk-list.govuk-error-summary__list a")
 
     assert a_tags[0].attrs["href"] == "#measure-conditions-formset-0-applicable_duty"
     assert a_tags[0].text == "Enter a valid duty sentence."

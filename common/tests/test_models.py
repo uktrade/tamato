@@ -24,6 +24,7 @@ from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
 from footnotes.models import FootnoteType
 from measures.models import MeasureCondition
+from measures.models import MeasureExcludedGeographicalArea
 from regulations.models import Group
 from regulations.models import Regulation
 from taric.models import Envelope
@@ -409,6 +410,9 @@ def test_trackedmodel_get_url(trackedmodel_factory):
         # None is returned for models that have no URL
         return
 
+    if instance.url_suffix:
+        assert instance.url_suffix in url
+
     assert len(url)
 
     # Verify URL is not local
@@ -619,12 +623,13 @@ def test_copy_fk_related_models():
         "component_sequence_number": 1,
         "condition_code_id": code.pk,
     }
-
+    assert measure.conditions.count() == 0
     copied_measure = measure.copy(
         transaction,
         conditions=[MeasureCondition(**condition_data)],
     )
 
+    assert measure.conditions.count() == 0
     assert copied_measure.conditions.count() == 1
 
 
@@ -684,6 +689,51 @@ def test_copy_nested_field_two_levels_deep():
     )
 
     assert copied_measure.conditions.first().components.first().duty_amount == 0
+
+
+def test_copy_saved_related_models():
+    """Test that copy accepts a queryset of saved objects, creates a new measure
+    with all of these related objects, and preserves original measure's
+    relationships."""
+    workbasket = factories.WorkBasketFactory.create()
+    measure = factories.MeasureFactory.create(transaction=workbasket.new_transaction())
+    exclusion_1 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        transaction=workbasket.new_transaction(),
+        modified_measure=measure,
+    )
+    exclusion_2 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        transaction=workbasket.new_transaction(),
+        modified_measure=measure,
+    )
+    exclusion_3 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        transaction=workbasket.new_transaction(),
+        modified_measure=measure,
+    )
+    exclusions = MeasureExcludedGeographicalArea.objects.exclude(pk=exclusion_1.pk)
+    copied_measure = measure.copy(workbasket.new_transaction(), exclusions=exclusions)
+
+    assert measure.exclusions.count() == 3
+    assert copied_measure.exclusions.count() == 2
+    assert exclusion_1 in measure.exclusions.all()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_1.modified_measure.sid,
+    ).exists()
+    assert exclusion_2 in measure.exclusions.all()
+    assert copied_measure.exclusions.filter(
+        modified_measure__sid=copied_measure.sid,
+        excluded_geographical_area=exclusion_2.excluded_geographical_area,
+    ).exists()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_2.modified_measure.sid,
+    ).exists()
+    assert exclusion_3 in measure.exclusions.all()
+    assert copied_measure.exclusions.filter(
+        modified_measure__sid=copied_measure.sid,
+        excluded_geographical_area=exclusion_3.excluded_geographical_area,
+    ).exists()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_3.modified_measure.sid,
+    ).exists()
 
 
 def test_transaction_summary(approved_transaction):

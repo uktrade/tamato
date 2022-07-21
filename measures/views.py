@@ -90,6 +90,7 @@ class MeasureDetail(MeasureMixin, TrackedModelDetailView):
 
         context = super().get_context_data(**kwargs)
         context["condition_groups"] = condition_groups
+        context["has_conditions"] = bool(len(conditions))
         return context
 
 
@@ -276,6 +277,7 @@ class MeasureCreateWizard(
             )
             # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
             kwargs["form_kwargs"] = {"measure_start_date": valid_between.lower}
+
         return kwargs
 
     def get_form(self, step=None, data=None, files=None):
@@ -415,6 +417,7 @@ class MeasureUpdate(
                 condition_data["version_group"] = existing_conditions.get(
                     sid=f.initial["condition_sid"],
                 ).version_group
+                condition_data["sid"] = f.initial["condition_sid"]
             # If changed and condition_sid not in changed_data, then this is a newly created condition
             elif f.has_changed() and "condition_sid" not in f.changed_data:
                 update_type = UpdateType.CREATE

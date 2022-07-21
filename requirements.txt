@@ -35,7 +35,7 @@ govuk-frontend-jinja @ git+https://github.com/alphagov/govuk-frontend-jinja.git@
 govuk-tech-docs-sphinx-theme==1.0.0
 gunicorn==20.0.4
 Jinja2==2.11.3
-lxml==4.6.5
+lxml==4.9.1
 markupsafe==2.0.1
 moto==2.1.0
 openpyxl==3.0.7

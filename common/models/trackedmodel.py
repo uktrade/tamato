@@ -141,8 +141,15 @@ class TrackedModel(PolymorphicModel):
     model, but in places where this does not exist models can declare their own.
     (Note that because multiple versions of each model will exist this does not
     actually equate to a ``UNIQUE`` constraint in the database.)
-    
+
     TrackedModel itself defaults to ("pk",) as it does not have an SID.
+    """
+
+    url_suffix = ""
+    """
+    This is to add a link within a page for get_url() e.g. for linking to a
+    Measure's conditions tab. If url_suffix is set to '#conditions' the output
+    detail url will be /measures/12345678/#conditions
     """
 
     def new_version(
@@ -466,15 +473,21 @@ class TrackedModel(PolymorphicModel):
             ignore = False
             # Check if user passed related model into overrides argument
             if field.name in subrecord_fields.keys():
-                # If user passed a new unsaved model, set the remote field value equal to self for each model passed
-                # e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `self`
+                # If user passed a new unsaved model, set the remote field value equal to new_object for each model passed
+                # e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `new_object`
                 if subrecord_fields[field.name]:
                     for subrecord in subrecord_fields[field.name]:
                         remote_field = [
                             f for f in self._meta.get_fields() if f.name == field.name
                         ][0].remote_field.name
-                        setattr(subrecord, remote_field, self)
-                        subrecord.save()
+                        if not subrecord.pk:
+                            setattr(subrecord, remote_field, new_object)
+                            subrecord.save()
+                        else:
+                            # If user passed a saved object, create a copy of that object with remote_field pointing at the new copied object
+                            # set ignore to True, so that duplicate copies are not made below
+                            subrecord.copy(transaction, **{remote_field: new_object})
+                            ignore = True
                 # Else, if an empty or None value is passed, set ignore to True, so that related models are not copied
                 # e.g. if an existing Measure with two conditions is copied with conditions=[], the copy will have no conditions
                 else:
@@ -623,10 +636,11 @@ class TrackedModel(PolymorphicModel):
         if action not in ["list", "create"]:
             kwargs = self.get_identifying_fields()
         try:
-            return reverse(
+            url = reverse(
                 f"{self.get_url_pattern_name_prefix()}-ui-{action}",
                 kwargs=kwargs,
             )
+            return f"{url}{self.url_suffix}"
         except NoReverseMatch:
             return None
 

@@ -90,8 +90,6 @@ class GeoGroupForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
         self.fields[
             "geographical_area_group"
@@ -100,7 +98,7 @@ class GeoGroupForm(forms.Form):
                 descriptions__description__isnull=True,
             )
             .as_at_today()
-            .approved_up_to_transaction(tx)
+            .current()
             .with_latest_links("descriptions")
             .prefetch_related("descriptions")
             .order_by("descriptions__description"),
@@ -125,15 +123,13 @@ class ErgaOmnesExclusionsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
         self.fields["erga_omnes_exclusion"].queryset = with_latest_description_string(
             GeographicalArea.objects.exclude(
                 descriptions__description__isnull=True,
             )
             .as_at_today()
-            .approved_up_to_transaction(tx)
+            .current()
             .with_latest_links("descriptions")
             .prefetch_related("descriptions")
             .order_by("descriptions__description"),
@@ -155,15 +151,13 @@ class GeoGroupExclusionsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
         self.fields["geo_group_exclusion"].queryset = with_latest_description_string(
             GeographicalArea.objects.exclude(
                 descriptions__description__isnull=True,
             )
             .as_at_today()
-            .approved_up_to_transaction(tx)
+            .current()
             .with_latest_links("descriptions")
             .prefetch_related("descriptions")
             .order_by("descriptions__description"),
@@ -222,13 +216,11 @@ class CountryRegionForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
         self.fields["geographical_area_country_or_region"].queryset = (
             self.fields["geographical_area_country_or_region"]
             .queryset.as_at_today()
-            .approved_up_to_transaction(tx)
+            .current()
             .with_latest_links("descriptions")
             .prefetch_related("descriptions")
             .order_by("descriptions__description")
@@ -855,8 +847,6 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
 
         kwargs.pop("initial")
@@ -898,11 +888,7 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
 
     @property
     def erga_omnes_instance(self):
-        return (
-            GeographicalArea.objects.approved_up_to_transaction(self.transaction)
-            .erga_omnes()
-            .get()
-        )
+        return GeographicalArea.objects.current().erga_omnes().get()
 
     def clean(self):
         cleaned_data = super().clean()
