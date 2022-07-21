@@ -268,6 +268,13 @@ def test_edit_workbasket_page_creates_new_workbasket(valid_user_client):
 
 
 def test_select_workbasket_page_200(valid_user_client):
+    """
+    Checks the page returns 200.
+
+    Then checks that only workbaskets with certain statuses are displayed i.e.
+    we don't want users to be able to edit workbaskets that are archived, sent,
+    or published.
+    """
     factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
     factories.WorkBasketFactory.create(status=WorkflowStatus.SENT)
     factories.WorkBasketFactory.create(status=WorkflowStatus.PUBLISHED)
