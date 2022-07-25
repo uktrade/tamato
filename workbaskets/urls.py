@@ -13,13 +13,38 @@ api_router.register(r"workbaskets", api_views.WorkBasketViewSet)
 ui_patterns = [
     path(
         "",
-        ui_views.WorkBasketList.as_view(),
+        ui_views.SelectWorkbasketView.as_view(),
         name="workbasket-ui-list",
+    ),
+    path(
+        "create/",
+        ui_views.WorkBasketCreate.as_view(),
+        name="workbasket-ui-create",
+    ),
+    path(
+        f"<pk>/edit/",
+        ui_views.EditWorkbasketView.as_view(),
+        name="edit-workbasket",
+    ),
+    path(
+        f"<pk>/review/",
+        ui_views.ReviewWorkbasketView.as_view(),
+        name="review-workbasket",
+    ),
+    path(
+        "download",
+        ui_views.download_envelope,
+        name="workbasket-download",
     ),
     path(
         f"<pk>/",
         ui_views.WorkBasketDetail.as_view(),
         name="workbasket-ui-detail",
+    ),
+    path(
+        f"<pk>/confirm-create/",
+        ui_views.WorkBasketConfirmCreate.as_view(),
+        name="workbasket-ui-confirm-create",
     ),
     path(
         f"<pk>/submit/",
@@ -35,11 +60,6 @@ ui_patterns = [
         f"<pk>/delete-changes-done/",
         ui_views.WorkBasketDeleteChangesDone.as_view(),
         name="workbasket-ui-delete-changes-done",
-    ),
-    path(
-        "download",
-        ui_views.download_envelope,
-        name="workbasket-download",
     ),
 ]
 

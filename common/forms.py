@@ -12,6 +12,7 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
+from django.db.models import TextChoices
 from django.forms import TypedChoiceField
 from django.forms import formsets
 from django.forms.renderers import get_default_renderer
@@ -151,6 +152,31 @@ class RadioNested(TypedChoiceField):
     def get_bound_field(self, form, field_name):
         assert isinstance(form, BindNestedFormMixin), self.MESSAGE_FORM_MIXIN
         return super().get_bound_field(form, field_name)
+
+
+class HomeForm(forms.Form):
+    class WorkbasketActions(TextChoices):
+        CREATE = "CREATE", "Create a new workbasket"
+        EDIT = (
+            "EDIT",
+            "Edit an existing workbasket",
+        )
+
+    workbasket_action = forms.ChoiceField(
+        label="What would you like to do?",
+        choices=WorkbasketActions.choices,
+        widget=forms.RadioSelect,
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.legend_size = Size.EXTRA_LARGE
+        self.helper.layout = Layout(
+            "workbasket_action",
+            Submit("submit", "Continue"),
+        )
 
 
 class DescriptionHelpBox(Div):

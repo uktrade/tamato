@@ -23,8 +23,14 @@ NM
 target.quota.definition.sid
 MeasureType
 ImportBatch
+f"<pk>/edit/
 BatchDependencies
+Jira
+MeasureActions
+do?{%
+MeasureAction
 Quota
+url('my
 SID
 the Euro ISO
 the Euro Definition

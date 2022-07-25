@@ -408,6 +408,7 @@ class WorkBasket(TimestampedMixin):
         session["workbasket"] = {
             "id": self.pk,
             "status": self.status,
+            "title": self.title,
         }
 
     @property

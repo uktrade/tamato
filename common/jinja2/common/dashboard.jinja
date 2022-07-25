@@ -1,0 +1,137 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/inset-text/macro.njk" import govukInsetText %}
+
+{% set page_title = "Manage trade tariffs" %}
+{% set page_subtitle = "This service lets you manage UK trade tariffs" %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">
+    {% block page_title %}
+      {{ page_title }}
+    {% endblock %}
+    <span class="govuk-caption-xl">
+      {% block page_subtitle %}
+        {{ page_subtitle }}
+      {% endblock %}
+    </span>
+  </h1>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h2 class="govuk-heading-l">
+        Main menu
+      </h2>
+    </div>
+  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Additional codes</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('additional_code-ui-create') }}">
+            Create a new additional code
+          </a>
+        </li>
+        <li>
+          <a class="govuk-link" href="{{ url("additional_code-ui-list") }}">
+            Find and edit additional codes
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Certificates</h2>
+      <ul class="govuk-list">
+      <li>
+          <a class="govuk-link" href="{{ url('certificate-ui-create') }}">
+            Create a new certificate
+          </a>
+        </li>
+        <li>
+          <a class="govuk-link" href="{{ url("certificate-ui-list") }}">
+            Find and edit certificates
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Footnotes</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('footnote-ui-create') }}">
+            Create a new footnote
+          </a>
+        </li>
+        <li>
+          <a class="govuk-link" href="{{ url('footnote-ui-list') }}">
+            Find and edit footnotes
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Geographical areas</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('geo_area-ui-list') }}">
+            Find and edit geographical areas
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Commodities</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('commodities-import') }}">
+            Import commodities
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Measures</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('measure-ui-create', kwargs={"step": "start"}) }}">
+            Create new measure
+          </a>
+        </li>
+        <li>
+          <a class="govuk-link" href="{{ url('measure-ui-list') }}">
+            Find and edit measures
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Quotas</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('quota-ui-list') }}">
+            Find and edit quotas
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Regulations</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('regulation-ui-create') }}">
+            Create a new regulation
+          </a>
+        </li>
+        <li>
+          <a class="govuk-link" href="{{ url('regulation-ui-list') }}">
+            Find and edit regulations
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <p class="govuk-body govuk-!-margin-bottom-9"></p>
+  {% include "includes/workbaskets/workbasket-selectable-items.jinja" %}
+{% endblock %}

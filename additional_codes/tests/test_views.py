@@ -65,7 +65,12 @@ def test_additional_code_delete_form(factory, use_delete_form):
     ),
     ids=view_urlpattern_ids,
 )
-def test_additional_codes_detail_views(view, url_pattern, valid_user_client):
+def test_additional_codes_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
     """Verify that additional code detail views are under the url
     additional_codes/ and don't return an error."""
     model_overrides = {

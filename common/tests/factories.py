@@ -118,7 +118,7 @@ class WorkBasketFactory(factory.django.DjangoModelFactory):
         model = "workbaskets.WorkBasket"
 
     author = factory.SubFactory(UserFactory)
-    title = factory.Faker("text", max_nb_chars=255)
+    title = factory.Faker("sentence", nb_words=4)
 
 
 class ApprovedWorkBasketFactory(WorkBasketFactory):
@@ -958,13 +958,12 @@ class MeasureConditionCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
 
 class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
     """
-    MeasureActions in the TaMaTo are essentially fixed, it
-    would be more realistic to test using a fixed list, however it
-    is convenient.
+    MeasureActions in the TaMaTo are essentially fixed, it would be more
+    realistic to test using a fixed list, however it is convenient.
 
-    As MeasureActionFactory is used in tests, it is possible to
-    generate more than 999 MeasureActions, to avoid creating MeasureAction codes
-    with four digits, which is not allowed, the code wraps back to 000 every 1000
+    As MeasureActionFactory is used in tests, it is possible to generate more
+    than 999 MeasureActions, to avoid creating MeasureAction codes with four
+    digits, which is not allowed, the code wraps back to 000 every 1000
     iterations.
     """
 
