@@ -18,26 +18,26 @@ from django_cte.cte import With
 
 from common.fields import TaricDateRangeField
 from common.models.tracked_qs import TrackedModelQuerySet
-from common.models.utils import get_current_transaction
 from common.querysets import ValidityQuerySet
 from common.util import EndDate
 from common.util import StartDate
 
 
-class DutySentenceMixin(QuerySet):
-    def old_with_duty_sentence(self) -> QuerySet:
+class MeasureComponentQuerySet(TrackedModelQuerySet):
+    def duty_sentence(self, measure):
         """
-        Annotates the query set with a human-readable string that represents the
-        aggregation of all of the linked components into a single duty sentence.
+        Returns the human-readable "duty sentence" for a Measure instance as a
+        string. The returned string value is a (Postgresql) string aggregation
+        of all the measure's "current" components.
 
         This operation relies on the `prefix` and `abbreviation` fields being
         filled in on duty expressions and units, which are not supplied by the
         TARIC3 XML by default.
 
-        Strings output by this annotation should be valid input to the
+        Strings output by this aggregation should be valid input to the
         :class:`~measures.parsers.DutySentenceParser`.
 
-        The annotated field will be generated using the below SQL:
+        The string aggregation will be generated using the below SQL:
 
         .. code:: SQL
 
@@ -82,70 +82,83 @@ class DutySentenceMixin(QuerySet):
               ),
             ) AS "duty_sentence"
         """
-        return self.annotate(
+
+        # MeasureComponents with the greatest transaction_id that is less than
+        # or equal to the Measure's transaction_id, are considered 'current'.
+        component_qs = measure.components.approved_up_to_transaction(
+            measure.transaction,
+        )
+        latest_transaction_id = component_qs.aggregate(
+            latest_transaction_id=Max(
+                "transaction_id",
+            ),
+        ).get("latest_transaction_id")
+        component_qs = component_qs.filter(transaction_id=latest_transaction_id)
+
+        # Aggregate all the current MeasureComponents for this Measure to form
+        # its duty sentence.
+        duty_sentence = component_qs.aggregate(
             duty_sentence=StringAgg(
                 expression=Trim(
                     Concat(
                         Case(
                             When(
-                                Q(components__duty_expression__prefix__isnull=True)
-                                | Q(components__duty_expression__prefix=""),
+                                Q(duty_expression__prefix__isnull=True)
+                                | Q(duty_expression__prefix=""),
                                 then=Value(""),
                             ),
                             default=Concat(
-                                F("components__duty_expression__prefix"),
+                                F("duty_expression__prefix"),
                                 Value(" "),
                             ),
                         ),
-                        "components__duty_amount",
+                        "duty_amount",
                         Case(
                             When(
-                                components__monetary_unit=None,
-                                components__duty_amount__isnull=False,
+                                monetary_unit=None,
+                                duty_amount__isnull=False,
                                 then=Value("%"),
                             ),
                             When(
-                                components__duty_amount__isnull=True,
+                                duty_amount__isnull=True,
                                 then=Value(""),
                             ),
                             default=Concat(
                                 Value(" "),
-                                F("components__monetary_unit__code"),
+                                F("monetary_unit__code"),
                             ),
                         ),
                         Case(
                             When(
-                                Q(components__component_measurement=None)
+                                Q(component_measurement=None)
+                                | Q(component_measurement__measurement_unit=None)
                                 | Q(
-                                    components__component_measurement__measurement_unit=None,
-                                )
-                                | Q(
-                                    components__component_measurement__measurement_unit__abbreviation=None,
+                                    component_measurement__measurement_unit__abbreviation=None,
                                 ),
                                 then=Value(""),
                             ),
                             When(
-                                components__monetary_unit__isnull=True,
+                                monetary_unit__isnull=True,
                                 then=F(
-                                    "components__component_measurement__measurement_unit__abbreviation",
+                                    "component_measurement__measurement_unit__abbreviation",
                                 ),
                             ),
                             default=Concat(
                                 Value(" / "),
                                 F(
-                                    "components__component_measurement__measurement_unit__abbreviation",
+                                    "component_measurement__measurement_unit__abbreviation",
                                 ),
                             ),
                         ),
                         Case(
                             When(
-                                components__component_measurement__measurement_unit_qualifier__abbreviation=None,
+                                component_measurement__measurement_unit_qualifier__abbreviation=None,
                                 then=Value(""),
                             ),
                             default=Concat(
                                 Value(" / "),
                                 F(
-                                    "components__component_measurement__measurement_unit_qualifier__abbreviation",
+                                    "component_measurement__measurement_unit_qualifier__abbreviation",
                                 ),
                             ),
                         ),
@@ -153,142 +166,15 @@ class DutySentenceMixin(QuerySet):
                     ),
                 ),
                 delimiter=" ",
-                ordering="components__duty_expression__sid",
+                ordering="duty_expression__sid",
             ),
         )
+        return duty_sentence.get("duty_sentence", "")
 
+
+class DutySentenceMixin(QuerySet):
     def with_duty_sentence(self) -> QuerySet:
-        # NOTE:
-        # ###
-        # Assumes MeasuresQuerySet is filtered by current and that we can
-        # therefore safely join elements of a MeasureComponent queryset by
-        # the associated Measure's version_group (since that will have been
-        # filtered by current too).
-        #
-        # Alternatively, we could first annotate instances in the Measure
-        # queryset with the MeasureComponent's transaction ID as at each
-        # Measure's transaction via a subquery. Then join the aggregated
-        # MeasureComponents with the Measures by transaction ID.
-
-        # Get the version groups of those measures that components must be
-        # joined to - this narrows to a relevant, more manageable components
-        # queryset for CTE construction.
-        measure_version_group_ids = set(
-            self.values_list("version_group_id", flat=True),
-        )
-
-        # Avoid circular dependency.
-        from measures.models import MeasureComponent
-
-        # TODO: we should use TrackedModelQuerySet.current() in place of this.
-        current_transaction = get_current_transaction()
-
-        components_qs = (
-            MeasureComponent.objects.filter(
-                component_measure__version_group__id__in=measure_version_group_ids,
-            )
-            .approved_up_to_transaction(
-                # Is transaction filtering really the right approach when some other
-                # attribute could equally well have been applied to filter measure_qs?
-                current_transaction,
-            )
-            .annotate(
-                measure_version_group_id=F("component_measure__version_group_id"),
-            )
-            .values(
-                "transaction",
-                "measure_version_group_id",
-            )
-            .annotate(
-                duty_sentence=StringAgg(
-                    expression=Trim(
-                        Concat(
-                            Case(
-                                When(
-                                    Q(duty_expression__prefix__isnull=True)
-                                    | Q(duty_expression__prefix=""),
-                                    then=Value(""),
-                                ),
-                                default=Concat(
-                                    F("duty_expression__prefix"),
-                                    Value(" "),
-                                ),
-                            ),
-                            "duty_amount",
-                            Case(
-                                When(
-                                    monetary_unit=None,
-                                    duty_amount__isnull=False,
-                                    then=Value("%"),
-                                ),
-                                When(
-                                    duty_amount__isnull=True,
-                                    then=Value(""),
-                                ),
-                                default=Concat(
-                                    Value(" "),
-                                    F("monetary_unit__code"),
-                                ),
-                            ),
-                            Case(
-                                When(
-                                    Q(component_measurement=None)
-                                    | Q(component_measurement__measurement_unit=None)
-                                    | Q(
-                                        component_measurement__measurement_unit__abbreviation=None,
-                                    ),
-                                    then=Value(""),
-                                ),
-                                When(
-                                    monetary_unit__isnull=True,
-                                    then=F(
-                                        "component_measurement__measurement_unit__abbreviation",
-                                    ),
-                                ),
-                                default=Concat(
-                                    Value(" / "),
-                                    F(
-                                        "component_measurement__measurement_unit__abbreviation",
-                                    ),
-                                ),
-                            ),
-                            Case(
-                                When(
-                                    component_measurement__measurement_unit_qualifier__abbreviation=None,
-                                    then=Value(""),
-                                ),
-                                default=Concat(
-                                    Value(" / "),
-                                    F(
-                                        "component_measurement__measurement_unit_qualifier__abbreviation",
-                                    ),
-                                ),
-                            ),
-                            output_field=CharField(),
-                        ),
-                    ),
-                    delimiter=" ",
-                    ordering="duty_expression__sid",
-                ),
-            )
-        )
-
-        cte = With(components_qs)
-
-        joined_measure_qs = (
-            cte.join(
-                self,
-                version_group_id=cte.col.measure_version_group_id,
-            )
-            .with_cte(
-                cte,
-            )
-            .annotate(
-                duty_sentence=cte.col.duty_sentence,
-            )
-        )
-
-        return joined_measure_qs
+        return self
 
 
 class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin, ValidityQuerySet):
