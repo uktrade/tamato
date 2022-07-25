@@ -385,7 +385,7 @@ def measure_form(measure_form_data, session_with_workbasket, erga_omnes):
     set_current_transaction(Transaction.objects.last())
     return MeasureForm(
         data=measure_form_data,
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
         initial={},
     )

@@ -4,7 +4,6 @@ from django.db.models import CharField
 from django.db.models import F
 from django.db.models import Func
 from django.db.models import Q
-from django.db.models import QuerySet
 from django.db.models import Value
 from django.db.models import When
 from django.db.models.aggregates import Max
@@ -172,12 +171,7 @@ class MeasureComponentQuerySet(TrackedModelQuerySet):
         return duty_sentence.get("duty_sentence", "")
 
 
-class DutySentenceMixin(QuerySet):
-    def with_duty_sentence(self) -> QuerySet:
-        return self
-
-
-class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin, ValidityQuerySet):
+class MeasuresQuerySet(TrackedModelQuerySet, ValidityQuerySet):
     def with_validity_field(self):
         return self.with_effective_valid_between()
 

@@ -56,7 +56,7 @@ class MeasureMixin:
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
 
-        return Measure.objects.with_duty_sentence().approved_up_to_transaction(tx)
+        return Measure.objects.approved_up_to_transaction(tx)
 
 
 class MeasureList(MeasureMixin, TamatoListView):
@@ -70,12 +70,11 @@ class MeasureList(MeasureMixin, TamatoListView):
 class MeasureDetail(MeasureMixin, TrackedModelDetailView):
     model = Measure
     template_name = "measures/detail.jinja"
-    queryset = Measure.objects.with_duty_sentence().latest_approved()
+    queryset = Measure.objects.latest_approved()
 
     def get_context_data(self, **kwargs: Any):
         conditions = (
             self.object.conditions.current()
-            .with_duty_sentence()
             .prefetch_related(
                 "condition_code",
                 "required_certificate",
@@ -313,7 +312,7 @@ class MeasureUpdate(
     form_class = forms.MeasureForm
     permission_required = "common.change_trackedmodel"
     template_name = "measures/edit.jinja"
-    queryset = Measure.objects.with_duty_sentence()
+    queryset = Measure.objects.all()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -344,9 +343,9 @@ class MeasureUpdate(
     def get_conditions(self, measure):
         tx = WorkBasket.get_current_transaction(self.request)
         return (
-            measure.conditions.with_duty_sentence()
-            .with_reference_price_string()
-            .approved_up_to_transaction(tx)
+            measure.conditions.with_reference_price_string().approved_up_to_transaction(
+                tx,
+            )
         )
 
     def get_context_data(self, **kwargs):

@@ -529,7 +529,7 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
 
         if not hasattr(self.instance, "duty_sentence"):
             raise AttributeError(
-                "Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
+                "Measure instance is missing `duty_sentence` attribute.",
             )
 
         self.initial["duty_sentence"] = self.instance.duty_sentence

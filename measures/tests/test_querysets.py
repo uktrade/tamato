@@ -72,7 +72,7 @@ def test_duty_sentence_generation(
             **kwargs,
         )
 
-    test_instance = model_factory._meta.model.objects.with_duty_sentence().get()
+    test_instance = model_factory._meta.model.objects.get()
     assert test_instance.duty_sentence == expected
 
 

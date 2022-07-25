@@ -35,7 +35,6 @@ def test_measure_conditions_list():
         type(cond)
         .objects.latest_approved()
         .with_reference_price_string()
-        .with_duty_sentence()
         .get(pk=cond.pk)
     )
     assert cond.reference_price_string == "48.100 EUR / 100 kg"
@@ -80,7 +79,6 @@ def test_stringify_measure_condition():
         type(cond)
         .objects.latest_approved()
         .with_reference_price_string()
-        .with_duty_sentence()
         .get(pk=cond.pk)
     )
     assert cond.reference_price_string == "0.000 EUR / 100 kg"
