@@ -41,9 +41,7 @@
       </ul>
     </div>
   </div>
-  {% set params %}
-    {% if request.GET %}?{{ request.GET.urlencode() }}{% endif %}
-  {% endset %}
+  {% set params %}{% if request.GET %}?{{ request.GET.urlencode() }}{% endif %}{% endset %}
   <a href="{{ url('workbaskets:review-workbasket', args=[request.session.workbasket.id]) }}{{ params }}" class="govuk-button govuk-button--primary">Review workbasket</a>
   <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}{{ params }}" class="govuk-button govuk-button--primary">Edit workbasket</a>
 {% endblock %}

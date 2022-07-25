@@ -243,6 +243,24 @@ def test_edit_workbasket_page_displays_breadcrumb(
     assert "Edit an existing workbasket" in breadcrumb_links
 
 
+def test_workbasket_detail_page_url_params(
+    valid_user_client,
+    session_workbasket,
+):
+    url = reverse(
+        "workbaskets:workbasket-ui-detail",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    buttons = soup.select(".govuk-button.govuk-button--primary")
+    for button in buttons:
+        # test that accidental spacing in template hasn't mangled the url
+        assert " " not in button.get("href")
+        assert "%20" not in button.get("href")
+
+
 def test_edit_workbasket_page_hides_breadcrumb(valid_user_client, session_workbasket):
     url = reverse("workbaskets:edit-workbasket", kwargs={"pk": session_workbasket.pk})
     response = valid_user_client.get(
