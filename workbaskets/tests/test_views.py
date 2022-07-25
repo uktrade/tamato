@@ -218,11 +218,20 @@ def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbas
     assert str(session_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
 
 
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        ("workbaskets:edit-workbasket"),
+        ("workbaskets:review-workbasket"),
+        ("workbaskets:workbasket-ui-detail"),
+    ],
+)
 def test_edit_workbasket_page_displays_breadcrumb(
+    url_name,
     valid_user_client,
     session_workbasket,
 ):
-    url = reverse("workbaskets:edit-workbasket", kwargs={"pk": session_workbasket.pk})
+    url = reverse(url_name, kwargs={"pk": session_workbasket.pk})
     response = valid_user_client.get(
         f"{url}?edit=1",
     )

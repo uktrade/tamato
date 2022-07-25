@@ -6,13 +6,22 @@
 {% set page_subtitle %}<span class="govuk-!-font-weight-bold">Summary</span> - View workbasket components{% endset %}
 
 {% block breadcrumb %}
+{% if request.GET.edit %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary" }
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - At a glance" }
     ]
   }) }}
+{% else %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - At a glance" }
+    ]
+  }) }}
+{% endif %}
 {% endblock %}
 
 {% block content %}

@@ -6,13 +6,22 @@
 {% set page_subtitle %}At a glance{% endset %}
 
 {% block breadcrumb %}
+  {% if request.GET.edit %}
+    {{ govukBreadcrumbs({
+      "items": [
+        {"text": "Home", "href": url("home")},
+        {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
+        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - At a glance" }
+      ]
+    }) }}
+  {% else %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("home")},
-      {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
       {"text": "Workbasket " ~ request.session.workbasket.id ~ " - At a glance" }
     ]
   }) }}
+  {% endif %}
 {% endblock %}
 
 
@@ -32,6 +41,9 @@
       </ul>
     </div>
   </div>
-  <a href="{{ url('workbaskets:review-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">Review workbasket</a>
-  <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}?edit=1" class="govuk-button govuk-button--primary">Edit workbasket</a>
+  {% set params %}
+    {% if request.GET %}?{{ request.GET.urlencode() }}{% endif %}
+  {% endset %}
+  <a href="{{ url('workbaskets:review-workbasket', args=[request.session.workbasket.id]) }}{{ params }}" class="govuk-button govuk-button--primary">Review workbasket</a>
+  <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}{{ params }}" class="govuk-button govuk-button--primary">Edit workbasket</a>
 {% endblock %}

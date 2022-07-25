@@ -101,13 +101,12 @@ class SelectWorkbasketView(WithPaginationListView):
 
             if workbasket:
                 workbasket.save_to_session(request.session)
-
-                return redirect(
-                    reverse(
-                        "workbaskets:workbasket-ui-detail",
-                        kwargs={"pk": workbasket_pk},
-                    ),
+                redirect_url = reverse(
+                    "workbaskets:workbasket-ui-detail",
+                    kwargs={"pk": workbasket_pk},
                 )
+
+                return redirect(f"{redirect_url}?edit=1")
 
         return redirect(reverse("workbaskets:workbasket-ui-list"))
 
