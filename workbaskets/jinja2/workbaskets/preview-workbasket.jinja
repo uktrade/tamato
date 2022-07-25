@@ -9,7 +9,7 @@
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("home")},
-      {"text": "Edit an existing workbasket", "href": url("workbaskets:select-workbasket")},
+      {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
       {"text": "Workbasket " ~ request.session.workbasket.id ~ " - At a glance" }
     ]
   }) }}
@@ -32,6 +32,6 @@
       </ul>
     </div>
   </div>
-  <a href="{{ url('workbaskets:review-workbasket') }}" class="govuk-button govuk-button--primary">Review workbasket</a>
-  <a href="{{ url('workbaskets:edit-workbasket') }}?edit=1" class="govuk-button govuk-button--primary">Edit workbasket</a>
+  <a href="{{ url('workbaskets:review-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">Review workbasket</a>
+  <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}?edit=1" class="govuk-button govuk-button--primary">Edit workbasket</a>
 {% endblock %}

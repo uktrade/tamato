@@ -9,7 +9,7 @@
     {{ govukBreadcrumbs({
       "items": [
         {"text": "Home", "href": url("home")},
-        {"text": "Edit an existing workbasket", "href": url("workbaskets:select-workbasket")},
+        {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
         {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
       ]
     }) }}

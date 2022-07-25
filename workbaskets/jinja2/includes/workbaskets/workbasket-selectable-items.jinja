@@ -45,7 +45,7 @@
         <h2 class="govuk-body">Select a component you would like to edit or remove:</h2>
       {% else %}
         <h2 class="govuk-body">There is nothing in your workbasket yet.</h2>
-        <a href="{{ url('workbaskets:edit-workbasket') }}?edit=1" class="govuk-button govuk-button--primary">Edit workbasket</a>
+        <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}?edit=1" class="govuk-button govuk-button--primary">Edit workbasket</a>
       {% endif %}
     </div>
   </div>

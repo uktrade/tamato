@@ -13,7 +13,7 @@ api_router.register(r"workbaskets", api_views.WorkBasketViewSet)
 ui_patterns = [
     path(
         "",
-        ui_views.WorkBasketList.as_view(),
+        ui_views.SelectWorkbasketView.as_view(),
         name="workbasket-ui-list",
     ),
     path(
@@ -22,17 +22,12 @@ ui_patterns = [
         name="workbasket-ui-create",
     ),
     path(
-        "preview-workbasket/",
-        ui_views.PreviewWorkbasketView.as_view(),
-        name="preview-workbasket",
-    ),
-    path(
-        "edit-workbasket/",
+        f"<pk>/edit/",
         ui_views.EditWorkbasketView.as_view(),
         name="edit-workbasket",
     ),
     path(
-        "review-workbasket/",
+        f"<pk>/review/",
         ui_views.ReviewWorkbasketView.as_view(),
         name="review-workbasket",
     ),
@@ -71,9 +66,4 @@ ui_patterns = [
 urlpatterns = [
     path("workbaskets/", include(ui_patterns)),
     path("api/", include(api_router.urls)),
-    path(
-        "select-workbasket/",
-        ui_views.SelectWorkbasketView.as_view(),
-        name="select-workbasket",
-    ),
 ]

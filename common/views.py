@@ -41,7 +41,7 @@ class HomeView(FormView, View):
 
     def form_valid(self, form):
         if form.cleaned_data["workbasket_action"] == "EDIT":
-            return redirect(reverse("workbaskets:select-workbasket"))
+            return redirect(reverse("workbaskets:workbasket-ui-list"))
         elif form.cleaned_data["workbasket_action"] == "CREATE":
             return redirect(reverse("workbaskets:workbasket-ui-create"))
 

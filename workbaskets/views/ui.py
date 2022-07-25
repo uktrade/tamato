@@ -22,7 +22,6 @@ from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
 from common.filters import TamatoFilter
-from common.pagination import build_pagination_list
 from common.views import WithPaginationListView
 from exporter.models import Upload
 from workbaskets import forms
@@ -47,20 +46,6 @@ class WorkBasketFilter(TamatoFilter):
         fields = ["search", "status"]
 
 
-class WorkBasketList(WithPaginationListView):
-    """UI endpoint for viewing and filtering workbaskets."""
-
-    template_name = "workbaskets/list.jinja"
-    filterset_class = WorkBasketFilter
-    search_fields = [
-        "title",
-        "reason",
-    ]
-
-    def get_queryset(self):
-        return WorkBasket.objects.order_by("-updated_at")
-
-
 class WorkBasketConfirmCreate(DetailView):
     template_name = "workbaskets/confirm_create.jinja"
     model = WorkBasket
@@ -79,6 +64,7 @@ class WorkBasketCreate(CreateView):
         self.object = form.save(commit=False)
         self.object.author = user
         self.object.save()
+        self.object.save_to_session(self.request.session)
         return redirect(
             reverse(
                 "workbaskets:workbasket-ui-confirm-create",
@@ -92,7 +78,10 @@ class WorkBasketCreate(CreateView):
         return kwargs
 
 
-class SelectWorkbasketView(WorkBasketList):
+class SelectWorkbasketView(WithPaginationListView):
+    """UI endpoint for viewing and filtering workbaskets."""
+
+    filterset_class = WorkBasketFilter
     template_name = "workbaskets/select-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
 
@@ -104,43 +93,23 @@ class SelectWorkbasketView(WorkBasketList):
             .order_by("-updated_at")
         )
 
+    def post(self, request, *args, **kwargs):
+        workbasket_pk = request.POST.get("workbasket")
 
-class WorkBasketDetail(DetailView):
-    """UI endpoint for viewing a specified workbasket."""
+        if workbasket_pk:
+            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
 
-    model = WorkBasket
-    template_name = "workbaskets/detail.jinja"
-    paginate_by = 50
-    # paginate_by = 2
+            if workbasket:
+                workbasket.save_to_session(request.session)
 
-    def get_context_data(self, **kwargs):
-        """
-        Although this is a detail view of a WorkBasket instance, it provides a
-        view of its contained items (TrackedModel instances) as a paged list.
+                return redirect(
+                    reverse(
+                        "workbaskets:workbasket-ui-detail",
+                        kwargs={"pk": workbasket_pk},
+                    ),
+                )
 
-        A paginator and related objects are therefore added to page context.
-        """
-        items = self.get_object().tracked_models.all()
-
-        paginator = Paginator(items, WorkBasketDetail.paginate_by)
-        try:
-            page_number = int(self.request.GET.get("page", 1))
-        except ValueError:
-            page_number = 1
-        page_obj = paginator.get_page(page_number)
-
-        context = super().get_context_data(**kwargs)
-
-        context["paginator"] = paginator
-        context["page_obj"] = page_obj
-        context["is_paginated"] = True
-        context["object_list"] = items
-        context["page_links"] = build_pagination_list(
-            page_number,
-            page_obj.paginator.num_pages,
-        )
-
-        return context
+        return redirect(reverse("workbaskets:workbasket-ui-list"))
 
 
 class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
@@ -283,32 +252,11 @@ class EditWorkbasketView(TemplateView):
     template_name = "workbaskets/edit-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
 
-    def dispatch(self, request, *args, **kwargs):
-        workbasket_pk = request.GET.get("workbasket")
-
-        if workbasket_pk:
-            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
-
-            if workbasket:
-                workbasket.save_to_session(request.session)
-
-        return super().dispatch(request, *args, **kwargs)
-
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class PreviewWorkbasketView(TemplateView):
+class WorkBasketDetail(DetailView):
+    model = WorkBasket
     template_name = "workbaskets/preview-workbasket.jinja"
-
-    def dispatch(self, request, *args, **kwargs):
-        workbasket_pk = request.GET.get("workbasket")
-
-        if workbasket_pk:
-            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
-
-            if workbasket:
-                workbasket.save_to_session(request.session)
-
-        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -319,18 +267,6 @@ class PreviewWorkbasketView(TemplateView):
 @method_decorator(require_current_workbasket, name="dispatch")
 class ReviewWorkbasketView(TemplateResponseMixin, FormMixin, View):
     template_name = "workbaskets/review-workbasket.jinja"
-
-    def dispatch(self, request, *args, **kwargs):
-        workbasket_pk = request.GET.get("workbasket")
-
-        if workbasket_pk:
-            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
-
-            if workbasket:
-                workbasket.save_to_session(request.session)
-
-        return super().dispatch(request, *args, **kwargs)
-
     form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.

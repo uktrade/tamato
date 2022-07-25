@@ -23,6 +23,7 @@ NM
 target.quota.definition.sid
 MeasureType
 ImportBatch
+f"<pk>/edit/
 BatchDependencies
 Jira
 MeasureActions
