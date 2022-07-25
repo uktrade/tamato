@@ -17,8 +17,17 @@
 {% endset %}
 
 {% block header %}
+{% set workbasket_url %}
+  {% if request.session.workbasket %}
+    {{ url('workbaskets:workbasket-ui-detail', args=[request.session.workbasket.id]) }}
+  {% else %}
+  {% endif %}
+{% endset %}
+
 {% set workbasket_html %}
-  <a href="{{ url('workbaskets:preview-workbasket') }}" class="govuk-header__link workbasket-link">Workbasket  {{ get_current_workbasket(request).id }} {{ workbasket_svg }}</a>
+  {% if request.session.workbasket %}
+    <a href="{{ url('workbaskets:workbasket-ui-detail', args=[request.session.workbasket.id]) }}" class="govuk-header__link workbasket-link">Workbasket  {{ request.session.workbasket.id }} {{ workbasket_svg }}</a>
+  {% endif %}
 {% endset %}
 
 {{ govukHeader({
@@ -26,7 +35,7 @@
   "serviceName": service_name,
   "serviceUrl": "/",
   "navigation": [
-    { "html": workbasket_html } if get_current_workbasket(request) else "",
+    { "html": workbasket_html } if request.session.workbasket else "",
     {
       "href": url("logout") if request.user.is_authenticated else settings.LOGIN_URL,
       "text": "Sign out" if request.user.is_authenticated else "Sign In"

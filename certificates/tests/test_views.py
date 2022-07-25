@@ -58,7 +58,12 @@ def test_certificate_create_form_creates_certificate_description_object(
     ),
     ids=view_urlpattern_ids,
 )
-def test_certificate_detail_views(view, url_pattern, valid_user_client):
+def test_certificate_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
     """Verify that certificate detail views are under the url certificates/ and
     don't return an error."""
     model_overrides = {

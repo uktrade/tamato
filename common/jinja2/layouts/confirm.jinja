@@ -22,15 +22,19 @@
       {% block panel %}{% endblock%}
       <h2 class="govuk-heading-m">Next steps</h2>
       <p class="govuk-body">To complete your task you must publish your change. </p>
+      {% if request.session.workbasket %}
       {{ govukButton({
         "text": "Go to your tariff changes",
-        "href": url("workbaskets:review-workbasket"),
+        "href": url("workbaskets:review-workbasket", args=[request.session.workbasket.id]),
         "classes": "govuk-button--secondary"
       }) }}
+      {% endif %}
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ object.get_url() }}">View {{ object._meta.verbose_name }} {{ object|string }}</a></li>
         <li><a href="{{ object.get_url("list") }}">Manage more {{ object._meta.verbose_name_plural }}</a></li>
-        <li><a href="{{ url('workbaskets:edit-workbasket') }}">Return to main menu</a></li>
+        {% if request.session.workbasket %}
+        <li><a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}">Return to main menu</a></li>
+        {% endif %}
       </ul>
     </div>
   </div>

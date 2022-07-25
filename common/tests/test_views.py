@@ -27,7 +27,7 @@ def test_index_displays_workbasket_action_form(valid_user_client):
             {
                 "workbasket_action": "EDIT",
             },
-            "workbaskets:select-workbasket",
+            "workbaskets:workbasket-ui-list",
         ),
         (
             {
