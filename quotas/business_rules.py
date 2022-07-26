@@ -355,11 +355,14 @@ class QA6(BusinessRule):
 
     def validate(self, association):
         if (
-            association.main_quota.sub_quota_associations.values(
+            association.main_quota.sub_quota_associations.approved_up_to_transaction(
+                association.transaction,
+            )
+            .values(
                 "sub_quota_relation_type",
             )
             .order_by("sub_quota_relation_type")
-            .distinct("sub_quota_relation_type")
+            .distinct()
             .count()
             > 1
         ):
