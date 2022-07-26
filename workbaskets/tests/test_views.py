@@ -322,8 +322,8 @@ def test_review_workbasket_redirects(
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    with factories.TransactionFactory.create(workbasket=workbasket):
-        factories.FootnoteTypeFactory.create_batch(30)
+    with workbasket.new_transaction() as tx:
+        factories.FootnoteTypeFactory.create_batch(30, transaction=tx)
     url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
     data = {"form-action": form_action}
     response = valid_user_client.post(f"{url}?page=2", data)
