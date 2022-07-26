@@ -337,7 +337,10 @@ class ReviewWorkbasketView(TemplateResponseMixin, FormMixin, View):
             )
         elif form_action in ("page-prev", "page-next"):
             return self._append_url_page_param(
-                reverse(self.action_success_url_names[form_action]),
+                reverse(
+                    self.action_success_url_names[form_action],
+                    kwargs={"pk": self.workbasket.pk},
+                ),
                 form_action,
             )
         return reverse("home")
