@@ -600,6 +600,21 @@ def test_QA6(existing_relation, new_relation, error_expected):
         business_rules.QA6(assoc.transaction).validate(assoc)
 
 
+# https://uktrade.atlassian.net/browse/TP2000-434
+def test_QA6_new_association_version():
+    """Tests that previous versions of an association are not compared when
+    looking for sub-quotas associated with the same main quota."""
+    original_version = factories.QuotaAssociationFactory.create(
+        sub_quota_relation_type="EQ",
+    )
+    later_version = original_version.new_version(
+        original_version.transaction.workbasket,
+        sub_quota_relation_type="NM",
+    )
+
+    business_rules.QA6(later_version.transaction).validate(later_version)
+
+
 @pytest.mark.parametrize(
     ("mechanism", "error_expected"),
     (
