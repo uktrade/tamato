@@ -35,12 +35,18 @@
 
 
 {% if workbasket %}
+{% set change_count = workbasket.tracked_models.count() %}
 <form method="post">
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <h2 class="govuk-heading-l">Your tariff changes</h2>
+      {% if change_count %}
+        <h2 class="govuk-body">Select a component you would like to edit or remove:</h2>
+      {% else %}
+        <h2 class="govuk-body">There is nothing in your workbasket yet.</h2>
+        <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}?edit=1" class="govuk-button govuk-button--primary">Edit workbasket</a>
+      {% endif %}
     </div>
   </div>
 
@@ -62,7 +68,7 @@
         <div class="govuk-details__text">
           This is a place holder for help text about tariff managers' actions and/or next steps
         </div>
-      </details> 
+      </details>
       #}
       <div class="govuk-button-group">
         <a href={{ url("workbaskets:workbasket-download") }} class="govuk-button" data-module="govuk-button" download>
@@ -72,43 +78,10 @@
     </div>
   </div>
   {% endif %}
-  
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-      {% set change_count = workbasket.tracked_models.count() %}
-      <p class="govuk-body">{{ change_count }} changes</p>
-
       {% if form.fields %}
-        {% set actions_details_html %}
-          <div class="govuk-grid-row">
-            <div class="govuk-grid-column-one-third">
-              <button
-                value="publish-all"
-                name="form-action"
-                class="govuk-link fake-link"
-                data-module="govuk-button"
-                role="link"
-              >
-                Publish <strong>all</strong> changes
-              </button>
-            </div>
-            <div class="govuk-grid-column-one-third">
-              <button
-                value="remove-selected"
-                name="form-action"
-                class="govuk-link fake-link"
-                data-module="govuk-button"
-                role="link"
-              >
-                Remove <strong>selected</strong> changes
-              </button>
-            </div>
-          </div>
-        {%- endset%}
-        {{ govukDetails({
-          "summaryText": "Actions on changes below",
-          "html": actions_details_html
-        }) }}
 
         {% set table_rows = [] %}
         {% for field in form %}
@@ -125,9 +98,9 @@
 
           {{ table_rows.append([
             {"html": checkbox},
-            {"text": obj.update_type_str},
-            {"text": obj._meta.verbose_name.title(), "classes": "govuk-!-width-one-quarter"},
             {"html": object_link, "classes": "govuk-!-width-one-quarter"},
+            {"text": obj._meta.verbose_name.title(), "classes": "govuk-!-width-one-quarter"},
+            {"text": obj.update_type_str},
             {"text": object_description, "classes": "govuk-!-width-one-quarter"},
             {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
           ]) or "" }}
@@ -136,9 +109,9 @@
         {{ govukTable({
           "head": [
             {"html": checkbox_check_all},
-            {"text": "Action"},
-            {"text": "Type"},
             {"text": "ID"},
+            {"text": "Component"},
+            {"text": "Action"},
             {"text": "Description"},
             {"text": "Activity date"},
           ],
@@ -149,5 +122,7 @@
       {% endif %}
     </div>
   </div>
+
+  <button value="remove-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Remove</button>
 </form>
 {% endif %}

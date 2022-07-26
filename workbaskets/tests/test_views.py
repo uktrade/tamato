@@ -2,18 +2,45 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+from bs4 import BeautifulSoup
 from django.test import override_settings
 from django.urls import reverse
 
 from common.tests import factories
+from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
+from workbaskets import models
+from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.tests.util import assert_workbasket_valid
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
+
+
+def test_workbasket_create_form_creates_workbasket_object(
+    valid_user_api_client,
+):
+
+    # Post a form
+    create_url = reverse("workbaskets:workbasket-ui-create")
+
+    form_data = {
+        "title": "My new workbasket",
+        "reason": "Making a new workbasket",
+    }
+
+    response = valid_user_api_client.post(create_url, form_data)
+    #  get the workbasket we have made, and make sure it matches title and description
+    workbasket = models.WorkBasket.objects.filter(
+        title=form_data["title"],
+    )[0]
+
+    assert str(workbasket.id) in response.url
+    assert workbasket.title == form_data["title"]
+    assert workbasket.reason == form_data["reason"]
 
 
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)
@@ -37,7 +64,7 @@ def test_submit_workbasket(
     response = client.get(url)
 
     assert response.status_code == 302
-    assert response.url == reverse("index")
+    assert response.url == reverse("home")
 
     workbasket.refresh_from_db()
 
@@ -157,3 +184,122 @@ def test_download(
 
         assert response.status_code == 302
         assert expected_url in response.url
+
+
+def test_review_workbasket_displays_objects_in_current_workbasket(
+    valid_user_client,
+    session_workbasket,
+):
+    """Verify that changes in the current workbasket are displayed on the bulk
+    selection form of the review workbasket page."""
+
+    with session_workbasket.new_transaction():
+        GoodsNomenclatureFactory.create()
+
+    response = valid_user_client.get(
+        reverse("workbaskets:review-workbasket", kwargs={"pk": session_workbasket.id}),
+    )
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        features="lxml",
+    )
+    for obj in session_workbasket.tracked_models.all():
+        field_name = SelectableObjectsForm.field_name_for_object(obj)
+        assert page.find("input", {"name": field_name})
+
+
+def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbasket):
+    response = valid_user_client.get(
+        reverse("workbaskets:edit-workbasket", kwargs={"pk": session_workbasket.pk}),
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    assert session_workbasket.title in soup.select(".govuk-heading-xl")[0].text
+    assert str(session_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
+
+
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        ("workbaskets:edit-workbasket"),
+        ("workbaskets:review-workbasket"),
+        ("workbaskets:workbasket-ui-detail"),
+    ],
+)
+def test_edit_workbasket_page_displays_breadcrumb(
+    url_name,
+    valid_user_client,
+    session_workbasket,
+):
+    url = reverse(url_name, kwargs={"pk": session_workbasket.pk})
+    response = valid_user_client.get(
+        f"{url}?edit=1",
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    breadcrumb_links = [
+        element.text for element in soup.select(".govuk-breadcrumbs__link")
+    ]
+    assert "Edit an existing workbasket" in breadcrumb_links
+
+
+def test_workbasket_detail_page_url_params(
+    valid_user_client,
+    session_workbasket,
+):
+    url = reverse(
+        "workbaskets:workbasket-ui-detail",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    buttons = soup.select(".govuk-button.govuk-button--primary")
+    for button in buttons:
+        # test that accidental spacing in template hasn't mangled the url
+        assert " " not in button.get("href")
+        assert "%20" not in button.get("href")
+
+
+def test_edit_workbasket_page_hides_breadcrumb(valid_user_client, session_workbasket):
+    url = reverse("workbaskets:edit-workbasket", kwargs={"pk": session_workbasket.pk})
+    response = valid_user_client.get(
+        f"{url}?edit=",
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    breadcrumb_links = [
+        element.text for element in soup.select(".govuk-breadcrumbs__link")
+    ]
+    assert "Edit an existing workbasket" not in breadcrumb_links
+
+
+def test_select_workbasket_page_200(valid_user_client):
+    """
+    Checks the page returns 200.
+
+    Then checks that only workbaskets with certain statuses are displayed i.e.
+    we don't want users to be able to edit workbaskets that are archived, sent,
+    or published.
+    """
+    factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.SENT)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.PUBLISHED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.APPROVED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.PROPOSED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.ERRORED)
+    valid_statuses = {
+        WorkflowStatus.EDITING,
+        WorkflowStatus.APPROVED,
+        WorkflowStatus.PROPOSED,
+        WorkflowStatus.ERRORED,
+    }
+    response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    statuses = [
+        element.text for element in soup.select(".govuk-table__row .status-badge")
+    ]
+    assert len(statuses) == 4
+    assert not set(statuses).difference(valid_statuses)
