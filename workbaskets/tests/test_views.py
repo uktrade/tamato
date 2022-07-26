@@ -303,3 +303,35 @@ def test_select_workbasket_page_200(valid_user_client):
     ]
     assert len(statuses) == 4
     assert not set(statuses).difference(valid_statuses)
+
+
+@pytest.mark.parametrize(
+    "form_action, url_name",
+    [
+        ("publish-all", "workbaskets:workbasket-ui-submit"),
+        ("remove-selected", "workbaskets:workbasket-ui-delete-changes"),
+        ("page-prev", "workbaskets:review-workbasket"),
+        ("page-next", "workbaskets:review-workbasket"),
+    ],
+)
+def test_review_workbasket_redirects(
+    form_action,
+    url_name,
+    valid_user_client,
+):
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    with workbasket.new_transaction() as tx:
+        factories.FootnoteTypeFactory.create_batch(30, transaction=tx)
+    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    data = {"form-action": form_action}
+    response = valid_user_client.post(f"{url}?page=2", data)
+    assert response.status_code == 302
+    assert reverse(url_name, kwargs={"pk": workbasket.pk}) in response.url
+
+    if form_action == "page-prev":
+        assert "?page=1" in response.url
+
+    elif form_action == "page-next":
+        assert "?page=3" in response.url
