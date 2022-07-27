@@ -49,9 +49,7 @@
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ created_measures.0.get_url('create') }}">Create a new measure</a></li>
         <li><a href="{{ created_measures.0.get_url('list') }}">Manage more {{ created_measures.0._meta.verbose_name_plural }}</a></li>
-        {% if request.session.workbasket %}
-        <li><a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}">Return to main menu</a></li>
-        {% endif %}
+        {% include "includes/common/main-menu-link.jinja" %}
       </ul>
     </div>
   </div>
