@@ -1156,3 +1156,5 @@ kernelspec
 *** components_qs
 components_qs}\")\n
 measure_qs)\n
+MeasureComponent
+Components
