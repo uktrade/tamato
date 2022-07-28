@@ -7,7 +7,7 @@
 {% block beforeContent %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Home", "href": url("index")},
+      {"text": "Home", "href": url("home")},
       {"text": "Footnotes", "href": url("footnote-ui-list")},
       {"text": "Footnote " ~ object.described_footnote|string, "href": object.described_footnote.get_url()},
       {"text": page_title}
@@ -25,7 +25,7 @@
   <ul class="govuk-list">
     <li><a href="{{ object.described_footnote.get_url() }}">View footnote {{ object.described_footnote|string }}</a></li>
     <li><a href="{{ url("footnote-ui-list") }}">Manage more footnotes</a></li>
-    <li><a href="{{ url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) }}">View content of your workbasket</a></li>
-    <li><a href="{{ url("index") }}">Return to main menu</a></li>
+    <li><a href="{{ url('workbaskets:workbasket-ui-detail', args=[request.session.workbasket.id]) }}">View content of your workbasket</a></li>
+    <li><a href="{{ url("home") }}">Return to main menu</a></li>
   </ul>
 {% endblock %}

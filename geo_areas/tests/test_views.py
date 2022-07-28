@@ -32,7 +32,12 @@ def test_geo_area_delete(factory, use_delete_form):
     ),
     ids=view_urlpattern_ids,
 )
-def test_geographical_area_detail_views(view, url_pattern, valid_user_client):
+def test_geographical_area_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
     """Verify that geographical detail views are under the url geographical-
     areas and don't return an error."""
     model_overrides = {

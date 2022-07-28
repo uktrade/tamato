@@ -887,7 +887,7 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
 
                 elif geo_area_choice == GeoAreaType.GROUP:
                     data_key = SUBFORM_PREFIX_MAPPING[geo_area_choice]
-                    cleaned_data["geo_area_list"] = cleaned_data[data_key]
+                    cleaned_data["geo_area_list"] = [cleaned_data[data_key]]
 
                 elif geo_area_choice == GeoAreaType.COUNTRY:
                     field_name = geographical_area_fields[geo_area_choice]

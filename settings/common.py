@@ -167,7 +167,7 @@ LOGIN_URL = reverse_lazy("login")
 if SSO_ENABLED:
     LOGIN_URL = reverse_lazy("authbroker_client:login")
 
-LOGIN_REDIRECT_URL = reverse_lazy("index")
+LOGIN_REDIRECT_URL = reverse_lazy("home")
 
 AUTHBROKER_URL = os.environ.get("AUTHBROKER_URL", "https://sso.trade.gov.uk")
 AUTHBROKER_CLIENT_ID = os.environ.get("AUTHBROKER_CLIENT_ID")

@@ -1,0 +1,3 @@
+{% if request.session.workbasket %}
+  <li><a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}">Return to main menu</a></li>
+{% endif %}

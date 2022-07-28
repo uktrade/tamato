@@ -1,0 +1,37 @@
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{%- set table_rows = [] -%}
+{% for workbasket in object_list %}
+  {%- set workbasket_linked_pk -%}
+  <form action="{{ request.path }}" method="post">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input
+      type="submit"
+      class="button-link"
+      name="workbasket"
+      value="{{ workbasket.pk }}">
+  </form>
+  {%- endset -%}
+  {%- set workbasket_status -%}
+    <span class="status-badge">{{ workbasket.status }}</a>
+  {%- endset -%}
+
+  {{ table_rows.append([
+    {"text": workbasket_linked_pk},
+    {"html": workbasket.title},
+    {"text": workbasket.reason},
+    {"text": workbasket_status},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "Number"},
+    {"text": "TOPS/Jira"},
+    {"text": "Description"},
+    {"text": "Status"},
+  ],
+  "rows": table_rows
+}) }}

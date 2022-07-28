@@ -46,7 +46,12 @@ def test_regulation_delete(factory, use_delete_form):
     ),
     ids=view_urlpattern_ids,
 )
-def test_regulation_detail_views(view, url_pattern, valid_user_client):
+def test_regulation_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
     """Verify that regulation detail views are under the url regulations/ and
     don't return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
@@ -61,7 +66,12 @@ def test_regulation_detail_views(view, url_pattern, valid_user_client):
     ),
     ids=view_urlpattern_ids,
 )
-def test_regulation_list_view(view, url_pattern, valid_user_client):
+def test_regulation_list_view(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
     """Verify that regulation list view is under the url regulations/ and
     doesn't return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
