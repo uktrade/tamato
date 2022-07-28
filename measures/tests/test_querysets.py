@@ -69,6 +69,7 @@ def test_duty_sentence_generation(
     for kwargs in reorder(component_data):
         component_factory(
             **{field: model},
+            transaction=model.transaction,
             **kwargs,
         )
 
