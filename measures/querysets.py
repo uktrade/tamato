@@ -1,3 +1,5 @@
+from typing import Union
+
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import Case
 from django.db.models import CharField
@@ -22,12 +24,16 @@ from common.util import EndDate
 from common.util import StartDate
 
 
-class MeasureComponentQuerySet(TrackedModelQuerySet):
-    def duty_sentence(self, measure):
+class ComponentQuerySet(TrackedModelQuerySet):
+    """QuerySet that can be used with MeasureComponent or
+    MeasureConditionComponent."""
+
+    def duty_sentence(self, component_parent: Union["Measure", "MeasureCondition"]):
         """
-        Returns the human-readable "duty sentence" for a Measure instance as a
-        string. The returned string value is a (Postgresql) string aggregation
-        of all the measure's "current" components.
+        Returns the human-readable "duty sentence" for a Measure or
+        MeasureComponent instance as a string. The returned string value is a
+        (Postgresql) string aggregation of all the measure's "current"
+        components.
 
         This operation relies on the `prefix` and `abbreviation` fields being
         filled in on duty expressions and units, which are not supplied by the
@@ -82,11 +88,13 @@ class MeasureComponentQuerySet(TrackedModelQuerySet):
             ) AS "duty_sentence"
         """
 
-        # MeasureComponents with the greatest transaction_id that is less than
-        # or equal to the Measure's transaction_id, are considered 'current'.
-        component_qs = measure.components.approved_up_to_transaction(
-            measure.transaction,
+        # Components with the greatest transaction_id that is less than
+        # or equal to component_parent's transaction_id, are considered 'current'.
+        component_qs = component_parent.components.approved_up_to_transaction(
+            component_parent.transaction,
         )
+        if not component_qs:
+            return ""
         latest_transaction_id = component_qs.aggregate(
             latest_transaction_id=Max(
                 "transaction_id",
@@ -94,8 +102,8 @@ class MeasureComponentQuerySet(TrackedModelQuerySet):
         ).get("latest_transaction_id")
         component_qs = component_qs.filter(transaction_id=latest_transaction_id)
 
-        # Aggregate all the current MeasureComponents for this Measure to form
-        # its duty sentence.
+        # Aggregate all the current Components for component_parent to form its
+        # duty sentence.
         duty_sentence = component_qs.aggregate(
             duty_sentence=StringAgg(
                 expression=Trim(
@@ -257,7 +265,7 @@ class MeasuresQuerySet(TrackedModelQuerySet, ValidityQuerySet):
         )
 
 
-class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
+class MeasureConditionQuerySet(TrackedModelQuerySet):
     def with_reference_price_string(self):
         """
         Returns a MeasureCondition queryset annotated with
