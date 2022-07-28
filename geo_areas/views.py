@@ -14,7 +14,6 @@ from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
-from geo_areas.util import with_current_description
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
 from workbaskets.views.generic import DraftDeleteView
@@ -23,11 +22,14 @@ from workbaskets.views.generic import DraftDeleteView
 class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows geographical areas to be viewed."""
 
-    queryset = with_current_description(
-        GeographicalArea.objects.latest_approved().prefetch_related(
+    queryset = (
+        GeographicalArea.objects.latest_approved()
+        .with_current_description()
+        .prefetch_related(
             "descriptions",
-        ),
+        )
     )
+
     serializer_class = AutoCompleteSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_class = GeographicalAreaFilter
@@ -67,7 +69,7 @@ class GeoAreaList(GeoAreaMixin, TamatoListView):
     filterset_class.search_fields = ["area_id", "description"]
 
     def get_queryset(self):
-        return with_current_description(GeographicalArea.objects.current())
+        return GeographicalArea.objects.current().with_current_description()
 
 
 class GeoAreaDetail(GeoAreaMixin, TrackedModelDetailView):

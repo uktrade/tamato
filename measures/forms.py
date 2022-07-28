@@ -29,7 +29,6 @@ from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
-from geo_areas.util import with_current_description
 from geo_areas.validators import AreaCode
 from measures import models
 from measures.parsers import DutySentenceParser
@@ -92,7 +91,8 @@ class GeoGroupForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["geographical_area_group"].queryset = (
-            with_current_description(GeographicalArea.objects.current())
+            GeographicalArea.objects.current()
+            .with_current_description()
             .filter(area_code=AreaCode.GROUP)
             .as_at_today()
             .order_by("description")
@@ -119,7 +119,8 @@ class ErgaOmnesExclusionsForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["erga_omnes_exclusion"].queryset = (
-            with_current_description(GeographicalArea.objects.current())
+            GeographicalArea.objects.current()
+            .with_current_description()
             .as_at_today()
             .order_by("description")
         )
@@ -141,7 +142,8 @@ class GeoGroupExclusionsForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["geo_group_exclusion"].queryset = (
-            with_current_description(GeographicalArea.objects.current())
+            GeographicalArea.objects.current()
+            .with_current_description()
             .as_at_today()
             .order_by("description")
         )
@@ -198,7 +200,8 @@ class CountryRegionForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["geographical_area_country_or_region"].queryset = (
-            with_current_description(GeographicalArea.objects.current())
+            GeographicalArea.objects.current()
+            .with_current_description()
             .exclude(area_code=AreaCode.GROUP)
             .as_at_today()
             .order_by("description")
