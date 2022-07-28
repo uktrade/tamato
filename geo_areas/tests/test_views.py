@@ -72,9 +72,7 @@ def test_geographical_area_list_queryset():
     )
     view = GeoAreaList()
     qs = view.get_queryset()
-    set_current_transaction(new_description.transaction)
-
-    assert 0
+    set_current_transaction(new_area.transaction)
 
     assert qs.count() == 1
     assert qs.first().description == "England"  # /PS-IGNORE
