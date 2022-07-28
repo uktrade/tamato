@@ -9,6 +9,9 @@ pytestmark = pytest.mark.django_db
 
 
 def test_with_current_description():
+    """Tests that, after updating a geo area description,
+    with_current_description returns a queryset with one geo area annotated with
+    only the latest description."""
     description = factories.GeographicalAreaDescriptionFactory.create(
         description="blarghhh",
     )
