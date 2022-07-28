@@ -1,4 +1,47 @@
+from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Layout
+from crispy_forms_gds.layout import Size
+from crispy_forms_gds.layout import Submit
 from django import forms
+
+from common.forms import DescriptionHelpBox
+from workbaskets import models
+
+
+class WorkbasketCreateForm(forms.ModelForm):
+    """The form for creating a new workbasket."""
+
+    title = forms.CharField(
+        label="Tops/Jira number",
+        widget=forms.TextInput,
+        required=True,
+    )
+
+    reason = forms.CharField(
+        label="Description",
+        help_text="Add your notes here. You may enter HTML formatting if required. See the guide below for more information.",
+        widget=forms.Textarea,
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "title",
+            Field.textarea("reason", rows=5),
+            DescriptionHelpBox(),
+            Submit("submit", "Create"),
+        )
+
+    class Meta:
+        model = models.WorkBasket
+        fields = ("title", "reason")
 
 
 class SelectableObjectField(forms.BooleanField):
