@@ -32,9 +32,7 @@
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ object.get_url() }}">View {{ object._meta.verbose_name }} {{ object|string }}</a></li>
         <li><a href="{{ object.get_url("list") }}">Manage more {{ object._meta.verbose_name_plural }}</a></li>
-        {% if request.session.workbasket %}
-        <li><a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}">Return to main menu</a></li>
-        {% endif %}
+        {% include "includes/common/main-menu-link.jinja" %}
       </ul>
     </div>
   </div>
