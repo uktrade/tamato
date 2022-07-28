@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 import factory
@@ -734,6 +735,37 @@ def test_ME119(date_ranges):
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ME119(measure.transaction).validate(measure)
+
+
+# https://uktrade.atlassian.net/browse/TP2000-411
+def test_ME119_multiple_origins():
+    """
+    Tests that it is possible to create two measures with the same quota   #
+
+    /PS-IGNORE order number for non-overlapping periods both covered by separate
+    quota origins without ON10 or ME119 being triggered.
+    """
+    valid_between = TaricDateRange(date(2020, 1, 1), date(2020, 1, 31))
+    measure = factories.MeasureWithQuotaFactory.create(
+        order_number__origin__valid_between=valid_between,
+        valid_between=valid_between,
+    )
+    later_origin = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=measure.order_number,
+        valid_between=TaricDateRange(date(2021, 1, 1), date(2021, 1, 31)),
+    )
+    from quotas.business_rules import ON10
+
+    ON10(later_origin.transaction).validate(later_origin)
+
+    business_rules.ME119(later_origin.transaction).validate(measure)
+
+    later_measure = factories.MeasureWithQuotaFactory.create(
+        order_number=measure.order_number,
+        valid_between=TaricDateRange(date(2021, 1, 1), date(2021, 1, 31)),
+    )
+
+    business_rules.ME119(later_measure.transaction).validate(later_measure)
 
 
 # -- Relation with additional codes

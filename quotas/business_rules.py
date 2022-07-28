@@ -9,6 +9,8 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
+from common.models.trackedmodel import TrackedModel
+from common.models.utils import override_current_transaction
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
@@ -123,6 +125,33 @@ class ON10(ValidityPeriodContained):
     measure."""
 
     contained_field_name = "order_number__measure"
+
+    def valid_origin(self, model: TrackedModel) -> bool:
+        current = model.get_versions().current()
+        origins = type(model).objects.current().filter(order_number=model.order_number)
+        contained = current
+        if self.contained_field_name:
+            contained = contained.follow_path(self.contained_field_name)
+
+        for origin in origins:
+            valid_between = origin.valid_between
+            if (
+                contained.with_validity_field()
+                .filter(
+                    **{
+                        f"{contained.model.validity_field_name}__contained_by": valid_between,
+                    }
+                )
+                .exists()
+            ):
+                return True
+
+        return False
+
+    def validate(self, model):
+        with override_current_transaction(self.transaction):
+            if self.violating_models(model).exists() and not self.valid_origin(model):
+                raise self.violation(model)
 
 
 @only_applicable_after("2007-12-31")
