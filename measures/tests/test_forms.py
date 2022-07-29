@@ -41,7 +41,7 @@ def test_error_raised_if_no_duty_sentence(session_with_workbasket):
 
     with pytest.raises(
         AttributeError,
-        match="Measure instance is missing `duty_sentence` attribute.",
+        match="Measure instance is missing a mandatory `duty_sentence`.",
     ):
         MeasureForm(data={}, instance=measure, request=session_with_workbasket)
 

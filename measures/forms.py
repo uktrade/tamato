@@ -527,9 +527,9 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
 
         tx = WorkBasket.get_current_transaction(self.request)
 
-        if not hasattr(self.instance, "duty_sentence"):
+        if not self.instance.duty_sentence:
             raise AttributeError(
-                "Measure instance is missing `duty_sentence` attribute.",
+                "Measure instance is missing a mandatory `duty_sentence`.",
             )
 
         self.initial["duty_sentence"] = self.instance.duty_sentence
