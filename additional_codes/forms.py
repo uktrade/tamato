@@ -54,7 +54,7 @@ class AdditionalCodeForm(ValidityPeriodForm):
             Field("type"),
             Field("start_date"),
             Field("end_date"),
-            Submit("submit", "Save"),
+            Submit("submit", "Save", data_prevent_double_click="true"),
         )
 
     def clean(self):
@@ -122,7 +122,7 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
             "start_date",
             Field.textarea("description", rows=5),
             DescriptionHelpBox(),
-            Submit("submit", "Save"),
+            Submit("submit", "Save", data_prevent_double_click="true"),
         )
 
     def clean(self):

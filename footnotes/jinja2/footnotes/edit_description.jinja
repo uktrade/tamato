@@ -43,6 +43,6 @@
     }) }}
 
     <h2 class="govuk-heading-m">Finish now</h2>
-    {{ govukButton({"text": "Add to workbasket"}) }} <span class="govuk-body"><a href="#">Cancel</a></span>
+    {{ govukButton({"text": "Add to workbasket", "preventDoubleClick": true,}) }} <span class="govuk-body"><a href="#">Cancel</a></span>
   {% endcall %}
 {% endblock %}

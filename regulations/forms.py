@@ -144,7 +144,7 @@ class RegulationCreateForm(RegulationFormBase):
                 ),
                 "approved",
             ),
-            Submit("submit", "Save"),
+            Submit("submit", "Save", data_prevent_double_click="true"),
         )
 
     def _make_partial_regulation_id(
@@ -295,7 +295,7 @@ class RegulationEditForm(RegulationFormBase):
                 ),
                 "approved",
             ),
-            Submit("submit", "Save"),
+            Submit("submit", "Save", data_prevent_double_click="true"),
         )
 
     def clean(self):
