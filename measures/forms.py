@@ -796,7 +796,12 @@ class MeasureDetailsForm(
             "order_number",
             "start_date",
             "end_date",
-            Submit("submit", "Continue"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
@@ -865,7 +870,12 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
                     "from or exports to the selected area."
                 ),
             ),
-            Submit("submit", "Continue"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     @property
@@ -933,7 +943,12 @@ class MeasureAdditionalCodeForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             "additional_code",
-            Submit("submit", "Continue"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
 
