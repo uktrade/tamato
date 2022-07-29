@@ -1,16 +1,22 @@
 import xml.etree.ElementTree as ET
 from io import BytesIO
+from os import path
 from typing import Sequence
 from unittest import mock
 
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from common.tests import factories
 from importer import chunker
+from importer.chunker import chunk_taric
 from importer.chunker import filter_transaction_records
+from importer.models import ImporterXMLChunk
 from importer.namespaces import TTags
 
 from .test_namespaces import get_snippet_transaction
+
+TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
 
 pytestmark = pytest.mark.django_db
 
@@ -40,7 +46,7 @@ def filter_snippet_transaction(
 
 @mock.patch("importer.chunker.TemporaryFile")
 def test_get_chunk(mock_temp_file: mock.MagicMock):
-    """Asserts that the correct chung is found or created for writing to."""
+    """Asserts that the correct chunk is found or created for writing to."""
     mock_temp_file.side_effect = BytesIO
     chunks_in_progress = {}
 
@@ -115,3 +121,18 @@ def test_filter_transaction_records_negative(
     )
 
     assert transaction is None
+
+
+def test_chunk_taric():
+    with open(f"{TEST_FILES_PATH}/goods.xml", "rb") as f:
+        content = f.read()
+    taric_file = SimpleUploadedFile("goods.xml", content, content_type="text/xml")
+    batch = factories.ImportBatchFactory.create()
+    chunk_taric(taric_file, batch)
+    assert ImporterXMLChunk.objects.count()
+    chunk = ImporterXMLChunk.objects.first()
+    assert chunk.chunk_text
+
+
+def test_write_transaction_to_chunk():
+    pass
