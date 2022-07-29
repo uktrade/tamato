@@ -144,7 +144,12 @@ class RegulationCreateForm(RegulationFormBase):
                 ),
                 "approved",
             ),
-            Submit("submit", "Save", data_prevent_double_click="true"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def _make_partial_regulation_id(
@@ -295,7 +300,12 @@ class RegulationEditForm(RegulationFormBase):
                 ),
                 "approved",
             ),
-            Submit("submit", "Save", data_prevent_double_click="true"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):

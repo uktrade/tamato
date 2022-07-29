@@ -43,7 +43,12 @@ class CommodityImportForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             "taric_file",
-            Submit("submit", "Continue", data_prevent_double_click="true"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean_taric_file(self):

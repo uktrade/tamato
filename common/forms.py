@@ -175,7 +175,12 @@ class HomeForm(forms.Form):
         self.helper.legend_size = Size.EXTRA_LARGE
         self.helper.layout = Layout(
             "workbasket_action",
-            Submit("submit", "Continue", data_prevent_double_click="true"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
 
@@ -289,7 +294,12 @@ class DescriptionForm(forms.ModelForm):
         self.helper.layout = Layout(
             Field("validity_start", context={"legend_size": "govuk-label--s"}),
             Field.textarea("description", label_size=Size.SMALL, rows=5),
-            Submit("submit", "Save", data_prevent_double_click="true"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     class Meta:
@@ -380,6 +390,7 @@ class DeleteForm(forms.ModelForm):
                 "submit",
                 "Delete",
                 css_class="govuk-button--warning",
+                data_module="govuk-button",
                 data_prevent_double_click="true",
             ),
         )

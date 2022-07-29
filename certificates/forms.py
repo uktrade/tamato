@@ -57,7 +57,12 @@ class CertificateCreateForm(ValidityPeriodForm):
             "start_date",
             Field.textarea("description", rows=5),
             DescriptionHelpBox(),
-            Submit("submit", "Save", data_prevent_double_click="true"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean_sid(self):
@@ -142,7 +147,12 @@ class CertificateForm(ValidityPeriodForm):
             "certificate_type",
             "start_date",
             "end_date",
-            Submit("submit", "Save", data_prevent_double_click="true"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):

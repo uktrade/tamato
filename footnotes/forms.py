@@ -53,7 +53,12 @@ class FootnoteForm(ValidityPeriodForm):
             Field("footnote_type"),
             Field("start_date"),
             Field("end_date"),
-            Submit("submit", "Save", data_prevent_double_click="true"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
@@ -111,7 +116,12 @@ class FootnoteCreateForm(ValidityPeriodForm):
             "start_date",
             Field.textarea("description", rows=5),
             DescriptionHelpBox(),
-            Submit("submit", "Save", data_prevent_double_click="true"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):

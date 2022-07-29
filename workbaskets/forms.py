@@ -36,7 +36,12 @@ class WorkbasketCreateForm(forms.ModelForm):
             "title",
             Field.textarea("reason", rows=5),
             DescriptionHelpBox(),
-            Submit("submit", "Create", data_prevent_double_click="true"),
+            Submit(
+                "submit",
+                "Create",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     class Meta:
