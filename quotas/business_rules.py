@@ -250,6 +250,24 @@ class QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition(
         return quota_definition.quotablocking_set.model
 
 
+class OverlappingQuotaDefinition(BusinessRule):
+    """There may be no overlap in time of two quota definitions with the same
+    quota order number id."""
+
+    def validate(self, quota_definition):
+        if (
+            type(quota_definition)
+            .objects.approved_up_to_transaction(quota_definition.transaction)
+            .filter(
+                order_number=quota_definition.order_number,
+                valid_between__overlap=quota_definition.valid_between,
+            )
+            .exclude(sid=quota_definition.sid)
+            .exists()
+        ):
+            raise self.violation(quota_definition)
+
+
 class QA1(UniqueIdentifyingFields):
     """The association between two quota definitions must be unique."""
 
@@ -366,6 +384,15 @@ class QA6(BusinessRule):
             .count()
             > 1
         ):
+            raise self.violation(association)
+
+
+class SameMainAndSubQuota(BusinessRule):
+    """A quota association may only exist between two distinct quota
+    definitions."""
+
+    def validate(self, association):
+        if association.main_quota.sid == association.sub_quota.sid:
             raise self.violation(association)
 
 
