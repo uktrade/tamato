@@ -13,6 +13,7 @@ from common.models.trackedmodel import TrackedModel
 from common.models.utils import override_current_transaction
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
+from quotas import models
 from quotas.validators import AdministrationMechanism
 from quotas.validators import SubQuotaType
 
@@ -28,7 +29,7 @@ class PreventDeletingLinkedQuotaDefinitions(BusinessRule):
             f"get_relation_model must be implemented on {self.__class__.__name__}.",
         )
 
-    def validate(self, quota_definition):
+    def validate(self, quota_definition: "models.QuotaDefinition"):
         related_model = self.get_relation_model(quota_definition)
         if quota_definition.update_type == UpdateType.DELETE:
             kwargs = {f"{self.sid_prefix}sid": quota_definition.sid}
@@ -48,7 +49,7 @@ class ON2(BusinessRule):
     """There may be no overlap in time of two quota order numbers with the same
     quota order number id."""
 
-    def validate(self, order_number):
+    def validate(self, order_number: "models.QuotaOrderNumber"):
         if (
             type(order_number)
             .objects.approved_up_to_transaction(order_number.transaction)
@@ -66,7 +67,7 @@ class ON5(BusinessRule):
     """There may be no overlap in time of two quota order number origins with
     the same quota order number SID and geographical area id."""
 
-    def validate(self, origin):
+    def validate(self, origin: "models.QuotaOrderNumberOrigin"):
         if (
             type(origin)
             .objects.approved_up_to_transaction(origin.transaction)
@@ -174,7 +175,7 @@ class ON13(BusinessRule):
     area group (area code = 1).
     """
 
-    def validate(self, exclusion):
+    def validate(self, exclusion: "models.QuotaOrderNumberOriginExclusion"):
         if exclusion.origin.geographical_area.area_code != AreaCode.GROUP:
             raise self.violation(exclusion)
 
@@ -244,7 +245,7 @@ class PreventQuotaDefinitionDeletion(BusinessRule):
     The Quota Definition may be end-dated instead.
     """
 
-    def validate(self, quota_definition):
+    def validate(self, quota_definition: "models.QuotaDefinition"):
         if quota_definition.update_type == UpdateType.DELETE:
             if quota_definition.valid_between.lower <= date.today():
                 raise self.violation(quota_definition)
@@ -257,7 +258,7 @@ class QuotaAssociationMustReferToANonDeletedSubQuota(
 
     sid_prefix = "sub_quota__"
 
-    def get_relation_model(self, quota_definition):
+    def get_relation_model(self, quota_definition: "models.QuotaDefinition"):
         return quota_definition.sub_quota_associations.model
 
 
@@ -266,7 +267,7 @@ class QuotaSuspensionMustReferToANonDeletedQuotaDefinition(
 ):
     """A Quota Suspension must refer to a non-deleted Quota Definition."""
 
-    def get_relation_model(self, quota_definition):
+    def get_relation_model(self, quota_definition: "models.QuotaDefinition"):
         return quota_definition.quotasuspension_set.model
 
 
@@ -275,7 +276,7 @@ class QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition(
 ):
     """A Quota Blocking Period must refer to a non-deleted Quota Definition."""
 
-    def get_relation_model(self, quota_definition):
+    def get_relation_model(self, quota_definition: "models.QuotaDefinition"):
         return quota_definition.quotablocking_set.model
 
 
@@ -283,7 +284,7 @@ class OverlappingQuotaDefinition(BusinessRule):
     """There may be no overlap in time of two quota definitions with the same
     quota order number id."""
 
-    def validate(self, quota_definition):
+    def validate(self, quota_definition: "models.QuotaDefinition"):
         if (
             type(quota_definition)
             .objects.approved_up_to_transaction(quota_definition.transaction)
@@ -322,7 +323,7 @@ class QA3(BusinessRule):
     has no conversion ratios or other way of relating units to each other.)
     """
 
-    def validate(self, association):
+    def validate(self, association: "models.QuotaAssociation"):
         main = association.main_quota
         sub = association.sub_quota
         if not (
@@ -341,7 +342,7 @@ class QA4(BusinessRule):
     When it is not specified a value 1 is always assumed.
     """
 
-    def validate(self, association):
+    def validate(self, association: "models.QuotaAssociation"):
         if not association.coefficient > 0:
             raise self.violation(association)
 
@@ -355,7 +356,7 @@ class QA5(BusinessRule):
     defined with the 'normal' type must have a coefficient of 1.
     """
 
-    def validate(self, association):
+    def validate(self, association: "models.QuotaAssociation"):
         if association.sub_quota_relation_type == SubQuotaType.EQUIVALENT:
 
             if association.coefficient == Decimal("1.00000"):
@@ -400,7 +401,7 @@ class QA6(BusinessRule):
     """Sub-quotas associated with the same main quota must have the same
     relation type."""
 
-    def validate(self, association):
+    def validate(self, association: "models.QuotaAssociation"):
         if (
             association.main_quota.sub_quota_associations.approved_up_to_transaction(
                 association.transaction,
@@ -420,7 +421,7 @@ class SameMainAndSubQuota(BusinessRule):
     """A quota association may only exist between two distinct quota
     definitions."""
 
-    def validate(self, association):
+    def validate(self, association: "models.QuotaAssociation"):
         if association.main_quota.sid == association.sub_quota.sid:
             raise self.violation(association)
 
@@ -428,7 +429,7 @@ class SameMainAndSubQuota(BusinessRule):
 class BlockingOnlyOfFCFSQuotas(BusinessRule):
     """Blocking periods are only applicable to FCFS quotas."""
 
-    def validate(self, blocking):
+    def validate(self, blocking: "models.QuotaBlocking"):
         if (
             blocking.quota_definition.order_number.mechanism
             != AdministrationMechanism.FCFS
@@ -440,7 +441,7 @@ class QBP2(BusinessRule):
     """The start date of the quota blocking period must be later than or equal
     to the start date of the quota validity period."""
 
-    def validate(self, blocking):
+    def validate(self, blocking: "models.QuotaBlocking"):
         if blocking.valid_between.lower < blocking.quota_definition.valid_between.lower:
             raise self.violation(blocking)
 
@@ -449,7 +450,7 @@ class SuspensionsOnlyToFCFSQuotas(BusinessRule):
     """Quota suspensions are only applicable to First Come First Served
     quotas."""
 
-    def validate(self, suspension):
+    def validate(self, suspension: "models.QuotaSuspension"):
         if (
             suspension.quota_definition.order_number.mechanism
             != AdministrationMechanism.FCFS
