@@ -132,7 +132,3 @@ def test_chunk_taric():
     assert ImporterXMLChunk.objects.count()
     chunk = ImporterXMLChunk.objects.first()
     assert chunk.chunk_text
-
-
-def test_write_transaction_to_chunk():
-    pass
