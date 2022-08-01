@@ -17,6 +17,7 @@ from django.db.models.functions.comparison import NullIf
 from django.db.models.functions.text import Trim
 from django_cte.cte import With
 
+import measures
 from common.fields import TaricDateRangeField
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.querysets import ValidityQuerySet
@@ -28,7 +29,10 @@ class ComponentQuerySet(TrackedModelQuerySet):
     """QuerySet that can be used with MeasureComponent or
     MeasureConditionComponent."""
 
-    def duty_sentence(self, component_parent: Union["Measure", "MeasureCondition"]):
+    def duty_sentence(
+        self,
+        component_parent: Union["measures.Measure", "measures.MeasureCondition"],
+    ):
         """
         Returns the human-readable "duty sentence" for a Measure or
         MeasureComponent instance as a string. The returned string value is a
