@@ -118,7 +118,12 @@ def test_measure_delete(use_delete_form):
     ),
     ids=view_urlpattern_ids,
 )
-def test_measure_detail_views(view, url_pattern, valid_user_client):
+def test_measure_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
     """Verify that measure detail views are under the url measures/ and don't
     return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
