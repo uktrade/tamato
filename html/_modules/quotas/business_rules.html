@@ -379,6 +379,24 @@
         <span class="k">return</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">quotablocking_set</span><span class="o">.</span><span class="n">model</span></div>
 
 
+<div class="viewcode-block" id="OverlappingQuotaDefinition"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.OverlappingQuotaDefinition">[docs]</a><span class="k">class</span> <span class="nc">OverlappingQuotaDefinition</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;There may be no overlap in time of two quota definitions with the same</span>
+<span class="sd">    quota order number id.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OverlappingQuotaDefinition.validate"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.OverlappingQuotaDefinition.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">order_number</span><span class="o">=</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">order_number</span><span class="p">,</span>
+                <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">sid</span><span class="o">=</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="QA1"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.QA1">[docs]</a><span class="k">class</span> <span class="nc">QA1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The association between two quota definitions must be unique.&quot;&quot;&quot;</span></div>
 
@@ -495,6 +513,15 @@
             <span class="o">.</span><span class="n">count</span><span class="p">()</span>
             <span class="o">&gt;</span> <span class="mi">1</span>
         <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">association</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SameMainAndSubQuota"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.SameMainAndSubQuota">[docs]</a><span class="k">class</span> <span class="nc">SameMainAndSubQuota</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A quota association may only exist between two distinct quota</span>
+<span class="sd">    definitions.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SameMainAndSubQuota.validate"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.SameMainAndSubQuota.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">association</span><span class="o">.</span><span class="n">main_quota</span><span class="o">.</span><span class="n">sid</span> <span class="o">==</span> <span class="n">association</span><span class="o">.</span><span class="n">sub_quota</span><span class="o">.</span><span class="n">sid</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">association</span><span class="p">)</span></div></div>
 
 
