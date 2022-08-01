@@ -29,6 +29,7 @@ def test_measure_conditions_list():
         duty_expression__prefix="",
         duty_amount=Decimal("2.5"),
         monetary_unit=None,
+        transaction=cond.transaction,
     )
 
     cond = (
@@ -61,6 +62,7 @@ def test_stringify_measure_condition():
         duty_expression__prefix="",
         duty_amount=Decimal("2.5"),
         monetary_unit=None,
+        transaction=cond.transaction,
     )
     factories.MeasureConditionComponentFactory.create(
         condition=cond,
@@ -73,6 +75,7 @@ def test_stringify_measure_condition():
             measurement_unit__abbreviation="100 kg",
             measurement_unit_qualifier=None,
         ),
+        transaction=cond.transaction,
     )
 
     cond = (
