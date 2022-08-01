@@ -45,7 +45,7 @@
 {% block beforeContent %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Home", "href": url("index")},
+      {"text": "Home", "href": url("home")},
       {"text": "Find and edit " ~ described_object._meta.verbose_name_plural, "href": described_object.get_url("list")},
       {"text": described_object._meta.verbose_name|capitalize ~ ": " ~ described_object|string, "href": described_object.get_url()},
       {"text": page_title}

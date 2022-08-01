@@ -184,6 +184,8 @@ def test_measure_forms_geo_area_valid_data_geo_group(erga_omnes):
         prefix=GEO_AREA_FORM_PREFIX,
     )
     assert form.is_valid()
+    # https://uktrade.atlassian.net/browse/TP2000-437 500 error where object instead of a list of objects
+    assert type(form.cleaned_data["geo_area_list"]) == list
 
 
 def test_measure_forms_geo_area_valid_data_countries(erga_omnes):
