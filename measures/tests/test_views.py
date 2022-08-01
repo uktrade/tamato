@@ -653,6 +653,26 @@ def test_measure_update_invalid_conditions(
     )
 
 
+def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
+    measure = factories.MeasureFactory.create(geographical_area=erga_omnes)
+    geo_group = factories.GeoGroupFactory.create()
+    area_1 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    area_2 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    client.force_login(valid_user)
+    data = model_to_dict(measure)
+    data = {k: v for k, v in data.items() if v is not None}
+    start_date = data["valid_between"].lower
+    data.update(
+        start_date_0=start_date.day,
+        start_date_1=start_date.month,
+        start_date_2=start_date.year,
+    )
+    response = client.post(url, data=data)
+
+    assert 0
+
+
 @pytest.mark.django_db
 def test_measure_form_wizard_start(valid_user_client):
     url = reverse("measure-ui-create", kwargs={"step": "start"})
