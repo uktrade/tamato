@@ -36,16 +36,6 @@ def test_diff_components_called(diff_components, measure_form, duty_sentence_par
     assert diff_components.called == True
 
 
-def test_error_raised_if_no_duty_sentence(session_with_workbasket):
-    measure = factories.MeasureFactory.create()
-
-    with pytest.raises(
-        AttributeError,
-        match="Measure instance is missing a mandatory `duty_sentence`.",
-    ):
-        MeasureForm(data={}, instance=measure, request=session_with_workbasket)
-
-
 def test_measure_form_invalid_conditions_data(
     measure_form_data,
     session_with_workbasket,
