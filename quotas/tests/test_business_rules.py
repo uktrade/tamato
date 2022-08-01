@@ -482,6 +482,23 @@ def test_linking_models_must_refer_to_a_non_deleted_sub_quota(
     business_rule(deleted.transaction).validate(deleted)
 
 
+def test_overlapping_quota_definition(date_ranges):
+    order_number = factories.QuotaOrderNumberFactory.create()
+    factories.QuotaDefinitionFactory.create(
+        order_number=order_number,
+        valid_between=date_ranges.normal,
+    )
+    overlapping_definition = factories.QuotaDefinitionFactory.create(
+        order_number=order_number,
+        valid_between=date_ranges.overlap_normal,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.OverlappingQuotaDefinition(
+            overlapping_definition.transaction,
+        ).validate(overlapping_definition)
+
+
 def test_QA1(assert_handles_duplicates):
     """The association between two quota definitions must be unique."""
 
@@ -625,6 +642,7 @@ def test_QA6(existing_relation, new_relation, error_expected):
 def test_QA6_new_association_version():
     """Tests that previous versions of an association are not compared when
     looking for sub-quotas associated with the same main quota."""
+
     original_version = factories.QuotaAssociationFactory.create(
         sub_quota_relation_type="EQ",
     )
@@ -634,6 +652,22 @@ def test_QA6_new_association_version():
     )
 
     business_rules.QA6(later_version.transaction).validate(later_version)
+
+
+def test_same_main_and_sub_quota():
+    """A quota association may only exist between two distinct quota
+    definitions."""
+
+    definition = factories.QuotaDefinitionFactory.create()
+    association = factories.QuotaAssociationFactory.create(
+        main_quota=definition,
+        sub_quota=definition,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.SameMainAndSubQuota(association.transaction).validate(
+            association,
+        )
 
 
 @pytest.mark.parametrize(
