@@ -738,7 +738,7 @@ def test_ME119(date_ranges):
 
 
 # https://uktrade.atlassian.net/browse/TP2000-411
-def test_ME119_multiple_origins():
+def test_ME119_multiple_valid_origins():
     """
     Tests that it is possible to create two measures with the same quota   #
 
@@ -766,6 +766,22 @@ def test_ME119_multiple_origins():
     )
 
     business_rules.ME119(later_measure.transaction).validate(later_measure)
+
+
+def test_ME119_multiple_clashing_origins(date_ranges):
+    """Test that a measure with two origins containing its validity period
+    raises a violation."""
+    measure = factories.MeasureWithQuotaFactory.create(
+        order_number__origin__valid_between=date_ranges.normal,
+        valid_between=date_ranges.normal,
+    )
+    origin = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=measure.order_number,
+        valid_between=date_ranges.normal,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ME119(origin.transaction).validate(measure)
 
 
 # -- Relation with additional codes

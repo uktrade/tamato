@@ -5,7 +5,6 @@ from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q
-from django.db.models import QuerySet
 from django.db.utils import DataError
 
 from common.business_rules import BusinessRule
@@ -17,14 +16,13 @@ from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
-from common.models.mixins.validity import ValidityMixin
-from common.models.trackedmodel import TrackedModel
 from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from geo_areas.validators import AreaCode
 from measures.querysets import MeasuresQuerySet
+from quotas.models import QuotaOrderNumberOrigin
 from quotas.validators import AdministrationMechanism
 
 # 140 - MEASURE TYPE SERIES
@@ -459,52 +457,32 @@ class ME119(ValidityPeriodContained):
     # This checks the same thing as ON10 from the other side of the relation
     container_field_name = "order_number__quotaordernumberorigin"
 
-    def violating_models(self, model: TrackedModel) -> QuerySet[ValidityMixin]:
-        current = model.get_versions().current()
+    def validate(self, measure):
+        """
+        Get all current QuotaOrderNumberOrigin objects associated with a
+        measure's QuotaOrderNumber.
 
-        # Resolve our way to the contained models. The output from `follow_path`
-        # will be all the models that should be contained.
-        contained = current
-        if self.contained_field_name:
-            contained = contained.follow_path(self.contained_field_name)
-
-        # Get the latest version of the container model. If the container is not
-        # present, then skip the rule.
-        container = current
-        if self.container_field_name:
-            container = container.follow_path(self.container_field_name)
-        if not container.exists():
-            return contained.none()
-
-        # Scope the contained models down to just the ones we are testing.
-        # Violating models are ones that are not contained by the valid between
-        # from the container model.
-        if container.count() > 1:
-            for c in container:
-                valid_between = c.valid_between
-                if (
-                    contained.with_validity_field()
-                    .filter(**self.extra_filters)
-                    .filter(
-                        **{
-                            f"{contained.model.validity_field_name}__contained_by": valid_between,
-                        }
-                    )
-                    .exists()
-                ):
-                    return contained.none()
-
-        valid_between = container.get().valid_between
-
-        return (
-            contained.with_validity_field()
-            .filter(**self.extra_filters)
-            .exclude(
-                **{
-                    f"{contained.model.validity_field_name}__contained_by": valid_between,
-                },
+        Loop over these and raise a violation if a) the measure validity period
+        is not contained by any of the origins or b) the validity_period is
+        contained by more than one origin.
+        """
+        with override_current_transaction(self.transaction):
+            contained_measure = measure.get_versions().current().get()
+            origins = QuotaOrderNumberOrigin.objects.current().filter(
+                order_number__order_number=measure.order_number.order_number,
             )
-        )
+            contained_count = 0
+
+            for origin in origins:
+                valid_between = origin.valid_between
+                if validity_range_contains_range(
+                    valid_between,
+                    contained_measure.valid_between,
+                ):
+                    contained_count += 1
+
+            if contained_count > 1 or contained_count == 0:
+                raise self.violation(measure)
 
 
 # -- Relation with additional codes
