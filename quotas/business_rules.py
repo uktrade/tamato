@@ -126,28 +126,6 @@ class ON10(ValidityPeriodContained):
 
     contained_field_name = "order_number__measure"
 
-    # def valid_origin(self, model: TrackedModel) -> bool:
-    #     current = model.get_versions().current()
-    #     origins = type(model).objects.current().filter(order_number=model.order_number)
-    #     contained = current
-    #     if self.contained_field_name:
-    #         contained = contained.follow_path(self.contained_field_name)
-
-    #     for origin in origins:
-    #         valid_between = origin.valid_between
-    #         if (
-    #             contained.with_validity_field()
-    #             .filter(
-    #                 **{
-    #                     f"{contained.model.validity_field_name}__contained_by": valid_between,
-    #                 }
-    #             )
-    #             .exists()
-    #         ):
-    #             return True
-
-    #     return False
-
     def validate(self, order_number_origin):
         """
         Loop over measures that reference the same quota order number as origin.
