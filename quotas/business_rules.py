@@ -9,8 +9,8 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
-from common.models.trackedmodel import TrackedModel
 from common.models.utils import override_current_transaction
+from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
@@ -126,32 +126,52 @@ class ON10(ValidityPeriodContained):
 
     contained_field_name = "order_number__measure"
 
-    def valid_origin(self, model: TrackedModel) -> bool:
-        current = model.get_versions().current()
-        origins = type(model).objects.current().filter(order_number=model.order_number)
-        contained = current
-        if self.contained_field_name:
-            contained = contained.follow_path(self.contained_field_name)
+    # def valid_origin(self, model: TrackedModel) -> bool:
+    #     current = model.get_versions().current()
+    #     origins = type(model).objects.current().filter(order_number=model.order_number)
+    #     contained = current
+    #     if self.contained_field_name:
+    #         contained = contained.follow_path(self.contained_field_name)
 
-        for origin in origins:
-            valid_between = origin.valid_between
-            if (
-                contained.with_validity_field()
-                .filter(
-                    **{
-                        f"{contained.model.validity_field_name}__contained_by": valid_between,
-                    }
-                )
-                .exists()
-            ):
-                return True
+    #     for origin in origins:
+    #         valid_between = origin.valid_between
+    #         if (
+    #             contained.with_validity_field()
+    #             .filter(
+    #                 **{
+    #                     f"{contained.model.validity_field_name}__contained_by": valid_between,
+    #                 }
+    #             )
+    #             .exists()
+    #         ):
+    #             return True
 
-        return False
+    #     return False
 
-    def validate(self, model):
+    def validate(self, order_number_origin):
+        """
+        Loop over measures that reference the same quota order number as origin.
+
+        Get all the origins linked to this measure. Loop over these origins and
+        check that every measure is contained by one and not more than one
+        origin.
+        """
         with override_current_transaction(self.transaction):
-            if self.violating_models(model).exists() and not self.valid_origin(model):
-                raise self.violation(model)
+            current_qs = order_number_origin.get_versions().current()
+            contained_measures = current_qs.follow_path(self.contained_field_name)
+
+            for measure in contained_measures:
+                origins = measure.order_number.quotaordernumberorigin_set.current()
+                contained_count = 0
+                for origin in origins:
+                    if validity_range_contains_range(
+                        origin.valid_between,
+                        measure.valid_between,
+                    ):
+                        contained_count += 1
+
+                if contained_count > 1 or contained_count == 0:
+                    raise self.violation(order_number_origin)
 
 
 @only_applicable_after("2007-12-31")
