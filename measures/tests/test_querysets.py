@@ -114,9 +114,14 @@ def test_duty_sentence_with_history(
     field_name: str,
     duty_sentence_x_2_data: List[Tuple[str, List[Dict]]],
 ):
-    """Sets up a history of model instances (Measure or MeasureCondition) and
-    linked components and test that the correct duty sentence is available via
-    the object's duty_sentence property throughout the instance's history."""
+    """
+    Sets up a history of model instances (Measure or MeasureCondition) and
+    linked components.
+
+    The test then checks that the correct duty sentence is available via each
+    object's duty_sentence property throughout the object's history, including
+    going back in transaction time.
+    """
     model_qs = model_factory._meta.model.objects.all()
 
     # Create model instance and associate it with duty components.
@@ -138,7 +143,8 @@ def test_duty_sentence_with_history(
     test_instance = model_qs.get_latest_version(sid=model_3.sid)
     assert test_instance.duty_sentence == expected
 
-    # Go back in history to the model's fist version to check its duty_sentence.
+    # Go back in time to the model's fist version to check its duty_sentence is
+    # still correctly constructed and retrieved.
     expected, component_data = duty_sentence_x_2_data[0]
     test_instance = model_qs.get_first_version(sid=model_1.sid)
     assert test_instance.duty_sentence == expected
