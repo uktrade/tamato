@@ -35,7 +35,7 @@ class ComponentQuerySet(TrackedModelQuerySet):
     ):
         """
         Returns the human-readable "duty sentence" for a Measure or
-        MeasureComponent instance as a string. The returned string value is a
+        MeasureCondition instance as a string. The returned string value is a
         (Postgresql) string aggregation of all the measure's "current"
         components.
 
