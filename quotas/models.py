@@ -225,6 +225,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         business_rules.QuotaAssociationMustReferToANonDeletedSubQuota,
         business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition,
         business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition,
+        business_rules.OverlappingQuotaDefinition,
         UniqueIdentifyingFields,
         UpdateValidity,
     )
@@ -287,6 +288,7 @@ class QuotaAssociation(TrackedModel):
         business_rules.QA5,
         business_rules.QA6,
         UpdateValidity,
+        business_rules.SameMainAndSubQuota,
     )
 
 
