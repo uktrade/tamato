@@ -124,6 +124,9 @@ def test_filter_transaction_records_negative(
 
 
 def test_chunk_taric():
+    """Tests that the chunker creates an ImporterXMLChunk object in the db from
+    the loaded XML file."""
+    assert not ImporterXMLChunk.objects.count()
     with open(f"{TEST_FILES_PATH}/goods.xml", "rb") as f:
         content = f.read()
     taric_file = SimpleUploadedFile("goods.xml", content, content_type="text/xml")
