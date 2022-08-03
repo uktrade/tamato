@@ -475,8 +475,12 @@ def test_measure_update_create_conditions(
 
     ####### CI unit test debugging #######
     raise AssertionError(
-        f"*** components.first() ordering = {components.first().condition.sid}:{components.first().duty_expression.sid},"
-        f"    components.last().duty_amount = {components.last().condition.sid}:{components.last().duty_expression.sid}",
+        f"*** components.first() : "
+        f"ordering={components.first().condition.sid}:{components.first().duty_expression.sid}, "
+        f"duty_amount={components.first().duty_amount},"
+        f"    components.last().duty_amount : "
+        f"ordering={components.last().condition.sid}:{components.last().duty_expression.sid}",
+        f"duty_amount={components.last().duty_amount}",
     )
 
     assert components.first().duty_amount == 3.5
