@@ -131,8 +131,7 @@ class ON10(ValidityPeriodContained):
         Loop over measures that reference the same quota order number as origin.
 
         Get all the origins linked to this measure. Loop over these origins and
-        check that every measure is contained by one and not more than one
-        origin.
+        check that every measure is contained by at least one origin.
         """
         with override_current_transaction(self.transaction):
             current_qs = order_number_origin.get_versions().current()
@@ -148,7 +147,7 @@ class ON10(ValidityPeriodContained):
                     ):
                         contained_count += 1
 
-                if contained_count > 1 or contained_count == 0:
+                if contained_count == 0:
                     raise self.violation(order_number_origin)
 
 

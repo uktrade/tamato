@@ -768,20 +768,17 @@ def test_ME119_multiple_valid_origins():
     business_rules.ME119(later_measure.transaction).validate(later_measure)
 
 
-def test_ME119_multiple_clashing_origins(date_ranges):
-    """Test that a measure with two origins containing its validity period
-    raises a violation."""
-    measure = factories.MeasureWithQuotaFactory.create(
-        order_number__origin__valid_between=date_ranges.normal,
-        valid_between=date_ranges.normal,
-    )
+def test_quota_origin_matching_area():
     origin = factories.QuotaOrderNumberOriginFactory.create(
-        order_number=measure.order_number,
-        valid_between=date_ranges.normal,
+        geographical_area__sid="666",
+    )
+    measure = factories.MeasureFactory.create(
+        order_number=origin.order_number,
+        geographical_area__sid="999",
     )
 
     with pytest.raises(BusinessRuleViolation):
-        business_rules.ME119(origin.transaction).validate(measure)
+        business_rules.QuotaOriginMatchingArea(measure.transaction).validate(measure)
 
 
 # -- Relation with additional codes
