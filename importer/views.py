@@ -11,7 +11,7 @@ from importer.filters import ImportBatchFilter
 
 
 class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
-    """UI endpoint for viewing and filtering Additional Codes."""
+    """UI endpoint for viewing and filtering Import Batches."""
 
     queryset = (
         models.ImportBatch.objects.all()
