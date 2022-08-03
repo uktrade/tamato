@@ -1148,3 +1148,4 @@ self.linked_model
 WorkBasketOutputFormat
 param kwargs:
 Enum
+schemaLocation="commodities_envelope.xsd"/

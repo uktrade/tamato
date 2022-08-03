@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema targetNamespace="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" elementFormDefault="qualified" attributeFormDefault="unqualified">
-    <xs:import namespace="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" schemaLocation="taric3.xsd" />
+    <xs:import namespace="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" schemaLocation="commodities_taric3.xsd" />
     <xs:element name="envelope">
         <xs:annotation>
             <xs:documentation>Message envelope</xs:documentation>
@@ -41,7 +41,7 @@
             <xs:attribute name="id" use="required">
                 <xs:simpleType>
                     <xs:restriction base="xs:string">
-                        <xs:pattern value="[0-9]{6}"/>
+                        <xs:pattern value="[0-9]{5}"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>
