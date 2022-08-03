@@ -471,18 +471,30 @@ def test_measure_update_create_conditions(
 
     components = condition.components.approved_up_to_transaction(tx)
 
-    assert components.count() == 2
+    ####### Start CI unit test debugging #######
 
-    ####### CI unit test debugging #######
-    raise AssertionError(
+    components = components.order_by("condition__sid", "duty_expression__sid")
+
+    # raise AssertionError(
+    #    f"*** components.first() : "
+    #    f"ordering={components.first().condition.sid}:{components.first().duty_expression.sid}, "
+    #    f"duty_amount={components.first().duty_amount},"
+    #    f"    components.last() : "
+    #    f"ordering={components.last().condition.sid}:{components.last().duty_expression.sid}",
+    #    f"duty_amount={components.last().duty_amount}",
+    # )
+    print(
         f"*** components.first() : "
         f"ordering={components.first().condition.sid}:{components.first().duty_expression.sid}, "
         f"duty_amount={components.first().duty_amount},"
-        f"    components.last().duty_amount : "
+        f"    components.last() : "
         f"ordering={components.last().condition.sid}:{components.last().duty_expression.sid}",
         f"duty_amount={components.last().duty_amount}",
     )
 
+    ####### End CI unit test debugging #######
+
+    assert components.count() == 2
     assert components.first().duty_amount == 3.5
     assert components.last().duty_amount == 11
 
