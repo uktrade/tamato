@@ -7,7 +7,6 @@ from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import QuerySet
 from django.db.models import Subquery
@@ -15,7 +14,7 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from checks.models import TrackedModelCheck
-from checks.models import TransactionCheck
+from common.models import ModelCeleryTask
 from common.models.mixins import TimestampedMixin
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
@@ -328,10 +327,11 @@ class WorkBasket(TimestampedMixin):
         if not self.transactions.exists():
             return
 
-        if self.unchecked_or_errored_transactions.exists():
-            raise ValidationError(
-                "Transactions have not yet been fully checked or contain errors",
-            )
+        # TODO
+        # if self.unchecked_or_errored_transactions.exists():
+        #     raise ValidationError(
+        #         "Transactions have not yet been fully checked or contain errors",
+        #     )
 
     @transition(
         field=status,
@@ -486,23 +486,8 @@ class WorkBasket(TimestampedMixin):
         )
 
     def delete_checks(self):
-        """Delete all TrackedModelCheck and TransactionCheck instances related
-        to the WorkBasket."""
-        TrackedModelCheck.objects.filter(
-            transaction_check__transaction__workbasket=self,
-        ).delete()
-        TransactionCheck.objects.filter(
-            transaction__workbasket=self,
-        ).delete()
-
-    @property
-    def unchecked_or_errored_transactions(self):
-        return self.transactions.exclude(
-            pk__in=TransactionCheck.objects.requires_update(False)
-            .filter(
-                completed=True,
-                successful=True,
-                transaction__workbasket=self,
-            )
-            .values("transaction__pk"),
-        )
+        """Delete all TrackedModelCheck and ModelCeleryTask instances related to
+        the WorkBasket."""
+        checks = TrackedModelCheck.objects.filter(model__transaction__workbasket=self)
+        ModelCeleryTask.objects.filter(object__in=checks).delete()
+        checks.delete()

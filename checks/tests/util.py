@@ -1,6 +1,6 @@
 from pytest_django.asserts import assertQuerysetEqual  # type: ignore
 
-from checks.models import TransactionCheck
+# from checks.models import TransactionCheck  # TODO
 
 
 def assert_queryset(queryset, expected):

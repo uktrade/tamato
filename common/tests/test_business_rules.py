@@ -20,11 +20,6 @@ from common.validators import UpdateType
 pytestmark = pytest.mark.django_db
 
 
-class TestRule(BusinessRule):
-    __test__ = False
-    validate = MagicMock()
-
-
 def test_business_rule_violation_message():
     model = MagicMock()
     violation = TestRule(model.transaction).violation(model)

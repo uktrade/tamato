@@ -1,26 +1,15 @@
-from itertools import chain
-
 import pytest
 
 import checks.tests.factories
 from checks.checks import BusinessRuleChecker
-from checks.checks import IndirectBusinessRuleChecker
-from checks.checks import checker_types
+from checks.checks import LinkedModelsBusinessRuleChecker
+
+# from checks.checks import checker_types  # TODO
 from common.tests import factories
 from common.tests.util import TestRule
 from common.tests.util import add_business_rules
 
 pytestmark = pytest.mark.django_db
-
-
-def test_all_business_rules_have_a_checker(trackedmodel_factory):
-    """Verify that each BusinessRule has a corresponding Checker."""
-    checkers = set(checker.rule for checker in checker_types())
-    model_type = trackedmodel_factory._meta.model
-    model_rules = set(
-        chain(model_type.business_rules, model_type.indirect_business_rules),
-    )
-    assert checkers.intersection(model_rules) == model_rules
 
 
 def test_business_rules_validation():
@@ -61,10 +50,10 @@ def test_indirect_business_rule_validation():
         TestRule,
         indirect=True,
     ):
-        checker_type = IndirectBusinessRuleChecker.of(TestRule)
+        checker_type = LinkedModelsBusinessRuleChecker.of(TestRule)
 
         # Verify the cache returns the same object if .of is called a second time.
-        assert checker_type is IndirectBusinessRuleChecker.of(TestRule)
+        assert checker_type is LinkedModelsBusinessRuleChecker.of(TestRule)
 
         checkers = checker_type.checkers_for(model)
 
