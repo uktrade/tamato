@@ -471,6 +471,13 @@ def test_measure_update_create_conditions(
     components = condition.components.approved_up_to_transaction(tx)
 
     assert components.count() == 2
+
+    ####### CI unit test debugging #######
+    raise AssertionError(
+        f"*** components.first().duty_amount = {components.first().duty_amount},"
+        f"    components.last().duty_amount = {components.last().duty_amount}",
+    )
+
     assert components.first().duty_amount == 3.5
     assert components.last().duty_amount == 11
 
