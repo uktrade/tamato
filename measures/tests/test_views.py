@@ -468,7 +468,7 @@ def test_measure_update_create_conditions(
     )
     assert condition.update_type == UpdateType.CREATE
 
-    components = condition.components.approved_up_to_transaction(tx).all()
+    components = condition.components.approved_up_to_transaction(tx)
 
     assert components.count() == 2
     assert components.first().duty_amount == 3.5
