@@ -1,8 +1,8 @@
 {%- extends "includes/common/tabs/core_data.jinja" -%}
 
 {% set geographical_exclusions %}
-{% if object.exclusions.all() %}
-	{% for exclusion in object.exclusions.all() %}
+{% if object.exclusions.current() %}
+	{% for exclusion in object.exclusions.current() %}
 		{{ exclusion.excluded_geographical_area.get_description().description }}{{ ", " if not loop.last else "" }}
 	{% endfor %}
 {% else %}-{% endif %}
