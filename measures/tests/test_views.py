@@ -24,6 +24,7 @@ from measures.business_rules import ME70
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureCondition
+from measures.models import MeasureExcludedGeographicalArea
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
@@ -651,6 +652,61 @@ def test_measure_update_invalid_conditions(
         a_tags[1].text
         == "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
     )
+
+
+def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
+    """
+    Tests that measure edit view handles exclusion of one group from another
+    group.
+
+    We create an erga omnes measure and a group containing two areas that also
+    belong to the erga omnes group. Then post to edit endpoint with this group
+    as an exclusion and check that two MeasureExcludedGeographicalArea objects
+    are created with the two area sids in that excluded group.
+    """
+    measure = factories.MeasureFactory.create(geographical_area=erga_omnes)
+    geo_group = factories.GeoGroupFactory.create()
+    area_1 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    area_2 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    factories.GeographicalMembershipFactory.create(geo_group=erga_omnes, member=area_1)
+    factories.GeographicalMembershipFactory.create(geo_group=erga_omnes, member=area_2)
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    client.force_login(valid_user)
+    data = model_to_dict(measure)
+    data = {k: v for k, v in data.items() if v is not None}
+    start_date = data["valid_between"].lower
+    data.update(
+        {
+            "start_date_0": start_date.day,
+            "start_date_1": start_date.month,
+            "start_date_2": start_date.year,
+            "geo_area": "ERGA_OMNES",
+            "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": geo_group.pk,
+        },
+    )
+
+    assert not MeasureExcludedGeographicalArea.objects.approved_up_to_transaction(
+        Transaction.objects.last(),
+    ).exists()
+
+    client.post(url, data=data)
+    measure_area_exclusions = (
+        MeasureExcludedGeographicalArea.objects.approved_up_to_transaction(
+            Transaction.objects.last(),
+        )
+    )
+
+    assert measure_area_exclusions.count() == 2
+
+    area_sids = [
+        sid[0]
+        for sid in measure_area_exclusions.values_list(
+            "excluded_geographical_area__sid",
+        )
+    ]
+
+    assert area_1.sid in area_sids
+    assert area_2.sid in area_sids
 
 
 @pytest.mark.django_db

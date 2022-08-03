@@ -623,7 +623,7 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
                         exclusion,
                     )
                 )
-                next(pattern)
+                [p for p in pattern]
 
         if (
             self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
