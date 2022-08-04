@@ -441,7 +441,7 @@ def test_measure_update_create_conditions(
     Also tests that related objects (certificate and condition code) are
     present.
     """
-    measure = Measure.objects.with_duty_sentence().first()
+    measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
@@ -494,7 +494,7 @@ def test_measure_update_edit_conditions(
     Checks that previous conditions are removed and new field values are
     correct.
     """
-    measure = Measure.objects.with_duty_sentence().first()
+    measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
@@ -550,7 +550,7 @@ def test_measure_update_edit_conditions(
 #     duty_sentence_parser,
 #     erga_omnes,
 # ):
-#     measure = Measure.objects.with_duty_sentence().first()
+#     measure = Measure.objects.first()
 #     url = reverse("measure-ui-edit", args=(measure.sid,))
 #     client.force_login(valid_user) /PS-IGNORE
 #     client.post(url, data=measure_edit_conditions_data) /PS-IGNORE
@@ -586,7 +586,7 @@ def test_measure_update_remove_conditions(
     endpoint and that the updated measure has no currently approved conditions
     associated with it.
     """
-    measure = Measure.objects.with_duty_sentence().first()
+    measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
@@ -635,7 +635,7 @@ def test_measure_update_invalid_conditions(
     measure_edit_conditions_data[
         "measure-conditions-formset-0-applicable_duty"
     ] = "invalid"
-    measure = Measure.objects.with_duty_sentence().first()
+    measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     response = client.post(url, data=measure_edit_conditions_data)

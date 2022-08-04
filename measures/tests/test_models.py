@@ -29,13 +29,13 @@ def test_measure_conditions_list():
         duty_expression__prefix="",
         duty_amount=Decimal("2.5"),
         monetary_unit=None,
+        transaction=cond.transaction,
     )
 
     cond = (
         type(cond)
         .objects.latest_approved()
         .with_reference_price_string()
-        .with_duty_sentence()
         .get(pk=cond.pk)
     )
     assert cond.reference_price_string == "48.100 EUR / 100 kg"
@@ -62,6 +62,7 @@ def test_stringify_measure_condition():
         duty_expression__prefix="",
         duty_amount=Decimal("2.5"),
         monetary_unit=None,
+        transaction=cond.transaction,
     )
     factories.MeasureConditionComponentFactory.create(
         condition=cond,
@@ -74,13 +75,13 @@ def test_stringify_measure_condition():
             measurement_unit__abbreviation="100 kg",
             measurement_unit_qualifier=None,
         ),
+        transaction=cond.transaction,
     )
 
     cond = (
         type(cond)
         .objects.latest_approved()
         .with_reference_price_string()
-        .with_duty_sentence()
         .get(pk=cond.pk)
     )
     assert cond.reference_price_string == "0.000 EUR / 100 kg"
