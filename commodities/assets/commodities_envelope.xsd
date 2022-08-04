@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" elementFormDefault="qualified" attributeFormDefault="unqualified">
+    <xs:import namespace="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" schemaLocation="commodities_taric3.xsd" />
+    <xs:element name="envelope">
+        <xs:annotation>
+            <xs:documentation>Message envelope</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="header" type="Header" minOccurs="0" maxOccurs="unbounded"/>
+                <xs:element name="transaction" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="header" type="Header" minOccurs="0" maxOccurs="unbounded"/>
+                            <xs:element ref="status" minOccurs="0"/>
+                            <xs:element name="app.message" minOccurs="1" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element ref="abstract.message"/>
+                                    </xs:sequence>
+                                    <xs:attribute name="id" use="required">
+                                        <xs:simpleType>
+                                            <xs:restriction base="xs:string">
+                                                <xs:minLength value="1"/>
+                                            </xs:restriction>
+                                        </xs:simpleType>
+                                    </xs:attribute>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                        <xs:attribute name="id" use="required">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:minLength value="1"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:attribute>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+            <xs:attribute name="id" use="required">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:pattern value="[0-9]{5}"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:complexType name="Header">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="value" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:simpleType name="MMIMessageType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="500"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:element name="abstract.message" abstract="true"/>
+    <xs:element name="abstract.ref" abstract="true"/>
+    <xs:element name="status">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="mmi.message" type="MMIMessageType" minOccurs="0"/>
+                <xs:element name="status.detail" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="business.ref" minOccurs="0">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element ref="abstract.ref"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="binary" minOccurs="0">
+                                <xs:complexType>
+                                    <xs:simpleContent>
+                                        <xs:extension base="xs:string">
+                                            <xs:attribute name="mime.type" type="xs:string" default="application/octet-stream"/>
+                                        </xs:extension>
+                                    </xs:simpleContent>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="mmi.message" type="MMIMessageType" minOccurs="0"/>
+                        </xs:sequence>
+                        <xs:attribute name="category" use="required">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="error"/>
+                                    <xs:enumeration value="info"/>
+                                    <xs:enumeration value="warning"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:attribute>
+                        <xs:attribute name="location" type="xs:string" use="required"/>
+                        <xs:attribute name="code" type="xs:NMTOKEN" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+            <xs:attribute name="category" use="required">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="ok"/>
+                        <xs:enumeration value="error"/>
+                        <xs:enumeration value="rejected"/>
+                        <xs:enumeration value="warning"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="location" type="xs:string" use="required"/>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
+

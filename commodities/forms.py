@@ -66,7 +66,7 @@ class CommodityImportForm(forms.ModelForm):
                 capture_exception(e)
             raise ValidationError(generic_error_message)
 
-        with open(settings.PATH_XSD_TARIC) as xsd_file:
+        with open(settings.PATH_XSD_COMMODITIES_TARIC) as xsd_file:
             xmlschema = lxml.etree.XMLSchema(file=xsd_file)
 
         try:
