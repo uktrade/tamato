@@ -24,6 +24,7 @@ from measures.business_rules import ME70
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureCondition
+from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
@@ -469,7 +470,9 @@ def test_measure_update_create_conditions(
     )
     assert condition.update_type == UpdateType.CREATE
 
-    components = condition.components.approved_up_to_transaction(tx).all()
+    components = condition.components.approved_up_to_transaction(tx).order_by(
+        *MeasureConditionComponent._meta.ordering
+    )
 
     assert components.count() == 2
     assert components.first().duty_amount == 3.5
