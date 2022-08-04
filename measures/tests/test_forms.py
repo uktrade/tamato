@@ -36,16 +36,6 @@ def test_diff_components_called(diff_components, measure_form, duty_sentence_par
     assert diff_components.called == True
 
 
-def test_error_raised_if_no_duty_sentence(session_with_workbasket):
-    measure = factories.MeasureFactory.create()
-
-    with pytest.raises(
-        AttributeError,
-        match="Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
-    ):
-        MeasureForm(data={}, instance=measure, request=session_with_workbasket)
-
-
 def test_measure_form_invalid_conditions_data(
     measure_form_data,
     session_with_workbasket,
@@ -63,7 +53,7 @@ def test_measure_form_invalid_conditions_data(
     measure_form = MeasureForm(
         data=measure_form_data,
         initial={},
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
 
@@ -704,7 +694,7 @@ def test_measure_form_valid_data(erga_omnes, session_with_workbasket):
     form = forms.MeasureForm(
         data=data,
         initial={},
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
     assert form.is_valid()
@@ -737,7 +727,7 @@ def test_measure_form_initial_data_geo_area(
     form = forms.MeasureForm(
         data=data,
         initial={},
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
     assert form.initial["geo_area"] == geo_area_to_choice[measure.geographical_area]
@@ -769,7 +759,7 @@ def test_measure_form_cleaned_data_geo_exclusions_group(
     form = forms.MeasureForm(
         data=data,
         initial={},
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
     assert form.is_valid()
@@ -806,7 +796,7 @@ def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
     form = forms.MeasureForm(
         data=data,
         initial={},
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
     assert form.is_valid()

@@ -509,11 +509,6 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
 
         tx = WorkBasket.get_current_transaction(self.request)
 
-        if not hasattr(self.instance, "duty_sentence"):
-            raise AttributeError(
-                "Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
-            )
-
         self.initial["duty_sentence"] = self.instance.duty_sentence
         self.request.session[
             f"instance_duty_sentence_{self.instance.sid}"
@@ -636,7 +631,10 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
                 WorkBasket.current(self.request),
                 models.MeasureComponent,
                 "component_measure",
-                # Creating components in the same transaction as the new version of the measure minimises number of transaction and groups the creation of measure and related objects in the same transaction.
+                # Creating components in the same transaction as the new version
+                # of the measure minimises number of transaction and groups the
+                # creation of measure and related objects in the same
+                # transaction.
                 transaction=instance.transaction,
             )
 
