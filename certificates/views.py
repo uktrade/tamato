@@ -157,7 +157,7 @@ class CertificateDescriptionCreate(
 ):
     def get_initial(self):
         initial = super().get_initial()
-        initial["described_certificate"] = models.Certificate.objects.get(
+        initial["described_certificate"] = models.Certificate.objects.current().get(
             certificate_type__sid=(self.kwargs.get("certificate_type__sid")),
             sid=(self.kwargs.get("sid")),
         )
