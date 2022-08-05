@@ -17,6 +17,23 @@ from measures.validators import validate_duties
 pytestmark = pytest.mark.django_db
 
 
+def create_duty_components(
+    component_factory,
+    component_data,
+    field_name,
+    model,
+):
+    components = []
+    for kwargs in component_data:
+        component = component_factory(
+            **{field_name: model},
+            transaction=model.transaction,
+            **kwargs,
+        )
+        components.append(component)
+    return components
+
+
 @pytest.mark.parametrize(
     "component_factory,model_factory,field",
     (
@@ -66,13 +83,70 @@ def test_duty_sentence_generation(
     expected, component_data = reversible_duty_sentence_data
 
     model = model_factory()
-    for kwargs in reorder(component_data):
-        component_factory(
-            **{field: model},
-            **kwargs,
-        )
+    create_duty_components(component_factory, component_data, field, model)
 
-    test_instance = model_factory._meta.model.objects.with_duty_sentence().get()
+    test_instance = model_factory._meta.model.objects.get()
+    assert test_instance.duty_sentence == expected
+
+
+@pytest.mark.parametrize(
+    "component_factory,model_factory,field_name",
+    (
+        (
+            factories.MeasureComponentFactory,
+            factories.MeasureFactory,
+            "component_measure",
+        ),
+        (
+            factories.MeasureConditionComponentFactory,
+            factories.MeasureConditionFactory,
+            "condition",
+        ),
+    ),
+    ids=(
+        factories.MeasureFactory._meta.model.__name__,
+        factories.MeasureConditionFactory._meta.model.__name__,
+    ),
+)
+def test_duty_sentence_with_history(
+    component_factory: factory.django.DjangoModelFactory,
+    model_factory: factory.django.DjangoModelFactory,
+    field_name: str,
+    duty_sentence_x_2_data: List[Tuple[str, List[Dict]]],
+):
+    """
+    Sets up a history of model instances (Measure or MeasureCondition) and
+    linked components.
+
+    The test then checks that the correct duty sentence is available via each
+    object's duty_sentence property throughout the object's history, including
+    going back in transaction time.
+    """
+    model_qs = model_factory._meta.model.objects.all()
+
+    # Create model instance and associate it with duty components.
+    model_1 = model_factory()
+    expected, component_data = duty_sentence_x_2_data[0]
+    create_duty_components(component_factory, component_data, field_name, model_1)
+    test_instance = model_qs.get_latest_version(sid=model_1.sid)
+    assert test_instance.duty_sentence == expected
+
+    # Create a new version of the model and associate it with new duty components.
+    model_2 = model_1.new_version(model_1.transaction.workbasket)
+    expected, component_data = duty_sentence_x_2_data[1]
+    create_duty_components(component_factory, component_data, field_name, model_2)
+    test_instance = model_qs.get_latest_version(sid=model_2.sid)
+    assert test_instance.duty_sentence == expected
+
+    # Create a new version of the model but don't update duty components.
+    model_3 = model_2.new_version(model_2.transaction.workbasket)
+    test_instance = model_qs.get_latest_version(sid=model_3.sid)
+    assert test_instance.duty_sentence == expected
+
+    # Go back in time to the model's fist version to check its duty_sentence is
+    # still correctly constructed and retrieved.
+    expected, component_data = duty_sentence_x_2_data[0]
+    test_instance = model_qs.get_first_version(sid=model_1.sid)
     assert test_instance.duty_sentence == expected
 
 
