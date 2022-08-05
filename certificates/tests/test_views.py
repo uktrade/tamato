@@ -108,3 +108,29 @@ def test_description_create_get_initial():
         initial = view.get_initial()
 
         assert initial["described_certificate"] == new_version
+
+
+def test_description_create_get_context_data(valid_user_api_client):
+    """Test that posting to certificate create endpoint with valid data returns
+    a 302 and creates new description matching certificate."""
+    certificate = factories.CertificateFactory.create(description=None)
+    new_version = certificate.new_version(certificate.transaction.workbasket)
+    url = reverse(
+        "certificate-ui-description-create",
+        args=(certificate.certificate_type.sid, certificate.sid),
+    )
+    post_data = {
+        "description": "certifiably certified",
+        "described_certificate": new_version.pk,
+        "validity_start_0": 1,
+        "validity_start_1": 1,
+        "validity_start_2": 2022,
+    }
+    assert not models.CertificateDescription.objects.exists()
+    response = valid_user_api_client.post(url, post_data)
+
+    assert response.status_code == 302
+    assert models.CertificateDescription.objects.filter(
+        described_certificate__sid=new_version.sid,
+        described_certificate__certificate_type__sid=new_version.certificate_type.sid,
+    ).exists()

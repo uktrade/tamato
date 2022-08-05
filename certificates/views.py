@@ -143,7 +143,7 @@ class CertificateCreateDescriptionMixin:
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["described_object"] = models.Certificate.objects.get(
+        context["described_object"] = models.Certificate.objects.current().get(
             certificate_type__sid=(self.kwargs.get("certificate_type__sid")),
             sid=(self.kwargs.get("sid")),
         )
