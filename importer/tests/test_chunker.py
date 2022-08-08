@@ -7,10 +7,14 @@ from unittest import mock
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from commodities.models.orm import GoodsNomenclature
 from common.tests import factories
 from importer import chunker
 from importer.chunker import chunk_taric
 from importer.chunker import filter_transaction_records
+from importer.chunker import get_chapter_heading
+from importer.chunker import get_record_code
+from importer.chunker import write_transaction_to_chunk
 from importer.models import ImporterXMLChunk
 from importer.namespaces import TTags
 
@@ -135,3 +139,69 @@ def test_chunk_taric():
     assert ImporterXMLChunk.objects.count()
     chunk = ImporterXMLChunk.objects.first()
     assert chunk.chunk_text
+
+
+@mock.patch("importer.chunker.get_record_code")
+def test_write_transaction_to_chunk_record_code_not_in_tree(
+    get_record_code,
+    envelope_commodity,
+    taric_schema_tags,
+    record_group,
+):
+    """Test that write_transaction_to_chunk returns None when record_code not
+    found in dependency tree."""
+    get_record_code.side_effect = "rubbish"
+    transaction = filter_snippet_transaction(
+        envelope_commodity,
+        taric_schema_tags,
+        record_group,
+    )
+    transactions_in_progress = {}
+    batch = factories.ImportBatchFactory.create(split_job=True)
+    result = write_transaction_to_chunk(
+        transaction,
+        transactions_in_progress,
+        batch,
+        "1",
+    )
+
+    assert result is None
+
+
+def test_get_record_code(envelope_commodity, taric_schema_tags, record_group):
+    transaction = filter_snippet_transaction(
+        envelope_commodity,
+        taric_schema_tags,
+        record_group,
+    )
+    record_code = get_record_code(transaction)
+
+    assert record_code == GoodsNomenclature.record_code
+
+
+def test_get_chapter_heading_commodity(
+    envelope_commodity,
+    taric_schema_tags,
+    record_group,
+):
+    transaction = filter_snippet_transaction(
+        envelope_commodity,
+        taric_schema_tags,
+        record_group,
+    )
+
+    get_chapter_heading(transaction)
+
+    # not sure exactly what assertions to make here
+
+
+def test_get_chapter_heading_measure(envelope_measure, taric_schema_tags):
+    transaction = get_snippet_transaction(envelope_measure, taric_schema_tags)
+
+    # this is erroring at the moment because generate_test_xml isn't populating all fields on the envelope_measure xml
+    get_chapter_heading(transaction)
+
+
+@mock.patch("importer.chunker.close_chunk")
+def test_write_transaction_to_chunk_exceed_max_file_size(close_chunk):
+    pass
