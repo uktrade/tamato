@@ -41,7 +41,7 @@ def test_business_rules_validation():
 
     for checker in checkers:
         checker.apply(model, check)
-    assert TestRule.validate.called_with(model)
+    TestRule.validate.assert_called_with(model)
 
 
 def test_indirect_business_rule_validation():
@@ -75,4 +75,4 @@ def test_indirect_business_rule_validation():
         checker.apply(model, check)
 
     for desc in descs:
-        assert TestRule.validate.called_with(desc)
+        TestRule.validate.assert_called_with(desc)
