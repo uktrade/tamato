@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import os
 from dataclasses import dataclass
 from functools import partial
 from typing import Any
@@ -55,6 +56,7 @@ from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
 
+TEST_CWD = os.getcwd()
 
 def pytest_addoption(parser):
     parser.addoption(

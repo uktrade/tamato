@@ -1,3 +1,4 @@
+import conftest
 from importer.cache import pickle
 import os
 
@@ -13,8 +14,7 @@ def test_init_no_cache_file():
 
 
 def test_init_with_cache_file():
-    cwd = os.getcwd()
-    cache_file = f'{cwd}/{pickle.PickleCacheEngine.CACHE_FILE}'
+    cache_file = f'{conftest.TEST_CWD}/{pickle.PickleCacheEngine.CACHE_FILE}'
     if os.path.exists(cache_file):
         os.remove(cache_file)
 

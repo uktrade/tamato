@@ -6,6 +6,7 @@ import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
+import conftest
 from importer.management.commands import renumber_transactions
 
 pytestmark = pytest.mark.django_db
@@ -15,8 +16,7 @@ class TestImportTaricCommand:
     TARGET_COMMAND = 'renumber_transactions'
 
     def example_goods_taric_file_location(self):
-        cwd = os.getcwd()
-        taric_file_location = f'{cwd}/../../test_files/goods.xml'
+        taric_file_location = f'{conftest.TEST_CWD}/importer/tests/test_files/goods.xml'
         return taric_file_location
 
     def call_command_test(self, out=None, error=None, return_error=False, *args, **kwargs):

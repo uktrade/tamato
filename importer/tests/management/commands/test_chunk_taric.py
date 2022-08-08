@@ -1,5 +1,6 @@
 import os
 import sys
+import conftest
 from datetime import datetime, timezone
 from io import StringIO
 
@@ -45,8 +46,7 @@ class TestChunkTaricCommand:
     TARGET_COMMAND = 'chunk_taric'
 
     def example_goods_taric_file_location(self):
-        cwd = os.getcwd()
-        taric_file_location = f'{cwd}/../../test_files/goods.xml'
+        taric_file_location = f'{conftest.TEST_CWD}/importer/tests/test_files/goods.xml'
         return taric_file_location
 
     def call_command_test(self, out=None, error=None, return_error=False, *args, **kwargs, ):
