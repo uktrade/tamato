@@ -5,7 +5,7 @@ import os
 
 def test_init_no_cache_file():
     cwd = os.getcwd()
-    cache_file = f'{cwd}/{pickle.PickleCacheEngine.CACHE_FILE}'
+    cache_file = f"{cwd}/{pickle.PickleCacheEngine.CACHE_FILE}"
     if os.path.exists(cache_file):
         os.remove(cache_file)
 
@@ -14,7 +14,7 @@ def test_init_no_cache_file():
 
 
 def test_init_with_cache_file():
-    cache_file = f'{conftest.TEST_CWD}/{pickle.PickleCacheEngine.CACHE_FILE}'
+    cache_file = f"{conftest.TEST_CWD}/{pickle.PickleCacheEngine.CACHE_FILE}"
     if os.path.exists(cache_file):
         os.remove(cache_file)
 
@@ -46,7 +46,7 @@ def test_pop_removes_value():
 def test_keys_return_keys_correctly():
     pickle_cache = pickle.PickleCacheEngine()
     pickle_cache.put("test", 123)
-    assert pickle_cache.keys() == {'test': ''}.keys()
+    assert pickle_cache.keys() == {"test": ""}.keys()
 
 
 def test_dump_return_correctly():
@@ -57,6 +57,6 @@ def test_dump_return_correctly():
 def test_clear_returns_correctly():
     pickle_cache = pickle.PickleCacheEngine()
     pickle_cache.put("test", 123)
-    assert pickle_cache.keys() == {'test': ''}.keys()
+    assert pickle_cache.keys() == {"test": ""}.keys()
     pickle_cache.clear()
     assert pickle_cache.keys() == {}.keys()

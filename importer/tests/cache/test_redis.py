@@ -22,7 +22,7 @@ def test_pop_removes_value():
 def test_keys_return_keys_correctly():
     redis_cache = redis.RedisCacheEngine()
     redis_cache.put("test", 123)
-    assert redis_cache.keys() == {'test': ''}.keys()
+    assert redis_cache.keys() == {"test": ""}.keys()
 
 
 def test_dump_return_correctly():
@@ -34,6 +34,6 @@ def test_dump_return_correctly():
 def test_clear_returns_correctly():
     redis_cache = redis.RedisCacheEngine()
     redis_cache.put("test", 123)
-    assert redis_cache.keys() == {'test': ''}.keys()
+    assert redis_cache.keys() == {"test": ""}.keys()
     redis_cache.clear()
     assert redis_cache.keys() == {}.keys()

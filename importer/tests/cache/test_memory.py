@@ -17,7 +17,7 @@ def test_pop_removes_value():
 def test_keys_return_keys_correctly():
     memory_cache = memory.MemoryCacheEngine()
     memory_cache.put("test", 123)
-    assert memory_cache.keys() == {'test': ''}.keys()
+    assert memory_cache.keys() == {"test": ""}.keys()
 
 
 def test_dump_return_correctly():
@@ -28,6 +28,6 @@ def test_dump_return_correctly():
 def test_clear_returns_correctly():
     memory_cache = memory.MemoryCacheEngine()
     memory_cache.put("test", 123)
-    assert memory_cache.keys() == {'test': ''}.keys()
+    assert memory_cache.keys() == {"test": ""}.keys()
     memory_cache.clear()
     assert memory_cache.keys() == {}.keys()

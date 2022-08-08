@@ -44,7 +44,7 @@ def test_pop_returns_none_if_not_present():
 def test_keys_return_keys_correctly_when_populated():
     object_cache = cache.ObjectCacheFacade()
     object_cache.put("test", 123)
-    assert object_cache.keys() == {'test': ''}.keys()
+    assert object_cache.keys() == {"test": ""}.keys()
 
 
 def test_keys_return_keys_correctly_when_empty():
@@ -60,6 +60,6 @@ def test_dump_return_correctly():
 def test_clear_returns_correctly():
     object_cache = cache.ObjectCacheFacade()
     object_cache.put("test", 123)
-    assert object_cache.keys() == {'test': ''}.keys()
+    assert object_cache.keys() == {"test": ""}.keys()
     object_cache.clear()
     assert object_cache.keys() == {}.keys()
