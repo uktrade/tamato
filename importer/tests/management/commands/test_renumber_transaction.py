@@ -15,10 +15,6 @@ pytestmark = pytest.mark.django_db
 class TestImportTaricCommand:
     TARGET_COMMAND = "renumber_transactions"
 
-    def example_goods_taric_file_location(self):
-        taric_file_location = f"{conftest.TEST_CWD}/importer/tests/test_files/goods.xml"
-        return taric_file_location
-
     def call_command_test(
         self, out=None, error=None, return_error=False, *args, **kwargs
     ):
@@ -51,9 +47,9 @@ class TestImportTaricCommand:
     def test_help_exists(self):
         assert len(renumber_transactions.Command.help) > 0
 
-    def test_dry_run(self):
+    def test_dry_run(self, example_goods_taric_file_location):
         out = self.call_command_test(
-            None, None, False, f"{self.example_goods_taric_file_location()}", "55"
+            None, None, False, f"{example_goods_taric_file_location}", "55"
         )
 
         assert out == ""
@@ -65,11 +61,11 @@ class TestImportTaricCommand:
 
         assert "Error: the following arguments are required: file, number" in str(ex)
 
-    def test_dry_run_error_no_number(self):
+    def test_dry_run_error_no_number(self, example_goods_taric_file_location):
         ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test(
-                None, None, True, f"{self.example_goods_taric_file_location()}"
+                None, None, True, f"{example_goods_taric_file_location}"
             )
 
         assert "Error: the following arguments are required: number" in str(ex)

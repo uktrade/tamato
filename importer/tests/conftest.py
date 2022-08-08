@@ -1,3 +1,4 @@
+import os
 from typing import Sequence
 from typing import Type
 
@@ -198,3 +199,9 @@ def tag_name() -> Tag:
 @pytest.fixture
 def tag_regex() -> Tag:
     return Tag(r"quota.([a-z.]+).event")
+
+
+@pytest.fixture
+def example_goods_taric_file_location():
+    taric_file_location = f"{os.getcwd()}/importer/tests/test_files/goods.xml"
+    return taric_file_location

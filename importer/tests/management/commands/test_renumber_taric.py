@@ -16,10 +16,6 @@ pytestmark = pytest.mark.django_db
 class TestImportTaricCommand:
     TARGET_COMMAND = "renumber_taric"
 
-    def example_goods_taric_file_location(self):
-        taric_file_location = f"{conftest.TEST_CWD}/importer/tests/test_files/goods.xml"
-        return taric_file_location
-
     def call_command_test(
         self,
         out=None,
@@ -57,12 +53,12 @@ class TestImportTaricCommand:
     def test_help_exists(self):
         assert len(renumber_taric.Command.help) > 0
 
-    def test_dry_run(self):
+    def test_dry_run(self, example_goods_taric_file_location):
         out = self.call_command_test(
             None,
             None,
             False,
-            f"{self.example_goods_taric_file_location()}",
+            f"{example_goods_taric_file_location}",
             "55",
             "fff",
             "sid",
@@ -80,11 +76,11 @@ class TestImportTaricCommand:
             in str(ex)
         )
 
-    def test_dry_run_error_no_number_record_or_attribute(self):
+    def test_dry_run_error_no_number_record_or_attribute(self, example_goods_taric_file_location):
         ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test(
-                None, None, True, f"{self.example_goods_taric_file_location()}"
+                None, None, True, f"{example_goods_taric_file_location}"
             )
 
         assert (
@@ -92,25 +88,25 @@ class TestImportTaricCommand:
             in str(ex)
         )
 
-    def test_dry_run_error_no_record_or_attribute(self):
+    def test_dry_run_error_no_record_or_attribute(self, example_goods_taric_file_location):
         ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test(
-                None, None, True, f"{self.example_goods_taric_file_location()}", "55"
+                None, None, True, f"{example_goods_taric_file_location}", "55"
             )
 
         assert "Error: the following arguments are required: record, attribute" in str(
             ex
         )
 
-    def test_dry_run_error_no_attribute(self):
+    def test_dry_run_error_no_attribute(self, example_goods_taric_file_location):
         ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test(
                 None,
                 None,
                 True,
-                f"{self.example_goods_taric_file_location()}",
+                f"{example_goods_taric_file_location}",
                 "55",
                 "f",
             )

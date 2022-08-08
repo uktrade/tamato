@@ -32,8 +32,8 @@ def test_setup_batch_no_split_with_dependencies_creates_dependencies_records():
     assert batch_with_deps.split_job is False
     assert ImporterXMLChunk.objects.filter(batch_id=batch.pk).count() == 0
     assert (
-        BatchDependencies.objects.filter(dependent_batch_id=batch_with_deps.pk).count()
-        == 1
+            BatchDependencies.objects.filter(dependent_batch_id=batch_with_deps.pk).count()
+            == 1
     )
     assert BatchDependencies.objects.filter(depends_on_id=batch.pk).count() == 1
 
@@ -47,20 +47,15 @@ def test_setup_batch_with_split_no_dependencies():
 
 
 class TestChunkTaricCommand:
-
     TARGET_COMMAND = "chunk_taric"
 
-    def example_goods_taric_file_location(self):
-        taric_file_location = f"{conftest.TEST_CWD}/importer/tests/test_files/goods.xml"
-        return taric_file_location
-
     def call_command_test(
-        self,
-        out=None,
-        error=None,
-        return_error=False,
-        *args,
-        **kwargs,
+            self,
+            out=None,
+            error=None,
+            return_error=False,
+            *args,
+            **kwargs,
     ):
         if out is None:
             out = StringIO()
@@ -91,13 +86,13 @@ class TestChunkTaricCommand:
     def test_help_exists(self):
         assert len(chunk_taric.Command.help) > 0
 
-    def test_dry_run(self):
+    def test_dry_run(self, example_goods_taric_file_location):
         initial_chunk_count = ImporterXMLChunk.objects.count()
         out = self.call_command_test(
             None,
             None,
             False,
-            f"{self.example_goods_taric_file_location()}",
+            f"{example_goods_taric_file_location}",
             "test_name",
         )
 
@@ -121,11 +116,11 @@ class TestChunkTaricCommand:
             ex
         )
 
-    def test_dry_run_error_no_name(self):
+    def test_dry_run_error_no_name(self, example_goods_taric_file_location):
         ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test(
-                None, None, True, f"{self.example_goods_taric_file_location()}"
+                None, None, True, f"{example_goods_taric_file_location}"
             )
 
         assert "Error: the following arguments are required: name" in str(ex)

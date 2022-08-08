@@ -17,10 +17,6 @@ class TestImportTaricCommand:
 
     TARGET_COMMAND = "import_taric"
 
-    def example_goods_taric_file_location(self):
-        taric_file_location = f"{conftest.TEST_CWD}/importer/tests/test_files/goods.xml"
-        return taric_file_location
-
     def call_command_test(
         self,
         out=None,
@@ -58,12 +54,12 @@ class TestImportTaricCommand:
     def test_help_exists(self):
         assert len(import_taric.Command.help) > 0
 
-    def test_dry_run(self):
+    def test_dry_run(self, example_goods_taric_file_location):
         out = self.call_command_test(
             None,
             None,
             False,
-            f"{self.example_goods_taric_file_location()}",
+            f"{example_goods_taric_file_location}",
             "test_name",
         )
 
@@ -78,11 +74,11 @@ class TestImportTaricCommand:
             ex
         )
 
-    def test_dry_run_error_no_name(self):
+    def test_dry_run_error_no_name(self, example_goods_taric_file_location):
         ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test(
-                None, None, True, f"{self.example_goods_taric_file_location()}"
+                None, None, True, f"{example_goods_taric_file_location}"
             )
 
         assert "Error: the following arguments are required: name" in str(ex)
