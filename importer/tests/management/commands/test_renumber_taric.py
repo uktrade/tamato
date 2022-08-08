@@ -76,7 +76,9 @@ class TestImportTaricCommand:
             in str(ex)
         )
 
-    def test_dry_run_error_no_number_record_or_attribute(self, example_goods_taric_file_location):
+    def test_dry_run_error_no_number_record_or_attribute(
+        self, example_goods_taric_file_location
+    ):
         ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test(
@@ -88,7 +90,9 @@ class TestImportTaricCommand:
             in str(ex)
         )
 
-    def test_dry_run_error_no_record_or_attribute(self, example_goods_taric_file_location):
+    def test_dry_run_error_no_record_or_attribute(
+        self, example_goods_taric_file_location
+    ):
         ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test(

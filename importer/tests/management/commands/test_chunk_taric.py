@@ -32,8 +32,8 @@ def test_setup_batch_no_split_with_dependencies_creates_dependencies_records():
     assert batch_with_deps.split_job is False
     assert ImporterXMLChunk.objects.filter(batch_id=batch.pk).count() == 0
     assert (
-            BatchDependencies.objects.filter(dependent_batch_id=batch_with_deps.pk).count()
-            == 1
+        BatchDependencies.objects.filter(dependent_batch_id=batch_with_deps.pk).count()
+        == 1
     )
     assert BatchDependencies.objects.filter(depends_on_id=batch.pk).count() == 1
 
@@ -50,12 +50,12 @@ class TestChunkTaricCommand:
     TARGET_COMMAND = "chunk_taric"
 
     def call_command_test(
-            self,
-            out=None,
-            error=None,
-            return_error=False,
-            *args,
-            **kwargs,
+        self,
+        out=None,
+        error=None,
+        return_error=False,
+        *args,
+        **kwargs,
     ):
         if out is None:
             out = StringIO()
