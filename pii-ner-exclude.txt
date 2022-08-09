@@ -1141,3 +1141,4 @@ self.linked_model
 WorkBasketOutputFormat
 param kwargs:
 Enum
+TestRule
