@@ -178,3 +178,26 @@ def test_validation_error_raised_for_duplicate_sid(session_with_workbasket):
         f"Certificate with sid A01 and type {certificate_type} already exists."
         in form.errors["sid"]
     )
+
+
+def test_certificate_description_valid_data():
+    certificate = factories.CertificateFactory.create()
+    data = {
+        "described_certificate": certificate.pk,
+        "description": "certifiably certified",
+        "validity_start_0": 1,
+        "validity_start_1": 1,
+        "validity_start_2": 2022,
+    }
+    form = forms.CertificateCreateDescriptionForm(data=data)
+
+    assert form.is_valid()
+
+
+def test_certificate_description_invalid_data():
+    form = forms.CertificateCreateDescriptionForm(data={})
+
+    assert not form.is_valid()
+    assert "This field is required." in form.errors["described_certificate"]
+    assert "This field is required." in form.errors["description"]
+    assert "Enter the day, month and year" in form.errors["validity_start"]
