@@ -2,28 +2,28 @@ import os
 import sys
 from datetime import datetime, timezone
 from io import StringIO
+from unittest.mock import patch
 
 import pytest
 from django.core.management import call_command, CommandParser
 from django.core.management.base import DjangoHelpFormatter, BaseCommand, CommandError
+from django.test.utils import override_settings
 
-import conftest
 from importer.management.commands import import_taric
 
 pytestmark = pytest.mark.django_db
 
 
 class TestImportTaricCommand:
-
     TARGET_COMMAND = "import_taric"
 
     def call_command_test(
-        self,
-        out=None,
-        error=None,
-        return_error=False,
-        *args,
-        **kwargs,
+            self,
+            out=None,
+            error=None,
+            return_error=False,
+            *args,
+            **kwargs,
     ):
         if out is None:
             out = StringIO()
@@ -54,16 +54,21 @@ class TestImportTaricCommand:
     def test_help_exists(self):
         assert len(import_taric.Command.help) > 0
 
+    @override_settings(CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+                       CELERY_ALWAYS_EAGER=True,
+                       BROKER_BACKEND='memory')
     def test_dry_run(self, example_goods_taric_file_location):
-        out = self.call_command_test(
-            None,
-            None,
-            False,
-            f"{example_goods_taric_file_location}",
-            "test_name",
-        )
+        with patch('importer.tasks.import_chunk.delay') as delay_mock:
+            out = self.call_command_test(
+                None,
+                None,
+                False,
+                f"{example_goods_taric_file_location}",
+                "test_name",
+            )
 
-        assert out == ""
+            assert out == ""
+            assert delay_mock.called
 
     def test_dry_run_error_no_args(self):
         ex = None
@@ -99,20 +104,20 @@ class TestImportTaricCommand:
 
         assert "taric3_file           The TARIC3 file to be parsed." in out
         assert (
-            "name                  The name of the batch, the Envelope ID is recommended."
-            in out
+                "name                  The name of the batch, the Envelope ID is recommended."
+                in out
         )
         assert "-u USERNAME, --username USERNAME" in out
         assert "The username to use for the owner of the workbaskets" in out
         assert (
-            "-S {ARCHIVED,EDITING,PROPOSED,APPROVED,SENT,PUBLISHED,ERRORED}, "
-            "--status {ARCHIVED,EDITING,PROPOSED,APPROVED,SENT,PUBLISHED,ERRORED}"
-            in out
+                "-S {ARCHIVED,EDITING,PROPOSED,APPROVED,SENT,PUBLISHED,ERRORED}, "
+                "--status {ARCHIVED,EDITING,PROPOSED,APPROVED,SENT,PUBLISHED,ERRORED}"
+                in out
         )
         assert "The status of the workbaskets containing the import" in out
         assert (
-            "-p {SEED_FIRST,SEED_ONLY,REVISION_ONLY}, --partition-scheme {SEED_FIRST,SEED_ONLY,REVISION_ONLY}"
-            in out
+                "-p {SEED_FIRST,SEED_ONLY,REVISION_ONLY}, --partition-scheme {SEED_FIRST,SEED_ONLY,REVISION_ONLY}"
+                in out
         )
         assert "Partition to place transactions in approved" in out
         assert "-s, --split-codes     Split the file based on record codes" in out
