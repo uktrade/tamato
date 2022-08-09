@@ -180,9 +180,6 @@ def test_ON10_multiple_active_origins():
     )
 
     business_rules.ON10(later_origin.transaction).validate(later_origin)
-    from measures.business_rules import ME119
-
-    ME119(later_origin.transaction).validate(measure)
 
 
 @only_applicable_after("2007-12-31")

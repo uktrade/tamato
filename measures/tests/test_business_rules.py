@@ -739,12 +739,9 @@ def test_ME119(date_ranges):
 
 # https://uktrade.atlassian.net/browse/TP2000-411
 def test_ME119_multiple_valid_origins():
-    """
-    Tests that it is possible to create two measures with the same quota   #
-
-    /PS-IGNORE order number for non-overlapping periods both covered by separate
-    quota origins without ON10 or ME119 being triggered.
-    """
+    """Tests that it is possible to create two measures with the same quota
+    order number for non-overlapping periods both covered by separate quota
+    origins without ME119 being triggered."""
     valid_between = TaricDateRange(date(2020, 1, 1), date(2020, 1, 31))
     measure = factories.MeasureWithQuotaFactory.create(
         order_number__origin__valid_between=valid_between,
@@ -754,9 +751,6 @@ def test_ME119_multiple_valid_origins():
         order_number=measure.order_number,
         valid_between=TaricDateRange(date(2021, 1, 1), date(2021, 1, 31)),
     )
-    from quotas.business_rules import ON10
-
-    ON10(later_origin.transaction).validate(later_origin)
 
     business_rules.ME119(later_origin.transaction).validate(measure)
 

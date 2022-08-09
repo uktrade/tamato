@@ -10,7 +10,6 @@ from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
 from common.models.utils import override_current_transaction
-from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
@@ -136,19 +135,10 @@ class ON10(ValidityPeriodContained):
         with override_current_transaction(self.transaction):
             current_qs = order_number_origin.get_versions().current()
             contained_measures = current_qs.follow_path(self.contained_field_name)
+            from measures.business_rules import ME119
 
             for measure in contained_measures:
-                origins = measure.order_number.quotaordernumberorigin_set.current()
-                contained_count = 0
-                for origin in origins:
-                    if validity_range_contains_range(
-                        origin.valid_between,
-                        measure.valid_between,
-                    ):
-                        contained_count += 1
-
-                if contained_count == 0:
-                    raise self.violation(order_number_origin)
+                ME119(self.transaction).validate(measure)
 
 
 @only_applicable_after("2007-12-31")

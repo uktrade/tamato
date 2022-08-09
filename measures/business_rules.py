@@ -455,7 +455,6 @@ class ME119(ValidityPeriodContained):
     measure."""
 
     # This checks the same thing as ON10 from the other side of the relation
-    container_field_name = "order_number__quotaordernumberorigin"
 
     def validate(self, measure):
         """
@@ -465,6 +464,9 @@ class ME119(ValidityPeriodContained):
         Loop over these and raise a violation if the measure validity period is
         not contained by any of the origins
         """
+        if not measure.order_number:
+            return
+
         with override_current_transaction(self.transaction):
             contained_measure = measure.get_versions().current().get()
 
@@ -479,7 +481,7 @@ class ME119(ValidityPeriodContained):
                     valid_between,
                     contained_measure.valid_between,
                 ):
-                    contained_count += 1
+                    return True
 
             if contained_count == 0:
                 raise self.violation(measure)
@@ -497,12 +499,14 @@ class QuotaOriginMatchingArea(BusinessRule):
         # Get all individual countries / regions associated with the measure
         with override_current_transaction(self.transaction):
             if measure.geographical_area.area_code == AreaCode.GROUP:
-                area_sids = [
-                    m.member.sid
-                    for m in measure.geographical_area.memberships.current()
-                ]
+                area_sids = set(
+                    [
+                        m.member.sid
+                        for m in measure.geographical_area.memberships.current()
+                    ],
+                )
             else:
-                area_sids = [measure.geographical_area.sid]
+                area_sids = set([measure.geographical_area.sid])
 
             # Get all individual countries / regions for each quota order number origin linked to the measure
             origins = QuotaOrderNumberOrigin.objects.current().filter(
@@ -518,10 +522,11 @@ class QuotaOriginMatchingArea(BusinessRule):
                 else:
                     origin_sids.append(origin.geographical_area.sid)
 
+            origin_sids = set(origin_sids)
+
             # Check that the geographical area sid is included in the list of origin area sids
-            for sid in area_sids:
-                if sid not in origin_sids:
-                    raise self.violation(measure)
+            if any(area_sids - origin_sids):
+                raise self.violation(measure)
 
 
 # -- Relation with additional codes
