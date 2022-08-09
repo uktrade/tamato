@@ -30,9 +30,9 @@ def diff_components(
     duty_sentence: str,
     start_date: date,
     workbasket: WorkBasket,
+    transaction: Type[Transaction],
     component_output: Type[TrackedModel] = MeasureComponent,
     reverse_attribute: str = "component_measure",
-    transaction: Type[Transaction] = None,
 ):
     """
     Takes a start_date and component_output (MeasureComponent is the default)
