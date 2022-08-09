@@ -2,8 +2,9 @@ import xml.etree.ElementTree as etree
 
 import pytest
 
+from footnotes.import_parsers import FootnoteTypeParser
 from importer.namespaces import Tag
-from importer.parsers import BooleanElement
+from importer.parsers import BooleanElement, Writable
 from importer.parsers import CompoundElement
 from importer.parsers import ElementParser
 from importer.parsers import TextElement
@@ -271,3 +272,13 @@ def test_compound_element_parser(num_children, separator, text, expected):
     parser.end(el)
 
     assert parser.data == expected
+
+
+# # Testing writable mixin
+# def test_writable_object_create():
+#     FootnoteTypeParser
+#
+#     class TestElement(Writable, ElementParser):
+#         tag = Tag("test")
+#         valid_between_lower = TextElement(Tag("validity.start.date"))
+#         valid_between_upper = TextElement(Tag("validity.end.date"))
