@@ -253,18 +253,7 @@ class EditWorkbasketView(TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class WorkBasketDetail(DetailView):
-    model = WorkBasket
-    template_name = "workbaskets/preview-workbasket.jinja"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["workbasket"] = WorkBasket.load_from_session(self.request.session)
-        return context
-
-
-@method_decorator(require_current_workbasket, name="dispatch")
-class ReviewWorkbasketView(TemplateResponseMixin, FormMixin, View):
+class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
     template_name = "workbaskets/review-workbasket.jinja"
     form_class = forms.SelectableObjectsForm
 
@@ -272,8 +261,8 @@ class ReviewWorkbasketView(TemplateResponseMixin, FormMixin, View):
     action_success_url_names = {
         "publish-all": "workbaskets:workbasket-ui-submit",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
-        "page-prev": "workbaskets:review-workbasket",
-        "page-next": "workbaskets:review-workbasket",
+        "page-prev": "workbaskets:workbasket-ui-detail",
+        "page-next": "workbaskets:workbasket-ui-detail",
     }
 
     @property
