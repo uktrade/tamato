@@ -10,6 +10,8 @@ import requests
 from django.core.exceptions import ValidationError
 from django.forms.models import model_to_dict
 
+from common.models.transactions import Transaction
+from common.models.utils import set_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
@@ -331,6 +333,32 @@ def irreversible_duty_sentence_data(request, get_component_data):
     return expected, [get_component_data(*args) for args in component_data]
 
 
+@pytest.fixture(
+    params=(
+        (
+            (
+                "0.000% + AC",
+                [(1, 0.0, None, None), (12, None, None, None)],
+            ),
+            (
+                "12.900% + 20.000 EUR / kg",
+                [(1, 12.9, None, None), (4, 20.0, "EUR", ("KGM", None))],
+            ),
+        ),
+    ),
+)
+def duty_sentence_x_2_data(request, get_component_data):
+    """Duty sentence test cases that can be used to create a history of
+    components."""
+    history = []
+    for version in request.param:
+        expected, component_data = version
+        history.append(
+            (expected, [get_component_data(*args) for args in component_data]),
+        )
+    return history
+
+
 @pytest.fixture
 def erga_omnes():
     return factories.GeographicalAreaFactory.create(
@@ -380,9 +408,10 @@ def measure_edit_conditions_data(measure_form_data):
 
 @pytest.fixture
 def measure_form(measure_form_data, session_with_workbasket, erga_omnes):
+    set_current_transaction(Transaction.objects.last())
     return MeasureForm(
         data=measure_form_data,
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
         initial={},
     )

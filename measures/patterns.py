@@ -228,20 +228,16 @@ class MeasureCreationPattern:
                 m.member
                 for m in GeographicalMembership.objects.as_at(
                     measure.valid_between.lower,
-                )
-                .filter(
+                ).filter(
                     geo_group=measure.geographical_area,
                 )
-                .all()
             )
-            for membership in (
-                GeographicalMembership.objects.as_at(measure.valid_between.lower)
-                .filter(geo_group=exclusion)
-                .all()
-            ):
+            for membership in GeographicalMembership.objects.as_at(
+                measure.valid_between.lower,
+            ).filter(geo_group=exclusion):
                 member = membership.member
-                assert (
-                    member in measure_origins
+                assert member.sid in list(
+                    m.sid for m in measure_origins
                 ), f"{member.area_id} not in {list(x.area_id for x in measure_origins)}"
                 yield MeasureExcludedGeographicalArea.objects.create(
                     modified_measure=measure,
@@ -288,7 +284,7 @@ class MeasureCreationPattern:
         measure condition components from newly created condition
         """
         condition = MeasureCondition(
-            sid=self.measure_condition_sid_counter(),
+            sid=data.get("sid") or self.measure_condition_sid_counter(),
             component_sequence_number=component_sequence_number,
             dependent_measure=measure,
             update_type=data.get("update_type") or UpdateType.CREATE,
@@ -505,7 +501,6 @@ class SuspensionViaAdditionalCodePattern:
         date."""
         return (
             Measure.objects.with_validity_field()
-            .with_duty_sentence()
             .approved_up_to_transaction(self.workbasket.transactions.last())
             .as_at(as_at)
             .filter(goods_nomenclature__sid=code.sid)

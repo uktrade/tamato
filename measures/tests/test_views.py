@@ -24,6 +24,8 @@ from measures.business_rules import ME70
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureCondition
+from measures.models import MeasureConditionComponent
+from measures.models import MeasureExcludedGeographicalArea
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
@@ -118,7 +120,12 @@ def test_measure_delete(use_delete_form):
     ),
     ids=view_urlpattern_ids,
 )
-def test_measure_detail_views(view, url_pattern, valid_user_client):
+def test_measure_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
     """Verify that measure detail views are under the url measures/ and don't
     return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
@@ -150,27 +157,132 @@ def test_measure_detail_conditions(client, valid_user):
         page.find("h3").text == f"{condition_code.code}: {condition_code.description}"
     )
 
-    rows = page.find("table").findChildren(["th", "tr"])
     # ignore everything above the first condition row
-    first_row = rows[4]
-    cells = first_row.findChildren(["td"])
+    cells = page.select("#conditions table > tbody > tr:first-child > td")
     certificate = certificate_condition.required_certificate
 
+    assert cells[0].text == str(certificate_condition.sid)
     assert (
-        cells[0].text
+        cells[1].text
         == f"{certificate.code}:\n        {certificate.get_description(transaction=certificate.transaction).description}"
     )
-    assert cells[1].text == certificate_condition.action.description
-    assert cells[2].text == "-"
+    assert cells[2].text == certificate_condition.action.description
+    assert cells[3].text == "-"
 
-    second_row = rows[5]
-    cells = second_row.findChildren(["td"])
+    cells = page.select("#conditions table > tbody > tr:nth-child(2) > td")
 
+    assert cells[0].text == str(amount_condition.sid)
     assert (
-        cells[0].text
+        cells[1].text
         == f"\n    1000.000\n        {amount_condition.monetary_unit.code}"
     )
-    assert len(rows) == 6
+    rows = page.select("#conditions table > tbody > tr")
+    assert len(rows) == 2
+
+
+def test_measure_detail_no_conditions(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#conditions"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    assert (
+        page.select("#conditions .govuk-body")[0].text
+        == "This measure has no conditions."
+    )
+
+
+def test_measure_detail_footnotes(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    footnote1 = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    ).associated_footnote
+    footnote2 = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    ).associated_footnote
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#footnotes"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    rows = page.select("#footnotes table > tbody > tr")
+    assert len(rows) == 2
+
+    first_column_links = page.select(
+        "#footnotes table > tbody > tr > td:first-child > a",
+    )
+    assert {link.text for link in first_column_links} == {
+        str(footnote1),
+        str(footnote2),
+    }
+    assert {link.get("href") for link in first_column_links} == {
+        footnote1.get_url(),
+        footnote2.get_url(),
+    }
+
+    second_column = page.select("#footnotes table > tbody > tr > td:nth-child(2)")
+    assert {cell.text for cell in second_column} == {
+        footnote1.descriptions.first().description,
+        footnote2.descriptions.first().description,
+    }
+
+
+def test_measure_detail_no_footnotes(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#footnotes"
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    assert (
+        page.select("#footnotes .govuk-body")[0].text
+        == "This measure has no footnotes."
+    )
+
+
+def test_measure_detail_quota_order_number(client, valid_user):
+    quota_order_number = factories.QuotaOrderNumberFactory.create()
+    measure = factories.MeasureFactory.create(order_number=quota_order_number)
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid})
+    client.force_login(valid_user)
+    response = client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    items = [element.text.strip() for element in page.select("#core-data dl dd")]
+    assert str(quota_order_number) in items
+
+
+def test_measure_detail_version_control(client, valid_user):
+    measure = factories.MeasureFactory.create()
+    measure.new_version(measure.transaction.workbasket)
+    measure.new_version(measure.transaction.workbasket)
+
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#versions"
+    client.force_login(valid_user)
+    response = client.get(url)
+    soup = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    rows = soup.select("#versions table > tbody > tr")
+    assert len(rows) == 3
+
+    update_types = {
+        cell.text
+        for cell in soup.select("#versions table > tbody > tr > td:first-child")
+    }
+    assert update_types == {"Create", "Update"}
 
 
 @pytest.mark.parametrize(
@@ -329,7 +441,7 @@ def test_measure_update_create_conditions(
     Also tests that related objects (certificate and condition code) are
     present.
     """
-    measure = Measure.objects.with_duty_sentence().first()
+    measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
@@ -356,8 +468,11 @@ def test_measure_update_create_conditions(
         condition.action.pk
         == measure_edit_conditions_data["measure-conditions-formset-0-action"]
     )
+    assert condition.update_type == UpdateType.CREATE
 
-    components = condition.components.approved_up_to_transaction(tx).all()
+    components = condition.components.approved_up_to_transaction(tx).order_by(
+        *MeasureConditionComponent._meta.ordering
+    )
 
     assert components.count() == 2
     assert components.first().duty_amount == 3.5
@@ -379,12 +494,16 @@ def test_measure_update_edit_conditions(
     Checks that previous conditions are removed and new field values are
     correct.
     """
-    measure = Measure.objects.with_duty_sentence().first()
-    previous_condition = measure.conditions.last()
+    measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
     transaction_count = Transaction.objects.count()
+    tx = Transaction.objects.last()
+    measure_with_condition = Measure.objects.approved_up_to_transaction(tx).get(
+        sid=measure.sid,
+    )
+    previous_condition = measure_with_condition.conditions.last()
     measure_edit_conditions_data[
         "measure-conditions-formset-0-required_certificate"
     ] = ""
@@ -404,10 +523,11 @@ def test_measure_update_edit_conditions(
 
     condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
 
-    assert condition != previous_condition
+    assert condition.pk != previous_condition.pk
     assert condition.required_certificate == None
     assert condition.duty_amount == 3
     assert condition.update_type == UpdateType.UPDATE
+    assert condition.sid == previous_condition.sid
 
     components = condition.components.approved_up_to_transaction(tx).all()
 
@@ -418,6 +538,37 @@ def test_measure_update_edit_conditions(
     assert component.duty_amount == 10
     assert component.update_type == UpdateType.UPDATE
     assert component.transaction == condition.transaction
+
+
+# The measure edit form will always show changes until we fix this bug https://uktrade.atlassian.net/browse/TP2000-247 /PS-IGNORE
+# When fixed, we should uncomment and add logic to prevent updates when there are no changes to a condition
+
+# def test_measure_update_no_conditions_changes(
+#     client,
+#     valid_user,
+#     measure_edit_conditions_data, /PS-IGNORE
+#     duty_sentence_parser,
+#     erga_omnes,
+# ):
+#     measure = Measure.objects.first()
+#     url = reverse("measure-ui-edit", args=(measure.sid,))
+#     client.force_login(valid_user) /PS-IGNORE
+#     client.post(url, data=measure_edit_conditions_data) /PS-IGNORE
+#     tx = Transaction.objects.last()
+#     measure_with_condition = Measure.objects.approved_up_to_transaction(tx).get( /PS-IGNORE
+#         sid=measure.sid, /PS-IGNORE
+#     )
+#     previous_condition = measure_with_condition.conditions.approved_up_to_transaction(tx).first()
+#     client.post(url, data=measure_edit_conditions_data) /PS-IGNORE
+#     tx = Transaction.objects.last()
+#     updated_measure = Measure.objects.approved_up_to_transaction(tx).get( /PS-IGNORE
+#         sid=measure.sid, /PS-IGNORE
+#     )
+#     condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
+
+#     assert condition.pk == previous_condition.pk
+#     assert condition.update_type == UpdateType.CREATE
+#     assert condition.sid == previous_condition.sid /PS-IGNORE
 
 
 def test_measure_update_remove_conditions(
@@ -435,7 +586,7 @@ def test_measure_update_remove_conditions(
     endpoint and that the updated measure has no currently approved conditions
     associated with it.
     """
-    measure = Measure.objects.with_duty_sentence().first()
+    measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
@@ -484,7 +635,7 @@ def test_measure_update_invalid_conditions(
     measure_edit_conditions_data[
         "measure-conditions-formset-0-applicable_duty"
     ] = "invalid"
-    measure = Measure.objects.with_duty_sentence().first()
+    measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     response = client.post(url, data=measure_edit_conditions_data)
@@ -495,8 +646,7 @@ def test_measure_update_invalid_conditions(
         response.content.decode(response.charset),
         features="lxml",
     )
-    ul = page.find_all("ul", {"class": "govuk-list govuk-error-summary__list"})[0]
-    a_tags = ul.findChildren("a")
+    a_tags = page.select("ul.govuk-list.govuk-error-summary__list a")
 
     assert a_tags[0].attrs["href"] == "#measure-conditions-formset-0-applicable_duty"
     assert a_tags[0].text == "Enter a valid duty sentence."
@@ -505,6 +655,61 @@ def test_measure_update_invalid_conditions(
         a_tags[1].text
         == "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
     )
+
+
+def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
+    """
+    Tests that measure edit view handles exclusion of one group from another
+    group.
+
+    We create an erga omnes measure and a group containing two areas that also
+    belong to the erga omnes group. Then post to edit endpoint with this group
+    as an exclusion and check that two MeasureExcludedGeographicalArea objects
+    are created with the two area sids in that excluded group.
+    """
+    measure = factories.MeasureFactory.create(geographical_area=erga_omnes)
+    geo_group = factories.GeoGroupFactory.create()
+    area_1 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    area_2 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    factories.GeographicalMembershipFactory.create(geo_group=erga_omnes, member=area_1)
+    factories.GeographicalMembershipFactory.create(geo_group=erga_omnes, member=area_2)
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    client.force_login(valid_user)
+    data = model_to_dict(measure)
+    data = {k: v for k, v in data.items() if v is not None}
+    start_date = data["valid_between"].lower
+    data.update(
+        {
+            "start_date_0": start_date.day,
+            "start_date_1": start_date.month,
+            "start_date_2": start_date.year,
+            "geo_area": "ERGA_OMNES",
+            "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": geo_group.pk,
+        },
+    )
+
+    assert not MeasureExcludedGeographicalArea.objects.approved_up_to_transaction(
+        Transaction.objects.last(),
+    ).exists()
+
+    client.post(url, data=data)
+    measure_area_exclusions = (
+        MeasureExcludedGeographicalArea.objects.approved_up_to_transaction(
+            Transaction.objects.last(),
+        )
+    )
+
+    assert measure_area_exclusions.count() == 2
+
+    area_sids = [
+        sid[0]
+        for sid in measure_area_exclusions.values_list(
+            "excluded_geographical_area__sid",
+        )
+    ]
+
+    assert area_1.sid in area_sids
+    assert area_2.sid in area_sids
 
 
 @pytest.mark.django_db

@@ -43,7 +43,12 @@ class CommodityImportForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             "taric_file",
-            Submit("submit", "Continue"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean_taric_file(self):
@@ -61,7 +66,7 @@ class CommodityImportForm(forms.ModelForm):
                 capture_exception(e)
             raise ValidationError(generic_error_message)
 
-        with open(settings.PATH_XSD_TARIC) as xsd_file:
+        with open(settings.PATH_XSD_COMMODITIES_TARIC) as xsd_file:
             xmlschema = lxml.etree.XMLSchema(file=xsd_file)
 
         try:

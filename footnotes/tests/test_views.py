@@ -102,7 +102,12 @@ def test_delete_form(factory, use_delete_form):
     ),
     ids=view_urlpattern_ids,
 )
-def test_footnote_detail_views(view, url_pattern, valid_user_client):
+def test_footnote_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
     """Verify that measure detail views are under the url footnotes/ and don't
     return an error."""
     model_overrides = {"footnotes.views.FootnoteDescriptionCreate": Footnote}

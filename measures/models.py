@@ -16,6 +16,7 @@ from common.util import classproperty
 from footnotes import validators as footnote_validators
 from measures import business_rules
 from measures import validators
+from measures.querysets import ComponentQuerySet
 from measures.querysets import MeasureConditionQuerySet
 from measures.querysets import MeasuresQuerySet
 from quotas import business_rules as quotas_business_rules
@@ -582,6 +583,10 @@ class Measure(TrackedModel, ValidityMixin):
 
         return TaricDateRange(self.valid_between.lower, self.effective_end_date)
 
+    @property
+    def duty_sentence(self) -> str:
+        return MeasureComponent.objects.duty_sentence(self)
+
     @classproperty
     def auto_value_fields(cls):
         """Remove export refund SID because we don't want to auto-increment it –
@@ -657,6 +662,8 @@ class MeasureComponent(TrackedModel):
         UpdateValidity,
     )
 
+    objects = TrackedModelManager.from_queryset(ComponentQuerySet)()
+
 
 class MeasureCondition(TrackedModel):
     """
@@ -669,6 +676,8 @@ class MeasureCondition(TrackedModel):
 
     record_code = "430"
     subrecord_code = "10"
+    url_pattern_name_prefix = "measure"
+    url_suffix = "#conditions"
 
     identifying_fields = ("sid",)
 
@@ -803,6 +812,10 @@ class MeasureCondition(TrackedModel):
 
         return "".join(out)
 
+    @property
+    def duty_sentence(self) -> str:
+        return MeasureConditionComponent.objects.duty_sentence(self)
+
 
 class MeasureConditionComponent(TrackedModel):
     """Contains the duty information or part of the duty information of the
@@ -857,6 +870,8 @@ class MeasureConditionComponent(TrackedModel):
         business_rules.ME108,
         UpdateValidity,
     )
+
+    objects = TrackedModelManager.from_queryset(ComponentQuerySet)()
 
 
 class MeasureExcludedGeographicalArea(TrackedModel):

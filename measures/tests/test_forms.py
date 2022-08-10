@@ -3,6 +3,8 @@ from unittest.mock import patch
 import pytest
 from django.forms.models import model_to_dict
 
+from common.models.transactions import Transaction
+from common.models.utils import set_current_transaction
 from common.tests import factories
 from geo_areas.validators import AreaCode
 from measures import forms
@@ -34,16 +36,6 @@ def test_diff_components_called(diff_components, measure_form, duty_sentence_par
     assert diff_components.called == True
 
 
-def test_error_raised_if_no_duty_sentence(session_with_workbasket):
-    measure = factories.MeasureFactory.create()
-
-    with pytest.raises(
-        AttributeError,
-        match="Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
-    ):
-        MeasureForm(data={}, instance=measure, request=session_with_workbasket)
-
-
 def test_measure_form_invalid_conditions_data(
     measure_form_data,
     session_with_workbasket,
@@ -61,7 +53,7 @@ def test_measure_form_invalid_conditions_data(
     measure_form = MeasureForm(
         data=measure_form_data,
         initial={},
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
 
@@ -86,6 +78,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -102,6 +95,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions(erga_omnes):
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": geo_area2.pk,
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -117,6 +111,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_delete(erga_omn
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-0-DELETE": "1",
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -133,6 +128,7 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions(erga_omnes):
         f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -150,6 +146,7 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions_delete(erga_omne
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
         "geo_group_exclusions_formset-0-DELETE": "1",
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -165,6 +162,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_add(erga_omnes)
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-ADD": "1",
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -179,12 +177,15 @@ def test_measure_forms_geo_area_valid_data_geo_group(erga_omnes):
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": geo_group.pk,
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
         prefix=GEO_AREA_FORM_PREFIX,
     )
     assert form.is_valid()
+    # https://uktrade.atlassian.net/browse/TP2000-437 500 error where object instead of a list of objects
+    assert type(form.cleaned_data["geo_area_list"]) == list
 
 
 def test_measure_forms_geo_area_valid_data_countries(erga_omnes):
@@ -195,6 +196,7 @@ def test_measure_forms_geo_area_valid_data_countries(erga_omnes):
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -212,6 +214,7 @@ def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
         "country_region_formset-1-DELETE": "on",
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -227,6 +230,7 @@ def test_measure_forms_geo_area_valid_data_countries_add(erga_omnes):
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-ADD": "1",
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -241,6 +245,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group(erga_omnes):
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         "geographical_area_group-geographical_area_group": geo_area1.pk,
     }
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -270,6 +275,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group(erga_omnes):
     ],
 )
 def test_measure_forms_geo_area_invalid_data_error_messages(data, error, erga_omnes):
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
         data,
         initial={},
@@ -684,10 +690,11 @@ def test_measure_form_valid_data(erga_omnes, session_with_workbasket):
         start_date_1=start_date.month,
         start_date_2=start_date.year,
     )
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureForm(
         data=data,
         initial={},
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
     assert form.is_valid()
@@ -720,7 +727,7 @@ def test_measure_form_initial_data_geo_area(
     form = forms.MeasureForm(
         data=data,
         initial={},
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
     assert form.initial["geo_area"] == geo_area_to_choice[measure.geographical_area]
@@ -748,10 +755,11 @@ def test_measure_form_cleaned_data_geo_exclusions_group(
         "geo_group_exclusions_formset-1-geo_group_exclusion": excluded_country2.pk,
     }
     data.update(exclusions_data)
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureForm(
         data=data,
         initial={},
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
     assert form.is_valid()
@@ -784,10 +792,11 @@ def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
         "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": excluded_country2.pk,
     }
     data.update(exclusions_data)
+    set_current_transaction(Transaction.objects.last())
     form = forms.MeasureForm(
         data=data,
         initial={},
-        instance=Measure.objects.with_duty_sentence().first(),
+        instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
     assert form.is_valid()

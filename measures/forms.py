@@ -29,7 +29,6 @@ from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
-from geo_areas.util import with_latest_description_string
 from geo_areas.validators import AreaCode
 from measures import models
 from measures.parsers import DutySentenceParser
@@ -90,22 +89,15 @@ class GeoGroupForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
-        self.fields[
-            "geographical_area_group"
-        ].queryset = with_latest_description_string(
-            GeographicalArea.objects.exclude(
-                descriptions__description__isnull=True,
-            )
+        self.fields["geographical_area_group"].queryset = (
+            GeographicalArea.objects.current()
+            .with_current_description()
+            .filter(area_code=AreaCode.GROUP)
             .as_at_today()
-            .approved_up_to_transaction(tx)
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
+            .order_by("description")
         )
+        # descriptions__description" should make this implicitly distinct()
         self.fields[
             "geographical_area_group"
         ].label_from_instance = lambda obj: obj.description
@@ -125,19 +117,12 @@ class ErgaOmnesExclusionsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
-        self.fields["erga_omnes_exclusion"].queryset = with_latest_description_string(
-            GeographicalArea.objects.exclude(
-                descriptions__description__isnull=True,
-            )
+        self.fields["erga_omnes_exclusion"].queryset = (
+            GeographicalArea.objects.current()
+            .with_current_description()
             .as_at_today()
-            .approved_up_to_transaction(tx)
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
+            .order_by("description")
         )
         self.fields[
             "erga_omnes_exclusion"
@@ -155,19 +140,12 @@ class GeoGroupExclusionsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
-        self.fields["geo_group_exclusion"].queryset = with_latest_description_string(
-            GeographicalArea.objects.exclude(
-                descriptions__description__isnull=True,
-            )
+        self.fields["geo_group_exclusion"].queryset = (
+            GeographicalArea.objects.current()
+            .with_current_description()
             .as_at_today()
-            .approved_up_to_transaction(tx)
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description"),
-            # descriptions__description" should make this implicitly distinct()
+            .order_by("description")
         )
         self.fields[
             "geo_group_exclusion"
@@ -212,27 +190,23 @@ class CountryRegionForm(forms.Form):
     prefix = COUNTRY_REGION_PREFIX
 
     geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=with_latest_description_string(
-            GeographicalArea.objects.exclude(
-                area_code=AreaCode.GROUP,
-                descriptions__description__isnull=True,
-            ),
+        queryset=GeographicalArea.objects.exclude(
+            area_code=AreaCode.GROUP,
+            descriptions__description__isnull=True,
         ),
         error_messages={"required": "A country or region is required."},
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
         self.fields["geographical_area_country_or_region"].queryset = (
-            self.fields["geographical_area_country_or_region"]
-            .queryset.as_at_today()
-            .approved_up_to_transaction(tx)
-            .with_latest_links("descriptions")
-            .prefetch_related("descriptions")
-            .order_by("descriptions__description")
+            GeographicalArea.objects.current()
+            .with_current_description()
+            .exclude(area_code=AreaCode.GROUP)
+            .as_at_today()
+            .order_by("description")
         )
+
         self.fields[
             "geographical_area_country_or_region"
         ].label_from_instance = lambda obj: obj.description
@@ -535,11 +509,6 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
 
         tx = WorkBasket.get_current_transaction(self.request)
 
-        if not hasattr(self.instance, "duty_sentence"):
-            raise AttributeError(
-                "Measure instance is missing `duty_sentence` attribute. Try calling `with_duty_sentence` queryset method",
-            )
-
         self.initial["duty_sentence"] = self.instance.duty_sentence
         self.request.session[
             f"instance_duty_sentence_{self.instance.sid}"
@@ -649,7 +618,7 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
                         exclusion,
                     )
                 )
-                next(pattern)
+                [p for p in pattern]
 
         if (
             self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
@@ -662,7 +631,10 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
                 WorkBasket.current(self.request),
                 models.MeasureComponent,
                 "component_measure",
-                # Creating components in the same transaction as the new version of the measure minimises number of transaction and groups the creation of measure and related objects in the same transaction.
+                # Creating components in the same transaction as the new version
+                # of the measure minimises number of transaction and groups the
+                # creation of measure and related objects in the same
+                # transaction.
                 transaction=instance.transaction,
             )
 
@@ -822,7 +794,12 @@ class MeasureDetailsForm(
             "order_number",
             "start_date",
             "end_date",
-            Submit("submit", "Continue"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
@@ -855,8 +832,6 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        tx = kwargs.pop("transaction", None)
-        self.transaction = tx
         super().__init__(*args, **kwargs)
 
         kwargs.pop("initial")
@@ -893,16 +868,17 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
                     "from or exports to the selected area."
                 ),
             ),
-            Submit("submit", "Continue"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     @property
     def erga_omnes_instance(self):
-        return (
-            GeographicalArea.objects.approved_up_to_transaction(self.transaction)
-            .erga_omnes()
-            .get()
-        )
+        return GeographicalArea.objects.current().erga_omnes().get()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -922,7 +898,7 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
 
                 elif geo_area_choice == GeoAreaType.GROUP:
                     data_key = SUBFORM_PREFIX_MAPPING[geo_area_choice]
-                    cleaned_data["geo_area_list"] = cleaned_data[data_key]
+                    cleaned_data["geo_area_list"] = [cleaned_data[data_key]]
 
                 elif geo_area_choice == GeoAreaType.COUNTRY:
                     field_name = geographical_area_fields[geo_area_choice]
@@ -965,7 +941,12 @@ class MeasureAdditionalCodeForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             "additional_code",
-            Submit("submit", "Continue"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
 
