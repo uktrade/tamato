@@ -2,9 +2,12 @@ import pytest
 from rest_framework.exceptions import ValidationError
 
 from common.tests import factories
+from common.tests.factories import ApprovedTransactionFactory
 from common.tests.models import TestModel1
+from footnotes.models import Footnote, FootnoteType
 from importer import handlers
 from importer.handlers import BaseHandler, MismatchedSerializerError
+from django.test import override_settings
 
 pytestmark = pytest.mark.django_db
 
@@ -275,7 +278,7 @@ def test_base_handler_check_serializer():
     with pytest.raises(AttributeError) as ex:
 
         class NotAHandler(BaseHandler):
-            tag: str = "dfgdfgdf"
+            tag = ""
             serializer_class = NotASerializer
 
             def __init__(self):
@@ -285,3 +288,56 @@ def test_base_handler_check_serializer():
         str(ex.value)
         == 'NotAHandler requires attribute "serializer_class" to be a subclass of "ModelSerializer".'
     )
+
+
+def test_base_handler_get_generic_link_no_kwargs(mock_serializer):
+    class AHandler(BaseHandler):
+        serializer_class = mock_serializer
+        tag = "test_handler_dep2"
+
+        def __init__(self):
+            pass
+
+    target = AHandler()
+    # Footnote.DoesNotExist is a dynamically created exception at run time : metaprogramming
+    with pytest.raises(Footnote.DoesNotExist) as ex:
+        target.get_generic_link(Footnote, {})
+
+    # the exception message is blank!
+    assert str(ex.value) == ""
+
+
+@override_settings(USE_IMPORTER_CACHE=True)
+def test_base_handler_get_generic_link_importer_cache_cached(mock_serializer, handler_test_data, object_nursery):
+    # add object to nursery
+    fnt = factories.FootnoteTypeFactory.create(footnote_type_id='XZX', transaction=ApprovedTransactionFactory.create())
+    nursery = object_nursery
+    nursery.cache_object(fnt)
+
+    class AHandler(BaseHandler):
+        serializer_class = mock_serializer
+        tag = "test_handler_dep2"
+
+    target = AHandler(handler_test_data, nursery)
+
+    link = target.get_generic_link(FootnoteType, {'footnote_type_id': fnt.footnote_type_id})
+
+    assert type(link[0]) is FootnoteType
+    assert link[1] is True
+
+
+@override_settings(USE_IMPORTER_CACHE=True)
+def test_base_handler_get_generic_link_importer_cache_not_cached(mock_serializer, handler_test_data, object_nursery):
+    # add object to nursery
+    fnt = factories.FootnoteTypeFactory.create(footnote_type_id='XZX', transaction=ApprovedTransactionFactory.create())
+
+    class AHandler(BaseHandler):
+        serializer_class = mock_serializer
+        tag = "test_handler_dep2"
+
+    target = AHandler(handler_test_data, object_nursery)
+
+    link = target.get_generic_link(FootnoteType, {'pk': fnt.pk})
+
+    assert type(link[0]) is FootnoteType
+    assert link[1] is False

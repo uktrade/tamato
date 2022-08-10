@@ -312,6 +312,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         First attempts to retrieve the object PK from the cache (saves queries). If this
         is not found a database query is made to find the object.
+
+        returns tuple(Object: model, bool: From Cache)
         """
         if not any(kwargs.values()):
             raise model.DoesNotExist
