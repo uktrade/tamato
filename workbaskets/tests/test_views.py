@@ -197,7 +197,10 @@ def test_review_workbasket_displays_objects_in_current_workbasket(
         GoodsNomenclatureFactory.create()
 
     response = valid_user_client.get(
-        reverse("workbaskets:review-workbasket", kwargs={"pk": session_workbasket.id}),
+        reverse(
+            "workbaskets:workbasket-ui-detail",
+            kwargs={"pk": session_workbasket.id},
+        ),
     )
     page = BeautifulSoup(
         response.content.decode(response.charset),
@@ -222,7 +225,6 @@ def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbas
     "url_name",
     [
         ("workbaskets:edit-workbasket"),
-        ("workbaskets:review-workbasket"),
         ("workbaskets:workbasket-ui-detail"),
     ],
 )
@@ -310,8 +312,8 @@ def test_select_workbasket_page_200(valid_user_client):
     [
         ("publish-all", "workbaskets:workbasket-ui-submit"),
         ("remove-selected", "workbaskets:workbasket-ui-delete-changes"),
-        ("page-prev", "workbaskets:review-workbasket"),
-        ("page-next", "workbaskets:review-workbasket"),
+        ("page-prev", "workbaskets:workbasket-ui-detail"),
+        ("page-next", "workbaskets:workbasket-ui-detail"),
     ],
 )
 def test_review_workbasket_redirects(
@@ -324,7 +326,7 @@ def test_review_workbasket_redirects(
     )
     with workbasket.new_transaction() as tx:
         factories.FootnoteTypeFactory.create_batch(30, transaction=tx)
-    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    url = reverse("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk})
     data = {"form-action": form_action}
     response = valid_user_client.post(f"{url}?page=2", data)
     assert response.status_code == 302
