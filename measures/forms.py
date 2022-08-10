@@ -629,13 +629,13 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
                 self.cleaned_data["duty_sentence"],
                 self.cleaned_data["valid_between"].lower,
                 WorkBasket.current(self.request),
-                models.MeasureComponent,
-                "component_measure",
                 # Creating components in the same transaction as the new version
                 # of the measure minimises number of transaction and groups the
                 # creation of measure and related objects in the same
                 # transaction.
-                transaction=instance.transaction,
+                instance.transaction,
+                models.MeasureComponent,
+                "component_measure",
             )
 
         footnote_pks = [
