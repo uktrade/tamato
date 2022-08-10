@@ -173,6 +173,7 @@ def envelope_measure() -> bytes:
             "taric_template": "taric/measure.xml",
         },
     )
+    data["goods_nomenclature"] = {"item_id": model.goods_nomenclature.item_id}
     return generate_test_import_xml(data).read()
 
 

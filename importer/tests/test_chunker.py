@@ -5,11 +5,13 @@ from typing import Sequence
 from unittest import mock
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from commodities.models.orm import GoodsNomenclature
 from common.tests import factories
 from importer import chunker
+from importer.chunker import MAX_FILE_SIZE
 from importer.chunker import chunk_taric
 from importer.chunker import filter_transaction_records
 from importer.chunker import get_chapter_heading
@@ -150,7 +152,7 @@ def test_write_transaction_to_chunk_record_code_not_in_tree(
 ):
     """Test that write_transaction_to_chunk returns None when record_code not
     found in dependency tree."""
-    get_record_code.side_effect = "rubbish"
+    get_record_code.return_value = "rubbish"
     transaction = filter_snippet_transaction(
         envelope_commodity,
         taric_schema_tags,
@@ -189,19 +191,49 @@ def test_get_chapter_heading_commodity(
         taric_schema_tags,
         record_group,
     )
+    chapter_heading = get_chapter_heading(transaction)
+    soup = BeautifulSoup(envelope_commodity)
 
-    get_chapter_heading(transaction)
-
-    # not sure exactly what assertions to make here
+    assert chapter_heading == soup.find("oub:goods.nomenclature.item.id").string[:2]
 
 
 def test_get_chapter_heading_measure(envelope_measure, taric_schema_tags):
     transaction = get_snippet_transaction(envelope_measure, taric_schema_tags)
+    chapter_heading = get_chapter_heading(transaction)
+    soup = BeautifulSoup(envelope_measure)
 
-    # this is erroring at the moment because generate_test_xml isn't populating all fields on the envelope_measure xml
-    get_chapter_heading(transaction)
+    assert chapter_heading == soup.find("oub:goods.nomenclature.item.id").string[:2]
 
 
+@mock.patch("importer.chunker.get_chunk")
 @mock.patch("importer.chunker.close_chunk")
-def test_write_transaction_to_chunk_exceed_max_file_size(close_chunk):
-    pass
+def test_write_transaction_to_chunk_exceed_max_file_size(
+    close_chunk,
+    get_chunk,
+    envelope_commodity,
+    taric_schema_tags,
+    record_group,
+):
+    transaction = filter_snippet_transaction(
+        envelope_commodity,
+        taric_schema_tags,
+        record_group,
+    )
+    chunks_in_progress = {}
+    chunk = BytesIO()
+    chunk.seek(MAX_FILE_SIZE + 1)
+    record_code = get_record_code(transaction)
+    chapter_heading = get_chapter_heading(transaction)
+    key = (record_code, chapter_heading)
+
+    def side_effect(in_progress, envelope_id, record_code=None, chapter_heading=None):
+        chunks_in_progress[key] = chunk
+
+        return chunk
+
+    get_chunk.side_effect = side_effect
+    batch = factories.ImportBatchFactory.create(split_job=True)
+    write_transaction_to_chunk(transaction, chunks_in_progress, batch, "1")
+
+    close_chunk.assert_called_with(chunk, batch, key)
+    assert chunks_in_progress == {}
