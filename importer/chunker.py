@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from logging import getLogger
 from tempfile import TemporaryFile
+from typing import List
 from typing import Optional
 from typing import Sequence
 
@@ -90,7 +91,7 @@ def close_chunk(chunk: TemporaryFile, batch: models.ImportBatch, key):
     )
 
 
-def sort_commodity_codes(transactions):
+def sort_commodity_codes(transactions: List[ET.Element]) -> List[ET.Element]:
     """
     Sort the commodity code transactions by item ID, indent, suffix and
     transaction ID (which represents the order they were given in).

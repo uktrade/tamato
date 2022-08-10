@@ -7,15 +7,18 @@ from unittest import mock
 import pytest
 from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.forms.models import model_to_dict
 
 from commodities.models.orm import GoodsNomenclature
 from common.tests import factories
+from common.tests.util import generate_test_import_xml
 from importer import chunker
 from importer.chunker import MAX_FILE_SIZE
 from importer.chunker import chunk_taric
 from importer.chunker import filter_transaction_records
 from importer.chunker import get_chapter_heading
 from importer.chunker import get_record_code
+from importer.chunker import sort_commodity_codes
 from importer.chunker import write_transaction_to_chunk
 from importer.models import ImporterXMLChunk
 from importer.namespaces import TTags
@@ -237,3 +240,38 @@ def test_write_transaction_to_chunk_exceed_max_file_size(
 
     close_chunk.assert_called_with(chunk, batch, key)
     assert chunks_in_progress == {}
+
+
+def test_sort_commodity_codes_item_id(taric_schema_tags, record_group):
+    commodity_1 = factories.GoodsNomenclatureFactory.create(item_id="0100000000")
+    commodity_2 = factories.GoodsNomenclatureFactory.create(item_id="0101000000")
+    transactions = []
+    for comm in [commodity_1, commodity_2]:
+        data = model_to_dict(comm)
+        data.update(
+            {
+                "record_code": comm.record_code,
+                "subrecord_code": comm.subrecord_code,
+                "taric_template": "taric/goods_nomenclature.xml",
+            },
+        )
+        xml = generate_test_import_xml(data).read()
+        transaction = filter_snippet_transaction(xml, taric_schema_tags, record_group)
+        transactions.append(transaction)
+
+    sorted_transactions = sort_commodity_codes(transactions)
+
+    assert sorted_transactions[0] == transactions[1]
+    assert sorted_transactions[1] == transactions[0]
+
+
+def test_sort_commodity_codes_indent():
+    pass
+
+
+def test_sort_commodity_codes_suffix():
+    pass
+
+
+def test_sort_commodity_codes_transaction_order():
+    pass
