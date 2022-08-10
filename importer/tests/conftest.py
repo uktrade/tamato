@@ -5,7 +5,7 @@ from typing import Type
 import pytest
 from django.forms.models import model_to_dict
 from rest_framework import serializers
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, ListSerializer
 
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
@@ -41,6 +41,15 @@ def mock_serializer() -> Type[ModelSerializer]:
             exclude = ("version_group",)
 
     return TestSerializer
+
+
+@pytest.fixture
+def mock_list_serializer() -> Type[ListSerializer]:
+    class TestListSerializer(ValiditySerializerMixin):
+        def __init__(self):
+            pass
+
+    return TestListSerializer
 
 
 @pytest.fixture

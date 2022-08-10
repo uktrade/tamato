@@ -4,7 +4,7 @@ from rest_framework.exceptions import ValidationError
 from common.tests import factories
 from common.tests.models import TestModel1
 from importer import handlers
-from importer.handlers import BaseHandler
+from importer.handlers import BaseHandler, MismatchedSerializerError
 
 pytestmark = pytest.mark.django_db
 
@@ -184,3 +184,104 @@ def test_serialize(prepped_handler):
         "tag": prepped_handler.tag,
         "transaction_id": prepped_handler.transaction_id,
     }
+
+
+def test_register_multiple_dependencies(mock_serializer):
+    class TestHandler(BaseHandler):
+        serializer_class = mock_serializer
+        tag = "test_handler_dep2"
+
+    @TestHandler.register_dependant
+    class TestHandlerChild1(BaseHandler):
+        dependencies = [TestHandler]
+        serializer_class = mock_serializer
+        tag = "test_handler_dep1"
+
+    @TestHandler.register_dependant
+    class TestHandlerChild2(BaseHandler):
+        dependencies = [TestHandler]
+        serializer_class = mock_serializer
+        tag = "test_handler_dep1"
+
+    print(TestHandler.dependencies)
+
+    assert TestHandlerChild1 in TestHandler.dependencies
+    assert TestHandlerChild2 in TestHandler.dependencies
+
+
+def test_register_multiple_dependencies_with_different_serializers(
+    mock_serializer, mock_list_serializer, handler_test_data, object_nursery
+):
+    class TestHandler(BaseHandler):
+        serializer_class = mock_serializer
+        tag = "test_handler_dep2"
+
+    @TestHandler.register_dependant
+    class TestHandlerChild1(BaseHandler):
+        dependencies = [TestHandler]
+        serializer_class = mock_list_serializer
+        tag = "test_handler_dep1"
+
+    @TestHandler.register_dependant
+    class TestHandlerChild2(BaseHandler):
+        dependencies = [TestHandler]
+        serializer_class = mock_serializer
+        tag = "test_handler_dep1"
+
+    print(TestHandler.dependencies)
+    ex = None
+    with pytest.raises(MismatchedSerializerError) as ex:
+        x = TestHandler(handler_test_data, object_nursery)
+
+    assert (
+        str(ex.value)
+        == f"Dependent parsers must have the same serializer_class as their dependencies. "
+        f"Dependency TestHandlerChild1 has "
+        f"serializer_class TestListSerializer. "
+        f"TestHandler has serializer_class TestSerializer."
+    )
+
+
+def test_base_handler_meta_no_type():
+    ex = None
+    with pytest.raises(AttributeError) as ex:
+
+        class NotAHandler(BaseHandler):
+            def __init__(self):
+                pass
+
+    assert str(ex.value) == 'NotAHandler requires attribute "tag" to be a str.'
+
+
+def test_base_handler_meta_new_check_type():
+    ex = None
+    with pytest.raises(AttributeError) as ex:
+
+        class NotAHandler(BaseHandler):
+            tag: int = None
+
+            def __init__(self):
+                pass
+
+    assert str(ex.value) == 'NotAHandler requires attribute "tag" to be a str.'
+
+
+def test_base_handler_check_serializer():
+    class NotASerializer:
+        def __init__(self):
+            pass
+
+    ex = None
+    with pytest.raises(AttributeError) as ex:
+
+        class NotAHandler(BaseHandler):
+            tag: str = "dfgdfgdf"
+            serializer_class = NotASerializer
+
+            def __init__(self):
+                pass
+
+    assert (
+        str(ex.value)
+        == 'NotAHandler requires attribute "serializer_class" to be a subclass of "ModelSerializer".'
+    )
