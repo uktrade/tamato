@@ -1167,3 +1167,5 @@ measure_qs)\n
 MeasureComponent
 Components
 TP2000-452
+commodity_1_kwargs
+goods_nomenclature_indent.xml

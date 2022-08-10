@@ -174,7 +174,7 @@ def envelope_measure() -> bytes:
         },
     )
     data["goods_nomenclature"] = {"item_id": model.goods_nomenclature.item_id}
-    return generate_test_import_xml(data).read()
+    return generate_test_import_xml([data]).read()
 
 
 @pytest.fixture
@@ -188,7 +188,7 @@ def envelope_commodity() -> bytes:
             "taric_template": "taric/goods_nomenclature.xml",
         },
     )
-    return generate_test_import_xml(data).read()
+    return generate_test_import_xml([data]).read()
 
 
 @pytest.fixture

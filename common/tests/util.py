@@ -9,6 +9,7 @@ from io import BytesIO
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import Type
@@ -471,15 +472,15 @@ def assert_many_records_match(
     assert expected_data == imported_data
 
 
-def generate_test_import_xml(obj: dict) -> BytesIO:
+def generate_test_import_xml(objects: List[dict], transaction_id: int = 0) -> BytesIO:
     last_transaction = Transaction.objects.last()
     next_transaction_id = (last_transaction.order if last_transaction else 0) + 1
     xml = render_to_string(
         template_name="workbaskets/taric/transaction_detail.xml",
         context={
             "envelope_id": next_transaction_id,
-            "tracked_models": [obj],
-            "transaction_id": next_transaction_id,
+            "tracked_models": objects,
+            "transaction_id": transaction_id if transaction_id else next_transaction_id,
             "message_counter": counter_generator(),
             "counter_generator": counter_generator,
         },

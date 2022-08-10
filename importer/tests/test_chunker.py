@@ -242,36 +242,70 @@ def test_write_transaction_to_chunk_exceed_max_file_size(
     assert chunks_in_progress == {}
 
 
-def test_sort_commodity_codes_item_id(taric_schema_tags, record_group):
-    commodity_1 = factories.GoodsNomenclatureFactory.create(item_id="0100000000")
-    commodity_2 = factories.GoodsNomenclatureFactory.create(item_id="0101000000")
+@pytest.mark.parametrize(
+    "commodity_1_kwargs, commodity_2_kwargs",
+    [
+        ({"item_id": "0101000000"}, {"item_id": "0100000000"}),
+        (
+            {"item_id": "0100000000", "indent__indent": "01"},
+            {"item_id": "0100000000", "indent__indent": "00"},
+        ),
+        (
+            {"item_id": "0100000000", "indent__indent": "00", "suffix": "80"},
+            {"item_id": "0100000000", "indent__indent": "00", "suffix": "70"},
+        ),
+        (
+            {
+                "item_id": "0100000000",
+                "indent__indent": "00",
+                "suffix": "80",
+                "transaction_id": 2,
+            },
+            {
+                "item_id": "0100000000",
+                "indent__indent": "00",
+                "suffix": "80",
+                "transaction_id": 1,
+            },
+        ),
+    ],
+)
+def test_sort_commodity_codes(
+    taric_schema_tags,
+    record_group,
+    commodity_1_kwargs,
+    commodity_2_kwargs,
+):
     transactions = []
-    for comm in [commodity_1, commodity_2]:
-        data = model_to_dict(comm)
-        data.update(
+    for comm_kwargs in [commodity_1_kwargs, commodity_2_kwargs]:
+        transaction_id = comm_kwargs.pop("transaction_id", 0)
+        comm = factories.GoodsNomenclatureFactory.create(**comm_kwargs)
+        comm_data = model_to_dict(comm)
+        comm_data.update(
             {
                 "record_code": comm.record_code,
                 "subrecord_code": comm.subrecord_code,
                 "taric_template": "taric/goods_nomenclature.xml",
             },
         )
-        xml = generate_test_import_xml(data).read()
+        indent = comm.indents.first()
+        indent_data = model_to_dict(indent)
+        indent_data.update(
+            {
+                "record_code": indent.record_code,
+                "subrecord_code": indent.subrecord_code,
+                "taric_template": "taric/goods_nomenclature_indent.xml",
+            },
+        )
+        indent_data["indented_goods_nomenclature"] = {"item_id": comm.item_id}
+        xml = generate_test_import_xml(
+            [comm_data, indent_data],
+            transaction_id=transaction_id,
+        ).read()
         transaction = filter_snippet_transaction(xml, taric_schema_tags, record_group)
         transactions.append(transaction)
 
-    sorted_transactions = sort_commodity_codes(transactions)
+    sorted_transactions = sort_commodity_codes(transactions.copy())
 
-    assert sorted_transactions[0] == transactions[1]
     assert sorted_transactions[1] == transactions[0]
-
-
-def test_sort_commodity_codes_indent():
-    pass
-
-
-def test_sort_commodity_codes_suffix():
-    pass
-
-
-def test_sort_commodity_codes_transaction_order():
-    pass
+    assert sorted_transactions[0] == transactions[1]

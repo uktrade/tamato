@@ -111,7 +111,7 @@ def sort_commodity_codes(transactions: List[ET.Element]) -> List[ET.Element]:
 
     Lastly if there is still a conflict commodities are ordered on transaction order.
 
-    These for factors in that order produce an accurate hierarchical representation.
+    These four factors in that order produce an accurate hierarchical representation.
     """
 
     def comm_code_key(transaction):
