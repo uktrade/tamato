@@ -28,18 +28,20 @@ def test_diff_components_update(
         duty_amount=9.000,
         duty_expression=percent_or_amount,
     )
+    new_measure = original_component.component_measure.new_version(
+        original_component.transaction.workbasket,
+    )
     util.diff_components(
-        original_component.component_measure,
+        new_measure,
         "8.000%",
         original_component.component_measure.valid_between.lower,
         workbasket,
+        new_measure.transaction,
         MeasureComponent,
         "component_measure",
     )
-    components = (
-        original_component.component_measure.components.approved_up_to_transaction(
-            workbasket.current_transaction,
-        )
+    components = new_measure.components.approved_up_to_transaction(
+        workbasket.current_transaction,
     )
 
     assert components.count() == 1
@@ -48,7 +50,7 @@ def test_diff_components_update(
 
     assert new_component.update_type == UpdateType.UPDATE
     assert new_component.version_group == original_component.version_group
-    assert new_component.component_measure == original_component.component_measure
+    assert new_component.component_measure == new_measure
     assert new_component.transaction == workbasket.current_transaction
     assert new_component.duty_amount == 8.000
 
@@ -72,11 +74,15 @@ def test_diff_components_update_multiple(
         monetary_unit=monetary_units["GBP"],
         component_measurement__measurement_unit=measurement_units[1],
     )
+    new_measure = component_1.component_measure.new_version(
+        component_1.transaction.workbasket,
+    )
     util.diff_components(
         component_2.component_measure,
         "13.000% + 254.000 GBP / 100 kg",
         component_1.component_measure.valid_between.lower,
         workbasket,
+        new_measure.transaction,
         MeasureComponent,
         "component_measure",
     )
@@ -106,6 +112,7 @@ def test_diff_components_create(workbasket, duty_sentence_parser):
         "8.000%",
         measure.valid_between.lower,
         workbasket,
+        measure.transaction,
         MeasureComponent,
         "component_measure",
     )
@@ -132,11 +139,15 @@ def test_diff_components_delete(
         duty_amount=9.000,
         duty_expression=percent_or_amount,
     )
+    new_measure = component.component_measure.new_version(
+        component.transaction.workbasket,
+    )
     util.diff_components(
         component.component_measure,
         "",
         component.component_measure.valid_between.lower,
         workbasket,
+        new_measure.transaction,
         MeasureComponent,
         "component_measure",
     )

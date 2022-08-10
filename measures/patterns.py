@@ -310,9 +310,9 @@ class MeasureCreationPattern:
                 data.get("applicable_duty"),
                 measure.valid_between.lower,
                 workbasket,
+                condition.transaction,
                 MeasureConditionComponent,
                 "condition",
-                transaction=condition.transaction,
             )
 
     @transaction.atomic
