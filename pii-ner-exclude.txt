@@ -1148,6 +1148,7 @@ self.linked_model
 WorkBasketOutputFormat
 param kwargs:
 Enum
+TestRule
 schemaLocation="commodities_envelope.xsd"/
 7930d36f
 *** measure_qs = <
