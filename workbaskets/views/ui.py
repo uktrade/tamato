@@ -375,3 +375,17 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
         store.add_items(to_add)
         store.remove_items(to_remove)
         return super().form_valid(form)
+
+
+class WorkBasketList(WithPaginationListView):
+    """UI endpoint for viewing and filtering workbaskets."""
+
+    template_name = "workbaskets/list.jinja"
+    filterset_class = WorkBasketFilter
+    search_fields = [
+        "title",
+        "reason",
+    ]
+
+    def get_queryset(self):
+        return WorkBasket.objects.order_by("-updated_at")
