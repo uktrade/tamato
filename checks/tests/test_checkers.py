@@ -1,4 +1,5 @@
 from itertools import chain
+from unittest.mock import call
 
 import pytest
 
@@ -39,18 +40,19 @@ def test_business_rules_validation():
 
         checkers = checker_type.checkers_for(model)
 
+    assert len(checkers)
+
     for checker in checkers:
         checker.apply(model, check)
-    assert TestRule.validate.called_with(model)
+
+    TestRule.validate.assert_called_once_with(model)
 
 
 def test_indirect_business_rule_validation():
     model = factories.TestModel1Factory.create()
-    descs = set(
-        factories.TestModelDescription1Factory.create_batch(
-            size=4,
-            described_record=model,
-        ),
+    desc1, desc2 = factories.TestModelDescription1Factory.create_batch(
+        size=2,
+        described_record=model,
     )
     check = checks.tests.factories.TransactionCheckFactory(
         transaction=model.transaction,
@@ -66,13 +68,20 @@ def test_indirect_business_rule_validation():
         # Verify the cache returns the same object if .of is called a second time.
         assert checker_type is IndirectBusinessRuleChecker.of(TestRule)
 
-        checkers = checker_type.checkers_for(model)
+        desc1_checkers = checker_type.checkers_for(desc1)
+        desc2_checkers = checker_type.checkers_for(desc2)
 
-    # Assert every checker has a unique name.
-    assert len(checkers) == len(set(c.name for c in checkers))
+        assert {type(checker) for checker in desc1_checkers} == {checker_type}
+        assert {type(checker) for checker in desc2_checkers} == {checker_type}
 
-    for checker in checkers:
-        checker.apply(model, check)
+        # Verify that applying the description checker calls validate on the
+        # business rule TestRule with model
+        for desc_checker in desc1_checkers | desc2_checkers:
+            desc_checker.apply(model, check)
 
-    for desc in descs:
-        assert TestRule.validate.called_with(desc)
+        TestRule.validate.assert_has_calls(
+            [
+                call(model),
+                call(model),
+            ],
+        )
