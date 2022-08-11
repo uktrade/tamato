@@ -254,6 +254,23 @@ def test_GA18(date_ranges):
         business_rules.GA18(duplicate.transaction).validate(duplicate)
 
 
+# https://uktrade.atlassian.net/browse/TP2000-469
+def test_GA18_multiple_versions(date_ranges):
+    """Test that GA18 fires for overlapping memberships when one membership is
+    created with a later version of the member area."""
+    existing = factories.GeographicalMembershipFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    new_version_member = existing.member.new_version(existing.transaction.workbasket)
+    duplicate = factories.GeographicalMembershipFactory.create(
+        geo_group=existing.geo_group,
+        member=new_version_member,
+        valid_between=date_ranges.overlap_normal,
+    )
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.GA18(duplicate.transaction).validate(duplicate)
+
+
 def test_GA19():
     """If the group has a parent the members must also be members of the
     parent."""
