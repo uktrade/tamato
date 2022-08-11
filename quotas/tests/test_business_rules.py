@@ -478,6 +478,35 @@ def test_overlapping_quota_definition(date_ranges):
         ).validate(overlapping_definition)
 
 
+def test_volume_and_initial_volume_must_match():
+    definition = factories.QuotaDefinitionFactory.create(
+        volume=1.000,
+        initial_volume=2.000,
+    )
+
+    with pytest.raises(BusinessRuleViolation) as violation:
+        business_rules.VolumeAndInitialVolumeMustMatch(definition.transaction).validate(
+            definition,
+        )
+
+    assert (
+        "Unless it is the main quota in a quota association, a definition's volume and initial_volume values should always be the same."
+        in str(violation)
+    )
+
+
+def test_volume_and_initial_volume_must_match_main_quota():
+    definition = factories.QuotaDefinitionFactory.create(
+        volume=1.000,
+        initial_volume=2.000,
+    )
+    association = factories.QuotaAssociationFactory.create(main_quota=definition)
+    assert 0
+    business_rules.VolumeAndInitialVolumeMustMatch(association.transaction).validate(
+        definition,
+    )
+
+
 def test_QA1(assert_handles_duplicates):
     """The association between two quota definitions must be unique."""
 
