@@ -297,8 +297,8 @@
         <span class="k">if</span> <span class="p">(</span>
             <span class="nb">type</span><span class="p">(</span><span class="n">membership</span><span class="p">)</span>
             <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">geo_group</span><span class="o">=</span><span class="n">membership</span><span class="o">.</span><span class="n">geo_group</span><span class="p">,</span>
-                <span class="n">member</span><span class="o">=</span><span class="n">membership</span><span class="o">.</span><span class="n">member</span><span class="p">,</span>
+                <span class="n">geo_group__version_group</span><span class="o">=</span><span class="n">membership</span><span class="o">.</span><span class="n">geo_group</span><span class="o">.</span><span class="n">version_group</span><span class="p">,</span>
+                <span class="n">member__version_group</span><span class="o">=</span><span class="n">membership</span><span class="o">.</span><span class="n">member</span><span class="o">.</span><span class="n">version_group</span><span class="p">,</span>
                 <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">membership</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">membership</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
