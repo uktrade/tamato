@@ -174,6 +174,8 @@ def test_write_transaction_to_chunk_record_code_not_in_tree(
 
 
 def test_get_record_code(envelope_commodity, taric_schema_tags, record_group):
+    """Test that get_record_code returns the correct value for GoodsNomenclature
+    when passed an xml ElementTree element."""
     transaction = filter_snippet_transaction(
         envelope_commodity,
         taric_schema_tags,
@@ -189,6 +191,8 @@ def test_get_chapter_heading_commodity(
     taric_schema_tags,
     record_group,
 ):
+    """Test that get_chapter_heading accepts an xml ElementTree element and
+    returns a string matching the goods nomenclature item_id in the xml."""
     transaction = filter_snippet_transaction(
         envelope_commodity,
         taric_schema_tags,
@@ -201,6 +205,9 @@ def test_get_chapter_heading_commodity(
 
 
 def test_get_chapter_heading_measure(envelope_measure, taric_schema_tags):
+    """Test that get_chapter_heading accepts an xml ElementTree element and
+    returns a string matching the measure's goods nomenclature item_id in the
+    xml."""
     transaction = get_snippet_transaction(envelope_measure, taric_schema_tags)
     chapter_heading = get_chapter_heading(transaction)
     soup = BeautifulSoup(envelope_measure)
@@ -217,6 +224,9 @@ def test_write_transaction_to_chunk_exceed_max_file_size(
     taric_schema_tags,
     record_group,
 ):
+    """Tests that write_transaction_to_chunk calls close_chunk when get_chunk
+    returns a chunk bigger than MAX_FILE_SIZE and that this chunk is popped from
+    chunks_in_progress dict."""
     transaction = filter_snippet_transaction(
         envelope_commodity,
         taric_schema_tags,
@@ -276,6 +286,8 @@ def test_sort_commodity_codes(
     commodity_1_kwargs,
     commodity_2_kwargs,
 ):
+    """Test that sort_commodity_codes sorts xml elements by item_id, indent,
+    suffix, and transaction order."""
     transactions = []
     for comm_kwargs in [commodity_1_kwargs, commodity_2_kwargs]:
         transaction_id = comm_kwargs.pop("transaction_id", 0)
