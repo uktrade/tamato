@@ -397,6 +397,20 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="VolumeAndInitialVolumeMustMatch"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.VolumeAndInitialVolumeMustMatch">[docs]</a><span class="k">class</span> <span class="nc">VolumeAndInitialVolumeMustMatch</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unless it is the main quota in a quota association, a definition&#39;s volume</span>
+<span class="sd">    and initial_volume values should always be the same.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="VolumeAndInitialVolumeMustMatch.validate"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.VolumeAndInitialVolumeMustMatch.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">sub_quota_associations</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">volume</span> <span class="o">!=</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">initial_volume</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="QA1"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.QA1">[docs]</a><span class="k">class</span> <span class="nc">QA1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;The association between two quota definitions must be unique.&quot;&quot;&quot;</span></div>
 
