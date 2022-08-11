@@ -75,7 +75,7 @@ class MeasureSnapshot:
         as_at: date,
         transaction: Transaction,
     ):
-        tree = collection._get_snapshot(transaction, as_at)
+        tree = collection.get_snapshot(transaction, as_at)
         # `None` is not a bug! We want the commodity code tree to be
         # linked to a specific date, but the measure date actually
         # represents a range of dates, and not a specific one.

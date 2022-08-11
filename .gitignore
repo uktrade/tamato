@@ -147,3 +147,10 @@ webpack-stats.json
 
 # temporary db credentials files
 *-db.json
+
+# system
+.DS_Store
+
+# pii / secrets hooks
+.pii-secret-hook
+ner_output_file.txt

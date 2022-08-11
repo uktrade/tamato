@@ -14,7 +14,7 @@
 {% block beforeContent %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Home", "href": url("index")},
+      {"text": "Home", "href": url("home")},
       {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url("list")},
       {"text": object._meta.verbose_name|capitalize ~ ": " ~ object.sid, "href": object.get_url()},
       {"text": page_title}
@@ -31,45 +31,32 @@
       }) }}
 {% endset %}
 
+{% set conditions_html %}
+      {% include "measures/create-conditions-formset.jinja" %}
+{% endset %}
+
 {% set footnotes_html %}
-    
+
     {% include "measures/create-footnotes-formset.jinja" %}
 
 {% endset %}
 
-{% set geographical_area_html %}
-    {{ govukRadios({
-        "idPrefix": "geographical_area_choice",
-        "name": "geographical_area_choice",
-        "fieldset": {
-            "legend": {
-                "text": "Geographical area",
-            }
+{% set duties_html %}
+    {{ govukInput({
+        "id": "duty_sentence",
+        "name": "duty_sentence",
+        "label": {
+            "text": form.duty_sentence.label,
         },
-        "items": [
-            {
-                "value": "all",
-                "text": "Erga Omnes (all countries)",
-                "checked": form.initial_geographical_area.is_all_countries(),
-            },
-            {
-                "value": "group",
-                "text": "A group of countries",
-                "conditional": {
-                    "html": form.geographical_area_group 
-                },
-                "checked": form.initial_geographical_area.is_group() and not form.initial_geographical_area.is_all_countries(),
-            },
-            {
-                "value": "single",
-                "text": "A single country or region",
-                "conditional": {
-                    "html": form.geographical_area_country_or_region 
-                },
-                "checked": form.initial_geographical_area.is_single_region_or_country(),
-            }
-        ]
+        "value": form.initial.duty_sentence|default("")
     }) }}
+    {% with component="measure" %}
+        {% include "components/duty_help.jinja" %}
+    {% endwith %}
+{% endset %}
+
+{% set geographical_area_html %}
+    {{ form.geo_area }}
     {{ govukDetails({
       "summaryText": "Help with geography",
       "text": "Choose the geographical area to which the measure applies. This can be a specific country or a group of countries, and exclusions can be specified. The measure will only apply to imports from or exports to the selected area."
@@ -101,6 +88,13 @@
                         "heading": {"text": "Commodity code"},
                         "content": {
                             "html": form.goods_nomenclature
+                        },
+                        "summary": {}
+                    },
+                    {
+                        "heading": {"text": "Duties"},
+                        "content": {
+                            "html": duties_html
                         },
                         "summary": {}
                     },
@@ -139,10 +133,18 @@
                         },
                         "summary": {}
                     },
+                    {
+                        "heading": {"text": "Conditions"},
+                        "content": {
+                            "html": conditions_html
+                        },
+                        "summary": {}
+                    },
                 ]
             }) }}
             {{ govukButton({
                 "text":"Save",
+                "preventDoubleClick": true,
             }) }}
         </div>
     </div>

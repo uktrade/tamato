@@ -42,14 +42,16 @@ class Migration(migrations.Migration):
             model_name="footnoteassociationmeasure",
             name="associated_footnote",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT, to="footnotes.footnote"
+                on_delete=django.db.models.deletion.PROTECT,
+                to="footnotes.footnote",
             ),
         ),
         migrations.AddField(
             model_name="footnoteassociationmeasure",
             name="footnoted_measure",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT, to="measures.measure"
+                on_delete=django.db.models.deletion.PROTECT,
+                to="measures.measure",
             ),
         ),
         migrations.AddField(
@@ -64,7 +66,8 @@ class Migration(migrations.Migration):
             model_name="additionalcodetypemeasuretype",
             name="measure_type",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT, to="measures.measuretype"
+                on_delete=django.db.models.deletion.PROTECT,
+                to="measures.measuretype",
             ),
         ),
     ]

@@ -10,6 +10,7 @@ from common.forms import CreateDescriptionForm
 from common.forms import DescriptionForm
 from common.forms import DescriptionHelpBox
 from common.forms import ValidityPeriodForm
+from common.forms import delete_form_for
 from common.util import get_next_id
 from footnotes import models
 from workbaskets.models import WorkBasket
@@ -52,7 +53,12 @@ class FootnoteForm(ValidityPeriodForm):
             Field("footnote_type"),
             Field("start_date"),
             Field("end_date"),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
@@ -110,7 +116,12 @@ class FootnoteCreateForm(ValidityPeriodForm):
             "start_date",
             Field.textarea("description", rows=5),
             DescriptionHelpBox(),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
@@ -172,3 +183,7 @@ class FootnoteCreateDescriptionForm(CreateDescriptionForm):
     class Meta:
         model = models.FootnoteDescription
         fields = ("described_footnote", "description", "validity_start")
+
+
+FootnoteDeleteForm = delete_form_for(models.Footnote)
+FootnoteDescriptionDeleteForm = delete_form_for(models.FootnoteDescription)

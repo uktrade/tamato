@@ -199,12 +199,19 @@ class EnvelopeSerializer:
         self,
         output: IO,
         envelope_id: int,
-        transaction_counter: Counter = counter_generator(),
         message_counter: Counter = counter_generator(),
         max_envelope_size: Optional[int] = None,
         format: str = "xml",
         newline: bool = False,
     ) -> None:
+        """
+        :param output: The output stream to write to.
+        :param envelope_id: The id of the envelope.
+        :param message_counter: A counter for the message ids.
+        :param max_envelope_size: The maximum size of an envelope, if None then no limit.
+        :param format: Format to serialize to, defaults to xml.
+        :param newline: Whether to add a newline after the envelope.
+        """
         self.output = output
         self.message_counter = message_counter
         self.envelope_id = envelope_id
@@ -247,11 +254,13 @@ class EnvelopeSerializer:
         self.write(self.render_envelope_end())
 
     def render_file_header(self) -> str:
+        """Output the file header."""
         return render_to_string(
             template_name="common/taric/start_file.xml",
         )
 
     def render_envelope_start(self) -> str:
+        """Output the envelope start."""
         return render_to_string(
             template_name="common/taric/start_envelope.xml",
             context={"envelope_id": self.envelope_id},
@@ -278,6 +287,7 @@ class EnvelopeSerializer:
         )
 
     def render_envelope_end(self) -> str:
+        """Output the envelope end."""
         return render_to_string(template_name="common/taric/end_envelope.xml")
 
     def start_next_envelope(self) -> None:

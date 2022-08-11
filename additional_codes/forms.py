@@ -13,6 +13,7 @@ from common.forms import CreateDescriptionForm
 from common.forms import DescriptionForm
 from common.forms import DescriptionHelpBox
 from common.forms import ValidityPeriodForm
+from common.forms import delete_form_for
 from workbaskets.models import WorkBasket
 
 
@@ -53,7 +54,12 @@ class AdditionalCodeForm(ValidityPeriodForm):
             Field("type"),
             Field("start_date"),
             Field("end_date"),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
@@ -121,7 +127,12 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
             "start_date",
             Field.textarea("description", rows=5),
             DescriptionHelpBox(),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
@@ -138,9 +149,9 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
         tx = WorkBasket.get_current_transaction(self.request)
 
         highest_sid = (
-            models.AdditionalCode.objects.filter(type__sid=instance.type.sid)
-            .approved_up_to_transaction(tx)
-            .aggregate(Max("sid"))["sid__max"]
+            models.AdditionalCode.objects.approved_up_to_transaction(tx).aggregate(
+                Max("sid"),
+            )["sid__max"]
         ) or 0
         instance.sid = highest_sid + 1
 
@@ -170,3 +181,9 @@ class AdditionalCodeCreateDescriptionForm(CreateDescriptionForm):
     class Meta:
         model = models.AdditionalCodeDescription
         fields = ("described_additionalcode", "description", "validity_start")
+
+
+AdditionalCodeDeleteForm = delete_form_for(models.AdditionalCode)
+
+
+AdditionalCodeDescriptionDeleteForm = delete_form_for(models.AdditionalCodeDescription)

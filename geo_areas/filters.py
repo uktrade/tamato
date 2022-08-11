@@ -43,7 +43,7 @@ class GeographicalAreaFilter(
         required=False,
     )
 
-    clear_url = reverse_lazy("geoarea-ui-list")
+    clear_url = reverse_lazy("geo_area-ui-list")
 
     class Meta:
         model = GeographicalArea

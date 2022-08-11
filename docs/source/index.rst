@@ -10,6 +10,7 @@
    architecture/index.rst
    importer/index.rst
    exporter/index.rst
+   training/gherkin.rst
    CODE_OF_CONDUCT
    CONTRIBUTING
    api/index.rst

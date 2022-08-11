@@ -101,18 +101,15 @@ def test_GA4():
         business_rules.GA4(child.transaction).validate(child)
 
 
-def test_GA5(date_ranges):
+def test_GA5(assert_spanning_enforced):
     """A parent geographical areas validity period must span a childs validity
     period."""
 
-    parent = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
-    child = factories.GeoGroupFactory.create(
-        parent=parent,
-        valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.GeoGroupFactory,
+        business_rules.GA5,
+        has_parent=True,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.GA5(child.transaction).validate(child)
 
 
 def test_GA6():
@@ -142,30 +139,32 @@ def test_GA7(date_ranges):
         business_rules.GA7(duplicate.transaction).validate(duplicate)
 
 
-def test_GA10(date_ranges):
+def test_GA10(assert_spanning_enforced):
     """If referenced in a measure the geographical area validity range must span
     the measure validity range."""
 
-    measure = factories.MeasureFactory.create(
-        geographical_area__valid_between=date_ranges.starts_with_normal,
-        valid_between=date_ranges.normal,
+    assert_spanning_enforced(
+        factories.GeographicalAreaFactory,
+        business_rules.GA10,
+        measures=factories.related_factory(
+            factories.MeasureFactory,
+            factory_related_name="geographical_area",
+        ),
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.GA10(measure.transaction).validate(measure.geographical_area)
 
 
-def test_GA11(date_ranges):
+def test_GA11(assert_spanning_enforced):
     """If an area is excluded in a measure then the areas validity must span the
     measure."""
 
-    exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
-        excluded_geographical_area__valid_between=date_ranges.normal,
-        modified_measure__valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.GeographicalAreaFactory,
+        business_rules.GA11,
+        measureexcludedgeographicalarea=factories.related_factory(
+            factories.MeasureExcludedGeographicalAreaFactory,
+            factory_related_name="excluded_geographical_area",
+        ),
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.GA11(exclusion.transaction).validate(
-            exclusion.excluded_geographical_area,
-        )
 
 
 def test_GA12(reference_nonexistent_record):
@@ -219,38 +218,24 @@ def test_GA15(date_ranges):
         )
 
 
-@pytest.mark.parametrize(
-    ("group_validity", "membership_validity", "expect_error"),
-    (
-        ("normal", "normal", False),
-        ("normal", "overlap_normal", True),
-        ("no_end", "no_end", False),
-        ("normal", "later", True),
-    ),
-)
-def test_GA16(date_ranges, group_validity, membership_validity, expect_error):
+def test_GA16(assert_spanning_enforced):
     """The validity period of the geographical area group must span all
     membership periods of its members."""
 
-    membership = factories.GeographicalMembershipFactory.create(
-        geo_group__valid_between=getattr(date_ranges, group_validity),
-        valid_between=getattr(date_ranges, membership_validity),
+    assert_spanning_enforced(
+        factories.GeographicalMembershipFactory,
+        business_rules.GA16,
     )
-    with raises_if(BusinessRuleViolation, expect_error):
-        business_rules.GA16(membership.transaction).validate(membership)
 
 
-@pytest.mark.xfail(reason="GA18_20 disabled")
-def test_GA17(date_ranges):
+def test_GA17(assert_spanning_enforced):
     """The validity range of the geographical area group must span all
     membership ranges of its members."""
 
-    membership = factories.GeographicalMembershipFactory.create(
-        geo_group__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.GeographicalMembershipFactory,
+        business_rules.GA17,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.GA17(membership.transaction).validate(membership)
 
 
 def test_GA18(date_ranges):
@@ -263,6 +248,23 @@ def test_GA18(date_ranges):
     duplicate = factories.GeographicalMembershipFactory.create(
         geo_group=existing.geo_group,
         member=existing.member,
+        valid_between=date_ranges.overlap_normal,
+    )
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.GA18(duplicate.transaction).validate(duplicate)
+
+
+# https://uktrade.atlassian.net/browse/TP2000-469
+def test_GA18_multiple_versions(date_ranges):
+    """Test that GA18 fires for overlapping memberships when one membership is
+    created with a later version of the member area."""
+    existing = factories.GeographicalMembershipFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    new_version_member = existing.member.new_version(existing.transaction.workbasket)
+    duplicate = factories.GeographicalMembershipFactory.create(
+        geo_group=existing.geo_group,
+        member=new_version_member,
         valid_between=date_ranges.overlap_normal,
     )
     with pytest.raises(BusinessRuleViolation):

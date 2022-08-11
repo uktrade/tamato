@@ -43,21 +43,7 @@ class ValidityMixin(models.Model):
     validity_field_name: str = "valid_between"
     """The name of the field that should be used for validity date checking."""
 
-    @classmethod
-    def objects_with_validity_field(cls):
-        """
-        Returns a QuerySet which will have this model's validity date field (as
-        specified by :attr:`validity_field_name`) present on the returned
-        models.
-
-        The need for this is that some models (e.g.
-        :class:`~measures.models.Measure`) use a validity date that is computed
-        on demand as part of a database query and hence is not present on the
-        default queryset.
-        """
-        return cls.objects
-
-    def terminate(self: Self, workbasket, when: date, **params) -> Self:
+    def terminate(self: Self, workbasket, when: date) -> Self:
         """
         Returns a new version of the object updated to end on the specified
         date.
@@ -88,7 +74,6 @@ class ValidityMixin(models.Model):
                 lower=self.valid_between.lower,
                 upper=when,
             )
-            update_params.update(params)
 
         return self.new_version(workbasket, **update_params)
 
@@ -97,6 +82,9 @@ class ValidityMixin(models.Model):
 
 
 class ValidityStartQueryset(CTEQuerySet):
+    def with_validity_field(self):
+        return self.with_end_date()
+
     def with_end_date(self):
         """
         Returns a :class:`QuerySet` where the :attr:`validity_end` date and the
@@ -214,18 +202,6 @@ class ValidityStartMixin(models.Model):
     """The :meth:`~common.models.mixins.ValidityStartQuerySet.with_end_date`
     method is used to automatically compute the end date based on the other
     models in the series. """
-
-    @classmethod
-    def objects_with_validity_field(cls):
-        """
-        Returns a QuerySet which will have this model's validity date range
-        present on the returned models.
-
-        The need for this is that ValidityStart models use a validity date range
-        that is computed on demand as part of a database query and hence is not
-        present on the default queryset.
-        """
-        return cls.objects.with_end_date()
 
     class Meta:
         abstract = True

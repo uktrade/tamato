@@ -1,6 +1,5 @@
 """Business rules for geographical areas."""
 from django.db import connection
-from django.db.models import F
 
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
@@ -8,7 +7,7 @@ from common.business_rules import MustExist
 from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
-from common.business_rules import ValidityPeriodContains
+from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
 from geo_areas.validators import AreaCode
 
@@ -58,26 +57,12 @@ class GA4(BusinessRule):
             raise self.violation(geo_area)
 
 
-class GA5(BusinessRule):
+class GA5(ValidityPeriodContained):
     """If a geographical area has a parent geographical area group then the
     validity period of the parent geographical area group must span the validity
     period of the geographical area."""
 
-    def validate(self, geo_area):
-        if (
-            type(geo_area)
-            .objects.select_related("parent")
-            .filter(
-                parent__isnull=False,
-                sid=geo_area.sid,
-            )
-            .approved_up_to_transaction(self.transaction)
-            .exclude(
-                parent__valid_between__contains=F("valid_between"),
-            )
-            .exists()
-        ):
-            raise self.violation(geo_area)
+    container_field_name = "parent"
 
 
 class GA6(BusinessRule):
@@ -126,7 +111,7 @@ class GA7(NoOverlapping):
     identifying_fields = ("area_id",)
 
 
-class GA10(ValidityPeriodContains):
+class GA10(ValidityPeriodContained):
     """When a geographical area is referenced in a measure then the validity
     period of the geographical area must span the validity period of the
     measure."""
@@ -134,23 +119,12 @@ class GA10(ValidityPeriodContains):
     contained_field_name = "measures"
 
 
-class GA11(BusinessRule):
+class GA11(ValidityPeriodContained):
     """If a geographical area is referenced as an excluded geographical area in
     a measure then the membership period of the geographical area must span the
     validity period of the measure."""
 
-    def validate(self, geo_area):
-        Measure = (
-            geo_area.measureexcludedgeographicalarea_set.model.modified_measure.field.related_model
-        )
-        if (
-            Measure.objects.with_effective_valid_between()
-            .approved_up_to_transaction(geo_area.transaction)
-            .filter(exclusions__excluded_geographical_area__sid=geo_area.sid)
-            .exclude(db_effective_valid_between__contained_by=geo_area.valid_between)
-            .exists()
-        ):
-            raise self.violation(geo_area)
+    contained_field_name = "measureexcludedgeographicalarea__modified_measure"
 
 
 class GA12(MustExist):
@@ -173,43 +147,17 @@ class GA14(MustExist):
     reference_field_name = "geo_group"
 
 
-class GA16(BusinessRule):
+class GA16(ValidityPeriodContained):
     """The validity period of the geographical area group must span all
     membership periods of its members."""
 
-    def validate(self, membership):
-        if (
-            type(membership)
-            .objects.filter(
-                geo_group=membership.geo_group,
-            )
-            .approved_up_to_transaction(membership.transaction)
-            .exclude(
-                valid_between__contained_by=membership.geo_group.valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(membership)
+    container_field_name = "geo_group"
 
 
-class GA17(BusinessRule):
+class GA17(GA16):
     """The membership period of a geographical area (member) must be within
     (inclusive) the validity period of the geographical area group (geographical
     area’s start and end date)."""
-
-    def validate(self, membership):
-        if (
-            type(membership)
-            .objects.filter(
-                geo_group=membership.geo_group,
-            )
-            .approved_up_to_transaction(membership.transaction)
-            .exclude(
-                valid_between__contained_by=membership.geo_group.valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(membership)
 
 
 class GA18(BusinessRule):
@@ -220,8 +168,8 @@ class GA18(BusinessRule):
         if (
             type(membership)
             .objects.filter(
-                geo_group=membership.geo_group,
-                member=membership.member,
+                geo_group__version_group=membership.geo_group.version_group,
+                member__version_group=membership.member.version_group,
                 valid_between__overlap=membership.valid_between,
             )
             .approved_up_to_transaction(membership.transaction)

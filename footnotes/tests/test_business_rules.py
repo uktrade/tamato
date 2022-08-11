@@ -103,35 +103,27 @@ def test_FO4_description_start_before_footnote_end(date_ranges):
         business_rules.FO4(early_description.transaction).validate(footnote)
 
 
-def test_FO5(date_ranges):
+def test_FO5(assert_spanning_enforced):
     """When a footnote is used in a measure the validity period of the footnote
     must span the validity period of the measure."""
 
-    assoc = factories.FootnoteAssociationMeasureFactory.create(
-        footnoted_measure=factories.MeasureFactory.create(
-            valid_between=date_ranges.normal,
-        ),
-        associated_footnote__valid_between=date_ranges.starts_with_normal,
+    assert_spanning_enforced(
+        factories.FootnoteFactory,
+        business_rules.FO5,
+        associated_with_measure=True,
     )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.FO5(assoc.transaction).validate(assoc.associated_footnote)
 
-
-def test_FO6(date_ranges):
+def test_FO6(assert_spanning_enforced):
     """When a footnote is used in a goods nomenclature the validity period of
     the footnote must span the validity period of the association with the goods
     nomenclature."""
 
-    assoc = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
-        goods_nomenclature=factories.GoodsNomenclatureFactory.create(
-            valid_between=date_ranges.normal,
-        ),
-        associated_footnote__valid_between=date_ranges.starts_with_normal,
+    assert_spanning_enforced(
+        factories.FootnoteFactory,
+        business_rules.FO6,
+        associated_with_goods_nomenclature=True,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.FO6(assoc.transaction).validate(assoc.associated_footnote)
 
 
 @pytest.mark.skip(reason="Export Refunds not implemented")
@@ -143,20 +135,16 @@ def test_FO7():
     assert False
 
 
-def test_FO9(date_ranges):
+def test_FO9(assert_spanning_enforced):
     """When a footnote is used in an additional code the validity period of the
     footnote must span the validity period of the association with the
     additional code."""
 
-    assoc = factories.FootnoteAssociationAdditionalCodeFactory.create(
-        additional_code=factories.AdditionalCodeFactory.create(
-            valid_between=date_ranges.normal,
-        ),
-        associated_footnote__valid_between=date_ranges.starts_with_normal,
+    assert_spanning_enforced(
+        factories.FootnoteFactory,
+        business_rules.FO9,
+        associated_with_additional_code=True,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.FO9(assoc.transaction).validate(assoc.associated_footnote)
 
 
 @requires_meursing_tables
@@ -166,15 +154,13 @@ def test_FO10():
     meursing heading."""
 
 
-def test_FO17(date_ranges):
+def test_FO17(assert_spanning_enforced):
     """The validity period of the footnote type must span the validity period of
     the footnote."""
-    footnote = factories.FootnoteFactory.create(
-        footnote_type__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
+    assert_spanning_enforced(
+        factories.FootnoteFactory,
+        business_rules.FO17,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.FO17(footnote.transaction).validate(footnote)
 
 
 def test_FO11(delete_record):

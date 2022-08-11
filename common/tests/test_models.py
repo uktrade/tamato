@@ -1,8 +1,10 @@
-from typing import List
 from unittest.mock import patch
+from urllib.parse import urlparse
 
+import factory
+import freezegun
 import pytest
-from pytest_django.asserts import assertQuerysetEqual  # noqa
+from pytest_django.asserts import assertQuerysetEqual  # type: ignore
 
 import common.exceptions
 import workbaskets.models
@@ -10,13 +12,11 @@ from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
+from common.models.utils import LazyString
 from common.tests import factories
 from common.tests import models
-from common.tests.factories import ApprovedTransactionFactory
-from common.tests.factories import FootnoteFactory
-from common.tests.factories import SeedFileTransactionFactory
+from common.tests.factories import EnvelopeFactory
 from common.tests.factories import TestModel1Factory
-from common.tests.factories import UnapprovedTransactionFactory
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
@@ -24,78 +24,13 @@ from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
 from footnotes.models import FootnoteType
 from measures.models import MeasureCondition
+from measures.models import MeasureExcludedGeographicalArea
 from regulations.models import Group
 from regulations.models import Regulation
+from taric.models import Envelope
+from workbaskets.tasks import check_workbasket_sync
 
 pytestmark = pytest.mark.django_db
-
-
-def generate_model_history(factory, number=5, **kwargs) -> List:
-    objects = []
-    kwargs["update_type"] = kwargs.get("update_type", UpdateType.CREATE)
-    current = factory.create(**kwargs)
-    objects.append(current)
-    kwargs["update_type"] = UpdateType.UPDATE
-    kwargs["version_group"] = kwargs.get("version_group", current.version_group)
-    for _ in range(number - 1):
-        current = factory.create(**kwargs)
-        objects.append(current)
-
-    return objects
-
-
-def model_with_history(factory, date_ranges, **kwargs):
-    class Models:
-        """
-        A convenient system to store tracked models.
-
-        Creates a number of historic models for both test model types.
-
-        Creates an active model for each test model type.
-
-        Then creates a number of future models for each type as well.
-        """
-
-        all_models = generate_model_history(
-            factory, valid_between=date_ranges.earlier, **kwargs
-        )
-
-        active_model = factory.create(
-            valid_between=date_ranges.current, update_type=UpdateType.UPDATE, **kwargs
-        )
-
-        all_models.append(active_model)
-
-        all_models.extend(
-            generate_model_history(
-                factory,
-                valid_between=date_ranges.future,
-                update_type=UpdateType.UPDATE,
-                **kwargs,
-            ),
-        )
-
-    return Models
-
-
-@pytest.fixture
-def model1_with_history(date_ranges):
-    return model_with_history(
-        factories.TestModel1Factory,
-        date_ranges,
-        version_group=factories.VersionGroupFactory.create(),
-        sid=1,
-    )
-
-
-@pytest.fixture
-def model2_with_history(date_ranges):
-    return model_with_history(
-        factories.TestModel2Factory,
-        date_ranges,
-        version_group=factories.VersionGroupFactory.create(),
-        custom_sid=1,
-    )
 
 
 @pytest.fixture
@@ -126,9 +61,6 @@ def test_versions_up_to(model1_with_history):
 
 def test_as_at(date_ranges, validity_factory):
     """Ensure only records active at a specific date are fetched."""
-    if validity_factory is factories.GoodsNomenclatureFactory:
-        pytest.xfail("Does not implement as_at")
-
     pks = {
         validity_factory.create(valid_between=date_ranges.later).pk,
         validity_factory.create(valid_between=date_ranges.later).pk,
@@ -364,6 +296,28 @@ def test_current_as_of(sample_model):
     )
 
 
+def test_create_with_description():
+    """Tests that when calling ``create`` on a described object, an associated
+    description is created with the correct data."""
+
+    # Get the data we need for the model, except the transaction needs to exist
+    # and we don't want a version group as it will be added on save.
+    model_data = factory.build(
+        dict,
+        FACTORY_CLASS=factories.TestModel1Factory,
+        transaction=factories.ApprovedTransactionFactory(),
+        version_group=None,
+        description=factories.short_description(),
+    )
+    model = TestModel1.create(**model_data)
+
+    description = model.get_descriptions().get()
+    assert description.validity_start == model.valid_between.lower
+    assert description.transaction == model.transaction
+    assert description.update_type == model.update_type
+    assert description.described_record == model
+
+
 def test_get_descriptions(sample_model):
     descriptions = {
         factories.TestModelDescription1Factory.create(described_record=sample_model)
@@ -390,27 +344,16 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     assert new_description in description_queryset
     assert description not in description_queryset
 
+    check_workbasket_sync(workbasket)
     workbasket.submit_for_approval()
     with patch(
         "exporter.tasks.upload_workbaskets.delay",
     ):
-        workbasket.approve(valid_user, workbaskets.models.SEED_FIRST)
+        workbasket.approve(valid_user.pk, "SEED_FIRST")
     description_queryset = sample_model.get_descriptions()
 
     assert new_description in description_queryset
     assert description not in description_queryset
-
-
-def test_get_descriptions_with_request(request, sample_model):
-    description = factories.TestModelDescription1Factory.create(
-        described_record=sample_model,
-    )
-    workbasket = factories.WorkBasketFactory.create()
-    new_description = description.new_version(workbasket)
-    with patch("workbaskets.models.WorkBasket.current", return_value=workbasket):
-        description_queryset = sample_model.get_descriptions(request=request)
-
-    assert new_description in description_queryset
 
 
 def test_get_description_dates(description_factory, date_ranges):
@@ -458,6 +401,57 @@ def test_get_description_dates(description_factory, date_ranges):
     assert future == future_description
 
 
+def test_trackedmodel_get_url(trackedmodel_factory):
+    """Verify get_url() returns something sensible and doesn't crash."""
+    instance = trackedmodel_factory.create()
+    url = instance.get_url()
+
+    if url is None:
+        # None is returned for models that have no URL
+        return
+
+    if instance.url_suffix:
+        assert instance.url_suffix in url
+
+    assert len(url)
+
+    # Verify URL is not local
+    assert not urlparse(url).netloc
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        factories.AdditionalCodeFactory,
+        factories.CertificateFactory,
+        factories.FootnoteFactory,
+        factories.GeographicalAreaFactory,
+    ],
+)
+def test_trackedmodel_get_description_create_url(factory):
+    """Verify get_url() returns something for creating descriptions."""
+    instance = factory.create()
+    url = instance.get_url("description-create")
+
+    assert url
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        factories.AdditionalCodeFactory,
+        factories.FootnoteFactory,
+        factories.MeasureFactory,
+        factories.RegulationFactory,
+    ],
+)
+def test_trackedmodel_get_create_url(factory):
+    instance = factory.create()
+    url = instance.get_url("create")
+
+    assert url
+
+
 def test_trackedmodel_str(trackedmodel_factory):
     """Verify no __str__ methods of TrackedModel classes crash or return non-
     strings."""
@@ -466,6 +460,21 @@ def test_trackedmodel_str(trackedmodel_factory):
 
     assert isinstance(result, str)
     assert len(result.strip())
+
+
+@pytest.mark.django_db(transaction=True, reset_sequences=True)
+def test_trackedmodel_base_str():
+    """
+    Verify TrackedModel base class can stringify without crashing, so that.
+
+    .trackedmodel_ptr will work on TrackedModel subclasses.
+    """
+    model = factories.TestModel1Factory.create()
+    trackedmodel = model.trackedmodel_ptr
+
+    result = str(trackedmodel)
+
+    assert f"pk={trackedmodel.pk}" == result
 
 
 def test_copy(trackedmodel_factory, approved_transaction):
@@ -499,29 +508,6 @@ def test_copy_also_copies_dependents():
     assert copy.descriptions.count() == 1
     assert copy.descriptions.get() != desc
     assert copy.descriptions.get().description == desc.description
-
-
-def test_transaction_default_order():
-    """Verify Transactions default order is by ("partition", "order") by
-    creating transactions that will not be in the correct order if only using
-    default sorting, by pk, or just by order."""
-    FootnoteFactory.create(transaction=SeedFileTransactionFactory.create())
-    FootnoteFactory.create(transaction=UnapprovedTransactionFactory.create())
-    FootnoteFactory.create(transaction=ApprovedTransactionFactory.create())
-
-    transaction_data = Transaction.objects.values("order", "partition")
-    unordered_transaction_data = Transaction.objects.order_by().values(
-        "order",
-        "partition",
-    )
-
-    assert list(transaction_data) != list(
-        unordered_transaction_data,
-    ), "Test or data structures may have been edited so sorting doesn't do anything."
-    assert list(transaction_data) == sorted(
-        unordered_transaction_data,
-        key=lambda o: (o["partition"], o["order"]),
-    )
 
 
 def test_save_single_draft_transaction_updates(unordered_transactions):
@@ -637,12 +623,13 @@ def test_copy_fk_related_models():
         "component_sequence_number": 1,
         "condition_code_id": code.pk,
     }
-
+    assert measure.conditions.count() == 0
     copied_measure = measure.copy(
         transaction,
         conditions=[MeasureCondition(**condition_data)],
     )
 
+    assert measure.conditions.count() == 0
     assert copied_measure.conditions.count() == 1
 
 
@@ -702,3 +689,89 @@ def test_copy_nested_field_two_levels_deep():
     )
 
     assert copied_measure.conditions.first().components.first().duty_amount == 0
+
+
+def test_copy_saved_related_models():
+    """Test that copy accepts a queryset of saved objects, creates a new measure
+    with all of these related objects, and preserves original measure's
+    relationships."""
+    workbasket = factories.WorkBasketFactory.create()
+    measure = factories.MeasureFactory.create(transaction=workbasket.new_transaction())
+    exclusion_1 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        transaction=workbasket.new_transaction(),
+        modified_measure=measure,
+    )
+    exclusion_2 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        transaction=workbasket.new_transaction(),
+        modified_measure=measure,
+    )
+    exclusion_3 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        transaction=workbasket.new_transaction(),
+        modified_measure=measure,
+    )
+    exclusions = MeasureExcludedGeographicalArea.objects.exclude(pk=exclusion_1.pk)
+    copied_measure = measure.copy(workbasket.new_transaction(), exclusions=exclusions)
+
+    assert measure.exclusions.count() == 3
+    assert copied_measure.exclusions.count() == 2
+    assert exclusion_1 in measure.exclusions.all()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_1.modified_measure.sid,
+    ).exists()
+    assert exclusion_2 in measure.exclusions.all()
+    assert copied_measure.exclusions.filter(
+        modified_measure__sid=copied_measure.sid,
+        excluded_geographical_area=exclusion_2.excluded_geographical_area,
+    ).exists()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_2.modified_measure.sid,
+    ).exists()
+    assert exclusion_3 in measure.exclusions.all()
+    assert copied_measure.exclusions.filter(
+        modified_measure__sid=copied_measure.sid,
+        excluded_geographical_area=exclusion_3.excluded_geographical_area,
+    ).exists()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_3.modified_measure.sid,
+    ).exists()
+
+
+def test_transaction_summary(approved_transaction):
+    """Verify that transaction.summary returns a LazyString which evaluates to a
+    string with the expected fields."""
+    # It's tricky to test lazy evaluation here, verifying an instance of LazyString works as a stand-in.
+    assert isinstance(approved_transaction.summary, LazyString)
+
+    expected_summary = (
+        f"transaction: {approved_transaction.partition}, {approved_transaction.pk} "
+        f"in workbasket: {approved_transaction.workbasket.status}, {approved_transaction.workbasket.pk}"
+    )
+
+    assert str(approved_transaction.summary) == expected_summary
+
+
+@freezegun.freeze_time("2023-01-01")
+@pytest.mark.parametrize(
+    "year,first_envelope_id,next_envelope_id",
+    [
+        (2023, "230001", "230002"),
+        (2023, "239998", "239999"),
+    ],
+)
+def test_next_envelope_id(year, first_envelope_id, next_envelope_id):
+    """Verify that envelope ID is made up of two digits of the year and a 4
+    digit counter starting from 0001."""
+    with freezegun.freeze_time(f"{year}-01-01"):
+        assert EnvelopeFactory.create(envelope_id=first_envelope_id)
+        assert Envelope.next_envelope_id() == next_envelope_id
+
+
+def test_next_envelope_id_overflow():
+    """Since the counter contains 4 digits, 9999 envelopes can be created a
+    year, attempting to create more should raise a ValueError."""
+
+    with freezegun.freeze_time("2023-01-01"):
+        assert EnvelopeFactory.create(envelope_id="239999").envelope_id == "239999"
+
+        with pytest.raises(ValueError):
+            Envelope.next_envelope_id()

@@ -4,6 +4,7 @@ from django.db import DataError
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
+from common.tests.util import raises_if
 from regulations import business_rules
 from regulations.validators import RoleType
 
@@ -139,7 +140,15 @@ def test_ROIMB44(id, approved, change_flag, expect_error):
         business_rules.ROIMB44(regulation.transaction).validate(regulation)
 
 
-def test_ROIMB46(delete_record):
+@pytest.mark.parametrize(
+    ("regulation_id", "role_type", "expect_error"),
+    (
+        (factories.BaseRegulationFactory.regulation_id, RoleType.BASE, True),
+        ("C2000000", RoleType.BASE, False),
+        (factories.BaseRegulationFactory.regulation_id, RoleType.MODIFICATION, False),
+    ),
+)
+def test_ROIMB46(regulation_id, role_type, expect_error, delete_record):
     """A base regulation cannot be deleted if it is used as a justification
     regulation, except for ‘C’ regulations used only in measures as both
     measure-generating regulation and justification regulation."""
@@ -147,40 +156,29 @@ def test_ROIMB46(delete_record):
     # justification regulation field, though there will be a lot of EU regulations where
     # the justification regulation field is set.
 
-    regulation = factories.BaseRegulationFactory.create()
-    factories.MeasureFactory.create(terminating_regulation=regulation)
-    deleted = delete_record(regulation)
+    regulation = factories.RegulationFactory.create(
+        regulation_id=regulation_id,
+        role_type=role_type,
+    )
+    measure = factories.MeasureFactory.create(
+        valid_between=factories.date_ranges("normal"),
+        generating_regulation=regulation,
+        terminating_regulation=regulation,
+    )
+    assert measure.terminating_regulation == regulation
 
-    with pytest.raises(BusinessRuleViolation):
+    deleted = delete_record(regulation)
+    with raises_if(BusinessRuleViolation, expect_error):
         business_rules.ROIMB46(deleted.transaction).validate(deleted)
 
-    draft_regulation = factories.BaseRegulationFactory.create(regulation_id="C2000000")
-    factories.MeasureFactory.create(
-        generating_regulation=draft_regulation,
-        terminating_regulation=draft_regulation,
-    )
 
-    deleted = delete_record(draft_regulation)
-    business_rules.ROIMB46(deleted.transaction).validate(deleted)
-
-    not_base_regulation = factories.RegulationFactory.create(
-        role_type=RoleType.MODIFICATION,
-    )
-    factories.MeasureFactory.create(terminating_regulation=not_base_regulation)
-
-    deleted = delete_record(not_base_regulation)
-    business_rules.ROIMB46(deleted.transaction).validate(deleted)
-
-
-def test_ROIMB47(date_ranges):
+def test_ROIMB47(assert_spanning_enforced):
     """The validity period of the regulation group id must span the validity
     period of the base regulation."""
     # But we will be ensuring that the regulation groups are not end dated, therefore we
     # will not get hit by this
-    regulation = factories.BaseRegulationFactory.create(
-        regulation_group__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
-    )
 
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ROIMB47(regulation.transaction).validate(regulation)
+    assert_spanning_enforced(
+        factories.BaseRegulationFactory,
+        business_rules.ROIMB47,
+    )

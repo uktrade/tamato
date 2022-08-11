@@ -1,4 +1,5 @@
 from typing import Iterable
+from unittest.mock import patch
 
 import pytest
 from django_fsm import TransitionNotAllowed
@@ -11,15 +12,20 @@ from common.tests.factories import ApprovedTransactionFactory
 from common.tests.factories import SeedFileTransactionFactory
 from common.tests.factories import TransactionFactory
 from common.tests.factories import WorkBasketFactory
+from common.tests.util import TestRule
+from common.tests.util import add_business_rules
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
+from workbaskets import tasks
 from workbaskets.models import REVISION_ONLY
 from workbaskets.models import SEED_FIRST
 from workbaskets.models import SEED_ONLY
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.models import TransactionPartitionScheme
 from workbaskets.models import UserTransactionPartitionScheme
+from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
+from workbaskets.tests.util import assert_workbasket_valid
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -48,20 +54,43 @@ def test_workbasket_transactions():
     assert workbasket.transactions.count() == 2
 
 
-def test_workbasket_transition(workbasket, transition, valid_user):
+@patch("exporter.tasks.upload_workbaskets")
+def test_workbasket_transition(upload, workbasket, transition, valid_user):
     """Tests all combinations of initial workbasket status and transition,
     testing that valid transitions do not error, and invalid transitions raise
     TransitionNotAllowed."""
 
-    transition_args = [valid_user, SEED_FIRST] if transition.name == "approve" else []
+    transition_args = (
+        [valid_user.pk, "SEED_FIRST"] if transition.name == "approve" else []
+    )
 
     try:
         getattr(workbasket, transition.name)(*transition_args)
         assert workbasket.status == transition.target.value
     except TransitionNotAllowed:
-        assert transition.name not in [
+        assert transition.name not in {
             t.name for t in workbasket.get_available_status_transitions()
-        ]
+        }
+
+
+@patch("exporter.tasks.upload_workbaskets")
+def test_workbasket_transition_task(upload, workbasket, transition, valid_user):
+    """Tests all combinations of initial workbasket status and transition,
+    testing that valid transitions do not error, and invalid transitions raise
+    TransitionNotAllowed."""
+
+    transition_args = (
+        [valid_user.pk, "SEED_FIRST"] if transition.name == "approve" else []
+    )
+
+    try:
+        tasks.transition(workbasket.pk, transition.name, *transition_args)
+        workbasket.refresh_from_db()
+        assert workbasket.status == transition.target.value
+    except TransitionNotAllowed:
+        assert transition.name not in {
+            t.name for t in workbasket.get_available_status_transitions()
+        }
 
 
 def test_get_tracked_models(new_workbasket):
@@ -72,7 +101,12 @@ def test_get_tracked_models(new_workbasket):
     assert new_workbasket.tracked_models.count() == 2
 
 
-def test_workbasket_accepted_updates_current_tracked_models(new_workbasket, valid_user):
+@patch("exporter.tasks.upload_workbaskets")
+def test_workbasket_accepted_updates_current_tracked_models(
+    upload,
+    new_workbasket,
+    valid_user,
+):
     original_footnote = factories.FootnoteFactory.create()
     new_footnote = original_footnote.new_version(
         workbasket=new_workbasket,
@@ -81,15 +115,19 @@ def test_workbasket_accepted_updates_current_tracked_models(new_workbasket, vali
 
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
 
+    assert_workbasket_valid(new_workbasket)
+
     new_workbasket.submit_for_approval()
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
-    new_workbasket.approve(valid_user, SEED_FIRST)
+    new_workbasket.approve(valid_user.pk, "SEED_FIRST")
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
 
 
+@patch("exporter.tasks.upload_workbaskets")
 def test_workbasket_errored_updates_tracked_models(
+    upload,
     new_workbasket,
     valid_user,
     settings,
@@ -100,12 +138,12 @@ def test_workbasket_errored_updates_tracked_models(
         workbasket=new_workbasket,
         update_type=UpdateType.UPDATE,
     )
-    assert new_footnote.version_group.current_version.pk == original_footnote.pk
+    assert_workbasket_valid(new_workbasket)
 
     new_workbasket.submit_for_approval()
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
-    new_workbasket.approve(valid_user, SEED_FIRST)
+    new_workbasket.approve(valid_user.pk, "SEED_FIRST")
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
     new_workbasket.export_to_cds()
@@ -228,76 +266,6 @@ def test_user_partition_scheme_get_partition_does_not_allow_seed_after_revision(
         SEED_ONLY.get_partition(status)
 
 
-# FIXME synthetic-record-order:
-#        Factories named here have fields containing TrackedModels, prior to TP-841 these would have each
-#        been in their own transaction.
-#        This hides an issue where synthetic fields (those generated by templates such as description) are
-#        only relative to their own tracked_model, failing under certain circumstances, as exposed by
-#        TP-841 aimed to unify a factories output under one transaction.
-EXCLUDE_MULTI_TRANSACTION_FACTORIES = [
-    "AdditionalCodeTypeMeasureTypeFactory",
-    "AmendmentFactory",
-    "ExtensionFactory",
-    "FootnoteAssociationMeasureFactory",
-    "GeographicalMembershipFactory",
-    "MeasureComponentFactory",
-    "MeasureConditionComponentFactory",
-    "MeasureConditionFactory",
-    "MeasureExcludedGeographicalAreaFactory",
-    "MeasureFactory",
-    "MeasurementFactory",
-    "MeasureTypeFactory",
-    "QuotaAssociationFactory",
-    "QuotaBlockingFactory",
-    "QuotaDefinitionFactory",
-    "QuotaEventFactory",
-    "QuotaOrderNumberFactory",
-    "QuotaOrderNumberOriginExclusionFactory",
-    "QuotaOrderNumberOriginFactory",
-    "QuotaSuspensionFactory",
-    "ReplacementFactory",
-    "SuspensionFactory",
-    "TerminationFactory",
-]
-FACTORIES = [
-    factory
-    for factory in factories.TrackedModelMixin.__subclasses__()
-    if factory.__name__ not in EXCLUDE_MULTI_TRANSACTION_FACTORIES
-]
-
-
-@pytest.mark.parametrize(
-    "factory",
-    FACTORIES,
-    ids=(f.__name__ for f in FACTORIES),
-)
-def test_nested_factories_dont_create_extra_transactions(factory):
-    """
-    To verify the seed_first transaction scheme it's important to have control
-    over when transactions are created.
-
-    If a TrackedModel is a field of another TrackedModels factory and it implicitly
-    creates a Transaction this can break tests of the seed first scheme as it is
-    no longer possible to know which transactions should be created.
-
-    This test verifies calls each factory specifying a transaction and fails
-    if new transactions were created.
-
-    Factories that cause this test to fail should be updated to ensure
-    transactions are passed to their SubFactories and RelatedFactories.
-    """
-    tx = TransactionFactory.create()
-
-    # Verify the initial assumption that there is one transaction.
-    assert [*Transaction.objects.all()] == [tx]
-
-    factory.create(transaction=tx)
-    assert [*Transaction.objects.all()] == [tx], (
-        f"{factory} created more than one transaction,"
-        " check that it passes its transaction to any tracked_models it creates."
-    )
-
-
 @pytest.mark.parametrize(
     "partition_setting,expected_partition",
     [
@@ -327,20 +295,24 @@ def test_workbasket_approval_updates_transactions(
         assert partition_scheme.approved_partition == expected_partition
 
     new_workbasket = WorkBasketFactory.create(status=WorkflowStatus.PROPOSED)
+    assert type(new_workbasket).objects.count() == 1
 
-    with new_workbasket.new_transaction() as tx:
-        factories.FootnoteFactory.create(transaction=tx)
+    model = factories.FootnoteFactory.create(
+        transaction=new_workbasket.new_transaction(),
+    )
+    assert model.transaction.partition == TransactionPartition.DRAFT
 
     # Before approving the workbasket check the ground truth that it contains some draft transactions.
-    # assert new_workbasket.tracked_models.exists()
     assert [TransactionPartition.DRAFT] == list(
         new_workbasket.transactions.distinct("partition").values_list(
             "partition",
             flat=True,
         ),
     )
+    with patch("exporter.tasks.upload_workbaskets") as upload:
+        new_workbasket.approve(valid_user.pk, partition_setting)
 
-    new_workbasket.approve(valid_user, partition_scheme)
+        upload.delay.assert_called_with()
 
     assert [expected_partition] == list(
         new_workbasket.transactions.distinct("partition").values_list(
@@ -350,3 +322,26 @@ def test_workbasket_approval_updates_transactions(
     )
 
     assert_transaction_order(Transaction.objects.all())
+
+
+def test_workbasket_clean_does_not_run_business_rules():
+    """Workbaskets should not have business rule validation included as part of
+    their model cleaning, because business rules are slow to run and for a
+    moderate sized workbasket will time out a web request."""
+
+    model = factories.TestModel1Factory.create()
+    with add_business_rules(type(model), TestRule):
+        model.transaction.workbasket.full_clean()
+
+    assert TestRule.validate.not_called()
+
+
+def test_current_transaction_returns_last_approved_transaction(
+    session_request,
+    approved_transaction,
+):
+    """Check that when no workbasket is saved on the request session
+    get_current_transaction returns the latest approved transaction instead."""
+    current = WorkBasket.get_current_transaction(session_request)
+
+    assert current == approved_transaction

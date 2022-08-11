@@ -14,7 +14,7 @@ scenarios("features/browse_geo_areas.feature")
 @pytest.fixture
 @when("I search for a geographical_area using a <search_term>")
 def geo_area_search(search_term, client):
-    return client.get(reverse("geoarea-list"), {"search": search_term})
+    return client.get(reverse("geo_area-list"), {"search": search_term})
 
 
 @then("the search result should contain the geographical_area searched for")

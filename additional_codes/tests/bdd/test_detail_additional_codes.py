@@ -26,7 +26,7 @@ def additional_code_core_data(additional_code_detail, additional_code_X000):
     act = ac.type
 
     assert f"{act.sid}{ac.code}" in content
-    assert ac.get_description().description in content
+    assert ac.get_description(transaction=ac.transaction).description in content
     assert f"{act.sid} - {act.description}" in content
     assert f"{ac.valid_between.lower:%d %b %Y}" in content
 

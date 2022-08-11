@@ -9,14 +9,18 @@ from django.db.models import Max
 from django.db.models import Q
 from django.db.models import Value
 from django.db.models import When
+from django.db.models.fields import Field
 from django.db.models.query_utils import DeferredAttribute
 from django_cte import CTEQuerySet
 from polymorphic.query import PolymorphicQuerySet
 
 from common import exceptions
 from common.models.tracked_utils import get_models_linked_to
+from common.models.utils import LazyTransaction
+from common.models.utils import get_current_transaction
 from common.querysets import TransactionPartitionQuerySet
 from common.querysets import ValidityQuerySet
+from common.util import resolve_path
 from common.validators import UpdateType
 
 
@@ -41,6 +45,27 @@ class TrackedModelQuerySet(
         """
         return self.filter(is_current__isnull=False).exclude(
             update_type=UpdateType.DELETE,
+        )
+
+    def current(self) -> TrackedModelQuerySet:
+        """
+        Returns a queryset of approved versions of the model up to the globally
+        defined current transaction (see ``common.models.utils`` for details of
+        how this is managed).
+
+        If this method is called from within a running instance of the Django
+        web application (i.e. application middleware has been exectuted), then
+        TransactionMiddleware will automatically set the globally defined,
+        current transaction to the current transaction in the global Workbasket.
+
+        Otherwise, if TransactionMiddleware has not been executed (for
+        instance, when running from the shell / Jupyter), then care must be
+        taken to ensure the global current transaction is set up correctly
+        (see ``set_current_transaction()`` and ``override_current_transaction()``
+        in ``common.models.utils``).
+        """
+        return self.approved_up_to_transaction(
+            LazyTransaction(get_value=get_current_transaction),
         )
 
     def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:
@@ -136,6 +161,20 @@ class TrackedModelQuerySet(
             ),
         )
 
+    def record_ordering(self) -> TrackedModelQuerySet:
+        """
+        Returns objects in order of their TARIC record code and subrecord code.
+
+        This is primarily useful for querysets that contain multiple types of
+        tracked model, e.g. when exporting the tracked models to XML.
+        """
+        return self.annotate_record_codes().order_by(
+            "transaction__partition",
+            "transaction__order",
+            "record_code",
+            "subrecord_code",
+        )
+
     def version_ordering(self) -> TrackedModelQuerySet:
         """
         Returns objects in canonical order, i.e. by the order in which they
@@ -205,9 +244,6 @@ class TrackedModelQuerySet(
             "version_group", "version_group__current_version", *related_lookups
         )
 
-    def get_queryset(self):
-        return self.annotate_record_codes().order_by("record_code", "subrecord_code")
-
     @staticmethod
     def _when_model_record_codes():
         """
@@ -271,3 +307,46 @@ class TrackedModelQuerySet(
         in_workbasket = self.model.objects.filter(transaction__workbasket=workbasket)
         # add latest version of models from the current workbasket
         return self.filter(query) | in_workbasket
+
+    def follow_path(self, path: str) -> TrackedModelQuerySet:
+        """
+        Returns a queryset filled with objects that are found by following the
+        passed path.
+
+        At each stage of the path, only the current versions of each object are
+        considered, so that upon reaching the end of the path the queryset will
+        only contain current versions that are linked back to the start of the
+        path by current versions as well.
+
+        E.g. ``follow_path(Measure.objects.filter(…), 'measurecomponent')`` will
+        return a queryset that contains all the measure components that are
+        attached to the filtered measures, as of the current() transaction.
+        """
+        steps = resolve_path(self.model, path)
+
+        qs = self
+        for model_type, rel in steps:
+            if isinstance(rel, Field):
+                # The foreign key is on the model we are moving towards. So we
+                # follow the foreign key on that model and filter by the current
+                # model's version group.
+                values = set(qs.values_list("version_group_id", flat=True))
+                filter = f"{rel.name}__version_group_id__in"
+            else:
+                # The foreign key is on the model we are moving away from. So we
+                # resolve the foreign key into the version group that we are
+                # looking for.
+                values = set(
+                    qs.values_list(
+                        f"{rel.remote_field.name}__version_group_id",
+                        flat=True,
+                    ),
+                )
+                filter = "version_group_id__in"
+
+            if any(values):
+                qs = model_type.objects.current().filter(**{filter: values})
+            else:
+                qs = model_type.objects.none()
+
+        return qs.distinct()

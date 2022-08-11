@@ -3,6 +3,7 @@ from typing import Set
 
 from django.db import models
 
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import ApplicabilityCode
 from common.fields import ShortDescription
@@ -12,10 +13,10 @@ from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
 from common.util import TaricDateRange
 from common.util import classproperty
-from common.validators import UpdateType
 from footnotes import validators as footnote_validators
 from measures import business_rules
 from measures import validators
+from measures.querysets import ComponentQuerySet
 from measures.querysets import MeasureConditionQuerySet
 from measures.querysets import MeasuresQuerySet
 from quotas import business_rules as quotas_business_rules
@@ -35,6 +36,8 @@ class MeasureTypeSeries(TrackedModel, ValidityMixin):
 
     description_record_code = "140"
     description_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     sid = models.CharField(
         max_length=2,
@@ -190,6 +193,8 @@ class DutyExpression(TrackedModel, ValidityMixin):
     description_record_code = "230"
     description_subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     sid = models.IntegerField(
         choices=validators.DutyExpressionId.choices,
         db_index=True,
@@ -213,7 +218,7 @@ class DutyExpression(TrackedModel, ValidityMixin):
         business_rules.ME111,
     )
 
-    business_rules = (UpdateValidity,)
+    business_rules = (UniqueIdentifyingFields, UpdateValidity)
 
 
 class MeasureType(TrackedModel, ValidityMixin):
@@ -230,6 +235,8 @@ class MeasureType(TrackedModel, ValidityMixin):
 
     description_record_code = "235"
     description_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     sid = models.CharField(
         max_length=6,
@@ -342,6 +349,11 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
         db_index=True,
     )
     description = ShortDescription()
+    # A measure condition code must be created with one or both of
+    # accepts_certificate and accepts_price set to True,
+    # though a condition should only ever have one of either required_certificate or duty_amount set.
+    accepts_certificate = models.BooleanField(default=False)
+    accepts_price = models.BooleanField(default=False)
 
     identifying_fields = ("code",)
 
@@ -378,6 +390,7 @@ class MeasureAction(TrackedModel, ValidityMixin):
         db_index=True,
     )
     description = ShortDescription()
+    requires_duty = models.BooleanField(default=False)
 
     identifying_fields = ("code",)
 
@@ -516,6 +529,7 @@ class Measure(TrackedModel, ValidityMixin):
         business_rules.ME12,
         business_rules.ME17,
         business_rules.ME24,
+        business_rules.ME27,
         business_rules.ME87,
         business_rules.ME33,
         business_rules.ME34,
@@ -527,6 +541,7 @@ class Measure(TrackedModel, ValidityMixin):
         business_rules.ME110,
         business_rules.ME111,
         business_rules.ME104,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -549,7 +564,7 @@ class Measure(TrackedModel, ValidityMixin):
         if not hasattr(self, self.validity_field_name):
             effective_valid_between = (
                 type(self)
-                .objects_with_validity_field()
+                .objects.with_validity_field()
                 .filter(pk=self.pk)
                 .get()
                 .db_effective_valid_between
@@ -568,9 +583,9 @@ class Measure(TrackedModel, ValidityMixin):
 
         return TaricDateRange(self.valid_between.lower, self.effective_end_date)
 
-    @classmethod
-    def objects_with_validity_field(cls):
-        return super().objects_with_validity_field().with_effective_valid_between()
+    @property
+    def duty_sentence(self) -> str:
+        return MeasureComponent.objects.duty_sentence(self)
 
     @classproperty
     def auto_value_fields(cls):
@@ -594,53 +609,6 @@ class Measure(TrackedModel, ValidityMixin):
             .filter(condition__dependent_measure__sid=self.sid)
             .exists()
         )
-
-    def get_conditions(self, transaction):
-        return MeasureCondition.objects.filter(
-            dependent_measure__sid=self.sid,
-        ).approved_up_to_transaction(transaction)
-
-    def terminate(self, workbasket, when: date):
-        """
-        Returns a new version of the measure updated to end on the specified
-        date.
-
-        If the measure would not have started on that date, the measure is
-        deleted instead. If the measure will already have ended by this date,
-        then does nothing.
-        """
-        update_params = {}
-        if not self.terminating_regulation:
-            update_params["terminating_regulation"] = self.generating_regulation
-
-        return super().terminate(workbasket, when, **update_params)
-
-    def save(self, *args, force_write=False, **kwargs):
-        """If the commodity code is being changed on an existing measure, the
-        measure is deleted instead of doing an `UPDATE` and a new measure
-        created with the updated commodity code."""
-        if (
-            self.update_type == UpdateType.UPDATE
-            and self.get_versions().order_by("transaction__order").last()
-        ):
-            previous = self.get_versions().order_by("transaction__order").last()
-            try:
-                nomenclature_removed = not (
-                    previous.goods_nomenclature and self.goods_nomenclature
-                )
-            except type(previous.goods_nomenclature).DoesNotExist:
-                return super().save(*args, force_write=force_write, **kwargs)
-            nomenclature_changed = (
-                True
-                if nomenclature_removed
-                else self.goods_nomenclature.sid != previous.goods_nomenclature.sid
-            )
-            if nomenclature_changed:
-                self.update_type = UpdateType.DELETE
-                instance = super().save(*args, force_write=force_write, **kwargs)
-                return self.copy(self.transaction)
-
-        return super().save(*args, force_write=force_write, **kwargs)
 
 
 class MeasureComponent(TrackedModel):
@@ -694,6 +662,8 @@ class MeasureComponent(TrackedModel):
         UpdateValidity,
     )
 
+    objects = TrackedModelManager.from_queryset(ComponentQuerySet)()
+
 
 class MeasureCondition(TrackedModel):
     """
@@ -706,6 +676,10 @@ class MeasureCondition(TrackedModel):
 
     record_code = "430"
     subrecord_code = "10"
+    url_pattern_name_prefix = "measure"
+    url_suffix = "#conditions"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
     dependent_measure = models.ForeignKey(
@@ -771,6 +745,9 @@ class MeasureCondition(TrackedModel):
         business_rules.ME62,
         business_rules.ME63,
         business_rules.ME64,
+        business_rules.ActionRequiresDuty,
+        business_rules.ConditionCodeAcceptance,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -835,6 +812,10 @@ class MeasureCondition(TrackedModel):
 
         return "".join(out)
 
+    @property
+    def duty_sentence(self) -> str:
+        return MeasureConditionComponent.objects.duty_sentence(self)
+
 
 class MeasureConditionComponent(TrackedModel):
     """Contains the duty information or part of the duty information of the
@@ -889,6 +870,8 @@ class MeasureConditionComponent(TrackedModel):
         business_rules.ME108,
         UpdateValidity,
     )
+
+    objects = TrackedModelManager.from_queryset(ComponentQuerySet)()
 
 
 class MeasureExcludedGeographicalArea(TrackedModel):

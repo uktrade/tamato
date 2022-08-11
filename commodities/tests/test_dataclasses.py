@@ -603,6 +603,7 @@ def test_snapshot_diff_update(collection_basic, transaction_pool):
     candidate = copy_commodity(
         current,
         transaction_pool,
+        preserve_sid=False,
         indent=current.obj.indents.get().indent + 1,
     )
 

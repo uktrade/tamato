@@ -1,5 +1,13 @@
 {%- extends "includes/common/tabs/core_data.jinja" -%}
 
+{% set geographical_exclusions %}
+{% if object.exclusions.current() %}
+	{% for exclusion in object.exclusions.current() %}
+		{{ exclusion.excluded_geographical_area.get_description().description }}{{ ", " if not loop.last else "" }}
+	{% endfor %}
+{% else %}-{% endif %}
+{% endset %}
+
 {% block data %}
 	{{ govukSummaryList({
 		"rows": [
@@ -44,8 +52,13 @@
             "actions": {"items": []}
         },
         {
+            "key": {"text": "Geographical area exclusions"},
+            "value": {"text":  geographical_exclusions },
+            "actions": {"items": []}
+        },
+        {
             "key": {"text": "Quota order number"},
-            "value": {"text":  object.order_number.sid if object.order_number else '-'},
+            "value": {"text":  object.order_number if object.order_number else '-'},
             "actions": {"items": []}
         },
         {

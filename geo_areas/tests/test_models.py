@@ -1,6 +1,9 @@
 import pytest
 
+from common.models.transactions import Transaction
+from common.models.utils import set_current_transaction
 from common.tests import factories
+from geo_areas import models
 
 pytestmark = pytest.mark.django_db
 
@@ -24,6 +27,7 @@ def test_get_current_memberships_on_groups(membership_data, expected):
     group = factories.GeoGroupFactory()
     for data in membership_data(group):
         factories.GeographicalMembershipFactory(**data)
+    set_current_transaction(Transaction.objects.last())
 
     assert len(group.get_current_memberships()) == expected
 
@@ -47,6 +51,7 @@ def test_get_current_memberships_on_areas(membership_data, expected):
     area = factories.CountryFactory()
     for data in membership_data(area):
         factories.GeographicalMembershipFactory(**data)
+    set_current_transaction(Transaction.objects.last())
 
     assert len(area.get_current_memberships()) == expected
 
@@ -56,6 +61,7 @@ def test_get_current_memberships_when_region_and_country_share_sid():
     region = factories.RegionFactory.create(sid=country.sid)
     country_membership = factories.GeographicalMembershipFactory.create(member=country)
     region_membership = factories.GeographicalMembershipFactory.create(member=region)
+    set_current_transaction(Transaction.objects.last())
     country_memberships = country.get_current_memberships()
     region_memberships = region.get_current_memberships()
 
@@ -124,3 +130,21 @@ def test_geo_area_update_types(
     check_update_validation,
 ):
     assert check_update_validation(factory)
+
+
+def test_with_current_description():
+    """Tests that, after updating a geo area description,
+    with_current_description returns a queryset with one geo area annotated with
+    only the latest description."""
+    description = factories.GeographicalAreaDescriptionFactory.create(
+        description="blarghhh",
+    )
+    current_description = description.new_version(
+        description.transaction.workbasket,
+        description="bleurgh",
+    )
+    set_current_transaction(current_description.transaction)
+    qs = models.GeographicalArea.objects.current().with_current_description()
+
+    assert qs.count() == 1
+    assert qs.first().description == "bleurgh"

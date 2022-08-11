@@ -2,49 +2,33 @@ from django.urls import include
 from django.urls import path
 from rest_framework import routers
 
+from common.paths import get_ui_paths
 from measures import views
 
 api_router = routers.DefaultRouter()
 api_router.register(r"measure_types", views.MeasureTypeViewSet, basename="measuretype")
 
+detail = "<sid:sid>"
 ui_patterns = [
-    path(
-        "",
-        views.MeasureList.as_view(),
-        name="measure-ui-list",
-    ),
-    path(
-        "create/<sid:sid>/confirm/",
-        views.MeasureConfirmCreate.as_view(),
-        name="measure-ui-confirm-create",
-    ),
+    *get_ui_paths(views, detail),
     path(
         "create/",
-        views.MeasureCreateWizard.as_view(),
+        views.MeasureCreateWizard.as_view(
+            url_name="measure-ui-create",
+            done_step_name="complete",
+        ),
         name="measure-ui-create",
     ),
     path(
         "create/<step>/",
-        views.MeasureCreateWizard.as_view(),
+        views.MeasureCreateWizard.as_view(
+            url_name="measure-ui-create",
+            done_step_name="complete",
+        ),
         name="measure-ui-create",
     ),
     path(
-        "<sid:sid>/",
-        views.MeasureDetail.as_view(),
-        name="measure-ui-detail",
-    ),
-    path(
-        "<sid:sid>/edit/",
-        views.MeasureUpdate.as_view(),
-        name="measure-ui-edit",
-    ),
-    path(
-        "<sid:sid>/confirm-update/",
-        views.MeasureConfirmUpdate.as_view(),
-        name="measure-ui-confirm-update",
-    ),
-    path(
-        "<sid:sid>/edit-footnotes/",
+        f"{detail}/edit-footnotes/",
         views.MeasureFootnotesUpdate.as_view(),
         name="measure-ui-edit-footnotes",
     ),

@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from rest_framework import permissions
 from rest_framework import viewsets
@@ -7,7 +8,6 @@ from rest_framework import viewsets
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.validators import UpdateType
-from common.views import BusinessRulesMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -19,6 +19,7 @@ from footnotes.filters import FootnoteFilterBackend
 from footnotes.serializers import FootnoteTypeSerializer
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import DraftCreateView
+from workbaskets.views.generic import DraftDeleteView
 from workbaskets.views.generic import DraftUpdateView
 
 
@@ -47,6 +48,9 @@ class FootnoteViewSet(viewsets.ReadOnlyModelViewSet):
 class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows footnote types to be viewed or edited."""
 
+    # Since the introduction of the current_objects ModelManager instance on
+    # TrackedModel, View.queryset can be better expressed as:
+    # queryset = models.FootnoteType.current_objects
     queryset = models.FootnoteType.objects.latest_approved()
     serializer_class = FootnoteTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -101,6 +105,7 @@ class FootnoteCreate(DraftCreateView):
     template_name = "footnotes/create.jinja"
     form_class = forms.FootnoteCreateForm
 
+    @transaction.atomic
     def form_valid(self, form):
         transaction = self.get_transaction()
         transaction.save()
@@ -132,7 +137,6 @@ class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
 
 class FootnoteUpdate(
     FootnoteMixin,
-    BusinessRulesMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
 ):
@@ -140,7 +144,7 @@ class FootnoteUpdate(
 
     validate_business_rules = (
         business_rules.FO2,
-        # business_rules.FO4,  # XXX should it be checked here?
+        business_rules.FO4,
         business_rules.FO5,
         business_rules.FO6,
         business_rules.FO9,
@@ -152,7 +156,22 @@ class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
 
 
-class FootnoteCreateDescription(
+class FootnoteDelete(
+    FootnoteMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.FootnoteDeleteForm
+    success_path = "list"
+
+    validate_business_rules = (
+        business_rules.FO11,
+        business_rules.FO12,
+        business_rules.FO15,
+    )
+
+
+class FootnoteDescriptionCreate(
     FootnoteCreateDescriptionMixin,
     TrackedModelDetailMixin,
     DraftCreateView,
@@ -171,7 +190,7 @@ class FootnoteCreateDescription(
     template_name = "common/create_description.jinja"
 
 
-class FootnoteUpdateDescription(
+class FootnoteDescriptionUpdate(
     FootnoteDescriptionMixin,
     TrackedModelDetailMixin,
     DraftUpdateView,
@@ -192,3 +211,12 @@ class FootnoteDescriptionConfirmUpdate(
     TrackedModelDetailView,
 ):
     template_name = "common/confirm_update_description.jinja"
+
+
+class FootnoteDescriptionDelete(
+    FootnoteDescriptionMixin,
+    TrackedModelDetailMixin,
+    DraftDeleteView,
+):
+    form_class = forms.FootnoteDescriptionDeleteForm
+    success_path = "detail"

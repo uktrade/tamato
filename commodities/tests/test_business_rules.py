@@ -1,7 +1,7 @@
 import pytest
-from django.core.exceptions import ValidationError
 from django.db import DataError
 
+from checks.tasks import check_transaction_sync
 from commodities import business_rules
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
@@ -39,7 +39,7 @@ def test_NIG1(date_ranges):
     ("parent_validity", "self_validity", "child_validity", "expect_error"),
     (
         ("normal", "no_end", "no_end", True),
-        ("no_end", "normal", "no_end", True),
+        ("no_end", "normal", "no_end", False),  # see note on NIG2
         ("no_end", "no_end", "normal", False),
         ("no_end", "no_end", "no_end", False),
         ("normal", "normal", "normal", False),
@@ -283,12 +283,15 @@ def test_NIG12_description_start_before_nomenclature_end(
 
 def test_NIG12_direct_rule_called_for_goods():
     good = factories.GoodsNomenclatureFactory.create(description=None)
+    check_transaction_sync(good.transaction)
 
-    with pytest.raises(
-        ValidationError,
-        match="At least one description record is mandatory.",
-    ):
-        good.transaction.clean()
+    assert (
+        good.transaction.checks.get()
+        .model_checks.filter(
+            message__contains="At least one description record is mandatory.",
+        )
+        .exists()
+    )
 
 
 @pytest.mark.parametrize(
@@ -374,34 +377,32 @@ def test_NIG24(date_ranges, valid_between, expect_error):
         business_rules.NIG24(association.transaction).validate(association)
 
 
-def test_NIG30(spanning_dates):
+def test_NIG30(assert_spanning_enforced):
     """When a goods nomenclature is used in a goods measure then the validity
     period of the goods nomenclature must span the validity period of the goods
     measure."""
-    commodity_range, measure_range, fully_contained = spanning_dates
-
-    measure = factories.MeasureFactory.create(
-        goods_nomenclature__valid_between=commodity_range,
-        valid_between=measure_range,
+    assert_spanning_enforced(
+        factories.GoodsNomenclatureFactory,
+        business_rules.NIG30,
+        measures=factories.related_factory(
+            factories.MeasureFactory,
+            factory_related_name="goods_nomenclature",
+        ),
     )
 
-    with raises_if(business_rules.NIG30.Violation, not fully_contained):
-        business_rules.NIG30(measure.transaction).validate(measure.goods_nomenclature)
 
-
-def test_NIG31(spanning_dates):
+def test_NIG31(assert_spanning_enforced):
     """When a goods nomenclature is used in an additional nomenclature measure
     then the validity period of the goods nomenclature must span the validity
     period of the additional nomenclature measure."""
-    commodity_range, measure_range, fully_contained = spanning_dates
-
-    measure = factories.MeasureWithAdditionalCodeFactory.create(
-        goods_nomenclature__valid_between=commodity_range,
-        valid_between=measure_range,
+    assert_spanning_enforced(
+        factories.GoodsNomenclatureFactory,
+        business_rules.NIG31,
+        measures=factories.related_factory(
+            factories.MeasureWithAdditionalCodeFactory,
+            factory_related_name="goods_nomenclature",
+        ),
     )
-
-    with raises_if(business_rules.NIG31.Violation, not fully_contained):
-        business_rules.NIG31(measure.transaction).validate(measure.goods_nomenclature)
 
 
 def test_NIG34(delete_record):

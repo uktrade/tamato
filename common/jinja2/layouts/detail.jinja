@@ -3,7 +3,7 @@
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Home", "href": url("index")},
+      {"text": "Home", "href": url("home")},
       {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url(action="list")},
       {"text": page_title}
     ]

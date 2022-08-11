@@ -1,20 +1,38 @@
 {% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% from "components/inset-text/macro.njk" import govukInsetText %}
+{% set page_title %}Workbasket {{ request.session.workbasket.id }}{% if request.session.workbasket.title %} - {{ request.session.workbasket.title }}{% endif %}{% endset %}
+{% set page_subtitle %}What would you like to do?{% endset %}
 
-{% set page_title = "Manage trade tariffs" %}
+{% block breadcrumb %}
+  {% if request.GET.edit %}
+    {{ govukBreadcrumbs({
+      "items": [
+        {"text": "Home", "href": url("home")},
+        {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
+        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
+        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
+      ]
+    }) }}
+  {% else %}
+    {{ govukBreadcrumbs({
+      "items": [
+        {"text": "Home", "href": url("home")},
+        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
+        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
+      ]
+    }) }}
+  {% endif %}
+{% endblock %}
+
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-xl">
-        {{ page_title }}
-        <span class="govuk-caption-xl">
-          This service lets you manage UK trade tariffs
-        </span>
-      </h1>
-    </div>
-  </div>
+  <h1 class="govuk-heading-xl">
+    {{ page_title }}
+    <span class="govuk-caption-xl">
+      {{ page_subtitle }}
+    </span>
+  </h1>
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <h2 class="govuk-heading-l">
@@ -41,6 +59,11 @@
     <div class="govuk-grid-column-one-quarter">
       <h2 class="govuk-heading-m">Certificates</h2>
       <ul class="govuk-list">
+      <li>
+          <a class="govuk-link" href="{{ url('certificate-ui-create') }}">
+            Create a new certificate
+          </a>
+        </li>
         <li>
           <a class="govuk-link" href="{{ url("certificate-ui-list") }}">
             Find and edit certificates
@@ -67,7 +90,7 @@
       <h2 class="govuk-heading-m">Geographical areas</h2>
       <ul class="govuk-list">
         <li>
-          <a class="govuk-link" href="{{ url('geoarea-ui-list') }}">
+          <a class="govuk-link" href="{{ url('geo_area-ui-list') }}">
             Find and edit geographical areas
           </a>
         </li>
@@ -75,6 +98,16 @@
     </div>
   </div>
   <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Commodities</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('commodities-import') }}">
+            Import commodities
+          </a>
+        </li>
+      </ul>
+    </div>
     <div class="govuk-grid-column-one-quarter">
       <h2 class="govuk-heading-m">Measures</h2>
       <ul class="govuk-list">
@@ -116,6 +149,4 @@
       </ul>
     </div>
   </div>
-  <p class="govuk-body govuk-!-margin-bottom-9"></p>
-  {% include "includes/workbaskets/workbasket-selectable-items.jinja" %}
 {% endblock %}

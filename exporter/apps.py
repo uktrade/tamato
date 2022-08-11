@@ -30,3 +30,9 @@ class ExporterConfig(CommonConfig):
 
     def ready(self):
         apsw.config(apsw.SQLITE_CONFIG_LOG, handle_sqlite_log)
+
+        from common.xml import namespaces
+
+        namespaces.register()
+
+        return super().ready()

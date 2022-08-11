@@ -87,12 +87,8 @@ def order_number_objects():
 def required_certificates_data(measure_data: Dict, order_number_objects) -> Dict:
     return {
         "order_number": factories.QuotaOrderNumberFactory.create(
-            required_certificates=[
-                factories.CertificateFactory(
-                    sid="123",
-                    certificate_type__sid="U",
-                ),
-            ],
+            required_certificates__sid="123",
+            required_certificates__certificate_type__sid="U",
         ),
         **measure_data,
     }
@@ -485,3 +481,57 @@ def test_suspension_pattern_does_not_recreate_old_mfn(
         == UpdateType.CREATE
     )
     assert not type(suspension).objects.filter(additional_code=None).exists()
+
+
+# https://uktrade.atlassian.net/browse/TP2000-402
+# The above bug occurred because the erga omnes group was created with an early version of Anguilla.
+# This country was later changed to a region and another group (Phytosanitary 9) created with this region.
+# We then tried to create an erga omnes measure and exclude this Phytosanitary 9 group from it. /PS-IGNORE
+# This caused a 500 error because our system didn't see this later version of Anguilla as belonging to erga omnes.
+# Therefore, we updated the logic to use the GeographicalArea identifying field `sid`, instead of pk, and disregard version. /PS-IGNORE
+# This follows the precedent set by get_current_memberships, which uses sid and means that the erga omnes group shows the latest version of Anguilla as one of its members. /PS-IGNORE
+def test_create_measure_excluded_geographical_areas_assertion(measure_creation_pattern):
+    """
+    Tests the assertion in create_measure_excluded_geographical_areas by
+    creating a group containing two countries, creating a measure with this
+    group, updating one country to a later version with a different pk but the
+    same sid, creating a group with this later version of the country, and then
+    trying to exclude this group from the measure group.
+
+    We expect the assertion to pass and a MeasureExcludedGeographicalArea to be
+    created with the measure and new version of the country
+    """
+    measure_group = factories.GeographicalAreaFactory.create(area_code=1)
+    country_1 = factories.GeographicalAreaFactory.create(area_code=0)
+    country_2 = factories.GeographicalAreaFactory.create(area_code=0)
+    factories.GeographicalMembershipFactory.create(
+        geo_group=measure_group,
+        member=country_1,
+    )
+    factories.GeographicalMembershipFactory.create(
+        geo_group=measure_group,
+        member=country_2,
+    )
+    excluded_group = factories.GeographicalAreaFactory.create(area_code=1)
+    new_country_2 = country_2.new_version(
+        workbasket=measure_creation_pattern.workbasket,
+    )
+    factories.GeographicalMembershipFactory.create(
+        geo_group=excluded_group,
+        member=new_country_2,
+    )
+    measure = factories.MeasureFactory.create(geographical_area=measure_group)
+    generator = measure_creation_pattern.create_measure_excluded_geographical_areas(
+        measure=measure,
+        exclusion=excluded_group,
+    )
+    exclusion = [gen for gen in generator][0]
+
+    assert exclusion.modified_measure == measure
+
+    # sanity check assumptions about result of calling new_version /PS-IGNORE
+    assert country_2.sid == new_country_2.sid
+    assert country_2.pk != new_country_2.pk
+
+    assert exclusion.excluded_geographical_area.sid == country_2.sid
+    assert exclusion.excluded_geographical_area.pk == new_country_2.pk

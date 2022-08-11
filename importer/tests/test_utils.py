@@ -12,7 +12,10 @@ def test_generate_key():
     TODO: This test needs to be more robust.
     """
     key = utils.generate_key("test", ["1", "2"], {"1": 1, "2": 2})
-    assert key == "a98ec5c5044800c88e862f007b98d89815fc40ca155d6ce7909530d792e909ce"
+    assert (
+        key
+        == "a98ec5c5044800c88e862f007b98d89815fc40ca155d6ce7909530d792e909ce"  # /PS-IGNORE
+    )
 
 
 def test_get_record_codes():

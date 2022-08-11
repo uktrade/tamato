@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import date
 from functools import cached_property
@@ -42,7 +41,7 @@ def column(label, optional=False, many=False):
             elif many:
                 if value is None:
                     return []
-                value = split("[" + "".join(self.separators) + "]", value)
+                value = split("[" + "".join(self.separators) + "]", str(value))
                 return [fn(self, v) for v in value]
             else:
                 return fn(self, value)
@@ -53,7 +52,7 @@ def column(label, optional=False, many=False):
     return decorate
 
 
-@dataclass
+@dataclass(frozen=True)
 class SheetRowMixin:
     """
     A mixin representing a row model, used for building importers that read data
@@ -83,9 +82,9 @@ class SheetRowMixin:
                 all_columns.append((key, value.__col__))
         return list(k[0] for k in sorted(all_columns, key=lambda k: k[1]))
 
-    @abstractmethod
     def import_row(self, workbasket: WorkBasket) -> Any:
-        pass
+        """Invoked by ``import_sheet`` when the row model has been loaded."""
+        return self
 
     @classmethod
     def import_sheet(cls, sheet: Worksheet, workbasket: WorkBasket, *args, **kwargs):

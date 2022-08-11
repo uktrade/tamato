@@ -56,16 +56,39 @@
     {{ rows.extend([
       ("Measure type", data["measure_type"] ~ " - " ~ data["measure_type"].description),
       ("Regulation ID", data["generating_regulation"]),
-      ("Geographical area", data["geographical_area"].get_description().description|safe),
       ("Quota order number", data["order_number"]),
       ("Measure start date", "{:%d/%m/%Y}".format(data["valid_between"].lower) if data["valid_between"] and data["valid_between"].lower else "-"),
       ("Measure end date", "{:%d/%m/%Y}".format(data["valid_between"].upper) if data["valid_between"] and data["valid_between"].upper else "-"),
     ]) }}
   {% endcall %}
 
-  {% call(rows, data) review_step("commodity") %}
+  {% call(rows, data) review_step("geographical_area") %}
+    {% for item in data.geo_area_list %}
     {{ rows.extend([
-      ("Commodity code", data["goods_nomenclature"] ~ " - " ~ data["goods_nomenclature"].get_description().description|safe if data["goods_nomenclature"] else "None"),
+      ("Geographical area", item.get_description().description|safe),
+    ]) }}
+    {% endfor %}
+    {% if data.geo_area_exclusions %}
+      {% for item in data.geo_area_exclusions %}
+      {{ rows.extend([
+        ("Excluded geographical area", item.get_description().description|safe),
+      ]) }}
+      {% endfor %}
+    {% endif %}
+
+  {% endcall %}
+
+  {% call(rows, data) review_step("commodities") %}
+    {% for item in data %}
+      {{ rows.extend([
+        ("Commodity code", item["commodity"] ~ " - " ~ item["commodity"].get_description().description|safe if item["commodity"] else "None"),
+        ("Duty", item["duties"]),
+      ]) }}
+    {% endfor %}
+  {% endcall %}
+
+  {% call(rows, data) review_step("additional_code") %}
+    {{ rows.extend([
       ("Additional code", data["additional_code"] ~ " - " ~ data["additional_code"].get_description().description|safe if data["additional_code"] else "None"),
     ]) }}
   {% endcall %}
@@ -81,10 +104,6 @@
     {% endif %}
   {% endcall %}
 
-  {% call(rows, data) review_step("duties") %}
-    {{ rows.append(("Duties", data["duties"])) }}
-  {% endcall %}
-
   {% call(rows, data) review_step("footnotes") %}
     {# Footnotes are optional, so cater for empty data. #}
     {% if data %}
@@ -96,5 +115,5 @@
     {% endif %}
   {% endcall %}
 
-  {{ govukButton({"text": "Create"}) }}
+  {{ govukButton({"text": "Create", "preventDoubleClick": true,}) }}
 {% endblock %}

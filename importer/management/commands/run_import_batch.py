@@ -3,6 +3,7 @@ from typing import Sequence
 from django.core.management import BaseCommand
 
 from importer import models
+from importer.namespaces import TARIC_RECORD_GROUPS
 from importer.tasks import find_and_run_next_batch_chunks
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.validators import WorkflowStatus
@@ -13,12 +14,14 @@ def run_batch(
     status: str,
     partition_scheme_setting: str,
     username: str,
+    workbasket_id: str = None,
     record_group: Sequence[str] = None,
 ):
     import_batch = models.ImportBatch.objects.get(name=batch)
 
     find_and_run_next_batch_chunks(
         import_batch,
+        workbasket_id,
         status,
         partition_scheme_setting,
         username,
@@ -60,6 +63,14 @@ class Command(BaseCommand):
             help="The username to use for the owner of the workbaskets created.",
             type=str,
         )
+        parser.add_argument(
+            "-C",
+            "--commodities",
+            help="Only import commodities",
+            action="store_const",
+            const=TARIC_RECORD_GROUPS["commodities"],
+            default=None,
+        )
 
     def handle(self, *args, **options):
         run_batch(
@@ -67,4 +78,5 @@ class Command(BaseCommand):
             status=options["status"],
             partition_scheme_setting=options["partition_scheme"],
             username=options["username"],
+            record_group=options["commodities"],
         )

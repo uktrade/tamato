@@ -45,12 +45,19 @@ class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
         self,
         output_constructor: callable,
         envelope_id=1,
+        benchmark=False,
         *args,
         **kwargs,
     ) -> None:
+        """
+        :param output_constructor: callable that returns a file like object to write to, called each time a new envelope is started.
+        :param envelope_id: Envelope ID, to use later, when creating Envelope objects in the database.
+        :param args: Passed through to EnvelopeSerializer.
+        :param kwargs: Passed through to EnvelopeSerializer.
+        """
         self.output_constructor = output_constructor
         EnvelopeSerializer.__init__(
-            self, self.output_constructor(), envelope_id=envelope_id, *args, **kwargs
+            self, self.output_constructor(), envelope_id=envelope_id, **kwargs
         )
 
     def start_next_envelope(self):
@@ -74,7 +81,7 @@ class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
         # Transactions written to the current output
         current_transactions = []
         for transaction in transactions.all():
-            tracked_models = transaction.tracked_models.all()
+            tracked_models = transaction.tracked_models.record_ordering()
             if not tracked_models.count():
                 # Transactions with no tracked models can occur if a workbasket
                 # is created and then populated, these are filtered as an empty

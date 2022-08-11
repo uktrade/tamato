@@ -5,19 +5,23 @@ import logging
 from datetime import date
 from datetime import datetime
 from functools import wraps
+from typing import Any
+from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import Mapping
 from typing import Optional
+from typing import Set
 from typing import Type
 from typing import Union
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
+from common.models.mixins.validity import ValidityMixin
 from common.models.tracked_utils import get_relations
 from common.models.trackedmodel import TrackedModel
+from common.models.utils import override_current_transaction
 from common.util import get_field_tuple
 from common.validators import UpdateType
 
@@ -51,6 +55,9 @@ class BusinessRuleViolation(Exception):
             message = self.default_message()
 
         super().__init__(message, model)
+
+
+ALL_RULES: Set[Type[BusinessRule]] = set()
 
 
 class BusinessRuleBase(type):
@@ -98,6 +105,8 @@ class BusinessRuleBase(type):
             "__doc__",
             getattr(new_class, "__doc__", None),
         )
+
+        ALL_RULES.add(new_class)
 
         return new_class
 
@@ -169,43 +178,6 @@ class BusinessRule(metaclass=BusinessRuleBase):
             model=model,
             message=message,
         )
-
-
-class BusinessRuleChecker:
-    """Runs all business rules governing a specified collection of model
-    instances and collects all violations."""
-
-    def __init__(self, models: Iterable[TrackedModel], transaction):
-        self.models = models
-        self.transaction = transaction
-
-    def validate(self):
-        """
-        Run business rules against the specified models in the given
-        transaction.
-
-        :raises ValidationError: All rule violations are raised in a single
-            ValidationError
-        """
-        violations = []
-
-        for model in self.models:
-            for rule in model.business_rules:
-                try:
-                    rule(self.transaction).validate(model)
-                except BusinessRuleViolation as violation:
-                    violations.append(violation)
-
-            for rule in model.indirect_business_rules:
-                rule_instance = rule(self.transaction)
-                for linked_model in rule.get_linked_models(model, self.transaction):
-                    try:
-                        rule_instance.validate(linked_model)
-                    except BusinessRuleViolation as violation:
-                        violations.append(violation)
-
-        if any(violations):
-            raise ValidationError(violations)
 
 
 def only_applicable_after(cutoff: Union[date, datetime, str]):
@@ -373,117 +345,95 @@ class PreventDeleteIfInUse(BusinessRule):
 
 
 class ValidityPeriodContained(BusinessRule):
-    """Rule enforcing validity period of a contained object (found through the
-    ``contained_field_name``) is contained by a container object's validity
-    period (found through the ``container_field_name``)."""
+    """
+    Rule enforcing validity period of a container object completely contains the
+    validity period of one more contained objects.
+
+    Checks that the following is true:
+
+        for contained_object in contained_objects:
+            container_object.valid_between contains
+            contained_object.valid_between
+    """
 
     container_field_name: Optional[str] = None
+    """
+    The name of the field on the passed model that gives the object who's
+    validity range should be bigger or equal at both ends.
+    
+    This value can be unspecified, in which case the default is that the passed
+    model is the container model.
+    
+    The container may be null because some business rules refer to optional
+    links. E.g. between additional codes and measures: in many cases the measure
+    just may not be using an addiitonal code, but this rule is run against every
+    measure. The case where the container has been deleted but the contained
+    object has not been deleted yet should be prevented by other business rules
+    but is of course possible to represent in the data, so we ignore that case
+    too.
+    """
+
     contained_field_name: Optional[str] = None
+    """
+    The name of a field (or double-underscore-seperated path to a field) on the
+    passed model that gives the object(s) who's validity range should be smaller
+    or equal at both ends.
+    
+    This value can be unspecified, in which case the default is that the passed
+    model is the contained model.
+    
+    The contained object may be null because subrecords are not routinely
+    deleted when the parent record is deleted. For example, if a footnote is
+    attached to a measure but the measure is deleted, the footnote association
+    may not be routinely cleared up. 
+    
+    Note that this one reason is why it is important to make sure we are
+    checking against the latest versions because the object will still be
+    linking via FK to the contained object version it was first attached to. The
+    other good reason is that if the dates on the container or contained objects
+    are modified, this business rule needs to be considering them.
+    """
 
-    def query_contains_validity(self, container, contained, model):
-        """
-        Raise a violation unless the contained model validity period falls
-        entirely within the validity period of the container model.
+    extra_filters: Dict[str, Any] = {}
+    """Any extra filters that should be applied to filter the contained
+    objects."""
 
-        :param container TrackedModel: The model whose validity should contain
-            that of the contained model
-        :param contained TrackedModel: The model whose validity should be
-            contained by that of the container model
-        :param model TrackedModel: The model to associate with the violation
-        :raises self.violation: A business violation exception
-        """
-        if (
-            not type(container)
-            .objects.filter(
-                **container.get_identifying_fields(),
-            )
-            .approved_up_to_transaction(self.transaction)
-            .filter(
-                valid_between__contains=contained.valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(model)
+    def violating_models(self, model: TrackedModel) -> QuerySet[ValidityMixin]:
+        current = model.get_versions().current()
 
-    def validate(self, model):
-        """
-        Check that the specified model or related model named by
-        ``contained_field_name`` has a validity period that is within the
-        validity period of the related model named by ``container_field_name``.
-
-        :param model TrackedModel: The model to check
-        """
-        _, container = get_field_tuple(model, self.container_field_name)
-        contained = model
+        # Resolve our way to the contained models. The output from `follow_path`
+        # will be all the models that should be contained.
+        contained = current
         if self.contained_field_name:
-            _, contained = get_field_tuple(model, self.contained_field_name)
+            contained = contained.follow_path(self.contained_field_name)
 
-        if not container:
-            # TODO should this raise an exception?
-            log.debug(
-                "Skipping %s: Container field %s not found.",
-                self.__class__.__name__,
-                self.container_field_name,
-            )
-            return
+        # Get the latest version of the container model. If the container is not
+        # present, then skip the rule.
+        container = current
+        if self.container_field_name:
+            container = container.follow_path(self.container_field_name)
+        if not container.exists():
+            return contained.none()
 
-        self.query_contains_validity(container, contained, model)
+        # Scope the contained models down to just the ones we are testing.
+        # Violating models are ones that are not contained by the valid between
+        # from the container model.
+        valid_between = container.get().valid_between
 
-
-class ValidityPeriodContains(BusinessRule):
-    """Rule enforcing validity period of this object contains a contained
-    object's validity period (found through the ``contained_field_name``)."""
-
-    contained_field_name: str
-
-    def validate(self, model):
-        contained_model = model
-        relation_path = []
-        for step in self.contained_field_name.split("__"):
-            relation = {
-                **contained_model._meta.fields_map,
-                **contained_model._meta._forward_fields_map,
-            }[step]
-            contained_model = relation.related_model
-            relation_path.append(relation.remote_field.name)
-
-        if (
-            contained_model.objects_with_validity_field()
-            .filter(
-                **{
-                    f"{'__'.join(reversed(relation_path))}__{field}": value
-                    for (field, value) in model.get_identifying_fields().items()
-                }
-            )
-            .approved_up_to_transaction(self.transaction)
+        return (
+            contained.with_validity_field()
+            .filter(**self.extra_filters)
             .exclude(
                 **{
-                    f"{contained_model.validity_field_name}__contained_by": model.valid_between,
+                    f"{contained.model.validity_field_name}__contained_by": valid_between,
                 },
             )
-            .exists()
-        ):
-            raise self.violation(model)
-
-
-class ValidityPeriodSpansContainer(BusinessRule):
-    """Rule enforcing validity period of each contained value spans the validity
-    period of the container."""
-
-    contained_field_name: str
+        )
 
     def validate(self, model):
-        container = model
-        _, contained = get_field_tuple(model, self.contained_field_name)
-
-        if (
-            contained.approved_up_to_transaction(self.transaction)
-            .exclude(
-                valid_between__contains=container.valid_between,
-            )
-            .exists()
-        ):
-            raise self.violation(model)
+        with override_current_transaction(self.transaction):
+            if self.violating_models(model).exists():
+                raise self.violation(model)
 
 
 class MustExist(BusinessRule):
@@ -552,6 +502,7 @@ class ValidityStartDateRules(BusinessRule):
             raise self.generate_violation(model, "start after end")
 
 
+@skip_when_deleted
 class DescriptionsRules(ValidityStartDateRules):
     """Repeated rule pattern for descriptions."""
 

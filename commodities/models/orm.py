@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Optional
 from typing import Set
 
@@ -10,7 +9,9 @@ from polymorphic.managers import PolymorphicManager
 
 from commodities import business_rules
 from commodities import validators
+from commodities.models.code import CommodityCode
 from commodities.querysets import GoodsNomenclatureIndentQuerySet
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import LongDescription
 from common.models import NumericSID
@@ -26,91 +27,11 @@ from footnotes.validators import ApplicationCode
 from measures import business_rules as measures_business_rules
 
 
-@dataclass
-class CommodityCode:
-    """A dataclass for commodity codes with a range of convenience
-    properties."""
-
-    code: str
-
-    @property
-    def chapter(self) -> str:
-        """Returns the HS chapter for the commodity code."""
-        return self.code[:2]
-
-    @property
-    def heading(self) -> str:
-        """Returns the HS heading for the commodity code."""
-        return self.code[:4]
-
-    @property
-    def subheading(self) -> str:
-        """Returns the HS subheading for the commodity code."""
-        return self.code[:6]
-
-    @property
-    def cn_subheading(self) -> str:
-        """Returns the CN subheading for the commodity code."""
-        return self.code[:8]
-
-    @property
-    def dot_code(self) -> str:
-        """Returns the commodity code in dot format."""
-        code = self.code
-        return f"{code[:4]}.{code[4:6]}.{code[6:8]}.{code[8:]}"
-
-    @property
-    def trimmed_dot_code(self) -> str:
-        """Returns the commodity code in dot format, without trailing zero
-        pairs."""
-        parts = self.dot_code.split(".")
-
-        for i, part in enumerate(parts[::-1]):
-            if part != "00":
-                return ".".join(parts[: len(parts) - i])
-
-    @property
-    def trimmed_code(self) -> str:
-        """Returns the commodity code without trailing zero pairs."""
-        return self.trimmed_dot_code.replace(".", "")
-
-    @property
-    def is_chapter(self) -> bool:
-        """Returns true if the commodity code represents a HS chapter."""
-        return self.trimmed_code.rstrip("0") == self.chapter
-
-    @property
-    def is_heading(self) -> bool:
-        """Returns true if the commodity code represents a HS heading."""
-        return self.trimmed_code == self.heading and not self.is_chapter
-
-    @property
-    def is_subheading(self) -> bool:
-        """Returns true if the commodity code represents a HS subheading."""
-        return self.trimmed_code == self.subheading
-
-    @property
-    def is_cn_subheading(self) -> bool:
-        """Returns true if the commodity code represents a CN subheading."""
-        return self.trimmed_code == self.cn_subheading
-
-    @property
-    def is_taric_subheading(self) -> bool:
-        """Returns true if the commodity code represents a Taric subheading."""
-        return self.trimmed_code == self.code
-
-    @property
-    def is_taric_code(self) -> bool:
-        return self.code[8:] != "00"
-
-    def __str__(self):
-        """Returns a string representation of the dataclass instance."""
-        return self.code
-
-
 class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "400"
     subrecord_code = "00"
+
+    identifying_fields = ("sid",)
 
     sid = NumericSID()
 
@@ -183,10 +104,6 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     def __str__(self):
         return self.item_id
 
-    @property
-    def autocomplete_label(self):
-        return f"{self} - {self.get_description().description}"
-
     def get_dependent_measures(self, transaction=None):
         return self.measures.model.objects.filter(
             goods_nomenclature__sid=self.sid,
@@ -231,6 +148,8 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     record_code = "400"
     subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     objects: GoodsNomenclatureIndentQuerySet = TrackedModelManager.from_queryset(
         GoodsNomenclatureIndentQuerySet,
     )()
@@ -246,7 +165,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     )
 
     indirect_business_rules = (business_rules.NIG11,)
-    business_rules = (business_rules.NIG2, UpdateValidity)
+    business_rules = (business_rules.NIG2, UniqueIdentifyingFields, UpdateValidity)
 
     validity_over = "indented_goods_nomenclature"
 
@@ -312,6 +231,8 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     period_record_code = "400"
     period_subrecord_code = "10"
 
+    identifying_fields = ("sid",)
+
     objects = PolymorphicManager.from_queryset(DescriptionQueryset)()
 
     sid = NumericSID()
@@ -323,7 +244,7 @@ class GoodsNomenclatureDescription(DescriptionMixin, TrackedModel):
     description = LongDescription()
 
     indirect_business_rules = (business_rules.NIG12,)
-    business_rules = (UpdateValidity,)
+    business_rules = (UniqueIdentifyingFields, UpdateValidity)
 
     class Meta:
         ordering = ("validity_start",)

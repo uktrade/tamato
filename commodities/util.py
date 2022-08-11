@@ -1,14 +1,14 @@
-from datetime import date
-from typing import Any
-from typing import Optional
+import re
 from typing import Union
 
-from common.util import TaricDateRange
 from common.util import strint
 
 
 class InvalidItemId(Exception):
     pass
+
+
+IGNORE_CHARACTERS = re.compile(r"\s|\.", re.UNICODE)
 
 
 def clean_item_id(value: Union[str, int, float]) -> str:
@@ -21,7 +21,7 @@ def clean_item_id(value: Union[str, int, float]) -> str:
         # we lost a leading zero due to the numeric storage
         item_id = "0" + item_id
 
-    item_id = item_id.replace(" ", "").replace(".", "")
+    item_id = re.sub(IGNORE_CHARACTERS, "", item_id, re.UNICODE)
 
     # We need a full 10 digit code so padd with trailing zeroes
     if len(item_id) % 2 != 0:
@@ -29,67 +29,3 @@ def clean_item_id(value: Union[str, int, float]) -> str:
     item_id = f"{item_id:0<10}"
 
     return item_id
-
-
-def date_ranges_overlap(a: TaricDateRange, b: TaricDateRange) -> bool:
-    """Returns true if two date ranges overlap."""
-    if a.upper and b.lower > a.upper:
-        return False
-    if b.upper and a.lower > b.upper:
-        return False
-
-    return True
-
-
-def contained_date_range(
-    date_range: TaricDateRange,
-    containing_date_range: TaricDateRange,
-    fallback: Optional[Any] = None,
-) -> Optional[TaricDateRange]:
-    """
-    Returns a trimmed contained range that is fully contained by the container
-    range.
-
-    Trimming is not eager: only the minimum amount of trimming is done to ensure
-    that the result is fully contained by the container date range.
-
-    If the two ranges do not overlap, the method returns None.
-    """
-    a = date_range
-    b = containing_date_range
-
-    if not date_ranges_overlap(a, b):
-        return fallback
-
-    start_date = None
-    end_date = None
-
-    if b.upper:
-        if a.upper is None or b.upper < a.upper:
-            end_date = b.upper
-    if b.lower > a.lower:
-        start_date = b.lower
-
-    return TaricDateRange(
-        start_date or a.lower,
-        end_date or a.upper,
-    )
-
-
-def get_snapshot_from_good_chapter(good):
-    from commodities.models.dc import CommodityCollectionLoader
-    from commodities.models.dc import CommodityTreeSnapshot
-    from commodities.models.dc import SnapshotMoment
-
-    loader = CommodityCollectionLoader(prefix=good.code.chapter)
-    collection = loader.load()
-    moment = SnapshotMoment(
-        transaction=good.transaction,
-        date=date.today(),
-    )
-    snapshot = CommodityTreeSnapshot(
-        moment=moment,
-        commodities=collection.commodities,
-    )
-
-    return snapshot

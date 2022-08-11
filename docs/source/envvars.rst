@@ -154,7 +154,13 @@ Environment variables
 
 .. envvar:: MINIO_SECRET_KEY
 
-    Password for local MinIO instance 
+    Password for local MinIO instance
+
+.. envvar:: EXPORTER_DISABLE_NOTIFICATIONS
+
+    (default ``False``)
+
+    Do not call the HMRC API notification endpoint after each upload
 
 .. envvar:: DJANGO_SETTINGS_MODULE
 
@@ -162,3 +168,10 @@ Environment variables
 
     The dotted import path to the python module to use for Django settings.
     Options include ``settings``, ``settings.dev`` and ``settings.test``.
+
+.. envvar:: BETTER_EXCEPTIONS
+
+    Set to 1 to enable the better_exceptions module or more human
+    readable exceptions.
+    
+    (See better_exceptions on github and pypi for more info).

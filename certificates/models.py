@@ -20,6 +20,8 @@ class CertificateType(TrackedModel, ValidityMixin):
     description_record_code = "110"
     description_subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     sid = models.CharField(
         max_length=1,
         validators=[validators.certificate_type_sid_validator],
@@ -78,10 +80,6 @@ class Certificate(TrackedModel, ValidityMixin, DescribedMixin):
     def __str__(self):
         return self.code
 
-    @property
-    def autocomplete_label(self):
-        return f"{self} - {self.get_description().description}"
-
 
 class CertificateDescription(DescriptionMixin, TrackedModel):
     record_code = "205"
@@ -89,6 +87,8 @@ class CertificateDescription(DescriptionMixin, TrackedModel):
 
     period_record_code = "205"
     period_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
 

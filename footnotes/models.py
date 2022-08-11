@@ -90,10 +90,6 @@ class Footnote(TrackedModel, ValidityMixin, DescribedMixin):
     def __str__(self):
         return f"{self.footnote_type.footnote_type_id}{self.footnote_id}"
 
-    @property
-    def autocomplete_label(self):
-        return f"{self} - {self.get_description().description}"
-
     class Meta:
         ordering = ["footnote_type__footnote_type_id", "footnote_id"]
 
@@ -114,6 +110,8 @@ class FootnoteDescription(DescriptionMixin, TrackedModel):
 
     period_record_code = "200"
     period_subrecord_code = "05"
+
+    identifying_fields = ("sid",)
 
     described_footnote = models.ForeignKey(
         Footnote,

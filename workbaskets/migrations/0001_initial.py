@@ -41,7 +41,8 @@ class Migration(migrations.Migration):
                 (
                     "reason",
                     models.TextField(
-                        blank=True, help_text="Reason for the changes to the tariff"
+                        blank=True,
+                        help_text="Reason for the changes to the tariff",
                     ),
                 ),
                 (

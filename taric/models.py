@@ -23,7 +23,7 @@ class EnvelopeQuerySet(QuerySet):
         else:
             now = date(year, 1, 1)
 
-        return self.filter(envelope_id__regex=fr"{now:%y}\d{{4}}").order_by(
+        return self.filter(envelope_id__regex=rf"{now:%y}\d{{4}}").order_by(
             "envelope_id",
         )
 

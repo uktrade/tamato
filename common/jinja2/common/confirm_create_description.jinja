@@ -10,7 +10,7 @@
 {% block beforeContent %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Home", "href": url("index")},
+      {"text": "Home", "href": url("home")},
       {"text": "Find and edit " ~ described_object._meta.verbose_name_plural, "href": described_object.get_url("list")},
       {"text": described_object._meta.verbose_name|capitalize ~ ": " ~ described_object|string, "href": described_object.get_url()},
       {"text": page_title}
@@ -23,7 +23,7 @@
     <div class="govuk-grid-column-two-thirds">
       <span class="govuk-caption-l">Confirmation</span>
       <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-      
+
       {{ govukPanel({
         "titleText": "A new description of " ~ described_object._meta.verbose_name ~ " " ~ described_object|string ~ " has been created",
         "text": "This new description has been added to your tariff changes",
@@ -32,15 +32,19 @@
 
       <h2 class="govuk-heading-m">Next steps</h2>
       <p class="govuk-body">To complete your task you must publish your change. </p>
+      {% if request.session.workbasket %}
       {{ govukButton({
         "text": "Go to your tariff changes",
-        "href": url("index"),
+        "href": url("workbaskets:edit-workbasket", args=[request.session.workbasket.id]),
         "classes": "govuk-button--secondary"
       }) }}
+      {% endif %}
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ described_object.get_url() }}">View {{ described_object._meta.verbose_name }} {{ described_object|string }}</a></li>
         <li><a class="govuk-link" href="{{ described_object.get_url("list") }}">Manage more {{ described_object._meta.verbose_name_plural }}</a></li>
-        <li><a class="govuk-link" href="{{ url("index") }}">Return to main menu</a></li>
+        {% if request.session.workbasket %}
+        <li><a class="govuk-link" href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}">Return to main menu</a></li>
+        {% endif %}
       </ul>
     </div>
   </div>

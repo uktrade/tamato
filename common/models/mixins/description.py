@@ -1,8 +1,11 @@
+from typing import Type
+
 from django.db.models.fields import Field
 from django.urls import NoReverseMatch
 from django.urls import reverse
 
 from common.business_rules import NoBlankDescription
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.exceptions import NoDescriptionError
 from common.models.managers import TrackedModelManager
@@ -10,7 +13,9 @@ from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_relations
+from common.models.utils import get_current_transaction
 from common.util import classproperty
+from common.validators import UpdateType
 
 
 class DescriptionQueryset(ValidityStartQueryset, TrackedModelQuerySet):
@@ -22,6 +27,7 @@ class DescriptionMixin(ValidityStartMixin):
 
     business_rules = (
         NoBlankDescription,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -76,6 +82,27 @@ class DescribedMixin:
     """Mixin adding convenience methods for TrackedModels with associated
     Descriptions."""
 
+    @classproperty
+    def description_type(cls) -> Type[DescriptionMixin]:
+        return cls._meta.get_field("descriptions").remote_field.model
+
+    @classmethod
+    def create(cls, *, description: str, update_type=UpdateType.CREATE, **kwargs):
+        described = cls.objects.create(
+            update_type=update_type,
+            **kwargs,
+        )
+
+        cls.description_type.objects.create(
+            description=description,
+            validity_start=described.valid_between.lower,
+            transaction=described.transaction,
+            update_type=update_type,
+            **{cls.description_type.described_object_field.name: described},
+        )
+
+        return described
+
     def get_descriptions(self, transaction=None, request=None) -> TrackedModelQuerySet:
         """
         Get the latest descriptions related to this instance of the Tracked
@@ -115,14 +142,19 @@ class DescribedMixin:
         if transaction:
             return query.approved_up_to_transaction(transaction)
 
-        if request:
-            from workbaskets.models import WorkBasket
-
-            return query.approved_up_to_transaction(
-                transaction=WorkBasket.get_current_transaction(request),
-            )
+        # if a global transaction variable is available, filter objects approved up to this
+        if get_current_transaction():
+            return query.current()
 
         return query.latest_approved()
 
     def get_description(self, transaction=None):
         return self.get_descriptions(transaction=transaction).last()
+
+    @property
+    def autocomplete_label(self):
+        description = self.get_description()
+        if not description:
+            return f"{self}"
+
+        return f"{self} - {description.description}"

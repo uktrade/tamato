@@ -1,0 +1,26 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+
+{% set page_title = "Delete " ~ object._meta.verbose_name ~ " " ~ object|string %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url("list")},
+      {"text": object._meta.verbose_name|capitalize ~ ": " ~ object|string, "href": object.get_url()},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block form %}
+  {{ govukWarningText({
+    "text": "Are you sure you want to delete this " ~ object._meta.verbose_name ~ "?"
+  }) }}
+  {% call django_form(action=object.get_url("delete")) %}
+    {{ crispy(form) }}
+  {% endcall %}
+  <a href="{{ object.get_url() }}" class="govuk-link">Cancel</a>
+{% endblock %}

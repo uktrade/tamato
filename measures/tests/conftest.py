@@ -1,3 +1,4 @@
+import datetime
 from typing import Callable
 from typing import Dict
 from typing import Optional
@@ -5,13 +6,22 @@ from typing import Sequence
 from typing import Tuple
 
 import pytest
+import requests
 from django.core.exceptions import ValidationError
+from django.forms.models import model_to_dict
 
+from common.models.transactions import Transaction
+from common.models.utils import set_current_transaction
 from common.tests import factories
+from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
+from geo_areas.validators import AreaCode
+from measures.forms import MeasureForm
 from measures.models import DutyExpression
+from measures.models import Measure
 from measures.models import MeasureAction
 from measures.models import MeasureConditionCode
+from measures.models import MeasureConditionComponent
 from measures.models import Measurement
 from measures.models import MeasurementUnit
 from measures.models import MeasurementUnitQualifier
@@ -242,6 +252,20 @@ def duty_sentence_parser(
 
 
 @pytest.fixture
+def condition_duty_sentence_parser(
+    duty_expressions: Dict[int, DutyExpression],
+    monetary_units: Dict[str, MonetaryUnit],
+    measurements: Dict[Tuple[str, Optional[str]], Measurement],
+) -> DutySentenceParser:
+    return DutySentenceParser(
+        duty_expressions.values(),
+        monetary_units.values(),
+        measurements.values(),
+        MeasureConditionComponent,
+    )
+
+
+@pytest.fixture
 def get_component_data(duty_expressions, monetary_units, measurements) -> Callable:
     def getter(
         duty_expression_id,
@@ -307,3 +331,123 @@ def irreversible_duty_sentence_data(request, get_component_data):
     places."""
     expected, component_data = request.param
     return expected, [get_component_data(*args) for args in component_data]
+
+
+@pytest.fixture(
+    params=(
+        (
+            (
+                "0.000% + AC",
+                [(1, 0.0, None, None), (12, None, None, None)],
+            ),
+            (
+                "12.900% + 20.000 EUR / kg",
+                [(1, 12.9, None, None), (4, 20.0, "EUR", ("KGM", None))],
+            ),
+        ),
+    ),
+)
+def duty_sentence_x_2_data(request, get_component_data):
+    """Duty sentence test cases that can be used to create a history of
+    components."""
+    history = []
+    for version in request.param:
+        expected, component_data = version
+        history.append(
+            (expected, [get_component_data(*args) for args in component_data]),
+        )
+    return history
+
+
+@pytest.fixture
+def erga_omnes():
+    return factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1011",
+    )
+
+
+@pytest.fixture
+def measure_form_data():
+    measure = factories.MeasureFactory.create()
+    data = model_to_dict(measure)
+    data["geo_area"] = "COUNTRY"
+    data["country_region-geographical_area_country_or_region"] = data[
+        "geographical_area"
+    ]
+    start_date = data["valid_between"].lower
+    data.update(
+        start_date_0=start_date.day,
+        start_date_1=start_date.month,
+        start_date_2=start_date.year,
+    )
+
+    return data
+
+
+@pytest.fixture
+def measure_edit_conditions_data(measure_form_data):
+    condition_code = factories.MeasureConditionCodeFactory.create(
+        accepts_certificate=True,
+    )
+    certificate = factories.CertificateFactory.create()
+    action = factories.MeasureActionFactory.create()
+    edit_data = {k: v for k, v in measure_form_data.items() if v is not None}
+    edit_data["update_type"] = 1
+    edit_data["measure-conditions-formset-TOTAL_FORMS"] = 1
+    edit_data["measure-conditions-formset-INITIAL_FORMS"] = 1
+    edit_data["measure-conditions-formset-MIN_NUM_FORMS"] = 0
+    edit_data["measure-conditions-formset-MAX_NUM_FORMS"] = 1000
+    edit_data["measure-conditions-formset-0-condition_code"] = condition_code.pk
+    edit_data["measure-conditions-formset-0-required_certificate"] = certificate.pk
+    edit_data["measure-conditions-formset-0-action"] = action.pk
+    edit_data["measure-conditions-formset-0-applicable_duty"] = "3.5% + 11 GBP / 100 kg"
+
+    return edit_data
+
+
+@pytest.fixture
+def measure_form(measure_form_data, session_with_workbasket, erga_omnes):
+    set_current_transaction(Transaction.objects.last())
+    return MeasureForm(
+        data=measure_form_data,
+        instance=Measure.objects.first(),
+        request=session_with_workbasket,
+        initial={},
+    )
+
+
+@pytest.fixture()
+def additional_code():
+    return factories.AdditionalCodeFactory.create()
+
+
+@pytest.fixture()
+def measure_type():
+    return factories.MeasureTypeFactory.create(
+        valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
+    )
+
+
+@pytest.fixture()
+def regulation():
+    return factories.RegulationFactory.create()
+
+
+@pytest.fixture()
+def commodity1():
+    return factories.GoodsNomenclatureFactory.create()
+
+
+@pytest.fixture()
+def commodity2():
+    return factories.GoodsNomenclatureFactory.create()
+
+
+@pytest.fixture()
+def mock_request(rf, valid_user, valid_user_client):
+    request = rf.get("/")
+    request.user = valid_user
+    request.session = valid_user_client.session
+    request.requests_session = requests.Session()
+    return request

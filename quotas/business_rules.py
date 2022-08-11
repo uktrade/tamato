@@ -8,8 +8,6 @@ from common.business_rules import MustExist
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
-from common.business_rules import ValidityPeriodContains
-from common.business_rules import ValidityPeriodSpansContainer
 from common.business_rules import only_applicable_after
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
@@ -103,13 +101,15 @@ class ON7(ValidityPeriodContained):
     container_field_name = "order_number"
 
 
-class ON8(ON7):
+class ON8(ValidityPeriodContained):
     """The validity period of the quota order number must span the validity
     period of the referencing quota definition."""
 
+    container_field_name = "order_number"
+
 
 @only_applicable_after("2007-12-31")
-class ON9(ValidityPeriodContains):
+class ON9(ValidityPeriodContained):
     """When a quota order number is used in a measure then the validity period
     of the quota order number must span the validity period of the measure."""
 
@@ -117,7 +117,7 @@ class ON9(ValidityPeriodContains):
 
 
 @only_applicable_after("2007-12-31")
-class ON10(ValidityPeriodContains):
+class ON10(ValidityPeriodContained):
     """When a quota order number is used in a measure then the validity period
     of the quota order number origin must span the validity period of the
     measure."""
@@ -163,7 +163,7 @@ class CertificatesMustExist(MustExist):
     reference_field_name = "certificate"
 
 
-class CertificateValidityPeriodMustSpanQuotaOrderNumber(ValidityPeriodSpansContainer):
+class CertificateValidityPeriodMustSpanQuotaOrderNumber(ValidityPeriodContained):
     """The validity period of the required certificates must span the validity
     period of the quota order number."""
 
@@ -248,6 +248,24 @@ class QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition(
 
     def get_relation_model(self, quota_definition):
         return quota_definition.quotablocking_set.model
+
+
+class OverlappingQuotaDefinition(BusinessRule):
+    """There may be no overlap in time of two quota definitions with the same
+    quota order number id."""
+
+    def validate(self, quota_definition):
+        if (
+            type(quota_definition)
+            .objects.approved_up_to_transaction(quota_definition.transaction)
+            .filter(
+                order_number=quota_definition.order_number,
+                valid_between__overlap=quota_definition.valid_between,
+            )
+            .exclude(sid=quota_definition.sid)
+            .exists()
+        ):
+            raise self.violation(quota_definition)
 
 
 class QA1(UniqueIdentifyingFields):
@@ -355,14 +373,26 @@ class QA6(BusinessRule):
 
     def validate(self, association):
         if (
-            association.main_quota.sub_quota_associations.values(
+            association.main_quota.sub_quota_associations.approved_up_to_transaction(
+                association.transaction,
+            )
+            .values(
                 "sub_quota_relation_type",
             )
             .order_by("sub_quota_relation_type")
-            .distinct("sub_quota_relation_type")
+            .distinct()
             .count()
             > 1
         ):
+            raise self.violation(association)
+
+
+class SameMainAndSubQuota(BusinessRule):
+    """A quota association may only exist between two distinct quota
+    definitions."""
+
+    def validate(self, association):
+        if association.main_quota.sid == association.sub_quota.sid:
             raise self.violation(association)
 
 

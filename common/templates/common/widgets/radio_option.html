@@ -1,0 +1,6 @@
+<div class="govuk-radios__item">
+	<input class="govuk-radios__input" type="{{ widget.type }}" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
+	<label{% if widget.attrs.id %} id="{{ widget.attrs.id }}-label" for="{{ widget.attrs.id }}"{% endif %} class="govuk-label govuk-radios__label">
+		{{ widget.label }}
+	</label>
+</div>

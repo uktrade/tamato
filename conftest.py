@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import dataclass
+from functools import partial
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -17,6 +18,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ValidationError
+from django.test.client import RequestFactory
 from django.test.html import parse_html
 from django.urls import reverse
 from factory.django import DjangoModelFactory
@@ -30,13 +32,17 @@ from rest_framework.test import APIClient
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UpdateValidity
+from common.business_rules import ValidityPeriodContained
 from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
+from common.models.utils import override_current_transaction
 from common.serializers import TrackedModelSerializer
 from common.tests import factories
+from common.tests.models import model_with_history
 from common.tests.util import Dates
 from common.tests.util import assert_records_match
+from common.tests.util import export_workbasket
 from common.tests.util import generate_test_import_xml
 from common.tests.util import get_form_data
 from common.tests.util import make_duplicate_record
@@ -83,11 +89,12 @@ def pytest_bdd_apply_tag(tag, function):
         return True
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def celery_config():
     return {
         "broker_url": "memory://",
         "result_backend": "cache",
+        "cache_backend": "memory",
         "task_always_eager": True,
     }
 
@@ -119,6 +126,75 @@ def spanning_dates(request, date_ranges):
         getattr(date_ranges, contained_validity),
         container_spans_contained,
     )
+
+
+@pytest.fixture
+def assert_spanning_enforced(spanning_dates, update_type):
+    """
+    Provides a function that thoroughly checks if the validity period of a
+    contained object is enforced to be within the validity period of a container
+    object.
+
+    In particular it also checks that the passed business rule doesn't take into
+    account deleted contained items in its enforcement, and that it always uses
+    the latest version of related objects.
+
+    This is useful in implementing tests for business rules of the form:
+
+        When a "contained object" is used in a "container object" the validity
+        period of the "container object" must span the validity period of the
+        "contained object".
+    """
+
+    def check(
+        factory: Type[DjangoModelFactory],
+        business_rule: Type[ValidityPeriodContained],
+        **factory_kwargs,
+    ):
+        container_validity, contained_validity, fully_spanned = spanning_dates
+
+        contained = getattr(business_rule, "contained_field_name") or ""
+        container = getattr(business_rule, "container_field_name") or ""
+
+        # If the test is checking an UPDATE or a DELETE, set the dates to be
+        # valid on the original version so that we can tell if it is
+        # successfully checking the later version.
+        validity_on_contained = (
+            container_validity
+            if update_type != UpdateType.CREATE
+            else contained_validity
+        )
+
+        object = factory.create(
+            **factory_kwargs,
+            **{
+                f"{contained}{'__' if contained else ''}valid_between": validity_on_contained,
+                f"{contained}{'__' if contained else ''}update_type": UpdateType.CREATE,
+                f"{container}{'__' if container else ''}valid_between": container_validity,
+            },
+        )
+        workbasket = object.transaction.workbasket
+
+        if update_type != UpdateType.CREATE:
+            # Make a new version of the contained model with the actual dates we
+            # are testing, first finding the correct contained model to use.
+            contained_obj = object
+            if contained:
+                with override_current_transaction(workbasket.current_transaction):
+                    contained_obj = (
+                        object.get_versions().current().follow_path(contained).get()
+                    )
+            contained_obj.new_version(
+                workbasket,
+                valid_between=contained_validity,
+                update_type=update_type,
+            )
+
+        error_expected = update_type != UpdateType.DELETE and not fully_spanned
+        with raises_if(business_rule.Violation, error_expected):
+            business_rule(workbasket.current_transaction).validate(object)
+
+    return check
 
 
 @pytest.fixture
@@ -248,6 +324,7 @@ def workbasket():
     ],
 )
 def trackedmodel_factory(request):
+    """Fixture that provides every TrackedModel class."""
     return request.param
 
 
@@ -415,7 +492,90 @@ def use_update_form(valid_user_api_client: APIClient):
 
 
 @pytest.fixture
-def run_xml_import(valid_user, settings):
+def use_delete_form(valid_user_api_client: APIClient):
+    """
+    Uses the default delete form and view for a model to delete an object, and
+    returns the deleted version of the object.
+
+    Will raise :class:`~django.core.exceptions.ValidationError` if form thinks
+    that the object cannot be deleted..
+    """
+
+    def use(object: TrackedModel):
+        model = type(object)
+        versions = set(
+            model.objects.filter(**object.get_identifying_fields()).values_list(
+                "pk",
+                flat=True,
+            ),
+        )
+
+        # Visit the delete page and ensure it is a success
+        delete_url = object.get_url("delete")
+        assert delete_url, f"No delete page found for {object}"
+        response = valid_user_api_client.get(delete_url)
+        assert response.status_code == 200
+
+        # Get the data out of the delete page
+        data = get_form_data(response.context_data["form"])
+        response = valid_user_api_client.post(delete_url, data)
+
+        # Check that if we expect failure that the new data was not persisted
+        if response.status_code not in (301, 302):
+            assert (
+                set(
+                    model.objects.filter(**object.get_identifying_fields()).values_list(
+                        "pk",
+                        flat=True,
+                    ),
+                )
+                == versions
+            )
+            raise ValidationError(
+                f"Delete form contained errors: {response.context_data['form'].errors}",
+            )
+
+        # Check that the delete persisted and we can't delete again
+        response = valid_user_api_client.get(delete_url)
+        assert response.status_code == 404
+
+        # Check that if success was expected that the new version was persisted
+        new_version = model.objects.exclude(pk=object.pk).get(
+            version_group=object.version_group,
+        )
+        assert new_version != object
+
+        # Check that the new version is a delete and is not approved yet
+        assert new_version.update_type == UpdateType.DELETE
+        assert new_version.transaction != object.transaction
+        assert not new_version.transaction.workbasket.approved
+        return new_version
+
+    return use
+
+
+@pytest.fixture
+def import_xml(valid_user):
+    def run_import(xml, workflow_status=WorkflowStatus.PUBLISHED, record_group=None):
+        process_taric_xml_stream(
+            xml,
+            workbasket_id=None,
+            workbasket_status=workflow_status,
+            partition_scheme=get_partition_scheme(),
+            username=valid_user.username,
+            record_group=record_group,
+        )
+
+    return run_import
+
+
+@pytest.fixture
+def export_xml(valid_user_api_client):
+    return partial(export_workbasket, valid_user_api_client=valid_user_api_client)
+
+
+@pytest.fixture
+def run_xml_import(import_xml, settings):
     """
     Returns a function for checking a model can be imported correctly.
 
@@ -455,13 +615,7 @@ def run_xml_import(valid_user, settings):
             serializer(model, context={"format": "xml"}).data,
         )
 
-        process_taric_xml_stream(
-            xml,
-            workbasket_status=workflow_status,
-            partition_scheme=get_partition_scheme(),
-            username=valid_user.username,
-            record_group=record_group,
-        )
+        import_xml(xml, workflow_status, record_group)
 
         db_kwargs = model.get_identifying_fields()
         workbasket = WorkBasket.objects.last()
@@ -563,6 +717,14 @@ def s3():
     with mock_s3() as moto:
         moto.start()
         s3 = boto3.client("s3")
+        yield s3
+
+
+@pytest.fixture
+def s3_resource():
+    with mock_s3() as moto:
+        moto.start()
+        s3 = boto3.resource("s3")
         yield s3
 
 
@@ -756,8 +918,8 @@ def in_use_check_respects_deletes(valid_user):
             "exporter.tasks.upload_workbaskets.delay",
         ):
             workbasket.approve(
-                valid_user,
-                get_partition_scheme(),
+                valid_user.pk,
+                settings.TRANSACTION_SCHEMA,
             )
         workbasket.save()
         assert in_use(dependant.transaction), f"Approved {instance!r} not in use"
@@ -982,3 +1144,39 @@ def unordered_transactions():
     assert existing_transaction.order > 1
 
     return UnorderedTransactionData(existing_transaction, new_transaction)
+
+
+@pytest.fixture
+def session_request(client):
+    session = client.session
+    session.save()
+    request = RequestFactory()
+    request.session = session
+
+    return request
+
+
+@pytest.fixture
+def session_with_workbasket(session_request, workbasket):
+    session_request.session.update({"workbasket": {"id": workbasket.pk}})
+    return session_request
+
+
+@pytest.fixture
+def model1_with_history(date_ranges):
+    return model_with_history(
+        factories.TestModel1Factory,
+        date_ranges,
+        version_group=factories.VersionGroupFactory.create(),
+        sid=1,
+    )
+
+
+@pytest.fixture
+def model2_with_history(date_ranges):
+    return model_with_history(
+        factories.TestModel2Factory,
+        date_ranges,
+        version_group=factories.VersionGroupFactory.create(),
+        custom_sid=1,
+    )

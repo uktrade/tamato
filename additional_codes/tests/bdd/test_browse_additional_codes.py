@@ -24,6 +24,6 @@ def additional_code_list(additional_code_search, additional_code_X000):
     result = results[0]
     assert (
         result["label"]
-        == f"{additional_code_X000} - {additional_code_X000.get_description().description}"
+        == f"{additional_code_X000} - {additional_code_X000.get_description(transaction=additional_code_X000.transaction).description}"
     )
     assert result["value"] == additional_code_X000.pk

@@ -1,0 +1,37 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title %}Workbasket {{ request.session.workbasket.id }}{% endset %}
+{% set page_subtitle %}<span class="govuk-!-font-weight-bold">Summary</span> - View workbasket components{% endset %}
+
+{% block breadcrumb %}
+{% if request.GET.edit %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary" }
+    ]
+  }) }}
+{% else %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary" }
+    ]
+  }) }}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+    {{ page_title }}
+  </h1>
+  <h2 class="govuk-body-l govuk-!-margin-bottom-6">
+    {{ page_subtitle }}
+  </h2>
+  {% set params %}{% if request.GET %}?{{ request.GET.urlencode() }}{% endif %}{% endset %}
+  <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}{{ params }}" class="govuk-button govuk-button--primary">Edit this workbasket</a>
+  {% include "includes/workbaskets/workbasket-selectable-items.jinja" %}
+{% endblock %}

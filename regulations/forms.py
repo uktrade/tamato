@@ -18,6 +18,7 @@ from django.utils.safestring import SafeString
 
 from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
+from common.forms import delete_form_for
 from regulations.models import Group
 from regulations.models import Regulation
 from regulations.validators import UK_ID
@@ -143,7 +144,12 @@ class RegulationCreateForm(RegulationFormBase):
                 ),
                 "approved",
             ),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def _make_partial_regulation_id(
@@ -294,7 +300,12 @@ class RegulationEditForm(RegulationFormBase):
                 ),
                 "approved",
             ),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
@@ -315,3 +326,6 @@ class RegulationEditForm(RegulationFormBase):
             )
 
         return cleaned_data
+
+
+RegulationDeleteForm = delete_form_for(Regulation)

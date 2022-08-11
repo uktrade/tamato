@@ -1,0 +1,10 @@
+<div class="govuk-radios__conditional" id="div_id_{{ field.html_name }}">
+    <label class="govuk-label" for="id_{{ field.html_name}}">Duty</label>
+    <div id="condition-duty-hint" class="govuk-hint">
+        If this condition should apply a different duty, enter it here.
+        {% with component="condition" %}
+            {% include "components/duty_help.jinja" %}
+        {% endwith %}
+        <input class="govuk-input" id="id_{{ field.html_name }}" name="{{ field.html_name }}" type="text" spellcheck="false" value="{{ field.initial if field.initial else ""}}">
+    </div>
+</div>

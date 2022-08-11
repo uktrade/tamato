@@ -3,10 +3,10 @@ import accessibleAutocomplete from 'accessible-autocomplete'
 const template = (result) => result && result.label
 
 let aborter = null;
-const initAutocomplete = () => { 
+const initAutocomplete = (includeNameAttr=true) => { 
   for (let element of document.querySelectorAll(".autocomplete")) {
     const hiddenInput = element.querySelector("input[type=hidden]");
-    accessibleAutocomplete({
+    const params = {
       element: element.querySelector(".autocomplete-container"),
       id: hiddenInput.id + "_autocomplete",
       source: (query, populateResults) => {
@@ -26,7 +26,7 @@ const initAutocomplete = () => {
       },
       minLength: element.dataset.minLength ? element.dataset.minLength : 0,
       defaultValue: element.dataset.originalValue,
-      name: `${hiddenInput.name}_autocomplete`,
+      name: "",
       templates: {
         inputValue: template,
         suggestion: template
@@ -39,7 +39,13 @@ const initAutocomplete = () => {
           hiddenInput.value = "";
         }
       }
-    });
+    };
+
+    if (includeNameAttr) {
+      params.name = `${hiddenInput.name}_autocomplete`;
+    }
+
+    accessibleAutocomplete(params);
   }
 }
 

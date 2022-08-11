@@ -7,8 +7,7 @@ from django.core.exceptions import ValidationError
 
 from additional_codes.models import AdditionalCode
 from additional_codes.views import AdditionalCodeList
-from common.tests.factories import AdditionalCodeFactory
-from common.tests.factories import AdditionalCodeTypeFactory
+from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import date_post_data
 from common.tests.util import get_class_based_view_urls_matching_url
@@ -37,8 +36,8 @@ pytestmark = pytest.mark.django_db
                 **date_post_data("start_date", datetime.date.today()),
                 **factory.build(
                     dict,
-                    type=AdditionalCodeTypeFactory.create().pk,
-                    FACTORY_CLASS=AdditionalCodeFactory,
+                    type=factories.AdditionalCodeTypeFactory.create().pk,
+                    FACTORY_CLASS=factories.AdditionalCodeFactory,
                 ),
             },
             True,
@@ -51,6 +50,14 @@ def test_additional_code_create_form(use_create_form, new_data, expected_valid):
 
 
 @pytest.mark.parametrize(
+    "factory",
+    (factories.AdditionalCodeFactory, factories.AdditionalCodeDescriptionFactory),
+)
+def test_additional_code_delete_form(factory, use_delete_form):
+    use_delete_form(factory())
+
+
+@pytest.mark.parametrize(
     ("view", "url_pattern"),
     get_class_based_view_urls_matching_url(
         "additional_codes/",
@@ -58,11 +65,16 @@ def test_additional_code_create_form(use_create_form, new_data, expected_valid):
     ),
     ids=view_urlpattern_ids,
 )
-def test_additional_codes_detail_views(view, url_pattern, valid_user_client):
+def test_additional_codes_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
     """Verify that additional code detail views are under the url
     additional_codes/ and don't return an error."""
     model_overrides = {
-        "additional_codes.views.AdditionalCodeCreateDescription": AdditionalCode,
+        "additional_codes.views.AdditionalCodeDescriptionCreate": AdditionalCode,
     }
 
     assert_model_view_renders(view, url_pattern, valid_user_client, model_overrides)

@@ -14,7 +14,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.transaction import atomic
-from lxml import etree
 
 from commodities.models.dc import CommodityChangeRecordLoader
 from common import models
@@ -86,7 +85,8 @@ class MessageParser(ElementParser):
         :param data: A dict of parsed element, mapping field names to values
         :param transaction_id: The primary key of the transaction to add records to
         """
-        for record_data in data["record"]:
+        logger.debug("Saving message id: %s", data.get("id"))
+        for record_data in data.get("record", []):
             self.record.save(record_data, transaction_id)
 
 
@@ -134,7 +134,7 @@ class TransactionParser(ElementParser):
             order=int(self.data["id"]),
         )
 
-        for message_data in data["message"]:
+        for message_data in data.get("message", []):
             self.message.save(message_data, transaction.id)
 
         is_commodity_import = (
@@ -203,8 +203,8 @@ class TransactionParser(ElementParser):
 
         codes = [
             get_record_code(record)
-            for transmission in data["message"]
-            for record in transmission["record"]
+            for transmission in data.get("message", [])
+            for record in transmission.get("record", [])
         ]
 
         matching_codes = [
@@ -224,6 +224,7 @@ class EnvelopeParser(ElementParser):
 
     def __init__(
         self,
+        workbasket_id: str,
         workbasket_status=None,
         partition_scheme: TransactionPartitionScheme = None,
         tamato_username=None,
@@ -233,6 +234,7 @@ class EnvelopeParser(ElementParser):
     ):
         super().__init__(**kwargs)
         self.last_transaction_id = -1
+        self.workbasket_id = workbasket_id
         self.workbasket_status = workbasket_status or WorkflowStatus.PUBLISHED.value
         self.tamato_username = tamato_username or settings.DATA_IMPORT_USERNAME
         self.record_group = record_group
@@ -247,13 +249,17 @@ class EnvelopeParser(ElementParser):
         if element.tag == self.tag:
             self.envelope_id = element.get("id")
 
-            user = get_user_model().objects.get(username=self.tamato_username)
-            self.workbasket, _ = WorkBasket.objects.get_or_create(
-                title=f"Data Import {self.envelope_id}",
-                author=user,
-                approver=user,
-                status=self.workbasket_status,
-            )
+            if self.workbasket_id is None:
+                user = get_user_model().objects.get(username=self.tamato_username)
+                self.workbasket, _ = WorkBasket.objects.get_or_create(
+                    title=f"Data Import {self.envelope_id}",
+                    author=user,
+                    approver=user,
+                    status=self.workbasket_status,
+                )
+            else:
+                self.workbasket = WorkBasket.objects.get(pk=self.workbasket_id)
+
             self.envelope, _ = Envelope.objects.get_or_create(
                 envelope_id=self.envelope_id,
             )
@@ -267,8 +273,10 @@ class EnvelopeParser(ElementParser):
             nursery.clear_cache()
 
 
+@atomic
 def process_taric_xml_stream(
     taric_stream,
+    workbasket_id,
     workbasket_status,
     partition_scheme,
     username,
@@ -277,10 +285,14 @@ def process_taric_xml_stream(
     """
     Parse a TARIC XML stream through the import handlers.
 
-    This will load the data from the stream into the database.
+    This will load the data from the stream into the database. This runs inside
+    a single database transaction so that if any of the data is invalid, it will
+    not be committed and the XML can be fixed and imported again without needing
+    to remove the existing data.
     """
     xmlparser = etree.iterparse(taric_stream, ["start", "end", "start-ns"])
     handler = EnvelopeParser(
+        workbasket_id=workbasket_id,
         workbasket_status=workbasket_status,
         partition_scheme=partition_scheme,
         tamato_username=username,

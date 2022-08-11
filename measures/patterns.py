@@ -32,10 +32,12 @@ from measures.models import MeasureAction
 from measures.models import MeasureComponent
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionCode
+from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasureType
 from measures.parsers import ConditionSentenceParser
 from measures.parsers import DutySentenceParser
+from measures.util import diff_components
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
@@ -226,20 +228,16 @@ class MeasureCreationPattern:
                 m.member
                 for m in GeographicalMembership.objects.as_at(
                     measure.valid_between.lower,
-                )
-                .filter(
+                ).filter(
                     geo_group=measure.geographical_area,
                 )
-                .all()
             )
-            for membership in (
-                GeographicalMembership.objects.as_at(measure.valid_between.lower)
-                .filter(geo_group=exclusion)
-                .all()
-            ):
+            for membership in GeographicalMembership.objects.as_at(
+                measure.valid_between.lower,
+            ).filter(geo_group=exclusion):
                 member = membership.member
-                assert (
-                    member in measure_origins
+                assert member.sid in list(
+                    m.sid for m in measure_origins
                 ), f"{member.area_id} not in {list(x.area_id for x in measure_origins)}"
                 yield MeasureExcludedGeographicalArea.objects.create(
                     modified_measure=measure,
@@ -269,6 +267,53 @@ class MeasureCreationPattern:
             )
             for footnote in footnotes
         ]
+
+    def create_condition_and_components(
+        self,
+        data,
+        component_sequence_number,
+        measure,
+        parser,
+        workbasket,
+    ):
+        """
+        Creates condition from data dict, component_sequence_number, and
+        measure.
+
+        If applicable_duty field is passed in data, uses parser to create
+        measure condition components from newly created condition
+        """
+        condition = MeasureCondition(
+            sid=data.get("sid") or self.measure_condition_sid_counter(),
+            component_sequence_number=component_sequence_number,
+            dependent_measure=measure,
+            update_type=data.get("update_type") or UpdateType.CREATE,
+            transaction=measure.transaction,
+            duty_amount=data.get("duty_amount"),
+            condition_code=data["condition_code"],
+            action=data.get("action"),
+            required_certificate=data.get("required_certificate"),
+            monetary_unit=data.get("monetary_unit"),
+            condition_measurement=data.get(
+                "condition_measurement",
+            ),
+        )
+        if data.get("version_group"):
+            condition.version_group = data.get("version_group")
+
+        condition.clean()
+        condition.save()
+
+        if data.get("applicable_duty"):
+            diff_components(
+                condition,
+                data.get("applicable_duty"),
+                measure.valid_between.lower,
+                workbasket,
+                condition.transaction,
+                MeasureConditionComponent,
+                "condition",
+            )
 
     @transaction.atomic
     def create_measure_tracked_models(
@@ -335,11 +380,6 @@ class MeasureCreationPattern:
             **data,
         }
 
-        if actual_end is not None:
-            measure_data["terminating_regulation"] = measure_data[
-                "generating_regulation"
-            ]
-
         new_measure = Measure.objects.create(**measure_data)
         yield new_measure
 
@@ -375,11 +415,12 @@ class MeasureCreationPattern:
         if condition_sentence:
             yield from self.create_measure_conditions(new_measure, condition_sentence)
 
-        # Now generate the duty components for the passed duty rate.
-        yield from self.create_measure_components_from_duty_rate(
-            new_measure,
-            duty_sentence,
-        )
+        # If there is a duty_sentence parse it and generate the duty components from the duty rate.
+        if duty_sentence:
+            yield from self.create_measure_components_from_duty_rate(
+                new_measure,
+                duty_sentence,
+            )
 
     def create(self, *args, **kwargs) -> Measure:
         """
@@ -459,8 +500,7 @@ class SuspensionViaAdditionalCodePattern:
         """Returns the measures applicable to the passed code on the given
         date."""
         return (
-            Measure.objects_with_validity_field()
-            .with_duty_sentence()
+            Measure.objects.with_validity_field()
             .approved_up_to_transaction(self.workbasket.transactions.last())
             .as_at(as_at)
             .filter(goods_nomenclature__sid=code.sid)

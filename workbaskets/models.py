@@ -9,17 +9,19 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Prefetch
 from django.db.models import QuerySet
 from django.db.models import Subquery
 from django_fsm import FSMField
 from django_fsm import transition
 
+from checks.models import TrackedModelCheck
+from checks.models import TransactionCheck
 from common.models.mixins import TimestampedMixin
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
+from common.models.transactions import TransactionQueryset
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -214,18 +216,6 @@ def get_partition_scheme(scheme: Optional[str] = None) -> TransactionPartitionSc
 
 
 class WorkBasketQueryset(QuerySet):
-    def prefetch_ordered_tracked_models(self) -> QuerySet:
-        """Sort tracked_models by record_number, subrecord_number by using
-        prefetch and imposing the order there."""
-
-        q_annotate_record_code = TrackedModel.objects.annotate_record_codes().order_by(
-            "record_code",
-            "subrecord_code",
-        )
-        return self.prefetch_related(
-            Prefetch("tracked_models", queryset=q_annotate_record_code),
-        )
-
     def ordered_transactions(self):
         """
         This Workbaskets transactions in creation order.
@@ -235,7 +225,7 @@ class WorkBasketQueryset(QuerySet):
         workbasket_pks = self.values_list("pk", flat=True)
         return Transaction.objects.filter(
             workbasket__pk__in=Subquery(workbasket_pks),
-        ).order_by("order")
+        )
 
     def is_approved(self):
         return self.filter(
@@ -249,16 +239,21 @@ class WorkBasketQueryset(QuerySet):
             approver__isnull=False,
         )
 
+    def editable(self):
+        return self.filter(
+            status=WorkflowStatus.EDITING,
+        )
+
 
 class WorkBasket(TimestampedMixin):
     """
     A WorkBasket groups tariff edits which will be applied at the same time.
 
     WorkBasket status is controlled by a state machine:
-    See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow
+    See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow # /PS-IGNORE
     """
 
-    objects = WorkBasketQueryset.as_manager()
+    objects: WorkBasketQueryset = WorkBasketQueryset.as_manager()
 
     title = models.CharField(
         max_length=255,
@@ -294,6 +289,8 @@ class WorkBasket(TimestampedMixin):
         editable=False,
     )
 
+    transactions: TransactionQueryset
+
     @property
     def approved(self):
         return self.status in WorkflowStatus.approved_statuses()
@@ -304,11 +301,37 @@ class WorkBasket(TimestampedMixin):
     @transition(
         field=status,
         source=WorkflowStatus.EDITING,
+        target=WorkflowStatus.ARCHIVED,
+        custom={"label": "Archive"},
+    )
+    def archive(self):
+        """Mark a workbasket as no longer in use."""
+
+    @transition(
+        field=status,
+        source=WorkflowStatus.ARCHIVED,
+        target=WorkflowStatus.EDITING,
+        custom={"label": "Unarchive"},
+    )
+    def unarchive(self):
+        """Restore a workbasket to an in use state."""
+
+    @transition(
+        field=status,
+        source=WorkflowStatus.EDITING,
         target=WorkflowStatus.PROPOSED,
         custom={"label": "Submit for approval"},
     )
     def submit_for_approval(self):
         self.full_clean()
+
+        if not self.transactions.exists():
+            return
+
+        if self.unchecked_or_errored_transactions.exists():
+            raise ValidationError(
+                "Transactions have not yet been fully checked or contain errors",
+            )
 
     @transition(
         field=status,
@@ -325,14 +348,20 @@ class WorkBasket(TimestampedMixin):
         target=WorkflowStatus.APPROVED,
         custom={"label": "Approve"},
     )
-    def approve(self, user, partition_scheme):
+    def approve(self, user: int, scheme_name: str):
         """Once a workbasket has been approved all related Tracked Models must
-        be updated to the current versions of themselves."""
+        be updated to the current versions of themselves and the workbasket
+        uploaded to CDS S3 bucket."""
 
-        self.approver = user
+        self.approver_id = user
 
         # Move transactions from the DRAFT partition into the REVISION partition.
+        partition_scheme = get_partition_scheme(scheme_name)
         self.transactions.save_drafts(partition_scheme)
+
+        from exporter.tasks import upload_workbaskets
+
+        upload_workbaskets.delay()
 
     @transition(
         field=status,
@@ -379,6 +408,7 @@ class WorkBasket(TimestampedMixin):
         session["workbasket"] = {
             "id": self.pk,
             "status": self.status,
+            "title": self.title,
         }
 
     @property
@@ -398,7 +428,7 @@ class WorkBasket(TimestampedMixin):
         if "workbasket" in request.session:
             workbasket = cls.load_from_session(request.session)
 
-            if workbasket.status in WorkflowStatus.approved_statuses():
+            if workbasket.status != WorkflowStatus.EDITING:
                 del request.session["workbasket"]
                 return None
 
@@ -410,18 +440,7 @@ class WorkBasket(TimestampedMixin):
         if workbasket:
             return workbasket.current_transaction
 
-        return None
-
-    def clean(self):
-        errors = []
-        for txn in self.transactions.order_by("order"):
-            try:
-                txn.clean()
-            except ValidationError as e:
-                errors.extend(e.error_list)
-
-        if any(errors):
-            raise ValidationError(errors)
+        return Transaction.approved.last()
 
     def new_transaction(self, **kwargs):
         """Create a new transaction in this workbasket."""
@@ -458,3 +477,32 @@ class WorkBasket(TimestampedMixin):
         recent approved transaction if no transactions are in the workbasket.
         """
         return self.transactions.last() or Transaction.approved.last()
+
+    @property
+    def tracked_model_check_errors(self):
+        return TrackedModelCheck.objects.filter(
+            transaction_check__transaction__workbasket=self,
+            successful=False,
+        )
+
+    def delete_checks(self):
+        """Delete all TrackedModelCheck and TransactionCheck instances related
+        to the WorkBasket."""
+        TrackedModelCheck.objects.filter(
+            transaction_check__transaction__workbasket=self,
+        ).delete()
+        TransactionCheck.objects.filter(
+            transaction__workbasket=self,
+        ).delete()
+
+    @property
+    def unchecked_or_errored_transactions(self):
+        return self.transactions.exclude(
+            pk__in=TransactionCheck.objects.requires_update(False)
+            .filter(
+                completed=True,
+                successful=True,
+                transaction__workbasket=self,
+            )
+            .values("transaction__pk"),
+        )

@@ -5,128 +5,77 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set page_title = "View workbasket" %}
 
-{% block beforeContent %}
+{% set page_title = "Work basket: " ~ workbasket.title %}
+
+
+{% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Home", "href": url("index")},
-      {"text": "Workbaskets", "href": url("workbaskets:workbasket-ui-list")},
+      {"text": "Home", "href": url("home")},
+      {"text": "Find and edit work baskets", "href": url("workbaskets:workbasket-ui-list")},
       {"text": page_title}
     ]
   }) }}
 {% endblock %}
 
+
 {% block content %}
-  <span class="govuk-caption-xl">Work Basket</span>
-  <h1 class="govuk-heading-xl">{{ workbasket.title }}</h1>
-  <p class="govuk-body">
-    You are viewing this work basket in read-only mode.
-  </p>
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
-  {% set detail_html %}
-    <h2 class="govuk-heading-l">About this Workbasket</h2>
-    {{ govukTable({
-      "firstCellIsHeader": true,
-      "rows": [
-        [
-          {"text": "Workbasket ID"},
-          {"text": workbasket.pk}
-        ],
-        [
-          {"text": "Workbasket name"},
-          {"text": workbasket.title},
-        ],
-        [
-          {"text": "Reason"},
-          {"text": workbasket.reason or ""}
-        ],
-        [
-          {"text": "User"},
-          {"text": workbasket.author.fullname or ""}
-        ],
-        [
-          {"text": "Created"},
-          {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)}
-        ],
-        [
-          {"text": "Last amended"},
-          {"text": "{:%d %b %y %H:%M}".format(workbasket.updated_at)}
-        ],
-        [
-          {"text": "Workbasket status"},
-          {"text": workbasket.get_status_display()}
-        ],
-        [
-          {"text": "Activity summary"},
-          {"text": ""}
-        ]
-      ]
-    }) }}
-  {% endset %}
+  <div class="govuk-grid-row govuk-!-margin-bottom-6">
+    <div class="govuk-grid-column-full">
 
-  {% set activities_html %}
-    <h2 class="govuk-heading-l">Workbasket activities</h2>
-    <p class="govuk-body">This workbasket contains the following {# workbasket.items.count() #} changes:</p>
-    {% set activity_groups = [] %}
-    {% for group_name, group_items in workbasketitem_groups %}
-      {% set table %}
-        {% with object_list = group_items %}
-          {% include "includes/" ~ group_name ~ "_list.jinja" %}
-        {% endwith %}
-      {% endset %}
-      {{ activity_groups.append(
-        {
-          "heading": {"text": group_name|capitalize},
-          "content": {"html": table},
-          "summary": {}
-        }
-      ) or "" }}
-    {% endfor %}
-    {{ govukAccordion({
-      "id": "workbasket-{{ workbasket.pk }}-activities-accordion",
-      "items": activity_groups
-    }) }}
-  {% endset %}
+      <h2 class="govuk-heading-l">Details</h2>
 
-  {% set history_html %}
-    <h2 class="govuk-heading-l">Workbasket history</h2>
-    <p class="govuk-body">The table below shows the actions that have been performed on
-    this workbasket.</p>
-    {{ govukTable({
-      "head": [
-        {"text": "Date"},
-        {"text": "User"},
-        {"text": "Event type"},
-        {"text": "Description"}
-      ],
-      "rows": []
-    }) }}
-  {% endset %}
+      {{ govukTable({
+          "firstCellIsHeader": true,
+          "rows": [
+          [
+              {"text": "Workbasket ID"},
+              {"text": workbasket.pk}
+          ],
+          [
+              {"text": "Workbasket name"},
+              {"text": workbasket.title},
+          ],
+          [
+              {"text": "Reason"},
+              {"text": workbasket.reason or ""}
+          ],
+          [
+              {"text": "Number of changes"},
+              {"text": '{0:,}'.format(workbasket.tracked_models.count()) }
+          ],
+          [
+              {"text": "Created"},
+              {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)}
+          ],
+          [
+              {"text": "Last amended"},
+              {"text": "{:%d %b %y %H:%M}".format(workbasket.updated_at)}
+          ],
+          [
+              {"text": "Workbasket status"},
+              {"text": workbasket.get_status_display()}
+          ],
+          ]
+      }) }}
+    </div>
+  </div>
 
-  {{ govukTabs({
-    "items": [
-      {
-        "label": "Workbasket detail",
-        "id": "detail",
-        "panel": {
-          "html": detail_html
-        }
-      },
-      {
-        "label": "Workbasket activities",
-        "id": "activities",
-        "panel": {
-          "html": activities_html
-        }
-      },
-      {
-        "label": "Workbasket history",
-        "id": "history",
-        "panel": {
-          "html": history_html
-        }
-      }
-    ]
-  }) }}
+  <div class="govuk-grid-row govuk-!-margin-bottom-5">
+    <div class="govuk-grid-column-full">
+
+      <h2 class="govuk-heading-l">Changes</h2>
+
+      {% set object_list = page_obj %}
+      {% set items_name = "changes" %}
+
+      {% include "includes/common/pagination-list-summary.jinja" %}
+      {% include "includes/workbaskets/workbasket-items-accordion.jinja" %}
+      {% include "includes/common/pagination.jinja" %}
+    </div>
+  </div>
 {% endblock %}
+      

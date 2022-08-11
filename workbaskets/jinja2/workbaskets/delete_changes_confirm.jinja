@@ -9,7 +9,7 @@
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Home", "href": url("index")},
+      {"text": "Home", "href": url("home")},
       {"text": page_title}
     ]
   }) }}
@@ -35,7 +35,7 @@
     }) }}
 
     <p class="govuk-body">
-      <a href="{{ url('index') }}" class="govuk-link">Return to main menu</a>
+      {% include "includes/common/main-menu-link.jinja" %}
     </p>
   </div>
 </div>

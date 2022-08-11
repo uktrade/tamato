@@ -4,7 +4,6 @@ import factory
 import pytest
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
-from django.test.client import RequestFactory
 
 from common.tests import factories
 from common.tests.util import date_post_data
@@ -17,17 +16,12 @@ from footnotes import models
 pytestmark = pytest.mark.django_db
 
 # https://uktrade.atlassian.net/browse/TP-851
-def test_form_save_creates_new_footnote_id_and_footnote_type_id_combo(client):
+def test_form_save_creates_new_footnote_id_and_footnote_type_id_combo(
+    session_with_workbasket,
+):
     """Tests that when two non-overlapping footnotes of the same type are
     created that these are created with a different footnote_id, to avoid
     duplication of footnote_id and footnote_type_id combination e.g. TN001."""
-    workbasket = factories.ApprovedWorkBasketFactory.create()
-    session = client.session
-    session.update({"workbasket": {"id": workbasket.pk}})
-    session.save()
-    request = RequestFactory()
-    request.session = session
-
     footnote_type = factories.FootnoteTypeFactory.create()
     valid_between = TaricDateRange(
         datetime.date(2021, 1, 1),
@@ -46,7 +40,7 @@ def test_form_save_creates_new_footnote_id_and_footnote_type_id_combo(client):
         "start_date_2": 2022,
         "description": "A note on feet",
     }
-    form = forms.FootnoteCreateForm(data=data, request=request)
+    form = forms.FootnoteCreateForm(data=data, request=session_with_workbasket)
     new_footnote = form.save(commit=False)
 
     assert earlier.footnote_id != new_footnote.footnote_id

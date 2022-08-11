@@ -2,6 +2,8 @@ from django.db import models
 
 
 class WorkflowStatus(models.TextChoices):
+    # Mark a workbasket as no longer in use.
+    ARCHIVED = "ARCHIVED", "Archived"
     # Workbasket can still be edited
     EDITING = "EDITING", "Editing"
     # Submitted for approval, pending response from an approver
@@ -21,5 +23,4 @@ class WorkflowStatus(models.TextChoices):
             cls.APPROVED,
             cls.SENT,
             cls.PUBLISHED,
-            cls.ERRORED,
         )

@@ -1,5 +1,4 @@
 import logging
-from collections import defaultdict
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -13,19 +12,28 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import TextChoices
+from django.template import loader
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.fields import AutoCompleteField
+from common.forms import BindNestedFormMixin
+from common.forms import FormSet
+from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
+from common.forms import delete_form_for
+from common.forms import formset_factory
 from common.util import validity_range_contains_range
 from common.validators import UpdateType
 from footnotes.models import Footnote
-from geo_areas.forms import GeographicalAreaFormMixin
-from geo_areas.forms import GeographicalAreaSelect
 from geo_areas.models import GeographicalArea
+from geo_areas.validators import AreaCode
 from measures import models
+from measures.parsers import DutySentenceParser
+from measures.patterns import MeasureCreationPattern
+from measures.util import diff_components
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -34,7 +42,422 @@ from workbaskets.models import WorkBasket
 logger = logging.getLogger(__name__)
 
 
-class MeasureForm(ValidityPeriodForm):
+ERGA_OMNES_EXCLUSIONS_PREFIX = "erga_omnes_exclusions"
+ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX = (
+    f"{ERGA_OMNES_EXCLUSIONS_PREFIX}_formset"  # /PS-IGNORE
+)
+GROUP_EXCLUSIONS_PREFIX = "geo_group_exclusions"
+GROUP_EXCLUSIONS_FORMSET_PREFIX = f"{GROUP_EXCLUSIONS_PREFIX}_formset"
+
+GEO_GROUP_PREFIX = "geographical_area_group"
+GEO_GROUP_FORMSET_PREFIX = f"{GEO_GROUP_PREFIX}_formset"
+
+COUNTRY_REGION_PREFIX = "country_region"
+COUNTRY_REGION_FORMSET_PREFIX = f"{COUNTRY_REGION_PREFIX}_formset"
+
+
+class GeoAreaType(TextChoices):
+    ERGA_OMNES = "ERGA_OMNES", "All countries (erga omnes)"
+    GROUP = "GROUP", "A group of countries"
+    COUNTRY = "COUNTRY", "Specific countries or regions"
+
+
+SUBFORM_PREFIX_MAPPING = {
+    GeoAreaType.GROUP: GEO_GROUP_PREFIX,
+    GeoAreaType.COUNTRY: COUNTRY_REGION_FORMSET_PREFIX,
+}
+
+EXCLUSIONS_FORMSET_PREFIX_MAPPING = {
+    GeoAreaType.ERGA_OMNES: ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
+    GeoAreaType.GROUP: GROUP_EXCLUSIONS_FORMSET_PREFIX,
+    GeoAreaType.COUNTRY: None,
+}
+
+FIELD_NAME_MAPPING = {
+    GeoAreaType.ERGA_OMNES: "erga_omnes_exclusion",
+    GeoAreaType.GROUP: "geo_group_exclusion",
+}
+
+
+class GeoGroupForm(forms.Form):
+    prefix = GEO_GROUP_PREFIX
+
+    geographical_area_group = forms.ModelChoiceField(
+        label="",
+        queryset=None,  # populated in __init__
+        error_messages={"required": "A country group is required."},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["geographical_area_group"].queryset = (
+            GeographicalArea.objects.current()
+            .with_current_description()
+            .filter(area_code=AreaCode.GROUP)
+            .as_at_today()
+            .order_by("description")
+        )
+        # descriptions__description" should make this implicitly distinct()
+        self.fields[
+            "geographical_area_group"
+        ].label_from_instance = lambda obj: obj.description
+
+        if self.initial.get("geo_area") == GeoAreaType.GROUP.value:
+            self.initial["geographical_area_group"] = self.initial["geographical_area"]
+
+
+class ErgaOmnesExclusionsForm(forms.Form):
+    prefix = ERGA_OMNES_EXCLUSIONS_PREFIX
+
+    erga_omnes_exclusion = forms.ModelChoiceField(
+        label="",
+        queryset=GeographicalArea.objects.all(),
+        help_text="Select a country to be excluded:",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["erga_omnes_exclusion"].queryset = (
+            GeographicalArea.objects.current()
+            .with_current_description()
+            .as_at_today()
+            .order_by("description")
+        )
+        self.fields[
+            "erga_omnes_exclusion"
+        ].label_from_instance = lambda obj: obj.description
+
+
+class GeoGroupExclusionsForm(forms.Form):
+    prefix = GROUP_EXCLUSIONS_PREFIX
+
+    geo_group_exclusion = forms.ModelChoiceField(
+        label="",
+        queryset=GeographicalArea.objects.all(),
+        help_text="Select a country to be excluded:",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["geo_group_exclusion"].queryset = (
+            GeographicalArea.objects.current()
+            .with_current_description()
+            .as_at_today()
+            .order_by("description")
+        )
+        self.fields[
+            "geo_group_exclusion"
+        ].label_from_instance = lambda obj: obj.description
+
+
+GeoGroupFormSet = formset_factory(
+    GeoGroupForm,
+    prefix=GEO_GROUP_FORMSET_PREFIX,
+    formset=FormSet,
+    min_num=1,
+    max_num=2,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
+
+ErgaOmnesExclusionsFormSet = formset_factory(
+    ErgaOmnesExclusionsForm,
+    prefix=ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
+    formset=FormSet,
+    min_num=0,
+    max_num=10,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
+
+GeoGroupExclusionsFormSet = formset_factory(
+    GeoGroupExclusionsForm,
+    prefix=GROUP_EXCLUSIONS_FORMSET_PREFIX,
+    formset=FormSet,
+    min_num=0,
+    max_num=10,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
+
+
+class CountryRegionForm(forms.Form):
+    prefix = COUNTRY_REGION_PREFIX
+
+    geographical_area_country_or_region = forms.ModelChoiceField(
+        queryset=GeographicalArea.objects.exclude(
+            area_code=AreaCode.GROUP,
+            descriptions__description__isnull=True,
+        ),
+        error_messages={"required": "A country or region is required."},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["geographical_area_country_or_region"].queryset = (
+            GeographicalArea.objects.current()
+            .with_current_description()
+            .exclude(area_code=AreaCode.GROUP)
+            .as_at_today()
+            .order_by("description")
+        )
+
+        self.fields[
+            "geographical_area_country_or_region"
+        ].label_from_instance = lambda obj: obj.description
+
+        if self.initial.get("geo_area") == GeoAreaType.COUNTRY.value:
+            self.initial["geographical_area_country_or_region"] = self.initial[
+                "geographical_area"
+            ]
+
+
+CountryRegionFormSet = formset_factory(
+    CountryRegionForm,
+    prefix=COUNTRY_REGION_FORMSET_PREFIX,
+    formset=FormSet,
+    min_num=1,
+    max_num=2,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
+
+
+class MeasureConditionComponentDuty(Field):
+    template = "components/measure_condition_component_duty/template.jinja"
+
+
+class MeasureValidityForm(ValidityPeriodForm):
+    """A form for working with `start_date` and `end_date` logic where the
+    `valid_between` field does not already exist on the form."""
+
+    class Meta:
+        model = models.Measure
+        fields = [
+            "valid_between",
+        ]
+
+
+class MeasureConditionsFormMixin(forms.ModelForm):
+    class Meta:
+        model = models.MeasureCondition
+        fields = [
+            "condition_code",
+            "duty_amount",
+            "monetary_unit",
+            "condition_measurement",
+            "required_certificate",
+            "action",
+            "applicable_duty",
+            "condition_sid",
+        ]
+
+    condition_code = forms.ModelChoiceField(
+        label="",
+        queryset=models.MeasureConditionCode.objects.latest_approved(),
+        empty_label="-- Please select a condition code --",
+    )
+    # This field used to be called duty_amount, but forms.ModelForm expects a decimal value when it sees that duty_amount is a DecimalField on the MeasureCondition model.
+    # reference_price expects a non-compound duty string (e.g. "11 GBP / 100 kg".
+    # Using DutySentenceParser we validate this string and get the decimal value to pass to the model field, duty_amount)
+    reference_price = forms.CharField(
+        label="Reference price or quantity",
+        required=False,
+    )
+    required_certificate = AutoCompleteField(
+        label="Certificate, licence or document",
+        queryset=Certificate.objects.all(),
+        required=False,
+    )
+    action = forms.ModelChoiceField(
+        label="Action code",
+        queryset=models.MeasureAction.objects.latest_approved(),
+        empty_label="-- Please select an action code --",
+    )
+    applicable_duty = forms.CharField(
+        label="Duty",
+        required=False,
+    )
+    condition_sid = forms.CharField(required=False, widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+
+        self.helper.layout = Layout(
+            Fieldset(
+                Div(
+                    Field(
+                        "condition_code",
+                        template="components/measure_condition_code/template.jinja",
+                    ),
+                    "condition_sid",
+                ),
+                Div(
+                    Field("reference_price", css_class="govuk-input"),
+                    "required_certificate",
+                    css_class="govuk-radios__conditional",
+                ),
+                Field(
+                    "action",
+                    template="components/measure_condition_action_code/template.jinja",
+                ),
+                Div(
+                    MeasureConditionComponentDuty("applicable_duty"),
+                ),
+                Field("DELETE", template="includes/common/formset-delete-button.jinja")
+                if not self.prefix.endswith("__prefix__")
+                else None,
+                legend="Condition code",
+                legend_size=Size.SMALL,
+                data_field="condition_code",
+            ),
+        )
+
+    def conditions_clean(self, cleaned_data, measure_start_date):
+        """
+        We get the reference_price from cleaned_data and the measure_start_date
+        from the form's initial data.
+
+        If both are present, we call validate_duties with measure_start_date.
+        Then, if reference_price is provided, we use DutySentenceParser with
+        measure_start_date, if present, or the current_date, to check that we
+        are dealing with a simple duty (i.e. only one component). We then update
+        cleaned_data with key-value pairs created from this single, unsaved
+        component.
+        """
+        price = cleaned_data.get("reference_price")
+
+        if price and measure_start_date is not None:
+            validate_duties(price, measure_start_date)
+
+        if price:
+            parser = DutySentenceParser.get(measure_start_date)
+            components = parser.parse(price)
+            if len(components) > 1:
+                raise ValidationError(
+                    "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+                )
+            cleaned_data["duty_amount"] = components[0].duty_amount
+            cleaned_data["monetary_unit"] = components[0].monetary_unit
+            cleaned_data["condition_measurement"] = components[0].component_measurement
+
+        # The JS autocomplete does not allow for clearing unnecessary certificates
+        # In case of a user changing data, the information is cleared here.
+        condition_code = cleaned_data.get("condition_code")
+        if condition_code and not condition_code.accepts_certificate:
+            cleaned_data["required_certificate"] = None
+
+        return cleaned_data
+
+
+class MeasureConditionsForm(MeasureConditionsFormMixin):
+    def get_start_date(self, data):
+        """Validates that the day, month, and year start_date fields are present
+        in data and then returns the start_date datetime object."""
+        validity_form = MeasureValidityForm(data=data)
+        validity_form.is_valid()
+
+        return validity_form.cleaned_data["valid_between"].lower
+
+    def clean_applicable_duty(self):
+        """
+        Gets applicable_duty from cleaned data.
+
+        We get start date from other data in the measure edit form. Uses
+        `DutySentenceParser` to check that applicable_duty is a valid duty
+        string.
+        """
+        applicable_duty = self.cleaned_data["applicable_duty"]
+
+        if applicable_duty and self.get_start_date(self.data) is not None:
+            validate_duties(applicable_duty, self.get_start_date(self.data))
+
+        return applicable_duty
+
+    def clean(self):
+        """
+        We get the reference_price from cleaned_data and the measure_start_date
+        from the form's initial data.
+
+        If both are present, we call validate_duties with measure_start_date.
+        Then, if reference_price is provided, we use DutySentenceParser with
+        measure_start_date, if present, or the current_date, to check that we
+        are dealing with a simple duty (i.e. only one component). We then update
+        cleaned_data with key-value pairs created from this single, unsaved
+        component.
+        """
+        cleaned_data = super().clean()
+        measure_start_date = self.get_start_date(self.data)
+
+        return self.conditions_clean(cleaned_data, measure_start_date)
+
+
+class MeasureConditionsFormSet(FormSet):
+    prefix = "measure-conditions-formset"
+    form = MeasureConditionsForm
+
+
+class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
+    # override methods that use form kwargs
+    def __init__(self, *args, **kwargs):
+        self.measure_start_date = kwargs.pop("measure_start_date")
+        super().__init__(*args, **kwargs)
+
+    def clean_applicable_duty(self):
+        """
+        Gets applicable_duty from cleaned data.
+
+        We expect `measure_start_date` to be passed in. Uses
+        `DutySentenceParser` to check that applicable_duty is a valid duty
+        string.
+        """
+        applicable_duty = self.cleaned_data["applicable_duty"]
+
+        if applicable_duty and self.measure_start_date is not None:
+            validate_duties(applicable_duty, self.measure_start_date)
+
+        return applicable_duty
+
+    def clean(self):
+        """
+        We get the reference_price from cleaned_data and the measure_start_date
+        from form kwargs.
+
+        If reference_price is provided, we use DutySentenceParser with
+        measure_start_date to check that we are dealing with a simple duty (i.e.
+        only one component). We then update cleaned_data with key-value pairs
+        created from this single, unsaved component.
+        """
+        cleaned_data = super().clean()
+
+        return self.conditions_clean(cleaned_data, self.measure_start_date)
+
+
+class MeasureConditionsWizardStepFormSet(FormSet):
+    form = MeasureConditionsWizardStepForm
+
+
+class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
+    class Meta:
+        model = models.Measure
+        fields = (
+            "valid_between",
+            "measure_type",
+            "generating_regulation",
+            "goods_nomenclature",
+            "additional_code",
+            "order_number",
+        )
+
     measure_type = AutoCompleteField(
         label="Measure type",
         help_text="Select the regulation which provides the legal basis for the measure.",
@@ -52,6 +475,11 @@ class MeasureForm(ValidityPeriodForm):
         required=False,
         attrs={"min_length": 3},
     )
+    duty_sentence = forms.CharField(
+        label="Duties",
+        widget=forms.TextInput,
+        required=False,
+    )
     additional_code = AutoCompleteField(
         label="Code and description",
         help_text="If applicable, select the additional code to which the measure applies.",
@@ -64,56 +492,64 @@ class MeasureForm(ValidityPeriodForm):
         queryset=QuotaOrderNumber.objects.all(),
         required=False,
     )
-    geographical_area = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.all(),
-        required=False,
-    )
-    geographical_area_group = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.filter(
-            area_code=1,
-        ),
-        required=False,
-        widget=forms.Select(attrs={"class": "govuk-select"}),
-        empty_label=None,
-    )
-    geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.exclude(
-            area_code=1,
-        ),
-        widget=forms.Select(attrs={"class": "govuk-select"}),
-        required=False,
-        empty_label=None,
+    geo_area = RadioNested(
+        label="Geographical area",
+        choices=GeoAreaType.choices,
+        nested_forms={
+            GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
+            GeoAreaType.GROUP.value: [GeoGroupForm, GeoGroupExclusionsFormSet],
+            GeoAreaType.COUNTRY.value: [CountryRegionForm],
+        },
+        error_messages={"required": "A Geographical area must be selected"},
     )
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        WorkBasket.get_current_transaction(self.request)
+        tx = WorkBasket.get_current_transaction(self.request)
 
-        self.initial_geographical_area = self.instance.geographical_area
+        self.initial["duty_sentence"] = self.instance.duty_sentence
+        self.request.session[
+            f"instance_duty_sentence_{self.instance.sid}"
+        ] = self.instance.duty_sentence
 
-        for field in ["geographical_area_group", "geographical_area_country_or_region"]:
-            self.fields[
-                field
-            ].label_from_instance = lambda obj: obj.structure_description
+        if self.instance.geographical_area.is_all_countries():
+            self.initial["geo_area"] = GeoAreaType.ERGA_OMNES.value
 
-        if self.instance.geographical_area.is_group():
-            self.fields[
-                "geographical_area_group"
-            ].initial = self.instance.geographical_area
+        elif self.instance.geographical_area.is_group():
+            self.initial["geo_area"] = GeoAreaType.GROUP.value
 
-        if self.instance.geographical_area.is_single_region_or_country():
-            self.fields[
-                "geographical_area_country_or_region"
-            ].initial = self.instance.geographical_area
+        else:
+            self.initial["geo_area"] = GeoAreaType.COUNTRY.value
 
         # If no footnote keys are stored in the session for a measure,
         # store all the pks of a measure's footnotes on the session, using the measure sid as key
         if f"instance_footnotes_{self.instance.sid}" not in self.request.session.keys():
+            tx = WorkBasket.get_current_transaction(self.request)
+            associations = (
+                models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
+                    tx,
+                ).filter(
+                    footnoted_measure=self.instance,
+                )
+            )
             self.request.session[f"instance_footnotes_{self.instance.sid}"] = [
-                footnote.pk for footnote in self.instance.footnotes.all()
+                a.associated_footnote.pk for a in associations
             ]
+
+        nested_forms_initial = {**self.initial}
+        nested_forms_initial["geographical_area"] = self.instance.geographical_area
+        kwargs.pop("initial")
+        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
+
+    def clean_duty_sentence(self):
+        duty_sentence = self.cleaned_data["duty_sentence"]
+        valid_between = self.initial.get("valid_between")
+        if duty_sentence and valid_between is not None:
+            validate_duties(duty_sentence, valid_between.lower)
+
+        return duty_sentence
 
     def clean(self):
         cleaned_data = super().clean()
@@ -128,15 +564,28 @@ class MeasureForm(ValidityPeriodForm):
         )
 
         geographical_area_fields = {
-            "all": erga_omnes_instance,
-            "group": cleaned_data.get("geographical_area_group"),
-            "single": cleaned_data.get("geographical_area_country_or_region"),
+            GeoAreaType.ERGA_OMNES: erga_omnes_instance,
+            GeoAreaType.GROUP: cleaned_data.get("geographical_area_group"),
+            GeoAreaType.COUNTRY: cleaned_data.get(
+                "geographical_area_country_or_region",
+            ),
         }
 
-        if self.data.get("geographical_area_choice"):
+        if self.data.get("geo_area"):
+            geo_area_choice = self.data.get("geo_area")
             cleaned_data["geographical_area"] = geographical_area_fields[
-                self.data.get("geographical_area_choice")
+                geo_area_choice
             ]
+            exclusions = cleaned_data.get(
+                EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
+            )
+            if exclusions:
+                cleaned_data["exclusions"] = [
+                    exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
+                    for exclusion in cleaned_data[
+                        EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
+                    ]
+                ]
 
         cleaned_data["sid"] = self.instance.sid
 
@@ -153,6 +602,42 @@ class MeasureForm(ValidityPeriodForm):
 
         sid = instance.sid
 
+        measure_creation_pattern = MeasureCreationPattern(
+            workbasket=WorkBasket.current(self.request),
+            base_date=instance.valid_between.lower,
+            defaults={
+                "generating_regulation": self.cleaned_data["generating_regulation"],
+            },
+        )
+
+        if self.cleaned_data.get("exclusions"):
+            for exclusion in self.cleaned_data.get("exclusions"):
+                pattern = (
+                    measure_creation_pattern.create_measure_excluded_geographical_areas(
+                        instance,
+                        exclusion,
+                    )
+                )
+                [p for p in pattern]
+
+        if (
+            self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
+            != self.cleaned_data["duty_sentence"]
+        ):
+            diff_components(
+                instance,
+                self.cleaned_data["duty_sentence"],
+                self.cleaned_data["valid_between"].lower,
+                WorkBasket.current(self.request),
+                # Creating components in the same transaction as the new version
+                # of the measure minimises number of transaction and groups the
+                # creation of measure and related objects in the same
+                # transaction.
+                instance.transaction,
+                models.MeasureComponent,
+                "component_measure",
+            )
+
         footnote_pks = [
             dct["footnote"]
             for dct in self.request.session.get(f"formset_initial_{sid}", [])
@@ -168,26 +653,43 @@ class MeasureForm(ValidityPeriodForm):
                 .approved_up_to_transaction(instance.transaction)
                 .first()
             )
-            models.FootnoteAssociationMeasure.objects.create(
-                footnoted_measure=instance,
-                associated_footnote=footnote,
-                update_type=UpdateType.CREATE,
-                transaction=instance.transaction,
+
+            existing_association = (
+                models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
+                    instance.transaction,
+                )
+                .filter(
+                    footnoted_measure__sid=instance.sid,
+                    associated_footnote__footnote_id=footnote.footnote_id,
+                    associated_footnote__footnote_type__footnote_type_id=footnote.footnote_type.footnote_type_id,
+                )
+                .first()
             )
+            if existing_association:
+                existing_association.new_version(
+                    workbasket=WorkBasket.current(self.request),
+                    transaction=instance.transaction,
+                    footnoted_measure=instance,
+                )
+            else:
+                models.FootnoteAssociationMeasure.objects.create(
+                    footnoted_measure=instance,
+                    associated_footnote=footnote,
+                    update_type=UpdateType.CREATE,
+                    transaction=instance.transaction,
+                )
 
         return instance
 
-    class Meta:
-        model = models.Measure
-        fields = (
-            "valid_between",
-            "measure_type",
-            "generating_regulation",
-            "goods_nomenclature",
-            "additional_code",
-            "order_number",
-            "geographical_area",
-        )
+    def is_valid(self) -> bool:
+        """Check that measure conditions data is valid before calling super() on
+        the rest of the form data."""
+        conditions_formset = MeasureConditionsFormSet(self.data)
+
+        if not conditions_formset.is_valid():
+            return False
+
+        return super().is_valid()
 
 
 class MeasureFilterForm(forms.Form):
@@ -248,7 +750,6 @@ class MeasureCreateStartForm(forms.Form):
 
 
 class MeasureDetailsForm(
-    GeographicalAreaFormMixin,
     ValidityPeriodForm,
     forms.Form,
 ):
@@ -257,7 +758,6 @@ class MeasureDetailsForm(
         fields = [
             "measure_type",
             "generating_regulation",
-            "geographical_area",
             "order_number",
             "valid_between",
         ]
@@ -285,28 +785,25 @@ class MeasureDetailsForm(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["geographical_area"].required = False
-
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             "measure_type",
             "generating_regulation",
-            GeographicalAreaSelect("geographical_area"),
             "order_number",
             "start_date",
             "end_date",
-            Submit("submit", "Continue"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
         cleaned_data = super().clean()
-
-        cleaned_data[self.prefix + "geographical_area"] = cleaned_data.pop(
-            self.prefix + "geo_area",
-            None,
-        )
 
         if "measure_type" in cleaned_data and "valid_between" in cleaned_data:
             measure_type = cleaned_data["measure_type"]
@@ -315,26 +812,122 @@ class MeasureDetailsForm(
                 cleaned_data["valid_between"],
             ):
                 raise ValidationError(
-                    f"The date range of the measure can't be outside that of the measure type: {measure_type.valid_between} does not contain {cleaned_data['valid_between']}",
+                    f"The date range of the measure can't be outside that of the measure type: "
+                    f"{measure_type.valid_between} does not contain {cleaned_data['valid_between']}",
                 )
 
         return cleaned_data
 
 
-class MeasureCommodityForm(forms.Form):
+class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
+    geo_area = RadioNested(
+        label="",
+        choices=GeoAreaType.choices,
+        nested_forms={
+            GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
+            GeoAreaType.GROUP.value: [GeoGroupForm, GeoGroupExclusionsFormSet],
+            GeoAreaType.COUNTRY.value: [CountryRegionFormSet],
+        },
+        error_messages={"required": "A Geographical area must be selected"},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        kwargs.pop("initial")
+
+        self.fields["geo_area"].initial = self.data.get(f"{self.prefix}-geo_area")
+
+        geographical_area_fields = {
+            GeoAreaType.ERGA_OMNES: self.erga_omnes_instance,
+            GeoAreaType.GROUP: self.data.get(f"{self.prefix}-geographical_area_group"),
+            GeoAreaType.COUNTRY: self.data.get(
+                f"{self.prefix}-geographical_area_country_or_region",
+            ),
+        }
+
+        nested_forms_initial = {}
+
+        if self.fields["geo_area"].initial:
+            nested_forms_initial["geographical_area"] = geographical_area_fields[
+                self.fields["geo_area"].initial
+            ]
+
+        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "geo_area",
+            HTML.details(
+                "Help with geography",
+                (
+                    "Choose the geographical area to which the measure applies. This can be a specific country "
+                    "or a group of countries, and exclusions can be specified. The measure will only apply to imports "
+                    "from or exports to the selected area."
+                ),
+            ),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    @property
+    def erga_omnes_instance(self):
+        return GeographicalArea.objects.current().erga_omnes().get()
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        geo_area_choice = self.cleaned_data.get("geo_area")
+
+        geographical_area_fields = {
+            GeoAreaType.GROUP: "geographical_area_group",
+            GeoAreaType.COUNTRY: "geographical_area_country_or_region",
+        }
+
+        if geo_area_choice:
+            if not self.formset_submit():
+
+                if geo_area_choice == GeoAreaType.ERGA_OMNES:
+                    cleaned_data["geo_area_list"] = [self.erga_omnes_instance]
+
+                elif geo_area_choice == GeoAreaType.GROUP:
+                    data_key = SUBFORM_PREFIX_MAPPING[geo_area_choice]
+                    cleaned_data["geo_area_list"] = [cleaned_data[data_key]]
+
+                elif geo_area_choice == GeoAreaType.COUNTRY:
+                    field_name = geographical_area_fields[geo_area_choice]
+                    data_key = SUBFORM_PREFIX_MAPPING[geo_area_choice]
+                    cleaned_data["geo_area_list"] = [
+                        geo_area[field_name] for geo_area in cleaned_data[data_key]
+                    ]
+
+                exclusions = cleaned_data.get(
+                    EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
+                )
+                if exclusions:
+                    cleaned_data["geo_area_exclusions"] = [
+                        exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
+                        for exclusion in cleaned_data[
+                            EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
+                        ]
+                    ]
+
+        return cleaned_data
+
+
+class MeasureAdditionalCodeForm(forms.ModelForm):
     class Meta:
         model = models.Measure
         fields = [
-            "goods_nomenclature",
             "additional_code",
         ]
 
-    goods_nomenclature = AutoCompleteField(
-        label="Commodity code",
-        help_text="Select the 10-digit commodity code to which the measure applies.",
-        queryset=GoodsNomenclature.objects.all(),
-        attrs={"min_length": 3},
-    )
     additional_code = AutoCompleteField(
         label="Additional code",
         help_text="If applicable, select the additional code to which the measure applies.",
@@ -346,213 +939,72 @@ class MeasureCommodityForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
         self.helper.layout = Layout(
-            "goods_nomenclature",
             "additional_code",
-            Submit("submit", "Continue"),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
 
-class FormSet(forms.BaseFormSet):
-    """
-    Adds the ability to add another form to the formset on submit.
-
-    If the form POST data contains an "ADD" field with the value "1", the formset
-    will be redisplayed with a new empty form appended.
-
-    Deleting a subform will also redisplay the formset, with the order of the forms
-    preserved.
-    """
-
-    extra = 0
-    can_order = False
-    can_delete = True
-    max_num = 1000
-    min_num = 0
-    absolute_max = 1000
-    validate_min = False
-    validate_max = False
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # If we have form data, then capture the any user "add form" or
-        # "delete form" actions.
-        self.formset_action = None
-        if f"{self.prefix}-ADD" in self.data:
-            self.formset_action = "ADD"
-        else:
-            for field in self.data:
-                if field.endswith("-DELETE"):
-                    self.formset_action = "DELETE"
-                    break
-
-        data = self.data.copy()
-
-        formset_initial = defaultdict(dict)
-        delete_forms = []
-        for field, value in self.data.items():
-
-            # filter out non-field data
-            if field.startswith(f"{self.prefix}-"):
-                form, field_name = field.rsplit("-", 1)
-
-                # remove from data, so we can rebuild later
-                if form != self.prefix:
-                    del data[field]
-
-                # group by subform
-                if value:
-                    formset_initial[form].update({field_name: value})
-
-                if field_name == "DELETE" and value == "1":
-                    delete_forms.append(form)
-
-        # ignore management form
-        try:
-            del formset_initial[self.prefix]
-        except KeyError:
-            pass
-
-        # ignore deleted forms
-        for form in delete_forms:
-            del formset_initial[form]
-
-            # leave DELETE field in data for is_valid
-            data[f"{form}-DELETE"] = 1
-
-        for i, (form, form_initial) in enumerate(formset_initial.items()):
-            for field, value in form_initial.items():
-
-                # convert submitted value to python object
-                form_field = self.form.declared_fields.get(field)
-                if form_field:
-                    form_initial[field] = form_field.widget.value_from_datadict(
-                        form_initial,
-                        {},
-                        field,
-                    )
-
-                # reinsert into data, with updated numbering
-                data[f"{self.prefix}-{i}-{field}"] = value
-
-        self.initial = list(formset_initial.values())
-        num_initial = len(self.initial)
-
-        if num_initial < 1:
-            data[f"{self.prefix}-ADD"] = "1"
-
-        # update management data
-        data[f"{self.prefix}-INITIAL_FORMS"] = num_initial
-        data[f"{self.prefix}-TOTAL_FORMS"] = num_initial
-        self.data = data
-
-    def is_valid(self):
-        """Invalidates the formset if "Add another" or "Delete" are submitted,
-        to redisplay the formset with an extra empty form or the selected form
-        removed."""
-
-        # Re-present the form to show the result of adding another form or
-        # deleting an existing one.
-        if self.formset_action == "ADD" or self.formset_action == "DELETE":
-            return False
-
-        # An empty set of forms is valid.
-        if self.total_form_count() == 0:
-            return True
-
-        return super().is_valid()
-
-
-class MeasureConditionsForm(forms.ModelForm):
-    class Meta:
-        model = models.MeasureCondition
-        fields = [
-            "condition_code",
-            "duty_amount",
-            "required_certificate",
-            "action",
-        ]
-
-    condition_code = forms.ModelChoiceField(
-        label="",
-        queryset=models.MeasureConditionCode.objects.latest_approved(),
-        empty_label="-- Please select a condition code --",
+class MeasureCommodityAndDutiesForm(forms.Form):
+    commodity = AutoCompleteField(
+        label="Commodity code",
+        help_text="Select the 10-digit commodity code to which the measure applies.",
+        queryset=GoodsNomenclature.objects.all(),
+        attrs={"min_length": 3},
     )
-    duty_amount = forms.DecimalField(
-        label="Reference price (where applicable)",
-        max_digits=10,
-        decimal_places=3,
+
+    duties = forms.CharField(
+        label="Duties",
         required=False,
-    )
-    required_certificate = AutoCompleteField(
-        label="Certificate, license or document",
-        queryset=Certificate.objects.all(),
-        required=False,
-    )
-    action = forms.ModelChoiceField(
-        label="Action code",
-        queryset=models.MeasureAction.objects.latest_approved(),
-        empty_label="-- Please select an action code --",
     )
 
     def __init__(self, *args, **kwargs):
+        # remove measure_start_date from kwargs here because superclass will not be expecting it
+        self.measure_start_date = kwargs.pop("measure_start_date")
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
         self.helper.form_tag = False
+        self.helper.label_size = Size.SMALL
         self.helper.layout = Layout(
             Fieldset(
-                Field("condition_code"),
-                Div(
-                    Field("duty_amount", css_class="govuk-input"),
-                    "required_certificate",
-                    "action",
-                    css_class="govuk-radios__conditional",
+                "commodity",
+                "duties",
+                HTML(
+                    loader.render_to_string(
+                        "components/duty_help.jinja",
+                        context={"component": "measure"},
+                    ),
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
                 else None,
-                legend="Condition code",
-                legend_size=Size.SMALL,
             ),
-        )
-
-
-class MeasureConditionsFormSet(FormSet):
-    form = MeasureConditionsForm
-
-
-class MeasureDutiesForm(forms.Form):
-    duties = forms.CharField(
-        label="Duties",
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.layout = Layout(
-            Fieldset(
-                "duties",
-                HTML.details(
-                    "Help with duties",
-                    "Enter the duty that applies to the measure. This is expressed as a percentage (e.g. 4%), a specific duty (e.g. 33 GBP/100kg) or a compound duty (e.g. 3.5% + 11 GBP/LTR).",
-                ),
-            ),
-            Submit("submit", "Continue"),
         )
 
     def clean(self):
         cleaned_data = super().clean()
-        duties = cleaned_data["duties"]
-        measure_start_date = self.initial.get("measure_start_date")
-        if measure_start_date is not None:
-            validate_duties(duties, measure_start_date)
+        duties = cleaned_data.get("duties", "")
+        validate_duties(duties, self.measure_start_date)
 
         return cleaned_data
+
+
+MeasureCommodityAndDutiesFormSet = formset_factory(
+    MeasureCommodityAndDutiesForm,
+    prefix="measure_commodities_duties_formset",
+    formset=FormSet,
+    min_num=1,
+    max_num=100,
+    extra=1,
+    validate_min=True,
+    validate_max=True,
+)
 
 
 class MeasureFootnotesForm(forms.Form):
@@ -609,3 +1061,6 @@ class MeasureUpdateFootnotesFormSet(FormSet):
 
 class MeasureReviewForm(forms.Form):
     pass
+
+
+MeasureDeleteForm = delete_form_for(models.Measure)

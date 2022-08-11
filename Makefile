@@ -98,6 +98,13 @@ docker-test:
 	@docker-compose run \
 		${PROJECT} sh -c "docker/wait_for_db && ${PYTHON} manage.py test -- -n=auto --dist=loadfile --cov"
 
+## clean-docs: Clean the generated documentation files
+clean-docs:
+	@rm -f docs/source/training/*.rst
+	@rm -rf docs/build
+
 ## build-docs: Build the project documentation
 build-docs html:
+	@sphinx-gherkindoc --raw-descriptions "docs/source/training" "docs/source/training"
+	@for FILE in $$(ls -1 docs/source/training/*.rst | grep -v gherkin); do $(BASH) docs/source/training/augment.sh $$FILE; done
 	@cd docs && sphinx-build -M html "source" "build"

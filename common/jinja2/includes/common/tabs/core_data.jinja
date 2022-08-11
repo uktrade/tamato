@@ -11,7 +11,14 @@
             <div class="app-related-items" role="complementary">
                 <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
                 <ul class="govuk-list govuk-!-font-size-16">
-                    <a class="govuk-link" href="{{object.get_url('edit')}}">Edit this {{object._meta.verbose_name}}</a>
+                    {% set edit_url = object.get_url('edit') %}
+                    {% if edit_url %}
+                        <li><a class="govuk-link" href="{{ edit_url }}">Edit this {{object._meta.verbose_name}}</a></li>
+                    {% endif %}
+                    {% set delete_url = object.get_url('delete') %}
+                    {% if delete_url %}
+                        <li><a class="govuk-link" href="{{ delete_url }}">Delete this {{object._meta.verbose_name}}</a></li>
+                    {% endif %}
                 </ul>
             </div>
         </div>

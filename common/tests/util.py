@@ -11,6 +11,9 @@ from typing import Callable
 from typing import Dict
 from typing import Optional
 from typing import Sequence
+from typing import Type
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 from dateutil.parser import parse as parse_date
@@ -25,6 +28,7 @@ from django_filters.views import FilterView
 from freezegun import freeze_time
 from lxml import etree
 
+from common.business_rules import BusinessRule
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.renderers import counter_generator
@@ -83,6 +87,22 @@ def raises_if(exception, expected):
     else:
         if expected:
             pytest.fail(f"Did not raise {exception}")
+
+
+@contextlib.contextmanager
+def add_business_rules(
+    model: Type[TrackedModel], *rules: Type[BusinessRule], indirect=False
+):
+    """Attach BusinessRules to a TrackedModel."""
+    target = f"{'indirect_' if indirect else ''}business_rules"
+    rules = (*rules, *getattr(model, target, []))
+    with patch.object(model, target, new=rules):
+        yield
+
+
+class TestRule(BusinessRule):
+    __test__ = False
+    validate = MagicMock()
 
 
 def check_validator(validate, value, expected_valid):
@@ -468,6 +488,26 @@ def generate_test_import_xml(obj: dict) -> BytesIO:
     return BytesIO(xml.encode())
 
 
+def export_workbasket(valid_user_api_client, workbasket):
+    response = valid_user_api_client.get(
+        reverse(
+            "workbaskets:workbasket-detail",
+            kwargs={"pk": workbasket.pk},
+        ),
+        {"format": "xml"},
+    )
+
+    assert response.status_code == 200
+    return etree.XML(response.content)  # type: ignore
+
+
+def serialize_xml(xml: etree._Element) -> BytesIO:
+    io = BytesIO()
+    xml.getroottree().write(io, encoding="utf-8")
+    io.seek(0)
+    return io
+
+
 def taric_xml_record_codes(xml):
     """Yields tuples of (record_code, subrecord_code)"""
     records = xml.xpath(".//*[local-name() = 'record']")
@@ -495,10 +535,9 @@ def validate_taric_xml(
 
     def decorator(func):
         def wraps(
-            api_client,
+            valid_user_api_client,
             taric_schema,
             approved_transaction,
-            valid_user,
             *args,
             **kwargs,
         ):
@@ -515,20 +554,10 @@ def validate_taric_xml(
                 transaction=approved_transaction, **factory_kwargs or {}
             )
 
-            api_client.force_login(user=valid_user)
-            response = api_client.get(
-                reverse(
-                    "workbaskets:workbasket-detail",
-                    kwargs={"pk": approved_transaction.workbasket.pk},
-                ),
-                {"format": "xml"},
+            xml = export_workbasket(
+                workbasket=approved_transaction.workbasket,
+                valid_user_api_client=valid_user_api_client,
             )
-
-            assert response.status_code == 200
-
-            content = response.content
-
-            xml = etree.XML(content)
 
             taric_schema.validate(xml)
 
@@ -706,6 +735,15 @@ def valid_between_start_delta(**delta) -> Callable[[TrackedModel], Dict[str, int
     )
 
 
+def valid_between_end_delta(**delta) -> Callable[[TrackedModel], Dict[str, int]]:
+    """Returns updated form data with the delta added to the "upper" date of the
+    model's valid between."""
+    return lambda model: date_post_data(
+        "end_date",
+        model.valid_between.upper + relativedelta(**delta),
+    )
+
+
 def validity_start_delta(**delta) -> Callable[[TrackedModel], Dict[str, int]]:
     """Returns updated form data with the delta added to the "validity start"
     date of the model."""
@@ -770,3 +808,18 @@ def assert_transaction_order(transactions):
     assert sorted(transactions, key=lambda o: (o.partition, o.order)) == list(
         transactions,
     ), "Transactions should be in the order partition, order"
+
+
+def wrap_numbers_over_max_digits(number: int, max_digits):
+    """
+    Wrap a number if it is too large to fit in the given number of digits.
+
+    Negative numbers use one of the digits for the sign.
+    """
+    assert max_digits > 0
+
+    if number >= 0:
+        return number % (10**max_digits)
+
+    # For negative numbers one digit is reserved for the sign.
+    return number % -(10 ** (max_digits - 1))

@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import re
 from datetime import timedelta
+from functools import lru_cache
 from functools import partial
 from platform import python_version_tuple
 from typing import Any
 from typing import Dict
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -17,8 +19,10 @@ import wrapt
 from django.db import transaction
 from django.db.models import F
 from django.db.models import Func
+from django.db.models import Model
 from django.db.models import QuerySet
 from django.db.models import Value
+from django.db.models.constants import LOOKUP_SEP
 from django.db.models.expressions import Case
 from django.db.models.expressions import Expression
 from django.db.models.expressions import When
@@ -53,14 +57,17 @@ else:
         return classmethod(property(fn))
 
 
-def is_truthy(value: str) -> bool:
+def is_truthy(value: Optional[str, bool]) -> bool:
     """
     Check whether a string represents a True boolean value.
 
     :param value str: The value to check
     :rtype: bool
     """
-    return str(value).lower() not in ("", "n", "no", "off", "f", "false", "0")
+    if not value:
+        return False
+
+    return str(value).lower() not in ("n", "no", "off", "f", "false", "0")
 
 
 def strint(value: Union[int, str, float]) -> str:
@@ -79,7 +86,10 @@ def strint(value: Union[int, str, float]) -> str:
         return str(value)
 
 
-def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
+T = TypeVar("T")
+
+
+def maybe_min(*objs: Optional[T]) -> Optional[T]:
     """Return the lowest out of the passed objects that are not None, or return
     None if all of the passed objects are None."""
     try:
@@ -88,7 +98,7 @@ def maybe_min(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
         return None
 
 
-def maybe_max(*objs: Optional[TypeVar("T")]) -> Optional[TypeVar("T")]:
+def maybe_max(*objs: Optional[T]) -> Optional[T]:
     """Return the highest out of the passed objects that are not None, or return
     None if all of the passed objects are None."""
     try:
@@ -215,11 +225,91 @@ def validity_range_contains_range(
     return True
 
 
-def get_field_tuple(
-    model: Model,
-    field_name: str,
-    default: Any = None,
-) -> Tuple[str, Any]:
+RelationPath = Sequence[Tuple[Type[Model], Field]]
+
+
+@lru_cache
+def resolve_path(model: Type[Model], path: str) -> RelationPath:
+    """
+    Returns an ordered sequence of types and field names of the foreign keys
+    representing the passed path, starting with the passed model and following
+    relations by name.
+
+    E.g. for a path of 'foo__bar__baz', first the relation 'foo' will be looked
+    up and the foreign key on the `Foo` model will be returned, then the
+    relation 'bar' will be looked up and the foreign key on the `Bar` model will
+    be returned, etc.
+    """
+    contained_model = model
+    relation_path: RelationPath = []
+
+    for step in path.split(LOOKUP_SEP):
+        relations = {
+            **contained_model._meta.fields_map,
+            **contained_model._meta._forward_fields_map,
+        }
+
+        if step not in relations:
+            raise ValueError(
+                f"{step!r} is not a valid relation for {contained_model!r}. "
+                f"Choices are: {relations.keys()!r}",
+            )
+
+        relation = relations[step]
+        contained_model = relation.related_model
+        assert contained_model is not None
+
+        relation_path.append((contained_model, relation.remote_field))
+
+    return relation_path
+
+
+def date_ranges_overlap(a: TaricDateRange, b: TaricDateRange) -> bool:
+    """Returns true if two date ranges overlap."""
+    if a.upper and b.lower > a.upper:
+        return False
+    if b.upper and a.lower > b.upper:
+        return False
+
+    return True
+
+
+def contained_date_range(
+    date_range: TaricDateRange,
+    containing_date_range: TaricDateRange,
+    fallback: Optional[Any] = None,
+) -> Optional[TaricDateRange]:
+    """
+    Returns a trimmed contained range that is fully contained by the container
+    range.
+
+    Trimming is not eager: only the minimum amount of trimming is done to ensure
+    that the result is fully contained by the container date range.
+
+    If the two ranges do not overlap, the method returns None.
+    """
+    a = date_range
+    b = containing_date_range
+
+    if not date_ranges_overlap(a, b):
+        return fallback
+
+    start_date = None
+    end_date = None
+
+    if b.upper:
+        if a.upper is None or b.upper < a.upper:
+            end_date = b.upper
+    if b.lower > a.lower:
+        start_date = b.lower
+
+    return TaricDateRange(
+        start_date or a.lower,
+        end_date or a.upper,
+    )
+
+
+def get_field_tuple(model: Model, field_name: str) -> Tuple[str, Any]:
     """
     Get the value of the named field of the specified model.
 

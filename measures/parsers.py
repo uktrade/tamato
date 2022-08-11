@@ -12,11 +12,11 @@ from typing import Iterator
 from typing import Match
 from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import Union
 
 from parsec import Parser
 from parsec import Value
-from parsec import choice
 from parsec import joint
 from parsec import optional
 from parsec import regex
@@ -25,6 +25,7 @@ from parsec import string
 from parsec import try_choice
 
 from certificates.models import Certificate
+from common.models.trackedmodel import TrackedModel
 from common.validators import ApplicabilityCode
 from measures.models import DutyExpression
 from measures.models import MeasureAction
@@ -118,13 +119,13 @@ def fail(text, index):
 class DutySentenceParser:
     """
     A duty expression defines what elements are permitted in a measure component
-    for each type of duty expression: amount, monetary unit and measurement.
-    They also include the prefix that must be matched at the start of the
-    expression. E.g. (2, '+', MANDATORY, PERMITTED, PERMITTED) describes things
-    like '+ 1.23 EUR/kg'.
+    or measure condition component for each type of duty expression: amount,
+    monetary unit and measurement. They also include the prefix that must be
+    matched at the start of the expression. E.g. (2, '+', MANDATORY, PERMITTED,
+    PERMITTED) describes things like '+ 1.23 EUR/kg'.
 
-    A parsed measure component references a duty expression ID and will
-    potentially have values for the amount, monetary unit and measurement.
+    A parsed component references a duty expression ID and will potentially have
+    values for the amount, monetary unit and measurement.
     """
 
     def __init__(
@@ -132,6 +133,7 @@ class DutySentenceParser:
         duty_expressions: Iterable[DutyExpression],
         monetary_units: Iterable[MonetaryUnit],
         permitted_measurements: Iterable[Measurement],
+        component_output: Type[TrackedModel] = MeasureComponent,
     ):
         # Decimal numbers are a sequence of digits (without a left-trailing zero)
         # followed optionally by a decimal point and a number of digits (we have seen
@@ -144,7 +146,7 @@ class DutySentenceParser:
         # For monetary units, the expression just contains the same code as is
         # present in the sentence. Percentage values correspond to no unit.
         self._monetary_unit = (
-            reduce(choice, map(code, monetary_units)) if monetary_units else fail
+            reduce(try_choice, map(code, monetary_units)) if monetary_units else fail
         )
         percentage_unit = token("%").result(None)
 
@@ -207,7 +209,7 @@ class DutySentenceParser:
                 and has_measurement != ApplicabilityCode.NOT_PERMITTED
                 else component
             ).parsecmap(
-                lambda exp: MeasureComponent(
+                lambda exp: component_output(
                     duty_expression=exp[0],
                     duty_amount=exp[1],
                     monetary_unit=exp[2],
@@ -256,7 +258,11 @@ class DutySentenceParser:
         return self.sentence_parser.parse_strict(s)
 
     @classmethod
-    def get(cls, forward_time: date) -> DutySentenceParser:
+    def get(
+        cls,
+        forward_time: date,
+        component_output: Type[TrackedModel] = MeasureComponent,
+    ) -> DutySentenceParser:
         """Return a DutySentenceParser loaded with expressions and measurements
         that are valid on the passed date."""
         duty_expressions = (
@@ -277,6 +283,7 @@ class DutySentenceParser:
             duty_expressions,
             monetary_units,
             permitted_measurements,
+            component_output=component_output,
         )
 
 

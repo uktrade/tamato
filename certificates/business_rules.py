@@ -3,7 +3,6 @@ from common.business_rules import DescriptionsRules
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
-from common.business_rules import ValidityPeriodContains
 
 
 class CET1(UniqueIdentifyingFields):
@@ -20,7 +19,7 @@ class CE2(UniqueIdentifyingFields):
     identifying_fields = ("sid", "certificate_type")
 
 
-class CE4(ValidityPeriodContains):
+class CE4(ValidityPeriodContained):
     """If a certificate is used in a measure condition then the validity periods
     of the certificate must span the validity period of the measure."""
 

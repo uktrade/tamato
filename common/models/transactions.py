@@ -4,17 +4,14 @@ from __future__ import annotations
 import json
 from logging import getLogger
 
-from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.transaction import atomic
 from django_fsm import FSMIntegerField
 from django_fsm import transition
 
-from common.business_rules import BusinessRuleChecker
-from common.business_rules import BusinessRuleViolation
 from common.models.mixins import TimestampedMixin
+from common.models.utils import lazy_string
 from common.renderers import counter_generator
 
 logger = getLogger(__name__)
@@ -26,11 +23,15 @@ class TransactionPartition(models.IntegerChoices):
     Transactions are partitioned into global groupings based on type.
 
     Within a partition, a transactions order applies, to obtain a global
-    ordering a order_by("partition", "order") must be used.
+    ordering call .order_by("partition", "order").
 
     The numbers chosen increment by "era" of transaction, starting
-    from approved transactions SEED_FILE and REVISION
+    from approved transactions SEED_FILE, REVISION
     then ending with DRAFT.
+
+    This system enables a simple filter for "approved" transactions, by checking
+    for <= HIGHEST_APPROVED_PARTITION, this is currently set to REVISION,
+    which is implemented in TransactionQuerySet.approved().
     """
 
     SEED_FILE = 1, "Seed"
@@ -38,34 +39,25 @@ class TransactionPartition(models.IntegerChoices):
     DRAFT = 3, "Draft"
 
     @classmethod
+    def get_highest_approved_partition(cls):
+        """Return the highest approved partition, this is used by
+        TransactionQuerySet.approved() to filter approved partitions using a
+        comparison operator as opposed to "in"."""
+        # This is a function, not a const as duplicate are not allowed in an Enum.
+        return cls.REVISION
+
+    @classmethod
     def approved_partitions(cls):
         return [cls.SEED_FILE, cls.REVISION]
 
 
 class TransactionManager(models.Manager):
-    """Sorts TrackedModels by record_number and subrecord_number."""
-
-    def get_queryset(self):
-        annotate_record_code = self.model.tracked_models.rel.related_model.objects.annotate_record_codes().order_by(
-            "record_code",
-            "subrecord_code",
-        )
-        return (
-            super()
-            .get_queryset()
-            .prefetch_related(
-                models.Prefetch("tracked_models", queryset=annotate_record_code),
-            )
-        )
+    pass
 
 
 class ApprovedTransactionManager(TransactionManager):
     def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .filter(partition__in=TransactionPartition.approved_partitions())
-        )
+        return super().get_queryset().approved()
 
 
 class TransactionsAlreadyApproved(Exception):
@@ -73,30 +65,20 @@ class TransactionsAlreadyApproved(Exception):
 
 
 class TransactionQueryset(models.QuerySet):
-    def unordered_tracked_models(self):
-        """Usually 'ordered_tracked_models' is required."""
+    @property
+    def tracked_models(self):
+        """Returns all tracked models referenced by transactions in this
+        queryset."""
         return self.model.tracked_models.rel.related_model.objects.filter(
             transaction__in=self,
         )
 
-    def ordered_tracked_models(self):
-        """TrackedModel in order of their transactions creation order."""
-
-        tracked_models = self.unordered_tracked_models().order_by(
-            "transaction__partition",
-            "transaction__order",
-        )  # order_by record_code, subrecord_code already happened in get_queryset
-        return tracked_models
-
     def approved(self):
-        """
-        Currently approved Transactions are SEED_FILE and REVISION this can be
-        more efficiently expressed as != DRAFT.
-
-        Using exclude(DRAFT) should be marginally more efficient than
-        filter(partition__in=TransactionPartition.approved_partitions())
-        """
-        return self.exclude(partition=TransactionPartition.DRAFT)
+        """Currently approved Transactions are SEED_FILE and REVISION this can
+        be."""
+        return self.filter(
+            partition__lte=TransactionPartition.get_highest_approved_partition(),
+        )
 
     def preorder_negative_transactions(self) -> None:
         """
@@ -108,42 +90,52 @@ class TransactionQueryset(models.QuerySet):
         """
         if self.count() and self.order_by("order").first().order < 0:
             order = PREEMPTIVE_TRANSACTION_SEED
-            for tx in self.order_by("order").all():
+            transactions = self.order_by("order")
+            for tx in transactions:
                 order += 1
                 tx.order = order
-                tx.save()
+
+            type(self).objects.bulk_update(transactions, ["order"])
 
     @atomic
-    def apply_transaction_order(self, partition_scheme) -> None:
+    def move_to_end_of_partition(self, partition) -> None:
         """
-        Reorder transactions in the workbasket.
+        Update Transaction partition and order fields to place them at the end
+        of the specified partition.
 
-        Note that transaction orders may not be contiguous,
-        e.g. when the workbasket has preemptive transactions
-        (created by the commodity code change handler).
-
-        TODO: Enhance this method to order based on partitions also.
+        Transaction order is updated to be contiguous.
         """
 
-        # Ensure order of the transactions in this query to start at the end of the existing approved partition.
-        existing_tx = self.model.objects.filter(
-            partition=partition_scheme.get_approved_partition(),
-        ).last()
+        transactions = self.order_by("partition", "order")
+
+        # Ensure order of the transactions in this query to start at end of the partition.
+        # The order_by here is redundant - as it's the natural order of Transaction,
+        # but it's included for clarity.
+        existing_tx = (
+            self.model.objects.order_by("order")
+            .filter(
+                partition=partition,
+            )
+            .exclude(pk__in=transactions.values_list("pk", flat=True))
+            .last()
+        )
         order_start = existing_tx.order + 1 if existing_tx else 1
 
         logger.debug(
-            "Update draft transactions in query starting from %s "
+            "Update transactions in query starting from %s "
             "to start after transaction %s. order_start: %s",
-            self.order_by("order").first().pk,
+            transactions.first().pk,
             existing_tx.pk if existing_tx else None,
             order_start,
         )
 
         counter = counter_generator(start=order_start)
 
-        for tx in self.order_by("order").all():
+        for tx in transactions:
             tx.order = counter()
-            tx.save()
+            tx.partition = partition
+
+        self.model.objects.bulk_update(transactions, ["partition", "order"])
 
     @atomic
     def save_drafts(self, partition_scheme):
@@ -176,13 +168,12 @@ class TransactionQueryset(models.QuerySet):
         )
         logger.debug("Update versions_group.")
 
-        for obj in self.unordered_tracked_models().order_by("pk"):
+        for obj in self.tracked_models.order_by("pk"):
             version_group = obj.version_group
             version_group.current_version = obj
             version_group.save()
 
-        self.apply_transaction_order(partition_scheme)
-        self.update(partition=approved_partition)
+        self.move_to_end_of_partition(approved_partition)
 
 
 class Transaction(TimestampedMixin):
@@ -206,6 +197,7 @@ class Transaction(TimestampedMixin):
     class Meta:
         # See TransactionPartition for information on workbasket_status order.
         ordering = ("partition", "order")
+        indexes = (models.Index(fields=("partition", "order")),)
 
     # FSMField protects against unexpected state changes.
     partition = FSMIntegerField(
@@ -248,22 +240,6 @@ class Transaction(TimestampedMixin):
         self.refresh_from_db()
         return self
 
-    def clean(self):
-        """Validate business rules against contained TrackedModels."""
-
-        if settings.SKIP_VALIDATION:
-            return
-
-        self.errors = []
-
-        try:
-            BusinessRuleChecker(self.tracked_models.all(), self).validate()
-        except BusinessRuleViolation as violation:
-            self.errors.append(violation)
-
-        if self.errors:
-            raise ValidationError(self.errors)
-
     def to_json(self):
         """
         Serialize to JSON.
@@ -292,6 +268,36 @@ class Transaction(TimestampedMixin):
     def add_to_transaction(self, instance, **kwargs):
         if hasattr(instance, "transaction"):
             instance.transaction = self
+
+    @lazy_string
+    def _get_summary(self):
+        """
+        Return a short summary of the transaction.
+
+        Attempts a balance between readability and enough information to debug
+        issues, so contains the pk and status of the transaction and workbasket.
+
+        Stringification is lazily evaluated, so this property can be passed to loggers.
+        """
+        return (
+            f"transaction: {self.partition}, {self.pk} "
+            f"in workbasket: {self.workbasket.status}, {self.workbasket.pk}"
+        )
+
+    @property
+    def summary(self):
+        """
+        Return a short summary of the transaction.
+
+        Attempts a balance between readability and enough information to debug
+        issues, so contains the partion, order for transactions and pk, status
+        for workbaskets.
+
+        Stringification happens lazily so this property is suitable for use
+        when logging.
+        """
+        # This is not decorated with lazy_string because it doesn't work with properties
+        return self._get_summary()
 
 
 class TransactionGroup(models.Model):

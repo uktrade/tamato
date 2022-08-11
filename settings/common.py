@@ -1,6 +1,7 @@
 """Django settings for tamato project."""
 import json
 import os
+import re
 import sys
 import uuid
 from datetime import timedelta
@@ -87,6 +88,7 @@ if os.getenv("ELASTIC_TOKEN"):
 
 DOMAIN_APPS = [
     "common",
+    "checks",
     "additional_codes.apps.AdditionalCodesConfig",
     "certificates.apps.CertificatesConfig",
     "commodities.apps.CommoditiesConfig",
@@ -127,6 +129,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "common.models.utils.TransactionMiddleware",
 ]
 if SSO_ENABLED:
     MIDDLEWARE += [
@@ -164,7 +167,7 @@ LOGIN_URL = reverse_lazy("login")
 if SSO_ENABLED:
     LOGIN_URL = reverse_lazy("authbroker_client:login")
 
-LOGIN_REDIRECT_URL = reverse_lazy("index")
+LOGIN_REDIRECT_URL = reverse_lazy("home")
 
 AUTHBROKER_URL = os.environ.get("AUTHBROKER_URL", "https://sso.trade.gov.uk")
 AUTHBROKER_CLIENT_ID = os.environ.get("AUTHBROKER_CLIENT_ID")
@@ -181,7 +184,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")
 
 # Whitelist values for the HTTP Host header, to prevent certain attacks
 # App runs inside GOV.UK PaaS, so we can allow all hosts
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = re.split(r"\s|,", os.environ.get("ALLOWED_HOSTS", ""))
+if "VCAP_APPLICATION" in os.environ:
+    # Under PaaS, if ALLOW_PAAS_URIS is set, fetch trusted domains from VCAP_APPLICATION env var
+    paas_hosts = json.loads(os.environ["VCAP_APPLICATION"])["uris"]
+    ALLOWED_HOSTS.extend(paas_hosts)
 
 # Sets the X-XSS-Protection: 1; mode=block header
 SECURE_BROWSER_XSS_FILTER = True
@@ -341,6 +348,7 @@ CELERY_TRACK_STARTED = True
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
@@ -348,6 +356,10 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": timedelta(minutes=30),
     },
 }
+
+SQLITE_EXCLUDED_APPS = [
+    "checks",
+]
 
 # -- Google Tag Manager
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID")
@@ -391,12 +403,21 @@ LOGGING = {
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
+        "common.paths": {
+            "handlers": [],
+            "propagate": DEBUG is True,
+        },
         "footnotes": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
         "measures": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "checks": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
@@ -458,6 +479,15 @@ PATH_ASSETS = Path(BASE_DIR, "common", "assets")
 PATH_XSD_ENVELOPE = Path(PATH_ASSETS, "envelope.xsd")
 PATH_XSD_TARIC = Path(PATH_ASSETS, "taric3.xsd")
 
+PATH_COMMODITIES_ASSETS = Path(BASE_DIR, "commodities", "assets")
+
+PATH_XSD_COMMODITIES_ENVELOPE = Path(
+    PATH_COMMODITIES_ASSETS,
+    "commodities_envelope.xsd",
+)
+PATH_XSD_COMMODITIES_TARIC = Path(PATH_COMMODITIES_ASSETS, "commodities_taric3.xsd")
+
+
 # Default username for envelope data imports
 DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")
 
@@ -493,3 +523,10 @@ WEBPACK_LOADER = {
 }
 
 TRANSACTION_SCHEMA = os.getenv("TRANSACTION_SCHEMA", "workbaskets.models.SEED_FIRST")
+
+# Default max number of objects that will be accurately counted by LimitedPaginator.
+LIMITED_PAGINATOR_MAX_COUNT = 200
+# Default max number of objects that will be accurately counted by MeasurePaginator.
+MEASURES_PAGINATOR_MAX_COUNT = int(
+    os.environ.get("MEASURES_PAGINATOR_MAX_COUNT", "1000"),
+)

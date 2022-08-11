@@ -1,0 +1,26 @@
+{% from "layouts/form.jinja" import errors with context %}
+
+{{ crispy(conditions_formset.management_form, no_form_tags) }}
+    <p class="govuk-body">
+        You can edit these conditions by selecting a new condition code and filling in the details.
+        <br>
+        <br>
+        Any changes you make will take effect when you press save.
+    </p>
+    {% for form in conditions_formset %}
+        {% if form.errors %}
+            {{ errors(form) }}
+        {% endif %}
+        {{ crispy(form) }}
+    {% endfor %}
+
+    {% if conditions_formset.data[conditions_formset.prefix ~ "-ADD"] %}
+        {{ crispy(conditions_formset.empty_form)|replace("__prefix__", conditions_formset.forms|length)|safe }}
+    {% endif %}
+
+    {% call govukFieldset({"legend": {}, "classes": "govuk-!-padding-top-3"}) %}
+        <button class="govuk-button govuk-button--secondary" value=1, name={{ conditions_formset.prefix ~ "-ADD" }}>
+            Add another condition
+        </button
+       
+    {% endcall %}

@@ -1,21 +1,13 @@
 import decimal
+from datetime import date
 from math import floor
-from typing import Union
+from typing import Type
 
-
-def clean_duty_sentence(value: Union[str, int, float]) -> str:
-    """Given a value, return a string representing a duty sentence taking into
-    account that the value may be storing simple percentages as a number
-    value."""
-    if isinstance(value, float) or isinstance(value, int):
-        # This is a percentage value that Excel has
-        # represented as a number.
-        decimal.getcontext().prec = 3
-        decimal.getcontext().rounding = decimal.ROUND_DOWN
-        return f"{decimal.Decimal(str(value)):.3%}"
-    else:
-        # All other values will appear as text.
-        return str(value)
+from common.models import TrackedModel
+from common.models.transactions import Transaction
+from common.validators import UpdateType
+from measures.models import MeasureComponent
+from workbaskets.models import WorkBasket
 
 
 def convert_eur_to_gbp(amount: str, eur_gbp_conversion_rate: float) -> str:
@@ -31,3 +23,71 @@ def convert_eur_to_gbp(amount: str, eur_gbp_conversion_rate: float) -> str:
         / 100
     )
     return f"{converted_amount:.3f}"
+
+
+def diff_components(
+    instance,
+    duty_sentence: str,
+    start_date: date,
+    workbasket: WorkBasket,
+    transaction: Type[Transaction],
+    component_output: Type[TrackedModel] = MeasureComponent,
+    reverse_attribute: str = "component_measure",
+):
+    """
+    Takes a start_date and component_output (MeasureComponent is the default)
+    and creates an instance of DutySentenceParser.
+
+    Expects a duty_sentence string and passes this to parser to generate a list
+    of new components. Then compares this list with existing components on the
+    model instance (either a Measure or a MeasureCondition) and determines
+    whether existing components are to be updated, created, or deleted.
+    Optionally accepts a Transaction, which should be passed when the method is
+    called during the creation of a measure or condition, to minimise the number
+    of transactions and avoid business rule violations (e.g.
+    ActionRequiresDuty).
+    """
+    from measures.parsers import DutySentenceParser
+
+    parser = DutySentenceParser.get(
+        start_date,
+        component_output=component_output,
+    )
+
+    new_components = parser.parse(duty_sentence)
+    old_components = instance.components.approved_up_to_transaction(
+        workbasket.current_transaction,
+    )
+    new_by_id = {c.duty_expression.id: c for c in new_components}
+    old_by_id = {c.duty_expression.id: c for c in old_components}
+    all_ids = set(new_by_id.keys()) | set(old_by_id.keys())
+    update_transaction = transaction if transaction else None
+    for id in all_ids:
+        new = new_by_id.get(id)
+        old = old_by_id.get(id)
+        if new and old:
+            # Component is having amount/unit changed – UPDATE it
+            new.update_type = UpdateType.UPDATE
+            new.version_group = old.version_group
+            setattr(new, reverse_attribute, instance)
+            if not update_transaction:
+                update_transaction = workbasket.new_transaction()
+            new.transaction = update_transaction
+            new.save()
+
+        elif new:
+            # Component exists only in new set - CREATE it
+            new.update_type = UpdateType.CREATE
+            setattr(new, reverse_attribute, instance)
+            new.transaction = (
+                transaction if transaction else workbasket.new_transaction()
+            )
+            new.save()
+
+        elif old:
+            # Component exists only in old set – DELETE it
+            old = old.new_version(
+                workbasket,
+                update_type=UpdateType.DELETE,
+                transaction=workbasket.new_transaction(),
+            )

@@ -1,10 +1,11 @@
+from typing import Union
+
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import Case
 from django.db.models import CharField
 from django.db.models import F
 from django.db.models import Func
 from django.db.models import Q
-from django.db.models import QuerySet
 from django.db.models import Value
 from django.db.models import When
 from django.db.models.aggregates import Max
@@ -16,27 +17,36 @@ from django.db.models.functions.comparison import NullIf
 from django.db.models.functions.text import Trim
 from django_cte.cte import With
 
+import measures
 from common.fields import TaricDateRangeField
 from common.models.tracked_qs import TrackedModelQuerySet
+from common.querysets import ValidityQuerySet
 from common.util import EndDate
 from common.util import StartDate
-from regulations.models import Regulation
 
 
-class DutySentenceMixin(QuerySet):
-    def with_duty_sentence(self) -> QuerySet:
+class ComponentQuerySet(TrackedModelQuerySet):
+    """QuerySet that can be used with MeasureComponent or
+    MeasureConditionComponent."""
+
+    def duty_sentence(
+        self,
+        component_parent: Union["measures.Measure", "measures.MeasureCondition"],
+    ):
         """
-        Annotates the query set with a human-readable string that represents the
-        aggregation of all of the linked components into a single duty sentence.
+        Returns the human-readable "duty sentence" for a Measure or
+        MeasureCondition instance as a string. The returned string value is a
+        (Postgresql) string aggregation of all the measure's "current"
+        components.
 
         This operation relies on the `prefix` and `abbreviation` fields being
         filled in on duty expressions and units, which are not supplied by the
         TARIC3 XML by default.
 
-        Strings output by this annotation should be valid input to the
+        Strings output by this aggregation should be valid input to the
         :class:`~measures.parsers.DutySentenceParser`.
 
-        The annotated field will be generated using the below SQL:
+        The string aggregation will be generated using the below SQL:
 
         .. code:: SQL
 
@@ -81,70 +91,85 @@ class DutySentenceMixin(QuerySet):
               ),
             ) AS "duty_sentence"
         """
-        return self.annotate(
+
+        # Components with the greatest transaction_id that is less than
+        # or equal to component_parent's transaction_id, are considered 'current'.
+        component_qs = component_parent.components.approved_up_to_transaction(
+            component_parent.transaction,
+        )
+        if not component_qs:
+            return ""
+        latest_transaction_id = component_qs.aggregate(
+            latest_transaction_id=Max(
+                "transaction_id",
+            ),
+        ).get("latest_transaction_id")
+        component_qs = component_qs.filter(transaction_id=latest_transaction_id)
+
+        # Aggregate all the current Components for component_parent to form its
+        # duty sentence.
+        duty_sentence = component_qs.aggregate(
             duty_sentence=StringAgg(
                 expression=Trim(
                     Concat(
                         Case(
                             When(
-                                Q(components__duty_expression__prefix__isnull=True)
-                                | Q(components__duty_expression__prefix=""),
+                                Q(duty_expression__prefix__isnull=True)
+                                | Q(duty_expression__prefix=""),
                                 then=Value(""),
                             ),
                             default=Concat(
-                                F("components__duty_expression__prefix"),
+                                F("duty_expression__prefix"),
                                 Value(" "),
                             ),
                         ),
-                        "components__duty_amount",
+                        "duty_amount",
                         Case(
                             When(
-                                components__monetary_unit=None,
-                                components__duty_amount__isnull=False,
+                                monetary_unit=None,
+                                duty_amount__isnull=False,
                                 then=Value("%"),
                             ),
                             When(
-                                components__duty_amount__isnull=True,
+                                duty_amount__isnull=True,
                                 then=Value(""),
                             ),
                             default=Concat(
                                 Value(" "),
-                                F("components__monetary_unit__code"),
+                                F("monetary_unit__code"),
                             ),
                         ),
                         Case(
                             When(
-                                Q(components__component_measurement=None)
+                                Q(component_measurement=None)
+                                | Q(component_measurement__measurement_unit=None)
                                 | Q(
-                                    components__component_measurement__measurement_unit=None,
-                                )
-                                | Q(
-                                    components__component_measurement__measurement_unit__abbreviation=None,
+                                    component_measurement__measurement_unit__abbreviation=None,
                                 ),
                                 then=Value(""),
                             ),
                             When(
-                                components__monetary_unit__isnull=True,
+                                monetary_unit__isnull=True,
                                 then=F(
-                                    "components__component_measurement__measurement_unit__abbreviation",
+                                    "component_measurement__measurement_unit__abbreviation",
                                 ),
                             ),
                             default=Concat(
                                 Value(" / "),
                                 F(
-                                    "components__component_measurement__measurement_unit__abbreviation",
+                                    "component_measurement__measurement_unit__abbreviation",
                                 ),
                             ),
                         ),
                         Case(
                             When(
-                                components__component_measurement__measurement_unit_qualifier__abbreviation=None,
+                                component_measurement__measurement_unit_qualifier__abbreviation=None,
                                 then=Value(""),
                             ),
                             default=Concat(
                                 Value(" / "),
                                 F(
-                                    "components__component_measurement__measurement_unit_qualifier__abbreviation",
+                                    "component_measurement__measurement_unit_qualifier__abbreviation",
                                 ),
                             ),
                         ),
@@ -152,12 +177,16 @@ class DutySentenceMixin(QuerySet):
                     ),
                 ),
                 delimiter=" ",
-                ordering="components__duty_expression__sid",
+                ordering="duty_expression__sid",
             ),
         )
+        return duty_sentence.get("duty_sentence", "")
 
 
-class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin):
+class MeasuresQuerySet(TrackedModelQuerySet, ValidityQuerySet):
+    def with_validity_field(self):
+        return self.with_effective_valid_between()
+
     def with_effective_valid_between(self):
         """
         There are five ways in which measures can get end dated:
@@ -187,6 +216,10 @@ class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin):
         # We also turn NULLs into "infinity" such that they sort to the top:
         # i.e. if any modification regulation is open-ended, so is the measure.
         # We then turn infinity back into NULL to be used in the date range.
+        Regulation = self.model._meta.get_field(
+            "generating_regulation",
+        ).remote_field.model
+
         end_date_from_modifications = With(
             Regulation.objects.annotate(
                 amended_end_date=NullIf(
@@ -236,8 +269,28 @@ class MeasuresQuerySet(TrackedModelQuerySet, DutySentenceMixin):
         )
 
 
-class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
+class MeasureConditionQuerySet(TrackedModelQuerySet):
     def with_reference_price_string(self):
+        """
+        Returns a MeasureCondition queryset annotated with
+        ``reference_price_string`` query expression.
+
+        This expression should evaluate to a valid reference price string
+        (https://uktrade.github.io/tariff-data-manual/documentation/data-structures/measure-conditions.html#condition-codes)
+
+        If a condition has no duty_amount value, then this expression evaluates to an empty string value ("").
+        Else it returns the result of three Case() expressions chained together.
+        The first Case() expression evaluates to "%" if the condition has a duty amount and no monetary unit,
+        else " ".
+
+        The second evaluates to "" when a condition has no condition_measurement
+        or its measurement has no measurement unit or the measurement unit has no abbreviation,
+        else, if it has no monetary unit, the measurement unit abbreviation is returned,
+        else, if it has a monetary unit, the abbreviation is returned prefixed by " / ".
+
+        The third evaluates to "" when a measurement unit qualifier has no abbreviation,
+        else the unit qualifier abbreviation is returned prefixed by " / ".
+        """
         return self.annotate(
             reference_price_string=Case(
                 When(
@@ -248,8 +301,9 @@ class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
                     "duty_amount",
                     Case(
                         When(
-                            monetary_unit__isnull=True,
-                            then=Value(""),
+                            monetary_unit=None,
+                            duty_amount__isnull=False,
+                            then=Value("%"),
                         ),
                         default=Concat(
                             Value(" "),
@@ -258,23 +312,37 @@ class MeasureConditionQuerySet(TrackedModelQuerySet, DutySentenceMixin):
                     ),
                     Case(
                         When(
-                            condition_measurement__measurement_unit__code__isnull=True,
+                            Q(condition_measurement__isnull=True)
+                            | Q(
+                                condition_measurement__measurement_unit__isnull=True,
+                            )
+                            | Q(
+                                condition_measurement__measurement_unit__abbreviation__isnull=True,
+                            ),
                             then=Value(""),
                         ),
+                        When(
+                            monetary_unit__isnull=True,
+                            then=F(
+                                "condition_measurement__measurement_unit__abbreviation",
+                            ),
+                        ),
                         default=Concat(
-                            Value(" "),
-                            F("condition_measurement__measurement_unit__code"),
+                            Value(" / "),
+                            F(
+                                "condition_measurement__measurement_unit__abbreviation",
+                            ),
                         ),
                     ),
                     Case(
                         When(
-                            condition_measurement__measurement_unit_qualifier__code__isnull=True,
+                            condition_measurement__measurement_unit_qualifier__abbreviation__isnull=True,
                             then=Value(""),
                         ),
                         default=Concat(
-                            Value(" "),
+                            Value(" / "),
                             F(
-                                "condition_measurement__measurement_unit_qualifier__code",
+                                "condition_measurement__measurement_unit_qualifier__abbreviation",
                             ),
                         ),
                     ),

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope id="22001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+	<env:transaction id="392602">
+		<env:app.message id="1">
+			<oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+				<oub:record>
+					<oub:transaction.id>392602</oub:transaction.id>
+					<oub:record.code>400</oub:record.code>
+					<oub:subrecord.code>00</oub:subrecord.code>
+					<oub:record.sequence.number>1</oub:record.sequence.number>
+					<oub:update.type>1</oub:update.type>
+					<oub:goods.nomenclature>
+						<oub:goods.nomenclature.sid>100460</oub:goods.nomenclature.sid>
+						<oub:goods.nomenclature.item.id>0709999030</oub:goods.nomenclature.item.id>
+						<oub:producline.suffix>80</oub:producline.suffix>
+						<oub:validity.start.date>2016-09-15</oub:validity.start.date>
+						<oub:validity.end.date>2021-12-31</oub:validity.end.date>
+						<oub:statistical.indicator>0</oub:statistical.indicator>
+					</oub:goods.nomenclature>
+				</oub:record>
+			</oub:transmission>
+		</env:app.message>
+	</env:transaction>
+</env:envelope>

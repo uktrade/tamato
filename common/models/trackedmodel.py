@@ -25,6 +25,7 @@ from common.exceptions import IllegalSaveError
 from common.fields import NumericSID
 from common.fields import SignedIntSID
 from common.models import TimestampedMixin
+from common.models.managers import CurrentTrackedModelManager
 from common.models.managers import TrackedModelManager
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_deferred_set_fields
@@ -97,6 +98,13 @@ class TrackedModel(PolymorphicModel):
     objects: TrackedModelQuerySet = TrackedModelManager.from_queryset(
         TrackedModelQuerySet,
     )()
+    current_objects: TrackedModelQuerySet = CurrentTrackedModelManager.from_queryset(
+        TrackedModelQuerySet,
+    )()
+    """
+    The `current_objects` model manager provides a default queryset that, by
+    default, filters to the 'current' transaction.
+    """
 
     business_rules: Iterable = ()
     indirect_business_rules: Iterable = ()
@@ -125,34 +133,40 @@ class TrackedModel(PolymorphicModel):
     ones.
     """
 
-    identifying_fields: Sequence[str] = ("sid",)
+    identifying_fields: Sequence[str] = ("pk",)
     """
     The fields which together form a composite unique key for each model.
 
-    The system ID (or SID) field is normally the unique identifier of a TARIC
+    The system ID (or SID) field, 'sid' is normally the unique identifier of a TARIC
     model, but in places where this does not exist models can declare their own.
     (Note that because multiple versions of each model will exist this does not
     actually equate to a ``UNIQUE`` constraint in the database.)
+
+    TrackedModel itself defaults to ("pk",) as it does not have an SID.
+    """
+
+    url_suffix = ""
+    """
+    This is to add a link within a page for get_url() e.g. for linking to a
+    Measure's conditions tab. If url_suffix is set to '#conditions' the output
+    detail url will be /measures/12345678/#conditions
     """
 
     def new_version(
         self: Cls,
         workbasket,
         transaction=None,
-        save: bool = True,
         update_type: UpdateType = UpdateType.UPDATE,
         **overrides,
     ) -> Cls:
         """
-        Return a new version of the object. Callers can override existing data
-        by passing in keyword args.
+        Create and return a new version of the object. Callers can override
+        existing data by passing in keyword args.
 
         The new version is added to a transaction which is created and added to the passed in workbasket
         (or may be supplied as a keyword arg).
 
-        update_type must be UPDATE or DELETE, with UPDATE as the default.
-
-        By default the new object is saved; this can be disabled by passing save=False.
+        `update_type` must be UPDATE or DELETE, with UPDATE as the default.
         """
         if update_type not in (
             validators.UpdateType.UPDATE,
@@ -183,34 +197,30 @@ class TrackedModel(PolymorphicModel):
         new_object_kwargs["transaction"] = transaction
 
         new_object = cls(**new_object_kwargs)
+        new_object.save()
 
-        if save:
-            new_object.save()
-
-            # TODO: make this work with save=False!
-            # Maybe the deferred values could be saved on the model
-            # and then handled with a post_save signal?
-            deferred_kwargs = {
-                field.name: field.value_from_object(self)
-                for field in get_deferred_set_fields(self)
-            }
-            deferred_overrides = {
-                name: value
-                for name, value in overrides.items()
-                if name in [f.name for f in get_deferred_set_fields(self)]
-            }
-            deferred_kwargs.update(deferred_overrides)
-            for field in deferred_kwargs:
-                getattr(new_object, field).set(deferred_kwargs[field])
+        deferred_kwargs = {
+            field.name: field.value_from_object(self)
+            for field in get_deferred_set_fields(self)
+        }
+        deferred_overrides = {
+            name: value
+            for name, value in overrides.items()
+            if name in [f.name for f in get_deferred_set_fields(self)]
+        }
+        deferred_kwargs.update(deferred_overrides)
+        for field in deferred_kwargs:
+            getattr(new_object, field).set(deferred_kwargs[field])
 
         return new_object
 
     def get_versions(self):
         """Find all versions of this model."""
         if hasattr(self, "version_group"):
-            return self.version_group.versions.all()
-        query = Q(**self.get_identifying_fields())
-        return self.__class__.objects.filter(query)
+            query = Q(version_group_id=self.version_group_id)
+        else:
+            query = Q(**self.get_identifying_fields())
+        return type(self).objects.filter(query)
 
     def _get_version_group(self) -> VersionGroup:
         if self.update_type == validators.UpdateType.CREATE:
@@ -319,6 +329,10 @@ class TrackedModel(PolymorphicModel):
         """Returns the record identifier as defined in TARIC3 records
         specification."""
         return f"{self.record_code}{self.subrecord_code}"
+
+    @property
+    def update_type_str(self) -> str:
+        return dict(UpdateType.choices)[self.update_type]
 
     @property
     def current_version(self: Cls) -> Cls:
@@ -459,15 +473,21 @@ class TrackedModel(PolymorphicModel):
             ignore = False
             # Check if user passed related model into overrides argument
             if field.name in subrecord_fields.keys():
-                # If user passed a new unsaved model, set the remote field value equal to self for each model passed
-                # e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `self`
+                # If user passed a new unsaved model, set the remote field value equal to new_object for each model passed
+                # e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `new_object`
                 if subrecord_fields[field.name]:
                     for subrecord in subrecord_fields[field.name]:
                         remote_field = [
                             f for f in self._meta.get_fields() if f.name == field.name
                         ][0].remote_field.name
-                        setattr(subrecord, remote_field, self)
-                        subrecord.save()
+                        if not subrecord.pk:
+                            setattr(subrecord, remote_field, new_object)
+                            subrecord.save()
+                        else:
+                            # If user passed a saved object, create a copy of that object with remote_field pointing at the new copied object
+                            # set ignore to True, so that duplicate copies are not made below
+                            subrecord.copy(transaction, **{remote_field: new_object})
+                            ignore = True
                 # Else, if an empty or None value is passed, set ignore to True, so that related models are not copied
                 # e.g. if an existing Measure with two conditions is copied with conditions=[], the copy will have no conditions
                 else:
@@ -613,13 +633,14 @@ class TrackedModel(PolymorphicModel):
         :rtype Optional[str]: The generated URL
         """
         kwargs = {}
-        if action != "list":
+        if action not in ["list", "create"]:
             kwargs = self.get_identifying_fields()
         try:
-            return reverse(
+            url = reverse(
                 f"{self.get_url_pattern_name_prefix()}-ui-{action}",
                 kwargs=kwargs,
             )
+            return f"{url}{self.url_suffix}"
         except NoReverseMatch:
             return None
 

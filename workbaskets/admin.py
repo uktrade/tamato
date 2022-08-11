@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponseRedirect
@@ -7,8 +8,9 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 
 from exporter.tasks import upload_workbaskets
+from workbaskets import tasks
 from workbaskets.models import WorkBasket
-from workbaskets.models import get_partition_scheme
+from workbaskets.util import clear_workbasket
 from workbaskets.validators import WorkflowStatus
 
 
@@ -40,12 +42,12 @@ class WorkBasketAdminForm(forms.ModelForm):
 class WorkBasketAdmin(admin.ModelAdmin):
     form = WorkBasketAdminForm
     actions = ["approve", "publish"]
-    change_list_template = "workbasket_change_list.html"
     list_display = (
         "pk",
         "title",
         "author",
         "status",
+        "tracked_model_count",
         "approver",
         "created_at",
         "updated_at",
@@ -61,6 +63,21 @@ class WorkBasketAdmin(admin.ModelAdmin):
         "title",
         "reason",
     )
+
+    def response_change(self, request, obj):
+        if "_clear-workbasket" in request.POST:
+            tracked_model_count = obj.tracked_models.count()
+            clear_workbasket(obj)
+            self.message_user(
+                request,
+                f"Deleted {tracked_model_count} TrackedModel(s) from WorkBasket.",
+            )
+            return HttpResponseRedirect(".")
+
+        return super().response_change(request, obj)
+
+    def tracked_model_count(self, obj):
+        return obj.tracked_models.count()
 
     def get_urls(self):
         urls = super().get_urls()
@@ -81,16 +98,16 @@ class WorkBasketAdmin(admin.ModelAdmin):
         instance = form.save(commit=False)
         if not change or not instance.author:
             instance.author = request.user
+        instance.save()
+        form.save_m2m()
 
         transition = form.cleaned_data.get("transition")
         if transition:
             transition_args = []
             if transition == "approve":
-                transition_args.extend([request.user, get_partition_scheme()])
-            getattr(instance, transition)(*transition_args)
+                transition_args.extend([request.user.pk, settings.TRANSACTION_SCHEMA])
+            tasks.transition.delay(instance.pk, transition, *transition_args)
 
-        instance.save()
-        form.save_m2m()
         return instance
 
 

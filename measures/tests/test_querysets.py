@@ -11,8 +11,27 @@ import pytest
 
 from common.tests import factories
 from measures.models import Measure
+from measures.models import MeasureCondition
+from measures.validators import validate_duties
 
 pytestmark = pytest.mark.django_db
+
+
+def create_duty_components(
+    component_factory,
+    component_data,
+    field_name,
+    model,
+):
+    components = []
+    for kwargs in component_data:
+        component = component_factory(
+            **{field_name: model},
+            transaction=model.transaction,
+            **kwargs,
+        )
+        components.append(component)
+    return components
 
 
 @pytest.mark.parametrize(
@@ -64,13 +83,70 @@ def test_duty_sentence_generation(
     expected, component_data = reversible_duty_sentence_data
 
     model = model_factory()
-    for kwargs in reorder(component_data):
-        component_factory(
-            **{field: model},
-            **kwargs,
-        )
+    create_duty_components(component_factory, component_data, field, model)
 
-    test_instance = model_factory._meta.model.objects.with_duty_sentence().get()
+    test_instance = model_factory._meta.model.objects.get()
+    assert test_instance.duty_sentence == expected
+
+
+@pytest.mark.parametrize(
+    "component_factory,model_factory,field_name",
+    (
+        (
+            factories.MeasureComponentFactory,
+            factories.MeasureFactory,
+            "component_measure",
+        ),
+        (
+            factories.MeasureConditionComponentFactory,
+            factories.MeasureConditionFactory,
+            "condition",
+        ),
+    ),
+    ids=(
+        factories.MeasureFactory._meta.model.__name__,
+        factories.MeasureConditionFactory._meta.model.__name__,
+    ),
+)
+def test_duty_sentence_with_history(
+    component_factory: factory.django.DjangoModelFactory,
+    model_factory: factory.django.DjangoModelFactory,
+    field_name: str,
+    duty_sentence_x_2_data: List[Tuple[str, List[Dict]]],
+):
+    """
+    Sets up a history of model instances (Measure or MeasureCondition) and
+    linked components.
+
+    The test then checks that the correct duty sentence is available via each
+    object's duty_sentence property throughout the object's history, including
+    going back in transaction time.
+    """
+    model_qs = model_factory._meta.model.objects.all()
+
+    # Create model instance and associate it with duty components.
+    model_1 = model_factory()
+    expected, component_data = duty_sentence_x_2_data[0]
+    create_duty_components(component_factory, component_data, field_name, model_1)
+    test_instance = model_qs.get_latest_version(sid=model_1.sid)
+    assert test_instance.duty_sentence == expected
+
+    # Create a new version of the model and associate it with new duty components.
+    model_2 = model_1.new_version(model_1.transaction.workbasket)
+    expected, component_data = duty_sentence_x_2_data[1]
+    create_duty_components(component_factory, component_data, field_name, model_2)
+    test_instance = model_qs.get_latest_version(sid=model_2.sid)
+    assert test_instance.duty_sentence == expected
+
+    # Create a new version of the model but don't update duty components.
+    model_3 = model_2.new_version(model_2.transaction.workbasket)
+    test_instance = model_qs.get_latest_version(sid=model_3.sid)
+    assert test_instance.duty_sentence == expected
+
+    # Go back in time to the model's fist version to check its duty_sentence is
+    # still correctly constructed and retrieved.
+    expected, component_data = duty_sentence_x_2_data[0]
+    test_instance = model_qs.get_first_version(sid=model_1.sid)
     assert test_instance.duty_sentence == expected
 
 
@@ -131,3 +207,102 @@ def test_get_measures_not_current():
 
     assert previous_measure in qs
     assert current_measure not in qs
+
+
+@pytest.mark.parametrize(
+    "create_kwargs, expected",
+    [
+        ({"duty_amount": None}, ""),
+        ({"duty_amount": 8.000, "monetary_unit": None}, "8.000%"),
+        ({"duty_amount": 33.000, "monetary_unit__code": "GBP"}, "33.000 GBP"),
+    ],
+)
+def test_with_reference_price_string_no_measurement(
+    create_kwargs,
+    expected,
+    duty_sentence_parser,
+):
+    """Tests that different combinations of duty_amount and monetary_unit
+    produce the expect reference_price_string and that this string represents a
+    valid duty sentence."""
+    condition = factories.MeasureConditionFactory.create(**create_kwargs)
+    qs = MeasureCondition.objects.with_reference_price_string()
+    price_condition = qs.first()
+
+    assert price_condition.reference_price_string == expected
+    validate_duties(
+        price_condition.reference_price_string,
+        condition.dependent_measure.valid_between.lower,
+    )
+
+
+@pytest.mark.parametrize(
+    "measurement_kwargs, condition_kwargs, expected",
+    [
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier__abbreviation": "lactic.",
+            },
+            {"duty_amount": 33.000, "monetary_unit__code": "GBP"},
+            "33.000 GBP / 100 kg / lactic.",
+        ),
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier": None,
+            },
+            {"duty_amount": 33.000, "monetary_unit__code": "GBP"},
+            "33.000 GBP / 100 kg",
+        ),
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier__abbreviation": "lactic.",
+            },
+            {
+                "duty_amount": None,
+                "monetary_unit": None,
+            },
+            "",
+        ),
+        (
+            {
+                "measurement_unit__abbreviation": "100 kg",
+                "measurement_unit_qualifier": None,
+            },
+            {
+                "duty_amount": None,
+                "monetary_unit": None,
+            },
+            "",
+        ),
+    ],
+)
+def test_with_reference_price_string_measurement(
+    measurement_kwargs,
+    condition_kwargs,
+    expected,
+    duty_sentence_parser,
+):
+    """
+    Tests that different combinations of duty_amount, monetary_unit, and
+    measurement produce the expect reference_price_string and that this string
+    represents a valid duty sentence.
+
+    The final two scenarios record the fact that this queryset, unlike
+    ``duty_sentence_string``, does not support supplementary units and these
+    expressions should evaluate to an empty string.
+    """
+    condition_measurement = factories.MeasurementFactory.create(**measurement_kwargs)
+    condition = factories.MeasureConditionFactory.create(
+        condition_measurement=condition_measurement, **condition_kwargs
+    )
+    qs = MeasureCondition.objects.with_reference_price_string()
+    price_condition = qs.first()
+
+    assert price_condition.reference_price_string == expected
+    validate_duties(
+        price_condition.reference_price_string,
+        condition.dependent_measure.valid_between.lower,
+    )

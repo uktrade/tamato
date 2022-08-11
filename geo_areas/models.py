@@ -1,9 +1,12 @@
 from django.db import models
 from django.db.models import CheckConstraint
 from django.db.models import Max
+from django.db.models import OuterRef
 from django.db.models import Q
+from django.db.models import Subquery
 from polymorphic.managers import PolymorphicManager
 
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
 from common.fields import SignedIntSID
@@ -22,6 +25,19 @@ from quotas import business_rules as quotas_business_rules
 class GeographicalAreaQuerySet(TrackedModelQuerySet):
     def erga_omnes(self):
         return self.filter(area_code=AreaCode.GROUP, area_id=1011)
+
+    def with_current_description(qs):
+        """Returns a GeographicalArea queryset annotated with the latest result
+        of a GeographicalAreaDescription subquery's description value, linking
+        these two queries on version_group field."""
+        current_descriptions = (
+            GeographicalAreaDescription.objects.current()
+            .filter(described_geographicalarea__version_group=OuterRef("version_group"))
+            .order_by("transaction__order")
+        )
+        return qs.annotate(
+            description=Subquery(current_descriptions.values("description")[:1]),
+        )
 
 
 class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
@@ -45,7 +61,9 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
     record_code = "250"
     subrecord_code = "00"
 
-    url_pattern_name_prefix = "geoarea"
+    identifying_fields = ("sid",)
+
+    url_pattern_name_prefix = "geo_area"
 
     sid = SignedIntSID(db_index=True)
     area_id = models.CharField(max_length=4, validators=[area_id_validator])
@@ -82,6 +100,7 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
         business_rules.GA11,
         business_rules.GA21,
         business_rules.GA22,
+        UniqueIdentifyingFields,
         UpdateValidity,
     )
 
@@ -90,7 +109,7 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
             GeographicalMembership.objects.filter(
                 Q(geo_group__sid=self.sid) | Q(member__sid=self.sid),
             )
-            .latest_approved()
+            .current()
             .select_related("member", "geo_group")
         )
 
@@ -105,10 +124,6 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
 
     def __str__(self):
         return f"{self.get_area_code_display()} {self.area_id}"
-
-    @property
-    def autocomplete_label(self):
-        return f"{self} - {self.get_description().description}"
 
     class Meta:
         constraints = (
@@ -184,6 +199,8 @@ class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
     period_record_code = "250"
     period_subrecord_code = "05"
 
+    identifying_fields = ("sid",)
+
     described_geographicalarea = models.ForeignKey(
         GeographicalArea,
         on_delete=models.CASCADE,
@@ -200,6 +217,8 @@ class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
             self.sid = highest_sid + 1
 
         return super().save(*args, **kwargs)
+
+    url_pattern_name_prefix = "geo_area_description"
 
     class Meta:
         ordering = ("validity_start",)

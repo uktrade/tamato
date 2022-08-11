@@ -1,29 +1,55 @@
 from django.utils.decorators import method_decorator
+from django.views import generic
 
-from common.views import CreateView
-from common.views import UpdateView
-from workbaskets.models import WorkBasket
+from common.validators import UpdateType
+from common.views import TrackedModelChangeView
 from workbaskets.views.decorators import require_current_workbasket
-from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class DraftCreateView(WithCurrentWorkBasket, CreateView):
+class DraftCreateView(
+    TrackedModelChangeView,
+    generic.CreateView,
+):
     """CreateView which creates or modifies drafts of a model in the current
     workbasket."""
 
+    update_type = UpdateType.CREATE
+    permission_required = "common.add_trackedmodel"
+    success_path = "confirm-create"
+
     def get_transaction(self):
-        workbasket = WorkBasket.current(self.request)
-        transaction = workbasket.new_transaction()
-        return transaction
+        return self.workbasket.new_transaction()
+
+    def get_result_object(self, form):
+        object = form.save(commit=False)
+        object.update_type = self.update_type
+        object.transaction = self.get_transaction()
+        object.save()
+        return object
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class DraftUpdateView(WithCurrentWorkBasket, UpdateView):
+class DraftUpdateView(
+    TrackedModelChangeView,
+    generic.UpdateView,
+):
     """UpdateView which creates or modifies drafts of a model in the current
     workbasket."""
 
-    def get_transaction(self):
-        transaction = super().get_transaction()
-        transaction.workbasket = WorkBasket.current(self.request)
-        return transaction
+    update_type = UpdateType.UPDATE
+    permission_required = "common.add_trackedmodel"
+    template_name = "common/edit.jinja"
+    success_path = "confirm-update"
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class DraftDeleteView(
+    TrackedModelChangeView,
+    generic.UpdateView,
+):
+    """Creates a new TrackedModel instance which is marked as deleted."""
+
+    update_type = UpdateType.DELETE
+    permission_required = "common.add_trackedmodel"
+    template_name = "common/delete.jinja"
