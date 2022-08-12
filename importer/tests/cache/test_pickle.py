@@ -1,6 +1,6 @@
-import conftest
-from importer.cache import pickle
 import os
+
+from importer.cache import pickle
 
 
 def test_init_no_cache_file():

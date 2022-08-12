@@ -1,13 +1,15 @@
 import pytest
+from django.test import override_settings
 from rest_framework.exceptions import ValidationError
 
 from common.tests import factories
 from common.tests.factories import ApprovedTransactionFactory
 from common.tests.models import TestModel1
-from footnotes.models import Footnote, FootnoteType
+from footnotes.models import Footnote
+from footnotes.models import FootnoteType
 from importer import handlers
-from importer.handlers import BaseHandler, MismatchedSerializerError
-from django.test import override_settings
+from importer.handlers import BaseHandler
+from importer.handlers import MismatchedSerializerError
 
 pytestmark = pytest.mark.django_db
 
@@ -190,6 +192,13 @@ def test_serialize(prepped_handler):
 
 
 def test_register_multiple_dependencies(mock_serializer):
+    """
+    Test that handler dependencies are correctly attributed.
+
+    This test checks that when using the dependent decorators on handlers that
+    have dependencies, they correctly attach to the target handler.
+    """
+
     class TestHandler(BaseHandler):
         serializer_class = mock_serializer
         tag = "test_handler_dep2"
@@ -206,15 +215,24 @@ def test_register_multiple_dependencies(mock_serializer):
         serializer_class = mock_serializer
         tag = "test_handler_dep1"
 
-    print(TestHandler.dependencies)
-
     assert TestHandlerChild1 in TestHandler.dependencies
     assert TestHandlerChild2 in TestHandler.dependencies
 
 
 def test_register_multiple_dependencies_with_different_serializers(
-    mock_serializer, mock_list_serializer, handler_test_data, object_nursery
+    mock_serializer,
+    mock_list_serializer,
+    handler_test_data,
+    object_nursery,
 ):
+    """
+    Test that handler dependencies are of the correct type.
+
+    This test checks that when using the dependent decorators on handlers that
+    have dependencies, an exception is raised when the serializer of the class
+    being added as a dependent is the same as the "depending on" handler
+    """
+
     class TestHandler(BaseHandler):
         serializer_class = mock_serializer
         tag = "test_handler_dep2"
@@ -231,10 +249,8 @@ def test_register_multiple_dependencies_with_different_serializers(
         serializer_class = mock_serializer
         tag = "test_handler_dep1"
 
-    print(TestHandler.dependencies)
-    ex = None
     with pytest.raises(MismatchedSerializerError) as ex:
-        x = TestHandler(handler_test_data, object_nursery)
+        TestHandler(handler_test_data, object_nursery)
 
     assert (
         str(ex.value)
@@ -308,9 +324,16 @@ def test_base_handler_get_generic_link_no_kwargs(mock_serializer):
 
 
 @override_settings(USE_IMPORTER_CACHE=True)
-def test_base_handler_get_generic_link_importer_cache_cached(mock_serializer, handler_test_data, object_nursery):
+def test_base_handler_get_generic_link_importer_cache_cached(
+    mock_serializer,
+    handler_test_data,
+    object_nursery,
+):
     # add object to nursery
-    fnt = factories.FootnoteTypeFactory.create(footnote_type_id='XZX', transaction=ApprovedTransactionFactory.create())
+    fnt = factories.FootnoteTypeFactory.create(
+        footnote_type_id="XZX",
+        transaction=ApprovedTransactionFactory.create(),
+    )
     nursery = object_nursery
     nursery.cache_object(fnt)
 
@@ -320,16 +343,26 @@ def test_base_handler_get_generic_link_importer_cache_cached(mock_serializer, ha
 
     target = AHandler(handler_test_data, nursery)
 
-    link = target.get_generic_link(FootnoteType, {'footnote_type_id': fnt.footnote_type_id})
+    link = target.get_generic_link(
+        FootnoteType,
+        {"footnote_type_id": fnt.footnote_type_id},
+    )
 
     assert type(link[0]) is FootnoteType
     assert link[1] is True
 
 
 @override_settings(USE_IMPORTER_CACHE=True)
-def test_base_handler_get_generic_link_importer_cache_not_cached(mock_serializer, handler_test_data, object_nursery):
+def test_base_handler_get_generic_link_importer_cache_not_cached(
+    mock_serializer,
+    handler_test_data,
+    object_nursery,
+):
     # add object to nursery
-    fnt = factories.FootnoteTypeFactory.create(footnote_type_id='XZX', transaction=ApprovedTransactionFactory.create())
+    fnt = factories.FootnoteTypeFactory.create(
+        footnote_type_id="XZX",
+        transaction=ApprovedTransactionFactory.create(),
+    )
 
     class AHandler(BaseHandler):
         serializer_class = mock_serializer
@@ -337,7 +370,7 @@ def test_base_handler_get_generic_link_importer_cache_not_cached(mock_serializer
 
     target = AHandler(handler_test_data, object_nursery)
 
-    link = target.get_generic_link(FootnoteType, {'pk': fnt.pk})
+    link = target.get_generic_link(FootnoteType, {"pk": fnt.pk})
 
     assert type(link[0]) is FootnoteType
     assert link[1] is False

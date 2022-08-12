@@ -3,9 +3,11 @@ from typing import Sequence
 from typing import Type
 
 import pytest
+from django.core.management import BaseCommand
 from django.forms.models import model_to_dict
 from rest_framework import serializers
-from rest_framework.serializers import ModelSerializer, ListSerializer
+from rest_framework.serializers import ListSerializer
+from rest_framework.serializers import ModelSerializer
 
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
@@ -214,3 +216,9 @@ def tag_regex() -> Tag:
 def example_goods_taric_file_location():
     taric_file_location = f"{os.getcwd()}/importer/tests/test_files/goods.xml"
     return taric_file_location
+
+
+def get_command_help_text(capsys, command):
+    captured = capsys.readouterr()
+    BaseCommand().print_help(command, "")
+    return captured.out

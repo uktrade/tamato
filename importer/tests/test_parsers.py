@@ -2,9 +2,8 @@ import xml.etree.ElementTree as etree
 
 import pytest
 
-from footnotes.import_parsers import FootnoteTypeParser
 from importer.namespaces import Tag
-from importer.parsers import BooleanElement, Writable
+from importer.parsers import BooleanElement
 from importer.parsers import CompoundElement
 from importer.parsers import ElementParser
 from importer.parsers import TextElement
