@@ -57,7 +57,7 @@ ui_patterns = [
         name="workbasket-ui-delete-changes-done",
     ),
     path(
-        "list",
+        "list-all",
         ui_views.WorkBasketList.as_view(),
         name="workbasket-ui-list-all",
     ),
