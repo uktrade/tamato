@@ -226,6 +226,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition,
         business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition,
         business_rules.OverlappingQuotaDefinition,
+        business_rules.VolumeAndInitialVolumeMustMatch,
         UniqueIdentifyingFields,
         UpdateValidity,
     )
