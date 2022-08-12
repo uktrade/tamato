@@ -284,6 +284,20 @@ class OverlappingQuotaDefinition(BusinessRule):
             raise self.violation(quota_definition)
 
 
+class VolumeAndInitialVolumeMustMatch(BusinessRule):
+    """Unless it is the main quota in a quota association, a definition's volume
+    and initial_volume values should always be the same."""
+
+    def validate(self, quota_definition):
+        if quota_definition.sub_quota_associations.approved_up_to_transaction(
+            self.transaction,
+        ).exists():
+            return True
+
+        if quota_definition.volume != quota_definition.initial_volume:
+            raise self.violation(quota_definition)
+
+
 class QA1(UniqueIdentifyingFields):
     """The association between two quota definitions must be unique."""
 
