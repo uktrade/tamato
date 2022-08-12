@@ -1168,3 +1168,9 @@ measure_qs)\n
 MeasureComponent
 Components
 TP2000-452
+xmlbomb.xml
+xmlbomb2.xml
+self.xml_bomb
+self.xml_external
+self.xml_bomb
+DTD

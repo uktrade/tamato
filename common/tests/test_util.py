@@ -1,3 +1,4 @@
+import os
 from unittest import mock
 
 import pytest
@@ -271,3 +272,56 @@ def test_wrap_numbers_over_max_digits(number, max_digits, expected):
     data.
     """
     assert wrap_numbers_over_max_digits(number, max_digits) == expected
+
+
+xml_dtd = os.path.join(HERE, "xmltestdata", "dtd.xml")
+xml_external = os.path.join(HERE, "xmltestdata", "external.xml")
+xml_external_file = os.path.join(HERE, "xmltestdata", "external_file.xml")
+xml_quadratic = os.path.join(HERE, "xmltestdata", "quadratic.xml")
+xml_simple = os.path.join(HERE, "xmltestdata", "simple.xml")
+xml_simple_ns = os.path.join(HERE, "xmltestdata", "simple-ns.xml")
+xml_bomb = os.path.join(HERE, "xmltestdata", "xmlbomb.xml")
+xml_bomb2 = os.path.join(HERE, "xmltestdata", "xmlbomb2.xml")
+xml_cyclic = os.path.join(HERE, "xmltestdata", "cyclic.xml")
+
+
+def test_check_docinfo_dtd():
+    pass
+
+
+# def test_dtd_forbidden(self):
+#     self.assertRaises(DTDForbidden, self.parse, self.xml_bomb, forbid_dtd=True)
+#     self.assertRaises(DTDForbidden, self.parse, self.xml_quadratic, forbid_dtd=True)
+#     self.assertRaises(DTDForbidden, self.parse, self.xml_external, forbid_dtd=True)
+#     self.assertRaises(DTDForbidden, self.parse, self.xml_dtd, forbid_dtd=True)
+
+#     self.assertRaises(
+#         DTDForbidden, self.parseString, self.get_content(self.xml_bomb), forbid_dtd=True
+#     )
+#     self.assertRaises(
+#         DTDForbidden, self.parseString, self.get_content(self.xml_quadratic), forbid_dtd=True
+#     )
+#     self.assertRaises(
+#         DTDForbidden, self.parseString, self.get_content(self.xml_external), forbid_dtd=True
+#     )
+#     self.assertRaises(
+#         DTDForbidden, self.parseString, self.get_content(self.xml_dtd), forbid_dtd=True
+#     )
+
+# def test_entities_forbidden(self):
+#     self.assertRaises(EntitiesForbidden, self.parse, self.xml_bomb)
+#     self.assertRaises(EntitiesForbidden, self.parse, self.xml_quadratic)
+#     self.assertRaises(EntitiesForbidden, self.parse, self.xml_external)
+
+#     self.assertRaises(EntitiesForbidden, self.parseString, self.get_content(self.xml_bomb))
+#     self.assertRaises(
+#         EntitiesForbidden, self.parseString, self.get_content(self.xml_quadratic)
+#     )
+#     self.assertRaises(
+#         EntitiesForbidden, self.parseString, self.get_content(self.xml_external)
+#     )
+
+#     if self.iterparse:
+#         self.assertRaises(EntitiesForbidden, self.iterparse, self.xml_bomb)
+#         self.assertRaises(EntitiesForbidden, self.iterparse, self.xml_quadratic)
+#         self.assertRaises(EntitiesForbidden, self.iterparse, self.xml_external)
