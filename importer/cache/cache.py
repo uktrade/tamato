@@ -34,15 +34,12 @@ class ObjectCacheFacade:
 
     def put(self, key, obj):
         self.engine.put(key, obj)
-        pass
 
     def keys(self):
         return self.engine.keys()
 
     def dump(self):
         self.engine.dump()
-        pass
 
     def clear(self):
         self.engine.clear()
-        pass
