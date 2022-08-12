@@ -4,9 +4,13 @@ from importer import cache
 
 
 @pytest.fixture(autouse=True)
-def run_around_tests():
-    # singleton memory cache is being used - values persist between tests
-    # needed to add something that cleaned the cache before each test
+def clear_object_cache():
+    """
+    Clears the object cache data for each test in this suite
+
+    Object cache will persist between tests so this is required for some tests in the suite to prepare a clean cache for
+    subsequent tests. This fixture is only local to this set of tests and is not called for any other tests
+    """
     object_cache = cache.ObjectCacheFacade()
     object_cache.clear()
     yield
