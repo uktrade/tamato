@@ -200,11 +200,11 @@ def get_record_code(transaction: ET.Element) -> str:
 
 
 def get_chapter_heading(transaction: ET.Element) -> str:
-    item_ids = transaction.findall(
+    item_id = transaction.find(
         "*/*/*/*/ns2:goods.nomenclature.item.id",
         nsmap,
     )
-    chapter_heading = item_ids[0].text[:2] if item_ids else "00"
+    chapter_heading = item_id.text[:2] if item_id else "00"
 
     return chapter_heading
 

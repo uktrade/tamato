@@ -106,6 +106,11 @@ def test_filter_transaction_records_positive(
 ):
     """Asserts that matching records from the record_group are preserved in the
     transaction."""
+
+    # filter_snippet_transaction calls get_snippet_transaction,
+    # which gets the first transaction from an xml envelope,
+    # and then calls filter_transaction_records, which checks whether this transaction contains
+    # a record identifier matching a value in TARIC_RECORD_CODES["commodities"]
     transaction = filter_snippet_transaction(
         envelope_commodity,
         taric_schema_tags,
