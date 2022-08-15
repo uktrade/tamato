@@ -492,6 +492,7 @@ def get_latest_versions(qs):
             yield model
 
 
+# This implementation is borrowed from defusedxml's deprecated lxml module https://github.com/tiran/defusedxml/blob/main/defusedxml/lxml.py
 def check_docinfo(elementtree, forbid_dtd=False):
     """Check docinfo of an element tree for DTD."""
     docinfo = elementtree.docinfo
