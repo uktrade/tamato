@@ -1174,4 +1174,4 @@ self.xml_bomb
 self.xml_external
 self.xml_bomb
 DTD
-https://github.com/tiran/defusedxml/blob/main/defusedxml/lxml.py
+https://github.com/tiran/defusedxml/blob/main/defusedxml/lxml.pyg
