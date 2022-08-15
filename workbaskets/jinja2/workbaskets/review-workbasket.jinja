@@ -2,7 +2,7 @@
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title %}Workbasket {{ request.session.workbasket.id }}{% endset %}
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }}{% endset %}
 {% set page_subtitle %}<span class="govuk-!-font-weight-bold">Summary</span> - View workbasket components{% endset %}
 
 {% block breadcrumb %}

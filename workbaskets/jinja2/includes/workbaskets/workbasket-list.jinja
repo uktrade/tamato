@@ -7,7 +7,7 @@
   {%- set workbasket_linked_id -%}
     <a
       class="govuk-link"
-      href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk}) }}"
+      href="{{ url("workbaskets:workbasket-ui-changes", kwargs={"pk": workbasket.pk}) }}"
     >{{ workbasket.pk }}</a>
   {%- endset -%}
   {{ table_rows.append([
