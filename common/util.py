@@ -17,7 +17,6 @@ from typing import Union
 
 import wrapt
 from defusedxml.common import DTDForbidden
-from defusedxml.common import EntitiesForbidden
 from django.db import transaction
 from django.db.models import F
 from django.db.models import Func
@@ -493,38 +492,24 @@ def get_latest_versions(qs):
             yield model
 
 
-def check_docinfo(elementtree, forbid_dtd=False, forbid_entities=True):
-    """Check docinfo of an element tree for DTD and entity declarations."""
+def check_docinfo(elementtree, forbid_dtd=False):
+    """Check docinfo of an element tree for DTD."""
     docinfo = elementtree.docinfo
     if docinfo.doctype:
         if forbid_dtd:
             raise DTDForbidden(docinfo.doctype, docinfo.system_url, docinfo.public_id)
 
-    if forbid_entities:
-        for dtd in docinfo.internalDTD, docinfo.externalDTD:
-            if dtd is None:
-                continue
-            for entity in dtd.iterentities():
-                raise EntitiesForbidden(
-                    entity.name,
-                    entity.content,
-                    None,
-                    None,
-                    None,
-                    None,
-                )
 
-
-def parse_xml(source):
+def parse_xml(source, forbid_dtd=True):
     elementtree = etree.parse(source)
-    check_docinfo(elementtree, forbid_dtd=True, forbid_entities=True)
+    check_docinfo(elementtree, forbid_dtd=forbid_dtd)
 
     return elementtree
 
 
-def xml_fromstring(text):
+def xml_fromstring(text, forbid_dtd=True):
     rootelement = etree.fromstring(text)
     elementtree = rootelement.getroottree()
-    check_docinfo(elementtree, forbid_dtd=True, forbid_entities=True)
+    check_docinfo(elementtree, forbid_dtd=forbid_dtd)
 
     return rootelement
