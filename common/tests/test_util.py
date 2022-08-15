@@ -279,7 +279,7 @@ def test_parse_xml_dtd():
     file = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "test_files",
-        "entity.xml",
+        "dtd.xml",
     )
     with pytest.raises(DTDForbidden):
         util.parse_xml(file)
