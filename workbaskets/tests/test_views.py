@@ -16,6 +16,7 @@ from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.tests.util import assert_workbasket_valid
 from workbaskets.validators import WorkflowStatus
+from workbaskets.views import ui
 
 pytestmark = pytest.mark.django_db
 
@@ -346,3 +347,40 @@ def test_delete_changes_confirm_200(valid_user_client, session_workbasket):
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
+
+
+def test_workbasket_list_view_get_queryset():
+    """Test that WorkBasketList.get_queryset() returns a queryset with the
+    expected number of baskets ordered by updated_at."""
+    wb_1 = factories.WorkBasketFactory.create()
+    wb_2 = factories.WorkBasketFactory.create()
+    wb_1.title = "most recently updated"
+    wb_1.save()
+    view = ui.WorkBasketList()
+    qs = view.get_queryset()
+
+    assert qs.count() == 2
+    assert qs.first() == wb_1
+    assert qs.last() == wb_2
+
+
+def test_workbasket_list_view(valid_user_client):
+    """Test that valid user receives a 200 on GET for WorkBasketList view and wb
+    values display in html table."""
+    wb = factories.WorkBasketFactory.create()
+    url = reverse("workbaskets:workbasket-ui-list-all")
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    table = soup.select("table")[0]
+    row_text = [row.text for row in table.findChildren("td")]
+
+    assert wb.title in row_text
+    assert str(wb.id) in row_text
+    assert wb.get_status_display() in row_text
+    assert wb.updated_at.strftime("%d %b %y") in row_text
+    assert wb.created_at.strftime("%d %b %y") in row_text
+    assert str(wb.tracked_models.count()) in row_text
+    assert wb.reason in row_text
