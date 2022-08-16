@@ -1,18 +1,27 @@
-class BaseEngine:
+from abc import ABC, abstractmethod
+
+
+class BaseEngine(ABC):
+    @abstractmethod
     def get(self, key, default=None):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def pop(self, key, default=None):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def put(self, key, obj):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def keys(self):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def dump(self):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def clear(self):
-        raise NotImplementedError
+        pass

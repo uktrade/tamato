@@ -56,8 +56,6 @@ from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
 
-TEST_CWD = os.getcwd()
-
 
 def pytest_addoption(parser):
     parser.addoption(

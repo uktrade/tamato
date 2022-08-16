@@ -87,7 +87,7 @@ class TestChunkTaricCommand:
 
     def test_dry_run_error_no_args(self):
         with pytest.raises(CommandError) as ex:
-            self.call_command_test(None, return_error=True)
+            self.call_command_test()
 
         assert "Error: the following arguments are required: taric3_file, name" in str(
             ex,
@@ -108,7 +108,9 @@ class TestChunkTaricCommand:
         assert "No such file or directory" in str(ex)
 
     def test_help(self, capsys):
-        out = get_command_help_text(capsys, self.TARGET_COMMAND)
+        get_command_help_text(capsys, self.TARGET_COMMAND, chunk_taric.Command)
+
+        out = capsys.readouterr().out
 
         assert "taric3_file" in out
         assert "The TARIC3 file to be parsed." in out

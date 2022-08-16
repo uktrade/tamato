@@ -43,7 +43,9 @@ class TestImportTaricCommand:
         assert "No such file or directory" in str(ex)
 
     def test_help(self, capsys):
-        out = get_command_help_text(capsys, self.TARGET_COMMAND)
+        get_command_help_text(capsys, self.TARGET_COMMAND, renumber_transactions.Command)
+
+        out = capsys.readouterr().out
 
         assert "file                  The XML file to renumber, in place" in out
         assert "number                The number to start from" in out

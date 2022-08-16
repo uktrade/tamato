@@ -98,11 +98,7 @@ class Command(BaseCommand):
             envelope_id = int(options.get("envelope_id")[0])
 
         # Setting max_envelope_size to 0, also disables splitting - so normalise 0 to None:
-        max_envelope_size = (
-            None
-            if options.get("disable_splitting")
-            else int(options.get("max_envelope_size") or None)
-        )
+        max_envelope_size = None
 
         directory = options.get("directory", ".")
 
@@ -114,7 +110,7 @@ class Command(BaseCommand):
         )
         errors = False
         for time_to_render, rendered_envelope in item_timer(
-            serializer.split_render_transactions(transactions),
+                serializer.split_render_transactions(transactions),
         ):
             envelope_file = rendered_envelope.output
             if not rendered_envelope.transactions:

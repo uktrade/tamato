@@ -64,7 +64,9 @@ class TestImportTaricCommand:
         assert "No such file or directory" in str(ex)
 
     def test_help(self, capsys):
-        out = get_command_help_text(capsys, self.TARGET_COMMAND)
+        get_command_help_text(capsys, self.TARGET_COMMAND, import_taric.Command)
+
+        out = capsys.readouterr().out
 
         assert "taric3_file name" in out
         assert "Import data from a TARIC XML file into TaMaTo" in out

@@ -218,7 +218,7 @@ def example_goods_taric_file_location():
     return taric_file_location
 
 
-def get_command_help_text(capsys, command):
+def get_command_help_text(capsys, command, command_class=BaseCommand):
     captured = capsys.readouterr()
-    BaseCommand().print_help(command, "")
+    command_class().print_help(command, "")
     return captured.out

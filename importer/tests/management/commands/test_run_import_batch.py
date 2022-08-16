@@ -41,7 +41,9 @@ class TestImportTaricCommand:
         assert "Error: the following arguments are required: batch" in str(ex)
 
     def test_help(self, capsys):
-        out = get_command_help_text(capsys, self.TARGET_COMMAND)
+        get_command_help_text(capsys, self.TARGET_COMMAND, run_import_batch.Command)
+
+        out = capsys.readouterr().out
 
         assert "batch                 The batch Id to be imported" in out
         assert (

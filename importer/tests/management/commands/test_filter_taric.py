@@ -59,7 +59,9 @@ class TestFilterTaricCommand:
         assert "No such file or directory" in str(ex)
 
     def test_help(self, capsys):
-        out = get_command_help_text(capsys, self.TARGET_COMMAND)
+        get_command_help_text(capsys, self.TARGET_COMMAND, filter_taric.Command)
+
+        out = capsys.readouterr().out
 
         assert (
             "file name [values [values ...]]\n\n"
