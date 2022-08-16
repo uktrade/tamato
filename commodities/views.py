@@ -7,10 +7,12 @@ from django.views.generic import TemplateView
 from rest_framework import permissions
 from rest_framework import viewsets
 
+from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
 from commodities.forms import CommodityImportForm
 from commodities.models import GoodsNomenclature
 from common.serializers import AutoCompleteSerializer
+from common.views import TamatoListView
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
@@ -53,3 +55,19 @@ class CommodityImportView(FormView, WithCurrentWorkBasket):
 
 class CommodityImportSuccessView(TemplateView):
     template_name = "commodities/import-success.jinja"
+
+
+class CommodityMixin:
+    model = GoodsNomenclature
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return GoodsNomenclature.objects.approved_up_to_transaction(tx)
+
+
+class CommodityListView(CommodityMixin, TamatoListView):
+    template_name = "commodities/list.jinja"
+    filterset_class = CommodityFilter
+
+    def get_queryset(self):
+        return GoodsNomenclature.objects.order_by("item_id")

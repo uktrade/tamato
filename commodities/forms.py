@@ -1,16 +1,48 @@
 from datetime import datetime
 
+import lxml
+import magic
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Button
+from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
+from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from importer.forms import ImportForm
 
+class CommodityFilterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
 
-class CommodityImportForm(ImportForm):
+        self.helper.layout = Layout(
+            Field.text("item_id", label_size=Size.SMALL),
+            Field.text("active_state", label_size=Size.SMALL),
+            Button("submit", "Search and Filter", css_class="govuk-!-margin-top-6"),
+            HTML(
+                f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+            ),
+        )
+
+
+
+def get_mime_type(file):
+    """Get MIME by reading the header of the file."""
+    initial_pos = file.tell()
+    file.seek(0)
+    mime_type = magic.from_buffer(file.read(1024), mime=True)
+    file.seek(initial_pos)
+    return mime_type
+
+
+class CommodityImportForm(forms.ModelForm):
     taric_file = forms.FileField(
         required=True,
         help_text="",

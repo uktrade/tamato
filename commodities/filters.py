@@ -1,5 +1,12 @@
+from django import forms
 from django.contrib.postgres.aggregates import StringAgg
+from django.urls import reverse_lazy
+from django_filters import CharFilter
 
+from commodities.forms import CommodityFilterForm
+from commodities.models.orm import GoodsNomenclature
+from common.filters import ActiveStateMixin
+from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 
 
@@ -15,3 +22,15 @@ class GoodsNomenclatureFilterBackend(TamatoFilterBackend):
             return queryset.filter(item_id__startswith=search_term)
 
         return super().search_queryset(queryset, search_term)
+
+
+class CommodityFilter(TamatoFilter, ActiveStateMixin):
+    item_id = CharFilter(label="Code", widget=forms.TextInput())
+    clear_url = reverse_lazy("commodities-list")
+
+    class Meta:
+        model = GoodsNomenclature
+        form = CommodityFilterForm
+
+        # Defines the order shown in the form.
+        fields = ["search", "item_id", "active_state"]
