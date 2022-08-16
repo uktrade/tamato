@@ -261,8 +261,11 @@ def test_register_multiple_dependencies_with_different_serializers(
     )
 
 
-def test_base_handler_meta_no_type():
-    ex = None
+def test_base_handler_meta_no_tag():
+    """
+    When a handler class is defined that inherits from BaseHandler, if it does not have a tag defined it will throw an
+    AttributeError exception
+    """
     with pytest.raises(AttributeError) as ex:
         class NotAHandler(BaseHandler):
             def __init__(self):
@@ -272,7 +275,10 @@ def test_base_handler_meta_no_type():
 
 
 def test_base_handler_meta_new_check_type():
-    ex = None
+    """
+    When a handler class is defined that inherits from BaseHandler, if it does not have a tag defined that is of type
+    str it will throw an AttributeError exception
+    """
     with pytest.raises(AttributeError) as ex:
         class NotAHandler(BaseHandler):
             tag: int = None
@@ -284,11 +290,15 @@ def test_base_handler_meta_new_check_type():
 
 
 def test_base_handler_check_serializer():
+    """
+    When a handler class is defined that inherits from BaseHandler, it must have a serializer_class that inherits from
+    ModelSerializer. If the serializer_class does not inherit form ModelSerializer it will raise an exception
+    """
+
     class NotASerializer:
         def __init__(self):
             pass
 
-    ex = None
     with pytest.raises(AttributeError) as ex:
         class NotAHandler(BaseHandler):
             tag = ""
@@ -304,6 +314,10 @@ def test_base_handler_check_serializer():
 
 
 def test_base_handler_get_generic_link_no_kwargs(mock_serializer):
+    """
+    When calling get_generic_link on an instance if a child of BaseHandler with args, Model and no kwargs, it should
+    raise an exception {model}.DoesNotExist with a blank message
+    """
     class AHandler(BaseHandler):
         serializer_class = mock_serializer
         tag = "test_handler_dep2"
@@ -327,6 +341,7 @@ def test_base_handler_get_generic_link_importer_cache_cached(
         handler_test_data,
         object_nursery,
 ):
+
     # add object to nursery
     fnt = factories.FootnoteTypeFactory.create(
         footnote_type_id="XZX",
@@ -353,6 +368,11 @@ def test_base_handler_get_generic_link_importer_cache_not_cached(
         handler_test_data,
         object_nursery,
 ):
+    """
+    When calling get_generic_link on an instance if a child of BaseHandler with args, Model and kwargs, it should
+    return a tuple, a link object (model) and a boolean indicating if it was retrieved from cache, in this case it is
+    False.
+    """
     # add object to nursery
     fnt = factories.FootnoteTypeFactory.create(
         footnote_type_id="XZX",

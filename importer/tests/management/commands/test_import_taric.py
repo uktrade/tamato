@@ -41,7 +41,6 @@ class TestImportTaricCommand:
             assert delay_mock.called
 
     def test_dry_run_error_no_args(self):
-        ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test()
 
@@ -50,14 +49,12 @@ class TestImportTaricCommand:
         )
 
     def test_dry_run_error_no_name(self, example_goods_taric_file_location):
-        ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test(f"{example_goods_taric_file_location}")
 
         assert "Error: the following arguments are required: name" in str(ex)
 
     def test_dry_run_error_file_not_found(self):
-        ex = None
         with pytest.raises(FileNotFoundError) as ex:
             self.call_command_test(f"dfgdfg", "sdfsdfsdf")
 

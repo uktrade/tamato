@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 class BaseEngine(ABC):
     @abstractmethod
     def get(self, key, default=None):
+
         pass
 
     @abstractmethod

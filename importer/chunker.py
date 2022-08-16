@@ -114,8 +114,10 @@ def sort_commodity_codes(transactions):
     """
 
     def comm_code_key(transaction):
-        """Sort Commodity codes by item id, indent, suffix and transaction
-        id."""
+        """
+        Sort Commodity codes by item id, indent, suffix and transaction
+        id.
+        """
         item_ids = transaction.findall("*/*/*/*/ns2:goods.nomenclature.item.id", nsmap)
         indents = transaction.findall("*/*/*/*/ns2:number.indents", nsmap)
         suffixes = transaction.findall("*/*/*/*/ns2:producline.suffix", nsmap)

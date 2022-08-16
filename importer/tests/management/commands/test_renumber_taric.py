@@ -62,7 +62,6 @@ class TestImportTaricCommand:
         self,
         example_goods_taric_file_location,
     ):
-        ex = None
         with pytest.raises(CommandError) as ex:
             self.call_command_test(f"{example_goods_taric_file_location}", "55")
 
