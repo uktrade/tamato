@@ -1,10 +1,10 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 
 
 class BaseEngine(ABC):
     @abstractmethod
     def get(self, key, default=None):
-
         pass
 
     @abstractmethod

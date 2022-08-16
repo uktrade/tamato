@@ -13,7 +13,7 @@ def setup_batch(
     dependencies: List[str],
 ) -> models.ImportBatch:
     """
-    Sets up a batch import
+    Sets up a batch import.
 
     creating the ImportBatch object, and links the ImportBatch to any provided dependencies
 

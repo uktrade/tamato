@@ -43,7 +43,11 @@ class TestImportTaricCommand:
         assert "No such file or directory" in str(ex)
 
     def test_help(self, capsys):
-        get_command_help_text(capsys, self.TARGET_COMMAND, renumber_transactions.Command)
+        get_command_help_text(
+            capsys,
+            self.TARGET_COMMAND,
+            renumber_transactions.Command,
+        )
 
         out = capsys.readouterr().out
 

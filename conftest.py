@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-import os
 from dataclasses import dataclass
 from functools import partial
 from typing import Any

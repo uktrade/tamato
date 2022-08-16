@@ -21,7 +21,8 @@ class PickleCacheEngine(BaseEngine):
 
     def get(self, key, default=None):
         """
-        Gets the value for the provided key or if not present, returns the value of default
+        Gets the value for the provided key or if not present, returns the value
+        of default.
 
         Args:
           key: The key to return the value for
@@ -34,7 +35,8 @@ class PickleCacheEngine(BaseEngine):
 
     def pop(self, key, default=None):
         """
-        Gets the value for the provided key and removes key from cache or if not present, returns the value of default
+        Gets the value for the provided key and removes key from cache or if not
+        present, returns the value of default.
 
         Args:
           key: The key to return the value for
@@ -47,7 +49,8 @@ class PickleCacheEngine(BaseEngine):
 
     def put(self, key, obj):
         """
-        Stores the value for the provided key. If the key already exists, it will be overwritten
+        Stores the value for the provided key. If the key already exists, it
+        will be overwritten.
 
         Args:
           key: The key to store the obj against
@@ -60,7 +63,7 @@ class PickleCacheEngine(BaseEngine):
 
     def keys(self):
         """
-        Returns a list of the keys stored in cache
+        Returns a list of the keys stored in cache.
 
         Returns:
           list(str) : A list of keys for the cache
@@ -79,7 +82,7 @@ class PickleCacheEngine(BaseEngine):
 
     def clear(self):
         """
-        Clears the cache, removing all keys and objects
+        Clears the cache, removing all keys and objects.
 
         Returns:
           None

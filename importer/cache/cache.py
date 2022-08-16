@@ -1,9 +1,10 @@
 from importlib import import_module
 
 import settings
+from importer.cache.base import BaseEngine
 
 
-class ObjectCacheFacade:
+class ObjectCacheFacade(BaseEngine):
     """
     Stores objects in a cache to be fetched for later use.
 
@@ -28,7 +29,8 @@ class ObjectCacheFacade:
 
     def get(self, key, default=None):
         """
-        Gets the value for the provided key or if not present, returns the value of default
+        Gets the value for the provided key or if not present, returns the value
+        of default.
 
         Args:
           key: The key to return the value for
@@ -41,7 +43,8 @@ class ObjectCacheFacade:
 
     def pop(self, key, default=None):
         """
-        Gets the value for the provided key and removes key from cache or if not present, returns the value of default
+        Gets the value for the provided key and removes key from cache or if not
+        present, returns the value of default.
 
         Args:
           key: The key to return the value for
@@ -54,7 +57,8 @@ class ObjectCacheFacade:
 
     def put(self, key, obj):
         """
-        Stores the value for the provided key. If the key already exists, it will be overwritten
+        Stores the value for the provided key. If the key already exists, it
+        will be overwritten.
 
         Args:
           key: The key to store the obj against
@@ -67,7 +71,7 @@ class ObjectCacheFacade:
 
     def keys(self):
         """
-        Returns a list of the keys stored in cache
+        Returns a list of the keys stored in cache.
 
         Returns:
           list(str) : A list of keys for the cache
@@ -85,7 +89,7 @@ class ObjectCacheFacade:
 
     def clear(self):
         """
-        Clears the cache, removing all keys and objects
+        Clears the cache, removing all keys and objects.
 
         Returns:
           None

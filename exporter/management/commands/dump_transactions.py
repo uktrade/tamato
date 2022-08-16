@@ -110,7 +110,7 @@ class Command(BaseCommand):
         )
         errors = False
         for time_to_render, rendered_envelope in item_timer(
-                serializer.split_render_transactions(transactions),
+            serializer.split_render_transactions(transactions),
         ):
             envelope_file = rendered_envelope.output
             if not rendered_envelope.transactions:
