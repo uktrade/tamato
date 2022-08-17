@@ -8,6 +8,7 @@ from typing import Sequence
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.template.loader import render_to_string
 
+from common.util import xml_fromstring
 from importer import models
 from importer.namespaces import make_schema_dataclass
 from importer.namespaces import nsmap
@@ -175,7 +176,7 @@ def rewrite_comm_codes(batch: models.ImportBatch, envelope_id: str, record_code=
     transactions = []
 
     for chunk in chunks:
-        transactions.extend(ET.fromstring(chunk.chunk_text))
+        transactions.extend(xml_fromstring(chunk.chunk_text))
 
     logger.info("%d to sort, deleting old ones", len(transactions))
 
