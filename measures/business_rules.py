@@ -474,17 +474,15 @@ class ME119(ValidityPeriodContained):
                 order_number__order_number=measure.order_number.order_number,
             )
 
-            contained_count = 0
             for origin in origins:
                 valid_between = origin.valid_between
                 if validity_range_contains_range(
                     valid_between,
                     contained_measure.valid_between,
                 ):
-                    return True
+                    return
 
-            if contained_count == 0:
-                raise self.violation(measure)
+            raise self.violation(measure)
 
 
 class QuotaOriginMatchingArea(BusinessRule):
