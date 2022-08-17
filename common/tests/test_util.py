@@ -3,6 +3,7 @@ from unittest import mock
 
 import pytest
 from defusedxml.common import DTDForbidden
+from lxml.etree import XMLSyntaxError
 
 from common import util
 from common.tests import factories
@@ -295,3 +296,27 @@ def test_xml_fromstring_dtd():
 </html>"""
     with pytest.raises(DTDForbidden):
         util.xml_fromstring(xml_string)
+
+
+# These test files are borrowed from https://github.com/tiran/defusedxml/tree/main/xmltestdata
+@pytest.mark.parametrize("file_name", ("bomb.xml", "quadratic.xml"))
+def test_parse_xml_vulnerabilities(file_name):
+    file = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "test_files",
+        file_name,
+    )
+    with pytest.raises(XMLSyntaxError):
+        util.parse_xml(file)
+
+
+@pytest.mark.parametrize("file_name", ("bomb.xml", "quadratic.xml"))
+def test_xml_fromstring_vulnerabilities(file_name):
+    file = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "test_files",
+        file_name,
+    )
+    string = open(file).read()
+    with pytest.raises(XMLSyntaxError):
+        util.xml_fromstring(string)
