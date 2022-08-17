@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from logging import getLogger
 from tempfile import TemporaryFile
+from typing import List
 from typing import Optional
 from typing import Sequence
 
@@ -91,7 +92,7 @@ def close_chunk(chunk: TemporaryFile, batch: models.ImportBatch, key):
     )
 
 
-def sort_commodity_codes(transactions):
+def sort_commodity_codes(transactions: List[ET.Element]) -> List[ET.Element]:
     """
     Sort the commodity code transactions by item ID, indent, suffix and
     transaction ID (which represents the order they were given in).
@@ -111,7 +112,7 @@ def sort_commodity_codes(transactions):
 
     Lastly if there is still a conflict commodities are ordered on transaction order.
 
-    These for factors in that order produce an accurate hierarchical representation.
+    These four factors in that order produce an accurate hierarchical representation.
     """
 
     def comm_code_key(transaction):
@@ -193,6 +194,22 @@ def rewrite_comm_codes(batch: models.ImportBatch, envelope_id: str, record_code=
         close_chunk(chunk, batch, key)
 
 
+def get_record_code(transaction: ET.Element) -> str:
+    return max(
+        code.text for code in transaction.findall("*/*/*/ns2:record.code", nsmap)
+    )
+
+
+def get_chapter_heading(transaction: ET.Element) -> str:
+    item_ids = transaction.findall(
+        "*/*/*/*/ns2:goods.nomenclature.item.id",
+        nsmap,
+    )
+    chapter_heading = item_ids[0].text[:2] if item_ids else "00"
+
+    return chapter_heading
+
+
 def write_transaction_to_chunk(
     transaction: ET.Element,
     chunks_in_progress: dict,
@@ -212,20 +229,14 @@ def write_transaction_to_chunk(
     chapter_heading = None
 
     if batch.split_job:
-        record_code = max(
-            code.text for code in transaction.findall("*/*/*/ns2:record.code", nsmap)
-        )
+        record_code = get_record_code(transaction)
 
         if record_code not in dependency_tree:
             return
 
         # Commodities and measures are special cases which can be split on chapter heading as well.
         if record_code in {"400", "430"}:
-            item_ids = transaction.findall(
-                "*/*/*/*/ns2:goods.nomenclature.item.id",
-                nsmap,
-            )
-            chapter_heading = item_ids[0].text[:2] if item_ids else "00"
+            chapter_heading = get_chapter_heading(transaction)
 
     else:
         record_code = None
