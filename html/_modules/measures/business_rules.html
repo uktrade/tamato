@@ -151,6 +151,7 @@
 <span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">ApplicabilityCode</span>
 <span class="kn">from</span> <span class="nn">geo_areas.validators</span> <span class="kn">import</span> <span class="n">AreaCode</span>
 <span class="kn">from</span> <span class="nn">measures.querysets</span> <span class="kn">import</span> <span class="n">MeasuresQuerySet</span>
+<span class="kn">from</span> <span class="nn">quotas.models</span> <span class="kn">import</span> <span class="n">QuotaOrderNumberOrigin</span>
 <span class="kn">from</span> <span class="nn">quotas.validators</span> <span class="kn">import</span> <span class="n">AdministrationMechanism</span>
 
 <span class="c1"># 140 - MEASURE TYPE SERIES</span>
@@ -583,7 +584,76 @@
 <span class="sd">    measure.&quot;&quot;&quot;</span>
 
     <span class="c1"># This checks the same thing as ON10 from the other side of the relation</span>
-    <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;order_number__quotaordernumberorigin&quot;</span></div>
+
+<div class="viewcode-block" id="ME119.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME119.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get all current QuotaOrderNumberOrigin objects associated with a</span>
+<span class="sd">        measure&#39;s QuotaOrderNumber.</span>
+
+<span class="sd">        Loop over these and raise a violation if the measure validity period is</span>
+<span class="sd">        not contained by any of the origins</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">with</span> <span class="n">override_current_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">):</span>
+            <span class="n">contained_measure</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">current</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+            <span class="n">origins</span> <span class="o">=</span> <span class="n">QuotaOrderNumberOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">current</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">order_number__order_number</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">order_number</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">origins</span><span class="p">:</span>
+                <span class="n">valid_between</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">valid_between</span>
+                <span class="k">if</span> <span class="n">validity_range_contains_range</span><span class="p">(</span>
+                    <span class="n">valid_between</span><span class="p">,</span>
+                    <span class="n">contained_measure</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+                <span class="p">):</span>
+                    <span class="k">return</span>
+
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="QuotaOriginMatchingArea"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.QuotaOriginMatchingArea">[docs]</a><span class="k">class</span> <span class="nc">QuotaOriginMatchingArea</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the quota order</span>
+<span class="sd">    number origin&#39;s geographical area(s) must match those of the measure.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuotaOriginMatchingArea.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.QuotaOriginMatchingArea.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+        <span class="c1"># Return if the measure has no order number and, therefore, no order number origin</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Get all individual countries / regions associated with the measure</span>
+        <span class="k">with</span> <span class="n">override_current_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">area_code</span> <span class="o">==</span> <span class="n">AreaCode</span><span class="o">.</span><span class="n">GROUP</span><span class="p">:</span>
+                <span class="n">area_sids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">m</span><span class="o">.</span><span class="n">member</span><span class="o">.</span><span class="n">sid</span>
+                        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">memberships</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+                    <span class="p">],</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">area_sids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">])</span>
+
+            <span class="c1"># Get all individual countries / regions for each quota order number origin linked to the measure</span>
+            <span class="n">origins</span> <span class="o">=</span> <span class="n">QuotaOrderNumberOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">current</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">order_number__order_number</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">order_number</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">origin_sids</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">origins</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">origin</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">area_code</span> <span class="o">==</span> <span class="n">AreaCode</span><span class="o">.</span><span class="n">GROUP</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">[</span>
+                        <span class="n">m</span><span class="o">.</span><span class="n">member</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">origin</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">memberships</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+                    <span class="p">]:</span>
+                        <span class="n">origin_sids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">origin_sids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+
+            <span class="n">origin_sids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">origin_sids</span><span class="p">)</span>
+
+            <span class="c1"># Check that the geographical area sid is included in the list of origin area sids</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">area_sids</span> <span class="o">-</span> <span class="n">origin_sids</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
 <span class="c1"># -- Relation with additional codes</span>
