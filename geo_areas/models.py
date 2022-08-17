@@ -27,19 +27,6 @@ class GeographicalAreaQuerySet(TrackedModelQuerySet):
     def erga_omnes(self):
         return self.filter(area_code=AreaCode.GROUP, area_id=1011)
 
-    # def with_current_description(qs):
-    #     """Returns a GeographicalArea queryset annotated with the latest result
-    #     of a GeographicalAreaDescription subquery's description value, linking
-    #     these two queries on version_group field."""
-    #     current_descriptions = (
-    #         GeographicalAreaDescription.objects.latest_approved()
-    #         .filter(described_geographicalarea__version_group=OuterRef("version_group")).order_by().values("described_geographicalarea__version_group")
-    #     )
-    #     agg_descriptions = current_descriptions.annotate(chained_description=StringAgg("description", " ")).values("chained_description")
-    #     return qs.annotate(
-    #         description=Subquery(agg_descriptions[:1]),
-    #     )
-
     def with_latest_description(qs):
         """
         Returns a GeographicalArea queryset annotated with the latest result of
