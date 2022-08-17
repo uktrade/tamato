@@ -1148,6 +1148,11 @@ self.linked_model
 WorkBasketOutputFormat
 param kwargs:
 Enum
+QuotaOrderNumberOrigin
+QuotaOrderNumber
+ME119
+TestRule
+schemaLocation="commodities_envelope.xsd"/
 7930d36f
 *** measure_qs = <
 CharField\n
@@ -1166,3 +1171,6 @@ measure_qs)\n
 MeasureComponent
 Components
 TP2000-452
+commodity_1_kwargs
+goods_nomenclature_indent.xml
+ElementTree

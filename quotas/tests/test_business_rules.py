@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -8,6 +9,7 @@ from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
 from common.tests.util import raises_if
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas import business_rules
@@ -162,6 +164,22 @@ def test_ON10(date_ranges):
         business_rules.ON10(measure.transaction).validate(
             measure.order_number.quotaordernumberorigin_set.first(),
         )
+
+
+def test_ON10_multiple_active_origins():
+    """Tests that it is possible to create multiple quota origins, as long as a
+    measure with a quota is covered by at least one of these origins."""
+    valid_between = TaricDateRange(date(2020, 1, 1), date(2020, 1, 31))
+    measure = factories.MeasureWithQuotaFactory.create(
+        order_number__origin__valid_between=valid_between,
+        valid_between=valid_between,
+    )
+    later_origin = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=measure.order_number,
+        valid_between=TaricDateRange(date(2021, 1, 1), date(2021, 1, 31)),
+    )
+
+    business_rules.ON10(later_origin.transaction).validate(later_origin)
 
 
 @only_applicable_after("2007-12-31")
@@ -476,6 +494,74 @@ def test_overlapping_quota_definition(date_ranges):
         business_rules.OverlappingQuotaDefinition(
             overlapping_definition.transaction,
         ).validate(overlapping_definition)
+
+
+def test_volume_and_initial_volume_must_match():
+    """Unless it is the main quota in a quota association, a definition's volume
+    and initial_volume values should always be the same."""
+
+    definition = factories.QuotaDefinitionFactory.create(
+        volume=1.000,
+        initial_volume=2.000,
+    )
+
+    with pytest.raises(BusinessRuleViolation) as violation:
+        business_rules.VolumeAndInitialVolumeMustMatch(definition.transaction).validate(
+            definition,
+        )
+
+    assert (
+        "Unless it is the main quota in a quota association, a definition's volume and initial_volume values should always be the same."
+        in str(violation)
+    )
+
+
+def test_volume_and_initial_volume_must_match_main_quota():
+    """Test that VolumeAndInitialVolumeMustMatch does not raise a violation when
+    definition with different volume and initial_volume values is used as parent
+    quota in an association."""
+
+    definition = factories.QuotaDefinitionFactory.create(
+        volume=1.000,
+        initial_volume=2.000,
+    )
+    association = factories.QuotaAssociationFactory.create(
+        transaction=definition.transaction,
+        main_quota=definition,
+        sub_quota__transaction=definition.transaction,
+    )
+
+    business_rules.VolumeAndInitialVolumeMustMatch(association.transaction).validate(
+        definition,
+    )
+
+
+def test_volume_and_initial_volume_must_match_sub_quota():
+    """Test that VolumeAndInitialVolumeMustMatch raises a violation when
+    definition with different volume and initial_volume values is used as child
+    quota in an association."""
+
+    definition = factories.QuotaDefinitionFactory.create(
+        volume=1.000,
+        initial_volume=2.000,
+    )
+    association = factories.QuotaAssociationFactory.create(
+        transaction=definition.transaction,
+        sub_quota=definition,
+        main_quota__transaction=definition.transaction,
+    )
+
+    with pytest.raises(BusinessRuleViolation) as violation:
+        business_rules.VolumeAndInitialVolumeMustMatch(
+            association.transaction,
+        ).validate(
+            definition,
+        )
+
+    assert (
+        "Unless it is the main quota in a quota association, a definition's volume and initial_volume values should always be the same."
+        in str(violation)
+    )
 
 
 def test_QA1(assert_handles_duplicates):

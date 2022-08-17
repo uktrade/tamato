@@ -16,6 +16,7 @@ from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.tests.util import assert_workbasket_valid
 from workbaskets.validators import WorkflowStatus
+from workbaskets.views import ui
 
 pytestmark = pytest.mark.django_db
 
@@ -197,7 +198,10 @@ def test_review_workbasket_displays_objects_in_current_workbasket(
         GoodsNomenclatureFactory.create()
 
     response = valid_user_client.get(
-        reverse("workbaskets:review-workbasket", kwargs={"pk": session_workbasket.id}),
+        reverse(
+            "workbaskets:workbasket-ui-detail",
+            kwargs={"pk": session_workbasket.id},
+        ),
     )
     page = BeautifulSoup(
         response.content.decode(response.charset),
@@ -222,7 +226,6 @@ def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbas
     "url_name",
     [
         ("workbaskets:edit-workbasket"),
-        ("workbaskets:review-workbasket"),
         ("workbaskets:workbasket-ui-detail"),
     ],
 )
@@ -310,8 +313,8 @@ def test_select_workbasket_page_200(valid_user_client):
     [
         ("publish-all", "workbaskets:workbasket-ui-submit"),
         ("remove-selected", "workbaskets:workbasket-ui-delete-changes"),
-        ("page-prev", "workbaskets:review-workbasket"),
-        ("page-next", "workbaskets:review-workbasket"),
+        ("page-prev", "workbaskets:workbasket-ui-detail"),
+        ("page-next", "workbaskets:workbasket-ui-detail"),
     ],
 )
 def test_review_workbasket_redirects(
@@ -324,7 +327,7 @@ def test_review_workbasket_redirects(
     )
     with workbasket.new_transaction() as tx:
         factories.FootnoteTypeFactory.create_batch(30, transaction=tx)
-    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    url = reverse("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk})
     data = {"form-action": form_action}
     response = valid_user_client.post(f"{url}?page=2", data)
     assert response.status_code == 302
@@ -344,3 +347,40 @@ def test_delete_changes_confirm_200(valid_user_client, session_workbasket):
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
+
+
+def test_workbasket_list_view_get_queryset():
+    """Test that WorkBasketList.get_queryset() returns a queryset with the
+    expected number of baskets ordered by updated_at."""
+    wb_1 = factories.WorkBasketFactory.create()
+    wb_2 = factories.WorkBasketFactory.create()
+    wb_1.title = "most recently updated"
+    wb_1.save()
+    view = ui.WorkBasketList()
+    qs = view.get_queryset()
+
+    assert qs.count() == 2
+    assert qs.first() == wb_1
+    assert qs.last() == wb_2
+
+
+def test_workbasket_list_view(valid_user_client):
+    """Test that valid user receives a 200 on GET for WorkBasketList view and wb
+    values display in html table."""
+    wb = factories.WorkBasketFactory.create()
+    url = reverse("workbaskets:workbasket-ui-list-all")
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    table = soup.select("table")[0]
+    row_text = [row.text for row in table.findChildren("td")]
+
+    assert wb.title in row_text
+    assert str(wb.id) in row_text
+    assert wb.get_status_display() in row_text
+    assert wb.updated_at.strftime("%d %b %y") in row_text
+    assert wb.created_at.strftime("%d %b %y") in row_text
+    assert str(wb.tracked_models.count()) in row_text
+    assert wb.reason in row_text

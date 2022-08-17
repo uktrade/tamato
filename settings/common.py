@@ -479,6 +479,15 @@ PATH_ASSETS = Path(BASE_DIR, "common", "assets")
 PATH_XSD_ENVELOPE = Path(PATH_ASSETS, "envelope.xsd")
 PATH_XSD_TARIC = Path(PATH_ASSETS, "taric3.xsd")
 
+PATH_COMMODITIES_ASSETS = Path(BASE_DIR, "commodities", "assets")
+
+PATH_XSD_COMMODITIES_ENVELOPE = Path(
+    PATH_COMMODITIES_ASSETS,
+    "commodities_envelope.xsd",
+)
+PATH_XSD_COMMODITIES_TARIC = Path(PATH_COMMODITIES_ASSETS, "commodities_taric3.xsd")
+
+
 # Default username for envelope data imports
 DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")
 

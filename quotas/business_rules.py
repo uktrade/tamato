@@ -9,6 +9,7 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
+from common.models.utils import override_current_transaction
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
@@ -123,6 +124,21 @@ class ON10(ValidityPeriodContained):
     measure."""
 
     contained_field_name = "order_number__measure"
+
+    def validate(self, order_number_origin):
+        """
+        Loop over measures that reference the same quota order number as origin.
+
+        Get all the origins linked to this measure. Loop over these origins and
+        check that every measure is contained by at least one origin.
+        """
+        with override_current_transaction(self.transaction):
+            current_qs = order_number_origin.get_versions().current()
+            contained_measures = current_qs.follow_path(self.contained_field_name)
+            from measures.business_rules import ME119
+
+            for measure in contained_measures:
+                ME119(self.transaction).validate(measure)
 
 
 @only_applicable_after("2007-12-31")
@@ -265,6 +281,20 @@ class OverlappingQuotaDefinition(BusinessRule):
             .exclude(sid=quota_definition.sid)
             .exists()
         ):
+            raise self.violation(quota_definition)
+
+
+class VolumeAndInitialVolumeMustMatch(BusinessRule):
+    """Unless it is the main quota in a quota association, a definition's volume
+    and initial_volume values should always be the same."""
+
+    def validate(self, quota_definition):
+        if quota_definition.sub_quota_associations.approved_up_to_transaction(
+            self.transaction,
+        ).exists():
+            return True
+
+        if quota_definition.volume != quota_definition.initial_volume:
             raise self.violation(quota_definition)
 
 
