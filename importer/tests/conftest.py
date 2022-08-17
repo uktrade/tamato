@@ -1,4 +1,5 @@
 import os
+import shutil
 from typing import Sequence
 from typing import Type
 
@@ -112,22 +113,41 @@ def handler_test_data(approved_transaction, date_ranges) -> DispatchedObjectType
 
 
 @pytest.fixture
+def handler_footnote_type_test_data(approved_transaction, date_ranges) -> DispatchedObjectType:
+    return {
+        "data": {
+            "footnote_type_id": "ZZ",
+            "application_code": 1,
+            "description": "testing",
+            "update_type": 3,
+            "valid_between": {
+                "upper": date_ranges.normal.upper,
+                "lower": date_ranges.normal.lower,
+            },
+            "transaction_id": approved_transaction.pk,
+        },
+        "tag": "footnote.type",
+        "transaction_id": approved_transaction.pk,
+    }
+
+
+@pytest.fixture
 def prepped_handler(object_nursery, handler_class, handler_test_data) -> BaseHandler:
     return handler_class(handler_test_data, object_nursery)
 
 
 @pytest.fixture
 def prepped_handler_with_dependencies1(
-    object_nursery,
-    handler_class_with_dependencies,
-    handler_test_data,
+        object_nursery,
+        handler_class_with_dependencies,
+        handler_test_data,
 ) -> BaseHandler:
     return handler_class_with_dependencies(handler_test_data, object_nursery)
 
 
 @pytest.fixture
 def prepped_handler_with_dependencies2(
-    prepped_handler_with_dependencies1,
+        prepped_handler_with_dependencies1,
 ) -> BaseHandler:
     return prepped_handler_with_dependencies1.dependencies[0](
         prepped_handler_with_dependencies1.serialize(),
@@ -137,9 +157,9 @@ def prepped_handler_with_dependencies2(
 
 @pytest.fixture
 def prepped_handler_with_link(
-    handler_class_with_links,
-    object_nursery,
-    handler_test_data,
+        handler_class_with_links,
+        object_nursery,
+        handler_test_data,
 ) -> BaseHandler:
     handler_test_data["data"]["test_model_1__sid"] = factories.TestModel1Factory().sid
 
@@ -214,7 +234,11 @@ def tag_regex() -> Tag:
 
 @pytest.fixture
 def example_goods_taric_file_location():
-    taric_file_location = f"{os.getcwd()}/importer/tests/test_files/goods.xml"
+    src = f"{os.getcwd()}/importer/tests/test_files/goods.xml"
+    dst = f"{os.getcwd()}/tmp/taric/goods.xml"
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    shutil.copyfile(src, dst)
+    taric_file_location = dst
     return taric_file_location
 
 

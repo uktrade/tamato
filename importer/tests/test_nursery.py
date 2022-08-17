@@ -5,6 +5,7 @@ from common.tests.models import TestModel1
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from importer import nursery
+from importer.utils import DispatchedObjectType
 
 
 def test_nursery_gets_handler_with_tag(object_nursery, handler_class):
@@ -18,10 +19,10 @@ def test_nursery_throws_error_on_no_handler(object_nursery):
 
 @pytest.mark.django_db
 def test_nursery_clears_cache(
-    handler_class,
-    object_nursery,
-    date_ranges,
-    unapproved_transaction,
+        handler_class,
+        object_nursery,
+        date_ranges,
+        unapproved_transaction,
 ):
     handler = handler_class(
         {
@@ -89,3 +90,22 @@ def test_nursery_gets_object_from_cache(settings, object_nursery):
         identifying_fields,
     )
     assert cached_instance == (instance.pk, instance.__class__.__name__)
+
+
+@pytest.mark.django_db
+def test_submit_commits_to_database(settings, object_nursery, handler_footnote_type_test_data):
+    settings.CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        },
+    }
+
+    expected_footnote_count = len(Footnote.objects.all()) + 1
+
+    # create dispatch object
+    dis_obj = handler_footnote_type_test_data
+
+    # submit to nursery
+    object_nursery.submit(dis_obj)
+
+    assert len(Footnote.objects.all()) == expected_footnote_count

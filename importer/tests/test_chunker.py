@@ -123,11 +123,11 @@ def test_filter_transaction_records_negative(
     assert transaction is None
 
 
-def test_chunk_taric():
+def test_chunk_taric(example_goods_taric_file_location):
     """Tests that the chunker creates an ImporterXMLChunk object in the db from
     the loaded XML file."""
     assert not ImporterXMLChunk.objects.count()
-    with open(f"{TEST_FILES_PATH}/goods.xml", "rb") as f:
+    with open(f"{example_goods_taric_file_location}", "rb") as f:
         content = f.read()
     taric_file = SimpleUploadedFile("goods.xml", content, content_type="text/xml")
     batch = factories.ImportBatchFactory.create()

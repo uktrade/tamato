@@ -60,8 +60,9 @@ class TestFilterTaricCommand:
 
         out = capsys.readouterr().out
 
+        print(out)
+
         assert (
-            "file name [values [values ...]]\n\n"
             "Removes transactions from the passed TARIC XML tree where the passed tag name\n"
             "is present and has the passed value. For example, calling ``filter_taric(root,\n"
             '"oub:measure.sid", "12345678", "23456789")`` will remove any transaction\n'
