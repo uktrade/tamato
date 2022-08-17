@@ -612,7 +612,7 @@ def run_xml_import(import_xml, settings):
         ), "A factory that returns an object instance needs to be provided"
 
         xml = generate_test_import_xml(
-            serializer(model, context={"format": "xml"}).data,
+            [serializer(model, context={"format": "xml"}).data],
         )
 
         import_xml(xml, workflow_status, record_group)
