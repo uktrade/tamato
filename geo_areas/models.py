@@ -59,6 +59,9 @@ class GeographicalAreaQuerySet(TrackedModelQuerySet):
         )
 
     def with_current_descriptions(qs):
+        """Returns a GeographicalArea queryset annotated with the result of a a
+        GeographicalAreaDescription subquery's description values chained
+        together, linking these two queries on version_group field."""
         current_descriptions = (
             GeographicalAreaDescription.objects.latest_approved()
             .filter(described_geographicalarea__version_group=OuterRef("version_group"))
