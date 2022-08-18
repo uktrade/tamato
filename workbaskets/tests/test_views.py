@@ -59,7 +59,20 @@ def test_workbasket_create_user_not_logged_in_dev_sso_disabled(client, settings)
     response = client.post(create_url, form_data)
 
     assert response.status_code == 302
-    assert response.url == reverse("login")
+    assert response.url == f"{settings.LOGIN_URL}?next={create_url}"
+
+
+def test_workbasket_create_without_permission(client):
+    create_url = reverse("workbaskets:workbasket-ui-create")
+    form_data = {
+        "title": "My new workbasket",
+        "reason": "Making a new workbasket",
+    }
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.post(create_url, form_data)
+
+    assert response.status_code == 403
 
 
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)
@@ -90,6 +103,18 @@ def test_submit_workbasket(
     assert workbasket.approver is not None
     assert "workbasket" not in client.session
     mock_upload.delay.assert_called_once_with()
+
+
+def test_submit_workbasket_without_permission(client, approved_workbasket):
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    url = reverse(
+        "workbaskets:workbasket-ui-submit",
+        kwargs={"pk": approved_workbasket.pk},
+    )
+    response = client.get(url)
+
+    assert response.status_code == 403
 
 
 @pytest.mark.parametrize(
@@ -289,6 +314,14 @@ def test_select_workbasket_page_200(valid_user_client):
     assert not set(statuses).difference(valid_statuses)
 
 
+def test_select_workbasket_without_permission(client):
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(reverse("workbaskets:workbasket-ui-list"))
+
+    assert response.status_code == 403
+
+
 @pytest.mark.parametrize(
     "form_action, url_name",
     [
@@ -328,6 +361,22 @@ def test_delete_changes_confirm_200(valid_user_client, session_workbasket):
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "url_name,",
+    ("workbaskets:workbasket-ui-delete-changes", "workbaskets:edit-workbasket"),
+)
+def test_workbasket_views_without_permission(url_name, client, session_workbasket):
+    url = reverse(
+        url_name,
+        kwargs={"pk": session_workbasket.pk},
+    )
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(url)
+
+    assert response.status_code == 403
 
 
 def test_workbasket_list_view_get_queryset():
