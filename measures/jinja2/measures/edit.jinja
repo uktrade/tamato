@@ -7,19 +7,18 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/fieldset/macro.njk" import govukFieldset %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 
 {% set page_title = "Edit " ~ object._meta.verbose_name ~ " details" %}
 
-{% block beforeContent %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("home")},
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
       {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url("list")},
       {"text": object._meta.verbose_name|capitalize ~ ": " ~ object.sid, "href": object.get_url()},
       {"text": page_title}
-    ]
-  }) }}
+    ])
+  }}
 {% endblock %}
 
 {% set validity_period_html %}

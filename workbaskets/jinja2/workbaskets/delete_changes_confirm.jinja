@@ -2,19 +2,7 @@
 
 {% from "components/panel/macro.njk" import govukPanel %}
 
-
 {% set page_title = "Remove tariff changes" %}
-
-
-{% block breadcrumb %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("home")},
-      {"text": page_title}
-    ]
-  }) }}
-{% endblock %}
-
 
 {% block content %}
 <div class="govuk-grid-row">

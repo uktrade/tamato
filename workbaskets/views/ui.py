@@ -106,7 +106,7 @@ class SelectWorkbasketView(WithPaginationListView):
                     kwargs={"pk": workbasket_pk},
                 )
 
-                return redirect(f"{redirect_url}?edit=1")
+                return redirect(redirect_url)
 
         return redirect(reverse("workbaskets:workbasket-ui-list"))
 

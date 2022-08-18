@@ -1,4 +1,5 @@
 {% extends "layouts/confirm.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 {% set page_title = "Create a new measure" %}
 
@@ -18,13 +19,11 @@
   {% endif %}
 {% endmacro %}
 
-{% block beforeContent %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("home")},
-      {"text": page_title}
-    ]
-  }) }}
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title },
+    ])
+  }}
 {% endblock %}
 
 {% block content %}

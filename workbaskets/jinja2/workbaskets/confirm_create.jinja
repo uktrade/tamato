@@ -5,13 +5,11 @@
 
 {% set page_title = "Create a new " ~ object._meta.verbose_name %}
 
-{% block beforeContent %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("home")},
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
       {"text": page_title}
     ]
-  }) }}
+  ) }}
 {% endblock %}
 
 {% block content %}
