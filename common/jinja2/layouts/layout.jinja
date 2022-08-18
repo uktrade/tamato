@@ -1,5 +1,5 @@
 {% from "components/phase-banner/macro.njk" import govukPhaseBanner %}
-{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 {% extends "layouts/_generic.jinja" %}
 
@@ -51,5 +51,8 @@
     "html": "This is a new service – your feedback will help us to improve it."
   }) }}
   {% block breadcrumb %}
+  {% if request.path != "/" %}
+    {{ breadcrumbs(request, [{"text": page_title}]) }}
+  {% endif %}
   {% endblock %}
 {% endblock %}

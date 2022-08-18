@@ -4,6 +4,7 @@
 
 {% set page_title = "Edit an existing workbasket" %}
 {% set list_include = "includes/workbaskets/edit-workbasket-list.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({

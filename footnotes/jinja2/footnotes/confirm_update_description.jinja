@@ -4,15 +4,13 @@
 
 {% set page_title = "Edit footnote description" %}
 
-{% block beforeContent %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("home")},
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
       {"text": "Footnotes", "href": url("footnote-ui-list")},
       {"text": "Footnote " ~ object.described_footnote|string, "href": object.described_footnote.get_url()},
       {"text": page_title}
-    ]
-  }) }}
+    ])
+  }}
 {% endblock %}
 
 {% block content %}
