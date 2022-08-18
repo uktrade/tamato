@@ -1,9 +1,8 @@
-import xml.etree.ElementTree as etree
-
 import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
+from common.util import xml_fromstring
 from common.views import HealthCheckResponse
 
 pytestmark = pytest.mark.django_db
@@ -58,7 +57,7 @@ def test_workbasket_action_form_response_redirects_user(
 )
 def test_healthcheck_response(response, status_code, status):
     assert response.status_code == status_code
-    payload = etree.fromstring(response.content)
+    payload = xml_fromstring(response.content)
     assert payload.tag == "pingdom_http_custom_check"
     assert payload[0].tag == "status"
     assert payload[0].text == status

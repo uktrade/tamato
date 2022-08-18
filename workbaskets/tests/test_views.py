@@ -222,30 +222,6 @@ def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbas
     assert str(session_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
 
 
-@pytest.mark.parametrize(
-    "url_name",
-    [
-        ("workbaskets:edit-workbasket"),
-        ("workbaskets:workbasket-ui-detail"),
-    ],
-)
-def test_edit_workbasket_page_displays_breadcrumb(
-    url_name,
-    valid_user_client,
-    session_workbasket,
-):
-    url = reverse(url_name, kwargs={"pk": session_workbasket.pk})
-    response = valid_user_client.get(
-        f"{url}?edit=1",
-    )
-    assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
-    breadcrumb_links = [
-        element.text for element in soup.select(".govuk-breadcrumbs__link")
-    ]
-    assert "Edit an existing workbasket" in breadcrumb_links
-
-
 def test_workbasket_detail_page_url_params(
     valid_user_client,
     session_workbasket,
@@ -262,19 +238,6 @@ def test_workbasket_detail_page_url_params(
         # test that accidental spacing in template hasn't mangled the url
         assert " " not in button.get("href")
         assert "%20" not in button.get("href")
-
-
-def test_edit_workbasket_page_hides_breadcrumb(valid_user_client, session_workbasket):
-    url = reverse("workbaskets:edit-workbasket", kwargs={"pk": session_workbasket.pk})
-    response = valid_user_client.get(
-        f"{url}?edit=",
-    )
-    assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
-    breadcrumb_links = [
-        element.text for element in soup.select(".govuk-breadcrumbs__link")
-    ]
-    assert "Edit an existing workbasket" not in breadcrumb_links
 
 
 def test_select_workbasket_page_200(valid_user_client):

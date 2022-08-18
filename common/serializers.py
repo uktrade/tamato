@@ -22,6 +22,7 @@ from common.renderers import Counter
 from common.renderers import counter_generator
 from common.util import TaricDateRange
 from common.util import get_taric_template
+from common.util import parse_xml
 from common.xml.namespaces import nsmap
 
 logger = logging.getLogger(__name__)
@@ -362,8 +363,8 @@ def validate_envelope(envelope_file, skip_declaration=False):
                 )
                 envelope_file.seek(pos, os.SEEK_SET)
 
-        schema = etree.XMLSchema(etree.parse(xsd_file))
-        xml = etree.parse(envelope_file)
+        schema = etree.XMLSchema(parse_xml(xsd_file))
+        xml = parse_xml(envelope_file)
 
         try:
             schema.assertValid(xml)

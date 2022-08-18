@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from common.util import parse_xml
 from importer import models
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
@@ -60,7 +61,7 @@ class CommodityImportForm(forms.ModelForm):
             raise ValidationError("The selected file must be XML")
 
         try:
-            xml_file = lxml.etree.parse(data)
+            xml_file = parse_xml(data)
         except lxml.etree.XMLSyntaxError as e:
             if settings.SENTRY_ENABLED:
                 capture_exception(e)
