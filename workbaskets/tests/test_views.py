@@ -44,6 +44,24 @@ def test_workbasket_create_form_creates_workbasket_object(
     assert workbasket.reason == form_data["reason"]
 
 
+def test_workbasket_create_user_not_logged_in_dev_sso_disabled(client, settings):
+    """Tests that, when a user who hasn't logged in tries to create a workbasket
+    in the dev env with SSO disabled, they are redirected to the login page."""
+    settings.ENV = "dev"
+    settings.SSO_ENABLED = False
+    settings.LOGIN_URL = reverse("login")
+    settings.MIDDLEWARE.remove("authbroker_client.middleware.ProtectAllViewsMiddleware")
+    create_url = reverse("workbaskets:workbasket-ui-create")
+    form_data = {
+        "title": "My new workbasket",
+        "reason": "Making a new workbasket",
+    }
+    response = client.post(create_url, form_data)
+
+    assert response.status_code == 302
+    assert response.url == reverse("login")
+
+
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)
 @patch("exporter.tasks.upload_workbaskets")
 def test_submit_workbasket(

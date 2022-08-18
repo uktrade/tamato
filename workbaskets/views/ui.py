@@ -61,6 +61,8 @@ class WorkBasketCreate(CreateView):
     form_class = forms.WorkbasketCreateForm
 
     def form_valid(self, form):
+        if not self.request.user.username:
+            return redirect(reverse("login"))
         user = get_user_model().objects.get(username=self.request.user.username)
         self.object = form.save(commit=False)
         self.object.author = user
