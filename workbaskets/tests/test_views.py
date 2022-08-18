@@ -63,6 +63,8 @@ def test_workbasket_create_user_not_logged_in_dev_sso_disabled(client, settings)
 
 
 def test_workbasket_create_without_permission(client):
+    """Tests that WorkBasketCreate returns 403 to user without add_workbasket
+    permission."""
     create_url = reverse("workbaskets:workbasket-ui-create")
     form_data = {
         "title": "My new workbasket",
@@ -103,18 +105,6 @@ def test_submit_workbasket(
     assert workbasket.approver is not None
     assert "workbasket" not in client.session
     mock_upload.delay.assert_called_once_with()
-
-
-def test_submit_workbasket_without_permission(client, approved_workbasket):
-    user = factories.UserFactory.create()
-    client.force_login(user)
-    url = reverse(
-        "workbaskets:workbasket-ui-submit",
-        kwargs={"pk": approved_workbasket.pk},
-    )
-    response = client.get(url)
-
-    assert response.status_code == 403
 
 
 @pytest.mark.parametrize(
@@ -315,6 +305,8 @@ def test_select_workbasket_page_200(valid_user_client):
 
 
 def test_select_workbasket_without_permission(client):
+    """Tests that SelectWorkbasketView returns 403 to user without
+    change_workbasket permission."""
     user = factories.UserFactory.create()
     client.force_login(user)
     response = client.get(reverse("workbaskets:workbasket-ui-list"))
@@ -365,9 +357,15 @@ def test_delete_changes_confirm_200(valid_user_client, session_workbasket):
 
 @pytest.mark.parametrize(
     "url_name,",
-    ("workbaskets:workbasket-ui-delete-changes", "workbaskets:edit-workbasket"),
+    (
+        "workbaskets:workbasket-ui-delete-changes",
+        "workbaskets:edit-workbasket",
+        "workbaskets:workbasket-ui-submit",
+    ),
 )
 def test_workbasket_views_without_permission(url_name, client, session_workbasket):
+    """Tests that delete, edit, and submit endpoints return 403s to user without
+    permissions."""
     url = reverse(
         url_name,
         kwargs={"pk": session_workbasket.pk},
