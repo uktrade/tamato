@@ -6,14 +6,12 @@
 
 {% set page_title = "Create a new import batch" %}
 
-{% block beforeContent %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("home")},
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
       {"text": "Find and edit import batches", "href": url("import_batch-ui-list")},
       {"text": page_title}
-    ]
-  }) }}
+    ])
+  }}
 {% endblock %}
 
 {% block content %}
