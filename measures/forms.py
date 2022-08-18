@@ -92,7 +92,7 @@ class GeoGroupForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["geographical_area_group"].queryset = (
             GeographicalArea.objects.current()
-            .with_current_description()
+            .with_latest_description()
             .filter(area_code=AreaCode.GROUP)
             .as_at_today()
             .order_by("description")
@@ -120,7 +120,7 @@ class ErgaOmnesExclusionsForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["erga_omnes_exclusion"].queryset = (
             GeographicalArea.objects.current()
-            .with_current_description()
+            .with_latest_description()
             .as_at_today()
             .order_by("description")
         )
@@ -143,7 +143,7 @@ class GeoGroupExclusionsForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["geo_group_exclusion"].queryset = (
             GeographicalArea.objects.current()
-            .with_current_description()
+            .with_latest_description()
             .as_at_today()
             .order_by("description")
         )
@@ -201,7 +201,7 @@ class CountryRegionForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["geographical_area_country_or_region"].queryset = (
             GeographicalArea.objects.current()
-            .with_current_description()
+            .with_latest_description()
             .exclude(area_code=AreaCode.GROUP)
             .as_at_today()
             .order_by("description")
