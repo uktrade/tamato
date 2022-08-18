@@ -61,6 +61,11 @@ ui_patterns = [
         ui_views.WorkBasketList.as_view(),
         name="workbasket-ui-list-all",
     ),
+    path(
+        f"<pk>/changes/",
+        ui_views.WorkBasketChanges.as_view(),
+        name="workbasket-ui-changes",
+    ),
 ]
 
 urlpatterns = [
