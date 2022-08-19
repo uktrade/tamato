@@ -79,6 +79,11 @@ The app requires an AWS S3 bucket or a compatible implementation, such as MinIO_
 .. _Redis: https://redis.io/
 .. _MinIO: https://min.io/
 
+If using MacOS then libmagic is required:
+
+    $ brew install libmagic
+
+
 Database
 ~~~~~~~~
 
