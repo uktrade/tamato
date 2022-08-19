@@ -1,13 +1,15 @@
 import pytest
 
-from importer.cache import cache
-from importer.cache import memory
-from importer.cache import pickle
-from importer.cache.cache import *
+from importer.cache import cache, redis, memory, pickle
 
 
-def does_not_raise():
-    yield
+@pytest.fixture(autouse=True)
+def clear_cache():
+    cache.ObjectCacheFacade().clear()
+    memory.MemoryCacheEngine().clear()
+    pickle_cache = pickle.PickleCacheEngine()
+    pickle_cache.clear()
+    pickle_cache.dump()
 
 
 # TODO  note : Redis cache defaults to django dummy cache - need to discuss getting redis on the CI server
@@ -18,25 +20,6 @@ test_data = [
     pickle.PickleCacheEngine,
     # redis.RedisCacheEngine,
 ]
-
-
-@pytest.fixture(autouse=True)
-def clear_object_cache():
-    """
-    Clears the object cache data for each test in this suite.
-
-    Object cache will persist between tests so this is required for some tests
-    in the suite to prepare a clean cache for subsequent tests. This fixture is
-    only local to this set of tests and is not called for any other tests
-    """
-    object_cache = ObjectCacheFacade()
-    object_cache.clear()
-
-    object_cache = pickle.PickleCacheEngine()
-    object_cache.clear()
-    object_cache.dump()
-
-    yield
 
 
 @pytest.mark.parametrize("target", test_data)
@@ -60,8 +43,11 @@ def test_put_stores_value_when_value_exists(target):
 
 @pytest.mark.parametrize("target", test_data)
 def test_pop_when_no_values_available_returns_none(target):
-    """For all parameterized cache engines, test that pop calls to non-existent
-    key returns None and does not throw exception etc."""
+    """
+    For all parameterized cache engines, test that pop calls to non-existent
+    key returns None and does not throw exception etc.
+    """
+
     object_cache = target()
     assert object_cache.pop("test") is None
 
@@ -70,6 +56,7 @@ def test_pop_when_no_values_available_returns_none(target):
 def test_pop_removes_and_returns_value_when_present(target):
     """For all parameterized cache engines, test that pop returns and removes
     value from cache."""
+
     object_cache = target()
     object_cache.put("test", 123)
     assert object_cache.pop("test") == 123
@@ -80,6 +67,7 @@ def test_pop_removes_and_returns_value_when_present(target):
 def test_pop_returns_none_if_not_present(target):
     """For all parameterized cache engines, test that pop returns None when
     value not present."""
+
     object_cache = target()
     assert object_cache.pop("test") is None
 
@@ -88,6 +76,7 @@ def test_pop_returns_none_if_not_present(target):
 def test_keys_return_keys_correctly_when_populated(target):
     """For all parameterized cache engines, test that keys returns as expected
     when populated."""
+
     object_cache = target()
     object_cache.put("test", 123)
     assert object_cache.keys() == {"test": ""}.keys()
@@ -109,6 +98,7 @@ def test_dump_return_correctly(target):
     Only used for pickle to write to file - but
     exists in base class.
     """
+
     object_cache = target()
     assert object_cache.dump() is None
 
@@ -117,6 +107,7 @@ def test_dump_return_correctly(target):
 def test_clear_returns_correctly(target):
     """For all parameterized cache engines, test that clear does clear the
     cache, verified by checking keys."""
+
     object_cache = target()
     object_cache.put("test", 123)
     assert object_cache.keys() == {"test": ""}.keys()

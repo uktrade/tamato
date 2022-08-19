@@ -25,6 +25,7 @@ from importer.namespaces import xsd_schema_paths
 from importer.nursery import TariffObjectNursery
 from importer.nursery import get_nursery
 from importer.utils import DispatchedObjectType
+import xml.etree.ElementTree as et
 
 
 @pytest.fixture
@@ -130,6 +131,19 @@ def handler_footnote_type_test_data(approved_transaction, date_ranges) -> Dispat
         "transaction_id": approved_transaction.pk,
     }
 
+
+@pytest.fixture
+def handler_footnote_type_description_test_data(approved_transaction, date_ranges) -> DispatchedObjectType:
+    return {
+        "data": {
+            "footnote_type_id": "ZZ",
+            "description": "testing",
+            "update_type": 3,
+            "transaction_id": approved_transaction.pk,
+        },
+        "tag": "footnote.type.description",
+        "transaction_id": approved_transaction.pk,
+    }
 
 @pytest.fixture
 def prepped_handler(object_nursery, handler_class, handler_test_data) -> BaseHandler:
@@ -241,6 +255,20 @@ def example_goods_taric_file_location():
     shutil.copyfile(src, dst)
     taric_file_location = dst
     return taric_file_location
+
+
+@pytest.fixture
+def goods_xml_element_tree():
+    src = f"{os.getcwd()}/importer/tests/test_files/goods.xml"
+    xml_text = open(src).read()
+    return et.fromstring(xml_text)
+
+
+@pytest.fixture
+def goods_indents_xml_element_tree():
+    src = f"{os.getcwd()}/importer/tests/test_files/goods_indents.xml"
+    xml_text = open(src).read()
+    return et.fromstring(xml_text)
 
 
 def get_command_help_text(capsys, command, command_class=BaseCommand):

@@ -3,7 +3,7 @@ import pytest
 from common.tests import factories
 from common.tests.models import TestModel1
 from common.validators import UpdateType
-from footnotes.models import Footnote
+from footnotes.models import Footnote, FootnoteType
 from importer import nursery
 from importer.utils import DispatchedObjectType
 
@@ -93,19 +93,22 @@ def test_nursery_gets_object_from_cache(settings, object_nursery):
 
 
 @pytest.mark.django_db
-def test_submit_commits_to_database(settings, object_nursery, handler_footnote_type_test_data):
+def test_submit_commits_to_database(settings, object_nursery, handler_footnote_type_test_data, handler_footnote_type_description_test_data):
     settings.CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         },
     }
 
-    expected_footnote_count = len(Footnote.objects.all()) + 1
+    expected_footnote_count = len(FootnoteType.objects.all()) + 1
 
     # create dispatch object
-    dis_obj = handler_footnote_type_test_data
+    footnote_type_dis_obj = handler_footnote_type_test_data
+    footnote_type_description_dis_obj = handler_footnote_type_description_test_data
+
 
     # submit to nursery
-    object_nursery.submit(dis_obj)
+    object_nursery.submit(footnote_type_description_dis_obj)
+    object_nursery.submit(footnote_type_dis_obj)
 
-    assert len(Footnote.objects.all()) == expected_footnote_count
+    assert len(FootnoteType.objects.all()) == expected_footnote_count
