@@ -1,16 +1,17 @@
 {% extends "layouts/layout.jinja" %}
 
-{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }}{% endset %}
 {% set page_subtitle %}<span class="govuk-!-font-weight-bold">Summary</span> - View workbasket components{% endset %}
 
 {% block breadcrumb %}
-  {{ breadcrumbs(request, [
+  {{ govukBreadcrumbs({
+      "items": [
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
       {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary" }
-    ])
+    ]})
   }}
 {% endblock %}
 
