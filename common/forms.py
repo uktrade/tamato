@@ -587,3 +587,11 @@ def formset_factory(
         "renderer": renderer or get_default_renderer(),
     }
     return type(form.__name__ + "FormSet", (formset,), attrs)
+
+
+class ImportForm(forms.ModelForm):
+    taric_file = forms.FileField(
+        required=True,
+        help_text="",
+        label="Select an XML file",
+    )
