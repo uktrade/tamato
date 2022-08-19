@@ -1,6 +1,8 @@
 import pytest
 
-from importer.cache import cache, redis, memory, pickle
+from importer.cache import cache
+from importer.cache import memory
+from importer.cache import pickle
 
 
 @pytest.fixture(autouse=True)
@@ -43,10 +45,8 @@ def test_put_stores_value_when_value_exists(target):
 
 @pytest.mark.parametrize("target", test_data)
 def test_pop_when_no_values_available_returns_none(target):
-    """
-    For all parameterized cache engines, test that pop calls to non-existent
-    key returns None and does not throw exception etc.
-    """
+    """For all parameterized cache engines, test that pop calls to non-existent
+    key returns None and does not throw exception etc."""
 
     object_cache = target()
     assert object_cache.pop("test") is None

@@ -1,5 +1,6 @@
 import os
 import shutil
+import xml.etree.ElementTree as et
 from typing import Sequence
 from typing import Type
 
@@ -25,7 +26,6 @@ from importer.namespaces import xsd_schema_paths
 from importer.nursery import TariffObjectNursery
 from importer.nursery import get_nursery
 from importer.utils import DispatchedObjectType
-import xml.etree.ElementTree as et
 
 
 @pytest.fixture
@@ -114,7 +114,10 @@ def handler_test_data(approved_transaction, date_ranges) -> DispatchedObjectType
 
 
 @pytest.fixture
-def handler_footnote_type_test_data(approved_transaction, date_ranges) -> DispatchedObjectType:
+def handler_footnote_type_test_data(
+    approved_transaction,
+    date_ranges,
+) -> DispatchedObjectType:
     return {
         "data": {
             "footnote_type_id": "ZZ",
@@ -133,7 +136,10 @@ def handler_footnote_type_test_data(approved_transaction, date_ranges) -> Dispat
 
 
 @pytest.fixture
-def handler_footnote_type_description_test_data(approved_transaction, date_ranges) -> DispatchedObjectType:
+def handler_footnote_type_description_test_data(
+    approved_transaction,
+    date_ranges,
+) -> DispatchedObjectType:
     return {
         "data": {
             "footnote_type_id": "ZZ",
@@ -145,6 +151,7 @@ def handler_footnote_type_description_test_data(approved_transaction, date_range
         "transaction_id": approved_transaction.pk,
     }
 
+
 @pytest.fixture
 def prepped_handler(object_nursery, handler_class, handler_test_data) -> BaseHandler:
     return handler_class(handler_test_data, object_nursery)
@@ -152,16 +159,16 @@ def prepped_handler(object_nursery, handler_class, handler_test_data) -> BaseHan
 
 @pytest.fixture
 def prepped_handler_with_dependencies1(
-        object_nursery,
-        handler_class_with_dependencies,
-        handler_test_data,
+    object_nursery,
+    handler_class_with_dependencies,
+    handler_test_data,
 ) -> BaseHandler:
     return handler_class_with_dependencies(handler_test_data, object_nursery)
 
 
 @pytest.fixture
 def prepped_handler_with_dependencies2(
-        prepped_handler_with_dependencies1,
+    prepped_handler_with_dependencies1,
 ) -> BaseHandler:
     return prepped_handler_with_dependencies1.dependencies[0](
         prepped_handler_with_dependencies1.serialize(),
@@ -171,9 +178,9 @@ def prepped_handler_with_dependencies2(
 
 @pytest.fixture
 def prepped_handler_with_link(
-        handler_class_with_links,
-        object_nursery,
-        handler_test_data,
+    handler_class_with_links,
+    object_nursery,
+    handler_test_data,
 ) -> BaseHandler:
     handler_test_data["data"]["test_model_1__sid"] = factories.TestModel1Factory().sid
 

@@ -13,17 +13,18 @@ from commodities.models.orm import GoodsNomenclature
 from common.tests import factories
 from common.tests.util import generate_test_import_xml
 from importer import chunker
-from importer.chunker import MAX_FILE_SIZE, rewrite_comm_codes
+from importer.chunker import MAX_FILE_SIZE
 from importer.chunker import chunk_taric
 from importer.chunker import filter_transaction_records
 from importer.chunker import get_chapter_heading
 from importer.chunker import get_record_code
+from importer.chunker import rewrite_comm_codes
+from importer.chunker import sort_comm_code_messages
 from importer.chunker import sort_commodity_codes
 from importer.chunker import write_transaction_to_chunk
-from importer.chunker import sort_comm_code_messages
 from importer.models import ImporterXMLChunk
-from importer.namespaces import TTags, nsmap
-
+from importer.namespaces import TTags
+from importer.namespaces import nsmap
 
 from .test_namespaces import get_snippet_transaction
 
@@ -287,8 +288,6 @@ def test_write_transaction_to_chunk_exceed_max_file_size(
         ),
     ],
 )
-
-
 def test_sort_commodity_codes(
     taric_schema_tags,
     record_group,
@@ -334,26 +333,29 @@ def test_sort_commodity_codes(
 
 def test_sort_comm_code_messages_returns_correctly(goods_xml_element_tree):
     """
-    Test the behaviour of the sort_comm_code_messages sorting function
+    Test the behaviour of the sort_comm_code_messages sorting function.
 
-    In this scenario the subrecord.code is 00 and there is no number.indents so the expected value is ('00', '00')
+    In this scenario the subrecord.code is 00 and there is no number.indents so
+    the expected value is ('00', '00')
     """
     # get first transaction
-    transaction = goods_xml_element_tree.find('*/env:app.message', nsmap)
+    transaction = goods_xml_element_tree.find("*/env:app.message", nsmap)
     sorted_result = sort_comm_code_messages(transaction)
-    assert sorted_result == ('00', '00')
+    assert sorted_result == ("00", "00")
 
 
-def test_sort_comm_code_messages_returns_correctly_with_indents(goods_indents_xml_element_tree):
+def test_sort_comm_code_messages_returns_correctly_with_indents(
+    goods_indents_xml_element_tree,
+):
     """
-    Test the behaviour of the sort_comm_code_messages sorting function
+    Test the behaviour of the sort_comm_code_messages sorting function.
 
     In this scenario the subrecord.code is 05 and the number.indents is 04
     """
     # get first transaction
-    transaction = goods_indents_xml_element_tree.find('*/env:app.message', nsmap)
+    transaction = goods_indents_xml_element_tree.find("*/env:app.message", nsmap)
     sorted_result = sort_comm_code_messages(transaction)
-    assert sorted_result == ('05', '04')
+    assert sorted_result == ("05", "04")
 
 
 def test_rewrite_comm_codes(example_goods_taric_file_location):
@@ -362,7 +364,5 @@ def test_rewrite_comm_codes(example_goods_taric_file_location):
     taric_file = SimpleUploadedFile("goods.xml", content, content_type="text/xml")
     batch = factories.ImportBatchFactory.create(split_job=True)
     chunk_taric(taric_file, batch)
-    result = rewrite_comm_codes(batch, 1)
+    rewrite_comm_codes(batch, 1)
     # verify sort_comm_code_messages was called 2 times - as per the goods.xml transaction count
-
-
