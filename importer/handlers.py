@@ -315,7 +315,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         returns tuple(Object: model, bool: From Cache)
         """
-        if not any(kwargs.values()):
+        if not kwargs.values():
             raise model.DoesNotExist
 
         if settings.USE_IMPORTER_CACHE:
