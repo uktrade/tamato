@@ -84,7 +84,11 @@ class GeoGroupForm(forms.Form):
 
     geographical_area_group = forms.ModelChoiceField(
         label="",
-        queryset=None,  # populated in __init__
+        queryset=GeographicalArea.objects.current()
+        .with_latest_description()
+        .filter(area_code=AreaCode.GROUP)
+        .as_at_today()
+        .order_by("description"),  # populated in __init__
         error_messages={"required": "A country group is required."},
     )
 
@@ -552,6 +556,16 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
         return duty_sentence
 
     def clean(self):
+        conditions_formset = MeasureConditionsFormSet(self.data)
+
+        if not conditions_formset.is_valid():
+            for form_errors in conditions_formset.errors:
+                for error in form_errors.keys():
+                    self.add_error(
+                        None,
+                        ValidationError(f"{error}: {form_errors[error][0]}"),
+                    )
+
         cleaned_data = super().clean()
 
         erga_omnes_instance = (
@@ -680,16 +694,6 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
                 )
 
         return instance
-
-    def is_valid(self) -> bool:
-        """Check that measure conditions data is valid before calling super() on
-        the rest of the form data."""
-        conditions_formset = MeasureConditionsFormSet(self.data)
-
-        if not conditions_formset.is_valid():
-            return False
-
-        return super().is_valid()
 
 
 class MeasureFilterForm(forms.Form):

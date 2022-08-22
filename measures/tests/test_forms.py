@@ -4,6 +4,7 @@ import pytest
 from django.forms.models import model_to_dict
 
 from common.models.transactions import Transaction
+from common.models.utils import override_current_transaction
 from common.models.utils import set_current_transaction
 from common.tests import factories
 from geo_areas.validators import AreaCode
@@ -57,7 +58,16 @@ def test_measure_form_invalid_conditions_data(
         request=session_with_workbasket,
     )
 
-    assert not measure_form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        assert not measure_form.is_valid()
+        assert (
+            "condition_code: This field is required." in measure_form.errors["__all__"]
+        )
+        assert "action: This field is required." in measure_form.errors["__all__"]
+        assert (
+            "applicable_duty: Enter a valid duty sentence."
+            in measure_form.errors["__all__"]
+        )
 
 
 def test_measure_forms_details_valid_data(measure_type, regulation, erga_omnes):
@@ -85,6 +95,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
         prefix=GEO_AREA_FORM_PREFIX,
     )
     assert form.is_valid()
+    assert form.cleaned_data["geo_area_list"] == [erga_omnes]
 
 
 def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions(erga_omnes):
@@ -102,9 +113,12 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions(erga_omnes):
         prefix=GEO_AREA_FORM_PREFIX,
     )
     assert form.is_valid()
+    assert form.cleaned_data["geo_area_exclusions"] == [geo_area1, geo_area2]
 
 
 def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_delete(erga_omnes):
+    """Test that is_valid returns False when DELETE is in formset data, as per
+    FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
@@ -117,6 +131,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_delete(erga_omn
         initial={},
         prefix=GEO_AREA_FORM_PREFIX,
     )
+
     assert not form.is_valid()
 
 
@@ -135,9 +150,12 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions(erga_omnes):
         prefix=GEO_AREA_FORM_PREFIX,
     )
     assert form.is_valid()
+    assert form.cleaned_data["geo_area_exclusions"] == [geo_area1]
 
 
 def test_measure_forms_geo_area_valid_data_geo_group_exclusions_delete(erga_omnes):
+    """Test that is_valid returns False when DELETE is in formset data, as per
+    FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     data = {
@@ -156,6 +174,8 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions_delete(erga_omne
 
 
 def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_add(erga_omnes):
+    """Test that is_valid returns False when ADD is in formset data, as per
+    FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
@@ -185,7 +205,7 @@ def test_measure_forms_geo_area_valid_data_geo_group(erga_omnes):
     )
     assert form.is_valid()
     # https://uktrade.atlassian.net/browse/TP2000-437 500 error where object instead of a list of objects
-    assert type(form.cleaned_data["geo_area_list"]) == list
+    assert form.cleaned_data["geo_area_list"] == [geo_group]
 
 
 def test_measure_forms_geo_area_valid_data_countries(erga_omnes):
@@ -203,9 +223,12 @@ def test_measure_forms_geo_area_valid_data_countries(erga_omnes):
         prefix=GEO_AREA_FORM_PREFIX,
     )
     assert form.is_valid()
+    assert form.cleaned_data["geo_area_list"] == [geo_area1, geo_area2]
 
 
 def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
+    """Test that is_valid returns False when DELETE is in formset data, as per
+    FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_area2 = factories.GeographicalAreaFactory.create()
     data = {
@@ -224,6 +247,8 @@ def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
 
 
 def test_measure_forms_geo_area_valid_data_countries_add(erga_omnes):
+    """Test that is_valid returns False when ADD is in formset data, as per
+    FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
@@ -240,7 +265,7 @@ def test_measure_forms_geo_area_valid_data_countries_add(erga_omnes):
 
 
 def test_measure_forms_geo_area_invalid_data_geo_group(erga_omnes):
-    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area1 = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         "geographical_area_group-geographical_area_group": geo_area1.pk,
@@ -253,6 +278,8 @@ def test_measure_forms_geo_area_invalid_data_geo_group(erga_omnes):
     )
     assert not form.is_valid()
     assert "A country group is required." in form.errors["geo_area"][0]
+
+    # THIS SHOULDN'T BE PASSING
 
 
 @pytest.mark.parametrize(
@@ -697,7 +724,9 @@ def test_measure_form_valid_data(erga_omnes, session_with_workbasket):
         instance=Measure.objects.first(),
         request=session_with_workbasket,
     )
+
     assert form.is_valid()
+    # add more assertions
 
 
 @pytest.mark.parametrize("initial_option", [("ERGA_OMNES"), ("GROUP"), ("COUNTRY")])
