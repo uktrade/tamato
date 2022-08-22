@@ -1,46 +1,49 @@
 import pytest
-from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from importer.management.commands import renumber_transactions
 from importer.tests.conftest import get_command_help_text
+from importer.tests.management.commands.base import TestCommandBase
 
 pytestmark = pytest.mark.django_db
 
 
-class TestImportTaricCommand:
+class TestImportTaricCommand(TestCommandBase):
     TARGET_COMMAND = "renumber_transactions"
-
-    def call_command_test(self, *args, **kwargs):
-        call_command(
-            self.TARGET_COMMAND,
-            *args,
-            **kwargs,
-        )
-
-    def test_help_exists(self):
-        assert len(renumber_transactions.Command.help) > 0
 
     def test_dry_run(self, example_goods_taric_file_location):
         self.call_command_test(f"{example_goods_taric_file_location}", "55")
 
-    def test_dry_run_error_no_args(self):
-        with pytest.raises(CommandError) as ex:
-            self.call_command_test()
+    @pytest.mark.parametrize(
+        "args,exception_type,error_msg",
+        [
+            (
+                [],
+                pytest.raises(CommandError),
+                "Error: the following arguments are required: file, number",
+            ),
+            (
+                ["foo"],
+                pytest.raises(CommandError),
+                "Error: the following arguments are required: number",
+            ),
+            (
+                ["foo", "bar"],
+                pytest.raises(CommandError),
+                "Error: argument number: invalid int value: 'bar'",
+            ),
+            (
+                ["foo", "7"],
+                pytest.raises(FileNotFoundError),
+                "No such file or directory",
+            ),
+        ],
+    )
+    def test_dry_run_args_errors(self, args, exception_type, error_msg):
+        with exception_type as ex:
+            self.call_command_test(*args)
 
-        assert "Error: the following arguments are required: file, number" in str(ex)
-
-    def test_dry_run_error_no_number(self, example_goods_taric_file_location):
-        with pytest.raises(CommandError) as ex:
-            self.call_command_test(f"{example_goods_taric_file_location}")
-
-        assert "Error: the following arguments are required: number" in str(ex)
-
-    def test_dry_run_error_file_not_found(self):
-        with pytest.raises(FileNotFoundError) as ex:
-            self.call_command_test(f"dfgdfg", "55")
-
-        assert "No such file or directory" in str(ex)
+        assert error_msg in str(ex.value)
 
     def test_help(self, capsys):
         get_command_help_text(

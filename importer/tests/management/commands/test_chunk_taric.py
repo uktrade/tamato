@@ -2,7 +2,6 @@ from datetime import datetime
 from datetime import timezone
 
 import pytest
-from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from importer.management.commands import chunk_taric
@@ -10,6 +9,7 @@ from importer.models import BatchDependencies
 from importer.models import ImportBatch
 from importer.models import ImporterXMLChunk
 from importer.tests.conftest import get_command_help_text
+from importer.tests.management.commands.base import TestCommandBase
 
 pytestmark = pytest.mark.django_db
 
@@ -48,23 +48,8 @@ def test_setup_batch_with_split_no_dependencies():
     assert BatchDependencies.objects.filter(dependent_batch_id=batch.pk).count() == 0
 
 
-class TestChunkTaricCommand:
+class TestChunkTaricCommand(TestCommandBase):
     TARGET_COMMAND = "chunk_taric"
-
-    def call_command_test(
-        self,
-        *args,
-        **kwargs,
-    ):
-
-        call_command(
-            self.TARGET_COMMAND,
-            *args,
-            **kwargs,
-        )
-
-    def test_help_exists(self):
-        assert len(chunk_taric.Command.help) > 0
 
     def test_dry_run(self, capsys, example_goods_taric_file_location):
         initial_chunk_count = ImporterXMLChunk.objects.count()
@@ -85,30 +70,39 @@ class TestChunkTaricCommand:
         chunk = ImporterXMLChunk.objects.last()
         assert (datetime.now(timezone.utc) - chunk.created_at).total_seconds() < 10
 
-    def test_dry_run_error_no_args(self):
-        with pytest.raises(CommandError) as ex:
-            self.call_command_test()
+    @pytest.mark.parametrize(
+        "args,exception_type,error_msg",
+        [
+            (
+                [],
+                pytest.raises(CommandError),
+                "Error: the following arguments are required: taric3_file, name",
+            ),
+            (
+                ["foo"],
+                pytest.raises(CommandError),
+                "Error: the following arguments are required: name",
+            ),
+            (
+                ["foo", "bar"],
+                pytest.raises(FileNotFoundError),
+                "No such file or directory",
+            ),
+            # (['foo bar'], does_not_raise(), '')
+        ],
+    )
+    def test_dry_run_args_errors(self, args, exception_type, error_msg):
+        with exception_type as ex:
+            self.call_command_test(*args)
 
-        assert "Error: the following arguments are required: taric3_file, name" in str(
-            ex,
-        )
-
-    def test_dry_run_error_no_name(self, example_goods_taric_file_location):
-        with pytest.raises(CommandError) as ex:
-            self.call_command_test(
-                f"{example_goods_taric_file_location}",
-            )
-
-        assert "Error: the following arguments are required: name" in str(ex)
-
-    def test_dry_run_error_file_not_found(self):
-        with pytest.raises(FileNotFoundError) as ex:
-            self.call_command_test(f"dfgdfg", "sdfsdfsdf")
-
-        assert "No such file or directory" in str(ex)
+        assert error_msg in str(ex.value)
 
     def test_help(self, capsys):
-        get_command_help_text(capsys, self.TARGET_COMMAND, chunk_taric.Command)
+        get_command_help_text(
+            capsys,
+            self.TARGET_COMMAND,
+            eval(self.TARGET_COMMAND).Command,
+        )
 
         out = capsys.readouterr().out
 

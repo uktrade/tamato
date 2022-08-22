@@ -1,26 +1,16 @@
 import pytest
-from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from importer.management.commands import run_import_batch
 from importer.models import ImportBatch
 from importer.tests.conftest import get_command_help_text
+from importer.tests.management.commands.base import TestCommandBase
 
 pytestmark = pytest.mark.django_db
 
 
-class TestImportTaricCommand:
+class TestImportTaricCommand(TestCommandBase):
     TARGET_COMMAND = "run_import_batch"
-
-    def call_command_test(self, *args, **kwargs):
-        call_command(
-            self.TARGET_COMMAND,
-            *args,
-            **kwargs,
-        )
-
-    def test_help_exists(self):
-        assert len(run_import_batch.Command.help) > 0
 
     def test_dry_run(self, capsys):
         ImportBatch.objects.create(name="55", split_job=False)
@@ -28,17 +18,26 @@ class TestImportTaricCommand:
         captured = capsys.readouterr()
         assert captured.out == ""
 
-    def test_batch_does_not_exist(self):
-        with pytest.raises(ImportBatch.DoesNotExist) as ex:
-            self.call_command_test("55")
+    @pytest.mark.parametrize(
+        "args,exception_type,error_msg",
+        [
+            (
+                [],
+                pytest.raises(CommandError),
+                "Error: the following arguments are required: batch",
+            ),
+            (
+                ["55"],
+                pytest.raises(ImportBatch.DoesNotExist),
+                "ImportBatch matching query does not exist.",
+            ),
+        ],
+    )
+    def test_dry_run_args_errors(self, args, exception_type, error_msg):
+        with exception_type as ex:
+            self.call_command_test(*args)
 
-        assert "ImportBatch matching query does not exist." in str(ex)
-
-    def test_dry_run_error_no_args(self):
-        with pytest.raises(CommandError) as ex:
-            self.call_command_test()
-
-        assert "Error: the following arguments are required: batch" in str(ex)
+        assert error_msg in str(ex.value)
 
     def test_help(self, capsys):
         get_command_help_text(capsys, self.TARGET_COMMAND, run_import_batch.Command)

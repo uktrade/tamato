@@ -1,6 +1,7 @@
 import os
 import shutil
 import xml.etree.ElementTree as et
+from pathlib import Path
 from typing import Sequence
 from typing import Type
 
@@ -26,6 +27,10 @@ from importer.namespaces import xsd_schema_paths
 from importer.nursery import TariffObjectNursery
 from importer.nursery import get_nursery
 from importer.utils import DispatchedObjectType
+
+
+def get_project_root():
+    return Path(__file__).parents[2]
 
 
 @pytest.fixture
@@ -256,8 +261,9 @@ def tag_regex() -> Tag:
 
 @pytest.fixture
 def example_goods_taric_file_location():
-    src = f"{os.getcwd()}/importer/tests/test_files/goods.xml"
-    dst = f"{os.getcwd()}/tmp/taric/goods.xml"
+    root_path = get_project_root()
+    src = os.path.join(root_path, "importer/tests/test_files/goods.xml")
+    dst = os.path.join(root_path, "tmp/taric/goods.xml")
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     shutil.copyfile(src, dst)
     taric_file_location = dst
@@ -266,14 +272,17 @@ def example_goods_taric_file_location():
 
 @pytest.fixture
 def goods_xml_element_tree():
-    src = f"{os.getcwd()}/importer/tests/test_files/goods.xml"
+    src = os.path.join(get_project_root(), "importer/tests/test_files/goods.xml")
     xml_text = open(src).read()
     return et.fromstring(xml_text)
 
 
 @pytest.fixture
 def goods_indents_xml_element_tree():
-    src = f"{os.getcwd()}/importer/tests/test_files/goods_indents.xml"
+    src = os.path.join(
+        get_project_root(),
+        "importer/tests/test_files/goods_indents.xml",
+    )
     xml_text = open(src).read()
     return et.fromstring(xml_text)
 
