@@ -2,6 +2,7 @@ from datetime import datetime
 from datetime import timezone
 
 import pytest
+from bs4 import BeautifulSoup as bs
 from django.core.management.base import CommandError
 
 from importer.management.commands import chunk_taric
@@ -69,6 +70,21 @@ class TestChunkTaricCommand(TestCommandBase):
         # verify the ImporterXMLChunk is attached to a batch
         chunk = ImporterXMLChunk.objects.last()
         assert (datetime.now(timezone.utc) - chunk.created_at).total_seconds() < 10
+
+        actual_bs = bs(chunk.chunk_text, "xml")
+        expected_bs = bs(open(example_goods_taric_file_location).read(), "xml")
+        assert len(actual_bs.find_all("transaction")) == len(
+            expected_bs.find_all("transaction"),
+        )
+        assert len(actual_bs.find_all("transaction")[0]["id"]) == len(
+            expected_bs.find_all("transaction")[0]["id"],
+        )
+        assert len(actual_bs.find_all("envelope")) == len(
+            expected_bs.find_all("envelope"),
+        )
+        assert len(actual_bs.find_all("envelope")[0]["id"]) == len(
+            expected_bs.find_all("envelope")[0]["id"],
+        )
 
     @pytest.mark.parametrize(
         "args,exception_type,error_msg",
