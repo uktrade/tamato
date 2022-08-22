@@ -20,7 +20,6 @@ test_data = [
     cache.ObjectCacheFacade,
     memory.MemoryCacheEngine,
     pickle.PickleCacheEngine,
-    # redis.RedisCacheEngine,
 ]
 
 
