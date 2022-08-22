@@ -44,6 +44,39 @@ def test_workbasket_create_form_creates_workbasket_object(
     assert workbasket.reason == form_data["reason"]
 
 
+def test_workbasket_create_user_not_logged_in_dev_sso_disabled(client, settings):
+    """Tests that, when a user who hasn't logged in tries to create a workbasket
+    in the dev env with SSO disabled, they are redirected to the login page."""
+    settings.ENV = "dev"
+    settings.SSO_ENABLED = False
+    settings.LOGIN_URL = reverse("login")
+    settings.MIDDLEWARE.remove("authbroker_client.middleware.ProtectAllViewsMiddleware")
+    create_url = reverse("workbaskets:workbasket-ui-create")
+    form_data = {
+        "title": "My new workbasket",
+        "reason": "Making a new workbasket",
+    }
+    response = client.post(create_url, form_data)
+
+    assert response.status_code == 302
+    assert response.url == f"{settings.LOGIN_URL}?next={create_url}"
+
+
+def test_workbasket_create_without_permission(client):
+    """Tests that WorkBasketCreate returns 403 to user without add_workbasket
+    permission."""
+    create_url = reverse("workbaskets:workbasket-ui-create")
+    form_data = {
+        "title": "My new workbasket",
+        "reason": "Making a new workbasket",
+    }
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.post(create_url, form_data)
+
+    assert response.status_code == 403
+
+
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPOGATES=True)
 @patch("exporter.tasks.upload_workbaskets")
 def test_submit_workbasket(
@@ -222,30 +255,6 @@ def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbas
     assert str(session_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
 
 
-@pytest.mark.parametrize(
-    "url_name",
-    [
-        ("workbaskets:edit-workbasket"),
-        ("workbaskets:workbasket-ui-detail"),
-    ],
-)
-def test_edit_workbasket_page_displays_breadcrumb(
-    url_name,
-    valid_user_client,
-    session_workbasket,
-):
-    url = reverse(url_name, kwargs={"pk": session_workbasket.pk})
-    response = valid_user_client.get(
-        f"{url}?edit=1",
-    )
-    assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
-    breadcrumb_links = [
-        element.text for element in soup.select(".govuk-breadcrumbs__link")
-    ]
-    assert "Edit an existing workbasket" in breadcrumb_links
-
-
 def test_workbasket_detail_page_url_params(
     valid_user_client,
     session_workbasket,
@@ -262,19 +271,6 @@ def test_workbasket_detail_page_url_params(
         # test that accidental spacing in template hasn't mangled the url
         assert " " not in button.get("href")
         assert "%20" not in button.get("href")
-
-
-def test_edit_workbasket_page_hides_breadcrumb(valid_user_client, session_workbasket):
-    url = reverse("workbaskets:edit-workbasket", kwargs={"pk": session_workbasket.pk})
-    response = valid_user_client.get(
-        f"{url}?edit=",
-    )
-    assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
-    breadcrumb_links = [
-        element.text for element in soup.select(".govuk-breadcrumbs__link")
-    ]
-    assert "Edit an existing workbasket" not in breadcrumb_links
 
 
 def test_select_workbasket_page_200(valid_user_client):
@@ -306,6 +302,16 @@ def test_select_workbasket_page_200(valid_user_client):
     ]
     assert len(statuses) == 4
     assert not set(statuses).difference(valid_statuses)
+
+
+def test_select_workbasket_without_permission(client):
+    """Tests that SelectWorkbasketView returns 403 to user without
+    change_workbasket permission."""
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(reverse("workbaskets:workbasket-ui-list"))
+
+    assert response.status_code == 403
 
 
 @pytest.mark.parametrize(
@@ -347,6 +353,28 @@ def test_delete_changes_confirm_200(valid_user_client, session_workbasket):
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "url_name,",
+    (
+        "workbaskets:workbasket-ui-delete-changes",
+        "workbaskets:edit-workbasket",
+        "workbaskets:workbasket-ui-submit",
+    ),
+)
+def test_workbasket_views_without_permission(url_name, client, session_workbasket):
+    """Tests that delete, edit, and submit endpoints return 403s to user without
+    permissions."""
+    url = reverse(
+        url_name,
+        kwargs={"pk": session_workbasket.pk},
+    )
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(url)
+
+    assert response.status_code == 403
 
 
 def test_workbasket_list_view_get_queryset():

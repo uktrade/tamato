@@ -5,24 +5,14 @@
 {% set page_subtitle %}What would you like to do?{% endset %}
 
 {% block breadcrumb %}
-  {% if request.GET.edit %}
-    {{ govukBreadcrumbs({
-      "items": [
-        {"text": "Home", "href": url("home")},
-        {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
-        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
-      ]
-    }) }}
-  {% else %}
-    {{ govukBreadcrumbs({
-      "items": [
-        {"text": "Home", "href": url("home")},
-        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
-        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
-      ]
-    }) }}
-  {% endif %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
+    ]
+  }) }}
 {% endblock %}
 
 

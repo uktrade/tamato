@@ -35,6 +35,7 @@ def test_commodities_import_success_redirect(mock_save, valid_user_client):
     [
         ("invalid.xml", "The selected file could not be uploaded - try again"),
         ("broken.xml", "The selected file could not be uploaded - try again"),
+        ("dtd.xml", "The selected file could not be uploaded - try again"),
         ("invalid_type.txt", "The selected file must be XML"),
     ],
 )

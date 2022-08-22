@@ -53,7 +53,7 @@ class WorkBasketConfirmCreate(DetailView):
     queryset = WorkBasket.objects.all()
 
 
-class WorkBasketCreate(CreateView):
+class WorkBasketCreate(PermissionRequiredMixin, CreateView):
     """UI endpoint for creating workbaskets."""
 
     permission_required = "workbaskets.add_workbasket"
@@ -61,6 +61,8 @@ class WorkBasketCreate(CreateView):
     form_class = forms.WorkbasketCreateForm
 
     def form_valid(self, form):
+        if not self.request.user.is_authenticated:
+            return redirect(reverse("login"))
         user = get_user_model().objects.get(username=self.request.user.username)
         self.object = form.save(commit=False)
         self.object.author = user
@@ -79,7 +81,7 @@ class WorkBasketCreate(CreateView):
         return kwargs
 
 
-class SelectWorkbasketView(WithPaginationListView):
+class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
     """UI endpoint for viewing and filtering workbaskets."""
 
     filterset_class = WorkBasketFilter
@@ -107,7 +109,7 @@ class SelectWorkbasketView(WithPaginationListView):
                     kwargs={"pk": workbasket_pk},
                 )
 
-                return redirect(f"{redirect_url}?edit=1")
+                return redirect(redirect_url)
 
         return redirect(reverse("workbaskets:workbasket-ui-list"))
 
@@ -248,7 +250,7 @@ def download_envelope(request):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class EditWorkbasketView(TemplateView):
+class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
     template_name = "workbaskets/edit-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
 

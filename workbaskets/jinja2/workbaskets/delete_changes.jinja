@@ -1,22 +1,9 @@
 {% extends "layouts/layout.jinja" %}
 
-{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 
-
 {% set page_title = "Remove tariff changes" %}
-
-
-{% block breadcrumb %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("home")},
-      {"text": page_title}
-    ]
-  }) }}
-{% endblock %}
-
 
 {% block content %}
   <div class="govuk-grid-row">

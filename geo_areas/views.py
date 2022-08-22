@@ -24,7 +24,7 @@ class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = (
         GeographicalArea.objects.latest_approved()
-        .with_current_description()
+        .with_latest_description()
         .prefetch_related(
             "descriptions",
         )
@@ -69,7 +69,7 @@ class GeoAreaList(GeoAreaMixin, TamatoListView):
     filterset_class.search_fields = ["area_id", "description"]
 
     def get_queryset(self):
-        return GeographicalArea.objects.current().with_current_description()
+        return GeographicalArea.objects.current().with_current_descriptions()
 
 
 class GeoAreaDetail(GeoAreaMixin, TrackedModelDetailView):
