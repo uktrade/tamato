@@ -10,6 +10,7 @@
         {"text": commodity.get_description().description},
     ]) or "" }}
 {% endfor %}
+{{object_list[0].origins.all()}}
 {{ govukTable({
     "head": [
         {"text": "Commodity code"},

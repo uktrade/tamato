@@ -15,8 +15,13 @@ urlpatterns = [
     path("api/", include(api_router.urls)),
     path(
         "commodities/",
-        views.CommodityListView.as_view(),
+        views.CommodityList.as_view(),
         name="commodities-list",
+    ),
+    path(
+        f"commodities/<sid>/",
+        views.CommodityDetail.as_view(),
+        name="commodity-detail",
     ),
     path(
         "commodities/import/",

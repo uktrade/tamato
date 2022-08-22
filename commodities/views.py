@@ -13,6 +13,7 @@ from commodities.forms import CommodityImportForm
 from commodities.models import GoodsNomenclature
 from common.serializers import AutoCompleteSerializer
 from common.views import TamatoListView
+from common.views import TrackedModelDetailView
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
@@ -65,9 +66,13 @@ class CommodityMixin:
         return GoodsNomenclature.objects.approved_up_to_transaction(tx)
 
 
-class CommodityListView(CommodityMixin, TamatoListView):
+class CommodityList(CommodityMixin, TamatoListView):
     template_name = "commodities/list.jinja"
     filterset_class = CommodityFilter
 
     def get_queryset(self):
         return GoodsNomenclature.objects.order_by("item_id")
+
+
+class CommodityDetail(CommodityMixin, TrackedModelDetailView):
+    template_name = "commodities/detail.jinja"
