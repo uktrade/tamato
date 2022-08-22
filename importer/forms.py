@@ -5,11 +5,11 @@ from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Layout
 from defusedxml.common import DTDForbidden
 from django import forms
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+import settings
 from common.util import parse_xml
 from importer import models
 from importer.chunker import chunk_taric
