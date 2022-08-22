@@ -18,7 +18,6 @@ from importer.chunker import chunk_taric
 from importer.chunker import filter_transaction_records
 from importer.chunker import get_chapter_heading
 from importer.chunker import get_record_code
-from importer.chunker import rewrite_comm_codes
 from importer.chunker import sort_comm_code_messages
 from importer.chunker import sort_commodity_codes
 from importer.chunker import write_transaction_to_chunk
@@ -356,13 +355,3 @@ def test_sort_comm_code_messages_returns_correctly_with_indents(
     transaction = goods_indents_xml_element_tree.find("*/env:app.message", nsmap)
     sorted_result = sort_comm_code_messages(transaction)
     assert sorted_result == ("05", "04")
-
-
-def test_rewrite_comm_codes(example_goods_taric_file_location):
-    with open(f"{example_goods_taric_file_location}", "rb") as f:
-        content = f.read()
-    taric_file = SimpleUploadedFile("goods.xml", content, content_type="text/xml")
-    batch = factories.ImportBatchFactory.create(split_job=True)
-    chunk_taric(taric_file, batch)
-    rewrite_comm_codes(batch, 1)
-    # verify sort_comm_code_messages was called 2 times - as per the goods.xml transaction count
