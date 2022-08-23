@@ -26,7 +26,7 @@ class GoodsNomenclatureFilterBackend(TamatoFilterBackend):
 
 class CommodityFilter(TamatoFilter, ActiveStateMixin):
     item_id = CharFilter(label="Code", widget=forms.TextInput())
-    clear_url = reverse_lazy("commodities-list")
+    clear_url = reverse_lazy("commodity-ui-list")
 
     class Meta:
         model = GoodsNomenclature

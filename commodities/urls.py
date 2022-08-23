@@ -16,7 +16,7 @@ urlpatterns = [
     path(
         "commodities/",
         views.CommodityList.as_view(),
-        name="commodities-list",
+        name="commodity-ui-list",
     ),
     path(
         f"commodities/<sid>/",
