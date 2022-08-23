@@ -98,7 +98,11 @@ class Command(BaseCommand):
             envelope_id = int(options.get("envelope_id")[0])
 
         # Setting max_envelope_size to 0, also disables splitting - so normalise 0 to None:
-        max_envelope_size = None
+        max_envelope_size = (
+            None
+            if options.get("disable_splitting")
+            else int(options.get("max_envelope_size") or None)
+        )
 
         directory = options.get("directory", ".")
 
