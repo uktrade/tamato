@@ -21,7 +21,7 @@ def test_commodities_import_200(valid_user_client):
 def test_commodities_import_success_redirect(mock_save, valid_user_client):
     mock_save.return_value = ImportBatchFactory.create()
     url = reverse("commodity-ui-import")
-    redirect_url = reverse("commodities-import-success")
+    redirect_url = reverse("commodity-ui-import-success")
     with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as f:
         content = f.read()
     taric_file = SimpleUploadedFile("taric_file.xml", content, content_type="text/xml")

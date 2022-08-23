@@ -31,6 +31,6 @@ urlpatterns = [
     path(
         "commodities/import/success/",
         views.CommodityImportSuccessView.as_view(),
-        name="commodities-import-success",
+        name="commodity-ui-import-success",
     ),
 ]

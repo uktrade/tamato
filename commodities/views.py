@@ -47,7 +47,7 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
 class CommodityImportView(FormView, WithCurrentWorkBasket):
     template_name = "commodities/import.jinja"
     form_class = CommodityImportForm
-    success_url = reverse_lazy("commodities-import-success")
+    success_url = reverse_lazy("commodity-ui-import-success")
 
     def form_valid(self, form):
         form.save(user=self.request.user, workbasket_id=self.workbasket.id)
