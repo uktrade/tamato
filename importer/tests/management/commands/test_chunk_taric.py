@@ -73,6 +73,8 @@ class TestChunkTaricCommand(TestCommandBase):
 
         actual_bs = bs(chunk.chunk_text, "xml")
         expected_bs = bs(open(example_goods_taric_file_location).read(), "xml")
+
+        # test that the XML inside the chunk matches the imported data
         assert len(actual_bs.find_all("transaction")) == len(
             expected_bs.find_all("transaction"),
         )
