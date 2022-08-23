@@ -3,14 +3,13 @@
 {% set table_rows = [] %}
 {% for commodity in object_list|sort(attribute='item_id') %}
     {% set commodity_link -%}
-        <a class="govuk-link govuk-!-font-weight-bold" href="{{ commodity.get_url() }}">{{ commodity.code }}</a>
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("commodity-detail", kwargs={"sid": commodity.sid}) }}">{{ commodity.code }}</a>
     {%- endset %}
     {{ table_rows.append([
         {"html": commodity_link},
         {"text": commodity.get_description().description},
     ]) or "" }}
 {% endfor %}
-{{object_list[0].origins.all()}}
 {{ govukTable({
     "head": [
         {"text": "Commodity code"},
