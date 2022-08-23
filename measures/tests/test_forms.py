@@ -264,11 +264,12 @@ def test_measure_forms_geo_area_valid_data_countries_add(erga_omnes):
     assert not form.is_valid()
 
 
-def test_measure_forms_geo_area_invalid_data_geo_group(erga_omnes):
-    geo_area1 = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
+def test_measure_forms_geo_area_invalid_data_geo_group_missing_field(erga_omnes):
+    """Test that GeoGroupForm raises a field required error when null value is
+    passed to geographical_area_group field."""
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
-        "geographical_area_group-geographical_area_group": geo_area1.pk,
+        "geographical_area-geographical_area_group": None,
     }
     set_current_transaction(Transaction.objects.last())
     form = forms.MeasureGeographicalAreaForm(
@@ -279,7 +280,26 @@ def test_measure_forms_geo_area_invalid_data_geo_group(erga_omnes):
     assert not form.is_valid()
     assert "A country group is required." in form.errors["geo_area"][0]
 
-    # THIS SHOULDN'T BE PASSING
+
+def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes):
+    """Test that GeoGroupForm raises an invalid choice error when passed an area
+    whose area_code is not AreaCode.GROUP."""
+    geo_area1 = factories.GeographicalAreaFactory.create(area_code=AreaCode.REGION)
+    data = {
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
+        "geographical_area-geographical_area_group": geo_area1.pk,
+    }
+    set_current_transaction(Transaction.objects.last())
+    form = forms.MeasureGeographicalAreaForm(
+        data,
+        initial={},
+        prefix=GEO_AREA_FORM_PREFIX,
+    )
+    assert not form.is_valid()
+    assert (
+        "Select a valid choice. That choice is not one of the available choices."
+        in form.errors["geo_area"][0]
+    )
 
 
 @pytest.mark.parametrize(
@@ -384,6 +404,8 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
         measure_start_date=date_ranges.normal,
     )
     assert form.is_valid() == is_valid
+    if not form.is_valid():
+        assert "Enter a valid duty sentence." in form.errors["__all__"]
 
 
 def test_measure_forms_conditions_form_valid_data():
@@ -705,6 +727,8 @@ def test_measure_forms_conditions_wizard_clears_unneeded_certificate(date_ranges
 
 
 def test_measure_form_valid_data(erga_omnes, session_with_workbasket):
+    """Test that MeasureForm.is_valid returns True when passed required fields
+    and geographical_area and sid fields in cleaned data."""
     measure = factories.MeasureFactory.create()
     data = model_to_dict(measure)
     data["geo_area"] = "COUNTRY"
@@ -726,7 +750,11 @@ def test_measure_form_valid_data(erga_omnes, session_with_workbasket):
     )
 
     assert form.is_valid()
-    # add more assertions
+    assert (
+        form.cleaned_data["geographical_area"].pk
+        == data["country_region-geographical_area_country_or_region"]
+    )
+    assert form.cleaned_data["sid"] == measure.sid
 
 
 @pytest.mark.parametrize("initial_option", [("ERGA_OMNES"), ("GROUP"), ("COUNTRY")])
@@ -766,6 +794,8 @@ def test_measure_form_cleaned_data_geo_exclusions_group(
     erga_omnes,
     session_with_workbasket,
 ):
+    """Test that MeasureForm accepts geo_area form group data and returns
+    excluded countries in cleaned data."""
     group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     excluded_country1 = factories.GeographicalAreaFactory.create()
     excluded_country2 = factories.GeographicalAreaFactory.create()
@@ -792,18 +822,15 @@ def test_measure_form_cleaned_data_geo_exclusions_group(
         request=session_with_workbasket,
     )
     assert form.is_valid()
-    assert form.cleaned_data["exclusions"]
-    assert not bool(
-        set(form.cleaned_data["exclusions"]).difference(
-            {excluded_country1, excluded_country2},
-        ),
-    )
+    assert form.cleaned_data["exclusions"] == [excluded_country1, excluded_country2]
 
 
 def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
     erga_omnes,
     session_with_workbasket,
 ):
+    """Test that MeasureForm accepts geo_area form erga omnes data and returns
+    excluded countries in cleaned data."""
     excluded_country1 = factories.GeographicalAreaFactory.create()
     excluded_country2 = factories.GeographicalAreaFactory.create()
     factories.GeographicalAreaFactory.create()
@@ -829,7 +856,4 @@ def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
         request=session_with_workbasket,
     )
     assert form.is_valid()
-    assert form.cleaned_data["exclusions"]
-    assert not set(form.cleaned_data["exclusions"]).difference(
-        {excluded_country1, excluded_country2},
-    )
+    assert form.cleaned_data["exclusions"] == [excluded_country1, excluded_country2]

@@ -1,4 +1,5 @@
 from os import path
+from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -21,7 +22,11 @@ def test_import_form_valid_envelope_id():
         assert form.is_valid()
 
 
-def test_import_form_invalid_envelope_id():
+@patch("commodities.forms.capture_exception")
+def test_import_form_invalid_envelope_id(capture_exception, settings):
+    """Test that form returns generic validation error and sentry captures
+    exception when given xml file with invalid id."""
+    settings.SENTRY_ENABLED = True
     with open(f"{TEST_FILES_PATH}/invalid_id.xml", "rb") as upload_file:
         file_data = {
             "taric_file": SimpleUploadedFile(
@@ -33,7 +38,25 @@ def test_import_form_invalid_envelope_id():
         form = forms.CommodityImportForm({}, file_data)
 
         assert not form.is_valid()
-        assert (
-            "The selected file could not be uploaded - try again"
-            in form.errors["taric_file"]
-        )
+
+        error_message = "The selected file could not be uploaded - try again"
+
+        assert error_message in form.errors["taric_file"]
+        capture_exception.assert_called_once()
+
+
+def test_import_form_non_xml_file():
+    """Test that form returns incorrect file type validation error when passed a
+    text file instead of xml."""
+    with open(f"{TEST_FILES_PATH}/invalid_type.txt", "rb") as upload_file:
+        file_data = {
+            "taric_file": SimpleUploadedFile(
+                upload_file.name,
+                upload_file.read(),
+                content_type="text",
+            ),
+        }
+        form = forms.CommodityImportForm({}, file_data)
+
+        assert not form.is_valid()
+        assert "The selected file must be XML" in form.errors["taric_file"]
