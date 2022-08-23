@@ -106,7 +106,6 @@ class TestChunkTaricCommand(TestCommandBase):
                 pytest.raises(FileNotFoundError),
                 "No such file or directory",
             ),
-            # (['foo bar'], does_not_raise(), '')
         ],
     )
     def test_dry_run_args_errors(self, args, exception_type, error_msg):

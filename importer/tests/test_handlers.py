@@ -381,7 +381,7 @@ def test_base_handler_get_generic_link_importer_cache_not_cached(
     with args, Model and kwargs, it should return a tuple, a link object (model)
     and a boolean indicating if it was retrieved from cache, in this case it is
     False."""
-    # add object to nursery
+
     fnt = factories.FootnoteTypeFactory.create(
         footnote_type_id="XZX",
         transaction=ApprovedTransactionFactory.create(),
