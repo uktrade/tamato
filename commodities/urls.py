@@ -26,7 +26,7 @@ urlpatterns = [
     path(
         "commodities/import/",
         views.CommodityImportView.as_view(),
-        name="commodities-import",
+        name="commodity-ui-import",
     ),
     path(
         "commodities/import/success/",
