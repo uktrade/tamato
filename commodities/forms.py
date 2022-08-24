@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import lxml
 import magic
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -10,12 +9,11 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
-from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from importer.forms import ImportForm
+
 
 class CommodityFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -32,7 +30,6 @@ class CommodityFilterForm(forms.Form):
         )
 
 
-
 def get_mime_type(file):
     """Get MIME by reading the header of the file."""
     initial_pos = file.tell()
@@ -42,7 +39,7 @@ def get_mime_type(file):
     return mime_type
 
 
-class CommodityImportForm(forms.ModelForm):
+class CommodityImportForm(ImportForm):
     taric_file = forms.FileField(
         required=True,
         help_text="",
