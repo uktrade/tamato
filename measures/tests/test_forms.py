@@ -4,7 +4,6 @@ import pytest
 from django.forms.models import model_to_dict
 
 from common.models.transactions import Transaction
-from common.models.utils import override_current_transaction
 from common.models.utils import set_current_transaction
 from common.tests import factories
 from geo_areas.validators import AreaCode
@@ -58,16 +57,8 @@ def test_measure_form_invalid_conditions_data(
         request=session_with_workbasket,
     )
 
-    with override_current_transaction(Transaction.objects.last()):
-        assert not measure_form.is_valid()
-        assert (
-            "condition_code: This field is required." in measure_form.errors["__all__"]
-        )
-        assert "action: This field is required." in measure_form.errors["__all__"]
-        assert (
-            "applicable_duty: Enter a valid duty sentence."
-            in measure_form.errors["__all__"]
-        )
+    assert not measure_form.is_valid()
+    # formset errors messages are test in view tests
 
 
 def test_measure_forms_details_valid_data(measure_type, regulation, erga_omnes):

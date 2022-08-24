@@ -246,9 +246,6 @@ class RegulationCreateForm(RegulationFormBase):
 
 
 class RegulationEditForm(RegulationFormBase):
-    regulation_usage = ChoiceField(
-        choices=RegulationUsage.choices,
-    )
     regulation_group = ModelChoiceField(
         queryset=Group.objects.all().order_by("group_id"),
         empty_label="Select a regulation group",
@@ -279,7 +276,6 @@ class RegulationEditForm(RegulationFormBase):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
             Fieldset(
-                "regulation_usage",
                 "public_identifier",
                 self._load_details_from_template(
                     "Help with public identifiers",
@@ -321,7 +317,7 @@ class RegulationEditForm(RegulationFormBase):
 
         if (
             not cleaned_data["approved"]
-            and cleaned_data["regulation_usage"] != RegulationUsage.DRAFT_REGULATION
+            and self.instance.regulation_id[0] != RegulationUsage.DRAFT_REGULATION
         ):
             self.add_error(
                 "approved",

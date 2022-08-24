@@ -84,7 +84,7 @@ def test_regulation_edit_form_valid_data(date_ranges):
     """Test that RegulationEditForm is valid when required fields in data and
     uses instance regulation_id to generate cleaned data."""
     group = factories.RegulationGroupFactory.create()
-    instance = factories.RegulationFactory.create()
+    instance = factories.RegulationFactory.create(regulation_id="C220001Z")
     initial = {"published_at": date_ranges.normal.lower}
     data = {
         "regulation_group": group.pk,
@@ -92,7 +92,6 @@ def test_regulation_edit_form_valid_data(date_ranges):
         "start_date_0": date_ranges.normal.lower.day,
         "start_date_1": date_ranges.normal.lower.month,
         "start_date_2": date_ranges.normal.lower.year,
-        "regulation_usage": RegulationUsage.DRAFT_REGULATION,
     }
     form = forms.RegulationEditForm(data=data, initial=initial, instance=instance)
 
@@ -102,7 +101,8 @@ def test_regulation_edit_form_valid_data(date_ranges):
 
 def test_regulation_edit_form_unapproved_and_not_draft(date_ranges):
     """Test that RegulationEditForm raises a ValidationError when approved is
-    False and regulation_usage is anything other than DRAFT_REGULATION."""
+    False and instance regulation usage (first character of regulation_id) is
+    anything other than DRAFT_REGULATION."""
     group = factories.RegulationGroupFactory.create()
     instance = factories.RegulationFactory.create()
     initial = {"published_at": date_ranges.normal.lower}
@@ -112,7 +112,6 @@ def test_regulation_edit_form_unapproved_and_not_draft(date_ranges):
         "start_date_0": date_ranges.normal.lower.day,
         "start_date_1": date_ranges.normal.lower.month,
         "start_date_2": date_ranges.normal.lower.year,
-        "regulation_usage": RegulationUsage.PREFERENTIAL_TRADE_AGREEMENT,
     }
     form = forms.RegulationEditForm(data=data, initial=initial, instance=instance)
 
