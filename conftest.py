@@ -240,6 +240,18 @@ def valid_user_client(client, valid_user):
 
 
 @pytest.fixture
+def superuser():
+    user = factories.UserFactory.create(is_superuser=True, is_staff=True)
+    return user
+
+
+@pytest.fixture
+def superuser_client(client, superuser):
+    client.force_login(superuser)
+    return client
+
+
+@pytest.fixture
 @given(parsers.parse("a valid user named {username}"), target_fixture="a_valid_user")
 def a_valid_user(username):
     return factories.UserFactory.create(username=username)

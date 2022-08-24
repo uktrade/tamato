@@ -1,16 +1,24 @@
 from os import path
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from commodities import forms
+from importer import forms
+from workbaskets.validators import WorkflowStatus
 
-TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
+TEST_FILES_PATH = path.join(Path(__file__).parents[2], "commodities/tests/test_files")
+
+pytestmark = pytest.mark.django_db
 
 
-def test_import_form_valid_envelope_id():
+def test_upload_taric_form_valid_envelope_id():
     with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as upload_file:
+        data = {
+            "name": "test_upload",
+            "status": WorkflowStatus.EDITING,
+        }
         file_data = {
             "taric_file": SimpleUploadedFile(
                 upload_file.name,
@@ -18,16 +26,17 @@ def test_import_form_valid_envelope_id():
                 content_type="text/xml",
             ),
         }
-        form = forms.CommodityImportForm({}, file_data)
+        form = forms.UploadTaricForm(data, file_data)
 
         assert form.is_valid()
 
 
 @pytest.mark.parametrize("file_name,", ("invalid_id", "dtd"))
 @patch("importer.forms.capture_exception")
-def test_import_form_invalid_envelope(capture_exception, file_name, settings):
+def test_upload_taric_form_invalid_envelope(capture_exception, file_name, settings):
     """Test that form returns generic validation error and sentry captures
-    exception when given xml file with invalid id."""
+    exception when given xml file with invalid id or document type
+    declaration."""
     settings.SENTRY_ENABLED = True
     with open(f"{TEST_FILES_PATH}/{file_name}.xml", "rb") as upload_file:
         file_data = {
@@ -37,13 +46,13 @@ def test_import_form_invalid_envelope(capture_exception, file_name, settings):
                 content_type="text/xml",
             ),
         }
-        form = forms.CommodityImportForm({}, file_data)
+        form = forms.UploadTaricForm({}, file_data)
 
         assert not form.is_valid()
-
-        error_message = "The selected file could not be uploaded - try again"
-
-        assert error_message in form.errors["taric_file"]
+        assert (
+            "The selected file could not be uploaded - try again"
+            in form.errors["taric_file"]
+        )
         capture_exception.assert_called_once()
 
 
@@ -58,7 +67,7 @@ def test_import_form_non_xml_file():
                 content_type="text",
             ),
         }
-        form = forms.CommodityImportForm({}, file_data)
+        form = forms.UploadTaricForm({}, file_data)
 
         assert not form.is_valid()
         assert "The selected file must be XML" in form.errors["taric_file"]
