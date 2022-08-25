@@ -1183,3 +1183,8 @@ goods_nomenclature_indent.xml
 ElementTree
 403s
 importer.forms.UploadTaricForm.save
+Commodity Code
+Commodity Description
+Comodity Code
+Comodity Description"
+f"/commodities/{commodity2.sid}/

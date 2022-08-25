@@ -8,7 +8,7 @@
 {% set parent_code %}
     <ul class="govuk-table-list">
         {% for origin in object.origins.all() %}
-            <a class="govuk-link govuk-!-font-weight-bold" href="{{ object.get_url() }}">{{ object.code }}</a>
+            <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("commodity-ui-detail", kwargs={"sid": origin.sid}) }}">{{ origin.code }}</a>
         {% endfor %}
     </ul>
 {% endset %}
@@ -37,12 +37,12 @@
                 "actions": {"items": []}
             },
             {
-                "key": {"text": "Comodity Code"}, {# /PS-IGNORE #}
+                "key": {"text": "Commodity Code"},
                 "value": {"text": object.code},
                 "actions": {"items": []}
             },
             {
-                "key": {"text": "Comodity suffix"},
+                "key": {"text": "Commodity suffix"},
                 "value": {"text": object.suffix},
                 "actions": {"items": []}
             },
@@ -53,7 +53,7 @@
                 "actions": {"items": []}
             },
             {
-                "key": {"text": "Comodity Description"}, {# /PS-IGNORE #}
+                "key": {"text": "Commodity Description"},
                 "value": {"text": object.get_description().description},
                 "actions": {"items": []}
             },
