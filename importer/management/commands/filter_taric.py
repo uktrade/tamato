@@ -13,7 +13,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "values",
             type=str,
-            nargs="*",
+            nargs="+",
             help="String value that the XML tag should have to be removed",
         )
         return super().add_arguments(parser)
