@@ -292,6 +292,7 @@ given for post-processing.</p>
 <p>Raises DoesNotExist if no kwargs passed.</p>
 <p>First attempts to retrieve the object PK from the cache (saves queries). If this
 is not found a database query is made to find the object.</p>
+<p>returns tuple(Object: model, bool: From Cache)</p>
 </dd></dl>
 
 <dl class="py method">
