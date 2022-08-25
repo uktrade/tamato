@@ -367,16 +367,18 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
             self.request,
             f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
         )
-        to_add = {
-            key: value for key, value in form.cleaned_data_no_prefix.items() if value
-        }
-        to_remove = {
-            key: value
-            for key, value in form.cleaned_data_no_prefix.items()
-            if key not in to_add
-        }
-        store.add_items(to_add)
-        store.remove_items(to_remove)
+        store.clear()
+        select_all = self.request.POST.get("select-all-pages")
+        if select_all:
+            object_list = {obj.id: True for obj in self.workbasket.tracked_models}
+            store.add_items(object_list)
+        else:
+            to_add = {
+                key: value
+                for key, value in form.cleaned_data_no_prefix.items()
+                if value
+            }
+            store.add_items(to_add)
         return super().form_valid(form)
 
 
