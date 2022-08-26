@@ -10,7 +10,6 @@ from lxml import etree
 
 from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
-from exporter.util import dit_file_generator
 from exporter.util import item_timer
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
@@ -108,7 +107,8 @@ class Command(BaseCommand):
 
         directory = options.get("directory", ".")
 
-        output_file_constructor = dit_file_generator(directory, envelope_id)
+        output_file_constructor = dit_file
+        _generator(directory, envelope_id)
         serializer = MultiFileEnvelopeTransactionSerializer(
             output_file_constructor,
             envelope_id=envelope_id,

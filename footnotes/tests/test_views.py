@@ -1,7 +1,6 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from checks.tasks import check_workbasket_sync
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
@@ -78,12 +77,15 @@ def test_footnote_business_rule_application(
     workbasket_valid,
     use_update_form,
 ):
-    description = use_update_form(factories.FootnoteDescriptionFactory(), new_data)
-    check_workbasket_sync(description.transaction.workbasket)
-    assert (
-        description.transaction.workbasket.unchecked_or_errored_transactions.exists()
-        is not workbasket_valid
-    )
+    # TODO - port the ideas in this test to the new business checking system.
+    pytest.fail()
+
+    # description = use_update_form(factories.FootnoteDescriptionFactory(), new_data)
+    # check_workbasket_sync(description.transaction.workbasket)
+    # assert (
+    #     description.transaction.workbasket.unchecked_or_errored_transactions.exists()
+    #     is not workbasket_valid
+    # )
 
 
 @pytest.mark.parametrize(

@@ -393,6 +393,7 @@ class TrackedModel(PolymorphicModel):
         "polymorphic_ctype",
         "id",
         "update_type",
+        "trackedmodel_check",
         "trackedmodel_ptr",
         "transaction",
     }
