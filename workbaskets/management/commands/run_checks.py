@@ -136,7 +136,6 @@ class Command(TaskControlMixin, BaseCommand):
     ]
 
     rule_names = []
-    rule_models = None
     passed = 0
     failed = 0
 
@@ -221,12 +220,10 @@ class Command(TaskControlMixin, BaseCommand):
                     "One or more rules not found:  " + ", ".join(rule_names),
                 )
                 sys.exit(2)
+            return rule_names
         else:
-            # Default to all rules being checks.
-            rule_models = BusinessRuleModel.objects.current().all()
-            rule_names = [*rule_models.values_list("name", flat=True)]
-
-        return rule_names, rule_models
+            # None, defaults to all rules being checks.
+            return None
 
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
         from checks.tasks import check_workbasket
@@ -238,7 +235,7 @@ class Command(TaskControlMixin, BaseCommand):
         clear_cache = options["clear_cache"]
         throw = options["throw"]
 
-        self.rule_names, self.rule_models = self.parse_rule_names_option(
+        self.rule_names = self.parse_rule_names_option(
             options["rules"],
         )
 
