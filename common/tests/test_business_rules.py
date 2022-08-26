@@ -14,26 +14,27 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.models.mixins.description import DescriptionMixin
 from common.tests import factories
+from common.tests.util import TestRule1
 from common.tests.util import raises_if
 from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
 
 
-def test_business_rule_violation_message():
+def test_business_rule_violation_message(register_business_rules):
     model = MagicMock()
-    violation = TestRule(model.transaction).violation(model)
+    violation = TestRule1(model.transaction).violation(model)
 
-    assert isinstance(violation, TestRule.Violation)
+    assert isinstance(violation, TestRule1.Violation)
     assert violation.args == (None, model)
     assert violation.model == model
 
-    setattr(TestRule.Violation, "__doc__", "A test message")
-    violation = TestRule(model.transaction).violation(model)
+    setattr(TestRule1.Violation, "__doc__", "A test message")
+    violation = TestRule1(model.transaction).violation(model)
 
     assert violation.args == ("A test message", model)
 
-    violation = TestRule(model.transaction).violation(model, "A different message")
+    violation = TestRule1(model.transaction).violation(model, "A different message")
 
     assert violation.args == ("A different message", model)
 

@@ -79,10 +79,18 @@ requires_update_importer = pytest.mark.skipif(
 
 @contextlib.contextmanager
 def raises_if(exception, expected, *args, **kwargs):
-    if expected:
-        yield from pytest.raises(exception, *args, **kwargs)
-    else:
+    try:
         yield
+    except exception:
+        if not expected:
+            raise
+        if args:
+            assert exception.args == args
+        if kwargs:
+            assert exception.kwargs == kwargs
+    else:
+        if expected:
+            pytest.fail(f"Did not raise {exception}")
 
 
 @contextlib.contextmanager
