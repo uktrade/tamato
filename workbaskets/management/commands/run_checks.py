@@ -14,6 +14,7 @@ from django.core.management.base import CommandParser
 
 from checks.models import BusinessRuleModel
 from checks.models import TrackedModelCheck
+from common.models import TrackedModel
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
@@ -136,6 +137,7 @@ class Command(TaskControlMixin, BaseCommand):
     ]
 
     rule_names = []
+    rule_models = None
     passed = 0
     failed = 0
 
@@ -165,12 +167,13 @@ class Command(TaskControlMixin, BaseCommand):
         readable_task_name = self.get_readable_task_name(node)
         style = self.style.SUCCESS if check_passed else self.style.ERROR
 
+        model = TrackedModel.objects.get(pk=model_pk)
         check = TrackedModelCheck.objects.filter(model=model_pk).last()
 
         if check is None:
-            check_msg = "[No results]"
+            check_msg = f"[{model}]  [All checks pending]"
         else:
-            check_msg = check.report(self.rule_names)
+            check_msg = check.report(self.rule_models)
 
         self.stdout.write(
             " " * depth * 2
@@ -201,7 +204,7 @@ class Command(TaskControlMixin, BaseCommand):
     def parse_rule_names_option(self, rule_names_option: str):
         """
         Given a comma seperated list of rule names, return a list of rule names
-        and their corresponding models.
+        and a list of their corresponding models.
 
         Also handles the case where the user includes spaces.
         """
@@ -220,10 +223,10 @@ class Command(TaskControlMixin, BaseCommand):
                     "One or more rules not found:  " + ", ".join(rule_names),
                 )
                 sys.exit(2)
-            return rule_names
+            return rule_names, rule_models
         else:
             # None, defaults to all rules being checks.
-            return None
+            return None, None
 
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
         from checks.tasks import check_workbasket
@@ -235,7 +238,7 @@ class Command(TaskControlMixin, BaseCommand):
         clear_cache = options["clear_cache"]
         throw = options["throw"]
 
-        self.rule_names = self.parse_rule_names_option(
+        self.rule_names, self.rule_models = self.parse_rule_names_option(
             options["rules"],
         )
 

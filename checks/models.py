@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Dict
 from typing import Iterable
+from typing import Optional
 from typing import Type
 from typing import TypeVar
 
@@ -232,5 +233,38 @@ class TrackedModelCheck(TaskModel):
         self.content_hash = None
         super().delete()
 
-    def report(self, requested_rules):
-        pass
+    def report(self, rule_filter: Optional[BusinessRuleResultQuerySet] = None):
+        """
+        :param requested_rules: If provided, only report results for these rules.
+        """
+        if rule_filter:
+            rule_filter = {
+                "pk__in": rule_filter.values_list("pk", flat=True),
+            }
+        else:
+            rule_filter = {}
+
+        results = self.results.filter(**rule_filter)
+
+        # Rules waiting to run.
+        msg = f"[{self.model}] "
+
+        msg += f"{results.passed().count()} passed"
+
+        if not results.failed().count():
+            msg += " 0 failed"
+
+        if not results.errored().count():
+            msg += " 0 errored"
+
+        if results.failed():
+            msg + "Failures:\n"
+            for result in results.failed():
+                msg += f"{result.rule.name}: {result.message}\n"
+
+        if results.errored():
+            msg + "Errors:\n"
+            for result in results.errored():
+                msg += f"{result.rule.name}: {result.message}\n"
+
+        return msg
