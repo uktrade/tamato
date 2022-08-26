@@ -47,7 +47,7 @@ class CommonConfig(AppConfig):
 
         :return:  True if the rules need syncing, or there are unapplied migrations to this app.
         """
-        from checks.models import get_updated_rules
+        from checks.models import BusinessRuleModel
         from common.models.utils import is_database_synchronized
 
         if not is_database_synchronized(DEFAULT_DB_ALIAS):
@@ -57,7 +57,7 @@ class CommonConfig(AppConfig):
             # There are unapplied migrations (some of which may be ones needed to run the business rules.)
             return True
 
-        added, removed = get_updated_rules()
+        added, removed = BusinessRuleModel.objects.get_updated_rules()
         sync_required = bool(added or removed)
         if sync_required:
             print(
