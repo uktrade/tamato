@@ -6,10 +6,19 @@ from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
+from commodities.models.orm import GoodsNomenclature
 from commodities.views import CommodityList
+from common.models.transactions import Transaction
+from common.models.utils import set_current_transaction
+from common.tests import factories
 from common.tests.factories import GoodsNomenclatureDescriptionFactory
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.factories import ImportBatchFactory
+from common.tests.util import assert_model_view_renders
+from common.tests.util import get_class_based_view_urls_matching_url
+from common.tests.util import view_is_subclass
+from common.tests.util import view_urlpattern_ids
+from common.views import TrackedModelDetailMixin
 
 pytestmark = pytest.mark.django_db
 
@@ -81,25 +90,55 @@ def test_commodity_list_displays_commodity_and_description(valid_user_client):
 
 def test_commodity_list_queryset():
     """Tests that commodity list queryset orders commodities by item_id."""
-    GoodsNomenclatureFactory.create_batch(3)
     view = CommodityList()
+    good_1 = factories.SimpleGoodsNomenclatureFactory.create(item_id="1010000000")
+    good_2 = factories.SimpleGoodsNomenclatureFactory.create(item_id="1000000000")
+    tx = Transaction.objects.last()
+    set_current_transaction(tx)
+    commodity_count = GoodsNomenclature.objects.approved_up_to_transaction(tx).count()
     qs = view.get_queryset()
-    ordered_commodities = qs.order_by("item_id")
 
-    assert qs.first().item_id == ordered_commodities[0].item_id
-    assert qs.last().item_id == ordered_commodities.last().item_id
+    assert qs.count() == commodity_count
+    assert qs.first().item_id == good_2.item_id
+    assert qs.last().item_id == good_1.item_id
 
 
+@pytest.mark.parametrize("search_terms", ["0", "010", "01010", "0101010"])
 def test_commodity_list_filter(search_terms, valid_user_client):
     """Tests that passing an item_id to the filter retrieves the right commodity
     code."""
-    GoodsNomenclatureFactory.create_batch(3)
-    list_url = reverse("geo_area-ui-list")
-    url = f"{list_url}?search={search_terms}"
+    commodity = GoodsNomenclatureFactory.create(item_id="0101010101")
+
+    list_url = reverse("commodity-ui-list")
+    url = f"{list_url}?item_id={search_terms}"
     response = valid_user_client.get(url)
     page = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",
     )
 
-    assert page.find("tbody").find("td", text="Greenland")
+    assert page.find("tbody").find(
+        "td",
+        text=commodity.descriptions.first().description,
+    )
+    assert page.find("tbody").find("td", text=commodity.item_id)
+
+
+@pytest.mark.parametrize(
+    ("view", "url_pattern"),
+    get_class_based_view_urls_matching_url(
+        "commodities/",
+        view_is_subclass(TrackedModelDetailMixin),
+    ),
+    ids=view_urlpattern_ids,
+)
+def test_commodities_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
+    """Verify that commodity detail views are under the url commodities/ and
+    don't return an error."""
+
+    assert_model_view_renders(view, url_pattern, valid_user_client)

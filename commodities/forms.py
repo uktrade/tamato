@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import magic
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Button
@@ -28,15 +27,6 @@ class CommodityFilterForm(forms.Form):
                 f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
             ),
         )
-
-
-def get_mime_type(file):
-    """Get MIME by reading the header of the file."""
-    initial_pos = file.tell()
-    file.seek(0)
-    mime_type = magic.from_buffer(file.read(1024), mime=True)
-    file.seek(initial_pos)
-    return mime_type
 
 
 class CommodityImportForm(ImportForm):

@@ -24,12 +24,12 @@ urlpatterns = [
         name="commodity-ui-detail",
     ),
     path(
-        "commodities/import/",
+        "import/commodities/",
         views.CommodityImportView.as_view(),
         name="commodity-ui-import",
     ),
     path(
-        "commodities/import/success/",
+        "import/commodities/success/",
         views.CommodityImportSuccessView.as_view(),
         name="commodity-ui-import-success",
     ),

@@ -62,8 +62,7 @@ class CommodityMixin:
     model = GoodsNomenclature
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return GoodsNomenclature.objects.approved_up_to_transaction(tx)
+        return GoodsNomenclature.objects.current()
 
 
 class CommodityList(CommodityMixin, TamatoListView):
@@ -71,7 +70,7 @@ class CommodityList(CommodityMixin, TamatoListView):
     filterset_class = CommodityFilter
 
     def get_queryset(self):
-        return GoodsNomenclature.objects.order_by("item_id")
+        return GoodsNomenclature.objects.current().order_by("item_id")
 
 
 class CommodityDetail(CommodityMixin, TrackedModelDetailView):
