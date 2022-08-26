@@ -1,5 +1,6 @@
 from os import path
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -47,3 +48,31 @@ def test_upload_taric_form_invalid_envelope_id(file_name):
             "The selected file could not be uploaded - try again"
             in form.errors["taric_file"]
         )
+
+
+# https://uktrade.atlassian.net/browse/TP2000-486
+# We forgot to add `self` to process_file params and no tests caught it.
+@patch("importer.forms.chunk_taric")
+@patch("importer.forms.run_batch")
+def test_upload_taric_form_save(run_batch, chunk_taric, superuser):
+    with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as upload_file:
+        data = {
+            "name": "test_upload",
+            "status": WorkflowStatus.EDITING,
+        }
+        file_data = {
+            "taric_file": SimpleUploadedFile(
+                upload_file.name,
+                upload_file.read(),
+                content_type="text/xml",
+            ),
+        }
+        form = forms.UploadTaricForm(data, file_data)
+        form.is_valid()
+        batch = form.save(user=superuser)
+
+        assert batch.name == "test_upload"
+        assert batch.split_job == False
+
+        run_batch.assert_called_once()
+        chunk_taric.assert_called_once()
