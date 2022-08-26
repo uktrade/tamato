@@ -427,3 +427,12 @@ class WorkBasketChanges(DetailView):
         )
 
         return context
+
+
+class WorkBasketViolations(DetailView):
+    """UI endpoint for viewing a specified workbasket's business rule
+    violations."""
+
+    model = WorkBasket
+    template_name = "workbaskets/violations.jinja"
+    paginate_by = 50

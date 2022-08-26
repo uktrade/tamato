@@ -141,3 +141,7 @@ class TrackedModelCheck(models.Model):
 
     message = fields.TextField(null=True)
     """The text content returned by the check, if any."""
+
+    @property
+    def rule_code(self):
+        return self.check_name.split(".")[-1][:-1]

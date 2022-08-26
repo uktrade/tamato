@@ -23,5 +23,17 @@
     {{ page_subtitle }}
   </h2>
   <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">Edit this workbasket</a>
+  {% if workbasket.tracked_model_check_errors.exists() %}
+  <p>{{workbasket.tracked_model_check_errors}}</p>
+  <div class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" data-module="govuk-error-summary">
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Number of changes: {{workbasket.tracked_models.count()}}
+    </h2>
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Number of violations: {{workbasket.tracked_model_check_errors.count()}}
+    </h2>
+    <a href="{{ url('workbaskets:workbasket-ui-violations', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">View violations</a>
+  </div>
+  {% endif %}
   {% include "includes/workbaskets/workbasket-selectable-items.jinja" %}
 {% endblock %}

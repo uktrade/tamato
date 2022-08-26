@@ -1,0 +1,58 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Rule violations {% endset %}
+
+{% set table_rows = [] %}
+
+{% for check in workbasket.tracked_model_check_errors %}
+    {% set object_link -%}
+    <a class="govuk-link govuk-!-font-weight-bold" href={{ check.model.get_url() }}>{{ check.model.sid }}</a>
+    {%- endset %}
+    {{ table_rows.append([
+    {"html": object_link},
+    {"text": check.model._meta.verbose_name.title()},
+    {"text": check.rule_code},
+    {"text": check.message},
+    {"text": check.transaction.created_at},
+  ]) or "" }}
+{% endfor %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+    {{ page_title }} 
+  </h1>
+  <div class="govuk-warning-text">
+  <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+  <strong class="govuk-warning-text__text">
+    <span class="govuk-warning-text__assistive">Warning</span>
+    Number of business rule violations: {{ workbasket.tracked_model_check_errors.count() }}
+  </strong>
+</div>
+{% set table_rows = [] %}
+
+{% for check in workbasket.tracked_model_check_errors %}
+    {% set object_link -%}
+    <a class="govuk-link govuk-!-font-weight-bold" href={{ check.model.get_url() }}>{{ check.model.sid }}</a>
+    {%- endset %}
+    {{ table_rows.append([
+    {"html": object_link},
+    {"text": check.model._meta.verbose_name.title()},
+    {"text": check.rule_code},
+    {"text": check.message},
+    {"text": "{:%d %b %Y}".format(check.transaction_check.transaction.created_at)},
+  ]) or "" }}
+{% endfor %}
+{{ govukTable({
+  "head": [
+    {"text": "Item ID"},
+    {"text": "Item"},
+    {"text": "Violation"},
+    {"text": "Description"},
+    {"text": "Activity Date"},
+  ],
+  "rows": table_rows
+}) }}
+{% endblock %}
