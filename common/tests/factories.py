@@ -971,7 +971,7 @@ class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "measures.MeasureAction"
 
     # Code should only contain 3 digits, modulo 1000 is used to wrap it.
-    code = factory.Sequence(lambda x: f"{wrap_numbers_over_max_digits(x + 1, 3):02d}")
+    code = factory.Sequence(lambda x: f"{wrap_numbers_over_max_digits(x, 3):02d}")
     description = short_description()
 
 

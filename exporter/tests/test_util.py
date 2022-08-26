@@ -25,10 +25,10 @@ def test_item_timer():
 
     assert item == 1
     assert isinstance(time_taken, float)
-    assert time_taken >= 0.0
+    assert time_taken > 0.0
 
     time_taken, item = next(items)
 
     assert item == 2
     assert isinstance(time_taken, float)
-    assert time_taken >= 0.0
+    assert time_taken > 0.0
