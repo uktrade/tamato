@@ -56,8 +56,7 @@ class Command(WorkBasketCommandMixin, BaseCommand):
 
         parser.add_argument(
             "workbasket_ids",
-            nargs="*",
-            help="Comma-separated list of workbasket ids to filter to",
+            help=("Comma-separated list of workbasket ids to filter to"),
             type=ast.literal_eval,
         )
 

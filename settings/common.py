@@ -371,6 +371,10 @@ if False:
     }
 
 RAISE_BUSINESS_RULE_FAILURES = is_truthy(
+    os.environ.get("RAISE_BUSINESS_RULE_ERRORS", "N"),
+)
+
+RAISE_BUSINESS_RULE_FAILURES = is_truthy(
     os.environ.get("RAISE_BUSINESS_RULE_FAILURES", "N"),
 )
 

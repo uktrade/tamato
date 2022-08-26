@@ -20,7 +20,6 @@ from common.business_rules import ALL_RULES
 from common.business_rules import BusinessRule
 from common.celery import app
 from common.models.celerytask import ModelCeleryTask
-from common.models.celerytask import bind_model_task
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.utils import get_current_transaction
@@ -38,6 +37,72 @@ ModelPKInterval = Tuple[int, int]
 
 TaskInfo = Tuple[int, str]
 """TaskInfo is a tuple of (task_id, task_name) which can be used to create a ModelCeleryTask."""
+
+
+# @app.task(trail=True)
+# def check_model(
+#     transaction_pk: int,
+#     model_pk: int,
+#     rule_names: Optional[Sequence[str]] = None,
+#     bind_to_task_kwargs: Optional[Dict] = None,
+# ):
+#     """
+#     Task to check one model against one business rule and record the result.
+#
+#     As this is a celery task, parameters are in base formats that can be serialised, such as int and str.
+#
+#     Run one business rule against one model, this is called as part of the check_models workflow.
+#
+#     By setting bind_to_task_uuid, the task will be bound to the celery task with the given UUID,
+#     this is useful for tracking the progress of the parent task, and cancelling it if needed.
+#     """
+#     # XXXX - TODO, re-add note on timings, from Simons original code.
+#
+#     if rule_names is None:
+#         rule_names = set(ALL_RULES.keys())
+#
+#     assert set(ALL_RULES.keys()).issuperset(rule_names)
+#
+#     transaction = Transaction.objects.get(pk=transaction_pk)
+#     model = TrackedModel.objects.get(pk=model_pk)
+#     successful = True
+#
+#     for checker in ALL_CHECKERS.values():
+#         for checker_model, model_rules in checker.get_model_rule_mapping(
+#             model,
+#             rule_names,
+#         ).items():
+#             """get_model_rules will return a different model in the case of
+#             LinkedModelChecker, so the model to check use checker_model."""
+#             for rule in model_rules:
+#                 logger.debug(
+#                     "%s rule:  %s, tx: %s,  model: %s",
+#                     checker.__name__,
+#                     rule,
+#                     transaction,
+#                     model,
+#                 )
+#                 check_result = checker.apply_rule_cached(
+#                     rule,
+#                     transaction,
+#                     checker_model,
+#                 )
+#                 if bind_to_task_kwargs:
+#                     logger.debug(
+#                         "Binding result %s to task.  bind_to_task_kwargs: %s",
+#                         check_result.pk,
+#                         bind_to_task_kwargs,
+#                     )
+#                     bind_model_task(check_result, **bind_to_task_kwargs)
+#
+#                 logger.info(
+#                     f"Ran check %s %s",
+#                     check_result,
+#                     "✅" if check_result.successful else "❌",
+#                 )
+#                 successful &= check_result.successful
+#
+#     return successful
 
 
 @app.task(trail=True)
@@ -65,43 +130,16 @@ def check_model(
     assert set(ALL_RULES.keys()).issuperset(rule_names)
 
     transaction = Transaction.objects.get(pk=transaction_pk)
-    model = TrackedModel.objects.get(pk=model_pk)
+    initial_model = TrackedModel.objects.get(pk=model_pk)
+
     successful = True
 
     for checker in ALL_CHECKERS.values():
-        for checker_model, model_rules in checker.get_model_rules(
-            model,
+        for model, rules in checker.get_model_rule_mapping(
+            initial_model,
             rule_names,
         ).items():
-            """get_model_rules will return a different model in the case of
-            LinkedModelChecker, so the model to check use checker_model."""
-            for rule in model_rules:
-                logger.debug(
-                    "%s rule:  %s, tx: %s,  model: %s",
-                    checker.__name__,
-                    rule,
-                    transaction,
-                    model,
-                )
-                check_result = checker.apply_rule_cached(
-                    rule,
-                    transaction,
-                    checker_model,
-                )
-                if bind_to_task_kwargs:
-                    logger.debug(
-                        "Binding result %s to task.  bind_to_task_kwargs: %s",
-                        check_result.pk,
-                        bind_to_task_kwargs,
-                    )
-                    bind_model_task(check_result, **bind_to_task_kwargs)
-
-                logger.info(
-                    f"Ran check %s %s",
-                    check_result,
-                    "✅" if check_result.successful else "❌",
-                )
-                successful &= check_result.successful
+            Checker.apply_rules(rules, transaction, model)
 
     return successful
 

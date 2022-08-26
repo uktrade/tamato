@@ -1180,3 +1180,20 @@ def model2_with_history(date_ranges):
         version_group=factories.VersionGroupFactory.create(),
         custom_sid=1,
     )
+
+
+def register_test_business_rules():
+    """Add the test business rules to the database (ordinary business rules
+    should use sync_business_rules and migrate but that's not convenient in a
+    unit test)/"""
+    from checks.models import BusinessRuleModel
+    from common.tests.util import TestRule1
+    from common.tests.util import TestRule2
+
+    for rule in TestRule1, TestRule2:
+        BusinessRuleModel.objects.create(name=rule.name, current=True)
+
+    yield
+
+    for rule in TestRule1, TestRule2:
+        BusinessRuleModel.objects.delete(name=rule.name)

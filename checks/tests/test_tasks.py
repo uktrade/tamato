@@ -1,89 +1,83 @@
-from itertools import repeat
-from itertools import zip_longest
-from unittest import mock
-
 import pytest
 from pytest_django.asserts import assertQuerysetEqual  # type: ignore
 
-from checks import tasks
-from checks.tests import factories
-
 pytestmark = pytest.mark.django_db
 
+# TODO - see if the assertion here can be ported to the new business rule checking system.
 
-def create_checker(check, name: str, complete: bool, success: bool):
-    checker = factories.DummyChecker(name=name, success=success)
-
-    if complete:
-        factories.TrackedModelCheckFactory.create(
-            model=check.transaction.tracked_models.first(),
-            transaction_check=check,
-            check_name=name,
-            successful=success,
-        )
-
-    return checker
-
-
-@pytest.fixture(
-    params=(
-        (0, 0, 0, {"incomplete", "empty"}),
-        (0, 0, 0, {"incomplete"}),
-        (1, 0, 0, {"incomplete"}),
-        (1, 1, 1, {"incomplete"}),
-        (1, 1, 0, {"incomplete"}),
-        (2, 1, 1, {"incomplete"}),
-        (1, 1, 1, set()),
-    ),
-    ids=(
-        "check of transaction with no models",
-        "check of models with no checks",
-        "check of models with missing checks",
-        "check of models with successful checks",
-        "check of models with unsuccessful checks",
-        "check of models with some incomplete checks",
-        "check that is already completed",
-    ),
-)
-def check(request):
-    num_checks, num_completed, num_successful, traits = request.param
-    assert num_checks >= num_completed
-    assert num_completed >= num_successful
-
-    check = factories.TransactionCheckFactory.create(
-        **{trait: True for trait in traits}
-    )
-    check_names = [str(i) for i in range(num_checks)]
-    completes = repeat(True, num_completed)
-    successes = repeat(True, num_successful)
-
-    checkers = set(
-        create_checker(check, name, complete, successful)
-        for name, complete, successful in zip_longest(
-            check_names,
-            completes,
-            successes,
-            fillvalue=False,
-        )
-    )
-
-    assert check.model_checks.count() == num_completed
-    assert check.model_checks.filter(successful=True).count() == num_successful
-
-    with mock.patch("checks.tasks.applicable_to", new=lambda m: checkers):
-        yield check, num_checks, num_completed, num_successful
-
-
-def test_model_checking(check):
-    check, num_checks, num_completed, num_successful = check
-
-    model = check.transaction.tracked_models.first()
-    if model is None:
-        pytest.skip("No model to check")
-    tasks.check_model(model.id, check.id)
-
-    assert check.model_checks.count() == num_checks
-    assert check.model_checks.filter(successful=True).count() == num_successful
+# def create_checker(check, name: str, complete: bool, success: bool):
+#     checker = factories.DummyChecker(name=name, success=success)
+#
+#     if complete:
+#         factories.TrackedModelCheckFactory.create(
+#             model=check.transaction.tracked_models.first(),
+#             transaction_check=check,
+#             check_name=name,
+#             successful=success,
+#         )
+#
+#     return checker
+#
+#
+# @pytest.fixture(
+#     params=(
+#         (0, 0, 0, {"incomplete", "empty"}),
+#         (0, 0, 0, {"incomplete"}),
+#         (1, 0, 0, {"incomplete"}),
+#         (1, 1, 1, {"incomplete"}),
+#         (1, 1, 0, {"incomplete"}),
+#         (2, 1, 1, {"incomplete"}),
+#         (1, 1, 1, set()),
+#     ),
+#     ids=(
+#         "check of transaction with no models",
+#         "check of models with no checks",
+#         "check of models with missing checks",
+#         "check of models with successful checks",
+#         "check of models with unsuccessful checks",
+#         "check of models with some incomplete checks",
+#         "check that is already completed",
+#     ),
+# )
+# def check(request):
+#     num_checks, num_completed, num_successful, traits = request.param
+#     assert num_checks >= num_completed
+#     assert num_completed >= num_successful
+#
+#     check = factories.TransactionCheckFactory.create(
+#         **{trait: True for trait in traits}
+#     )
+#     check_names = [str(i) for i in range(num_checks)]
+#     completes = repeat(True, num_completed)
+#     successes = repeat(True, num_successful)
+#
+#     checkers = set(
+#         create_checker(check, name, complete, successful)
+#         for name, complete, successful in zip_longest(
+#             check_names,
+#             completes,
+#             successes,
+#             fillvalue=False,
+#         )
+#     )
+#
+#     assert check.model_checks.count() == num_completed
+#     assert check.model_checks.filter(successful=True).count() == num_successful
+#
+#     with mock.patch("checks.tasks.applicable_to", new=lambda m: checkers):
+#         yield check, num_checks, num_completed, num_successful
+#
+#
+# def test_model_checking(check):
+#     check, num_checks, num_completed, num_successful = check
+#
+#     model = check.transaction.tracked_models.first()
+#     if model is None:
+#         pytest.skip("No model to check")
+#     tasks.check_model(model.id, check.id)
+#
+#     assert check.model_checks.count() == num_checks
+#     assert check.model_checks.filter(successful=True).count() == num_successful
 
 
 # def test_completion_of_transaction_checks(check):

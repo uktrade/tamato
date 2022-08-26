@@ -102,6 +102,11 @@ def get_field_hashable_string(value):
     return f"{value_type.__module__}:{value_type.__name__}={value}"
 
 
+class NotPresent:
+    # Sentinel value for fields that are not present.
+    pass
+
+
 def get_field_hashable_strings(instance, fields):
     """
     Given a model instance, return a dict of {field names: hashable string},
@@ -113,6 +118,6 @@ def get_field_hashable_strings(instance, fields):
     :return:  Dictionary of {field_name: hash}
     """
     return {
-        field.name: get_field_hashable_string(getattr(instance, field.name))
+        field.name: get_field_hashable_string(getattr(instance, field.name, NotPresent))
         for field in fields
     }

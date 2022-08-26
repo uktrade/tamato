@@ -1,7 +1,10 @@
 import logging
+import os
+import sys
 from importlib import import_module
 
 from django.apps import AppConfig
+from django.db import DEFAULT_DB_ALIAS
 
 logger = logging.getLogger(__file__)
 
@@ -22,7 +25,7 @@ class CommonConfig(AppConfig):
     AppConfig.ready method.
     """
 
-    def ready(self):
+    def load_importer_modules(self):
         """Load importer parser and handler modules, if they exist."""
         modules_to_import = [
             f"{self.name}.{IMPORT_PARSER_NAME}",
@@ -33,3 +36,46 @@ class CommonConfig(AppConfig):
                 import_module(module)
             except ModuleNotFoundError:
                 logger.debug(f"Failed to import {module}")
+
+    def warn_if_business_rules_changed(self):
+        """
+        Output a message if the business rules in app don't match those in the
+        database.
+
+        A data migration to sync the rules may be created using the sync_business_rules
+        management command.
+
+        :return:  True if the rules need syncing, or there are unapplied migrations to this app.
+        """
+        from checks.models import get_updated_rules
+        from common.models.utils import is_database_synchronized
+
+        if not is_database_synchronized(DEFAULT_DB_ALIAS):
+            logger.debug(
+                "Database has pending migrations, run them before checking if business rule sync is required.",
+            )
+            # There are unapplied migrations (some of which may be ones needed to run the business rules.)
+            return True
+
+        added, removed = get_updated_rules()
+        sync_required = bool(added or removed)
+        if sync_required:
+            print(
+                f"Business rules are not synced to the database. (Added: {len(added)},  Removed: {len(removed)})",
+                file=sys.stderr,
+            )
+            print(
+                "Create a data migration to sync the rules using the management command:\n  "
+                "sync_business_rules",
+                file=sys.stderr,
+            )
+
+        return sync_required
+
+    def ready(self):
+        in_runserver = bool(os.environ.get("RUN_MAIN"))
+
+        self.load_importer_modules()
+        if in_runserver:
+            if self.warn_if_business_rules_changed():
+                sys.exit(1)

@@ -126,7 +126,7 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     )
 
     def __str__(self):
-        return self.sid
+        return f"{self.sid}"
 
     def order_number_in_use(self, transaction):
         return self.order_number.in_use(transaction)

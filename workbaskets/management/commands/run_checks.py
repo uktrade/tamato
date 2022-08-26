@@ -1,4 +1,5 @@
 import logging
+import re
 import signal
 import sys
 from typing import Any
@@ -6,10 +7,12 @@ from typing import Dict
 from typing import Optional
 
 from celery.result import AsyncResult
+from celery.result import EagerResult
 from celery.result import GroupResult
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 
+from checks.models import BusinessRuleModel
 from checks.models import TrackedModelCheck
 from workbaskets.models import WorkBasket
 
@@ -35,12 +38,16 @@ def revoke_task_and_children(task, depth=0):
 
 
 class TaskControlMixin:
-    # Implementing classes can populate this with
+    # Implementing classes can remove the module names of tasks to make the display less verbose.
     IGNORE_TASK_PREFIXES = []
 
     def get_readable_task_name(self, node):
         """Optionally remove a prefix from the task name (used to remove the
         module which is often repeated)"""
+        if isinstance(node, EagerResult) and not node.name:
+            # Name isn't available for when CELERY_TASK_ALWAYS_EAGER is set :(
+            return f"Eager Task: {node.id}"
+
         task_name = getattr(node, "name") or ""
         for prefix in self.IGNORE_TASK_PREFIXES:
             unprefixed = task_name.replace(prefix, "")
@@ -79,21 +86,21 @@ class TaskControlMixin:
 
     def display_task(self, node, value, depth):
         """Default task display."""
-        # For now this only shows args, to avoid some noise - if this is more widely
-        # used that may be something that could be configured by the caller.
+        # Only shows task.args, to avoid some noise.
         readable_task_name = self.get_readable_task_name(
             node,
         )
 
+        # node.args can be None when CELERY_TASK_ALWAYS_EAGER is set,
+        # - when running eagerly the full API isn't available.
         self.stdout.write(
-            " " * depth * 2 + f"{readable_task_name}  " + f"{tuple(node.args)}",
+            " " * depth * 2 + f"{readable_task_name}  " + f"{tuple(node.args or ())}",
         )
 
     def iterate_ongoing_tasks(self, result, ignore_groupresult=True):
         """
-        Iterate over the ongoing tasks as they are received, track their.
-
-        depth - which is useful for visual formatting.
+        Iterate over the ongoing tasks as they are received, "depth" is tracked
+        to enabled visual formatting.
 
         Yields: (node, value, depth)
         """
@@ -114,6 +121,7 @@ class TaskControlMixin:
             yield node, value, depth
 
     def display_ongoing_tasks(self, result):
+        """Iterate the task tree and display info as the received."""
         for node, value, depth in self.iterate_ongoing_tasks(result):
             self.display_task(node, value, depth)
 
@@ -127,6 +135,8 @@ class Command(TaskControlMixin, BaseCommand):
         "checks.tasks.",
     ]
 
+    rule_names = []
+    rule_models = None
     passed = 0
     failed = 0
 
@@ -144,16 +154,30 @@ class Command(TaskControlMixin, BaseCommand):
             default=False,
         )
 
+        parser.add_argument(
+            "rules",
+            type=str,
+            help="Check only these rules (comma seperated list):  'rule_name1,rule_name2'",
+        )
+
     def display_check_model_task(self, node, value, depth):
         model_pk = node.args[1]
         check_passed = value
         readable_task_name = self.get_readable_task_name(node)
         style = self.style.SUCCESS if check_passed else self.style.ERROR
+
+        check = TrackedModelCheck.objects.filter(model=model_pk).last()
+
+        if check is None:
+            check_msg = "[No results]"
+        else:
+            check_msg = check.report(self.rule_names)
+
         self.stdout.write(
             " " * depth * 2
             + f"{readable_task_name}  "
             + style(
-                f"[{model_pk}] {TrackedModelCheck.objects.filter(model=model_pk).last()}",
+                f"[{model_pk}] {check_msg}",
             ),
         )
 
@@ -175,6 +199,35 @@ class Command(TaskControlMixin, BaseCommand):
                     self.failed += 1
             yield node, value, depth
 
+    def parse_rule_names_option(self, rule_names_option: str):
+        """
+        Given a comma seperated list of rule names, return a list of rule names
+        and their corresponding models.
+
+        Also handles the case where the user includes spaces.
+        """
+        # Split by comma, but be kind and eat spaces too.
+        rule_names = re.split(r"\s|,", rule_names_option)
+
+        # The user may limit the check to particular rules.
+        if rule_names:
+            rule_names = rule_names
+            rule_models = BusinessRuleModel.objects.current().filter(
+                name__in=rule_names,
+            )
+            if rule_models.count() != len(rule_names):
+                # TODO - be nice to the user and show which rules are missing.
+                self.stderr.write(
+                    "One or more rules not found:  " + ", ".join(rule_names),
+                )
+                sys.exit(2)
+        else:
+            # Default to all rules being checks.
+            rule_models = BusinessRuleModel.objects.current().all()
+            rule_names = [*rule_models.values_list("name", flat=True)]
+
+        return rule_names, rule_models
+
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
         from checks.tasks import check_workbasket
 
@@ -183,11 +236,14 @@ class Command(TaskControlMixin, BaseCommand):
             pk=int(options["WORKBASKET_PK"]),
         )
         clear_cache = options["clear_cache"]
-        rule_names = None
         throw = options["throw"]
 
-        # Temporarily display a message while waiting for celery, this will only have time to show up
-        # if celery isn't working (easy enough on a dev machine), or is busy.
+        self.rule_names, self.rule_models = self.parse_rule_names_option(
+            options["rules"],
+        )
+
+        # Temporarily display a message while waiting for celery to acknowledge the task,
+        # if this stays on the screen it's a sign celery is either busy or not running.
         self.stdout.write("Connecting to celery...  ⌛", ending="")
         self.stdout._out.flush()  # self.stdout.flush() doesn't result in any output - TODO: report as a bug to django.
         result = check_workbasket.apply_async(
@@ -197,7 +253,7 @@ class Command(TaskControlMixin, BaseCommand):
             ),
             kwargs={
                 "clear_cache": clear_cache,
-                "rules": rule_names,
+                "rules": self.rule_names,
             },
             throw=throw,
         )
@@ -207,6 +263,7 @@ class Command(TaskControlMixin, BaseCommand):
         # Attach a handler to revoke the task and its subtasks if the user presses Ctrl+C
         self.revoke_task_on_sigint(result)
 
+        # Display tasks as they complete
         self.display_ongoing_tasks(result)
         self.stdout.write()
 

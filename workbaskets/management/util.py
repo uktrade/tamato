@@ -22,14 +22,8 @@ class WorkBasketCommandMixin:
         self.stdout.write(f"{spaces}reason: {first_line_of(workbasket.reason)}")
         self.stdout.write(f"{spaces}status: {workbasket.status}")
         if show_transaction_info:
-            transactions = workbasket.transactions
-            first_pk = (
-                workbasket.transactions.first().pk if transactions.count() else "-"
-            )
-            last_pk = workbasket.transactions.last().pk if transactions.count() else "-"
-
             self.stdout.write(
-                f"{spaces}transactions: {first_pk} - {last_pk} [{transactions.count()}]",
+                f"{spaces}transactions: {workbasket.transactions.first().pk} - {workbasket.transactions.last().pk}",
             )
 
     def _output_workbasket_compact(self, workbasket, show_transaction_info, **kwargs):
@@ -38,13 +32,8 @@ class WorkBasketCommandMixin:
             ending="" if show_transaction_info else "\n",
         )
         if show_transaction_info:
-            transactions = workbasket.transactions
-            first_pk = (
-                workbasket.transactions.first().pk if transactions.count() else "-"
-            )
-            last_pk = workbasket.transactions.last().pk if transactions.count() else "-"
             self.stdout.write(
-                f", {first_pk} - {last_pk} [{transactions.count()}]",
+                f", {workbasket.transactions.first().pk} - {workbasket.transactions.last().pk}",
             )
 
     def output_workbasket(

@@ -1215,3 +1215,31 @@ checker.apply_rule
 TestRule
 LinkedModelsBusinessRuleChecker.of(TestRule
 assert len(checkers
+run_rule
+rule.__name
+A``Checker
+mark_removed_rules(apps
+f"python
+ANSI
+# Query
+klass.objects.filter(pk__in
+content_hash_fast(self
+Sort
+self._content_hash(sorted_models
+Business Rules
+Create a TrackedModelBusinessRuleViolation
+Sync
+Pending Addition"
+CELERY_TASK_ALWAYS_EAGER
+assert set(ALL_RULES.keys()).issuperset(rule_names
+check_result
+successful &= check_result.successful
+successful &=
+ALL_RULES
+\s|
+github https://gist.github.com/egmontkob <-
+Hyperlinks (a.k.a
+DummyChecker
+assert check.transaction.tracked_models.count
+assert num_checks
+assert check.model_checks.count

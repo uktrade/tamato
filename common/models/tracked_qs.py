@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from hashlib import sha256
-from itertools import chain
 from typing import List
 
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Case
 from django.db.models import CharField
 from django.db.models import F
@@ -444,55 +442,56 @@ class TrackedModelQuerySet(
         """
         return self._content_hash(self.order_by("pk").iterator())
 
-    def group_by_type(self):
-        """Yield a sequence of query sets, where each queryset contains only one
-        Polymorphic ctype, enabling the use of prefetch and select_related on
-        them."""
-        pks = self.values_list("pk", flat=True)
-        polymorphic_ctypes = (
-            self.non_polymorphic()
-            .distinct("polymorphic_ctype_id")
-            .values_list("polymorphic_ctype", flat=True)
-        )
-
-        for polymorphic_ctype in polymorphic_ctypes:
-            # Query contenttypes to get the concrete class instance
-            klass = ContentType.objects.get_for_id(polymorphic_ctype).model_class()
-            yield klass.objects.filter(pk__in=pks)
-
-    def select_related_copyable_fields(self):
-        """Split models into separate querysets, using group_by_type and call
-        select_related on any related fields found in the `copyable_fields`
-        attribute."""
-        pks = self.values_list("pk", flat=True)
-        for qs in self.group_by_type():
-            # Work out which fields from copyable_fields may be use in select_related
-            related_fields = [
-                field.name
-                for field in qs.model.copyable_fields
-                if hasattr(field, "related_query_name")
-            ]
-            yield qs.select_related(*related_fields).filter(pk__in=pks)
-
-    def content_hash_fast(self):
-        """
-        Use `select_related_copyable_fields` to call select_related on fields
-        that will be hashed.
-
-        This increases the speed a little more than 2x, at the expense of keeping the data in memory.
-        On this developers' laptop 2.3 seconds vs 6.5 for the naive implementation in `content_hash`,
-        for larger amounts of data the difference got bigger, 23 seconds vs 90, though this may
-        because more types of data were represented.
-
-        For larger workbaskets batching should be used to keep memory usage withing reasonable bounds.
-
-        The hash value returned here should be the same as that from `content_hash`.
-        """
-        # Fetch data using select_related, at this point the ordering
-        # will have been lost.
-        all_models = chain(*self.select_related_copyable_fields())
-
-        # Sort the data using trackedmodel_ptr_id, since the previous step outputs
-        # an iterable, sorted is used, instead of order_by on a queryset.
-        sorted_models = sorted(all_models, key=lambda o: o.trackedmodel_ptr_id)
-        return self._content_hash(sorted_models)
+    # def group_by_type(self):
+    #     """Yield a sequence of query sets, where each queryset contains only one
+    #     Polymorphic ctype, enabling the use of prefetch and select_related on
+    #     them."""
+    #     pks = self.values_list("pk", flat=True)
+    #     polymorphic_ctypes = (
+    #         self.non_polymorphic()
+    #         .only("polymorphic_ctype_id")
+    #         .distinct("polymorphic_ctype_id")
+    #         .values_list("polymorphic_ctype_id", flat=True)
+    #     )
+    #
+    #     for polymorphic_ctype in polymorphic_ctypes:
+    #         # Query contenttypes to get the concrete class instance
+    #         klass = ContentType.objects.get_for_id(polymorphic_ctype).model_class()
+    #         yield klass.objects.filter(pk__in=pks)
+    #
+    # def select_related_copyable_fields(self):
+    #     """Split models into separate querysets, using group_by_type and call
+    #     select_related on any related fields found in the `copyable_fields`
+    #     attribute."""
+    #     pks = self.values_list("pk", flat=True)
+    #     for qs in self.group_by_type():
+    #         # Work out which fields from copyable_fields may be use in select_related
+    #         related_fields = [
+    #             field.name
+    #             for field in qs.model.copyable_fields
+    #             if hasattr(field, "related_query_name")
+    #         ]
+    #         yield qs.select_related(*related_fields).filter(pk__in=pks)
+    #
+    # def content_hash_fast(self):
+    #     """
+    #     Use `select_related_copyable_fields` to call select_related on fields
+    #     that will be hashed.
+    #
+    #     This increases the speed a little more than 2x, at the expense of keeping the data in memory.
+    #     On this developers' laptop 2.3 seconds vs 6.5 for the naive implementation in `content_hash`,
+    #     for larger amounts of data the difference got bigger, 23 seconds vs 90, though this may
+    #     because more types of data were represented.
+    #
+    #     For larger workbaskets batching should be used to keep memory usage withing reasonable bounds.
+    #
+    #     The hash value returned here should be the same as that from `content_hash`.
+    #     """
+    #     # Fetch data using select_related, at this point the ordering
+    #     # will have been lost.
+    #     all_models = chain(*self.select_related_copyable_fields())
+    #
+    #     # Sort the data using trackedmodel_ptr_id, since the previous step outputs
+    #     # an iterable, sorted is used, instead of order_by on a queryset.
+    #     sorted_models = sorted(all_models, key=lambda o: o.trackedmodel_ptr_id)
+    #     return self._content_hash(sorted_models)

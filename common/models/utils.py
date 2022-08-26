@@ -3,6 +3,8 @@ import threading
 from typing import FrozenSet
 
 import wrapt
+from django.db import connections
+from django.db.migrations.executor import MigrationExecutor
 from django.db.models import Value
 
 _thread_locals = threading.local()
@@ -111,3 +113,37 @@ class TransactionMiddleware:
             response = self.get_response(request)
         # No post-view processing required.
         return response
+
+
+def is_database_synchronized(database):
+    # https://stackoverflow.com/a/31847406/62709
+    connection = connections[database]
+    connection.prepare_database()
+    executor = MigrationExecutor(connection)
+    targets = executor.loader.graph.leaf_nodes()
+    return not executor.migration_plan(targets)
+
+
+def ansi_hyperlink(uri, label=None, parameters=None):
+    """
+    Return an ANSI escape sequence that will hyperlink to the specified URI.
+
+    TODO:  Linking to the spec for ANSI escape sequences, or this example causes
+    one of our post commit hooks to output 'entropy check failed'
+
+    For mor einfo search for the gisthub gist and many comments by egmontkob on github for
+    "Hyperlinks (a.k.a. HTML-like anchors) in terminal emulators"
+
+    https://gist.github.com/egmontkob
+
+    In a github gist unde the above account.
+    """
+    if label is None:
+        label = uri
+    if parameters is None:
+        parameters = ""
+
+    # OSC 8 ; params ; URI ST <name> OSC 8 ;; ST
+    escape_mask = "\033]8;{};{}\033\\{}\033]8;;\033\\"
+
+    return escape_mask.format(parameters, uri, label)

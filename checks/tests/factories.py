@@ -1,20 +1,15 @@
-from dataclasses import dataclass
-from typing import Optional
+# TODO - infrastructure is for the old business rule checker, see if similar concepts are needed for the new one.
 
-from checks.checks import Checker
-from common.models.trackedmodel import TrackedModel
-
-
-@dataclass(frozen=True)
-class DummyChecker(Checker):
-    name: str = "DummyChecker"
-    success: bool = True
-    message: Optional[str] = None
-
-    def run(self, model: TrackedModel):
-        return self.success, self.message
-
-
+# @dataclass(frozen=True)
+# class DummyChecker(Checker):
+#     name: str = "DummyChecker"
+#     success: bool = True
+#     message: Optional[str] = None
+#
+#     def run(self, model: TrackedModel):
+#         return self.success, self.message
+#
+#
 # class TransactionCheckFactory(factory.django.DjangoModelFactory):
 #     class Meta:
 #         model = models.TransactionCheck

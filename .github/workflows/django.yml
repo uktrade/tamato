@@ -46,6 +46,13 @@ jobs:
       run: |
         python manage.py makemigrations --dry-run --check
 
+    - name: Check for business rule data migrations
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        DJANGO_SETTINGS_MODULE: settings.test
+      run: |
+        python manage.py sync_business_rules --check
+
     - name: Run tests
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
