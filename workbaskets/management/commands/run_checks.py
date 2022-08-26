@@ -158,6 +158,7 @@ class Command(TaskControlMixin, BaseCommand):
         parser.add_argument(
             "rules",
             type=str,
+            nargs="*",
             help="Check only these rules (comma seperated list):  'rule_name1,rule_name2'",
         )
 
@@ -201,13 +202,17 @@ class Command(TaskControlMixin, BaseCommand):
                     self.failed += 1
             yield node, value, depth
 
-    def parse_rule_names_option(self, rule_names_option: str):
+    def parse_rule_names_option(self, rule_names_option: Optional[str]):
         """
         Given a comma seperated list of rule names, return a list of rule names
         and a list of their corresponding models.
 
         Also handles the case where the user includes spaces.
         """
+
+        if not rule_names_option:
+            return [], None
+
         # Split by comma, but be kind and eat spaces too.
         rule_names = re.split(r"\s|,", rule_names_option)
 
