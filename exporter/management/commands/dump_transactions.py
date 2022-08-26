@@ -1,21 +1,15 @@
-import os
+import ast
+import itertools
 import sys
 
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.db.transaction import atomic
-from lxml import etree
 
-from common.serializers import validate_envelope
-from exporter.serializers import MultiFileEnvelopeTransactionSerializer
-from exporter.util import dit_file_generator
-from exporter.util import item_timer
+from exporter.management.commands.util import dump_transactions
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
-
-# VARIATION_SELECTOR enables emoji presentation
-WARNING_SIGN_EMOJI = "\N{WARNING SIGN}\N{VARIATION SELECTOR-16}"
 
 
 class Command(BaseCommand):
@@ -52,7 +46,7 @@ class Command(BaseCommand):
                 "with a comma-separated list of workbasket ids."
             ),
             nargs="*",
-            type=int,
+            type=ast.literal_eval,
             default=None,
             action="store",
         )
@@ -76,7 +70,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         workbasket_ids = options.get("workbasket_ids")
         if workbasket_ids:
-            query = dict(id__in=workbasket_ids)
+            query = dict(id__in=itertools.chain.from_iterable(workbasket_ids))
         else:
             query = dict(status=WorkflowStatus.APPROVED)
 
@@ -106,34 +100,12 @@ class Command(BaseCommand):
 
         directory = options.get("directory", ".")
 
-        output_file_constructor = dit_file_generator(directory, envelope_id)
-        serializer = MultiFileEnvelopeTransactionSerializer(
-            output_file_constructor,
-            envelope_id=envelope_id,
-            max_envelope_size=max_envelope_size,
+        success = dump_transactions(
+            transactions,
+            envelope_id,
+            directory,
+            max_envelope_size,
+            self.stdout,
         )
-        errors = False
-        for time_to_render, rendered_envelope in item_timer(
-            serializer.split_render_transactions(transactions),
-        ):
-            envelope_file = rendered_envelope.output
-            if not rendered_envelope.transactions:
-                self.stdout.write(
-                    f"{envelope_file.name} {WARNING_SIGN_EMOJI}  is empty !",
-                )
-                errors = True
-            else:
-                envelope_file.seek(0, os.SEEK_SET)
-                try:
-                    validate_envelope(envelope_file)
-                except etree.DocumentInvalid:
-                    self.stdout.write(
-                        f"{envelope_file.name} {WARNING_SIGN_EMOJI}️ Envelope invalid:",
-                    )
-                else:
-                    total_transactions = len(rendered_envelope.transactions)
-                    self.stdout.write(
-                        f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
-                    )
-        if errors:
+        if success:
             sys.exit(1)
