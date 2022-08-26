@@ -1,10 +1,5 @@
 import pytest
 
-from checks.tests import factories
-from checks.tests.util import assert_current
-from checks.tests.util import assert_fresh
-from checks.tests.util import assert_requires_update
-
 # TODO - see if the assertion here are worth porting to the new checking system and port them if so.
 pytestmark = pytest.mark.django_db
 
@@ -118,14 +113,17 @@ def test_stale_check_does_require_update():
 
 
 def test_current_fresh_check_made_after_stale_check_does_not_require_update():
-    stale_check = factories.StaleTransactionCheckFactory.create()
-    fresh_check = factories.TransactionCheckFactory.create(
-        transaction=stale_check.transaction,
-    )
-
-    assert_fresh(fresh_check)
-    assert_current(fresh_check)
-    assert_requires_update(fresh_check, False)
+    # TODO - port the ideas in this test to the new business checking system.
+    pytest.fail()
+    #
+    # stale_check = factories.StaleTransactionCheckFactory.create()
+    # fresh_check = factories.TransactionCheckFactory.create(
+    #     transaction=stale_check.transaction,
+    # )
+    #
+    # assert_fresh(fresh_check)
+    # assert_current(fresh_check)
+    # assert_requires_update(fresh_check, False)
 
 
 def test_current_fresh_check_made_on_transaction_after_stale_check_requires_update():
@@ -180,8 +178,11 @@ def test_current_fresh_check_made_on_transaction_after_updated_stale_check_does_
 
 
 def test_check_with_no_models_does_not_require_update():
-    check = factories.TransactionCheckFactory.create(empty=True)
-
-    assert_fresh(check)
-    assert_current(check)
-    assert_requires_update(check, False)
+    # TODO - port the ideas in this test to the new business checking system.
+    pytest.fail()
+    #
+    # check = factories.TransactionCheckFactory.create(empty=True)
+    #
+    # assert_fresh(check)
+    # assert_current(check)
+    # assert_requires_update(check, False)

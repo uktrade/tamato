@@ -1302,3 +1302,4 @@ ROIMB4
 ROIMB46
 SameMainAndSubQuota
 ValidityStartDateRules
+assert_current(fresh_check
