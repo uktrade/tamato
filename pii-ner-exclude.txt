@@ -1168,3 +1168,4 @@ measure_qs)\n
 MeasureComponent
 Components
 TP2000-452
+WorkBasketOutputFormat Enum
