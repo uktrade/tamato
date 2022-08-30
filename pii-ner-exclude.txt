@@ -1185,9 +1185,7 @@ ElementTree
 FootnoteForm
 AreaCode
 erga omnes data
-importer.forms.UploadTaricForm.save
 IndexError
-importer.forms.UploadTaricForm.save
 USERNAME
 Split
 Args
@@ -1206,3 +1204,4 @@ XZX
 BaseEngine
 TARGET_COMMAND
 https://github.com/tiran/defusedxml/blob/main/defusedxml/lxml.py
+importer.forms.UploadTaricForm.save
