@@ -29,6 +29,9 @@ def test_commodities_import_success_redirect(mock_save, valid_user_client):
     assert response.status_code == 302
     assert response.url == redirect_url
 
+    response = valid_user_client.get(redirect_url)
+    assert response.status_code == 200
+
 
 @pytest.mark.parametrize(
     "file_name,error_msg",
