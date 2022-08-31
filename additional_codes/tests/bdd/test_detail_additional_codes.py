@@ -5,6 +5,8 @@ from pytest_bdd import then
 from pytest_bdd import when
 from rest_framework.reverse import reverse
 
+from common.models.utils import override_current_transaction
+
 pytestmark = pytest.mark.django_db
 
 
@@ -26,7 +28,8 @@ def additional_code_core_data(additional_code_detail, additional_code_X000):
     act = ac.type
 
     assert f"{act.sid}{ac.code}" in content
-    assert ac.get_description(transaction=ac.transaction).description in content
+    with override_current_transaction(ac.transaction):
+        assert ac.get_description(transaction=ac.transaction).description in content
     assert f"{act.sid} - {act.description}" in content
     assert f"{ac.valid_between.lower:%d %b %Y}" in content
 

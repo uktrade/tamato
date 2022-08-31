@@ -9,7 +9,7 @@ from django.urls import reverse
 from commodities.models.orm import GoodsNomenclature
 from commodities.views import CommodityList
 from common.models.transactions import Transaction
-from common.models.utils import set_current_transaction
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.factories import GoodsNomenclatureDescriptionFactory
 from common.tests.factories import GoodsNomenclatureFactory
@@ -94,13 +94,13 @@ def test_commodity_list_queryset():
     good_1 = factories.SimpleGoodsNomenclatureFactory.create(item_id="1010000000")
     good_2 = factories.SimpleGoodsNomenclatureFactory.create(item_id="1000000000")
     tx = Transaction.objects.last()
-    set_current_transaction(tx)
     commodity_count = GoodsNomenclature.objects.approved_up_to_transaction(tx).count()
-    qs = view.get_queryset()
+    with override_current_transaction(tx):
+        qs = view.get_queryset()
 
-    assert qs.count() == commodity_count
-    assert qs.first().item_id == good_2.item_id
-    assert qs.last().item_id == good_1.item_id
+        assert qs.count() == commodity_count
+        assert qs.first().item_id == good_2.item_id
+        assert qs.last().item_id == good_1.item_id
 
 
 @pytest.mark.parametrize("search_terms", ["0", "010", "01010", "0101010"])

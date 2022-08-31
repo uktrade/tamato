@@ -1,4 +1,3 @@
-from unittest.mock import patch
 from urllib.parse import urlparse
 
 import factory
@@ -13,6 +12,7 @@ from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import LazyString
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests import models
 from common.tests.factories import EnvelopeFactory
@@ -28,7 +28,6 @@ from measures.models import MeasureExcludedGeographicalArea
 from regulations.models import Group
 from regulations.models import Regulation
 from taric.models import Envelope
-from workbaskets.tasks import check_workbasket_sync
 
 pytestmark = pytest.mark.django_db
 
@@ -311,11 +310,12 @@ def test_create_with_description():
     )
     model = TestModel1.create(**model_data)
 
-    description = model.get_descriptions().get()
-    assert description.validity_start == model.valid_between.lower
-    assert description.transaction == model.transaction
-    assert description.update_type == model.update_type
-    assert description.described_record == model
+    with override_current_transaction(model.transaction):
+        description = model.get_descriptions().get()
+        assert description.validity_start == model.valid_between.lower
+        assert description.transaction == model.transaction
+        assert description.update_type == model.update_type
+        assert description.described_record == model
 
 
 def test_get_descriptions(sample_model):
@@ -323,7 +323,8 @@ def test_get_descriptions(sample_model):
         factories.TestModelDescription1Factory.create(described_record=sample_model)
         for _ in range(2)
     }
-    assert set(sample_model.get_descriptions()) == descriptions
+    with override_current_transaction(Transaction.objects.last()):
+        assert set(sample_model.get_descriptions()) == descriptions
 
 
 def test_get_descriptions_with_update(sample_model, valid_user):
@@ -333,27 +334,11 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     workbasket = factories.WorkBasketFactory.create()
     new_description = description.new_version(workbasket)
 
-    description_queryset = sample_model.get_descriptions()
-    assert description in description_queryset
-    assert new_description not in description_queryset
+    with override_current_transaction(new_description.transaction):
+        description_queryset = sample_model.get_descriptions()
 
-    description_queryset = sample_model.get_descriptions(
-        transaction=new_description.transaction,
-    )
-
-    assert new_description in description_queryset
-    assert description not in description_queryset
-
-    check_workbasket_sync(workbasket)
-    workbasket.submit_for_approval()
-    with patch(
-        "exporter.tasks.upload_workbaskets.delay",
-    ):
-        workbasket.approve(valid_user.pk, "SEED_FIRST")
-    description_queryset = sample_model.get_descriptions()
-
-    assert new_description in description_queryset
-    assert description not in description_queryset
+        assert description not in description_queryset
+        assert new_description in description_queryset
 
 
 def test_get_description_dates(description_factory, date_ranges):
@@ -546,26 +531,28 @@ def test_save_drafts_transaction_updates(unordered_transactions):
 
 def test_structure_description(trackedmodel_factory):
     model = trackedmodel_factory.create()
-    description = model.structure_description
+    with override_current_transaction(model.transaction):
+        description = model.structure_description
 
-    if description:
-        assert type(description) == str
+        if description:
+            assert type(description) == str
 
-    if "structure_description" in type(model).__dict__:
-        pass
-    elif hasattr(type(model), "descriptions") and model.get_descriptions().last():
-        assert description == model.get_descriptions().last().description
-    elif hasattr(type(model), "description"):
-        assert description == model.description
-    else:
-        assert description == None
+        if "structure_description" in type(model).__dict__:
+            pass
+        elif hasattr(type(model), "descriptions") and model.get_descriptions().last():
+            assert description == model.get_descriptions().last().description
+        elif hasattr(type(model), "description"):
+            assert description == model.description
+        else:
+            assert description == None
 
 
 def test_described(description_factory):
     description = description_factory.create()
     described = description.get_described_object()
 
-    assert described.get_description() == description
+    with override_current_transaction(described.transaction):
+        assert described.get_description() == description
 
 
 def test_get_url_pattern_name_prefix():

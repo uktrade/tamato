@@ -5,6 +5,8 @@ from pytest_bdd import then
 from pytest_bdd import when
 from rest_framework.reverse import reverse
 
+from common.models.utils import override_current_transaction
+
 pytestmark = pytest.mark.django_db
 
 
@@ -22,8 +24,9 @@ def footnotes_list(footnotes_search, footnote_NC000):
     results = footnotes_search.json()["results"]
     assert len(results) == 1
     result = results[0]
-    assert (
-        result["label"]
-        == f"{footnote_NC000} - {footnote_NC000.get_description(transaction=footnote_NC000.transaction).description}"
-        and result["value"] == footnote_NC000.pk
-    )
+    with override_current_transaction(footnote_NC000.transaction):
+        assert (
+            result["label"]
+            == f"{footnote_NC000} - {footnote_NC000.get_description(transaction=footnote_NC000.transaction).description}"
+            and result["value"] == footnote_NC000.pk
+        )
