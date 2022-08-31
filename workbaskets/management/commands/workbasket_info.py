@@ -18,9 +18,17 @@ class Command(WorkBasketCommandMixin, BaseCommand):
         parser.add_argument("WORKBASKET_PK", type=int)
 
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
-        workbasket = WorkBasket.objects.get(
-            pk=int(options["WORKBASKET_PK"]),
-        )
+        workbasket_pk = int(options["WORKBASKET_PK"])
+        try:
+            workbasket = WorkBasket.objects.get(
+                pk=workbasket_pk,
+            )
+        except WorkBasket.DoesNotExist:
+            self.stderr.write(
+                self.style.ERROR(f"Workbasket pk={workbasket_pk} not found."),
+            )
+            exit(1)
+
         self.stdout.write(
             self.style.SUCCESS(
                 f"WorkBaskets {workbasket.pk} status {workbasket.status}",
