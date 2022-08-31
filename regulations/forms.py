@@ -317,7 +317,7 @@ class RegulationEditForm(RegulationFormBase):
 
         if (
             not cleaned_data["approved"]
-            and cleaned_data["regulation_usage"] != RegulationUsage.DRAFT_REGULATION
+            and self.instance.regulation_id[0] != RegulationUsage.DRAFT_REGULATION
         ):
             self.add_error(
                 "approved",

@@ -5,20 +5,18 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Submit
 from defusedxml.common import DTDForbidden
 from django import forms
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from sentry_sdk import capture_exception
 
-import settings
 from common.util import parse_xml
 from importer import models
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
 from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.validators import WorkflowStatus
-
-if settings.SENTRY_ENABLED:
-    from sentry_sdk import capture_exception
 
 
 def get_mime_type(file):
