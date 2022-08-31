@@ -1,5 +1,7 @@
 import enum
 
+from workbaskets.models import WorkBasket
+
 
 class WorkBasketOutputFormat(enum.Enum):
     READABLE = 1
@@ -77,3 +79,20 @@ class WorkBasketCommandMixin:
 
         for w in workbaskets:
             self.output_workbasket(w, show_transaction_info, output_format)
+
+    def get_workbasket_or_exit(self, workbasket_pk):
+        """
+        Get the workbasket instance by its primary key, workbasket_pk.
+
+        If no matching workbasket is found, then output an error message and
+        exit the process.
+        """
+        try:
+            return WorkBasket.objects.get(
+                pk=workbasket_pk,
+            )
+        except WorkBasket.DoesNotExist:
+            self.stderr.write(
+                self.style.ERROR(f"Workbasket pk={workbasket_pk} not found."),
+            )
+            exit(1)
