@@ -1,8 +1,8 @@
 import lxml
 import magic
 from crispy_forms_gds.helper import FormHelper
-from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Layout
+from crispy_forms_gds.layout import Submit
 from defusedxml.common import DTDForbidden
 from django import forms
 from django.contrib.auth.models import User
@@ -101,7 +101,12 @@ class UploadTaricForm(ImportForm):
 
         self.helper.layout = Layout(
             *self.fields,
-            Button("submit", "Upload"),
+            Submit(
+                "submit",
+                "Upload",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     @transaction.atomic
