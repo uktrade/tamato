@@ -281,17 +281,17 @@ def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         "geographical_area-geographical_area_group": geo_area1.pk,
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert not form.is_valid()
-    assert (
-        "Select a valid choice. That choice is not one of the available choices."
-        in form.errors["geo_area"][0]
-    )
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert not form.is_valid()
+        assert (
+            "Select a valid choice. That choice is not one of the available choices."
+            in form.errors["geo_area"][0]
+        )
 
 
 @pytest.mark.parametrize(
