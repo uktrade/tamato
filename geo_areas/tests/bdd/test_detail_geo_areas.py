@@ -31,12 +31,8 @@ def geo_area_core_data(geo_area_detail, geographical_area_1001):
 
     assert str(geographical_area_1001.area_id) in content
     with override_current_transaction(geographical_area_1001.transaction):
-        assert (
-            geographical_area_1001.get_description(
-                transaction=geographical_area_1001.transaction,
-            ).description
-            in content
-        )
+        assert geographical_area_1001.get_description().description in content
+
     assert geographical_area_1001.get_area_code_display() in content
 
     assert f"{geographical_area_1001.valid_between.lower:%d %b %Y}" in content
@@ -59,7 +55,7 @@ def compare_members_to_html(members, html, is_group):
         assert f"{member.valid_between.lower:%d %b %Y}" in html
         assert str(obj.area_id) in html
         with override_current_transaction(obj.transaction):
-            assert obj.get_description(transaction=obj.transaction).description in html
+            assert obj.get_description().description in html
 
 
 @then("the memberships against the geographical_area should be presented")

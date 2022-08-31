@@ -166,7 +166,7 @@ def test_measure_detail_conditions(client, valid_user):
     with override_current_transaction(certificate.transaction):
         assert (
             cells[1].text
-            == f"{certificate.code}:\n        {certificate.get_description(transaction=certificate.transaction).description}"
+            == f"{certificate.code}:\n        {certificate.get_description().description}"
         )
     assert cells[2].text == certificate_condition.action.description
     assert cells[3].text == "-"

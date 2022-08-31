@@ -27,6 +27,6 @@ def footnotes_list(footnotes_search, footnote_NC000):
     with override_current_transaction(footnote_NC000.transaction):
         assert (
             result["label"]
-            == f"{footnote_NC000} - {footnote_NC000.get_description(transaction=footnote_NC000.transaction).description}"
+            == f"{footnote_NC000} - {footnote_NC000.get_description().description}"
             and result["value"] == footnote_NC000.pk
         )

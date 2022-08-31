@@ -27,6 +27,6 @@ def additional_code_list(additional_code_search, additional_code_X000):
     with override_current_transaction(additional_code_X000.transaction):
         assert (
             result["label"]
-            == f"{additional_code_X000} - {additional_code_X000.get_description(transaction=additional_code_X000.transaction).description}"
+            == f"{additional_code_X000} - {additional_code_X000.get_description().description}"
         )
     assert result["value"] == additional_code_X000.pk

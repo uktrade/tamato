@@ -1390,7 +1390,7 @@ def test_ME56(reference_nonexistent_record):
 
     def delete_certificate(c):
         with override_current_transaction(c.transaction):
-            c.get_descriptions(transaction=c.transaction).first().delete()
+            c.get_descriptions().first().delete()
             c.delete()
 
     with reference_nonexistent_record(
