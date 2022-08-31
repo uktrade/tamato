@@ -1,5 +1,6 @@
 from os import path
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -31,7 +32,12 @@ def test_upload_taric_form_valid_envelope_id():
 
 
 @pytest.mark.parametrize("file_name,", ("invalid_id", "dtd"))
-def test_upload_taric_form_invalid_envelope_id(file_name):
+@patch("importer.forms.capture_exception")
+def test_upload_taric_form_invalid_envelope(capture_exception, file_name, settings):
+    """Test that form returns generic validation error and sentry captures
+    exception when given xml file with invalid id or document type
+    declaration."""
+    settings.SENTRY_ENABLED = True
     with open(f"{TEST_FILES_PATH}/{file_name}.xml", "rb") as upload_file:
         file_data = {
             "taric_file": SimpleUploadedFile(
@@ -47,3 +53,49 @@ def test_upload_taric_form_invalid_envelope_id(file_name):
             "The selected file could not be uploaded - try again"
             in form.errors["taric_file"]
         )
+        capture_exception.assert_called_once()
+
+
+def test_import_form_non_xml_file():
+    """Test that form returns incorrect file type validation error when passed a
+    text file instead of xml."""
+    with open(f"{TEST_FILES_PATH}/invalid_type.txt", "rb") as upload_file:
+        file_data = {
+            "taric_file": SimpleUploadedFile(
+                upload_file.name,
+                upload_file.read(),
+                content_type="text",
+            ),
+        }
+        form = forms.UploadTaricForm({}, file_data)
+
+        assert not form.is_valid()
+        assert "The selected file must be XML" in form.errors["taric_file"]
+
+
+# https://uktrade.atlassian.net/browse/TP2000-486
+# We forgot to add `self` to process_file params and no tests caught it.
+@patch("importer.forms.chunk_taric")
+@patch("importer.forms.run_batch")
+def test_upload_taric_form_save(run_batch, chunk_taric, superuser):
+    with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as upload_file:
+        data = {
+            "name": "test_upload",
+            "status": WorkflowStatus.EDITING,
+        }
+        file_data = {
+            "taric_file": SimpleUploadedFile(
+                upload_file.name,
+                upload_file.read(),
+                content_type="text/xml",
+            ),
+        }
+        form = forms.UploadTaricForm(data, file_data)
+        form.is_valid()
+        batch = form.save(user=superuser)
+
+        assert batch.name == "test_upload"
+        assert batch.split_job == False
+
+        run_batch.assert_called_once()
+        chunk_taric.assert_called_once()

@@ -6,7 +6,6 @@ from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 
 from workbaskets.management.util import WorkBasketCommandMixin
-from workbaskets.models import WorkBasket
 from workbaskets.tasks import check_workbasket_sync
 
 logger = logging.getLogger(__name__)
@@ -22,9 +21,7 @@ class Command(WorkBasketCommandMixin, BaseCommand):
         parser.add_argument("WORKBASKET_PK", type=int)
 
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
-        workbasket = WorkBasket.objects.get(
-            pk=int(options["WORKBASKET_PK"]),
-        )
+        workbasket = self.get_workbasket_or_exit(int(options["WORKBASKET_PK"]))
         self.stdout.write(
             f"Starting business rule checks against WorkBasket {workbasket}...",
         )

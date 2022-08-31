@@ -20,9 +20,7 @@ class Command(WorkBasketCommandMixin, BaseCommand):
         parser.add_argument("STATUS", choices=WorkflowStatus)
 
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
-        workbasket = WorkBasket.objects.get(
-            pk=int(options["WORKBASKET_PK"]),
-        )
+        workbasket = self.get_workbasket_or_exit(int(options["WORKBASKET_PK"]))
         if workbasket.status == options["STATUS"]:
             self.stdout.write(
                 f"WorkBasket {workbasket.pk} is already in "

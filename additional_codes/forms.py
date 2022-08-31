@@ -32,7 +32,7 @@ class AdditionalCodeForm(ValidityPeriodForm):
         self.fields["type"].label = "Additional code type"
         self.fields["type"].required = False
 
-        if self.instance:
+        if self.instance.pk is not None:
             self.fields["code"].disabled = True
             self.fields["code"].help_text = "You can't edit this"
             self.fields[
@@ -70,7 +70,7 @@ class AdditionalCodeForm(ValidityPeriodForm):
 
         # get type from instance if not submitted
         ctype = cleaned_data.get("type")
-        if not ctype and self.instance and self.instance.type:
+        if not ctype and self.instance.pk and self.instance.type:
             ctype = self.instance.type
 
         return cleaned_data
