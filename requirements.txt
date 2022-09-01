@@ -15,6 +15,7 @@ django-dotenv==1.4.2
 drf-extra-fields==3.0.2
 django-cte==1.1.5
 django-extensions==3.1.1
+django-fakeredis>=0.1.*
 django-filter==2.4.0
 django-formtools==2.3
 django-fsm==2.7.1
