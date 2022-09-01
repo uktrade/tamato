@@ -24,7 +24,7 @@ class GoodsNomenclatureFilterBackend(TamatoFilterBackend):
         return super().search_queryset(queryset, search_term)
 
 
-class CommodityFilter(TamatoFilter, ActiveStateMixin):
+class CommodityFilter(ActiveStateMixin, TamatoFilter):
     item_id = CharFilter(
         label="Code",
         widget=forms.TextInput(),

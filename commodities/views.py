@@ -12,8 +12,8 @@ from commodities.filters import GoodsNomenclatureFilterBackend
 from commodities.forms import CommodityImportForm
 from commodities.models import GoodsNomenclature
 from common.serializers import AutoCompleteSerializer
-from common.views import TamatoListView
 from common.views import TrackedModelDetailView
+from common.views import WithPaginationListView
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
@@ -65,7 +65,7 @@ class CommodityMixin:
         return GoodsNomenclature.objects.current()
 
 
-class CommodityList(CommodityMixin, TamatoListView):
+class CommodityList(CommodityMixin, WithPaginationListView):
     template_name = "commodities/list.jinja"
     filterset_class = CommodityFilter
 
