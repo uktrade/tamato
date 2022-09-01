@@ -14,13 +14,23 @@ api_router.register(
 urlpatterns = [
     path("api/", include(api_router.urls)),
     path(
-        "commodities/import/",
-        views.CommodityImportView.as_view(),
-        name="commodities-import",
+        "commodities/",
+        views.CommodityList.as_view(),
+        name="commodity-ui-list",
     ),
     path(
-        "commodities/import/success/",
+        f"commodities/<sid>/",
+        views.CommodityDetail.as_view(),
+        name="commodity-ui-detail",
+    ),
+    path(
+        "import/commodities/",
+        views.CommodityImportView.as_view(),
+        name="commodity-ui-import",
+    ),
+    path(
+        "import/commodities/success/",
         views.CommodityImportSuccessView.as_view(),
-        name="commodities-import-success",
+        name="commodity-ui-import-success",
     ),
 ]
