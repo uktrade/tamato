@@ -1,0 +1,26 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
+
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Summary{% endset %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+      "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary" }
+    ]})
+  }}
+{% endblock %}
+
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+    {{ page_title }}
+  </h1>
+  {{ navigation(request, "summary") }}
+
+  {% include "includes/workbaskets/workbasket-selectable-items.jinja" %}
+{% endblock %}

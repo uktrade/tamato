@@ -27,9 +27,9 @@ ui_patterns = [
         name="edit-workbasket",
     ),
     path(
-        f"<pk>/review-measures/",
+        f"<pk>/review/",
         ui_views.ReviewMeasuresWorkbasketView.as_view(),
-        name="review-measures-workbasket",
+        name="review-workbasket",
     ),
     path(
         "download",

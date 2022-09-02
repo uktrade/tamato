@@ -263,7 +263,7 @@ class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
     def get_queryset(self):
         return Measure.objects.filter(trackedmodel_ptr__transaction__workbasket_id=350)
 
-    template_name = "workbaskets/review-measures-workbasket.jinja"
+    template_name = "workbaskets/review-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
     paginator_class = MeasurePaginator
     filterset_class = MeasureFilter
@@ -277,7 +277,7 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
-    template_name = "workbaskets/review-workbasket.jinja"
+    template_name = "workbaskets/summary-workbasket.jinja"
     form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.

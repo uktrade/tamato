@@ -8,7 +8,7 @@
             <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-link">Add/edit items</a>
         </li>
         <li class="{% if active_link == 'review' %}active{% endif %}">
-            <a href="{{ url('workbaskets:review-measures-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-link">Review changes</a>
+            <a href="{{ url('workbaskets:review-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-link">Review changes</a>
         </li>
     </ul>
 </nav>
