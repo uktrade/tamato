@@ -1,19 +1,28 @@
 .govuk-table-list {
   @extend .govuk-list;
 }
+
 @media (min-width: 40.0625em) {
   .govuk-table-m {
     font-size: 16px;
     font-size: 1rem;
     line-height: 1.25;
+
     .govuk-list {
       font-size: inherit;
     }
   }
+
   .govuk-table-list {
     margin-bottom: 0;
+
     li:last-child {
       margin-bottom: 0;
     }
   }
+}
+
+// fix line breaks between parts of measure condition
+.govuk-table__cell li {
+  white-space: nowrap;
 }
