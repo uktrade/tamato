@@ -1,3 +1,5 @@
+from typing import Type
+
 import boto3
 from botocore.client import Config
 from django.conf import settings
@@ -22,9 +24,14 @@ from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
 from common.filters import TamatoFilter
+from common.models import TrackedModel
 from common.pagination import build_pagination_list
+from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
+from measures.filters import MeasureFilter
+from measures.models import Measure
+from measures.pagination import MeasurePaginator
 from workbaskets import forms
 from workbaskets import tasks
 from workbaskets.models import WorkBasket
@@ -247,6 +254,19 @@ def download_envelope(request):
     )
 
     return HttpResponseRedirect(url)
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
+    model: Type[TrackedModel] = Measure
+
+    def get_queryset(self):
+        return Measure.objects.filter(trackedmodel_ptr__transaction__workbasket_id=350)
+
+    template_name = "workbaskets/review-measures-workbasket.jinja"
+    permission_required = "workbaskets.change_workbasket"
+    paginator_class = MeasurePaginator
+    filterset_class = MeasureFilter
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
