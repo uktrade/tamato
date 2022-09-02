@@ -1,9 +1,9 @@
 {% extends "layouts/layout.jinja" %}
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
 
-{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }}{% endset %}
-{% set page_subtitle %}<span class="govuk-!-font-weight-bold">Summary</span> - View workbasket components{% endset %}
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Summary{% endset %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -15,13 +15,12 @@
   }}
 {% endblock %}
 
+
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
     {{ page_title }}
   </h1>
-  <h2 class="govuk-body-l govuk-!-margin-bottom-6">
-    {{ page_subtitle }}
-  </h2>
-  <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">Edit this workbasket</a>
+  {{ navigation(request, "summary") }}
+
   {% include "includes/workbaskets/workbasket-selectable-items.jinja" %}
 {% endblock %}
