@@ -259,6 +259,7 @@ def download_envelope(request):
 @method_decorator(require_current_workbasket, name="dispatch")
 class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
     model: Type[TrackedModel] = Measure
+    paginate_by = 30
 
     @property
     def workbasket(self) -> WorkBasket:
@@ -267,7 +268,7 @@ class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
     def get_queryset(self):
         return Measure.objects.filter(
             trackedmodel_ptr__transaction__workbasket_id=self.workbasket.id,
-        )
+        ).order_by("sid")
 
     template_name = "workbaskets/review-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"

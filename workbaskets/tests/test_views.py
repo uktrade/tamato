@@ -11,6 +11,7 @@ from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
+from measures.models import Measure
 from workbaskets import models
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
@@ -412,3 +413,54 @@ def test_workbasket_list_view(valid_user_client):
     assert wb.created_at.strftime("%d %b %y") in row_text
     assert str(wb.tracked_models.count()) in row_text
     assert wb.reason in row_text
+
+
+def test_workbasket_measures_review(valid_user_client):
+    """Test that valid user receives a 200 on GET for
+    ReviewMeasuresWorkbasketView and correct measures display in html table."""
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    non_workbasket_measures = factories.MeasureFactory.create_batch(5)
+
+    with workbasket.new_transaction() as tx:
+        factories.MeasureFactory.create_batch(30, transaction=tx)
+
+    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    non_workbasket_measures_sids = {str(m.sid) for m in non_workbasket_measures}
+    measure_sids = {e.text for e in soup.select("table tr td:first-child")}
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=workbasket.id,
+    )
+    assert not {str(m.sid) for m in workbasket_measures}.difference(measure_sids)
+    assert measure_sids.difference(non_workbasket_measures_sids)
+
+
+def test_workbasket_measures_review_pagination(valid_user_client):
+    """Test that the first 30 measures in the workbasket are displayed in the
+    table."""
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+
+    with workbasket.new_transaction() as tx:
+        factories.MeasureFactory.create_batch(40, transaction=tx)
+
+    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    measure_sids = {e.text for e in soup.select("table tr td:first-child")}
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=workbasket.id,
+    )
+    assert measure_sids.issubset({str(m.sid) for m in workbasket_measures})
