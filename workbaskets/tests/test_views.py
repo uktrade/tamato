@@ -273,8 +273,9 @@ def test_review_workbasket_displays_rule_violation_summary(
     )
     headings = page.find_all("h2", attrs={"class": "govuk-error-summary__title"})
     tracked_model_count = session_workbasket.tracked_models.count()
+    created_at = f"{check.created_at:%d %b %Y %H:%M}"
 
-    assert f"Live status: {check.created_at}" in headings[0].text
+    assert f"Live status: {created_at}" in headings[0].text
     assert f"Number of changes: {tracked_model_count}" in headings[1].text
     assert f"Number of violations: 1" in headings[2].text
 
