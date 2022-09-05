@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from django.test import override_settings
 from django.urls import reverse
 
+from checks.tests.factories import TrackedModelCheckFactory
 from common.tests import factories
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.util import validity_period_post_data
@@ -245,6 +246,36 @@ def test_review_workbasket_displays_objects_in_current_workbasket(
         assert page.find("input", {"name": field_name})
 
 
+def test_review_workbasket_displays_rule_violation_summary(
+    valid_user_client,
+    session_workbasket,
+):
+    with session_workbasket.new_transaction() as transaction:
+        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        check = TrackedModelCheckFactory.create(
+            transaction_check__transaction=transaction,
+            model=good,
+            successful=False,
+        )
+
+    response = valid_user_client.get(
+        reverse(
+            "workbaskets:workbasket-ui-detail",
+            kwargs={"pk": session_workbasket.id},
+        ),
+    )
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        features="lxml",
+    )
+    headings = page.find_all("h2", attrs={"class": "govuk-error-summary__title"})
+    tracked_model_count = session_workbasket.tracked_models.count()
+
+    assert f"Live status: {check.created_at}" in headings[0].text
+    assert f"Number of changes: {tracked_model_count}" in headings[1].text
+    assert f"Number of violations: 1" in headings[2].text
+
+
 def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbasket):
     response = valid_user_client.get(
         reverse("workbaskets:edit-workbasket", kwargs={"pk": session_workbasket.pk}),
@@ -412,3 +443,66 @@ def test_workbasket_list_view(valid_user_client):
     assert wb.created_at.strftime("%d %b %y") in row_text
     assert str(wb.tracked_models.count()) in row_text
     assert wb.reason in row_text
+
+
+@patch("workbaskets.tasks.check_workbasket.delay")
+def test_run_business_rules(check_workbasket, valid_user_client, session_workbasket):
+    check_workbasket.return_value.id = 123
+    assert not session_workbasket.rule_check_task_id
+
+    with session_workbasket.new_transaction() as transaction:
+        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        check = TrackedModelCheckFactory.create(
+            transaction_check__transaction=transaction,
+            model=good,
+            successful=False,
+        )
+
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+    }
+    session.save()
+    response = valid_user_client.get(
+        reverse("workbaskets:workbasket-run-business-rules"),
+    )
+
+    assert response.status_code == 302
+    assert response.url == f"/workbaskets/{session_workbasket.pk}/"
+
+    session_workbasket.refresh_from_db()
+
+    assert session_workbasket.rule_check_task_id
+    check_workbasket.assert_called_once_with(session_workbasket.pk)
+    assert not session_workbasket.tracked_model_checks.exists()
+
+
+def test_workbasket_violations(valid_user_client, session_workbasket):
+    url = reverse(
+        "workbaskets:workbasket-ui-violations",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    with session_workbasket.new_transaction() as transaction:
+        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        check = TrackedModelCheckFactory.create(
+            transaction_check__transaction=transaction,
+            model=good,
+            successful=False,
+        )
+
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    table = page.findChildren("table")[0]
+    row = table.findChildren("tr")[1]
+    cells = row.findChildren("td")
+
+    assert cells[0].text == str(check.pk)
+    assert cells[1].text == good._meta.verbose_name.title()
+    assert cells[2].text == check.rule_code
+    assert cells[3].text == check.message
+    assert cells[4].text == f"{check.transaction_check.transaction.created_at:%d %b %Y}"

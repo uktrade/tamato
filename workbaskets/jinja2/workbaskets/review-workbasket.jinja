@@ -4,6 +4,24 @@
 
 {% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }}{% endset %}
 {% set page_subtitle %}<span class="govuk-!-font-weight-bold">Summary</span> - View workbasket components{% endset %}
+{% set business_rules_button %} <a href="{{ url('workbaskets:workbasket-run-business-rules')}}" class="govuk-button govuk-button--secondary govuk-!-margin-left-5"">Run business rules</a> {% endset %}
+{% set rule_check_status %}
+  {% if rule_check_in_progress %}
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Live status: rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket. Come back later or refresh to see results.
+    </h2>
+  {% elif workbasket.tracked_model_checks.exists() %}
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Live status: {{ workbasket.tracked_model_checks.order_by("created_at").last().created_at }}
+    </h2>
+    {{ business_rules_button }}
+  {% else %}
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Live status: no rule check performed yet.
+    </h2>
+    {{ business_rules_button }}
+  {% endif %}
+{% endset %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -23,17 +41,12 @@
     {{ page_subtitle }}
   </h2>
   <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">Edit this workbasket</a>
+  <div class="govuk-button-group">
+    {{ rule_check_status}} 
+  </div>
+  <hr class="govuk-section-break govuk-section-break--visible">
   {% if workbasket.tracked_model_check_errors.exists() %}
   <div class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" data-module="govuk-error-summary">
-    <div class="govuk-button-group">
-      <h2 class="govuk-error-summary__title" id="error-summary-title">
-        Live status {{ workbasket.tracked_model_check_errors.order_by("created_at").last().created_at}}  
-      </h2>
-      <button class="govuk-button govuk-button--secondary" data-module="govuk-button">
-        Save as draft
-      </button>
-    </div>
-    <hr class="govuk-section-break govuk-section-break--visible">
     <h2 class="govuk-error-summary__title" id="error-summary-title">
       Number of changes: {{workbasket.tracked_models.count()}}
     </h2>

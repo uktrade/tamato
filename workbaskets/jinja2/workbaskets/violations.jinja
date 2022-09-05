@@ -34,11 +34,8 @@
 {% set table_rows = [] %}
 
 {% for check in workbasket.tracked_model_check_errors %}
-    {% set object_link -%}
-    <a class="govuk-link govuk-!-font-weight-bold" href={{ check.model.get_url() }}>{{ check.model.sid }}</a>
-    {%- endset %}
     {{ table_rows.append([
-    {"html": object_link},
+    {"text": check.pk},
     {"text": check.model._meta.verbose_name.title()},
     {"text": check.rule_code},
     {"text": check.message},

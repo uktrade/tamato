@@ -71,6 +71,11 @@ ui_patterns = [
         ui_views.WorkBasketViolations.as_view(),
         name="workbasket-ui-violations",
     ),
+    path(
+        "run-business-rules",
+        ui_views.run_business_rules,
+        name="workbasket-run-business-rules",
+    ),
 ]
 
 urlpatterns = [

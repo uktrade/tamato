@@ -288,6 +288,12 @@ class WorkBasket(TimestampedMixin):
         protected=False,
         editable=False,
     )
+    rule_check_task_id = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        unique=True,
+    )
 
     transactions: TransactionQueryset
 
@@ -479,11 +485,14 @@ class WorkBasket(TimestampedMixin):
         return self.transactions.last() or Transaction.approved.last()
 
     @property
-    def tracked_model_check_errors(self):
+    def tracked_model_checks(self):
         return TrackedModelCheck.objects.filter(
             transaction_check__transaction__workbasket=self,
-            successful=False,
         )
+
+    @property
+    def tracked_model_check_errors(self):
+        return self.tracked_model_checks.filter(successful=False)
 
     def delete_checks(self):
         """Delete all TrackedModelCheck and TransactionCheck instances related
