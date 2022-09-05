@@ -145,4 +145,10 @@ class TrackedModelCheck(TimestampedMixin):
 
     @property
     def rule_code(self):
+        """
+        Expects `check_name` value in the format
+        `BusinessRuleCheckerOf[footnotes.business_rules.FO4]`.
+
+        Returns business rule code (e.g. `FO4`).
+        """
         return self.check_name.split(".")[-1][:-1]

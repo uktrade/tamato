@@ -5,21 +5,6 @@
 
 {% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Rule violations {% endset %}
 
-{% set table_rows = [] %}
-
-{% for check in workbasket.tracked_model_check_errors %}
-    {% set object_link -%}
-    <a class="govuk-link govuk-!-font-weight-bold" href={{ check.model.get_url() }}>{{ check.model.sid }}</a>
-    {%- endset %}
-    {{ table_rows.append([
-    {"html": object_link},
-    {"text": check.model._meta.verbose_name.title()},
-    {"text": check.rule_code},
-    {"text": check.message},
-    {"text": check.transaction.created_at},
-  ]) or "" }}
-{% endfor %}
-
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
     {{ page_title }} 
@@ -42,6 +27,7 @@
     {"text": "{:%d %b %Y}".format(check.transaction_check.transaction.created_at)},
   ]) or "" }}
 {% endfor %}
+
 {{ govukTable({
   "head": [
     {"text": "Item ID"},

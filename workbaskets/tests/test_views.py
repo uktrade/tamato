@@ -250,6 +250,9 @@ def test_review_workbasket_displays_rule_violation_summary(
     valid_user_client,
     session_workbasket,
 ):
+    """Test that the review workbasket page includes an error summary box
+    detailing the number of tracked model changes and business rule violations,
+    dated to the most recent `TrackedModelCheck`."""
     with session_workbasket.new_transaction() as transaction:
         good = GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
@@ -447,6 +450,10 @@ def test_workbasket_list_view(valid_user_client):
 
 @patch("workbaskets.tasks.check_workbasket.delay")
 def test_run_business_rules(check_workbasket, valid_user_client, session_workbasket):
+    """Test that a GET request to the run-business-rules endpoint returns a 302,
+    redirecting to the review workbasket page, runs the `check_workbasket` task,
+    saves the task id on the workbasket, and deletes pre-existing
+    `TrackedModelCheck` objects associated with the workbasket."""
     check_workbasket.return_value.id = 123
     assert not session_workbasket.rule_check_task_id
 
@@ -474,12 +481,15 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
 
     session_workbasket.refresh_from_db()
 
-    assert session_workbasket.rule_check_task_id
     check_workbasket.assert_called_once_with(session_workbasket.pk)
+    assert session_workbasket.rule_check_task_id
     assert not session_workbasket.tracked_model_checks.exists()
 
 
 def test_workbasket_violations(valid_user_client, session_workbasket):
+    """Test that a GET request to the violations endpoint returns a 200 and
+    displays the correct column values for one unsuccessful
+    `TrackedModelCheck`."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
         kwargs={"pk": session_workbasket.pk},
