@@ -260,8 +260,14 @@ def download_envelope(request):
 class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
     model: Type[TrackedModel] = Measure
 
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
     def get_queryset(self):
-        return Measure.objects.filter(trackedmodel_ptr__transaction__workbasket_id=350)
+        return Measure.objects.filter(
+            trackedmodel_ptr__transaction__workbasket_id=self.workbasket.id,
+        )
 
     template_name = "workbaskets/review-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
