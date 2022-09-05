@@ -267,7 +267,7 @@ class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
 
     def get_queryset(self):
         return Measure.objects.filter(
-            trackedmodel_ptr__transaction__workbasket_id=self.workbasket.id,
+            transaction__workbasket=self.workbasket,
         ).order_by("sid")
 
     template_name = "workbaskets/review-workbasket.jinja"
