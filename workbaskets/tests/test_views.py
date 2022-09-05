@@ -448,6 +448,7 @@ def test_workbasket_measures_review_pagination(valid_user_client):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
+    factories.MeasureFactory.create_batch(5)
 
     with workbasket.new_transaction() as tx:
         factories.MeasureFactory.create_batch(40, transaction=tx)
