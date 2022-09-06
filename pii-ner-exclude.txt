@@ -1216,3 +1216,4 @@ f"/commodities/{commodity2.sid}/
 f"{first_line_of(workbasket.reason
 WorkBasketOutputFormat Enum
 0004_archive_field
+Europe

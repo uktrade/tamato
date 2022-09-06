@@ -299,7 +299,7 @@ LANGUAGE_CODE = "en-gb"
 USE_TZ = True
 
 # Time zone
-TIME_ZONE = "UTC"
+TIME_ZONE = "Europe/London"
 
 # HMRC AWS settings (override the defaults)
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")

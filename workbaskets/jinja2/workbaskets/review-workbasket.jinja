@@ -10,9 +10,14 @@
     <h2 class="govuk-error-summary__title" id="error-summary-title">
       Live status: rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket. Come back later or refresh to see results.
     </h2>
+  {% elif workbasket.tracked_model_check_errors.exists() %}
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Live status ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): failing business rules.
+    </h2>
+    {{ business_rules_button }}
   {% elif workbasket.tracked_model_checks.exists() %}
     <h2 class="govuk-error-summary__title" id="error-summary-title">
-      Live status: {{ "{:%d %b %Y %H:%M}".format(workbasket.tracked_model_checks.order_by("created_at").last().created_at) }}
+      Live status ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): business rules passing.
     </h2>
     {{ business_rules_button }}
   {% elif workbasket.tracked_models.exists() %}
