@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from django.test import override_settings
 from django.urls import reverse
 
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.util import validity_period_post_data
@@ -442,16 +443,18 @@ def test_workbasket_measures_review(valid_user_client):
     assert measure_sids.difference(non_workbasket_measures_sids)
 
 
-def test_workbasket_measures_review_pagination(valid_user_client):
+def test_workbasket_measures_review_pagination(
+    valid_user_client,
+    unapproved_transaction,
+):
     """Test that the first 30 measures in the workbasket are displayed in the
     table."""
-    workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.EDITING,
-    )
-    factories.MeasureFactory.create_batch(5)
 
-    with workbasket.new_transaction() as tx:
-        factories.MeasureFactory.create_batch(40, transaction=tx)
+    with override_current_transaction(unapproved_transaction):
+        workbasket = factories.WorkBasketFactory.create(
+            status=WorkflowStatus.EDITING,
+        )
+        factories.MeasureFactory.create_batch(40, transaction=unapproved_transaction)
 
     url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
     response = valid_user_client.get(url)
