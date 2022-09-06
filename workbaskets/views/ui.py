@@ -31,7 +31,7 @@ from workbaskets import forms
 from workbaskets import tasks
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
-from workbaskets.tasks import check_workbasket
+from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
 
@@ -460,7 +460,7 @@ def run_business_rules(request):
 
     # remove existing workbasket checks before creating new ones in check_workbasket task
     workbasket.delete_checks()
-    task = check_workbasket.delay(workbasket.pk)
+    task = call_check_workbasket_sync.delay(workbasket.pk)
 
     # save task id against basket, so that we can check its status later
     workbasket.rule_check_task_id = task.id
