@@ -15,11 +15,15 @@
       Live status: {{ "{:%d %b %Y %H:%M}".format(workbasket.tracked_model_checks.order_by("created_at").last().created_at) }}
     </h2>
     {{ business_rules_button }}
-  {% else %}
+  {% elif workbasket.tracked_models.exists() %}
     <h2 class="govuk-error-summary__title" id="error-summary-title">
       Live status: no rule check performed yet.
     </h2>
     {{ business_rules_button }}
+  {% else %}
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Live status: no objects in workbasket.
+    </h2>
   {% endif %}
 {% endset %}
 
