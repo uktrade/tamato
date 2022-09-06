@@ -2,7 +2,7 @@
 {% from 'macros/create_link.jinja' import create_link %}
 
 {% set description_rows = [] %}
-{% for description in object.get_descriptions(request=request) %}
+{% for description in object.get_descriptions() %}
 	{% set edit_url = description.get_url("edit") %}
 	{% set delete_url = description.get_url("delete") %}
 	{% set description_row = [

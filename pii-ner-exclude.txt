@@ -1205,5 +1205,10 @@ BaseEngine
 TARGET_COMMAND
 https://github.com/tiran/defusedxml/blob/main/defusedxml/lxml.py
 importer.forms.UploadTaricForm.save
+Commodity Code
+Commodity Description
+Comodity Code
+Comodity Description"
+f"/commodities/{commodity2.sid}/
 f"{first_line_of(workbasket.reason
 WorkBasketOutputFormat Enum
