@@ -442,6 +442,21 @@ def test_workbasket_measures_review(valid_user_client):
     assert not {str(m.sid) for m in workbasket_measures}.difference(measure_sids)
     assert measure_sids.difference(non_workbasket_measures_sids)
 
+    # 5th column is start date
+    table_start_dates = {e.text for e in soup.select("table tr td:nth-child(5)")}
+    measure_start_dates = {
+        f"{m.valid_between.lower:%d %b %Y}" for m in workbasket_measures
+    }
+    assert not measure_start_dates.difference(table_start_dates)
+    # 6th column is end date
+    table_end_dates = {e.text for e in soup.select("table tr td:nth-child(6)")}
+    measure_end_dates = {
+        f"{m.effective_end_date:%d %b %Y}"
+        for m in workbasket_measures
+        if m.effective_end_date
+    }
+    assert not measure_end_dates.difference(table_end_dates)
+
 
 def test_workbasket_measures_review_pagination(
     valid_user_client,
