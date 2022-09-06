@@ -435,12 +435,13 @@ def test_workbasket_measures_review(valid_user_client):
     soup = BeautifulSoup(str(response.content), "html.parser")
 
     non_workbasket_measures_sids = {str(m.sid) for m in non_workbasket_measures}
-    measure_sids = {e.text for e in soup.select("table tr td:first-child")}
+    measure_sids = [e.text for e in soup.select("table tr td:first-child")]
     workbasket_measures = Measure.objects.filter(
         trackedmodel_ptr__transaction__workbasket_id=workbasket.id,
     )
-    assert not {str(m.sid) for m in workbasket_measures}.difference(measure_sids)
-    assert measure_sids.difference(non_workbasket_measures_sids)
+    table_measure_sids = [str(m.sid) for m in workbasket_measures]
+    assert table_measure_sids == measure_sids
+    assert set(measure_sids).difference(non_workbasket_measures_sids)
 
     # 5th column is start date
     table_start_dates = {e.text for e in soup.select("table tr td:nth-child(5)")}
