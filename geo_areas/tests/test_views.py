@@ -2,7 +2,7 @@ import pytest
 from bs4 import BeautifulSoup
 from rest_framework.reverse import reverse
 
-from common.models.utils import set_current_transaction
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
@@ -77,11 +77,11 @@ def test_geographical_area_list_queryset():
     )
     view = GeoAreaList()
     qs = view.get_queryset()
-    set_current_transaction(new_area.transaction)
 
-    assert qs.count() == 1
-    assert qs.first().description == "England"  # /PS-IGNORE
-    assert qs.first() == new_area
+    with override_current_transaction(new_area.transaction):
+        assert qs.count() == 1
+        assert qs.first().description == "England"  # /PS-IGNORE
+        assert qs.first() == new_area
 
 
 # https://uktrade.atlassian.net/browse/TP2000-225

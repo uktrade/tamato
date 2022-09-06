@@ -2,6 +2,7 @@ import pytest
 from django.db import DataError
 
 from common.business_rules import BusinessRuleViolation
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import only_applicable_after
 from common.tests.util import raises_if
@@ -62,8 +63,9 @@ def test_GA3_first_description_must_have_same_start_date(date_ranges):
     area = factories.GeographicalAreaFactory.create(
         description__validity_start=date_ranges.later.lower,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.GA3(area.transaction).validate(area)
+    with override_current_transaction(area.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.GA3(area.transaction).validate(area)
 
 
 def test_GA3_start_dates_cannot_match():
@@ -74,10 +76,11 @@ def test_GA3_start_dates_cannot_match():
         described_geographicalarea=existing.described_geographicalarea,
         validity_start=existing.validity_start,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.GA3(duplicate.transaction).validate(
-            existing.described_geographicalarea,
-        )
+    with override_current_transaction(duplicate.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.GA3(duplicate.transaction).validate(
+                existing.described_geographicalarea,
+            )
 
 
 def test_GA3_description_start_before_geographical_area_end(date_ranges):
@@ -88,8 +91,11 @@ def test_GA3_description_start_before_geographical_area_end(date_ranges):
         valid_between=date_ranges.normal,
         description__validity_start=date_ranges.later.lower,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.GA3(geographical_area.transaction).validate(geographical_area)
+    with override_current_transaction(geographical_area.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.GA3(geographical_area.transaction).validate(
+                geographical_area,
+            )
 
 
 def test_GA4():

@@ -56,7 +56,6 @@
 
       {% else %}
         <h2 class="govuk-body">There is nothing in your workbasket yet.</h2>
-        <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">Edit workbasket</a>
       {% endif %}
     </div>
   </div>
@@ -133,7 +132,8 @@
       {% endif %}
     </div>
   </div>
-
+  {% if change_count %}
   <button value="remove-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Remove</button>
+  {% endif %}
 </form>
 {% endif %}

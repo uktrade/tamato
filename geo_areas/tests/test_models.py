@@ -1,7 +1,7 @@
 import pytest
 
 from common.models.transactions import Transaction
-from common.models.utils import set_current_transaction
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from geo_areas import models
 
@@ -27,9 +27,9 @@ def test_get_current_memberships_on_groups(membership_data, expected):
     group = factories.GeoGroupFactory()
     for data in membership_data(group):
         factories.GeographicalMembershipFactory(**data)
-    set_current_transaction(Transaction.objects.last())
 
-    assert len(group.get_current_memberships()) == expected
+    with override_current_transaction(Transaction.objects.last()):
+        assert len(group.get_current_memberships()) == expected
 
 
 @pytest.mark.parametrize(
@@ -51,9 +51,9 @@ def test_get_current_memberships_on_areas(membership_data, expected):
     area = factories.CountryFactory()
     for data in membership_data(area):
         factories.GeographicalMembershipFactory(**data)
-    set_current_transaction(Transaction.objects.last())
 
-    assert len(area.get_current_memberships()) == expected
+    with override_current_transaction(Transaction.objects.last()):
+        assert len(area.get_current_memberships()) == expected
 
 
 def test_get_current_memberships_when_region_and_country_share_sid():
@@ -61,16 +61,16 @@ def test_get_current_memberships_when_region_and_country_share_sid():
     region = factories.RegionFactory.create(sid=country.sid)
     country_membership = factories.GeographicalMembershipFactory.create(member=country)
     region_membership = factories.GeographicalMembershipFactory.create(member=region)
-    set_current_transaction(Transaction.objects.last())
-    country_memberships = country.get_current_memberships()
-    region_memberships = region.get_current_memberships()
+    with override_current_transaction(Transaction.objects.last()):
+        country_memberships = country.get_current_memberships()
+        region_memberships = region.get_current_memberships()
 
-    assert country_memberships.count() == 2
-    assert region_memberships.count() == 2
-    assert country_membership in country_memberships
-    assert region_membership in country_memberships
-    assert country_membership in region_memberships
-    assert region_membership in region_memberships
+        assert country_memberships.count() == 2
+        assert region_memberships.count() == 2
+        assert country_membership in country_memberships
+        assert region_membership in country_memberships
+        assert country_membership in region_memberships
+        assert region_membership in region_memberships
 
 
 def test_other_on_membership():
@@ -143,11 +143,11 @@ def test_with_latest_description_multiple_version():
         description.transaction.workbasket,
         description="bleurgh",
     )
-    set_current_transaction(current_description.transaction)
-    qs = models.GeographicalArea.objects.current().with_latest_description()
+    with override_current_transaction(current_description.transaction):
+        qs = models.GeographicalArea.objects.current().with_latest_description()
 
-    assert qs.count() == 1
-    assert qs.first().description == "bleurgh"
+        assert qs.count() == 1
+        assert qs.first().description == "bleurgh"
 
 
 def test_with_latest_description_multiple_descriptions(date_ranges):
@@ -161,12 +161,12 @@ def test_with_latest_description_multiple_descriptions(date_ranges):
         described_geographicalarea=earlier_description.described_geographicalarea,
         validity_start=date_ranges.later.lower,
     )
-    set_current_transaction(later_description.transaction)
-    qs = models.GeographicalArea.objects.current().with_latest_description()
+    with override_current_transaction(later_description.transaction):
+        qs = models.GeographicalArea.objects.current().with_latest_description()
 
-    # sanity check that description objects have been created with different description values
-    assert earlier_description.description != later_description.description
-    assert qs.first().description == later_description.description
+        # sanity check that description objects have been created with different description values
+        assert earlier_description.description != later_description.description
+        assert qs.first().description == later_description.description
 
 
 def test_with_current_descriptions(approved_workbasket):
@@ -180,10 +180,10 @@ def test_with_current_descriptions(approved_workbasket):
         transaction__workbasket=approved_workbasket,
         described_geographicalarea=description_1.described_geographicalarea,
     )
-    set_current_transaction(description_2.transaction)
-    qs = models.GeographicalArea.objects.current().with_current_descriptions()
+    with override_current_transaction(description_2.transaction):
+        qs = models.GeographicalArea.objects.current().with_current_descriptions()
+        area = qs.first()
 
-    area = qs.first()
     # sanity check that description is not an empty string or None
     assert area.description
     assert (

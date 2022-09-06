@@ -509,7 +509,7 @@ class DescriptionsRules(ValidityStartDateRules):
     item_name = "description"
 
     def get_objects(self, model):
-        return model.get_descriptions(self.transaction)
+        return model.get_descriptions()
 
 
 class NoBlankDescription(BusinessRule):

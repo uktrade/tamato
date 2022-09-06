@@ -1,6 +1,6 @@
 .workbasket-filters {
 
-  > * {
+  >* {
     display: inline-block;
   }
 
@@ -42,4 +42,38 @@
       margin-bottom: -4px;
     }
   }
+}
+
+.workbasket-navigation {
+
+  border-top: 1px solid govuk-colour("mid-grey");
+  border-bottom: 1px solid govuk-colour("mid-grey");
+
+  >* {
+    display: inline-block;
+  }
+
+  .govuk-list {
+    margin: 0;
+
+    li {
+      display: inline-block;
+      padding: 5px 50px;
+      margin: 0;
+    }
+
+    .active {
+      border-bottom: 4px solid govuk-colour("blue");
+    }
+  }
+
+  .govuk-link {
+    text-decoration: none;
+    font-weight: bold;
+
+    &:visited {
+      color: govuk-colour("blue");
+    }
+  }
+
 }

@@ -3,6 +3,7 @@ from django.db import DataError
 
 from certificates import business_rules
 from common.business_rules import BusinessRuleViolation
+from common.models.utils import override_current_transaction
 from common.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -82,9 +83,10 @@ def test_CE5(delete_record):
 def test_CE6_one_description_mandatory():
     """At least one description record is mandatory."""
     certificate = factories.CertificateFactory.create(description=None)
-    with pytest.raises(BusinessRuleViolation):
-        # certificate created without description
-        business_rules.CE6(certificate.transaction).validate(certificate)
+    with override_current_transaction(certificate.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            # certificate created without description
+            business_rules.CE6(certificate.transaction).validate(certificate)
 
 
 def test_CE6_first_description_must_have_same_start_date(date_ranges):
@@ -95,11 +97,11 @@ def test_CE6_first_description_must_have_same_start_date(date_ranges):
         described_certificate__valid_between=date_ranges.no_end,
         validity_start=date_ranges.later.lower,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.CE6(description.transaction).validate(
-            description.described_certificate,
-        )
+    with override_current_transaction(description.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.CE6(description.transaction).validate(
+                description.described_certificate,
+            )
 
 
 def test_CE6_start_dates_cannot_match():
@@ -111,11 +113,11 @@ def test_CE6_start_dates_cannot_match():
         described_certificate=existing.described_certificate,
         validity_start=existing.validity_start,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.CE6(new_description.transaction).validate(
-            existing.described_certificate,
-        )
+    with override_current_transaction(new_description.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.CE6(new_description.transaction).validate(
+                existing.described_certificate,
+            )
 
 
 def test_CE6_certificate_validity_period_must_span_description(date_ranges):
@@ -126,11 +128,11 @@ def test_CE6_certificate_validity_period_must_span_description(date_ranges):
         described_certificate__valid_between=date_ranges.normal,
         validity_start=date_ranges.overlap_normal.lower,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.CE6(description.transaction).validate(
-            description.described_certificate,
-        )
+    with override_current_transaction(description.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.CE6(description.transaction).validate(
+                description.described_certificate,
+            )
 
 
 def test_CE7(assert_spanning_enforced):
