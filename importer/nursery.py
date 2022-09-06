@@ -11,7 +11,7 @@ from django.core.cache import cache
 
 from commodities.exceptions import InvalidIndentError
 from common.models import TrackedModel
-from importer.cache.cache import ObjectCacheFacade
+from importer.cache import ObjectCacheFacade
 from importer.utils import DispatchedObjectType
 from importer.utils import generate_key
 

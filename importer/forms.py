@@ -30,6 +30,7 @@ def get_mime_type(file):
 
 class ImportForm(forms.ModelForm):
     def process_file(
+        self,
         file,
         batch,
         user,

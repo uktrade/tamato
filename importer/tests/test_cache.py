@@ -1,4 +1,4 @@
-from importer.cache import cache
+from importer import cache
 
 
 def test_put_stores_value():
