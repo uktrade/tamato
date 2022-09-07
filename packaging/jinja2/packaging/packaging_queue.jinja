@@ -1,0 +1,87 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{%- set table_rows = [] -%}
+{%- for workbasket in object_list -%}
+  {%- set workbasket_linked_id -%}
+    <a
+      class="govuk-link"
+      href="{{ url("workbaskets:workbasket-ui-changes", kwargs={"pk": workbasket.pk}) }}"
+    >{{ workbasket.pk }}</a>
+  {%- endset -%}
+
+  {%- set workbasket_linked_jira -%}
+    <a
+      class="govuk-link"
+      href="#"
+    >{{ 123 }}</a>
+  {%- endset -%}
+
+  {%- set promote -%}
+    <a
+      class="govuk-link"
+      href="#"
+    >{{ Up }}</a>
+  {%- endset -%}
+
+  {%- set demote -%}
+    <a
+      class="govuk-link"
+      href="#"
+    >{{ Down }}</a>
+  {%- endset -%}
+
+  {%- set remove -%}
+    <a
+      class="govuk-link"
+      href="#"
+    >{{ Remove }}</a>
+  {%- endset -%}
+
+  {{ table_rows.append([
+    {"text": workbasket_linked_id},
+    {"text": workbasket_linked_jira},
+    {"text": workbasket.reason},
+    {"text": promote},
+    {"text": demote},
+    {"text": remove},
+  ]) or "" }}
+{%- endfor -%}
+
+{% block breadcrumb %}
+<div class="govuk-breadcrumbs">
+  <ol class="govuk-breadcrumbs__list">
+    <li class="govuk-breadcrumbs__list-item">
+      Packaging Queue
+    </li>
+  </ol>
+</div>
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">
+    WorkBaskets Queued for HMRC Processing
+  </h1>
+
+  <div class="">
+    {% if object_list %}
+      {{ govukTable({
+        "head": [
+          {"text": "ID"},
+          {"text": "TOPS/Jira"},
+          {"text": "Description"},
+          {"text": "Move"},
+          {"text": "Withdraw"},
+        ],
+        "rows": table_rows
+      }) }}
+    {% else %}
+      <p class="govuk-body">There are currently no queued WorkBaskets.</p>
+    {% endif %}
+  </div>
+{% endblock %}

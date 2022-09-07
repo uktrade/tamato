@@ -29,6 +29,7 @@ urlpatterns = [
     path("", include("geo_areas.urls")),
     path("", include("importer.urls")),
     path("", include("measures.urls")),
+    path("", include("packaging.urls")),
     path("", include("quotas.urls")),
     path("", include("regulations.urls")),
     path("", include("workbaskets.urls", namespace="workbaskets")),

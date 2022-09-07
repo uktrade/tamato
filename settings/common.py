@@ -64,6 +64,7 @@ THIRD_PARTY_APPS = [
     "django_extensions",
     "django_filters",
     "formtools",
+    "ordered_model",
     "polymorphic",
     "rest_framework",
     "webpack_loader",
@@ -95,6 +96,7 @@ DOMAIN_APPS = [
     "footnotes.apps.FootnotesConfig",
     "geo_areas.apps.GeoAreasConfig",
     "measures.apps.MeasuresConfig",
+    "packaging",
     "quotas.apps.QuotasConfig",
     "regulations.apps.RegulationsConfig",
 ]
