@@ -184,13 +184,12 @@ def test_detecting_of_transactions_to_update():
 
 @pytest.mark.parametrize("include_archived", [True, False])
 @pytest.mark.parametrize(
-    "transaction_partition", [TransactionPartition.DRAFT, TransactionPartition.REVISION]
+    "transaction_partition",
+    [TransactionPartition.DRAFT, TransactionPartition.REVISION],
 )
 def test_archived_workbasket_checks(include_archived, transaction_partition):
-    """
-    Verify transactions in ARCHIVED workbaskets do not require checking unless
-    include_archived is True.
-    """
+    """Verify transactions in ARCHIVED workbaskets do not require checking
+    unless include_archived is True."""
     head_transaction = common_factories.ApprovedTransactionFactory.create()
 
     # Transaction that requires update in DRAFT or REVISION

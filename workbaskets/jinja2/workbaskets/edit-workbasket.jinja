@@ -1,5 +1,6 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
 
 {% set page_title %}Workbasket {{ request.session.workbasket.id }}{% if request.session.workbasket.title %} - {{ request.session.workbasket.title }}{% endif %}{% endset %}
 {% set page_subtitle %}What would you like to do?{% endset %}
@@ -23,6 +24,9 @@
       {{ page_subtitle }}
     </span>
   </h1>
+
+  {{ navigation(request, "edit") }}
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <h2 class="govuk-heading-l">
@@ -92,8 +96,13 @@
       <h2 class="govuk-heading-m">Commodities</h2>
       <ul class="govuk-list">
         <li>
-          <a class="govuk-link" href="{{ url('commodities-import') }}">
+          <a class="govuk-link" href="{{ url('commodity-ui-import') }}">
             Import commodities
+          </a>
+        </li>
+         <li>
+          <a class="govuk-link" href="{{ url('commodity-ui-list') }}">
+            Find commodities
           </a>
         </li>
       </ul>

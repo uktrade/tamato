@@ -7,6 +7,8 @@ import checks.tests.factories
 from checks.checks import BusinessRuleChecker
 from checks.checks import IndirectBusinessRuleChecker
 from checks.checks import checker_types
+from common.models.transactions import Transaction
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import TestRule
 from common.tests.util import add_business_rules
@@ -63,13 +65,15 @@ def test_indirect_business_rule_validation():
         TestRule,
         indirect=True,
     ):
+
         checker_type = IndirectBusinessRuleChecker.of(TestRule)
 
         # Verify the cache returns the same object if .of is called a second time.
         assert checker_type is IndirectBusinessRuleChecker.of(TestRule)
 
-        desc1_checkers = checker_type.checkers_for(desc1)
-        desc2_checkers = checker_type.checkers_for(desc2)
+        with override_current_transaction(Transaction.objects.last()):
+            desc1_checkers = checker_type.checkers_for(desc1)
+            desc2_checkers = checker_type.checkers_for(desc2)
 
         assert {type(checker) for checker in desc1_checkers} == {checker_type}
         assert {type(checker) for checker in desc2_checkers} == {checker_type}

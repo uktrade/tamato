@@ -1,0 +1,50 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set create_url = create_url or "create" %}
+
+{% set page_title = "Find a commodity code" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  <div class="filter-layout">
+    <div class="filter-layout__filters">
+      <h2 class="govuk-heading-m govuk-!-margin-top-3">Search and filter</h2>
+      <form method="get" action="{{ url(form_url) }}">
+          {{ crispy(filter.form) }}
+      </form>
+    </div>
+
+    <div class="filter-layout__content">
+      {% if paginator.count > 0 %}
+        {% include "includes/common/pagination-list-summary.jinja" %}
+      {% endif %}
+      {% if object_list %}
+        {% include list_include %}
+      {% else %}
+        <p class="govuk-body">There are no results for your search, please:</p>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>check the spelling of your keywords</li>
+          <li>use more general keywords</li>
+          <li>select or deselect different filters</li>
+          <li>get help via our <a class="govuk-link" href="#">support and feedback form</a></li>
+        </ul>
+      {% endif %}
+      {% include "includes/common/pagination.jinja" %}
+    </div>
+  </div>
+{% endblock %}

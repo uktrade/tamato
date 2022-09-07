@@ -1,0 +1,20 @@
+{% from 'macros/create_link.jinja' import create_link %}
+
+{% set table_rows = [] %}
+{% for commodity in object_list|sort(attribute='item_id') %}
+    {% set commodity_link -%}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("commodity-ui-detail", kwargs={"sid": commodity.sid}) }}">{{ commodity.code }}</a>
+    {%- endset %}
+    {{ table_rows.append([
+        {"html": commodity_link},
+        {"text": commodity.get_description().description},
+    ]) or "" }}
+{% endfor %}
+{{ govukTable({
+    "head": [
+        {"text": "Commodity code"},
+        {"text": "Commodity description"},
+
+    ],
+    "rows": table_rows
+}) }}

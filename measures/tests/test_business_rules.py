@@ -9,6 +9,7 @@ from django.db.models import signals
 
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UniqueIdentifyingFields
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.factories import date_ranges
 from common.tests.factories import end_date
@@ -1388,8 +1389,9 @@ def test_ME56(reference_nonexistent_record):
     """The referenced certificate must exist."""
 
     def delete_certificate(c):
-        c.get_descriptions(transaction=c.transaction).first().delete()
-        c.delete()
+        with override_current_transaction(c.transaction):
+            c.get_descriptions().first().delete()
+            c.delete()
 
     with reference_nonexistent_record(
         factories.MeasureConditionWithCertificateFactory,
