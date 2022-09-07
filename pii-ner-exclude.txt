@@ -1188,6 +1188,7 @@ AreaCode
 erga omnes data
 IndexError
 USERNAME
+django.core.cache
 Split
 Args
 Split Transactions
