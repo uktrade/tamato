@@ -13,7 +13,6 @@
         <li class="{% if active_link == 'review' %}active{% endif %}">
             <a href="{{ url('workbaskets:review-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-link">Review changes</a>
         </li>
-        {% endif %}
     </ul>
 </nav>
 {% endmacro %}
