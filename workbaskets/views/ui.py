@@ -395,6 +395,8 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
             result = AsyncResult(self.workbasket.rule_check_task_id)
             if result.status != "SUCCESS":
                 context.update({"rule_check_in_progress": True})
+            else:
+                self.workbasket.save_to_session(self.request.session)
 
         return context
 

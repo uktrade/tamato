@@ -415,11 +415,8 @@ class WorkBasket(TimestampedMixin):
             "id": self.pk,
             "status": self.status,
             "title": self.title,
+            "error_count": self.tracked_model_check_errors.count(),
         }
-        if self.tracked_model_check_errors.exists():
-            session["workbasket"][
-                "error_count"
-            ] = self.tracked_model_check_errors.count()
 
     @property
     def tracked_models(self) -> TrackedModelQuerySet:
