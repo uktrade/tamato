@@ -1,0 +1,69 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
+
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Summary{% endset %}
+{% set business_rules_button %} <a href="{{ url('workbaskets:workbasket-run-business-rules')}}" class="govuk-button govuk-button--secondary govuk-!-margin-left-5"">Run business rules</a> {% endset %}
+{% set rule_check_status %}
+  {% if rule_check_in_progress %}
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Live status: rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket. Come back later or refresh to see results.
+    </h2>
+  {% elif workbasket.tracked_model_check_errors.exists() %}
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Live status ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): failing business rules.
+    </h2>
+    {{ business_rules_button }}
+  {% elif workbasket.tracked_model_checks.exists() %}
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Live status ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): business rules passing.
+    </h2>
+    {{ business_rules_button }}
+  {% elif workbasket.tracked_models.exists() %}
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Live status: no rule check performed yet.
+    </h2>
+    {{ business_rules_button }}
+  {% else %}
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Live status: no objects in workbasket.
+    </h2>
+  {% endif %}
+{% endset %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+      "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary" }
+    ]})
+  }}
+{% endblock %}
+
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+    {{ page_title }}
+  </h1>
+  {{ navigation(request, "summary") }}
+
+  <div class="govuk-button-group">
+    {{ rule_check_status}} 
+  </div>
+
+  {% if workbasket.tracked_model_check_errors.exists() %}
+  <div class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" data-module="govuk-error-summary">
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Number of changes: {{workbasket.tracked_models.count()}}
+    </h2>
+    <h2 class="govuk-error-summary__title" id="error-summary-title">
+      Number of violations: {{workbasket.tracked_model_check_errors.count()}}
+    </h2>
+    <a href="{{ url('workbaskets:workbasket-ui-violations', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">View violations</a>
+  </div>
+  {% endif %}
+
+  {% include "includes/workbaskets/workbasket-selectable-items.jinja" %}
+{% endblock %}
