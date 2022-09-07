@@ -12,6 +12,19 @@ def setup_batch(
     split_on_code: bool,
     dependencies: List[str],
 ) -> models.ImportBatch:
+    """
+    Sets up a batch import.
+
+    creating the ImportBatch object, and links the ImportBatch to any provided dependencies
+
+    Args:
+      batch_name: (str) The name to be stored against the import
+      split_on_code: (bool) Indicate of the import should be split on record code
+      dependencies: (list(str)) A list of batch names that need to be imported before this batch can import.
+
+    Returns:
+      ImportBatch instance, The created ImportBatch object.
+    """
     batch = models.ImportBatch.objects.create(name=batch_name, split_job=split_on_code)
 
     for dependency in dependencies or []:

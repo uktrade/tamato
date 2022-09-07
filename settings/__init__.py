@@ -1,1 +1,1 @@
-from settings.common import *
+from settings.common import *  # noqa
