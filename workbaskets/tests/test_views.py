@@ -5,6 +5,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.test import override_settings
 from django.urls import reverse
+from django.utils.timezone import localtime
 
 from checks.tests.factories import TrackedModelCheckFactory
 from common.models.utils import override_current_transaction
@@ -275,9 +276,10 @@ def test_review_workbasket_displays_rule_violation_summary(
     )
     headings = page.find_all("h2", attrs={"class": "govuk-error-summary__title"})
     tracked_model_count = session_workbasket.tracked_models.count()
-    created_at = f"{check.created_at:%d %b %Y %H:%M}"
+    local_created_at = localtime(check.created_at)
+    created_at = f"{local_created_at:%d %b %Y %H:%M}"
 
-    assert f"Live status: {created_at}" in headings[0].text
+    assert f"Live status ({created_at}): failing business rules." in headings[0].text
     assert f"Number of changes: {tracked_model_count}" in headings[1].text
     assert f"Number of violations: 1" in headings[2].text
 
@@ -574,7 +576,14 @@ def test_workbasket_violations(valid_user_client, session_workbasket):
             model=good,
             successful=False,
         )
-
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+        "error_count": session_workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
