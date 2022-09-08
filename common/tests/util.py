@@ -2,7 +2,6 @@ import contextlib
 import importlib
 from datetime import date
 from datetime import datetime
-from datetime import timezone
 from functools import lru_cache
 from functools import wraps
 from io import BytesIO
@@ -14,6 +13,7 @@ from typing import Sequence
 from typing import Type
 from unittest.mock import MagicMock
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import pytest
 from dateutil.parser import parse as parse_date
@@ -44,7 +44,6 @@ EXPORT_REFUND_NOMENCLATURE_IMPLEMENTED = False
 COMMODITIES_IMPLEMENTED = True
 MEURSING_TABLES_IMPLEMENTED = False
 PARTIAL_TEMPORARY_STOP_IMPLEMENTED = False
-UTC = timezone.utc
 
 requires_commodities = pytest.mark.skipif(
     not COMMODITIES_IMPLEMENTED,
@@ -640,7 +639,12 @@ class Dates:
 
     @property
     def datetime_now(self):
-        return datetime.now(tz=UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+        return datetime.now(ZoneInfo("Europe/London")).replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
 
     def __getattr__(self, name):
         if name in self.deltas:
