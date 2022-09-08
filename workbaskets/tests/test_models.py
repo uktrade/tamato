@@ -347,16 +347,42 @@ def test_current_transaction_returns_last_approved_transaction(
     assert current == approved_transaction
 
 
-def test_split_workbasket_all_status(workbasket):
-    # TODO
-    assert False
+def test_split_workbasket_by_transaction_count(new_workbasket):
+    for i in range(0, 5):
+        tx = new_workbasket.new_transaction(composite_key=f"test{i}")
+        with tx:
+            factories.MeasureFactory.create()
+    split_workbaskets = new_workbasket.split_by_transaction_count(3)
+    assert (
+        split_workbaskets[0].transactions.count()
+        + split_workbaskets[1].transactions.count()
+        == new_workbasket.transactions.count()
+    )
 
 
-def test_split_approved_workbasket_into_editing(approved_workbasket):
-    # TODO
-    assert False
+def test_split_approved_workbasket_by_transaction_count(approved_workbasket):
+    """Split workbaskets should be created with EDITING status."""
+    tx = approved_workbasket.new_transaction(composite_key="test")
+    with tx:
+        factories.MeasureFactory.create()
+    split_workbaskets = approved_workbasket.split_by_transaction_count(0)
+    assert split_workbaskets[0].status == WorkflowStatus.EDITING
 
 
-def test_empty_workbasket_split(workbasket):
-    # TODO
-    assert False
+def test_copy_split_workbasket_by_transaction_count(new_workbasket):
+    tx = new_workbasket.new_transaction(composite_key="test")
+    with tx:
+        for i in range(0, 1):
+            factories.MeasureFactory.create()
+    split_workbaskets = new_workbasket.split_by_transaction_count(0)
+    assert len(split_workbaskets) == 1
+
+
+def test_split_empty_workbasket_by_transaction_count():
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    assert workbasket.transactions.count() == 0
+    split_workbaskets = workbasket.split_by_transaction_count(1)
+    print(f"*** split_workbaskets: {split_workbaskets}")
+    assert len(split_workbaskets) == 0

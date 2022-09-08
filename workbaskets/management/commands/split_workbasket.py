@@ -42,7 +42,10 @@ class Command(WorkBasketCommandMixin, BaseCommand):
         max_transactions = int(options["MAX_TRANSACTIONS"])
         base_title = options["title"] or workbasket.title
 
-        new_workbaskets = workbasket.split(max_transactions, base_title)
+        new_workbaskets = workbasket.split_by_transaction_count(
+            max_transactions,
+            base_title,
+        )
 
         self.stdout.write(
             self.style.SUCCESS(

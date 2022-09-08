@@ -442,7 +442,11 @@ class WorkBasket(TimestampedMixin):
 
         return Transaction.approved.last()
 
-    def split(self, max_transactions: int, base_title: str = None):
+    def split_by_transaction_count(
+        self,
+        max_transactions: int,
+        base_title: str = None,
+    ):
         """
         Non-destructive workbasket splitting, copying transactions from a
         workbasket into multiple newly created workbaskets, each having a
