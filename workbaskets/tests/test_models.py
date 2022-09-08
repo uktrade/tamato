@@ -347,16 +347,29 @@ def test_current_transaction_returns_last_approved_transaction(
     assert current == approved_transaction
 
 
-def test_split_workbasket_by_transaction_count(new_workbasket):
-    for i in range(0, 5):
-        tx = new_workbasket.new_transaction(composite_key=f"test{i}")
-        with tx:
-            factories.MeasureFactory.create()
-    split_workbaskets = new_workbasket.split_by_transaction_count(3)
+def test_split_workbasket_after_transaction(workbasket_tx_x_5):
+    tx_split_point = workbasket_tx_x_5.transactions.all()[2]
+    split_workbaskets = workbasket_tx_x_5.split_after_transaction(tx_split_point.id)
+    assert len(split_workbaskets) == 2
     assert (
         split_workbaskets[0].transactions.count()
         + split_workbaskets[1].transactions.count()
-        == new_workbasket.transactions.count()
+        == workbasket_tx_x_5.transactions.count()
+    )
+
+
+def test_split_workbasket_after_invalid_transaction(workbasket_tx_x_5):
+    invalid_id = workbasket_tx_x_5.transactions.order_by("-id")[0].id + 1
+    with pytest.raises(ValueError):
+        workbasket_tx_x_5.split_after_transaction(invalid_id)
+
+
+def test_split_workbasket_by_transaction_count(workbasket_tx_x_5):
+    split_workbaskets = workbasket_tx_x_5.split_by_transaction_count(3)
+    assert (
+        split_workbaskets[0].transactions.count()
+        + split_workbaskets[1].transactions.count()
+        == workbasket_tx_x_5.transactions.count()
     )
 
 
@@ -384,5 +397,4 @@ def test_split_empty_workbasket_by_transaction_count():
     )
     assert workbasket.transactions.count() == 0
     split_workbaskets = workbasket.split_by_transaction_count(1)
-    print(f"*** split_workbaskets: {split_workbaskets}")
     assert len(split_workbaskets) == 0

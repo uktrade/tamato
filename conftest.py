@@ -308,6 +308,15 @@ def session_workbasket(client, new_workbasket):
     return new_workbasket
 
 
+@pytest.fixture
+def workbasket_tx_x_5(new_workbasket) -> WorkBasket:
+    for i in range(0, 5):
+        tx = new_workbasket.new_transaction(composite_key=f"test{i}")
+        with tx:
+            factories.MeasureFactory.create()
+    return new_workbasket
+
+
 @pytest.fixture(scope="function")
 def seed_file_transaction():
     return factories.SeedFileTransactionFactory.create()

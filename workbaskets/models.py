@@ -442,6 +442,50 @@ class WorkBasket(TimestampedMixin):
 
         return Transaction.approved.last()
 
+    def split_after_transaction(
+        self,
+        transaction_id: int,
+        base_title: str = None,
+    ):
+        if not self.transactions.filter(id=transaction_id):
+            raise ValueError(
+                "transaction_id must be a valid Transaction ID within this "
+                "workbasket's set of linked transactions.",
+            )
+
+        new_workbaskets = []
+        title_max_len = self._meta.get_field("title").max_length
+        base_title = base_title or self.title
+        base_title = base_title[: title_max_len - 4]
+        part_index = 1
+
+        new_workbasket = WorkBasket(
+            title=f"{base_title}#{part_index}",
+            reason=self.reason,
+            author=self.author,
+        )
+        new_workbasket.save()
+        new_workbaskets.append(new_workbasket)
+
+        for transaction in self.transactions.all():
+            transaction.copy(new_workbasket)
+            if (
+                transaction.id == transaction_id
+                and self.transactions.last().id != transaction_id
+            ):
+                # Next new workbasket, so long as we're not at the end of the
+                # set of source transactions (i.e. self.transactions.last()).
+                part_index += 1
+                new_workbasket = WorkBasket(
+                    title=f"{base_title}#{part_index}",
+                    reason=self.reason,
+                    author=self.author,
+                )
+                new_workbasket.save()
+                new_workbaskets.append(new_workbasket)
+
+        return new_workbaskets
+
     def split_by_transaction_count(
         self,
         max_transactions: int,
