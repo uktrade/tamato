@@ -13,7 +13,6 @@ from typing import Sequence
 from typing import Type
 from unittest.mock import MagicMock
 from unittest.mock import patch
-from zoneinfo import ZoneInfo
 
 import pytest
 from dateutil.parser import parse as parse_date
@@ -27,6 +26,7 @@ from django.urls import reverse
 from django_filters.views import FilterView
 from freezegun import freeze_time
 from lxml import etree
+from pytz import timezone
 
 from common.business_rules import BusinessRule
 from common.models.trackedmodel import TrackedModel
@@ -639,7 +639,7 @@ class Dates:
 
     @property
     def datetime_now(self):
-        return datetime.now(ZoneInfo("Europe/London")).replace(
+        return datetime.now(timezone("Europe/London")).replace(
             hour=0,
             minute=0,
             second=0,
