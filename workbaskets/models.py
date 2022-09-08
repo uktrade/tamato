@@ -22,6 +22,8 @@ from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.transactions import TransactionQueryset
+from measures.models import Measure
+from measures.querysets import MeasuresQuerySet
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -416,11 +418,16 @@ class WorkBasket(TimestampedMixin):
             "status": self.status,
             "title": self.title,
             "error_count": self.tracked_model_check_errors.count(),
+            "measure_count": self.measures.count(),
         }
 
     @property
     def tracked_models(self) -> TrackedModelQuerySet:
         return TrackedModel.objects.filter(transaction__workbasket=self)
+
+    @property
+    def measures(self) -> MeasuresQuerySet:
+        return Measure.objects.filter(transaction__workbasket=self)
 
     @classmethod
     def load_from_session(cls, session):

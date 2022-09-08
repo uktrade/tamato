@@ -32,7 +32,7 @@ ui_patterns = [
         name="review-workbasket",
     ),
     path(
-        "download",
+        "download/",
         ui_views.download_envelope,
         name="workbasket-download",
     ),
@@ -62,7 +62,7 @@ ui_patterns = [
         name="workbasket-ui-delete-changes-done",
     ),
     path(
-        "list-all",
+        "list-all/",
         ui_views.WorkBasketList.as_view(),
         name="workbasket-ui-list-all",
     ),
@@ -77,7 +77,7 @@ ui_patterns = [
         name="workbasket-ui-violations",
     ),
     path(
-        "run-business-rules",
+        "run-business-rules/",
         ui_views.run_business_rules,
         name="workbasket-run-business-rules",
     ),
