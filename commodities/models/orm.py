@@ -5,6 +5,7 @@ from typing import Set
 
 from django.db import models
 from django.db.models.query import QuerySet
+from django.urls import reverse
 from polymorphic.managers import PolymorphicManager
 
 from commodities import business_rules
@@ -104,6 +105,9 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     def __str__(self):
         return self.item_id
 
+    def get_url(self):
+        return reverse("commodity-ui-detail", kwargs={"sid": self.sid})
+
     def get_dependent_measures(self, transaction=None):
         return self.measures.model.objects.filter(
             goods_nomenclature__sid=self.sid,
@@ -174,6 +178,12 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
         """Returns True if this is a root indent."""
         item_id = self.indented_goods_nomenclature.item_id
         return self.indent == 0 and item_id[2:] == "00000000"
+
+    def get_url(self):
+        return reverse(
+            "commodity-ui-detail",
+            kwargs={"sid": self.indented_goods_nomenclature.sid},
+        )
 
     def get_good_indents(
         self,
@@ -280,6 +290,12 @@ class GoodsNomenclatureOrigin(TrackedModel):
 
     indirect_business_rules = (business_rules.NIG5,)
     business_rules = (business_rules.NIG7, UpdateValidity)
+
+    def get_url(self):
+        return reverse(
+            "commodity-ui-detail",
+            kwargs={"sid": self.new_goods_nomenclature.sid},
+        )
 
     def __str__(self):
         return (
