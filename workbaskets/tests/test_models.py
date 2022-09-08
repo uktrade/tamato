@@ -345,3 +345,18 @@ def test_current_transaction_returns_last_approved_transaction(
     current = WorkBasket.get_current_transaction(session_request)
 
     assert current == approved_transaction
+
+
+def test_split_workbasket_all_status(workbasket):
+    # TODO
+    assert False
+
+
+def test_split_approved_workbasket_into_editing(approved_workbasket):
+    # TODO
+    assert False
+
+
+def test_empty_workbasket_split(workbasket):
+    # TODO
+    assert False

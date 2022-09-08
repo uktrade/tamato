@@ -29,6 +29,9 @@ class WorkBasketCommandMixin:
         self.stdout.write(
             f"{spaces}tracked model count: {workbasket.tracked_models.count()}",
         )
+        self.stdout.write(
+            f"{spaces}transaction count: {workbasket.transactions.count()}",
+        )
         if show_transaction_info:
             self.stdout.write(
                 f"{spaces}transactions: {workbasket.transactions.first().pk} - {workbasket.transactions.last().pk}",
@@ -40,6 +43,7 @@ class WorkBasketCommandMixin:
             f"{first_line_of(workbasket.reason) or '-'}, {workbasket.status}, "
             f"{workbasket.unchecked_or_errored_transactions}, "
             f"{workbasket.tracked_models.count()}",
+            f"{workbasket.transactions.count()}",
             ending="" if show_transaction_info else "\n",
         )
         if show_transaction_info:

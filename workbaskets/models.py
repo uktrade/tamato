@@ -442,6 +442,49 @@ class WorkBasket(TimestampedMixin):
 
         return Transaction.approved.last()
 
+    def split(self, max_transactions: int, base_title: str = None):
+        """
+        Non-destructive workbasket splitting, copying transactions from a
+        workbasket into multiple newly created workbaskets, each having a
+        maximum of max_transactions transactions.
+
+        If max_transactions is 0 (zero), or exceeds the number of transactions
+        in the source workbasket, then the split operation amounts to a
+        workbasket copy.
+        """
+        if max_transactions < 0:
+            raise ValueError(
+                "max_transsactions must take a non-negative value.",
+            )
+
+        new_workbaskets = []
+
+        if max_transactions == 0:
+            transaction_blocks = [self.transactions.all()]
+        else:
+            transaction_blocks = [
+                self.transactions.all()[i : i + max_transactions]
+                for i in range(0, self.transactions.count(), max_transactions)
+            ]
+
+        title_max_len = self._meta.get_field("title").max_length
+        base_title = base_title or self.title
+        base_title = base_title[: title_max_len - 4]
+        for i, transactions_to_copy in enumerate(transaction_blocks):
+            part_index = f"#{i+1}"
+
+            new_wb = WorkBasket(
+                title=f"{base_title}{part_index}",
+                reason=self.reason,
+                author=self.author,
+            )
+            new_wb.save()
+            for transaction in transactions_to_copy:
+                transaction.copy(new_wb)
+            new_workbaskets.append(new_wb)
+
+        return new_workbaskets
+
     def new_transaction(self, **kwargs):
         """Create a new transaction in this workbasket."""
         if "order" not in kwargs:

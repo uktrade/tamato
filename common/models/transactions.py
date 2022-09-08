@@ -224,6 +224,21 @@ class Transaction(TimestampedMixin):
 
     approved = ApprovedTransactionManager.from_queryset(TransactionQueryset)()
 
+    def copy(self, workbasket):
+        """
+        Create a deep copy of a transaction in the given WorkBasket.
+
+        All of the source Transaction's TrackedModels are copied to the newly
+        created Transaction before returning the new Transaction instance.
+        """
+        # TODO:
+        # Is it necessary to prevent copying to the source transaction's
+        # WorkBasket, or is only a partial guard required?
+        new_transaction = workbasket.new_transaction()
+        for obj in self.tracked_models.all():
+            obj.copy(new_transaction)
+        return new_transaction
+
     @transition(
         field=partition,
         source=TransactionPartition.DRAFT,
