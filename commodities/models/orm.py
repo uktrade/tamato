@@ -179,12 +179,6 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
         item_id = self.indented_goods_nomenclature.item_id
         return self.indent == 0 and item_id[2:] == "00000000"
 
-    def get_url(self):
-        return reverse(
-            "commodity-ui-detail",
-            kwargs={"sid": self.indented_goods_nomenclature.sid},
-        )
-
     def get_good_indents(
         self,
         as_of_transaction: Optional[Transaction] = None,
@@ -290,12 +284,6 @@ class GoodsNomenclatureOrigin(TrackedModel):
 
     indirect_business_rules = (business_rules.NIG5,)
     business_rules = (business_rules.NIG7, UpdateValidity)
-
-    def get_url(self):
-        return reverse(
-            "commodity-ui-detail",
-            kwargs={"sid": self.new_goods_nomenclature.sid},
-        )
 
     def __str__(self):
         return (
