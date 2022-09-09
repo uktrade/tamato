@@ -274,14 +274,15 @@ def test_review_workbasket_displays_rule_violation_summary(
         response.content.decode(response.charset),
         features="lxml",
     )
-    headings = page.find_all("h2", attrs={"class": "govuk-error-summary__title"})
+    status_heading = page.find_all("h2", attrs={"class": "govuk-heading-s"})[0]
+    error_headings = page.find_all("h2", attrs={"class": "govuk-error-summary__title"})
     tracked_model_count = session_workbasket.tracked_models.count()
     local_created_at = localtime(check.created_at)
     created_at = f"{local_created_at:%d %b %Y %H:%M}"
 
-    assert f"Live status ({created_at}): failing business rules." in headings[0].text
-    assert f"Number of changes: {tracked_model_count}" in headings[1].text
-    assert f"Number of violations: 1" in headings[2].text
+    assert f"Live status ({created_at}): failing business rules." in status_heading.text
+    assert f"Number of changes: {tracked_model_count}" in error_headings[0].text
+    assert f"Number of violations: 1" in error_headings[1].text
 
 
 def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbasket):
@@ -290,7 +291,6 @@ def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbas
     )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
-    assert session_workbasket.title in soup.select(".govuk-heading-xl")[0].text
     assert str(session_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
 
 
