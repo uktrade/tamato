@@ -5,9 +5,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.test import override_settings
 from django.urls import reverse
-from django.utils.timezone import localtime
 
-from checks.tests.factories import TrackedModelCheckFactory
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.factories import GoodsNomenclatureFactory
@@ -249,48 +247,13 @@ def test_review_workbasket_displays_objects_in_current_workbasket(
         assert page.find("input", {"name": field_name})
 
 
-def test_review_workbasket_displays_rule_violation_summary(
-    valid_user_client,
-    session_workbasket,
-):
-    """Test that the review workbasket page includes an error summary box
-    detailing the number of tracked model changes and business rule violations,
-    dated to the most recent `TrackedModelCheck`."""
-    with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
-        check = TrackedModelCheckFactory.create(
-            transaction_check__transaction=transaction,
-            model=good,
-            successful=False,
-        )
-
-    response = valid_user_client.get(
-        reverse(
-            "workbaskets:workbasket-ui-detail",
-            kwargs={"pk": session_workbasket.id},
-        ),
-    )
-    page = BeautifulSoup(
-        response.content.decode(response.charset),
-        features="lxml",
-    )
-    status_heading = page.find_all("h2", attrs={"class": "govuk-heading-s"})[0]
-    error_headings = page.find_all("h2", attrs={"class": "govuk-error-summary__title"})
-    tracked_model_count = session_workbasket.tracked_models.count()
-    local_created_at = localtime(check.created_at)
-    created_at = f"{local_created_at:%d %b %Y %H:%M}"
-
-    assert f"Live status ({created_at}): failing business rules." in status_heading.text
-    assert f"Number of changes: {tracked_model_count}" in error_headings[0].text
-    assert f"Number of violations: 1" in error_headings[1].text
-
-
 def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbasket):
     response = valid_user_client.get(
         reverse("workbaskets:edit-workbasket", kwargs={"pk": session_workbasket.pk}),
     )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
+    assert session_workbasket.title in soup.select(".govuk-heading-xl")[0].text
     assert str(session_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
 
 
@@ -521,80 +484,3 @@ def test_workbasket_measures_review_pagination(
         trackedmodel_ptr__transaction__workbasket_id=workbasket.id,
     )
     assert measure_sids.issubset({str(m.sid) for m in workbasket_measures})
-
-
-@patch("workbaskets.tasks.call_check_workbasket_sync.delay")
-def test_run_business_rules(check_workbasket, valid_user_client, session_workbasket):
-    """Test that a GET request to the run-business-rules endpoint returns a 302,
-    redirecting to the review workbasket page, runs the `check_workbasket` task,
-    saves the task id on the workbasket, and deletes pre-existing
-    `TrackedModelCheck` objects associated with the workbasket."""
-    check_workbasket.return_value.id = 123
-    assert not session_workbasket.rule_check_task_id
-
-    with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
-        check = TrackedModelCheckFactory.create(
-            transaction_check__transaction=transaction,
-            model=good,
-            successful=False,
-        )
-
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-    }
-    session.save()
-    response = valid_user_client.get(
-        reverse("workbaskets:workbasket-run-business-rules"),
-    )
-
-    assert response.status_code == 302
-    assert response.url == f"/workbaskets/{session_workbasket.pk}/"
-
-    session_workbasket.refresh_from_db()
-
-    check_workbasket.assert_called_once_with(session_workbasket.pk)
-    assert session_workbasket.rule_check_task_id
-    assert not session_workbasket.tracked_model_checks.exists()
-
-
-def test_workbasket_violations(valid_user_client, session_workbasket):
-    """Test that a GET request to the violations endpoint returns a 200 and
-    displays the correct column values for one unsuccessful
-    `TrackedModelCheck`."""
-    url = reverse(
-        "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
-    )
-    with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
-        check = TrackedModelCheckFactory.create(
-            transaction_check__transaction=transaction,
-            model=good,
-            successful=False,
-        )
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "error_count": session_workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
-    response = valid_user_client.get(url)
-
-    assert response.status_code == 200
-
-    page = BeautifulSoup(str(response.content), "html.parser")
-    table = page.findChildren("table")[0]
-    row = table.findChildren("tr")[1]
-    cells = row.findChildren("td")
-
-    assert cells[0].text == str(check.pk)
-    assert cells[1].text == good._meta.verbose_name.title()
-    assert cells[2].text == check.rule_code
-    assert cells[3].text == check.message
-    assert cells[4].text == f"{check.transaction_check.transaction.created_at:%d %b %Y}"

@@ -7,7 +7,6 @@ from django.contrib import messages
 from django.template.defaultfilters import pluralize
 from django.templatetags.static import static
 from django.urls import reverse
-from django.utils.timezone import template_localtime
 from govuk_frontend_jinja.templates import Environment
 from govuk_frontend_jinja.templates import NunjucksExtension
 from jinja2 import Markup
@@ -104,11 +103,6 @@ def environment(**kwargs):
     """
     env = GovukFrontendEnvironment(**kwargs)
 
-    env.filters.update(
-        {
-            "localtime": template_localtime,
-        },
-    )
     env.globals.update(
         {
             "break_words": break_words,
@@ -117,7 +111,6 @@ def environment(**kwargs):
             "env": os.environ.get("ENV", "dev"),
             "get_messages": messages.get_messages,
             "get_current_workbasket": WorkBasket.current,
-            "localtime": template_localtime,
             "pluralize": pluralize,
             "render_bundle": render_bundle,
             "settings": settings,

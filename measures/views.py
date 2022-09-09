@@ -249,7 +249,6 @@ class MeasureCreateWizard(
         cleaned_data = self.get_all_cleaned_data()
 
         created_measures = self.create_measures(cleaned_data)
-        created_measures[0].transaction.workbasket.save_to_session(self.request.session)
 
         context = self.get_context_data(
             form=None,

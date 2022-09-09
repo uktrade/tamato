@@ -2,13 +2,11 @@ from typing import Type
 
 import boto3
 from botocore.client import Config
-from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import ProtectedError
-from django.db.transaction import atomic
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -38,7 +36,6 @@ from workbaskets import forms
 from workbaskets import tasks
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
-from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
 
@@ -388,16 +385,8 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
                 "workbasket": self.workbasket,
                 "page_obj": page,
                 "uploaded_envelope_dates": self.uploaded_envelope_dates,
-                "rule_check_in_progress": False,
             },
         )
-        if self.workbasket.rule_check_task_id:
-            result = AsyncResult(self.workbasket.rule_check_task_id)
-            if result.status != "SUCCESS":
-                context.update({"rule_check_in_progress": True})
-            else:
-                self.workbasket.save_to_session(self.request.session)
-
         return context
 
     def form_valid(self, form):
@@ -467,32 +456,3 @@ class WorkBasketChanges(DetailView):
         )
 
         return context
-
-
-class WorkBasketViolations(DetailView):
-    """UI endpoint for viewing a specified workbasket's business rule
-    violations."""
-
-    model = WorkBasket
-    template_name = "workbaskets/violations.jinja"
-    paginate_by = 50
-
-
-@atomic
-def run_business_rules(request):
-    """Functional view for running business rules asynchronously against current
-    session workbasket."""
-
-    # Get workbasket pk from session
-    pk = request.session.get("workbasket")["id"]
-    workbasket = WorkBasket.objects.get(pk=pk)
-
-    # remove existing workbasket checks before creating new ones in check_workbasket task
-    workbasket.delete_checks()
-    task = call_check_workbasket_sync.delay(workbasket.pk)
-
-    # save task id against basket, so that we can check its status later
-    workbasket.rule_check_task_id = task.id
-    workbasket.save()
-
-    return redirect(reverse("workbaskets:workbasket-ui-detail", kwargs={"pk": pk}))

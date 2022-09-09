@@ -2,6 +2,7 @@ import contextlib
 import importlib
 from datetime import date
 from datetime import datetime
+from datetime import timezone
 from functools import lru_cache
 from functools import wraps
 from io import BytesIO
@@ -26,7 +27,6 @@ from django.urls import reverse
 from django_filters.views import FilterView
 from freezegun import freeze_time
 from lxml import etree
-from pytz import timezone
 
 from common.business_rules import BusinessRule
 from common.models.trackedmodel import TrackedModel
@@ -44,6 +44,7 @@ EXPORT_REFUND_NOMENCLATURE_IMPLEMENTED = False
 COMMODITIES_IMPLEMENTED = True
 MEURSING_TABLES_IMPLEMENTED = False
 PARTIAL_TEMPORARY_STOP_IMPLEMENTED = False
+UTC = timezone.utc
 
 requires_commodities = pytest.mark.skipif(
     not COMMODITIES_IMPLEMENTED,
@@ -639,12 +640,7 @@ class Dates:
 
     @property
     def datetime_now(self):
-        return datetime.now(timezone("Europe/London")).replace(
-            hour=0,
-            minute=0,
-            second=0,
-            microsecond=0,
-        )
+        return datetime.now(tz=UTC).replace(hour=0, minute=0, second=0, microsecond=0)
 
     def __getattr__(self, name):
         if name in self.deltas:
