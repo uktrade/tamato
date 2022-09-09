@@ -280,7 +280,7 @@ def test_review_workbasket_displays_rule_violation_summary(
     local_created_at = localtime(check.created_at)
     created_at = f"{local_created_at:%d %b %Y %H:%M}"
 
-    assert f"Live status ({created_at}): failing business rules." in status_heading.text
+    assert f"{created_at}): failing business rules." in status_heading.text
     assert f"Number of changes: {tracked_model_count}" in error_headings[0].text
     assert f"Number of violations: 1" in error_headings[1].text
 
@@ -475,7 +475,7 @@ def test_workbasket_measures_review(valid_user_client):
     measure_sids = [e.text for e in soup.select("table tr td:first-child")]
     workbasket_measures = Measure.objects.filter(
         trackedmodel_ptr__transaction__workbasket_id=workbasket.id,
-    )
+    ).order_by("sid")
     table_measure_sids = [str(m.sid) for m in workbasket_measures]
     assert table_measure_sids == measure_sids
     assert set(measure_sids).difference(non_workbasket_measures_sids)
