@@ -6,11 +6,13 @@ from bs4 import BeautifulSoup
 from django.test import override_settings
 from django.urls import reverse
 
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
+from measures.models import Measure
 from workbaskets import models
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
@@ -412,3 +414,73 @@ def test_workbasket_list_view(valid_user_client):
     assert wb.created_at.strftime("%d %b %y") in row_text
     assert str(wb.tracked_models.count()) in row_text
     assert wb.reason in row_text
+
+
+def test_workbasket_measures_review(valid_user_client):
+    """Test that valid user receives a 200 on GET for
+    ReviewMeasuresWorkbasketView and correct measures display in html table."""
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    non_workbasket_measures = factories.MeasureFactory.create_batch(5)
+
+    with workbasket.new_transaction() as tx:
+        factories.MeasureFactory.create_batch(30, transaction=tx)
+
+    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    non_workbasket_measures_sids = {str(m.sid) for m in non_workbasket_measures}
+    measure_sids = [e.text for e in soup.select("table tr td:first-child")]
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=workbasket.id,
+    )
+    table_measure_sids = [str(m.sid) for m in workbasket_measures]
+    assert table_measure_sids == measure_sids
+    assert set(measure_sids).difference(non_workbasket_measures_sids)
+
+    # 5th column is start date
+    table_start_dates = {e.text for e in soup.select("table tr td:nth-child(5)")}
+    measure_start_dates = {
+        f"{m.valid_between.lower:%d %b %Y}" for m in workbasket_measures
+    }
+    assert not measure_start_dates.difference(table_start_dates)
+    # 6th column is end date
+    table_end_dates = {e.text for e in soup.select("table tr td:nth-child(6)")}
+    measure_end_dates = {
+        f"{m.effective_end_date:%d %b %Y}"
+        for m in workbasket_measures
+        if m.effective_end_date
+    }
+    assert not measure_end_dates.difference(table_end_dates)
+
+
+def test_workbasket_measures_review_pagination(
+    valid_user_client,
+    unapproved_transaction,
+):
+    """Test that the first 30 measures in the workbasket are displayed in the
+    table."""
+
+    with override_current_transaction(unapproved_transaction):
+        workbasket = factories.WorkBasketFactory.create(
+            status=WorkflowStatus.EDITING,
+        )
+        factories.MeasureFactory.create_batch(40, transaction=unapproved_transaction)
+
+    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    measure_sids = {e.text for e in soup.select("table tr td:first-child")}
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=workbasket.id,
+    )
+    assert measure_sids.issubset({str(m.sid) for m in workbasket_measures})

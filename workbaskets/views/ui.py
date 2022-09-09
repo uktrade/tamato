@@ -1,3 +1,5 @@
+from typing import Type
+
 import boto3
 from botocore.client import Config
 from django.conf import settings
@@ -22,9 +24,14 @@ from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
 from common.filters import TamatoFilter
+from common.models import TrackedModel
 from common.pagination import build_pagination_list
+from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
+from measures.filters import MeasureFilter
+from measures.models import Measure
+from measures.pagination import MeasurePaginator
 from workbaskets import forms
 from workbaskets import tasks
 from workbaskets.models import WorkBasket
@@ -250,6 +257,26 @@ def download_envelope(request):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
+class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
+    model: Type[TrackedModel] = Measure
+    paginate_by = 30
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    def get_queryset(self):
+        return Measure.objects.filter(
+            transaction__workbasket=self.workbasket,
+        ).order_by("sid")
+
+    template_name = "workbaskets/review-workbasket.jinja"
+    permission_required = "workbaskets.change_workbasket"
+    paginator_class = MeasurePaginator
+    filterset_class = MeasureFilter
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
 class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
     template_name = "workbaskets/edit-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
@@ -257,7 +284,7 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
-    template_name = "workbaskets/review-workbasket.jinja"
+    template_name = "workbaskets/summary-workbasket.jinja"
     form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.

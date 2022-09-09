@@ -16,6 +16,7 @@ VersionGroup
 f"https://legislation.gov.uk/uksi/2021/{n
 UI
 FIXME
+Measure SID
 AdditionalCode
 MeasurementUnit
 MonetaryUnit
@@ -1187,6 +1188,7 @@ AreaCode
 erga omnes data
 IndexError
 USERNAME
+django.core.cache
 Split
 Args
 Split Transactions
