@@ -86,4 +86,4 @@ class TrackedModelCheckFactory(factory.django.DjangoModelFactory):
     transaction_check = factory.SubFactory(TransactionCheckFactory)
     check_name = factories.string_sequence()
     successful = True
-    message = factory.Faker("text", max_nb_chars=50)
+    message = None

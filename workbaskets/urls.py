@@ -22,21 +22,6 @@ ui_patterns = [
         name="workbasket-ui-create",
     ),
     path(
-        "list-all/",
-        ui_views.WorkBasketList.as_view(),
-        name="workbasket-ui-list-all",
-    ),
-    path(
-        "run-business-rules/",
-        ui_views.run_business_rules,
-        name="workbasket-run-business-rules",
-    ),
-    path(
-        "download/",
-        ui_views.download_envelope,
-        name="workbasket-download",
-    ),
-    path(
         f"<pk>/edit/",
         ui_views.EditWorkbasketView.as_view(),
         name="edit-workbasket",
@@ -45,6 +30,11 @@ ui_patterns = [
         f"<pk>/review/",
         ui_views.ReviewMeasuresWorkbasketView.as_view(),
         name="review-workbasket",
+    ),
+    path(
+        "download",
+        ui_views.download_envelope,
+        name="workbasket-download",
     ),
     path(
         f"<pk>/",
@@ -72,14 +62,14 @@ ui_patterns = [
         name="workbasket-ui-delete-changes-done",
     ),
     path(
+        "list-all",
+        ui_views.WorkBasketList.as_view(),
+        name="workbasket-ui-list-all",
+    ),
+    path(
         f"<pk>/changes/",
         ui_views.WorkBasketChanges.as_view(),
         name="workbasket-ui-changes",
-    ),
-    path(
-        f"<pk>/violations/",
-        ui_views.WorkBasketViolations.as_view(),
-        name="workbasket-ui-violations",
     ),
 ]
 
