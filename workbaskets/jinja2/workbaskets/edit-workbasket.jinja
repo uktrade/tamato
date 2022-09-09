@@ -2,8 +2,7 @@
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
-{% set page_title %}Workbasket {{ request.session.workbasket.id }}{% if request.session.workbasket.title %} - {{ request.session.workbasket.title }}{% endif %}{% endset %}
-{% set page_subtitle %}What would you like to do?{% endset %}
+{% set page_title %}Workbasket {{ request.session.workbasket.id }} - Add/edit items{% endset %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -11,7 +10,7 @@
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
       {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Add/edit items" }
     ]
   }) }}
 {% endblock %}
@@ -20,20 +19,10 @@
 {% block content %}
   <h1 class="govuk-heading-xl">
     {{ page_title }}
-    <span class="govuk-caption-xl">
-      {{ page_subtitle }}
-    </span>
   </h1>
 
   {{ navigation(request, "edit") }}
 
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <h2 class="govuk-heading-l">
-        Main menu
-      </h2>
-    </div>
-  </div>
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-one-quarter">
       <h2 class="govuk-heading-m">Additional codes</h2>
