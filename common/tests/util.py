@@ -18,6 +18,7 @@ import pytest
 from dateutil.parser import parse as parse_date
 from dateutil.relativedelta import relativedelta
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.models.base import ModelBase
 from django.template.loader import render_to_string
@@ -639,7 +640,7 @@ class Dates:
 
     @property
     def datetime_now(self):
-        return datetime.now(timezone("Europe/London")).replace(
+        return datetime.now(timezone(settings.TIME_ZONE)).replace(
             hour=0,
             minute=0,
             second=0,

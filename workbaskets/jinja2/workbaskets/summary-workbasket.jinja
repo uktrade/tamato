@@ -7,28 +7,18 @@
 {% set business_rules_button %} <a href="{{ url('workbaskets:workbasket-run-business-rules')}}" class="govuk-button govuk-button--secondary govuk-!-margin-left-5"">Run business rules</a> {% endset %}
 {% set rule_check_status %}
   {% if rule_check_in_progress %}
-    <h2 class="govuk-heading-s">
-      Live status: rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket. Come back later or refresh to see results.
-    </h2>
+      : rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket. Come back later or refresh to see results.
   {% elif workbasket.tracked_model_check_errors.exists() %}
-    <h2 class="govuk-heading-s">
-      Live status ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): failing business rules.
-    </h2>
+       ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): failing business rules.
     {{ business_rules_button }}
   {% elif workbasket.tracked_model_checks.exists() %}
-    <h2 class="govuk-heading-s">
-      Live status ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): business rules passing.
-    </h2>
+       ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): business rules passing.
     {{ business_rules_button }}
   {% elif workbasket.tracked_models.exists() %}
-    <h2 class="govuk-heading-s">
-      Live status: no rule check performed yet.
-    </h2>
+      : no rule check performed yet.
     {{ business_rules_button }}
   {% else %}
-    <h2 class="govuk-heading-s">
-      Live status: no objects in workbasket.
-    </h2>
+      : no objects in workbasket.
   {% endif %}
 {% endset %}
 
@@ -50,7 +40,9 @@
   {{ navigation(request, "summary") }}
 
   <div class="govuk-button-group">
-    {{ rule_check_status}} 
+    <h2 class="govuk-heading-s">
+      Live status {{ rule_check_status}} 
+    </h2>
   </div>
 
   {% if workbasket.tracked_model_check_errors.exists() %}
