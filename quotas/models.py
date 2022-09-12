@@ -152,7 +152,6 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
 
     record_code = "360"
     subrecord_code = "15"
-
     origin = models.ForeignKey(QuotaOrderNumberOrigin, on_delete=models.PROTECT)
     excluded_geographical_area = models.ForeignKey(
         "geo_areas.GeographicalArea",
