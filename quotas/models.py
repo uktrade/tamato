@@ -114,9 +114,7 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
 
     record_code = "360"
     subrecord_code = "10"
-
     identifying_fields = ("sid",)
-
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
