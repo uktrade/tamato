@@ -435,6 +435,11 @@ def regulation():
 
 
 @pytest.fixture()
+def quota_order_number():
+    return factories.QuotaOrderNumberFactory()
+
+
+@pytest.fixture()
 def commodity1():
     return factories.GoodsNomenclatureFactory.create()
 
