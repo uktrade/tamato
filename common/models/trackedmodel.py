@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -411,6 +412,17 @@ class TrackedModel(PolymorphicModel):
         through overrides.
         """
 
+        new_object, _ = self.clone(
+            transaction=transaction,
+            overrides=overrides,
+        )
+        return new_object
+
+    def clone(
+        self: Cls,
+        transaction,
+        **overrides: Any,
+    ) -> List[Cls, List]:
         # Remove any fields from the basic data that are overriden, because
         # otherwise when we convert foreign keys to IDs (below) Django will
         # ignore the object from the overrides and just take the ID from the
@@ -457,6 +469,7 @@ class TrackedModel(PolymorphicModel):
         }
 
         new_object = type(self).objects.create(**new_object_data)
+        new_sub_records = []
 
         # Now copy any many-to-many fields with an auto-created through model.
         # These must be handled after creation of the new model. We only need to
@@ -486,7 +499,11 @@ class TrackedModel(PolymorphicModel):
                         else:
                             # If user passed a saved object, create a copy of that object with remote_field pointing at the new copied object
                             # set ignore to True, so that duplicate copies are not made below
-                            subrecord.copy(transaction, **{remote_field: new_object})
+                            new_sub_records.appent(
+                                subrecord.copy(
+                                    transaction, **{remote_field: new_object}
+                                ),
+                            )
                             ignore = True
                 # Else, if an empty or None value is passed, set ignore to True, so that related models are not copied
                 # e.g. if an existing Measure with two conditions is copied with conditions=[], the copy will have no conditions
@@ -507,7 +524,7 @@ class TrackedModel(PolymorphicModel):
                 for model in queryset.approved_up_to_transaction(transaction):
                     model.copy(transaction, **kwargs)
 
-        return new_object
+        return [new_object, new_sub_records]
 
     def in_use_by(self, via_relation: str, transaction=None) -> QuerySet[TrackedModel]:
         """
