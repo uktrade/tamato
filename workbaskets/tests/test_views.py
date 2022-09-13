@@ -627,3 +627,6 @@ def test_violation_detail_page(valid_user_client, session_workbasket):
     paragraphs_text = [e.text for e in soup.select("p")]
     assert check.rule_code in paragraphs_text
     assert check.message in paragraphs_text
+    # Attribute does not exist yet. This will fail when we eventually add it
+    with pytest.raises(AttributeError):
+        assert check.solution
