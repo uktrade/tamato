@@ -63,17 +63,31 @@ def test_measure_form_invalid_conditions_data(
     # formset errors messages are test in view tests
 
 
-def test_measure_forms_details_valid_data(measure_type, regulation, erga_omnes):
+def test_measure_forms_details_valid_data(measure_type, erga_omnes):
     data = {
         "measure_type": measure_type.pk,
-        "generating_regulation": regulation.pk,
-        "order_number": None,
         "start_date_0": 2,
         "start_date_1": 4,
         "start_date_2": 2021,
         "geographical_area": erga_omnes.pk,
     }
     form = forms.MeasureDetailsForm(data, prefix="")
+    assert form.is_valid()
+
+
+def test_measure_forms_regulation_id_valid_data(regulation):
+    data = {
+        "generating_regulation": regulation.pk,
+    }
+    form = forms.MeasureRegulationIdForm(data, prefix="")
+    assert form.is_valid()
+
+
+def test_measure_forms_quota_order_number_valid_data(quota_order_number):
+    data = {
+        "order_number": quota_order_number.pk,
+    }
+    form = forms.MeasureQuotaOrderNumberForm(data, prefix="")
     assert form.is_valid()
 
 
@@ -327,8 +341,6 @@ def test_measure_forms_geo_area_invalid_data_error_messages(data, error, erga_om
 def test_measure_forms_details_invalid_data():
     data = {
         "measure_type": "foo",
-        "generating_regulation": "bar",
-        "order_number": None,
         "start_date_0": 2,
         "start_date_1": 4,
         "start_date_2": 2021,
@@ -338,7 +350,30 @@ def test_measure_forms_details_invalid_data():
         "Select a valid choice. That choice is not one of the available choices.",
     ]
     assert form.errors["measure_type"] == error_string
+    assert not form.is_valid()
+
+
+def test_measure_forms_regulation_id_invalid_data():
+    data = {
+        "generating_regulation": "bar",
+    }
+    form = forms.MeasureRegulationIdForm(data, initial={}, prefix="")
+    error_string = [
+        "Select a valid choice. That choice is not one of the available choices.",
+    ]
     assert form.errors["generating_regulation"] == error_string
+    assert not form.is_valid()
+
+
+def test_measure_forms_quota_order_number_invalid_data():
+    data = {
+        "order_number": "foo",
+    }
+    form = forms.MeasureQuotaOrderNumberForm(data, initial={}, prefix="")
+    error_string = [
+        "Select a valid choice. That choice is not one of the available choices.",
+    ]
+    assert form.errors["order_number"] == error_string
     assert not form.is_valid()
 
 

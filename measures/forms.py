@@ -757,8 +757,6 @@ class MeasureDetailsForm(
         model = models.Measure
         fields = [
             "measure_type",
-            "generating_regulation",
-            "order_number",
             "valid_between",
         ]
 
@@ -766,20 +764,6 @@ class MeasureDetailsForm(
         label="Measure type",
         help_text="Select the appropriate measure type.",
         queryset=models.MeasureType.objects.all(),
-    )
-    generating_regulation = AutoCompleteField(
-        label="Regulation ID",
-        help_text="Select the regulation which provides the legal basis for the measure.",
-        queryset=Regulation.objects.all(),
-    )
-    order_number = AutoCompleteField(
-        label="Quota order number",
-        help_text=(
-            "Select the quota order number if a quota measure type has been selected. "
-            "Leave this field blank if the measure is not a quota."
-        ),
-        queryset=QuotaOrderNumber.objects.all(),
-        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -790,8 +774,6 @@ class MeasureDetailsForm(
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             "measure_type",
-            "generating_regulation",
-            "order_number",
             "start_date",
             "end_date",
             Submit(
@@ -817,6 +799,70 @@ class MeasureDetailsForm(
                 )
 
         return cleaned_data
+
+
+class MeasureRegulationIdForm(forms.Form):
+    class Meta:
+        model = models.Measure
+        fields = [
+            "generating_regulation",
+        ]
+
+    generating_regulation = AutoCompleteField(
+        label="Regulation ID",
+        help_text="Select the regulation which provides the legal basis for the measure.",
+        queryset=Regulation.objects.all(),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "generating_regulation",
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
+class MeasureQuotaOrderNumberForm(forms.Form):
+    class Meta:
+        model = models.Measure
+        fields = [
+            "order_number",
+        ]
+
+    order_number = AutoCompleteField(
+        label="Quota order number",
+        help_text=(
+            "Select the quota order number if a quota measure type has been selected. "
+            "Leave this field blank if the measure is not a quota."
+        ),
+        queryset=QuotaOrderNumber.objects.all(),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "order_number",
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
 
 
 class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):

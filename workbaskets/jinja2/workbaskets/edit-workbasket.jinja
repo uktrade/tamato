@@ -2,7 +2,11 @@
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
-{% set page_title %}Workbasket {{ request.session.workbasket.id }} - Add/edit items{% endset %}
+{% set page_title %}
+  Workbasket {{ request.session.workbasket.id }}
+  {% if request.session.workbasket.title %} - Add/edit items{% endif %}
+{% endset %}
+
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({

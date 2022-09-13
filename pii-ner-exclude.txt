@@ -1219,3 +1219,5 @@ f"{first_line_of(workbasket.reason
 WorkBasketOutputFormat Enum
 0004_archive_field
 Europe
+Enter the Regulation ID
+Enter the Quota Order Number
