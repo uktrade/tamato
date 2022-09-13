@@ -1215,3 +1215,5 @@ f"/commodities/{commodity2.sid}/
 f"{first_line_of(workbasket.reason
 WorkBasketOutputFormat Enum
 -id
+Enter the Regulation ID
+Enter the Quota Order Number

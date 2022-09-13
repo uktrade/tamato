@@ -55,10 +55,20 @@
   {% call(rows, data) review_step("measure_details") %}
     {{ rows.extend([
       ("Measure type", data["measure_type"] ~ " - " ~ data["measure_type"].description),
-      ("Regulation ID", data["generating_regulation"]),
-      ("Quota order number", data["order_number"]),
       ("Measure start date", "{:%d/%m/%Y}".format(data["valid_between"].lower) if data["valid_between"] and data["valid_between"].lower else "-"),
       ("Measure end date", "{:%d/%m/%Y}".format(data["valid_between"].upper) if data["valid_between"] and data["valid_between"].upper else "-"),
+    ]) }}
+  {% endcall %}
+
+  {% call(rows, data) review_step("regulation_id") %}
+    {{ rows.extend([
+      ("Regulation ID", data["generating_regulation"]),
+    ]) }}
+  {% endcall %}
+
+  {% call(rows, data) review_step("quota_order_number") %}
+    {{ rows.extend([
+      ("Quota order number", data["order_number"]),
     ]) }}
   {% endcall %}
 
