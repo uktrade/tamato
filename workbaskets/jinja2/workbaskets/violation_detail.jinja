@@ -8,6 +8,16 @@
 details
 {% endset %}
 
+{% block breadcrumb %}
+{{ govukBreadcrumbs({
+  "items": [
+    {"text": "Home", "href": url("home")},
+    {"text": "Workbasket " ~ workbasket.id, "href": url('workbaskets:edit-workbasket', kwargs={"pk": workbasket.id})},
+    {"text": page_title}
+  ]
+}) }}
+{% endblock %}
+
 {% block content %}
 <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
   {{ page_title }}
