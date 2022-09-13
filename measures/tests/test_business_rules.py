@@ -632,6 +632,41 @@ def test_ME32(related_measure_data):
         business_rules.ME32(related.transaction).validate(related)
 
 
+def test_ME32_false_positive():
+    good_1 = factories.GoodsNomenclatureFactory.create(
+        item_id="2903691100",
+        suffix="80",
+    )
+    factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature=good_1,
+        indent=3,
+    )
+    factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature=good_1,
+        indent=4,
+    )
+    good_2 = factories.GoodsNomenclatureFactory.create(
+        item_id="2903691920",
+        suffix="80",
+        valid_between=good_1.valid_between,
+    )
+    factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature=good_2,
+        indent=5,
+    )
+    measure = factories.MeasureFactory.create(goods_nomenclature=good_1)
+    clashing_measure = factories.MeasureFactory.create(
+        goods_nomenclature=good_2,
+        measure_type=measure.measure_type,
+        geographical_area=measure.geographical_area,
+        order_number=measure.order_number,
+        additional_code=measure.additional_code,
+        reduction=measure.reduction,
+    )
+
+    business_rules.ME32(clashing_measure.transaction).validate(clashing_measure)
+
+
 # -- Ceiling/quota definition existence
 
 
