@@ -1216,3 +1216,5 @@ f"{first_line_of(workbasket.reason
 WorkBasketOutputFormat Enum
 Enter the Regulation ID
 Enter the Quota Order Number
+f"{path}/DIT000123.xml \N{WARNING SIGN}\N{VARIATION SELECTOR-16
+f"{path}/DIT000123.xml \N{WHITE HEAVY

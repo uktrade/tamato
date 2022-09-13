@@ -30,8 +30,14 @@ class WorkBasketCommandMixin:
             f"{spaces}tracked model count: {workbasket.tracked_models.count()}",
         )
         if show_transaction_info:
+            transactions = workbasket.transactions
+            first_pk = (
+                workbasket.transactions.first().pk if transactions.count() else "-"
+            )
+            last_pk = workbasket.transactions.last().pk if transactions.count() else "-"
+
             self.stdout.write(
-                f"{spaces}transactions: {workbasket.transactions.first().pk} - {workbasket.transactions.last().pk}",
+                f"{spaces}transactions: {first_pk} - {last_pk} [{transactions.count()}]",
             )
 
     def _output_workbasket_compact(self, workbasket, show_transaction_info, **kwargs):
@@ -43,14 +49,19 @@ class WorkBasketCommandMixin:
             ending="" if show_transaction_info else "\n",
         )
         if show_transaction_info:
+            transactions = workbasket.transactions
+            first_pk = (
+                workbasket.transactions.first().pk if transactions.count() else "-"
+            )
+            last_pk = workbasket.transactions.last().pk if transactions.count() else "-"
             self.stdout.write(
-                f", {workbasket.transactions.first().pk} - {workbasket.transactions.last().pk}",
+                f", {first_pk} - {last_pk} [{transactions.count()}]",
             )
 
     def output_workbasket(
         self,
         workbasket,
-        show_transaction_info=False,
+        show_transaction_info,
         output_format=WorkBasketOutputFormat.READABLE,
         **kwargs,
     ):
