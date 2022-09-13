@@ -81,14 +81,14 @@ ui_patterns = [
         ui_views.WorkBasketViolations.as_view(),
         name="workbasket-ui-violations",
     ),
-]
-
-urlpatterns = [
-    path("workbaskets/", include(ui_patterns)),
     path(
         f"<wb_pk>/violations/<pk>/",
         ui_views.WorkBasketViolationDetail.as_view(),
         name="workbasket-ui-violation-detail",
     ),
+]
+
+urlpatterns = [
+    path("workbaskets/", include(ui_patterns)),
     path("api/", include(api_router.urls)),
 ]
