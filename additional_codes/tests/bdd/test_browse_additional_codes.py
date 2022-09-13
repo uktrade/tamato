@@ -5,6 +5,8 @@ from pytest_bdd import then
 from pytest_bdd import when
 from rest_framework.reverse import reverse
 
+from common.models.utils import override_current_transaction
+
 pytestmark = pytest.mark.django_db
 
 
@@ -22,8 +24,9 @@ def additional_code_list(additional_code_search, additional_code_X000):
     results = additional_code_search.json()["results"]
     assert len(results) == 1
     result = results[0]
-    assert (
-        result["label"]
-        == f"{additional_code_X000} - {additional_code_X000.get_description(transaction=additional_code_X000.transaction).description}"
-    )
+    with override_current_transaction(additional_code_X000.transaction):
+        assert (
+            result["label"]
+            == f"{additional_code_X000} - {additional_code_X000.get_description().description}"
+        )
     assert result["value"] == additional_code_X000.pk

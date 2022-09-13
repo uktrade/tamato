@@ -4,6 +4,7 @@ from django.db import DataError
 from checks.tasks import check_transaction_sync
 from commodities import business_rules
 from common.business_rules import BusinessRuleViolation
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import raises_if
 from common.validators import UpdateType
@@ -233,9 +234,9 @@ def test_NIG11_start_date_less_than_end_date(date_ranges):
 def test_NIG12_one_description_mandatory():
     """At least one description record is mandatory."""
     good = factories.GoodsNomenclatureFactory.create(description=None)
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12(good.transaction).validate(good)
+    with override_current_transaction(good.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.NIG12(good.transaction).validate(good)
 
 
 def test_NIG12_first_description_must_have_same_start_date(date_ranges):
@@ -244,8 +245,9 @@ def test_NIG12_first_description_must_have_same_start_date(date_ranges):
     good = factories.GoodsNomenclatureFactory.create(
         description__validity_start=date_ranges.later.lower,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12(good.transaction).validate(good)
+    with override_current_transaction(good.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.NIG12(good.transaction).validate(good)
 
 
 def test_NIG12_start_dates_cannot_match():
@@ -256,8 +258,9 @@ def test_NIG12_start_dates_cannot_match():
         described_goods_nomenclature=goods_nomenclature,
         validity_start=goods_nomenclature.valid_between.lower,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12(duplicate.transaction).validate(goods_nomenclature)
+    with override_current_transaction(duplicate.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.NIG12(duplicate.transaction).validate(goods_nomenclature)
 
 
 def test_NIG12_description_start_before_nomenclature_end(
@@ -276,9 +279,11 @@ def test_NIG12_description_start_before_nomenclature_end(
         described_goods_nomenclature=goods_nomenclature,
         validity_start=date_ranges.later.lower,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12(early_description.transaction).validate(goods_nomenclature)
+    with override_current_transaction(early_description.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.NIG12(early_description.transaction).validate(
+                goods_nomenclature,
+            )
 
 
 def test_NIG12_direct_rule_called_for_goods():

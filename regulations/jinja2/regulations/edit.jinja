@@ -2,23 +2,19 @@
 
 {% set page_title = 'Edit regulation details' %}
 
-{% block beforeContent %}
-  {{ super() }}
-  
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("home")},
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
       {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url("list")},
       {"text": object._meta.verbose_name|capitalize ~ ": " ~ object|string, "href": object.get_url()},
       {"text": page_title}
-    ]
-  }) }}
+    ])
+  }}
 {% endblock %}
 
 {% block form %}
   <div class="govuk-grid-row govuk-!-margin-bottom-3">
     <div class="govuk-grid-column-two-thirds">
-      <p class="govuk-body">Edit details of regulation X1904110.</p>
+      <p class="govuk-body">Edit details of regulation {{object.regulation_id}}.</p>
     </div>
   </div>
 

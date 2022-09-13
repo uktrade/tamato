@@ -11,6 +11,7 @@ from django.forms.models import model_to_dict
 from django.urls import reverse
 
 from common.models.transactions import Transaction
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
@@ -162,10 +163,11 @@ def test_measure_detail_conditions(client, valid_user):
     certificate = certificate_condition.required_certificate
 
     assert cells[0].text == str(certificate_condition.sid)
-    assert (
-        cells[1].text
-        == f"{certificate.code}:\n        {certificate.get_description(transaction=certificate.transaction).description}"
-    )
+    with override_current_transaction(certificate.transaction):
+        assert (
+            cells[1].text
+            == f"{certificate.code}:\n        {certificate.get_description().description}"
+        )
     assert cells[2].text == certificate_condition.action.description
     assert cells[3].text == "-"
 
@@ -725,6 +727,7 @@ def test_measure_form_wizard_finish(
     valid_user_client,
     measure_type,
     regulation,
+    quota_order_number,
     duty_sentence_parser,
     erga_omnes,
 ):
@@ -741,10 +744,23 @@ def test_measure_form_wizard_finish(
             "data": {
                 "measure_create_wizard-current_step": "measure_details",
                 "measure_details-measure_type": measure_type.pk,
-                "measure_details-generating_regulation": regulation.pk,
                 "measure_details-start_date_0": 2,
                 "measure_details-start_date_1": 4,
                 "measure_details-start_date_2": 2021,
+            },
+            "next_step": "regulation_id",
+        },
+        {
+            "data": {
+                "measure_create_wizard-current_step": "regulation_id",
+                "regulation_id-generating_regulation": regulation.pk,
+            },
+            "next_step": "quota_order_number",
+        },
+        {
+            "data": {
+                "measure_create_wizard-current_step": "quota_order_number",
+                "quota_order_number-order_number": quota_order_number.pk,
             },
             "next_step": "geographical_area",
         },

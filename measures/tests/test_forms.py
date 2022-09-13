@@ -4,7 +4,7 @@ import pytest
 from django.forms.models import model_to_dict
 
 from common.models.transactions import Transaction
-from common.models.utils import set_current_transaction
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from geo_areas.validators import AreaCode
 from measures import forms
@@ -23,7 +23,8 @@ def test_diff_components_not_called(
     measure_form,
     duty_sentence_parser,
 ):
-    measure_form.save(commit=False)
+    with override_current_transaction(Transaction.objects.last()):
+        measure_form.save(commit=False)
 
     assert diff_components.called == False
 
@@ -31,7 +32,8 @@ def test_diff_components_not_called(
 @patch("measures.forms.diff_components")
 def test_diff_components_called(diff_components, measure_form, duty_sentence_parser):
     measure_form.data.update(duty_sentence="6.000%")
-    measure_form.save(commit=False)
+    with override_current_transaction(Transaction.objects.last()):
+        measure_form.save(commit=False)
 
     assert diff_components.called == True
 
@@ -58,13 +60,12 @@ def test_measure_form_invalid_conditions_data(
     )
 
     assert not measure_form.is_valid()
+    # formset errors messages are test in view tests
 
 
-def test_measure_forms_details_valid_data(measure_type, regulation, erga_omnes):
+def test_measure_forms_details_valid_data(measure_type, erga_omnes):
     data = {
         "measure_type": measure_type.pk,
-        "generating_regulation": regulation.pk,
-        "order_number": None,
         "start_date_0": 2,
         "start_date_1": 4,
         "start_date_2": 2021,
@@ -74,17 +75,34 @@ def test_measure_forms_details_valid_data(measure_type, regulation, erga_omnes):
     assert form.is_valid()
 
 
+def test_measure_forms_regulation_id_valid_data(regulation):
+    data = {
+        "generating_regulation": regulation.pk,
+    }
+    form = forms.MeasureRegulationIdForm(data, prefix="")
+    assert form.is_valid()
+
+
+def test_measure_forms_quota_order_number_valid_data(quota_order_number):
+    data = {
+        "order_number": quota_order_number.pk,
+    }
+    form = forms.MeasureQuotaOrderNumberForm(data, prefix="")
+    assert form.is_valid()
+
+
 def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert form.is_valid()
+        assert form.cleaned_data["geo_area_list"] == [erga_omnes]
 
 
 def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions(erga_omnes):
@@ -95,29 +113,32 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions(erga_omnes):
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": geo_area2.pk,
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert form.is_valid()
+        assert form.cleaned_data["geo_area_exclusions"] == [geo_area1, geo_area2]
 
 
 def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_delete(erga_omnes):
+    """Test that is_valid returns False when DELETE is in formset data, as per
+    FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-0-DELETE": "1",
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert not form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert not form.is_valid()
 
 
 def test_measure_forms_geo_area_valid_data_geo_group_exclusions(erga_omnes):
@@ -128,16 +149,19 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions(erga_omnes):
         f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert form.is_valid()
+        assert form.cleaned_data["geo_area_exclusions"] == [geo_area1]
 
 
 def test_measure_forms_geo_area_valid_data_geo_group_exclusions_delete(erga_omnes):
+    """Test that is_valid returns False when DELETE is in formset data, as per
+    FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     data = {
@@ -146,29 +170,31 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions_delete(erga_omne
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
         "geo_group_exclusions_formset-0-DELETE": "1",
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert not form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert not form.is_valid()
 
 
 def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_add(erga_omnes):
+    """Test that is_valid returns False when ADD is in formset data, as per
+    FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-ADD": "1",
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert not form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert not form.is_valid()
 
 
 def test_measure_forms_geo_area_valid_data_geo_group(erga_omnes):
@@ -177,15 +203,15 @@ def test_measure_forms_geo_area_valid_data_geo_group(erga_omnes):
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": geo_group.pk,
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert form.is_valid()
-    # https://uktrade.atlassian.net/browse/TP2000-437 500 error where object instead of a list of objects
-    assert type(form.cleaned_data["geo_area_list"]) == list
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert form.is_valid()
+        # https://uktrade.atlassian.net/browse/TP2000-437 500 error where object instead of a list of objects
+        assert form.cleaned_data["geo_area_list"] == [geo_group]
 
 
 def test_measure_forms_geo_area_valid_data_countries(erga_omnes):
@@ -196,16 +222,19 @@ def test_measure_forms_geo_area_valid_data_countries(erga_omnes):
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert form.is_valid()
+        assert form.cleaned_data["geo_area_list"] == [geo_area1, geo_area2]
 
 
 def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
+    """Test that is_valid returns False when DELETE is in formset data, as per
+    FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_area2 = factories.GeographicalAreaFactory.create()
     data = {
@@ -214,45 +243,69 @@ def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
         "country_region_formset-1-DELETE": "on",
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert not form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert not form.is_valid()
 
 
 def test_measure_forms_geo_area_valid_data_countries_add(erga_omnes):
+    """Test that is_valid returns False when ADD is in formset data, as per
+    FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-ADD": "1",
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert not form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert not form.is_valid()
 
 
-def test_measure_forms_geo_area_invalid_data_geo_group(erga_omnes):
-    geo_area1 = factories.GeographicalAreaFactory.create()
+def test_measure_forms_geo_area_invalid_data_geo_group_missing_field(erga_omnes):
+    """Test that GeoGroupForm raises a field required error when null value is
+    passed to geographical_area_group field."""
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
-        "geographical_area_group-geographical_area_group": geo_area1.pk,
+        "geographical_area-geographical_area_group": None,
     }
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert not form.is_valid()
-    assert "A country group is required." in form.errors["geo_area"][0]
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert not form.is_valid()
+        assert "A country group is required." in form.errors["geo_area"][0]
+
+
+def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes):
+    """Test that GeoGroupForm raises an invalid choice error when passed an area
+    whose area_code is not AreaCode.GROUP."""
+    geo_area1 = factories.GeographicalAreaFactory.create(area_code=AreaCode.REGION)
+    data = {
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
+        "geographical_area-geographical_area_group": geo_area1.pk,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert not form.is_valid()
+        assert (
+            "Select a valid choice. That choice is not one of the available choices."
+            in form.errors["geo_area"][0]
+        )
 
 
 @pytest.mark.parametrize(
@@ -275,21 +328,19 @@ def test_measure_forms_geo_area_invalid_data_geo_group(erga_omnes):
     ],
 )
 def test_measure_forms_geo_area_invalid_data_error_messages(data, error, erga_omnes):
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureGeographicalAreaForm(
-        data,
-        initial={},
-        prefix=GEO_AREA_FORM_PREFIX,
-    )
-    assert not form.is_valid()
-    assert error in form.errors["geo_area"]
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial={},
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert not form.is_valid()
+        assert error in form.errors["geo_area"]
 
 
 def test_measure_forms_details_invalid_data():
     data = {
         "measure_type": "foo",
-        "generating_regulation": "bar",
-        "order_number": None,
         "start_date_0": 2,
         "start_date_1": 4,
         "start_date_2": 2021,
@@ -299,7 +350,30 @@ def test_measure_forms_details_invalid_data():
         "Select a valid choice. That choice is not one of the available choices.",
     ]
     assert form.errors["measure_type"] == error_string
+    assert not form.is_valid()
+
+
+def test_measure_forms_regulation_id_invalid_data():
+    data = {
+        "generating_regulation": "bar",
+    }
+    form = forms.MeasureRegulationIdForm(data, initial={}, prefix="")
+    error_string = [
+        "Select a valid choice. That choice is not one of the available choices.",
+    ]
     assert form.errors["generating_regulation"] == error_string
+    assert not form.is_valid()
+
+
+def test_measure_forms_quota_order_number_invalid_data():
+    data = {
+        "order_number": "foo",
+    }
+    form = forms.MeasureQuotaOrderNumberForm(data, initial={}, prefix="")
+    error_string = [
+        "Select a valid choice. That choice is not one of the available choices.",
+    ]
+    assert form.errors["order_number"] == error_string
     assert not form.is_valid()
 
 
@@ -357,6 +431,8 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
         measure_start_date=date_ranges.normal,
     )
     assert form.is_valid() == is_valid
+    if not form.is_valid():
+        assert "Enter a valid duty sentence." in form.errors["__all__"]
 
 
 def test_measure_forms_conditions_form_valid_data():
@@ -678,6 +754,8 @@ def test_measure_forms_conditions_wizard_clears_unneeded_certificate(date_ranges
 
 
 def test_measure_form_valid_data(erga_omnes, session_with_workbasket):
+    """Test that MeasureForm.is_valid returns True when passed required fields
+    and geographical_area and sid fields in cleaned data."""
     measure = factories.MeasureFactory.create()
     data = model_to_dict(measure)
     data["geo_area"] = "COUNTRY"
@@ -690,14 +768,19 @@ def test_measure_form_valid_data(erga_omnes, session_with_workbasket):
         start_date_1=start_date.month,
         start_date_2=start_date.year,
     )
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureForm(
-        data=data,
-        initial={},
-        instance=Measure.objects.first(),
-        request=session_with_workbasket,
-    )
-    assert form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureForm(
+            data=data,
+            initial={},
+            instance=Measure.objects.first(),
+            request=session_with_workbasket,
+        )
+        assert form.is_valid()
+        assert (
+            form.cleaned_data["geographical_area"].pk
+            == data["country_region-geographical_area_country_or_region"]
+        )
+        assert form.cleaned_data["sid"] == measure.sid
 
 
 @pytest.mark.parametrize("initial_option", [("ERGA_OMNES"), ("GROUP"), ("COUNTRY")])
@@ -737,6 +820,8 @@ def test_measure_form_cleaned_data_geo_exclusions_group(
     erga_omnes,
     session_with_workbasket,
 ):
+    """Test that MeasureForm accepts geo_area form group data and returns
+    excluded countries in cleaned data."""
     group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     excluded_country1 = factories.GeographicalAreaFactory.create()
     excluded_country2 = factories.GeographicalAreaFactory.create()
@@ -755,26 +840,23 @@ def test_measure_form_cleaned_data_geo_exclusions_group(
         "geo_group_exclusions_formset-1-geo_group_exclusion": excluded_country2.pk,
     }
     data.update(exclusions_data)
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureForm(
-        data=data,
-        initial={},
-        instance=Measure.objects.first(),
-        request=session_with_workbasket,
-    )
-    assert form.is_valid()
-    assert form.cleaned_data["exclusions"]
-    assert not bool(
-        set(form.cleaned_data["exclusions"]).difference(
-            {excluded_country1, excluded_country2},
-        ),
-    )
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureForm(
+            data=data,
+            initial={},
+            instance=Measure.objects.first(),
+            request=session_with_workbasket,
+        )
+        assert form.is_valid()
+        assert form.cleaned_data["exclusions"] == [excluded_country1, excluded_country2]
 
 
 def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
     erga_omnes,
     session_with_workbasket,
 ):
+    """Test that MeasureForm accepts geo_area form erga omnes data and returns
+    excluded countries in cleaned data."""
     excluded_country1 = factories.GeographicalAreaFactory.create()
     excluded_country2 = factories.GeographicalAreaFactory.create()
     factories.GeographicalAreaFactory.create()
@@ -792,15 +874,12 @@ def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
         "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": excluded_country2.pk,
     }
     data.update(exclusions_data)
-    set_current_transaction(Transaction.objects.last())
-    form = forms.MeasureForm(
-        data=data,
-        initial={},
-        instance=Measure.objects.first(),
-        request=session_with_workbasket,
-    )
-    assert form.is_valid()
-    assert form.cleaned_data["exclusions"]
-    assert not set(form.cleaned_data["exclusions"]).difference(
-        {excluded_country1, excluded_country2},
-    )
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureForm(
+            data=data,
+            initial={},
+            instance=Measure.objects.first(),
+            request=session_with_workbasket,
+        )
+        assert form.is_valid()
+        assert form.cleaned_data["exclusions"] == [excluded_country1, excluded_country2]

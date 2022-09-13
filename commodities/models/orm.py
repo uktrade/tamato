@@ -5,6 +5,7 @@ from typing import Set
 
 from django.db import models
 from django.db.models.query import QuerySet
+from django.urls import reverse
 from polymorphic.managers import PolymorphicManager
 
 from commodities import business_rules
@@ -103,6 +104,9 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
 
     def __str__(self):
         return self.item_id
+
+    def get_url(self):
+        return reverse("commodity-ui-detail", kwargs={"sid": self.sid})
 
     def get_dependent_measures(self, transaction=None):
         return self.measures.model.objects.filter(

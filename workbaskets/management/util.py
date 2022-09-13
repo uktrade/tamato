@@ -1,5 +1,7 @@
 import enum
 
+from workbaskets.models import WorkBasket
+
 
 class WorkBasketOutputFormat(enum.Enum):
     READABLE = 1
@@ -21,6 +23,12 @@ class WorkBasketCommandMixin:
         self.stdout.write(f"{spaces}title: {first_line_of(workbasket.title)}")
         self.stdout.write(f"{spaces}reason: {first_line_of(workbasket.reason)}")
         self.stdout.write(f"{spaces}status: {workbasket.status}")
+        self.stdout.write(
+            f"{spaces}unchecked or errors: {workbasket.unchecked_or_errored_transactions.exists()}",
+        )
+        self.stdout.write(
+            f"{spaces}tracked model count: {workbasket.tracked_models.count()}",
+        )
         if show_transaction_info:
             transactions = workbasket.transactions
             first_pk = (
@@ -34,7 +42,10 @@ class WorkBasketCommandMixin:
 
     def _output_workbasket_compact(self, workbasket, show_transaction_info, **kwargs):
         self.stdout.write(
-            f"{workbasket.pk}, {first_line_of(workbasket.title)}, {first_line_of(workbasket.reason) or '-'}, {workbasket.status}",
+            f"{workbasket.pk}, {first_line_of(workbasket.title)}, "
+            f"{first_line_of(workbasket.reason) or '-'}, {workbasket.status}, "
+            f"{workbasket.unchecked_or_errored_transactions}, "
+            f"{workbasket.tracked_models.count()}",
             ending="" if show_transaction_info else "\n",
         )
         if show_transaction_info:
@@ -79,3 +90,20 @@ class WorkBasketCommandMixin:
 
         for w in workbaskets:
             self.output_workbasket(w, show_transaction_info, output_format)
+
+    def get_workbasket_or_exit(self, workbasket_pk):
+        """
+        Get the workbasket instance by its primary key, workbasket_pk.
+
+        If no matching workbasket is found, then output an error message and
+        exit the process.
+        """
+        try:
+            return WorkBasket.objects.get(
+                pk=workbasket_pk,
+            )
+        except WorkBasket.DoesNotExist:
+            self.stderr.write(
+                self.style.ERROR(f"Workbasket pk={workbasket_pk} not found."),
+            )
+            exit(1)

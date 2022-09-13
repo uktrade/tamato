@@ -2,6 +2,7 @@ import pytest
 from django.db import DataError
 
 from common.business_rules import BusinessRuleViolation
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import requires_meursing_tables
 from footnotes import business_rules
@@ -60,8 +61,9 @@ def test_FO3(date_ranges):
 def test_FO4_one_description_mandatory():
     """At least one description record is mandatory."""
     footnote = factories.FootnoteFactory.create(description=None)
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.FO4(footnote.transaction).validate(footnote)
+    with override_current_transaction(footnote.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.FO4(footnote.transaction).validate(footnote)
 
 
 def test_FO4_first_description_must_have_same_start_date(date_ranges):
@@ -70,8 +72,9 @@ def test_FO4_first_description_must_have_same_start_date(date_ranges):
     footnote = factories.FootnoteFactory.create(
         description__validity_start=date_ranges.later.lower,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.FO4(footnote.transaction).validate(footnote)
+    with override_current_transaction(footnote.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.FO4(footnote.transaction).validate(footnote)
 
 
 def test_FO4_start_dates_cannot_match():
@@ -82,8 +85,9 @@ def test_FO4_start_dates_cannot_match():
         described_footnote=footnote,
         validity_start=footnote.valid_between.lower,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.FO4(duplicate.transaction).validate(footnote)
+    with override_current_transaction(duplicate.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.FO4(duplicate.transaction).validate(footnote)
 
 
 def test_FO4_description_start_before_footnote_end(date_ranges):
@@ -98,9 +102,9 @@ def test_FO4_description_start_before_footnote_end(date_ranges):
         described_footnote=footnote,
         validity_start=date_ranges.later.lower,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.FO4(early_description.transaction).validate(footnote)
+    with override_current_transaction(early_description.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.FO4(early_description.transaction).validate(footnote)
 
 
 def test_FO5(assert_spanning_enforced):

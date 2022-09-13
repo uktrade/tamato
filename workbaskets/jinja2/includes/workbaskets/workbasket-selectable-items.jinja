@@ -43,9 +43,19 @@
     <div class="govuk-grid-column-two-thirds">
       {% if change_count %}
         <h2 class="govuk-body">Select a component you would like to edit or remove:</h2>
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <div class="govuk-checkboxes govuk-checkboxes--large">
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="select-all-pages" name="select-all-pages" type="checkbox">
+                <label class="govuk-label govuk-checkboxes__label govuk-!-padding-right-0" for="selected">Select all {{ change_count }} changes across {{ page_obj.paginator.num_pages }} pages</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
       {% else %}
         <h2 class="govuk-body">There is nothing in your workbasket yet.</h2>
-        <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}?edit=1" class="govuk-button govuk-button--primary">Edit workbasket</a>
       {% endif %}
     </div>
   </div>
@@ -122,7 +132,8 @@
       {% endif %}
     </div>
   </div>
-
+  {% if change_count %}
   <button value="remove-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Remove</button>
+  {% endif %}
 </form>
 {% endif %}

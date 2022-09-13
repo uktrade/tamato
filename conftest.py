@@ -240,6 +240,18 @@ def valid_user_client(client, valid_user):
 
 
 @pytest.fixture
+def superuser():
+    user = factories.UserFactory.create(is_superuser=True, is_staff=True)
+    return user
+
+
+@pytest.fixture
+def superuser_client(client, superuser):
+    client.force_login(superuser)
+    return client
+
+
+@pytest.fixture
 @given(parsers.parse("a valid user named {username}"), target_fixture="a_valid_user")
 def a_valid_user(username):
     return factories.UserFactory.create(username=username)
@@ -612,7 +624,7 @@ def run_xml_import(import_xml, settings):
         ), "A factory that returns an object instance needs to be provided"
 
         xml = generate_test_import_xml(
-            serializer(model, context={"format": "xml"}).data,
+            [serializer(model, context={"format": "xml"}).data],
         )
 
         import_xml(xml, workflow_status, record_group)

@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 import factory
@@ -8,6 +9,7 @@ from django.db.models import signals
 
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UniqueIdentifyingFields
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.factories import date_ranges
 from common.tests.factories import end_date
@@ -736,6 +738,44 @@ def test_ME119(date_ranges):
         business_rules.ME119(measure.transaction).validate(measure)
 
 
+# https://uktrade.atlassian.net/browse/TP2000-411
+def test_ME119_multiple_valid_origins():
+    """Tests that it is possible to create two measures with the same quota
+    order number for non-overlapping periods both covered by separate quota
+    origins without ME119 being triggered."""
+    valid_between = TaricDateRange(date(2020, 1, 1), date(2020, 1, 31))
+    measure = factories.MeasureWithQuotaFactory.create(
+        order_number__origin__valid_between=valid_between,
+        valid_between=valid_between,
+    )
+    later_origin = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=measure.order_number,
+        valid_between=TaricDateRange(date(2021, 1, 1), date(2021, 1, 31)),
+    )
+
+    business_rules.ME119(later_origin.transaction).validate(measure)
+
+    later_measure = factories.MeasureWithQuotaFactory.create(
+        order_number=measure.order_number,
+        valid_between=TaricDateRange(date(2021, 1, 1), date(2021, 1, 31)),
+    )
+
+    business_rules.ME119(later_measure.transaction).validate(later_measure)
+
+
+def test_quota_origin_matching_area():
+    origin = factories.QuotaOrderNumberOriginFactory.create(
+        geographical_area__sid="666",
+    )
+    measure = factories.MeasureFactory.create(
+        order_number=origin.order_number,
+        geographical_area__sid="999",
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.QuotaOriginMatchingArea(measure.transaction).validate(measure)
+
+
 # -- Relation with additional codes
 
 
@@ -1349,8 +1389,9 @@ def test_ME56(reference_nonexistent_record):
     """The referenced certificate must exist."""
 
     def delete_certificate(c):
-        c.get_descriptions(transaction=c.transaction).first().delete()
-        c.delete()
+        with override_current_transaction(c.transaction):
+            c.get_descriptions().first().delete()
+            c.delete()
 
     with reference_nonexistent_record(
         factories.MeasureConditionWithCertificateFactory,

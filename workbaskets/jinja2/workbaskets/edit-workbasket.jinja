@@ -1,38 +1,32 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
 
-{% set page_title %}Workbasket {{ request.session.workbasket.id }}{% if request.session.workbasket.title %} - {{ request.session.workbasket.title }}{% endif %}{% endset %}
-{% set page_subtitle %}What would you like to do?{% endset %}
+{% set page_title %}
+  Workbasket {{ request.session.workbasket.id }}
+  {% if request.session.workbasket.title %} - {{ request.session.workbasket.title }}{% endif %}
+{% endset %}
+
 
 {% block breadcrumb %}
-  {% if request.GET.edit %}
-    {{ govukBreadcrumbs({
-      "items": [
-        {"text": "Home", "href": url("home")},
-        {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
-        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
-      ]
-    }) }}
-  {% else %}
-    {{ govukBreadcrumbs({
-      "items": [
-        {"text": "Home", "href": url("home")},
-        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
-        {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
-      ]
-    }) }}
-  {% endif %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
+    ]
+  }) }}
 {% endblock %}
 
 
 {% block content %}
-  <h1 class="govuk-heading-xl">
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
     {{ page_title }}
-    <span class="govuk-caption-xl">
-      {{ page_subtitle }}
-    </span>
   </h1>
+
+  {{ navigation(request, "edit") }}
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <h2 class="govuk-heading-l">
@@ -102,8 +96,13 @@
       <h2 class="govuk-heading-m">Commodities</h2>
       <ul class="govuk-list">
         <li>
-          <a class="govuk-link" href="{{ url('commodities-import') }}">
+          <a class="govuk-link" href="{{ url('commodity-ui-import') }}">
             Import commodities
+          </a>
+        </li>
+         <li>
+          <a class="govuk-link" href="{{ url('commodity-ui-list') }}">
+            Find commodities
           </a>
         </li>
       </ul>

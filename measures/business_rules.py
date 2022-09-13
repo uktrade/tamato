@@ -22,6 +22,7 @@ from common.util import validity_range_contains_range
 from common.validators import ApplicabilityCode
 from geo_areas.validators import AreaCode
 from measures.querysets import MeasuresQuerySet
+from quotas.models import QuotaOrderNumberOrigin
 from quotas.validators import AdministrationMechanism
 
 # 140 - MEASURE TYPE SERIES
@@ -454,7 +455,76 @@ class ME119(ValidityPeriodContained):
     measure."""
 
     # This checks the same thing as ON10 from the other side of the relation
-    container_field_name = "order_number__quotaordernumberorigin"
+
+    def validate(self, measure):
+        """
+        Get all current QuotaOrderNumberOrigin objects associated with a
+        measure's QuotaOrderNumber.
+
+        Loop over these and raise a violation if the measure validity period is
+        not contained by any of the origins
+        """
+        if not measure.order_number:
+            return
+
+        with override_current_transaction(self.transaction):
+            contained_measure = measure.get_versions().current().get()
+
+            origins = QuotaOrderNumberOrigin.objects.current().filter(
+                order_number__order_number=measure.order_number.order_number,
+            )
+
+            for origin in origins:
+                valid_between = origin.valid_between
+                if validity_range_contains_range(
+                    valid_between,
+                    contained_measure.valid_between,
+                ):
+                    return
+
+            raise self.violation(measure)
+
+
+class QuotaOriginMatchingArea(BusinessRule):
+    """When a quota order number is used in a measure then the quota order
+    number origin's geographical area(s) must match those of the measure."""
+
+    def validate(self, measure):
+        # Return if the measure has no order number and, therefore, no order number origin
+        if not measure.order_number:
+            return
+
+        # Get all individual countries / regions associated with the measure
+        with override_current_transaction(self.transaction):
+            if measure.geographical_area.area_code == AreaCode.GROUP:
+                area_sids = set(
+                    [
+                        m.member.sid
+                        for m in measure.geographical_area.memberships.current()
+                    ],
+                )
+            else:
+                area_sids = set([measure.geographical_area.sid])
+
+            # Get all individual countries / regions for each quota order number origin linked to the measure
+            origins = QuotaOrderNumberOrigin.objects.current().filter(
+                order_number__order_number=measure.order_number.order_number,
+            )
+            origin_sids = []
+            for origin in origins:
+                if origin.geographical_area.area_code == AreaCode.GROUP:
+                    for a in [
+                        m.member for m in origin.geographical_area.memberships.current()
+                    ]:
+                        origin_sids.append(a.sid)
+                else:
+                    origin_sids.append(origin.geographical_area.sid)
+
+            origin_sids = set(origin_sids)
+
+            # Check that the geographical area sid is included in the list of origin area sids
+            if any(area_sids - origin_sids):
+                raise self.violation(measure)
 
 
 # -- Relation with additional codes

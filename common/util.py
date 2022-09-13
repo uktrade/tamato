@@ -16,6 +16,7 @@ from typing import TypeVar
 from typing import Union
 
 import wrapt
+from defusedxml.common import DTDForbidden
 from django.db import transaction
 from django.db.models import F
 from django.db.models import Func
@@ -35,6 +36,7 @@ from django.db.models.functions.text import Lower
 from django.db.models.functions.text import Upper
 from django.db.transaction import atomic
 from django.template import loader
+from lxml import etree
 from psycopg2.extras import DateRange
 from psycopg2.extras import DateTimeRange
 
@@ -488,3 +490,27 @@ def get_latest_versions(qs):
         if key not in keys:
             keys.add(key)
             yield model
+
+
+# This implementation is borrowed from defusedxml's deprecated lxml module https://github.com/tiran/defusedxml/blob/main/defusedxml/lxml.py
+def check_docinfo(elementtree, forbid_dtd=False):
+    """Check docinfo of an element tree for DTD."""
+    docinfo = elementtree.docinfo
+    if docinfo.doctype:
+        if forbid_dtd:
+            raise DTDForbidden(docinfo.doctype, docinfo.system_url, docinfo.public_id)
+
+
+def parse_xml(source, forbid_dtd=True):
+    elementtree = etree.parse(source)
+    check_docinfo(elementtree, forbid_dtd=forbid_dtd)
+
+    return elementtree
+
+
+def xml_fromstring(text, forbid_dtd=True):
+    rootelement = etree.fromstring(text)
+    elementtree = rootelement.getroottree()
+    check_docinfo(elementtree, forbid_dtd=forbid_dtd)
+
+    return rootelement
