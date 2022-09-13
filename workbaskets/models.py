@@ -447,6 +447,16 @@ class WorkBasket(TimestampedMixin):
         transaction_id: int,
         base_title: str = None,
     ):
+        """
+        Non-destructive workbasket splitting, copying transactions from a
+        workbasket into multiple newly created workbaskets, each having a
+        maximum of max_transactions transactions.
+
+        If max_transactions is 0 (zero), or exceeds the number of transactions
+        in the source workbasket, then the split operation amounts to a
+        workbasket copy.
+        """
+
         if not self.transactions.filter(id=transaction_id):
             raise ValueError(
                 "transaction_id must be a valid Transaction ID within this "

@@ -414,7 +414,7 @@ class TrackedModel(PolymorphicModel):
 
         new_object, _ = self.clone(
             transaction=transaction,
-            overrides=overrides,
+            **overrides,
         )
         return new_object
 
@@ -499,7 +499,7 @@ class TrackedModel(PolymorphicModel):
                         else:
                             # If user passed a saved object, create a copy of that object with remote_field pointing at the new copied object
                             # set ignore to True, so that duplicate copies are not made below
-                            new_sub_records.appent(
+                            new_sub_records.append(
                                 subrecord.copy(
                                     transaction, **{remote_field: new_object}
                                 ),
