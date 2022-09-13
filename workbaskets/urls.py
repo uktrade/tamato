@@ -85,5 +85,10 @@ ui_patterns = [
 
 urlpatterns = [
     path("workbaskets/", include(ui_patterns)),
+    path(
+        f"<wb_pk>/violations/<pk>/",
+        ui_views.WorkBasketViolationDetail.as_view(),
+        name="workbasket-ui-violation-detail",
+    ),
     path("api/", include(api_router.urls)),
 ]
