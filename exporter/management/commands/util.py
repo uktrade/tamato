@@ -57,6 +57,7 @@ def dump_transactions(
             envelope_file.seek(0, os.SEEK_SET)
             try:
                 validate_envelope(envelope_file)
+                assert 0
             except etree.DocumentInvalid:
                 output_stream.write(
                     f"{envelope_file.name} {WARNING_SIGN_EMOJI}️ Envelope invalid:",
@@ -64,6 +65,6 @@ def dump_transactions(
             else:
                 total_transactions = len(rendered_envelope.transactions)
                 output_stream.write(
-                    f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
+                    f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK} XML valid. {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
                 )
     return not errors
