@@ -598,3 +598,35 @@ def test_workbasket_violations(valid_user_client, session_workbasket):
     assert cells[2].text == check.rule_code
     assert cells[3].text == check.message
     assert cells[4].text == f"{check.transaction_check.transaction.created_at:%d %b %Y}"
+
+
+def test_violation_detail_page(valid_user_client, session_workbasket):
+    with session_workbasket.new_transaction() as transaction:
+        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        check = TrackedModelCheckFactory.create(
+            transaction_check__transaction=transaction,
+            model=good,
+            successful=False,
+        )
+    url = reverse(
+        "workbaskets:workbasket-ui-violation-detail",
+        kwargs={"wb_pk": session_workbasket.pk, "pk": check.pk},
+    )
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+        "error_count": session_workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    paragraphs_text = [e.text for e in soup.select("p")]
+    assert check.rule_code in paragraphs_text
+    assert check.message in paragraphs_text
+    # Attribute does not exist yet. This will fail when we eventually add it
+    with pytest.raises(AttributeError):
+        assert check.solution

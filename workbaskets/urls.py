@@ -81,6 +81,11 @@ ui_patterns = [
         ui_views.WorkBasketViolations.as_view(),
         name="workbasket-ui-violations",
     ),
+    path(
+        f"<wb_pk>/violations/<pk>/",
+        ui_views.WorkBasketViolationDetail.as_view(),
+        name="workbasket-ui-violation-detail",
+    ),
 ]
 
 urlpatterns = [

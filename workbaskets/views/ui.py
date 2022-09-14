@@ -25,6 +25,7 @@ from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
+from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
@@ -476,6 +477,21 @@ class WorkBasketViolations(DetailView):
     model = WorkBasket
     template_name = "workbaskets/violations.jinja"
     paginate_by = 50
+
+
+class WorkBasketViolationDetail(DetailView):
+    """UI endpoint for viewing a specified workbasket's business rule
+    violations."""
+
+    model = TrackedModelCheck
+    template_name = "workbaskets/violation_detail.jinja"
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(id=self.kwargs.get("wb_pk"))
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(workbasket=self.workbasket, **kwargs)
 
 
 @atomic
