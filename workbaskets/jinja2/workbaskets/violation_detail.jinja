@@ -28,7 +28,7 @@ details
   <div class="govuk-grid-column-two-thirds">
     {% set object_link %}
     <a href="{{ object.model.get_url() }}" class="govuk-link">{{ object.model._meta.verbose_name.title() }}
-      {{ object.model.id }}</a>
+      {{ object.model.sid or object.model.id }}</a>
     {% endset %}
     <h2 class="govuk-heading-m">Rule violation details - {{ object_link }}</h2>
     <hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">
