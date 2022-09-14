@@ -4,7 +4,7 @@
 
 {% set page_title %}
   Workbasket {{ request.session.workbasket.id }}
-  {% if request.session.workbasket.title %} - {{ request.session.workbasket.title }}{% endif %}
+  {% if request.session.workbasket.title %} - Add/edit items{% endif %}
 {% endset %}
 
 
@@ -14,7 +14,7 @@
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
       {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Menu" }
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Add/edit items" }
     ]
   }) }}
 {% endblock %}
@@ -27,13 +27,6 @@
 
   {{ navigation(request, "edit") }}
 
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <h2 class="govuk-heading-l">
-        Main menu
-      </h2>
-    </div>
-  </div>
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-one-quarter">
       <h2 class="govuk-heading-m">Additional codes</h2>
