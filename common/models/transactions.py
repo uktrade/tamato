@@ -224,19 +224,32 @@ class Transaction(TimestampedMixin):
 
     approved = ApprovedTransactionManager.from_queryset(TransactionQueryset)()
 
-    def copy(self, workbasket):
+    def clone(self, workbasket):
         """
-        Create a deep copy of a transaction in the given WorkBasket.
+        Create a deep clone of a transaction in the given WorkBasket.
 
         All of the source Transaction's TrackedModels are copied to the newly
         created Transaction before returning the new Transaction instance.
         """
-        # TODO:
-        # Is it necessary to prevent copying to the source transaction's
-        # WorkBasket, or is only a partial guard required?
         new_transaction = workbasket.new_transaction()
+        cloned_obj_ids = []
         for obj in self.tracked_models.all():
-            obj.copy(new_transaction)
+            if obj.id in cloned_obj_ids:
+                # Already cloned (as part of a parent's object cloning).
+                continue
+
+            new_obj, new_subrecords = obj.clone(
+                new_transaction,
+                duplicate_update_type=False,
+            )
+
+            if new_obj:
+                cloned_obj_ids.append(obj.id)
+            if new_subrecords:
+                cloned_obj_ids.extend(
+                    [src_subrecord.id for src_subrecord, _ in new_subrecords],
+                )
+
         return new_transaction
 
     @transition(

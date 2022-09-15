@@ -47,6 +47,7 @@ class WorkBasketAdmin(admin.ModelAdmin):
         "title",
         "author",
         "status",
+        "transaction_count",
         "tracked_model_count",
         "approver",
         "created_at",
@@ -67,17 +68,26 @@ class WorkBasketAdmin(admin.ModelAdmin):
     def response_change(self, request, obj):
         if "_clear-workbasket" in request.POST:
             tracked_model_count = obj.tracked_models.count()
+            transaction_count = obj.transactions.count()
             clear_workbasket(obj)
             self.message_user(
                 request,
-                f"Deleted {tracked_model_count} TrackedModel(s) from WorkBasket.",
+                f"Deleted {tracked_model_count} TrackedModel(s) in "
+                f"{transaction_count} from WorkBasket.",
             )
             return HttpResponseRedirect(".")
 
         return super().response_change(request, obj)
 
+    def transaction_count(self, obj):
+        return obj.transactions.count()
+
+    transaction_count.short_description = "tranxs #"
+
     def tracked_model_count(self, obj):
         return obj.tracked_models.count()
+
+    tracked_model_count.short_description = "tracked models #"
 
     def get_urls(self):
         urls = super().get_urls()

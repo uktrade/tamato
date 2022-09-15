@@ -14,7 +14,8 @@
     {"text": workbasket_linked_id},
     {"html": workbasket.title},
     {"text": workbasket.reason},
-    {"text": '{0:,}'.format(workbasket.tracked_models.count()) },
+    {"text": '{:,}'.format(workbasket.transactions.count()) },
+    {"text": '{:,}'.format(workbasket.tracked_models.count()) },
     {
       "html": "<span title=\"{:%d %b %y %H:%M}\">{:%d %b %y}</span>".format(
         workbasket.created_at,
@@ -36,7 +37,8 @@
     {"text": "ID"},
     {"text": "Title"},
     {"text": "Reason"},
-    {"text": "Number of changes"},
+    {"text": "Transaction count"},
+    {"text": "Item count"},
     {"text": "Created"},
     {"text": "Updated*"},
     {"text": "Status"},

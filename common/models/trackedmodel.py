@@ -414,6 +414,7 @@ class TrackedModel(PolymorphicModel):
 
         new_object, _ = self.clone(
             transaction=transaction,
+            duplicate_update_type=False,
             **overrides,
         )
         return new_object
@@ -421,8 +422,25 @@ class TrackedModel(PolymorphicModel):
     def clone(
         self: Cls,
         transaction,
+        duplicate_update_type,
         **overrides: Any,
     ) -> List[Cls, List]:
+        """
+        Create a like-for-like copy of the model complete with new version
+        group, new SID (if present) and an update type determinted by the
+        duplicate_update_type param (if False, then a CREATE update type is
+        used).
+
+        If the model to be copied has dependent TARIC subrecords, then they are
+        also (recursively) copied.
+
+        A list of two elements are returned:
+        The first element is the new instance of the copied object.
+        The second element is a list of two-tuples, each tuple providing source,
+        copied dependend subrecords and its newly created copy.
+        [new_instance, [[subrec1, new_subrec1], [subrec2, new_subrec2]]
+        """
+
         # Remove any fields from the basic data that are overriden, because
         # otherwise when we convert foreign keys to IDs (below) Django will
         # ignore the object from the overrides and just take the ID from the
@@ -461,15 +479,19 @@ class TrackedModel(PolymorphicModel):
             for f in basic_fields
         }
 
+        update_type = validators.UpdateType.CREATE
+        if duplicate_update_type:
+            update_type = self.update_type
+
         new_object_data = {
             **model_data,
             "transaction": transaction,
-            "update_type": validators.UpdateType.CREATE,
+            "update_type": update_type,
             **overrides,
         }
 
         new_object = type(self).objects.create(**new_object_data)
-        new_sub_records = []
+        new_subrecords = []
 
         # Now copy any many-to-many fields with an auto-created through model.
         # These must be handled after creation of the new model. We only need to
@@ -486,8 +508,10 @@ class TrackedModel(PolymorphicModel):
             ignore = False
             # Check if user passed related model into overrides argument
             if field.name in subrecord_fields.keys():
-                # If user passed a new unsaved model, set the remote field value equal to new_object for each model passed
-                # e.g. if a Measure is copied and a MeasureCondition is passed, update `dependent_measure` field to `new_object`
+                # If the client passed a new unsaved model, set the remote field
+                # value equal to new_object for each model passed e.g. if a
+                # Measure is copied and a MeasureCondition is passed, update
+                # `dependent_measure` field to `new_object`
                 if subrecord_fields[field.name]:
                     for subrecord in subrecord_fields[field.name]:
                         remote_field = [
@@ -497,16 +521,21 @@ class TrackedModel(PolymorphicModel):
                             setattr(subrecord, remote_field, new_object)
                             subrecord.save()
                         else:
-                            # If user passed a saved object, create a copy of that object with remote_field pointing at the new copied object
-                            # set ignore to True, so that duplicate copies are not made below
-                            new_sub_records.append(
-                                subrecord.copy(
-                                    transaction, **{remote_field: new_object}
-                                ),
+                            # If the client passed a saved object, create a copy
+                            # of that object with remote_field pointing at the
+                            # new copied object set ignore to True, so that
+                            # duplicate copies are not made below
+                            new_subrec, new_extra_subrecs = subrecord.clone(
+                                transaction, **{remote_field: new_object}
                             )
+                            new_subrecords.append([subrecord, new_subrec])
+                            if new_extra_subrecs:
+                                new_subrecords.extend(new_extra_subrecs)
                             ignore = True
-                # Else, if an empty or None value is passed, set ignore to True, so that related models are not copied
-                # e.g. if an existing Measure with two conditions is copied with conditions=[], the copy will have no conditions
+                # Else, if an empty or None value is passed, set ignore to True,
+                # so that related models are not copied e.g. if an existing
+                # Measure with two conditions is copied with conditions=[],
+                # the copy will have no conditions
                 else:
                     ignore = True
 
@@ -524,7 +553,7 @@ class TrackedModel(PolymorphicModel):
                 for model in queryset.approved_up_to_transaction(transaction):
                     model.copy(transaction, **kwargs)
 
-        return [new_object, new_sub_records]
+        return [new_object, new_subrecords]
 
     def in_use_by(self, via_relation: str, transaction=None) -> QuerySet[TrackedModel]:
         """

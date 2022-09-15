@@ -478,7 +478,7 @@ class WorkBasket(TimestampedMixin):
         new_workbaskets.append(new_workbasket)
 
         for transaction in self.transactions.all():
-            transaction.copy(new_workbasket)
+            transaction.clone(new_workbasket)
             if (
                 transaction.id == transaction_id
                 and self.transactions.last().id != transaction_id
@@ -502,13 +502,13 @@ class WorkBasket(TimestampedMixin):
         base_title: str = None,
     ):
         """
-        Non-destructive workbasket splitting, copying transactions from a
+        Non-destructive workbasket splitting, cloning transactions from a
         workbasket into multiple newly created workbaskets, each having a
         maximum of max_transactions transactions.
 
         If max_transactions is 0 (zero), or exceeds the number of transactions
-        in the source workbasket, then the split operation amounts to a
-        workbasket copy.
+        in the source workbasket, then the split operation amounts to cloning
+        the workbasket.
         """
         if max_transactions < 0:
             raise ValueError(
@@ -528,7 +528,7 @@ class WorkBasket(TimestampedMixin):
         title_max_len = self._meta.get_field("title").max_length
         base_title = base_title or self.title
         base_title = base_title[: title_max_len - 4]
-        for i, transactions_to_copy in enumerate(transaction_blocks):
+        for i, transactions_to_clone in enumerate(transaction_blocks):
             part_index = f"#{i+1}"
 
             new_wb = WorkBasket(
@@ -537,8 +537,8 @@ class WorkBasket(TimestampedMixin):
                 author=self.author,
             )
             new_wb.save()
-            for transaction in transactions_to_copy:
-                transaction.copy(new_wb)
+            for transaction in transactions_to_clone:
+                transaction.clone(new_wb)
             new_workbaskets.append(new_wb)
 
         return new_workbaskets
