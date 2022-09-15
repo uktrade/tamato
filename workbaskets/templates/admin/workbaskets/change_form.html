@@ -10,12 +10,16 @@
         <span>
             {{ original.tracked_models.count }}
             tracked model{{ original.tracked_models.count|pluralize }}
+            /
+            {{ original.transactions.count }}
+            transaction{{ original.transactions.count|pluralize }}
         </span>
         <input
             type="submit"
-            value="Delete WorkBasket TrackedModels"
+            style="background-color:#a41515"
+            value="Delete WorkBasket Contents"
             name="_clear-workbasket"
-            {% if not original.tracked_models.count %}disabled{% endif %}
+            {% if not original.tracked_models.count and not original.transactions.count %}disabled{% endif %}
         >
     </div>
 {% endblock %}

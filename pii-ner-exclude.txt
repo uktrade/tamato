@@ -1224,3 +1224,5 @@ WorkBasketOutputFormat Enum
 Europe
 Enter the Regulation ID
 Enter the Quota Order Number
+tranxs #
+WorkBasket Contents
