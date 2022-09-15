@@ -93,10 +93,30 @@
     <div class="govuk-grid-column-full">
       {% if form.fields %}
 
+        {% set ns = namespace() %}
+        {% set ns.current_tranx_id = 0 %}
         {% set table_rows = [] %}
         {% for field in form %}
           {% set checkbox = checkbox_item(field) %}
           {% set obj = field.field.obj %}
+
+          {% set obj_tranx_id = obj.transaction.id %}
+          {% if ns.current_tranx_id != obj_tranx_id %}
+            {# Next transaction - add a new transaction row marker. #}
+            {% set ns.current_tranx_id = obj.transaction.id %}
+
+            {{ table_rows.append([
+              {
+                "text": "",
+                "colspan": 1,
+              },
+              {
+                "html": '<div class="start-tranx" style="font-weight: bold;">&mdash; Transaction ' ~ ns.current_tranx_id ~ '</div>',
+                "colspan": 5,
+              },
+            ]) or "" }}
+          {% endif %}
+
           {% set object_link -%}
             <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
               {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
