@@ -431,7 +431,7 @@ def test_workbasket_list_view_get_queryset():
     assert qs.last() == wb_2
 
 
-def test_workbasket_list_view(valid_user_client):
+def test_workbasket_list_all_view(valid_user_client):
     """Test that valid user receives a 200 on GET for WorkBasketList view and wb
     values display in html table."""
     wb = factories.WorkBasketFactory.create()
