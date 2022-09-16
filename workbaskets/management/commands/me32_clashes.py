@@ -40,6 +40,6 @@ class Command(WorkBasketCommandMixin, BaseCommand):
             for c in clashes:
                 self.stdout.write(
                     self.style.ERROR(
-                        self.stdout.write(f"     Measure.SID={c.sid}"),
+                        self.stdout.write(f"     Measure.sid={c.sid}"),
                     ),
                 )
