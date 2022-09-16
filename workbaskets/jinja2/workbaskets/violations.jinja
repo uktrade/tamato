@@ -18,9 +18,9 @@
 </div>
 {% set table_rows = [] %}
 
-{% for check in workbasket.tracked_model_check_errors %}
+{% for check in object_list %}
 {% set check_link -%}
-<a class="govuk-link" href="{{ url('workbaskets:workbasket-ui-violation-detail', kwargs={'wb_pk': object.pk, 'pk': check.pk }) }}">{{ check.pk }}</a>
+<a class="govuk-link" href="{{ url('workbaskets:workbasket-ui-violation-detail', kwargs={'wb_pk': workbasket.pk, 'pk': check.pk }) }}">{{ check.pk }}</a>
 {%- endset %}
 {{ table_rows.append([
     {"html": check_link, },
@@ -31,13 +31,39 @@
   ]) or "" }}
 {% endfor %}
 
+{% macro sort_by(sort_by, title) %}
+
+{% if request.GET.sort_by == sort_by and request.GET.d == "desc" %}
+<a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ url('workbaskets:workbasket-ui-violations', kwargs={'pk': workbasket.pk }) }}?sort_by={{ sort_by }}&d=asc">
+  {{ title }} {% include "components/sort_icon.jinja" %}
+</a>
+{% else %}
+<a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ url('workbaskets:workbasket-ui-violations', kwargs={'pk': workbasket.pk }) }}?sort_by=model&d=desc">
+  {{ title }} {% include "components/sort_icon.jinja" %}
+</a>
+{% endif %}
+
+{% endmacro %}
+
+{% set item %}
+{{ sort_by("model", "Item") }}
+{% endset %}
+
+{% set violation %}
+{{ sort_by("check_name", "Violation") }}
+{% endset %}
+
+{% set activity_date %}
+{{ sort_by("date", "Activity date") }}
+{% endset %}
+
 {{ govukTable({
   "head": [
     {"text": "Item ID"},
-    {"text": "Item"},
-    {"text": "Violation"},
+    {"html": item},
+    {"text": violation},
     {"text": "Description"},
-    {"text": "Activity Date"},
+    {"text": activity_date},
   ],
   "rows": table_rows
 }) }}
