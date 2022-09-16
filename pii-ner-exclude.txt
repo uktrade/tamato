@@ -19,6 +19,7 @@ FIXME
 Measure SID
 AdditionalCode
 MeasurementUnit
+rotate(180deg
 MonetaryUnit
 NM
 kwargs={'wb_pk
