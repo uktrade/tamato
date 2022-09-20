@@ -10,7 +10,9 @@ from django.utils.timezone import localtime
 from checks.tests.factories import TrackedModelCheckFactory
 from common.models.utils import override_current_transaction
 from common.tests import factories
+from common.tests.factories import GeographicalAreaFactory
 from common.tests.factories import GoodsNomenclatureFactory
+from common.tests.factories import MeasureFactory
 from common.tests.util import validity_period_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
@@ -630,3 +632,130 @@ def test_violation_detail_page(valid_user_client, session_workbasket):
     # Attribute does not exist yet. This will fail when we eventually add it
     with pytest.raises(AttributeError):
         assert check.solution
+
+
+@pytest.fixture
+def setup(session_workbasket, valid_user_client):
+    with session_workbasket.new_transaction() as transaction:
+        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        measure = MeasureFactory.create(transaction=transaction)
+        geo_area = GeographicalAreaFactory.create(transaction=transaction)
+        objects = [good, measure, geo_area]
+        for obj in objects:
+            TrackedModelCheckFactory.create(
+                transaction_check__transaction=transaction,
+                model=obj,
+                successful=False,
+            )
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+        "error_count": session_workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
+
+
+def test_violation_list_page_sorting_date(setup, valid_user_client, session_workbasket):
+    """Tests the sorting of the queryset when GET params are set."""
+    url = reverse(
+        "workbaskets:workbasket-ui-violations",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    response = valid_user_client.get(f"{url}?sort_by=date&d=asc")
+
+    assert response.status_code == 200
+
+    checks = session_workbasket.tracked_model_check_errors
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    activity_dates = [
+        element.text for element in soup.select("table tbody tr td:nth-child(5)")
+    ]
+    exp_dates = sorted(
+        [f"{c.transaction_check.transaction.created_at:%d %b %Y}" for c in checks],
+    )
+
+    assert activity_dates == exp_dates
+
+    response = valid_user_client.get(f"{url}?sort_by=date&d=desc")
+    exp_dates.reverse()
+
+    assert activity_dates == exp_dates
+
+
+def test_violation_list_page_sorting_model_name(
+    setup,
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests the sorting of the queryset when GET params are set."""
+    url = reverse(
+        "workbaskets:workbasket-ui-violations",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    response = valid_user_client.get(f"{url}?sort_by=model&d=asc")
+
+    assert response.status_code == 200
+
+    checks = session_workbasket.tracked_model_check_errors
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    activity_dates = [
+        element.text for element in soup.select("table tbody tr td:nth-child(5)")
+    ]
+    exp_dates = sorted(
+        [f"{c.transaction_check.transaction.created_at:%d %b %Y}" for c in checks],
+    )
+
+    assert activity_dates == exp_dates
+
+    response = valid_user_client.get(f"{url}?sort_by=model&d=desc")
+    exp_dates.reverse()
+
+    assert activity_dates == exp_dates
+
+
+def test_violation_list_page_sorting_check_name(
+    setup,
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests the sorting of the queryset when GET params are set."""
+    url = reverse(
+        "workbaskets:workbasket-ui-violations",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    response = valid_user_client.get(f"{url}?sort_by=check_name&d=asc")
+
+    assert response.status_code == 200
+
+    checks = session_workbasket.tracked_model_check_errors
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    rule_codes = [
+        element.text for element in soup.select("table tbody tr td:nth-child(3)")
+    ]
+    exp_rule_codes = sorted([c.rule_code for c in checks])
+
+    assert rule_codes == exp_rule_codes
+
+    response = valid_user_client.get(f"{url}?sort_by=check_name&d=desc")
+    exp_rule_codes.reverse()
+    assert rule_codes == exp_rule_codes
+
+
+def test_violation_list_page_sorting_ignores_invalid_params(
+    setup,
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that the page doesn't break if invalid params are sent."""
+    url = reverse(
+        "workbaskets:workbasket-ui-violations",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    response = valid_user_client.get(f"{url}?sort_by=foo&d=bar")
+
+    assert response.status_code == 200

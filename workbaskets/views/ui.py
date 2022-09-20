@@ -491,7 +491,8 @@ class WorkBasketViolations(WithPaginationListView):
         )
         sort_by = self.request.GET.get("sort_by")
         direction = self.request.GET.get("d")
-        if sort_by:
+        sort_by_fields = ["model", "date", "check_name"]
+        if sort_by and sort_by in sort_by_fields:
             if sort_by == "date":
                 qs = qs.order_by("transaction_check__transaction__created_at")
             elif sort_by == "model":
