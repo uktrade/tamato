@@ -441,7 +441,6 @@ class WorkBasketChanges(DetailView):
     model = WorkBasket
     template_name = "workbaskets/detail.jinja"
     paginate_by = 50
-    # paginate_by = 2
 
     def get_context_data(self, **kwargs):
         """
@@ -470,13 +469,40 @@ class WorkBasketChanges(DetailView):
         return context
 
 
-class WorkBasketViolations(DetailView):
+class WorkBasketViolations(WithPaginationListView):
     """UI endpoint for viewing a specified workbasket's business rule
     violations."""
 
-    model = WorkBasket
+    model = TrackedModelCheck
     template_name = "workbaskets/violations.jinja"
     paginate_by = 50
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(id=self.kwargs.get("pk"))
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(workbasket=self.workbasket, **kwargs)
+
+    def get_queryset(self):
+        qs = TrackedModelCheck.objects.filter(
+            transaction_check__transaction__workbasket=self.workbasket,
+            successful=False,
+        )
+        sort_by = self.request.GET.get("sort_by")
+        order = self.request.GET.get("order")
+        sort_by_fields = ["model", "date", "check_name"]
+        if sort_by and sort_by in sort_by_fields:
+            if sort_by == "date":
+                qs = qs.order_by("transaction_check__transaction__created_at")
+            elif sort_by == "model":
+                qs = qs.order_by("model__polymorphic_ctype")
+            else:
+                qs = qs.order_by(sort_by)
+
+        if order == "desc":
+            qs = qs.reverse()
+        return qs
 
 
 class WorkBasketViolationDetail(DetailView):
