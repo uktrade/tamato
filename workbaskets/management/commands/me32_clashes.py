@@ -20,7 +20,7 @@ class Command(WorkBasketCommandMixin, BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
         sid = int(options["MEASURE_SID"])
-        measure = Measure.objects.filter(sid=sid).last()
+        measure = Measure.objects.filter(sid=sid).order_by("transaction").last()
         if not measure:
             self.stderr.write(
                 self.style.ERROR(f"measure sid={sid} not found."),
