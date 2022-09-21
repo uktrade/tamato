@@ -490,7 +490,7 @@ class WorkBasketViolations(WithPaginationListView):
             successful=False,
         )
         sort_by = self.request.GET.get("sort_by")
-        direction = self.request.GET.get("d")
+        order = self.request.GET.get("order")
         sort_by_fields = ["model", "date", "check_name"]
         if sort_by and sort_by in sort_by_fields:
             if sort_by == "date":
@@ -500,7 +500,7 @@ class WorkBasketViolations(WithPaginationListView):
             else:
                 qs = qs.order_by(sort_by)
 
-        if direction == "desc":
+        if order == "desc":
             qs = qs.reverse()
         return qs
 

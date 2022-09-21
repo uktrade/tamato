@@ -663,7 +663,7 @@ def test_violation_list_page_sorting_date(setup, valid_user_client, session_work
         "workbaskets:workbasket-ui-violations",
         kwargs={"pk": session_workbasket.pk},
     )
-    response = valid_user_client.get(f"{url}?sort_by=date&d=asc")
+    response = valid_user_client.get(f"{url}?sort_by=date&order=asc")
 
     assert response.status_code == 200
 
@@ -679,7 +679,7 @@ def test_violation_list_page_sorting_date(setup, valid_user_client, session_work
 
     assert activity_dates == exp_dates
 
-    response = valid_user_client.get(f"{url}?sort_by=date&d=desc")
+    response = valid_user_client.get(f"{url}?sort_by=date&order=desc")
     exp_dates.reverse()
 
     assert activity_dates == exp_dates
@@ -695,7 +695,7 @@ def test_violation_list_page_sorting_model_name(
         "workbaskets:workbasket-ui-violations",
         kwargs={"pk": session_workbasket.pk},
     )
-    response = valid_user_client.get(f"{url}?sort_by=model&d=asc")
+    response = valid_user_client.get(f"{url}?sort_by=model&order=asc")
 
     assert response.status_code == 200
 
@@ -711,7 +711,7 @@ def test_violation_list_page_sorting_model_name(
 
     assert activity_dates == exp_dates
 
-    response = valid_user_client.get(f"{url}?sort_by=model&d=desc")
+    response = valid_user_client.get(f"{url}?sort_by=model&order=desc")
     exp_dates.reverse()
 
     assert activity_dates == exp_dates
@@ -727,7 +727,7 @@ def test_violation_list_page_sorting_check_name(
         "workbaskets:workbasket-ui-violations",
         kwargs={"pk": session_workbasket.pk},
     )
-    response = valid_user_client.get(f"{url}?sort_by=check_name&d=asc")
+    response = valid_user_client.get(f"{url}?sort_by=check_name&order=asc")
 
     assert response.status_code == 200
 
@@ -741,7 +741,7 @@ def test_violation_list_page_sorting_check_name(
 
     assert rule_codes == exp_rule_codes
 
-    response = valid_user_client.get(f"{url}?sort_by=check_name&d=desc")
+    response = valid_user_client.get(f"{url}?sort_by=check_name&order=desc")
     exp_rule_codes.reverse()
     assert rule_codes == exp_rule_codes
 
@@ -756,6 +756,6 @@ def test_violation_list_page_sorting_ignores_invalid_params(
         "workbaskets:workbasket-ui-violations",
         kwargs={"pk": session_workbasket.pk},
     )
-    response = valid_user_client.get(f"{url}?sort_by=foo&d=bar")
+    response = valid_user_client.get(f"{url}?sort_by=foo&order=bar")
 
     assert response.status_code == 200

@@ -7,54 +7,54 @@
 {% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Rule violations {% endset %}
 
 {% block content %}
-<h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
-{{ navigation(request, "violations") }}
-<div class="govuk-warning-text">
-  <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-  <strong class="govuk-warning-text__text">
-    <span class="govuk-warning-text__assistive">Warning</span>
-    Number of business rule violations: {{ workbasket.tracked_model_check_errors.count() }}
-  </strong>
-</div>
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
+  {{ navigation(request, "violations") }}
+  <div class="govuk-warning-text">
+    <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+    <strong class="govuk-warning-text__text">
+      <span class="govuk-warning-text__assistive">Warning</span>
+      Number of business rule violations: {{ workbasket.tracked_model_check_errors.count() }}
+    </strong>
+  </div>
 {% set table_rows = [] %}
 
 {% for check in object_list %}
-{% set check_link -%}
-<a class="govuk-link" href="{{ url('workbaskets:workbasket-ui-violation-detail', kwargs={'wb_pk': workbasket.pk, 'pk': check.pk }) }}">{{ check.pk }}</a>
-{%- endset %}
-{{ table_rows.append([
-    {"html": check_link, },
-    {"text": check.model._meta.verbose_name.title()},
-    {"text": check.rule_code},
-    {"text": check.message},
-    {"text": "{:%d %b %Y}".format(check.transaction_check.transaction.created_at)},
-  ]) or "" }}
+  {% set check_link -%}
+    <a class="govuk-link" href="{{ url('workbaskets:workbasket-ui-violation-detail', kwargs={'wb_pk': workbasket.pk, 'pk': check.pk }) }}">{{ check.pk }}</a>
+  {%- endset %}
+  {{ table_rows.append([
+      {"html": check_link, },
+      {"text": check.model._meta.verbose_name.title()},
+      {"text": check.rule_code},
+      {"text": check.message},
+      {"text": "{:%d %b %Y}".format(check.transaction_check.transaction.created_at)},
+    ]) or "" }}
 {% endfor %}
 
 {% macro sort_by(sort_by, title) %}
 
-{% if request.GET.sort_by == sort_by and request.GET.d == "desc" %}
-<a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ url('workbaskets:workbasket-ui-violations', kwargs={'pk': workbasket.pk }) }}?sort_by={{ sort_by }}&d=asc">
-  {{ title }} {% include "components/sort_icon.jinja" %}
-</a>
-{% else %}
-<a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ url('workbaskets:workbasket-ui-violations', kwargs={'pk': workbasket.pk }) }}?sort_by=model&d=desc">
-  {{ title }} {% include "components/sort_icon.jinja" %}
-</a>
-{% endif %}
+  {% if request.GET.sort_by == sort_by and request.GET.order == "desc" %}
+    <a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ url('workbaskets:workbasket-ui-violations', kwargs={'pk': workbasket.pk }) }}?sort_by={{ sort_by }}&order=asc">
+      {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
+    </a>
+  {% else %}
+    <a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ url('workbaskets:workbasket-ui-violations', kwargs={'pk': workbasket.pk }) }}?sort_by=model&order=desc">
+      {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
+    </a>
+  {% endif %}
 
 {% endmacro %}
 
 {% set item %}
-{{ sort_by("model", "Item") }}
+  {{ sort_by("model", "Item") }}
 {% endset %}
 
 {% set violation %}
-{{ sort_by("check_name", "Violation") }}
+  {{ sort_by("check_name", "Violation") }}
 {% endset %}
 
 {% set activity_date %}
-{{ sort_by("date", "Activity date") }}
+  {{ sort_by("date", "Activity date") }}
 {% endset %}
 
 {{ govukTable({
