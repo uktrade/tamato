@@ -38,7 +38,7 @@
       {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
     </a>
   {% else %}
-    <a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ url('workbaskets:workbasket-ui-violations', kwargs={'pk': workbasket.pk }) }}?sort_by=model&order=desc">
+    <a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ url('workbaskets:workbasket-ui-violations', kwargs={'pk': workbasket.pk }) }}?sort_by={{ sort_by }}&order=desc">
       {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
     </a>
   {% endif %}
