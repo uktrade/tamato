@@ -386,7 +386,7 @@ def test_get_description_dates(description_factory, date_ranges):
     assert future == future_description
 
 
-def test_trackedmodel_get_url(trackedmodel_factory):
+def test_trackedmodel_get_url(trackedmodel_factory, valid_user_client):
     """Verify get_url() returns something sensible and doesn't crash."""
     instance = trackedmodel_factory.create()
     url = instance.get_url()
@@ -402,6 +402,9 @@ def test_trackedmodel_get_url(trackedmodel_factory):
 
     # Verify URL is not local
     assert not urlparse(url).netloc
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize(
