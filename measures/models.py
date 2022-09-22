@@ -1,5 +1,4 @@
 from datetime import date
-from typing import Optional
 from typing import Set
 
 from django.db import models
@@ -818,7 +817,7 @@ class MeasureCondition(TrackedModel):
     def duty_sentence(self) -> str:
         return MeasureConditionComponent.objects.duty_sentence(self)
 
-    def get_url(self) -> Optional[str]:
+    def get_url(self) -> str:
         """Generate a URL to a representation of the model in the webapp."""
         url = reverse(
             f"{self.get_url_pattern_name_prefix()}-ui-detail",
