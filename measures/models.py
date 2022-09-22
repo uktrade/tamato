@@ -1,7 +1,9 @@
 from datetime import date
+from typing import Optional
 from typing import Set
 
 from django.db import models
+from django.urls import reverse
 
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
@@ -815,6 +817,14 @@ class MeasureCondition(TrackedModel):
     @property
     def duty_sentence(self) -> str:
         return MeasureConditionComponent.objects.duty_sentence(self)
+
+    def get_url(self) -> Optional[str]:
+        """Generate a URL to a representation of the model in the webapp."""
+        url = reverse(
+            f"{self.get_url_pattern_name_prefix()}-ui-detail",
+            kwargs={"sid": self.dependent_measure.sid},
+        )
+        return f"{url}{self.url_suffix}"
 
 
 class MeasureConditionComponent(TrackedModel):
