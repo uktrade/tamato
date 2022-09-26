@@ -525,6 +525,23 @@ def test_workbasket_measures_review_pagination(
     assert measure_sids.issubset({str(m.sid) for m in workbasket_measures})
 
 
+def test_workbasket_measures_review_conditions(valid_user_client):
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    tx = workbasket.new_transaction()
+    measure = factories.MeasureFactory.create(transaction=tx)
+    condition = factories.MeasureConditionFactory.create(
+        transaction=tx,
+        dependent_measure=measure,
+    )
+    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    with override_current_transaction(tx):
+        response = valid_user_client.get(url)
+
+    BeautifulSoup(str(response.content), "html.parser")
+
+
 @patch("workbaskets.tasks.call_check_workbasket_sync.delay")
 def test_run_business_rules(check_workbasket, valid_user_client, session_workbasket):
     """Test that a GET request to the run-business-rules endpoint returns a 302,
