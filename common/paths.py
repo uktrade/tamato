@@ -19,6 +19,8 @@ OBJECT_ACTIONS = {
     "ConfirmUpdate": "confirm-update",
     "Delete": "delete",
     "DescriptionCreate": "description-create",
+    "EditUpdate": "edit-taric-update",
+    "EditCreate": "edit-taric-create",
 }
 
 
@@ -82,5 +84,7 @@ def get_ui_paths(
                 url = pattern + ("/" if pattern else "") + pathname
 
                 paths.append(path(url, view.as_view(), name=name))
+            else:
+                logger.debug("No view matching ")
 
     return paths

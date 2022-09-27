@@ -25,9 +25,9 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from workbaskets.models import WorkBasket
-from workbaskets.views.generic import DraftCreateView
-from workbaskets.views.generic import DraftDeleteView
-from workbaskets.views.generic import DraftUpdateView
+from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
 
 
 class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -95,7 +95,7 @@ class AdditionalCodeList(AdditionalCodeMixin, TamatoListView):
     ]
 
 
-class AdditionalCodeCreate(DraftCreateView):
+class AdditionalCodeCreate(CreateTaricCreateView):
     template_name = "additional_codes/create.jinja"
     form_class = AdditionalCodeCreateForm
 
@@ -131,7 +131,7 @@ class AdditionalCodeDetail(AdditionalCodeMixin, TrackedModelDetailView):
 class AdditionalCodeUpdate(
     AdditionalCodeMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
     form_class = AdditionalCodeForm
 
@@ -148,7 +148,7 @@ class AdditionalCodeUpdate(
 class AdditionalCodeDescriptionCreate(
     AdditionalCodeCreateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftCreateView,
+    CreateTaricCreateView,
 ):
     def get_initial(self):
         initial = super().get_initial()
@@ -164,7 +164,7 @@ class AdditionalCodeDescriptionCreate(
 class AdditionalCodeDescriptionUpdate(
     AdditionalCodeDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
     form_class = AdditionalCodeDescriptionForm
     template_name = "common/edit_description.jinja"
@@ -191,7 +191,7 @@ class AdditionalCodeConfirmUpdate(AdditionalCodeMixin, TrackedModelDetailView):
 class AdditionalCodeDelete(
     AdditionalCodeMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = AdditionalCodeDeleteForm
     success_path = "list"
@@ -202,7 +202,7 @@ class AdditionalCodeDelete(
 class AdditionalCodeDescriptionDelete(
     AdditionalCodeDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = AdditionalCodeDescriptionDeleteForm
     success_path = "detail"

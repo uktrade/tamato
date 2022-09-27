@@ -15,9 +15,9 @@ from regulations.forms import RegulationDeleteForm
 from regulations.forms import RegulationEditForm
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
-from workbaskets.views.generic import DraftCreateView
-from workbaskets.views.generic import DraftDeleteView
-from workbaskets.views.generic import DraftUpdateView
+from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
 
 
 class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -57,7 +57,7 @@ class RegulationDetail(RegulationMixin, TrackedModelDetailView):
     template_name = "regulations/detail.jinja"
 
 
-class RegulationCreate(DraftCreateView):
+class RegulationCreate(CreateTaricCreateView):
     """UI to create new regulations."""
 
     template_name = "regulations/create.jinja"
@@ -83,7 +83,7 @@ class RegulationConfirmCreate(TrackedModelDetailView):
 class RegulationUpdate(
     RegulationMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
     template_name = "regulations/edit.jinja"
     form_class = RegulationEditForm
@@ -106,7 +106,7 @@ class RegulationConfirmUpdate(
 class RegulationDelete(
     RegulationMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = RegulationDeleteForm
     success_path = "list"

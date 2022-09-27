@@ -18,9 +18,9 @@ from footnotes.filters import FootnoteFilter
 from footnotes.filters import FootnoteFilterBackend
 from footnotes.serializers import FootnoteTypeSerializer
 from workbaskets.models import WorkBasket
-from workbaskets.views.generic import DraftCreateView
-from workbaskets.views.generic import DraftDeleteView
-from workbaskets.views.generic import DraftUpdateView
+from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
 
 
 class FootnoteViewSet(viewsets.ReadOnlyModelViewSet):
@@ -101,7 +101,7 @@ class FootnoteList(FootnoteMixin, TamatoListView):
     ]
 
 
-class FootnoteCreate(DraftCreateView):
+class FootnoteCreate(CreateTaricCreateView):
     template_name = "footnotes/create.jinja"
     form_class = forms.FootnoteCreateForm
 
@@ -138,7 +138,7 @@ class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
 class FootnoteUpdate(
     FootnoteMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
     form_class = forms.FootnoteForm
 
@@ -159,7 +159,7 @@ class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
 class FootnoteDelete(
     FootnoteMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = forms.FootnoteDeleteForm
     success_path = "list"
@@ -174,7 +174,7 @@ class FootnoteDelete(
 class FootnoteDescriptionCreate(
     FootnoteCreateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftCreateView,
+    CreateTaricCreateView,
 ):
     def get_initial(self):
         initial = super().get_initial()
@@ -193,7 +193,7 @@ class FootnoteDescriptionCreate(
 class FootnoteDescriptionUpdate(
     FootnoteDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
     form_class = forms.FootnoteDescriptionForm
     template_name = "common/edit_description.jinja"
@@ -216,7 +216,7 @@ class FootnoteDescriptionConfirmUpdate(
 class FootnoteDescriptionDelete(
     FootnoteDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = forms.FootnoteDescriptionDeleteForm
     success_path = "detail"

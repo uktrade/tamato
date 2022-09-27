@@ -17,9 +17,9 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from workbaskets.models import WorkBasket
-from workbaskets.views.generic import DraftCreateView
-from workbaskets.views.generic import DraftDeleteView
-from workbaskets.views.generic import DraftUpdateView
+from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
 
 
 class CertificatesViewSet(viewsets.ReadOnlyModelViewSet):
@@ -69,7 +69,7 @@ class CertificateList(CertificateMixin, TamatoListView):
     ]
 
 
-class CertificateCreate(DraftCreateView):
+class CertificateCreate(CreateTaricCreateView):
     """UI endpoint for creating Certificates."""  # /PS-IGNORE
 
     template_name = "certificates/create.jinja"
@@ -114,7 +114,7 @@ class CertificateDetail(CertificateMixin, TrackedModelDetailView):
 class CertificateUpdate(
     CertificateMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
     form_class = forms.CertificateForm
 
@@ -153,7 +153,7 @@ class CertificateCreateDescriptionMixin:
 class CertificateDescriptionCreate(
     CertificateCreateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftCreateView,
+    CreateTaricCreateView,
 ):
     def get_initial(self):
         initial = super().get_initial()
@@ -170,7 +170,7 @@ class CertificateDescriptionCreate(
 class CertificateUpdateDescription(
     CertificateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
     form_class = forms.CertificateDescriptionForm
     template_name = "common/edit_description.jinja"
@@ -193,7 +193,7 @@ class CertificateDescriptionConfirmUpdate(
 class CertificateDelete(
     CertificateMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = forms.CertificateDeleteForm
     success_path = "list"
@@ -204,7 +204,7 @@ class CertificateDelete(
 class CertificateDescriptionDelete(
     CertificateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = forms.CertificateDescriptionDeleteForm
     success_path = "detail"
