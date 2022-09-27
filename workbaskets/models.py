@@ -22,6 +22,8 @@ from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.transactions import TransactionQueryset
+from measures.models import Measure
+from measures.querysets import MeasuresQuerySet
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -288,6 +290,12 @@ class WorkBasket(TimestampedMixin):
         protected=False,
         editable=False,
     )
+    rule_check_task_id = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        unique=True,
+    )
 
     transactions: TransactionQueryset
 
@@ -409,11 +417,17 @@ class WorkBasket(TimestampedMixin):
             "id": self.pk,
             "status": self.status,
             "title": self.title,
+            "error_count": self.tracked_model_check_errors.count(),
+            "measure_count": self.measures.count(),
         }
 
     @property
     def tracked_models(self) -> TrackedModelQuerySet:
         return TrackedModel.objects.filter(transaction__workbasket=self)
+
+    @property
+    def measures(self) -> MeasuresQuerySet:
+        return Measure.objects.filter(transaction__workbasket=self)
 
     @classmethod
     def load_from_session(cls, session):
@@ -479,11 +493,14 @@ class WorkBasket(TimestampedMixin):
         return self.transactions.last() or Transaction.approved.last()
 
     @property
-    def tracked_model_check_errors(self):
+    def tracked_model_checks(self):
         return TrackedModelCheck.objects.filter(
             transaction_check__transaction__workbasket=self,
-            successful=False,
         )
+
+    @property
+    def tracked_model_check_errors(self):
+        return self.tracked_model_checks.filter(successful=False)
 
     def delete_checks(self):
         """Delete all TrackedModelCheck and TransactionCheck instances related

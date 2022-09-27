@@ -101,6 +101,8 @@ class MeasureCreateWizard(
 
     START = "start"
     MEASURE_DETAILS = "measure_details"
+    REGULATION_ID = "regulation_id"
+    QUOTA_ORDER_NUMBER = "quota_order_number"
     GEOGRAPHICAL_AREA = "geographical_area"
     COMMODITIES = "commodities"
     ADDITIONAL_CODE = "additional_code"
@@ -112,6 +114,8 @@ class MeasureCreateWizard(
     form_list = [
         (START, forms.MeasureCreateStartForm),
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
+        (REGULATION_ID, forms.MeasureRegulationIdForm),
+        (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
         (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
         (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
@@ -123,6 +127,8 @@ class MeasureCreateWizard(
     templates = {
         START: "measures/create-start.jinja",
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
+        REGULATION_ID: "measures/create-wizard-step.jinja",
+        QUOTA_ORDER_NUMBER: "measures/create-wizard-step.jinja",
         GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
         COMMODITIES: "measures/create-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
@@ -140,6 +146,14 @@ class MeasureCreateWizard(
         MEASURE_DETAILS: {
             "title": "Enter the basic data",
             "link_text": "Measure details",
+        },
+        REGULATION_ID: {
+            "title": "Enter the Regulation ID",
+            "link_text": "Regulation ID",
+        },
+        QUOTA_ORDER_NUMBER: {
+            "title": "Enter the Quota Order Number",
+            "link_text": "Quota Order Number",
         },
         GEOGRAPHICAL_AREA: {
             "title": "Select the geographical area",
@@ -249,6 +263,7 @@ class MeasureCreateWizard(
         cleaned_data = self.get_all_cleaned_data()
 
         created_measures = self.create_measures(cleaned_data)
+        created_measures[0].transaction.workbasket.save_to_session(self.request.session)
 
         context = self.get_context_data(
             form=None,

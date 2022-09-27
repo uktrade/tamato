@@ -57,3 +57,9 @@ def check_workbasket_sync(workbasket: WorkBasket):
     )
     for transaction in transactions:
         check_transaction_sync(transaction)
+
+
+@app.task(bind=True)
+def call_check_workbasket_sync(self, workbasket_id: int):
+    workbasket: WorkBasket = WorkBasket.objects.get(pk=workbasket_id)
+    check_workbasket_sync(workbasket)
