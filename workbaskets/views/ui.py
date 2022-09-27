@@ -1,3 +1,4 @@
+import logging
 from typing import Type
 
 import boto3
@@ -42,6 +43,8 @@ from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
+
+logger = logging.getLogger(__name__)
 
 
 class WorkBasketFilter(TamatoFilter):
@@ -293,6 +296,7 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
 
     # Form action mappings to URL names.
     action_success_url_names = {
+        "run-business-rules": "workbaskets:workbasket-ui-detail",
         "publish-all": "workbaskets:workbasket-ui-submit",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:workbasket-ui-detail",
@@ -351,6 +355,19 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
         else:
             return self.form_invalid(form)
 
+    @atomic
+    def run_business_rules(self):
+        # Remove old checks, start new checks via a Celery task and save the
+        # newly created task's ID on the workbasket.
+        self.workbasket.delete_checks()
+        task = call_check_workbasket_sync.delay(self.workbasket.pk)
+        logger.info(
+            f"Started rule check against workbasket.id={self.workbasket.pk} "
+            f"on task.id={task.id}",
+        )
+        self.workbasket.rule_check_task_id = task.id
+        self.workbasket.save()
+
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
         if form_action in ("publish-all", "remove-selected"):
@@ -359,6 +376,15 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
                 kwargs={"pk": self.workbasket.pk},
             )
         elif form_action in ("page-prev", "page-next"):
+            return self._append_url_page_param(
+                reverse(
+                    self.action_success_url_names[form_action],
+                    kwargs={"pk": self.workbasket.pk},
+                ),
+                form_action,
+            )
+        elif form_action == "run-business-rules":
+            self.run_business_rules()
             return self._append_url_page_param(
                 reverse(
                     self.action_success_url_names[form_action],
@@ -518,23 +544,3 @@ class WorkBasketViolationDetail(DetailView):
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(workbasket=self.workbasket, **kwargs)
-
-
-@atomic
-def run_business_rules(request):
-    """Functional view for running business rules asynchronously against current
-    session workbasket."""
-
-    # Get workbasket pk from session
-    pk = request.session.get("workbasket")["id"]
-    workbasket = WorkBasket.objects.get(pk=pk)
-
-    # remove existing workbasket checks before creating new ones in check_workbasket task
-    workbasket.delete_checks()
-    task = call_check_workbasket_sync.delay(workbasket.pk)
-
-    # save task id against basket, so that we can check its status later
-    workbasket.rule_check_task_id = task.id
-    workbasket.save()
-
-    return redirect(reverse("workbaskets:workbasket-ui-detail", kwargs={"pk": pk}))
