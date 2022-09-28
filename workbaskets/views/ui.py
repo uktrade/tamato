@@ -365,8 +365,9 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
             f"Started rule check against workbasket.id={self.workbasket.pk} "
             f"on task.id={task.id}",
         )
-        self.workbasket.rule_check_task_id = task.id
-        self.workbasket.save()
+        workbasket = self.workbasket
+        workbasket.rule_check_task_id = task.id
+        workbasket.save()
 
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
