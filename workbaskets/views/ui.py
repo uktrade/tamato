@@ -357,15 +357,15 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
 
     @atomic
     def run_business_rules(self):
-        # Remove old checks, start new checks via a Celery task and save the
-        # newly created task's ID on the workbasket.
-        self.workbasket.delete_checks()
-        task = call_check_workbasket_sync.delay(self.workbasket.pk)
+        """Remove old checks, start new checks via a Celery task and save the
+        newly created task's ID on the workbasket."""
+        workbasket = self.workbasket
+        workbasket.delete_checks()
+        task = call_check_workbasket_sync.delay(workbasket.pk)
         logger.info(
-            f"Started rule check against workbasket.id={self.workbasket.pk} "
+            f"Started rule check against workbasket.id={workbasket.pk} "
             f"on task.id={task.id}",
         )
-        workbasket = self.workbasket
         workbasket.rule_check_task_id = task.id
         workbasket.save()
 
