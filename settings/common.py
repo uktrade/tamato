@@ -345,6 +345,8 @@ if VCAP_SERVICES.get("redis"):
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
 CELERY_TRACK_STARTED = True
+CELERY_TASK_TRACK_STARTED = True
+CELERY_RESULT_PERSISTENT = True
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
@@ -418,6 +420,11 @@ LOGGING = {
             "propagate": False,
         },
         "checks": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "workbaskets": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,

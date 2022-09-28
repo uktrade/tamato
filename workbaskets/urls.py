@@ -27,11 +27,6 @@ ui_patterns = [
         name="workbasket-ui-list-all",
     ),
     path(
-        "run-business-rules/",
-        ui_views.run_business_rules,
-        name="workbasket-run-business-rules",
-    ),
-    path(
         "download/",
         ui_views.download_envelope,
         name="workbasket-download",
