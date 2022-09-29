@@ -575,12 +575,19 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
         "title": session_workbasket.title,
     }
     session.save()
-    response = valid_user_client.get(
-        reverse("workbaskets:workbasket-run-business-rules"),
+    url = reverse(
+        "workbaskets:workbasket-ui-detail",
+        kwargs={"pk": session_workbasket.id},
+    )
+    response = valid_user_client.post(
+        url,
+        {"form-action": "run-business-rules"},
     )
 
     assert response.status_code == 302
-    assert response.url == f"/workbaskets/{session_workbasket.pk}/"
+    response_url = f"/workbaskets/{session_workbasket.pk}/"
+    # Only compare the response URL up to the query string.
+    assert response.url[: len(response_url)] == response_url
 
     session_workbasket.refresh_from_db()
 
