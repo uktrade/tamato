@@ -1,22 +1,42 @@
 {% extends "layouts/layout.jinja" %}
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
-{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Summary{% endset %}
-{% set business_rules_button %} <a href="{{ url('workbaskets:workbasket-run-business-rules')}}" class="govuk-button govuk-button--secondary govuk-!-margin-left-5"">Run business rules</a> {% endset %}
+{% set page_title %}
+  Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Summary
+{% endset %}
+
+{% set run_business_rules_form %}
+  <form
+    method="post"
+    class="govuk-!-display-inline-block govuk-!-margin-left-5"
+  >
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+    {{ govukButton({
+        "text": "Run business rules",
+        "classes": "govuk-button--secondary govuk-!-margin-0",
+        "name": "form-action",
+        "value": "run-business-rules",
+        "preventDoubleClick": true,
+    }) }}
+  </form>
+{% endset %}
+
 {% set rule_check_status %}
   {% if rule_check_in_progress %}
       : rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket. Come back later or refresh to see results.
   {% elif workbasket.tracked_model_check_errors.exists() %}
        ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): failing business rules.
-    {{ business_rules_button }}
+    {{ run_business_rules_form }}
   {% elif workbasket.tracked_model_checks.exists() %}
        ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): business rules passing.
-    {{ business_rules_button }}
+    {{ run_business_rules_form }}
   {% elif workbasket.tracked_models.exists() %}
       : no rule check performed yet.
-    {{ business_rules_button }}
+    {{ run_business_rules_form }}
   {% else %}
       : no objects in workbasket.
   {% endif %}
