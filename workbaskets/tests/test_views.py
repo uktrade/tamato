@@ -531,7 +531,7 @@ def test_workbasket_measures_review_conditions(valid_user_client):
     )
     factories.MeasureFactory.create_batch(5)
     certificate = factories.CertificateFactory.create()
-    tx = transaction = workbasket.new_transaction()
+    tx = workbasket.new_transaction()
     measure = factories.MeasureFactory.create(transaction=tx)
     condition = factories.MeasureConditionFactory.create(
         # transaction=tx,
