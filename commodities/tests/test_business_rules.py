@@ -108,6 +108,12 @@ def test_NIG2_only_checks_future_dates_of_parent(date_ranges):
         indented_goods_nomenclature__item_id="2901000000",
         indent=0,
     )
+    #
+    # parent_2 = factories.GoodsNomenclatureIndentFactory.create(
+    #     indented_goods_nomenclature__valid_between=getattr(date_ranges, "starts_2_months_ago_to_delta", ),
+    #     indented_goods_nomenclature__item_id="2901200000",
+    #     indent=0,
+    # )
 
     child = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__valid_between=getattr(
@@ -116,65 +122,6 @@ def test_NIG2_only_checks_future_dates_of_parent(date_ranges):
         ),
         indented_goods_nomenclature__item_id="2901210000",
         indent=1,
-    )
-
-    with raises_if(BusinessRuleViolation, False):
-        business_rules.NIG2(type(child.transaction).objects.last()).validate(child)
-
-
-def test_NIG2_is_valid_with_multiple_parents_spanning_child_valid_period(date_ranges):
-    grand_parent = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__valid_between=getattr(
-            date_ranges,
-            "starts_delta_no_end",
-        ),
-        indented_goods_nomenclature__item_id="2901000000",
-        indent=0,
-    )
-
-    distant_parent_1 = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__valid_between=getattr(
-            date_ranges,
-            "starts_2_months_ago_to_delta",
-        ),
-        indented_goods_nomenclature__item_id="2901200000",
-        indent=1,
-    )
-
-    distant_parent_2 = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__valid_between=getattr(
-            date_ranges,
-            "starts_1_month_ago_no_end",
-        ),
-        indented_goods_nomenclature__item_id="2901400000",
-        indent=1,
-    )
-
-    parent_closest = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__valid_between=getattr(
-            date_ranges,
-            "starts_1_month_ago_to_1_month_ahead",
-        ),
-        indented_goods_nomenclature__item_id="2901500000",
-        indent=1,
-    )
-
-    not_a_parent = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__valid_between=getattr(
-            date_ranges,
-            "starts_1_month_ago_no_end",
-        ),
-        indented_goods_nomenclature__item_id="2901700000",
-        indent=1,
-    )
-
-    child = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__valid_between=getattr(
-            date_ranges,
-            "starts_1_month_ago_no_end",
-        ),
-        indented_goods_nomenclature__item_id="2901510000",
-        indent=2,
     )
 
     with raises_if(BusinessRuleViolation, False):

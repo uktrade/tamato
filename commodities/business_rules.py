@@ -64,25 +64,19 @@ class NIG2(BusinessRule):
 
         return validity_range_contains_range(parent_validity, child_validity)
 
-    def parents_span_childs_future(self, parents, child):
+    def parents_span_child(self, parents, child):
         if len(parents) == 0:
             raise Exception("No parents")
 
         # get all date ranges
         parents_validity = []
         for parent in parents:
-            parents_validity.append(
-                parent.indented_goods_nomenclature.version_at(
-                    self.transaction,
-                ).valid_between,
-            )
+            parents_validity.append(parent.valid_between)
 
         # sort by start date so any gaps will be obvious
         parents_validity.sort(key=lambda daterange: daterange.lower)
 
-        child_validity = child.indented_goods_nomenclature.version_at(
-            self.transaction,
-        ).valid_between
+        child_validity = child.valid_between
 
         multi_parent_validity = None
 
@@ -96,11 +90,12 @@ class NIG2(BusinessRule):
                         parent_validity,
                     )
 
-        multi_parent_validity = TaricDateRange(
-            datetime.today(),
-            multi_parent_validity.upper,
+        print(
+            f"parents start : {multi_parent_validity.lower}, parents end : {multi_parent_validity.upper}",
         )
-        child_validity = TaricDateRange(datetime.today(), child_validity.upper)
+        print(
+            f"child start : {child_validity.lower}, child end : {child_validity.upper}",
+        )
 
         return validity_range_contains_range(multi_parent_validity, child_validity)
 
@@ -124,12 +119,11 @@ class NIG2(BusinessRule):
         collection = get_chapter_collection(good)
         snapshot = collection.get_snapshot(self.transaction, datetime.today())
 
-        potential_parents = snapshot.get_potential_parents(commodity)
-
-        if len(potential_parents) == 0:
+        parent = snapshot.get_parent(commodity)
+        if not parent:
             return
 
-        if not self.parents_span_childs_future(potential_parents, indent):
+        if not self.parent_spans_childs_future(parent.indent_obj, indent):
             raise self.violation(indent)
 
 
