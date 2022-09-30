@@ -637,14 +637,11 @@ def test_ME32_false_positive():
         item_id="2903691100",
         suffix="80",
     )
-    factories.GoodsNomenclatureIndentFactory.create(
+    indent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature=good_1,
         indent=3,
     )
-    factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature=good_1,
-        indent=4,
-    )
+    new_version = indent.new_version(indent.transaction.workbasket, indent=4)
     good_2 = factories.GoodsNomenclatureFactory.create(
         item_id="2903691920",
         suffix="80",
