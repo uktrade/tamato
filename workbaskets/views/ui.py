@@ -1,12 +1,15 @@
+import logging
 from typing import Type
 
 import boto3
 from botocore.client import Config
+from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import ProtectedError
+from django.db.transaction import atomic
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -23,6 +26,7 @@ from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
+from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
@@ -36,8 +40,11 @@ from workbaskets import forms
 from workbaskets import tasks
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
+from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
+
+logger = logging.getLogger(__name__)
 
 
 class WorkBasketFilter(TamatoFilter):
@@ -289,6 +296,7 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
 
     # Form action mappings to URL names.
     action_success_url_names = {
+        "run-business-rules": "workbaskets:workbasket-ui-detail",
         "publish-all": "workbaskets:workbasket-ui-submit",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:workbasket-ui-detail",
@@ -347,6 +355,20 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
         else:
             return self.form_invalid(form)
 
+    @atomic
+    def run_business_rules(self):
+        """Remove old checks, start new checks via a Celery task and save the
+        newly created task's ID on the workbasket."""
+        workbasket = self.workbasket
+        workbasket.delete_checks()
+        task = call_check_workbasket_sync.delay(workbasket.pk)
+        logger.info(
+            f"Started rule check against workbasket.id={workbasket.pk} "
+            f"on task.id={task.id}",
+        )
+        workbasket.rule_check_task_id = task.id
+        workbasket.save()
+
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
         if form_action in ("publish-all", "remove-selected"):
@@ -355,6 +377,15 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
                 kwargs={"pk": self.workbasket.pk},
             )
         elif form_action in ("page-prev", "page-next"):
+            return self._append_url_page_param(
+                reverse(
+                    self.action_success_url_names[form_action],
+                    kwargs={"pk": self.workbasket.pk},
+                ),
+                form_action,
+            )
+        elif form_action == "run-business-rules":
+            self.run_business_rules()
             return self._append_url_page_param(
                 reverse(
                     self.action_success_url_names[form_action],
@@ -385,8 +416,16 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
                 "workbasket": self.workbasket,
                 "page_obj": page,
                 "uploaded_envelope_dates": self.uploaded_envelope_dates,
+                "rule_check_in_progress": False,
             },
         )
+        if self.workbasket.rule_check_task_id:
+            result = AsyncResult(self.workbasket.rule_check_task_id)
+            if result.status != "SUCCESS":
+                context.update({"rule_check_in_progress": True})
+            else:
+                self.workbasket.save_to_session(self.request.session)
+
         return context
 
     def form_valid(self, form):
@@ -429,7 +468,6 @@ class WorkBasketChanges(DetailView):
     model = WorkBasket
     template_name = "workbaskets/detail.jinja"
     paginate_by = 50
-    # paginate_by = 2
 
     def get_context_data(self, **kwargs):
         """
@@ -456,3 +494,54 @@ class WorkBasketChanges(DetailView):
         )
 
         return context
+
+
+class WorkBasketViolations(WithPaginationListView):
+    """UI endpoint for viewing a specified workbasket's business rule
+    violations."""
+
+    model = TrackedModelCheck
+    template_name = "workbaskets/violations.jinja"
+    paginate_by = 50
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(id=self.kwargs.get("pk"))
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(workbasket=self.workbasket, **kwargs)
+
+    def get_queryset(self):
+        qs = TrackedModelCheck.objects.filter(
+            transaction_check__transaction__workbasket=self.workbasket,
+            successful=False,
+        )
+        sort_by = self.request.GET.get("sort_by")
+        order = self.request.GET.get("order")
+        sort_by_fields = ["model", "date", "check_name"]
+        if sort_by and sort_by in sort_by_fields:
+            if sort_by == "date":
+                qs = qs.order_by("transaction_check__transaction__created_at")
+            elif sort_by == "model":
+                qs = qs.order_by("model__polymorphic_ctype")
+            else:
+                qs = qs.order_by(sort_by)
+
+        if order == "desc":
+            qs = qs.reverse()
+        return qs
+
+
+class WorkBasketViolationDetail(DetailView):
+    """UI endpoint for viewing a specified workbasket's business rule
+    violations."""
+
+    model = TrackedModelCheck
+    template_name = "workbaskets/violation_detail.jinja"
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(id=self.kwargs.get("wb_pk"))
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(workbasket=self.workbasket, **kwargs)
