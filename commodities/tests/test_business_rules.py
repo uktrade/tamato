@@ -122,6 +122,10 @@ def test_NIG2_only_checks_future_dates_of_parent(date_ranges):
         business_rules.NIG2(type(child.transaction).objects.last()).validate(child)
 
 
+# need to test that this works when parent of child does not have a parent
+# add failing test where a parents parents children > child item id and has an allowable date range but is not considered
+
+
 def test_NIG2_is_valid_with_multiple_parents_spanning_child_valid_period(date_ranges):
     grand_parent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__valid_between=getattr(
@@ -254,7 +258,7 @@ def test_NIG2_parents_span_child_valid(
     child_validity,
     expected,
 ):
-    target = business_rules.NIG2().parents_span_child
+    target = business_rules.NIG2().parents_span_childs_future
     good = factories.GoodsNomenclatureFactory.create()
     parents = []
 

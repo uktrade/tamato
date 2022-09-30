@@ -393,6 +393,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
     def get_potential_parents(self, commodity: Commodity) -> List[Commodity]:
         """gets possible parents, for queries where a parent may be end-dated,
         and another parent could potentially be present to inherit the child."""
+
         parent = self.get_parent(commodity)
         grandparent = self.get_parent(parent)
         parents = self.get_children(grandparent)
