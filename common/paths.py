@@ -7,10 +7,14 @@ from django.urls import path
 
 logger = logging.getLogger(__name__)
 
+
 BULK_ACTIONS = {
     "List": "",
     "Create": "create",
 }
+"""Map of view class name suffixes to URL path action names, used to handle
+class-level actions."""
+
 
 OBJECT_ACTIONS = {
     "ConfirmCreate": "confirm-create",
@@ -19,9 +23,9 @@ OBJECT_ACTIONS = {
     "ConfirmUpdate": "confirm-update",
     "Delete": "delete",
     "DescriptionCreate": "description-create",
-    "EditUpdate": "edit-taric-update",
-    "EditCreate": "edit-taric-create",
 }
+"""Map of view class name suffixes to URL path action names, used to handle
+object-level actions."""
 
 
 def get_ui_paths(
@@ -63,28 +67,50 @@ def get_ui_paths(
 
     etc.
     """
-    app_name = views.__name__.split(".")[0]
 
-    combinations = [
-        (app_name[:-1], BULK_ACTIONS, ""),
-        (app_name[:-1], OBJECT_ACTIONS, pattern),
+    app_name_singular = views.__name__.split(".")[0][:-1]
+
+    view_info = [
+        # Bulk action patterns.
+        (app_name_singular, class_suffix, pathname, "")
+        for class_suffix, pathname in BULK_ACTIONS.items()
+    ] + [
+        # Object action patterns.
+        (app_name_singular, class_suffix, pathname, pattern)
+        for class_suffix, pathname in OBJECT_ACTIONS.items()
     ]
+    for subrecord_name, pattern in subrecords.items():
+        view_info += [
+            # Object action patterns for subrecords.
+            (f"{app_name_singular}_{subrecord_name}", class_suffix, pathname, pattern)
+            for class_suffix, pathname in OBJECT_ACTIONS.items()
+        ]
+    """
+    view_info is a list of 4-tuples, each comprising:
+    (app_name_singular, class_suffix, pathname, pattern)
+    """
+    from pprint import pprint
 
-    for name, pattern in subrecords.items():
-        combinations.append((f"{app_name[:-1]}_{name}", OBJECT_ACTIONS, pattern))
+    pprint(view_info)
 
     paths = []
-    for prefix, actions, pattern in combinations:
-        for class_suffix, pathname in actions.items():
-            class_prefix = "".join(word.title() for word in prefix.split("_"))
-            classname = class_prefix + class_suffix
-            if hasattr(views, classname):
-                view = getattr(views, classname)
-                name = f"{prefix}-ui-{pathname if pathname else class_suffix.lower()}"
-                url = pattern + ("/" if pattern else "") + pathname
+    for app_name_singular, class_suffix, pathname, pattern in view_info:
+        classname = get_view_class_prefix(app_name_singular) + class_suffix
+        if hasattr(views, classname):
+            view = getattr(views, classname)
+            name = f"{app_name_singular}-ui-{pathname if pathname else class_suffix.lower()}"
+            url = pattern + ("/" if pattern else "") + pathname
 
-                paths.append(path(url, view.as_view(), name=name))
-            else:
-                logger.debug("No view matching ")
+            paths.append(path(url, view.as_view(), name=name))
+        else:
+            # logger.debug(f"No view matching {views.__name__}.{classname}")
+            pass
 
     return paths
+
+
+def get_view_class_prefix(app_name_singular):
+    """Given one of Tamato's Django app names - in its singular format, for
+    instance additional_code - get the prefix portion of the view class name for
+    that application."""
+    return "".join(word.title() for word in app_name_singular.split("_"))
