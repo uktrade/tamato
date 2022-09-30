@@ -30,7 +30,7 @@ object-level actions."""
 
 def get_ui_paths(
     views: ModuleType,
-    pattern: str,
+    detail_pattern: str,
     **subrecords: str,
 ) -> Collection[URLPattern]:
     """
@@ -50,13 +50,13 @@ def get_ui_paths(
       or OBJECT_ACTIONS
     * The view class should be mapped to a URL that is the corresponding value
       of BULK_ACTIONS or OBJECT_ACTIONS
-    * OBJECT_ACTIONS have URLs that are prefixed with a `pattern`
+    * OBJECT_ACTIONS have URLs that are prefixed with a `detail_pattern`
     * Subrecords have URLs that are prefixed with both `subrecord` patterns
     * The name of the path is the same as the URL, apart from if the URL is
       blank, in which case it is the lowercase of the action key.
 
-    E.g. when passed `additional_codes.views` with the pattern `<sid:sid>`, will
-    return routes for:
+    E.g. when passed `additional_codes.views` with the detail_pattern
+    `<sid:sid>`, will return routes for:
 
     * Name "additional_code-ui-list" mapped to URL "" using view
       `AdditionalCodeList`
@@ -70,33 +70,40 @@ def get_ui_paths(
 
     app_name_singular = views.__name__.split(".")[0][:-1]
 
-    view_info = [
-        # Bulk action patterns.
+    views_info = [
+        # Bulk actions info.
         (app_name_singular, class_suffix, pathname, "")
         for class_suffix, pathname in BULK_ACTIONS.items()
     ] + [
-        # Object action patterns.
-        (app_name_singular, class_suffix, pathname, pattern)
+        # Object actions info.
+        (app_name_singular, class_suffix, pathname, detail_pattern)
         for class_suffix, pathname in OBJECT_ACTIONS.items()
     ]
-    for subrecord_name, pattern in subrecords.items():
-        view_info += [
-            # Object action patterns for subrecords.
-            (f"{app_name_singular}_{subrecord_name}", class_suffix, pathname, pattern)
+    for subrecord_name, detail_pattern in subrecords.items():
+        views_info += [
+            # Object actions info for subrecords.
+            (
+                f"{app_name_singular}_{subrecord_name}",
+                class_suffix,
+                pathname,
+                detail_pattern,
+            )
             for class_suffix, pathname in OBJECT_ACTIONS.items()
         ]
     """
-    view_info is a list of 4-tuples, each comprising:
-    (app_name_singular, class_suffix, pathname, pattern)
+    views_info is a list of 4-tuples providing each providing the necessary
+    details to construct a path for each type of possible view. A tuple
+    comprises:
+        (app_name_singular, class_suffix, pathname, detail_pattern)
     """
 
     paths = []
-    for app_name_singular, class_suffix, pathname, pattern in view_info:
+    for app_name_singular, class_suffix, pathname, detail_pattern in views_info:
         classname = get_view_class_prefix(app_name_singular) + class_suffix
         if hasattr(views, classname):
             view = getattr(views, classname)
             name = f"{app_name_singular}-ui-{pathname if pathname else class_suffix.lower()}"
-            url = pattern + ("/" if pattern else "") + pathname
+            url = detail_pattern + ("/" if detail_pattern else "") + pathname
 
             paths.append(path(url, view.as_view(), name=name))
         else:
@@ -108,6 +115,7 @@ def get_ui_paths(
 
 def get_view_class_prefix(app_name_singular):
     """Given one of Tamato's Django app names - in its singular format, for
-    instance additional_code - get the prefix portion of the view class name for
-    that application."""
+    instance, additional_code - get the prefix portion of the view class's name
+    for that application. The returned prefix follows the conventions for
+    naming view classes for Tamato's TrackedModels."""
     return "".join(word.title() for word in app_name_singular.split("_"))
