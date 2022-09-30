@@ -89,9 +89,6 @@ def get_ui_paths(
     view_info is a list of 4-tuples, each comprising:
     (app_name_singular, class_suffix, pathname, pattern)
     """
-    from pprint import pprint
-
-    pprint(view_info)
 
     paths = []
     for app_name_singular, class_suffix, pathname, pattern in view_info:
