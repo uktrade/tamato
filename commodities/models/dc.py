@@ -390,6 +390,25 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
         super().__post_init__()
 
+    def get_potential_parents(self, commodity: Commodity) -> List[Commodity]:
+        """gets possible parents, for queries where a parent may be end-dated,
+        and another parent could potentially be present to inherit the child."""
+        parent = self.get_parent(commodity)
+        grandparent = self.get_parent(parent)
+        parents = self.get_children(grandparent)
+
+        result = []
+
+        for parent in parents:
+            if int(parent.item_id) < int(commodity.item_id):
+                result.append(parent.indent_obj)
+            elif int(parent.item_id) == int(commodity.item_id) and int(
+                parent.suffix,
+            ) < int(commodity.suffix):
+                result.append(parent.indent_obj)
+
+        return result
+
     def get_parent(self, commodity: Commodity) -> Optional[Commodity]:
         """Returns the parent of a commodity in the snapshot tree."""
         return self.edges.get(commodity)

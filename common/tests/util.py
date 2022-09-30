@@ -650,6 +650,10 @@ class Dates:
             relativedelta(months=1),
             relativedelta(months=2),
         ),
+        "starts_1_month_ahead_no_end": (
+            relativedelta(months=1),
+            None,
+        ),
     }
 
     @property
