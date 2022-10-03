@@ -113,3 +113,24 @@ def test_change_workbasket_status(upload, client, superadmin, workbasket, transi
     else:
         # transition field is ignored
         pass
+
+
+def test_terminate_workbasket_rule_check(client, superadmin, workbasket):
+    workbasket.rule_check_task_id = "aa97eb5a-0bb9-411f-995d-6724e326e9f7"
+    workbasket.save()
+
+    change_url = reverse("admin:workbaskets_workbasket_change", args=[workbasket.id])
+    client.force_login(superadmin)
+    response = client.post(
+        change_url,
+        data={
+            "transition": "",
+            "reason": workbasket.reason,
+            "title": workbasket.title,
+            "terminate_rule_check": "on",
+        },
+    )
+
+    assert response.status_code == 302
+    workbasket.refresh_from_db()
+    assert not workbasket.rule_check_task_id
