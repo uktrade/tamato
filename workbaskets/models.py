@@ -5,6 +5,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 from typing import Optional
 
+from celery.result import AsyncResult
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
@@ -298,6 +299,49 @@ class WorkBasket(TimestampedMixin):
     )
 
     transactions: TransactionQueryset
+
+    def terminate_rule_check(self):
+        """Terminate any task associated with the WorkBasket's rule checking, as
+        identified by its rule_check_task_id."""
+
+        logger.info(
+            f"Attempting rule check termination for WorkBasket " f"pk={self.pk}.",
+        )
+        if not self.rule_check_task_id:
+            logger.info(
+                f"Unable to terminate rule check for WorkBasket "
+                f"pk={self.pk} - "
+                f"empty rule_check_task_id.",
+            )
+            return
+
+        task_result = AsyncResult(self.rule_check_task_id)
+        if not task_result:
+            logger.info(
+                f"Unable to terminate rule check for WorkBasket "
+                f"pk={self.pk}, "
+                f"rule_check_task_id={self.rule_check_task_id} - "
+                f"task result is unavailable.",
+            )
+            return
+
+        task_result.revoke()
+        self.rule_check_task_id = None
+        self.save()
+        logger.info(
+            f"Terminated rule check for WorkBasket pk={self.pk}.",
+        )
+
+    @property
+    def rule_check_task_status(self):
+        """Return the status of the WorkBasket's rule check task if it is
+        available, otherwise return None."""
+        if not self.rule_check_task_id:
+            return None
+        task_result = AsyncResult(self.rule_check_task_id)
+        if not task_result:
+            return None
+        return task_result.status
 
     @property
     def approved(self):
