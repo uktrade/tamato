@@ -708,16 +708,19 @@ def test_measure_forms_conditions_clears_unneeded_certificate(date_ranges):
         prefix="",
         initial=initial_data,
     )
-    form_expects_certificate.is_valid()
-    assert form_expects_certificate.cleaned_data["required_certificate"] == certificate
+    with override_current_transaction(action.transaction):
+        form_expects_certificate.is_valid()
+        assert (
+            form_expects_certificate.cleaned_data["required_certificate"] == certificate
+        )
 
-    form_expects_no_certificate = forms.MeasureConditionsForm(
-        dict(data, **{"condition_code": code_without_certificate.pk}),
-        prefix="",
-        initial=initial_data,
-    )
-    assert form_expects_no_certificate.is_valid()
-    assert form_expects_no_certificate.cleaned_data["required_certificate"] is None
+        form_expects_no_certificate = forms.MeasureConditionsForm(
+            dict(data, **{"condition_code": code_without_certificate.pk}),
+            prefix="",
+            initial=initial_data,
+        )
+        assert form_expects_no_certificate.is_valid()
+        assert form_expects_no_certificate.cleaned_data["required_certificate"] is None
 
 
 def test_measure_forms_conditions_wizard_clears_unneeded_certificate(date_ranges):
@@ -741,16 +744,19 @@ def test_measure_forms_conditions_wizard_clears_unneeded_certificate(date_ranges
         prefix="",
         measure_start_date=date_ranges.normal,
     )
-    form_expects_certificate.is_valid()
-    assert form_expects_certificate.cleaned_data["required_certificate"] == certificate
+    with override_current_transaction(action.transaction):
+        form_expects_certificate.is_valid()
+        assert (
+            form_expects_certificate.cleaned_data["required_certificate"] == certificate
+        )
 
-    form_expects_no_certificate = forms.MeasureConditionsWizardStepForm(
-        dict(data, **{"condition_code": code_without_certificate.pk}),
-        prefix="",
-        measure_start_date=date_ranges.normal,
-    )
-    assert form_expects_no_certificate.is_valid()
-    assert form_expects_no_certificate.cleaned_data["required_certificate"] is None
+        form_expects_no_certificate = forms.MeasureConditionsWizardStepForm(
+            dict(data, **{"condition_code": code_without_certificate.pk}),
+            prefix="",
+            measure_start_date=date_ranges.normal,
+        )
+        assert form_expects_no_certificate.is_valid()
+        assert form_expects_no_certificate.cleaned_data["required_certificate"] is None
 
 
 def test_measure_form_valid_data(erga_omnes, session_with_workbasket):

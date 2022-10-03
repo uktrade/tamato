@@ -272,7 +272,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
     )
     required_certificate = AutoCompleteField(
         label="Certificate, licence or document",
-        queryset=Certificate.objects.all(),
+        queryset=Certificate.objects.current(),
         required=False,
     )
     action = forms.ModelChoiceField(
