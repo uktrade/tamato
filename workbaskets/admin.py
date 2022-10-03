@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.admin.widgets import AdminTextInputWidget
 from django.http import HttpResponseRedirect
 from django.urls import path
 from django.urls import reverse
@@ -17,9 +18,27 @@ from workbaskets.validators import WorkflowStatus
 class WorkBasketAdminForm(forms.ModelForm):
     class Meta:
         model = WorkBasket
-        fields = ["title", "reason", "transition"]
+        fields = [
+            "title",
+            "reason",
+            "transition",
+            "terminate_rule_check",
+        ]
+        readonly_fields = (
+            "rule_check_task_id",
+            "rule_check_task_status",
+        )
 
     transition = forms.ChoiceField(required=False)
+    rule_check_task_id = forms.CharField(
+        required=False,
+        widget=AdminTextInputWidget(),
+    )
+    rule_check_task_status = forms.CharField(
+        required=False,
+        widget=AdminTextInputWidget(),
+    )
+    terminate_rule_check = forms.BooleanField(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -35,6 +54,11 @@ class WorkBasketAdminForm(forms.ModelForm):
             if len(self.fields["transition"].choices) == 1:
                 self.fields["transition"].disabled = True
 
+            self.fields["rule_check_task_id"].disabled = True
+            self.fields["rule_check_task_status"].disabled = True
+            self.fields[
+                "rule_check_task_status"
+            ].initial = self.instance.rule_check_task_status
         else:
             del self.fields["transition"]
 
@@ -63,6 +87,29 @@ class WorkBasketAdmin(admin.ModelAdmin):
         "pk",
         "title",
         "reason",
+    )
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "title",
+                    "reason",
+                    "transition",
+                ),
+            },
+        ),
+        (
+            "Rule check options",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "rule_check_task_id",
+                    "rule_check_task_status",
+                    "terminate_rule_check",
+                ),
+            },
+        ),
     )
 
     def response_change(self, request, obj):
@@ -117,6 +164,10 @@ class WorkBasketAdmin(admin.ModelAdmin):
             if transition == "approve":
                 transition_args.extend([request.user.pk, settings.TRANSACTION_SCHEMA])
             tasks.transition.delay(instance.pk, transition, *transition_args)
+
+        terminate_rule_check = form.cleaned_data.get("terminate_rule_check")
+        if terminate_rule_check:
+            instance.terminate_rule_check()
 
         return instance
 
