@@ -8,6 +8,7 @@ from django.test.html import parse_html
 from django.urls import reverse
 
 from common.tests import factories
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -115,7 +116,8 @@ def test_change_workbasket_status(upload, client, superadmin, workbasket, transi
         pass
 
 
-def test_terminate_workbasket_rule_check(client, superadmin, workbasket):
+def test_terminate_workbasket_rule_check(client, superadmin):
+    workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
     workbasket.rule_check_task_id = "aa97eb5a-0bb9-411f-995d-6724e326e9f7"
     workbasket.save()
 
