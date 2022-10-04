@@ -326,6 +326,7 @@ class WorkBasket(TimestampedMixin):
             return
 
         task_result.revoke()
+        self.delete_checks()
         self.rule_check_task_id = None
         self.save()
         logger.info(
