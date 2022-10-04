@@ -496,13 +496,14 @@ def test_overlapping_quota_definition(date_ranges):
         ).validate(overlapping_definition)
 
 
-def test_volume_and_initial_volume_must_match():
+def test_volume_and_initial_volume_must_match(date_ranges):
     """Unless it is the main quota in a quota association, a definition's volume
     and initial_volume values should always be the same."""
 
     definition = factories.QuotaDefinitionFactory.create(
         volume=1.000,
         initial_volume=2.000,
+        valid_between=getattr(date_ranges, "starts_1_month_ahead_to_2_months_ahead"),
     )
 
     with pytest.raises(BusinessRuleViolation) as violation:
@@ -514,6 +515,39 @@ def test_volume_and_initial_volume_must_match():
         "Unless it is the main quota in a quota association, a definition's volume and initial_volume values should always be the same."
         in str(violation)
     )
+
+
+def test_volume_and_initial_volume_can_differ_if_in_current_or_historical_period(
+    date_ranges,
+):
+    """Unless it is the main quota in a quota association, a definition's volume
+    and initial_volume values should always be the same."""
+
+    definition_historical = factories.QuotaDefinitionFactory.create(
+        volume=1.000,
+        initial_volume=2.000,
+        valid_between=getattr(date_ranges, "starts_2_months_ago_to_1_month_ago"),
+    )
+
+    definition_current = factories.QuotaDefinitionFactory.create(
+        volume=1.000,
+        initial_volume=2.000,
+        valid_between=getattr(date_ranges, "starts_1_month_ago_to_1_month_ahead"),
+    )
+
+    result_historical = business_rules.VolumeAndInitialVolumeMustMatch(
+        definition_historical.transaction,
+    ).validate(
+        definition_historical,
+    )
+    result_current = business_rules.VolumeAndInitialVolumeMustMatch(
+        definition_current.transaction,
+    ).validate(
+        definition_current,
+    )
+
+    assert result_historical
+    assert result_current
 
 
 def test_volume_and_initial_volume_must_match_main_quota():

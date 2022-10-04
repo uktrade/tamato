@@ -1,4 +1,5 @@
 """Business rules for quotas."""
+import datetime
 from datetime import date
 from decimal import Decimal
 
@@ -285,10 +286,19 @@ class OverlappingQuotaDefinition(BusinessRule):
 
 
 class VolumeAndInitialVolumeMustMatch(BusinessRule):
-    """Unless it is the main quota in a quota association, a definition's volume
-    and initial_volume values should always be the same."""
+    """
+    Unless it is the main quota in a quota association, a definition's volume
+    and initial_volume values should always be the same.
+
+    the exception is when we are updating quotas in the current period, these
+    can have differing vol and initial vol
+    """
 
     def validate(self, quota_definition):
+
+        if quota_definition.valid_between.lower < datetime.date.today():
+            return True
+
         if quota_definition.sub_quota_associations.approved_up_to_transaction(
             self.transaction,
         ).exists():

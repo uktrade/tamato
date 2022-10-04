@@ -632,6 +632,18 @@ class Dates:
         "future": (relativedelta(weeks=+10), relativedelta(weeks=+20)),
         "no_end": (relativedelta(), None),
         "normal_first_half": (relativedelta(), relativedelta(days=+14)),
+        "starts_1_month_ago_to_1_month_ahead": (
+            relativedelta(months=-1),
+            relativedelta(months=1),
+        ),
+        "starts_1_month_ahead_to_2_months_ahead": (
+            relativedelta(months=1),
+            relativedelta(months=2),
+        ),
+        "starts_2_months_ago_to_1_month_ago": (
+            relativedelta(months=-2),
+            relativedelta(months=-1),
+        ),
     }
 
     @property
