@@ -76,10 +76,10 @@ class Command(WorkBasketCommandMixin, BaseCommand):
                     self.stdout.write(
                         self.style.ERROR(
                             self.stdout.write(
-                                f"     Measure: "
+                                f"     Measure "
                                 f"sid={c.sid}, update_type={c.update_type}, "
                                 f"transaction.id={c.transaction.id}, "
-                                f"workbasket.pk={c.transaction.workbasket.pk},",
+                                f"workbasket.pk={c.transaction.workbasket.pk}.",
                             ),
                         ),
                     )
