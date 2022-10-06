@@ -53,6 +53,7 @@ def test_NIG1(date_ranges):
         "all_closed_and_span",
     ),
 )
+
 def test_NIG2(
     date_ranges,
     parent_validity,
@@ -94,7 +95,7 @@ def test_NIG2(
 
 def test_NIG2_only_checks_future_dates_of_parent(date_ranges):
     """
-    The validity period of the goods nomenclature must be within the validity
+    The validity period o f the goods nomenclature must be within the validity
     period of the product line above in the hierarchy.
 
     Also covers NIG3
@@ -241,7 +242,7 @@ def test_NIG2_is_valid_with_multiple_parents_spanning_child_valid_period(date_ra
                 "starts_1_month_ago_no_end",
             ],
             "starts_2_months_ago_to_1_month_ago",
-            False,
+            True,
         ),
         (
             [
@@ -264,15 +265,15 @@ def test_NIG2_parents_span_child_valid(
 
     for parent_validity in parent_validities:
         validity = getattr(date_ranges, parent_validity)
-        parent = factories.GoodsNomenclatureFactory.create(
-            sid=good.sid,
-            valid_between=validity,
+        parent = factories.GoodsNomenclatureIndentFactory.create(
+            indented_goods_nomenclature__valid_between=validity,
+            indented_goods_nomenclature__sid=good.sid,
         )
         parents.append(parent)
 
-    child = factories.GoodsNomenclatureFactory.create(
-        sid=good.sid,
-        valid_between=getattr(date_ranges, child_validity),
+    child = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(date_ranges, child_validity),
+        indented_goods_nomenclature__sid=good.sid,
     )
 
     assert target(parents, child) == expected

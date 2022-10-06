@@ -84,6 +84,9 @@ class NIG2(BusinessRule):
             self.transaction,
         ).valid_between
 
+        if not child_validity.upper_inf and child_validity.upper < datetime.today().date():
+            return True
+
         multi_parent_validity = None
 
         for parent_validity in parents_validity:
@@ -97,10 +100,17 @@ class NIG2(BusinessRule):
                     )
 
         multi_parent_validity = TaricDateRange(
-            datetime.today(),
+            datetime.today().date(),
             multi_parent_validity.upper,
         )
-        child_validity = TaricDateRange(datetime.today(), child_validity.upper)
+
+        child_start_date = child_validity.lower
+
+        if child_start_date < datetime.today().date():
+            child_start_date = datetime.today().date()
+
+
+        child_validity = TaricDateRange(child_start_date, child_validity.upper)
 
         return validity_range_contains_range(multi_parent_validity, child_validity)
 
