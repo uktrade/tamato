@@ -53,7 +53,6 @@ def test_NIG1(date_ranges):
         "all_closed_and_span",
     ),
 )
-
 def test_NIG2(
     date_ranges,
     parent_validity,
