@@ -24,3 +24,18 @@ class WorkflowStatus(models.TextChoices):
             cls.SENT,
             cls.PUBLISHED,
         )
+
+    @classmethod
+    def unchecked_statuses(cls):
+        """
+        A successful transition out of EDITING may only occur when all business
+        rule checks have succeeded.
+
+        WorkBaskets with the following set of statuses may have successful rule
+        checks, but this isn't guarenteed.
+        """
+        return (
+            cls.ARCHIVED,
+            cls.EDITING,
+            cls.ERRORED,
+        )
