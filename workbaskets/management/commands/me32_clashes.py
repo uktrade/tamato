@@ -40,7 +40,7 @@ class Command(WorkBasketCommandMixin, BaseCommand):
             measures = list(
                 Measure.objects.filter(
                     sid=sid,
-                    transaction__workbasket__pk=workbasket.pk,
+                    transaction__workbasket=workbasket,
                 ),
             )
             workbasket_info = f" in workbasket.pk={workbasket.pk}"
