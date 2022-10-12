@@ -130,6 +130,7 @@
 <span></span><span class="sd">&quot;&quot;&quot;Business rules for commodities/goods nomenclatures.&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
 
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
@@ -143,6 +144,7 @@
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">skip_when_deleted</span>
 <span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">skip_when_not_deleted</span>
 <span class="kn">from</span> <span class="nn">common.models.trackedmodel</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
+<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">TaricDateRange</span>
 <span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">validity_range_contains_range</span>
 
 
@@ -178,6 +180,58 @@
         <span class="p">)</span><span class="o">.</span><span class="n">valid_between</span>
         <span class="k">return</span> <span class="n">validity_range_contains_range</span><span class="p">(</span><span class="n">parent_validity</span><span class="p">,</span> <span class="n">child_validity</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">parents_span_childs_future</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parents</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parents</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;No parents&quot;</span><span class="p">)</span>
+
+        <span class="c1"># get all date ranges</span>
+        <span class="n">parents_validity</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">parents</span><span class="p">:</span>
+            <span class="n">parents_validity</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">parent</span><span class="o">.</span><span class="n">indented_goods_nomenclature</span><span class="o">.</span><span class="n">version_at</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># sort by start date so any gaps will be obvious</span>
+        <span class="n">parents_validity</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">daterange</span><span class="p">:</span> <span class="n">daterange</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+
+        <span class="n">child_validity</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">indented_goods_nomenclature</span><span class="o">.</span><span class="n">version_at</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">valid_between</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">child_validity</span><span class="o">.</span><span class="n">upper_inf</span>
+            <span class="ow">and</span> <span class="n">child_validity</span><span class="o">.</span><span class="n">upper</span> <span class="o">&lt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="n">multi_parent_validity</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">parent_validity</span> <span class="ow">in</span> <span class="n">parents_validity</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">multi_parent_validity</span><span class="p">:</span>
+                <span class="n">multi_parent_validity</span> <span class="o">=</span> <span class="n">parent_validity</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">parent_validity</span><span class="o">.</span><span class="n">overlaps</span><span class="p">(</span><span class="n">multi_parent_validity</span><span class="p">):</span>
+                    <span class="n">multi_parent_validity</span> <span class="o">=</span> <span class="n">TaricDateRange</span><span class="o">.</span><span class="n">merge_ranges</span><span class="p">(</span>
+                        <span class="n">multi_parent_validity</span><span class="p">,</span>
+                        <span class="n">parent_validity</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+        <span class="n">multi_parent_validity</span> <span class="o">=</span> <span class="n">TaricDateRange</span><span class="p">(</span>
+            <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">(),</span>
+            <span class="n">multi_parent_validity</span><span class="o">.</span><span class="n">upper</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">child_start_date</span> <span class="o">=</span> <span class="n">child_validity</span><span class="o">.</span><span class="n">lower</span>
+
+        <span class="k">if</span> <span class="n">child_start_date</span> <span class="o">&lt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">():</span>
+            <span class="n">child_start_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+
+        <span class="n">child_validity</span> <span class="o">=</span> <span class="n">TaricDateRange</span><span class="p">(</span><span class="n">child_start_date</span><span class="p">,</span> <span class="n">child_validity</span><span class="o">.</span><span class="n">upper</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">validity_range_contains_range</span><span class="p">(</span><span class="n">multi_parent_validity</span><span class="p">,</span> <span class="n">child_validity</span><span class="p">)</span>
+
 <div class="viewcode-block" id="NIG2.validate"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG2.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">commodities.models.dc</span> <span class="kn">import</span> <span class="n">Commodity</span>
         <span class="kn">from</span> <span class="nn">commodities.models.dc</span> <span class="kn">import</span> <span class="n">get_chapter_collection</span>
@@ -196,13 +250,14 @@
 
         <span class="n">commodity</span> <span class="o">=</span> <span class="n">Commodity</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="n">good</span><span class="p">,</span> <span class="n">indent_obj</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
         <span class="n">collection</span> <span class="o">=</span> <span class="n">get_chapter_collection</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
-        <span class="n">snapshot</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">get_snapshot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span> <span class="n">good</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+        <span class="n">snapshot</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">get_snapshot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">())</span>
 
-        <span class="n">parent</span> <span class="o">=</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">get_parent</span><span class="p">(</span><span class="n">commodity</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">parent</span><span class="p">:</span>
+        <span class="n">potential_parents</span> <span class="o">=</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">get_potential_parents</span><span class="p">(</span><span class="n">commodity</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">potential_parents</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_spans_child</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">indent_obj</span><span class="p">,</span> <span class="n">indent</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents_span_childs_future</span><span class="p">(</span><span class="n">potential_parents</span><span class="p">,</span> <span class="n">indent</span><span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">indent</span><span class="p">)</span></div></div>
 
 
