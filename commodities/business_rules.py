@@ -51,19 +51,6 @@ class NIG2(BusinessRule):
         ).valid_between
         return validity_range_contains_range(parent_validity, child_validity)
 
-    def parent_spans_childs_future(self, parent, child) -> bool:
-        parent_validity = parent.indented_goods_nomenclature.version_at(
-            self.transaction,
-        ).valid_between
-        child_validity = child.indented_goods_nomenclature.version_at(
-            self.transaction,
-        ).valid_between
-
-        parent_validity = TaricDateRange(datetime.today(), parent_validity.upper)
-        child_validity = TaricDateRange(datetime.today(), child_validity.upper)
-
-        return validity_range_contains_range(parent_validity, child_validity)
-
     def parents_span_childs_future(self, parents, child):
         if len(parents) == 0:
             raise Exception("No parents")
