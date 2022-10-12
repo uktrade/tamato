@@ -1,6 +1,7 @@
 """Business rules for commodities/goods nomenclatures."""
 import logging
 from datetime import date
+from datetime import datetime
 from datetime import timedelta
 
 from common.business_rules import BusinessRule
@@ -14,6 +15,7 @@ from common.business_rules import only_applicable_after
 from common.business_rules import skip_when_deleted
 from common.business_rules import skip_when_not_deleted
 from common.models.trackedmodel import TrackedModel
+from common.util import TaricDateRange
 from common.util import validity_range_contains_range
 
 
@@ -49,6 +51,58 @@ class NIG2(BusinessRule):
         ).valid_between
         return validity_range_contains_range(parent_validity, child_validity)
 
+    def parents_span_childs_future(self, parents, child):
+        if len(parents) == 0:
+            raise Exception("No parents")
+
+        # get all date ranges
+        parents_validity = []
+        for parent in parents:
+            parents_validity.append(
+                parent.indented_goods_nomenclature.version_at(
+                    self.transaction,
+                ).valid_between,
+            )
+
+        # sort by start date so any gaps will be obvious
+        parents_validity.sort(key=lambda daterange: daterange.lower)
+
+        child_validity = child.indented_goods_nomenclature.version_at(
+            self.transaction,
+        ).valid_between
+
+        if (
+            not child_validity.upper_inf
+            and child_validity.upper < datetime.today().date()
+        ):
+            return True
+
+        multi_parent_validity = None
+
+        for parent_validity in parents_validity:
+            if not multi_parent_validity:
+                multi_parent_validity = parent_validity
+            else:
+                if parent_validity.overlaps(multi_parent_validity):
+                    multi_parent_validity = TaricDateRange.merge_ranges(
+                        multi_parent_validity,
+                        parent_validity,
+                    )
+
+        multi_parent_validity = TaricDateRange(
+            datetime.today().date(),
+            multi_parent_validity.upper,
+        )
+
+        child_start_date = child_validity.lower
+
+        if child_start_date < datetime.today().date():
+            child_start_date = datetime.today().date()
+
+        child_validity = TaricDateRange(child_start_date, child_validity.upper)
+
+        return validity_range_contains_range(multi_parent_validity, child_validity)
+
     def validate(self, indent):
         from commodities.models.dc import Commodity
         from commodities.models.dc import get_chapter_collection
@@ -67,13 +121,14 @@ class NIG2(BusinessRule):
 
         commodity = Commodity(obj=good, indent_obj=indent)
         collection = get_chapter_collection(good)
-        snapshot = collection.get_snapshot(self.transaction, good.valid_between.lower)
+        snapshot = collection.get_snapshot(self.transaction, datetime.today())
 
-        parent = snapshot.get_parent(commodity)
-        if not parent:
+        potential_parents = snapshot.get_potential_parents(commodity)
+
+        if len(potential_parents) == 0:
             return
 
-        if not self.parent_spans_child(parent.indent_obj, indent):
+        if not self.parents_span_childs_future(potential_parents, indent):
             raise self.violation(indent)
 
 
