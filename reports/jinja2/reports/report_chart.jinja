@@ -1,0 +1,47 @@
+{% extends "reports/layout_reports.jinja" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {'text': "Reports Index", "href": '/reports'},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% block content %}
+    <script src="{{ static("chart.js") }}"></script>
+    <script>
+    var config = {
+            type: '{{ report.chart_type|safe }}',
+            data: {
+                datasets: [{
+                    data: {{ report.data()|safe }},
+                    backgroundColor: [
+                        '#EA80FC', '#64B5F6', '#FF5722', '#00838F', '#FFA000'
+                    ],
+                    label: '{{ report.name|safe }}'
+                }],
+                labels: {{ report.labels()|safe }}
+            },
+            options: {
+                responsive: true
+            }
+        };
+
+        window.onload = function () {
+            var ctx = document.getElementById('pie-chart').getContext('2d');
+            window.myPie = new Chart(ctx, config);
+        };
+
+    </script>
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        Report: {{ report.name }}
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">The report type is a chart</span>
+
+    <div>
+        <div id="container" style="width: 75%;">
+            <canvas id="pie-chart"></canvas>
+        </div>
+    </div>
+{% endblock %}
