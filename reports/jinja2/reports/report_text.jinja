@@ -1,0 +1,22 @@
+{% extends "reports/layout_reports.jinja" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {'text': "Reports Index", "href": '/reports'},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        Report: {{ report.name }}
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">The report type is text</span>
+
+    <div>
+        <p class="govuk-body">
+            {{ report.text() }}
+        </p>
+    </div>
+{% endblock %}
