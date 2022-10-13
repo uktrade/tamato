@@ -636,13 +636,12 @@ class TrackedModel(PolymorphicModel):
         if action not in ["list", "create"]:
             kwargs = self.get_identifying_fields()
         try:
-            # TODO: Check for overriden versions of this function.
             if (
                 action == "edit"
                 and self.transaction.workbasket.status == WorkflowStatus.EDITING
             ):
                 # Edits in WorkBaskets that are in EDITING state get real
-                # updates, not new instances.
+                # changes via DB updates, not newly created UPDATE instances.
                 if self.update_type == UpdateType.CREATE:
                     action += "-create"
                 elif self.update_type == UpdateType.UPDATE:

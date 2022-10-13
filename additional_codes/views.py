@@ -76,14 +76,6 @@ class AdditionalCodeCreateDescriptionMixin:
         return context
 
 
-class AdditionalCodeDescriptionMixin:
-    model: Type[TrackedModel] = AdditionalCodeDescription
-
-    def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return AdditionalCodeDescription.objects.approved_up_to_transaction(tx)
-
-
 class AdditionalCodeList(AdditionalCodeMixin, TamatoListView):
     """UI endpoint for viewing and filtering Additional Codes."""
 
@@ -166,6 +158,14 @@ class AdditionalCodeUpdate(
     )
 
 
+class AdditionalCodeDescriptionMixin:
+    model: Type[TrackedModel] = AdditionalCodeDescription
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return AdditionalCodeDescription.objects.approved_up_to_transaction(tx)
+
+
 class AdditionalCodeDescriptionCreate(
     AdditionalCodeCreateDescriptionMixin,
     TrackedModelDetailMixin,
@@ -180,6 +180,20 @@ class AdditionalCodeDescriptionCreate(
 
     form_class = AdditionalCodeCreateDescriptionForm
     template_name = "common/create_description.jinja"
+
+
+class AdditionalCodeDescriptionEditCreate(
+    AdditionalCodeDescriptionMixin,
+    TrackedModelDetailMixin,
+    EditTaricCreateView,
+):
+    form_class = AdditionalCodeDescriptionForm
+    template_name = "common/edit_description.jinja"
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class AdditionalCodeDescriptionUpdate(

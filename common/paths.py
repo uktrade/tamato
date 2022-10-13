@@ -113,7 +113,7 @@ def get_ui_paths(
 
             paths.append(path(url, view.as_view(), name=name))
         # else:
-        #    logger.debug(f"No view matching {views.__name__}.{classname}")
+        #   logger.debug(f"No view matching {views.__name__}.{classname}")
 
     return paths
 
