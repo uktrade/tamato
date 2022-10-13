@@ -80,7 +80,7 @@ class AdditionalCodeForm(ValidityPeriodForm):
         fields = ("type", "valid_between")
 
 
-class AdditionalCodeCreateForm(ValidityPeriodForm):
+class AdditionalCodeCreateBaseForm(ValidityPeriodForm):
     class Meta:
         model = models.AdditionalCode
         fields = ("type", "code", "valid_between")
@@ -143,6 +143,8 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
         )
         return cleaned_data
 
+
+class AdditionalCodeCreateForm(AdditionalCodeCreateBaseForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
 
@@ -158,6 +160,10 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
         if commit:
             instance.save(commit)
         return instance
+
+
+class AdditionalCodeEditCreateForm(AdditionalCodeCreateBaseForm):
+    pass
 
 
 class AdditionalCodeDescriptionForm(DescriptionForm):

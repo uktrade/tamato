@@ -20,10 +20,12 @@ OBJECT_ACTIONS = {
     "ConfirmCreate": "confirm-create",
     "Detail": "",
     "Update": "edit",
-    # "Update": "update",
     "ConfirmUpdate": "confirm-update",
     "Delete": "delete",
     "DescriptionCreate": "description-create",
+    # Edits on taric objects that are in a WorkBasket with status=EDITING.
+    "EditCreate": "edit-create",
+    "EditUpdate": "edit-update",
 }
 """Map of view class name suffixes to URL path action names, used to handle
 object-level actions."""

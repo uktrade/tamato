@@ -56,7 +56,7 @@ class CreateTaricDeleteView(
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class EditTaricCreateOrUpdateView(
+class EditTaricCreateView(
     TrackedModelChangeView,
     generic.UpdateView,
 ):
@@ -69,17 +69,6 @@ class EditTaricCreateOrUpdateView(
 
     permission_required = "common.add_trackedmodel"
     success_path = "confirm-update"
-
-    # NOTE:
-    # * update_type isn't required as this class will update from the form,
-    #   leaving the update_type of the object as is.
-    # @property
-    # def update_type(self):
-    #    return self.update_type
-    # TODO:
-    # * Any reason to break out into two separate view classes?
-    #       class EditTaricCreateView
-    #       class EditTaricUpdateView
 
     def get_template_names(self):
         return "common/edit.jinja"

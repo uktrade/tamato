@@ -13,6 +13,7 @@ from additional_codes.forms import AdditionalCodeCreateForm
 from additional_codes.forms import AdditionalCodeDeleteForm
 from additional_codes.forms import AdditionalCodeDescriptionDeleteForm
 from additional_codes.forms import AdditionalCodeDescriptionForm
+from additional_codes.forms import AdditionalCodeEditCreateForm
 from additional_codes.forms import AdditionalCodeForm
 from additional_codes.models import AdditionalCode
 from additional_codes.models import AdditionalCodeDescription
@@ -28,6 +29,7 @@ from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.generic import EditTaricCreateView
 
 
 class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -112,6 +114,49 @@ class AdditionalCodeCreate(CreateTaricCreateView):
         self.object_description.update_type = UpdateType.CREATE
         self.object_description.transaction = transaction
         self.object_description.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
+class AdditionalCodeEditCreate(
+    AdditionalCodeMixin,
+    TrackedModelDetailMixin,
+    EditTaricCreateView,
+):
+    template_name = "additional_codes/create.jinja"
+    form_class = AdditionalCodeEditCreateForm
+
+    @transaction.atomic
+    def form_valid(self, form):
+        print(f"*** self.object = {self.object}")
+        self.object = form.save()
+        object_description = self.object.get_description()
+
+        # tmp_object_description = self.object.get_description()
+        # object_description = AdditionalCodeDescription.objects.filter(
+        #    sid=tmp_object_description.sid
+        # ).last()
+
+        print(f"*** object_description: {object_description}")
+        print(f"*** type(object_description): {type(object_description)}")
+        print(f"*** object_description.sid: {object_description.sid}")
+        print(f"*** object_description.description: {object_description.description}")
+        print(
+            f"*** object_description.described_additionalcode: {object_description.described_additionalcode}",
+        )
+        # Got to here:
+        # "AdditionalCodeDescription has no described_additionalcode" although
+        # the object does have a FK field back to the object named
+        # described_additionalcode
+        object_description.description = form.cleaned_data[
+            "additional_code_description"
+        ]
+        # object_description.save(update_fields=["description"])
+
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form_kwargs(self):
