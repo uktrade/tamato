@@ -1250,19 +1250,6 @@ Email
 Postcode
 View Reports
 View Report
-Base Report
-Base Text Report
-Base Chart Report
-Base Table Report
-FF5722
-Chart(ctx
-f'<a href="/reports/{row.slug()}">View Report</a
-Blank Goods Nomenclature
-ReportsConfig
-Email
-Postcode
-View Reports
-View Report
 f"empty
 Exit
 meth:`~workbaskets.models
