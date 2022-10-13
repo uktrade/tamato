@@ -102,7 +102,10 @@ def get_ui_paths(
         classname = get_view_class_prefix(app_name_singular) + class_suffix
         if hasattr(views, classname):
             view = getattr(views, classname)
-            name = f"{app_name_singular}-ui-{pathname if pathname else class_suffix.lower()}"
+            name = (
+                f"{app_name_singular}-ui-"
+                f"{pathname if pathname else class_suffix.lower()}"
+            )
             url = detail_pattern + ("/" if detail_pattern else "") + pathname
 
             paths.append(path(url, view.as_view(), name=name))
