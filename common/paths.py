@@ -20,6 +20,7 @@ OBJECT_ACTIONS = {
     "ConfirmCreate": "confirm-create",
     "Detail": "",
     "Update": "edit",
+    # "Update": "update",
     "ConfirmUpdate": "confirm-update",
     "Delete": "delete",
     "DescriptionCreate": "description-create",
@@ -109,9 +110,8 @@ def get_ui_paths(
             url = detail_pattern + ("/" if detail_pattern else "") + pathname
 
             paths.append(path(url, view.as_view(), name=name))
-        else:
-            # logger.debug(f"No view matching {views.__name__}.{classname}")
-            pass
+        # else:
+        #    logger.debug(f"No view matching {views.__name__}.{classname}")
 
     return paths
 
