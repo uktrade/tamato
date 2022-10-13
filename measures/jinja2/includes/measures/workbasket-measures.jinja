@@ -7,7 +7,7 @@
     <a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a>
   {%- endset %}
   {% set footnotes %}
-    {% for footnote in measure.footnotes.all() %}
+    {% for footnote in measure.footnotes.current() %}
         {{ create_link(footnote.get_url(), footnote|string) }}{{ ", " if not loop.last else "" }}
     {% endfor %}
   {% endset %}
@@ -21,8 +21,8 @@
     {"html": create_link(url("additional_code-ui-detail", kwargs={"sid": measure.additional_code.sid}), measure.additional_code.type.sid ~ measure.additional_code.code) if measure.additional_code else '-'},
     {"html": create_link(url("geo_area-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
     {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
-    {"text": footnotes if measure.footnotes.all() else '-'},
-    {"text": conditions_list(measure) if measure.conditions.latest_approved() else "-"},
+    {"text": footnotes if measure.footnotes.current() else '-'},
+    {"text": conditions_list(measure) if measure.conditions.current() else "-"},
   ]) or "" }}
 {% endfor %}
 

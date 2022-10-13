@@ -525,6 +525,32 @@ def test_workbasket_measures_review_pagination(
     assert measure_sids.issubset({str(m.sid) for m in workbasket_measures})
 
 
+def test_workbasket_measures_review_conditions(valid_user_client):
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    factories.MeasureFactory.create_batch(5)
+    certificate = factories.CertificateFactory.create()
+    tx = workbasket.new_transaction()
+    measure = factories.MeasureFactory.create(transaction=tx)
+    condition = factories.MeasureConditionFactory.create(
+        # transaction=tx,
+        dependent_measure=measure,
+        condition_code__code="B",
+        required_certificate=certificate,
+        action__code="27",
+    )
+    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    # 11th column is conditions. We're interested in the first (and only) row.
+    condition_text = soup.select("table tr td:nth-child(11)")[0].text
+
+    assert "B" in condition_text
+    assert certificate.code in condition_text
+    assert "27" in condition_text
+
+
 @patch("workbaskets.tasks.call_check_workbasket_sync.delay")
 def test_run_business_rules(check_workbasket, valid_user_client, session_workbasket):
     """Test that a GET request to the run-business-rules endpoint returns a 302,

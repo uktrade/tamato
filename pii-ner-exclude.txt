@@ -1238,4 +1238,9 @@ EditCreate
 Create or Update - Delete
 0005_workbasket_rule_check_task_id
 run_business_rules_form
-
+Merge
+indent=0
+0005_workbasket_rule_check_task_id
+run_business_rules_form
+f"empty
+Exit

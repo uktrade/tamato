@@ -72,6 +72,13 @@ class Command(BaseCommand):
             action="store_true",
         )
 
+        parser.add_argument(
+            "--force-unchecked-rules",
+            help="Force export of workbaskets that have not had complete and successful business rule checks.",
+            default=False,
+            action="store_true",
+        )
+
     @atomic
     def handle(self, *args, **options):
         workbasket_ids = options.get("workbasket_ids")
@@ -83,6 +90,29 @@ class Command(BaseCommand):
         workbaskets = WorkBasket.objects.filter(**query)
         if not workbaskets:
             sys.exit("Nothing to upload:  No workbaskets with status APPROVED.")
+
+        if options.get("force_unchecked_rules"):
+            self.stdout.write(
+                f"{WARNING_SIGN_EMOJI}  Forcing dump of workbasket with "
+                f"potentially incomplete or unchecked business rules.",
+            )
+        else:
+            # Exit if any of the workbaskets have a status that does not
+            # guarantee that they have had complete, successful business rule
+            # checks.
+            for w in workbaskets:
+                if w.status in WorkflowStatus.unchecked_statuses():
+                    self.stdout.write(
+                        f"Workbasket pk={w.pk} has status {w.status} and "
+                        f"therefore does not guarantee complete and successful "
+                        f"business rule checks.",
+                    )
+                    self.stdout.write(
+                        "You may force dump using the --force-unchecked-rules flag.",
+                    )
+                    sys.exit(
+                        f"Exiting {WARNING_SIGN_EMOJI}.",
+                    )
 
         # transactions:  will be serialized, then added to an envelope for uploaded.
         transactions = workbaskets.ordered_transactions()
