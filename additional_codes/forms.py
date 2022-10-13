@@ -101,14 +101,6 @@ class AdditionalCodeCreateBaseForm(ValidityPeriodForm):
             "the additional code type"
         ),
     )
-    description = forms.CharField(
-        label="Additional code description",
-        help_text=(
-            "You may enter HTML formatting if required. See the guide below "
-            "for more information."
-        ),
-        widget=forms.Textarea,
-    )
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -121,6 +113,21 @@ class AdditionalCodeCreateBaseForm(ValidityPeriodForm):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
+
+
+class AdditionalCodeCreateForm(AdditionalCodeCreateBaseForm):
+    description = forms.CharField(
+        label="Additional code description",
+        help_text=(
+            "You may enter HTML formatting if required. See the guide below "
+            "for more information."
+        ),
+        widget=forms.Textarea,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self.helper.layout = Layout(
             "type",
             Field.text("code", field_width=Fluid.ONE_QUARTER, maxlength="3"),
@@ -143,8 +150,6 @@ class AdditionalCodeCreateBaseForm(ValidityPeriodForm):
         )
         return cleaned_data
 
-
-class AdditionalCodeCreateForm(AdditionalCodeCreateBaseForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
 
@@ -163,7 +168,21 @@ class AdditionalCodeCreateForm(AdditionalCodeCreateBaseForm):
 
 
 class AdditionalCodeEditCreateForm(AdditionalCodeCreateBaseForm):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper.layout = Layout(
+            "type",
+            Field.text("code", field_width=Fluid.ONE_QUARTER, maxlength="3"),
+            "start_date",
+            Field.textarea("description", rows=5),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
 
 
 class AdditionalCodeDescriptionForm(DescriptionForm):

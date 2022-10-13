@@ -132,31 +132,7 @@ class AdditionalCodeEditCreate(
 
     @transaction.atomic
     def form_valid(self, form):
-        print(f"*** self.object = {self.object}")
         self.object = form.save()
-        object_description = self.object.get_description()
-
-        # tmp_object_description = self.object.get_description()
-        # object_description = AdditionalCodeDescription.objects.filter(
-        #    sid=tmp_object_description.sid
-        # ).last()
-
-        print(f"*** object_description: {object_description}")
-        print(f"*** type(object_description): {type(object_description)}")
-        print(f"*** object_description.sid: {object_description.sid}")
-        print(f"*** object_description.description: {object_description.description}")
-        print(
-            f"*** object_description.described_additionalcode: {object_description.described_additionalcode}",
-        )
-        # Got to here:
-        # "AdditionalCodeDescription has no described_additionalcode" although
-        # the object does have a FK field back to the object named
-        # described_additionalcode
-        object_description.description = form.cleaned_data[
-            "additional_code_description"
-        ]
-        # object_description.save(update_fields=["description"])
-
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form_kwargs(self):
