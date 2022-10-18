@@ -56,7 +56,7 @@ class CreateTaricDeleteView(
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class EditTaricCreateView(
+class EditTaricView(
     TrackedModelChangeView,
     generic.UpdateView,
 ):

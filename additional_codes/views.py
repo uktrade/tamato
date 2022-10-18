@@ -29,7 +29,7 @@ from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
-from workbaskets.views.generic import EditTaricCreateView
+from workbaskets.views.generic import EditTaricView
 
 
 class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -117,7 +117,7 @@ class AdditionalCodeCreate(CreateTaricCreateView):
 class AdditionalCodeEditCreate(
     AdditionalCodeMixin,
     TrackedModelDetailMixin,
-    EditTaricCreateView,
+    EditTaricView,
 ):
     template_name = "additional_codes/create.jinja"
     form_class = AdditionalCodeEditCreateForm
@@ -141,10 +141,9 @@ class AdditionalCodeDetail(AdditionalCodeMixin, TrackedModelDetailView):
     template_name = "additional_codes/detail.jinja"
 
 
-class AdditionalCodeUpdate(
+class AdditionalCodeUpdateMixin(
     AdditionalCodeMixin,
     TrackedModelDetailMixin,
-    CreateTaricUpdateView,
 ):
     form_class = AdditionalCodeForm
 
@@ -156,6 +155,20 @@ class AdditionalCodeUpdate(
         business_rules.ACN17,
         # business_rules.ACN5,  # XXX should it be checked here?
     )
+
+
+class AdditionalCodeUpdate(
+    AdditionalCodeUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class AdditionalCodeEditUpdate(
+    AdditionalCodeUpdateMixin,
+    EditTaricView,
+):
+    pass
 
 
 class AdditionalCodeDescriptionMixin:
@@ -185,7 +198,7 @@ class AdditionalCodeDescriptionCreate(
 class AdditionalCodeDescriptionEditCreate(
     AdditionalCodeDescriptionMixin,
     TrackedModelDetailMixin,
-    EditTaricCreateView,
+    EditTaricView,
 ):
     form_class = AdditionalCodeDescriptionForm
     template_name = "common/edit_description.jinja"
