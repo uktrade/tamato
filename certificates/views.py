@@ -1,6 +1,7 @@
 from typing import Type
 
 from django.db import transaction
+from django.http import HttpResponseRedirect
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -20,6 +21,7 @@ from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.generic import EditTaricView
 
 
 class CertificatesViewSet(viewsets.ReadOnlyModelViewSet):
@@ -70,7 +72,7 @@ class CertificateList(CertificateMixin, TamatoListView):
 
 
 class CertificateCreate(CreateTaricCreateView):
-    """UI endpoint for creating Certificates."""  # /PS-IGNORE
+    """UI endpoint for creating Certificates CREATE instances."""
 
     template_name = "certificates/create.jinja"
     form_class = forms.CertificateCreateForm
@@ -96,6 +98,27 @@ class CertificateCreate(CreateTaricCreateView):
         description.save()
 
         return object
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
+class CertificateEditCreate(
+    CertificateMixin,  # Sets model and defines get_queryset()
+    TrackedModelDetailMixin,  # Defines get_object()
+    EditTaricView,  # Overrides get_result_object() which normally creates new version.
+):
+    """UI endpoint for editing Certificate CREATE instances."""
+
+    template_name = "certificates/create.jinja"
+    form_class = forms.CertificateEditCreateForm
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
