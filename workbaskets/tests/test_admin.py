@@ -142,3 +142,34 @@ def test_terminate_workbasket_rule_check(client, superadmin):
     assert response.status_code == 302
     workbasket.refresh_from_db()
     assert not workbasket.rule_check_task_id
+
+
+# https://uktrade.atlassian.net/browse/TP2000-556
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+def test_workbasket_empty_rule_check_task_id_value(client, superadmin):
+    """Test that admin change view saves workbasket rule_check_task_id as a null
+    value, rather than an empty string, avoiding duplicate value errors."""
+
+    factories.WorkBasketFactory.create(rule_check_task_id="")
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+        rule_check_task_id=None,
+    )
+    change_url = reverse(
+        "admin:workbaskets_workbasket_change",
+        args=[workbasket.id],
+    )
+    client.force_login(superadmin)
+    response = client.post(
+        change_url,
+        data={
+            "transition": "submit_for_approval",
+            "reason": workbasket.reason,
+            "title": workbasket.title,
+        },
+    )
+
+    assert response.status_code == 302
+    workbasket.refresh_from_db()
+
+    assert workbasket.rule_check_task_status == None
