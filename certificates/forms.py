@@ -54,6 +54,26 @@ class CertificateCreateBaseForm(ValidityPeriodForm):
             certificate_type=certificate_type,
         )
 
+    def next_sid(self, instance):
+        """
+        Get the next available Certificate SID.
+
+        The instance parameter can be provided from the returned value of this
+        form's save() method (with its commit param set either to True or
+        False).
+        """
+        current_transaction = WorkBasket.get_current_transaction(self.request)
+        # Filter certificate by type and find the highest sid, using regex to
+        # ignore legacy, non-numeric identifiers
+        return get_next_id(
+            models.Certificate.objects.filter(
+                sid__regex=r"^[0-9]*$",
+                certificate_type__sid=instance.certificate_type.sid,
+            ).approved_up_to_transaction(current_transaction),
+            instance._meta.get_field("sid"),
+            max_len=3,
+        )
+
     class Meta:
         model = models.Certificate
         fields = ("certificate_type", "valid_between", "sid")
@@ -91,26 +111,6 @@ class CertificateCreateForm(CertificateCreateBaseForm):
                 f"{self.cleaned_data['certificate_type']} already exists.",
             )
         return sid
-
-    def next_sid(self, instance):
-        """
-        Get the next available Certificate SID.
-
-        The instance parameter can be provided from the returned value of this
-        form's save() method (with its commit param set either to True or
-        False).
-        """
-        current_transaction = WorkBasket.get_current_transaction(self.request)
-        # Filter certificate by type and find the highest sid, using regex to
-        # ignore legacy, non-numeric identifiers
-        return get_next_id(
-            models.Certificate.objects.filter(
-                sid__regex=r"^[0-9]*$",
-                certificate_type__sid=instance.certificate_type.sid,
-            ).approved_up_to_transaction(current_transaction),
-            instance._meta.get_field("sid"),
-            max_len=3,
-        )
 
     def save(self, commit=True):
         instance = super().save(commit=False)
