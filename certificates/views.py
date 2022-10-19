@@ -134,10 +134,9 @@ class CertificateDetail(CertificateMixin, TrackedModelDetailView):
     template_name = "certificates/detail.jinja"
 
 
-class CertificateUpdate(
+class CertificateUpdateMixin(
     CertificateMixin,
     TrackedModelDetailMixin,
-    CreateTaricUpdateView,
 ):
     form_class = forms.CertificateForm
 
@@ -147,6 +146,20 @@ class CertificateUpdate(
         # business_rules.CE6,  # XXX should it be checked here?
         business_rules.CE7,
     )
+
+
+class CertificateUpdate(
+    CertificateUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class CertificateEditUpdate(
+    CertificateUpdateMixin,
+    EditTaricView,
+):
+    pass
 
 
 class CertificateConfirmUpdate(CertificateMixin, TrackedModelDetailView):
