@@ -203,6 +203,20 @@ class CertificateDescriptionCreate(
     template_name = "common/create_description.jinja"
 
 
+class CertificateDescriptionEditCreate(
+    CertificateDescriptionMixin,
+    TrackedModelDetailMixin,
+    EditTaricView,
+):
+    form_class = forms.CertificateDescriptionForm
+    template_name = "common/edit_description.jinja"
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+
 class CertificateUpdateDescription(
     CertificateDescriptionMixin,
     TrackedModelDetailMixin,
