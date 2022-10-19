@@ -65,17 +65,6 @@ class AdditionalCodeMixin:
         )
 
 
-class AdditionalCodeCreateDescriptionMixin:
-    model: Type[TrackedModel] = AdditionalCodeDescription
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["described_object"] = AdditionalCode.objects.get(
-            sid=(self.kwargs.get("sid")),
-        )
-        return context
-
-
 class AdditionalCodeList(AdditionalCodeMixin, TamatoListView):
     """UI endpoint for viewing and filtering Additional Codes."""
 
@@ -169,6 +158,17 @@ class AdditionalCodeEditUpdate(
     EditTaricView,
 ):
     pass
+
+
+class AdditionalCodeCreateDescriptionMixin:
+    model: Type[TrackedModel] = AdditionalCodeDescription
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["described_object"] = AdditionalCode.objects.get(
+            sid=(self.kwargs.get("sid")),
+        )
+        return context
 
 
 class AdditionalCodeDescriptionMixin:
