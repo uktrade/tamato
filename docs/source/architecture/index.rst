@@ -38,6 +38,8 @@ third parties via open data.
 Concepts
 --------
 
+.. _TARIC:
+
 TARIC
 ^^^^^
 
@@ -105,6 +107,53 @@ There are a number of convenience methods for finding "current" models.
 
 .. autoclass:: common.models.trackedmodel.TrackedModelQuerySet
   :members: latest_approved, approved_up_to_transaction
+
+
+Workbaskets
+^^^^^^^^^^^
+A workbasket is a way of grouping together a set of changes to the tariff, 
+specifically a set of transactions. These transactions should in turn contain one
+or more tracked models (see :class:`~common.models.trackedmodel.TrackedModel` ), 
+with one transaction corresponding to one :ref:`TARIC` object. E.g. one transaction 
+might contain three tracked models, a Measure and two components dependent on that 
+measure, such as a :class:`~measures.models.MeasureComponent`, and 
+:class:`~measures.models.FootnoteAssociationMeasure`. Empty transactions are possible, 
+though redundant. 
+
+In database relationship terms, a workbasket has a one-to-many 
+connection with a transaction, which itself has a one-to-many relationship with a 
+tracked model. The ordering of transactions in a workbasket is important because the 
+exporter generates xml by passing over each transaction sequentially (see 
+:ref:`12-ordering-of-tariff-transactions`). Business rule validation is also run in 
+order with each transaction only aware of objects in preceding transactions in the same 
+basket and transactions in an already "approved" basket. 
+
+A workbasket is a `finite state machine <https://github.com/viewflow/django-fsm>`_ and 
+a workbasket can be considered "approved" when it is in an `APPROVED`, `SENT`, or 
+`PUBLISHED` state. Other states include `ARCHIVED`, `PROPOSED`, and `ERRORED`. See below 
+for a full map of the different possible state transitions.
+
+.. image:: wb-state.svg
+
+Certain transition methods do more than just change a workbasket's status:
+
+:py:meth: ~workbaskets.models.WorkBasket.submit_for_approval
+
+Performs Django model validation, ensures the workbasket contains transactions, and checks
+that rules have been run successfully against those transactions.
+
+:py:meth: ~workbaskets.models.WorkBasket.approve
+
+Sets `approver_id` to be that of current request user, moves all transactions from DRAFT
+to REVISION status (see ~common.models.transactions.TransactionPartition), making these
+changes visible to workbaskets in an unapproved status, and calls 
+:py:meth:`~exporter.tasks.upload_workbaskets` which should generate an XML envelope and 
+upload to an S3 bucket (this functionality is broken as of 20/10/2022).
+
+:py:meth: ~workbaskets.models.WorkBasket.cds_error
+
+Unsets the `current_version` for each object in the basket, undoing the effects of `approve`
+and making objects invisible to other unapproved workbaskets.
 
 Domain Modules
 --------------
@@ -286,3 +335,7 @@ description.
 :mod:`taric`
 ^^^^^^^^^^^^
 .. automodule:: taric
+
+:mod:`workbaskets`
+^^^^^^^^^^^^^^^^^^
+.. automodule:: workbaskets
