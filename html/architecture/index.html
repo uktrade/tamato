@@ -376,28 +376,16 @@ a workbasket can be considered “approved” when it is in an <cite>APPROVED</c
 <cite>PUBLISHED</cite> state. Other states include <cite>ARCHIVED</cite>, <cite>PROPOSED</cite>, and <cite>ERRORED</cite>. See below
 for a full map of the different possible state transitions.</p>
 <img alt="../_images/wb-state.svg" src="../_images/wb-state.svg" /><p>Certain transition methods do more than just change a workbasket’s status:</p>
-<dl class="field-list simple">
-<dt class="field-odd">py:meth</dt>
-<dd class="field-odd"><p>~workbaskets.models.WorkBasket.submit_for_approval</p>
-</dd>
-</dl>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_for_approval()</span></code></p>
 <p>Performs Django model validation, ensures the workbasket contains transactions, and checks
 that rules have been run successfully against those transactions.</p>
-<dl class="field-list simple">
-<dt class="field-odd">py:meth</dt>
-<dd class="field-odd"><p>~workbaskets.models.WorkBasket.approve</p>
-</dd>
-</dl>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">approve()</span></code></p>
 <p>Sets <cite>approver_id</cite> to be that of current request user, moves all transactions from DRAFT
-to REVISION status (see ~common.models.transactions.TransactionPartition), making these
+to REVISION status (see <code class="xref py py-class docutils literal notranslate"><span class="pre">TransactionPartition</span></code>), making these
 changes visible to workbaskets in an unapproved status, and calls
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">upload_workbaskets()</span></code> which should generate an XML envelope and
 upload to an S3 bucket (this functionality is broken as of 20/10/2022).</p>
-<dl class="field-list simple">
-<dt class="field-odd">py:meth</dt>
-<dd class="field-odd"><p>~workbaskets.models.WorkBasket.cds_error</p>
-</dd>
-</dl>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">cds_error()</span></code></p>
 <p>Unsets the <cite>current_version</cite> for each object in the basket, undoing the effects of <cite>approve</cite>
 and making objects invisible to other unapproved workbaskets.</p>
 </section>
