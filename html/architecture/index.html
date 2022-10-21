@@ -108,12 +108,13 @@
 <li class="toctree-l3"><a class="reference internal" href="#taric">TARIC</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#validity-dates-as-version-control">Validity dates as version control</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#tracked-models-as-version-control">Tracked models as version control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#workbaskets">Workbaskets</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#domain-modules">Domain Modules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#module-measures"><code class="xref py py-mod docutils literal notranslate"><span class="pre">measures</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-commodities"><code class="xref py py-mod docutils literal notranslate"><span class="pre">commodities</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id1">Commodities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Commodities</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="#tp-803-commodity-tree-changes">TP-803: Commodity Tree Changes</a><ul>
 <li class="toctree-l6"><a class="reference internal" href="#issues-to-consider-when-changing-the-tree">Issues To Consider When Changing The Tree</a></li>
 <li class="toctree-l6"><a class="reference internal" href="#requirements-for-tackling-the-issues">Requirements For Tackling The Issues</a></li>
@@ -152,7 +153,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-checks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">checks</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id4"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6"><code class="xref py py-mod docutils literal notranslate"><span class="pre">workbaskets</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -177,12 +179,13 @@
 <li><a class="reference internal" href="#taric">TARIC</a></li>
 <li><a class="reference internal" href="#validity-dates-as-version-control">Validity dates as version control</a></li>
 <li><a class="reference internal" href="#tracked-models-as-version-control">Tracked models as version control</a></li>
+<li><a class="reference internal" href="#workbaskets">Workbaskets</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#domain-modules">Domain Modules</a><ul>
 <li><a class="reference internal" href="#module-measures"><code class="xref py py-mod docutils literal notranslate"><span class="pre">measures</span></code></a></li>
 <li><a class="reference internal" href="#module-commodities"><code class="xref py py-mod docutils literal notranslate"><span class="pre">commodities</span></code></a><ul>
-<li><a class="reference internal" href="#id1">Commodities</a><ul>
+<li><a class="reference internal" href="#id2">Commodities</a><ul>
 <li><a class="reference internal" href="#tp-803-commodity-tree-changes">TP-803: Commodity Tree Changes</a><ul>
 <li><a class="reference internal" href="#issues-to-consider-when-changing-the-tree">Issues To Consider When Changing The Tree</a></li>
 <li><a class="reference internal" href="#requirements-for-tackling-the-issues">Requirements For Tackling The Issues</a></li>
@@ -221,7 +224,8 @@
 <li><a class="reference internal" href="#module-exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a></li>
 <li><a class="reference internal" href="#module-checks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">checks</span></code></a></li>
 <li><a class="reference internal" href="#module-hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a></li>
-<li><a class="reference internal" href="#id4"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
+<li><a class="reference internal" href="#id5"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
+<li><a class="reference internal" href="#id6"><code class="xref py py-mod docutils literal notranslate"><span class="pre">workbaskets</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -269,7 +273,7 @@ third parties via open data.</p>
 <section id="concepts">
 <h2>Concepts<a class="headerlink" href="#concepts" title="Permalink to this headline">¶</a></h2>
 <section id="taric">
-<h3>TARIC<a class="headerlink" href="#taric" title="Permalink to this headline">¶</a></h3>
+<span id="id1"></span><h3>TARIC<a class="headerlink" href="#taric" title="Permalink to this headline">¶</a></h3>
 <p>Most UK border systems were previously designed to take customs tariff updates
 from the European Union. For this reason the tariff domain model and output
 interfaces match those still used by the EU. This standard is called TARIC
@@ -350,6 +354,53 @@ will return the objects for all tracked models.</p>
 </dd></dl>
 
 </section>
+<section id="workbaskets">
+<h3>Workbaskets<a class="headerlink" href="#workbaskets" title="Permalink to this headline">¶</a></h3>
+<p>A workbasket is a way of grouping together a set of changes to the tariff,
+specifically a set of transactions. These transactions should in turn contain one
+or more tracked models (see <a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrackedModel</span></code></a> ),
+with one transaction corresponding to one <a class="reference internal" href="#taric"><span class="std std-ref">TARIC</span></a> object. E.g. one transaction
+might contain three tracked models, a Measure and two components dependent on that
+measure, such as a <code class="xref py py-class docutils literal notranslate"><span class="pre">MeasureComponent</span></code>, and
+<code class="xref py py-class docutils literal notranslate"><span class="pre">FootnoteAssociationMeasure</span></code>. Empty transactions are possible,
+though redundant.</p>
+<p>In database relationship terms, a workbasket has a one-to-many
+connection with a transaction, which itself has a one-to-many relationship with a
+tracked model. The ordering of transactions in a workbasket is important because the
+exporter generates xml by passing over each transaction sequentially (see
+<a class="reference internal" href="../adr/0012-ordering-of-tariff-transactions.html#ordering-of-tariff-transactions"><span class="std std-ref">12. Ordering of tariff transactions</span></a>). Business rule validation is also run in
+order with each transaction only aware of objects in preceding transactions in the same
+basket and transactions in an already “approved” basket.</p>
+<p>A workbasket is a <a class="reference external" href="https://github.com/viewflow/django-fsm">finite state machine</a> and
+a workbasket can be considered “approved” when it is in an <cite>APPROVED</cite>, <cite>SENT</cite>, or
+<cite>PUBLISHED</cite> state. Other states include <cite>ARCHIVED</cite>, <cite>PROPOSED</cite>, and <cite>ERRORED</cite>. See below
+for a full map of the different possible state transitions.</p>
+<img alt="../_images/wb-state.svg" src="../_images/wb-state.svg" /><p>Certain transition methods do more than just change a workbasket’s status:</p>
+<dl class="field-list simple">
+<dt class="field-odd">py:meth</dt>
+<dd class="field-odd"><p>~workbaskets.models.WorkBasket.submit_for_approval</p>
+</dd>
+</dl>
+<p>Performs Django model validation, ensures the workbasket contains transactions, and checks
+that rules have been run successfully against those transactions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">py:meth</dt>
+<dd class="field-odd"><p>~workbaskets.models.WorkBasket.approve</p>
+</dd>
+</dl>
+<p>Sets <cite>approver_id</cite> to be that of current request user, moves all transactions from DRAFT
+to REVISION status (see ~common.models.transactions.TransactionPartition), making these
+changes visible to workbaskets in an unapproved status, and calls
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">upload_workbaskets()</span></code> which should generate an XML envelope and
+upload to an S3 bucket (this functionality is broken as of 20/10/2022).</p>
+<dl class="field-list simple">
+<dt class="field-odd">py:meth</dt>
+<dd class="field-odd"><p>~workbaskets.models.WorkBasket.cds_error</p>
+</dd>
+</dl>
+<p>Unsets the <cite>current_version</cite> for each object in the basket, undoing the effects of <cite>approve</cite>
+and making objects invisible to other unapproved workbaskets.</p>
+</section>
 </section>
 <section id="domain-modules">
 <h2>Domain Modules<a class="headerlink" href="#domain-modules" title="Permalink to this headline">¶</a></h2>
@@ -364,8 +415,8 @@ of goods must be translated into one or more measures.</p>
 </section>
 <section id="module-commodities">
 <span id="commodities"></span><h3><a class="reference internal" href="#module-commodities" title="commodities"><code class="xref py py-mod docutils literal notranslate"><span class="pre">commodities</span></code></a><a class="headerlink" href="#module-commodities" title="Permalink to this headline">¶</a></h3>
-<section id="id1">
-<h4>Commodities<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<section id="id2">
+<h4>Commodities<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <p>Commodity codes are 10-digit codes that refer to specific products. Traders must put
 these codes on their declaration forms when importing or exporting goods.</p>
 <p>Nomenclature, also known as goods classification, goods nomenclature or commodity code
@@ -699,7 +750,7 @@ description.</p>
 </section>
 <section id="module-checks">
 <span id="checks"></span><h3><a class="reference internal" href="#module-checks" title="checks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">checks</span></code></a><a class="headerlink" href="#module-checks" title="Permalink to this headline">¶</a></h3>
-<p>The <a href="#id2"><span class="problematic" id="id3">``</span></a>checks` subsystem runs background checks against models.</p>
+<p>The <a href="#id3"><span class="problematic" id="id4">``</span></a>checks` subsystem runs background checks against models.</p>
 <p>Users are able to produce models using the UI that do not pass validation of
 TARIC business rules. When they do this, they need to be informed of the issues
 so that they can go and manually correct them. Business rule checking is slow,
@@ -761,10 +812,15 @@ then notify SDES via an HTTPS API that a file is ready to be downloaded. This
 module makes available the API client library to make the call.</p>
 <p>More information about SDES is available from <a class="reference external" href="https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/secure-data-exchange-notifications/1.0">the HMRC developer hub</a>.</p>
 </section>
-<section id="id4">
-<h3><a class="reference internal" href="#module-taric" title="taric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<section id="id5">
+<h3><a class="reference internal" href="#module-taric" title="taric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <span class="target" id="module-taric"></span><p>Implements models used by the <a class="reference internal" href="#module-exporter" title="exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a> to keep track of which
 envelopes the system has generated and which transactions they contained.</p>
+</section>
+<section id="id6">
+<h3><a class="reference internal" href="#module-workbaskets" title="workbaskets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">workbaskets</span></code></a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-workbaskets"></span><p>Provides classes and models for tracking draft data and implements the
+workflow that data must go through before publication.</p>
 </section>
 </section>
 </section>
