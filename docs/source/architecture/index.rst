@@ -137,20 +137,20 @@ for a full map of the different possible state transitions.
 
 Certain transition methods do more than just change a workbasket's status:
 
-:py:meth: ~workbaskets.models.WorkBasket.submit_for_approval
+:meth:`~workbaskets.models.WorkBasket.submit_for_approval`
 
 Performs Django model validation, ensures the workbasket contains transactions, and checks
 that rules have been run successfully against those transactions.
 
-:py:meth: ~workbaskets.models.WorkBasket.approve
+:meth:`~workbaskets.models.WorkBasket.approve`
 
 Sets `approver_id` to be that of current request user, moves all transactions from DRAFT
-to REVISION status (see ~common.models.transactions.TransactionPartition), making these
+to REVISION status (see :class:`~common.models.transactions.TransactionPartition`), making these
 changes visible to workbaskets in an unapproved status, and calls 
 :py:meth:`~exporter.tasks.upload_workbaskets` which should generate an XML envelope and 
 upload to an S3 bucket (this functionality is broken as of 20/10/2022).
 
-:py:meth: ~workbaskets.models.WorkBasket.cds_error
+:meth:`~workbaskets.models.WorkBasket.cds_error`
 
 Unsets the `current_version` for each object in the basket, undoing the effects of `approve`
 and making objects invisible to other unapproved workbaskets.
