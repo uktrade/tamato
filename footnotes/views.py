@@ -155,10 +155,9 @@ class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
     template_name = "footnotes/detail.jinja"
 
 
-class FootnoteUpdate(
+class FootnoteUpdateMixin(
     FootnoteMixin,
     TrackedModelDetailMixin,
-    CreateTaricUpdateView,
 ):
     form_class = forms.FootnoteForm
 
@@ -170,6 +169,20 @@ class FootnoteUpdate(
         business_rules.FO9,
         business_rules.FO17,
     )
+
+
+class FootnoteUpdate(
+    FootnoteUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class FootnoteEditUpdate(
+    FootnoteUpdateMixin,
+    EditTaricView,
+):
+    pass
 
 
 class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
