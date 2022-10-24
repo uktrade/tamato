@@ -21,6 +21,7 @@ from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.generic import EditTaricView
 
 
 class FootnoteViewSet(viewsets.ReadOnlyModelViewSet):
@@ -119,6 +120,25 @@ class FootnoteCreate(CreateTaricCreateView):
         description.update_type = UpdateType.CREATE
         description.transaction = transaction
         description.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
+class FootnoteEditCreate(
+    FootnoteMixin,
+    TrackedModelDetailMixin,
+    EditTaricView,
+):
+    template_name = "footnotes/create.jinja"
+    form_class = forms.FootnoteEditCreateForm
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
         return HttpResponseRedirect(self.get_success_url())
 
     def get_form_kwargs(self):

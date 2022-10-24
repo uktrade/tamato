@@ -83,19 +83,16 @@ class FootnoteForm(ValidityPeriodForm):
         fields = ("footnote_type", "valid_between")
 
 
-class FootnoteCreateForm(ValidityPeriodForm):
+class FootnoteCreateBaseForm(ValidityPeriodForm):
 
     footnote_type = forms.ModelChoiceField(
         label="Footnote type",
-        help_text="Selecting the right footnote type will determine whether it can be associated with measures, commodity codes, or both",
+        help_text=(
+            "Selecting the right footnote type will determine whether it can "
+            "be associated with measures, commodity codes, or both."
+        ),
         queryset=models.FootnoteType.objects.latest_approved(),
         empty_label="Select a footnote type",
-    )
-
-    description = forms.CharField(
-        label="Footnote description",
-        help_text="You may enter HTML formatting if required. See the guide below for more information.",
-        widget=forms.Textarea,
     )
 
     def __init__(self, *args, **kwargs):
@@ -111,6 +108,48 @@ class FootnoteCreateForm(ValidityPeriodForm):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
+
+    def next_sid(self, instance):
+        """
+        Get the next available Footnote SID for this Footnote type.
+
+        The instance parameter can be provided from the returned value of this
+        form's save() method (with its commit param set either to True or
+        False).
+        """
+        print(f"*** next_sid() - self.request = {self.request}")
+        workbasket = WorkBasket.current(self.request)
+        tx = None
+        if workbasket:
+            tx = workbasket.transactions.order_by("order").last()
+
+        return get_next_id(
+            models.Footnote.objects.filter(
+                footnote_type__footnote_type_id=instance.footnote_type.footnote_type_id,
+            ).approved_up_to_transaction(tx),
+            instance._meta.get_field("footnote_id"),
+            max_len=3,
+        )
+
+    class Meta:
+        model = models.Footnote
+        fields = ("footnote_type", "valid_between")
+
+
+class FootnoteCreateForm(FootnoteCreateBaseForm):
+
+    description = forms.CharField(
+        label="Footnote description",
+        help_text=(
+            "You may enter HTML formatting if required. See the guide below "
+            "for more information."
+        ),
+        widget=forms.Textarea,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self.helper.layout = Layout(
             "footnote_type",
             "start_date",
@@ -134,31 +173,38 @@ class FootnoteCreateForm(ValidityPeriodForm):
             description=cleaned_data["description"],
             validity_start=cleaned_data["valid_between"].lower,
         )
-
         return cleaned_data
 
     def save(self, commit=True):
-        instance = super(FootnoteCreateForm, self).save(commit=False)
-
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
-
-        instance.footnote_id = get_next_id(
-            models.Footnote.objects.filter(
-                footnote_type__footnote_type_id=instance.footnote_type.footnote_type_id,
-            ).approved_up_to_transaction(tx),
-            instance._meta.get_field("footnote_id"),
-            max_len=3,
-        )
+        instance = super().save(commit=False)
+        instance.footnote_id = self.next_sid(instance)
         if commit:
             instance.save()
         return instance
 
-    class Meta:
-        model = models.Footnote
-        fields = ("footnote_type", "valid_between")
+
+class FootnoteEditCreateForm(FootnoteCreateBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper.layout = Layout(
+            "footnote_type",
+            "start_date",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if "footnote_type" in self.changed_data:
+            instance.footnote_id = self.next_sid(instance)
+        if commit:
+            instance.save()
+        return instance
 
 
 class FootnoteDescriptionForm(DescriptionForm):
