@@ -239,6 +239,20 @@ class FootnoteDescriptionConfirmCreate(
     template_name = "common/confirm_create_description.jinja"
 
 
+class FootnoteDescriptionEditCreate(
+    FootnoteDescriptionMixin,
+    TrackedModelDetailMixin,
+    EditTaricView,
+):
+    form_class = forms.FootnoteDescriptionForm
+    template_name = "common/edit_description.jinja"
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+
 class FootnoteDescriptionConfirmUpdate(
     FootnoteDescriptionMixin,
     TrackedModelDetailView,
