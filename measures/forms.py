@@ -30,6 +30,7 @@ from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.validators import AreaCode
+from measures import constants
 from measures import models
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
@@ -1041,16 +1042,9 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         return cleaned_data
 
 
-MeasureCommodityAndDutiesFormSet = formset_factory(
-    MeasureCommodityAndDutiesForm,
-    prefix="measure_commodities_duties_formset",
-    formset=FormSet,
-    min_num=1,
-    max_num=100,
-    extra=1,
-    validate_min=True,
-    validate_max=True,
-)
+class MeasureCommodityAndDutiesFormSet(FormSet):
+    form = MeasureCommodityAndDutiesForm
+    prefix = "measure_commodities_duties_formset"
 
 
 class MeasureFootnotesForm(forms.Form):
@@ -1110,3 +1104,40 @@ class MeasureReviewForm(forms.Form):
 
 
 MeasureDeleteForm = delete_form_for(models.Measure)
+
+
+class MeasuresEditStartForm(forms.Form):
+    choices = [
+        (constants.MEASURE_DETAILS, "Validity dates and measure type"),
+        (constants.REGULATION_ID, "Regulation"),
+        (constants.QUOTA_ORDER_NUMBER, "Quotas"),
+        (constants.GEOGRAPHICAL_AREA, "Geographies"),
+        (constants.COMMODITIES, "Commodity code"),
+        (constants.ADDITIONAL_CODE, "Additional codes"),
+        (constants.CONDITIONS, "Conditions"),
+        (constants.FOOTNOTES, "Footnotes"),
+    ]
+    fields_to_edit = forms.MultipleChoiceField(
+        choices=choices,
+        widget=forms.CheckboxSelectMultiple,
+        label="",
+        help_text="Select all that apply",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "fields_to_edit",
+            ),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )

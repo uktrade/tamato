@@ -21,6 +21,7 @@ AdditionalCode
 MeasurementUnit
 rotate(180deg
 model&d
+Geographies
 sort_by(sort_by
 MonetaryUnit
 check_name&d
