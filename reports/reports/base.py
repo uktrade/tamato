@@ -1,5 +1,6 @@
 from abc import ABC
-from re import sub
+
+from django.utils.text import slugify
 
 
 class ReportBase(ABC):
@@ -12,13 +13,6 @@ class ReportBase(ABC):
 
     @classmethod
     def slug(cls):
-        result = cls.name
-        result = result.replace("\n", " ").replace("\r", " ")
-        result = "_".join(
-            sub(
-                "([A-Z][a-z]+)",
-                r" \1",
-                sub("([A-Z]+)", r" \1", result.replace("-", " ")),
-            ).split(),
-        ).lower()
+        result = slugify(cls.name).replace("-", "_")
+        result = result.replace("__", "_")
         return result
