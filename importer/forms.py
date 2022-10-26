@@ -64,7 +64,7 @@ class ImportForm(forms.ModelForm):
                 capture_exception(e)
             raise ValidationError(generic_error_message)
 
-        with open(settings.PATH_XSD_COMMODITIES_TARIC) as xsd_file:
+        with open(self.xsd_file) as xsd_file:
             xmlschema = lxml.etree.XMLSchema(file=xsd_file)
 
         try:
@@ -93,6 +93,7 @@ class UploadTaricForm(ImportForm):
         required=False,
         initial=False,
     )
+    xsd_file = settings.PATH_XSD_TARIC
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

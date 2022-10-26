@@ -577,7 +577,7 @@
     </xs:simpleType>
     <xs:simpleType name="ShortDescription">
         <xs:restriction base="xs:string">
-            <xs:maxLength value="500"/>
+            <xs:maxLength value="1000"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="StoppedFlag">
