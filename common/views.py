@@ -1,11 +1,13 @@
 """Common views."""
 import time
+from datetime import datetime
 from typing import Optional
 from typing import Tuple
 from typing import Type
 
 import django.contrib.auth.views
 from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.cache import cache
@@ -19,8 +21,10 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.timezone import make_aware
 from django.views import generic
 from django.views.generic import FormView
+from django.views.generic import TemplateView
 from django.views.generic.base import View
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
@@ -29,6 +33,7 @@ from redis.exceptions import TimeoutError as RedisTimeoutError
 from common import forms
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
+from common.celery import app
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
@@ -95,6 +100,50 @@ def healthcheck(request):
         return response.fail("Redis missing")
 
     return response
+
+
+class AppInfoView(
+    LoginRequiredMixin,
+    TemplateView,
+):
+    template_name = "common/app_info.jinja"
+
+    def active_checks(self):
+        results = []
+        inspect = app.control.inspect()
+
+        if not inspect:
+            return results
+
+        active_tasks = inspect.active()
+        if not active_tasks:
+            return results
+
+        for _, task_info_list in active_tasks.items():
+            for task_info in task_info_list:
+                if (
+                    task_info.get("name")
+                    == "workbaskets.tasks.call_check_workbasket_sync"
+                ):
+                    date_time_start = make_aware(
+                        datetime.fromtimestamp(
+                            task_info.get("time_start"),
+                        ),
+                    ).strftime("%Y-%m-%d, %H:%M:%S")
+                    results.append(
+                        {
+                            "task_id": task_info.get("id"),
+                            "workbasket_id": task_info.get("args", [""])[0],
+                            "date_time_start": date_time_start,
+                        },
+                    )
+
+        return results
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data["active_checks"] = self.active_checks()
+        return data
 
 
 class LoginView(django.contrib.auth.views.LoginView):
