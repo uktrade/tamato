@@ -6,6 +6,7 @@ from typing import Tuple
 from typing import Type
 
 import django.contrib.auth.views
+import kombu.exceptions
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -111,7 +112,6 @@ class AppInfoView(
     def active_checks(self):
         results = []
         inspect = app.control.inspect()
-
         if not inspect:
             return results
 
@@ -142,7 +142,12 @@ class AppInfoView(
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
-        data["active_checks"] = self.active_checks()
+        try:
+            data["active_checks"] = self.active_checks()
+            data["celery_healthy"] = True
+        except kombu.exceptions.OperationalError as oe:
+            data["celery_healthy"] = False
+
         return data
 
 
