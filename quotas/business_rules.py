@@ -62,6 +62,19 @@ class ON2(BusinessRule):
             raise self.violation(order_number)
 
 
+class ON4(BusinessRule):
+    """The referenced geographical area must exist."""
+
+    def validate(self, order_number):
+        if (
+            order_number.origins.approved_up_to_transaction(
+                order_number.transaction,
+            ).count()
+            == 0
+        ):
+            raise self.violation(order_number)
+
+
 class ON5(BusinessRule):
     """There may be no overlap in time of two quota order number origins with
     the same quota order number SID and geographical area id."""
