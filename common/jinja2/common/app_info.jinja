@@ -37,21 +37,30 @@
   ] %}
   {% set table_rows = [] %}
 
-  {% if active_checks %}
-    {% for check in active_checks %}
+  {% if celery_healthy %}
+    {% if active_checks %}
+      {% for check in active_checks %}
+        {{ table_rows.append([
+            {"text": check.workbasket_id},
+            {"text": check.date_time_start},
+            {"text": check.task_id},
+        ]) or "" }}
+      {% endfor %}
+    {% else %}
       {{ table_rows.append([
-          {"text": check.workbasket_id},
-          {"text": check.date_time_start},
-          {"text": check.task_id},
+        {
+          "text": "No active checks.",
+          "colspan": 3,
+        }
       ]) or "" }}
-    {% endfor %}
+    {% endif %}
   {% else %}
-    {{ table_rows.append([
-      {
-        "text": "No active checks",
-        "colspan": 3,
-      }
-    ]) or "" }}
+      {{ table_rows.append([
+        {
+          "text": "Business rule check details are currently unavailable.",
+          "colspan": 3,
+        }
+      ]) or "" }}
   {% endif %}
 
   {{ govukTable({
