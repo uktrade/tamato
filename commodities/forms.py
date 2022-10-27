@@ -8,6 +8,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
 
@@ -35,6 +36,7 @@ class CommodityImportForm(ImportForm):
         help_text="",
         label="Select an XML file",
     )
+    xsd_file = settings.PATH_XSD_COMMODITIES_TARIC
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

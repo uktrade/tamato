@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope id="22001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+	<env:transaction id="392602">
+		<env:app.message id="1">
+			<oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+				<oub:record>
+                    <oub:transaction.id>19802301</oub:transaction.id>
+                    <oub:record.code>370</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>450</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+					<oub:quota.definition>
+                        <oub:quota.definition.sid>21830</oub:quota.definition.sid>
+                        <oub:quota.order.number.id>091528</oub:quota.order.number.id>
+                        <oub:validity.start.date>2023-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2023-12-31</oub:validity.end.date>
+                        <oub:quota.order.number.sid>2554</oub:quota.order.number.sid>
+                        <oub:volume>2550000</oub:volume>
+                        <oub:initial.volume>2550000</oub:initial.volume>
+                        <oub:measurement.unit.code>LTR</oub:measurement.unit.code>
+                        <oub:maximum.precision>3</oub:maximum.precision>
+                        <oub:critical.state>N</oub:critical.state>
+                        <oub:critical.threshold>90</oub:critical.threshold>
+                        <oub:description>Commission Implementation Regulation (EU) No 343/2011 - Opening and providing for the administration of Union tariff quotas for wines originating in Bosnia and Herzegovina
+                            L 96/12 of 9/04/2011
+                            Increase of volumes with COMMISSION IMPLEMENTING REGULATION (EU) 2017/822 of 15 May 2017 amending Implementing Regulation (EU) No 343/2011 opening and providing for the administration of Union tariff quotas for wines originating in Bosnia and Herzegovina (see OJ L 123/1)</oub:description>
+                    </oub:quota.definition>
+				</oub:record>
+			</oub:transmission>
+		</env:app.message>
+	</env:transaction>
+</env:envelope>
