@@ -30,8 +30,14 @@
     Active business rule checks
   </h2>
 
+  {% set table_head = [
+      {"text": "Workbasket ID"},
+      {"text": "Time started"},
+      {"text": "Celery task ID"},
+  ] %}
+  {% set table_rows = [] %}
+
   {% if active_checks %}
-    {% set table_rows = [] %}
     {% for check in active_checks %}
       {{ table_rows.append([
           {"text": check.workbasket_id},
@@ -39,16 +45,18 @@
           {"text": check.task_id},
       ]) or "" }}
     {% endfor %}
-    {{ govukTable({
-        "head": [
-            {"text": "Workbasket ID"},
-            {"text": "Time started"},
-            {"text": "Celery task ID"},
-        ],
-        "rows": table_rows
-    }) }}
   {% else %}
-    No active checks
+    {{ table_rows.append([
+      {
+        "text": "No active checks",
+        "colspan": 3,
+      }
+    ]) or "" }}
   {% endif %}
+
+  {{ govukTable({
+      "head": table_head,
+      "rows": table_rows
+  }) }}
 
 {% endblock %}
