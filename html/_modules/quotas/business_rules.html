@@ -191,6 +191,19 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">order_number</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="ON4"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.ON4">[docs]</a><span class="k">class</span> <span class="nc">ON4</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The referenced geographical area must exist.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ON4.validate"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.ON4.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_number</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">order_number</span><span class="o">.</span><span class="n">origins</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+                <span class="n">order_number</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">order_number</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="ON5"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.ON5">[docs]</a><span class="k">class</span> <span class="nc">ON5</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;There may be no overlap in time of two quota order number origins with</span>
 <span class="sd">    the same quota order number SID and geographical area id.&quot;&quot;&quot;</span>

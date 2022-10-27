@@ -586,6 +586,20 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="MustExistNotNull"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExistNotNull">[docs]</a><span class="k">class</span> <span class="nc">MustExistNotNull</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Rule enforcing a referenced record exists, Null values raise</span>
+<span class="sd">    violation.&quot;&quot;&quot;</span>
+
+    <span class="n">reference_field_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="MustExistNotNull.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExistNotNull.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_field_name</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="ValidityStartDateRules"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityStartDateRules">[docs]</a><span class="k">class</span> <span class="nc">ValidityStartDateRules</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Repeated rule pattern for descriptions.&quot;&quot;&quot;</span>
 
