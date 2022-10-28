@@ -62,3 +62,12 @@ def test_healthcheck_response(response, status_code, status):
     assert payload[0].tag == "status"
     assert payload[0].text == status
     assert payload[1].tag == "response_time"
+
+
+def test_app_info(valid_user_client):
+    response = valid_user_client.get(reverse("app-info"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert "Active business rule checks" in page.select("h2")[0].text
