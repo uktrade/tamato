@@ -5,6 +5,8 @@ from reports.reports.base import ReportBase
 from reports.reports.base_chart import ReportBaseChart
 from reports.reports.base_table import ReportBaseTable
 from reports.reports.base_text import ReportBaseText
+from reports.reports.blank_goods_nomenclature_descriptions import Report
+from reports.reports.index import IndexTable
 
 
 class TestBaseReport:
@@ -121,3 +123,27 @@ class TestBaseReportChildClasses:
         target = SlugTestReport()
 
         assert target.slug() == slug
+
+
+class TestIndex:
+    def test_index_table_headers(self):
+        target = IndexTable()
+
+        assert len(target.headers()) == 2
+        assert target.headers()[0]["text"] == "Name"
+        assert target.headers()[1]["text"] == "Link"
+
+    def test_index_table_rows(self):
+        target = IndexTable()
+
+        rows = target.rows()
+
+        assert len(rows) > 0
+
+    def test_index_table_row(self):
+        target = IndexTable()
+
+        row = target.row(Report)
+
+        assert row[0]["text"] == "Blank Goods Nomenclature descriptions"
+        assert row[1]["html"] == f'<a href="/reports/{Report.slug()}">View Report</a>'

@@ -3,8 +3,10 @@ from django.urls import path
 import reports.utils as utils
 from reports import views
 
+app_name = "reports"
+
 urlpatterns = [
-    path("reports/", views.index, name="reportsindex"),
+    path("reports/", views.index, name="index"),
 ]
 
 for report in utils.get_reports():

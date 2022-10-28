@@ -1248,6 +1248,8 @@ Blank Goods Nomenclature
 ReportsConfig
 Email
 Postcode
+View Reports
+View Report
 f"empty
 Exit
 meth:`~workbaskets.models

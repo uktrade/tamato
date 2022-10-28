@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
 
 import reports.reports.index as index_model
@@ -6,6 +7,7 @@ import reports.reports.index as index_model
 import reports.utils as utils
 
 
+@permission_required("app.view_report_index")
 def index(request):
 
     context = {
@@ -15,6 +17,7 @@ def index(request):
     return render(request, "reports/index.jinja", context)
 
 
+@permission_required("app.view_report")
 def report(request):
 
     # find the report based on the request
