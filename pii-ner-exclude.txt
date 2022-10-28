@@ -1246,3 +1246,5 @@ Blank Goods Nomenclature
 ReportsConfig
 Email
 Postcode
+View Reports
+View Report
