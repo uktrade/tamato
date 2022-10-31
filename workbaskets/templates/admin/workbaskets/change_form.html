@@ -6,6 +6,7 @@
 {% block submit_buttons_bottom %}
     {{ block.super }}
 
+    {% if original.status == 'EDITING' or original.status == 'ARCHIVED' %}
     <div class="submit-row">
         <span>
             {{ original.tracked_models.count }}
@@ -22,4 +23,5 @@
             {% if not original.tracked_models.count and not original.transactions.count %}disabled{% endif %}
         >
     </div>
+    {% endif %}
 {% endblock %}

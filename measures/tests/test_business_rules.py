@@ -286,6 +286,22 @@ def test_ME6(reference_nonexistent_record):
             business_rules.ME6(measure.transaction).validate(measure)
 
 
+def test_ME6_happy(reference_nonexistent_record):
+    measure = factories.MeasureFactory.create()
+
+    assert business_rules.ME6(measure.transaction).validate(measure) is None
+
+
+def test_ME6_null_goods(reference_nonexistent_record):
+    measure = factories.MeasureFactory.create(
+        goods_nomenclature__suffix="00",
+        goods_nomenclature=None,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ME6(measure.transaction).validate(measure)
+
+
 def test_ME7():
     """The goods nomenclature code must be a product code; that is, it may not
     be an intermediate line."""

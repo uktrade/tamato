@@ -125,6 +125,29 @@ class TaricDateRange(DateRange):
             bounds = "[)"
         super().__init__(lower, upper, bounds, empty)
 
+    def overlaps(self, compared_date_range: TaricDateRange):
+
+        if self.upper_inf:
+            if compared_date_range.upper_inf:
+                # will overlap regardless
+                return True
+            elif compared_date_range.upper >= self.lower:
+                return True
+        else:
+            if compared_date_range.upper_inf:
+                if compared_date_range.lower <= self.upper:
+                    return True
+            else:
+                # here nether have inf
+                if self.lower <= compared_date_range.lower <= self.upper:
+                    # overlap at lower end
+                    return True
+                elif self.lower <= compared_date_range.upper <= self.upper:
+                    # overlap at upper end
+                    return True
+
+        return False
+
     def upper_is_greater(self, compared_date_range: TaricDateRange) -> bool:
         """
         Checks whether this date range ends after the specified date range.
@@ -137,6 +160,28 @@ class TaricDateRange(DateRange):
         return (
             None not in {self.upper, compared_date_range.upper}
         ) and self.upper > compared_date_range.upper
+
+    @staticmethod
+    def merge_ranges(first_range: TaricDateRange, second_range: TaricDateRange):
+        result = first_range
+
+        if second_range.overlaps(first_range):
+            # get lowest lower
+            if second_range.lower < first_range.lower:
+                result = TaricDateRange(second_range.lower, first_range.upper)
+
+            # get highest upper
+            if first_range.upper is not None:
+                if second_range.upper is None:
+                    result = TaricDateRange(first_range.lower, None)
+                elif second_range.upper > first_range.upper:
+                    result = TaricDateRange(first_range.lower, second_range.upper)
+        else:
+            raise Exception(
+                "TaricDateRange Merge not possible for non overlapping ranges",
+            )
+
+        return result
 
 
 # XXX keep for migrations
