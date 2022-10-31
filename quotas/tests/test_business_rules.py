@@ -54,6 +54,26 @@ def test_ON2(date_ranges, existing_range, new_range, ranges_overlap):
         business_rules.ON2(order_number.transaction).validate(order_number)
 
 
+def test_ON4_pass(date_ranges, approved_transaction, unapproved_transaction):
+    order_number = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.normal,
+        transaction=unapproved_transaction,
+    )
+
+    assert business_rules.ON4(order_number.transaction).validate(order_number) is None
+
+
+def test_ON4_fail(date_ranges, approved_transaction, unapproved_transaction):
+    order_number = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.normal,
+        transaction=approved_transaction,
+        origin=None,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ON4(order_number.transaction).validate(order_number)
+
+
 def test_ON5(date_ranges, approved_transaction, unapproved_transaction):
     """There may be no overlap in time of two quota order number origins with
     the same quota order number SID and geographical area id."""

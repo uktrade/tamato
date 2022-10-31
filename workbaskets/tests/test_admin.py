@@ -8,6 +8,7 @@ from django.test.html import parse_html
 from django.urls import reverse
 
 from common.tests import factories
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -113,3 +114,62 @@ def test_change_workbasket_status(upload, client, superadmin, workbasket, transi
     else:
         # transition field is ignored
         pass
+
+
+@pytest.mark.skip(reason="Requires approach to testing Celery task management.")
+def test_terminate_workbasket_rule_check(client, superadmin):
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    workbasket.rule_check_task_id = "aa97eb5a-0bb9-411f-995d-6724e326e9f7"
+
+    change_url = reverse(
+        "admin:workbaskets_workbasket_change",
+        args=[workbasket.id],
+    )
+    # TODO: mock celery.result.AsyncResult
+    client.force_login(superadmin)
+    response = client.post(
+        change_url,
+        data={
+            "transition": "",
+            "reason": workbasket.reason,
+            "title": workbasket.title,
+            "terminate_rule_check": "on",
+        },
+    )
+
+    assert response.status_code == 302
+    workbasket.refresh_from_db()
+    assert not workbasket.rule_check_task_id
+
+
+# https://uktrade.atlassian.net/browse/TP2000-556
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+def test_workbasket_empty_rule_check_task_id_value(client, superadmin):
+    """Test that admin change view saves workbasket rule_check_task_id as a null
+    value, rather than an empty string, avoiding duplicate value errors."""
+
+    factories.WorkBasketFactory.create(rule_check_task_id="")
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+        rule_check_task_id=None,
+    )
+    change_url = reverse(
+        "admin:workbaskets_workbasket_change",
+        args=[workbasket.id],
+    )
+    client.force_login(superadmin)
+    response = client.post(
+        change_url,
+        data={
+            "transition": "submit_for_approval",
+            "reason": workbasket.reason,
+            "title": workbasket.title,
+        },
+    )
+
+    assert response.status_code == 302
+    workbasket.refresh_from_db()
+
+    assert workbasket.rule_check_task_status == None

@@ -1,6 +1,7 @@
 {% extends "layouts/layout.jinja" %}
 
 {% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
 
 {% set page_title = "Remove tariff changes" %}
 
@@ -22,9 +23,16 @@
       "classes": "govuk-!-margin-bottom-7"
     }) }}
 
-    <p class="govuk-body">
+    {% if request.session.workbasket %}
+    {{ govukButton({
+      "text": "Go to your tariff changes",
+      "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]),
+      "classes": "govuk-button--secondary"
+    }) }}
+    {% endif %}
+    <ul class="govuk-list govuk-list-spaced">
       {% include "includes/common/main-menu-link.jinja" %}
-    </p>
+    </ul>
   </div>
 </div>
 {% endblock %}

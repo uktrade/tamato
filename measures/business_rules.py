@@ -11,6 +11,7 @@ from common.business_rules import BusinessRule
 from common.business_rules import ExclusionMembership
 from common.business_rules import FootnoteApplicability
 from common.business_rules import MustExist
+from common.business_rules import MustExistNotNull
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
@@ -158,7 +159,7 @@ class ME5(ValidityPeriodContained):
     container_field_name = "geographical_area"
 
 
-class ME6(MustExist):
+class ME6(MustExistNotNull):
     """The goods code must exist."""
 
     reference_field_name = "goods_nomenclature"
