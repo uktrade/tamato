@@ -91,6 +91,7 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
     business_rules = (
         business_rules.NIG1,
         business_rules.NIG5,
+        business_rules.NIG11,
         business_rules.NIG12,
         business_rules.NIG30,
         business_rules.NIG31,
