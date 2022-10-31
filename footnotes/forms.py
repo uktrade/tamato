@@ -84,6 +84,9 @@ class FootnoteForm(ValidityPeriodForm):
 
 
 class FootnoteCreateBaseForm(ValidityPeriodForm):
+    class Meta:
+        model = models.Footnote
+        fields = ("footnote_type", "valid_between")
 
     footnote_type = forms.ModelChoiceField(
         label="Footnote type",
@@ -130,10 +133,6 @@ class FootnoteCreateBaseForm(ValidityPeriodForm):
             instance._meta.get_field("footnote_id"),
             max_len=3,
         )
-
-    class Meta:
-        model = models.Footnote
-        fields = ("footnote_type", "valid_between")
 
 
 class FootnoteCreateForm(FootnoteCreateBaseForm):
