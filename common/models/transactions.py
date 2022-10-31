@@ -64,6 +64,10 @@ class TransactionsAlreadyApproved(Exception):
     pass
 
 
+class TransactionsAlreadyInDraft(Exception):
+    pass
+
+
 class TransactionQueryset(models.QuerySet):
     @property
     def tracked_models(self):
@@ -77,6 +81,11 @@ class TransactionQueryset(models.QuerySet):
         """Currently approved Transactions are SEED_FILE and REVISION this can
         be."""
         return self.filter(
+            partition__lte=TransactionPartition.get_highest_approved_partition(),
+        )
+
+    def unapproved(self):
+        return self.exclude(
             partition__lte=TransactionPartition.get_highest_approved_partition(),
         )
 
@@ -137,6 +146,9 @@ class TransactionQueryset(models.QuerySet):
 
         self.model.objects.bulk_update(transactions, ["partition", "order"])
 
+    def check_transaction_queryset():
+        pass
+
     @atomic
     def save_drafts(self, partition_scheme):
         """
@@ -174,6 +186,48 @@ class TransactionQueryset(models.QuerySet):
             version_group.save()
 
         self.move_to_end_of_partition(approved_partition)
+
+    def revert_current_version(self):
+        """Set current_version to previous version or None on contained tracked
+        model version groups."""
+        for obj in self.tracked_models.order_by("-pk").select_related("version_group"):
+            version_group = obj.version_group
+            versions = (
+                version_group.versions.has_approved_state()
+                .order_by("-pk")
+                .exclude(pk=obj.pk)
+            )
+            if versions.count() == 0:
+                version_group.current_version = None
+            else:
+                version_group.current_version = versions.first()
+            version_group.save()
+
+    @atomic
+    def move_to_draft(self):
+        """
+        Save SEED_FILE or REVISION transactions as DRAFT.
+
+        Set current_version to previous version or None on contained tracked
+        model version groups.
+        """
+        if self.unapproved().exists():
+            pks = self.values_list("pk")
+            msg = f"One or more Transactions was already in the DRAFT partition: {pks}"
+            logger.error(msg)
+            raise TransactionsAlreadyInDraft(msg)
+
+        if self.first() is None:
+            logger.info("Queryset contains no transactions, bailing out early.")
+            return
+
+        logger.debug("Update versions_group.")
+
+        self.revert_current_version()
+
+        logger.info("Save with DRAFT partition scheme")
+
+        self.move_to_end_of_partition(TransactionPartition.DRAFT)
 
 
 class Transaction(TimestampedMixin):

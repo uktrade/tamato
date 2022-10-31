@@ -11,6 +11,7 @@ from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
+from common.models.transactions import TransactionsAlreadyInDraft
 from common.models.utils import LazyString
 from common.models.utils import override_current_transaction
 from common.tests import factories
@@ -530,6 +531,42 @@ def test_save_drafts_transaction_updates(unordered_transactions):
         == unordered_transactions.new_transaction.order
     )
     assert_transaction_order(Transaction.objects.all())
+
+
+def test_move_to_draft_unapproved_transactions(unapproved_transaction):
+    with pytest.raises(TransactionsAlreadyInDraft) as exception:
+        unapproved_transaction.workbasket.transactions.move_to_draft()
+
+    pks = unapproved_transaction.workbasket.transactions.values_list("pk")
+
+    assert (
+        exception.value.args[0]
+        == f"One or more Transactions was already in the DRAFT partition: {pks}"
+    )
+
+
+def test_move_to_draft_no_transactions():
+    pass
+
+
+def test_move_to_draft():
+    pass
+
+
+def test_revert_current_version(approved_workbasket):
+    original_version = factories.TestModel1Factory.create(
+        transaction__workbasket=approved_workbasket,
+    )
+    other_workbasket = factories.ApprovedWorkBasketFactory.create()
+    new_version = original_version.new_version(other_workbasket)
+
+    # sanity check
+    assert new_version.version_group.current_version == new_version
+
+    new_version.transaction.workbasket.transactions.revert_current_version()
+    new_version.refresh_from_db()
+
+    assert new_version.version_group.current_version == original_version
 
 
 def test_structure_description(trackedmodel_factory):
