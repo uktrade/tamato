@@ -40,14 +40,17 @@ class Report(ReportBaseTable):
         return table_rows
 
     def query(self):
-        return Certificate.objects.latest_approved().filter(
-            Q(
-                valid_between__startswith__lte=datetime.date.today(),
-                valid_between__endswith__gte=datetime.date.today(),
+        return (
+            Certificate.objects.latest_approved()
+            .filter(
+                Q(
+                    valid_between__startswith__lte=datetime.date.today(),
+                    valid_between__endswith__gte=datetime.date.today(),
+                )
+                | Q(
+                    valid_between__startswith__lte=datetime.date.today(),
+                    valid_between__endswith=None,
+                ),
             )
-            | Q(
-                valid_between__startswith__lte=datetime.date.today(),
-                valid_between__endswith=None,
-            ),
+            .order_by("certificate_type__sid", "sid")
         )
-        # return Certificate.objects.latest_approved().all()
