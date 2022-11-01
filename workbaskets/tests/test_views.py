@@ -113,6 +113,7 @@ def test_submit_workbasket(
     mock_upload.delay.assert_called_once_with()
 
 
+@pytest.mark.skip("Retired since it tests single universal workbasket management.")
 @pytest.mark.parametrize(
     ("other_statuses", "should_reuse"),
     (
