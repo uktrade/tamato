@@ -77,19 +77,9 @@ UK_ID_PREFIXES = "".join([ru for ru in RegulationUsage.values if ru is not None]
 #     split regulations logically although they have been published as one piece of
 #     legislation (for instance, for supporting different validity periods within the
 #     one regulation)
-TARIC_ID = (
-    r"([CRDAIJ])"  # regulation usage.
-    r"(\d{2})"  # publication year.
-    r"(\d{4})"  # regulation sequence number.
-    r"([0-9A-Z])"  # suffix.
-)
-UK_ID = (
-    rf"([{UK_ID_PREFIXES}])"  # regulation usage.
-    r"(\d{2})"  # publication year.
-    r"(\d{4})"  # regulation sequence number.
-    r"([0-9A-Z])"  # suffix.
-)
-NATIONAL_ID = r"([ZV])" r"(\d{4})" r"([A-Z]{3})"
+TARIC_ID = r"[CRDAIJ]\d{2}\d{4}[0-9A-Z]"
+UK_ID = rf"[{UK_ID_PREFIXES}]" + r"\d{2}\d{4}[0-9A-Z]"
+NATIONAL_ID = r"[ZV]\d{4}[A-Z]{3}"
 DUMMY_ID = r"IYY\d{5}"
 REGULATION_ID_REGEX = rf"({TARIC_ID}|{UK_ID}|{NATIONAL_ID}|{DUMMY_ID})"
 regulation_id_validator = RegexValidator(rf"^{REGULATION_ID_REGEX}$")
