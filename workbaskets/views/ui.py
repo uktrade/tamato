@@ -339,7 +339,7 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
 
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
-        if form_action in ("remove-selected"):
+        if form_action == "remove-selected":
             return reverse(
                 self.action_success_url_names[form_action],
                 kwargs={"pk": self.workbasket.pk},
