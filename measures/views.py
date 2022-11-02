@@ -186,9 +186,9 @@ class MeasuresEditWizard(
         (constants.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
         (constants.GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
         (constants.COMMODITIES, forms.MeasureCommodityForm),
-        (constants.DUTIES, forms.MeasureDutiesForm),
+        (constants.DUTIES, forms.MeasureDutiesMultipleEditForm),
         (constants.ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
-        (constants.CONDITIONS, forms.MeasureConditionsEditWizardStepFormSet),
+        (constants.CONDITIONS, forms.MeasureConditionsMultipleEditForm),
         (constants.FOOTNOTES, forms.MeasureFootnotesFormSet),
         (constants.SUMMARY, forms.MeasureReviewForm),
     ]

@@ -408,7 +408,6 @@ class MeasureConditionsFormSet(FormSet):
 
 
 class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
-    # override methods that use form kwargs
     def __init__(self, *args, **kwargs):
         self.measure_start_date = kwargs.pop("measure_start_date")
         super().__init__(*args, **kwargs)
@@ -443,21 +442,19 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         return self.conditions_clean(cleaned_data, self.measure_start_date)
 
 
-class MeasureConditionsEditWizardStepForm(MeasureConditionsFormMixin):
+class MeasureConditionsMultipleEditForm(MeasureConditionsFormMixin):
+    """
+    Used in the MeasuresEditWizard.
 
-    # override methods that use form kwargs
+    Like MeasureConditionsWizardStepForm but has validation for multiple
+    measures with different validity periods.
+    """
+
     def __init__(self, *args, **kwargs):
         self.measure_start_dates = kwargs.pop("measure_start_dates")
         super().__init__(*args, **kwargs)
 
     def clean_applicable_duty(self):
-        """
-        Gets applicable_duty from cleaned data.
-
-        We expect `measure_start_dates` to be passed in. Uses
-        `DutySentenceParser` to check that applicable_duty is a valid duty
-        string.
-        """
         applicable_duty = self.cleaned_data["applicable_duty"]
 
         if applicable_duty and self.measure_start_dates is not None:
@@ -467,15 +464,6 @@ class MeasureConditionsEditWizardStepForm(MeasureConditionsFormMixin):
         return applicable_duty
 
     def clean(self):
-        """
-        We get the reference_price from cleaned_data and the measure_start_dates
-        from form kwargs.
-
-        If reference_price is provided, we use DutySentenceParser with
-        measure_start_dates to check that we are dealing with a simple duty
-        (i.e. only one component). We then update cleaned_data with key-value
-        pairs created from this single, unsaved component.
-        """
         cleaned_data = super().clean()
 
         return self.conditions_clean(cleaned_data, self.measure_start_dates)
@@ -1111,7 +1099,13 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         return cleaned_data
 
 
-class MeasureDutiesForm(forms.Form):
+class MeasureDutiesMultipleEditForm(forms.Form):
+    """
+    Used in the MeasuresEditWizard.
+
+    Has validation for multiple measures with different validity periods.
+    """
+
     duties = forms.CharField(
         label="Duties",
         help_text="The duty expression should be valid for the validity periods of all the measures you wish to edit",
