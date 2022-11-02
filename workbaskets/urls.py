@@ -52,11 +52,6 @@ ui_patterns = [
         name="workbasket-ui-confirm-create",
     ),
     path(
-        f"<pk>/submit/",
-        ui_views.WorkBasketSubmit.as_view(),
-        name="workbasket-ui-submit",
-    ),
-    path(
         f"<pk>/delete-changes/",
         ui_views.WorkBasketDeleteChanges.as_view(),
         name="workbasket-ui-delete-changes",
