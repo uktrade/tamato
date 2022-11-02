@@ -443,8 +443,77 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         return self.conditions_clean(cleaned_data, self.measure_start_date)
 
 
+class MeasureConditionsEditWizardStepForm(MeasureConditionsFormMixin):
+
+    # override methods that use form kwargs
+    def __init__(self, *args, **kwargs):
+        self.measure_start_dates = kwargs.pop("measure_start_dates")
+        super().__init__(*args, **kwargs)
+
+    def clean_applicable_duty(self):
+        """
+        Gets applicable_duty from cleaned data.
+
+        We expect `measure_start_dates` to be passed in. Uses
+        `DutySentenceParser` to check that applicable_duty is a valid duty
+        string.
+        """
+        applicable_duty = self.cleaned_data["applicable_duty"]
+
+        if applicable_duty and self.measure_start_dates is not None:
+            for d in self.measure_start_dates:
+                validate_duties(applicable_duty, d)
+
+        return applicable_duty
+
+    def clean(self):
+        """
+        We get the reference_price from cleaned_data and the measure_start_dates
+        from form kwargs.
+
+        If reference_price is provided, we use DutySentenceParser with
+        measure_start_dates to check that we are dealing with a simple duty
+        (i.e. only one component). We then update cleaned_data with key-value
+        pairs created from this single, unsaved component.
+        """
+        cleaned_data = super().clean()
+
+        return self.conditions_clean(cleaned_data, self.measure_start_dates)
+
+    def conditions_clean(self, cleaned_data, measure_start_dates):
+        price = cleaned_data.get("reference_price")
+
+        if price and measure_start_dates is not None:
+            for start_date in self.measure_start_dates:
+                validate_duties(price, start_date)
+
+        if price:
+            for start_date in self.measure_start_dates:
+                parser = DutySentenceParser.get(start_date)
+                components = parser.parse(price)
+                if len(components) > 1:
+                    raise ValidationError(
+                        "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+                    )
+            cleaned_data["duty_amount"] = components[0].duty_amount
+            cleaned_data["monetary_unit"] = components[0].monetary_unit
+            cleaned_data["condition_measurement"] = components[0].component_measurement
+
+        # The JS autocomplete does not allow for clearing unnecessary certificates
+        # In case of a user changing data, the information is cleared here.
+        condition_code = cleaned_data.get("condition_code")
+        if condition_code and not condition_code.accepts_certificate:
+            cleaned_data["required_certificate"] = None
+
+        return cleaned_data
+
+
 class MeasureConditionsWizardStepFormSet(FormSet):
     form = MeasureConditionsWizardStepForm
+
+
+class MeasureConditionsEditWizardStepFormSet(FormSet):
+    form = MeasureConditionsEditWizardStepForm
 
 
 class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
@@ -1042,6 +1111,56 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         return cleaned_data
 
 
+class MeasureDutiesForm(forms.Form):
+    duties = forms.CharField(
+        label="Duties",
+        help_text="The duty expression should be valid for the validity periods of all the measures you wish to edit",
+    )
+
+    def __init__(self, *args, **kwargs):
+        # remove measure_start_date from kwargs here because superclass will not be expecting it
+        self.measure_start_dates = kwargs.pop("measure_start_dates")
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.label_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "duties",
+                HTML(
+                    loader.render_to_string(
+                        "components/duty_help.jinja",
+                        context={"component": "measure"},
+                    ),
+                ),
+            ),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        duties = cleaned_data.get("duties", "")
+        for d in self.measure_start_dates:
+            validate_duties(duties, d)
+
+        return cleaned_data
+
+
+class MeasureCommodityForm(forms.Form):
+    commodity = AutoCompleteField(
+        label="Commodity code",
+        help_text="Select the 10-digit commodity code to which the measure applies.",
+        queryset=GoodsNomenclature.objects.all(),
+        attrs={"min_length": 3},
+    )
+
+
 class MeasureCommodityAndDutiesFormSet(FormSet):
     form = MeasureCommodityAndDutiesForm
     prefix = "measure_commodities_duties_formset"
@@ -1113,6 +1232,7 @@ class MeasuresEditStartForm(forms.Form):
         (constants.QUOTA_ORDER_NUMBER, "Quotas"),
         (constants.GEOGRAPHICAL_AREA, "Geographies"),
         (constants.COMMODITIES, "Commodity code"),
+        (constants.DUTIES, "Duties"),
         (constants.ADDITIONAL_CODE, "Additional codes"),
         (constants.CONDITIONS, "Conditions"),
         (constants.FOOTNOTES, "Footnotes"),
