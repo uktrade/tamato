@@ -17,6 +17,7 @@ f"https://legislation.gov.uk/uksi/2021/{n
 UI
 FIXME
 SessionStore
+item.duty_amount
 Measure SID
 AdditionalCode
 MeasurementUnit

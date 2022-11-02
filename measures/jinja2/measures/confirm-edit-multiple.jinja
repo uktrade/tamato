@@ -1,0 +1,55 @@
+{% extends "layouts/confirm.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Updated measures" %}
+
+{% macro panel_title(edited_measures) %}
+  {% if edited_measures|length > 1 %}
+    {{ edited_measures.0._meta.verbose_name_plural|title }} {% for m in edited_measures %}{% if not loop.last %}{{ m|string }}, {% else %}{{ m|string }} {% endif %}{% endfor %}have been updated
+  {% else %}
+    {{ edited_measures.0._meta.verbose_name|title }} {{ edited_measures.0|string }} has been updated
+  {% endif %}
+{% endmacro %}
+
+{% macro panel_subtitle(edited_measures) %}
+  {% if edited_measures|length > 1 %}
+    These updated measures have been added to your tariff changes
+  {% else %}
+    This updated measure has been added to your tariff changes
+  {% endif %}
+{% endmacro %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title },
+    ])
+  }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Confirmation</span>
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+      {{ govukPanel({
+        "titleText": panel_title(edited_measures),
+        "text": panel_subtitle(edited_measures),
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
+      <h2 class="govuk-heading-m">Next steps</h2>
+      <p class="govuk-body">To complete your task you must publish your change. </p>
+      {% if request.session.workbasket %}
+      {{ govukButton({
+        "text": "Go to your tariff changes",
+        "href": url("workbaskets:edit-workbasket", args=[request.session.workbasket.id]),
+        "classes": "govuk-button--secondary"
+      }) }}
+      {% endif %}
+      <ul class="govuk-list govuk-list-spaced">
+        <li><a class="govuk-link" href="{{ edited_measures.0.get_url('create') }}">Create a new measure</a></li>
+        <li><a href="{{ edited_measures.0.get_url('list') }}">Manage more {{ edited_measures.0._meta.verbose_name_plural }}</a></li>
+        {% include "includes/common/main-menu-link.jinja" %}
+      </ul>
+    </div>
+  </div>
+{% endblock %}
