@@ -17,12 +17,10 @@ from django.urls import reverse
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
-from django.views.generic.base import RedirectView
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.base import TemplateView
 from django.views.generic.base import View
 from django.views.generic.detail import DetailView
-from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
@@ -37,7 +35,6 @@ from measures.filters import MeasureFilter
 from measures.models import Measure
 from measures.pagination import MeasurePaginator
 from workbaskets import forms
-from workbaskets import tasks
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
@@ -126,34 +123,6 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
                 return redirect(redirect_url)
 
         return redirect(reverse("workbaskets:workbasket-ui-list"))
-
-
-class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
-    """UI endpoint for submitting a workbasket to HMRC CDS."""
-
-    model = WorkBasket
-    permission_required = "workbaskets.change_workbasket"
-
-    def get_redirect_url(self, *args, **kwargs) -> str:
-        return reverse("home")
-
-    def get(self, *args, **kwargs):
-        workbasket: WorkBasket = self.get_object()
-
-        (
-            tasks.transition.si(
-                workbasket.pk,
-                "submit_for_approval",
-            )
-            | tasks.transition.si(
-                workbasket.pk,
-                "approve",
-                self.request.user.pk,
-                settings.TRANSACTION_SCHEMA,
-            )
-        ).delay()
-
-        return super().get(*args, **kwargs)
 
 
 class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
@@ -297,7 +266,6 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
     # Form action mappings to URL names.
     action_success_url_names = {
         "run-business-rules": "workbaskets:workbasket-ui-detail",
-        "publish-all": "workbaskets:workbasket-ui-submit",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:workbasket-ui-detail",
         "page-next": "workbaskets:workbasket-ui-detail",
@@ -371,7 +339,7 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
 
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
-        if form_action in ("publish-all", "remove-selected"):
+        if form_action in ("remove-selected"):
             return reverse(
                 self.action_success_url_names[form_action],
                 kwargs={"pk": self.workbasket.pk},
