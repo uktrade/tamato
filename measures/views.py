@@ -20,6 +20,7 @@ from rest_framework.reverse import reverse
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.session_store import SessionStore
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -160,7 +161,7 @@ class MeasuresEditWizard(
             "title": "Select the elements you want to edit",
             "link_text": "Start",
         },
-        constants.MEASURE_DETAILS: STEP_METADATA[constants.MEASURE_DETAILS],
+        constants.END_DATES: {"title": "Edit the end dates", "link_text": "End dates"},
         constants.REGULATION_ID: STEP_METADATA[constants.REGULATION_ID],
         constants.QUOTA_ORDER_NUMBER: STEP_METADATA[constants.QUOTA_ORDER_NUMBER],
         constants.GEOGRAPHICAL_AREA: STEP_METADATA[constants.GEOGRAPHICAL_AREA],
@@ -181,11 +182,10 @@ class MeasuresEditWizard(
 
     form_list = [
         (constants.START, forms.MeasuresEditStartForm),
-        (constants.MEASURE_DETAILS, forms.MeasureDetailsForm),
+        (constants.END_DATES, forms.MeasureEndDateForm),
         (constants.REGULATION_ID, forms.MeasureRegulationIdForm),
         (constants.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
         (constants.GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
-        (constants.COMMODITIES, forms.MeasureCommodityForm),
         (constants.DUTIES, forms.MeasureDutiesMultipleEditForm),
         (constants.ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
         (constants.CONDITIONS, forms.MeasureConditionsMultipleEditForm),
@@ -195,11 +195,10 @@ class MeasuresEditWizard(
 
     templates = {
         constants.START: "measures/edit-multiple-start.jinja",
-        constants.MEASURE_DETAILS: "measures/edit-wizard-step.jinja",
+        constants.END_DATES: "measures/edit-wizard-step.jinja",
         constants.REGULATION_ID: "measures/edit-wizard-step.jinja",
         constants.QUOTA_ORDER_NUMBER: "measures/edit-wizard-step.jinja",
         constants.GEOGRAPHICAL_AREA: "measures/edit-wizard-step.jinja",
-        constants.COMMODITIES: "measures/edit-wizard-step.jinja",
         constants.DUTIES: "measures/edit-wizard-step.jinja",
         constants.ADDITIONAL_CODE: "measures/edit-wizard-step.jinja",
         constants.CONDITIONS: "measures/create-formset.jinja",
@@ -211,7 +210,7 @@ class MeasuresEditWizard(
     def get_template_names(self):
         return self.templates.get(
             self.steps.current,
-            "measures/measure-wizard-step.jinja",
+            "measures/edit-wizard-step.jinja",
         )
 
     @property
@@ -273,6 +272,13 @@ class MeasuresEditWizard(
 
         edited_measures = []
         for measure in self.measures:
+
+            if "end_date" in cleaned_data:
+                new_valid_between = TaricDateRange(
+                    lower=measure.valid_between.lower,
+                    upper=cleaned_data["end_date"],
+                )
+                changed_data["valid_between"] = new_valid_between
 
             measure.new_version(
                 workbasket=self.workbasket,

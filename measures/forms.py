@@ -20,6 +20,7 @@ from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
+from common.forms import DateInputFieldFixed
 from common.forms import FormSet
 from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
@@ -243,6 +244,28 @@ class MeasureValidityForm(ValidityPeriodForm):
         fields = [
             "valid_between",
         ]
+
+
+class MeasureEndDateForm(forms.Form):
+    end_date = DateInputFieldFixed(
+        label="End date",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "end_date",
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
 
 
 class MeasureConditionsFormMixin(forms.ModelForm):
@@ -501,7 +524,7 @@ class MeasureConditionsWizardStepFormSet(FormSet):
 
 
 class MeasureConditionsEditWizardStepFormSet(FormSet):
-    form = MeasureConditionsEditWizardStepForm
+    form = MeasureConditionsMultipleEditForm
 
 
 class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
@@ -1146,15 +1169,6 @@ class MeasureDutiesMultipleEditForm(forms.Form):
         return cleaned_data
 
 
-class MeasureCommodityForm(forms.Form):
-    commodity = AutoCompleteField(
-        label="Commodity code",
-        help_text="Select the 10-digit commodity code to which the measure applies.",
-        queryset=GoodsNomenclature.objects.all(),
-        attrs={"min_length": 3},
-    )
-
-
 class MeasureCommodityAndDutiesFormSet(FormSet):
     form = MeasureCommodityAndDutiesForm
     prefix = "measure_commodities_duties_formset"
@@ -1221,11 +1235,10 @@ MeasureDeleteForm = delete_form_for(models.Measure)
 
 class MeasuresEditStartForm(forms.Form):
     choices = [
-        (constants.MEASURE_DETAILS, "Validity dates and measure type"),
+        (constants.END_DATES, "End dates"),
         (constants.REGULATION_ID, "Regulation"),
         (constants.QUOTA_ORDER_NUMBER, "Quotas"),
         (constants.GEOGRAPHICAL_AREA, "Geographies"),
-        (constants.COMMODITIES, "Commodity code"),
         (constants.DUTIES, "Duties"),
         (constants.ADDITIONAL_CODE, "Additional codes"),
         (constants.CONDITIONS, "Conditions"),

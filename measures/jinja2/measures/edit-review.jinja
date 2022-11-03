@@ -55,12 +55,10 @@
 
 {% block form %}
   {% set fields_to_edit = view.get_cleaned_data_for_step("start").fields_to_edit %}
-  {% if "measure_details" in fields_to_edit %}
-    {% call(rows, data) review_step("measure_details") %}
+  {% if "end_dates" in fields_to_edit %}
+    {% call(rows, data) review_step("end_dates") %}
       {{ rows.extend([
-        ("Measure type", data["measure_type"] ~ " - " ~ data["measure_type"].description),
-        ("Measure start date", "{:%d/%m/%Y}".format(data["valid_between"].lower) if data["valid_between"] and data["valid_between"].lower else "-"),
-        ("Measure end date", "{:%d/%m/%Y}".format(data["valid_between"].upper) if data["valid_between"] and data["valid_between"].upper else "-"),
+        ("Measure end date", "{:%d/%m/%Y}".format(data["end_date"]) if data["end_date"] else "-"),
       ]) }}
     {% endcall %}
   {% endif %}

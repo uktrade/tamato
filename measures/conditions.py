@@ -1,10 +1,10 @@
 from measures import constants
 
 
-def show_step_measure_details(wizard):
+def show_step_end_dates(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step(constants.START)
     if cleaned_data:
-        return constants.MEASURE_DETAILS in cleaned_data.get("fields_to_edit")
+        return constants.END_DATES in cleaned_data.get("fields_to_edit")
 
 
 def show_step_regulation_id(wizard):
@@ -23,12 +23,6 @@ def show_step_geographical_area(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step(constants.START)
     if cleaned_data:
         return constants.GEOGRAPHICAL_AREA in cleaned_data.get("fields_to_edit")
-
-
-def show_step_commodities(wizard):
-    cleaned_data = wizard.get_cleaned_data_for_step(constants.START)
-    if cleaned_data:
-        return constants.COMMODITIES in cleaned_data.get("fields_to_edit")
 
 
 def show_step_duties(wizard):
@@ -56,11 +50,10 @@ def show_step_footnotes(wizard):
 
 
 measure_edit_condition_dict = {
-    constants.MEASURE_DETAILS: show_step_measure_details,
+    constants.END_DATES: show_step_end_dates,
     constants.REGULATION_ID: show_step_regulation_id,
     constants.QUOTA_ORDER_NUMBER: show_step_quota_order_number,
     constants.GEOGRAPHICAL_AREA: show_step_geographical_area,
-    constants.COMMODITIES: show_step_commodities,
     constants.DUTIES: show_step_duties,
     constants.ADDITIONAL_CODE: show_step_additional_code,
     constants.CONDITIONS: show_step_conditions,

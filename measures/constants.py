@@ -1,4 +1,5 @@
 START = "start"
+END_DATES = "end_dates"
 VALIDITY_DATES = "validity_dates"
 MEASURE_DETAILS = "measure_details"
 REGULATION_ID = "regulation_id"
