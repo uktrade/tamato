@@ -1255,3 +1255,6 @@ Implementing Regulation
 Implementing RegulationY-%m-%d
 date_time_start
 Y-%m-%d
+CertificateDescription
+Footnote CREATE
+FootnoteDescription UPDATE
