@@ -12,6 +12,8 @@ from common.business_rules import NoBlankDescription
 from common.business_rules import NoOverlapping
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
+from common.business_rules import skip_when_deleted
+from common.business_rules import skip_when_not_deleted
 from common.models.mixins.description import DescriptionMixin
 from common.tests import factories
 from common.tests.util import raises_if
@@ -158,3 +160,35 @@ def test_prevent_delete_if_in_use(approved_transaction):
         TestInUse(model.transaction).validate(model)
 
     assert model.in_use.called
+
+
+@skip_when_deleted
+class SkipWhenDeletedRule(BusinessRule):
+    def validate():
+        pass
+
+
+@pytest.mark.s
+def test_skip_when_deleted(capfd):
+    model = factories.TestModel1Factory.create(update_type=UpdateType.DELETE)
+    SkipWhenDeletedRule(model.transaction).validate(model)
+
+    assert "Skipping SkipWhenDeletedRule: update_type is 2" in capfd.readouterr().err
+
+
+@skip_when_not_deleted
+class SkipWhenNotDeletedRule(BusinessRule):
+    def validate():
+        pass
+
+
+@pytest.mark.s
+@pytest.mark.parametrize("update_type", [UpdateType.CREATE, UpdateType.UPDATE])
+def test_skip_when_not_deleted(capfd, update_type):
+    model = factories.TestModel1Factory.create(update_type=update_type)
+    SkipWhenNotDeletedRule(model.transaction).validate(model)
+
+    assert (
+        f"Skipping SkipWhenNotDeletedRule: update_type is {update_type}"
+        in capfd.readouterr().err
+    )
