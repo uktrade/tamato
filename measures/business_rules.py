@@ -715,6 +715,7 @@ class ME34(BusinessRule):
 # -- Measure component
 
 
+@skip_when_deleted
 class ME40(BusinessRule):
     """
     If the flag "duty expression" on measure type is "mandatory" then at least
