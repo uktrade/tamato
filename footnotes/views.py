@@ -103,6 +103,8 @@ class FootnoteList(FootnoteMixin, TamatoListView):
 
 
 class FootnoteCreate(CreateTaricCreateView):
+    """UI endpoint for creating Footnote CREATE instances."""
+
     template_name = "footnotes/create.jinja"
     form_class = forms.FootnoteCreateForm
 
@@ -133,6 +135,8 @@ class FootnoteEditCreate(
     TrackedModelDetailMixin,
     EditTaricView,
 ):
+    """UI endpoint for editing Footnote CREATE instances."""
+
     template_name = "footnotes/create.jinja"
     form_class = forms.FootnoteEditCreateForm
 
@@ -175,14 +179,14 @@ class FootnoteUpdate(
     FootnoteUpdateMixin,
     CreateTaricUpdateView,
 ):
-    pass
+    """UI endpoint for creating Footnote UPDATE instances."""
 
 
 class FootnoteEditUpdate(
     FootnoteUpdateMixin,
     EditTaricView,
 ):
-    pass
+    """UI endpoint for editing Footnote UPDATE instances."""
 
 
 class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
@@ -209,6 +213,8 @@ class FootnoteDescriptionCreate(
     TrackedModelDetailMixin,
     CreateTaricCreateView,
 ):
+    """UI endpoint for creating FootnoteDescription CREATE instances."""
+
     def get_initial(self):
         initial = super().get_initial()
         initial["described_footnote"] = models.Footnote.objects.get(
@@ -228,6 +234,8 @@ class FootnoteDescriptionUpdate(
     TrackedModelDetailMixin,
     CreateTaricUpdateView,
 ):
+    """UI endpoint for creating FootnoteDescription UPDATE instances."""
+
     form_class = forms.FootnoteDescriptionForm
     template_name = "common/edit_description.jinja"
 
@@ -244,6 +252,8 @@ class FootnoteDescriptionEditCreate(
     TrackedModelDetailMixin,
     EditTaricView,
 ):
+    """UI endpoint for editing FootnoteDescription CREATE instances."""
+
     form_class = forms.FootnoteDescriptionForm
     template_name = "common/edit_description.jinja"
 

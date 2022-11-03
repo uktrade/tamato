@@ -79,6 +79,8 @@ class AdditionalCodeList(AdditionalCodeMixin, TamatoListView):
 
 
 class AdditionalCodeCreate(CreateTaricCreateView):
+    """UI endpoint for creating AdditionalCode CREATE instances."""
+
     template_name = "additional_codes/create.jinja"
     form_class = AdditionalCodeCreateForm
 
@@ -108,6 +110,8 @@ class AdditionalCodeEditCreate(
     TrackedModelDetailMixin,
     EditTaricView,
 ):
+    """UI endpoint for editing AdditionalCode CREATE instances."""
+
     template_name = "additional_codes/create.jinja"
     form_class = AdditionalCodeEditCreateForm
 
@@ -184,6 +188,8 @@ class AdditionalCodeDescriptionCreate(
     TrackedModelDetailMixin,
     CreateTaricCreateView,
 ):
+    """UI endpoint for creating AdditionalCodeDescription CREATE instances."""
+
     def get_initial(self):
         initial = super().get_initial()
         initial["described_additionalcode"] = AdditionalCode.objects.get(
@@ -200,6 +206,8 @@ class AdditionalCodeDescriptionEditCreate(
     TrackedModelDetailMixin,
     EditTaricView,
 ):
+    """UI endpoint for editing AdditionalCodeDescription CREATE instances."""
+
     form_class = AdditionalCodeDescriptionForm
     template_name = "common/edit_description.jinja"
 
@@ -214,6 +222,8 @@ class AdditionalCodeDescriptionUpdate(
     TrackedModelDetailMixin,
     CreateTaricUpdateView,
 ):
+    """UI endpoint for AdditionalCodeDescription CREATE instances."""
+
     form_class = AdditionalCodeDescriptionForm
     template_name = "common/edit_description.jinja"
 

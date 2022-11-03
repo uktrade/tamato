@@ -152,14 +152,14 @@ class CertificateUpdate(
     CertificateUpdateMixin,
     CreateTaricUpdateView,
 ):
-    pass
+    """UI endpoint for creating Certificate UPDATE instances."""
 
 
 class CertificateEditUpdate(
     CertificateUpdateMixin,
     EditTaricView,
 ):
-    pass
+    """UI endpoint for editing Certificate UPDATE instances."""
 
 
 class CertificateConfirmUpdate(CertificateMixin, TrackedModelDetailView):
@@ -191,6 +191,8 @@ class CertificateDescriptionCreate(
     TrackedModelDetailMixin,
     CreateTaricCreateView,
 ):
+    """UI endpoint for creating CertificateDescription CREATE instances."""
+
     def get_initial(self):
         initial = super().get_initial()
         initial["described_certificate"] = models.Certificate.objects.current().get(
@@ -208,6 +210,8 @@ class CertificateDescriptionEditCreate(
     TrackedModelDetailMixin,
     EditTaricView,
 ):
+    """UI endpoint for editing CertificateDescription CREATE instances."""
+
     form_class = forms.CertificateDescriptionForm
     template_name = "common/edit_description.jinja"
 
@@ -222,6 +226,8 @@ class CertificateUpdateDescription(
     TrackedModelDetailMixin,
     CreateTaricUpdateView,
 ):
+    """UI endpoint for creating CertificateDescription UPDATE instances."""
+
     form_class = forms.CertificateDescriptionForm
     template_name = "common/edit_description.jinja"
 
