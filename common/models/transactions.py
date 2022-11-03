@@ -146,9 +146,6 @@ class TransactionQueryset(models.QuerySet):
 
         self.model.objects.bulk_update(transactions, ["partition", "order"])
 
-    def check_transaction_queryset():
-        pass
-
     @atomic
     def save_drafts(self, partition_scheme):
         """
@@ -178,7 +175,7 @@ class TransactionQueryset(models.QuerySet):
             "Approved partition %s selected by partition_scheme.",
             approved_partition,
         )
-        logger.debug("Update versions_group.")
+        logger.debug("Update version_group.")
 
         for obj in self.tracked_models.order_by("pk"):
             version_group = obj.version_group
@@ -221,7 +218,7 @@ class TransactionQueryset(models.QuerySet):
             logger.info("Queryset contains no transactions, bailing out early.")
             return
 
-        logger.debug("Update versions_group.")
+        logger.debug("Update version_group.")
 
         self.revert_current_version()
 

@@ -545,12 +545,25 @@ def test_move_to_draft_unapproved_transactions(unapproved_transaction):
     )
 
 
-def test_move_to_draft_no_transactions():
-    pass
+def test_move_to_draft_no_transactions(capfd):
+    wb = factories.ApprovedWorkBasketFactory.create(transaction=None)
+
+    assert wb.transactions.move_to_draft() == None
+    assert (
+        "Queryset contains no transactions, bailing out early."
+        in capfd.readouterr().err
+    )
 
 
-def test_move_to_draft():
-    pass
+def test_move_to_draft(capfd, approved_workbasket):
+    approved_workbasket.transactions.move_to_draft()
+    readout = capfd.readouterr().err
+
+    assert "Update version_group." in readout
+    assert "Save with DRAFT partition scheme" in readout
+
+    for transaction in approved_workbasket.transactions.all():
+        assert transaction.partition == TransactionPartition.DRAFT
 
 
 def test_revert_current_version(approved_workbasket):
