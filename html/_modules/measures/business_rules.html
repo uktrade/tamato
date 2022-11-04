@@ -578,7 +578,8 @@
         <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ME119"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME119">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ME119"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME119">[docs]</a><span class="nd">@skip_when_deleted</span>
+<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2007-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ME119</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;When a quota order number is used in a measure then the validity period</span>
 <span class="sd">    of the quota order number origin must span the validity period of the</span>
