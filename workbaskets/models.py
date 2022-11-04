@@ -457,6 +457,16 @@ class WorkBasket(TimestampedMixin):
                 version_group.current_version = versions.first()
             version_group.save()
 
+    @transition(
+        field=status,
+        source=WorkflowStatus.ERRORED,
+        target=WorkflowStatus.EDITING,
+        custom={"label": "Restore for further editing."},
+    )
+    def restore(self):
+        """WorkBasket is ready to be worked on again after being rejected by
+        CDS."""
+
     def save_to_session(self, session):
         session["workbasket"] = {
             "id": self.pk,
