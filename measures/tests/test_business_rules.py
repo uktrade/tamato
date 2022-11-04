@@ -779,6 +779,14 @@ def test_ME119_multiple_valid_origins():
     business_rules.ME119(later_measure.transaction).validate(later_measure)
 
 
+@pytest.mark.s
+def test_ME119_skipped_when_deleted(capfd):
+    measure = factories.MeasureFactory.create(update_type=UpdateType.DELETE)
+    business_rules.ME119(measure.transaction).validate(measure)
+
+    assert "Skipping ME119: update_type is 2" in capfd.readouterr().err
+
+
 def test_quota_origin_matching_area():
     origin = factories.QuotaOrderNumberOriginFactory.create(
         geographical_area__sid="666",
@@ -1187,6 +1195,14 @@ def test_ME40(applicability_code, component, condition_component, error_expected
         business_rules.ME40(
             (condition_component or component or measure).transaction,
         ).validate(measure)
+
+
+@pytest.mark.s
+def test_ME40_skipped_when_deleted(capfd):
+    measure = factories.MeasureFactory.create(update_type=UpdateType.DELETE)
+    business_rules.ME40(measure.transaction).validate(measure)
+
+    assert "Skipping ME40: update_type is 2" in capfd.readouterr().err
 
 
 def test_ME41(reference_nonexistent_record):

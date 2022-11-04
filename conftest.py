@@ -1192,3 +1192,31 @@ def model2_with_history(date_ranges):
         version_group=factories.VersionGroupFactory.create(),
         custom_sid=1,
     )
+
+
+# As per this open issue with pytest https://github.com/pytest-dev/pytest/issues/5997,
+# some tests can only be run with global capturing disabled. Until we find a way
+# to disable capturing from within the test itself we can mark tests that should be skipped
+# unless global capturing is disabled via the "-s" flag.
+
+# TODO https://uktrade.atlassian.net/browse/TP2000-591
+
+# See pytest docs for implementation below
+# https://docs.pytest.org/en/7.1.x/example/simple.html#control-skipping-of-tests-according-to-command-line-option
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "s: mark test as needing global capturing disabled to run",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("-s") == "no":
+        # -s given in cli: do not skip s tests
+        return
+    skip_s = pytest.mark.skip(reason="need -s option to run")
+    for item in items:
+        if "s" in item.keywords:
+            item.add_marker(skip_s)

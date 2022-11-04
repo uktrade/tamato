@@ -449,6 +449,7 @@ class ME117(BusinessRule):
         raise self.violation(measure)
 
 
+@skip_when_deleted
 @only_applicable_after("2007-12-31")
 class ME119(ValidityPeriodContained):
     """When a quota order number is used in a measure then the validity period
