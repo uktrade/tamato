@@ -446,6 +446,16 @@ class WorkBasket(TimestampedMixin):
         version and revert transaction partition to DRAFT."""
         self.transactions.move_to_draft()
 
+    @transition(
+        field=status,
+        source=WorkflowStatus.ERRORED,
+        target=WorkflowStatus.EDITING,
+        custom={"label": "Restore for further editing."},
+    )
+    def restore(self):
+        """WorkBasket is ready to be worked on again after being rejected by
+        CDS."""
+
     def save_to_session(self, session):
         session["workbasket"] = {
             "id": self.pk,
