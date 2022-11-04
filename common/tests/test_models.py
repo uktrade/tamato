@@ -545,6 +545,7 @@ def test_move_to_draft_unapproved_transactions(unapproved_transaction):
     )
 
 
+@pytest.mark.s
 def test_move_to_draft_no_transactions(capfd):
     wb = factories.ApprovedWorkBasketFactory.create(transaction=None)
 
@@ -555,6 +556,7 @@ def test_move_to_draft_no_transactions(capfd):
     )
 
 
+@pytest.mark.s
 def test_move_to_draft(capfd, approved_workbasket):
     approved_workbasket.transactions.move_to_draft()
     readout = capfd.readouterr().err

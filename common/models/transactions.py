@@ -154,15 +154,15 @@ class TransactionQueryset(models.QuerySet):
         Contained tracked models to become the current version. Order field is
         updated so these transactions are at the end of the approved partition
         """
+        if self.exists():
+            logger.info("Draft contains no transactions, bailing out early.")
+            return
+
         if self.approved().exists():
             pks = self.values_list("pk")
             msg = f"One or more Transactions was not in the DRAFT partition: {pks}"
             logger.error(msg)
             raise TransactionsAlreadyApproved(msg)
-
-        if self.first() is None:
-            logger.info("Draft contains no transactions, bailing out early.")
-            return
 
         # Find the transaction in the destination approved partition with the highest order
         # get_approved_partition may raise a ValueError, e.g. when attempting to create
@@ -184,8 +184,9 @@ class TransactionQueryset(models.QuerySet):
 
         self.move_to_end_of_partition(approved_partition)
 
+    @atomic
     def revert_current_version(self):
-        """Set current_version to previous version or None on contained tracked
+        """Set current_version to previous version or None on a basket's tracked
         model version groups."""
         for obj in self.tracked_models.order_by("-pk").select_related("version_group"):
             version_group = obj.version_group
@@ -205,18 +206,18 @@ class TransactionQueryset(models.QuerySet):
         """
         Save SEED_FILE or REVISION transactions as DRAFT.
 
-        Set current_version to previous version or None on contained tracked
+        Set current_version to previous version or None on a basket's tracked
         model version groups.
         """
+        if self.exists():
+            logger.info("Queryset contains no transactions, bailing out early.")
+            return
+
         if self.unapproved().exists():
             pks = self.values_list("pk")
             msg = f"One or more Transactions was already in the DRAFT partition: {pks}"
             logger.error(msg)
             raise TransactionsAlreadyInDraft(msg)
-
-        if self.first() is None:
-            logger.info("Queryset contains no transactions, bailing out early.")
-            return
 
         logger.debug("Update version_group.")
 
