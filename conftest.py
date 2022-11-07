@@ -437,6 +437,19 @@ def use_create_form(valid_user_api_client: APIClient):
 
 @pytest.fixture
 def use_edit_view(valid_user_api_client: APIClient):
+    """
+    Uses the default edit form and view for a model in a workbasket with EDITING
+    status.
+
+    The ``object`` param is the TrackedModel instance that is to be edited and
+    saved, which should not create a new version.
+    ``data_changes`` should be a dictionary to apply to the object, effectively
+    applying edits.
+
+    Will raise :class:`~django.core.exceptions.ValidationError` if the form
+    contains errors.
+    """
+
     def use(obj: TrackedModel, data_changes: dict[str, str]):
         Model = type(obj)
         obj_count = Model.objects.filter(**obj.get_identifying_fields()).count()
