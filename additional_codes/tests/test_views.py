@@ -79,8 +79,10 @@ def test_additional_code_edit_views(
     workbasket,
     published_additional_code_type,
 ):
-    """Tests that additional code update view allows saving a valid form from an
-    existing instance and that an invalid form fails validation."""
+    """Tests that additional code edit views (for update types CREATE and
+    UPDATE) allows saving a valid form from an existing instance and that an
+    invalid form fails validation as expected."""
+
     additional_code = factories.AdditionalCodeFactory.create(
         update_type=update_type,
         type=published_additional_code_type,

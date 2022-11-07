@@ -169,8 +169,10 @@ def test_certificate_edit_views(
     workbasket,
     published_certificate_type,
 ):
-    """Tests that certificate update view allows saving a valid form from an
-    existing instance and that an invalid form fails validation."""
+    """Tests that certificate edit views (for update types CREATE and UPDATE)
+    allows saving a valid form from an existing instance and that an invalid
+    form fails validation as expected."""
+
     certificate = factories.CertificateFactory.create(
         update_type=update_type,
         certificate_type=published_certificate_type,

@@ -315,6 +315,13 @@ def published_certificate_type(approved_workbasket):
 
 
 @pytest.fixture
+def published_footnote_type(approved_workbasket):
+    return factories.FootnoteTypeFactory(
+        transaction=approved_workbasket.new_transaction(),
+    )
+
+
+@pytest.fixture
 @given("there is a current workbasket")
 def session_workbasket(client, new_workbasket):
     new_workbasket.save_to_session(client.session)
