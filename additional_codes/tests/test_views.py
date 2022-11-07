@@ -61,14 +61,14 @@ def test_additional_code_edit_create_view(
     data_changes,
     expected_valid,
     use_edit_view,
+    approved_workbasket,
 ):
     """Tests that additional code update view allows saving a valid form from an
     existing instance and that an invalid form fails as expected."""
     # AdditionalCodeType instance must be published for the AdditionCode edit
     # forms to validate correctly.
-    approved_wb = factories.ApprovedWorkBasketFactory.create()
     additional_code_type = factories.AdditionalCodeTypeFactory(
-        transaction=approved_wb.new_transaction(),
+        transaction=approved_workbasket.new_transaction(),
     )
 
     wb = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
