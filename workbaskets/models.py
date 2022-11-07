@@ -443,19 +443,8 @@ class WorkBasket(TimestampedMixin):
     def cds_error(self):
         """If a workbasket, after approval, is then rejected by CDS it is
         important to roll back the current models to the previous approved
-        version."""
-        for obj in self.tracked_models.order_by("-pk").select_related("version_group"):
-            version_group = obj.version_group
-            versions = (
-                version_group.versions.has_approved_state()
-                .order_by("-pk")
-                .exclude(pk=obj.pk)
-            )
-            if versions.count() == 0:
-                version_group.current_version = None
-            else:
-                version_group.current_version = versions.first()
-            version_group.save()
+        version and revert transaction partition to DRAFT."""
+        self.transactions.move_to_draft()
 
     @transition(
         field=status,
