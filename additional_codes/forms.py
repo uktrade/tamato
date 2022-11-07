@@ -175,7 +175,6 @@ class AdditionalCodeEditCreateForm(AdditionalCodeCreateBaseForm):
             "type",
             Field.text("code", field_width=Fluid.ONE_QUARTER, maxlength="3"),
             "start_date",
-            Field.textarea("description", rows=5),
             Submit(
                 "submit",
                 "Save",
