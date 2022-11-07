@@ -301,6 +301,13 @@ def approved_workbasket():
 
 
 @pytest.fixture
+def published_additional_code_type(approved_workbasket):
+    return factories.AdditionalCodeTypeFactory(
+        transaction=approved_workbasket.new_transaction(),
+    )
+
+
+@pytest.fixture
 @given("there is a current workbasket")
 def session_workbasket(client, new_workbasket):
     new_workbasket.save_to_session(client.session)

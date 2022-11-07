@@ -17,7 +17,6 @@ from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -61,21 +60,14 @@ def test_additional_code_edit_create_view(
     data_changes,
     expected_valid,
     use_edit_view,
-    approved_workbasket,
+    workbasket,
+    published_additional_code_type,
 ):
     """Tests that additional code update view allows saving a valid form from an
     existing instance and that an invalid form fails as expected."""
-    # AdditionalCodeType instance must be published for the AdditionCode edit
-    # forms to validate correctly.
-    additional_code_type = factories.AdditionalCodeTypeFactory(
-        transaction=approved_workbasket.new_transaction(),
-    )
-
-    wb = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-    tx = wb.new_transaction()
-
+    tx = workbasket.new_transaction()
     additional_code = factories.AdditionalCodeFactory.create(
-        type=additional_code_type,
+        type=published_additional_code_type,
         transaction=tx,
     )
     factories.AdditionalCodeDescriptionFactory.create(
