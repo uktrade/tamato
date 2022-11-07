@@ -57,16 +57,13 @@ def test_additional_code_create_form(use_create_form, new_data, expected_valid):
         ({"code": ""}, False),
     ),
 )
-def test_additional_code_edit_create_view(data_changes, expected_valid, use_edit_view):
-    """
-    Tests that footnote update view allows an empty dict and that it is possible
-    to update the end date day, month, and year to an earlier date.
-
-    We expect a later end date to fail because the validity period extends
-    beyond that of the footnote type. We test end date, rather than start_date
-    because it is not possible to edit the start date through the view without
-    separately updating the description start date beforehand.
-    """
+def test_additional_code_edit_create_view(
+    data_changes,
+    expected_valid,
+    use_edit_view,
+):
+    """Tests that additional code update view allows saving a valid form from an
+    existing instance and that an invalid form fails as expected."""
     # AdditionalCodeType instance must be published for the AdditionCode edit
     # forms to validate correctly.
     approved_wb = factories.ApprovedWorkBasketFactory.create()
