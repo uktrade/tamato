@@ -193,6 +193,10 @@
     <span class="k">pass</span>
 
 
+<span class="k">class</span> <span class="nc">TransactionsAlreadyInDraft</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
 <span class="k">class</span> <span class="nc">TransactionQueryset</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -206,6 +210,11 @@
         <span class="sd">&quot;&quot;&quot;Currently approved Transactions are SEED_FILE and REVISION this can</span>
 <span class="sd">        be.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">partition__lte</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">get_highest_approved_partition</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">unapproved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
             <span class="n">partition__lte</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">get_highest_approved_partition</span><span class="p">(),</span>
         <span class="p">)</span>
 
@@ -274,15 +283,15 @@
 <span class="sd">        Contained tracked models to become the current version. Order field is</span>
 <span class="sd">        updated so these transactions are at the end of the approved partition</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Draft contains no transactions, bailing out early.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approved</span><span class="p">()</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">pks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;One or more Transactions was not in the DRAFT partition: </span><span class="si">{</span><span class="n">pks</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">TransactionsAlreadyApproved</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Draft contains no transactions, bailing out early.&quot;</span><span class="p">)</span>
-            <span class="k">return</span>
 
         <span class="c1"># Find the transaction in the destination approved partition with the highest order</span>
         <span class="c1"># get_approved_partition may raise a ValueError, e.g. when attempting to create</span>
@@ -295,7 +304,7 @@
             <span class="s2">&quot;Approved partition </span><span class="si">%s</span><span class="s2"> selected by partition_scheme.&quot;</span><span class="p">,</span>
             <span class="n">approved_partition</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update versions_group.&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update version_group.&quot;</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">):</span>
             <span class="n">version_group</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">version_group</span>
@@ -303,6 +312,49 @@
             <span class="n">version_group</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">move_to_end_of_partition</span><span class="p">(</span><span class="n">approved_partition</span><span class="p">)</span>
+
+    <span class="nd">@atomic</span>
+    <span class="k">def</span> <span class="nf">revert_current_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set current_version to previous version or None on a basket&#39;s tracked</span>
+<span class="sd">        model version groups.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-pk&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;version_group&quot;</span><span class="p">):</span>
+            <span class="n">version_group</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">version_group</span>
+            <span class="n">versions</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">version_group</span><span class="o">.</span><span class="n">versions</span><span class="o">.</span><span class="n">has_approved_state</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-pk&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">versions</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="n">versions</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="n">version_group</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="nd">@atomic</span>
+    <span class="k">def</span> <span class="nf">move_to_draft</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save SEED_FILE or REVISION transactions as DRAFT.</span>
+
+<span class="sd">        Set current_version to previous version or None on a basket&#39;s tracked</span>
+<span class="sd">        model version groups.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Queryset contains no transactions, bailing out early.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unapproved</span><span class="p">()</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">pks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;One or more Transactions was already in the DRAFT partition: </span><span class="si">{</span><span class="n">pks</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">TransactionsAlreadyInDraft</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Update version_group.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">revert_current_version</span><span class="p">()</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Save with DRAFT partition scheme&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">move_to_end_of_partition</span><span class="p">(</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">DRAFT</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Transaction"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction">[docs]</a><span class="k">class</span> <span class="nc">Transaction</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
