@@ -222,7 +222,7 @@ class AdditionalCodeDescriptionUpdate(
     TrackedModelDetailMixin,
     CreateTaricUpdateView,
 ):
-    """UI endpoint for AdditionalCodeDescription CREATE instances."""
+    """UI endpoint for AdditionalCodeDescription UPDATE instances."""
 
     form_class = AdditionalCodeDescriptionForm
     template_name = "common/edit_description.jinja"
