@@ -429,11 +429,39 @@ def use_create_form(valid_user_api_client: APIClient):
 
 
 @pytest.fixture
+def use_edit_view(valid_user_api_client: APIClient):
+    def use(obj: TrackedModel, data_changes: dict[str, str]):
+        Model = type(obj)
+        obj_count = Model.objects.filter(**obj.get_identifying_fields()).count()
+        url = obj.get_url("edit")
+
+        # Check initial form rendering.
+        get_response = valid_user_api_client.get(url)
+        assert get_response.status_code == 200
+
+        # Edit and submit the data.
+        initial_form = get_response.context_data["form"]
+        form_data = get_form_data(initial_form)
+        form_data.update(data_changes)
+        post_response = valid_user_api_client.post(url, form_data)
+
+        # POSTing a real edits form should never create new object instances.
+        assert Model.objects.filter(**obj.get_identifying_fields()).count() == obj_count
+        if post_response.status_code not in (301, 302):
+            raise ValidationError(
+                f"Form contained errors: {dict(post_response.context_data['form'].errors)}",
+            )
+
+    return use
+
+
+@pytest.fixture
 def use_update_form(valid_user_api_client: APIClient):
     """
-    Uses the default edit form and view for a model to update an object to have
-    the passed new data and returns the new version of the object.
+    Uses the default create form and view for a model with update_type=UPDATE.
 
+    The ``object`` param is the TrackedModel instance for which a new UPDATE
+    instance is to be created.
     The ``new_data`` dictionary should contain callable objects that when passed
     the existing value will return a new value to be sent with the form.
 
