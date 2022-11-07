@@ -17,6 +17,7 @@ from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -47,6 +48,48 @@ pytestmark = pytest.mark.django_db
 def test_additional_code_create_form(use_create_form, new_data, expected_valid):
     with raises_if(ValidationError, not expected_valid):
         use_create_form(AdditionalCode, new_data)
+
+
+@pytest.mark.parametrize(
+    ("data_changes", "expected_valid"),
+    (
+        ({}, True),
+        ({"code": ""}, False),
+    ),
+)
+def test_additional_code_edit_create_view(data_changes, expected_valid, use_edit_view):
+    """
+    Tests that footnote update view allows an empty dict and that it is possible
+    to update the end date day, month, and year to an earlier date.
+
+    We expect a later end date to fail because the validity period extends
+    beyond that of the footnote type. We test end date, rather than start_date
+    because it is not possible to edit the start date through the view without
+    separately updating the description start date beforehand.
+    """
+    # AdditionalCodeType instance must be published for the AdditionCode edit
+    # forms to validate correctly.
+    approved_wb = factories.ApprovedWorkBasketFactory.create()
+    additional_code_type = factories.AdditionalCodeTypeFactory(
+        transaction=approved_wb.new_transaction(),
+    )
+
+    wb = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    tx = wb.new_transaction()
+
+    additional_code = factories.AdditionalCodeFactory.create(
+        type=additional_code_type,
+        transaction=tx,
+    )
+    factories.AdditionalCodeDescriptionFactory.create(
+        described_additionalcode=additional_code,
+        description="Test additional code edit create view",
+        validity_start=additional_code.valid_between.lower,
+        transaction=tx,
+    )
+
+    with raises_if(ValidationError, not expected_valid):
+        use_edit_view(additional_code, data_changes)
 
 
 @pytest.mark.parametrize(
