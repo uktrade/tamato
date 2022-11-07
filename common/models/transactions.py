@@ -154,7 +154,7 @@ class TransactionQueryset(models.QuerySet):
         Contained tracked models to become the current version. Order field is
         updated so these transactions are at the end of the approved partition
         """
-        if self.exists():
+        if not self.exists():
             logger.info("Draft contains no transactions, bailing out early.")
             return
 
@@ -209,7 +209,7 @@ class TransactionQueryset(models.QuerySet):
         Set current_version to previous version or None on a basket's tracked
         model version groups.
         """
-        if self.exists():
+        if not self.exists():
             logger.info("Queryset contains no transactions, bailing out early.")
             return
 
