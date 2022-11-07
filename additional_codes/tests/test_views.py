@@ -81,19 +81,11 @@ def test_additional_code_edit_create_view(
 ):
     """Tests that additional code update view allows saving a valid form from an
     existing instance and that an invalid form fails validation."""
-    tx = workbasket.new_transaction()
     additional_code = factories.AdditionalCodeFactory.create(
         update_type=update_type,
         type=published_additional_code_type,
-        transaction=tx,
+        transaction=workbasket.new_transaction(),
     )
-    factories.AdditionalCodeDescriptionFactory.create(
-        described_additionalcode=additional_code,
-        description="Test additional code edit create view",
-        validity_start=additional_code.valid_between.lower,
-        transaction=tx,
-    )
-
     with raises_if(ValidationError, not expected_valid):
         use_edit_view(additional_code, data_changes)
 
