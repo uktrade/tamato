@@ -15,6 +15,7 @@ from common.tests.util import raises_if
 from common.tests.util import validity_period_post_data
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 
@@ -52,21 +53,37 @@ def test_additional_code_create_form(use_create_form, new_data, expected_valid):
 @pytest.mark.parametrize(
     ("data_changes", "expected_valid"),
     (
-        ({}, True),
-        ({"code": ""}, False),
+        ({**date_post_data("start_date", datetime.date.today())}, True),
+        (
+            {
+                "start_date_0": "",
+                "start_date_1": "",
+                "start_date_2": "",
+            },
+            False,
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "update_type",
+    (
+        UpdateType.CREATE,
+        UpdateType.UPDATE,
     ),
 )
 def test_additional_code_edit_create_view(
     data_changes,
     expected_valid,
+    update_type,
     use_edit_view,
     workbasket,
     published_additional_code_type,
 ):
     """Tests that additional code update view allows saving a valid form from an
-    existing instance and that an invalid form fails as expected."""
+    existing instance and that an invalid form fails validation."""
     tx = workbasket.new_transaction()
     additional_code = factories.AdditionalCodeFactory.create(
+        update_type=update_type,
         type=published_additional_code_type,
         transaction=tx,
     )
