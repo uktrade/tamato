@@ -71,7 +71,7 @@ def test_additional_code_create_form(use_create_form, new_data, expected_valid):
         UpdateType.UPDATE,
     ),
 )
-def test_additional_code_edit_create_view(
+def test_additional_code_edit_views(
     data_changes,
     expected_valid,
     update_type,
