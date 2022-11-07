@@ -1260,3 +1260,4 @@ Footnote CREATE
 FootnoteDescription UPDATE
 f"Form
 AdditionCode
+Skipping ME119: update_type
