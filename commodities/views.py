@@ -38,7 +38,7 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
                 tx,
             )
             .prefetch_related("descriptions")
-            .as_at(date.today())
+            .as_at_and_beyond(date.today())
             .filter(suffix=80)
         )
 
