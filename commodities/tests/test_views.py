@@ -1,3 +1,4 @@
+import json
 from os import path
 from unittest.mock import patch
 
@@ -145,3 +146,26 @@ def test_commodities_detail_views(
     don't return an error."""
 
     assert_model_view_renders(view, url_pattern, valid_user_client)
+
+
+def test_goods_nomenclature(valid_user_client, date_ranges):
+    past_good = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.earlier,
+    )
+    present_good = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    future_good = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.later,
+    )
+    url = reverse("goodsnomenclature-list")
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    goods = json.loads(response.content)["results"]
+    pks = [good["value"] for good in goods]
+
+    assert past_good.pk not in pks
+    assert present_good.pk in pks
+    assert future_good.pk in pks
