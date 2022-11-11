@@ -33,6 +33,7 @@ from geo_areas.validators import AreaCode
 from measures import constants
 from measures import models
 from measures.helpers import update_measure
+from measures.helpers import update_measure_footnotes
 from measures.parsers import DutySentenceParser
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
@@ -678,8 +679,37 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
         instance = super().save(commit=False)
         if commit:
             instance.save()
+        defaults = {"generating_regulation": self.cleaned_data["generating_regulation"]}
 
-        return update_measure(instance, self.request, self.cleaned_data)
+        footnote_pks = [
+            dct["footnote"]
+            for dct in self.request.session.get(f"formset_initial_{instance.sid}", [])
+        ]
+        footnote_pks.extend(
+            self.request.session.get(f"instance_footnotes_{instance.sid}", []),
+        )
+
+        self.request.session.pop(f"formset_initial_{instance.sid}", None)
+        self.request.session.pop(f"instance_footnotes_{instance.sid}", None)
+
+        tx = WorkBasket.get_current_transaction(self.request)
+
+        new_measure = update_measure(
+            instance,
+            tx,
+            WorkBasket.current(self.request),
+            self.cleaned_data,
+            defaults,
+        )
+
+        update_measure_footnotes(
+            new_measure,
+            tx,
+            WorkBasket.current(self.request),
+            footnote_pks,
+        )
+
+        return new_measure
 
     def is_valid(self) -> bool:
         """Check that measure conditions data is valid before calling super() on

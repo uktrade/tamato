@@ -9,6 +9,7 @@ from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -20,7 +21,6 @@ from rest_framework.reverse import reverse
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.session_store import SessionStore
-from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -29,6 +29,10 @@ from measures import constants
 from measures import forms
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
+from measures.helpers import create_conditions
+from measures.helpers import update_conditions
+from measures.helpers import update_measure
+from measures.helpers import update_measure_footnotes
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureConditionComponent
@@ -188,7 +192,7 @@ class MeasuresEditWizard(
         (constants.GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
         (constants.DUTIES, forms.MeasureDutiesMultipleEditForm),
         (constants.ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
-        (constants.CONDITIONS, forms.MeasureConditionsMultipleEditForm),
+        (constants.CONDITIONS, forms.MeasureConditionsEditWizardStepFormSet),
         (constants.FOOTNOTES, forms.MeasureFootnotesFormSet),
         (constants.SUMMARY, forms.MeasureReviewForm),
     ]
@@ -206,6 +210,11 @@ class MeasuresEditWizard(
         constants.SUMMARY: "measures/edit-review.jinja",
         constants.COMPLETE: "measures/confirm-edit-multiple.jinja",
     }
+
+    def get(self, *args, **kwargs):
+        if not self.measures:
+            return redirect("measure-ui-list")
+        return super().get(*args, **kwargs)
 
     def get_template_names(self):
         return self.templates.get(
@@ -265,26 +274,26 @@ class MeasuresEditWizard(
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
-
-        model_fields = [f.name for f in Measure._meta.get_fields()]
-        form_changed_data = [f for f in cleaned_data if f in model_fields]
-        changed_data = {name: cleaned_data[name] for name in form_changed_data}
+        current_workbasket = WorkBasket.current(self.request)
+        tx = WorkBasket.get_current_transaction(self.request)
 
         edited_measures = []
+
+        footnote_pks = [
+            item["footnote"].pk
+            for item in cleaned_data.get("formset-footnotes", [])
+            if not item.get("DELETE")
+        ]
+        conditions_data = cleaned_data.get("formset-conditions", [])
+        for condition in conditions_data:
+            condition["update_type"] = UpdateType.CREATE
+
         for measure in self.measures:
+            defaults = {"generating_regulation": measure.generating_regulation}
+            update_measure(measure, tx, current_workbasket, cleaned_data, defaults)
+            create_conditions(measure, current_workbasket, conditions_data)
+            update_measure_footnotes(measure, tx, current_workbasket, footnote_pks)
 
-            if "end_date" in cleaned_data:
-                new_valid_between = TaricDateRange(
-                    lower=measure.valid_between.lower,
-                    upper=cleaned_data["end_date"],
-                )
-                changed_data["valid_between"] = new_valid_between
-
-            measure.new_version(
-                workbasket=self.workbasket,
-                update_type=self.update_type,
-                **changed_data,
-            )
             edited_measures.append(measure)
 
         context = self.get_context_data(
@@ -586,85 +595,16 @@ class MeasureUpdate(
         context["conditions_formset"] = conditions_formset
         return context
 
-    def create_conditions(self, obj):
-        """
-        Gets condition formset from context data, loops over these forms and
-        validates the data, checking for the condition_sid field in the data to
-        indicate whether an existing condition is being updated or a new one
-        created from scratch.
-
-        Then deletes any existing conditions that are not being updated,
-        before calling the MeasureCreationPattern.create_condition_and_components with the appropriate parser and condition data.
-        """
-        formset = self.get_context_data()["conditions_formset"]
-        excluded_sids = []
-        conditions_data = []
-        workbasket = WorkBasket.current(self.request)
-        existing_conditions = obj.conditions.approved_up_to_transaction(
-            workbasket.get_current_transaction(self.request),
-        )
-
-        for f in formset.forms:
-            f.is_valid()
-            condition_data = f.cleaned_data
-            # If the form has changed and "condition_sid" is in the changed data,
-            # this means that the condition is preexisting and needs to updated
-            # so that its dependent_measure points to the latest version of measure
-            if f.has_changed() and "condition_sid" in f.changed_data:
-                excluded_sids.append(f.initial["condition_sid"])
-                update_type = UpdateType.UPDATE
-                condition_data["version_group"] = existing_conditions.get(
-                    sid=f.initial["condition_sid"],
-                ).version_group
-                condition_data["sid"] = f.initial["condition_sid"]
-            # If changed and condition_sid not in changed_data, then this is a newly created condition
-            elif f.has_changed() and "condition_sid" not in f.changed_data:
-                update_type = UpdateType.CREATE
-
-            condition_data["update_type"] = update_type
-            conditions_data.append(condition_data)
-
-        workbasket = WorkBasket.current(self.request)
-
-        # Delete all existing conditions from the measure instance, except those that need to be updated
-        for condition in existing_conditions.exclude(sid__in=excluded_sids):
-            condition.new_version(
-                workbasket=workbasket,
-                update_type=UpdateType.DELETE,
-                transaction=obj.transaction,
-            )
-
-        if conditions_data:
-            measure_creation_pattern = MeasureCreationPattern(
-                workbasket=workbasket,
-                base_date=obj.valid_between.lower,
-            )
-            parser = DutySentenceParser.get(
-                obj.valid_between.lower,
-                component_output=MeasureConditionComponent,
-            )
-
-            # Loop over conditions_data, starting at 1 because component_sequence_number has to start at 1
-            for component_sequence_number, condition_data in enumerate(
-                conditions_data,
-                start=1,
-            ):
-                # Create conditions and measure condition components, using instance as `dependent_measure`
-                measure_creation_pattern.create_condition_and_components(
-                    condition_data,
-                    component_sequence_number,
-                    obj,
-                    parser,
-                    workbasket,
-                )
-
     def get_result_object(self, form):
-        obj = super().get_result_object(form)
-        form.instance = obj
-        self.create_conditions(obj)
-        form.save(commit=False)
+        instance = super().get_result_object(form)
+        form.instance = instance
+        current_workbasket = WorkBasket.current(self.request)
+        transaction = current_workbasket.get_current_transaction(self.request)
+        formset = self.get_context_data()["conditions_formset"]
+        new_measure = form.save(commit=False)
+        update_conditions(new_measure, transaction, current_workbasket, formset)
 
-        return obj
+        return instance
 
 
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):
