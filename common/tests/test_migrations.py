@@ -3,7 +3,9 @@ from datetime import datetime
 
 import pytest
 
+
 from common.models.transactions import TransactionPartition
+
 from common.util import TaricDateRange
 from common.validators import UpdateType
 
@@ -55,6 +57,7 @@ def test_missing_current_version_fix(migrator):
         "abbreviation": "xxx",
         "version_group": version_group,
     }
+
 
     # Create measurement Unit
     measurement_unit = measurement_unit_class.objects.create(**kwargs)
