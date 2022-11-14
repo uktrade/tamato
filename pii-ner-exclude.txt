@@ -1261,3 +1261,4 @@ FootnoteDescription UPDATE
 f"Form
 AdditionCode
 Skipping ME119: update_type
+Implementing Regulation
