@@ -39,10 +39,7 @@ def fix_current_versions(apps, schemaeditor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("common", "0005_transaction_index"),
-        ("workbaskets", "0005_workbasket_rule_check_task_id"),
-        ("measures", "0010_add_requires_to_action_and_accepts_to_condition_code"),
-        ("common", "0001_initial"),
+        ("common", "0006_auto_20221114_1000"),
     ]
 
     operations = [
