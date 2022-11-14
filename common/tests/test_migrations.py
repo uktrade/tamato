@@ -68,11 +68,10 @@ def test_missing_current_version_fix(migrator):
     migrator.apply_tested_migration(
         ("common", "0007_auto_20221114_1040_fix_missing_current_versions"),
     )
-
     measurement_unit = measurement_unit_class.objects.get(
         trackedmodel_ptr_id=measurement_unit_id,
     )
 
+    # assert
     assert measurement_unit.version_group.current_version_id == measurement_unit_id
-
     migrator.reset()
