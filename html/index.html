@@ -314,6 +314,11 @@ server.</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery -A common.celery worker --loglevel<span class="o">=</span>info
 </pre></div>
 </div>
+<p>To monitor celery workers or individual tasks run:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery flower
+</pre></div>
+</div>
+<p>See <a class="reference external" href="https://flower.readthedocs.io/en/latest/">flower docs</a> for more details</p>
 </section>
 <section id="manually-trigger-the-upload-to-s3">
 <h3>Manually trigger the upload to s3<a class="headerlink" href="#manually-trigger-the-upload-to-s3" title="Permalink to this headline">¶</a></h3>
