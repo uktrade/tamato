@@ -231,6 +231,27 @@ def test_ON12(delete_record):
         business_rules.ON12(deleted.transaction).validate(deleted)
 
 
+def test_ON12_does_not_raise(delete_record):
+    """
+    The quota order number origin cannot be deleted if it is used in a measure.
+
+    This rule is only applicable for measure with start date after 31/12/2007.
+    """
+
+    # create measure, and quota order and origin
+    measure = factories.MeasureWithQuotaFactory.create()
+
+    # add another origin
+    origin_without_measure = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=measure.order_number,
+    )
+
+    # delete record
+    deleted = delete_record(origin_without_measure)
+
+    assert business_rules.ON12(deleted.transaction).validate(deleted) is None
+
+
 @pytest.mark.parametrize(
     "area_code, expect_error",
     [
