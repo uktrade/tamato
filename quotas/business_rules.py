@@ -163,11 +163,44 @@ class ON11(PreventDeleteIfInUse):
 
 
 @only_applicable_after("2007-12-31")
-class ON12(PreventDeleteIfInUse):
+class ON12(BusinessRule):
     """The quota order number origin cannot be deleted if it is used in a
     measure."""
 
-    in_use_check = "order_number_in_use"
+    def validate(self, on_origin):
+        """
+        Loop over measures that reference the same quota order number as origin.
+
+        Get all the origins linked to this measure. Loop over these origins and
+        check that there are no measures linked to the origin .
+        """
+
+        if (
+            type(on_origin.order_number.measure_set.first())
+            .objects.approved_up_to_transaction(on_origin.transaction)
+            .count()
+            == 0
+        ):
+            return
+
+        on_query = (
+            type(on_origin.order_number.measure_set.first())
+            .objects.approved_up_to_transaction(on_origin.transaction)
+            .filter(
+                geographical_area_id=on_origin.geographical_area_id,
+                order_number_id=on_origin.order_number_id,
+            )
+        )
+
+        if on_query.exists():
+            raise self.violation(
+                model=on_origin,
+                message=(
+                    "The quota order number origin cannot be deleted if it is used in a"
+                    "measure."
+                    f"This order_number_origin is linked to {on_query.count()} measures currently."
+                ),
+            )
 
 
 class ON13(BusinessRule):
