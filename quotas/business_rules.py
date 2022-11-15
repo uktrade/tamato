@@ -175,18 +175,21 @@ class ON12(BusinessRule):
         check that there are no measures linked to the origin .
         """
 
-        m_query = type(
-            on_origin.order_number.measure_set.first(),
-        ).objects.approved_up_to_transaction(
-            on_origin.transaction,
-        )
-
-        if not m_query.exists():
+        if (
+            type(on_origin.order_number.measure_set.first())
+            .objects.approved_up_to_transaction(on_origin.transaction)
+            .count()
+            == 0
+        ):
             return
 
-        on_query = m_query.filter(
-            geographical_area_id=on_origin.geographical_area_id,
-            order_number_id=on_origin.order_number_id,
+        on_query = (
+            type(on_origin.order_number.measure_set.first())
+            .objects.approved_up_to_transaction(on_origin.transaction)
+            .filter(
+                geographical_area_id=on_origin.geographical_area_id,
+                order_number_id=on_origin.order_number_id,
+            )
         )
 
         if on_query.exists():
