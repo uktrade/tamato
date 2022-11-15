@@ -236,13 +236,6 @@ class MeasuresEditWizard(
     def measures(self):
         return Measure.objects.filter(pk__in=self._session_store.data.keys())
 
-    def get_initial(self):
-        store = SessionStore(
-            self.request,
-            "MEASURE_SELECTIONS",
-        )
-        return store.data.copy()
-
     def get_form_kwargs(self, step):
         kwargs = {}
         if step == constants.DUTIES:
