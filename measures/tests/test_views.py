@@ -21,6 +21,7 @@ from common.tests.util import view_urlpattern_ids
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from measures import constants
 from measures.business_rules import ME70
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
@@ -350,28 +351,54 @@ def test_measure_update_duty_sentence(
     post_data["update_type"] = 1
     url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
     client.force_login(valid_user)
+
+    prev_transaction = Transaction.objects.last()
+    old_measure = Measure.objects.get(id=measure_form.data["id"])
+    components = old_measure.components.approved_up_to_transaction(
+        prev_transaction,
+    ).filter(
+        component_measure__sid=measure_form.instance.sid,
+    )
+
+    prev_transaction_pks = [t.pk for t in list(Transaction.objects.all())]
+
+    assert not components.exists()
+
     response = client.post(url, data=post_data)
 
     assert response.status_code == 302
 
     if update_data:
-        tx = Transaction.objects.last()
-        measure = Measure.objects.approved_up_to_transaction(tx).get(
+        last_tx = Transaction.objects.last()
+        measure = Measure.objects.approved_up_to_transaction(last_tx).get(
             sid=measure_form.instance.sid,
         )
-        components = measure.components.approved_up_to_transaction(tx).filter(
+        components = measure.components.approved_up_to_transaction(last_tx).filter(
             component_measure__sid=measure_form.instance.sid,
         )
+
+        # one transaction for the measure, one for its components
+        assert Transaction.objects.count() == len(prev_transaction_pks) + 2
+
+        new_transactions = Transaction.objects.all().exclude(
+            pk__in=prev_transaction_pks,
+        )
+
+        assert measure.transaction != old_measure.transaction
+        assert measure.transaction in new_transactions
+        assert components.first().transaction != old_measure.transaction
 
         assert components.exists()
         assert components.count() == 1
         assert components.first().duty_amount == 10.000
-        assert components.first().transaction == measure.transaction
+        assert components.first().transaction in new_transactions
 
 
 # https://uktrade.atlassian.net/browse/TP2000-144
 @patch("measures.forms.MeasureForm.save")
+@patch("measures.views.update_conditions")
 def test_measure_form_save_called_on_measure_update(
+    update_conditions,
     save,
     client,
     valid_user,
@@ -387,6 +414,7 @@ def test_measure_form_save_called_on_measure_update(
     client.force_login(valid_user)
     client.post(url, data=post_data)
 
+    update_conditions.assert_called()
     save.assert_called_with(commit=False)
 
 
@@ -519,8 +547,8 @@ def test_measure_update_edit_conditions(
         sid=measure.sid,
     )
 
-    # We expect one transaction for updating the measure and updating the condition, one for deleting a component and updating a component
-    assert Transaction.objects.count() == transaction_count + 2
+    # We expect one transaction for updating the measure, one for updating the condition, one for deleting a component and updating a component
+    assert Transaction.objects.count() == transaction_count + 3
     assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 1
 
     condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
@@ -610,8 +638,8 @@ def test_measure_update_remove_conditions(
     response = client.post(url, data=measure_edit_conditions_data)
 
     assert response.status_code == 302
-    # We expect one transaction for the measure update and condition deletion
-    assert Transaction.objects.count() == transaction_count + 1
+    # We expect two transactions for the measure update and condition deletion
+    assert Transaction.objects.count() == transaction_count + 2
 
     tx = Transaction.objects.last()
     updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
@@ -1078,3 +1106,146 @@ def test_measure_form_creates_exclusions(
     assert not set(
         [e.excluded_geographical_area for e in measure.exclusions.all()],
     ).difference({excluded_country1, excluded_country2})
+
+
+@unittest.mock.patch("measures.parsers.DutySentenceParser")
+def test_measure_update_form_wizard_finish(
+    mock_duty_sentence_parser,
+    valid_user_client,
+    workbasket,
+    additional_code,
+    regulation,
+    quota_order_number,
+    duty_sentence_parser,
+    erga_omnes,
+    measure_edit_conditions_data,
+):
+
+    mock_duty_sentence_parser.return_value = duty_sentence_parser
+
+    measure1 = factories.MeasureFactory.create()
+    measure2 = factories.MeasureFactory.create()
+    footnote = factories.FootnoteFactory.create()
+
+    session = valid_user_client.session
+    session.update(
+        {
+            "MEASURE_SELECTIONS": {
+                str(measure1.pk): True,
+                str(measure2.pk): True,
+            },
+        },
+    )
+    session.update({"workbasket": {"id": workbasket.pk}})
+    session.save()
+
+    assert not workbasket.tracked_models.count()
+
+    STEP_KEY = "measures_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: constants.START,
+                "start-fields_to_edit": [
+                    constants.END_DATES,
+                    constants.REGULATION_ID,
+                    constants.QUOTA_ORDER_NUMBER,
+                    constants.GEOGRAPHICAL_AREA,
+                    constants.DUTIES,
+                    constants.ADDITIONAL_CODE,
+                    constants.CONDITIONS,
+                    constants.FOOTNOTES,
+                ],
+            },
+            "next_step": constants.END_DATES,
+        },
+        {
+            "data": {
+                STEP_KEY: constants.END_DATES,
+                "end_dates-end_date_0": "01",
+                "end_dates-end_date_1": "01",
+                "end_dates-end_date_2": "2100",
+            },
+            "next_step": constants.REGULATION_ID,
+        },
+        {
+            "data": {
+                STEP_KEY: constants.REGULATION_ID,
+                "regulation_id-generating_regulation": regulation.pk,
+            },
+            "next_step": constants.QUOTA_ORDER_NUMBER,
+        },
+        {
+            "data": {
+                STEP_KEY: constants.QUOTA_ORDER_NUMBER,
+                "quota_order_number-order_number": quota_order_number.pk,
+            },
+            "next_step": constants.GEOGRAPHICAL_AREA,
+        },
+        {
+            "data": {
+                STEP_KEY: constants.GEOGRAPHICAL_AREA,
+                "geographical_area-geo_area": "ERGA_OMNES",
+            },
+            "next_step": constants.DUTIES,
+        },
+        {
+            "data": {
+                STEP_KEY: constants.DUTIES,
+                "duties-duties": "3.5%+++11+GBP+/+100+kg",
+            },
+            "next_step": constants.ADDITIONAL_CODE,
+        },
+        {
+            "data": {
+                STEP_KEY: constants.ADDITIONAL_CODE,
+                "additional_code-additional_code": additional_code.pk,
+            },
+            "next_step": constants.CONDITIONS,
+        },
+        {
+            "data": {
+                STEP_KEY: constants.CONDITIONS,
+                **measure_edit_conditions_data,
+            },
+            "next_step": constants.FOOTNOTES,
+        },
+        {
+            "data": {
+                STEP_KEY: constants.FOOTNOTES,
+                "form-0-footnote": footnote.pk,
+            },
+            "next_step": constants.SUMMARY,
+        },
+        {
+            "data": {
+                STEP_KEY: constants.SUMMARY,
+            },
+            "next_step": constants.COMPLETE,
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    complete_response = valid_user_client.get(response.url)
+
+    # 2 measures edited with:
+    # 1 condition
+    # 1 footnote
+    assert workbasket.tracked_models.count() == 6
+
+    assert complete_response.status_code == 200

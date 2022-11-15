@@ -290,9 +290,25 @@ class MeasuresEditWizard(
 
         for measure in self.measures:
             defaults = {"generating_regulation": measure.generating_regulation}
-            update_measure(measure, tx, current_workbasket, cleaned_data, defaults)
-            create_conditions(measure, current_workbasket, conditions_data)
-            update_measure_footnotes(measure, tx, current_workbasket, footnote_pks)
+            new_measure = update_measure(
+                measure,
+                tx,
+                current_workbasket,
+                cleaned_data,
+                defaults,
+            )
+            create_conditions(
+                measure,
+                new_measure.transaction,
+                current_workbasket,
+                conditions_data,
+            )
+            update_measure_footnotes(
+                new_measure,
+                new_measure.transaction,
+                current_workbasket,
+                footnote_pks,
+            )
 
             edited_measures.append(measure)
 
@@ -599,10 +615,15 @@ class MeasureUpdate(
         instance = super().get_result_object(form)
         form.instance = instance
         current_workbasket = WorkBasket.current(self.request)
-        transaction = current_workbasket.get_current_transaction(self.request)
+        current_workbasket.get_current_transaction(self.request)
         formset = self.get_context_data()["conditions_formset"]
         new_measure = form.save(commit=False)
-        update_conditions(new_measure, transaction, current_workbasket, formset)
+        update_conditions(
+            instance,
+            new_measure.transaction,
+            current_workbasket,
+            formset,
+        )
 
         return instance
 

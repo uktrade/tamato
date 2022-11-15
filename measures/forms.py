@@ -524,6 +524,7 @@ class MeasureConditionsWizardStepFormSet(FormSet):
 
 class MeasureConditionsEditWizardStepFormSet(FormSet):
     form = MeasureConditionsMultipleEditForm
+    prefix = "measure-conditions-formset"
 
 
 class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
