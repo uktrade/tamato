@@ -11,6 +11,7 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
+from common.business_rules import skip_when_not_deleted
 from common.models.utils import override_current_transaction
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
@@ -164,6 +165,7 @@ class ON11(PreventDeleteIfInUse):
 
 
 @only_applicable_after("2007-12-31")
+@skip_when_not_deleted
 class ON12(BusinessRule):
     """The quota order number origin cannot be deleted if it is used in a
     measure."""
