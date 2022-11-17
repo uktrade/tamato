@@ -516,6 +516,33 @@ def test_overlapping_quota_definition(date_ranges):
         ).validate(overlapping_definition)
 
 
+def test_overlapping_quota_definition_on_deleted_records(date_ranges, delete_record):
+    order_number = factories.QuotaOrderNumberFactory.create()
+
+    old_quota_definition = factories.QuotaDefinitionFactory.create(
+        order_number=order_number,
+        valid_between=date_ranges.normal,
+    )
+
+    old_quota_definition.new_version(
+        update_type=UpdateType.DELETE,
+    )
+
+    overlapping_definition = factories.QuotaDefinitionFactory.create(
+        order_number=order_number,
+        valid_between=date_ranges.normal,
+    )
+
+    assert (
+        business_rules.OverlappingQuotaDefinition(
+            overlapping_definition.transaction,
+        ).validate(
+            overlapping_definition,
+        )
+        is None
+    )
+
+
 def test_volume_and_initial_volume_must_match(date_ranges):
     """Unless it is the main quota in a quota association, a definition's volume
     and initial_volume values should always be the same."""
