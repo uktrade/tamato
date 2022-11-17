@@ -292,7 +292,12 @@ class OverlappingQuotaDefinition(BusinessRule):
                 order_number=quota_definition.order_number,
                 valid_between__overlap=quota_definition.valid_between,
             )
-            .exclude(sid=quota_definition.sid)
+            .exclude(
+                sid=quota_definition.sid,
+                update_type=2,
+                trackedmodel_ptr_id=quota_definition.trackedmodel_ptr_id,
+            )
+            .exclude(update_type=2)
             .exists()
         ):
             raise self.violation(quota_definition)
