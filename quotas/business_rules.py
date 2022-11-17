@@ -285,22 +285,26 @@ class OverlappingQuotaDefinition(BusinessRule):
     quota order number id."""
 
     def validate(self, quota_definition):
-        if (
+
+        potential_quota_definition_matches = (
             type(quota_definition)
-            .objects.approved_up_to_transaction(quota_definition.transaction)
+            .objects.approved_up_to_transaction(
+                quota_definition.transaction,
+            )
             .filter(
                 order_number=quota_definition.order_number,
                 valid_between__overlap=quota_definition.valid_between,
             )
-            .exclude(
-                sid=quota_definition.sid,
-                update_type=2,
-                trackedmodel_ptr_id=quota_definition.trackedmodel_ptr_id,
-            )
-            .exclude(update_type=2)
-            .exists()
-        ):
-            raise self.violation(quota_definition)
+            .exclude(sid=quota_definition.sid)
+        )
+
+        if potential_quota_definition_matches.exists():
+            for potential_quota_definition in potential_quota_definition_matches:
+                if (
+                    potential_quota_definition
+                    == potential_quota_definition.current_version
+                ):
+                    raise self.violation(quota_definition)
 
 
 class VolumeAndInitialVolumeMustMatch(BusinessRule):

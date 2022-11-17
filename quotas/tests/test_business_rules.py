@@ -516,7 +516,11 @@ def test_overlapping_quota_definition(date_ranges):
         ).validate(overlapping_definition)
 
 
-def test_overlapping_quota_definition_on_deleted_records(date_ranges, delete_record):
+def test_overlapping_quota_definition_on_deleted_records(
+    date_ranges,
+    delete_record,
+    approved_transaction,
+):
     order_number = factories.QuotaOrderNumberFactory.create()
 
     old_quota_definition = factories.QuotaDefinitionFactory.create(
@@ -526,9 +530,12 @@ def test_overlapping_quota_definition_on_deleted_records(date_ranges, delete_rec
 
     old_quota_definition.new_version(
         update_type=UpdateType.DELETE,
+        transaction=approved_transaction,
+        workbasket=approved_transaction.workbasket,
     )
 
     overlapping_definition = factories.QuotaDefinitionFactory.create(
+        sid=5,
         order_number=order_number,
         valid_between=date_ranges.normal,
     )
