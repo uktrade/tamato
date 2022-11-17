@@ -3,6 +3,7 @@ import datetime
 from datetime import date
 from decimal import Decimal
 
+import measures.models as measures_models
 from common.business_rules import BusinessRule
 from common.business_rules import ExclusionMembership
 from common.business_rules import MustExist
@@ -175,9 +176,7 @@ class ON12(BusinessRule):
         check that there are no measures linked to the origin .
         """
 
-        measures = type(
-            order_number_origin.order_number.measure_set.first(),
-        ).objects.approved_up_to_transaction(
+        measures = measures_models.Measure.objects.approved_up_to_transaction(
             order_number_origin.transaction,
         )
 
