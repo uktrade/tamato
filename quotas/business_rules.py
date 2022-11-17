@@ -194,8 +194,8 @@ class ON12(BusinessRule):
             raise self.violation(
                 model=order_number_origin,
                 message=(
-                    "The quota order number origin cannot be deleted if it is used in a "
-                    "measure."
+                    "The quota order number origin cannot be deleted if it is used in a"
+                    " measure."
                     f"This order_number_origin is linked to {order_numbers.count()} measures currently."
                 ),
             )
