@@ -184,8 +184,8 @@ class ON12(BusinessRule):
             return
 
         order_numbers = measures.filter(
-            geographical_area_id=order_number_origin.geographical_area_id,
-            order_number_id=order_number_origin.order_number_id,
+            geographical_area__sid=order_number_origin.geographical_area.sid,
+            order_number__sid=order_number_origin.order_number.sid,
         )
 
         if order_numbers.exists():
