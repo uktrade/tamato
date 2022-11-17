@@ -249,7 +249,7 @@ def test_ON12_does_not_raise(delete_record):
     # delete record
     deleted = delete_record(origin_without_measure)
 
-    assert business_rules.ON12(deleted.transaction).validate(deleted) is None
+    business_rules.ON12(deleted.transaction).validate(deleted)
 
 
 @pytest.mark.parametrize(

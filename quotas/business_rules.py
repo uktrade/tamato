@@ -167,7 +167,7 @@ class ON12(BusinessRule):
     """The quota order number origin cannot be deleted if it is used in a
     measure."""
 
-    def validate(self, on_origin):
+    def validate(self, order_number_origin):
         """
         Loop over measures that reference the same quota order number as origin.
 
@@ -175,30 +175,27 @@ class ON12(BusinessRule):
         check that there are no measures linked to the origin .
         """
 
-        if (
-            type(on_origin.order_number.measure_set.first())
-            .objects.approved_up_to_transaction(on_origin.transaction)
-            .count()
-            == 0
-        ):
-            return
-
-        on_query = (
-            type(on_origin.order_number.measure_set.first())
-            .objects.approved_up_to_transaction(on_origin.transaction)
-            .filter(
-                geographical_area_id=on_origin.geographical_area_id,
-                order_number_id=on_origin.order_number_id,
-            )
+        measures = type(
+            order_number_origin.order_number.measure_set.first(),
+        ).objects.approved_up_to_transaction(
+            order_number_origin.transaction,
         )
 
-        if on_query.exists():
+        if not measures.exists():
+            return
+
+        order_numbers = measures.filter(
+            geographical_area_id=order_number_origin.geographical_area_id,
+            order_number_id=order_number_origin.order_number_id,
+        )
+
+        if order_numbers.exists():
             raise self.violation(
-                model=on_origin,
+                model=order_number_origin,
                 message=(
-                    "The quota order number origin cannot be deleted if it is used in a"
+                    "The quota order number origin cannot be deleted if it is used in a "
                     "measure."
-                    f"This order_number_origin is linked to {on_query.count()} measures currently."
+                    f"This order_number_origin is linked to {order_numbers.count()} measures currently."
                 ),
             )
 
