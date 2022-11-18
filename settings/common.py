@@ -103,6 +103,7 @@ TAMATO_APPS = [
     "hmrc_sdes",
     "importer",
     # XXX need to keep this for migrations. delete later.
+    "publishing",
     "taric",
     "workbaskets",
     "exporter.apps.ExporterConfig",
