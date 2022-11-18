@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import TextChoices
 from django_fsm import FSMField
@@ -53,10 +54,16 @@ class PackagedWorkBasket(TimestampedMixin):
         on_delete=models.PROTECT,
         editable=False,
     )
-    position = models.IntegerField(
+    position = models.SmallIntegerField(
         db_index=True,
         editable=False,
+        validators=[
+            MinValueValidator(0),
+        ],
     )
+    """Position 1 is the top position, ready for processing. An instance that
+    is being processed or has been processed has its position value set to 0.
+    """
     envelope = models.ForeignKey(
         Envelope,
         null=True,
@@ -76,6 +83,9 @@ class PackagedWorkBasket(TimestampedMixin):
         on_delete=models.PROTECT,
         editable=False,
     )
+    """The report file associated with an attempt (either successful or failed)
+    to process / load the associated workbasket's envelope file.
+    """
 
     # position_state transition management.
 
@@ -88,10 +98,13 @@ class PackagedWorkBasket(TimestampedMixin):
     def begin_processing(self):
         """Start processing a PackagedWorkBasket."""
         # TODO:
+        # * Prevent processing anything other the instance in the top position,
+        #   1.
         # * Guard against attempts to process more than one instance at any
         #   one time. This avoids an otherwise intractable CDS envelope
         #   sequencing issue that results from a contiguous envelope numbering
-        #   requirement, while also supporting envelope ingestion failures.
+        #   requirement, while also supporting envelope ingestion failure since
+        #   their envelope IDs become invalid and must be recycled.
 
     @transition(
         field=processing_state,
@@ -118,7 +131,7 @@ class PackagedWorkBasket(TimestampedMixin):
         """Create a new instance, appending it to the end (last position) of the
         package processing queue."""
         # TODO:
-        # * Assigne self.position to MAX(position) + 1.
+        # * Assign self.position to MAX(position) + 1.
         return cls.objects.create()
 
     # Queue positioning.
