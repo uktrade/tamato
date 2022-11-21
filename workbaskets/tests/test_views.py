@@ -51,7 +51,10 @@ def test_workbasket_create_user_not_logged_in_dev_sso_disabled(client, settings)
     settings.ENV = "dev"
     settings.SSO_ENABLED = False
     settings.LOGIN_URL = reverse("login")
-    settings.MIDDLEWARE.remove("authbroker_client.middleware.ProtectAllViewsMiddleware")
+    if "authbroker_client.middleware.ProtectAllViewsMiddleware" in settings.MIDDLEWARE:
+        settings.MIDDLEWARE.remove(
+            "authbroker_client.middleware.ProtectAllViewsMiddleware",
+        )
     create_url = reverse("workbaskets:workbasket-ui-create")
     form_data = {
         "title": "My new workbasket",
