@@ -1247,3 +1247,6 @@ date_time_start
 Y-%m-%d
 Skipping ME119: update_type
 Implementing Regulation
+{PYTHON}  manage.py migrate
+{PYTHON}  manage.py makemigrations
+{PYTHON}  manage.py collectstatic

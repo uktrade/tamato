@@ -95,8 +95,8 @@ docker-run:
 docker-test:
 	@echo
 	@echo "> Running tests in Docker..."
-	@docker-compose run \
-		${PROJECT} sh -c "docker/wait_for_db && ${PYTHON} manage.py test -- -n=auto --dist=loadfile --cov"
+	@docker-compose -f docker-compose-test.yml run \
+		${PROJECT} ${PYTHON} manage.py test -- -n=auto --dist=loadfile --cov"
 
 ## clean-docs: Clean the generated documentation files
 clean-docs:
@@ -108,3 +108,71 @@ build-docs html:
 	@sphinx-gherkindoc --raw-descriptions "docs/source/training" "docs/source/training"
 	@for FILE in $$(ls -1 docs/source/training/*.rst | grep -v gherkin); do $(BASH) docs/source/training/augment.sh $$FILE; done
 	@cd docs && sphinx-build -M html "source" "build"
+
+
+## docker-first-use: Run tests in Docker container
+docker-first-use:
+	@echo
+	@echo "> Running db in docker..."
+	@docker-compose down
+	@docker-compose up -d db
+	@echo "> Running migrate in docker..."
+	@docker-compose run --rm \
+		${PROJECT} ${PYTHON} manage.py migrate
+	@echo "> Run docker container..."
+	@docker-compose up 
+
+## docker-migrations: Run django makemigrations in Docker container
+docker-migrations:
+	@echo
+	@echo "> Running makemigrations in docker..."
+	@docker-compose run --rm \
+		${PROJECT} ${PYTHON} manage.py makemigrations
+
+## docker-migrate: Run django makemigrations in Docker container
+docker-migrate:
+	@echo
+	@echo "> Running database migrations in docker..."
+	@docker-compose run --rm \
+		${PROJECT} ${PYTHON}  manage.py migrate
+
+## docker-migrations: Run django makemigrations in Docker container
+docker-checkmigrations:
+	@echo
+	@echo "> Running check migrations in docker..."
+	@docker-compose run --rm --no-deps \
+		${PROJECT} ${PYTHON}  manage.py makemigrations --check
+
+## docker-shell: Run django shell in Docker container
+docker-shell:
+	@echo
+	@echo "> Running django shell  in docker..."
+	@docker-compose run --rm \
+		${PROJECT} ${PYTHON} manage.py shell
+
+## docker-collectstatic: Run django collectstatic in Docker container
+docker-collectstatic:
+	@echo
+	@echo "> Collecting static assets in docker..."
+	@docker-compose run --rm \
+		${PROJECT} ${PYTHON}  manage.py collectstatic
+
+## docker-bash: Run bash shell in Docker container
+docker-bash:
+	@echo
+	@echo "> Running bash shell in docker..."
+	@docker-compose run --rm ${PROJECT} bash
+
+## docker-pytest: Run pytest in Docker container
+docker-pytest:
+	@echo
+	@echo "> Running pytest in docker..."
+	@docker-compose -f docker-compose-test.yml run --rm \
+		${PROJECT} ${PYTHON} -m pytest -n=auto --dist=loadfile --alluredir=allure-results --nomigrations --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml
+
+## docker-superuser: Create superuser in Docker container
+docker-superuser:
+	@echo
+	@echo "> Creating superuser in docker..."
+	@docker-compose run --rm \
+		${PROJECT} ${PYTHON} manage.py createsuperuser

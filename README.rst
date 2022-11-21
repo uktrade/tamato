@@ -25,13 +25,19 @@ Build the Docker image:
 .. code:: sh
 
     $ cp sample.env .env
-    $ docker-compose build
+    $ make docker-image
 
-Run the tamato app:
+Run the tamato app first time:
+
+ .. code:: sh
+
+    $ make migrate or make first-use
+
+Run the tamato app:  
 
 .. code:: sh
 
-    $ docker-compose up
+    $ make docker-run
 
 Go to http://localhost:8000/ in your web browser to view the app
 
@@ -45,17 +51,24 @@ To get a database dump, please contact the `TAP team`_.
 
 .. _`TAP team`: mailto:stephen.corder@trade.gov.uk?subject=TaMaTo+database+dump+request
 
-Run database migrations (in another terminal):
+Run database migrations:
 
 .. code:: sh
 
-    $ docker-compose exec tamato python manage.py migrate
+    $ make docker-migrate
 
-Create a superuser (in another terminal), to enable logging in to the app:
+Create a superuser, to enable logging in to the app:
 
 .. code:: sh
 
-    $ docker-compose exec tamato python manage.py createsuperuser
+    $ make docker-superuser
+
+Run tests from within a docker container:
+
+.. code:: sh
+
+    $ make docker-test
+    $ make docker-pytest
 
 
 Development environment

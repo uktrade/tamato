@@ -43,7 +43,7 @@ services:
   tamato:
     build: 
       context: .
-      dockerfile: "docker/Dockerfile"
+      dockerfile: "docker/Dockerfile.test"
     image: tamato
     ports:
       - "8000:8000"
@@ -59,14 +59,11 @@ services:
       - celery-redis
     environment:
       DATABASE_URL: "postgres://postgres@db/postgres"
-      DJANGO_SETTINGS_MODULE: "settings.dev"
+      DJANGO_SETTINGS_MODULE: "settings.test"
       ENABLE_DJANGO_DEBUG_TOOLBAR: "False"
       PYTHONUNBUFFERED: "1"
       STARTING_TRANSACTION: "0"
-      NURSERY_CACHE_ENGINE: "importer.cache.redis.RedisCacheEngine"
-      CACHE_URL: "redis://cache-redis:6378/1"
-      CELERY_BROKER_URL: "redis://celery-redis:6378/1"
-      SSO_ENABLED: "false"
+      SSO_ENABLED: "False"
     command: python manage.py runserver 0.0.0.0:8000
 
 volumes:
