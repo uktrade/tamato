@@ -1,8 +1,11 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Max
+from django.db.models import QuerySet
 from django.db.models import TextChoices
 from django.db.models import Value
 from django.db.models.functions import Coalesce
+from django.db.transaction import atomic
 from django_fsm import FSMField
 from django_fsm import transition
 
@@ -35,10 +38,48 @@ class ProcessingState(TextChoices):
         "Failed processing",
     )
 
+    @classmethod
+    def completed_processing_states(cls):
+        return (
+            cls.SUCCESSFULLY_PROCESSED,
+            cls.FAILED_PROCESSING,
+        )
+
 
 class LoadingReport(TimestampedMixin):
     """Reported associated with an attempt to load (process) a
     PackagedWorkBasket instance."""
+
+    # TODO
+
+
+class PackagedWorkBasketQuerySet(QuerySet):
+    def awaiting_processing(self) -> "PackagedWorkBasketQuerySet":
+        """Return all PackagedWorkBasket instances whose processing_state is set
+        to AWAITING_PROCESSING."""
+        return self.filter(processing_state=ProcessingState.AWAITING_PROCESSING)
+
+    def currently_processing(self) -> "PackagedWorkBasket":
+        """
+        Returns a single PackagedWorkBasket instance if one currently has a
+        processing_state of CURRENTLY_PROCESSING.
+
+        If no instance has a processing_state of CURRENTLY_PROCESSING, then None
+        is returned.
+        """
+        try:
+            return self.get(
+                processing_state=ProcessingState.CURRENTLY_PROCESSING,
+            )
+        except ObjectDoesNotExist:
+            return None
+
+    def completed_processing(self) -> "PackagedWorkBasketQuerySet":
+        """Return all PackagedWorkBasket instances whose processing_state is one
+        of the completed processing states."""
+        return self.filter(
+            processing_state__in=ProcessingState.completed_processing_states(),
+        )
 
 
 class PackagedWorkBasket(TimestampedMixin):
@@ -50,6 +91,8 @@ class PackagedWorkBasket(TimestampedMixin):
     most instance only to attempt CDS ingestion. The packaging process handles
     CDS ingestion success and failure cases.
     """
+
+    objects: PackagedWorkBasketQuerySet = PackagedWorkBasketQuerySet.as_manager()
 
     workbasket = models.ForeignKey(
         WorkBasket,
@@ -126,26 +169,39 @@ class PackagedWorkBasket(TimestampedMixin):
     # Creation management.
 
     @classmethod
+    @atomic
     def create(cls, workbasket):
-        """Create a new instance, associating with workbasket and appending the
-        instance to the end (last position) of the package processing queue."""
+        """Create and save a new instance, associating with workbasket and
+        appending the instance to the end (last position) of the package
+        processing queue."""
         # TODO:
         # * Guard against creating more than one active instance for a
         #   workbasket in the queue.
         # * Get max_position as a Subquery of create().
+        # * Validate that the workbasket has complete and successful business
+        #   rule checks?
         max_position = cls.objects.aggregate(
             out=Coalesce(
                 Max("position"),
                 Value(0),
             ),
         )["out"]
-        return cls.objects.create(
+        obj = cls(
             workbasket=workbasket,
             position=max_position + 1,
         )
+        return obj.save()
 
-    # Queue positioning.
+    # Queue management.
 
+    @atomic
+    def pop_top(self):
+        """Pop the top-most instance, shuffling all other actively queued
+        instances up one position."""
+        # TODO:
+        return self
+
+    @atomic
     def promote_to_top(self):
         """Promote the instance to the top position of the package processing
         queue."""
@@ -154,6 +210,7 @@ class PackagedWorkBasket(TimestampedMixin):
         #   position and 1.
         return self
 
+    @atomic
     def promote_position(self):
         """Promote the instance by one position up the package processing
         queue."""
@@ -162,6 +219,7 @@ class PackagedWorkBasket(TimestampedMixin):
         # * Bulk update on position col, swapping self and ahead.
         return self
 
+    @atomic
     def demote_position(self):
         """Demote the instance by one position down the package processing
         queue."""
