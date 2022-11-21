@@ -1,6 +1,8 @@
-from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Max
 from django.db.models import TextChoices
+from django.db.models import Value
+from django.db.models.functions import Coalesce
 from django_fsm import FSMField
 from django_fsm import transition
 
@@ -54,12 +56,9 @@ class PackagedWorkBasket(TimestampedMixin):
         on_delete=models.PROTECT,
         editable=False,
     )
-    position = models.SmallIntegerField(
+    position = models.PositiveSmallIntegerField(
         db_index=True,
         editable=False,
-        validators=[
-            MinValueValidator(0),
-        ],
     )
     """Position 1 is the top position, ready for processing. An instance that
     is being processed or has been processed has its position value set to 0.
@@ -127,12 +126,23 @@ class PackagedWorkBasket(TimestampedMixin):
     # Creation management.
 
     @classmethod
-    def create(cls):
-        """Create a new instance, appending it to the end (last position) of the
-        package processing queue."""
+    def create(cls, workbasket):
+        """Create a new instance, associating with workbasket and appending the
+        instance to the end (last position) of the package processing queue."""
         # TODO:
-        # * Assign self.position to MAX(position) + 1.
-        return cls.objects.create()
+        # * Guard against creating more than one active instance for a
+        #   workbasket in the queue.
+        # * Get max_position as a Subquery of create().
+        max_position = cls.objects.aggregate(
+            out=Coalesce(
+                Max("position"),
+                Value(0),
+            ),
+        )["out"]
+        return cls.objects.create(
+            workbasket=workbasket,
+            position=max_position + 1,
+        )
 
     # Queue positioning.
 
