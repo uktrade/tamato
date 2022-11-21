@@ -463,6 +463,7 @@ def assert_read_only_model_view_returns_list(
     :param equals=False: flag for equals check
     :param valid_user_client:
     """
+
     def get_attribute_value(data, attributes):
         for attribute in attributes.split("."):
             data = data[attribute]
