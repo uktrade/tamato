@@ -446,6 +446,23 @@ def assert_read_only_model_view_returns_list(
     valid_user_client,
     equals=False,
 ):
+    """
+    Integration test to verify class based read only model views.
+
+    Given a class based view and a url_name -
+      - Lookup the url for a list function
+      - Fetch data from the a URL constructed using the just created data.
+      - Assert that a 200 status was returned.
+      - Assert that the expected data is in results or equal if equals flag true
+
+    :param url_name: url namespace for the view
+    :param result_attributes: attribute path for the result
+    :param expected_attribute: attribute path for the expected result
+    :param expected_results: expected result
+    :param valid_user_client:
+    :param equals=False: flag for equals check
+    :param valid_user_client:
+    """
     def get_attribute_value(data, attributes):
         for attribute in attributes.split("."):
             data = data[attribute]

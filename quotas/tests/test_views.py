@@ -157,7 +157,7 @@ def test_quota_blocking_api_list_view(valid_user_client):
     expected_results = [factories.QuotaBlockingFactory.create()]
 
     assert_read_only_model_view_returns_list(
-        "quotablockingperiod",
+        "quotablocking",
         "sid",
         "sid",
         expected_results,

@@ -20,7 +20,6 @@ api_router.register(
 api_router.register(
     r"certificate_types",
     views.CertificateTypeViewSet,
-    basename="certificatetype",
 )
 
 detail = "<ctype_sid:certificate_type__sid><cert_sid:sid>"
