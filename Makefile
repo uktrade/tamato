@@ -96,7 +96,7 @@ docker-test:
 	@echo
 	@echo "> Running tests in Docker..."
 	@docker-compose -f docker-compose-test.yml run \
-		${PROJECT} ${PYTHON} manage.py test -- -n=auto --dist=loadfile --cov"
+		${PROJECT} ${PYTHON} manage.py test -- -n=auto --dist=loadfile --cov
 
 ## clean-docs: Clean the generated documentation files
 clean-docs:
@@ -110,7 +110,7 @@ build-docs html:
 	@cd docs && sphinx-build -M html "source" "build"
 
 
-## docker-first-use: Run tests in Docker container
+## docker-first-use: Run application for first time in Docker 
 docker-first-use:
 	@echo
 	@echo "> Running db in docker..."
@@ -122,7 +122,7 @@ docker-first-use:
 	@echo "> Run docker container..."
 	@docker-compose up 
 
-## docker-migrations: Run django makemigrations in Docker container
+## docker-migrations: Run django makemigrations in Docker
 docker-migrations:
 	@echo
 	@echo "> Running makemigrations in docker..."
