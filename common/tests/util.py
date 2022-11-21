@@ -1,5 +1,6 @@
 import contextlib
 import importlib
+import json
 from datetime import date
 from datetime import datetime
 from functools import lru_cache
@@ -435,6 +436,43 @@ def assert_model_view_renders(
     assert (
         response.status_code == 200
     ), f"View returned an error status: {response.status_code}"
+
+
+def assert_read_only_model_view_returns_list(
+    url_name,
+    result_attributes,
+    expected_attribute,
+    expected_results,
+    valid_user_client,
+    equals=False,
+):
+    def get_attribute_value(data, attributes):
+        for attribute in attributes.split("."):
+            data = data[attribute]
+        return data
+
+    def r_getattr(data, attributes):
+        for attribute in attributes.split("."):
+            data = getattr(data, attribute)
+        return data
+
+    url = reverse(f"{url_name}-list")
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    results = json.loads(response.content)["results"]
+    actual_results = [
+        get_attribute_value(result, result_attributes) for result in results
+    ]
+
+    for index, expected_result in enumerate(expected_results):
+        if equals:
+            assert (
+                r_getattr(expected_result, expected_attribute) == actual_results[index]
+            )
+        else:
+            assert r_getattr(expected_result, expected_attribute) in actual_results
 
 
 def assert_records_match(

@@ -11,7 +11,11 @@ api_router.register(
     views.AdditionalCodeViewSet,
     basename="additionalcode",
 )
-api_router.register(r"additional_code_types", views.AdditionalCodeTypeViewSet)
+api_router.register(
+    r"additional_code_types",
+    views.AdditionalCodeTypeViewSet,
+    basename="additionalcodetype",
+)
 
 detail = "<sid:sid>"
 description_detail = "<sid:described_additionalcode__sid>/description/<sid:sid>"
