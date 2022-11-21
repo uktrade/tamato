@@ -414,17 +414,26 @@
 <span class="sd">    quota order number id.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="OverlappingQuotaDefinition.validate"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.OverlappingQuotaDefinition.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span>
+
+        <span class="n">potential_quota_definition_matches</span> <span class="o">=</span> <span class="p">(</span>
             <span class="nb">type</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+                <span class="n">quota_definition</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">order_number</span><span class="o">=</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">order_number</span><span class="p">,</span>
                 <span class="n">valid_between__overlap</span><span class="o">=</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">valid_between</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">sid</span><span class="o">=</span><span class="n">quota_definition</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span></div></div>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">potential_quota_definition_matches</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">potential_quota_definition</span> <span class="ow">in</span> <span class="n">potential_quota_definition_matches</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">potential_quota_definition</span>
+                    <span class="o">==</span> <span class="n">potential_quota_definition</span><span class="o">.</span><span class="n">current_version</span>
+                <span class="p">):</span>
+                    <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="VolumeAndInitialVolumeMustMatch"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.VolumeAndInitialVolumeMustMatch">[docs]</a><span class="k">class</span> <span class="nc">VolumeAndInitialVolumeMustMatch</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
