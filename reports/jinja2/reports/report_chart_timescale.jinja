@@ -1,0 +1,92 @@
+{% extends "reports/layout_reports.jinja" %}
+
+{% block breadcrumb %}
+    {{ breadcrumbs(request, [
+      {'text': "Reports Index", "href": '/reports'},
+      {"text": page_title}
+    ]) }}
+{% endblock %}
+
+{% block content %}
+    <script src="{{ static("chart.js") }}"></script>
+    <script src="{{ static("moment.min.js") }}"></script>
+    <script src="{{ static("chartjs-adapter-moment.js") }}"></script>
+    <script>
+
+        const data = {
+            datasets: [{
+                label: "{{ report.hover_text|safe }}",
+                fill: false,
+                backgroundColor: '#0a5c0c',
+                data: {{ report.data()|safe }},
+            }]
+        };
+
+        const config = {
+            type: 'bar',
+            data: data,
+            options: {
+                spanGaps: 1000 * 60 * 60 * 24 * 2, // 2 days
+                responsive: true,
+                interaction: {
+                    mode: 'nearest',
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: "{{ report.name|safe }}"
+                    },
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        min: '2022-10-01',
+                        max: '2022-11-22',
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        },
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 0,
+                            major: {
+                                enabled: true
+                            },
+                            font: function (context) {
+                                if (context.tick && context.tick.major) {
+                                    return {
+                                        weight: 'bold',
+                                    };
+                                }
+                            }
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'value'
+                        }
+                    }
+                }
+            },
+        };
+
+        window.onload = function () {
+            var ctx = document.getElementById('chart').getContext('2d');
+            window.myPie = new Chart(ctx, config);
+        };
+
+    </script>
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        Report: {{ report.name }}
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">The report type is a timescale chart</span>
+
+    <div>
+        <div id="container" style="width: 75%;">
+            <canvas id="chart"></canvas>
+        </div>
+    </div>
+{% endblock %}

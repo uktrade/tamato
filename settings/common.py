@@ -41,6 +41,8 @@ STATICFILES_DIRS = [
     join(BASE_DIR, "static"),
     join(BASE_DIR, "node_modules", "govuk-frontend", "govuk", "assets"),
     join(BASE_DIR, "node_modules", "chart.js", "dist"),
+    join(BASE_DIR, "node_modules", "moment", "min"),
+    join(BASE_DIR, "node_modules", "chartjs-adapter-moment", "dist"),
 ]
 
 STATICFILES_FINDERS = [

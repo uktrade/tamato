@@ -30,7 +30,7 @@ def get_report_by_slug(slug):
 
 
 def get_template_by_type(template_type):
-    known_template_types = ["text", "chart", "table"]
+    known_template_types = ["text", "table", "chart", "chart_timescale"]
 
     if template_type in known_template_types:
         return f"reports/report_{template_type}.jinja"
