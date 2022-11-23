@@ -114,6 +114,47 @@ def test_measure_delete(use_delete_form):
     use_delete_form(factories.MeasureFactory())
 
 
+def test_multiple_measure_delete(client, valid_user, session_workbasket):
+    """Tests that MultipleMeasureDelete view's Post function takes a list of
+    measures, and sets their update type to delete, clearing the session once
+    completed."""
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+
+    url = reverse("measure-ui-delete-multiple")
+    client.force_login(valid_user)
+    session = client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+    }
+    session.update(
+        {
+            "DELETE_MEASURE_SELECTIONS": {
+                measure_1.pk: True,
+                measure_2.pk: True,
+                measure_3.pk: True,
+            },
+        },
+    )
+    session.save()
+    post_data = {"action": "delete"}
+    response = client.post(url, data=post_data)
+
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+    ).order_by("sid")
+
+    # on success, the page redirects to the list page
+    assert response.status_code == 302
+    assert client.session["DELETE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        # check that the update type is delete which is 2
+        assert measure.update_type == 2
+
+
 @pytest.mark.parametrize(
     ("view", "url_pattern"),
     get_class_based_view_urls_matching_url(
