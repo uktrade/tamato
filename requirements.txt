@@ -42,6 +42,7 @@ Jinja2==2.11.3
 lxml==4.9.1
 markupsafe==2.0.1
 moto==2.1.0
+notifications-python-client==6.4.1
 openpyxl==3.0.7
 parsec==3.8
 psycopg2-binary==2.9.*

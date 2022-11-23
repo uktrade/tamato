@@ -325,12 +325,16 @@ See the documentation on :ref:`the exporter <the-exporter>` for a full
 description.
 
 :mod:`checks`
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 .. automodule:: checks
 
 :mod:`hmrc_sdes`
 ^^^^^^^^^^^^^^^^
 .. automodule:: hmrc_sdes
+
+:mod:`notifications`
+^^^^^^^^^^^^^^^^^^^^
+.. automodule:: notifications
 
 :mod:`taric`
 ^^^^^^^^^^^^

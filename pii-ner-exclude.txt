@@ -1250,3 +1250,8 @@ Implementing RegulationLoadingReport
 loading_report
 Queued
 LoadingReport
+NotifiedUser
+NotificationLog
+template_id
+template_id"
+GOVUK Notify

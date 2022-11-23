@@ -1207,3 +1207,19 @@ class BatchDependenciesFactory(factory.django.DjangoModelFactory):
 
     dependent_batch = factory.SubFactory(ImportBatchFactory)
     depends_on = factory.SubFactory(ImportBatchFactory)
+
+
+class NotifiedUserFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "notifications.NotifiedUser"
+
+    email = factory.Faker("email")
+    enrol_packaging = True
+
+
+class NotificationLogFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "notifications.NotificationLog"
+
+    template_id = string_sequence(length=10)
+    recipients = factory.Faker("text", max_nb_chars=24)
