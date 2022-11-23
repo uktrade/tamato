@@ -12,8 +12,10 @@
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
         Report: {{ report.name }}
     </h1>
-    <span class="govuk-caption-xl govuk-!-margin-bottom-9">The report type is a table</span>
-
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">Table</span>
+    <h2 class="govuk-body">
+    {{ report.description|safe }}
+    </h2>
     <div>
         {% include "generics/table.jinja" %}
 
