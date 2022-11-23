@@ -37,8 +37,10 @@
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
         Report: {{ report.name }}
     </h1>
-    <span class="govuk-caption-xl govuk-!-margin-bottom-9">The report type is a chart</span>
-
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">Chart : {{ report.chart_type|safe }}</span>
+    <h2 class="govuk-body">
+    {{ report.description|safe }}
+    </h2>
     <div>
         <div id="container" style="width: 75%;">
             <canvas id="pie-chart"></canvas>

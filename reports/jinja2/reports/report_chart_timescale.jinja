@@ -40,8 +40,8 @@
                 scales: {
                     x: {
                         type: 'time',
-                        min: '2022-10-01',
-                        max: '2022-11-22',
+                        min: '{{ report.min_date_str|safe }}',
+                        max: '{{ report.max_date_str|safe }}',
                         display: true,
                         title: {
                             display: true,
@@ -82,8 +82,10 @@
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
         Report: {{ report.name }}
     </h1>
-    <span class="govuk-caption-xl govuk-!-margin-bottom-9">The report type is a timescale chart</span>
-
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">Timescale chart</span>
+    <h2 class="govuk-body">
+    {{ report.description|safe }}
+    </h2>
     <div>
         <div id="container" style="width: 75%;">
             <canvas id="chart"></canvas>

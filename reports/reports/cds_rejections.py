@@ -10,14 +10,26 @@ from workbaskets.validators import WorkflowStatus
 
 
 class Report(ReportBaseChart):
-    name = "CDS rejections in the last 365 days"
+    name = "CDS rejections in the last 12 months"
+    description = (
+        "This report shows the count of rejected (errored) workbaskets in the last 12 months per day. "
+        "<br><br>"
+        "Note: workbaskets that are rejected, tend to be removed, so this report is for demonstration "
+        "purposes only at this point. there remains some work to do to confidently track and collect "
+        "rejection information in TAP suitable for reporting purposes."
+    )
     chart_type = "line"
     report_template = "chart_timescale"
     days_in_past = 120
     hover_text = "rejected"
 
-    def data(self):
+    def min_date_str(self):
+        return str(date.today() + timedelta(days=-(self.days_in_past + 1)))
 
+    def max_date_str(self):
+        return str(date.today())
+
+    def data(self):
         result = []
 
         for row in self.query():

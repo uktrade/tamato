@@ -10,11 +10,18 @@ from workbaskets.validators import WorkflowStatus
 
 
 class Report(ReportBaseChart):
-    name = "CDS approvals in this quarter"
+    name = "CDS approvals in the last 12 months"
+    description = "This report shows the count of approved (published) workbaskets in the last 12 months per day"
     chart_type = "line"
     report_template = "chart_timescale"
-    days_in_past = 50
+    days_in_past = 365
     hover_text = "approved"
+
+    def min_date_str(self):
+        return str(date.today() + timedelta(days=-(self.days_in_past + 1)))
+
+    def max_date_str(self):
+        return str(date.today())
 
     def data(self):
 

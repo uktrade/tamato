@@ -7,6 +7,7 @@ class ReportBase(ABC):
     name = "Base Report"
     report_details = "Please complete report details"
     report_template = "text"
+    description = "This report is pending a description"
     enabled = True
 
     def __init__(self):
