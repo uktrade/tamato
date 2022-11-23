@@ -49,7 +49,7 @@ def test_current_queryset_returns_correct_results(
             approved=True,
             order=head_order + 1,
         )
-    assert Transaction.objects.all().approved.last() == latest
+    assert Transaction.objects.all().approved().last() == latest
 
     assert_current(check, expect_current)
 
