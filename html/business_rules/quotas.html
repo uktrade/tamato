@@ -268,16 +268,10 @@ measure.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="quotas.business_rules.ON12.validate">
-<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#quotas.business_rules.ON12.validate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check whether the specified model violates this business rule.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><a class="reference internal" href="common.html#common.business_rules.BusinessRuleViolation" title="common.business_rules.BusinessRuleViolation"><strong>BusinessRuleViolation</strong></a> – Raised if the passed model violates this business rule.</p>
-</dd>
-</dl>
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order_number_origin</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#ON12.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.ON12.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loop over measures that reference the same quota order number as origin.</p>
+<p>Get all the origins linked to this measure. Loop over these origins and
+check that there are no measures linked to the origin .</p>
 </dd></dl>
 
 </dd></dl>
