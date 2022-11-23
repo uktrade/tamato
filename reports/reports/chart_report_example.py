@@ -4,6 +4,7 @@ from reports.reports.base_chart import ReportBaseChart
 class Report(ReportBaseChart):
     name = "Chart example report with mock data"
     chart_type = "bar"
+    enabled = False
 
     def data(self):
         return [120, 33, 74, 55, 9]

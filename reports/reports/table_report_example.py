@@ -4,6 +4,7 @@ from reports.reports.base_table import ReportBaseTable
 
 class Report(ReportBaseTable):
     name = "Table report example accessing TAP data"
+    enabled = False
 
     def headers(self) -> [dict]:
         return [

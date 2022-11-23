@@ -9,6 +9,7 @@ from reports.reports.base_table import ReportBaseTable
 
 class Report(ReportBaseTable):
     name = "Live certificate doc codes"
+    enabled = False
 
     def headers(self) -> [dict]:
         return [
