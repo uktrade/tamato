@@ -15,7 +15,8 @@ def get_reports():
 
     for klass in get_child_classes(base.ReportBase):
         for subklass in get_child_classes(klass):
-            report_list.append(subklass)
+            if subklass.enabled:
+                report_list.append(subklass)
 
     return report_list
 
