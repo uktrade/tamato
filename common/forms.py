@@ -4,8 +4,10 @@ from typing import Type
 
 from crispy_forms_gds.fields import DateInputField
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -163,7 +165,7 @@ class HomeForm(forms.Form):
         )
 
     workbasket_action = forms.ChoiceField(
-        label="What would you like to do?",
+        label="",
         choices=WorkbasketActions.choices,
         widget=forms.RadioSelect,
         required=True,
@@ -172,9 +174,17 @@ class HomeForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
-        self.helper.legend_size = Size.EXTRA_LARGE
         self.helper.layout = Layout(
-            "workbasket_action",
+            Fieldset(
+                HTML.details(
+                    "What is a workbasket?",
+                    "A workbasket is used to collect all the elements that make up a tariff. "
+                    "Workbaskets will collect all the tariff changes you make for a specific tariff",
+                ),
+                "workbasket_action",
+                legend="What would you like to do?",
+                legend_size=Size.LARGE,
+            ),
             Submit(
                 "submit",
                 "Continue",
