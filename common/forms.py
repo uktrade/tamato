@@ -178,8 +178,8 @@ class HomeForm(forms.Form):
             Fieldset(
                 HTML.details(
                     "What is a workbasket?",
-                    "A workbasket is used to collect all the elements that make up a tariff. "
-                    "Workbaskets will collect all the tariff changes you make for a specific tariff",
+                    "A workbasket is used to collect all the changes you make to the UK's Import and Export Tariff data. "
+                    "Workbaskets group these changes so they can be checked by Customs Declaration Services (CDS) before going live.",
                 ),
                 "workbasket_action",
                 legend="What would you like to do?",
