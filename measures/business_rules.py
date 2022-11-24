@@ -11,6 +11,7 @@ from common.business_rules import BusinessRule
 from common.business_rules import ExclusionMembership
 from common.business_rules import FootnoteApplicability
 from common.business_rules import MustExist
+from common.business_rules import MustExistNotNull
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
@@ -158,7 +159,7 @@ class ME5(ValidityPeriodContained):
     container_field_name = "geographical_area"
 
 
-class ME6(MustExist):
+class ME6(MustExistNotNull):
     """The goods code must exist."""
 
     reference_field_name = "goods_nomenclature"
@@ -448,6 +449,7 @@ class ME117(BusinessRule):
         raise self.violation(measure)
 
 
+@skip_when_deleted
 @only_applicable_after("2007-12-31")
 class ME119(ValidityPeriodContained):
     """When a quota order number is used in a measure then the validity period
@@ -714,6 +716,7 @@ class ME34(BusinessRule):
 # -- Measure component
 
 
+@skip_when_deleted
 class ME40(BusinessRule):
     """
     If the flag "duty expression" on measure type is "mandatory" then at least

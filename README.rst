@@ -221,6 +221,14 @@ Open another terminal and start a Celery worker:
 
     celery -A common.celery worker --loglevel=info
 
+To monitor celery workers or individual tasks run:
+
+.. code:: sh
+
+    celery flower
+
+See `flower docs <https://flower.readthedocs.io/en/latest/>`_ for more details
+
 
 Manually trigger the upload to s3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

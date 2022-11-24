@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
+from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
 from common.tests.util import valid_between_start_delta
@@ -75,3 +76,25 @@ def test_regulation_list_view(
     """Verify that regulation list view is under the url regulations/ and
     doesn't return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
+
+
+def test_regulation_api_list_view(valid_user_client, date_ranges):
+    selected_group = factories.RegulationGroupFactory.create()
+    expected_results = [
+        factories.RegulationFactory.create(
+            valid_between=date_ranges.normal,
+            regulation_group=selected_group,
+        ),
+        factories.RegulationFactory.create(
+            valid_between=date_ranges.earlier,
+            regulation_group=selected_group,
+        ),
+    ]
+
+    assert_read_only_model_view_returns_list(
+        "regulation",
+        "value",
+        "pk",
+        expected_results,
+        valid_user_client,
+    )

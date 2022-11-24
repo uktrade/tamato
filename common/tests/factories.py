@@ -128,7 +128,7 @@ class ApprovedWorkBasketFactory(WorkBasketFactory):
     approver = factory.SubFactory(UserFactory)
     status = WorkflowStatus.APPROVED
     transaction = factory.RelatedFactory(
-        "common.tests.factories.TransactionFactory",
+        "common.tests.factories.ApprovedTransactionFactory",
         factory_related_name="workbasket",
     )
 

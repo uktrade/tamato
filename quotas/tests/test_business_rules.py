@@ -54,6 +54,26 @@ def test_ON2(date_ranges, existing_range, new_range, ranges_overlap):
         business_rules.ON2(order_number.transaction).validate(order_number)
 
 
+def test_ON4_pass(date_ranges, approved_transaction, unapproved_transaction):
+    order_number = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.normal,
+        transaction=unapproved_transaction,
+    )
+
+    assert business_rules.ON4(order_number.transaction).validate(order_number) is None
+
+
+def test_ON4_fail(date_ranges, approved_transaction, unapproved_transaction):
+    order_number = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.normal,
+        transaction=approved_transaction,
+        origin=None,
+    )
+
+    with pytest.raises(BusinessRuleViolation):
+        business_rules.ON4(order_number.transaction).validate(order_number)
+
+
 def test_ON5(date_ranges, approved_transaction, unapproved_transaction):
     """There may be no overlap in time of two quota order number origins with
     the same quota order number SID and geographical area id."""
@@ -209,6 +229,27 @@ def test_ON12(delete_record):
 
     with pytest.raises(BusinessRuleViolation):
         business_rules.ON12(deleted.transaction).validate(deleted)
+
+
+def test_ON12_does_not_raise(delete_record):
+    """
+    The quota order number origin cannot be deleted if it is used in a measure.
+
+    This rule is only applicable for measure with start date after 31/12/2007.
+    """
+
+    # create measure, and quota order and origin
+    measure = factories.MeasureWithQuotaFactory.create()
+
+    # add another origin
+    origin_without_measure = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=measure.order_number,
+    )
+
+    # delete record
+    deleted = delete_record(origin_without_measure)
+
+    business_rules.ON12(deleted.transaction).validate(deleted)
 
 
 @pytest.mark.parametrize(
@@ -494,6 +535,40 @@ def test_overlapping_quota_definition(date_ranges):
         business_rules.OverlappingQuotaDefinition(
             overlapping_definition.transaction,
         ).validate(overlapping_definition)
+
+
+def test_overlapping_quota_definition_on_deleted_records(
+    date_ranges,
+    delete_record,
+    approved_transaction,
+):
+    order_number = factories.QuotaOrderNumberFactory.create()
+
+    old_quota_definition = factories.QuotaDefinitionFactory.create(
+        order_number=order_number,
+        valid_between=date_ranges.normal,
+    )
+
+    old_quota_definition.new_version(
+        update_type=UpdateType.DELETE,
+        transaction=approved_transaction,
+        workbasket=approved_transaction.workbasket,
+    )
+
+    overlapping_definition = factories.QuotaDefinitionFactory.create(
+        sid=5,
+        order_number=order_number,
+        valid_between=date_ranges.normal,
+    )
+
+    assert (
+        business_rules.OverlappingQuotaDefinition(
+            overlapping_definition.transaction,
+        ).validate(
+            overlapping_definition,
+        )
+        is None
+    )
 
 
 def test_volume_and_initial_volume_must_match(date_ranges):
