@@ -765,6 +765,17 @@
         <span class="k">if</span> <span class="n">action</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">,</span> <span class="s2">&quot;create&quot;</span><span class="p">]:</span>
             <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">action</span> <span class="o">==</span> <span class="s2">&quot;edit&quot;</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">EDITING</span>
+            <span class="p">):</span>
+                <span class="c1"># Edits in WorkBaskets that are in EDITING state get real</span>
+                <span class="c1"># changes via DB updates, not newly created UPDATE instances.</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">:</span>
+                    <span class="n">action</span> <span class="o">+=</span> <span class="s2">&quot;-create&quot;</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">:</span>
+                    <span class="n">action</span> <span class="o">+=</span> <span class="s2">&quot;-update&quot;</span>
+
             <span class="n">url</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_url_pattern_name_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2">-ui-</span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
