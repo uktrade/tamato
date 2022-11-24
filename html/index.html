@@ -237,6 +237,18 @@ $ npm install
 $ npm run build
 </pre></div>
 </div>
+<p>Those using Mac m1 laptops may have problems installing certain packages (e.g.
+psycopg2 and lxml) via requirements-dev.txt. In this scenario you should run the
+following from a rosetta terminal (see <a class="reference external" href="https://www.courier.com/blog/tips-and-tricks-to-setup-your-apple-m1-for-development/">this article</a> ),
+substituting your own python version as appropriate:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pip uninstall psycopg2
+$ brew install postgresql
+$ <span class="nb">export</span> <span class="nv">CPPFLAGS</span><span class="o">=</span><span class="s2">&quot;-I/opt/homebrew/opt/openssl@1.1/include&quot;</span>
+$ <span class="nb">export</span> <span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">&quot;-L/opt/homebrew/opt/openssl@1.1/lib -L</span><span class="si">${</span><span class="nv">HOME</span><span class="si">}</span><span class="s2">/.pyenv/versions/3.8.10/lib&quot;</span>
+$ arch -arm64 pip install psycopg2 --no-binary :all:
+</pre></div>
+</div>
+<p>Credit due to armenzg and his <a class="reference external" href="https://github.com/psycopg/psycopg2/issues/1286#issuecomment-914286206">answer here</a> .</p>
 </section>
 <section id="running">
 <h3>Running<a class="headerlink" href="#running" title="Permalink to this headline">¶</a></h3>
