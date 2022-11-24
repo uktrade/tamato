@@ -9,6 +9,7 @@ from additional_codes.models import AdditionalCode
 from additional_codes.views import AdditionalCodeList
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
+from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import date_post_data
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
@@ -136,3 +137,37 @@ def test_additional_codes_list_view(view, url_pattern, valid_user_client):
     """Verify that additional code list view is under the url additional_codes/
     and doesn't return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
+
+
+def test_additional_codes_api_list_view(valid_user_client, date_ranges):
+    selected_type = factories.AdditionalCodeTypeFactory.create()
+    expected_results = [
+        factories.AdditionalCodeFactory.create(
+            valid_between=date_ranges.normal,
+            type=selected_type,
+        ),
+        factories.AdditionalCodeFactory.create(
+            valid_between=date_ranges.earlier,
+            type=selected_type,
+        ),
+    ]
+    assert_read_only_model_view_returns_list(
+        "additionalcode",
+        "value",
+        "pk",
+        expected_results,
+        valid_user_client,
+    )
+
+
+def test_additional_code_type_api_list_view(valid_user_client):
+    expected_results = [
+        factories.AdditionalCodeTypeFactory.create(),
+    ]
+    assert_read_only_model_view_returns_list(
+        "additionalcodetype",
+        "sid",
+        "sid",
+        expected_results,
+        valid_user_client,
+    )

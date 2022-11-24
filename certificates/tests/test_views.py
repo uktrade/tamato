@@ -10,6 +10,7 @@ from certificates.views import CertificateList
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
+from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import date_post_data
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
@@ -180,3 +181,38 @@ def test_certificate_edit_views(
     )
     with raises_if(ValidationError, not expected_valid):
         use_edit_view(certificate, data_changes)
+
+
+def test_certificate_api_list_view(valid_user_client, date_ranges):
+    selected_type = factories.CertificateTypeFactory.create()
+    expected_results = [
+        factories.CertificateFactory.create(
+            valid_between=date_ranges.normal,
+            certificate_type=selected_type,
+        ),
+        factories.CertificateFactory.create(
+            valid_between=date_ranges.earlier,
+            certificate_type=selected_type,
+        ),
+    ]
+    assert_read_only_model_view_returns_list(
+        "certificate",
+        "value",
+        "pk",
+        expected_results,
+        valid_user_client,
+    )
+
+
+def test_certificate_type_api_list_view(valid_user_client):
+    expected_results = [
+        factories.CertificateTypeFactory.create(),
+    ]
+
+    assert_read_only_model_view_returns_list(
+        "certificatetype",
+        "sid",
+        "sid",
+        expected_results,
+        valid_user_client,
+    )

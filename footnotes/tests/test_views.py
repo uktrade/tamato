@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
+from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import date_post_data
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
@@ -174,3 +175,36 @@ def test_footnote_edit_views(
     )
     with raises_if(ValidationError, not expected_valid):
         use_edit_view(footnote, data_changes)
+
+
+def test_footnote_api_list_view(valid_user_client, date_ranges):
+    selected_type = factories.FootnoteTypeFactory.create()
+    expected_results = [
+        factories.FootnoteFactory.create(
+            valid_between=date_ranges.normal,
+            footnote_type=selected_type,
+        ),
+        factories.FootnoteFactory.create(
+            valid_between=date_ranges.earlier,
+            footnote_type=selected_type,
+        ),
+    ]
+    assert_read_only_model_view_returns_list(
+        "footnote",
+        "value",
+        "pk",
+        expected_results,
+        valid_user_client,
+    )
+
+
+def test_footnote_type_api_list_view(valid_user_client):
+    expected_results = [factories.FootnoteTypeFactory.create()]
+
+    assert_read_only_model_view_returns_list(
+        "footnotetype",
+        "footnote_type_id",
+        "footnote_type_id",
+        expected_results,
+        valid_user_client,
+    )

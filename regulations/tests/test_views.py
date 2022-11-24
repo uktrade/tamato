@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
+from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import date_post_data
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
@@ -119,3 +120,25 @@ def test_regulation_edit_views(
     )
     with raises_if(ValidationError, not expected_valid):
         use_edit_view(regulation, data_changes)
+
+
+def test_regulation_api_list_view(valid_user_client, date_ranges):
+    selected_group = factories.RegulationGroupFactory.create()
+    expected_results = [
+        factories.RegulationFactory.create(
+            valid_between=date_ranges.normal,
+            regulation_group=selected_group,
+        ),
+        factories.RegulationFactory.create(
+            valid_between=date_ranges.earlier,
+            regulation_group=selected_group,
+        ),
+    ]
+
+    assert_read_only_model_view_returns_list(
+        "regulation",
+        "value",
+        "pk",
+        expected_results,
+        valid_user_client,
+    )
