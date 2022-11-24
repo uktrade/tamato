@@ -96,6 +96,12 @@ def query_transform(request, **kwargs):
     return updated.urlencode()
 
 
+def debug_output(text):
+    if settings.DEBUG:
+        print(text)
+    return ""
+
+
 def environment(**kwargs):
     """
     Set up the Jinja template environment.
@@ -113,6 +119,7 @@ def environment(**kwargs):
         {
             "break_words": break_words,
             "query_transform": query_transform,
+            "debug_output": debug_output,
             "crispy": render_crispy_form,
             "env": os.environ.get("ENV", "dev"),
             "get_messages": messages.get_messages,

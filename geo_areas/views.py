@@ -15,8 +15,8 @@ from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from workbaskets.models import WorkBasket
-from workbaskets.views.generic import DraftCreateView
-from workbaskets.views.generic import DraftDeleteView
+from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricDeleteView
 
 
 class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
@@ -63,7 +63,10 @@ class GeoAreaCreateDescriptionMixin:
         return context
 
 
-class GeoAreaList(GeoAreaMixin, TamatoListView):
+class GeoAreaList(
+    GeoAreaMixin,
+    TamatoListView,
+):
     template_name = "geo_areas/list.jinja"
     filterset_class = GeographicalAreaFilter
     filterset_class.search_fields = ["area_id", "description"]
@@ -72,11 +75,18 @@ class GeoAreaList(GeoAreaMixin, TamatoListView):
         return GeographicalArea.objects.current().with_current_descriptions()
 
 
-class GeoAreaDetail(GeoAreaMixin, TrackedModelDetailView):
+class GeoAreaDetail(
+    GeoAreaMixin,
+    TrackedModelDetailView,
+):
     template_name = "geo_areas/detail.jinja"
 
 
-class GeoAreaDelete(GeoAreaMixin, TrackedModelDetailMixin, DraftDeleteView):
+class GeoAreaDelete(
+    GeoAreaMixin,
+    TrackedModelDetailMixin,
+    CreateTaricDeleteView,
+):
     form_class = forms.GeographicalAreaDeleteForm
     success_path = "list"
 
@@ -89,7 +99,7 @@ class GeoAreaDelete(GeoAreaMixin, TrackedModelDetailMixin, DraftDeleteView):
 class GeoAreaDescriptionCreate(
     GeoAreaCreateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftCreateView,
+    CreateTaricCreateView,
 ):
     def get_initial(self):
         initial = super().get_initial()
@@ -112,7 +122,7 @@ class GeoAreaDescriptionConfirmCreate(
 class GeoAreaDescriptionDelete(
     GeoAreaDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = forms.GeographicalAreaDescriptionDeleteForm
     success_path = "detail"

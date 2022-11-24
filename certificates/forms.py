@@ -17,7 +17,7 @@ from common.util import get_next_id
 from workbaskets.models import WorkBasket
 
 
-class CertificateCreateForm(ValidityPeriodForm):
+class CertificateCreateBaseForm(ValidityPeriodForm):
     """The form for creating a new certificate."""
 
     sid = forms.CharField(
@@ -34,12 +34,6 @@ class CertificateCreateForm(ValidityPeriodForm):
         empty_label="Select a certificate type",
     )
 
-    description = forms.CharField(
-        label="Certificate description",
-        help_text="You may enter HTML formatting if required. See the guide below for more information.",
-        widget=forms.Textarea,
-    )
-
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
@@ -51,6 +45,50 @@ class CertificateCreateForm(ValidityPeriodForm):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
+
+    def filter_certificates_for_sid(self, sid):
+        certificate_type = self.cleaned_data["certificate_type"]
+        tx = WorkBasket.get_current_transaction(self.request)
+        return models.Certificate.objects.approved_up_to_transaction(tx).filter(
+            sid=sid,
+            certificate_type=certificate_type,
+        )
+
+    def next_sid(self, instance):
+        """
+        Get the next available Certificate SID.
+
+        The instance parameter can be provided from the returned value of this
+        form's save() method (with its commit param set either to True or
+        False).
+        """
+        current_transaction = WorkBasket.get_current_transaction(self.request)
+        # Filter certificate by type and find the highest sid, using regex to
+        # ignore legacy, non-numeric identifiers
+        return get_next_id(
+            models.Certificate.objects.filter(
+                sid__regex=r"^[0-9]*$",
+                certificate_type__sid=instance.certificate_type.sid,
+            ).approved_up_to_transaction(current_transaction),
+            instance._meta.get_field("sid"),
+            max_len=3,
+        )
+
+    class Meta:
+        model = models.Certificate
+        fields = ("certificate_type", "valid_between", "sid")
+
+
+class CertificateCreateForm(CertificateCreateBaseForm):
+    description = forms.CharField(
+        label="Certificate description",
+        help_text="You may enter HTML formatting if required. See the guide below for more information.",
+        widget=forms.Textarea,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self.helper.layout = Layout(
             "certificate_type",
             "sid",
@@ -67,22 +105,15 @@ class CertificateCreateForm(ValidityPeriodForm):
 
     def clean_sid(self):
         sid = self.cleaned_data["sid"]
-        if sid:
-            certificate_type = self.cleaned_data["certificate_type"]
-            tx = WorkBasket.get_current_transaction(self.request)
-            if (
-                models.Certificate.objects.approved_up_to_transaction(tx)
-                .filter(sid=sid, certificate_type=certificate_type)
-                .exists()
-            ):
-                raise ValidationError(
-                    f"Certificate with sid {sid} and type {certificate_type} already exists.",
-                )
-
+        if sid and self.filter_certificates_for_sid(sid).exists():
+            raise ValidationError(
+                f"Certificate with sid {sid} and type "
+                f"{self.cleaned_data['certificate_type']} already exists.",
+            )
         return sid
 
     def save(self, commit=True):
-        instance = super(CertificateCreateForm, self).save(commit=False)
+        instance = super().save(commit=False)
 
         self.cleaned_data["certificate_description"] = models.CertificateDescription(
             description=self.cleaned_data["description"],
@@ -90,24 +121,52 @@ class CertificateCreateForm(ValidityPeriodForm):
         )
 
         if not instance.sid:
-            current_transaction = WorkBasket.get_current_transaction(self.request)
-            # Filter certificate by type and find the highest sid, using regex to ignore legacy, non-numeric identifiers
-            instance.sid = get_next_id(
-                models.Certificate.objects.filter(
-                    sid__regex=r"^[0-9]*$",
-                    certificate_type__sid=instance.certificate_type.sid,
-                ).approved_up_to_transaction(current_transaction),
-                instance._meta.get_field("sid"),
-                max_len=3,
-            )
+            instance.sid = self.next_sid(instance)
 
         if commit:
             instance.save()
         return instance
 
-    class Meta:
-        model = models.Certificate
-        fields = ("certificate_type", "valid_between", "sid")
+
+class CertificateEditCreateForm(CertificateCreateBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper.layout = Layout(
+            "certificate_type",
+            "sid",
+            "start_date",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean_sid(self):
+        sid = self.cleaned_data["sid"]
+        if (
+            sid
+            and self.filter_certificates_for_sid(sid)
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                f"Certificate with sid {sid} and type "
+                f"{self.cleaned_data['certificate_type']} already exists.",
+            )
+        return sid
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        if not instance.sid:
+            instance.sid = self.next_sid(instance)
+
+        if commit:
+            instance.save()
+        return instance
 
 
 class CertificateForm(ValidityPeriodForm):
