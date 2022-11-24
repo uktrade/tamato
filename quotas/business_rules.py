@@ -1,7 +1,9 @@
 """Business rules for quotas."""
+import datetime
 from datetime import date
 from decimal import Decimal
 
+import measures.models as measures_models
 from common.business_rules import BusinessRule
 from common.business_rules import ExclusionMembership
 from common.business_rules import MustExist
@@ -9,6 +11,8 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
+from common.business_rules import skip_when_not_deleted
+from common.models.utils import override_current_transaction
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas.validators import AdministrationMechanism
@@ -56,6 +60,19 @@ class ON2(BusinessRule):
             )
             .exclude(sid=order_number.sid)
             .exists()
+        ):
+            raise self.violation(order_number)
+
+
+class ON4(BusinessRule):
+    """The referenced geographical area must exist."""
+
+    def validate(self, order_number):
+        if (
+            order_number.origins.approved_up_to_transaction(
+                order_number.transaction,
+            ).count()
+            == 0
         ):
             raise self.violation(order_number)
 
@@ -124,6 +141,21 @@ class ON10(ValidityPeriodContained):
 
     contained_field_name = "order_number__measure"
 
+    def validate(self, order_number_origin):
+        """
+        Loop over measures that reference the same quota order number as origin.
+
+        Get all the origins linked to this measure. Loop over these origins and
+        check that every measure is contained by at least one origin.
+        """
+        with override_current_transaction(self.transaction):
+            current_qs = order_number_origin.get_versions().current()
+            contained_measures = current_qs.follow_path(self.contained_field_name)
+            from measures.business_rules import ME119
+
+            for measure in contained_measures:
+                ME119(self.transaction).validate(measure)
+
 
 @only_applicable_after("2007-12-31")
 class ON11(PreventDeleteIfInUse):
@@ -133,11 +165,40 @@ class ON11(PreventDeleteIfInUse):
 
 
 @only_applicable_after("2007-12-31")
-class ON12(PreventDeleteIfInUse):
+@skip_when_not_deleted
+class ON12(BusinessRule):
     """The quota order number origin cannot be deleted if it is used in a
     measure."""
 
-    in_use_check = "order_number_in_use"
+    def validate(self, order_number_origin):
+        """
+        Loop over measures that reference the same quota order number as origin.
+
+        Get all the origins linked to this measure. Loop over these origins and
+        check that there are no measures linked to the origin .
+        """
+
+        measures = measures_models.Measure.objects.approved_up_to_transaction(
+            order_number_origin.transaction,
+        )
+
+        if not measures.exists():
+            return
+
+        order_numbers = measures.filter(
+            geographical_area__sid=order_number_origin.geographical_area.sid,
+            order_number__sid=order_number_origin.order_number.sid,
+        )
+
+        if order_numbers.exists():
+            raise self.violation(
+                model=order_number_origin,
+                message=(
+                    "The quota order number origin cannot be deleted if it is used in a "
+                    "measure. "
+                    f"This order_number_origin is linked to {order_numbers.count()} measures currently."
+                ),
+            )
 
 
 class ON13(BusinessRule):
@@ -250,6 +311,56 @@ class QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition(
         return quota_definition.quotablocking_set.model
 
 
+class OverlappingQuotaDefinition(BusinessRule):
+    """There may be no overlap in time of two quota definitions with the same
+    quota order number id."""
+
+    def validate(self, quota_definition):
+
+        potential_quota_definition_matches = (
+            type(quota_definition)
+            .objects.approved_up_to_transaction(
+                quota_definition.transaction,
+            )
+            .filter(
+                order_number=quota_definition.order_number,
+                valid_between__overlap=quota_definition.valid_between,
+            )
+            .exclude(sid=quota_definition.sid)
+        )
+
+        if potential_quota_definition_matches.exists():
+            for potential_quota_definition in potential_quota_definition_matches:
+                if (
+                    potential_quota_definition
+                    == potential_quota_definition.current_version
+                ):
+                    raise self.violation(quota_definition)
+
+
+class VolumeAndInitialVolumeMustMatch(BusinessRule):
+    """
+    Unless it is the main quota in a quota association, a definition's volume
+    and initial_volume values should always be the same.
+
+    the exception is when we are updating quotas in the current period, these
+    can have differing vol and initial vol
+    """
+
+    def validate(self, quota_definition):
+
+        if quota_definition.valid_between.lower < datetime.date.today():
+            return True
+
+        if quota_definition.sub_quota_associations.approved_up_to_transaction(
+            self.transaction,
+        ).exists():
+            return True
+
+        if quota_definition.volume != quota_definition.initial_volume:
+            raise self.violation(quota_definition)
+
+
 class QA1(UniqueIdentifyingFields):
     """The association between two quota definitions must be unique."""
 
@@ -355,14 +466,26 @@ class QA6(BusinessRule):
 
     def validate(self, association):
         if (
-            association.main_quota.sub_quota_associations.values(
+            association.main_quota.sub_quota_associations.approved_up_to_transaction(
+                association.transaction,
+            )
+            .values(
                 "sub_quota_relation_type",
             )
             .order_by("sub_quota_relation_type")
-            .distinct("sub_quota_relation_type")
+            .distinct()
             .count()
             > 1
         ):
+            raise self.violation(association)
+
+
+class SameMainAndSubQuota(BusinessRule):
+    """A quota association may only exist between two distinct quota
+    definitions."""
+
+    def validate(self, association):
+        if association.main_quota.sid == association.sub_quota.sid:
             raise self.violation(association)
 
 

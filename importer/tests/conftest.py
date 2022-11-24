@@ -1,9 +1,15 @@
+import os
+import shutil
+import xml.etree.ElementTree as et
+from pathlib import Path
 from typing import Sequence
 from typing import Type
 
 import pytest
+from django.core.management import BaseCommand
 from django.forms.models import model_to_dict
 from rest_framework import serializers
+from rest_framework.serializers import ListSerializer
 from rest_framework.serializers import ModelSerializer
 
 from common.serializers import TrackedModelSerializerMixin
@@ -23,6 +29,10 @@ from importer.nursery import get_nursery
 from importer.utils import DispatchedObjectType
 
 
+def get_project_root():
+    return Path(__file__).parents[2]
+
+
 @pytest.fixture
 def object_nursery() -> TariffObjectNursery:
     nursery = get_nursery()
@@ -40,6 +50,15 @@ def mock_serializer() -> Type[ModelSerializer]:
             exclude = ("version_group",)
 
     return TestSerializer
+
+
+@pytest.fixture
+def mock_list_serializer() -> Type[ListSerializer]:
+    class TestListSerializer(ValiditySerializerMixin):
+        def __init__(self):
+            pass
+
+    return TestListSerializer
 
 
 @pytest.fixture
@@ -95,6 +114,45 @@ def handler_test_data(approved_transaction, date_ranges) -> DispatchedObjectType
             "transaction_id": approved_transaction.pk,
         },
         "tag": "",
+        "transaction_id": approved_transaction.pk,
+    }
+
+
+@pytest.fixture
+def handler_footnote_type_test_data(
+    approved_transaction,
+    date_ranges,
+) -> DispatchedObjectType:
+    return {
+        "data": {
+            "footnote_type_id": "ZZ",
+            "application_code": 1,
+            "description": "testing",
+            "update_type": 3,
+            "valid_between": {
+                "upper": date_ranges.normal.upper,
+                "lower": date_ranges.normal.lower,
+            },
+            "transaction_id": approved_transaction.pk,
+        },
+        "tag": "footnote.type",
+        "transaction_id": approved_transaction.pk,
+    }
+
+
+@pytest.fixture
+def handler_footnote_type_description_test_data(
+    approved_transaction,
+    date_ranges,
+) -> DispatchedObjectType:
+    return {
+        "data": {
+            "footnote_type_id": "ZZ",
+            "description": "testing",
+            "update_type": 3,
+            "transaction_id": approved_transaction.pk,
+        },
+        "tag": "footnote.type.description",
         "transaction_id": approved_transaction.pk,
     }
 
@@ -173,7 +231,8 @@ def envelope_measure() -> bytes:
             "taric_template": "taric/measure.xml",
         },
     )
-    return generate_test_import_xml(data).read()
+    data["goods_nomenclature"] = {"item_id": model.goods_nomenclature.item_id}
+    return generate_test_import_xml([data]).read()
 
 
 @pytest.fixture
@@ -187,7 +246,7 @@ def envelope_commodity() -> bytes:
             "taric_template": "taric/goods_nomenclature.xml",
         },
     )
-    return generate_test_import_xml(data).read()
+    return generate_test_import_xml([data]).read()
 
 
 @pytest.fixture
@@ -198,3 +257,37 @@ def tag_name() -> Tag:
 @pytest.fixture
 def tag_regex() -> Tag:
     return Tag(r"quota.([a-z.]+).event")
+
+
+@pytest.fixture
+def example_goods_taric_file_location():
+    root_path = get_project_root()
+    src = os.path.join(root_path, "importer/tests/test_files/goods.xml")
+    dst = os.path.join(root_path, "tmp/taric/goods.xml")
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    shutil.copyfile(src, dst)
+    taric_file_location = dst
+    return taric_file_location
+
+
+@pytest.fixture
+def goods_xml_element_tree():
+    src = os.path.join(get_project_root(), "importer/tests/test_files/goods.xml")
+    xml_text = open(src).read()
+    return et.fromstring(xml_text)
+
+
+@pytest.fixture
+def goods_indents_xml_element_tree():
+    src = os.path.join(
+        get_project_root(),
+        "importer/tests/test_files/goods_indents.xml",
+    )
+    xml_text = open(src).read()
+    return et.fromstring(xml_text)
+
+
+def get_command_help_text(capsys, command, command_class=BaseCommand):
+    captured = capsys.readouterr()
+    command_class().print_help(command, "")
+    return captured.out

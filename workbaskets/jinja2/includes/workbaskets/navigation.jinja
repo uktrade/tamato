@@ -1,0 +1,18 @@
+{% macro navigation(request, active_link) %}
+<nav class="workbasket-navigation govuk-!-margin-bottom-7">
+    <ul class="govuk-list">
+        <li class="{% if active_link == 'summary' %}active{% endif %}">
+            <a href="{{ url('workbaskets:workbasket-ui-detail', args=[request.session.workbasket.id]) }}" class="govuk-link">View summary</a>
+        </li>
+        <li class="{% if active_link == 'edit' %}active{% endif %}">
+            <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-link">Add/edit items</a>
+        </li>
+        <li class="{% if active_link == 'violations' %}active{% endif %}">
+            <a href="{{ url('workbaskets:workbasket-ui-violations', args=[request.session.workbasket.id]) }}" class="govuk-link">View violations ({{request.session.workbasket.error_count}})</a>
+        </li>
+        <li class="{% if active_link == 'review' %}active{% endif %}">
+            <a href="{{ url('workbaskets:review-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-link">Review changes ({{request.session.workbasket.measure_count}})</a>
+        </li>
+    </ul>
+</nav>
+{% endmacro %}

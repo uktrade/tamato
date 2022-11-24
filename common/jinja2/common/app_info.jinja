@@ -1,0 +1,71 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/inset-text/macro.njk" import govukInsetText %}
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{% set page_title = "Application information" %}
+
+{% block breadcrumb %}
+  <div class="govuk-breadcrumbs">
+    <ol class="govuk-breadcrumbs__list">
+      <li class="govuk-breadcrumbs__list-item">
+        <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
+      </li>
+      <li class="govuk-breadcrumbs__list-item">
+        {{ page_title }}
+      </li>
+    </ol>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">
+    {% block page_title %}
+      {{ page_title }}
+    {% endblock %}
+  </h1>
+
+  <h2 class="govuk-heading-m">
+    Active business rule checks
+  </h2>
+
+  {% set table_head = [
+      {"text": "Workbasket ID"},
+      {"text": "Time started"},
+      {"text": "Celery task ID"},
+  ] %}
+  {% set table_rows = [] %}
+
+  {% if celery_healthy %}
+    {% if active_checks %}
+      {% for check in active_checks %}
+        {{ table_rows.append([
+            {"text": check.workbasket_id},
+            {"text": check.date_time_start},
+            {"text": check.task_id},
+        ]) or "" }}
+      {% endfor %}
+    {% else %}
+      {{ table_rows.append([
+        {
+          "text": "No active checks.",
+          "colspan": 3,
+        }
+      ]) or "" }}
+    {% endif %}
+  {% else %}
+      {{ table_rows.append([
+        {
+          "text": "Business rule check details are currently unavailable.",
+          "colspan": 3,
+        }
+      ]) or "" }}
+  {% endif %}
+
+  {{ govukTable({
+      "head": table_head,
+      "rows": table_rows
+  }) }}
+
+{% endblock %}

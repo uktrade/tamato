@@ -1,4 +1,3 @@
-from unittest.mock import patch
 from urllib.parse import urlparse
 
 import factory
@@ -12,7 +11,9 @@ from common.exceptions import NoIdentifyingValuesGivenError
 from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
+from common.models.transactions import TransactionsAlreadyInDraft
 from common.models.utils import LazyString
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests import models
 from common.tests.factories import EnvelopeFactory
@@ -24,10 +25,10 @@ from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
 from footnotes.models import FootnoteType
 from measures.models import MeasureCondition
+from measures.models import MeasureExcludedGeographicalArea
 from regulations.models import Group
 from regulations.models import Regulation
 from taric.models import Envelope
-from workbaskets.tasks import check_workbasket_sync
 
 pytestmark = pytest.mark.django_db
 
@@ -310,11 +311,12 @@ def test_create_with_description():
     )
     model = TestModel1.create(**model_data)
 
-    description = model.get_descriptions().get()
-    assert description.validity_start == model.valid_between.lower
-    assert description.transaction == model.transaction
-    assert description.update_type == model.update_type
-    assert description.described_record == model
+    with override_current_transaction(model.transaction):
+        description = model.get_descriptions().get()
+        assert description.validity_start == model.valid_between.lower
+        assert description.transaction == model.transaction
+        assert description.update_type == model.update_type
+        assert description.described_record == model
 
 
 def test_get_descriptions(sample_model):
@@ -322,7 +324,8 @@ def test_get_descriptions(sample_model):
         factories.TestModelDescription1Factory.create(described_record=sample_model)
         for _ in range(2)
     }
-    assert set(sample_model.get_descriptions()) == descriptions
+    with override_current_transaction(Transaction.objects.last()):
+        assert set(sample_model.get_descriptions()) == descriptions
 
 
 def test_get_descriptions_with_update(sample_model, valid_user):
@@ -332,27 +335,11 @@ def test_get_descriptions_with_update(sample_model, valid_user):
     workbasket = factories.WorkBasketFactory.create()
     new_description = description.new_version(workbasket)
 
-    description_queryset = sample_model.get_descriptions()
-    assert description in description_queryset
-    assert new_description not in description_queryset
+    with override_current_transaction(new_description.transaction):
+        description_queryset = sample_model.get_descriptions()
 
-    description_queryset = sample_model.get_descriptions(
-        transaction=new_description.transaction,
-    )
-
-    assert new_description in description_queryset
-    assert description not in description_queryset
-
-    check_workbasket_sync(workbasket)
-    workbasket.submit_for_approval()
-    with patch(
-        "exporter.tasks.upload_workbaskets.delay",
-    ):
-        workbasket.approve(valid_user.pk, "SEED_FIRST")
-    description_queryset = sample_model.get_descriptions()
-
-    assert new_description in description_queryset
-    assert description not in description_queryset
+        assert description not in description_queryset
+        assert new_description in description_queryset
 
 
 def test_get_description_dates(description_factory, date_ranges):
@@ -400,7 +387,7 @@ def test_get_description_dates(description_factory, date_ranges):
     assert future == future_description
 
 
-def test_trackedmodel_get_url(trackedmodel_factory):
+def test_trackedmodel_get_url(trackedmodel_factory, valid_user_client):
     """Verify get_url() returns something sensible and doesn't crash."""
     instance = trackedmodel_factory.create()
     url = instance.get_url()
@@ -409,10 +396,16 @@ def test_trackedmodel_get_url(trackedmodel_factory):
         # None is returned for models that have no URL
         return
 
+    if instance.url_suffix:
+        assert instance.url_suffix in url
+
     assert len(url)
 
     # Verify URL is not local
     assert not urlparse(url).netloc
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize(
@@ -540,28 +533,81 @@ def test_save_drafts_transaction_updates(unordered_transactions):
     assert_transaction_order(Transaction.objects.all())
 
 
+def test_move_to_draft_unapproved_transactions(unapproved_transaction):
+    with pytest.raises(TransactionsAlreadyInDraft) as exception:
+        unapproved_transaction.workbasket.transactions.move_to_draft()
+
+    pks = unapproved_transaction.workbasket.transactions.values_list("pk")
+
+    assert (
+        exception.value.args[0]
+        == f"One or more Transactions was already in the DRAFT partition: {pks}"
+    )
+
+
+@pytest.mark.s
+def test_move_to_draft_no_transactions(capfd):
+    wb = factories.ApprovedWorkBasketFactory.create(transaction=None)
+
+    assert wb.transactions.move_to_draft() == None
+    assert (
+        "Queryset contains no transactions, bailing out early."
+        in capfd.readouterr().err
+    )
+
+
+@pytest.mark.s
+def test_move_to_draft(capfd, approved_workbasket):
+    approved_workbasket.transactions.move_to_draft()
+    readout = capfd.readouterr().err
+
+    assert "Update version_group." in readout
+    assert "Save with DRAFT partition scheme" in readout
+
+    for transaction in approved_workbasket.transactions.all():
+        assert transaction.partition == TransactionPartition.DRAFT
+
+
+def test_revert_current_version(approved_workbasket):
+    original_version = factories.TestModel1Factory.create(
+        transaction__workbasket=approved_workbasket,
+    )
+    other_workbasket = factories.ApprovedWorkBasketFactory.create()
+    new_version = original_version.new_version(other_workbasket)
+
+    # sanity check
+    assert new_version.version_group.current_version == new_version
+
+    new_version.transaction.workbasket.transactions.revert_current_version()
+    new_version.refresh_from_db()
+
+    assert new_version.version_group.current_version == original_version
+
+
 def test_structure_description(trackedmodel_factory):
     model = trackedmodel_factory.create()
-    description = model.structure_description
+    with override_current_transaction(model.transaction):
+        description = model.structure_description
 
-    if description:
-        assert type(description) == str
+        if description:
+            assert type(description) == str
 
-    if "structure_description" in type(model).__dict__:
-        pass
-    elif hasattr(type(model), "descriptions") and model.get_descriptions().last():
-        assert description == model.get_descriptions().last().description
-    elif hasattr(type(model), "description"):
-        assert description == model.description
-    else:
-        assert description == None
+        if "structure_description" in type(model).__dict__:
+            pass
+        elif hasattr(type(model), "descriptions") and model.get_descriptions().last():
+            assert description == model.get_descriptions().last().description
+        elif hasattr(type(model), "description"):
+            assert description == model.description
+        else:
+            assert description == None
 
 
 def test_described(description_factory):
     description = description_factory.create()
     described = description.get_described_object()
 
-    assert described.get_description() == description
+    with override_current_transaction(described.transaction):
+        assert described.get_description() == description
 
 
 def test_get_url_pattern_name_prefix():
@@ -619,12 +665,13 @@ def test_copy_fk_related_models():
         "component_sequence_number": 1,
         "condition_code_id": code.pk,
     }
-
+    assert measure.conditions.count() == 0
     copied_measure = measure.copy(
         transaction,
         conditions=[MeasureCondition(**condition_data)],
     )
 
+    assert measure.conditions.count() == 0
     assert copied_measure.conditions.count() == 1
 
 
@@ -684,6 +731,51 @@ def test_copy_nested_field_two_levels_deep():
     )
 
     assert copied_measure.conditions.first().components.first().duty_amount == 0
+
+
+def test_copy_saved_related_models():
+    """Test that copy accepts a queryset of saved objects, creates a new measure
+    with all of these related objects, and preserves original measure's
+    relationships."""
+    workbasket = factories.WorkBasketFactory.create()
+    measure = factories.MeasureFactory.create(transaction=workbasket.new_transaction())
+    exclusion_1 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        transaction=workbasket.new_transaction(),
+        modified_measure=measure,
+    )
+    exclusion_2 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        transaction=workbasket.new_transaction(),
+        modified_measure=measure,
+    )
+    exclusion_3 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        transaction=workbasket.new_transaction(),
+        modified_measure=measure,
+    )
+    exclusions = MeasureExcludedGeographicalArea.objects.exclude(pk=exclusion_1.pk)
+    copied_measure = measure.copy(workbasket.new_transaction(), exclusions=exclusions)
+
+    assert measure.exclusions.count() == 3
+    assert copied_measure.exclusions.count() == 2
+    assert exclusion_1 in measure.exclusions.all()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_1.modified_measure.sid,
+    ).exists()
+    assert exclusion_2 in measure.exclusions.all()
+    assert copied_measure.exclusions.filter(
+        modified_measure__sid=copied_measure.sid,
+        excluded_geographical_area=exclusion_2.excluded_geographical_area,
+    ).exists()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_2.modified_measure.sid,
+    ).exists()
+    assert exclusion_3 in measure.exclusions.all()
+    assert copied_measure.exclusions.filter(
+        modified_measure__sid=copied_measure.sid,
+        excluded_geographical_area=exclusion_3.excluded_geographical_area,
+    ).exists()
+    assert not copied_measure.exclusions.filter(
+        modified_measure__sid=exclusion_3.modified_measure.sid,
+    ).exists()
 
 
 def test_transaction_summary(approved_transaction):

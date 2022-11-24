@@ -1,27 +1,47 @@
+import logging
+from typing import Type
+
 import boto3
 from botocore.client import Config
+from celery.result import AsyncResult
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import ProtectedError
+from django.db.transaction import atomic
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.urls import reverse_lazy
-from django.views.generic.base import RedirectView
+from django.utils.decorators import method_decorator
+from django.views.generic import CreateView
+from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.base import TemplateView
+from django.views.generic.base import View
 from django.views.generic.detail import DetailView
-from django.views.generic.detail import SingleObjectMixin
+from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
+from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
+from common.models import TrackedModel
 from common.pagination import build_pagination_list
+from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
-from workbaskets import tasks
+from measures.filters import MeasureFilter
+from measures.models import Measure
+from measures.pagination import MeasurePaginator
+from workbaskets import forms
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
+from workbaskets.tasks import call_check_workbasket_sync
+from workbaskets.validators import WorkflowStatus
+from workbaskets.views.decorators import require_current_workbasket
+
+logger = logging.getLogger(__name__)
 
 
 class WorkBasketFilter(TamatoFilter):
@@ -38,84 +58,71 @@ class WorkBasketFilter(TamatoFilter):
         fields = ["search", "status"]
 
 
-class WorkBasketList(WithPaginationListView):
-    """UI endpoint for viewing and filtering workbaskets."""
-
-    template_name = "workbaskets/list.jinja"
-    filterset_class = WorkBasketFilter
-    search_fields = [
-        "title",
-        "reason",
-    ]
-
-    def get_queryset(self):
-        return WorkBasket.objects.order_by("-updated_at")
-
-
-class WorkBasketDetail(DetailView):
-    """UI endpoint for viewing a specified workbasket."""
-
+class WorkBasketConfirmCreate(DetailView):
+    template_name = "workbaskets/confirm_create.jinja"
     model = WorkBasket
-    template_name = "workbaskets/detail.jinja"
-    paginate_by = 50
-    # paginate_by = 2
+    queryset = WorkBasket.objects.all()
 
-    def get_context_data(self, **kwargs):
-        """
-        Although this is a detail view of a WorkBasket instance, it provides a
-        view of its contained items (TrackedModel instances) as a paged list.
 
-        A paginator and related objects are therefore added to page context.
-        """
-        items = self.get_object().tracked_models.all()
+class WorkBasketCreate(PermissionRequiredMixin, CreateView):
+    """UI endpoint for creating workbaskets."""
 
-        paginator = Paginator(items, WorkBasketDetail.paginate_by)
-        try:
-            page_number = int(self.request.GET.get("page", 1))
-        except ValueError:
-            page_number = 1
-        page_obj = paginator.get_page(page_number)
+    permission_required = "workbaskets.add_workbasket"
+    template_name = "workbaskets/create.jinja"
+    form_class = forms.WorkbasketCreateForm
 
-        context = super().get_context_data(**kwargs)
-
-        context["paginator"] = paginator
-        context["page_obj"] = page_obj
-        context["is_paginated"] = True
-        context["object_list"] = items
-        context["page_links"] = build_pagination_list(
-            page_number,
-            page_obj.paginator.num_pages,
+    def form_valid(self, form):
+        if not self.request.user.is_authenticated:
+            return redirect(reverse("login"))
+        user = get_user_model().objects.get(username=self.request.user.username)
+        self.object = form.save(commit=False)
+        self.object.author = user
+        self.object.save()
+        self.object.save_to_session(self.request.session)
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-confirm-create",
+                kwargs={"pk": self.object.pk},
+            ),
         )
 
-        return context
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
 
-class WorkBasketSubmit(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
-    """UI endpoint for submitting a workbasket to HMRC CDS."""
+class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
+    """UI endpoint for viewing and filtering workbaskets."""
 
-    model = WorkBasket
+    filterset_class = WorkBasketFilter
+    template_name = "workbaskets/select-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
 
-    def get_redirect_url(self, *args, **kwargs) -> str:
-        return reverse("index")
+    def get_queryset(self):
+        return (
+            WorkBasket.objects.exclude(status=WorkflowStatus.PUBLISHED)
+            .exclude(status=WorkflowStatus.ARCHIVED)
+            .exclude(status=WorkflowStatus.SENT)
+            .order_by("-updated_at")
+        )
 
-    def get(self, *args, **kwargs):
-        workbasket: WorkBasket = self.get_object()
+    def post(self, request, *args, **kwargs):
+        workbasket_pk = request.POST.get("workbasket")
 
-        (
-            tasks.transition.si(
-                workbasket.pk,
-                "submit_for_approval",
-            )
-            | tasks.transition.si(
-                workbasket.pk,
-                "approve",
-                self.request.user.pk,
-                settings.TRANSACTION_SCHEMA,
-            )
-        ).delay()
+        if workbasket_pk:
+            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
 
-        return super().get(*args, **kwargs)
+            if workbasket:
+                workbasket.save_to_session(request.session)
+                redirect_url = reverse(
+                    "workbaskets:workbasket-ui-detail",
+                    kwargs={"pk": workbasket_pk},
+                )
+
+                return redirect(redirect_url)
+
+        return redirect(reverse("workbaskets:workbasket-ui-list"))
 
 
 class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
@@ -154,7 +161,7 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
             # The user has cancelled out of the deletion process.
-            return redirect("index")
+            return redirect("home")
 
         # By reverse ordering on record_code + subrecord_code we're able to
         # delete child entities first, avoiding protected foreign key
@@ -223,3 +230,286 @@ def download_envelope(request):
     )
 
     return HttpResponseRedirect(url)
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
+    model: Type[TrackedModel] = Measure
+    paginate_by = 30
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    def get_queryset(self):
+        return Measure.objects.filter(
+            transaction__workbasket=self.workbasket,
+        ).order_by("sid")
+
+    template_name = "workbaskets/review-workbasket.jinja"
+    permission_required = "workbaskets.change_workbasket"
+    paginator_class = MeasurePaginator
+    filterset_class = MeasureFilter
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
+    template_name = "workbaskets/edit-workbasket.jinja"
+    permission_required = "workbaskets.change_workbasket"
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
+    template_name = "workbaskets/summary-workbasket.jinja"
+    form_class = forms.SelectableObjectsForm
+
+    # Form action mappings to URL names.
+    action_success_url_names = {
+        "run-business-rules": "workbaskets:workbasket-ui-detail",
+        "remove-selected": "workbaskets:workbasket-ui-delete-changes",
+        "page-prev": "workbaskets:workbasket-ui-detail",
+        "page-next": "workbaskets:workbasket-ui-detail",
+    }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    @property
+    def paginator(self):
+        return Paginator(self.workbasket.tracked_models, per_page=10)
+
+    @property
+    def latest_upload(self):
+        return Upload.objects.order_by("created_date").last()
+
+    @property
+    def uploaded_envelope_dates(self):
+        """Gets a list of all transactions from the `latest_approved_workbasket`
+        in the order they were updated and returns a dict with the first and
+        last transactions as values for "start" and "end" keys respectively."""
+        if self.latest_upload:
+            transactions = self.latest_upload.envelope.transactions.order_by(
+                "updated_at",
+            )
+            return {
+                "start": transactions.first().updated_at,
+                "end": transactions.last().updated_at,
+            }
+        return None
+
+    def _append_url_page_param(self, url, form_action):
+        """Based upon 'form_action', append a 'page' URL parameter to the given
+        url param and return the result."""
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_number = 1
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+        return f"{url}?page={page_number}"
+
+    def get(self, request, *args, **kwargs):
+        """Service GET requests by displaying the page and form."""
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request, *args, **kwargs):
+        """Manage POST requests, which can either be requests to change the
+        paged form data while preserving the user's form changes, or finally
+        submit the form data for processing."""
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    @atomic
+    def run_business_rules(self):
+        """Remove old checks, start new checks via a Celery task and save the
+        newly created task's ID on the workbasket."""
+        workbasket = self.workbasket
+        workbasket.delete_checks()
+        task = call_check_workbasket_sync.delay(workbasket.pk)
+        logger.info(
+            f"Started rule check against workbasket.id={workbasket.pk} "
+            f"on task.id={task.id}",
+        )
+        workbasket.rule_check_task_id = task.id
+        workbasket.save()
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        if form_action == "remove-selected":
+            return reverse(
+                self.action_success_url_names[form_action],
+                kwargs={"pk": self.workbasket.pk},
+            )
+        elif form_action in ("page-prev", "page-next"):
+            return self._append_url_page_param(
+                reverse(
+                    self.action_success_url_names[form_action],
+                    kwargs={"pk": self.workbasket.pk},
+                ),
+                form_action,
+            )
+        elif form_action == "run-business-rules":
+            self.run_business_rules()
+            return self._append_url_page_param(
+                reverse(
+                    self.action_success_url_names[form_action],
+                    kwargs={"pk": self.workbasket.pk},
+                ),
+                form_action,
+            )
+        return reverse("home")
+
+    def get_initial(self):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        return store.data.copy()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        context.update(
+            {
+                "workbasket": self.workbasket,
+                "page_obj": page,
+                "uploaded_envelope_dates": self.uploaded_envelope_dates,
+                "rule_check_in_progress": False,
+            },
+        )
+        if self.workbasket.rule_check_task_id:
+            result = AsyncResult(self.workbasket.rule_check_task_id)
+            if result.status != "SUCCESS":
+                context.update({"rule_check_in_progress": True})
+            else:
+                self.workbasket.save_to_session(self.request.session)
+
+        return context
+
+    def form_valid(self, form):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        store.clear()
+        select_all = self.request.POST.get("select-all-pages")
+        if select_all:
+            object_list = {obj.id: True for obj in self.workbasket.tracked_models}
+            store.add_items(object_list)
+        else:
+            to_add = {
+                key: value
+                for key, value in form.cleaned_data_no_prefix.items()
+                if value
+            }
+            store.add_items(to_add)
+        return super().form_valid(form)
+
+
+class WorkBasketList(WithPaginationListView):
+    """UI endpoint for viewing and filtering workbaskets."""
+
+    template_name = "workbaskets/list.jinja"
+    filterset_class = WorkBasketFilter
+    search_fields = [
+        "title",
+        "reason",
+    ]
+
+    def get_queryset(self):
+        return WorkBasket.objects.order_by("-updated_at")
+
+
+class WorkBasketChanges(DetailView):
+    """UI endpoint for viewing a specified workbasket."""
+
+    model = WorkBasket
+    template_name = "workbaskets/detail.jinja"
+    paginate_by = 50
+
+    def get_context_data(self, **kwargs):
+        """
+        Although this is a detail view of a WorkBasket instance, it provides a
+        view of its contained items (TrackedModel instances) as a paged list.
+
+        A paginator and related objects are therefore added to page context.
+        """
+        items = self.get_object().tracked_models.all()
+        paginator = Paginator(items, WorkBasketChanges.paginate_by)
+        try:
+            page_number = int(self.request.GET.get("page", 1))
+        except ValueError:
+            page_number = 1
+        page_obj = paginator.get_page(page_number)
+        context = super().get_context_data(**kwargs)
+        context["paginator"] = paginator
+        context["page_obj"] = page_obj
+        context["is_paginated"] = True
+        context["object_list"] = items
+        context["page_links"] = build_pagination_list(
+            page_number,
+            page_obj.paginator.num_pages,
+        )
+
+        return context
+
+
+class WorkBasketViolations(WithPaginationListView):
+    """UI endpoint for viewing a specified workbasket's business rule
+    violations."""
+
+    model = TrackedModelCheck
+    template_name = "workbaskets/violations.jinja"
+    paginate_by = 50
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(id=self.kwargs.get("pk"))
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(workbasket=self.workbasket, **kwargs)
+
+    def get_queryset(self):
+        qs = TrackedModelCheck.objects.filter(
+            transaction_check__transaction__workbasket=self.workbasket,
+            successful=False,
+        )
+        sort_by = self.request.GET.get("sort_by")
+        order = self.request.GET.get("order")
+        sort_by_fields = ["model", "date", "check_name"]
+        if sort_by and sort_by in sort_by_fields:
+            if sort_by == "date":
+                qs = qs.order_by("transaction_check__transaction__created_at")
+            elif sort_by == "model":
+                qs = qs.order_by("model__polymorphic_ctype")
+            else:
+                qs = qs.order_by(sort_by)
+
+        if order == "desc":
+            qs = qs.reverse()
+        return qs
+
+
+class WorkBasketViolationDetail(DetailView):
+    """UI endpoint for viewing a specified workbasket's business rule
+    violations."""
+
+    model = TrackedModelCheck
+    template_name = "workbaskets/violation_detail.jinja"
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(id=self.kwargs.get("wb_pk"))
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(workbasket=self.workbasket, **kwargs)

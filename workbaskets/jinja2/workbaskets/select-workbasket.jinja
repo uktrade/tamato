@@ -1,0 +1,46 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "Edit an existing workbasket" %}
+{% set list_include = "includes/workbaskets/edit-workbasket-list.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  <nav class="workbasket-filters">
+    <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
+    <ul class="govuk-list">
+      <li>
+        <a href="{{ request.path }}?status=" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if not request.GET.status %}selected-link{% endif %}">All</a>
+      </li>
+      <li>
+        <a href="{{ request.path }}?status=EDITING" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'EDITING' %}selected-link{% endif %}">Editing</a>
+      </li>
+      <li>
+        <a href="{{ request.path }}?status=PROPOSED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'PROPOSED' %}selected-link{% endif %}">Proposed</a>
+      </li>
+      <li>
+        <a href="{{ request.path }}?status=APPROVED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'APPROVED' %}selected-link{% endif %}">Approved</a>
+      </li>
+    </ul>
+  </nav>
+  <hr class="govuk-section-break govuk-section-break--visible">
+
+  {% if object_list %}
+    {% include list_include %}
+  {% else %}
+    <p class="govuk-body">There are no workbaskets with this status.</p>
+  {% endif %}
+  {% include "includes/common/pagination.jinja" %}
+{% endblock %}

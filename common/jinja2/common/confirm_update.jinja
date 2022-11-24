@@ -1,16 +1,15 @@
 {% extends "layouts/confirm.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 {% set page_title = "Edit " ~ object._meta.verbose_name ~ " details" %}
 
-{% block beforeContent %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("index")},
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
       {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url("list")},
       {"text": object._meta.verbose_name|capitalize ~ ": " ~ object|string, "href": object.get_url()},
       {"text": page_title}
-    ]
-  }) }}
+    ])
+  }}
 {% endblock %}
 
 {% block panel %}

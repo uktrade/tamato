@@ -66,6 +66,7 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     business_rules = (
         business_rules.ON1,
         business_rules.ON2,
+        business_rules.ON4,
         business_rules.ON9,
         business_rules.ON11,
         UniqueIdentifyingFields,
@@ -85,6 +86,25 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     def is_origin_quota(self):
         return any(self.required_certificates.all())
 
+    @property
+    def geographical_exclusion_descriptions(self):
+
+        origin_ids = list(
+            self.quotaordernumberorigin_set.latest_approved().values_list(
+                "pk",
+                flat=True,
+            ),
+        )
+        exclusions = QuotaOrderNumberOriginExclusion.objects.latest_approved().filter(
+            origin_id__in=origin_ids,
+        )
+        descriptions = [
+            exclusion.excluded_geographical_area.get_description().description
+            for exclusion in exclusions
+        ]
+
+        return sorted(descriptions)
+
     class Meta:
         verbose_name = "quota"
 
@@ -95,9 +115,7 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
 
     record_code = "360"
     subrecord_code = "10"
-
     identifying_fields = ("sid",)
-
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
@@ -135,7 +153,6 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
 
     record_code = "360"
     subrecord_code = "15"
-
     origin = models.ForeignKey(QuotaOrderNumberOrigin, on_delete=models.PROTECT)
     excluded_geographical_area = models.ForeignKey(
         "geo_areas.GeographicalArea",
@@ -225,6 +242,8 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         business_rules.QuotaAssociationMustReferToANonDeletedSubQuota,
         business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition,
         business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition,
+        business_rules.OverlappingQuotaDefinition,
+        business_rules.VolumeAndInitialVolumeMustMatch,
         UniqueIdentifyingFields,
         UpdateValidity,
     )
@@ -287,6 +306,7 @@ class QuotaAssociation(TrackedModel):
         business_rules.QA5,
         business_rules.QA6,
         UpdateValidity,
+        business_rules.SameMainAndSubQuota,
     )
 
 

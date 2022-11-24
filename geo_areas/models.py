@@ -1,7 +1,10 @@
+from django.contrib.postgres.aggregates import StringAgg
 from django.db import models
 from django.db.models import CheckConstraint
 from django.db.models import Max
+from django.db.models import OuterRef
 from django.db.models import Q
+from django.db.models import Subquery
 from polymorphic.managers import PolymorphicManager
 
 from common.business_rules import UniqueIdentifyingFields
@@ -23,6 +26,41 @@ from quotas import business_rules as quotas_business_rules
 class GeographicalAreaQuerySet(TrackedModelQuerySet):
     def erga_omnes(self):
         return self.filter(area_code=AreaCode.GROUP, area_id=1011)
+
+    def with_latest_description(qs):
+        """
+        Returns a GeographicalArea queryset annotated with the latest result of
+        a GeographicalAreaDescription subquery's description value, linking
+        these two queries on version_group field.
+
+        Where an area has multiple current descriptions, the description with
+        the latest validity_start date is used.
+        """
+        current_descriptions = (
+            GeographicalAreaDescription.objects.current()
+            .filter(described_geographicalarea__version_group=OuterRef("version_group"))
+            .order_by("-validity_start")
+        )
+        return qs.annotate(
+            description=Subquery(current_descriptions.values("description")[:1]),
+        )
+
+    def with_current_descriptions(qs):
+        """Returns a GeographicalArea queryset annotated with the result of a a
+        GeographicalAreaDescription subquery's description values chained
+        together, linking these two queries on version_group field."""
+        current_descriptions = (
+            GeographicalAreaDescription.objects.latest_approved()
+            .filter(described_geographicalarea__version_group=OuterRef("version_group"))
+            .order_by()
+            .values("described_geographicalarea__version_group")
+        )
+        agg_descriptions = current_descriptions.annotate(
+            chained_description=StringAgg("description", " "),
+        ).values("chained_description")
+        return qs.annotate(
+            description=Subquery(agg_descriptions[:1]),
+        )
 
 
 class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
@@ -94,7 +132,7 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
             GeographicalMembership.objects.filter(
                 Q(geo_group__sid=self.sid) | Q(member__sid=self.sid),
             )
-            .latest_approved()
+            .current()
             .select_related("member", "geo_group")
         )
 

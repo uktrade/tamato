@@ -13,13 +13,11 @@
 {% set version_control_tab_html %}{% include "includes/geo_areas/tabs/version_control.jinja" %}{% endset %}
 
 {% block breadcrumb %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("index")},
+  {{ breadcrumbs(request, [
       {"text": "Find and edit geographical areas", "href": url("geo_area-ui-list")},
       {"text": page_title}
-    ]
-  }) }}
+    ])
+  }}
 {% endblock %}
 
 {% block content %}

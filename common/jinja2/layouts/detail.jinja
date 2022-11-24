@@ -1,13 +1,12 @@
 {% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 {% block breadcrumb %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("index")},
+  {{ breadcrumbs(request, [
       {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url(action="list")},
       {"text": page_title}
     ]
-  }) }}
+  ) }}
 {% endblock %}
 
 {% block content %}

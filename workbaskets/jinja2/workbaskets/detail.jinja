@@ -4,19 +4,18 @@
 {% from "components/tabs/macro.njk" import govukTabs %}
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 
 {% set page_title = "Work basket: " ~ workbasket.title %}
 
 
 {% block breadcrumb %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("index")},
+  {{ breadcrumbs(request, [
       {"text": "Find and edit work baskets", "href": url("workbaskets:workbasket-ui-list")},
       {"text": page_title}
-    ]
-  }) }}
+    ])
+  }}
 {% endblock %}
 
 

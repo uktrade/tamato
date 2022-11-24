@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
+from common.util import xml_fromstring
 from importer.namespaces import Tag
 from importer.namespaces import TTags
 
@@ -16,7 +17,7 @@ def get_snippet_transaction(
     Tags: TTags,
 ) -> ET.Element:
     """Returns the first transaction element in a Taric envelope."""
-    envelope = ET.fromstring(xml)
+    envelope = xml_fromstring(xml)
     return Tags.ENV_TRANSACTION.first(envelope)
 
 

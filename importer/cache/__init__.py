@@ -1,1 +1,1 @@
-from importer.cache.cache import ObjectCacheFacade
+from importer.cache.cache import ObjectCacheFacade  # noqa

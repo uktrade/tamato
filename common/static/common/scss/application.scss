@@ -1,9 +1,9 @@
-@function frontend-font-url($filename) {
-  @return url("~govuk-frontend/govuk/assets/fonts/" + $filename);
+@function frontend-font-url($filename){
+@return url("~govuk-frontend/govuk/assets/fonts/" + $filename);
 }
 
-@function frontend-image-url($filename) {
-  @return url("~govuk-frontend/govuk/assets/images/" + $filename);
+@function frontend-image-url($filename){
+@return url("~govuk-frontend/govuk/assets/images/" + $filename);
 }
 
 $govuk-font-url-function: frontend-font-url;
@@ -14,6 +14,8 @@ $govuk-image-url-function: frontend-image-url;
 
 @import "icon-action-list";
 @import "layout";
+@import "text";
+@import "components";
 @import "autocomplete";
 @import "accordion";
 @import "_table";
@@ -26,3 +28,4 @@ $govuk-image-url-function: frontend-image-url;
 @import "step-by-step-nav";
 @import "step-by-step-related";
 @import "fake-link";
+@import "violations";

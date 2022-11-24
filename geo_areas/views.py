@@ -22,9 +22,14 @@ from workbaskets.views.generic import DraftDeleteView
 class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows geographical areas to be viewed."""
 
-    queryset = GeographicalArea.objects.latest_approved().prefetch_related(
-        "descriptions",
+    queryset = (
+        GeographicalArea.objects.latest_approved()
+        .with_latest_description()
+        .prefetch_related(
+            "descriptions",
+        )
     )
+
     serializer_class = AutoCompleteSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_class = GeographicalAreaFilter
@@ -61,7 +66,10 @@ class GeoAreaCreateDescriptionMixin:
 class GeoAreaList(GeoAreaMixin, TamatoListView):
     template_name = "geo_areas/list.jinja"
     filterset_class = GeographicalAreaFilter
-    search_fields = ["sid", "descriptions__description"]
+    filterset_class.search_fields = ["area_id", "description"]
+
+    def get_queryset(self):
+        return GeographicalArea.objects.current().with_current_descriptions()
 
 
 class GeoAreaDetail(GeoAreaMixin, TrackedModelDetailView):

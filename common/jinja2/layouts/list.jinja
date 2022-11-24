@@ -8,15 +8,6 @@
 
 {% set page_title = "Find and edit " ~ object_list.model._meta.verbose_name_plural %}
 
-{% block breadcrumb %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("index")},
-      {"text": page_title}
-    ]
-  }) }}
-{% endblock %}
-
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">

@@ -1,0 +1,13 @@
+{% extends "layouts/create.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+
+{% set page_title = "Create a new workbasket" %}
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}

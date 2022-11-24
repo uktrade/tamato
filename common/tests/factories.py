@@ -118,7 +118,7 @@ class WorkBasketFactory(factory.django.DjangoModelFactory):
         model = "workbaskets.WorkBasket"
 
     author = factory.SubFactory(UserFactory)
-    title = factory.Faker("text", max_nb_chars=255)
+    title = factory.Faker("sentence", nb_words=4)
 
 
 class ApprovedWorkBasketFactory(WorkBasketFactory):
@@ -128,7 +128,7 @@ class ApprovedWorkBasketFactory(WorkBasketFactory):
     approver = factory.SubFactory(UserFactory)
     status = WorkflowStatus.APPROVED
     transaction = factory.RelatedFactory(
-        "common.tests.factories.TransactionFactory",
+        "common.tests.factories.ApprovedTransactionFactory",
         factory_related_name="workbasket",
     )
 
@@ -958,13 +958,12 @@ class MeasureConditionCodeFactory(TrackedModelMixin, ValidityFactoryMixin):
 
 class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
     """
-    MeasureActions in the TaMaTo are essentially fixed, it
-    would be more realistic to test using a fixed list, however it
-    is convenient.
+    MeasureActions in the TaMaTo are essentially fixed, it would be more
+    realistic to test using a fixed list, however it is convenient.
 
-    As MeasureActionFactory is used in tests, it is possible to
-    generate more than 999 MeasureActions, to avoid creating MeasureAction codes
-    with four digits, which is not allowed, the code wraps back to 000 every 1000
+    As MeasureActionFactory is used in tests, it is possible to generate more
+    than 999 MeasureActions, to avoid creating MeasureAction codes with four
+    digits, which is not allowed, the code wraps back to 000 every 1000
     iterations.
     """
 
@@ -972,7 +971,7 @@ class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "measures.MeasureAction"
 
     # Code should only contain 3 digits, modulo 1000 is used to wrap it.
-    code = factory.Sequence(lambda x: f"{wrap_numbers_over_max_digits(x, 3):02d}")
+    code = factory.Sequence(lambda x: f"{wrap_numbers_over_max_digits(x + 1, 3):02d}")
     description = short_description()
 
 

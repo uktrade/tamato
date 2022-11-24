@@ -1,11 +1,14 @@
 """Common views."""
 import time
+from datetime import datetime
 from typing import Optional
 from typing import Tuple
 from typing import Type
 
 import django.contrib.auth.views
+import kombu.exceptions
 from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.cache import cache
@@ -17,179 +20,36 @@ from django.db.models import Model
 from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.urls import reverse
-from django.utils.decorators import method_decorator
+from django.utils.timezone import make_aware
 from django.views import generic
-from django.views.generic.base import TemplateResponseMixin
+from django.views.generic import FormView
+from django.views.generic import TemplateView
 from django.views.generic.base import View
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
+from common import forms
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
+from common.celery import app
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
-from exporter.models import Upload
-from workbaskets.forms import SelectableObjectsForm
-from workbaskets.models import WorkBasket
-from workbaskets.session_store import SessionStore
-from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
-@method_decorator(require_current_workbasket, name="dispatch")
-class DashboardView(TemplateResponseMixin, FormMixin, View):
-    """
-    UI endpoint providing a dashboard view, including a WorkBasket (list) of
-    paged user-selectable TrackedModel instances (items). Pages contain a
-    configurable maximum number of items.
-
-    Items are selectable (user selections) via an associated checkbox
-    widget so that bulk operations may be performed against them.
-
-    Each page displays a maximum number of items (10 being the default), with
-    user selections preserved when navigating between pages.
-
-    Item selection is preserved in the user's session. Whenever page navigation
-    or a bulk operation is performed, item selection state is updated.
-
-    User item selection changes are calculated and applied to the Django
-    Session object by performing a three way diff between:
-    * Current selection state held in the session,
-    * Available list items (have any new items been added, or somehow removed),
-    * User submitted changes (from form POST requests)
-
-    Note:
-    --
-    Options considered to manage paged selection:
-    * Full list in form, hiding items not on current page. This would require
-      either including all items in GET request's URI after POST, dropping use
-      of GET after POST, neither seem very reasonable.
-    * Use django formtools wizard. This doesn't fit the wizard's usecase and
-      design very well and may make for an over complicated implementation.
-    * Store user selection in the session. Simplest, complete and most elegant.
-    """
-
-    form_class = SelectableObjectsForm
-    template_name = "common/index.jinja"
-
-    # Form action mappings to URL names.
-    action_success_url_names = {
-        "publish-all": "workbaskets:workbasket-ui-submit",
-        "remove-selected": "workbaskets:workbasket-ui-delete-changes",
-        "page-prev": "index",
-        "page-next": "index",
-    }
-
-    @property
-    def workbasket(self) -> WorkBasket:
-        return WorkBasket.current(self.request)
-
-    @property
-    def paginator(self):
-        return Paginator(self.workbasket.tracked_models, per_page=10)
-
-    @property
-    def latest_upload(self):
-        return Upload.objects.order_by("created_date").last()
-
-    @property
-    def uploaded_envelope_dates(self):
-        """Gets a list of all transactions from the `latest_approved_workbasket`
-        in the order they were updated and returns a dict with the first and
-        last transactions as values for "start" and "end" keys respectively."""
-        if self.latest_upload:
-            transactions = self.latest_upload.envelope.transactions.order_by(
-                "updated_at",
-            )
-            return {
-                "start": transactions.first().updated_at,
-                "end": transactions.last().updated_at,
-            }
-        return None
-
-    def _append_url_page_param(self, url, form_action):
-        """Based upon 'form_action', append a 'page' URL parameter to the given
-        url param and return the result."""
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        page_number = 1
-        if form_action == "page-prev":
-            page_number = page.previous_page_number()
-        elif form_action == "page-next":
-            page_number = page.next_page_number()
-        return f"{url}?page={page_number}"
-
-    def get(self, request, *args, **kwargs):
-        """Service GET requests by displaying the page and form."""
-        return self.render_to_response(self.get_context_data())
-
-    def post(self, request, *args, **kwargs):
-        """Manage POST requests, which can either be requests to change the
-        paged form data while preserving the user's form changes, or finally
-        submit the form data for processing."""
-        form = self.get_form()
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
-
-    def get_success_url(self):
-        form_action = self.request.POST.get("form-action")
-        if form_action in ("publish-all", "remove-selected"):
-            return reverse(
-                self.action_success_url_names[form_action],
-                kwargs={"pk": self.workbasket.pk},
-            )
-        elif form_action in ("page-prev", "page-next"):
-            return self._append_url_page_param(
-                reverse(self.action_success_url_names[form_action]),
-                form_action,
-            )
-        return reverse("index")
-
-    def get_initial(self):
-        store = SessionStore(
-            self.request,
-            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
-        )
-        return store.data.copy()
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        kwargs["objects"] = page.object_list
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        context.update(
-            {
-                "workbasket": self.workbasket,
-                "page_obj": page,
-                "uploaded_envelope_dates": self.uploaded_envelope_dates,
-            },
-        )
-        return context
+class HomeView(FormView, View):
+    template_name = "common/workbasket_action.jinja"
+    form_class = forms.HomeForm
 
     def form_valid(self, form):
-        store = SessionStore(
-            self.request,
-            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
-        )
-        to_add = {
-            key: value for key, value in form.cleaned_data_no_prefix.items() if value
-        }
-        to_remove = {
-            key: value
-            for key, value in form.cleaned_data_no_prefix.items()
-            if key not in to_add
-        }
-        store.add_items(to_add)
-        store.remove_items(to_remove)
-        return super().form_valid(form)
+        if form.cleaned_data["workbasket_action"] == "EDIT":
+            return redirect(reverse("workbaskets:workbasket-ui-list"))
+        elif form.cleaned_data["workbasket_action"] == "CREATE":
+            return redirect(reverse("workbaskets:workbasket-ui-create"))
 
 
 class HealthCheckResponse(HttpResponse):
@@ -241,6 +101,54 @@ def healthcheck(request):
         return response.fail("Redis missing")
 
     return response
+
+
+class AppInfoView(
+    LoginRequiredMixin,
+    TemplateView,
+):
+    template_name = "common/app_info.jinja"
+
+    def active_checks(self):
+        results = []
+        inspect = app.control.inspect()
+        if not inspect:
+            return results
+
+        active_tasks = inspect.active()
+        if not active_tasks:
+            return results
+
+        for _, task_info_list in active_tasks.items():
+            for task_info in task_info_list:
+                if (
+                    task_info.get("name")
+                    == "workbaskets.tasks.call_check_workbasket_sync"
+                ):
+                    date_time_start = make_aware(
+                        datetime.fromtimestamp(
+                            task_info.get("time_start"),
+                        ),
+                    ).strftime("%Y-%m-%d, %H:%M:%S")
+                    results.append(
+                        {
+                            "task_id": task_info.get("id"),
+                            "workbasket_id": task_info.get("args", [""])[0],
+                            "date_time_start": date_time_start,
+                        },
+                    )
+
+        return results
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        try:
+            data["active_checks"] = self.active_checks()
+            data["celery_healthy"] = True
+        except kombu.exceptions.OperationalError as oe:
+            data["celery_healthy"] = False
+
+        return data
 
 
 class LoginView(django.contrib.auth.views.LoginView):

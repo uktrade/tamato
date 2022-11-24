@@ -1,0 +1,144 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
+
+{% set page_title %}
+  Workbasket {{ request.session.workbasket.id }}
+  {% if request.session.workbasket.title %} - Add/edit items{% endif %}
+{% endset %}
+
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]) },
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Add/edit items" }
+    ]
+  }) }}
+{% endblock %}
+
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+    {{ page_title }}
+  </h1>
+
+  {{ navigation(request, "edit") }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Additional codes</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('additional_code-ui-create') }}">
+            Create a new additional code
+          </a>
+        </li>
+        <li>
+          <a class="govuk-link" href="{{ url("additional_code-ui-list") }}">
+            Find and edit additional codes
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Certificates</h2>
+      <ul class="govuk-list">
+      <li>
+          <a class="govuk-link" href="{{ url('certificate-ui-create') }}">
+            Create a new certificate
+          </a>
+        </li>
+        <li>
+          <a class="govuk-link" href="{{ url("certificate-ui-list") }}">
+            Find and edit certificates
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Footnotes</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('footnote-ui-create') }}">
+            Create a new footnote
+          </a>
+        </li>
+        <li>
+          <a class="govuk-link" href="{{ url('footnote-ui-list') }}">
+            Find and edit footnotes
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Geographical areas</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('geo_area-ui-list') }}">
+            Find and edit geographical areas
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Commodities</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('commodity-ui-import') }}">
+            Import commodities
+          </a>
+        </li>
+         <li>
+          <a class="govuk-link" href="{{ url('commodity-ui-list') }}">
+            Find commodities
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Measures</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('measure-ui-create', kwargs={"step": "start"}) }}">
+            Create new measure
+          </a>
+        </li>
+        <li>
+          <a class="govuk-link" href="{{ url('measure-ui-list') }}">
+            Find and edit measures
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Quotas</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('quota-ui-list') }}">
+            Find and edit quotas
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Regulations</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('regulation-ui-create') }}">
+            Create a new regulation
+          </a>
+        </li>
+        <li>
+          <a class="govuk-link" href="{{ url('regulation-ui-list') }}">
+            Find and edit regulations
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+{% endblock %}

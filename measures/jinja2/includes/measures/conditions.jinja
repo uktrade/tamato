@@ -1,6 +1,6 @@
 {% macro conditions_list(measure) -%}
   <ol class="govuk-list">
-    {% for condition in measure.conditions.latest_approved().with_reference_price_string() -%}
+    {% for condition in measure.conditions.current().with_reference_price_string() -%}
       <li title="{{ condition.description }}">
 
         <span class="condition_code">

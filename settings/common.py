@@ -167,7 +167,7 @@ LOGIN_URL = reverse_lazy("login")
 if SSO_ENABLED:
     LOGIN_URL = reverse_lazy("authbroker_client:login")
 
-LOGIN_REDIRECT_URL = reverse_lazy("index")
+LOGIN_REDIRECT_URL = reverse_lazy("home")
 
 AUTHBROKER_URL = os.environ.get("AUTHBROKER_URL", "https://sso.trade.gov.uk")
 AUTHBROKER_CLIENT_ID = os.environ.get("AUTHBROKER_CLIENT_ID")
@@ -299,7 +299,7 @@ LANGUAGE_CODE = "en-gb"
 USE_TZ = True
 
 # Time zone
-TIME_ZONE = "UTC"
+TIME_ZONE = "Europe/London"
 
 # HMRC AWS settings (override the defaults)
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
@@ -345,6 +345,8 @@ if VCAP_SERVICES.get("redis"):
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
 CELERY_TRACK_STARTED = True
+CELERY_TASK_TRACK_STARTED = True
+CELERY_RESULT_PERSISTENT = True
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
@@ -422,6 +424,11 @@ LOGGING = {
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
+        "workbaskets": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
     },
     "celery": {
         "handlers": ["celery"],
@@ -478,6 +485,15 @@ PATH_ASSETS = Path(BASE_DIR, "common", "assets")
 
 PATH_XSD_ENVELOPE = Path(PATH_ASSETS, "envelope.xsd")
 PATH_XSD_TARIC = Path(PATH_ASSETS, "taric3.xsd")
+
+PATH_COMMODITIES_ASSETS = Path(BASE_DIR, "commodities", "assets")
+
+PATH_XSD_COMMODITIES_ENVELOPE = Path(
+    PATH_COMMODITIES_ASSETS,
+    "commodities_envelope.xsd",
+)
+PATH_XSD_COMMODITIES_TARIC = Path(PATH_COMMODITIES_ASSETS, "commodities_taric3.xsd")
+
 
 # Default username for envelope data imports
 DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")

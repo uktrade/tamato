@@ -1,6 +1,7 @@
 {% extends "layouts/form.jinja" %}
 {% from "components/details/macro.njk" import govukDetails %}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 {% set page_title = "Create a new " ~ described_object._meta.verbose_name  ~ " description" %}
 {% set description_help_html %}
@@ -40,15 +41,13 @@
   }) }}
 {% endset %}
 
-{% block beforeContent %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("index")},
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
       {"text": "Find and edit " ~ described_object._meta.verbose_name_plural, "href": described_object.get_url("list")},
       {"text": described_object._meta.verbose_name|capitalize ~ ": " ~ described_object|string, "href": described_object.get_url()},
       {"text": page_title}
-    ]
-  }) }}
+    ])
+  }}
 {% endblock %}
 
 {% block form %}

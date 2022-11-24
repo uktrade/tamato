@@ -4,6 +4,7 @@ from django.db import DataError
 from checks.tasks import check_transaction_sync
 from commodities import business_rules
 from common.business_rules import BusinessRuleViolation
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import raises_if
 from common.validators import UpdateType
@@ -89,6 +90,192 @@ def test_NIG2(
 
     with raises_if(BusinessRuleViolation, expect_error):
         business_rules.NIG2(type(child.transaction).objects.last()).validate(self)
+
+
+def test_NIG2_only_checks_future_dates_of_parent(date_ranges):
+    """
+    The validity period o f the goods nomenclature must be within the validity
+    period of the product line above in the hierarchy.
+
+    Also covers NIG3
+    """
+
+    parent_1 = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            "starts_delta_no_end",
+        ),
+        indented_goods_nomenclature__item_id="2901000000",
+        indent=0,
+    )
+
+    child = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            "starts_1_month_ago_no_end",
+        ),
+        indented_goods_nomenclature__item_id="2901210000",
+        indent=1,
+    )
+
+    with raises_if(BusinessRuleViolation, False):
+        business_rules.NIG2(type(child.transaction).objects.last()).validate(child)
+
+
+# need to test that this works when parent of child does not have a parent
+# add failing test where a parents parents children > child item id and has an allowable date range but is not considered
+
+
+def test_NIG2_is_valid_with_multiple_parents_spanning_child_valid_period(date_ranges):
+    grand_parent = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            "starts_delta_no_end",
+        ),
+        indented_goods_nomenclature__item_id="2901000000",
+        indent=0,
+    )
+
+    distant_parent_1 = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            "starts_2_months_ago_to_delta",
+        ),
+        indented_goods_nomenclature__item_id="2901200000",
+        indent=1,
+    )
+
+    distant_parent_2 = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            "starts_1_month_ago_no_end",
+        ),
+        indented_goods_nomenclature__item_id="2901400000",
+        indent=1,
+    )
+
+    parent_closest = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            "starts_1_month_ago_to_1_month_ahead",
+        ),
+        indented_goods_nomenclature__item_id="2901500000",
+        indent=1,
+    )
+
+    not_a_parent = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            "starts_1_month_ago_no_end",
+        ),
+        indented_goods_nomenclature__item_id="2901700000",
+        indent=1,
+    )
+
+    child = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(
+            date_ranges,
+            "starts_1_month_ago_no_end",
+        ),
+        indented_goods_nomenclature__item_id="2901510000",
+        indent=2,
+    )
+
+    with raises_if(BusinessRuleViolation, False):
+        business_rules.NIG2(type(child.transaction).objects.last()).validate(child)
+
+
+@pytest.mark.parametrize(
+    ("parent_validities", "child_validity", "expected"),
+    (
+        (
+            [
+                "starts_1_month_ago_to_delta",
+                "starts_delta_to_1_month_ahead",
+            ],
+            "starts_1_month_ago_to_1_month_ahead",
+            True,
+        ),
+        (
+            [
+                "starts_1_month_ago_no_end",
+                "starts_2_months_ago_to_delta",
+            ],
+            "starts_1_month_ago_to_1_month_ahead",
+            True,
+        ),
+        (
+            [
+                "starts_2_months_ago_to_1_month_ago",
+                "starts_1_month_ahead_to_2_months_ahead",
+            ],
+            "starts_1_month_ago_to_1_month_ahead",
+            False,
+        ),
+        (
+            [
+                "starts_2_months_ago_to_1_month_ago",
+                "starts_1_month_ahead_to_2_months_ahead",
+                "starts_1_month_ago_no_end",
+            ],
+            "starts_1_month_ago_to_1_month_ahead",
+            True,
+        ),
+        (
+            [
+                "starts_2_months_ago_to_1_month_ago",
+                "starts_1_month_ahead_to_2_months_ahead",
+            ],
+            "starts_1_month_ago_no_end",
+            False,
+        ),
+        (
+            [
+                "starts_1_month_ago_no_end",
+            ],
+            "starts_1_month_ago_no_end",
+            True,
+        ),
+        (
+            [
+                "starts_1_month_ago_no_end",
+            ],
+            "starts_2_months_ago_to_1_month_ago",
+            True,
+        ),
+        (
+            [
+                "starts_1_month_ago_no_end",
+            ],
+            "starts_1_month_ago_to_delta",
+            True,
+        ),
+    ),
+)
+def test_NIG2_parents_span_child_valid(
+    date_ranges,
+    parent_validities,
+    child_validity,
+    expected,
+):
+    target = business_rules.NIG2().parents_span_childs_future
+    good = factories.GoodsNomenclatureFactory.create()
+    parents = []
+
+    for parent_validity in parent_validities:
+        validity = getattr(date_ranges, parent_validity)
+        parent = factories.GoodsNomenclatureIndentFactory.create(
+            indented_goods_nomenclature__valid_between=validity,
+            indented_goods_nomenclature__sid=good.sid,
+        )
+        parents.append(parent)
+
+    child = factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature__valid_between=getattr(date_ranges, child_validity),
+        indented_goods_nomenclature__sid=good.sid,
+    )
+
+    assert target(parents, child) == expected
 
 
 def test_NIG4(date_ranges):
@@ -233,9 +420,9 @@ def test_NIG11_start_date_less_than_end_date(date_ranges):
 def test_NIG12_one_description_mandatory():
     """At least one description record is mandatory."""
     good = factories.GoodsNomenclatureFactory.create(description=None)
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12(good.transaction).validate(good)
+    with override_current_transaction(good.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.NIG12(good.transaction).validate(good)
 
 
 def test_NIG12_first_description_must_have_same_start_date(date_ranges):
@@ -244,8 +431,9 @@ def test_NIG12_first_description_must_have_same_start_date(date_ranges):
     good = factories.GoodsNomenclatureFactory.create(
         description__validity_start=date_ranges.later.lower,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12(good.transaction).validate(good)
+    with override_current_transaction(good.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.NIG12(good.transaction).validate(good)
 
 
 def test_NIG12_start_dates_cannot_match():
@@ -256,8 +444,9 @@ def test_NIG12_start_dates_cannot_match():
         described_goods_nomenclature=goods_nomenclature,
         validity_start=goods_nomenclature.valid_between.lower,
     )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12(duplicate.transaction).validate(goods_nomenclature)
+    with override_current_transaction(duplicate.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.NIG12(duplicate.transaction).validate(goods_nomenclature)
 
 
 def test_NIG12_description_start_before_nomenclature_end(
@@ -276,9 +465,11 @@ def test_NIG12_description_start_before_nomenclature_end(
         described_goods_nomenclature=goods_nomenclature,
         validity_start=date_ranges.later.lower,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG12(early_description.transaction).validate(goods_nomenclature)
+    with override_current_transaction(early_description.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.NIG12(early_description.transaction).validate(
+                goods_nomenclature,
+            )
 
 
 def test_NIG12_direct_rule_called_for_goods():

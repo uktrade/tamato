@@ -5,6 +5,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 from typing import Optional
 
+from celery.result import AsyncResult
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
@@ -22,6 +23,8 @@ from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.transactions import TransactionQueryset
+from measures.models import Measure
+from measures.querysets import MeasuresQuerySet
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -288,8 +291,58 @@ class WorkBasket(TimestampedMixin):
         protected=False,
         editable=False,
     )
+    rule_check_task_id = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        unique=True,
+    )
 
     transactions: TransactionQueryset
+
+    def terminate_rule_check(self):
+        """Terminate any task associated with the WorkBasket's rule checking, as
+        identified by its rule_check_task_id."""
+
+        logger.info(
+            f"Attempting rule check termination for WorkBasket " f"pk={self.pk}.",
+        )
+        if not self.rule_check_task_id:
+            logger.info(
+                f"Unable to terminate rule check for WorkBasket "
+                f"pk={self.pk} - "
+                f"empty rule_check_task_id.",
+            )
+            return
+
+        task_result = AsyncResult(self.rule_check_task_id)
+        if not task_result:
+            logger.info(
+                f"Unable to terminate rule check for WorkBasket "
+                f"pk={self.pk}, "
+                f"rule_check_task_id={self.rule_check_task_id} - "
+                f"task result is unavailable.",
+            )
+            return
+
+        task_result.revoke()
+        self.delete_checks()
+        self.rule_check_task_id = None
+        self.save()
+        logger.info(
+            f"Terminated rule check for WorkBasket pk={self.pk}.",
+        )
+
+    @property
+    def rule_check_task_status(self):
+        """Return the status of the WorkBasket's rule check task if it is
+        available, otherwise return None."""
+        if not self.rule_check_task_id:
+            return None
+        task_result = AsyncResult(self.rule_check_task_id)
+        if not task_result:
+            return None
+        return task_result.status
 
     @property
     def approved(self):
@@ -390,29 +443,35 @@ class WorkBasket(TimestampedMixin):
     def cds_error(self):
         """If a workbasket, after approval, is then rejected by CDS it is
         important to roll back the current models to the previous approved
-        version."""
-        for obj in self.tracked_models.order_by("-pk").select_related("version_group"):
-            version_group = obj.version_group
-            versions = (
-                version_group.versions.has_approved_state()
-                .order_by("-pk")
-                .exclude(pk=obj.pk)
-            )
-            if versions.count() == 0:
-                version_group.current_version = None
-            else:
-                version_group.current_version = versions.first()
-            version_group.save()
+        version and revert transaction partition to DRAFT."""
+        self.transactions.move_to_draft()
+
+    @transition(
+        field=status,
+        source=WorkflowStatus.ERRORED,
+        target=WorkflowStatus.EDITING,
+        custom={"label": "Restore for further editing."},
+    )
+    def restore(self):
+        """WorkBasket is ready to be worked on again after being rejected by
+        CDS."""
 
     def save_to_session(self, session):
         session["workbasket"] = {
             "id": self.pk,
             "status": self.status,
+            "title": self.title,
+            "error_count": self.tracked_model_check_errors.count(),
+            "measure_count": self.measures.count(),
         }
 
     @property
     def tracked_models(self) -> TrackedModelQuerySet:
         return TrackedModel.objects.filter(transaction__workbasket=self)
+
+    @property
+    def measures(self) -> MeasuresQuerySet:
+        return Measure.objects.filter(transaction__workbasket=self)
 
     @classmethod
     def load_from_session(cls, session):
@@ -478,11 +537,14 @@ class WorkBasket(TimestampedMixin):
         return self.transactions.last() or Transaction.approved.last()
 
     @property
-    def tracked_model_check_errors(self):
+    def tracked_model_checks(self):
         return TrackedModelCheck.objects.filter(
             transaction_check__transaction__workbasket=self,
-            successful=False,
         )
+
+    @property
+    def tracked_model_check_errors(self):
+        return self.tracked_model_checks.filter(successful=False)
 
     def delete_checks(self):
         """Delete all TrackedModelCheck and TransactionCheck instances related

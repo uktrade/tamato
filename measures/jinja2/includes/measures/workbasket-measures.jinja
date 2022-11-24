@@ -1,0 +1,45 @@
+{% from 'macros/create_link.jinja' import create_link %} 
+{% from "includes/measures/conditions.jinja" import conditions_list %}
+
+{% set table_rows = [] %}
+{% for measure in object_list %}
+  {% set measure_link -%}
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a>
+  {%- endset %}
+  {% set footnotes %}
+    {% for footnote in measure.footnotes.current() %}
+        {{ create_link(footnote.get_url(), footnote|string) }}{{ ", " if not loop.last else "" }}
+    {% endfor %}
+  {% endset %}
+  {{ table_rows.append([
+    {"html": measure_link},
+    {"text": measure.measure_type.sid ~ " - " ~ measure.measure_type.description},
+    {"text": measure.goods_nomenclature.item_id|wordwrap(2)|replace("\n", " ") if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
+    {"text": measure.duty_sentence if measure.duty_sentence else '-'},
+    {"text": "{:%d %b %Y}".format(measure.valid_between.lower) },
+    {"text": "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else "-" },
+    {"html": create_link(url("additional_code-ui-detail", kwargs={"sid": measure.additional_code.sid}), measure.additional_code.type.sid ~ measure.additional_code.code) if measure.additional_code else '-'},
+    {"html": create_link(url("geo_area-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
+    {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
+    {"text": footnotes if measure.footnotes.current() else '-'},
+    {"text": conditions_list(measure) if measure.conditions.current() else "-"},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "Measure SID"},
+    {"text": "Measure type"},
+    {"text": "Commodity code"},
+    {"text": "Duties"},
+    {"text": "Start date"},
+    {"text": "End date"},
+    {"text": "Additional code"},
+    {"text": "Geographical area"},
+    {"text": "Quota"},
+    {"text": "Footnote"},
+    {"text": "Conditions"},
+  ],
+  "rows": table_rows,
+  "classes": "govuk-table-m"
+}) }}

@@ -168,8 +168,8 @@ class GA18(BusinessRule):
         if (
             type(membership)
             .objects.filter(
-                geo_group=membership.geo_group,
-                member=membership.member,
+                geo_group__version_group=membership.geo_group.version_group,
+                member__version_group=membership.member.version_group,
                 valid_between__overlap=membership.valid_between,
             )
             .approved_up_to_transaction(membership.transaction)

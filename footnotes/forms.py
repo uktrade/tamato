@@ -33,7 +33,7 @@ class FootnoteForm(ValidityPeriodForm):
         self.fields["footnote_type"].label = "Footnote type"
         self.fields["footnote_type"].required = False
 
-        if self.instance:
+        if self.instance.pk:
             self.fields["code"].disabled = True
             self.fields["code"].help_text = "You can't edit this"
             self.fields["code"].initial = str(self.instance)
@@ -53,19 +53,24 @@ class FootnoteForm(ValidityPeriodForm):
             Field("footnote_type"),
             Field("start_date"),
             Field("end_date"),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
         cleaned_data = super().clean()
 
-        if self.instance and self.instance.footnote_id:
+        if self.instance.pk and self.instance.footnote_id:
             cleaned_data["footnote_id"] = self.instance.footnote_id
 
         # get type from instance if not submitted
         footnote_type = cleaned_data.get("footnote_type")
 
-        if not footnote_type and self.instance and self.instance.footnote_type:
+        if not footnote_type and self.instance.pk and self.instance.footnote_type:
             footnote_type = self.instance.footnote_type
 
         if not footnote_type:
@@ -111,7 +116,12 @@ class FootnoteCreateForm(ValidityPeriodForm):
             "start_date",
             Field.textarea("description", rows=5),
             DescriptionHelpBox(),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):

@@ -1,0 +1,22 @@
+
+{% macro breadcrumbs(request, breadcrumbs_list) %}
+<div class="govuk-breadcrumbs">
+  <ol class="govuk-breadcrumbs__list">
+    <li class="govuk-breadcrumbs__list-item">
+      <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
+    </li>
+    {% if request.session.workbasket %}
+      <li class="govuk-breadcrumbs__list-item">
+        <a class="govuk-breadcrumbs__link" href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}">Workbasket {{ request.session.workbasket.id }}</a>
+      </li>
+    {% endif %}
+    {% for crumb in breadcrumbs_list %}
+      <li class="govuk-breadcrumbs__list-item">
+        {% if crumb.href %}<a class="govuk-breadcrumbs__link" href="{{ crumb.href }}">{% endif %}
+        {{ crumb.text }}
+        {% if crumb.href %}</a>{% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</div>
+{% endmacro %}
