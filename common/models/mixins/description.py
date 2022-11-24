@@ -13,7 +13,6 @@ from common.models.mixins.validity import ValidityStartMixin
 from common.models.mixins.validity import ValidityStartQueryset
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_relations
-from common.models.utils import get_current_transaction
 from common.util import classproperty
 from common.validators import UpdateType
 
@@ -103,7 +102,7 @@ class DescribedMixin:
 
         return described
 
-    def get_descriptions(self, transaction=None, request=None) -> TrackedModelQuerySet:
+    def get_descriptions(self) -> TrackedModelQuerySet:
         """
         Get the latest descriptions related to this instance of the Tracked
         Model.
@@ -139,17 +138,10 @@ class DescribedMixin:
             *descriptions_model._meta.ordering
         )
 
-        if transaction:
-            return query.approved_up_to_transaction(transaction)
+        return query.current()
 
-        # if a global transaction variable is available, filter objects approved up to this
-        if get_current_transaction():
-            return query.current()
-
-        return query.latest_approved()
-
-    def get_description(self, transaction=None):
-        return self.get_descriptions(transaction=transaction).last()
+    def get_description(self):
+        return self.get_descriptions().last()
 
     @property
     def autocomplete_label(self):

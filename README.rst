@@ -79,6 +79,11 @@ The app requires an AWS S3 bucket or a compatible implementation, such as MinIO_
 .. _Redis: https://redis.io/
 .. _MinIO: https://min.io/
 
+If using MacOS then libmagic is required:
+
+    $ brew install libmagic
+
+
 Database
 ~~~~~~~~
 
@@ -227,6 +232,14 @@ Open another terminal and start a Celery worker:
 .. code:: sh
 
     celery -A common.celery worker --loglevel=info
+
+To monitor celery workers or individual tasks run:
+
+.. code:: sh
+
+    celery flower
+
+See `flower docs <https://flower.readthedocs.io/en/latest/>`_ for more details
 
 
 Manually trigger the upload to s3

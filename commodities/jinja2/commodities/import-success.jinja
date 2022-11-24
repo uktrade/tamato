@@ -1,16 +1,15 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/step-by-step-nav/macro.jinja" import step_by_step_nav %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 {% set page_title = "Import commodities" %}
 
 
-{% block beforeContent %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("index")},
-      {"text": page_title}
-    ]
-  }) }}
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+    {"text": "Import commodities", "href": url("commodity-ui-import")},
+    {"text": page_title}
+  ])}}
 {% endblock %}
 
 {% block content %}
@@ -20,7 +19,7 @@
       <h1 class="govuk-heading-xl">Your file is being imported</h1>
       <p class="govuk-body">We have confirmed that the file is valid and are processing the changes. This might take up to 20 minutes.</p>
       <p class="govuk-body">You will be able to review the changes and finish the import from the main page.</p>
-      <a href="{{ url('index') }}" class="govuk-button govuk-button--secondary">Return to the main page</a>
+      {% include "includes/common/main-menu-link.jinja" %}
     </div>
   </div>
 {% endblock %}

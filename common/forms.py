@@ -12,6 +12,7 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
+from django.db.models import TextChoices
 from django.forms import TypedChoiceField
 from django.forms import formsets
 from django.forms.renderers import get_default_renderer
@@ -153,6 +154,36 @@ class RadioNested(TypedChoiceField):
         return super().get_bound_field(form, field_name)
 
 
+class HomeForm(forms.Form):
+    class WorkbasketActions(TextChoices):
+        CREATE = "CREATE", "Create a new workbasket"
+        EDIT = (
+            "EDIT",
+            "Edit an existing workbasket",
+        )
+
+    workbasket_action = forms.ChoiceField(
+        label="What would you like to do?",
+        choices=WorkbasketActions.choices,
+        widget=forms.RadioSelect,
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.legend_size = Size.EXTRA_LARGE
+        self.helper.layout = Layout(
+            "workbasket_action",
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
 class DescriptionHelpBox(Div):
     template = "components/description_help.jinja"
 
@@ -263,7 +294,12 @@ class DescriptionForm(forms.ModelForm):
         self.helper.layout = Layout(
             Field("validity_start", context={"legend_size": "govuk-label--s"}),
             Field.textarea("description", label_size=Size.SMALL, rows=5),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     class Meta:
@@ -350,7 +386,13 @@ class DeleteForm(forms.ModelForm):
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            Submit("submit", "Delete", css_class="govuk-button--warning"),
+            Submit(
+                "submit",
+                "Delete",
+                css_class="govuk-button--warning",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
 

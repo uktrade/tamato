@@ -154,3 +154,6 @@ webpack-stats.json
 # pii / secrets hooks
 .pii-secret-hook
 ner_output_file.txt
+
+tmp/**
+_dumped_cache.pkl

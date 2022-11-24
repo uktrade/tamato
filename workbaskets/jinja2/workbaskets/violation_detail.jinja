@@ -1,0 +1,53 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
+
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Rule violation
+details
+{% endset %}
+
+{% block breadcrumb %}
+{{ govukBreadcrumbs({
+  "items": [
+    {"text": "Home", "href": url("home")},
+    {"text": "Workbasket " ~ workbasket.id, "href": url('workbaskets:edit-workbasket', kwargs={"pk": workbasket.id})},
+    {"text": "Workbasket " ~ workbasket.id ~ " - Rule violations", "href": url('workbaskets:workbasket-ui-violations', kwargs={"pk": workbasket.id})},
+    {"text": page_title}
+]
+}) }}
+{% endblock %}
+
+{% block content %}
+<h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+  {{ page_title }}
+</h1>
+{{ navigation(request, "violations") }}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    {% set object_link %}
+    <a href="{{ object.model.get_url() }}" class="govuk-link">{{ object.model._meta.verbose_name.title() }}
+      {{ object.model.sid or object.model.id }}</a>
+    {% endset %}
+    <h2 class="govuk-heading-m">Rule violation details - {{ object_link }}</h2>
+    <hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">
+
+    <h3 class="govuk-heading-s">Business rule ID:</h3>
+    <p class="govuk-body">{{ object.rule_code }}</p>
+    <h3 class="govuk-heading-s">Rule violation description:</h3>
+    <p class="govuk-body">{{ object.message }}</p>
+    {% if object.solution %}
+    <h3 class="govuk-heading-s">Solution:</h3>
+    <p class="govuk-body">{{ object.solution }}</p>
+    {% endif %}
+
+    <hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">
+
+    {# <a href="#" class="govuk-button govuk-button-primary">Review violation</a> #}
+  </div>
+</div>
+
+
+{% endblock %}

@@ -1,3 +1,4 @@
+from io import StringIO
 from unittest import mock
 
 import pytest
@@ -6,8 +7,10 @@ from lxml import etree
 
 from common.tests.factories import FootnoteTypeFactory
 from common.tests.factories import RegulationFactory
+from common.tests.factories import WorkBasketFactory
 from common.tests.util import taric_xml_record_codes
 from common.tests.util import validate_taric_xml_record_order
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -90,3 +93,21 @@ def test_dump_command_outputs_approved_workbasket(approved_transaction, capsys):
         codes = taric_xml_record_codes(xml)
 
         assert codes == expected_codes
+
+
+def test_dump_command_exits_on_unchecked_workbasket():
+    workbasket = WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    out = StringIO()
+    with pytest.raises(SystemExit):
+        call_command(
+            "dump_transactions",
+            "999999",
+            f"{workbasket.pk}",
+            stdout=out,
+        )
+    assert (
+        "does not guarantee complete and successful business rule checks"
+        in out.getvalue()
+    )

@@ -4,6 +4,8 @@ from pytest_bdd import scenarios
 from pytest_bdd import then
 from pytest_bdd import when
 
+from common.models.utils import override_current_transaction
+
 pytestmark = pytest.mark.django_db
 
 
@@ -23,7 +25,8 @@ def footnote_core_data(footnote_detail, footnote_NC000):
     ft = f.footnote_type
 
     assert str(f) in content
-    assert f.get_description(transaction=f.transaction).description in content
+    with override_current_transaction(f.transaction):
+        assert f.get_description().description in content
     assert str(ft) in content
     assert f"{f.valid_between.lower:%d %b %Y}" in content
 

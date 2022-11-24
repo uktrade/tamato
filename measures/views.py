@@ -56,7 +56,7 @@ class MeasureMixin:
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
 
-        return Measure.objects.with_duty_sentence().approved_up_to_transaction(tx)
+        return Measure.objects.approved_up_to_transaction(tx)
 
 
 class MeasureList(MeasureMixin, TamatoListView):
@@ -70,12 +70,11 @@ class MeasureList(MeasureMixin, TamatoListView):
 class MeasureDetail(MeasureMixin, TrackedModelDetailView):
     model = Measure
     template_name = "measures/detail.jinja"
-    queryset = Measure.objects.with_duty_sentence().latest_approved()
+    queryset = Measure.objects.latest_approved()
 
     def get_context_data(self, **kwargs: Any):
         conditions = (
             self.object.conditions.current()
-            .with_duty_sentence()
             .prefetch_related(
                 "condition_code",
                 "required_certificate",
@@ -90,6 +89,7 @@ class MeasureDetail(MeasureMixin, TrackedModelDetailView):
 
         context = super().get_context_data(**kwargs)
         context["condition_groups"] = condition_groups
+        context["has_conditions"] = bool(len(conditions))
         return context
 
 
@@ -101,6 +101,8 @@ class MeasureCreateWizard(
 
     START = "start"
     MEASURE_DETAILS = "measure_details"
+    REGULATION_ID = "regulation_id"
+    QUOTA_ORDER_NUMBER = "quota_order_number"
     GEOGRAPHICAL_AREA = "geographical_area"
     COMMODITIES = "commodities"
     ADDITIONAL_CODE = "additional_code"
@@ -112,6 +114,8 @@ class MeasureCreateWizard(
     form_list = [
         (START, forms.MeasureCreateStartForm),
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
+        (REGULATION_ID, forms.MeasureRegulationIdForm),
+        (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
         (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
         (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
@@ -123,6 +127,8 @@ class MeasureCreateWizard(
     templates = {
         START: "measures/create-start.jinja",
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
+        REGULATION_ID: "measures/create-wizard-step.jinja",
+        QUOTA_ORDER_NUMBER: "measures/create-wizard-step.jinja",
         GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
         COMMODITIES: "measures/create-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
@@ -140,6 +146,14 @@ class MeasureCreateWizard(
         MEASURE_DETAILS: {
             "title": "Enter the basic data",
             "link_text": "Measure details",
+        },
+        REGULATION_ID: {
+            "title": "Enter the Regulation ID",
+            "link_text": "Regulation ID",
+        },
+        QUOTA_ORDER_NUMBER: {
+            "title": "Enter the Quota Order Number",
+            "link_text": "Quota Order Number",
         },
         GEOGRAPHICAL_AREA: {
             "title": "Select the geographical area",
@@ -249,6 +263,7 @@ class MeasureCreateWizard(
         cleaned_data = self.get_all_cleaned_data()
 
         created_measures = self.create_measures(cleaned_data)
+        created_measures[0].transaction.workbasket.save_to_session(self.request.session)
 
         context = self.get_context_data(
             form=None,
@@ -276,6 +291,7 @@ class MeasureCreateWizard(
             )
             # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
             kwargs["form_kwargs"] = {"measure_start_date": valid_between.lower}
+
         return kwargs
 
     def get_form(self, step=None, data=None, files=None):
@@ -311,7 +327,7 @@ class MeasureUpdate(
     form_class = forms.MeasureForm
     permission_required = "common.change_trackedmodel"
     template_name = "measures/edit.jinja"
-    queryset = Measure.objects.with_duty_sentence()
+    queryset = Measure.objects.all()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -342,9 +358,9 @@ class MeasureUpdate(
     def get_conditions(self, measure):
         tx = WorkBasket.get_current_transaction(self.request)
         return (
-            measure.conditions.with_duty_sentence()
-            .with_reference_price_string()
-            .approved_up_to_transaction(tx)
+            measure.conditions.with_reference_price_string().approved_up_to_transaction(
+                tx,
+            )
         )
 
     def get_context_data(self, **kwargs):

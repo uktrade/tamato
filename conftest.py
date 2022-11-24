@@ -240,6 +240,18 @@ def valid_user_client(client, valid_user):
 
 
 @pytest.fixture
+def superuser():
+    user = factories.UserFactory.create(is_superuser=True, is_staff=True)
+    return user
+
+
+@pytest.fixture
+def superuser_client(client, superuser):
+    client.force_login(superuser)
+    return client
+
+
+@pytest.fixture
 @given(parsers.parse("a valid user named {username}"), target_fixture="a_valid_user")
 def a_valid_user(username):
     return factories.UserFactory.create(username=username)
@@ -612,7 +624,7 @@ def run_xml_import(import_xml, settings):
         ), "A factory that returns an object instance needs to be provided"
 
         xml = generate_test_import_xml(
-            serializer(model, context={"format": "xml"}).data,
+            [serializer(model, context={"format": "xml"}).data],
         )
 
         import_xml(xml, workflow_status, record_group)
@@ -1180,3 +1192,31 @@ def model2_with_history(date_ranges):
         version_group=factories.VersionGroupFactory.create(),
         custom_sid=1,
     )
+
+
+# As per this open issue with pytest https://github.com/pytest-dev/pytest/issues/5997,
+# some tests can only be run with global capturing disabled. Until we find a way
+# to disable capturing from within the test itself we can mark tests that should be skipped
+# unless global capturing is disabled via the "-s" flag.
+
+# TODO https://uktrade.atlassian.net/browse/TP2000-591
+
+# See pytest docs for implementation below
+# https://docs.pytest.org/en/7.1.x/example/simple.html#control-skipping-of-tests-according-to-command-line-option
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "s: mark test as needing global capturing disabled to run",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("-s") == "no":
+        # -s given in cli: do not skip s tests
+        return
+    skip_s = pytest.mark.skip(reason="need -s option to run")
+    for item in items:
+        if "s" in item.keywords:
+            item.add_marker(skip_s)

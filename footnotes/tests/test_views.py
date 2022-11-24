@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
+from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
 from common.tests.util import valid_between_end_delta
@@ -102,7 +103,12 @@ def test_delete_form(factory, use_delete_form):
     ),
     ids=view_urlpattern_ids,
 )
-def test_footnote_detail_views(view, url_pattern, valid_user_client):
+def test_footnote_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    session_with_workbasket,
+):
     """Verify that measure detail views are under the url footnotes/ and don't
     return an error."""
     model_overrides = {"footnotes.views.FootnoteDescriptionCreate": Footnote}
@@ -123,3 +129,36 @@ def test_footnote_list_view(view, url_pattern, valid_user_client):
     """Verify that footnote list view is under the url footnotes/ and doesn't
     return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
+
+
+def test_footnote_api_list_view(valid_user_client, date_ranges):
+    selected_type = factories.FootnoteTypeFactory.create()
+    expected_results = [
+        factories.FootnoteFactory.create(
+            valid_between=date_ranges.normal,
+            footnote_type=selected_type,
+        ),
+        factories.FootnoteFactory.create(
+            valid_between=date_ranges.earlier,
+            footnote_type=selected_type,
+        ),
+    ]
+    assert_read_only_model_view_returns_list(
+        "footnote",
+        "value",
+        "pk",
+        expected_results,
+        valid_user_client,
+    )
+
+
+def test_footnote_type_api_list_view(valid_user_client):
+    expected_results = [factories.FootnoteTypeFactory.create()]
+
+    assert_read_only_model_view_returns_list(
+        "footnotetype",
+        "footnote_type_id",
+        "footnote_type_id",
+        expected_results,
+        valid_user_client,
+    )

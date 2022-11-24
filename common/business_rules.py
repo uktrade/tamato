@@ -457,6 +457,20 @@ class MustExist(BusinessRule):
             raise self.violation(model)
 
 
+class MustExistNotNull(BusinessRule):
+    """Rule enforcing a referenced record exists, Null values raise
+    violation."""
+
+    reference_field_name: Optional[str] = None
+
+    def validate(self, model):
+        try:
+            if getattr(model, self.reference_field_name) is None:
+                raise self.violation(model)
+        except ObjectDoesNotExist:
+            raise self.violation(model)
+
+
 class ValidityStartDateRules(BusinessRule):
     """Repeated rule pattern for descriptions."""
 
@@ -509,7 +523,7 @@ class DescriptionsRules(ValidityStartDateRules):
     item_name = "description"
 
     def get_objects(self, model):
-        return model.get_descriptions(self.transaction)
+        return model.get_descriptions()
 
 
 class NoBlankDescription(BusinessRule):

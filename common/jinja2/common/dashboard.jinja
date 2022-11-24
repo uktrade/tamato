@@ -3,18 +3,19 @@
 {% from "components/inset-text/macro.njk" import govukInsetText %}
 
 {% set page_title = "Manage trade tariffs" %}
+{% set page_subtitle = "This service lets you manage UK trade tariffs" %}
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-xl">
-        {{ page_title }}
-        <span class="govuk-caption-xl">
-          This service lets you manage UK trade tariffs
-        </span>
-      </h1>
-    </div>
-  </div>
+  <h1 class="govuk-heading-xl">
+    {% block page_title %}
+      {{ page_title }}
+    {% endblock %}
+    <span class="govuk-caption-xl">
+      {% block page_subtitle %}
+        {{ page_subtitle }}
+      {% endblock %}
+    </span>
+  </h1>
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <h2 class="govuk-heading-l">
@@ -84,7 +85,7 @@
       <h2 class="govuk-heading-m">Commodities</h2>
       <ul class="govuk-list">
         <li>
-          <a class="govuk-link" href="{{ url('commodities-import') }}">
+          <a class="govuk-link" href="{{ url('commodity-ui-import') }}">
             Import commodities
           </a>
         </li>

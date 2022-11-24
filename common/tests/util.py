@@ -1,8 +1,8 @@
 import contextlib
 import importlib
+import json
 from datetime import date
 from datetime import datetime
-from datetime import timezone
 from functools import lru_cache
 from functools import wraps
 from io import BytesIO
@@ -19,6 +19,7 @@ import pytest
 from dateutil.parser import parse as parse_date
 from dateutil.relativedelta import relativedelta
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.models.base import ModelBase
 from django.template.loader import render_to_string
@@ -27,6 +28,7 @@ from django.urls import reverse
 from django_filters.views import FilterView
 from freezegun import freeze_time
 from lxml import etree
+from pytz import timezone
 
 from common.business_rules import BusinessRule
 from common.models.trackedmodel import TrackedModel
@@ -44,7 +46,6 @@ EXPORT_REFUND_NOMENCLATURE_IMPLEMENTED = False
 COMMODITIES_IMPLEMENTED = True
 MEURSING_TABLES_IMPLEMENTED = False
 PARTIAL_TEMPORARY_STOP_IMPLEMENTED = False
-UTC = timezone.utc
 
 requires_commodities = pytest.mark.skipif(
     not COMMODITIES_IMPLEMENTED,
@@ -437,6 +438,61 @@ def assert_model_view_renders(
     ), f"View returned an error status: {response.status_code}"
 
 
+def assert_read_only_model_view_returns_list(
+    url_name,
+    result_attributes,
+    expected_attribute,
+    expected_results,
+    valid_user_client,
+    equals=False,
+):
+    """
+    Integration test to verify class based read only model views.
+
+    Given a class based view and a url_name -
+      - Lookup the url for a list function
+      - Fetch data from the a URL constructed using the just created data.
+      - Assert that a 200 status was returned.
+      - Assert that the expected data is in results or equal if equals flag true
+
+    :param url_name: url namespace for the view
+    :param result_attributes: attribute path for the result
+    :param expected_attribute: attribute path for the expected result
+    :param expected_results: expected result
+    :param valid_user_client:
+    :param equals=False: flag for equals check
+    :param valid_user_client:
+    """
+
+    def get_attribute_value(data, attributes):
+        for attribute in attributes.split("."):
+            data = data[attribute]
+        return data
+
+    def r_getattr(data, attributes):
+        for attribute in attributes.split("."):
+            data = getattr(data, attribute)
+        return data
+
+    url = reverse(f"{url_name}-list")
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    results = json.loads(response.content)["results"]
+    actual_results = [
+        get_attribute_value(result, result_attributes) for result in results
+    ]
+
+    for index, expected_result in enumerate(expected_results):
+        if equals:
+            assert (
+                r_getattr(expected_result, expected_attribute) == actual_results[index]
+            )
+        else:
+            assert r_getattr(expected_result, expected_attribute) in actual_results
+
+
 def assert_records_match(
     expected: TrackedModel,
     imported: TrackedModel,
@@ -471,15 +527,20 @@ def assert_many_records_match(
     assert expected_data == imported_data
 
 
-def generate_test_import_xml(obj: dict) -> BytesIO:
+def generate_test_import_xml(
+    objects: Sequence[dict],
+    transaction_id: Optional[int] = None,
+) -> BytesIO:
     last_transaction = Transaction.objects.last()
     next_transaction_id = (last_transaction.order if last_transaction else 0) + 1
     xml = render_to_string(
         template_name="workbaskets/taric/transaction_detail.xml",
         context={
             "envelope_id": next_transaction_id,
-            "tracked_models": [obj],
-            "transaction_id": next_transaction_id,
+            "tracked_models": objects,
+            "transaction_id": next_transaction_id
+            if transaction_id is None
+            else transaction_id,
             "message_counter": counter_generator(),
             "counter_generator": counter_generator,
         },
@@ -627,6 +688,28 @@ class Dates:
         "future": (relativedelta(weeks=+10), relativedelta(weeks=+20)),
         "no_end": (relativedelta(), None),
         "normal_first_half": (relativedelta(), relativedelta(days=+14)),
+        "starts_1_month_ago_to_delta": (relativedelta(months=-1), relativedelta()),
+        "starts_delta_to_1_month_ahead": (relativedelta(), relativedelta(months=1)),
+        "starts_1_month_ago_to_1_month_ahead": (
+            relativedelta(months=-1),
+            relativedelta(months=1),
+        ),
+        "starts_1_month_ago_no_end": (relativedelta(months=-1), None),
+        "starts_2_months_ago_no_end": (relativedelta(months=-2), None),
+        "starts_delta_no_end": (relativedelta(), None),
+        "starts_2_months_ago_to_1_month_ago": (
+            relativedelta(months=-2),
+            relativedelta(months=-1),
+        ),
+        "starts_2_months_ago_to_delta": (relativedelta(months=-2), relativedelta()),
+        "starts_1_month_ahead_to_2_months_ahead": (
+            relativedelta(months=1),
+            relativedelta(months=2),
+        ),
+        "starts_1_month_ahead_no_end": (
+            relativedelta(months=1),
+            None,
+        ),
     }
 
     @property
@@ -635,7 +718,12 @@ class Dates:
 
     @property
     def datetime_now(self):
-        return datetime.now(tz=UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+        return datetime.now(timezone(settings.TIME_ZONE)).replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
 
     def __getattr__(self, name):
         if name in self.deltas:

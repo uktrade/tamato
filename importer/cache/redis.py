@@ -6,7 +6,11 @@ from importer.cache.base import BaseEngine
 
 def prefix_key_decorator(func):
     def wrapped_func(self, key, *args, **kwargs):
-        prefix = getattr(settings, "IMPORTER_CACHE_PREFIX", "__IMPORTER_CACHE")
+        prefix = getattr(
+            settings,
+            "IMPORTER_CACHE_PREFIX",
+            RedisCacheEngine.CACHE_PREFIX,
+        )
         if not key.startswith(prefix):
             key = f"{prefix}__{key}"
         return func(self, key, *args, **kwargs)
@@ -37,12 +41,20 @@ class RedisCacheEngine(BaseEngine):
         cache.set(key, obj, timeout=None)
 
     def keys(self):
-        prefix = getattr(settings, "IMPORTER_CACHE_PREFIX", "__IMPORTER_CACHE")
+        prefix = getattr(
+            settings,
+            "IMPORTER_CACHE_PREFIX",
+            RedisCacheEngine.CACHE_PREFIX,
+        )
         return cache.keys(f"{prefix}*")
 
     def dump(self):
         pass
 
     def clear(self):
-        prefix = getattr(settings, "IMPORTER_CACHE_PREFIX", "__IMPORTER_CACHE")
+        prefix = getattr(
+            settings,
+            "IMPORTER_CACHE_PREFIX",
+            RedisCacheEngine.CACHE_PREFIX,
+        )
         cache.delete(f"{prefix}*")

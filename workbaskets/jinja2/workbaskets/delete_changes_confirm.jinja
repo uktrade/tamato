@@ -1,20 +1,9 @@
 {% extends "layouts/layout.jinja" %}
 
 {% from "components/panel/macro.njk" import govukPanel %}
-
+{% from "components/button/macro.njk" import govukButton %}
 
 {% set page_title = "Remove tariff changes" %}
-
-
-{% block breadcrumb %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": "Home", "href": url("index")},
-      {"text": page_title}
-    ]
-  }) }}
-{% endblock %}
-
 
 {% block content %}
 <div class="govuk-grid-row">
@@ -34,9 +23,16 @@
       "classes": "govuk-!-margin-bottom-7"
     }) }}
 
-    <p class="govuk-body">
-      <a href="{{ url('index') }}" class="govuk-link">Return to main menu</a>
-    </p>
+    {% if request.session.workbasket %}
+    {{ govukButton({
+      "text": "Go to your tariff changes",
+      "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]),
+      "classes": "govuk-button--secondary"
+    }) }}
+    {% endif %}
+    <ul class="govuk-list govuk-list-spaced">
+      {% include "includes/common/main-menu-link.jinja" %}
+    </ul>
   </div>
 </div>
 {% endblock %}

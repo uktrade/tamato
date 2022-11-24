@@ -16,6 +16,7 @@ from typing import TypeVar
 from typing import Union
 
 import wrapt
+from defusedxml.common import DTDForbidden
 from django.db import transaction
 from django.db.models import F
 from django.db.models import Func
@@ -35,6 +36,7 @@ from django.db.models.functions.text import Lower
 from django.db.models.functions.text import Upper
 from django.db.transaction import atomic
 from django.template import loader
+from lxml import etree
 from psycopg2.extras import DateRange
 from psycopg2.extras import DateTimeRange
 
@@ -123,6 +125,29 @@ class TaricDateRange(DateRange):
             bounds = "[)"
         super().__init__(lower, upper, bounds, empty)
 
+    def overlaps(self, compared_date_range: TaricDateRange):
+
+        if self.upper_inf:
+            if compared_date_range.upper_inf:
+                # will overlap regardless
+                return True
+            elif compared_date_range.upper >= self.lower:
+                return True
+        else:
+            if compared_date_range.upper_inf:
+                if compared_date_range.lower <= self.upper:
+                    return True
+            else:
+                # here nether have inf
+                if self.lower <= compared_date_range.lower <= self.upper:
+                    # overlap at lower end
+                    return True
+                elif self.lower <= compared_date_range.upper <= self.upper:
+                    # overlap at upper end
+                    return True
+
+        return False
+
     def upper_is_greater(self, compared_date_range: TaricDateRange) -> bool:
         """
         Checks whether this date range ends after the specified date range.
@@ -135,6 +160,28 @@ class TaricDateRange(DateRange):
         return (
             None not in {self.upper, compared_date_range.upper}
         ) and self.upper > compared_date_range.upper
+
+    @staticmethod
+    def merge_ranges(first_range: TaricDateRange, second_range: TaricDateRange):
+        result = first_range
+
+        if second_range.overlaps(first_range):
+            # get lowest lower
+            if second_range.lower < first_range.lower:
+                result = TaricDateRange(second_range.lower, first_range.upper)
+
+            # get highest upper
+            if first_range.upper is not None:
+                if second_range.upper is None:
+                    result = TaricDateRange(first_range.lower, None)
+                elif second_range.upper > first_range.upper:
+                    result = TaricDateRange(first_range.lower, second_range.upper)
+        else:
+            raise Exception(
+                "TaricDateRange Merge not possible for non overlapping ranges",
+            )
+
+        return result
 
 
 # XXX keep for migrations
@@ -488,3 +535,27 @@ def get_latest_versions(qs):
         if key not in keys:
             keys.add(key)
             yield model
+
+
+# This implementation is borrowed from defusedxml's deprecated lxml module https://github.com/tiran/defusedxml/blob/main/defusedxml/lxml.py
+def check_docinfo(elementtree, forbid_dtd=False):
+    """Check docinfo of an element tree for DTD."""
+    docinfo = elementtree.docinfo
+    if docinfo.doctype:
+        if forbid_dtd:
+            raise DTDForbidden(docinfo.doctype, docinfo.system_url, docinfo.public_id)
+
+
+def parse_xml(source, forbid_dtd=True):
+    elementtree = etree.parse(source)
+    check_docinfo(elementtree, forbid_dtd=forbid_dtd)
+
+    return elementtree
+
+
+def xml_fromstring(text, forbid_dtd=True):
+    rootelement = etree.fromstring(text)
+    elementtree = rootelement.getroottree()
+    check_docinfo(elementtree, forbid_dtd=forbid_dtd)
+
+    return rootelement

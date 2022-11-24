@@ -5,6 +5,7 @@ from additional_codes import business_rules
 from additional_codes import models
 from additional_codes.validators import ApplicationCode
 from common.business_rules import BusinessRuleViolation
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import raises_if
 from common.tests.util import requires_meursing_tables
@@ -212,8 +213,9 @@ def test_ACN11():
 def test_ACN5_one_description_mandatory():
     """At least one description is mandatory."""
     additional_code = factories.AdditionalCodeFactory.create()
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN5(additional_code.transaction).validate(additional_code)
+    with override_current_transaction(additional_code.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.ACN5(additional_code.transaction).validate(additional_code)
 
 
 def test_ACN5_first_description_must_have_same_start_date(date_ranges):
@@ -224,11 +226,11 @@ def test_ACN5_first_description_must_have_same_start_date(date_ranges):
         described_additionalcode__valid_between=date_ranges.no_end,
         validity_start=date_ranges.later.lower,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN5(description.transaction).validate(
-            description.described_additionalcode,
-        )
+    with override_current_transaction(description.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.ACN5(description.transaction).validate(
+                description.described_additionalcode,
+            )
 
 
 def test_ACN5_start_dates_cannot_match():
@@ -239,11 +241,11 @@ def test_ACN5_start_dates_cannot_match():
         described_additionalcode=existing.described_additionalcode,
         validity_start=existing.validity_start,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN5(duplicate.transaction).validate(
-            existing.described_additionalcode,
-        )
+    with override_current_transaction(duplicate.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.ACN5(duplicate.transaction).validate(
+                existing.described_additionalcode,
+            )
 
 
 def test_ACN5_description_start_before_additional_code_end(date_ranges):
@@ -258,11 +260,11 @@ def test_ACN5_description_start_before_additional_code_end(date_ranges):
         described_additionalcode=description.described_additionalcode,
         validity_start=date_ranges.starts_with_normal.lower,
     )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ACN5(next_description.transaction).validate(
-            description.described_additionalcode,
-        )
+    with override_current_transaction(next_description.transaction):
+        with pytest.raises(BusinessRuleViolation):
+            business_rules.ACN5(next_description.transaction).validate(
+                description.described_additionalcode,
+            )
 
 
 def test_ACN14(delete_record):

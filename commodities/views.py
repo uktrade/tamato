@@ -7,10 +7,13 @@ from django.views.generic import TemplateView
 from rest_framework import permissions
 from rest_framework import viewsets
 
+from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
 from commodities.forms import CommodityImportForm
 from commodities.models import GoodsNomenclature
 from common.serializers import AutoCompleteSerializer
+from common.views import TrackedModelDetailView
+from common.views import WithPaginationListView
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
@@ -35,7 +38,7 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
                 tx,
             )
             .prefetch_related("descriptions")
-            .as_at(date.today())
+            .as_at_and_beyond(date.today())
             .filter(suffix=80)
         )
 
@@ -44,7 +47,7 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
 class CommodityImportView(FormView, WithCurrentWorkBasket):
     template_name = "commodities/import.jinja"
     form_class = CommodityImportForm
-    success_url = reverse_lazy("commodities-import-success")
+    success_url = reverse_lazy("commodity-ui-import-success")
 
     def form_valid(self, form):
         form.save(user=self.request.user, workbasket_id=self.workbasket.id)
@@ -53,3 +56,22 @@ class CommodityImportView(FormView, WithCurrentWorkBasket):
 
 class CommodityImportSuccessView(TemplateView):
     template_name = "commodities/import-success.jinja"
+
+
+class CommodityMixin:
+    model = GoodsNomenclature
+
+    def get_queryset(self):
+        return GoodsNomenclature.objects.current()
+
+
+class CommodityList(CommodityMixin, WithPaginationListView):
+    template_name = "commodities/list.jinja"
+    filterset_class = CommodityFilter
+
+    def get_queryset(self):
+        return GoodsNomenclature.objects.current().order_by("item_id")
+
+
+class CommodityDetail(CommodityMixin, TrackedModelDetailView):
+    template_name = "commodities/detail.jinja"

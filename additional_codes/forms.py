@@ -32,7 +32,7 @@ class AdditionalCodeForm(ValidityPeriodForm):
         self.fields["type"].label = "Additional code type"
         self.fields["type"].required = False
 
-        if self.instance:
+        if self.instance.pk is not None:
             self.fields["code"].disabled = True
             self.fields["code"].help_text = "You can't edit this"
             self.fields[
@@ -54,7 +54,12 @@ class AdditionalCodeForm(ValidityPeriodForm):
             Field("type"),
             Field("start_date"),
             Field("end_date"),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
@@ -65,7 +70,7 @@ class AdditionalCodeForm(ValidityPeriodForm):
 
         # get type from instance if not submitted
         ctype = cleaned_data.get("type")
-        if not ctype and self.instance and self.instance.type:
+        if not ctype and self.instance.pk and self.instance.type:
             ctype = self.instance.type
 
         return cleaned_data
@@ -122,7 +127,12 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
             "start_date",
             Field.textarea("description", rows=5),
             DescriptionHelpBox(),
-            Submit("submit", "Save"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
