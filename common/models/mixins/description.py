@@ -15,6 +15,7 @@ from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_relations
 from common.util import classproperty
 from common.validators import UpdateType
+from workbaskets.validators import WorkflowStatus
 
 
 class DescriptionQueryset(ValidityStartQueryset, TrackedModelQuerySet):
@@ -49,11 +50,22 @@ class DescriptionMixin(ValidityStartMixin):
         if action != "list":
             kwargs = self.get_identifying_fields()
             described_object = self.get_described_object()
+
             if action == "detail":
                 url = described_object.get_url()
                 if url:
                     return url + "#descriptions"
                 return
+            elif (
+                action == "edit"
+                and self.transaction.workbasket.status == WorkflowStatus.EDITING
+            ):
+                # Edits in WorkBaskets that are in EDITING state get real
+                # changes via DB updates, not newly created UPDATE instances.
+                if self.update_type == UpdateType.CREATE:
+                    action += "-create"
+                elif self.update_type == UpdateType.UPDATE:
+                    action += "-update"
 
             for field, value in described_object.get_identifying_fields().items():
                 kwargs[f"{self.described_object_field.name}__{field}"] = value
