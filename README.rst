@@ -115,7 +115,11 @@ Installing
     $ npm install
     $ npm run build
 
-Those using Mac m1 laptops may have problems installing certain packages (e.g. psycopg2 and lxml) via requirements-dev.txt. In this scenario you should run the following from a rosetta terminal (see `this article <https://www.courier.com/blog/tips-and-tricks-to-setup-your-apple-m1-for-development/>`_  ), substituting your own python version as appropriate:
+Those using Mac m1 laptops may have problems installing certain packages (e.g. 
+psycopg2 and lxml) via requirements-dev.txt. In this scenario you should run the 
+following from a rosetta terminal (see `this article 
+<https://www.courier.com/blog/tips-and-tricks-to-setup-your-apple-m1-for-development/>`_ ), 
+substituting your own python version as appropriate:
 
 .. code:: sh
 
@@ -125,7 +129,8 @@ Those using Mac m1 laptops may have problems installing certain packages (e.g. p
     $ export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib -L${HOME}/.pyenv/versions/3.8.10/lib"
     $ arch -arm64 pip install psycopg2 --no-binary :all:
 
-Credit due to armenzg and his `answer here <https://github.com/psycopg/psycopg2/issues/1286#issuecomment-914286206>`_ .
+Credit due to armenzg and his `answer here 
+<https://github.com/psycopg/psycopg2/issues/1286#issuecomment-914286206>`_ .
 
 Running
 ~~~~~~~
