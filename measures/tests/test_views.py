@@ -114,8 +114,8 @@ def test_measure_delete(use_delete_form):
     use_delete_form(factories.MeasureFactory())
 
 
-def test_multiple_measure_delete(client, valid_user, session_workbasket):
-    """Tests that MultipleMeasureDelete view's Post function takes a list of
+def test_multiple_measure_delete_functionality(client, valid_user, session_workbasket):
+    """Tests that MeasureMultipleDelete view's Post function takes a list of
     measures, and sets their update type to delete, clearing the session once
     completed."""
     measure_1 = factories.MeasureFactory.create()
@@ -153,6 +153,73 @@ def test_multiple_measure_delete(client, valid_user, session_workbasket):
     for measure in workbasket_measures:
         # check that the update type is delete which is 2
         assert measure.update_type == 2
+
+
+def test_multiple_measure_delete_template(client, valid_user, session_workbasket):
+    """Test that valid user receives a 200 on GET for MultipleMeasureDelete and
+    correct measures display in html table."""
+    # Make a bunch of measures
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+    measure_4 = factories.MeasureFactory.create()
+    measure_5 = factories.MeasureFactory.create()
+
+    url = reverse("measure-ui-delete-multiple")
+    client.force_login(valid_user)
+    session = client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+    }
+    # Add some of those measures to the session to replicate them being selected on list page.
+    session.update(
+        {
+            "DELETE_MEASURE_SELECTIONS": {
+                measure_1.pk: True,
+                measure_2.pk: True,
+                measure_3.pk: True,
+            },
+        },
+    )
+    session.save()
+    url = reverse("measure-ui-delete-multiple")
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    # grab the whole measure objects for our pk's we've got in the session, so we can compare attributes.
+    selected_measures = Measure.objects.filter(
+        pk__in=[key for key in session["DELETE_MEASURE_SELECTIONS"].items()],
+    )
+
+    # Get the measure ids that are being shown in the table in the template.
+    measure_ids_in_table = [e.text for e in soup.select("table tr td:first-child")]
+
+    # Get the sids for the measures we selected, as these are what are shown in the template.
+    selected_measures_ids = [str(measure.sid) for measure in selected_measures]
+
+    assert measure_ids_in_table == selected_measures_ids
+    assert set(measure_ids_in_table).difference([measure_4.sid, measure_5.sid])
+
+    # 4th column is start date
+    start_dates_in_table = {e.text for e in soup.select("table tr td:nth-child(4)")}
+    measure_start_dates = {
+        f"{m.valid_between.lower:%d %b %Y}" for m in selected_measures
+    }
+    assert not measure_start_dates.difference(start_dates_in_table)
+
+    # 5th column is end date
+    end_dates_in_table = {e.text for e in soup.select("table tr td:nth-child(5)")}
+    measure_end_dates = {
+        f"{m.effective_end_date:%d %b %Y}"
+        for m in selected_measures
+        if m.effective_end_date
+    }
+    assert not measure_end_dates.difference(end_dates_in_table)
 
 
 @pytest.mark.parametrize(
