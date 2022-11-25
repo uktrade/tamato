@@ -614,7 +614,7 @@ class MeasureMultipleDelete(TemplateView, ListView):
         for obj in object_list:
             # make a new version of the object with an update type of delete.
             obj.new_version(
-                workbasket=WorkBasket.current(),
+                workbasket=WorkBasket.current(request),
                 update_type=UpdateType.DELETE,
             )
         session_store = self._session_store()

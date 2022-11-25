@@ -125,16 +125,21 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
     url = reverse("measure-ui-delete-multiple")
     client.force_login(valid_user)
     session = client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "DELETE_MEASURE_SELECTIONS": {
-            measure_1.pk: True,
-            measure_2.pk: True,
-            measure_3.pk: True,
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "DELETE_MEASURE_SELECTIONS": {
+                measure_1.pk: True,
+                measure_2.pk: True,
+                measure_3.pk: True,
+            },
         },
-    }
+    )
+    session.save()
     post_data = {"action": "delete"}
     response = client.post(url, data=post_data)
 
@@ -164,16 +169,21 @@ def test_multiple_measure_delete_template(client, valid_user, session_workbasket
     client.force_login(valid_user)
     session = client.session
     # Add a workbasket to the session, and add some selected measures to it.
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "DELETE_MEASURE_SELECTIONS": {
-            measure_1.pk: True,
-            measure_2.pk: True,
-            measure_3.pk: True,
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "DELETE_MEASURE_SELECTIONS": {
+                measure_1.pk: True,
+                measure_2.pk: True,
+                measure_3.pk: True,
+            },
         },
-    }
+    )
+    session.save()
 
     url = reverse("measure-ui-delete-multiple")
     response = client.get(url)
