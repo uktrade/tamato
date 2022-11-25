@@ -584,16 +584,6 @@ class MeasureMultipleDelete(TemplateView, ListView):
 
     template_name = "measures/delete-multiple-measures.jinja"
 
-    def _workbasket(self):
-        """Get the current workbasket that is in session."""
-
-        try:
-            session_workbasket = self.request.session._session["workbasket"]
-            workbasket = WorkBasket.objects.get(pk=session_workbasket["id"])
-        except WorkBasket.DoesNotExist:
-            workbasket = WorkBasket.objects.none()
-        return workbasket
-
     def _session_store(self):
         """Get the session store to store the measures that will be deleted."""
 
@@ -619,17 +609,12 @@ class MeasureMultipleDelete(TemplateView, ListView):
             # The user has cancelled out of the deletion process.
             return redirect("home")
 
-        # By reverse ordering on record_code + subrecord_code we're able to
-        # delete child entities first, avoiding protected foreign key
-        # violations.
         object_list = self.get_queryset()
-        # To do - figure out how to get record_ordering and reverse to work when added to this chain. Quotaset error.
-        # .record_ordering().reverse()
 
         for obj in object_list:
             # make a new version of the object with an update type of delete.
             obj.new_version(
-                workbasket=self._workbasket(),
+                workbasket=WorkBasket.current(),
                 update_type=UpdateType.DELETE,
             )
         session_store = self._session_store()
