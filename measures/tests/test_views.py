@@ -163,22 +163,18 @@ def test_multiple_measure_delete_template(client, valid_user, session_workbasket
     url = reverse("measure-ui-delete-multiple")
     client.force_login(valid_user)
     session = client.session
+    # Add a workbasket to the session, and add some selected measures to it.
     session["workbasket"] = {
         "id": session_workbasket.pk,
         "status": session_workbasket.status,
         "title": session_workbasket.title,
-    }
-    # Add some of those measures to the session to replicate them being selected on list page.
-    session.update(
-        {
-            "DELETE_MEASURE_SELECTIONS": {
-                measure_1.pk: True,
-                measure_2.pk: True,
-                measure_3.pk: True,
-            },
+        "DELETE_MEASURE_SELECTIONS": {
+            measure_1.pk: True,
+            measure_2.pk: True,
+            measure_3.pk: True,
         },
-    )
-    session.save()
+    }
+
     url = reverse("measure-ui-delete-multiple")
     response = client.get(url)
 
