@@ -490,8 +490,15 @@
         <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clashing_measures</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
+        <span class="n">clashing_measures</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clashing_measures</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">clashing_measures</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="n">default_message</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="se">\n</span><span class="s2">&quot;</span>
+
+            <span class="k">for</span> <span class="n">clashing_measure</span> <span class="ow">in</span> <span class="n">clashing_measures</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Clash with Measure SID </span><span class="si">{</span><span class="n">clashing_measure</span><span class="o">.</span><span class="n">sid</span><span class="si">}</span><span class="s2">. &quot;</span>
+
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span></div></div>
 
 
 <span class="c1"># -- Ceiling/quota definition existence</span>
