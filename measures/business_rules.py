@@ -362,7 +362,16 @@ class ME32(BusinessRule):
             return
 
         if self.clashing_measures(measure).exists():
-            raise self.violation(measure)
+            message = (
+                "There may be no overlap in time with other measure occurrences with a goods code in the same "
+                "nomenclature hierarchy which references the same measure type, geo area, order number, "
+                "additional code and reduction indicator."
+            )
+
+            for clashing_measure in self.clashing_measures(measure):
+                message += f"Overlap detected with Measure SID {clashing_measure.sid}. "
+
+            raise self.violation(measure, message)
 
 
 # -- Ceiling/quota definition existence
