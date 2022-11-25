@@ -361,15 +361,13 @@ class ME32(BusinessRule):
         if measure.goods_nomenclature is None:
             return
 
-        if self.clashing_measures(measure).exists():
-            message = (
-                "There may be no overlap in time with other measure occurrences with a goods code in the same "
-                "nomenclature hierarchy which references the same measure type, geo area, order number, "
-                "additional code and reduction indicator."
-            )
+        clashing_measures = self.clashing_measures(measure)
 
-            for clashing_measure in self.clashing_measures(measure):
-                message += f"Overlap detected with Measure SID {clashing_measure.sid}. "
+        if clashing_measures.exists():
+            message = self.violation(measure).default_message() + " \n"
+
+            for clashing_measure in clashing_measures:
+                message += f"\nClash with Measure SID {clashing_measure.sid}. "
 
             raise self.violation(measure, message)
 
