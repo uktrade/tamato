@@ -3,12 +3,23 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 {% from "components/inset-text/macro.njk" import govukInsetText %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% from 'macros/create_link.jinja' import create_link %} 
 {% from "includes/measures/conditions.jinja" import conditions_list %}
 {% from "components/table/macro.njk" import govukTable %}
 
 {% set page_title = "Delete measures" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Find and edit measures", "href": url("measure-ui-list")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
 
 {% block content %}
   <div class="govuk-grid-row">
