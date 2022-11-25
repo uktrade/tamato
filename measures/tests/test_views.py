@@ -129,17 +129,12 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
         "id": session_workbasket.pk,
         "status": session_workbasket.status,
         "title": session_workbasket.title,
-    }
-    session.update(
-        {
-            "DELETE_MEASURE_SELECTIONS": {
-                measure_1.pk: True,
-                measure_2.pk: True,
-                measure_3.pk: True,
-            },
+        "DELETE_MEASURE_SELECTIONS": {
+            measure_1.pk: True,
+            measure_2.pk: True,
+            measure_3.pk: True,
         },
-    )
-    session.save()
+    }
     post_data = {"action": "delete"}
     response = client.post(url, data=post_data)
 
