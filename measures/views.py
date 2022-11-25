@@ -82,7 +82,7 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
     def paginator(self):
         filterset_class = self.get_filterset_class()
         self.filterset = self.get_filterset(filterset_class)
-        return MeasurePaginator(self.filterset.qs, per_page=10)
+        return MeasurePaginator(self.filterset.qs, per_page=20)
 
     def form_valid(self, form):
         store = SessionStore(
