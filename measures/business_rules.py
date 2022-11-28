@@ -361,8 +361,15 @@ class ME32(BusinessRule):
         if measure.goods_nomenclature is None:
             return
 
-        if self.clashing_measures(measure).exists():
-            raise self.violation(measure)
+        clashing_measures = self.clashing_measures(measure)
+
+        if clashing_measures.exists():
+            message = self.violation(measure).default_message() + " \n"
+
+            for clashing_measure in clashing_measures:
+                message += f"\nClash with Measure SID {clashing_measure.sid}. "
+
+            raise self.violation(measure, message)
 
 
 # -- Ceiling/quota definition existence
