@@ -159,8 +159,9 @@ class LogoutView(django.contrib.auth.views.LogoutView):
     template_name = "common/logged_out.jinja"
 
 
-class WithPaginationListView(FilterView):
-    """Generic list view enabling pagination."""
+class WithPaginationListMixin:
+    """Mixin that can be inherited by a ListView subclass to enable this
+    project's pagination capabilities."""
 
     paginator_class = Paginator
     paginate_by = settings.REST_FRAMEWORK["PAGE_SIZE"]
@@ -175,6 +176,10 @@ class WithPaginationListView(FilterView):
             page_obj.paginator.num_pages,
         )
         return data
+
+
+class WithPaginationListView(WithPaginationListMixin, FilterView):
+    """Generic filtered list view enabling pagination."""
 
 
 class RequiresSuperuserMixin(UserPassesTestMixin):
