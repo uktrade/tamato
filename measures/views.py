@@ -33,8 +33,8 @@ from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
-from workbaskets.views.generic import DraftDeleteView
-from workbaskets.views.generic import DraftUpdateView
+from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
 
 
 class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -322,7 +322,7 @@ class MeasureCreateWizard(
 class MeasureUpdate(
     MeasureMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
     form_class = forms.MeasureForm
     permission_required = "common.change_trackedmodel"
@@ -533,7 +533,7 @@ class MeasureFootnotesUpdate(View):
 class MeasureDelete(
     MeasureMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = forms.MeasureDeleteForm
     success_path = "list"

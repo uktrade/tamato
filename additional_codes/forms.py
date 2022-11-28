@@ -80,7 +80,7 @@ class AdditionalCodeForm(ValidityPeriodForm):
         fields = ("type", "valid_between")
 
 
-class AdditionalCodeCreateForm(ValidityPeriodForm):
+class AdditionalCodeCreateBaseForm(ValidityPeriodForm):
     class Meta:
         model = models.AdditionalCode
         fields = ("type", "code", "valid_between")
@@ -101,14 +101,6 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
             "the additional code type"
         ),
     )
-    description = forms.CharField(
-        label="Additional code description",
-        help_text=(
-            "You may enter HTML formatting if required. See the guide below "
-            "for more information."
-        ),
-        widget=forms.Textarea,
-    )
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -121,6 +113,21 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
+
+
+class AdditionalCodeCreateForm(AdditionalCodeCreateBaseForm):
+    description = forms.CharField(
+        label="Additional code description",
+        help_text=(
+            "You may enter HTML formatting if required. See the guide below "
+            "for more information."
+        ),
+        widget=forms.Textarea,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self.helper.layout = Layout(
             "type",
             Field.text("code", field_width=Fluid.ONE_QUARTER, maxlength="3"),
@@ -158,6 +165,23 @@ class AdditionalCodeCreateForm(ValidityPeriodForm):
         if commit:
             instance.save(commit)
         return instance
+
+
+class AdditionalCodeEditCreateForm(AdditionalCodeCreateBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper.layout = Layout(
+            "type",
+            Field.text("code", field_width=Fluid.ONE_QUARTER, maxlength="3"),
+            "start_date",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
 
 
 class AdditionalCodeDescriptionForm(DescriptionForm):

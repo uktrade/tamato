@@ -1,6 +1,7 @@
 from typing import Type
 
 from django.db import transaction
+from django.http import HttpResponseRedirect
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -17,9 +18,10 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from workbaskets.models import WorkBasket
-from workbaskets.views.generic import DraftCreateView
-from workbaskets.views.generic import DraftDeleteView
-from workbaskets.views.generic import DraftUpdateView
+from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.generic import EditTaricView
 
 
 class CertificatesViewSet(viewsets.ReadOnlyModelViewSet):
@@ -69,8 +71,8 @@ class CertificateList(CertificateMixin, TamatoListView):
     ]
 
 
-class CertificateCreate(DraftCreateView):
-    """UI endpoint for creating Certificates."""  # /PS-IGNORE
+class CertificateCreate(CreateTaricCreateView):
+    """UI endpoint for creating Certificates CREATE instances."""
 
     template_name = "certificates/create.jinja"
     form_class = forms.CertificateCreateForm
@@ -103,6 +105,27 @@ class CertificateCreate(DraftCreateView):
         return kwargs
 
 
+class CertificateEditCreate(
+    CertificateMixin,  # Sets model and defines get_queryset()
+    TrackedModelDetailMixin,  # Defines get_object()
+    EditTaricView,  # Overrides get_result_object() which normally creates new version.
+):
+    """UI endpoint for editing Certificate CREATE instances."""
+
+    template_name = "certificates/create.jinja"
+    form_class = forms.CertificateEditCreateForm
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
 class CertificateConfirmCreate(CertificateMixin, TrackedModelDetailView):
     template_name = "common/confirm_create.jinja"
 
@@ -111,10 +134,9 @@ class CertificateDetail(CertificateMixin, TrackedModelDetailView):
     template_name = "certificates/detail.jinja"
 
 
-class CertificateUpdate(
+class CertificateUpdateMixin(
     CertificateMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
 ):
     form_class = forms.CertificateForm
 
@@ -124,6 +146,20 @@ class CertificateUpdate(
         # business_rules.CE6,  # XXX should it be checked here?
         business_rules.CE7,
     )
+
+
+class CertificateUpdate(
+    CertificateUpdateMixin,
+    CreateTaricUpdateView,
+):
+    """UI endpoint for creating Certificate UPDATE instances."""
+
+
+class CertificateEditUpdate(
+    CertificateUpdateMixin,
+    EditTaricView,
+):
+    """UI endpoint for editing Certificate UPDATE instances."""
 
 
 class CertificateConfirmUpdate(CertificateMixin, TrackedModelDetailView):
@@ -153,8 +189,10 @@ class CertificateCreateDescriptionMixin:
 class CertificateDescriptionCreate(
     CertificateCreateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftCreateView,
+    CreateTaricCreateView,
 ):
+    """UI endpoint for creating CertificateDescription CREATE instances."""
+
     def get_initial(self):
         initial = super().get_initial()
         initial["described_certificate"] = models.Certificate.objects.current().get(
@@ -167,11 +205,29 @@ class CertificateDescriptionCreate(
     template_name = "common/create_description.jinja"
 
 
+class CertificateDescriptionEditCreate(
+    CertificateDescriptionMixin,
+    TrackedModelDetailMixin,
+    EditTaricView,
+):
+    """UI endpoint for editing CertificateDescription CREATE instances."""
+
+    form_class = forms.CertificateDescriptionForm
+    template_name = "common/edit_description.jinja"
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+
 class CertificateUpdateDescription(
     CertificateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
+    """UI endpoint for creating CertificateDescription UPDATE instances."""
+
     form_class = forms.CertificateDescriptionForm
     template_name = "common/edit_description.jinja"
 
@@ -193,7 +249,7 @@ class CertificateDescriptionConfirmUpdate(
 class CertificateDelete(
     CertificateMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = forms.CertificateDeleteForm
     success_path = "list"
@@ -204,7 +260,7 @@ class CertificateDelete(
 class CertificateDescriptionDelete(
     CertificateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = forms.CertificateDescriptionDeleteForm
     success_path = "detail"

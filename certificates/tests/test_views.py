@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from certificates import models
@@ -10,9 +11,12 @@ from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import assert_read_only_model_view_returns_list
+from common.tests.util import date_post_data
 from common.tests.util import get_class_based_view_urls_matching_url
+from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 
@@ -135,6 +139,48 @@ def test_description_create_get_context_data(valid_user_api_client):
         described_certificate__sid=new_version.sid,
         described_certificate__certificate_type__sid=new_version.certificate_type.sid,
     ).exists()
+
+
+@pytest.mark.parametrize(
+    ("data_changes", "expected_valid"),
+    (
+        ({**date_post_data("start_date", datetime.date.today())}, True),
+        (
+            {
+                "start_date_0": "",
+                "start_date_1": "",
+                "start_date_2": "",
+            },
+            False,
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "update_type",
+    (
+        UpdateType.CREATE,
+        UpdateType.UPDATE,
+    ),
+)
+def test_certificate_edit_views(
+    data_changes,
+    expected_valid,
+    update_type,
+    use_edit_view,
+    workbasket,
+    published_certificate_type,
+):
+    """Tests that certificate edit views (for update types CREATE and UPDATE)
+    allows saving a valid form from an existing instance and that an invalid
+    form fails validation as expected."""
+
+    certificate = factories.CertificateFactory.create(
+        update_type=update_type,
+        certificate_type=published_certificate_type,
+        transaction=workbasket.new_transaction(),
+    )
+    with raises_if(ValidationError, not expected_valid):
+        use_edit_view(certificate, data_changes)
 
 
 def test_certificate_api_list_view(valid_user_client, date_ranges):

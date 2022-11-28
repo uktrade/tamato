@@ -12,7 +12,7 @@ from quotas import serializers
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
 from workbaskets.models import WorkBasket
-from workbaskets.views.generic import DraftDeleteView
+from workbaskets.views.generic import CreateTaricDeleteView
 
 
 class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
@@ -87,7 +87,7 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
     template_name = "quotas/detail.jinja"
 
 
-class QuotaDelete(QuotaMixin, TrackedModelDetailMixin, DraftDeleteView):
+class QuotaDelete(QuotaMixin, TrackedModelDetailMixin, CreateTaricDeleteView):
     form_class = forms.QuotaDeleteForm
     success_path = "list"
 
