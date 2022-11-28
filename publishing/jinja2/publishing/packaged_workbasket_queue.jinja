@@ -1,10 +1,10 @@
 {% extends "layouts/layout.jinja" %}
 
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "components/table/macro.njk" import govukTable %}
 
 {% set page_title = "Order and package workbaskets" %}
 {% set list_include = "includes/packaged-workbasket-queue.jinja" %}
-{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({

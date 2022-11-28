@@ -5,13 +5,14 @@
 {%- set table_rows = [] -%}
 
 {% for obj in object_list %}
+
   {{ table_rows.append([
     {"html": "<span>TODO</span>"},
-    {"html": '<a href="#">{{obj.workbasket.pk}}</a>'},
-    {"html": '<a href="#">TODO - obj.jira_id</a>'},
-    {"html": "<span>TODO - obj.description.</span>"},
-    {"html": '<a href="#">Move to top of queue</a>'},
-    {"html": '<a href="#">Remove from queue</a>'},
+    {"html": "<a href=\"" ~ url("workbaskets:workbasket-ui-changes", args=(obj.workbasket.pk,)) ~ "\" class=\"govuk-link\">" ~ obj.workbasket.pk ~ "</a>"},
+    {"html": "<a href=\"#\" class=\"govuk-link\">" ~ obj.workbasket.title ~ "</a>"},
+    {"html": "<span>" ~ obj.workbasket.reason ~ "</span>"},
+    {"html": "<a href=\"#\" class=\"govuk-link\">Move to top of queue</a>"},
+    {"html": "<a href=\"#\" class=\"govuk-link\">Remove from queue</a>"},
   ]) or "" }}
 {% endfor %}
 
@@ -21,8 +22,10 @@
     {"text": "Workbasket ID"},
     {"text": "TOPS/Jira"},
     {"text": "Description"},
-    {"text": "Actions"},
-    {"text": "Remove"},
+    {
+      "text": "Actions",
+      "colspan": 3,
+    },
   ],
   "rows": table_rows
 }) }}
