@@ -1,12 +1,21 @@
+from django.urls import path
+from django.views.generic.base import RedirectView
+
+from publishing import views
+
 urlpatterns = [
-    # path(
-    #    "",
-    #    views.QueuedPackagedWorkbasketView.as_view(),
-    #    name="queued-packaged-workbasket-ui-list",
-    # ),
-    # path(
-    #    "export/",
-    #    views.ExportPackagedWorkbasketView.as_view(),
-    #    name="export-packaged-workbasket-ui-list",
-    # ),
+    path(
+        "publishing/",
+        RedirectView.as_view(pattern_name="packaged-workbasket-queue-ui-list"),
+    ),
+    path(
+        "publishing/packaging-queue/",
+        views.PackagedWorkbasketQueueView.as_view(),
+        name="packaged-workbasket-queue-ui-list",
+    ),
+    path(
+        "publishing/envelope-queue/",
+        views.EnvelopeQueueView.as_view(),
+        name="envelope-queue-ui-list",
+    ),
 ]

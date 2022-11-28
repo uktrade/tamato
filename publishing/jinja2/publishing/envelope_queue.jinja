@@ -1,0 +1,28 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "Send envelopes to CDS - Workbaskets" %}
+{% set list_include = "includes/envelope-queue.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  {% if object_list %}
+    {% include list_include %}
+  {% else %}
+    <p class="govuk-body">There are no workbaskets to send to CDS.</p>
+  {% endif %}
+
+  {% include "includes/common/pagination.jinja" %}
+{% endblock %}

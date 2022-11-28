@@ -17,26 +17,45 @@ from workbaskets.models import WorkBasket
 class ProcessingState(TextChoices):
     """Processing states of PackagedWorkBasket instances."""
 
-    # Queued up and awaiting processing.
-    AWAITING_PROCESSING = (
-        "AWAITING_PROCESSING ",
-        "Awaiting processing",
+    UNREVIEWED_AWAITING_PROCESSING = (
+        "UNREVIEWED_AWAITING_PROCESSING",
+        "Awaiting review and processing",
     )
-    # Picked off the queue and now being actively processed - now attempting to ingest envelope into CDS.
+    """Queued up and awaiting processing."""
+    AWAITING_PROCESSING = (
+        "AWAITING_PROCESSING",
+        "Reviewed and awaiting processing",
+    )
+    """Queued up and awaiting processing."""
     CURRENTLY_PROCESSING = (
-        "CURRENTLY_PROCESSING ",
+        "CURRENTLY_PROCESSING",
         "Currently processing",
     )
-    # Processing now completed with a successful outcome - envelope ingested into CDS.
+    """Picked off the queue and now being actively processed - now attempting to
+    ingest envelope into CDS."""
     SUCCESSFULLY_PROCESSED = (
-        "SUCCESSFULLY_PROCESSED ",
+        "SUCCESSFULLY_PROCESSED",
         "Successfully processed",
     )
-    # Processing now completed with a failure outcome - CDS rejected the envelope.
+    """Processing now completed with a successful outcome - envelope ingested
+    into CDS."""
     FAILED_PROCESSING = (
-        "FAILED_PROCESSING ",
+        "FAILED_PROCESSING",
         "Failed processing",
     )
+    """Processing now completed with a failure outcome - CDS rejected the
+    envelope."""
+
+    @classmethod
+    def queued_states(cls):
+        return (
+            cls.UNREVIEWED_AWAITING_PROCESSING,
+            cls.AWAITING_PROCESSING,
+        )
+
+    @classmethod
+    def active_states(cls):
+        return (cls.CURRENTLY_PROCESSING,)
 
     @classmethod
     def completed_processing_states(cls):
@@ -87,10 +106,27 @@ class PackagedWorkBasket(TimestampedMixin):
     Encapsulates state and behaviour of a WorkBasket passing through the
     packaging process.
 
-    A PackagedWorkBasket must be queued, allowing HMRC users to pick the top-
-    most instance only to attempt CDS ingestion. The packaging process handles
-    CDS ingestion success and failure cases.
+    A PackagedWorkBasket must be queued, in priority order, allowing HMRC users
+    to pick only the top-most instance when attempting a CDS ingestion. The
+    packaging process currently includes an approval / notification step and
+    handles CDS ingestion success and failure cases.
+
+    The approval / notification step in the process results in the priority
+    queue conceptually being composed of two subqueues:
+
+    1) those instances that have not been reviewed and may not yet be sent to
+    CDS for ingestion.
+
+    2) Those instances that have been reviewed and are available for ingestion
+    into CDS. The split is conceptual in that it isn't explicitly implemented as
+    two queues.
+
+    The two queues may be formed, where necessary, by appropriate QuerySet
+    filtering and / or ordering.
     """
+
+    class Meta:
+        ordering = ["position"]
 
     objects: PackagedWorkBasketQuerySet = PackagedWorkBasketQuerySet.as_manager()
 
@@ -202,7 +238,7 @@ class PackagedWorkBasket(TimestampedMixin):
         return self
 
     @atomic
-    def promote_to_top(self):
+    def promote_to_top_of_waiting(self):
         """Promote the instance to the top position of the package processing
         queue."""
         # TODO:
@@ -224,6 +260,8 @@ class PackagedWorkBasket(TimestampedMixin):
         """Demote the instance by one position down the package processing
         queue."""
         # TODO:
+        # * Validate that the instance is queued / in the correct state
+        #   (UNREVIEWED_AWAITING_PROCESSING).
         # * Check current position and return if already in last position.
         # * Bulk update on position col, swapping self and behind.
         return self

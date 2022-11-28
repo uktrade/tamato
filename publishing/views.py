@@ -1,35 +1,61 @@
-from django.core.paginator import Paginator
-from django.views.generic.base import TemplateResponseMixin
-from django.views.generic.base import View
-from django.views.generic.edit import FormMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.views.generic import ListView
 
+from common.views import WithPaginationListMixin
 from publishing.models import PackagedWorkBasket
-from workbaskets.forms import SelectableObjectsForm
-from workbaskets.session_store import SessionStore
-
-# TODO:
-# * Move SelectableObjectsForm to common.forms.
-# * Move SessionStore to common.session_store.
+from publishing.models import ProcessingState
 
 
-class QueuedPackagedWorkbasketView(TemplateResponseMixin, FormMixin, View):
-    template_name = "publishing/queued-packaged-workbasket.jinja"
-    form_class = SelectableObjectsForm
+class PackagedWorkbasketQueueView(
+    PermissionRequiredMixin,
+    WithPaginationListMixin,
+    ListView,
+):
+    model = PackagedWorkBasket
+    permission_required = ""  # TODO: select permissions.
 
-    @property
-    def paginator(self):
-        awaiting_queue = PackagedWorkBasket.objects.awaiting_processing()
-        return Paginator(awaiting_queue, per_page=20)
+    def get_template_names(self):
+        return ["publishing/packaged_workbasket_queue.jinja"]
 
-    def get_initial(self):
-        store = SessionStore(
-            self.request,
-            f"QUEUED_PACKAGED_WORKBASKET_SELECTIONS",
+    def get_queryset(self):
+        """Return all items that are awaiting processing or are actively being
+        processed, as displayed on this view."""
+        return PackagedWorkBasket.objects.filter(
+            processing_state__in=(
+                ProcessingState.queued_states() + ProcessingState.active_states()
+            ),
         )
-        return store.data.copy()
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        kwargs["objects"] = page.object_list
-        return kwargs
+    def post(self, request, *args, **kwargs):
+        """Manage POST requests, which can be to either pause/commence CDS
+        processing or move a PackagedWorkBasket instance to the top of the
+        packaging queue."""
+        # TODO: manage post actions.
+        return super().post()
+
+
+class EnvelopeQueueView(
+    PermissionRequiredMixin,
+    WithPaginationListMixin,
+    ListView,
+):
+    model = PackagedWorkBasket
+    permission_required = ""  # TODO: select permissions.
+
+    def get_template_names(self):
+        return ["publishing/envelope_queue.jinja"]
+
+    def get_queryset(self):
+        """Return all items that are awaiting processing or are actively being
+        processed, as displayed on this view."""
+        return PackagedWorkBasket.objects.filter(
+            processing_state__in=(
+                ProcessingState.active_states() + ProcessingState.queued_states()
+            ),
+        )
+
+    def post(self, request, *args, **kwargs):
+        """Manage POST requests, including download, accept and reject
+        envelopes."""
+        # TODO: manage post actions.
+        return super().post()
