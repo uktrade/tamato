@@ -14,6 +14,11 @@ class WorkbasketCreateForm(forms.ModelForm):
 
     title = forms.CharField(
         label="Tops/Jira number",
+        help_text=(
+            "Your Tops/Jira number is needed to associate your workbasket with your Jira ticket. "
+            "You can find this number at the end of the web address for your Jira ticket. "
+            "Your workbasket will be given a unique number that may be different to your Tops/Jira number. "
+        ),
         widget=forms.TextInput,
         required=True,
     )
