@@ -14,6 +14,7 @@ from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
+from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
@@ -1249,3 +1250,23 @@ def test_measure_update_form_wizard_finish(
     assert workbasket.tracked_models.count() == 6
 
     assert complete_response.status_code == 200
+
+
+def test_measuretype_api_list_view(valid_user_client):
+    expected_results = [
+        factories.MeasureTypeFactory.create(
+            description="1 test description",
+        ),
+        factories.MeasureTypeFactory.create(
+            description="2 test description",
+        ),
+    ]
+
+    assert_read_only_model_view_returns_list(
+        "measuretype",
+        "value",
+        "pk",
+        expected_results,
+        valid_user_client,
+        equals=True,
+    )

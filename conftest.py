@@ -301,6 +301,27 @@ def approved_workbasket():
 
 
 @pytest.fixture
+def published_additional_code_type(approved_workbasket):
+    return factories.AdditionalCodeTypeFactory(
+        transaction=approved_workbasket.new_transaction(),
+    )
+
+
+@pytest.fixture
+def published_certificate_type(approved_workbasket):
+    return factories.CertificateTypeFactory(
+        transaction=approved_workbasket.new_transaction(),
+    )
+
+
+@pytest.fixture
+def published_footnote_type(approved_workbasket):
+    return factories.FootnoteTypeFactory(
+        transaction=approved_workbasket.new_transaction(),
+    )
+
+
+@pytest.fixture
 @given("there is a current workbasket")
 def session_workbasket(client, new_workbasket):
     new_workbasket.save_to_session(client.session)
@@ -429,11 +450,52 @@ def use_create_form(valid_user_api_client: APIClient):
 
 
 @pytest.fixture
+def use_edit_view(valid_user_api_client: APIClient):
+    """
+    Uses the default edit form and view for a model in a workbasket with EDITING
+    status.
+
+    The ``object`` param is the TrackedModel instance that is to be edited and
+    saved, which should not create a new version.
+    ``data_changes`` should be a dictionary to apply to the object, effectively
+    applying edits.
+
+    Will raise :class:`~django.core.exceptions.ValidationError` if the form
+    contains errors.
+    """
+
+    def use(obj: TrackedModel, data_changes: dict[str, str]):
+        Model = type(obj)
+        obj_count = Model.objects.filter(**obj.get_identifying_fields()).count()
+        url = obj.get_url("edit")
+
+        # Check initial form rendering.
+        get_response = valid_user_api_client.get(url)
+        assert get_response.status_code == 200
+
+        # Edit and submit the data.
+        initial_form = get_response.context_data["form"]
+        form_data = get_form_data(initial_form)
+        form_data.update(data_changes)
+        post_response = valid_user_api_client.post(url, form_data)
+
+        # POSTing a real edits form should never create new object instances.
+        assert Model.objects.filter(**obj.get_identifying_fields()).count() == obj_count
+        if post_response.status_code not in (301, 302):
+            raise ValidationError(
+                f"Form contained errors: {dict(post_response.context_data['form'].errors)}",
+            )
+
+    return use
+
+
+@pytest.fixture
 def use_update_form(valid_user_api_client: APIClient):
     """
-    Uses the default edit form and view for a model to update an object to have
-    the passed new data and returns the new version of the object.
+    Uses the default create form and view for a model with update_type=UPDATE.
 
+    The ``object`` param is the TrackedModel instance for which a new UPDATE
+    instance is to be created.
     The ``new_data`` dictionary should contain callable objects that when passed
     the existing value will return a new value to be sent with the form.
 
@@ -1192,3 +1254,31 @@ def model2_with_history(date_ranges):
         version_group=factories.VersionGroupFactory.create(),
         custom_sid=1,
     )
+
+
+# As per this open issue with pytest https://github.com/pytest-dev/pytest/issues/5997,
+# some tests can only be run with global capturing disabled. Until we find a way
+# to disable capturing from within the test itself we can mark tests that should be skipped
+# unless global capturing is disabled via the "-s" flag.
+
+# TODO https://uktrade.atlassian.net/browse/TP2000-591
+
+# See pytest docs for implementation below
+# https://docs.pytest.org/en/7.1.x/example/simple.html#control-skipping-of-tests-according-to-command-line-option
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "s: mark test as needing global capturing disabled to run",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("-s") == "no":
+        # -s given in cli: do not skip s tests
+        return
+    skip_s = pytest.mark.skip(reason="need -s option to run")
+    for item in items:
+        if "s" in item.keywords:
+            item.add_marker(skip_s)

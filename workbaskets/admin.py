@@ -30,10 +30,6 @@ class WorkBasketAdminForm(forms.ModelForm):
         )
 
     transition = forms.ChoiceField(required=False)
-    rule_check_task_id = forms.CharField(
-        required=False,
-        widget=AdminTextInputWidget(),
-    )
     rule_check_task_status = forms.CharField(
         required=False,
         widget=AdminTextInputWidget(),

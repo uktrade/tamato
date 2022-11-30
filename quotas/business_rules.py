@@ -3,6 +3,7 @@ import datetime
 from datetime import date
 from decimal import Decimal
 
+import measures.models as measures_models
 from common.business_rules import BusinessRule
 from common.business_rules import ExclusionMembership
 from common.business_rules import MustExist
@@ -10,6 +11,7 @@ from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import ValidityPeriodContained
 from common.business_rules import only_applicable_after
+from common.business_rules import skip_when_not_deleted
 from common.models.utils import override_current_transaction
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
@@ -58,6 +60,19 @@ class ON2(BusinessRule):
             )
             .exclude(sid=order_number.sid)
             .exists()
+        ):
+            raise self.violation(order_number)
+
+
+class ON4(BusinessRule):
+    """The referenced geographical area must exist."""
+
+    def validate(self, order_number):
+        if (
+            order_number.origins.approved_up_to_transaction(
+                order_number.transaction,
+            ).count()
+            == 0
         ):
             raise self.violation(order_number)
 
@@ -150,11 +165,40 @@ class ON11(PreventDeleteIfInUse):
 
 
 @only_applicable_after("2007-12-31")
-class ON12(PreventDeleteIfInUse):
+@skip_when_not_deleted
+class ON12(BusinessRule):
     """The quota order number origin cannot be deleted if it is used in a
     measure."""
 
-    in_use_check = "order_number_in_use"
+    def validate(self, order_number_origin):
+        """
+        Loop over measures that reference the same quota order number as origin.
+
+        Get all the origins linked to this measure. Loop over these origins and
+        check that there are no measures linked to the origin .
+        """
+
+        measures = measures_models.Measure.objects.approved_up_to_transaction(
+            order_number_origin.transaction,
+        )
+
+        if not measures.exists():
+            return
+
+        order_numbers = measures.filter(
+            geographical_area__sid=order_number_origin.geographical_area.sid,
+            order_number__sid=order_number_origin.order_number.sid,
+        )
+
+        if order_numbers.exists():
+            raise self.violation(
+                model=order_number_origin,
+                message=(
+                    "The quota order number origin cannot be deleted if it is used in a "
+                    "measure. "
+                    f"This order_number_origin is linked to {order_numbers.count()} measures currently."
+                ),
+            )
 
 
 class ON13(BusinessRule):
@@ -272,17 +316,26 @@ class OverlappingQuotaDefinition(BusinessRule):
     quota order number id."""
 
     def validate(self, quota_definition):
-        if (
+
+        potential_quota_definition_matches = (
             type(quota_definition)
-            .objects.approved_up_to_transaction(quota_definition.transaction)
+            .objects.approved_up_to_transaction(
+                quota_definition.transaction,
+            )
             .filter(
                 order_number=quota_definition.order_number,
                 valid_between__overlap=quota_definition.valid_between,
             )
             .exclude(sid=quota_definition.sid)
-            .exists()
-        ):
-            raise self.violation(quota_definition)
+        )
+
+        if potential_quota_definition_matches.exists():
+            for potential_quota_definition in potential_quota_definition_matches:
+                if (
+                    potential_quota_definition
+                    == potential_quota_definition.current_version
+                ):
+                    raise self.violation(quota_definition)
 
 
 class VolumeAndInitialVolumeMustMatch(BusinessRule):

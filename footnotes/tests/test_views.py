@@ -1,14 +1,19 @@
+import datetime
+
 import pytest
 from django.core.exceptions import ValidationError
 
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
+from common.tests.util import assert_read_only_model_view_returns_list
+from common.tests.util import date_post_data
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
 from common.tests.util import valid_between_end_delta
 from common.tests.util import validity_start_delta
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from footnotes.models import Footnote
@@ -128,3 +133,78 @@ def test_footnote_list_view(view, url_pattern, valid_user_client):
     """Verify that footnote list view is under the url footnotes/ and doesn't
     return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
+
+
+@pytest.mark.parametrize(
+    ("data_changes", "expected_valid"),
+    (
+        ({**date_post_data("start_date", datetime.date.today())}, True),
+        (
+            {
+                "start_date_0": "",
+                "start_date_1": "",
+                "start_date_2": "",
+            },
+            False,
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "update_type",
+    (
+        UpdateType.CREATE,
+        UpdateType.UPDATE,
+    ),
+)
+def test_footnote_edit_views(
+    data_changes,
+    expected_valid,
+    update_type,
+    use_edit_view,
+    workbasket,
+    published_footnote_type,
+):
+    """Tests that footnote edit views (for update types CREATE and UPDATE)
+    allows saving a valid form from an existing instance and that an invalid
+    form fails validation as expected."""
+
+    footnote = factories.FootnoteFactory.create(
+        update_type=update_type,
+        footnote_type=published_footnote_type,
+        transaction=workbasket.new_transaction(),
+    )
+    with raises_if(ValidationError, not expected_valid):
+        use_edit_view(footnote, data_changes)
+
+
+def test_footnote_api_list_view(valid_user_client, date_ranges):
+    selected_type = factories.FootnoteTypeFactory.create()
+    expected_results = [
+        factories.FootnoteFactory.create(
+            valid_between=date_ranges.normal,
+            footnote_type=selected_type,
+        ),
+        factories.FootnoteFactory.create(
+            valid_between=date_ranges.earlier,
+            footnote_type=selected_type,
+        ),
+    ]
+    assert_read_only_model_view_returns_list(
+        "footnote",
+        "value",
+        "pk",
+        expected_results,
+        valid_user_client,
+    )
+
+
+def test_footnote_type_api_list_view(valid_user_client):
+    expected_results = [factories.FootnoteTypeFactory.create()]
+
+    assert_read_only_model_view_returns_list(
+        "footnotetype",
+        "footnote_type_id",
+        "footnote_type_id",
+        expected_results,
+        valid_user_client,
+    )

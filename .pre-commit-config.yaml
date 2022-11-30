@@ -1,10 +1,10 @@
 repos:
   - repo: https://github.com/asottile/add-trailing-comma
-    rev: v2.2.3
+    rev: v2.3.0
     hooks:
       - id: add-trailing-comma
   - repo: https://github.com/myint/autoflake.git
-    rev: v1.4
+    rev: v1.7.7
     hooks:
       - id: autoflake
         args:
@@ -19,7 +19,7 @@ repos:
       - id: isort
         args: [--force-single-line-imports]
   - repo: https://github.com/myint/docformatter.git
-    rev: v1.4
+    rev: v1.5.0
     hooks:
       - id: docformatter
         args:
@@ -30,7 +30,7 @@ repos:
             "--pre-summary-newline",
           ]
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 22.10.0
     hooks:
       - id: black
   - repo: https://github.com/ikamensh/flynt/
@@ -50,13 +50,6 @@ repos:
         files: ''
         language: python
         language_version: python3.9
-        pass_filenames: true
-        require_serial: true
-    -   id: pii_secret_file_content_ner
-        files: ''
-        language: python
-        language_version: python3.9
-        args: [--ner_output_file=ner_output_file.txt] # uncomment to output NER entities
         pass_filenames: true
         require_serial: true
     -   id: hooks_version_check

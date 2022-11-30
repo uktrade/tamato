@@ -20,9 +20,6 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <span class="govuk-caption-l">Confirmation</span>
-      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-
       {{ govukPanel({
         "titleText": "Description of " ~ described_object._meta.verbose_name ~ " " ~ described_object|string ~ " has been updated",
         "text": "This change has been added to your tariff changes",

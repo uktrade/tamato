@@ -120,6 +120,23 @@ Installing
     $ npm install
     $ npm run build
 
+Those using Mac m1 laptops may have problems installing certain packages (e.g. 
+psycopg2 and lxml) via requirements-dev.txt. In this scenario you should run the 
+following from a rosetta terminal (see `this article 
+<https://www.courier.com/blog/tips-and-tricks-to-setup-your-apple-m1-for-development/>`_ ), 
+substituting your own python version as appropriate:
+
+.. code:: sh
+
+    $ pip uninstall psycopg2
+    $ brew install postgresql
+    $ export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
+    $ export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib -L${HOME}/.pyenv/versions/3.8.10/lib"
+    $ arch -arm64 pip install psycopg2 --no-binary :all:
+
+Credit due to armenzg and his `answer here 
+<https://github.com/psycopg/psycopg2/issues/1286#issuecomment-914286206>`_ .
+
 Running
 ~~~~~~~
 
@@ -220,6 +237,14 @@ Open another terminal and start a Celery worker:
 .. code:: sh
 
     celery -A common.celery worker --loglevel=info
+
+To monitor celery workers or individual tasks run:
+
+.. code:: sh
+
+    celery flower
+
+See `flower docs <https://flower.readthedocs.io/en/latest/>`_ for more details
 
 
 Manually trigger the upload to s3

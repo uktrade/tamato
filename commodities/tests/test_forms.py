@@ -62,3 +62,20 @@ def test_import_form_non_xml_file():
 
         assert not form.is_valid()
         assert "The selected file must be XML" in form.errors["taric_file"]
+
+
+# https://uktrade.atlassian.net/browse/TP2000-571
+def test_import_form_long_definition_description():
+    """Tests that form is valid when provided with QuotaDefinition description
+    longer than 500 characters."""
+    with open(f"{TEST_FILES_PATH}/quota_definition.xml", "rb") as upload_file:
+        file_data = {
+            "taric_file": SimpleUploadedFile(
+                upload_file.name,
+                upload_file.read(),
+                content_type="text/xml",
+            ),
+        }
+        form = forms.CommodityImportForm({}, file_data)
+
+    assert form.is_valid()

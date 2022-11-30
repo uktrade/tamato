@@ -17,7 +17,10 @@ api_router.register(
     views.FootnoteViewSet,
     basename="footnote",
 )
-api_router.register(r"footnote_types", views.FootnoteTypeViewSet)
+api_router.register(
+    r"footnote_types",
+    views.FootnoteTypeViewSet,
+)
 
 detail = "<footnote_type_id:footnote_type__footnote_type_id><footnote_id:footnote_id>"
 description_detail = "<footnote_type_id:described_footnote__footnote_type__footnote_type_id><footnote_id:described_footnote__footnote_id>/description/<sid:sid>"

@@ -2,6 +2,7 @@ from typing import Iterable
 from unittest.mock import patch
 
 import pytest
+from django.conf import settings
 from django_fsm import TransitionNotAllowed
 
 from common.models import TrackedModel
@@ -345,3 +346,43 @@ def test_current_transaction_returns_last_approved_transaction(
     current = WorkBasket.get_current_transaction(session_request)
 
     assert current == approved_transaction
+
+
+@pytest.mark.parametrize(
+    "method, source, target",
+    [
+        ("archive", "EDITING", "ARCHIVED"),
+        ("unarchive", "ARCHIVED", "EDITING"),
+        ("submit_for_approval", "EDITING", "PROPOSED"),
+        ("withdraw", "PROPOSED", "EDITING"),
+        ("export_to_cds", "APPROVED", "SENT"),
+        ("cds_confirmed", "SENT", "PUBLISHED"),
+        ("cds_error", "SENT", "ERRORED"),
+        ("restore", "ERRORED", "EDITING"),
+    ],
+)
+def test_workbasket_transition_methods(method, source, target):
+    """Test that workbasket transition methods move workbasket status from
+    source to target."""
+
+    wb = factories.WorkBasketFactory.create(status=getattr(WorkflowStatus, source))
+    getattr(wb, method)()
+
+    assert wb.status == getattr(WorkflowStatus, target)
+
+
+@patch("exporter.tasks.upload_workbaskets.delay")
+def test_approve(upload, valid_user):
+    """Test that approve transitions workbasket from PROPOSED to APPROVED,
+    setting approver and shifting transaction from DRAFT to REVISION
+    partition."""
+
+    wb = factories.WorkBasketFactory.create(status=WorkflowStatus.PROPOSED)
+    wb.approve(valid_user.pk, settings.TRANSACTION_SCHEMA)
+
+    assert wb.status == WorkflowStatus.APPROVED
+    assert wb.approver == valid_user
+    upload.assert_called_once()
+
+    for transaction in wb.transactions.all():
+        assert transaction.partition == TransactionPartition.REVISION
