@@ -1,30 +1,22 @@
 import pytest
-from django import forms
 
 from workbaskets.forms import WorkbasketCreateForm
 
 pytestmark = pytest.mark.django_db
 
 
-class WorkBasketForm(forms.Form):
-    title = forms.CharField()
-    reason = forms.CharField()
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
 def test_workbasket_form_validation():
-    form = WorkBasketForm(
+    form = WorkbasketCreateForm(
         {
             "title": "some title",
             "reason": "",
         },
     )
     assert not form.is_valid()
+    assert "title" in form.errors
     assert "reason" in form.errors
 
-    form = WorkBasketForm(
+    form = WorkbasketCreateForm(
         {
             "title": "",
             "reason": "some reason",
@@ -33,28 +25,19 @@ def test_workbasket_form_validation():
     assert not form.is_valid()
     assert "title" in form.errors
 
-    form = WorkBasketForm(
-        {
-            "title": "",
-            "reason": "",
-        },
-    )
-    assert not form.is_valid()
-    assert "title" in form.errors
-    assert "reason" in form.errors
-
-    form = WorkBasketForm(
+    form = WorkbasketCreateForm(
         {
             "title": "some title",
             "reason": "some reason",
         },
     )
-    assert form.is_valid()
+    assert not form.is_valid()
+    assert "title" in form.errors
 
 
 def test_workbasket_create_form_valid_data():
     """Test that WorkbasketCreateForm is valid when required fields in data."""
-    data = {"title": "test basket", "reason": "testing testing"}
+    data = {"title": "123", "reason": "testing testing"}
     form = WorkbasketCreateForm(data=data)
 
     assert form.is_valid()
