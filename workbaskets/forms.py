@@ -7,6 +7,7 @@ from django import forms
 
 from common.forms import DescriptionHelpBox
 from workbaskets import models
+from workbaskets import validators
 
 
 class WorkbasketCreateForm(forms.ModelForm):
@@ -20,6 +21,7 @@ class WorkbasketCreateForm(forms.ModelForm):
             "Your workbasket will be given a unique number that may be different to your Tops/Jira number. "
         ),
         widget=forms.TextInput,
+        validators=[validators.tops_jira_number_validator],
         required=True,
     )
 
