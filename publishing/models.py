@@ -17,11 +17,6 @@ from workbaskets.models import WorkBasket
 class ProcessingState(TextChoices):
     """Processing states of PackagedWorkBasket instances."""
 
-    UNREVIEWED_AWAITING_PROCESSING = (
-        "UNREVIEWED_AWAITING_PROCESSING",
-        "Awaiting review and processing",
-    )
-    """Queued up and awaiting processing."""
     AWAITING_PROCESSING = (
         "AWAITING_PROCESSING",
         "Reviewed and awaiting processing",
@@ -48,10 +43,7 @@ class ProcessingState(TextChoices):
 
     @classmethod
     def queued_states(cls):
-        return (
-            cls.UNREVIEWED_AWAITING_PROCESSING,
-            cls.AWAITING_PROCESSING,
-        )
+        return (cls.AWAITING_PROCESSING,)
 
     @classmethod
     def active_states(cls):
@@ -103,26 +95,14 @@ class PackagedWorkBasketQuerySet(QuerySet):
 
 class PackagedWorkBasket(TimestampedMixin):
     """
-    Encapsulates state and behaviour of a WorkBasket passing through the
+    Encapsulates state and behaviour of a WorkBasket on its journey through the
     packaging process.
 
     A PackagedWorkBasket must be queued, in priority order, allowing HMRC users
-    to pick only the top-most instance when attempting a CDS ingestion. The
-    packaging process currently includes an approval / notification step and
-    handles CDS ingestion success and failure cases.
-
-    The approval / notification step in the process results in the priority
-    queue conceptually being composed of two subqueues:
-
-    1) those instances that have not been reviewed and may not yet be sent to
-    CDS for ingestion.
-
-    2) Those instances that have been reviewed and are available for ingestion
-    into CDS. The split is conceptual in that it isn't explicitly implemented as
-    two queues.
-
-    The two queues may be formed, where necessary, by appropriate QuerySet
-    filtering and / or ordering.
+    to pick only the top-most instance when attempting a CDS ingestion. In order
+    for a workbasket to be submitted for packaging it must have a complete and
+    successful set of rules checks and its status must be APPROVED, indicating
+    that it has passed through the review process.
     """
 
     class Meta:
@@ -165,7 +145,35 @@ class PackagedWorkBasket(TimestampedMixin):
     to process / load the associated workbasket's envelope file.
     """
 
-    # position_state transition management.
+    # Creation management.
+
+    @classmethod
+    @atomic
+    def create(cls, workbasket):
+        """Create and save a new instance, associating with workbasket and
+        appending the instance to the end (last position) of the package
+        processing queue."""
+        # TODO:
+        # * Guard against creating more than one active instance for a
+        #   workbasket in the queue.
+        # * Get max_position as a Subquery of create().
+        # * Validate that the workbasket has complete and successful business
+        #   rule checks?
+        # * Is it possible to save/create with position=max_position as a
+        #   subquery?
+        max_position = cls.objects.aggregate(
+            out=Coalesce(
+                Max("position"),
+                Value(0),
+            ),
+        )["out"]
+        obj = cls(
+            workbasket=workbasket,
+            position=max_position + 1,
+        )
+        return obj.save()
+
+    # processing_state transition management.
 
     @transition(
         field=processing_state,
@@ -202,45 +210,24 @@ class PackagedWorkBasket(TimestampedMixin):
     def processing_failed(self):
         """Processing completed with a failed outcome."""
 
-    # Creation management.
-
-    @classmethod
-    @atomic
-    def create(cls, workbasket):
-        """Create and save a new instance, associating with workbasket and
-        appending the instance to the end (last position) of the package
-        processing queue."""
-        # TODO:
-        # * Guard against creating more than one active instance for a
-        #   workbasket in the queue.
-        # * Get max_position as a Subquery of create().
-        # * Validate that the workbasket has complete and successful business
-        #   rule checks?
-        max_position = cls.objects.aggregate(
-            out=Coalesce(
-                Max("position"),
-                Value(0),
-            ),
-        )["out"]
-        obj = cls(
-            workbasket=workbasket,
-            position=max_position + 1,
-        )
-        return obj.save()
-
     # Queue management.
 
     @atomic
     def pop_top(self):
-        """Pop the top-most instance, shuffling all other actively queued
-        instances up one position."""
+        """
+        Pop the top-most instance, shuffling all remaining queued instances
+        (with `state` AWAITING_PROCESSING) up one position.
+
+        Management of the popped instance's `processing_state` is not altered by
+        this function and should be managed separately by the caller.
+        """
         # TODO:
         return self
 
     @atomic
-    def promote_to_top_of_waiting(self):
+    def promote_to_top_position(self):
         """Promote the instance to the top position of the package processing
-        queue."""
+        queue so that it occupies position 1."""
         # TODO:
         # * Bulk update on position col, set self=1 and decrement those between
         #   position and 1.
