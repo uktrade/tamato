@@ -71,20 +71,23 @@ def test_selectable_objects_form():
     assert len(form.fields) == 5
     # Check that the ids added to the end of the field names, match the measure pks.
     assert form_fields_keys == measure_pks
-    # Check that the field name class method returns the right name.
+
     for item in measures:
+        # Check that the field name class method returns the right name.
         assert (
             SelectableObjectsForm.field_name_for_object(measures[measures.index(item)])
             == f"selectableobject_{item.pk}"
         )
-    # Check that the id class method returns the right id.
-    for item in measures:
+        # Check that the id class method returns the right id.
         assert (
             SelectableObjectsForm.object_id_from_field_name(
                 list(form.fields.keys())[measures.index(item)],
             )
             == measure_pks[measures.index(item)]
         )
+        # Check that the fields are of SelectableObjectField type
+        assert type(form.fields[f"selectableobject_{item.pk}"]) is SelectableObjectField
+
     # Check that the cleaned_data_no_prefix property returns a list of the data with no prefixes.
     form.cleaned_data = {
         f"selectableobject_{measure_pks[0]}": True,
