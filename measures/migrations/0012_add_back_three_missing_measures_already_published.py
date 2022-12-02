@@ -24,15 +24,21 @@ def add_back_missing_measures(apps, schemaeditor):
 
     target_work_basket = WorkBasket.objects.get(id=target_workbasket_id)
 
-    if not GeographicalArea.objects.filter(sid=146).exists():
+    if not GeographicalArea.objects.latest_approved().filter(sid=146).exists():
         return
 
-    geographical_area_canada = GeographicalArea.objects.get(sid=146)  # Canada
+    geographical_area_canada = GeographicalArea.objects.latest_approved().get(
+        sid=146,
+    )  # Canada
 
-    if not Regulation.objects.filter(regulation_id="C2100006", approved=True).exists():
+    if (
+        not Regulation.objects.latest_approved()
+        .filter(regulation_id="C2100006", approved=True)
+        .exists()
+    ):
         return
 
-    regulation_C2100006 = Regulation.objects.get(
+    regulation_C2100006 = Regulation.objects.latest_approved().get(
         regulation_id="C2100006",
         approved=True,
     )
@@ -40,18 +46,30 @@ def add_back_missing_measures(apps, schemaeditor):
     if not MeasureType.objects.filter(sid=142).exists():
         return
 
-    measure_type_tariff_pref = MeasureType.objects.get(sid=142)
+    measure_type_tariff_pref = MeasureType.objects.latest_approved().get(sid=142)
 
-    if not DutyExpression.objects.filter(sid=1).exists():
+    if not DutyExpression.objects.latest_approved().filter(sid=1).exists():
         return
 
     condition_duty_expression = DutyExpression.objects.get(sid=1)
 
-    if not GoodsNomenclature.objects.filter(item_id="0306920000").exists():
+    if (
+        not GoodsNomenclature.objects.latest_approved()
+        .filter(item_id="0306920000")
+        .exists()
+    ):
         return
-    if not GoodsNomenclature.objects.filter(item_id="0307190000").exists():
+    if (
+        not GoodsNomenclature.objects.latest_approved()
+        .filter(item_id="0307190000")
+        .exists()
+    ):
         return
-    if not GoodsNomenclature.objects.filter(item_id="0307490000").exists():
+    if (
+        not GoodsNomenclature.objects.latest_approved()
+        .filter(item_id="0307490000")
+        .exists()
+    ):
         return
 
     transaction = target_work_basket.new_transaction()
@@ -65,7 +83,7 @@ def add_back_missing_measures(apps, schemaeditor):
         valid_between=TaricDateRange(date(2022, 12, 28), None),
         generating_regulation=regulation_C2100006,
         measure_type=measure_type_tariff_pref,
-        goods_nomenclature=GoodsNomenclature.objects.get(
+        goods_nomenclature=GoodsNomenclature.objects.latest_approved().get(
             item_id="0306920000",
         ),
         stopped=False,

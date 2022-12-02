@@ -16,6 +16,8 @@ from common.tests.factories import RegulationGroupFactory
 
 @pytest.mark.django_db()
 def test_add_back_deleted_measures(migrator):
+    from common.models.transactions import TransactionPartition
+
     """Ensures that the initial migration works."""
     old_state = migrator.apply_initial_migration(
         (
@@ -89,10 +91,24 @@ def test_add_back_deleted_measures(migrator):
 
     measurement_class = new_state.apps.get_model("measures", "Measure")
 
-    # we should be able to get the measurements from the database now
-    assert measurement_class.objects.filter(sid=20194965).exists() is True
-    assert measurement_class.objects.filter(sid=20194966).exists() is True
-    assert measurement_class.objects.filter(sid=20194967).exists() is True
+    measures_ids_to_check = [20194965, 20194966, 20194967]
+
+    for measure_id_to_check in measures_ids_to_check:
+        # we should be able to get the measurements from the database now
+        assert (
+            measurement_class.objects.filter(sid=measure_id_to_check).exists() is True
+        )
+        assert measurement_class.objects.filter(sid=measure_id_to_check).count() == 1
+        measure_to_check = measurement_class.objects.get(sid=measure_id_to_check)
+        # verify the transactions are on the correct partition
+        assert measure_to_check.transaction.partition == TransactionPartition.REVISION
+        # verify that the current version is as expected
+        assert (
+            measure_to_check.version_group.current_version_id
+            == measure_to_check.trackedmodel_ptr_id
+        )
+
+    # verify that the current version is correct
 
     migrator.reset()
 
