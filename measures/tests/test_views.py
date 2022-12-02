@@ -194,7 +194,7 @@ def test_multiple_measure_delete_template(client, valid_user, session_workbasket
 
     # grab the whole measure objects for our pk's we've got in the session, so we can compare attributes.
     selected_measures = Measure.objects.filter(
-        pk__in=[key for key in session["DELETE_MEASURE_SELECTIONS"].items()],
+        pk__in=session["DELETE_MEASURE_SELECTIONS"].keys(),
     )
 
     # Get the measure ids that are being shown in the table in the template.
