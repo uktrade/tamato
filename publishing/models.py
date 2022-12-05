@@ -163,18 +163,24 @@ class PackagedWorkBasket(TimestampedMixin):
         appending the instance to the end (last position) of the package
         processing queue."""
 
-        # A WorkBasket may not be in an unchecked state when packaging.
         if workbasket.status in WorkflowStatus.unchecked_statuses():
-            raise PackagedWorkBasketInvalidCheckStatus()
+            raise PackagedWorkBasketInvalidCheckStatus(
+                f"Unable to create PackagedWorkBasket from {workbasket} due to "
+                f"unchecked status {workbasket.status}",
+            )
 
-        # Prevent creating multiple active / queued instances for a workbasket.
-        if PackagedWorkBasketQuerySet(
+        packaged_work_baskets = PackagedWorkBasket.objects.filter(
             workbasket=workbasket,
             processing_state__in=(
                 ProcessingState.queued_states() + ProcessingState.active_states()
             ),
-        ).exists():
-            raise PackagedWorkBasketDuplication()
+        )
+        if packaged_work_baskets.exists():
+            raise PackagedWorkBasketDuplication(
+                f"Unable to create PackagedWorkBasket from {workbasket} since "
+                "it is already packaged and actively queued - "
+                f"{packaged_work_baskets}.",
+            )
 
         max_position = cls.objects.aggregate(
             out=Coalesce(
