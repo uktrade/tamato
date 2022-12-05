@@ -12,6 +12,15 @@ from django_fsm import transition
 from common.models.mixins import TimestampedMixin
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
+
+
+class PackagedWorkBasketInvalidCheckStatus(Exception):
+    pass
+
+
+class PackagedWorkBasketDuplication(Exception):
+    pass
 
 
 class ProcessingState(TextChoices):
@@ -153,14 +162,20 @@ class PackagedWorkBasket(TimestampedMixin):
         """Create and save a new instance, associating with workbasket and
         appending the instance to the end (last position) of the package
         processing queue."""
-        # TODO:
-        # * Guard against creating more than one active instance for a
-        #   workbasket in the queue.
-        # * Get max_position as a Subquery of create().
-        # * Validate that the workbasket has complete and successful business
-        #   rule checks?
-        # * Is it possible to save/create with position=max_position as a
-        #   subquery?
+
+        # A WorkBasket may not be in an unchecked state when packaging.
+        if workbasket.status in WorkflowStatus.unchecked_statuses():
+            raise PackagedWorkBasketInvalidCheckStatus()
+
+        # Prevent creating multiple active / queued instances for a workbasket.
+        if PackagedWorkBasketQuerySet(
+            workbasket=workbasket,
+            processing_state__in=(
+                ProcessingState.queued_states() + ProcessingState.active_states()
+            ),
+        ).exists():
+            raise PackagedWorkBasketDuplication()
+
         max_position = cls.objects.aggregate(
             out=Coalesce(
                 Max("position"),
@@ -209,6 +224,44 @@ class PackagedWorkBasket(TimestampedMixin):
     )
     def processing_failed(self):
         """Processing completed with a failed outcome."""
+
+    # Notification management.
+    """
+    Sending "Ready to download" email notifications
+    -
+    PackagedWorkBasket.notify_ready_for_processing(self)
+    --
+
+    When an instance first arrives at position 1, and no other instance has
+    PackagedWorkBasket.state == ProcessingState.CURRENTLY_PROCESSING, then
+    call notify_ready_for_processing() with the instance as a parameter.
+
+    When an instance has its PackagedWorkBasket.state transitioned to either
+    SUCCESSFULLY_PROCESSED or FAILED_PROCESSING, and there are instances
+    with PackagedWorkBasket.state == ProcessingState.AWAITING_PROCESSING,
+    then call ready_for_processing() with the instances as a parameter.
+
+
+    Sending "Ingestion succeeded" and "Ingestion failed" notifications
+    -
+    PackagedWorkBasket.notify_processing_succeeded(self)
+    PackagedWorkBasket.notify_processing_failed(self)
+    --
+
+    The functions processing_succeeded() and processing_failed() map to these
+    two cases and are called by the state transition methods
+    PackagedWorkBasket.notify_processing_succeeded() and
+    PackagedWorkBasket.notify_processing_failed(), respectively.
+    """
+
+    def notify_ready_for_processing(self):
+        """TODO."""
+
+    def notify_processing_succeeded(self):
+        """TODO."""
+
+    def notify_processing_failed(self):
+        """TODO."""
 
     # Queue management.
 
