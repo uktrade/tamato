@@ -144,6 +144,16 @@ class PackagedWorkBasket(TimestampedMixin):
     """The report file associated with an attempt (either successful or failed)
     to process / load the associated workbasket's envelope file.
     """
+    theme = models.CharField()
+    description = models.TextField(
+        null=True,
+        blank=True,
+    )
+    eif = models.DateField(null=True, blank=True)
+    """The enter into force date determines when changes should go live in CDS. A file will need to be ingested by CDS on the day before this. If left, blank CDS will ingest the file immediately."""
+    embargo = models.DateField(null=True, blank=True)
+    jira_url = models.URLField()
+    """URL linking the packaged workbasket with a ticket on the Tariff Operations (TOPS) project's Jira board."""
 
     # Creation management.
 
