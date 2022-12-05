@@ -1,0 +1,162 @@
+{% extends "measures/edit-wizard-step.jinja" %}
+
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
+
+{% set page_title = step_metadata[wizard.steps.current].title %}
+{% set page_subtitle = "Edit measures" %}
+{% set info = "Edit measures" %}
+
+{% macro review_step(step) %}
+  {% set link_text = step_metadata[step].link_text %}
+  <h2 class="govuk-heading-m">{{ link_text }}</h2>
+  {% set rows = [] %}
+  {% set data = view.get_cleaned_data_for_step(step) %}
+
+  {% set ignore %}
+  {{ caller(rows, data) }}
+  {% endset %}
+
+  {% set row_data = [] %}
+  {% if rows %}
+    {% for label, value in rows %}
+      {{ row_data.append({
+        "key": {"text": label},
+        "value": {"text": value},
+        "actions": {
+          "items": [
+            {
+              "text": "Change",
+              "visuallyHiddenText": label|lower,
+              "href": view.get_step_url(step),
+              "attributes": {}
+            }
+          ]
+        }
+      }) or "" }}
+    {% endfor %}
+  {% else %}
+    {{ row_data.append({
+      "key": {"text": link_text},
+      "value": {"text": "None"},
+      "actions": {
+        "items": [
+          {
+            "text": "Change",
+            "visuallyHiddenText": link_text,
+            "href": view.get_step_url(step),
+            "attributes": {}
+          }
+        ]
+      }
+    }) or "" }}
+  {% endif %}
+  {{ govukSummaryList({"rows": row_data, "classes": "govuk-!-margin-bottom-9"}) }}
+{% endmacro %}
+
+{% block form %}
+  {% set fields_to_edit = view.get_cleaned_data_for_step("start").fields_to_edit %}
+  {% if "end_dates" in fields_to_edit %}
+    {% call(rows, data) review_step("end_dates") %}
+      {{ rows.extend([
+        ("Measure end date", "{:%d/%m/%Y}".format(data["end_date"]) if data["end_date"] else "-"),
+      ]) }}
+    {% endcall %}
+  {% endif %}
+
+  {% if "regulation_id" in fields_to_edit %}
+    {% call(rows, data) review_step("regulation_id") %}
+      {{ rows.extend([
+        ("Regulation ID", data["generating_regulation"]),
+      ]) }}
+    {% endcall %}
+  {% endif %}
+
+  {% if "quota_order_number" in fields_to_edit %}
+    {% call(rows, data) review_step("quota_order_number") %}
+      {{ rows.extend([
+        ("Quota order number", data["order_number"]),
+      ]) }}
+    {% endcall %}
+  {% endif %}
+
+  {% if "geographical_area" in fields_to_edit %}
+    {% call(rows, data) review_step("geographical_area") %}
+      {% for item in data.geo_area_list %}
+      {{ rows.extend([
+        ("Geographical area", item.get_description().description|safe),
+      ]) }}
+      {% endfor %}
+      {% if data.geo_area_exclusions %}
+        {% for item in data.geo_area_exclusions %}
+        {{ rows.extend([
+          ("Excluded geographical area", item.get_description().description|safe),
+        ]) }}
+        {% endfor %}
+      {% endif %}
+
+    {% endcall %}
+  {% endif %}
+
+  {% if "commodity" in fields_to_edit %}
+    {% call(rows, data) review_step("commodity") %}
+      {% for item in data %}
+        {{ rows.extend([
+          ("Commodity code", item["commodity"] ~ " - " ~ item["commodity"].get_description().description|safe if item["commodity"] else "None"),
+        ]) }}
+      {% endfor %}
+    {% endcall %}
+  {% endif %}
+
+  {% if "duties" in fields_to_edit %}
+    {% call(rows, data) review_step("duties") %}
+      {{ rows.extend([
+        ("Duty", data["duties"]),
+      ]) }}
+    {% endcall %}
+  {% endif %}
+
+  {% if "additional_code" in fields_to_edit %}
+    {% call(rows, data) review_step("additional_code") %}
+      {{ rows.extend([
+        ("Additional code", data["additional_code"] ~ " - " ~ data["additional_code"].get_description().description|safe if data["additional_code"] else "None"),
+      ]) }}
+    {% endcall %}
+  {% endif %}
+
+  {% if "conditions" in fields_to_edit %}
+    {% call(rows, data) review_step("conditions") %}
+      {# Conditions are optional, so cater for empty data. #}
+      {% if data %}
+        {% for item in data  %}
+          {% if not item.DELETE %}
+            {{ rows.extend([
+              ("Condition code", item.condition_code),
+              ("Duty amount", item.duty_amount),
+              ("Monetary unit", item.monetary_unit),
+              ("Condition measurement", item.condition_measurement),
+              ("Required certificate", item.required_certificate),
+              ("Action", item.action),
+              ("Applicable duty", item.applicable_duty),
+              ("Reference price", item.reference_price),
+            ]) }}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endcall %}
+  {% endif %}
+
+  {% if "footnotes" in fields_to_edit %}
+    {% call(rows, data) review_step("footnotes") %}
+      {# Footnotes are optional, so cater for empty data. #}
+      {% if data %}
+        {% for item in data %}
+          {% if not item.DELETE %}
+            {{ rows.append(("Footnote", item.footnote ~ " - " ~ item.footnote.get_description().description|safe)) }}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endcall %}
+  {% endif %}
+
+  {{ govukButton({"text": "Create", "preventDoubleClick": true,}) }}
+{% endblock %}

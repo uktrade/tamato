@@ -20,20 +20,21 @@ from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
+from common.forms import DateInputFieldFixed
 from common.forms import FormSet
 from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.util import validity_range_contains_range
-from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.validators import AreaCode
+from measures import constants
 from measures import models
+from measures.helpers import update_measure
+from measures.helpers import update_measure_footnotes
 from measures.parsers import DutySentenceParser
-from measures.patterns import MeasureCreationPattern
-from measures.util import diff_components
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -244,6 +245,28 @@ class MeasureValidityForm(ValidityPeriodForm):
         ]
 
 
+class MeasureEndDateForm(forms.Form):
+    end_date = DateInputFieldFixed(
+        label="End date",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "end_date",
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
 class MeasureConditionsFormMixin(forms.ModelForm):
     class Meta:
         model = models.MeasureCondition
@@ -407,7 +430,6 @@ class MeasureConditionsFormSet(FormSet):
 
 
 class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
-    # override methods that use form kwargs
     def __init__(self, *args, **kwargs):
         self.measure_start_date = kwargs.pop("measure_start_date")
         super().__init__(*args, **kwargs)
@@ -442,8 +464,67 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         return self.conditions_clean(cleaned_data, self.measure_start_date)
 
 
+class MeasureConditionsMultipleEditForm(MeasureConditionsFormMixin):
+    """
+    Used in the MeasuresEditWizard.
+
+    Like MeasureConditionsWizardStepForm but has validation for multiple
+    measures with different validity periods.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.measure_start_dates = kwargs.pop("measure_start_dates")
+        super().__init__(*args, **kwargs)
+
+    def clean_applicable_duty(self):
+        applicable_duty = self.cleaned_data["applicable_duty"]
+
+        if applicable_duty and self.measure_start_dates is not None:
+            for d in self.measure_start_dates:
+                validate_duties(applicable_duty, d)
+
+        return applicable_duty
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        return self.conditions_clean(cleaned_data, self.measure_start_dates)
+
+    def conditions_clean(self, cleaned_data, measure_start_dates):
+        price = cleaned_data.get("reference_price")
+
+        if price and measure_start_dates is not None:
+            for start_date in self.measure_start_dates:
+                validate_duties(price, start_date)
+
+        if price:
+            for start_date in self.measure_start_dates:
+                parser = DutySentenceParser.get(start_date)
+                components = parser.parse(price)
+                if len(components) > 1:
+                    raise ValidationError(
+                        "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+                    )
+            cleaned_data["duty_amount"] = components[0].duty_amount
+            cleaned_data["monetary_unit"] = components[0].monetary_unit
+            cleaned_data["condition_measurement"] = components[0].component_measurement
+
+        # The JS autocomplete does not allow for clearing unnecessary certificates
+        # In case of a user changing data, the information is cleared here.
+        condition_code = cleaned_data.get("condition_code")
+        if condition_code and not condition_code.accepts_certificate:
+            cleaned_data["required_certificate"] = None
+
+        return cleaned_data
+
+
 class MeasureConditionsWizardStepFormSet(FormSet):
     form = MeasureConditionsWizardStepForm
+
+
+class MeasureConditionsEditWizardStepFormSet(FormSet):
+    form = MeasureConditionsMultipleEditForm
+    prefix = "measure-conditions-formset"
 
 
 class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
@@ -599,87 +680,37 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
         instance = super().save(commit=False)
         if commit:
             instance.save()
-
-        sid = instance.sid
-
-        measure_creation_pattern = MeasureCreationPattern(
-            workbasket=WorkBasket.current(self.request),
-            base_date=instance.valid_between.lower,
-            defaults={
-                "generating_regulation": self.cleaned_data["generating_regulation"],
-            },
-        )
-
-        if self.cleaned_data.get("exclusions"):
-            for exclusion in self.cleaned_data.get("exclusions"):
-                pattern = (
-                    measure_creation_pattern.create_measure_excluded_geographical_areas(
-                        instance,
-                        exclusion,
-                    )
-                )
-                [p for p in pattern]
-
-        if (
-            self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
-            != self.cleaned_data["duty_sentence"]
-        ):
-            diff_components(
-                instance,
-                self.cleaned_data["duty_sentence"],
-                self.cleaned_data["valid_between"].lower,
-                WorkBasket.current(self.request),
-                # Creating components in the same transaction as the new version
-                # of the measure minimises number of transaction and groups the
-                # creation of measure and related objects in the same
-                # transaction.
-                instance.transaction,
-                models.MeasureComponent,
-                "component_measure",
-            )
+        defaults = {"generating_regulation": self.cleaned_data["generating_regulation"]}
 
         footnote_pks = [
             dct["footnote"]
-            for dct in self.request.session.get(f"formset_initial_{sid}", [])
+            for dct in self.request.session.get(f"formset_initial_{instance.sid}", [])
         ]
-        footnote_pks.extend(self.request.session.get(f"instance_footnotes_{sid}", []))
+        footnote_pks.extend(
+            self.request.session.get(f"instance_footnotes_{instance.sid}", []),
+        )
 
-        self.request.session.pop(f"formset_initial_{sid}", None)
-        self.request.session.pop(f"instance_footnotes_{sid}", None)
+        self.request.session.pop(f"formset_initial_{instance.sid}", None)
+        self.request.session.pop(f"instance_footnotes_{instance.sid}", None)
 
-        for pk in footnote_pks:
-            footnote = (
-                Footnote.objects.filter(pk=pk)
-                .approved_up_to_transaction(instance.transaction)
-                .first()
-            )
+        tx = WorkBasket.get_current_transaction(self.request)
 
-            existing_association = (
-                models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
-                    instance.transaction,
-                )
-                .filter(
-                    footnoted_measure__sid=instance.sid,
-                    associated_footnote__footnote_id=footnote.footnote_id,
-                    associated_footnote__footnote_type__footnote_type_id=footnote.footnote_type.footnote_type_id,
-                )
-                .first()
-            )
-            if existing_association:
-                existing_association.new_version(
-                    workbasket=WorkBasket.current(self.request),
-                    transaction=instance.transaction,
-                    footnoted_measure=instance,
-                )
-            else:
-                models.FootnoteAssociationMeasure.objects.create(
-                    footnoted_measure=instance,
-                    associated_footnote=footnote,
-                    update_type=UpdateType.CREATE,
-                    transaction=instance.transaction,
-                )
+        new_measure = update_measure(
+            instance,
+            tx,
+            WorkBasket.current(self.request),
+            self.cleaned_data,
+            defaults,
+        )
 
-        return instance
+        update_measure_footnotes(
+            new_measure,
+            tx,
+            WorkBasket.current(self.request),
+            footnote_pks,
+        )
+
+        return new_measure
 
     def is_valid(self) -> bool:
         """Check that measure conditions data is valid before calling super() on
@@ -1041,16 +1072,56 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         return cleaned_data
 
 
-MeasureCommodityAndDutiesFormSet = formset_factory(
-    MeasureCommodityAndDutiesForm,
-    prefix="measure_commodities_duties_formset",
-    formset=FormSet,
-    min_num=1,
-    max_num=100,
-    extra=1,
-    validate_min=True,
-    validate_max=True,
-)
+class MeasureDutiesMultipleEditForm(forms.Form):
+    """
+    Used in the MeasuresEditWizard.
+
+    Has validation for multiple measures with different validity periods.
+    """
+
+    duties = forms.CharField(
+        label="Duties",
+        help_text="The duty expression should be valid for the validity periods of all the measures you wish to edit",
+    )
+
+    def __init__(self, *args, **kwargs):
+        # remove measure_start_date from kwargs here because superclass will not be expecting it
+        self.measure_start_dates = kwargs.pop("measure_start_dates")
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.label_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "duties",
+                HTML(
+                    loader.render_to_string(
+                        "components/duty_help.jinja",
+                        context={"component": "measure"},
+                    ),
+                ),
+            ),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        duties = cleaned_data.get("duties", "")
+        for d in self.measure_start_dates:
+            validate_duties(duties, d)
+
+        return cleaned_data
+
+
+class MeasureCommodityAndDutiesFormSet(FormSet):
+    form = MeasureCommodityAndDutiesForm
+    prefix = "measure_commodities_duties_formset"
 
 
 class MeasureFootnotesForm(forms.Form):
@@ -1110,3 +1181,40 @@ class MeasureReviewForm(forms.Form):
 
 
 MeasureDeleteForm = delete_form_for(models.Measure)
+
+
+class MeasuresEditStartForm(forms.Form):
+    choices = [
+        (constants.END_DATES, "End dates"),
+        (constants.REGULATION_ID, "Regulation"),
+        (constants.QUOTA_ORDER_NUMBER, "Quotas"),
+        (constants.GEOGRAPHICAL_AREA, "Geographies"),
+        (constants.DUTIES, "Duties"),
+        (constants.ADDITIONAL_CODE, "Additional codes"),
+        (constants.CONDITIONS, "Conditions"),
+        (constants.FOOTNOTES, "Footnotes"),
+    ]
+    fields_to_edit = forms.MultipleChoiceField(
+        choices=choices,
+        widget=forms.CheckboxSelectMultiple,
+        label="",
+        help_text="Select all that apply",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "fields_to_edit",
+            ),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )

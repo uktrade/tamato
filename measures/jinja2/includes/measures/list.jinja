@@ -1,17 +1,49 @@
 {% from 'macros/create_link.jinja' import create_link %} 
 {% from "includes/measures/conditions.jinja" import conditions_list %}
 
+{% macro checkbox_item(field) -%}
+  {% set id = field.id_for_label %}
+  {% set name = field.name %}
+  {% set checked = "checked" if field.value() else "" %}
+  <div class="govuk-form-group">
+    <fieldset class="govuk-fieldset">
+      <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+        <div class="govuk-checkboxes__item">
+          <input class="govuk-checkboxes__input" id="{{ id }}" name="{{ name }}" type="checkbox" {{ checked }} data-check-trackedmodel>
+          <label class="govuk-label govuk-checkboxes__label" for="{{ id }}"></label>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+{%- endmacro %}
+
+{% set checkbox_check_all -%}
+  <div class="govuk-form-group">
+    <fieldset class="govuk-fieldset">
+      <div class="govuk-checkboxes govuk-checkboxes--small">
+        <div class="govuk-checkboxes__item">
+          <input class="govuk-checkboxes__input" id="select-all" name="select-all" type="checkbox" data-check-all="data-check-trackedmodel">
+          <label class="govuk-label govuk-checkboxes__label govuk-!-padding-right-0" for="selected"></label>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+{%- endset %}
+
 {% set table_rows = [] %}
-{% for measure in object_list %}
+
+{% for field in form %}
+  {% set checkbox = checkbox_item(field) %}
+  {% set measure = field.field.obj %}
   {% set measure_link -%}
     <a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a>
   {%- endset %}
-  {% set footnotes %}
-    {% for footnote in measure.footnotes.all() %}
-        {{ create_link(footnote.get_url(), footnote|string) }}{{ ", " if not loop.last else "" }}
-    {% endfor %}
-  {% endset %}
+  {% set object_description -%}
+    {{ measure.structure_description if measure.structure_description else "-" }}
+  {%- endset %}
+
   {{ table_rows.append([
+    {"html": checkbox},
     {"html": measure_link},
     {"text": measure.measure_type.sid ~ " - " ~ measure.measure_type.description},
     {"text": measure.goods_nomenclature.item_id|wordwrap(2)|replace("\n", " ") if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
@@ -24,18 +56,27 @@
   ]) or "" }}
 {% endfor %}
 
-{{ govukTable({
-  "head": [
-    {"text": "ID"},
-    {"text": "Type"},
-    {"text": "Commodity code"},
-    {"text": "Duties"},
-    {"text": "Additional code"},
-    {"text": "Geographical area"},
-    {"text": "Quota"},
-    {"text": "Footnote"},
-    {"text": "Conditions"},
-  ],
-  "rows": table_rows,
-  "classes": "govuk-table-m"
-}) }}
+<form method="post">
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+  {% if object_list %}
+    <button value="edit-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Edit measures</button>
+  {% endif %}
+
+  {{ govukTable({
+    "head": [
+      {"html": checkbox_check_all},
+      {"text": "ID"},
+      {"text": "Type"},
+      {"text": "Commodity code"},
+      {"text": "Duties"},
+      {"text": "Additional code"},
+      {"text": "Geographical area"},
+      {"text": "Quota"},
+      {"text": "Footnote"},
+      {"text": "Conditions"},
+    ],
+    "rows": table_rows,
+    "classes": "govuk-table-m"
+  }) }}
+</form>

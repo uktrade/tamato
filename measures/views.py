@@ -4,26 +4,35 @@ from typing import Any
 from typing import Type
 
 from crispy_forms.helper import FormHelper
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.generic.edit import FormView
 from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
+from common.session_store import SessionStore
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from measures import constants
 from measures import forms
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
+from measures.helpers import create_conditions
+from measures.helpers import update_conditions
+from measures.helpers import update_measure
+from measures.helpers import update_measure_footnotes
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureConditionComponent
@@ -31,10 +40,59 @@ from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
+from workbaskets import forms as workbasket_forms
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.mixins import WithCurrentWorkBasket
+
+STEP_METADATA = {
+    constants.MEASURE_DETAILS: {
+        "title": "Enter the basic data",
+        "link_text": "Measure details",
+    },
+    constants.REGULATION_ID: {
+        "title": "Enter the Regulation ID",
+        "link_text": "Regulation ID",
+    },
+    constants.QUOTA_ORDER_NUMBER: {
+        "title": "Enter the Quota Order Number",
+        "link_text": "Quota Order Number",
+    },
+    constants.GEOGRAPHICAL_AREA: {
+        "title": "Select the geographical area",
+        "link_text": "Geographical areas",
+        "info": "The measure will only apply to imports from or exports to the selected area. You can specify exclusions.",
+    },
+    constants.COMMODITIES: {
+        "title": "Select a commodity",
+        "link_text": "Commodity",
+    },
+    constants.DUTIES: {
+        "title": "Enter the duties",
+        "link_text": "Duties",
+    },
+    constants.ADDITIONAL_CODE: {
+        "title": "Assign an additional code",
+        "link_text": "Additional code",
+    },
+    constants.CONDITIONS: {
+        "title": "Add any condition codes",
+        "info": (
+            "This section is optional. If there are no condition "
+            "codes, select continue."
+        ),
+        "link_text": "Conditions",
+    },
+    constants.FOOTNOTES: {
+        "title": "Add any footnotes",
+        "info": (
+            "This section is optional. If there are no footnotes, " "select continue."
+        ),
+        "link_text": "Footnotes",
+    },
+}
 
 
 class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -59,12 +117,201 @@ class MeasureMixin:
         return Measure.objects.approved_up_to_transaction(tx)
 
 
-class MeasureList(MeasureMixin, TamatoListView):
+class MeasureList(MeasureMixin, FormView, TamatoListView):
     """UI endpoint for viewing and filtering Measures."""
 
-    paginator_class = MeasurePaginator
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
+    form_class = workbasket_forms.SelectableObjectsForm
+    update_type = UpdateType.UPDATE
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
+        return kwargs
+
+    @property
+    def paginator(self):
+        filterset_class = self.get_filterset_class()
+        self.filterset = self.get_filterset(filterset_class)
+        return MeasurePaginator(self.filterset.qs, per_page=10)
+
+    def form_valid(self, form):
+        store = SessionStore(
+            self.request,
+            "MEASURE_SELECTIONS",
+        )
+        # clear the store here before adding items
+        # in case there was a previous form in progress that was abandoned
+        store.clear()
+        object_pks = {k: True for k, v in form.cleaned_data_no_prefix.items() if v}
+        store.add_items(object_pks)
+        url = reverse("measure-ui-edit-multiple", kwargs={"step": "start"})
+        return HttpResponseRedirect(url)
+
+
+class MeasuresEditWizard(
+    WithCurrentWorkBasket,
+    PermissionRequiredMixin,
+    NamedUrlSessionWizardView,
+):
+
+    update_type = UpdateType.UPDATE
+    permission_required = "common.add_trackedmodel"
+
+    step_metadata = {
+        constants.START: {
+            "title": "Select the elements you want to edit",
+            "link_text": "Start",
+        },
+        constants.END_DATES: {"title": "Edit the end dates", "link_text": "End dates"},
+        constants.REGULATION_ID: STEP_METADATA[constants.REGULATION_ID],
+        constants.QUOTA_ORDER_NUMBER: STEP_METADATA[constants.QUOTA_ORDER_NUMBER],
+        constants.GEOGRAPHICAL_AREA: STEP_METADATA[constants.GEOGRAPHICAL_AREA],
+        constants.COMMODITIES: STEP_METADATA[constants.COMMODITIES],
+        constants.DUTIES: STEP_METADATA[constants.DUTIES],
+        constants.ADDITIONAL_CODE: STEP_METADATA[constants.ADDITIONAL_CODE],
+        constants.CONDITIONS: STEP_METADATA[constants.CONDITIONS],
+        constants.FOOTNOTES: STEP_METADATA[constants.FOOTNOTES],
+        constants.SUMMARY: {
+            "title": "Review your changes",
+            "link_text": "Summary",
+        },
+        constants.COMPLETE: {
+            "title": "Finished",
+            "link_text": "Success",
+        },
+    }
+
+    form_list = [
+        (constants.START, forms.MeasuresEditStartForm),
+        (constants.END_DATES, forms.MeasureEndDateForm),
+        (constants.REGULATION_ID, forms.MeasureRegulationIdForm),
+        (constants.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
+        (constants.GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
+        (constants.DUTIES, forms.MeasureDutiesMultipleEditForm),
+        (constants.ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
+        (constants.CONDITIONS, forms.MeasureConditionsEditWizardStepFormSet),
+        (constants.FOOTNOTES, forms.MeasureFootnotesFormSet),
+        (constants.SUMMARY, forms.MeasureReviewForm),
+    ]
+
+    templates = {
+        constants.START: "measures/edit-multiple-start.jinja",
+        constants.END_DATES: "measures/edit-wizard-step.jinja",
+        constants.REGULATION_ID: "measures/edit-wizard-step.jinja",
+        constants.QUOTA_ORDER_NUMBER: "measures/edit-wizard-step.jinja",
+        constants.GEOGRAPHICAL_AREA: "measures/edit-wizard-step.jinja",
+        constants.DUTIES: "measures/edit-wizard-step.jinja",
+        constants.ADDITIONAL_CODE: "measures/edit-wizard-step.jinja",
+        constants.CONDITIONS: "measures/create-formset.jinja",
+        constants.FOOTNOTES: "measures/create-formset.jinja",
+        constants.SUMMARY: "measures/edit-review.jinja",
+        constants.COMPLETE: "measures/confirm-edit-multiple.jinja",
+    }
+
+    def get(self, *args, **kwargs):
+        if not self.measures:
+            return redirect("measure-ui-list")
+        return super().get(*args, **kwargs)
+
+    def get_template_names(self):
+        return self.templates.get(
+            self.steps.current,
+            "measures/edit-wizard-step.jinja",
+        )
+
+    @property
+    def _session_store(self):
+        """Get the current user's SessionStore containing ids of the measures
+        that have been selected for editing."""
+
+        return SessionStore(
+            self.request,
+            "MEASURE_SELECTIONS",
+        )
+
+    @property
+    def measures(self):
+        return Measure.objects.filter(pk__in=self._session_store.data.keys())
+
+    def get_form_kwargs(self, step):
+        kwargs = {}
+        if step == constants.DUTIES:
+            # duty sentence validation requires the measure start date so pass it to form kwargs here
+            measure_start_dates = [
+                measure.valid_between.lower for measure in self.measures
+            ]
+            # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
+            kwargs["measure_start_dates"] = measure_start_dates
+        elif step == constants.CONDITIONS:
+            # duty sentence validation requires the measure start date so pass it to form kwargs here
+            measure_start_dates = [
+                measure.valid_between.lower for measure in self.measures
+            ]
+            # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
+            kwargs["form_kwargs"] = {"measure_start_dates": measure_start_dates}
+
+        return kwargs
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form=form, **kwargs)
+        context["step_metadata"] = self.step_metadata
+        if form:
+            context["form"].is_bound = False
+        context["no_form_tags"] = FormHelper()
+        context["no_form_tags"].form_tag = False
+        context["measures"] = self.measures
+        return context
+
+    def done(self, form_list, **kwargs):
+        cleaned_data = self.get_all_cleaned_data()
+        current_workbasket = WorkBasket.current(self.request)
+        tx = WorkBasket.get_current_transaction(self.request)
+
+        edited_measures = []
+
+        footnote_pks = [
+            item["footnote"].pk
+            for item in cleaned_data.get("formset-footnotes", [])
+            if not item.get("DELETE")
+        ]
+        conditions_data = cleaned_data.get("formset-conditions", [])
+        for condition in conditions_data:
+            condition["update_type"] = UpdateType.CREATE
+
+        for measure in self.measures:
+            defaults = {"generating_regulation": measure.generating_regulation}
+            new_measure = update_measure(
+                measure,
+                tx,
+                current_workbasket,
+                cleaned_data,
+                defaults,
+            )
+            create_conditions(
+                measure,
+                new_measure.transaction,
+                current_workbasket,
+                conditions_data,
+            )
+            update_measure_footnotes(
+                new_measure,
+                new_measure.transaction,
+                current_workbasket,
+                footnote_pks,
+            )
+
+            edited_measures.append(measure)
+
+        context = self.get_context_data(
+            form=None,
+            edited_measures=edited_measures,
+            **kwargs,
+        )
+
+        return render(self.request, "measures/confirm-edit-multiple.jinja", context)
 
 
 class MeasureDetail(MeasureMixin, TrackedModelDetailView):
@@ -98,100 +345,54 @@ class MeasureCreateWizard(
     NamedUrlSessionWizardView,
 ):
     storage_name = "measures.wizard.MeasureCreateSessionStorage"
-
-    START = "start"
-    MEASURE_DETAILS = "measure_details"
-    REGULATION_ID = "regulation_id"
-    QUOTA_ORDER_NUMBER = "quota_order_number"
-    GEOGRAPHICAL_AREA = "geographical_area"
-    COMMODITIES = "commodities"
-    ADDITIONAL_CODE = "additional_code"
-    CONDITIONS = "conditions"
-    FOOTNOTES = "footnotes"
-    SUMMARY = "summary"
-    COMPLETE = "complete"
-
-    form_list = [
-        (START, forms.MeasureCreateStartForm),
-        (MEASURE_DETAILS, forms.MeasureDetailsForm),
-        (REGULATION_ID, forms.MeasureRegulationIdForm),
-        (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
-        (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
-        (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
-        (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
-        (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
-        (FOOTNOTES, forms.MeasureFootnotesFormSet),
-        (SUMMARY, forms.MeasureReviewForm),
-    ]
-
-    templates = {
-        START: "measures/create-start.jinja",
-        MEASURE_DETAILS: "measures/create-wizard-step.jinja",
-        REGULATION_ID: "measures/create-wizard-step.jinja",
-        QUOTA_ORDER_NUMBER: "measures/create-wizard-step.jinja",
-        GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
-        COMMODITIES: "measures/create-formset.jinja",
-        ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
-        CONDITIONS: "measures/create-formset.jinja",
-        FOOTNOTES: "measures/create-formset.jinja",
-        SUMMARY: "measures/create-review.jinja",
-        COMPLETE: "measures/confirm-create-multiple.jinja",
-    }
-
     step_metadata = {
-        START: {
+        constants.START: {
             "title": "Create a new measure",
             "link_text": "Start",
         },
-        MEASURE_DETAILS: {
-            "title": "Enter the basic data",
-            "link_text": "Measure details",
-        },
-        REGULATION_ID: {
-            "title": "Enter the Regulation ID",
-            "link_text": "Regulation ID",
-        },
-        QUOTA_ORDER_NUMBER: {
-            "title": "Enter the Quota Order Number",
-            "link_text": "Quota Order Number",
-        },
-        GEOGRAPHICAL_AREA: {
-            "title": "Select the geographical area",
-            "link_text": "Geographical areas",
-            "info": "The measure will only apply to imports from or exports to the selected area. You can specify exclusions.",
-        },
-        COMMODITIES: {
-            "title": "Select commodities and enter the duties",
-            "link_text": "Commodities and duties",
-        },
-        ADDITIONAL_CODE: {
-            "title": "Assign an additional code",
-            "link_text": "Additional code",
-        },
-        CONDITIONS: {
-            "title": "Add any condition codes",
-            "info": (
-                "This section is optional. If there are no condition "
-                "codes, select continue."
-            ),
-            "link_text": "Conditions",
-        },
-        FOOTNOTES: {
-            "title": "Add any footnotes",
-            "info": (
-                "This section is optional. If there are no footnotes, "
-                "select continue."
-            ),
-            "link_text": "Footnotes",
-        },
-        SUMMARY: {
+        constants.MEASURE_DETAILS: STEP_METADATA[constants.MEASURE_DETAILS],
+        constants.REGULATION_ID: STEP_METADATA[constants.REGULATION_ID],
+        constants.QUOTA_ORDER_NUMBER: STEP_METADATA[constants.QUOTA_ORDER_NUMBER],
+        constants.GEOGRAPHICAL_AREA: STEP_METADATA[constants.GEOGRAPHICAL_AREA],
+        constants.COMMODITIES: STEP_METADATA[constants.COMMODITIES],
+        constants.ADDITIONAL_CODE: STEP_METADATA[constants.ADDITIONAL_CODE],
+        constants.CONDITIONS: STEP_METADATA[constants.CONDITIONS],
+        constants.FOOTNOTES: STEP_METADATA[constants.FOOTNOTES],
+        constants.SUMMARY: {
             "title": "Review your measure",
             "link_text": "Summary",
         },
-        COMPLETE: {
+        constants.COMPLETE: {
             "title": "Finished",
             "link_text": "Success",
         },
+    }
+
+    form_list = [
+        (constants.START, forms.MeasureCreateStartForm),
+        (constants.MEASURE_DETAILS, forms.MeasureDetailsForm),
+        (constants.REGULATION_ID, forms.MeasureRegulationIdForm),
+        (constants.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
+        (constants.GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
+        (constants.COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
+        (constants.ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
+        (constants.CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
+        (constants.FOOTNOTES, forms.MeasureFootnotesFormSet),
+        (constants.SUMMARY, forms.MeasureReviewForm),
+    ]
+
+    templates = {
+        constants.START: "measures/create-start.jinja",
+        constants.MEASURE_DETAILS: "measures/create-wizard-step.jinja",
+        constants.REGULATION_ID: "measures/create-wizard-step.jinja",
+        constants.QUOTA_ORDER_NUMBER: "measures/create-wizard-step.jinja",
+        constants.GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
+        constants.COMMODITIES: "measures/create-formset.jinja",
+        constants.ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
+        constants.CONDITIONS: "measures/create-formset.jinja",
+        constants.FOOTNOTES: "measures/create-formset.jinja",
+        constants.SUMMARY: "measures/create-review.jinja",
+        constants.COMPLETE: "measures/confirm-create-multiple.jinja",
     }
 
     @atomic
@@ -284,9 +485,11 @@ class MeasureCreateWizard(
 
     def get_form_kwargs(self, step):
         kwargs = {}
-        if step == self.COMMODITIES or step == self.CONDITIONS:
+        if step == constants.COMMODITIES or step == constants.CONDITIONS:
             # duty sentence validation requires the measure start date so pass it to form kwargs here
-            valid_between = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(
+            valid_between = self.get_cleaned_data_for_step(
+                constants.MEASURE_DETAILS,
+            ).get(
                 "valid_between",
             )
             # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
@@ -315,7 +518,7 @@ class MeasureCreateWizard(
     def get_template_names(self):
         return self.templates.get(
             self.steps.current,
-            "measures/create-wizard-step.jinja",
+            "measures/measure-wizard-step.jinja",
         )
 
 
@@ -401,85 +604,21 @@ class MeasureUpdate(
         context["conditions_formset"] = conditions_formset
         return context
 
-    def create_conditions(self, obj):
-        """
-        Gets condition formset from context data, loops over these forms and
-        validates the data, checking for the condition_sid field in the data to
-        indicate whether an existing condition is being updated or a new one
-        created from scratch.
-
-        Then deletes any existing conditions that are not being updated,
-        before calling the MeasureCreationPattern.create_condition_and_components with the appropriate parser and condition data.
-        """
+    def get_result_object(self, form):
+        instance = super().get_result_object(form)
+        form.instance = instance
+        current_workbasket = WorkBasket.current(self.request)
+        current_workbasket.get_current_transaction(self.request)
         formset = self.get_context_data()["conditions_formset"]
-        excluded_sids = []
-        conditions_data = []
-        workbasket = WorkBasket.current(self.request)
-        existing_conditions = obj.conditions.approved_up_to_transaction(
-            workbasket.get_current_transaction(self.request),
+        new_measure = form.save(commit=False)
+        update_conditions(
+            instance,
+            new_measure.transaction,
+            current_workbasket,
+            formset,
         )
 
-        for f in formset.forms:
-            f.is_valid()
-            condition_data = f.cleaned_data
-            # If the form has changed and "condition_sid" is in the changed data,
-            # this means that the condition is preexisting and needs to updated
-            # so that its dependent_measure points to the latest version of measure
-            if f.has_changed() and "condition_sid" in f.changed_data:
-                excluded_sids.append(f.initial["condition_sid"])
-                update_type = UpdateType.UPDATE
-                condition_data["version_group"] = existing_conditions.get(
-                    sid=f.initial["condition_sid"],
-                ).version_group
-                condition_data["sid"] = f.initial["condition_sid"]
-            # If changed and condition_sid not in changed_data, then this is a newly created condition
-            elif f.has_changed() and "condition_sid" not in f.changed_data:
-                update_type = UpdateType.CREATE
-
-            condition_data["update_type"] = update_type
-            conditions_data.append(condition_data)
-
-        workbasket = WorkBasket.current(self.request)
-
-        # Delete all existing conditions from the measure instance, except those that need to be updated
-        for condition in existing_conditions.exclude(sid__in=excluded_sids):
-            condition.new_version(
-                workbasket=workbasket,
-                update_type=UpdateType.DELETE,
-                transaction=obj.transaction,
-            )
-
-        if conditions_data:
-            measure_creation_pattern = MeasureCreationPattern(
-                workbasket=workbasket,
-                base_date=obj.valid_between.lower,
-            )
-            parser = DutySentenceParser.get(
-                obj.valid_between.lower,
-                component_output=MeasureConditionComponent,
-            )
-
-            # Loop over conditions_data, starting at 1 because component_sequence_number has to start at 1
-            for component_sequence_number, condition_data in enumerate(
-                conditions_data,
-                start=1,
-            ):
-                # Create conditions and measure condition components, using instance as `dependent_measure`
-                measure_creation_pattern.create_condition_and_components(
-                    condition_data,
-                    component_sequence_number,
-                    obj,
-                    parser,
-                    workbasket,
-                )
-
-    def get_result_object(self, form):
-        obj = super().get_result_object(form)
-        form.instance = obj
-        self.create_conditions(obj)
-        form.save(commit=False)
-
-        return obj
+        return instance
 
 
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):

@@ -28,6 +28,7 @@ from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
+from common.session_store import SessionStore
 from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
@@ -36,7 +37,6 @@ from measures.models import Measure
 from measures.pagination import MeasurePaginator
 from workbaskets import forms
 from workbaskets.models import WorkBasket
-from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
