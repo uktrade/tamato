@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('commodities', '0010_delete_goodsnomenclatureindentnode'),
+        ('commodities', '0011_delete_goodsnomenclatureindentnode'),
     ]
 
     operations = [
