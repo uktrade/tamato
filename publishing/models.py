@@ -96,7 +96,20 @@ class PackagedWorkBasketManager(models.Manager):
                 f"{packaged_work_baskets}.",
             )
 
-        return super().create(workbasket=workbasket)
+        position = (
+            PackagedWorkBasket.objects.aggregate(
+                out=Coalesce(
+                    Max("position"),
+                    Value(0),
+                ),
+            )["out"]
+            + 1
+        )
+
+        return super().create(
+            workbasket=workbasket,
+            position=position,
+        )
 
 
 class PackagedWorkBasketQuerySet(QuerySet):
@@ -181,22 +194,6 @@ class PackagedWorkBasket(TimestampedMixin):
     """The report file associated with an attempt (either successful or failed)
     to process / load the associated workbasket's envelope file.
     """
-
-    @atomic
-    def save(self, *args, **kwargs):
-        """Save this instance and, if it is a new, unsaved instance, then
-        immediately append it to the packaging queue by setting its position to
-        the max position + 1."""
-
-        if getattr(self, "pk") is None:
-            self.position = PackagedWorkBasket.objects.aggregate(
-                out=Coalesce(
-                    Max("position"),
-                    Value(0),
-                ),
-            )["out"]
-
-        return super().save(*args, **kwargs)
 
     # processing_state transition management.
 
