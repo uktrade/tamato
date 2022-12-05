@@ -51,7 +51,7 @@ def add_back_missing_measures(apps, schemaeditor):
     if not DutyExpression.objects.latest_approved().filter(sid=1).exists():
         return
 
-    condition_duty_expression = DutyExpression.objects.get(sid=1)
+    condition_duty_expression = DutyExpression.objects.latest_approved().get(sid=1)
 
     if (
         not GoodsNomenclature.objects.latest_approved()
