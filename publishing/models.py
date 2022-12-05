@@ -73,6 +73,32 @@ class LoadingReport(TimestampedMixin):
     # TODO
 
 
+class PackagedWorkBasketManager(models.Manager):
+    def create(self, workbasket):
+        """Create a new instance, associating with workbasket."""
+
+        if workbasket.status in WorkflowStatus.unchecked_statuses():
+            raise PackagedWorkBasketInvalidCheckStatus(
+                "Unable to create PackagedWorkBasket from WorkBasket instance "
+                f"({workbasket}) due to unchecked {workbasket.status} status.",
+            )
+
+        packaged_work_baskets = PackagedWorkBasket.objects.filter(
+            workbasket=workbasket,
+            processing_state__in=(
+                ProcessingState.queued_states() + ProcessingState.active_states()
+            ),
+        )
+        if packaged_work_baskets.exists():
+            raise PackagedWorkBasketDuplication(
+                f"Unable to create PackagedWorkBasket from {workbasket} since "
+                "it is already packaged and actively queued - "
+                f"{packaged_work_baskets}.",
+            )
+
+        return super().create(workbasket=workbasket)
+
+
 class PackagedWorkBasketQuerySet(QuerySet):
     def awaiting_processing(self) -> "PackagedWorkBasketQuerySet":
         """Return all PackagedWorkBasket instances whose processing_state is set
@@ -117,7 +143,9 @@ class PackagedWorkBasket(TimestampedMixin):
     class Meta:
         ordering = ["position"]
 
-    objects: PackagedWorkBasketQuerySet = PackagedWorkBasketQuerySet.as_manager()
+    objects: PackagedWorkBasketQuerySet = PackagedWorkBasketManager.from_queryset(
+        PackagedWorkBasketQuerySet,
+    )()
 
     workbasket = models.ForeignKey(
         WorkBasket,
@@ -154,45 +182,21 @@ class PackagedWorkBasket(TimestampedMixin):
     to process / load the associated workbasket's envelope file.
     """
 
-    # Creation management.
-
-    @classmethod
     @atomic
-    def create(cls, workbasket):
-        """Create and save a new instance, associating with workbasket and
-        appending the instance to the end (last position) of the package
-        processing queue."""
+    def save(self, *args, **kwargs):
+        """Save this instance and, if it is a new, unsaved instance, then
+        immediately append it to the packaging queue by setting its position to
+        the max position + 1."""
 
-        if workbasket.status in WorkflowStatus.unchecked_statuses():
-            raise PackagedWorkBasketInvalidCheckStatus(
-                f"Unable to create PackagedWorkBasket from {workbasket} due to "
-                f"unchecked status {workbasket.status}",
-            )
+        if getattr(self, "pk") is None:
+            self.position = PackagedWorkBasket.objects.aggregate(
+                out=Coalesce(
+                    Max("position"),
+                    Value(0),
+                ),
+            )["out"]
 
-        packaged_work_baskets = PackagedWorkBasket.objects.filter(
-            workbasket=workbasket,
-            processing_state__in=(
-                ProcessingState.queued_states() + ProcessingState.active_states()
-            ),
-        )
-        if packaged_work_baskets.exists():
-            raise PackagedWorkBasketDuplication(
-                f"Unable to create PackagedWorkBasket from {workbasket} since "
-                "it is already packaged and actively queued - "
-                f"{packaged_work_baskets}.",
-            )
-
-        max_position = cls.objects.aggregate(
-            out=Coalesce(
-                Max("position"),
-                Value(0),
-            ),
-        )["out"]
-        obj = cls(
-            workbasket=workbasket,
-            position=max_position + 1,
-        )
-        return obj.save()
+        return super().save(*args, **kwargs)
 
     # processing_state transition management.
 
