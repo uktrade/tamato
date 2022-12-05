@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             pass
 
     dependencies = [
-        ('commodities', '0010_delete_goodsnomenclatureindentnode'),
+        ('commodities', '0011_TOPS_745_migration_dependencies'),
     ]
 
     operations = [
