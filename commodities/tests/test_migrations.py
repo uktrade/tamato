@@ -6,13 +6,13 @@ from common.tests.factories import GoodsNomenclatureDescriptionFactory
 
 
 @pytest.mark.django_db()
-def test_main_migration0011(migrator):
+def test_main_migration0012(migrator):
     """Ensures that the description date fix for TOPS-745 migration works."""
     # migrator.reset()
 
     # before migration
     old_state = migrator.apply_initial_migration(
-        ('commodities', '0010_delete_goodsnomenclatureindentnode'))
+        ('commodities', '0011_TOPS_745_migration_dependencies'))
 
     conftest.setup_content_types(old_state.apps)
 
@@ -30,7 +30,7 @@ def test_main_migration0011(migrator):
 
     # after migration
     new_state = migrator.before(
-        ('commodities', '0011_description_date_fix_for_TOPS_745'))
+        ('commodities', '0012_TOPS_745_description_date_fix'))
     GoodsNomenclatureDescription = new_state.apps.get_model('commodities',
                                                             'GoodsNomenclatureDescription')
     assert GoodsNomenclatureDescription.objects.get(
