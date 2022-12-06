@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 trackedmodel_ptr_id=10008934,
             )
             gn_desc.validity_start = datetime.date(2022, 1, 6)
-            gn_desc.save()
+            gn_desc.save(force_write=True)
         else:
             pass
 

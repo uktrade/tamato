@@ -16,6 +16,7 @@ class Migration(migrations.Migration):
         ("importer", "0003_auto_20210302_1349"),
         ("taric", "0002_auto_20210219_1043"),
         ("exporter", "0004_upload_created_date"),
+        ("additional_codes", "0007_allow_blank_descriptions"),
     ]
 
     operations = []
