@@ -74,7 +74,7 @@ class LoadingReport(TimestampedMixin):
 
 
 class PackagedWorkBasketManager(models.Manager):
-    def create(self, workbasket):
+    def create(self, workbasket, **kwargs):
         """Create a new instance, associating with workbasket."""
 
         if workbasket.status in WorkflowStatus.unchecked_statuses():
@@ -106,10 +106,7 @@ class PackagedWorkBasketManager(models.Manager):
             + 1
         )
 
-        return super().create(
-            workbasket=workbasket,
-            position=position,
-        )
+        return super().create(workbasket=workbasket, position=position, **kwargs)
 
 
 class PackagedWorkBasketQuerySet(QuerySet):
