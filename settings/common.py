@@ -102,6 +102,7 @@ DOMAIN_APPS = [
 TAMATO_APPS = [
     "hmrc_sdes",
     "importer",
+    "notifications",
     # XXX need to keep this for migrations. delete later.
     "publishing",
     "taric",
@@ -538,3 +539,6 @@ LIMITED_PAGINATOR_MAX_COUNT = 200
 MEASURES_PAGINATOR_MAX_COUNT = int(
     os.environ.get("MEASURES_PAGINATOR_MAX_COUNT", "1000"),
 )
+
+# key used to instantiate GOVUK Notify python client
+NOTIFICATIONS_API_KEY = os.environ.get("NOTIFICATIONS_API_KEY")
