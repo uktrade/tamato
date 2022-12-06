@@ -1,0 +1,29 @@
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{%- set table_rows = [] -%}
+
+{% for obj in object_list %}
+
+  {{ table_rows.append([
+    {"html": "<span>TODO</span>"},
+    {"html": "<a href=\"" ~ url("workbaskets:workbasket-ui-changes", args=(obj.workbasket.pk,)) ~ "\" class=\"govuk-link\">" ~ obj.workbasket.pk ~ "</a>"},
+    {"html": "<a href=\"#\" class=\"govuk-link\">" ~ obj.workbasket.title ~ "</a>"},
+    {"html": "<span>" ~ obj.workbasket.reason ~ "</span>"},
+    {"html": "<a href=\"#\" class=\"govuk-link\">Move to top of queue</a>"},
+    {"html": "<a href=\"#\" class=\"govuk-link\">Remove from queue</a>"},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": ""},
+    {"text": "Workbasket ID"},
+    {"text": "TOPS/Jira"},
+    {"text": "Description"},
+    {"text": "Order"},
+    {"text": "Remove"},
+  ],
+  "rows": table_rows
+}) }}

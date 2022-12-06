@@ -1223,3 +1223,15 @@ class NotificationLogFactory(factory.django.DjangoModelFactory):
 
     template_id = string_sequence(length=10)
     recipients = factory.Faker("text", max_nb_chars=24)
+
+
+class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
+    """Creates a PackagedWorkBasket instance associated with an approved
+    WorkBasket."""
+
+    class Meta:
+        model = "publishing.PackagedWorkBasket"
+
+    workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
+    theme = string_sequence(length=50)
+    jira_url = "www.fakejiraticket.com"

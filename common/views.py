@@ -159,8 +159,9 @@ class LogoutView(django.contrib.auth.views.LogoutView):
     template_name = "common/logged_out.jinja"
 
 
-class WithPaginationListView(FilterView):
-    """Generic list view enabling pagination."""
+class WithPaginationListMixin:
+    """Mixin that can be inherited by a ListView subclass to enable this
+    project's pagination capabilities."""
 
     paginator_class = Paginator
     paginate_by = settings.REST_FRAMEWORK["PAGE_SIZE"]
@@ -175,6 +176,10 @@ class WithPaginationListView(FilterView):
             page_obj.paginator.num_pages,
         )
         return data
+
+
+class WithPaginationListView(WithPaginationListMixin, FilterView):
+    """Generic filtered list view enabling pagination."""
 
 
 class RequiresSuperuserMixin(UserPassesTestMixin):
@@ -275,6 +280,14 @@ class TrackedModelChangeView(
         return self.object.get_url(self.success_path)
 
     def get_result_object(self, form):
+        """
+        Overridable used to get a saved result.
+
+        In the default case (this implementation) a new version of a
+        TrackedModel instance is created. However, this function may be
+        overridden to provide alternative behaviour, such as simply updating the
+        TrackedModel instance.
+        """
         # compares changed data against model fields to prevent unexpected kwarg TypeError
         # e.g. `geographical_area_group` is a field on `MeasureUpdateForm` and included in cleaned data,
         # but isn't a field on `Measure` and would cause a TypeError on model save()
