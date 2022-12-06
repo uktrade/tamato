@@ -1209,7 +1209,7 @@ class BatchDependenciesFactory(factory.django.DjangoModelFactory):
     depends_on = factory.SubFactory(ImportBatchFactory)
 
 
-class PackagedWorkBasket(factory.django.DjangoModelFactory):
+class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
     """Creates a PackagedWorkBasket instance associated with an approved
     WorkBasket."""
 
