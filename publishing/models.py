@@ -74,7 +74,7 @@ class LoadingReport(TimestampedMixin):
 
 
 class PackagedWorkBasketManager(models.Manager):
-    def create(self, workbasket):
+    def create(self, workbasket, **kwargs):
         """Create a new instance, associating with workbasket."""
 
         if workbasket.status in WorkflowStatus.unchecked_statuses():
@@ -106,10 +106,7 @@ class PackagedWorkBasketManager(models.Manager):
             + 1
         )
 
-        return super().create(
-            workbasket=workbasket,
-            position=position,
-        )
+        return super().create(workbasket=workbasket, position=position, **kwargs)
 
 
 class PackagedWorkBasketQuerySet(QuerySet):
@@ -194,6 +191,16 @@ class PackagedWorkBasket(TimestampedMixin):
     """The report file associated with an attempt (either successful or failed)
     to process / load the associated workbasket's envelope file.
     """
+    theme = models.CharField(max_length=255)
+    description = models.TextField(
+        blank=True,
+    )
+    eif = models.DateField(null=True, blank=True)
+    """The enter into force date determines when changes should go live in CDS. A file will need to be ingested by CDS on the day before this. If left, blank CDS will ingest the file immediately."""
+    embargo = models.DateField(null=True, blank=True)
+    """The date until which CDS prevents envelope from being displayed after ingestion."""
+    jira_url = models.URLField()
+    """URL linking the packaged workbasket with a ticket on the Tariff Operations (TOPS) project's Jira board."""
 
     # processing_state transition management.
 

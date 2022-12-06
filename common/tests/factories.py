@@ -1217,3 +1217,5 @@ class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
         model = "publishing.PackagedWorkBasket"
 
     workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
+    theme = string_sequence(length=50)
+    jira_url = "www.fakejiraticket.com"
