@@ -193,7 +193,6 @@ class PackagedWorkBasket(TimestampedMixin):
     """
     theme = models.CharField(max_length=255)
     description = models.TextField(
-        null=True,
         blank=True,
     )
     eif = models.DateField(null=True, blank=True)
