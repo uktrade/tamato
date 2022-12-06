@@ -1209,6 +1209,22 @@ class BatchDependenciesFactory(factory.django.DjangoModelFactory):
     depends_on = factory.SubFactory(ImportBatchFactory)
 
 
+class NotifiedUserFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "notifications.NotifiedUser"
+
+    email = factory.Faker("email")
+    enrol_packaging = True
+
+
+class NotificationLogFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "notifications.NotificationLog"
+
+    template_id = string_sequence(length=10)
+    recipients = factory.Faker("text", max_nb_chars=24)
+
+
 class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
     """Creates a PackagedWorkBasket instance associated with an approved
     WorkBasket."""
