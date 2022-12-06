@@ -5,32 +5,33 @@ import datetime
 from django.db import migrations
 
 
+def fix_date_on_description(apps, schema_editor):
+    """
+    Update the validity_start date of the latest approved goods nomenclature
+    description for goods nomenclature item id: 2530900010.
+
+    This is a manual change replicating the goods nomenclature description
+    period change that takes place in TGB22197 but is missed by the importer
+    """
+
+    GoodsNomenclatureDescription = apps.get_model(
+        "commodities",
+        "GoodsNomenclatureDescription",
+    )
+
+    if GoodsNomenclatureDescription.objects.filter(
+        trackedmodel_ptr_id=10008934,
+    ).exists():
+        gn_desc = GoodsNomenclatureDescription.objects.get(
+            trackedmodel_ptr_id=10008934,
+        )
+        gn_desc.validity_start = datetime.date(2022, 1, 6)
+        gn_desc.save()
+    else:
+        pass
+
+
 class Migration(migrations.Migration):
-    def fix_date_on_description(self, schema_editor):
-        """
-        Update the validity_start date of the latest approved goods nomenclature
-        description for goods nomenclature item id: 2530900010.
-
-        This is a manual change replicating the goods nomenclature description
-        period change that takes place in TGB22197 but is missed by the importer
-        """
-        from commodities.models.orm import GoodsNomenclatureDescription
-
-        if (
-            GoodsNomenclatureDescription.objects.latest_approved()
-            .filter(
-                trackedmodel_ptr_id=10008934,
-            )
-            .exists()
-        ):
-            gn_desc = GoodsNomenclatureDescription.objects.latest_approved().get(
-                trackedmodel_ptr_id=10008934,
-            )
-            gn_desc.validity_start = datetime.date(2022, 1, 6)
-            gn_desc.save(force_write=True)
-        else:
-            pass
-
     dependencies = [
         ("commodities", "0011_TOPS_745_migration_dependencies"),
     ]

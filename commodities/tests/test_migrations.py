@@ -2,14 +2,13 @@ import datetime
 
 import pytest
 
-import conftest
 from common.tests.factories import ApprovedWorkBasketFactory
 from common.util import TaricDateRange
 from common.validators import UpdateType
 
 
 @pytest.mark.django_db()
-def test_main_migration0012(migrator):
+def test_main_migration_works(migrator):
     """Ensures that the description date fix for TOPS-745 migration works."""
     # migrator.reset()
 
@@ -18,14 +17,11 @@ def test_main_migration0012(migrator):
         ("commodities", "0011_TOPS_745_migration_dependencies"),
     )
 
-    conftest.setup_content_types(old_state.apps)
-
     GoodsNomenclatureDescription = old_state.apps.get_model(
         "commodities",
         "GoodsNomenclatureDescription",
     )
-    GoodsNomenclature = old_state.apps.get_model("commodities",
-                                                 "GoodsNomenclature")
+    GoodsNomenclature = old_state.apps.get_model("commodities", "GoodsNomenclature")
     Transaction = old_state.apps.get_model("common", "Transaction")
     Workbasket = old_state.apps.get_model("workbaskets", "WorkBasket")
     VersionGroup = old_state.apps.get_model("common", "VersionGroup")
@@ -62,12 +58,39 @@ def test_main_migration0012(migrator):
     new_state = migrator.apply_tested_migration(
         ("commodities", "0012_TOPS_745_description_date_fix"),
     )
+
     GoodsNomenclatureDescription = new_state.apps.get_model(
         "commodities",
         "GoodsNomenclatureDescription",
     )
     assert GoodsNomenclatureDescription.objects.get(
         trackedmodel_ptr_id=10008934,
-    ).validity_start == datetime.date(2022, 1, 6)
+    ).validity_start == datetime.date(
+        2022,
+        1,
+        6,
+    )
+
+    migrator.reset()
+
+
+@pytest.mark.django_db()
+def test_main_migration_ignores_if_no_data(migrator):
+    # before migration
+    old_state = migrator.apply_initial_migration(
+        ("commodities", "0011_TOPS_745_migration_dependencies"),
+    )
+
+    GoodsNomenclatureDescription = old_state.apps.get_model(
+        "commodities",
+        "GoodsNomenclatureDescription",
+    )
+
+    assert GoodsNomenclatureDescription.objects.all().count() == 0
+
+    # if this migration works when no data exists, that's a pass
+    migrator.apply_tested_migration(
+        ("commodities", "0012_TOPS_745_description_date_fix"),
+    )
 
     migrator.reset()
