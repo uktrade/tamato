@@ -36,3 +36,16 @@ def test_create_from_invalid_status():
     )
     with pytest.raises(models.PackagedWorkBasketInvalidCheckStatus):
         factories.PackagedWorkBasketFactory(workbasket=editing_workbasket)
+
+
+def test_begin_processing_transition():
+    """TODO test successful transition conditions."""
+
+
+def test_begin_processing_transition_invalid():
+    """
+    TODO test failed conditions:
+
+    begin_processing_condition_at_position_1()
+    begin_processing_condition_no_instances_active()
+    """

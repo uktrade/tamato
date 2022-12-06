@@ -15,11 +15,11 @@ from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 
-class PackagedWorkBasketInvalidCheckStatus(Exception):
+class PackagedWorkBasketDuplication(Exception):
     pass
 
 
-class PackagedWorkBasketDuplication(Exception):
+class PackagedWorkBasketInvalidCheckStatus(Exception):
     pass
 
 
@@ -197,22 +197,41 @@ class PackagedWorkBasket(TimestampedMixin):
 
     # processing_state transition management.
 
+    def begin_processing_condition_at_position_1(self):
+        """Django FSM condition: Instance must be at position 1 in order to
+        complete the begin_processing transition to CURRENTLY_PROCESSING."""
+
+        return self.position == 1
+
+    def begin_processing_condition_no_instances_active(self):
+        """Django FSM condition: No other instance is actively being processed
+        in order to complete the begin_processing and transition this instance
+        to CURRENTLY_PROCESSING."""
+
+        return not PackagedWorkBasket.objects.filter(
+            processing_state=ProcessingState.active_states(),
+        ).exists()
+
     @transition(
         field=processing_state,
         source=ProcessingState.AWAITING_PROCESSING,
         target=ProcessingState.CURRENTLY_PROCESSING,
+        conditions=[
+            begin_processing_condition_at_position_1,
+            begin_processing_condition_no_instances_active,
+        ],
         custom={"label": "Begin processing"},
     )
     def begin_processing(self):
-        """Start processing a PackagedWorkBasket."""
-        # TODO:
-        # * Prevent processing anything other the instance in the top position,
-        #   1.
-        # * Guard against attempts to process more than one instance at any
-        #   one time. This avoids an otherwise intractable CDS envelope
-        #   sequencing issue that results from a contiguous envelope numbering
-        #   requirement, while also supporting envelope ingestion failure since
-        #   their envelope IDs become invalid and must be recycled.
+        """
+        Start processing a PackagedWorkBasket.
+
+        Only a single instance may have its `processing_state` set to
+        CURRENTLY_PROCESSING. This is to avoid an otherwise intractable CDS
+        envelope sequencing issue that results from a CDS contiguous envelope
+        numbering requirement that means CDS failed envelope IDs must be
+        recycled.
+        """
 
     @transition(
         field=processing_state,

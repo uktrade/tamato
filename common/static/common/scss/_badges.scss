@@ -1,0 +1,17 @@
+
+.tamato-badge {
+  display: inline-block;
+  padding: 0.2rem 0.4rem;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.tamato-badge-light-purple {
+  @extend .tamato-badge;
+  background-color: rgb(219, 213, 233);
+}
+
+.tamato-badge-light-green {
+  @extend .tamato-badge;
+  background-color: rgb(204, 224, 216);
+}
