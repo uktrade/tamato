@@ -13,6 +13,7 @@ from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
@@ -83,8 +84,20 @@ class QuotaList(QuotaMixin, TamatoListView):
     filterset_class = QuotaFilter
 
 
-class QuotaDetail(QuotaMixin, TrackedModelDetailView):
+class QuotaDetail(QuotaMixin, TrackedModelDetailView, WithCurrentWorkBasket):
     template_name = "quotas/detail.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        latest_definition = (
+            self.object.definitions.approved_up_to_transaction(
+                self.workbasket.current_transaction,
+            )
+            .order_by("valid_between")
+            .last()
+        )
+        return super().get_context_data(
+            latest_definition=latest_definition, *args, **kwargs
+        )
 
 
 class QuotaDelete(QuotaMixin, TrackedModelDetailMixin, CreateTaricDeleteView):
