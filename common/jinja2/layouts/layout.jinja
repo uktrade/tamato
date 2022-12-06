@@ -1,5 +1,6 @@
 {% from "components/phase-banner/macro.njk" import govukPhaseBanner %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/footer/macro.njk" import govukFooter %}
 
 {% extends "layouts/_generic.jinja" %}
 
@@ -55,4 +56,17 @@
     {{ breadcrumbs(request, [{"text": page_title}]) }}
   {% endif %}
   {% endblock %}
+{% endblock %}
+
+{% block footer %}
+  {{ govukFooter({
+    "meta": {
+      "items": [
+        {
+          "href": "https://workspace.trade.gov.uk/working-at-dit/policies-and-guidance/policies/tariff-application-privacy-policy/",
+          "text": "Privacy policy"
+        },
+      ]
+    }
+  }) }}
 {% endblock %}
