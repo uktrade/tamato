@@ -1,3 +1,5 @@
+from datetime import date
+
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -85,6 +87,15 @@ class QuotaList(QuotaMixin, TamatoListView):
 
 class QuotaDetail(QuotaMixin, TrackedModelDetailView):
     template_name = "quotas/detail.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        definitions = self.object.definitions.current()
+        current_definition = definitions.as_at(date.today()).first()
+        if not current_definition:
+            current_definition = definitions.not_yet_in_effect(date.today()).first()
+        return super().get_context_data(
+            current_definition=current_definition, *args, **kwargs
+        )
 
 
 class QuotaDelete(QuotaMixin, TrackedModelDetailMixin, CreateTaricDeleteView):

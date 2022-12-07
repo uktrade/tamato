@@ -1,0 +1,63 @@
+<div class="quota__core-data">
+    <div class="quota__core-data__content">
+        <h2 class="govuk-heading-l">Details</h2>
+        {% if current_definition %}
+        {{ govukSummaryList({
+            "rows": [
+                {
+                    "key": {"text": "Quota definition SID"},
+                    "value": {"text": object.sid},
+                    "actions": {"items": []}
+                },
+                {
+                    "key": {"text": "Quota definition description"},
+                    "value": {"text": current_definition.description if current_definition.description else "-"},
+                    "actions": {"items": []}
+                },
+                {
+                    "key": {"text": "Start date"},
+                    "value": {"text": "{:%d %b %Y}".format(current_definition.valid_between.lower) },
+                    "actions": {"items": []}
+                },
+                {
+                    "key": {"text": "End date"},
+                    "value": {"text": "{:%d %b %Y}".format(current_definition.valid_between.upper) },
+                    "actions": {"items": []}
+                },
+                {
+                    "key": {"text": "Initial volume"},
+                    "value": {"text": current_definition.initial_volume },
+                    "actions": {"items": []}
+                },
+                {
+                    "key": {"text": "Volume"},
+                    "value": {"text": current_definition.volume },
+                    "actions": {"items": []}
+                },
+                {
+                    "key": {"text": "Measurement unit"},
+                    "value": {"text": current_definition.measurement_unit.description},
+                    "actions": {"items": []}
+                },
+                {
+                    "key": {"text": "Critical threshold"},
+                    "value": {"text": current_definition.quota_critical_threshold ~ "%"},
+                    "actions": {"items": []}
+                },
+                {
+                    "key": {"text": "Critical state"},
+                    "value": {"text": "Yes" if current_definition.quota_critical else "No"},
+                    "actions": {"items": []}
+                },
+                {
+                    "key": {"text": "Maximum precision"},
+                    "value": {"text": current_definition.maximum_precision },
+                    "actions": {"items": []}
+                },
+            ]
+        })}}
+    {% else %}
+        <p class="govuk-body">No active or upcoming quota definition.</p>
+    {% endif %}
+    </div>
+</div>
