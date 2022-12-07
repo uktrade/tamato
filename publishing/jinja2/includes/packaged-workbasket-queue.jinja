@@ -6,8 +6,8 @@
 
 {% for obj in object_list %}
 
-  {# TODO: move into view function / context. #}
   {%- set order_cell_content %}
+    {# TODO: move into view function / context. #}
     {% if obj.processing_state == "CURRENTLY_PROCESSING" %}
       <span class="tamato-badge-light-purple">CDS DOWNLOADED</span>
     {% elif obj.processing_state == "AWAITING_PROCESSING" and obj.position == 1 %}
@@ -20,11 +20,15 @@
     {% endif %}
   {% endset -%}
 
-  {# TODO: move into view function / context. #}
-  {# TODO: Turn into POST submits. #}
   {%- set up_down_cell_content %}
-    <img src="{{ static('/common/images/up_chevron.svg') }}">
-    <img src="{{ static('/common/images/down_chevron.svg') }}">
+    {# TODO: move into view function / context. #}
+    {# TODO: Turn into POST submits. #}
+    {% if loop.index == 1 %}
+      <img class="icon icon-waiting" src="{{ static('/common/images/timer.svg') }}">
+    {% else %}
+      <img class="icon icon-up" src="{{ static('/common/images/up_chevron.svg') }}">
+      <img class="icon icon-down" src="{{ static('/common/images/down_chevron.svg') }}">
+    {% endif %}
   {% endset -%}
 
   {{ table_rows.append([
@@ -48,4 +52,5 @@
     {"text": "Remove"},
   ],
   "rows": table_rows,
+  "classes": "packaged-workbaskets first-row-highlight",
 }) }}

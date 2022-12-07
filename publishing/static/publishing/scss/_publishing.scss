@@ -1,1 +1,14 @@
 
+table.packaged-workbaskets td:first-child {
+  padding-left: 20px;
+}
+table.packaged-workbaskets td:last-child {
+  padding-right: 20px;
+}
+table.first-row-highlight tbody tr:first-child {
+  background-color: rgb(243, 242, 241);
+}
+table.packaged-workbaskets .icon {
+  display: inline-block;
+  width: 1.4rem;
+}

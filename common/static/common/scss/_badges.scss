@@ -9,9 +9,11 @@
 .tamato-badge-light-purple {
   @extend .tamato-badge;
   background-color: rgb(219, 213, 233);
+  color: rgb(61, 35, 117);
 }
 
 .tamato-badge-light-green {
   @extend .tamato-badge;
   background-color: rgb(204, 224, 216);
+  color: rgb(0, 90, 48);
 }

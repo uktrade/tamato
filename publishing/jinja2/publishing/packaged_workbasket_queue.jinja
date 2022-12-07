@@ -17,27 +17,31 @@
 {% endblock %}
 
 {% block content %}
-  <h1 class="govuk-heading-xl govuk-!-padding-top-3 govuk-!-padding-bottom-3">
-    {{ page_title }}
-  </h1>
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
   <h2 class="govuk-heading-m">Workbaskets - Ready to order</h1>
 
-  {{ govukDetails({
-    "summaryText": "What does pausing and unpausing CDS queue mean?",
-    "html": (
-      "<p>Pausing the CDS queue prevents any envelopes that are waiting in this "
-      "queue from being downloaded by HMRC users.</p>"
-      "<p>Unpausing allows downloads to commence again.</p>"
-    ),
-    "classes": "govuk-!-padding-bottom-5",
-  }) }}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
 
-  {% if object_list %}
-    {% include list_include %}
-  {% else %}
-    <p class="govuk-body">There are no workbaskets in the packaging queue.</p>
-  {% endif %}
+      {{ govukDetails({
+        "summaryText": "What does pausing and unpausing CDS queue mean?",
+        "html": (
+          "<p>Pausing the CDS queue prevents any envelopes that are waiting in this "
+          "queue from being downloaded by HMRC users.</p>"
+          "<p>Unpausing allows downloads to commence again.</p>"
+        ),
+        "classes": "govuk-!-padding-bottom-5",
+      }) }}
 
-  {% include "includes/common/pagination.jinja" %}
+      {% if object_list %}
+        {% include list_include %}
+      {% else %}
+        <p class="govuk-body">There are no workbaskets in the packaging queue.</p>
+      {% endif %}
+
+      {% include "includes/common/pagination.jinja" %}
+
+    </div>
+  </div>
 {% endblock %}
