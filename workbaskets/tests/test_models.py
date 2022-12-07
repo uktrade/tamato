@@ -355,6 +355,7 @@ def test_current_transaction_returns_last_approved_transaction(
         ("unarchive", "ARCHIVED", "EDITING"),
         ("submit_for_approval", "EDITING", "PROPOSED"),
         ("withdraw", "PROPOSED", "EDITING"),
+        ("unapprove", "APPROVED", "EDITING"),
         ("export_to_cds", "APPROVED", "SENT"),
         ("cds_confirmed", "SENT", "PUBLISHED"),
         ("cds_error", "SENT", "ERRORED"),

@@ -30,7 +30,7 @@ def test_workbasket_create_form_creates_workbasket_object(
     create_url = reverse("workbaskets:workbasket-ui-create")
 
     form_data = {
-        "title": "My new workbasket",
+        "title": "1234567890",
         "reason": "Making a new workbasket",
     }
 
@@ -57,7 +57,7 @@ def test_workbasket_create_user_not_logged_in_dev_sso_disabled(client, settings)
         )
     create_url = reverse("workbaskets:workbasket-ui-create")
     form_data = {
-        "title": "My new workbasket",
+        "title": "1234567890",
         "reason": "Making a new workbasket",
     }
     response = client.post(create_url, form_data)
@@ -71,7 +71,7 @@ def test_workbasket_create_without_permission(client):
     permission."""
     create_url = reverse("workbaskets:workbasket-ui-create")
     form_data = {
-        "title": "My new workbasket",
+        "title": "1234567890",
         "reason": "Making a new workbasket",
     }
     user = factories.UserFactory.create()

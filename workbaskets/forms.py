@@ -7,6 +7,7 @@ from django import forms
 
 from common.forms import DescriptionHelpBox
 from workbaskets import models
+from workbaskets import validators
 
 
 class WorkbasketCreateForm(forms.ModelForm):
@@ -14,7 +15,13 @@ class WorkbasketCreateForm(forms.ModelForm):
 
     title = forms.CharField(
         label="Tops/Jira number",
+        help_text=(
+            "Your Tops/Jira number is needed to associate your workbasket with your Jira ticket. "
+            "You can find this number at the end of the web address for your Jira ticket. "
+            "Your workbasket will be given a unique number that may be different to your Tops/Jira number. "
+        ),
         widget=forms.TextInput,
+        validators=[validators.tops_jira_number_validator],
         required=True,
     )
 
