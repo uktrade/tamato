@@ -1,6 +1,8 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import F
 from django.db.models import Max
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import TextChoices
 from django.db.models import Value
@@ -20,6 +22,10 @@ class PackagedWorkBasketDuplication(Exception):
 
 
 class PackagedWorkBasketInvalidCheckStatus(Exception):
+    pass
+
+
+class PackagedWorkBasketInvalidQueueOperation(Exception):
     pass
 
 
@@ -134,6 +140,9 @@ class PackagedWorkBasketQuerySet(QuerySet):
             processing_state__in=ProcessingState.completed_processing_states(),
         )
 
+    def max_position(self) -> int:
+        return PackagedWorkBasket.objects.aggregate(out=Max("position"))["out"]
+
 
 class PackagedWorkBasket(TimestampedMixin):
     """
@@ -242,6 +251,8 @@ class PackagedWorkBasket(TimestampedMixin):
         recycled.
         """
 
+        self.pop_top()
+
     @transition(
         field=processing_state,
         source=ProcessingState.CURRENTLY_PROCESSING,
@@ -309,34 +320,95 @@ class PackagedWorkBasket(TimestampedMixin):
         Management of the popped instance's `processing_state` is not altered by
         this function and should be managed separately by the caller.
         """
-        # TODO:
+
+        if self.position != 1:
+            raise PackagedWorkBasketInvalidQueueOperation(
+                "Unable to pop instance at position {self.position} in queue "
+                "because it is not at position 1.",
+            )
+
+        PackagedWorkBasket.objects.filter(position__gt=0).update(
+            position=F("position") - 1,
+        )
+
+        return self
+
+    @atomic
+    def remove_from_queue(self):
+        """
+        Remove instance from the queue, shuffling all successive queued
+        instances (with `state` AWAITING_PROCESSING) up one position.
+
+        Management of the queued instance's `processing_state` is not altered by
+        this function and should be managed separately by the caller.
+        """
+
+        if self.position == 0:
+            raise PackagedWorkBasketInvalidQueueOperation(
+                "Unable to remove instance with a position value of 0 from "
+                "queue because 0 indicates that it is not a queue member.",
+            )
+
+        current_position = self.position
+        self.position = 0
+        self.save()
+
+        PackagedWorkBasket.objects.filter(position__gt=current_position).update(
+            position=F("position") - 1,
+        )
+
         return self
 
     @atomic
     def promote_to_top_position(self):
         """Promote the instance to the top position of the package processing
         queue so that it occupies position 1."""
-        # TODO:
-        # * Bulk update on position col, set self=1 and decrement those between
-        #   position and 1.
+
+        if self.position == 1:
+            return self
+
+        position = self.position
+        self.position = 1
+        self.save()
+
+        PackagedWorkBasket.objects.filter(
+            Q(position__gte=1) & Q(position__lt=position),
+        ).update(position=F("position") + 1)
+
         return self
 
     @atomic
     def promote_position(self):
         """Promote the instance by one position up the package processing
         queue."""
-        # TODO:
-        # * Check current position and return if already in top position.
-        # * Bulk update on position col, swapping self and ahead.
+
+        if self.position == 1:
+            return
+
+        obj_to_swap = PackagedWorkBasket.objects.get(position=self.position - 1)
+        obj_to_swap.position += 1
+        self.position -= 1
+        PackagedWorkBasket.objects.bulk_update(
+            [self, obj_to_swap],
+            ["position"],
+        )
+
         return self
 
     @atomic
     def demote_position(self):
         """Demote the instance by one position down the package processing
         queue."""
-        # TODO:
-        # * Validate that the instance is queued / in the correct state
-        #   (UNREVIEWED_AWAITING_PROCESSING).
-        # * Check current position and return if already in last position.
-        # * Bulk update on position col, swapping self and behind.
+
+        if self.position == PackagedWorkBasket.objects.max_position():
+            return
+
+        obj_to_swap = PackagedWorkBasket.objects.get(position=self.position + 1)
+        obj_to_swap.position -= 1
+        self.position += 1
+        PackagedWorkBasket.objects.bulk_update(
+            [self, obj_to_swap],
+            ["position"],
+        )
+
         return self
