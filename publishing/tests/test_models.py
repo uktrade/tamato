@@ -47,5 +47,5 @@ def test_begin_processing_transition_invalid():
     TODO test failed conditions:
 
     begin_processing_condition_at_position_1()
-    begin_processing_condition_no_instances_active()
+    begin_processing_condition_no_instances_currently_processing()
     """

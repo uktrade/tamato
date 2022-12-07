@@ -35,8 +35,8 @@ class ProcessingState(TextChoices):
         "CURRENTLY_PROCESSING",
         "Currently processing",
     )
-    """Picked off the queue and now being actively processed - now attempting to
-    ingest envelope into CDS."""
+    """Picked off the queue and now currently being processed - now attempting
+    to ingest envelope into CDS."""
     SUCCESSFULLY_PROCESSED = (
         "SUCCESSFULLY_PROCESSED",
         "Successfully processed",
@@ -53,10 +53,6 @@ class ProcessingState(TextChoices):
     @classmethod
     def queued_states(cls):
         return (cls.AWAITING_PROCESSING,)
-
-    @classmethod
-    def active_states(cls):
-        return (cls.CURRENTLY_PROCESSING,)
 
     @classmethod
     def completed_processing_states(cls):
@@ -86,7 +82,8 @@ class PackagedWorkBasketManager(models.Manager):
         packaged_work_baskets = PackagedWorkBasket.objects.filter(
             workbasket=workbasket,
             processing_state__in=(
-                ProcessingState.queued_states() + ProcessingState.active_states()
+                ProcessingState.queued_states()
+                + (ProcessingState.CURRENTLY_PROCESSING,)
             ),
         )
         if packaged_work_baskets.exists():
@@ -217,14 +214,12 @@ class PackagedWorkBasket(TimestampedMixin):
 
         return self.position == 1
 
-    def begin_processing_condition_no_instances_active(self):
-        """Django FSM condition: No other instance is actively being processed
+    def begin_processing_condition_no_instances_currently_processing(self):
+        """Django FSM condition: No other instance is currently being processed
         in order to complete the begin_processing and transition this instance
         to CURRENTLY_PROCESSING."""
 
-        return not PackagedWorkBasket.objects.filter(
-            processing_state=ProcessingState.active_states(),
-        ).exists()
+        return not PackagedWorkBasket.objects.currently_processing()
 
     @transition(
         field=processing_state,
@@ -232,7 +227,7 @@ class PackagedWorkBasket(TimestampedMixin):
         target=ProcessingState.CURRENTLY_PROCESSING,
         conditions=[
             begin_processing_condition_at_position_1,
-            begin_processing_condition_no_instances_active,
+            begin_processing_condition_no_instances_currently_processing,
         ],
         custom={"label": "Begin processing"},
     )
