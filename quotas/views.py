@@ -1,3 +1,5 @@
+from datetime import date
+
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -13,7 +15,6 @@ from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricDeleteView
-from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
@@ -84,19 +85,16 @@ class QuotaList(QuotaMixin, TamatoListView):
     filterset_class = QuotaFilter
 
 
-class QuotaDetail(QuotaMixin, TrackedModelDetailView, WithCurrentWorkBasket):
+class QuotaDetail(QuotaMixin, TrackedModelDetailView):
     template_name = "quotas/detail.jinja"
 
     def get_context_data(self, *args, **kwargs):
-        latest_definition = (
-            self.object.definitions.approved_up_to_transaction(
-                self.workbasket.current_transaction,
-            )
-            .order_by("valid_between")
-            .last()
-        )
+        definitions = self.object.definitions.current()
+        current_definition = definitions.as_at(date.today()).first()
+        if not current_definition:
+            current_definition = definitions.not_yet_in_effect(date.today()).first()
         return super().get_context_data(
-            latest_definition=latest_definition, *args, **kwargs
+            current_definition=current_definition, *args, **kwargs
         )
 
 
