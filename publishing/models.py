@@ -75,6 +75,16 @@ class LoadingReport(TimestampedMixin):
     # TODO
 
 
+def save_after(func):
+    @atomic
+    def inner(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        self.save()
+        return result
+
+    return inner
+
+
 class PackagedWorkBasketManager(models.Manager):
     def create(self, workbasket, **kwargs):
         """Create a new instance, associating with workbasket."""
@@ -230,6 +240,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
         return not PackagedWorkBasket.objects.currently_processing()
 
+    @save_after
     @transition(
         field=processing_state,
         source=ProcessingState.AWAITING_PROCESSING,
@@ -247,29 +258,63 @@ class PackagedWorkBasket(TimestampedMixin):
         Only a single instance may have its `processing_state` set to
         CURRENTLY_PROCESSING. This is to avoid an otherwise intractable CDS
         envelope sequencing issue that results from a CDS contiguous envelope
-        numbering requirement that means CDS failed envelope IDs must be
-        recycled.
+        numbering requirement - CDS failed envelope IDs must be recycled and
+        therefore CDS envelope processing must complete to establish the correct
+        next envelope ID.
+
+        A successful transition also sets the instance's position to 0.
+
+        Because transitioning processing_state can update the position of
+        multiple instances it's necessary for this method to perform a save()
+        operation upon successful transitions.
         """
 
         self.pop_top()
 
+    @save_after
     @transition(
         field=processing_state,
         source=ProcessingState.CURRENTLY_PROCESSING,
-        target=ProcessingState.FAILED_PROCESSING,
+        target=ProcessingState.SUCCESSFULLY_PROCESSED,
         custom={"label": "Processing succeeded"},
     )
     def processing_succeeded(self):
         """Processing completed with a successful outcome."""
 
+    @save_after
     @transition(
         field=processing_state,
         source=ProcessingState.CURRENTLY_PROCESSING,
-        target=ProcessingState.SUCCESSFULLY_PROCESSED,
+        target=ProcessingState.FAILED_PROCESSING,
         custom={"label": "Processing failed"},
     )
     def processing_failed(self):
         """Processing completed with a failed outcome."""
+
+    @atomic
+    def refresh_from_db(self, using=None, fields=None):
+        """Reload instance from database but avoid writing to
+        self.processing_state directly in order to avoid the exception
+        'AttributeError: Direct processing_state modification is not allowed.'
+        """
+        if fields is None:
+            refresh_status = True
+            fields = [f.name for f in self._meta.concrete_fields]
+        else:
+            refresh_status = "processing_state" in fields
+
+        fields_without_status = [f for f in fields if f != "processing_state"]
+
+        super().refresh_from_db(using=using, fields=fields_without_status)
+
+        if refresh_status:
+            fresh_status = (
+                type(self)
+                .objects.only("processing_state")
+                .get(pk=self.pk)
+                .processing_state
+            )
+            self._meta.get_field("processing_state").set_state(self, fresh_status)
 
     # Notification management.
     """
@@ -330,6 +375,7 @@ class PackagedWorkBasket(TimestampedMixin):
         PackagedWorkBasket.objects.filter(position__gt=0).update(
             position=F("position") - 1,
         )
+        self.refresh_from_db()
 
         return self
 
@@ -356,6 +402,7 @@ class PackagedWorkBasket(TimestampedMixin):
         PackagedWorkBasket.objects.filter(position__gt=current_position).update(
             position=F("position") - 1,
         )
+        self.refresh_from_db()
 
         return self
 
@@ -374,6 +421,7 @@ class PackagedWorkBasket(TimestampedMixin):
         PackagedWorkBasket.objects.filter(
             Q(position__gte=1) & Q(position__lt=position),
         ).update(position=F("position") + 1)
+        self.refresh_from_db()
 
         return self
 
@@ -392,6 +440,7 @@ class PackagedWorkBasket(TimestampedMixin):
             [self, obj_to_swap],
             ["position"],
         )
+        self.refresh_from_db()
 
         return self
 
@@ -410,5 +459,6 @@ class PackagedWorkBasket(TimestampedMixin):
             [self, obj_to_swap],
             ["position"],
         )
+        self.refresh_from_db()
 
         return self
