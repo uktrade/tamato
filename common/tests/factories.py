@@ -1225,6 +1225,13 @@ class NotificationLogFactory(factory.django.DjangoModelFactory):
     recipients = factory.Faker("text", max_nb_chars=24)
 
 
+class LoadingReportFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "publishing.LoadingReport"
+
+    comments = short_description()
+
+
 class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
     """Creates a PackagedWorkBasket instance associated with an approved
     WorkBasket."""
@@ -1235,3 +1242,4 @@ class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
     workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
     theme = string_sequence(length=50)
     jira_url = "www.fakejiraticket.com"
+    loading_report = factory.SubFactory(LoadingReportFactory)

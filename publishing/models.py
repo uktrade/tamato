@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Max
@@ -8,8 +11,11 @@ from django.db.models.functions import Coalesce
 from django.db.transaction import atomic
 from django_fsm import FSMField
 from django_fsm import transition
+from notifications_python_client import prepare_upload
 
 from common.models.mixins import TimestampedMixin
+from notifications.tasks import send_emails
+from publishing.storages import LoadingReportStorage
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
@@ -66,11 +72,17 @@ class ProcessingState(TextChoices):
         )
 
 
+def report_bucket(instance: "Upload", filename: str):
+    """Generate the filepath to upload to loading report bucket."""
+    return str(Path(settings.LOADING_REPORTS_STORAGE_DIRECTORY) / filename)
+
+
 class LoadingReport(TimestampedMixin):
     """Reported associated with an attempt to load (process) a
     PackagedWorkBasket instance."""
 
-    # TODO
+    file = models.FileField(storage=LoadingReportStorage, upload_to=report_bucket)
+    comments = models.TextField(blank=True)
 
 
 class PackagedWorkBasketManager(models.Manager):
@@ -197,8 +209,6 @@ class PackagedWorkBasket(TimestampedMixin):
     )
     eif = models.DateField(null=True, blank=True)
     """The enter into force date determines when changes should go live in CDS. A file will need to be ingested by CDS on the day before this. If left, blank CDS will ingest the file immediately."""
-    embargo = models.DateField(null=True, blank=True)
-    """The date until which CDS prevents envelope from being displayed after ingestion."""
     jira_url = models.URLField()
     """URL linking the packaged workbasket with a ticket on the Tariff Operations (TOPS) project's Jira board."""
 
@@ -269,13 +279,39 @@ class PackagedWorkBasket(TimestampedMixin):
     """
 
     def notify_ready_for_processing(self):
-        """TODO."""
+        personalisation = {
+            "envelope_id": self.envelope.envelope_id,
+            "theme": self.theme,
+            "eif": self.eif if self.eif else "Immediately",
+            "jira_url": self.jira_url,
+        }
+        send_emails.delay(
+            template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
+            personalisation=personalisation,
+        )
 
     def notify_processing_succeeded(self):
-        """TODO."""
+        f = self.loading_report.file.open("rb")
+        personalisation = {
+            "envelope_id": self.envelope.envelope_id,
+            "transaction_count": self.workbasket.transactions.count(),
+            "link_to_file": prepare_upload(f),
+        }
+        send_emails.delay(
+            template_id=settings.CDS_ACCEPTED_TEMPLATE_ID,
+            personalisation=personalisation,
+        )
 
     def notify_processing_failed(self):
-        """TODO."""
+        f = self.loading_report.file.open("rb")
+        personalisation = {
+            "envelope_id": self.envelope.envelope_id,
+            "link_to_file": prepare_upload(f),
+        }
+        send_emails.delay(
+            template_id=settings.CDS_REJECTED_TEMPLATE_ID,
+            personalisation=personalisation,
+        )
 
     # Queue management.
 

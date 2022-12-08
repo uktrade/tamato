@@ -307,6 +307,16 @@ TIME_ZONE = "Europe/London"
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
 
+# Loading reports AWS settings
+LOADING_REPORTS_BUCKET_NAME = os.environ.get(
+    "LOADING_REPORTS_BUCKET_NAME",
+    "loading_reports",
+)
+LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
+    "LOADING_REPORTS_STORAGE_DIRECTORY",
+    "loading_reports/",
+)
+
 # SQLite AWS settings
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
 SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
@@ -542,3 +552,7 @@ MEASURES_PAGINATOR_MAX_COUNT = int(
 
 # key used to instantiate GOVUK Notify python client
 NOTIFICATIONS_API_KEY = os.environ.get("NOTIFICATIONS_API_KEY")
+
+READY_FOR_CDS_TEMPLATE_ID = os.environ.get("READY_FOR_CDS_TEMPLATE_ID")
+CDS_ACCEPTED_TEMPLATE_ID = os.environ.get("CDS_ACCEPTED_TEMPLATE_ID")
+CDS_REJECTED_TEMPLATE_ID = os.environ.get("CDS_REJECTED_TEMPLATE_ID")
