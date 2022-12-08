@@ -6,6 +6,7 @@
 {% set find_edit_url = url("quota-ui-list") %}
 
 {% set core_data_tab_html %}{% include "includes/quotas/tabs/core_data.jinja" %}{% endset %}
+{% set version_control_tab_html %}{% include "includes/quotas/tabs/version_control.jinja" %}{% endset %}
 
 {% set tabs = {
     "items": [
@@ -15,7 +16,14 @@
         "panel": {
           "html": core_data_tab_html
         }
-      }
+      },
+      {
+        "label": "Version control",
+        "id": "versions",
+        "panel": {
+          "html": version_control_tab_html
+        }
+      },
     ]
   }%}
 
