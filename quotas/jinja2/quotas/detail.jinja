@@ -2,19 +2,27 @@
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set page_title = "Quota: " ~ object.order_number %}
+{% set page_title = "Quota ID: " ~ object.order_number %}
 {% set find_edit_url = url("quota-ui-list") %}
 
 {% set core_data_tab_html %}{% include "includes/quotas/tabs/core_data.jinja" %}{% endset %}
+{% set definition_details_html %}{% include "includes/quotas/tabs/definition_details.jinja" %}{% endset %}
 {% set version_control_tab_html %}{% include "includes/quotas/tabs/version_control.jinja" %}{% endset %}
 
 {% set tabs = {
     "items": [
       {
-        "label": "Details",
+        "label": "Order number details",
         "id": "core-data",
         "panel": {
           "html": core_data_tab_html
+        }
+      },
+      {
+        "label": "Definition details",
+        "id": "definition-details",
+        "panel": {
+          "html": definition_details_html
         }
       },
       {
@@ -23,7 +31,7 @@
         "panel": {
           "html": version_control_tab_html
         }
-      },
+      }
     ]
   }%}
 
