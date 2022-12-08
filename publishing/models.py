@@ -279,7 +279,13 @@ class PackagedWorkBasket(TimestampedMixin):
         custom={"label": "Processing succeeded"},
     )
     def processing_succeeded(self):
-        """Processing completed with a successful outcome."""
+        """
+        Processing completed with a successful outcome.
+
+        Because transitioning processing_state can update the position of
+        multiple instances it's necessary for this method to perform a save()
+        operation upon successful transitions.
+        """
 
     @save_after
     @transition(
@@ -289,7 +295,13 @@ class PackagedWorkBasket(TimestampedMixin):
         custom={"label": "Processing failed"},
     )
     def processing_failed(self):
-        """Processing completed with a failed outcome."""
+        """
+        Processing completed with a failed outcome.
+
+        Because transitioning processing_state can update the position of
+        multiple instances it's necessary for this method to perform a save()
+        operation upon successful transitions.
+        """
 
     @atomic
     def refresh_from_db(self, using=None, fields=None):
@@ -415,13 +427,13 @@ class PackagedWorkBasket(TimestampedMixin):
             return self
 
         position = self.position
-        self.position = 1
-        self.save()
 
         PackagedWorkBasket.objects.filter(
             Q(position__gte=1) & Q(position__lt=position),
         ).update(position=F("position") + 1)
-        self.refresh_from_db()
+
+        self.position = 1
+        self.save()
 
         return self
 

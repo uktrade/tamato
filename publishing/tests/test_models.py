@@ -99,3 +99,47 @@ def test_begin_processing_transition_invalid_start_state():
     )
     with pytest.raises(TransitionNotAllowed):
         next_packaged_work_basket.begin_processing()
+
+
+def test_remove_from_queue():
+    packaged_work_basket = factories.PackagedWorkBasketFactory()
+    assert packaged_work_basket.position > 0
+
+    packaged_work_basket.remove_from_queue()
+    assert packaged_work_basket.position == 0
+
+
+def test_promote_to_top_position():
+    factories.PackagedWorkBasketFactory()
+    factories.PackagedWorkBasketFactory()
+
+    packaged_work_basket = PackagedWorkBasket.objects.last()
+    assert packaged_work_basket.position == PackagedWorkBasket.objects.max_position()
+
+    packaged_work_basket.promote_to_top_position()
+    assert packaged_work_basket.position == 1
+    assert PackagedWorkBasket.objects.filter(position=1).count() == 1
+
+
+def test_promote_position():
+    factories.PackagedWorkBasketFactory()
+    factories.PackagedWorkBasketFactory()
+
+    initially_first = PackagedWorkBasket.objects.get(position=1)
+    initially_second = PackagedWorkBasket.objects.get(position=2)
+    initially_second.promote_position()
+    initially_first.refresh_from_db()
+    assert initially_first.position == 2
+    assert initially_second.position == 1
+
+
+def test_demote_position():
+    factories.PackagedWorkBasketFactory()
+    factories.PackagedWorkBasketFactory()
+
+    initially_first = PackagedWorkBasket.objects.get(position=1)
+    initially_second = PackagedWorkBasket.objects.get(position=2)
+    initially_first.demote_position()
+    initially_second.refresh_from_db()
+    assert initially_first.position == 2
+    assert initially_second.position == 1
