@@ -4,7 +4,7 @@
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
-{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Review changes{% endset %}
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Review measures{% endset %}
 {% set page_subtitle %}<span class="govuk-!-font-weight-bold">Summary</span> - View workbasket components{% endset %}
 
 {% block breadcrumb %}
@@ -12,7 +12,7 @@
       "items": [
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Review changes" }
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Review measures" }
     ]})
   }}
 {% endblock %}
@@ -27,13 +27,15 @@
 {{ navigation(request, "review") }}
 
 <div class="govuk-!-margin-top-5">
-  {% if paginator.count > 0 %}
-    <p class="govuk-body">There are {{ paginator.count }} measures to review.</p>
+  {% if paginator.count == 1 %}
+    <p class="govuk-body">{{ paginator.count }} measure available to review.</p>
+  {% elif paginator.count > 1 %}
+    <p class="govuk-body">{{ paginator.count }} measures available to review.</p>
   {% endif %}
   {% if object_list %}
     {% include "includes/measures/workbasket-measures.jinja" %}
   {% else %}
-    <p class="govuk-body">There are no measures in this workbasket.</p>
+    <p class="govuk-body">0 measures available to review.</p>
   {% endif %}
   {% include "includes/common/pagination.jinja" %}
 </div>
