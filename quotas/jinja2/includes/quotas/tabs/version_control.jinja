@@ -9,7 +9,6 @@
     {"text": object.transaction.workbasket.get_status_display()},
     {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
     {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
-    {"text": object.get_description().description},
   ]) or "" }}
 {% endfor %}
 {{ govukTable({
@@ -19,7 +18,6 @@
     {"text": "Status"},
     {"text": "Start date"},
     {"text": "End date"},
-    {"text": "Description", "classes": "govuk-!-width-one-half"}
   ],
   "rows": table_rows
 }) }}
