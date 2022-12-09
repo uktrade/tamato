@@ -27,15 +27,9 @@
 {{ navigation(request, "review") }}
 
 <div class="govuk-!-margin-top-5">
-  {% if paginator.count == 1 %}
-    <p class="govuk-body">{{ paginator.count }} measure available to review.</p>
-  {% elif paginator.count > 1 %}
-    <p class="govuk-body">{{ paginator.count }} measures available to review.</p>
-  {% endif %}
+  <p class="govuk-body">{{ paginator.count }} measure{{ paginator.count|pluralize }} available to review.</p>
   {% if object_list %}
     {% include "includes/measures/workbasket-measures.jinja" %}
-  {% else %}
-    <p class="govuk-body">0 measures available to review.</p>
   {% endif %}
   {% include "includes/common/pagination.jinja" %}
 </div>
