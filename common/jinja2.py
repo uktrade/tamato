@@ -113,6 +113,7 @@ def environment(**kwargs):
     env.filters.update(
         {
             "localtime": template_localtime,
+            "pluralize": pluralize,
         },
     )
     env.globals.update(
