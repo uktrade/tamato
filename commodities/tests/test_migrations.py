@@ -21,24 +21,34 @@ def test_main_migration_works(migrator):
         "commodities",
         "GoodsNomenclatureDescription",
     )
-    GoodsNomenclature = old_state.apps.get_model("commodities", "GoodsNomenclature")
+    GoodsNomenclature = old_state.apps.get_model("commodities",
+                                                 "GoodsNomenclature")
     Transaction = old_state.apps.get_model("common", "Transaction")
     Workbasket = old_state.apps.get_model("workbaskets", "WorkBasket")
     VersionGroup = old_state.apps.get_model("common", "VersionGroup")
 
     ApprovedWorkBasketFactory.create().save()
-    workbasket = Workbasket.objects.last()
+    workbasket = Workbasket.objects.create(id=238, author_id=1)
     new_transaction = Transaction.objects.create(
         workbasket=workbasket,
-        order=99,
+        order=Transaction.objects.order_by("order").last().order + 1,
     )
 
-    GoodsNomenclature.objects.create(
+    gn_older_version = GoodsNomenclature.objects.create(
         update_type=UpdateType.CREATE,
         transaction=new_transaction,
         version_group=VersionGroup.objects.create(),
         valid_between=TaricDateRange(datetime.date(2020, 1, 6)),
         statistical=False,
+    ).save()
+
+    gn_current_version = GoodsNomenclature.objects.create(
+        update_type=UpdateType.CREATE,
+        transaction=new_transaction,
+        version_group=VersionGroup.objects.create(),
+        valid_between=TaricDateRange(datetime.date(2020, 1, 6)),
+        statistical=False,
+        trackedmodel_ptr_id=10008944,
     ).save()
 
     gnd = GoodsNomenclatureDescription.objects.create(
@@ -63,8 +73,10 @@ def test_main_migration_works(migrator):
         "commodities",
         "GoodsNomenclatureDescription",
     )
+    current_version_id = GoodsNomenclatureDescription.objects.get(
+        trackedmodel_ptr_id=10008934).version_group.current_version_id
     assert GoodsNomenclatureDescription.objects.get(
-        trackedmodel_ptr_id=10008934,
+        trackedmodel_ptr_id=current_version_id,
     ).validity_start == datetime.date(
         2022,
         1,
