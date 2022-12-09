@@ -7,6 +7,7 @@
 
 {% set core_data_tab_html %}{% include "includes/quotas/tabs/core_data.jinja" %}{% endset %}
 {% set definition_details_html %}{% include "includes/quotas/tabs/definition_details.jinja" %}{% endset %}
+{% set version_control_tab_html %}{% include "includes/quotas/tabs/version_control.jinja" %}{% endset %}
 
 {% set tabs = {
     "items": [
@@ -22,6 +23,13 @@
         "id": "definition-details",
         "panel": {
           "html": definition_details_html
+        }
+      },
+      {
+        "label": "Version control",
+        "id": "versions",
+        "panel": {
+          "html": version_control_tab_html
         }
       }
     ]
