@@ -278,6 +278,16 @@ def goods_xml_element_tree():
 
 
 @pytest.fixture
+def goods_description_only_update_xml_as_text():
+    src = os.path.join(
+        get_project_root(),
+        "importer/tests/test_files/goods_description_only_update.xml",
+    )
+    xml_text = open(src).read()
+    return xml_text
+
+
+@pytest.fixture
 def goods_indents_xml_element_tree():
     src = os.path.join(
         get_project_root(),

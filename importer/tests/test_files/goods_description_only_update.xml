@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope id="220001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+    <env:transaction id="19282658">
+        <env:app.message id="1">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19774475</oub:transaction.id>
+                    <oub:record.code>400</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>197</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:goods.nomenclature.description>
+                        <oub:goods.nomenclature.description.period.sid>143415
+                        </oub:goods.nomenclature.description.period.sid>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:goods.nomenclature.sid>103510</oub:goods.nomenclature.sid>
+                        <oub:goods.nomenclature.item.id>0306129091</oub:goods.nomenclature.item.id>
+                        <oub:productline.suffix>80</oub:productline.suffix>
+                        <oub:description>A new description</oub:description>
+                    </oub:goods.nomenclature.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>
