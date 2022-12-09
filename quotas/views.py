@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.views.generic.list import ListView
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -96,6 +97,21 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
         return super().get_context_data(
             current_definition=current_definition, *args, **kwargs
         )
+
+
+class QuotaDefinitions(ListView):
+    template_name = "quotas/definitions.jinja"
+    model = models.QuotaDefinition
+
+    def get_queryset(self):
+        return models.QuotaDefinition.objects.filter(order_number=self.quota)
+
+    @property
+    def quota(self):
+        return models.QuotaOrderNumber.objects.get(sid=self.kwargs["sid"])
+
+    def get_context_data(self, *args, **kwargs):
+        return super().get_context_data(quota=self.quota, *args, **kwargs)
 
 
 class QuotaDelete(QuotaMixin, TrackedModelDetailMixin, CreateTaricDeleteView):
