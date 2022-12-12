@@ -20,6 +20,11 @@ ui_patterns = [
         name="measure-ui-create",
     ),
     path(
+        "delete-multiple-measures/",
+        views.MeasureMultipleDelete.as_view(),
+        name="measure-ui-delete-multiple",
+    ),
+    path(
         "create/<step>/",
         views.MeasureCreateWizard.as_view(
             url_name="measure-ui-create",

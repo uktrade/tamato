@@ -71,3 +71,18 @@ def test_app_info(valid_user_client):
 
     page = BeautifulSoup(str(response.content), "html.parser")
     assert "Active business rule checks" in page.select("h2")[0].text
+
+
+def test_index_displays_footer_links(valid_user_client):
+    response = valid_user_client.get(reverse("home"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    a_tags = page.select("footer a")
+
+    assert "Privacy policy" in a_tags[0].text
+    assert (
+        a_tags[0].attrs["href"]
+        == "https://workspace.trade.gov.uk/working-at-dit/policies-and-guidance/policies/tariff-application-privacy-policy/"
+    )
