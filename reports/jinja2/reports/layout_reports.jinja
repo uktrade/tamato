@@ -1,0 +1,11 @@
+{% extends "layouts/layout.jinja" %}
+
+{% set page_title = report.name %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {'text': "Reports Index", "href": '/reports'},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}

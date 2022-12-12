@@ -32,6 +32,7 @@ urlpatterns = [
     path("", include("publishing.urls")),
     path("", include("quotas.urls")),
     path("", include("regulations.urls")),
+    path("", include("reports.urls")),
     path("", include("workbaskets.urls", namespace="workbaskets")),
     path("admin/", admin.site.urls),
 ]

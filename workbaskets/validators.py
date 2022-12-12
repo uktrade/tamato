@@ -1,4 +1,10 @@
+from django.core.validators import RegexValidator
 from django.db import models
+
+tops_jira_number_validator = RegexValidator(
+    r"^[0-9]+$",
+    message="Your TOPS/Jira number must only include numbers. You do not need to add ‘TOPS’ or ‘Jira’ in front of the number.",
+)
 
 
 class WorkflowStatus(models.TextChoices):

@@ -419,6 +419,17 @@ class WorkBasket(TimestampedMixin):
     @transition(
         field=status,
         source=WorkflowStatus.APPROVED,
+        target=WorkflowStatus.EDITING,
+        custom={"label": "Restore an approved workbasket to an in use state."},
+    )
+    def unapprove(self):
+        """A workbasket that has not yet been sent to CDS requires further
+        changes to be added."""
+        self.transactions.move_to_draft()
+
+    @transition(
+        field=status,
+        source=WorkflowStatus.APPROVED,
         target=WorkflowStatus.SENT,
         custom={"label": "Send to HMRC"},
     )

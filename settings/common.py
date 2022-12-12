@@ -40,6 +40,9 @@ MEDIA_ROOT = join(BASE_DIR, "run", "uploads")
 STATICFILES_DIRS = [
     join(BASE_DIR, "static"),
     join(BASE_DIR, "node_modules", "govuk-frontend", "govuk", "assets"),
+    join(BASE_DIR, "node_modules", "chart.js", "dist"),
+    join(BASE_DIR, "node_modules", "moment", "min"),
+    join(BASE_DIR, "node_modules", "chartjs-adapter-moment", "dist"),
 ]
 
 STATICFILES_FINDERS = [
@@ -96,6 +99,7 @@ DOMAIN_APPS = [
     "geo_areas.apps.GeoAreasConfig",
     "measures.apps.MeasuresConfig",
     "quotas.apps.QuotasConfig",
+    "reports.apps.ReportsConfig",
     "regulations.apps.RegulationsConfig",
 ]
 
