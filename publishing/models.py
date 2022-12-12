@@ -316,7 +316,13 @@ class PackagedWorkBasket(TimestampedMixin):
         custom={"label": "Abandon"},
     )
     def abandon(self):
-        """Abandon an instance before any processing attempt has been made."""
+        """
+        Abandon an instance before any processing attempt has been made.
+
+        Because transitioning processing_state can update the position of
+        multiple instances it's necessary for this method to perform a save()
+        operation upon successful transitions.
+        """
 
         self.remove_from_queue()
 
