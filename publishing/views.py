@@ -22,7 +22,8 @@ class PackagedWorkbasketQueueView(
         processed, as displayed on this view."""
         return PackagedWorkBasket.objects.filter(
             processing_state__in=(
-                ProcessingState.queued_states() + ProcessingState.active_states()
+                ProcessingState.queued_states()
+                + (ProcessingState.CURRENTLY_PROCESSING,)
             ),
         )
 

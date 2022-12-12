@@ -1,6 +1,8 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import F
 from django.db.models import Max
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import TextChoices
 from django.db.models import Value
@@ -15,11 +17,15 @@ from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 
+class PackagedWorkBasketDuplication(Exception):
+    pass
+
+
 class PackagedWorkBasketInvalidCheckStatus(Exception):
     pass
 
 
-class PackagedWorkBasketDuplication(Exception):
+class PackagedWorkBasketInvalidQueueOperation(Exception):
     pass
 
 
@@ -35,8 +41,8 @@ class ProcessingState(TextChoices):
         "CURRENTLY_PROCESSING",
         "Currently processing",
     )
-    """Picked off the queue and now being actively processed - now attempting to
-    ingest envelope into CDS."""
+    """Picked off the queue and now currently being processed - now attempting
+    to ingest envelope into CDS."""
     SUCCESSFULLY_PROCESSED = (
         "SUCCESSFULLY_PROCESSED",
         "Successfully processed",
@@ -49,14 +55,15 @@ class ProcessingState(TextChoices):
     )
     """Processing now completed with a failure outcome - CDS rejected the
     envelope."""
+    ABANDONED = (
+        "ABANDONED",
+        "Abandoned",
+    )
+    """Processing has been abandoned."""
 
     @classmethod
     def queued_states(cls):
         return (cls.AWAITING_PROCESSING,)
-
-    @classmethod
-    def active_states(cls):
-        return (cls.CURRENTLY_PROCESSING,)
 
     @classmethod
     def completed_processing_states(cls):
@@ -73,6 +80,16 @@ class LoadingReport(TimestampedMixin):
     # TODO
 
 
+def save_after(func):
+    @atomic
+    def inner(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        self.save()
+        return result
+
+    return inner
+
+
 class PackagedWorkBasketManager(models.Manager):
     def create(self, workbasket, **kwargs):
         """Create a new instance, associating with workbasket."""
@@ -86,7 +103,8 @@ class PackagedWorkBasketManager(models.Manager):
         packaged_work_baskets = PackagedWorkBasket.objects.filter(
             workbasket=workbasket,
             processing_state__in=(
-                ProcessingState.queued_states() + ProcessingState.active_states()
+                ProcessingState.queued_states()
+                + (ProcessingState.CURRENTLY_PROCESSING,)
             ),
         )
         if packaged_work_baskets.exists():
@@ -136,6 +154,9 @@ class PackagedWorkBasketQuerySet(QuerySet):
         return self.filter(
             processing_state__in=ProcessingState.completed_processing_states(),
         )
+
+    def max_position(self) -> int:
+        return PackagedWorkBasket.objects.aggregate(out=Max("position"))["out"]
 
 
 class PackagedWorkBasket(TimestampedMixin):
@@ -196,48 +217,139 @@ class PackagedWorkBasket(TimestampedMixin):
         blank=True,
     )
     eif = models.DateField(null=True, blank=True)
-    """The enter into force date determines when changes should go live in CDS. A file will need to be ingested by CDS on the day before this. If left, blank CDS will ingest the file immediately."""
+    """The enter into force date determines when changes should go live in CDS.
+    A file will need to be ingested by CDS on the day before this. If left,
+    blank CDS will ingest the file immediately.
+    """
     embargo = models.DateField(null=True, blank=True)
-    """The date until which CDS prevents envelope from being displayed after ingestion."""
+    """The date until which CDS prevents envelope from being displayed after
+    ingestion.
+    """
     jira_url = models.URLField()
-    """URL linking the packaged workbasket with a ticket on the Tariff Operations (TOPS) project's Jira board."""
+    """URL linking the packaged workbasket with a ticket on the Tariff
+    Operations (TOPS) project's Jira board.
+    """
 
     # processing_state transition management.
 
+    def begin_processing_condition_at_position_1(self):
+        """Django FSM condition: Instance must be at position 1 in order to
+        complete the begin_processing transition to CURRENTLY_PROCESSING."""
+
+        return self.position == 1
+
+    def begin_processing_condition_no_instances_currently_processing(self):
+        """Django FSM condition: No other instance is currently being processed
+        in order to complete the begin_processing and transition this instance
+        to CURRENTLY_PROCESSING."""
+
+        return not PackagedWorkBasket.objects.currently_processing()
+
+    @save_after
     @transition(
         field=processing_state,
         source=ProcessingState.AWAITING_PROCESSING,
         target=ProcessingState.CURRENTLY_PROCESSING,
+        conditions=[
+            begin_processing_condition_at_position_1,
+            begin_processing_condition_no_instances_currently_processing,
+        ],
         custom={"label": "Begin processing"},
     )
     def begin_processing(self):
-        """Start processing a PackagedWorkBasket."""
-        # TODO:
-        # * Prevent processing anything other the instance in the top position,
-        #   1.
-        # * Guard against attempts to process more than one instance at any
-        #   one time. This avoids an otherwise intractable CDS envelope
-        #   sequencing issue that results from a contiguous envelope numbering
-        #   requirement, while also supporting envelope ingestion failure since
-        #   their envelope IDs become invalid and must be recycled.
+        """
+        Start processing a PackagedWorkBasket.
 
-    @transition(
-        field=processing_state,
-        source=ProcessingState.CURRENTLY_PROCESSING,
-        target=ProcessingState.FAILED_PROCESSING,
-        custom={"label": "Processing succeeded"},
-    )
-    def processing_succeeded(self):
-        """Processing completed with a successful outcome."""
+        Only a single instance may have its `processing_state` set to
+        CURRENTLY_PROCESSING. This is to avoid an otherwise intractable CDS
+        envelope sequencing issue that results from a CDS contiguous envelope
+        numbering requirement - CDS failed envelope IDs must be recycled and
+        therefore CDS envelope processing must complete to establish the correct
+        next envelope ID.
 
+        A successful transition also sets the instance's position to 0.
+
+        Because transitioning processing_state can update the position of
+        multiple instances it's necessary for this method to perform a save()
+        operation upon successful transitions.
+        """
+
+        self.pop_top()
+
+    @save_after
     @transition(
         field=processing_state,
         source=ProcessingState.CURRENTLY_PROCESSING,
         target=ProcessingState.SUCCESSFULLY_PROCESSED,
+        custom={"label": "Processing succeeded"},
+    )
+    def processing_succeeded(self):
+        """
+        Processing completed with a successful outcome.
+
+        Because transitioning processing_state can update the position of
+        multiple instances it's necessary for this method to perform a save()
+        operation upon successful transitions.
+        """
+
+    @save_after
+    @transition(
+        field=processing_state,
+        source=ProcessingState.CURRENTLY_PROCESSING,
+        target=ProcessingState.FAILED_PROCESSING,
         custom={"label": "Processing failed"},
     )
     def processing_failed(self):
-        """Processing completed with a failed outcome."""
+        """
+        Processing completed with a failed outcome.
+
+        Because transitioning processing_state can update the position of
+        multiple instances it's necessary for this method to perform a save()
+        operation upon successful transitions.
+        """
+
+    @save_after
+    @transition(
+        field=processing_state,
+        source=ProcessingState.AWAITING_PROCESSING,
+        target=ProcessingState.ABANDONED,
+        custom={"label": "Abandon"},
+    )
+    def abandon(self):
+        """
+        Abandon an instance before any processing attempt has been made.
+
+        Because transitioning processing_state can update the position of
+        multiple instances it's necessary for this method to perform a save()
+        operation upon successful transitions.
+        """
+
+        self.remove_from_queue()
+
+    @atomic
+    def refresh_from_db(self, using=None, fields=None):
+        """Reload instance from database but avoid writing to
+        self.processing_state directly in order to avoid the exception
+        'AttributeError: Direct processing_state modification is not allowed.'
+        """
+        if fields is None:
+            refresh_state = True
+            fields = [f.name for f in self._meta.concrete_fields]
+        else:
+            refresh_state = "processing_state" in fields
+
+        fields_without_state = [f for f in fields if f != "processing_state"]
+
+        super().refresh_from_db(using=using, fields=fields_without_state)
+
+        if refresh_state:
+            new_state = (
+                type(self)
+                .objects.only("processing_state")
+                .get(pk=self.pk)
+                .processing_state
+            )
+            self._meta.get_field("processing_state").set_state(self, new_state)
 
     # Notification management.
     """
@@ -288,34 +400,100 @@ class PackagedWorkBasket(TimestampedMixin):
         Management of the popped instance's `processing_state` is not altered by
         this function and should be managed separately by the caller.
         """
-        # TODO:
+
+        if self.position != 1:
+            raise PackagedWorkBasketInvalidQueueOperation(
+                "Unable to pop instance at position {self.position} in queue "
+                "because it is not at position 1.",
+            )
+
+        PackagedWorkBasket.objects.filter(position__gt=0).update(
+            position=F("position") - 1,
+        )
+        self.refresh_from_db()
+
+        return self
+
+    @atomic
+    def remove_from_queue(self):
+        """
+        Remove instance from the queue, shuffling all successive queued
+        instances (with `state` AWAITING_PROCESSING) up one position.
+
+        Management of the queued instance's `processing_state` is not altered by
+        this function and should be managed separately by the caller.
+        """
+
+        if self.position == 0:
+            raise PackagedWorkBasketInvalidQueueOperation(
+                "Unable to remove instance with a position value of 0 from "
+                "queue because 0 indicates that it is not a queue member.",
+            )
+
+        current_position = self.position
+        self.position = 0
+        self.save()
+
+        PackagedWorkBasket.objects.filter(position__gt=current_position).update(
+            position=F("position") - 1,
+        )
+        self.refresh_from_db()
+
         return self
 
     @atomic
     def promote_to_top_position(self):
         """Promote the instance to the top position of the package processing
         queue so that it occupies position 1."""
-        # TODO:
-        # * Bulk update on position col, set self=1 and decrement those between
-        #   position and 1.
+
+        if self.position == 1:
+            return self
+
+        position = self.position
+
+        PackagedWorkBasket.objects.filter(
+            Q(position__gte=1) & Q(position__lt=position),
+        ).update(position=F("position") + 1)
+
+        self.position = 1
+        self.save()
+
         return self
 
     @atomic
     def promote_position(self):
         """Promote the instance by one position up the package processing
         queue."""
-        # TODO:
-        # * Check current position and return if already in top position.
-        # * Bulk update on position col, swapping self and ahead.
+
+        if self.position == 1:
+            return
+
+        obj_to_swap = PackagedWorkBasket.objects.get(position=self.position - 1)
+        obj_to_swap.position += 1
+        self.position -= 1
+        PackagedWorkBasket.objects.bulk_update(
+            [self, obj_to_swap],
+            ["position"],
+        )
+        self.refresh_from_db()
+
         return self
 
     @atomic
     def demote_position(self):
         """Demote the instance by one position down the package processing
         queue."""
-        # TODO:
-        # * Validate that the instance is queued / in the correct state
-        #   (UNREVIEWED_AWAITING_PROCESSING).
-        # * Check current position and return if already in last position.
-        # * Bulk update on position col, swapping self and behind.
+
+        if self.position == PackagedWorkBasket.objects.max_position():
+            return
+
+        obj_to_swap = PackagedWorkBasket.objects.get(position=self.position + 1)
+        obj_to_swap.position -= 1
+        self.position += 1
+        PackagedWorkBasket.objects.bulk_update(
+            [self, obj_to_swap],
+            ["position"],
+        )
+        self.refresh_from_db()
+
         return self

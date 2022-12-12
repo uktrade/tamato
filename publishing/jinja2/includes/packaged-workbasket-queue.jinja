@@ -6,14 +6,41 @@
 
 {% for obj in object_list %}
 
+  {%- set order_cell_content %}
+    {# TODO: move into view function / context. #}
+    {% if obj.processing_state == "CURRENTLY_PROCESSING" %}
+      <span class="tamato-badge-light-purple">CDS DOWNLOADED</span>
+    {% elif obj.processing_state == "AWAITING_PROCESSING" and obj.position == 1 %}
+      {# TODO: check notification status of instance. #}
+      <span class="tamato-badge-light-green">CDS NOTIFIED</span>
+    {% elif obj.position == 2 %}
+      {# TODO: Correctly implement conditional move down. #}
+      <a href="#">Move down</a>
+    {% else %}
+      <a href="#">Move to top to notify CDS</a>
+    {% endif %}
+  {% endset -%}
+
+  {%- set up_down_cell_content %}
+    {# TODO: move into view function / context. #}
+    {# TODO: Turn into POST submits. #}
+    {% if loop.index == 1 %}
+      <img class="icon icon-waiting" src="{{ static('/common/images/incomplete-circle.svg') }}">
+    {% else %}
+      <img class="icon icon-up" src="{{ static('/common/images/chevron-up.svg') }}">
+      <img class="icon icon-down" src="{{ static('/common/images/chevron-down.svg') }}">
+    {% endif %}
+  {% endset -%}
+
   {{ table_rows.append([
-    {"html": "<span>TODO</span>"},
+    {"html": up_down_cell_content},
     {"html": "<a href=\"" ~ url("workbaskets:workbasket-ui-changes", args=(obj.workbasket.pk,)) ~ "\" class=\"govuk-link\">" ~ obj.workbasket.pk ~ "</a>"},
     {"html": "<a href=\"#\" class=\"govuk-link\">" ~ obj.workbasket.title ~ "</a>"},
     {"html": "<span>" ~ obj.workbasket.reason ~ "</span>"},
-    {"html": "<a href=\"#\" class=\"govuk-link\">Move to top of queue</a>"},
+    {"html": order_cell_content},
     {"html": "<a href=\"#\" class=\"govuk-link\">Remove from queue</a>"},
   ]) or "" }}
+
 {% endfor %}
 
 {{ govukTable({
@@ -25,5 +52,6 @@
     {"text": "Order"},
     {"text": "Remove"},
   ],
-  "rows": table_rows
+  "rows": table_rows,
+  "classes": "packaged-workbaskets first-row-highlight",
 }) }}
