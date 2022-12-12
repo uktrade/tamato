@@ -344,4 +344,7 @@ class SortingMixin:
             if order == "desc":
                 sort_by = f"-{sort_by}"
 
-        return sort_by
+            return sort_by
+
+        else:
+            return None
