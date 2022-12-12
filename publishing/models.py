@@ -55,6 +55,11 @@ class ProcessingState(TextChoices):
     )
     """Processing now completed with a failure outcome - CDS rejected the
     envelope."""
+    ABANDONED = (
+        "ABANDONED",
+        "Abandoned",
+    )
+    """Processing has been abandoned."""
 
     @classmethod
     def queued_states(cls):
@@ -302,6 +307,18 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
+
+    @save_after
+    @transition(
+        field=processing_state,
+        source=ProcessingState.AWAITING_PROCESSING,
+        target=ProcessingState.ABANDONED,
+        custom={"label": "Abandon"},
+    )
+    def abandon(self):
+        """Abandon an instance before any processing attempt has been made."""
+
+        self.remove_from_queue()
 
     @atomic
     def refresh_from_db(self, using=None, fields=None):
