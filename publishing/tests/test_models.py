@@ -101,6 +101,24 @@ def test_begin_processing_transition_invalid_start_state():
         next_packaged_work_basket.begin_processing()
 
 
+def test_abandon_transition():
+    packaged_work_basket = factories.PackagedWorkBasketFactory()
+    assert packaged_work_basket.processing_state == ProcessingState.AWAITING_PROCESSING
+    assert packaged_work_basket.position > 0
+    packaged_work_basket.abandon()
+    assert packaged_work_basket.processing_state == ProcessingState.ABANDONED
+    assert packaged_work_basket.position == 0
+
+
+def test_abandon_transition_from_invalid_state():
+    packaged_work_basket = factories.PackagedWorkBasketFactory()
+    packaged_work_basket.begin_processing()
+    assert packaged_work_basket.processing_state == ProcessingState.CURRENTLY_PROCESSING
+    assert packaged_work_basket.position == 0
+    with pytest.raises(TransitionNotAllowed):
+        packaged_work_basket.abandon()
+
+
 def test_remove_from_queue():
     packaged_work_basket = factories.PackagedWorkBasketFactory()
     assert packaged_work_basket.position > 0
