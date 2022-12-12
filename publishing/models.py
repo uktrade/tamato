@@ -333,23 +333,23 @@ class PackagedWorkBasket(TimestampedMixin):
         'AttributeError: Direct processing_state modification is not allowed.'
         """
         if fields is None:
-            refresh_status = True
+            refresh_state = True
             fields = [f.name for f in self._meta.concrete_fields]
         else:
-            refresh_status = "processing_state" in fields
+            refresh_state = "processing_state" in fields
 
         fields_without_status = [f for f in fields if f != "processing_state"]
 
         super().refresh_from_db(using=using, fields=fields_without_status)
 
-        if refresh_status:
-            fresh_status = (
+        if refresh_state:
+            new_state = (
                 type(self)
                 .objects.only("processing_state")
                 .get(pk=self.pk)
                 .processing_state
             )
-            self._meta.get_field("processing_state").set_state(self, fresh_status)
+            self._meta.get_field("processing_state").set_state(self, new_state)
 
     # Notification management.
     """
