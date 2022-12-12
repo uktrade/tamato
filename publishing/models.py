@@ -338,9 +338,9 @@ class PackagedWorkBasket(TimestampedMixin):
         else:
             refresh_state = "processing_state" in fields
 
-        fields_without_status = [f for f in fields if f != "processing_state"]
+        fields_without_state = [f for f in fields if f != "processing_state"]
 
-        super().refresh_from_db(using=using, fields=fields_without_status)
+        super().refresh_from_db(using=using, fields=fields_without_state)
 
         if refresh_state:
             new_state = (
