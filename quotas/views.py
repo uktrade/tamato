@@ -104,7 +104,18 @@ class QuotaDefinitions(ListView):
     model = models.QuotaDefinition
 
     def get_queryset(self):
-        return models.QuotaDefinition.objects.filter(order_number=self.quota)
+        qs = models.QuotaDefinition.objects.filter(order_number=self.quota)
+
+        sort_by = self.request.GET.get("sort_by")
+        order = self.request.GET.get("order")
+        sort_by_fields = ["sid", "valid_between"]
+
+        if sort_by and sort_by in sort_by_fields:
+            qs = qs.order_by(sort_by)
+
+        if order == "desc":
+            qs = qs.reverse()
+        return qs
 
     @property
     def quota(self):
