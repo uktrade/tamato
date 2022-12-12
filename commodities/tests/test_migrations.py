@@ -54,6 +54,7 @@ def test_main_migration_works(migrator):
     gnd = GoodsNomenclatureDescription.objects.create(
         update_type=UpdateType.CREATE,
         trackedmodel_ptr_id=10008934,
+        sid=156256,
         transaction=new_transaction,
         validity_start=datetime.date(2021, 1, 6),
         described_goods_nomenclature_id=GoodsNomenclature.objects.last().trackedmodel_ptr_id,
