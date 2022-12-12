@@ -21,8 +21,7 @@ def test_main_migration_works(migrator):
         "commodities",
         "GoodsNomenclatureDescription",
     )
-    GoodsNomenclature = old_state.apps.get_model("commodities",
-                                                 "GoodsNomenclature")
+    GoodsNomenclature = old_state.apps.get_model("commodities", "GoodsNomenclature")
     Transaction = old_state.apps.get_model("common", "Transaction")
     Workbasket = old_state.apps.get_model("workbaskets", "WorkBasket")
     VersionGroup = old_state.apps.get_model("common", "VersionGroup")
@@ -54,7 +53,6 @@ def test_main_migration_works(migrator):
     gnd = GoodsNomenclatureDescription.objects.create(
         update_type=UpdateType.CREATE,
         trackedmodel_ptr_id=10008934,
-        sid=156256,
         transaction=new_transaction,
         validity_start=datetime.date(2021, 1, 6),
         described_goods_nomenclature_id=GoodsNomenclature.objects.last().trackedmodel_ptr_id,
@@ -75,7 +73,8 @@ def test_main_migration_works(migrator):
         "GoodsNomenclatureDescription",
     )
     current_version_id = GoodsNomenclatureDescription.objects.get(
-        trackedmodel_ptr_id=10008934).version_group.current_version_id
+        trackedmodel_ptr_id=10008934
+    ).version_group.current_version_id
     assert GoodsNomenclatureDescription.objects.get(
         trackedmodel_ptr_id=current_version_id,
     ).validity_start == datetime.date(

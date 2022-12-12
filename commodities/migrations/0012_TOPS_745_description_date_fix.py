@@ -36,16 +36,17 @@ def fix_date_on_description(apps, schema_editor):
         "GoodsNomenclature",
     )
 
-    if GoodsNomenclatureDescription.objects.filter(
+    if (
+        GoodsNomenclatureDescription.objects.filter(
             trackedmodel_ptr_id=10008934,
-    ).exists() and Workbasket.objects.filter(
-        id=238).exists():
+        ).exists()
+        and Workbasket.objects.filter(id=238).exists()
+    ):
         gn_desc_original = GoodsNomenclatureDescription.objects.get(
             trackedmodel_ptr_id=10008934,
         )
 
-        original_workbasket = Workbasket.objects.get(
-            id=238)
+        original_workbasket = Workbasket.objects.get(id=238)
 
         goodsnomenclature_current_version = GoodsNomenclature.objects.get(
             trackedmodel_ptr_id=10008944,
@@ -55,11 +56,11 @@ def fix_date_on_description(apps, schema_editor):
             workbasket=original_workbasket,
             order=Transaction.objects.order_by("order").last().order + 1,
             partition=TransactionPartition.REVISION,
-            composite_key=str(
-                original_workbasket.id) + "-" + str(
-                Transaction.objects.order_by(
-                    "order").last().order + 1) + "-" + str(
-                TransactionPartition.REVISION),
+            composite_key=str(original_workbasket.id)
+            + "-"
+            + str(Transaction.objects.order_by("order").last().order + 1)
+            + "-"
+            + str(TransactionPartition.REVISION),
         )
         new_gn_desc = GoodsNomenclatureDescription.objects.create(
             update_type=UpdateType.UPDATE,
@@ -84,6 +85,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(fix_date_on_description,
-                             migrations.RunPython.noop),
+        migrations.RunPython(fix_date_on_description, migrations.RunPython.noop),
     ]
