@@ -5,6 +5,7 @@ from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.serializers import AutoCompleteSerializer
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -99,23 +100,14 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
         )
 
 
-class QuotaDefinitions(ListView):
+class QuotaDefinitions(SortingMixin, ListView):
     template_name = "quotas/definitions.jinja"
     model = models.QuotaDefinition
+    sort_by_fields = ["sid", "valid_between"]
 
     def get_queryset(self):
-        qs = models.QuotaDefinition.objects.filter(order_number=self.quota)
-
-        sort_by = self.request.GET.get("sort_by")
-        order = self.request.GET.get("order")
-        sort_by_fields = ["sid", "valid_between"]
-
-        if sort_by and sort_by in sort_by_fields:
-            qs = qs.order_by(sort_by)
-
-        if order == "desc":
-            qs = qs.reverse()
-        return qs
+        self.queryset = models.QuotaDefinition.objects.filter(order_number=self.quota)
+        return super().get_queryset()
 
     @property
     def quota(self):
