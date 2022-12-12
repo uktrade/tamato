@@ -1,5 +1,5 @@
-<div class="quota__core-data">
-    <div class="quota__core-data__content">
+<div class="quota__core-data govuk-grid-row">
+    <div class="quota__core-data__content govuk-grid-column-three-quarters">
         <h2 class="govuk-heading-l">Details</h2>
         {% if current_definition %}
         {{ govukSummaryList({
@@ -60,4 +60,5 @@
         <p class="govuk-body">No active or upcoming quota definition.</p>
     {% endif %}
     </div>
+    {% include "includes/quotas/actions.jinja"%}
 </div>

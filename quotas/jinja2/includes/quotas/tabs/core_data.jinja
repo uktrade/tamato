@@ -5,8 +5,9 @@
         {% endfor %}
     </ul>
 {% endset %}
-<div class="quota__core-data">
-    <div class="quota__core-data__content">
+
+<div class="quota__core-data govuk-grid-row">
+    <div class="quota__core-data__content govuk-grid-column-three-quarters">
         <h2 class="govuk-heading-l">Details</h2>
         {{ govukSummaryList({
             "rows": [
@@ -53,4 +54,5 @@
             ]
         })}}
     </div>
+    {% include "includes/quotas/actions.jinja"%}
 </div>
