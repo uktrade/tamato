@@ -24,10 +24,10 @@
     {# TODO: move into view function / context. #}
     {# TODO: Turn into POST submits. #}
     {% if loop.index == 1 %}
-      <img class="icon icon-waiting" src="{{ static('/common/images/timer.svg') }}">
+      <img class="icon icon-waiting" src="{{ static('/common/images/incomplete-circle.svg') }}">
     {% else %}
-      <img class="icon icon-up" src="{{ static('/common/images/up_chevron.svg') }}">
-      <img class="icon icon-down" src="{{ static('/common/images/down_chevron.svg') }}">
+      <img class="icon icon-up" src="{{ static('/common/images/chevron-up.svg') }}">
+      <img class="icon icon-down" src="{{ static('/common/images/chevron-down.svg') }}">
     {% endif %}
   {% endset -%}
 
