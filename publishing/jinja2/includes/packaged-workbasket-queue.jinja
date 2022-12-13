@@ -6,6 +6,47 @@
 
 {% for obj in object_list %}
 
+  {# TODO: move into view function / context. #}
+  {%- set up_down_cell_content %}
+    {% if loop.index != 1 %}
+      <button
+        class="govuk-link fake-link"
+        name="promote_position"
+        value="{{ obj.pk }}"
+      >
+        <img
+          class="icon icon-up"
+          src="{{ static('/common/images/chevron-up.svg') }}"
+          alt="Chevron up"
+        >
+      </button>
+    {% endif %}
+    <br>
+    {% if loop.index != object_list | length %}
+      <button
+        class="govuk-link fake-link"
+        name="demote_position"
+        value="{{ obj.pk }}"
+      >
+        <img
+          class="icon icon-down"
+          src="{{ static('/common/images/chevron-down.svg') }}"
+          alt="Chevron down"
+        >
+      </button>
+    {% endif %}
+  {% endset -%}
+
+
+  {%- set jira_cell_content %}
+    <a
+      href="{{ url('workbaskets:workbasket-ui-changes', args=(obj.workbasket.pk,)) }} "
+      class="govuk-link"
+    >{{ obj.workbasket.pk }}</a>
+  {% endset -%}
+
+
+  {# TODO: move into view function / context. #}
   {%- set order_cell_content %}
     {# TODO: move into view function / context. #}
     {% if obj.processing_state == "CURRENTLY_PROCESSING" %}
@@ -15,22 +56,39 @@
       <span class="tamato-badge-light-green">CDS NOTIFIED</span>
     {% elif obj.position == 2 %}
       {# TODO: Correctly implement conditional move down. #}
-      <a href="#">Move down</a>
+      <a href="#"></a>
+      <button
+        class="govuk-link fake-link"
+        name="demote_position"
+        value="{{ obj.pk }}"
+      >
+        Move down
+      </button>
     {% else %}
-      <a href="#">Move to top to notify CDS</a>
+      <button
+        class="govuk-link fake-link"
+        name="promote_to_top_position"
+        value="{{ obj.pk }}"
+      >
+        Move to top to notify CDS
+      </button>
     {% endif %}
   {% endset -%}
 
-  {%- set up_down_cell_content %}
+
+  {%- set remove_cell_content %}
     {# TODO: move into view function / context. #}
-    {# TODO: Turn into POST submits. #}
-    {% if loop.index == 1 %}
-      <img class="icon icon-waiting" src="{{ static('/common/images/incomplete-circle.svg') }}">
-    {% else %}
-      <img class="icon icon-up" src="{{ static('/common/images/chevron-up.svg') }}">
-      <img class="icon icon-down" src="{{ static('/common/images/chevron-down.svg') }}">
+    {% if obj.processing_state != "CURRENTLY_PROCESSING" %}
+      <button
+        class="govuk-link fake-link"
+        name="remove_from_queue"
+        value="{{ obj.pk }}"
+      >
+        Remove from queue
+      </button>
     {% endif %}
   {% endset -%}
+
 
   {{ table_rows.append([
     {"html": up_down_cell_content},
@@ -38,20 +96,24 @@
     {"html": "<a href=\"#\" class=\"govuk-link\">" ~ obj.workbasket.title ~ "</a>"},
     {"html": "<span>" ~ obj.workbasket.reason ~ "</span>"},
     {"html": order_cell_content},
-    {"html": "<a href=\"#\" class=\"govuk-link\">Remove from queue</a>"},
+    {"html": remove_cell_content},
   ]) or "" }}
 
 {% endfor %}
 
-{{ govukTable({
-  "head": [
-    {"text": ""},
-    {"text": "Workbasket ID"},
-    {"text": "TOPS/Jira"},
-    {"text": "Description"},
-    {"text": "Order"},
-    {"text": "Remove"},
-  ],
-  "rows": table_rows,
-  "classes": "packaged-workbaskets first-row-highlight",
-}) }}
+<form method="post" action="">
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+  {{ govukTable({
+    "head": [
+      {"text": ""},
+      {"text": "Workbasket ID"},
+      {"text": "TOPS/Jira"},
+      {"text": "Description"},
+      {"text": "Order"},
+      {"text": "Remove"},
+    ],
+    "rows": table_rows,
+    "classes": "packaged-workbaskets first-row-highlight",
+  }) }}
+</form>
