@@ -11,8 +11,20 @@ class LoadingReportStorage(S3Boto3Storage):
         return dict(
             super().get_default_settings(),
             bucket_name=settings.LOADING_REPORTS_BUCKET_NAME,
+            access_key=settings.LOADING_REPORTS_S3_ACCESS_KEY_ID,
+            secret_key=settings.LOADING_REPORTS_S3_SECRET_ACCESS_KEY,
+            endpoint_url=settings.LOADING_REPORTS_S3_ENDPOINT_URL,
             default_acl="private",
         )
+
+    def generate_filename(self, filename: str) -> str:
+        from django.conf import settings
+
+        filename = path.join(
+            settings.LOADING_REPORTS_STORAGE_DIRECTORY,
+            filename,
+        )
+        return super().generate_filename(filename)
 
     def get_object_parameters(self, name):
         self.object_parameters.update(

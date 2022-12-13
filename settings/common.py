@@ -310,11 +310,23 @@ HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/stagin
 # Loading reports AWS settings
 LOADING_REPORTS_BUCKET_NAME = os.environ.get(
     "LOADING_REPORTS_BUCKET_NAME",
-    "loading_reports",
+    "loading-reports",
+)
+LOADING_REPORTS_S3_ACCESS_KEY_ID = os.environ.get(
+    "LOADING_REPORTS_S3_ACCESS_KEY_ID",
+    "test_loading_reports_key_id",
+)
+LOADING_REPORTS_S3_SECRET_ACCESS_KEY = os.environ.get(
+    "LOADING_REPORTS_S3_SECRET_ACCESS_KEY",
+    "test_loading_reports_key",
+)
+LOADING_REPORTS_S3_ENDPOINT_URL = os.environ.get(
+    "LOADING_REPORTS_S3_ENDPOINT_URL",
+    "https://test-loading-reports-url.local/",
 )
 LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
     "LOADING_REPORTS_STORAGE_DIRECTORY",
-    "loading_reports/",
+    "loading-reports/",
 )
 
 # SQLite AWS settings

@@ -72,14 +72,14 @@ class ProcessingState(TextChoices):
         )
 
 
-def report_bucket(instance: "Upload", filename: str):
+def report_bucket(instance: "LoadingReport", filename: str):
     """Generate the filepath to upload to loading report bucket."""
     return str(Path(settings.LOADING_REPORTS_STORAGE_DIRECTORY) / filename)
 
 
 class LoadingReport(TimestampedMixin):
-    """Reported associated with an attempt to load (process) a
-    PackagedWorkBasket instance."""
+    """Report associated with an attempt to load (process) a PackagedWorkBasket
+    instance."""
 
     file = models.FileField(storage=LoadingReportStorage, upload_to=report_bucket)
     comments = models.TextField(blank=True)
