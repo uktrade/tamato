@@ -38,11 +38,19 @@
   {% endset -%}
 
 
-  {%- set jira_cell_content %}
+  {%- set workbasket_id_cell_content %}
     <a
-      href="{{ url('workbaskets:workbasket-ui-changes', args=(obj.workbasket.pk,)) }} "
+      href="{{ url('workbaskets:workbasket-ui-changes', args=(obj.workbasket.pk,)) }}"
       class="govuk-link"
     >{{ obj.workbasket.pk }}</a>
+  {% endset -%}
+
+
+  {%- set jira_cell_content %}
+    <a
+      href="{{ obj.jira_url }}"
+      class="govuk-link"
+    >{{ obj.workbasket.title }}</a>
   {% endset -%}
 
 
@@ -92,8 +100,8 @@
 
   {{ table_rows.append([
     {"html": up_down_cell_content},
-    {"html": "<a href=\"" ~ url("workbaskets:workbasket-ui-changes", args=(obj.workbasket.pk,)) ~ "\" class=\"govuk-link\">" ~ obj.workbasket.pk ~ "</a>"},
-    {"html": "<a href=\"#\" class=\"govuk-link\">" ~ obj.workbasket.title ~ "</a>"},
+    {"html": workbasket_id_cell_content},
+    {"html": jira_cell_content},
     {"html": "<span>" ~ obj.workbasket.reason ~ "</span>"},
     {"html": order_cell_content},
     {"html": remove_cell_content},
