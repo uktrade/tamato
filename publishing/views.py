@@ -98,8 +98,8 @@ class PackagedWorkbasketQueueView(
             )
         except (
             PackagedWorkBasket.DoesNotExist,
-            TransitionNotAllowed,
             PackagedWorkBasketInvalidQueueOperation,
+            TransitionNotAllowed,
         ):
             # Nothing to do in the case of these exceptions.
             return request.build_absolute_uri()
