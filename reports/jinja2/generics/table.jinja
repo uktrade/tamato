@@ -1,0 +1,6 @@
+{% from "components/table/macro.njk" import govukTable -%}
+
+{{ govukTable({
+    "head": report.headers(),
+    "rows": report.rows()
+}) }}

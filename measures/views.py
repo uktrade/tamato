@@ -8,9 +8,13 @@ from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.generic.base import TemplateView
+from django.views.generic.edit import FormView
+from django.views.generic.list import ListView
 from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
@@ -31,7 +35,9 @@ from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
+from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
+from workbaskets.session_store import SessionStore
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
@@ -59,12 +65,46 @@ class MeasureMixin:
         return Measure.objects.approved_up_to_transaction(tx)
 
 
-class MeasureList(MeasureMixin, TamatoListView):
+class MeasureList(MeasureMixin, FormView, TamatoListView):
     """UI endpoint for viewing and filtering Measures."""
 
-    paginator_class = MeasurePaginator
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
+    form_class = SelectableObjectsForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
+        return kwargs
+
+    @property
+    def paginator(self):
+        filterset_class = self.get_filterset_class()
+        self.filterset = self.get_filterset(filterset_class)
+        return MeasurePaginator(self.filterset.qs, per_page=20)
+
+    def form_valid(self, form):
+        store = SessionStore(
+            self.request,
+            "DELETE_MEASURE_SELECTIONS",
+        )
+        # clear the store here before adding items
+        # in case there was a previous form in progress that was abandoned
+        store.clear()
+        # If the user selects all, adds all the measures to the store
+        select_all = self.request.POST.get("select-all-pages")
+        if select_all:
+            object_pks = {key: True for key, value in form.fields if value}
+            store.add_items(object_pks)
+        else:
+            object_pks = {
+                key: True for key, value in form.cleaned_data_no_prefix.items() if value
+            }
+            store.add_items(object_pks)
+
+        url = reverse("measure-ui-delete-multiple")
+        return HttpResponseRedirect(url)
 
 
 class MeasureDetail(MeasureMixin, TrackedModelDetailView):
@@ -537,3 +577,47 @@ class MeasureDelete(
 ):
     form_class = forms.MeasureDeleteForm
     success_path = "list"
+
+
+class MeasureMultipleDelete(TemplateView, ListView):
+    """UI for user review and deletion of multiple Measures."""
+
+    template_name = "measures/delete-multiple-measures.jinja"
+
+    def _session_store(self):
+        """Get the session store to store the measures that will be deleted."""
+
+        return SessionStore(
+            self.request,
+            "DELETE_MEASURE_SELECTIONS",
+        )
+
+    def get_queryset(self):
+        """Get the measures that are candidates for deletion."""
+        store = self._session_store()
+        return Measure.objects.filter(pk__in=store.data.keys())
+
+    def get_context_data(self, **kwargs):
+        store_objects = self.get_queryset()
+        self.object_list = store_objects
+        context = super().get_context_data(**kwargs)
+
+        return context
+
+    def post(self, request):
+        if request.POST.get("action", None) != "delete":
+            # The user has cancelled out of the deletion process.
+            return redirect("home")
+
+        object_list = self.get_queryset()
+
+        for obj in object_list:
+            # make a new version of the object with an update type of delete.
+            obj.new_version(
+                workbasket=WorkBasket.current(request),
+                update_type=UpdateType.DELETE,
+            )
+        session_store = self._session_store()
+        session_store.clear()
+
+        return redirect(reverse("measure-ui-list"))

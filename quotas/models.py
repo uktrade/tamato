@@ -188,7 +188,11 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     identifying_fields = ("sid",)
 
     sid = SignedIntSID(db_index=True)
-    order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
+    order_number = models.ForeignKey(
+        QuotaOrderNumber,
+        on_delete=models.PROTECT,
+        related_name="definitions",
+    )
     volume = models.DecimalField(max_digits=14, decimal_places=3)
     initial_volume = models.DecimalField(max_digits=14, decimal_places=3)
     monetary_unit = models.ForeignKey(

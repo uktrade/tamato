@@ -17,6 +17,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.management import create_contenttypes
 from django.core.exceptions import ValidationError
 from django.test.client import RequestFactory
 from django.test.html import parse_html
@@ -126,6 +127,21 @@ def spanning_dates(request, date_ranges):
         getattr(date_ranges, contained_validity),
         container_spans_contained,
     )
+
+
+def setup_content_types(apps):
+    """This fixture is used to set-up content types, needed for migration
+    testing, when a clean new database and the content types have not been
+    populated yet."""
+
+    tamato_apps = settings.DOMAIN_APPS + settings.TAMATO_APPS
+
+    for app_name in tamato_apps:
+        app_label = app_name.split(".")[0]
+        app_config = apps.get_app_config(app_label)
+        app_config.models_module = True
+
+        create_contenttypes(app_config)
 
 
 @pytest.fixture

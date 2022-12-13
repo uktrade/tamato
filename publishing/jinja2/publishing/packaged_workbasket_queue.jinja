@@ -1,6 +1,7 @@
 {% extends "layouts/layout.jinja" %}
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/details/macro.njk" import govukDetails %}
 {% from "components/table/macro.njk" import govukTable %}
 
 {% set page_title = "Order and package workbaskets" %}
@@ -18,11 +19,29 @@
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
-  {% if object_list %}
-    {% include list_include %}
-  {% else %}
-    <p class="govuk-body">There are no workbaskets in the packaging queue.</p>
-  {% endif %}
+  <h2 class="govuk-heading-m">Workbaskets - Ready to order</h1>
 
-  {% include "includes/common/pagination.jinja" %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      {{ govukDetails({
+        "summaryText": "What does pausing and unpausing CDS queue mean?",
+        "html": (
+          "<p>Pausing the CDS queue prevents any envelopes that are waiting in this "
+          "queue from being downloaded by HMRC users.</p>"
+          "<p>Unpausing allows downloads to commence again.</p>"
+        ),
+        "classes": "govuk-!-padding-bottom-5",
+      }) }}
+
+      {% if object_list %}
+        {% include list_include %}
+      {% else %}
+        <p class="govuk-body">There are no workbaskets in the packaging queue.</p>
+      {% endif %}
+
+      {% include "includes/common/pagination.jinja" %}
+
+    </div>
+  </div>
 {% endblock %}
