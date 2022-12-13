@@ -325,6 +325,9 @@ class PackagedWorkBasket(TimestampedMixin):
         """
 
         self.remove_from_queue()
+        # TODO:
+        # Transition self.workbasket.status to from QUEUED to EDITING by calling
+        # self.workbasket.dequeue() when the transition is implemented.
 
     @atomic
     def refresh_from_db(self, using=None, fields=None):
