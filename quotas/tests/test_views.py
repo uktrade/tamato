@@ -1,4 +1,6 @@
 import pytest
+from bs4 import BeautifulSoup
+from django.urls import reverse
 
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -180,3 +182,46 @@ def test_quota_event_api_list_view(valid_user_client):
         expected_results,
         valid_user_client,
     )
+
+
+def test_quota_definitions_list_200(valid_user_client, quota_order_number):
+    factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
+
+    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+
+def test_quota_definitions_list_sids(valid_user_client, quota_order_number):
+    definitions = factories.QuotaDefinitionFactory.create_batch(
+        5,
+        order_number=quota_order_number,
+    )
+
+    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    sids = {
+        int(element.text)
+        for element in soup.select(
+            "table > tr > td:first-child > details > summary > span",
+        )
+    }
+    object_sids = {d.sid for d in definitions}
+    assert not sids.difference(object_sids)
+
+
+def test_quota_definitions_list_title(valid_user_client, quota_order_number):
+    factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
+
+    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    title = soup.select("h1")[0].text
+    assert title == f"Quota ID: {quota_order_number.order_number} - Data"
