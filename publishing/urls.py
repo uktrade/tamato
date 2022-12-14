@@ -3,9 +3,21 @@ from django.views.generic.base import RedirectView
 
 from publishing import views
 
+app_name = "publishing"
+
 url_prefix = "publishing/"
 
 urlpatterns = [
+    path(
+        url_prefix + "create/",
+        views.PackagedWorkbasketCreateView.as_view(),
+        name="packaged-workbasket-queue-ui-create",
+    ),
+    path(
+        url_prefix + "<pk>/confirm-create/",
+        views.PackagedWorkbasketConfirmCreate.as_view(),
+        name="packaged-workbasket-queue-confirm-create",
+    ),
     path(
         url_prefix + "",
         RedirectView.as_view(pattern_name="packaged-workbasket-queue-ui-list"),

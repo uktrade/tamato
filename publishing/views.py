@@ -1,9 +1,19 @@
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ValidationError
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.views.generic import CreateView
+from django.views.generic import DetailView
 from django.views.generic import ListView
 
 from common.views import WithPaginationListMixin
+from publishing import forms
 from publishing.models import PackagedWorkBasket
+from publishing.models import PackagedWorkBasketDuplication
+from publishing.models import PackagedWorkBasketInvalidCheckStatus
 from publishing.models import ProcessingState
+from workbaskets.models import WorkBasket
 
 
 class PackagedWorkbasketQueueView(
@@ -60,3 +70,74 @@ class EnvelopeQueueView(
         envelopes."""
         # TODO: manage post actions.
         return super().post()
+
+
+class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
+    """UI endpoint for creating packaged workbaskets."""
+
+    permission_required = "workbaskets.add_workbasket"
+    template_name = "publishing/create.jinja"
+    form_class = forms.PackagedWorkBasketCreateForm
+
+    @property
+    def workbasket(self):
+        return WorkBasket.current(self.request) 
+
+    def form_valid(self, form):
+        wb = self.workbasket
+        try:
+            wb.submit_for_approval()
+            wb.save()
+        except ValidationError:
+            return redirect(
+                reverse(
+                    "workbaskets:workbasket-ui-detail",
+                    kwargs={"pk": self.workbasket.id},
+                ),
+            )
+
+        wb.approve(self.request.user, settings.TRANSACTION_SCHEMA)
+        wb.save()
+
+        queued_wb = None
+        try:
+            queued_wb = PackagedWorkBasket.objects.create(
+                workbasket=wb, **form.cleaned_data
+            )
+        except PackagedWorkBasketDuplication:
+            return redirect(
+                reverse(
+                    "publishing:packaged-workbasket-queue-ui-list",
+                ),
+            )
+        except PackagedWorkBasketInvalidCheckStatus:
+            return redirect(
+                reverse(
+                    "workbaskets:workbasket-ui-detail",
+                    kwargs={"pk": self.workbasket.id},
+                ),
+            )
+
+        return redirect(
+            reverse(
+                "publishing:packaged-workbasket-queue-confirm-create",
+                kwargs={"pk": queued_wb.pk},
+            ),
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
+class PackagedWorkbasketConfirmCreate(DetailView):
+    template_name = "publishing/confirm_create.jinja"
+    model = WorkBasket
+
+    def get_queryset(self):
+        """Return all items that are awaiting processing or are actively being
+        processed, as displayed on this view."""
+        return PackagedWorkBasket.objects.filter(
+            id=self.kwargs.get("pk"),
+        )

@@ -1,0 +1,78 @@
+from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Div
+from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fluid
+from crispy_forms_gds.layout import Layout
+from crispy_forms_gds.layout import Size
+from crispy_forms_gds.layout import Submit
+from django import forms
+
+from common.forms import DateInputFieldFixed
+from common.forms import DescriptionHelpBox
+from publishing import models
+
+
+class CDSWarningBox(Div):
+    template = "includes/warning_help.jinja"
+
+
+class PackagedWorkBasketCreateForm(forms.ModelForm):
+
+    theme = forms.CharField(
+        label="Theme",
+        widget=forms.TextInput(attrs={"placeholder": "Updating"}),
+        required=True,
+    )
+
+    description = forms.CharField(
+        label="Note",
+        help_text="Add your notes here. You may enter HTML formatting if required. See the guide below for more information.",
+        widget=forms.Textarea,
+        required=False,
+    )
+
+    eif = DateInputFieldFixed(
+        label="EIF date",
+        help_text="For Example, 27 03 2008",
+        required=False,
+    )
+
+    embargo = forms.CharField(
+        label="Embargo",
+        widget=forms.TextInput,
+        required=False,
+    )
+
+    jira_url = forms.URLField(
+        label="Tops Jira",
+        help_text="Insert Tops Jira ticket link",
+        widget=forms.TextInput,
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Field.text("theme", field_width=Fluid.TWO_THIRDS),
+            Field.textarea("description", rows=5),
+            DescriptionHelpBox(),
+            Field("eif"),
+            Field.text("embargo", field_width=Fluid.TWO_THIRDS),
+            Field.text("jira_url", field_width=Fluid.TWO_THIRDS),
+            CDSWarningBox(),
+            Submit(
+                "submit",
+                "Add to queue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    class Meta:
+        model = models.PackagedWorkBasket
+        fields = ("theme", "description", "eif", "embargo", "jira_url")
