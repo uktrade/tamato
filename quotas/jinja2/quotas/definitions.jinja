@@ -67,8 +67,9 @@
       {"text": "-" },
       {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
       {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
-      {"text": object.initial_volume },
-      {"text": object.volume },
+      {"text": intcomma(object.initial_volume) },
+      {"text": intcomma(object.volume) },
+      {"text": object.measurement_unit.abbreviation|title},
       {"text": "-" },
     ]) or "" }}
   {% endfor %}
@@ -93,6 +94,7 @@
     {"text": "End date"},
     {"text": "Initial volume"},
     {"text": "Volume"},
+    {"text": "Measurement unit"},
     {"text": "Balance"}
   ],
   "rows": table_rows
