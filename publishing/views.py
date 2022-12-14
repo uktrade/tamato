@@ -25,11 +25,13 @@ class PackagedWorkbasketQueueView(
         """Return all items that are awaiting processing or are actively being
         processed, as displayed on this view."""
         return PackagedWorkBasket.objects.filter(
-            processing_state__in=(
-                ProcessingState.queued_states()
-                + (ProcessingState.CURRENTLY_PROCESSING,)
-            ),
+            processing_state__in=ProcessingState.queued_states(),
         )
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        data = super().get_context_data(object_list=object_list, **kwargs)
+        data["currently_processing"] = PackagedWorkBasket.objects.currently_processing()
+        return data
 
     def post(self, request, *args, **kwargs):
         """Manage POST requests, which can be to either pause/commence CDS
@@ -51,6 +53,8 @@ class PackagedWorkbasketQueueView(
             url = self._remove_from_queue(request, post.get("remove_from_queue"))
 
         return HttpResponseRedirect(url)
+
+    # Queue item position management.
 
     def _promote_position(self, request, pk):
         try:
@@ -119,11 +123,7 @@ class EnvelopeQueueView(
     def get_queryset(self):
         """Return all items that are awaiting processing or are actively being
         processed, as displayed on this view."""
-        return PackagedWorkBasket.objects.filter(
-            processing_state__in=(
-                ProcessingState.active_states() + ProcessingState.queued_states()
-            ),
-        )
+        return PackagedWorkBasket.objects.all_queued()
 
     def post(self, request, *args, **kwargs):
         """Manage POST requests, including download, accept and reject
