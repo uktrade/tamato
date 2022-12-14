@@ -12,6 +12,7 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
+from notifications.models import NotificationLog
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
@@ -63,7 +64,9 @@ class ProcessingState(TextChoices):
 
     @classmethod
     def queued_states(cls):
-        return (cls.AWAITING_PROCESSING,)
+        """Returns all states that represent a queued  instance, including those
+        that are being processed."""
+        return (cls.AWAITING_PROCESSING, cls.CURRENTLY_PROCESSING)
 
     @classmethod
     def completed_processing_states(cls):
@@ -100,12 +103,8 @@ class PackagedWorkBasketManager(models.Manager):
                 f"({workbasket}) due to unchecked {workbasket.status} status.",
             )
 
-        packaged_work_baskets = PackagedWorkBasket.objects.filter(
+        packaged_work_baskets = PackagedWorkBasket.objects.all_queued().filter(
             workbasket=workbasket,
-            processing_state__in=(
-                ProcessingState.queued_states()
-                + (ProcessingState.CURRENTLY_PROCESSING,)
-            ),
         )
         if packaged_work_baskets.exists():
             raise PackagedWorkBasketDuplication(
@@ -147,6 +146,11 @@ class PackagedWorkBasketQuerySet(QuerySet):
             )
         except ObjectDoesNotExist:
             return None
+
+    def all_queued(self) -> "PackagedWorkBasketQuerySet":
+        return self.filter(
+            processing_state__in=ProcessingState.queued_states(),
+        )
 
     def completed_processing(self) -> "PackagedWorkBasketQuerySet":
         """Return all PackagedWorkBasket instances whose processing_state is one
@@ -326,8 +330,9 @@ class PackagedWorkBasket(TimestampedMixin):
 
         self.remove_from_queue()
         # TODO:
-        # Transition self.workbasket.status to from QUEUED to EDITING by calling
-        # self.workbasket.dequeue() when the transition is implemented.
+        # Transition self.workbasket.status from QUEUED to EDITING by calling
+        # self.workbasket.dequeue() once the transition is implemented.
+        # self.workbasket.dequeue()
 
     @atomic
     def refresh_from_db(self, using=None, fields=None):
@@ -391,6 +396,19 @@ class PackagedWorkBasket(TimestampedMixin):
 
     def notify_processing_failed(self):
         """TODO."""
+
+    @property
+    def cds_notified_notification_log(self) -> NotificationLog:
+        """
+        NotificationLog instance created when HMRC are notified of an instance's
+        envelope being ready for processing by CDS.
+
+        None if there is no NotificationLog instance associated with this
+        PackagedWorkBasket instance.
+        """
+        # TODO: Apply correct lookup when .packaged_work_basket is available.
+        # return NotificationLog.objects.filter(packaged_work_basket=self).last()
+        return NotificationLog.objects.last() if self.position == 1 else None
 
     # Queue management.
 
