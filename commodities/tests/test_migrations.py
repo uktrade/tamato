@@ -73,7 +73,7 @@ def test_main_migration_works(migrator):
         "GoodsNomenclatureDescription",
     )
     current_version_id = GoodsNomenclatureDescription.objects.get(
-        trackedmodel_ptr_id=10008934
+        trackedmodel_ptr_id=10008934,
     ).version_group.current_version_id
     assert GoodsNomenclatureDescription.objects.get(
         trackedmodel_ptr_id=current_version_id,
