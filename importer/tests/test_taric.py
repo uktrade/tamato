@@ -3,7 +3,6 @@ from io import BytesIO
 import pytest
 
 import settings
-from commodities.models import GoodsNomenclature
 from commodities.models import GoodsNomenclatureDescription
 from common.models.transactions import Transaction
 from common.tests.factories import GoodsNomenclatureDescriptionFactory
@@ -180,13 +179,12 @@ def test_process_taric_xml_stream_correctly_imports_text_only_changes_to_comm_co
     workbasket = ApprovedWorkBasketFactory.create()
 
     # Create goods nomenclature & description
-    GoodsNomenclatureFactory.create(sid=103510, item_id="0306129091", suffix=80).save(
-        force_write=True,
-    )
-    GoodsNomenclatureDescriptionFactory.create(
-        sid=143415,
-        described_goods_nomenclature=GoodsNomenclature.objects.get(sid=103510),
-        description="some description",
+    GoodsNomenclatureFactory.create(
+        sid=103510,
+        item_id="0306129091",
+        suffix=80,
+        description__sid=143415,
+        description__description="some description",
     ).save(force_write=True)
 
     goods_nomenclature_description = (
