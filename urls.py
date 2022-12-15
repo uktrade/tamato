@@ -36,6 +36,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 ]
 
+handler403 = "common.views.handler403"
+
 if settings.SSO_ENABLED:
     urlpatterns = [
         path(
