@@ -51,6 +51,9 @@ class PackagedWorkbasketQueueView(
             )
         elif post.get("remove_from_queue"):
             url = self._remove_from_queue(request, post.get("remove_from_queue"))
+        else:
+            # Handle invalid post content by redisplaying the page.
+            url = request.build_absolute_uri()
 
         return HttpResponseRedirect(url)
 
