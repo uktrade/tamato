@@ -16,7 +16,9 @@ class PackagedWorkbasketQueueView(
     ListView,
 ):
     model = PackagedWorkBasket
-    permission_required = ""  # TODO: select permissions.
+    # TODO: select permissions.
+    # permission_required = ""
+    permission_required = "common.add_trackedmodel"
 
     def get_template_names(self):
         return ["publishing/packaged_workbasket_queue.jinja"]
