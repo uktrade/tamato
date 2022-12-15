@@ -115,6 +115,8 @@ class ElementParser:
         self.text = None
         self.started = False
 
+        print(tag)
+
         if tag:
             self.tag = tag
 
