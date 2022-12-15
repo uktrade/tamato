@@ -16,8 +16,6 @@ class PackagedWorkbasketQueueView(
     ListView,
 ):
     model = PackagedWorkBasket
-    # TODO: select permissions.
-    # permission_required = ""
     permission_required = "common.add_trackedmodel"
 
     def get_template_names(self):
