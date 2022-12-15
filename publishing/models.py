@@ -148,6 +148,8 @@ class PackagedWorkBasketQuerySet(QuerySet):
             return None
 
     def all_queued(self) -> "PackagedWorkBasketQuerySet":
+        """Return all PackagedWorkBasket instances whose processing_state is one
+        of the actively queued / non-completed states."""
         return self.filter(
             processing_state__in=ProcessingState.queued_states(),
         )
