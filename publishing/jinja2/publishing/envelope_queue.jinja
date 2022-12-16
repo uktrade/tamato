@@ -1,9 +1,10 @@
 {% extends "layouts/layout.jinja" %}
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/details/macro.njk" import govukDetails %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set page_title = "Send envelopes to CDS - Workbaskets" %}
+{% set page_title = "CDS - Process envelopes" %}
 {% set list_include = "includes/envelope-queue.jinja" %}
 
 {% block breadcrumb %}
@@ -18,11 +19,36 @@
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
-  {% if object_list %}
-    {% include list_include %}
-  {% else %}
-    <p class="govuk-body">There are no workbaskets to send to CDS.</p>
-  {% endif %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      {{ govukDetails({
+        "summaryText": "What happens when an envelope is downloaded?",
+        "html": (
+          "<p>Downloading an envelope 'locks' the associated workbasket, "
+          "preventing it from being removed from or reordered in the queue by "
+          "DIT staff.</p>"
+
+          "<p>After downloading, you should process the envelope and then "
+          "choose to either <em>Accept</em> or <em>Reject</em> it, depending "
+          "upon the processing results. This will unlock the workbasket, "
+          "remove it from the queue, and make the next envelope available for "
+          "downloading.</p>"
+        ),
+        "classes": "govuk-!-padding-bottom-5",
+      }) }}
+
+      {% if object_list %}
+        {% include list_include %}
+      {% else %}
+        <p class="govuk-body">There are no workbaskets to send to CDS.</p>
+      {% endif %}
+
+      {% include "includes/common/pagination.jinja" %}
+
+    </div>
+  </div>
 
   {% include "includes/common/pagination.jinja" %}
 {% endblock %}

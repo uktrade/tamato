@@ -1,0 +1,142 @@
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{%- macro download_button(obj) %}
+  {% if obj == currently_processing %}
+    Downloaded:
+    {% if obj.currently_processing_start_time %}
+      {{ '{:%d %b %Y}'.format(obj.currently_processing_start_time) }}
+    {% endif %}
+    <br>
+    <button
+      class="govuk-link fake-link"
+      name="download_envelope"
+      value="{{ obj.pk }}"
+    >
+      Re-download
+      <img
+        class="icon icon-download"
+        src="{{ static('/common/images/download-file.svg') }}"
+        alt="Download file icon"
+      >
+    </button>
+  {% else %}
+    <button
+      class="govuk-link fake-link"
+      name="download_envelope"
+      value="{{ obj.pk }}"
+    >
+      Download
+      <img
+        class="icon icon-download"
+        src="{{ static('/common/images/download-file.svg') }}"
+        alt="Download file icon"
+      >
+    </button>
+  {% endif %}
+{% endmacro -%}
+
+
+{%- macro accept_envelope_link(obj) %}
+  {% if obj == currently_processing %}
+    <a
+      class="govuk-link"
+      href="{{ url('publishing:accept-envelope-ui-list', args=(obj.pk,)) }}"
+    >
+      Accept
+    </a>
+  {% else %}
+    <span class="disabled-action">Accept</span>
+  {% endif %}
+{% endmacro -%}
+
+
+{%- macro reject_envelope_link(obj) %}
+  {% if obj == currently_processing %}
+    <a
+      class="govuk-link"
+      href="{{ url('publishing:reject-envelope-ui-list', args=(obj.pk,)) }}"
+    >
+      Reject
+    </a>
+  {% else %}
+    <span class="disabled-action">Reject</span>
+  {% endif %}
+{% endmacro -%}
+
+
+{%- set table_rows = [] -%}
+
+{%- for obj in object_list %}
+
+  {%- set envelope_id_cell_content %}
+    {% if loop.index == 1 %}
+      {# TODO #}
+      220099
+    {% endif %}
+  {% endset -%}
+
+
+  {%- set description_cell_content %}
+    {{ obj.workbasket.reason }}
+  {% endset -%}
+
+
+  {%- set date_received_cell_content %}
+    {{ '{:%d %b %Y}'.format(obj.created_at) }}
+  {% endset -%}
+
+
+  {%- set process_envelope_cell_content %}
+    {% if loop.index == 1 %}
+      {# First row. #}
+      {{ download_button(obj) }}
+    {% endif %}
+  {% endset -%}
+
+
+  {%- set accept_envelope_cell_content %}
+    {% if loop.index == 1 %}
+      {# First row. #}
+      {{ accept_envelope_link(obj) }}
+    {% endif %}
+  {% endset -%}
+
+
+  {%- set reject_cell_content %}
+    {% if loop.index == 1 %}
+      {# First row. #}
+      {{ reject_envelope_link(obj) }}
+    {% endif %}
+  {% endset -%}
+
+
+  {{ table_rows.append([
+    {"html": envelope_id_cell_content},
+    {"html": description_cell_content},
+    {"html": date_received_cell_content},
+    {"html": process_envelope_cell_content},
+    {"html": accept_envelope_cell_content},
+    {"html": reject_cell_content},
+  ]) or "" }}
+
+{% endfor -%}
+
+
+<form method="post" action="">
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+  {{ govukTable({
+  "head": [
+    {"text": "Envelope ID"},
+    {"text": "Description"},
+    {"text": "Date received"},
+    {"text": "Process envelope"},
+    {"text": "Accept envelope"},
+    {"text": "Reject envelope"},
+  ],
+  "rows": table_rows,
+  "classes": "queued-envelopes first-row-highlight",
+  }) }}
+
+</form>
