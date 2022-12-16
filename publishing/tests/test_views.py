@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+import datetime
 
 from django.urls import reverse
 from django.utils.timezone import localtime
@@ -10,8 +11,10 @@ from common.tests.factories import GeographicalAreaFactory
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.factories import MeasureFactory
 from checks.tests.factories import TrackedModelCheckFactory
+from checks.tests.factories import TransactionCheckFactory
 from common.models.utils import override_current_transaction
 from publishing import models
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -49,7 +52,16 @@ def test_packaged_workbasket_create_without_permission(client):
 
     assert response.status_code == 403
 
-def test_packaged_workbasket_create_form_no_business_rules(valid_user_api_client,session_workbasket):
+def test_packaged_workbasket_create_form_no_business_rules(valid_user_client,session_workbasket):
+    session = valid_user_client.session
+    session["workbasket"] = {
+        #**session_workbasket,
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+        "error_count": session_workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
 
     form_data = {
@@ -57,10 +69,10 @@ def test_packaged_workbasket_create_form_no_business_rules(valid_user_api_client
         "jira_url": "www.fakejiraticket.com",
     }
 
-    response = valid_user_api_client.post(create_url, form_data)
+    response = valid_user_client.post(create_url, form_data)
     #  get the workbasket we have made, and make sure it matches title and description
-    assert not models.PackagedWorkBasket.objects.select_related().filter(
-        workbasket= session_workbasket.pk
+    assert not models.PackagedWorkBasket.objects.all_queued().filter(
+        workbasket= session_workbasket
     ).exists()
 
     assert response.status_code == 302
@@ -75,23 +87,47 @@ def setup(session_workbasket, valid_user_client):
         measure = MeasureFactory.create(transaction=transaction)
         geo_area = GeographicalAreaFactory.create(transaction=transaction)
         objects = [good, measure, geo_area]
-        for obj in objects:
-            TrackedModelCheckFactory.create(
-                transaction_check__transaction=transaction,
-                model=obj,
-                successful=True,
-            )
-    # session = valid_user_client.session
-    # session["workbasket"] = {
-    #     **session_workbasket,
-    #     "id": session_workbasket.pk,
-    #     "status": session_workbasket.status,
-    #     "title": session_workbasket.title,
-    #     "error_count": session_workbasket.tracked_model_check_errors.count(),
-    # }
-    # session.save()
+        TransactionCheckFactory.create(
+            transaction=transaction,
+            successful=True,
+            completed=True,
+        )
+        # for transaction in objects:
+        #     TransactionCheckFactory.create(
+        #         #transaction_check__transaction=transaction,
+        #         #model=obj,
+        #         successful=True,
+        #         completed=True,
+        #     )
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+        "error_count": session_workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
 
-def test_packaged_workbasket_create_form(valid_user_api_client,session_workbasket):
+@patch("exporter.tasks.upload_workbaskets")
+def test_packaged_workbasket_create_form(upload, valid_user_client,):
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    with workbasket.new_transaction() as transaction:
+        TransactionCheckFactory.create(
+            transaction=transaction,
+            successful=True,
+            completed=True,
+        )
+    
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": workbasket.pk,
+        "status": workbasket.status,
+        "title": workbasket.title,
+        "error_count": workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
     # creating a packaged workbasket in the queue
     first_packaged_work_basket = factories.PackagedWorkBasketFactory()
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
@@ -99,13 +135,22 @@ def test_packaged_workbasket_create_form(valid_user_api_client,session_workbaske
     form_data = {
         "theme": "My theme",
         "jira_url": "www.fakejiraticket.com",
+        "eif_0": 1,
+        "eif_1": 1,
+        "eif_2": 2023,
     }
 
-    response = valid_user_api_client.post(create_url, form_data)
+    response = valid_user_client.post(create_url, form_data)
+
+    assert response.status_code == 302
+    assert "/confirm-create/" in response.url
     #  get the workbasket we have made, and make sure it matches title and description
-    second_packaged_work_basket = models.PackagedWorkBasket.objects.select_related().filter(
-        workbasket= session_workbasket.pk
-    )[0]
+    second_packaged_work_basket = models.PackagedWorkBasket.objects.all_queued().filter(
+        workbasket=workbasket.pk
+    )
+
+
+    assert second_packaged_work_basket.exists()
 
     response_url = f"/publishing/{second_packaged_work_basket.id}/confirm-create/"
     # Only compare the response URL up to the query string.
@@ -116,7 +161,7 @@ def test_packaged_workbasket_create_form(valid_user_api_client,session_workbaske
     assert first_packaged_work_basket.position > 0
     assert first_packaged_work_basket.position < second_packaged_work_basket.position
 
-def test_packaged_workbasket_create_form_business_rule_violations(valid_user_api_client,session_workbasket):
+def test_packaged_workbasket_create_form_business_rule_violations(setup,valid_user_client,session_workbasket):
     with session_workbasket.new_transaction() as transaction:
         measure = MeasureFactory.create(transaction=transaction)
         TrackedModelCheckFactory.create(
@@ -131,10 +176,10 @@ def test_packaged_workbasket_create_form_business_rule_violations(valid_user_api
         "jira_url": "www.fakejiraticket.com",
     }
 
-    response = valid_user_api_client.post(create_url, form_data)
+    response = valid_user_client.post(create_url, form_data)
     #  get the workbasket we have made, and make sure it matches title and description
-    assert not models.PackagedWorkBasket.objects.select_related().filter(
-        workbasket= session_workbasket.pk
+    assert not models.PackagedWorkBasket.objects.all_queued().filter(
+        workbasket= session_workbasket
     ).exists()
 
     assert response.status_code == 302
@@ -143,7 +188,7 @@ def test_packaged_workbasket_create_form_business_rule_violations(valid_user_api
     assert response.url[: len(response_url)] == response_url
 
 
-def test_create_duplicate_awaiting_instances(valid_user_api_client,session_workbasket):
+def test_create_duplicate_awaiting_instances(setup,valid_user_client,session_workbasket):
     """Test that a WorkBasket cannot enter the packaging queue more than
     once."""
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
@@ -153,10 +198,10 @@ def test_create_duplicate_awaiting_instances(valid_user_api_client,session_workb
         "jira_url": "www.fakejiraticket.com",
     }
 
-    response = valid_user_api_client.post(create_url, form_data)
+    response = valid_user_client.post(create_url, form_data)
     #  get the workbasket we have made, and make sure it matches title and description
-    second_packaged_work_basket = models.PackagedWorkBasket.objects.select_related().filter(
-        workbasket= session_workbasket.pk
+    second_packaged_work_basket = models.PackagedWorkBasket.objects.all_queued().filter(
+        workbasket= session_workbasket
     )[0]
 
     assert response.status_code == 302
@@ -164,4 +209,4 @@ def test_create_duplicate_awaiting_instances(valid_user_api_client,session_workb
     # Only compare the response URL up to the query string.
     assert response.url[: len(response_url)] == response_url
 
-    response = valid_user_api_client.post(create_url, form_data)
+    response = valid_user_client.post(create_url, form_data)

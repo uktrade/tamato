@@ -148,6 +148,11 @@ class PackagedWorkBasketQuerySet(QuerySet):
         except ObjectDoesNotExist:
             return None
 
+    def all_queued(self) -> "PackagedWorkBasketQuerySet":
+        return self.filter(
+            processing_state__in=ProcessingState.queued_states(),
+        )
+        
     def completed_processing(self) -> "PackagedWorkBasketQuerySet":
         """Return all PackagedWorkBasket instances whose processing_state is one
         of the completed processing states."""
@@ -220,7 +225,6 @@ class PackagedWorkBasket(TimestampedMixin):
     )
     eif = models.DateField(
         null=True,
-        blank=True,
         help_text="For Example, 27 3 2008",
     )
     """The enter into force date determines when changes should go live in CDS.
@@ -228,7 +232,6 @@ class PackagedWorkBasket(TimestampedMixin):
     blank CDS will ingest the file immediately.
     """
     embargo = models.CharField(
-        null=True,
         blank=True,
         max_length=255,
     )

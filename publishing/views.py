@@ -81,7 +81,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
 
     @property
     def workbasket(self):
-        return WorkBasket.current(self.request) 
+        return WorkBasket.current(self.request)
 
     def form_valid(self, form):
         wb = self.workbasket
@@ -89,6 +89,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
             wb.submit_for_approval()
             wb.save()
         except ValidationError:
+            #TODO log error
             return redirect(
                 reverse(
                     "workbaskets:workbasket-ui-detail",
@@ -133,7 +134,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
 
 class PackagedWorkbasketConfirmCreate(DetailView):
     template_name = "publishing/confirm_create.jinja"
-    model = WorkBasket
+    model = PackagedWorkBasket
 
     def get_queryset(self):
         """Return all items that are awaiting processing or are actively being
