@@ -152,7 +152,7 @@ class PackagedWorkBasketQuerySet(QuerySet):
         return self.filter(
             processing_state__in=ProcessingState.queued_states(),
         )
-        
+
     def completed_processing(self) -> "PackagedWorkBasketQuerySet":
         """Return all PackagedWorkBasket instances whose processing_state is one
         of the completed processing states."""
@@ -225,6 +225,7 @@ class PackagedWorkBasket(TimestampedMixin):
     )
     eif = models.DateField(
         null=True,
+        blank=True,
         help_text="For Example, 27 3 2008",
     )
     """The enter into force date determines when changes should go live in CDS.
@@ -233,6 +234,7 @@ class PackagedWorkBasket(TimestampedMixin):
     """
     embargo = models.CharField(
         blank=True,
+        null=True,
         max_length=255,
     )
     """The date until which CDS prevents envelope from being displayed after
