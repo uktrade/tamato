@@ -62,7 +62,7 @@ def test_workbasket_transition(upload, workbasket, transition, valid_user):
     TransitionNotAllowed."""
 
     transition_args = (
-        [valid_user.pk, "SEED_FIRST"] if transition.name == "approve" else []
+        [valid_user.pk, "SEED_FIRST"] if transition.name == "queue" else []
     )
 
     try:
@@ -81,7 +81,7 @@ def test_workbasket_transition_task(upload, workbasket, transition, valid_user):
     TransitionNotAllowed."""
 
     transition_args = (
-        [valid_user.pk, "SEED_FIRST"] if transition.name == "approve" else []
+        [valid_user.pk, "SEED_FIRST"] if transition.name == "queue" else []
     )
 
     try:
@@ -118,11 +118,9 @@ def test_workbasket_accepted_updates_current_tracked_models(
 
     assert_workbasket_valid(new_workbasket)
 
-    new_workbasket.submit_for_approval()
+    new_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
     new_footnote.refresh_from_db()
-    assert new_footnote.version_group.current_version.pk == original_footnote.pk
-    new_workbasket.approve(valid_user.pk, "SEED_FIRST")
-    new_footnote.refresh_from_db()
+
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
 
 
@@ -141,13 +139,7 @@ def test_workbasket_errored_updates_tracked_models(
     )
     assert_workbasket_valid(new_workbasket)
 
-    new_workbasket.submit_for_approval()
-    new_footnote.refresh_from_db()
-    assert new_footnote.version_group.current_version.pk == original_footnote.pk
-    new_workbasket.approve(valid_user.pk, "SEED_FIRST")
-    new_footnote.refresh_from_db()
-    assert new_footnote.version_group.current_version.pk == new_footnote.pk
-    new_workbasket.export_to_cds()
+    new_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
     new_workbasket.cds_error()
@@ -155,7 +147,7 @@ def test_workbasket_errored_updates_tracked_models(
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
 
 
-@pytest.mark.parametrize("status", [WorkflowStatus.EDITING, WorkflowStatus.PROPOSED])
+@pytest.mark.parametrize("status", [WorkflowStatus.EDITING, WorkflowStatus.ERRORED])
 def test_draft_status_as_transaction_partition_draft_no_first_seed(
     status,
 ):
@@ -183,7 +175,7 @@ def test_draft_status_as_transaction_partition_draft_no_first_seed(
         ),
     ],
 )
-def test_user_partition_scheme_passes_approved_workbaskets(
+def test_user_partition_scheme_passes_queued_workbaskets(
     status,
     partition_scheme,
     expected_partition,
@@ -270,8 +262,8 @@ def test_user_partition_scheme_get_partition_does_not_allow_seed_after_revision(
 @pytest.mark.parametrize(
     "partition_setting,expected_partition",
     [
-        ("workbaskets.models.REVISION_ONLY", TransactionPartition.REVISION),
-        ("workbaskets.models.SEED_ONLY", TransactionPartition.SEED_FILE),
+        # ("workbaskets.models.REVISION_ONLY", TransactionPartition.REVISION),
+        # ("workbaskets.models.SEED_ONLY", TransactionPartition.SEED_FILE),
         ("workbaskets.models.SEED_FIRST", TransactionPartition.SEED_FILE),
     ],
 )
@@ -281,8 +273,8 @@ def test_workbasket_approval_updates_transactions(
     partition_setting,
     expected_partition,
 ):
-    """Verify that approving a PROPOSED workbasket moves its DRAFT transactions
-    to SEED_FILE or REVISION as specified by the partition scheme, and that the
+    """Verify that queuing an EDITING workbasket moves its DRAFT transactions to
+    SEED_FILE or REVISION as specified by the partition scheme, and that the
     transaction order is updated to start at the end of the specified
     partition."""
     # This test is good at finding issues with factories that implicitly create transactions
@@ -295,7 +287,7 @@ def test_workbasket_approval_updates_transactions(
     if isinstance(partition_scheme, UserTransactionPartitionScheme):
         assert partition_scheme.approved_partition == expected_partition
 
-    new_workbasket = WorkBasketFactory.create(status=WorkflowStatus.PROPOSED)
+    new_workbasket = WorkBasketFactory.create(status=WorkflowStatus.EDITING)
     assert type(new_workbasket).objects.count() == 1
 
     model = factories.FootnoteFactory.create(
@@ -310,10 +302,17 @@ def test_workbasket_approval_updates_transactions(
             flat=True,
         ),
     )
-    with patch("exporter.tasks.upload_workbaskets") as upload:
-        new_workbasket.approve(valid_user.pk, partition_setting)
 
-        upload.delay.assert_called_with()
+    # Before queuing the workbasket, we need to ensure that transactions have been successfully checked
+
+    # check_1 = TransactionCheckFactory.create(transaction=new_workbasket.transactions.first(), head_transaction=tx, completed=True, successful=True)
+    # TransactionCheckFactory.create(transaction=new_workbasket.transactions.last(), head_transaction=check_1.head_transaction, completed=True, successful=True)
+    from workbaskets.tasks import check_workbasket_sync
+
+    TransactionFactory.create(partition=expected_partition)
+    check_workbasket_sync(new_workbasket)
+
+    new_workbasket.queue(valid_user.pk, partition_setting)
 
     assert [expected_partition] == list(
         new_workbasket.transactions.distinct("partition").values_list(
@@ -353,12 +352,9 @@ def test_current_transaction_returns_last_approved_transaction(
     [
         ("archive", "EDITING", "ARCHIVED"),
         ("unarchive", "ARCHIVED", "EDITING"),
-        ("submit_for_approval", "EDITING", "PROPOSED"),
-        ("withdraw", "PROPOSED", "EDITING"),
-        ("unapprove", "APPROVED", "EDITING"),
-        ("export_to_cds", "APPROVED", "SENT"),
-        ("cds_confirmed", "SENT", "PUBLISHED"),
-        ("cds_error", "SENT", "ERRORED"),
+        ("unqueue", "QUEUED", "EDITING"),
+        ("cds_confirmed", "QUEUED", "PUBLISHED"),
+        ("cds_error", "QUEUED", "ERRORED"),
         ("restore", "ERRORED", "EDITING"),
     ],
 )
@@ -372,18 +368,14 @@ def test_workbasket_transition_methods(method, source, target):
     assert wb.status == getattr(WorkflowStatus, target)
 
 
-@patch("exporter.tasks.upload_workbaskets.delay")
-def test_approve(upload, valid_user):
-    """Test that approve transitions workbasket from PROPOSED to APPROVED,
-    setting approver and shifting transaction from DRAFT to REVISION
-    partition."""
+def test_queue(valid_user, unapproved_checked_transaction):
+    """Test that approve transitions workbasket from EDITING to QUEUED, setting
+    approver and shifting transaction from DRAFT to REVISION partition."""
+    wb = unapproved_checked_transaction.workbasket
+    wb.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
 
-    wb = factories.WorkBasketFactory.create(status=WorkflowStatus.PROPOSED)
-    wb.approve(valid_user.pk, settings.TRANSACTION_SCHEMA)
-
-    assert wb.status == WorkflowStatus.APPROVED
+    assert wb.status == WorkflowStatus.QUEUED
     assert wb.approver == valid_user
-    upload.assert_called_once()
 
     for transaction in wb.transactions.all():
         assert transaction.partition == TransactionPartition.REVISION

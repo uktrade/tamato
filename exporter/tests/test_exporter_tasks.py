@@ -24,7 +24,7 @@ class SentinelError(Exception):
     pass
 
 
-def test_upload_workbaskets_uploads_approved_workbasket_to_s3(
+def test_upload_workbaskets_uploads_queued_workbasket_to_s3(
     approved_transaction,
     hmrc_storage,
     s3,
@@ -33,7 +33,7 @@ def test_upload_workbaskets_uploads_approved_workbasket_to_s3(
     settings,
 ):
     """Exercise HMRCStorage and verify content is saved to bucket."""
-    assert WorkBasket.objects.filter(status=WorkflowStatus.SENT).exists() == False
+    assert WorkBasket.objects.filter(status=WorkflowStatus.QUEUED).exists() == False
 
     now = datetime.now()
     expected_bucket = "hmrc"
@@ -81,7 +81,7 @@ def test_upload_workbaskets_uploads_approved_workbasket_to_s3(
 
     assert codes == expected_codes
 
-    assert WorkBasket.objects.filter(status=WorkflowStatus.SENT).exists() == True
+    assert WorkBasket.objects.filter(status=WorkflowStatus.QUEUED).exists() == True
 
 
 @mock.patch(

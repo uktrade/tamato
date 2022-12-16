@@ -557,20 +557,20 @@ def test_move_to_draft_no_transactions(capfd):
 
 
 @pytest.mark.s
-def test_move_to_draft(capfd, approved_workbasket):
-    approved_workbasket.transactions.move_to_draft()
+def test_move_to_draft(capfd, queued_workbasket):
+    queued_workbasket.transactions.move_to_draft()
     readout = capfd.readouterr().err
 
     assert "Update version_group." in readout
     assert "Save with DRAFT partition scheme" in readout
 
-    for transaction in approved_workbasket.transactions.all():
+    for transaction in queued_workbasket.transactions.all():
         assert transaction.partition == TransactionPartition.DRAFT
 
 
-def test_revert_current_version(approved_workbasket):
+def test_revert_current_version(queued_workbasket):
     original_version = factories.TestModel1Factory.create(
-        transaction__workbasket=approved_workbasket,
+        transaction__workbasket=queued_workbasket,
     )
     other_workbasket = factories.ApprovedWorkBasketFactory.create()
     new_version = original_version.new_version(other_workbasket)

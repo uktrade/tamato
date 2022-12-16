@@ -143,7 +143,7 @@ class WorkBasketAdmin(admin.ModelAdmin):
         upload_workbaskets.delay()
         self.message_user(
             request,
-            f"Uploading workbaskets with status of '{WorkflowStatus.APPROVED.label}'",
+            f"Uploading workbaskets with status of '{WorkflowStatus.QUEUED.label}'",
         )
         return HttpResponseRedirect(reverse("admin:workbaskets_workbasket_changelist"))
 
