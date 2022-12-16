@@ -2,6 +2,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
+from common.tests import factories
 from common.util import xml_fromstring
 from common.views import HealthCheckResponse
 from common.views import handler403
@@ -92,6 +93,13 @@ def test_index_displays_footer_links(valid_user_client):
 def test_handler403(client):
     request = client.get("/")
     response = handler403(request)
+
+    assert response.status_code == 403
+    assert response.template_name == "common/403.jinja"
+
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(reverse("workbaskets:workbasket-ui-list"))
 
     assert response.status_code == 403
     assert response.template_name == "common/403.jinja"
