@@ -55,17 +55,16 @@ def test_packaged_workbasket_create_without_permission(client):
     assert response.status_code == 403
 
 
-def test_packaged_workbasket_create_form_no_business_rules(
-    valid_user_client,
-    session_workbasket,
-):
+def test_packaged_workbasket_create_form_no_business_rules( valid_user_client,):
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
     session = valid_user_client.session
     session["workbasket"] = {
-        # **session_workbasket,
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "error_count": session_workbasket.tracked_model_check_errors.count(),
+        "id": workbasket.pk,
+        "status": workbasket.status,
+        "title": workbasket.title,
+        "error_count": workbasket.tracked_model_check_errors.count(),
     }
     session.save()
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
@@ -76,52 +75,21 @@ def test_packaged_workbasket_create_form_no_business_rules(
     }
 
     response = valid_user_client.post(create_url, form_data)
-    #  get the workbasket we have made, and make sure it matches title and description
+    
     assert (
         not models.PackagedWorkBasket.objects.all_queued()
         .filter(
-            workbasket=session_workbasket,
+            workbasket=workbasket,
         )
         .exists()
     )
 
     assert response.status_code == 302
-    response_url = f"/workbaskets/{session_workbasket.pk}/"
+    response_url = f"/workbaskets/{workbasket.id}/"
     # Only compare the response URL up to the query string.
     assert response.url[: len(response_url)] == response_url
 
-
-@pytest.fixture
-def setup(session_workbasket, valid_user_client):
-    with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
-        measure = MeasureFactory.create(transaction=transaction)
-        geo_area = GeographicalAreaFactory.create(transaction=transaction)
-        [good, measure, geo_area]
-        TransactionCheckFactory.create(
-            transaction=transaction,
-            successful=True,
-            completed=True,
-        )
-        # for transaction in objects:
-        #     TransactionCheckFactory.create(
-        #         #transaction_check__transaction=transaction,
-        #         #model=obj,
-        #         successful=True,
-        #         completed=True,
-        #     )
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "error_count": session_workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
-
-
-@patch("exporter.tasks.upload_workbaskets")
-def test_packaged_workbasket_create_form(upload, valid_user_client):
+def test_packaged_workbasket_create_form( valid_user_client):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
@@ -171,18 +139,25 @@ def test_packaged_workbasket_create_form(upload, valid_user_client):
     assert first_packaged_work_basket.position < second_packaged_work_basket.position
 
 
-def test_packaged_workbasket_create_form_business_rule_violations(
-    setup,
-    valid_user_client,
-    session_workbasket,
-):
-    with session_workbasket.new_transaction() as transaction:
-        measure = MeasureFactory.create(transaction=transaction)
-        TrackedModelCheckFactory.create(
-            transaction_check__transaction=transaction,
-            model=measure,
+def test_packaged_workbasket_create_form_business_rule_violations( valid_user_client):
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    with workbasket.new_transaction() as transaction:
+        TransactionCheckFactory.create(
+            transaction=transaction,
             successful=False,
+            completed=True,
         )
+
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": workbasket.pk,
+        "status": workbasket.status,
+        "title": workbasket.title,
+        "error_count": workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
 
     form_data = {
@@ -195,13 +170,13 @@ def test_packaged_workbasket_create_form_business_rule_violations(
     assert (
         not models.PackagedWorkBasket.objects.all_queued()
         .filter(
-            workbasket=session_workbasket,
+            workbasket=workbasket,
         )
         .exists()
     )
 
     assert response.status_code == 302
-    response_url = f"/workbaskets/{session_workbasket.pk}/"
+    response_url = f"/workbaskets/{workbasket.pk}/"
     # Only compare the response URL up to the query string.
     assert response.url[: len(response_url)] == response_url
 
@@ -252,5 +227,3 @@ def test_create_duplicate_awaiting_instances(valid_user_client, valid_user):
     response_url = reverse("publishing:packaged-workbasket-queue-ui-list")
     # Only compare the response URL up to the query string.
     assert response.url == response_url
-
-    # response = valid_user_client.post(create_url, form_data)
