@@ -1,3 +1,4 @@
+import logging
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
@@ -14,6 +15,7 @@ from publishing.models import PackagedWorkBasketDuplication
 from publishing.models import PackagedWorkBasketInvalidCheckStatus
 from publishing.models import ProcessingState
 from workbaskets.models import WorkBasket
+
 
 
 class PackagedWorkbasketQueueView(
@@ -79,6 +81,10 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
     template_name = "publishing/create.jinja"
     form_class = forms.PackagedWorkBasketCreateForm
 
+    def __init__(self):
+        super().__init__()
+        self.logger = logging.getLogger(type(self).__name__)
+
     @property
     def workbasket(self):
         return WorkBasket.current(self.request)
@@ -88,8 +94,12 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
         try:
             wb.submit_for_approval()
             wb.save()
-        except ValidationError:
-            #TODO log error
+        except ValidationError as err:
+            self.logger.error(
+                "Error: %s \n Redirecting to work basket %s summary",
+                err.message,
+                self.workbasket.id
+                )
             return redirect(
                 reverse(
                     "workbaskets:workbasket-ui-detail",
@@ -105,13 +115,22 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
             queued_wb = PackagedWorkBasket.objects.create(
                 workbasket=wb, **form.cleaned_data
             )
-        except PackagedWorkBasketDuplication:
+        except PackagedWorkBasketDuplication as err:
+            self.logger.error(
+                "Error: %s \n Redirecting to packaged work basket queue",
+                err
+                )
             return redirect(
                 reverse(
                     "publishing:packaged-workbasket-queue-ui-list",
                 ),
             )
-        except PackagedWorkBasketInvalidCheckStatus:
+        except PackagedWorkBasketInvalidCheckStatus as err:
+            self.logger.error(
+                "Error: %s \n Redirecting to packaged work basket %s summary",
+                err,
+                self.workbasket.id
+                )
             return redirect(
                 reverse(
                     "workbaskets:workbasket-ui-detail",

@@ -55,16 +55,13 @@ def test_packaged_workbasket_create_without_permission(client):
     assert response.status_code == 403
 
 
-def test_packaged_workbasket_create_form_no_business_rules( valid_user_client,):
-    workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.EDITING,
-    )
+def test_packaged_workbasket_create_form_no_business_rules( valid_user_client,session_workbasket):
     session = valid_user_client.session
     session["workbasket"] = {
-        "id": workbasket.pk,
-        "status": workbasket.status,
-        "title": workbasket.title,
-        "error_count": workbasket.tracked_model_check_errors.count(),
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+        "error_count": session_workbasket.tracked_model_check_errors.count(),
     }
     session.save()
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
@@ -79,13 +76,13 @@ def test_packaged_workbasket_create_form_no_business_rules( valid_user_client,):
     assert (
         not models.PackagedWorkBasket.objects.all_queued()
         .filter(
-            workbasket=workbasket,
+            workbasket=session_workbasket,
         )
         .exists()
     )
 
     assert response.status_code == 302
-    response_url = f"/workbaskets/{workbasket.id}/"
+    response_url = f"/workbaskets/{session_workbasket.id}/"
     # Only compare the response URL up to the query string.
     assert response.url[: len(response_url)] == response_url
 
