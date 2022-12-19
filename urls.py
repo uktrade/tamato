@@ -37,6 +37,7 @@ urlpatterns = [
 ]
 
 handler403 = "common.views.handler403"
+handler500 = "common.views.handler500"
 
 if settings.SSO_ENABLED:
     urlpatterns = [

@@ -311,3 +311,7 @@ class TrackedModelChangeView(
 
 def handler403(request, *args, **kwargs):
     return TemplateResponse(request=request, template="common/403.jinja", status=403)
+
+
+def handler500(request, *args, **kwargs):
+    return TemplateResponse(request=request, template="common/500.jinja", status=500)
