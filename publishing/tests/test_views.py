@@ -87,6 +87,8 @@ def test_packaged_workbasket_create_form_no_rule_check(
 
 
 def test_packaged_workbasket_create_form(valid_user_client):
+    """Tests that Packaged WorkBasket Create returns 302 and redirects to
+    confirm create page on success."""
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
@@ -137,7 +139,9 @@ def test_packaged_workbasket_create_form(valid_user_client):
     assert first_packaged_work_basket.position < second_packaged_work_basket.position
 
 
-def test_packaged_workbasket_create_form_business_rule_violations(valid_user_client):
+def test_packaged_workbasket_create_form_rule_check_violations(valid_user_client):
+    """Tests that Packaged WorkBasket Create returns 302 and redirects to
+    workbasket detail page when there are rule check violations on workbasket."""
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
@@ -180,6 +184,9 @@ def test_packaged_workbasket_create_form_business_rule_violations(valid_user_cli
 
 
 def test_create_duplicate_awaiting_instances(valid_user_client, valid_user):
+    """Tests that Packaged WorkBasket Create returns 302 and redirects to
+    packaged workbasket queue page when trying to package a workbasket that
+    is already on the queue."""
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
