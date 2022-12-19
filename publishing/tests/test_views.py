@@ -118,7 +118,7 @@ def test_packaged_workbasket_create_form( valid_user_client):
 
     assert response.status_code == 302
     assert "/confirm-create/" in response.url
-    #  get the workbasket we have made, and make sure it matches title and description
+    #  get the packaged workbasket we have made from the queued, filtering it by workbasket
     second_packaged_work_basket = (
         models.PackagedWorkBasket.objects.all_queued()
         .filter(
@@ -163,7 +163,7 @@ def test_packaged_workbasket_create_form_business_rule_violations( valid_user_cl
     }
 
     response = valid_user_client.post(create_url, form_data)
-    #  get the workbasket we have made, and make sure it matches title and description
+    #  assert the packaged workbasket does not exist
     assert (
         not models.PackagedWorkBasket.objects.all_queued()
         .filter(

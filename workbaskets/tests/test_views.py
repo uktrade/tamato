@@ -168,7 +168,7 @@ def test_review_workbasket_displays_rule_violation_summary(
         features="lxml",
     )
 
-    error_headings = page.find_all("h2", attrs={"class": "govuk-error-summary__body"})
+    error_headings = page.find_all("h2", attrs={"class": "govuk-body"})
     tracked_model_count = session_workbasket.tracked_models.count()
     local_created_at = localtime(check.created_at)
     created_at = f"{local_created_at:%d %b %Y %H:%M}"
