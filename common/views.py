@@ -21,6 +21,7 @@ from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.timezone import make_aware
 from django.views import generic
@@ -311,3 +312,7 @@ class TrackedModelChangeView(
             return self.form_invalid(form)
 
         return FormMixin.form_valid(self, form)
+
+
+def handler403(request, *args, **kwargs):
+    return TemplateResponse(request=request, template="common/403.jinja", status=403)

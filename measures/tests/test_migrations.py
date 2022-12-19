@@ -4,7 +4,6 @@ from datetime import timedelta
 import pytest
 from psycopg2._range import DateTimeTZRange
 
-import conftest
 from common.tests.factories import ApprovedWorkBasketFactory
 from common.tests.factories import DutyExpressionFactory
 from common.tests.factories import GeographicalAreaFactory
@@ -15,7 +14,7 @@ from common.tests.factories import RegulationGroupFactory
 
 
 @pytest.mark.django_db()
-def test_add_back_deleted_measures(migrator):
+def test_add_back_deleted_measures(migrator, setup_content_types):
     from common.models.transactions import TransactionPartition
 
     """Ensures that the initial migration works."""
@@ -26,7 +25,7 @@ def test_add_back_deleted_measures(migrator):
         ),
     )
 
-    conftest.setup_content_types(old_state.apps)
+    setup_content_types(old_state.apps)
 
     # setup
     target_workbasket_id = 545
@@ -114,7 +113,10 @@ def test_add_back_deleted_measures(migrator):
 
 
 @pytest.mark.django_db()
-def test_add_back_deleted_measures_fails_silently_if_data_not_present(migrator):
+def test_add_back_deleted_measures_fails_silently_if_data_not_present(
+    migrator,
+    setup_content_types,
+):
     """Ensures that the initial migration works when no data to create measures
     are present, for local dev etc."""
 
@@ -125,7 +127,7 @@ def test_add_back_deleted_measures_fails_silently_if_data_not_present(migrator):
         ),
     )
 
-    conftest.setup_content_types(old_state.apps)
+    setup_content_types(old_state.apps)
 
     measurement_class = old_state.apps.get_model("measures", "Measure")
 
