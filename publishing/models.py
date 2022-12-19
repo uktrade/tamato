@@ -84,10 +84,12 @@ class LoadingReport(TimestampedMixin):
 
     # TODO Change report_file to correct field for / s3 object reference.
     report_file = models.FileField(
+        blank=True,
         null=True,
     )
     comment = models.TextField(
         blank=True,
+        max_length=200,
     )
 
 
