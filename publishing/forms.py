@@ -12,10 +12,6 @@ from common.forms import DescriptionHelpBox
 from publishing import models
 
 
-class CDSWarningBox(Div):
-    template = "includes/warning_help.jinja"
-
-
 class PackagedWorkBasketCreateForm(forms.ModelForm):
 
     theme = forms.CharField(
@@ -64,7 +60,9 @@ class PackagedWorkBasketCreateForm(forms.ModelForm):
             Field("eif"),
             Field.text("embargo", field_width=Fluid.TWO_THIRDS),
             Field.text("jira_url", field_width=Fluid.TWO_THIRDS),
-            CDSWarningBox(),
+            Div(
+                template="includes/warning_help.jinja",
+            ),
             Submit(
                 "submit",
                 "Add to queue",

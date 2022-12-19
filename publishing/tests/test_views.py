@@ -35,8 +35,8 @@ def test_packaged_workbasket_create_user_not_logged_in_dev_sso_disabled(
 
 
 def test_packaged_workbasket_create_without_permission(client):
-    """Tests that WorkBasketCreate returns 403 to user without add_workbasket
-    permission."""
+    """Tests that Packaged WorkBasket Create returns 403 to user without
+    common.add_trackedmodel permission."""
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
     form_data = {
         "theme": "My theme",
@@ -49,10 +49,12 @@ def test_packaged_workbasket_create_without_permission(client):
     assert response.status_code == 403
 
 
-def test_packaged_workbasket_create_form_no_business_rules(
+def test_packaged_workbasket_create_form_no_rule_check(
     valid_user_client,
     session_workbasket,
 ):
+    """Tests that Packaged WorkBasket Create returns 302 and redirects work
+    basket summary when no rule check has been executed."""
     session = valid_user_client.session
     session["workbasket"] = {
         "id": session_workbasket.pk,
@@ -129,6 +131,7 @@ def test_packaged_workbasket_create_form(valid_user_client):
     # Only compare the response URL up to the query string.
     assert response.url[: len(response_url)] == response_url
     assert second_packaged_work_basket.theme == form_data["theme"]
+    # Check in, form field may not contain full URL contianed within URLField object
     assert form_data["jira_url"] in second_packaged_work_basket.jira_url
     assert first_packaged_work_basket.position > 0
     assert first_packaged_work_basket.position < second_packaged_work_basket.position
