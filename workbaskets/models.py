@@ -67,7 +67,6 @@ class SeedFirstTransactionPartitionScheme(TransactionPartitionScheme):
         Usage note:   This must to be called before workbasket status is changed otherwise it will only
                       ever return REVISION.
         """
-        assert 0
         if WorkBasket.objects.filter(
             status__in=WorkflowStatus.approved_statuses(),
         ).exists():

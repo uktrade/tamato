@@ -61,7 +61,7 @@ class WorkBasketAdminForm(forms.ModelForm):
 
 class WorkBasketAdmin(admin.ModelAdmin):
     form = WorkBasketAdminForm
-    actions = ["approve", "publish"]
+    actions = ["queue", "publish"]
     list_display = (
         "pk",
         "title",
@@ -157,7 +157,7 @@ class WorkBasketAdmin(admin.ModelAdmin):
         transition = form.cleaned_data.get("transition")
         if transition:
             transition_args = []
-            if transition == "approve":
+            if transition == "queue":
                 transition_args.extend([request.user.pk, settings.TRANSACTION_SCHEMA])
             tasks.transition.delay(instance.pk, transition, *transition_args)
 

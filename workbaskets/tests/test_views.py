@@ -220,7 +220,6 @@ def test_select_workbasket_page_200(valid_user_client):
     factories.WorkBasketFactory.create(status=WorkflowStatus.ERRORED)
     valid_statuses = {
         WorkflowStatus.EDITING,
-        WorkflowStatus.QUEUED,
         WorkflowStatus.ERRORED,
     }
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
@@ -229,7 +228,7 @@ def test_select_workbasket_page_200(valid_user_client):
     statuses = [
         element.text for element in soup.select(".govuk-table__row .status-badge")
     ]
-    assert len(statuses) == 4
+    assert len(statuses) == 2
     assert not set(statuses).difference(valid_statuses)
 
 
