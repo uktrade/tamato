@@ -37,3 +37,8 @@ ui_patterns = [
 urlpatterns = [
     path("publishing/", include(ui_patterns)),
 ]
+
+
+urlpatterns = [
+    path("publishing/", include(ui_patterns)),
+]
