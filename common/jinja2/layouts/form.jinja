@@ -11,6 +11,10 @@
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
+  {% if page_label %}
+    <div class="govuk-hint">{{ page_label }}</div>
+  {% endif %}
+
   {% block form %}{% endblock %}
 {% endblock %}
 
