@@ -1012,7 +1012,7 @@ def in_use_check_respects_deletes(valid_user):
         assert not in_use(instance.transaction), f"New {instance!r} already in use"
 
         workbasket = factories.WorkBasketFactory.create(
-            status=WorkflowStatus.QUEUED,
+            status=WorkflowStatus.EDITING,
         )
         with workbasket.new_transaction():
             create_kwargs = {relation: instance}
@@ -1026,15 +1026,22 @@ def in_use_check_respects_deletes(valid_user):
             Transaction.approved.last(),
         ), f"Unapproved {instance!r} already in use"
 
+        for tx in workbasket.transactions.all():
+            TransactionCheckFactory.create(
+                transaction=tx,
+                successful=True,
+                completed=True,
+            )
+
         with patch(
             "exporter.tasks.upload_workbaskets.delay",
         ):
-            workbasket.approve(
+            workbasket.queue(
                 valid_user.pk,
                 settings.TRANSACTION_SCHEMA,
             )
         workbasket.save()
-        assert in_use(dependant.transaction), f"Approved {instance!r} not in use"
+        assert in_use(dependant.transaction), f"Queued {instance!r} not in use"
 
         deleted = dependant.new_version(
             workbasket,

@@ -13,8 +13,6 @@ from common.tests.factories import RegulationFactory
 from common.tests.util import taric_xml_record_codes
 from common.tests.util import validate_taric_xml_record_order
 from exporter.tasks import upload_workbaskets
-from workbaskets.models import WorkBasket
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -33,7 +31,6 @@ def test_upload_workbaskets_uploads_queued_workbasket_to_s3(
     settings,
 ):
     """Exercise HMRCStorage and verify content is saved to bucket."""
-    assert WorkBasket.objects.filter(status=WorkflowStatus.QUEUED).exists() == False
 
     now = datetime.now()
     expected_bucket = "hmrc"
@@ -80,8 +77,6 @@ def test_upload_workbaskets_uploads_queued_workbasket_to_s3(
     codes = taric_xml_record_codes(xml)
 
     assert codes == expected_codes
-
-    assert WorkBasket.objects.filter(status=WorkflowStatus.QUEUED).exists() == True
 
 
 @mock.patch(

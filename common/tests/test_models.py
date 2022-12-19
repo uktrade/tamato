@@ -547,7 +547,7 @@ def test_move_to_draft_unapproved_transactions(unapproved_transaction):
 
 @pytest.mark.s
 def test_move_to_draft_no_transactions(capfd):
-    wb = factories.ApprovedWorkBasketFactory.create(transaction=None)
+    wb = factories.QueuedWorkBasketFactory.create(transaction=None)
 
     assert wb.transactions.move_to_draft() == None
     assert (
@@ -572,7 +572,7 @@ def test_revert_current_version(queued_workbasket):
     original_version = factories.TestModel1Factory.create(
         transaction__workbasket=queued_workbasket,
     )
-    other_workbasket = factories.ApprovedWorkBasketFactory.create()
+    other_workbasket = factories.QueuedWorkBasketFactory.create()
     new_version = original_version.new_version(other_workbasket)
 
     # sanity check
@@ -626,7 +626,7 @@ def test_numeric_sid_iteration():
 def test_copy_related_model():
     measure = factories.MeasureFactory.create()
     goods_nomenclature = factories.GoodsNomenclatureFactory.create()
-    workbasket = factories.ApprovedWorkBasketFactory.create()
+    workbasket = factories.QueuedWorkBasketFactory.create()
 
     copied_measure = measure.copy(
         workbasket.new_transaction(),
@@ -646,7 +646,7 @@ def test_copy_related_model():
 def test_copy_empty_for_related_models(conditions):
     measure = factories.MeasureFactory.create()
     condition = factories.MeasureConditionFactory.create(dependent_measure=measure)
-    workbasket = factories.ApprovedWorkBasketFactory.create()
+    workbasket = factories.QueuedWorkBasketFactory.create()
 
     copied_measure = measure.copy(workbasket.new_transaction(), conditions=conditions)
 
@@ -655,7 +655,7 @@ def test_copy_empty_for_related_models(conditions):
 
 def test_copy_fk_related_models():
     measure = factories.MeasureFactory.create()
-    workbasket = factories.ApprovedWorkBasketFactory.create()
+    workbasket = factories.QueuedWorkBasketFactory.create()
     code = factories.MeasureConditionCodeFactory.create()
     transaction = workbasket.new_transaction()
     condition_data = {
@@ -677,7 +677,7 @@ def test_copy_fk_related_models():
 
 def test_copy_nested_fk():
     measure = factories.MeasureFactory.create()
-    workbasket = factories.ApprovedWorkBasketFactory.create()
+    workbasket = factories.QueuedWorkBasketFactory.create()
     transaction = workbasket.new_transaction()
     factories.MeasureConditionFactory.create(
         transaction=transaction,
@@ -695,7 +695,7 @@ def test_copy_nested_fk():
 
 def test_copy_nested_field():
     measure = factories.MeasureFactory.create()
-    workbasket = factories.ApprovedWorkBasketFactory.create()
+    workbasket = factories.QueuedWorkBasketFactory.create()
     transaction = workbasket.new_transaction()
     factories.MeasureConditionFactory.create(
         transaction=transaction,
@@ -712,7 +712,7 @@ def test_copy_nested_field():
 
 def test_copy_nested_field_two_levels_deep():
     measure = factories.MeasureFactory.create()
-    workbasket = factories.ApprovedWorkBasketFactory.create()
+    workbasket = factories.QueuedWorkBasketFactory.create()
     transaction = workbasket.new_transaction()
     condition = factories.MeasureConditionFactory.create(
         transaction=transaction,
