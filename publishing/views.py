@@ -1,6 +1,8 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.http import HttpResponseRedirect
+from django.db.transaction import atomic
+from django.shortcuts import redirect
 from django.urls import reverse
+from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic import ListView
 from django_fsm import TransitionNotAllowed
@@ -60,7 +62,7 @@ class PackagedWorkbasketQueueView(
             # Handle invalid post content by redisplaying the page.
             url = request.build_absolute_uri()
 
-        return HttpResponseRedirect(url)
+        return redirect(url)
 
     # Queue item position management.
 
@@ -146,16 +148,22 @@ class EnvelopeQueueView(
 
         post = request.POST
 
-        if post.get("download_envelope"):
-            url = self._download_envelope(request, post.get("download_envelope"))
+        if post.get("process_envelope"):
+            url = self._process_envelope(request, post.get("process_envelope"))
         else:
             # Handle invalid post content by redisplaying the page.
             url = request.build_absolute_uri()
 
-        return HttpResponseRedirect(url)
+        return redirect(url)
 
-    def _download_envelope(self, request, pk):
-        """TODO."""
+    def _process_envelope(self, request, pk):
+        packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
+        packaged_work_basket.begin_processing()
+        """TODO:
+        * Make the download file available either:
+            - Open in a separate tab.
+            - Download as the second step after setting to CURRENTLY_PROCESSING.
+        """
         return request.build_absolute_uri()
 
 
@@ -165,6 +173,26 @@ class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
     permission_required = "workbaskets.change_workbasket"
     template_name = "publishing/complete-envelope-processing.jinja"
     form_class = LoadingReportForm
+    success_url = reverse_lazy("publishing:envelope-queue-ui-list")
+
+    @atomic
+    def form_valid(self, form):
+        """Create a LoadingReport instance, associated it wth the
+        PackagedWorkBasket and transition that PackagedWorkBasket instance to
+        the next, completed processing state (either succeeded or failed)."""
+
+        packaged_work_basket = PackagedWorkBasket.objects.get(
+            pk=self.kwargs["pk"],
+        )
+        self.object = form.save()
+        packaged_work_basket.loading_report = self.object
+        packaged_work_basket.save()
+        self.transition_packaged_work_basket(packaged_work_basket)
+
+        return redirect(self.get_success_url())
+
+    def transition_packaged_work_basket(self, packaged_work_basket):
+        raise NotImplementedError()
 
 
 class AcceptEnvelopeView(CompleteEnvelopeProcessingView):
@@ -176,6 +204,9 @@ class AcceptEnvelopeView(CompleteEnvelopeProcessingView):
         data["accept_reject"] = "accept"
         return data
 
+    def transition_packaged_work_basket(self, packaged_work_basket):
+        return packaged_work_basket.processing_succeeded()
+
 
 class RejectEnvelopeView(CompleteEnvelopeProcessingView):
     """UI view used to reject an envelope as having failed to be processed by
@@ -185,3 +216,6 @@ class RejectEnvelopeView(CompleteEnvelopeProcessingView):
         data = super().get_context_data(object_list=object_list, **kwargs)
         data["accept_reject"] = "reject"
         return data
+
+    def transition_packaged_work_basket(self, packaged_work_basket):
+        return packaged_work_basket.processing_failed()

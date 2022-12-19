@@ -1,13 +1,14 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 
-{%- macro download_button(obj) %}
+{%- macro process_download_button(obj) %}
   {% if obj == currently_processing %}
     Downloaded:
     {% if obj.currently_processing_start_time %}
       {{ '{:%d %b %Y}'.format(obj.currently_processing_start_time) }}
     {% endif %}
     <br>
+    {# TODO: UI download implementation (<a target="_blank">...</a>).#}
     <button
       class="govuk-link fake-link"
       name="download_envelope"
@@ -21,18 +22,22 @@
       >
     </button>
   {% else %}
-    <button
-      class="govuk-link fake-link"
-      name="download_envelope"
-      value="{{ obj.pk }}"
-    >
-      Download
-      <img
-        class="icon icon-download"
-        src="{{ static('/common/images/download-file.svg') }}"
-        alt="Download file icon"
+    <form method="post" action="">
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+      <button
+        class="govuk-link fake-link"
+        name="process_envelope"
+        value="{{ obj.pk }}"
       >
-    </button>
+        Download
+        <img
+          class="icon icon-download"
+          src="{{ static('/common/images/download-file.svg') }}"
+          alt="Download file icon"
+        >
+        </button>
+      </form>
   {% endif %}
 {% endmacro -%}
 
@@ -71,7 +76,7 @@
 
   {%- set envelope_id_cell_content %}
     {% if loop.index == 1 %}
-      {# TODO #}
+      {# TODO: Get dynamically generated next envelope ID. #}
       220099
     {% endif %}
   {% endset -%}
@@ -90,7 +95,7 @@
   {%- set process_envelope_cell_content %}
     {% if loop.index == 1 %}
       {# First row. #}
-      {{ download_button(obj) }}
+      {{ process_download_button(obj) }}
     {% endif %}
   {% endset -%}
 
@@ -123,10 +128,7 @@
 {% endfor -%}
 
 
-<form method="post" action="">
-  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
-  {{ govukTable({
+{{ govukTable({
   "head": [
     {"text": "Envelope ID"},
     {"text": "Description"},
@@ -137,6 +139,4 @@
   ],
   "rows": table_rows,
   "classes": "queued-envelopes first-row-highlight",
-  }) }}
-
-</form>
+}) }}

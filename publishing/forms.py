@@ -1,4 +1,5 @@
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
@@ -22,6 +23,7 @@ class LoadingReportForm(ModelForm):
         self.helper.layout = Layout(
             Field("report_file"),
             Field.textarea("comment", rows=5),
+            HTML.warning("Submitting this form sends a notification email to users."),
             Submit(
                 "submit",
                 "Submit",
@@ -29,3 +31,6 @@ class LoadingReportForm(ModelForm):
                 data_prevent_double_click="true",
             ),
         )
+
+        self.fields["report_file"].label = "Loading report file"
+        self.fields["comment"].label = "Comments"
