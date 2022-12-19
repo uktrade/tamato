@@ -149,7 +149,7 @@ class EnvelopeQueueView(
 class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
     """UI endpoint for creating packaged workbaskets."""
 
-    permission_required = "common.add_trackedmodel"
+    permission_required = "publishing.add_packagedworkbasket"
     template_name = "publishing/create.jinja"
     form_class = forms.PackagedWorkBasketCreateForm
 

@@ -232,6 +232,7 @@ def policy_group(db) -> Group:
         ("common", "change_trackedmodel"),
         ("workbaskets", "add_workbasket"),
         ("workbaskets", "change_workbasket"),
+        ("publishing", "add_packagedworkbasket")
     ]:
         group.permissions.add(
             Permission.objects.get(

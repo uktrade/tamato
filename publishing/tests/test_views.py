@@ -36,7 +36,7 @@ def test_packaged_workbasket_create_user_not_logged_in_dev_sso_disabled(
 
 def test_packaged_workbasket_create_without_permission(client):
     """Tests that Packaged WorkBasket Create returns 403 to user without
-    common.add_trackedmodel permission."""
+    publishing.add_packagedworkbasket permission."""
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
     form_data = {
         "theme": "My theme",
