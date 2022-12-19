@@ -130,19 +130,29 @@ def spanning_dates(request, date_ranges):
     )
 
 
-def setup_content_types(apps):
+@pytest.fixture
+def setup_content_types():
     """This fixture is used to set-up content types, needed for migration
     testing, when a clean new database and the content types have not been
     populated yet."""
 
-    tamato_apps = settings.DOMAIN_APPS + settings.TAMATO_APPS
+    def _method(apps):
+        tamato_apps = settings.DOMAIN_APPS + settings.TAMATO_APPS
 
-    for app_name in tamato_apps:
-        app_label = app_name.split(".")[0]
-        app_config = apps.get_app_config(app_label)
-        app_config.models_module = True
+        app_labels = []
 
-        create_contenttypes(app_config)
+        for app in apps.get_app_configs():
+            app_labels.append(app.label)
+
+        for app_name in tamato_apps:
+            app_label = app_name.split(".")[0]
+            if app_label in app_labels:
+                app_config = apps.get_app_config(app_label)
+                app_config.models_module = True
+
+                create_contenttypes(app_config)
+
+    return _method
 
 
 @pytest.fixture
