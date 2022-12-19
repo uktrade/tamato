@@ -1,6 +1,7 @@
 import logging
 
 from django.conf import settings
+from django.db.transaction import atomic
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
@@ -162,6 +163,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
         """Current Workbasket in session."""
         return WorkBasket.current(self.request)
 
+    @atomic
     def form_valid(self, form):
         """If form is valid submit workbasket state from EDITING -> PROPOSED ->
         APPROVED, then create the packaged workbasket in the queue and then go
@@ -177,10 +179,8 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
                 self.workbasket.id,
             )
             return redirect(
-                reverse(
-                    "workbaskets:workbasket-ui-detail",
-                    kwargs={"pk": self.workbasket.id},
-                ),
+                "workbaskets:workbasket-ui-detail",
+                pk=self.workbasket.id
             )
 
         wb.approve(self.request.user, settings.TRANSACTION_SCHEMA)
@@ -197,9 +197,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
                 err,
             )
             return redirect(
-                reverse(
-                    "publishing:packaged-workbasket-queue-ui-list",
-                ),
+                "publishing:packaged-workbasket-queue-ui-list"
             )
         except PackagedWorkBasketInvalidCheckStatus as err:
             self.logger.error(
@@ -208,24 +206,14 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
                 self.workbasket.id,
             )
             return redirect(
-                reverse(
-                    "workbaskets:workbasket-ui-detail",
-                    kwargs={"pk": self.workbasket.id},
-                ),
+                "workbaskets:workbasket-ui-detail",
+                pk=self.workbasket.id
             )
 
         return redirect(
-            reverse(
-                "publishing:packaged-workbasket-queue-confirm-create",
-                kwargs={"pk": queued_wb.pk},
-            ),
+            "publishing:packaged-workbasket-queue-confirm-create",
+            pk=queued_wb.pk
         )
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["request"] = self.request
-        return kwargs
-
 
 class PackagedWorkbasketConfirmCreate(DetailView):
     template_name = "publishing/confirm_create.jinja"

@@ -1,5 +1,6 @@
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Div
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fluid
 from crispy_forms_gds.layout import Layout
@@ -47,7 +48,6 @@ class PackagedWorkBasketCreateForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
@@ -61,7 +61,13 @@ class PackagedWorkBasketCreateForm(forms.ModelForm):
             Field.text("embargo", field_width=Fluid.TWO_THIRDS),
             Field.text("jira_url", field_width=Fluid.TWO_THIRDS),
             Div(
-                template="includes/warning_help.jinja",
+                HTML(
+                    '<span class="govuk-warning-text__icon" aria-hidden="true">!</span>'
+                ),
+                HTML(
+                    '<strong class="govuk-warning-text__text"><span class="govuk-warning-text__assistive">Warning</span>The workbasket will be added to the queue ready to send to CDS.</strong>'
+                ),
+                css_class= "govuk-warning-text",
             ),
             Submit(
                 "submit",
