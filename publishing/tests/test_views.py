@@ -1,15 +1,9 @@
-from unittest.mock import patch
-
 import pytest
 from django.conf import settings
 from django.urls import reverse
 
-from checks.tests.factories import TrackedModelCheckFactory
 from checks.tests.factories import TransactionCheckFactory
 from common.tests import factories
-from common.tests.factories import GeographicalAreaFactory
-from common.tests.factories import GoodsNomenclatureFactory
-from common.tests.factories import MeasureFactory
 from publishing import models
 from workbaskets.validators import WorkflowStatus
 
@@ -55,7 +49,10 @@ def test_packaged_workbasket_create_without_permission(client):
     assert response.status_code == 403
 
 
-def test_packaged_workbasket_create_form_no_business_rules( valid_user_client,session_workbasket):
+def test_packaged_workbasket_create_form_no_business_rules(
+    valid_user_client,
+    session_workbasket,
+):
     session = valid_user_client.session
     session["workbasket"] = {
         "id": session_workbasket.pk,
@@ -72,7 +69,7 @@ def test_packaged_workbasket_create_form_no_business_rules( valid_user_client,se
     }
 
     response = valid_user_client.post(create_url, form_data)
-    
+
     assert (
         not models.PackagedWorkBasket.objects.all_queued()
         .filter(
@@ -86,7 +83,8 @@ def test_packaged_workbasket_create_form_no_business_rules( valid_user_client,se
     # Only compare the response URL up to the query string.
     assert response.url[: len(response_url)] == response_url
 
-def test_packaged_workbasket_create_form( valid_user_client):
+
+def test_packaged_workbasket_create_form(valid_user_client):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
@@ -136,7 +134,7 @@ def test_packaged_workbasket_create_form( valid_user_client):
     assert first_packaged_work_basket.position < second_packaged_work_basket.position
 
 
-def test_packaged_workbasket_create_form_business_rule_violations( valid_user_client):
+def test_packaged_workbasket_create_form_business_rule_violations(valid_user_client):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )

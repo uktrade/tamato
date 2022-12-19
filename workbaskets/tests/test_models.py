@@ -369,7 +369,7 @@ def test_workbasket_transition_methods(method, source, target):
     assert wb.status == getattr(WorkflowStatus, target)
 
 
-def test_approve( valid_user):
+def test_approve(valid_user):
     """Test that approve transitions workbasket from PROPOSED to APPROVED,
     setting approver and shifting transaction from DRAFT to REVISION
     partition."""

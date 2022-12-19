@@ -1,4 +1,5 @@
 import logging
+
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
@@ -15,7 +16,6 @@ from publishing.models import PackagedWorkBasketDuplication
 from publishing.models import PackagedWorkBasketInvalidCheckStatus
 from publishing.models import ProcessingState
 from workbaskets.models import WorkBasket
-
 
 
 class PackagedWorkbasketQueueView(
@@ -98,8 +98,8 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
             self.logger.error(
                 "Error: %s \n Redirecting to work basket %s summary",
                 err.message,
-                self.workbasket.id
-                )
+                self.workbasket.id,
+            )
             return redirect(
                 reverse(
                     "workbaskets:workbasket-ui-detail",
@@ -118,8 +118,8 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
         except PackagedWorkBasketDuplication as err:
             self.logger.error(
                 "Error: %s \n Redirecting to packaged work basket queue",
-                err
-                )
+                err,
+            )
             return redirect(
                 reverse(
                     "publishing:packaged-workbasket-queue-ui-list",
@@ -129,8 +129,8 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
             self.logger.error(
                 "Error: %s \n Redirecting to packaged work basket %s summary",
                 err,
-                self.workbasket.id
-                )
+                self.workbasket.id,
+            )
             return redirect(
                 reverse(
                     "workbaskets:workbasket-ui-detail",

@@ -378,7 +378,7 @@ class WorkBasket(TimestampedMixin):
     def submit_for_approval(self):
         self.full_clean()
 
-        if not self.transactions.exists():            
+        if not self.transactions.exists():
             return
 
         if self.unchecked_or_errored_transactions.exists():
@@ -568,7 +568,7 @@ class WorkBasket(TimestampedMixin):
         ).delete()
 
     @property
-    def unchecked_or_errored_transactions(self):        
+    def unchecked_or_errored_transactions(self):
         return self.transactions.exclude(
             pk__in=TransactionCheck.objects.requires_update(False)
             .filter(
