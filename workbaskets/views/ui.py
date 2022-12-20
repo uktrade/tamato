@@ -265,6 +265,7 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
 
     # Form action mappings to URL names.
     action_success_url_names = {
+        "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
         "run-business-rules": "workbaskets:workbasket-ui-detail",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:workbasket-ui-detail",
@@ -360,6 +361,10 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
                     kwargs={"pk": self.workbasket.pk},
                 ),
                 form_action,
+            )
+        elif form_action == "submit-for-packaging":
+            return reverse(
+                self.action_success_url_names[form_action],
             )
         return reverse("home")
 

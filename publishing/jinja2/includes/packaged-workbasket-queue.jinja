@@ -1,57 +1,180 @@
-{% from "components/button/macro.njk" import govukButton %}
-{% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
+
+
+{%- macro tick_icon() %}
+  <img
+    class="icon"
+    src="{{ static('/common/images/tick-solid-circle.svg') }}"
+    alt="Tick icon"
+  >
+{% endmacro -%}
+
+
+{%- macro timer_icon() %}
+  <img
+    class="icon"
+    src="{{ static('/common/images/incomplete-circle.svg') }}"
+    alt="Incomplete circle icon"
+  >
+{% endmacro -%}
+
+
+{%- macro promote_button(obj) %}
+  <button
+    class="govuk-link fake-link"
+    name="promote_position"
+    value="{{ obj.pk }}"
+  >
+    <img
+      class="icon"
+      src="{{ static('/common/images/chevron-up.svg') }}"
+      alt="Chevron up icon"
+    >
+  </button>
+{% endmacro -%}
+
+
+{%- macro demote_button(obj) %}
+  <button
+    class="govuk-link fake-link"
+    name="demote_position"
+    value="{{ obj.pk }}"
+  >
+    <img
+      class="icon"
+      src="{{ static('/common/images/chevron-down.svg') }}"
+      alt="Chevron down icon"
+    >
+  </button>
+{% endmacro -%}
+
 
 {%- set table_rows = [] -%}
 
-{% for obj in object_list %}
-
-  {%- set order_cell_content %}
-    {# TODO: move into view function / context. #}
-    {% if obj.processing_state == "CURRENTLY_PROCESSING" %}
-      <span class="tamato-badge-light-purple">CDS DOWNLOADED</span>
-    {% elif obj.processing_state == "AWAITING_PROCESSING" and obj.position == 1 %}
-      {# TODO: check notification status of instance. #}
-      <span class="tamato-badge-light-green">CDS NOTIFIED</span>
-    {% elif obj.position == 2 %}
-      {# TODO: Correctly implement conditional move down. #}
-      <a href="#">Move down</a>
-    {% else %}
-      <a href="#">Move to top to notify CDS</a>
-    {% endif %}
-  {% endset -%}
+{%- for obj in object_list %}
 
   {%- set up_down_cell_content %}
-    {# TODO: move into view function / context. #}
-    {# TODO: Turn into POST submits. #}
     {% if loop.index == 1 %}
-      <img class="icon icon-waiting" src="{{ static('/common/images/incomplete-circle.svg') }}">
+      {# First row. #}
+      {% if obj == currently_processing %}
+        {{ tick_icon() }}
+      {% else %}
+        {{ timer_icon() }}
+      {% endif %}
+    {% elif loop.index == 2 %}
+      {# Second row. #}
+      {% if obj == currently_processing %}
+        {% if 2 < object_list | length %}
+          <br>
+          {{ demote_button(obj) }}
+        {% endif %}
+      {% else %}
+        {{ promote_button(obj) }}
+        <br>
+        {% if 2 < object_list | length %}
+          {{ demote_button(obj) }}
+        {% endif %}
+      {% endif %}
+    {% elif loop.index == object_list | length %}
+      {# Last row. #}
+      {{ promote_button(obj) }}
     {% else %}
-      <img class="icon icon-up" src="{{ static('/common/images/chevron-up.svg') }}">
-      <img class="icon icon-down" src="{{ static('/common/images/chevron-down.svg') }}">
+      {# All other rows. #}
+      {{ promote_button(obj) }}
+      <br>
+      {{ demote_button(obj) }}
     {% endif %}
   {% endset -%}
+
+
+  {%- set workbasket_id_cell_content %}
+    <a
+      href="{{ url('workbaskets:workbasket-ui-changes', args=(obj.workbasket.pk,)) }}"
+      class="govuk-link"
+    >{{ obj.workbasket.pk }}</a>
+  {% endset -%}
+
+
+  {%- set jira_cell_content %}
+    <a
+      href="{{ obj.jira_url }}"
+      class="govuk-link"
+    >{{ obj.workbasket.title }}</a>
+  {% endset -%}
+
+
+  {%- set description_cell_content %}
+    <span>{{ obj.workbasket.reason }}</span>
+  {% endset -%}
+
+
+  {%- set order_cell_content %}
+    {% if loop.index == 1 %}
+      {# First row. #}
+      {% if obj == currently_processing %}
+        <span class="processing-state tamato-badge-light-green">CDS DOWNLOADED</span>
+      {% elif obj.processing_state == "AWAITING_PROCESSING" and obj.cds_notified_notification_log %}
+        <span class="processing-state tamato-badge-light-purple">CDS NOTIFIED</span>
+      {% endif %}
+    {% elif loop.index == 2 and currently_processing %}
+      {# Second row. #}
+      <button
+        class="govuk-link fake-link"
+        name="demote_position"
+        value="{{ obj.pk }}"
+      >
+        Move down
+      </button>
+    {% else %}
+      {# All other rows. #}
+      <button
+        class="govuk-link fake-link"
+        name="promote_to_top_position"
+        value="{{ obj.pk }}"
+      >
+        Move to top to notify CDS
+      </button>
+    {% endif %}
+  {% endset -%}
+
+
+  {%- set remove_cell_content %}
+    {% if obj != currently_processing %}
+      <button
+        class="govuk-link fake-link"
+        name="remove_from_queue"
+        value="{{ obj.pk }}"
+      >
+        Remove from queue
+      </button>
+    {% endif %}
+  {% endset -%}
+
 
   {{ table_rows.append([
     {"html": up_down_cell_content},
-    {"html": "<a href=\"" ~ url("workbaskets:workbasket-ui-changes", args=(obj.workbasket.pk,)) ~ "\" class=\"govuk-link\">" ~ obj.workbasket.pk ~ "</a>"},
-    {"html": "<a href=\"#\" class=\"govuk-link\">" ~ obj.workbasket.title ~ "</a>"},
-    {"html": "<span>" ~ obj.workbasket.reason ~ "</span>"},
+    {"html": workbasket_id_cell_content},
+    {"html": jira_cell_content},
+    {"html": description_cell_content},
     {"html": order_cell_content},
-    {"html": "<a href=\"#\" class=\"govuk-link\">Remove from queue</a>"},
+    {"html": remove_cell_content},
   ]) or "" }}
 
-{% endfor %}
+{% endfor -%}
 
-{{ govukTable({
-  "head": [
-    {"text": ""},
-    {"text": "Workbasket ID"},
-    {"text": "TOPS/Jira"},
-    {"text": "Description"},
-    {"text": "Order"},
-    {"text": "Remove"},
-  ],
-  "rows": table_rows,
-  "classes": "packaged-workbaskets first-row-highlight",
-}) }}
+<form method="post" action="">
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+  {{ govukTable({
+    "head": [
+      {"text": ""},
+      {"text": "Workbasket ID"},
+      {"text": "TOPS/Jira"},
+      {"text": "Description"},
+      {"text": "Order"},
+      {"text": "Remove"},
+    ],
+    "rows": table_rows,
+    "classes": "packaged-workbaskets first-row-highlight",
+  }) }}
+</form>
