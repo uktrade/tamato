@@ -302,7 +302,6 @@ def test_workbasket_approval_updates_transactions(
             flat=True,
         ),
     )
-
     new_workbasket.approve(valid_user.pk, partition_setting)
 
     assert [expected_partition] == list(

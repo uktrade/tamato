@@ -218,20 +218,32 @@ class PackagedWorkBasket(TimestampedMixin):
     """The report file associated with an attempt (either successful or failed)
     to process / load the associated workbasket's envelope file.
     """
-    theme = models.CharField(max_length=255)
+    theme = models.CharField(
+        max_length=255,
+    )
     description = models.TextField(
         blank=True,
     )
-    eif = models.DateField(null=True, blank=True)
+    eif = models.DateField(
+        null=True,
+        blank=True,
+        help_text="For Example, 27 3 2008",
+    )
     """The enter into force date determines when changes should go live in CDS.
     A file will need to be ingested by CDS on the day before this. If left,
     blank CDS will ingest the file immediately.
     """
-    embargo = models.DateField(null=True, blank=True)
+    embargo = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+    )
     """The date until which CDS prevents envelope from being displayed after
     ingestion.
     """
-    jira_url = models.URLField()
+    jira_url = models.URLField(
+        help_text="Insert Tops Jira ticket link",
+    )
     """URL linking the packaged workbasket with a ticket on the Tariff
     Operations (TOPS) project's Jira board.
     """

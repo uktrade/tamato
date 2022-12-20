@@ -167,13 +167,13 @@ def test_review_workbasket_displays_rule_violation_summary(
         response.content.decode(response.charset),
         features="lxml",
     )
-    status_heading = page.find_all("h2", attrs={"class": "govuk-heading-s"})[0]
-    error_headings = page.find_all("h2", attrs={"class": "govuk-error-summary__title"})
+
+    error_headings = page.find_all("h2", attrs={"class": "govuk-body"})
     tracked_model_count = session_workbasket.tracked_models.count()
     local_created_at = localtime(check.created_at)
     created_at = f"{local_created_at:%d %b %Y %H:%M}"
 
-    assert f"{created_at}): failing business rules." in status_heading.text
+    assert f"Last Run: ({created_at})" in error_headings[0].text
     assert f"Number of changes: {tracked_model_count}" in error_headings[0].text
     assert f"Number of violations: 1" in error_headings[1].text
 
@@ -479,6 +479,44 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     check_workbasket.assert_called_once_with(session_workbasket.pk)
     assert session_workbasket.rule_check_task_id
     assert not session_workbasket.tracked_model_checks.exists()
+
+
+def test_submit_for_packaging(valid_user_client, session_workbasket):
+    """Test that a GET request to the submit-for-packaging endpoint returns a
+    302, redirecting to the create packaged workbasket page."""
+    with session_workbasket.new_transaction() as transaction:
+        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        measure = MeasureFactory.create(transaction=transaction)
+        geo_area = GeographicalAreaFactory.create(transaction=transaction)
+        objects = [good, measure, geo_area]
+        for obj in objects:
+            TrackedModelCheckFactory.create(
+                transaction_check__transaction=transaction,
+                model=obj,
+                successful=True,
+            )
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+        "error_count": session_workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
+
+    url = reverse(
+        "workbaskets:workbasket-ui-detail",
+        kwargs={"pk": session_workbasket.id},
+    )
+    response = valid_user_client.post(
+        url,
+        {"form-action": "submit-for-packaging"},
+    )
+
+    assert response.status_code == 302
+    response_url = f"/publishing/create/"
+    # Only compare the response URL up to the query string.
+    assert response.url[: len(response_url)] == response_url
 
 
 def test_workbasket_violations(valid_user_client, session_workbasket):
