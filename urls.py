@@ -29,7 +29,7 @@ urlpatterns = [
     path("", include("geo_areas.urls")),
     path("", include("importer.urls")),
     path("", include("measures.urls")),
-    path("", include("publishing.urls")),
+    path("", include("publishing.urls", namespace="publishing")),
     path("", include("quotas.urls")),
     path("", include("regulations.urls")),
     path("", include("reports.urls")),

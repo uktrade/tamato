@@ -16,7 +16,7 @@ def test_record_renumbering_produces_valid_import_data(import_xml, export_xml):
     produces is valid and when imported produces records in the database that
     are correctly renumbered."""
     code_type = factories.AdditionalCodeTypeFactory.create()
-    workbasket = factories.ApprovedWorkBasketFactory()
+    workbasket = factories.QueuedWorkBasketFactory.create()
     first = factories.AdditionalCodeFactory.create(
         type=code_type,
         transaction__workbasket=workbasket,
@@ -92,7 +92,7 @@ def test_transaction_removing_produces_valid_import_data(import_xml, export_xml)
     transactions."""
     code_type = factories.AdditionalCodeTypeFactory.create()
     with transaction.atomic():
-        workbasket = factories.ApprovedWorkBasketFactory()
+        workbasket = factories.QueuedWorkBasketFactory.create()
         first = factories.AdditionalCodeFactory.create(
             type=code_type,
             transaction__workbasket=workbasket,

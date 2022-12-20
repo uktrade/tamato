@@ -28,10 +28,7 @@
         <a href="{{ request.path }}?status=EDITING" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'EDITING' %}selected-link{% endif %}">Editing</a>
       </li>
       <li>
-        <a href="{{ request.path }}?status=PROPOSED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'PROPOSED' %}selected-link{% endif %}">Proposed</a>
-      </li>
-      <li>
-        <a href="{{ request.path }}?status=APPROVED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'APPROVED' %}selected-link{% endif %}">Approved</a>
+        <a href="{{ request.path }}?status=QUEUED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'QUEUED' %}selected-link{% endif %}">QUEUED</a>
       </li>
     </ul>
   </nav>

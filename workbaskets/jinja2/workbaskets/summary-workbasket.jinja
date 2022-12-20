@@ -8,6 +8,24 @@
   Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Summary
 {% endset %}
 
+{% set run_business_rules_form_icon %}
+<form
+    method="post"
+    class="govuk-!-display-inline-block"
+  >
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+    <button
+      value="run-business-rules"
+      name="form-action"
+      preventDoubleClick= true
+      class="no-background"
+    >
+      <img src="{{ static('common/images/refresh.svg') }}" alt="run business rules">
+    </button>
+  </form>
+{% endset %}
+
 {% set run_business_rules_form %}
   <form
     method="post"
@@ -16,29 +34,70 @@
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
     {{ govukButton({
-        "text": "Run business rules",
-        "classes": "govuk-button--secondary govuk-!-margin-0",
-        "name": "form-action",
-        "value": "run-business-rules",
-        "preventDoubleClick": true,
+      "text": "Run business rules",
+      "classes": "govuk-button--secondary govuk-!-margin-0",
+      "name": "form-action",
+      "value": "run-business-rules",
+      "preventDoubleClick": true,
     }) }}
   </form>
 {% endset %}
 
-{% set rule_check_status %}
+{% macro rule_check_result_content() %}
+  <h2 class="govuk-body" id="summary-title" style="max-width:none">
+    <span class="govuk-!-font-weight-bold">
+      Number of changes: {{workbasket.tracked_models.count()}} &nbsp
+    </span>
+    <a href={{ url('workbaskets:review-workbasket', args=[request.session.workbasket.id]) }}>Review changes</a>
+    <span class="govuk-!-font-weight-bold" style="float:right">
+      Last Run: ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }})
+      {{ run_business_rules_form_icon }}
+    </span>        
+  </h2>
+  <h2 class="govuk-body govuk-!-font-weight-bold" id="summary-title">
+    Number of violations: {{workbasket.tracked_model_check_errors.count()}}
+  </h2>
+{% endmacro %}
+
+{% macro live_rule_check(context) %}
+<div class="govuk-button-group">
+  <h2 class="govuk-heading-s">
+    Live status : 
+    {% if context == 'in-progress' %}
+      rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket. Come back later or refresh to see results.
+    {% elif context == 'no-checks'%}
+      no rule check performed yet.
+      {{ run_business_rules_form }}
+    {% elif context == 'empty'%}
+      no objects in workbasket.
+    {% endif %}
+  </h2>
+</div>
+{% endmacro %}
+
+{% set rule_check_block %}
+
   {% if rule_check_in_progress %}
-      : rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket. Come back later or refresh to see results.
+    {{ live_rule_check('in-progress') }}    
   {% elif workbasket.tracked_model_check_errors.exists() %}
-       ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): failing business rules.
-    {{ run_business_rules_form }}
+    <div class="govuk-error-summary" aria-labelledby="summary-title" role="alert" data-module="govuk-error-summary">
+      {{ rule_check_result_content() }} 
+      <a href="{{ url('workbaskets:workbasket-ui-violations', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">View violations</a>
+    </div>
   {% elif workbasket.tracked_model_checks.exists() %}
-       ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): business rules passing.
-    {{ run_business_rules_form }}
-  {% elif workbasket.tracked_models.exists() %}
-      : no rule check performed yet.
-    {{ run_business_rules_form }}
+    <div class="govuk-notification-banner govuk-notification-banner--success"   
+      aria-labelledby="summary-title" role="region" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__content">
+        {{ rule_check_result_content() }} 
+        <a href="{{ url('publishing:packaged-workbasket-queue-ui-create')}}" class="govuk-button govuk-button--primary">
+          Send to packaging queue
+        </a>
+      </div>
+    </div>
+  {% elif workbasket.tracked_models.exists() %}    
+    {{ live_rule_check('no-checks') }}    
   {% else %}
-      : no objects in workbasket.
+    {{ live_rule_check('empty') }}    
   {% endif %}
 {% endset %}
 
@@ -59,24 +118,7 @@
   </h1>
   {{ navigation(request, "summary") }}
 
-  <div class="govuk-button-group">
-    <h2 class="govuk-heading-s">
-      Live status {{ rule_check_status}} 
-    </h2>
-  </div>
-
-  {% if workbasket.tracked_model_check_errors.exists() %}
-  <div class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" data-module="govuk-error-summary">
-    <h2 class="govuk-error-summary__title" id="error-summary-title">
-      Number of changes: {{workbasket.tracked_models.count()}} &nbsp
-      <a href={{ url('workbaskets:review-workbasket', args=[request.session.workbasket.id]) }}>Review changes</a>
-    </h2>
-    <h2 class="govuk-error-summary__title" id="error-summary-title">
-      Number of violations: {{workbasket.tracked_model_check_errors.count()}}
-    </h2>
-    <a href="{{ url('workbaskets:workbasket-ui-violations', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">View violations</a>
-  </div>
-  {% endif %}
+  {{ rule_check_block }}
 
   {% include "includes/workbaskets/workbasket-selectable-items.jinja" %}
 {% endblock %}
