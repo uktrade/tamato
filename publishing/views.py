@@ -1,12 +1,12 @@
 import logging
 
 from django.conf import settings
-from django.db.transaction import atomic
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
-from django.http import HttpResponseRedirect
+from django.db.transaction import atomic
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic import DetailView
 from django.views.generic import ListView
@@ -14,6 +14,7 @@ from django_fsm import TransitionNotAllowed
 
 from common.views import WithPaginationListMixin
 from publishing import forms
+from publishing.forms import LoadingReportForm
 from publishing.models import PackagedWorkBasket
 from publishing.models import PackagedWorkBasketDuplication
 from publishing.models import PackagedWorkBasketInvalidCheckStatus
@@ -27,6 +28,9 @@ class PackagedWorkbasketQueueView(
     WithPaginationListMixin,
     ListView,
 ):
+    """UI view used to manage (ordering, pausing, removal) packaged
+    workbaskets."""
+
     model = PackagedWorkBasket
     permission_required = "common.add_trackedmodel"
 
@@ -67,7 +71,7 @@ class PackagedWorkbasketQueueView(
             # Handle invalid post content by redisplaying the page.
             url = request.build_absolute_uri()
 
-        return HttpResponseRedirect(url)
+        return redirect(url)
 
     # Queue item position management.
 
@@ -129,6 +133,8 @@ class EnvelopeQueueView(
     WithPaginationListMixin,
     ListView,
 ):
+    """UI view used to download and manage envelope processing."""
+
     model = PackagedWorkBasket
     permission_required = ""  # TODO: select permissions.
 
@@ -140,11 +146,88 @@ class EnvelopeQueueView(
         processed, as displayed on this view."""
         return PackagedWorkBasket.objects.all_queued()
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        data = super().get_context_data(object_list=object_list, **kwargs)
+        data["currently_processing"] = PackagedWorkBasket.objects.currently_processing()
+        return data
+
     def post(self, request, *args, **kwargs):
         """Manage POST requests, including download, accept and reject
         envelopes."""
-        # TODO: manage post actions.
-        return super().post()
+
+        post = request.POST
+
+        if post.get("process_envelope"):
+            url = self._process_envelope(request, post.get("process_envelope"))
+        else:
+            # Handle invalid post content by redisplaying the page.
+            url = request.build_absolute_uri()
+
+        return redirect(url)
+
+    def _process_envelope(self, request, pk):
+        packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
+        packaged_work_basket.begin_processing()
+        """TODO:
+        * Make the download file available either:
+            - Open in a separate tab.
+            - Download as the second step after setting to CURRENTLY_PROCESSING.
+        """
+        return request.build_absolute_uri()
+
+
+class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
+    """Generic UI view used to confirm envelope processing."""
+
+    permission_required = "workbaskets.change_workbasket"
+    template_name = "publishing/complete-envelope-processing.jinja"
+    form_class = LoadingReportForm
+    success_url = reverse_lazy("publishing:envelope-queue-ui-list")
+
+    @atomic
+    def form_valid(self, form):
+        """Create a LoadingReport instance, associated it wth the
+        PackagedWorkBasket and transition that PackagedWorkBasket instance to
+        the next, completed processing state (either succeeded or failed)."""
+
+        packaged_work_basket = PackagedWorkBasket.objects.get(
+            pk=self.kwargs["pk"],
+        )
+        self.object = form.save()
+        packaged_work_basket.loading_report = self.object
+        packaged_work_basket.save()
+        self.transition_packaged_work_basket(packaged_work_basket)
+
+        return redirect(self.get_success_url())
+
+    def transition_packaged_work_basket(self, packaged_work_basket):
+        raise NotImplementedError()
+
+
+class AcceptEnvelopeView(CompleteEnvelopeProcessingView):
+    """UI view used to accept an envelope as having been processed by HMRC
+    systems (CDS, etc)."""
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        data = super().get_context_data(object_list=object_list, **kwargs)
+        data["accept_reject"] = "accept"
+        return data
+
+    def transition_packaged_work_basket(self, packaged_work_basket):
+        return packaged_work_basket.processing_succeeded()
+
+
+class RejectEnvelopeView(CompleteEnvelopeProcessingView):
+    """UI view used to reject an envelope as having failed to be processed by
+    HMRC systems (CDS, etc)."""
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        data = super().get_context_data(object_list=object_list, **kwargs)
+        data["accept_reject"] = "reject"
+        return data
+
+    def transition_packaged_work_basket(self, packaged_work_basket):
+        return packaged_work_basket.processing_failed()
 
 
 class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
@@ -180,7 +263,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
             )
             return redirect(
                 "workbaskets:workbasket-ui-detail",
-                pk=self.workbasket.id
+                pk=self.workbasket.id,
             )
 
         wb.approve(self.request.user, settings.TRANSACTION_SCHEMA)
@@ -197,7 +280,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
                 err,
             )
             return redirect(
-                "publishing:packaged-workbasket-queue-ui-list"
+                "publishing:packaged-workbasket-queue-ui-list",
             )
         except PackagedWorkBasketInvalidCheckStatus as err:
             self.logger.error(
@@ -207,13 +290,14 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
             )
             return redirect(
                 "workbaskets:workbasket-ui-detail",
-                pk=self.workbasket.id
+                pk=self.workbasket.id,
             )
 
         return redirect(
             "publishing:packaged-workbasket-queue-confirm-create",
-            pk=queued_wb.pk
+            pk=queued_wb.pk,
         )
+
 
 class PackagedWorkbasketConfirmCreate(DetailView):
     template_name = "publishing/confirm_create.jinja"
