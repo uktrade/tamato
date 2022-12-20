@@ -183,9 +183,6 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
                 pk=self.workbasket.id,
             )
 
-        # wb.approve(self.request.user, settings.TRANSACTION_SCHEMA)
-        # wb.save()
-
         queued_wb = None
         try:
             queued_wb = PackagedWorkBasket.objects.create(
