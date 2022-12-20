@@ -104,6 +104,7 @@ def save_after(func):
 
 
 class PackagedWorkBasketManager(models.Manager):
+    @atomic
     def create(self, workbasket, **kwargs):
         """Create a new instance, associating with workbasket."""
 
