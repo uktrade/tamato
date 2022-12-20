@@ -369,6 +369,13 @@ class WorkBasket(TimestampedMixin):
     def unarchive(self):
         """Restore a workbasket to an in use state."""
 
+    def approve(self, user: int, scheme_name: str):
+        self.approver_id = user
+
+        # Move transactions from the DRAFT partition into the REVISION partition.
+        partition_scheme = get_partition_scheme(scheme_name)
+        self.transactions.save_drafts(partition_scheme)
+
     @transition(
         field=status,
         source=WorkflowStatus.EDITING,
@@ -388,11 +395,7 @@ class WorkBasket(TimestampedMixin):
                 "Transactions have not yet been fully checked or contain errors",
             )
 
-        self.approver_id = user
-
-        # Move transactions from the DRAFT partition into the REVISION partition.
-        partition_scheme = get_partition_scheme(scheme_name)
-        self.transactions.save_drafts(partition_scheme)
+        self.approve(user, scheme_name)
 
     @transition(
         field=status,

@@ -262,8 +262,8 @@ def test_user_partition_scheme_get_partition_does_not_allow_seed_after_revision(
 @pytest.mark.parametrize(
     "partition_setting,expected_partition",
     [
-        # ("workbaskets.models.REVISION_ONLY", TransactionPartition.REVISION),
-        # ("workbaskets.models.SEED_ONLY", TransactionPartition.SEED_FILE),
+        ("workbaskets.models.REVISION_ONLY", TransactionPartition.REVISION),
+        ("workbaskets.models.SEED_ONLY", TransactionPartition.SEED_FILE),
         ("workbaskets.models.SEED_FIRST", TransactionPartition.SEED_FILE),
     ],
 )
@@ -303,16 +303,7 @@ def test_workbasket_approval_updates_transactions(
         ),
     )
 
-    # Before queuing the workbasket, we need to ensure that transactions have been successfully checked
-
-    # check_1 = TransactionCheckFactory.create(transaction=new_workbasket.transactions.first(), head_transaction=tx, completed=True, successful=True)
-    # TransactionCheckFactory.create(transaction=new_workbasket.transactions.last(), head_transaction=check_1.head_transaction, completed=True, successful=True)
-    from workbaskets.tasks import check_workbasket_sync
-
-    TransactionFactory.create(partition=expected_partition)
-    check_workbasket_sync(new_workbasket)
-
-    new_workbasket.queue(valid_user.pk, partition_setting)
+    new_workbasket.approve(valid_user.pk, partition_setting)
 
     assert [expected_partition] == list(
         new_workbasket.transactions.distinct("partition").values_list(
