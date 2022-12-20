@@ -1,9 +1,9 @@
 import logging
 
 from django.conf import settings
-from django.db.transaction import atomic
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
+from django.db.transaction import atomic
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -170,7 +170,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
         to create confirmation."""
         wb = self.workbasket
         try:
-            wb.submit_for_approval()
+            wb.queue(self.request.user, settings.TRANSACTION_SCHEMA)
             wb.save()
         except ValidationError as err:
             self.logger.error(
@@ -180,11 +180,11 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
             )
             return redirect(
                 "workbaskets:workbasket-ui-detail",
-                pk=self.workbasket.id
+                pk=self.workbasket.id,
             )
 
-        wb.approve(self.request.user, settings.TRANSACTION_SCHEMA)
-        wb.save()
+        # wb.approve(self.request.user, settings.TRANSACTION_SCHEMA)
+        # wb.save()
 
         queued_wb = None
         try:
@@ -197,7 +197,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
                 err,
             )
             return redirect(
-                "publishing:packaged-workbasket-queue-ui-list"
+                "publishing:packaged-workbasket-queue-ui-list",
             )
         except PackagedWorkBasketInvalidCheckStatus as err:
             self.logger.error(
@@ -207,13 +207,14 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
             )
             return redirect(
                 "workbaskets:workbasket-ui-detail",
-                pk=self.workbasket.id
+                pk=self.workbasket.id,
             )
 
         return redirect(
             "publishing:packaged-workbasket-queue-confirm-create",
-            pk=queued_wb.pk
+            pk=queued_wb.pk,
         )
+
 
 class PackagedWorkbasketConfirmCreate(DetailView):
     template_name = "publishing/confirm_create.jinja"
