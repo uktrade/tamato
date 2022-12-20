@@ -370,6 +370,13 @@ class WorkBasket(TimestampedMixin):
         """Restore a workbasket to an in use state."""
 
     def approve(self, user: int, scheme_name: str):
+        """
+        Sets the approver_id to a user pk and moves all transactions to the
+        specified partition.
+
+        (This will normally mean a move from DRAFT to REVISION).
+        """
+
         self.approver_id = user
 
         # Move transactions from the DRAFT partition into the REVISION partition.
@@ -403,7 +410,7 @@ class WorkBasket(TimestampedMixin):
         target=WorkflowStatus.EDITING,
         custom={"label": "Restore a queued workbasket to an in use state."},
     )
-    def unqueue(self):
+    def dequeue(self):
         """A queued workbasket not yet downloaded by CDS requires further
         changes to be added."""
 

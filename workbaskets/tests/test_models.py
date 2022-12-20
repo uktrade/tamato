@@ -342,7 +342,7 @@ def test_current_transaction_returns_last_approved_transaction(
     [
         ("archive", "EDITING", "ARCHIVED"),
         ("unarchive", "ARCHIVED", "EDITING"),
-        ("unqueue", "QUEUED", "EDITING"),
+        ("dequeue", "QUEUED", "EDITING"),
         ("cds_confirmed", "QUEUED", "PUBLISHED"),
         ("cds_error", "QUEUED", "ERRORED"),
         ("restore", "ERRORED", "EDITING"),

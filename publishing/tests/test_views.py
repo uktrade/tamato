@@ -213,7 +213,7 @@ def test_create_duplicate_awaiting_instances(valid_user_client, valid_user):
         workbasket=workbasket,
     )
 
-    workbasket.unqueue()
+    workbasket.dequeue()
     workbasket.save()
 
     """Test that a WorkBasket cannot enter the packaging queue more than
