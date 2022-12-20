@@ -8,6 +8,16 @@ app_name = "publishing"
 
 ui_patterns = [
     path(
+        "create/",
+        views.PackagedWorkbasketCreateView.as_view(),
+        name="packaged-workbasket-queue-ui-create",
+    ),
+    path(
+        "<pk>/confirm-create/",
+        views.PackagedWorkbasketConfirmCreate.as_view(),
+        name="packaged-workbasket-queue-confirm-create",
+    ),
+    path(
         "",
         RedirectView.as_view(pattern_name="packaged-workbasket-queue-ui-list"),
     ),

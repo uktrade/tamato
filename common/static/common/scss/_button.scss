@@ -1,0 +1,10 @@
+// remove background on a button and ensures no outline appears when clicked
+// usage: text only or icon buttons
+button.no-background {
+    background-color: transparent; 
+    background-repeat: no-repeat;
+    border: none;
+    cursor: pointer;
+    overflow: hidden;
+    outline: none;
+}

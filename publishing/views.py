@@ -1,13 +1,25 @@
+import logging
+
+from django.conf import settings
+from django.db.transaction import atomic
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 from django.urls import reverse
+from django.views.generic import CreateView
+from django.views.generic import DetailView
 from django.views.generic import ListView
 from django_fsm import TransitionNotAllowed
 
 from common.views import WithPaginationListMixin
+from publishing import forms
 from publishing.models import PackagedWorkBasket
+from publishing.models import PackagedWorkBasketDuplication
+from publishing.models import PackagedWorkBasketInvalidCheckStatus
 from publishing.models import PackagedWorkBasketInvalidQueueOperation
 from publishing.models import ProcessingState
+from workbaskets.models import WorkBasket
 
 
 class PackagedWorkbasketQueueView(
@@ -133,3 +145,82 @@ class EnvelopeQueueView(
         envelopes."""
         # TODO: manage post actions.
         return super().post()
+
+
+class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
+    """UI endpoint for creating packaged workbaskets."""
+
+    permission_required = "publishing.add_packagedworkbasket"
+    template_name = "publishing/create.jinja"
+    form_class = forms.PackagedWorkBasketCreateForm
+
+    def __init__(self):
+        super().__init__()
+        self.logger = logging.getLogger(type(self).__name__)
+
+    @property
+    def workbasket(self):
+        """Current Workbasket in session."""
+        return WorkBasket.current(self.request)
+
+    @atomic
+    def form_valid(self, form):
+        """If form is valid submit workbasket state from EDITING -> PROPOSED ->
+        APPROVED, then create the packaged workbasket in the queue and then go
+        to create confirmation."""
+        wb = self.workbasket
+        try:
+            wb.submit_for_approval()
+            wb.save()
+        except ValidationError as err:
+            self.logger.error(
+                "Error: %s \n Redirecting to work basket %s summary",
+                err.message,
+                self.workbasket.id,
+            )
+            return redirect(
+                "workbaskets:workbasket-ui-detail",
+                pk=self.workbasket.id
+            )
+
+        wb.approve(self.request.user, settings.TRANSACTION_SCHEMA)
+        wb.save()
+
+        queued_wb = None
+        try:
+            queued_wb = PackagedWorkBasket.objects.create(
+                workbasket=wb, **form.cleaned_data
+            )
+        except PackagedWorkBasketDuplication as err:
+            self.logger.error(
+                "Error: %s \n Redirecting to packaged work basket queue",
+                err,
+            )
+            return redirect(
+                "publishing:packaged-workbasket-queue-ui-list"
+            )
+        except PackagedWorkBasketInvalidCheckStatus as err:
+            self.logger.error(
+                "Error: %s \n Redirecting to packaged work basket %s summary",
+                err,
+                self.workbasket.id,
+            )
+            return redirect(
+                "workbaskets:workbasket-ui-detail",
+                pk=self.workbasket.id
+            )
+
+        return redirect(
+            "publishing:packaged-workbasket-queue-confirm-create",
+            pk=queued_wb.pk
+        )
+
+class PackagedWorkbasketConfirmCreate(DetailView):
+    template_name = "publishing/confirm_create.jinja"
+    model = PackagedWorkBasket
+
+    def get_queryset(self):
+        """Return package work basket based on packaged workbasket pk."""
+        return PackagedWorkBasket.objects.filter(
+            id=self.kwargs.get("pk"),
+        )

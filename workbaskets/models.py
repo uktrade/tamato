@@ -412,9 +412,10 @@ class WorkBasket(TimestampedMixin):
         partition_scheme = get_partition_scheme(scheme_name)
         self.transactions.save_drafts(partition_scheme)
 
-        from exporter.tasks import upload_workbaskets
+        # TODO remove permentantly before pushing to master
+        # from exporter.tasks import upload_workbaskets
 
-        upload_workbaskets.delay()
+        # upload_workbaskets.delay()
 
     @transition(
         field=status,

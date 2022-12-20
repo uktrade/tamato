@@ -310,10 +310,7 @@ def test_workbasket_approval_updates_transactions(
             flat=True,
         ),
     )
-    with patch("exporter.tasks.upload_workbaskets") as upload:
-        new_workbasket.approve(valid_user.pk, partition_setting)
-
-        upload.delay.assert_called_with()
+    new_workbasket.approve(valid_user.pk, partition_setting)
 
     assert [expected_partition] == list(
         new_workbasket.transactions.distinct("partition").values_list(
@@ -372,8 +369,7 @@ def test_workbasket_transition_methods(method, source, target):
     assert wb.status == getattr(WorkflowStatus, target)
 
 
-@patch("exporter.tasks.upload_workbaskets.delay")
-def test_approve(upload, valid_user):
+def test_approve(valid_user):
     """Test that approve transitions workbasket from PROPOSED to APPROVED,
     setting approver and shifting transaction from DRAFT to REVISION
     partition."""
@@ -383,7 +379,6 @@ def test_approve(upload, valid_user):
 
     assert wb.status == WorkflowStatus.APPROVED
     assert wb.approver == valid_user
-    upload.assert_called_once()
 
     for transaction in wb.transactions.all():
         assert transaction.partition == TransactionPartition.REVISION
