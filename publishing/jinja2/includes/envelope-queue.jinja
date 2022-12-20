@@ -3,38 +3,38 @@
 
 {%- macro process_download_button(obj) %}
   {% if obj == currently_processing %}
-    Downloaded:
+    Started processing:
     {% if obj.currently_processing_start_time %}
       {{ '{:%d %b %Y}'.format(obj.currently_processing_start_time) }}
     {% endif %}
     <br>
     {# TODO: UI download implementation (<a target="_blank">...</a>).#}
-    <button
-      class="govuk-link fake-link"
-      name="download_envelope"
-      value="{{ obj.pk }}"
+    <a
+      class="govuk-link"
+      href="{{ url('publishing:download-queued-envelope-ui-download', args=(obj.pk,)) }}"
+      target="_blank"
     >
-      Re-download
+      Download
       <img
         class="icon icon-download"
         src="{{ static('/common/images/download-file.svg') }}"
         alt="Download file icon"
       >
-    </button>
+    </a>
   {% else %}
     <form method="post" action="">
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
       <button
-        class="govuk-link fake-link"
+        class="govuk-link fake-link process-envelope"
         name="process_envelope"
         value="{{ obj.pk }}"
       >
-        Download
+        Start processing
         <img
-          class="icon icon-download"
-          src="{{ static('/common/images/download-file.svg') }}"
-          alt="Download file icon"
+          class="icon icon-begin-processing"
+          src="{{ static('/common/images/play-arrow-rounded-blue.svg') }}"
+          alt="Play arrow file icon"
         >
         </button>
       </form>

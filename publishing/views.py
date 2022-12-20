@@ -10,6 +10,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic import DetailView
 from django.views.generic import ListView
+from django.views.generic import View
 from django_fsm import TransitionNotAllowed
 
 from common.views import WithPaginationListMixin
@@ -168,12 +169,34 @@ class EnvelopeQueueView(
     def _process_envelope(self, request, pk):
         packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
         packaged_work_basket.begin_processing()
-        """TODO:
-        * Make the download file available either:
-            - Open in a separate tab.
-            - Download as the second step after setting to CURRENTLY_PROCESSING.
-        """
         return request.build_absolute_uri()
+
+
+class DownloadQueuedEnvelopeView(PermissionRequiredMixin, View):
+    permission_required = "common.add_trackedmodel"
+
+    def get(self, request, *args, **kwargs):
+        # TODO:
+        # * This is dummy implementation - get the envelope file object from S3.
+
+        from django.http import HttpResponse
+
+        file_content = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<env:envelope "
+            'xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" '
+            'xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" '
+            'id="220999"'
+            "></env:envelope>"
+        )
+        file_name = "DIT220999.xml"
+
+        response = HttpResponse(file_content)
+        response["content-type"] = "text/xml"
+        response["content-length"] = len(file_content)
+        response["content-disposition"] = f'attachment; filename="{file_name}"'
+
+        return response
 
 
 class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):

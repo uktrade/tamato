@@ -32,6 +32,11 @@ ui_patterns = [
         name="envelope-queue-ui-list",
     ),
     path(
+        "download-queued-envelope/<pk>/",
+        views.DownloadQueuedEnvelopeView.as_view(),
+        name="download-queued-envelope-ui-download",
+    ),
+    path(
         "envelope-queue/accept/<pk>/",
         views.AcceptEnvelopeView.as_view(),
         name="accept-envelope-ui-list",
