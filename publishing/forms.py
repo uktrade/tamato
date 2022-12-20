@@ -54,7 +54,10 @@ class PackagedWorkBasketCreateForm(forms.ModelForm):
 
     description = forms.CharField(
         label="Note",
-        help_text="Add your notes here. You may enter HTML formatting if required. See the guide below for more information.",
+        help_text=(
+            "Add your notes here. You may enter HTML formatting if required. "
+            "See the guide below for more information."
+        ),
         widget=forms.Textarea,
         required=False,
     )
@@ -96,7 +99,10 @@ class PackagedWorkBasketCreateForm(forms.ModelForm):
                     '<span class="govuk-warning-text__icon" aria-hidden="true">!</span>',
                 ),
                 HTML(
-                    '<strong class="govuk-warning-text__text"><span class="govuk-warning-text__assistive">Warning</span>The workbasket will be added to the queue ready to send to CDS.</strong>',
+                    '<strong class="govuk-warning-text__text">'
+                    '<span class="govuk-warning-text__assistive">Warning</span>'
+                    "The workbasket will be added to the queue ready to send to CDS."
+                    "</strong>",
                 ),
                 css_class="govuk-warning-text",
             ),

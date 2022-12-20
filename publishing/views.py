@@ -13,8 +13,8 @@ from django.views.generic import ListView
 from django_fsm import TransitionNotAllowed
 
 from common.views import WithPaginationListMixin
-from publishing import forms
 from publishing.forms import LoadingReportForm
+from publishing.forms import PackagedWorkBasketCreateForm
 from publishing.models import PackagedWorkBasket
 from publishing.models import PackagedWorkBasketDuplication
 from publishing.models import PackagedWorkBasketInvalidCheckStatus
@@ -235,7 +235,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
 
     permission_required = "publishing.add_packagedworkbasket"
     template_name = "publishing/create.jinja"
-    form_class = forms.PackagedWorkBasketCreateForm
+    form_class = PackagedWorkBasketCreateForm
 
     def __init__(self):
         super().__init__()
