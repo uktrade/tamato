@@ -173,7 +173,7 @@ class PackagedWorkBasket(TimestampedMixin):
     A PackagedWorkBasket must be queued, in priority order, allowing HMRC users
     to pick only the top-most instance when attempting a CDS ingestion. In order
     for a workbasket to be submitted for packaging it must have a complete and
-    successful set of rules checks and its status must be APPROVED, indicating
+    successful set of rules checks and its status must be QUEUED, indicating
     that it has passed through the review process.
     """
 

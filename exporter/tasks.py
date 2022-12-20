@@ -85,7 +85,6 @@ def upload_and_create_envelopes(
         upload_status.add_upload_pk(upload.pk)
 
         logger.info("Workbasket saved to CDS S3 bucket")
-        workbaskets.update(status=WorkflowStatus.SENT)
 
         logger.debug("Uploaded: %s", upload.filename)
         upload_status.add_envelope_messages(
@@ -111,10 +110,10 @@ def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
     :return :class:`~exporter.util.UploadTaskResultData`: object with user readable feedback on task status.
     """
     upload_status = UploadTaskResultData(**upload_status_data)
-    workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.APPROVED)
+    workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.QUEUED)
 
     if not workbaskets:
-        msg = "Nothing to upload:  No workbaskets with status APPROVED."
+        msg = "Nothing to upload:  No workbaskets with status QUEUED."
         logger.info(msg)
         return dict(upload_status.add_messages([msg]))
 
@@ -122,7 +121,7 @@ def upload_workbasket_envelopes(self, upload_status_data) -> Dict:
     transactions = workbaskets.ordered_transactions()
 
     if not transactions:
-        msg = f"Nothing to upload:  {workbaskets.count()} Workbaskets APPROVED but none contain any transactions."
+        msg = f"Nothing to upload:  {workbaskets.count()} Workbaskets QUEUED but none contain any transactions."
         logger.info(msg)
         return dict(upload_status.add_messages([msg]))
 

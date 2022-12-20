@@ -30,6 +30,7 @@ from pytest_bdd import parsers
 from pytest_bdd import then
 from rest_framework.test import APIClient
 
+from checks.tests.factories import TransactionCheckFactory
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UpdateValidity
@@ -242,7 +243,7 @@ def policy_group(db) -> Group:
         ("common", "change_trackedmodel"),
         ("workbaskets", "add_workbasket"),
         ("workbaskets", "change_workbasket"),
-        ("publishing", "add_packagedworkbasket")
+        ("publishing", "add_packagedworkbasket"),
     ]:
         group.permissions.add(
             Permission.objects.get(
@@ -323,28 +324,28 @@ def new_workbasket() -> WorkBasket:
 
 
 @pytest.fixture
-def approved_workbasket():
-    return factories.ApprovedWorkBasketFactory.create()
+def queued_workbasket():
+    return factories.QueuedWorkBasketFactory.create()
 
 
 @pytest.fixture
-def published_additional_code_type(approved_workbasket):
+def published_additional_code_type(queued_workbasket):
     return factories.AdditionalCodeTypeFactory(
-        transaction=approved_workbasket.new_transaction(),
+        transaction=queued_workbasket.new_transaction(),
     )
 
 
 @pytest.fixture
-def published_certificate_type(approved_workbasket):
+def published_certificate_type(queued_workbasket):
     return factories.CertificateTypeFactory(
-        transaction=approved_workbasket.new_transaction(),
+        transaction=queued_workbasket.new_transaction(),
     )
 
 
 @pytest.fixture
-def published_footnote_type(approved_workbasket):
+def published_footnote_type(queued_workbasket):
     return factories.FootnoteTypeFactory(
-        transaction=approved_workbasket.new_transaction(),
+        transaction=queued_workbasket.new_transaction(),
     )
 
 
@@ -369,6 +370,17 @@ def approved_transaction():
 @pytest.fixture(scope="function")
 def unapproved_transaction():
     return factories.UnapprovedTransactionFactory.create()
+
+
+@pytest.fixture(scope="function")
+def unapproved_checked_transaction(unapproved_transaction):
+    TransactionCheckFactory.create(
+        transaction=unapproved_transaction,
+        completed=True,
+        successful=True,
+    )
+
+    return unapproved_transaction
 
 
 @pytest.fixture(scope="function")
@@ -1001,7 +1013,7 @@ def in_use_check_respects_deletes(valid_user):
         assert not in_use(instance.transaction), f"New {instance!r} already in use"
 
         workbasket = factories.WorkBasketFactory.create(
-            status=WorkflowStatus.PROPOSED,
+            status=WorkflowStatus.EDITING,
         )
         with workbasket.new_transaction():
             create_kwargs = {relation: instance}
@@ -1015,15 +1027,22 @@ def in_use_check_respects_deletes(valid_user):
             Transaction.approved.last(),
         ), f"Unapproved {instance!r} already in use"
 
+        for tx in workbasket.transactions.all():
+            TransactionCheckFactory.create(
+                transaction=tx,
+                successful=True,
+                completed=True,
+            )
+
         with patch(
             "exporter.tasks.upload_workbaskets.delay",
         ):
-            workbasket.approve(
+            workbasket.queue(
                 valid_user.pk,
                 settings.TRANSACTION_SCHEMA,
             )
         workbasket.save()
-        assert in_use(dependant.transaction), f"Approved {instance!r} not in use"
+        assert in_use(dependant.transaction), f"Queued {instance!r} not in use"
 
         deleted = dependant.new_version(
             workbasket,

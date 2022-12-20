@@ -129,7 +129,7 @@ order with each transaction only aware of objects in preceding transactions in t
 basket and transactions in an already "approved" basket. 
 
 A workbasket is a `finite state machine <https://github.com/viewflow/django-fsm>`_ and 
-a workbasket can be considered "approved" when it is in an `APPROVED`, `SENT`, or 
+a workbasket can be considered "approved" when it is in an `QUEUED`, `SENT`, or 
 `PUBLISHED` state. Other states include `ARCHIVED`, `PROPOSED`, and `ERRORED`. See below 
 for a full map of the different possible state transitions.
 
