@@ -3,18 +3,18 @@
 
 {%- macro process_download_button(obj) %}
   {% if obj == currently_processing %}
-    Started processing:
-    {% if obj.currently_processing_start_time %}
-      {{ '{:%d %b %Y}'.format(obj.currently_processing_start_time) }}
+    Processing started:
+    <br>
+    {% if obj.processing_started_at %}
+      {{ '{:%-l:%M %p, %d %b %Y}'.format(obj.processing_started_at) }}
     {% endif %}
     <br>
-    {# TODO: UI download implementation (<a target="_blank">...</a>).#}
     <a
       class="govuk-link"
       href="{{ url('publishing:download-queued-envelope-ui-download', args=(obj.pk,)) }}"
       target="_blank"
     >
-      Download
+      Download envelope
       <img
         class="icon icon-download"
         src="{{ static('/common/images/download-file.svg') }}"
@@ -77,7 +77,7 @@
   {%- set envelope_id_cell_content %}
     {% if loop.index == 1 %}
       {# TODO: Get dynamically generated next envelope ID. #}
-      220099
+      220999
     {% endif %}
   {% endset -%}
 

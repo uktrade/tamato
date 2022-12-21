@@ -220,9 +220,14 @@ class PackagedWorkBasket(TimestampedMixin):
         protected=True,
         editable=False,
     )
-    currently_processing_start_time = models.DateTimeField(
+    processing_started_at = models.DateTimeField(
         null=True,
+        blank=True,
+        default=None,
     )
+    """The date and time at which processing_state transitioned to
+    CURRENTLY_PROCESSING.
+    """
     loading_report = models.ForeignKey(
         LoadingReport,
         null=True,
@@ -306,7 +311,8 @@ class PackagedWorkBasket(TimestampedMixin):
         operation upon successful transitions.
         """
 
-        self.currently_processing_start_time = datetime.now()
+        self.processing_started_at = datetime.now()
+        self.save()
         self.pop_top()
 
     @save_after
