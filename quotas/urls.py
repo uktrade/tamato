@@ -44,5 +44,10 @@ ui_patterns = get_ui_paths(views, "<sid:sid>")
 
 urlpatterns = [
     path("quotas/", include(ui_patterns)),
+    path(
+        f"quotas/<sid>/quota-definitions/",
+        views.QuotaDefinitionList.as_view(),
+        name="quota-definitions",
+    ),
     path("api/", include(api_router.urls)),
 ]

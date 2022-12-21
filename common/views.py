@@ -309,6 +309,48 @@ class TrackedModelChangeView(
         return FormMixin.form_valid(self, form)
 
 
+class SortingMixin:
+    """
+    Can be used to sort a queryset in a view using GET params. Checks the GET
+    param against sort_by_fields to pass a valid field to .order_by(). If the
+    GET param doesn't match the desired .order_by() field, a dictionary mapping
+    can be added as custom_sorting.
+
+    Example usage:
+
+    class YourModelListView(SortingMixin, ListView):
+        sort_by_fields = ["sid", "model", "valid_between"]
+        custom_sorting = {
+            "model": "model__polymorphic_ctype",
+        }
+
+        def get_queryset(self):
+            self.queryset = YourModel.objects.all()
+            return super().get_queryset()
+    """
+
+    def get_ordering(self):
+        sort_by = self.request.GET.get("sort_by")
+        order = self.request.GET.get("order")
+        assert hasattr(
+            self,
+            "sort_by_fields",
+        ), "SortingMixin requires class attribute sort_by_fields to be set"
+        assert isinstance(self.sort_by_fields, list), "sort_by_fields must be a list"
+
+        if sort_by and sort_by in self.sort_by_fields:
+            if hasattr(self, "custom_sorting") and self.custom_sorting.get(sort_by):
+                sort_by = self.custom_sorting.get(sort_by)
+
+            if order == "desc":
+                sort_by = f"-{sort_by}"
+
+            return sort_by
+
+        else:
+            return None
+
+
 def handler403(request, *args, **kwargs):
     return TemplateResponse(request=request, template="common/403.jinja", status=403)
 

@@ -1,9 +1,11 @@
 from datetime import date
 
+from django.views.generic.list import ListView
 from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.serializers import AutoCompleteSerializer
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -81,6 +83,8 @@ class QuotaMixin:
 
 
 class QuotaList(QuotaMixin, TamatoListView):
+    """Returns a list of QuotaOrderNumber objects."""
+
     template_name = "quotas/list.jinja"
     filterset_class = QuotaFilter
 
@@ -96,6 +100,25 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
         return super().get_context_data(
             current_definition=current_definition, *args, **kwargs
         )
+
+
+class QuotaDefinitionList(SortingMixin, ListView):
+    template_name = "quotas/definitions.jinja"
+    model = models.QuotaDefinition
+    sort_by_fields = ["sid", "valid_between"]
+
+    def get_queryset(self):
+        self.queryset = models.QuotaDefinition.objects.current().filter(
+            order_number=self.quota,
+        )
+        return super().get_queryset()
+
+    @property
+    def quota(self):
+        return models.QuotaOrderNumber.objects.get(sid=self.kwargs["sid"])
+
+    def get_context_data(self, *args, **kwargs):
+        return super().get_context_data(quota=self.quota, *args, **kwargs)
 
 
 class QuotaDelete(QuotaMixin, TrackedModelDetailMixin, CreateTaricDeleteView):

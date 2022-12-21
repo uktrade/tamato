@@ -1,0 +1,14 @@
+
+{% macro sort_by(request, sort_by, title, base_url) %}
+
+  {% if request.GET.sort_by == sort_by and request.GET.order == "desc" %}
+    <a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ base_url }}?sort_by={{ sort_by }}&order=asc">
+      {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
+    </a>
+  {% else %}
+    <a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ base_url }}?sort_by={{ sort_by }}&order=desc">
+      {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
+    </a>
+  {% endif %}
+
+{% endmacro %}
