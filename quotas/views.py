@@ -83,6 +83,8 @@ class QuotaMixin:
 
 
 class QuotaList(QuotaMixin, TamatoListView):
+    """Returns a list of QuotaOrderNumber objects."""
+
     template_name = "quotas/list.jinja"
     filterset_class = QuotaFilter
 
