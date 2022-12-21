@@ -132,6 +132,7 @@
 <li><a class="reference internal" href="#running-the-exporter">Running the exporter</a></li>
 <li><a class="reference internal" href="#manually-trigger-the-upload-to-s3">Manually trigger the upload to s3</a></li>
 <li><a class="reference internal" href="#dump-transactions">Dump transactions</a></li>
+<li><a class="reference internal" href="#mocking-s3-upload-with-minio">Mocking s3 upload with minio</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#how-to-contribute">How to contribute</a></li>
@@ -352,6 +353,25 @@ to a file or output to stdout using a management command:</p>
 </pre></div>
 </div>
 <p>Output defaults to stdout if filename is <code class="docutils literal notranslate"><span class="pre">-</span></code> or is not supplied.</p>
+</section>
+<section id="mocking-s3-upload-with-minio">
+<h3>Mocking s3 upload with minio<a class="headerlink" href="#mocking-s3-upload-with-minio" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Follow <a class="reference external" href="https://min.io/docs/minio/macos/index.html">instructions</a> to install minio server</p></li>
+<li><p>Export MINIO_ROOT_USER and MINIO_ROOT_PASSWORD variables of your choice</p></li>
+<li><p>Run server with:</p></li>
+</ol>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>minio server --quiet --address <span class="m">0</span>.0.0.0:9003 ~/data
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Navigate to <a class="reference external" href="http://localhost:9003/">http://localhost:9003/</a> and login using root user and password credentials just
+created. Create a bucket and an access key via the console.</p></li>
+<li><p>Export environment variables for any storages you wish to dummy (e.g. for sqlite dump export
+this will be SQLITE_STORAGE_BUCKET_NAME, SQLITE_S3_ACCESS_KEY_ID, SQLITE_S3_SECRET_ACCESS_KEY,
+SQLITE_S3_ENDPOINT_URL, and SQLITE_STORAGE_DIRECTORY), setting s3 endpoint url to
+<a class="reference external" href="http://localhost:9003/">http://localhost:9003/</a></p></li>
+</ol>
 </section>
 </section>
 <section id="how-to-contribute">
