@@ -121,24 +121,24 @@ class WorkBasketFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("sentence", nb_words=4)
 
 
-class ApprovedWorkBasketFactory(WorkBasketFactory):
+class QueuedWorkBasketFactory(WorkBasketFactory):
     class Meta:
         model = "workbaskets.WorkBasket"
 
     approver = factory.SubFactory(UserFactory)
-    status = WorkflowStatus.APPROVED
+    status = WorkflowStatus.QUEUED
     transaction = factory.RelatedFactory(
         "common.tests.factories.ApprovedTransactionFactory",
         factory_related_name="workbasket",
     )
 
 
-class SimpleApprovedWorkBasketFactory(WorkBasketFactory):
+class SimpleQueuedWorkBasketFactory(WorkBasketFactory):
     class Meta:
         model = "workbaskets.WorkBasket"
 
     approver = factory.SubFactory(UserFactory)
-    status = WorkflowStatus.APPROVED
+    status = WorkflowStatus.QUEUED
 
 
 class TransactionFactory(factory.django.DjangoModelFactory):
@@ -147,7 +147,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
     order = factory.Sequence(lambda x: x + 10)
     import_transaction_id = factory.Sequence(lambda x: x + 10)
-    workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
+    workbasket = factory.SubFactory(SimpleQueuedWorkBasketFactory)
     composite_key = factory.Sequence(str)
 
     class Params:
@@ -1239,7 +1239,7 @@ class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "publishing.PackagedWorkBasket"
 
-    workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
+    workbasket = factory.SubFactory(SimpleQueuedWorkBasketFactory)
     theme = string_sequence(length=50)
     jira_url = "www.fakejiraticket.com"
     loading_report = factory.SubFactory(LoadingReportFactory)

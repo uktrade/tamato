@@ -49,7 +49,7 @@ pytestmark = pytest.mark.django_db
     ),
 )
 def measures(request, duty_expressions):
-    with factories.SimpleApprovedWorkBasketFactory.create().new_transaction():
+    with factories.SimpleQueuedWorkBasketFactory.create().new_transaction():
         return [
             factories.MeasureFactory.create(**k, reduction=None) for k in request.param
         ]

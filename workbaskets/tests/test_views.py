@@ -82,7 +82,7 @@ def test_workbasket_create_without_permission(client):
 
 
 def test_download(
-    approved_workbasket,
+    queued_workbasket,
     client,
     valid_user,
     hmrc_storage,
@@ -214,16 +214,12 @@ def test_select_workbasket_page_200(valid_user_client):
     or published.
     """
     factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.SENT)
     factories.WorkBasketFactory.create(status=WorkflowStatus.PUBLISHED)
     factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.APPROVED)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.PROPOSED)
+    factories.WorkBasketFactory.create(status=WorkflowStatus.QUEUED)
     factories.WorkBasketFactory.create(status=WorkflowStatus.ERRORED)
     valid_statuses = {
         WorkflowStatus.EDITING,
-        WorkflowStatus.APPROVED,
-        WorkflowStatus.PROPOSED,
         WorkflowStatus.ERRORED,
     }
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
@@ -232,7 +228,7 @@ def test_select_workbasket_page_200(valid_user_client):
     statuses = [
         element.text for element in soup.select(".govuk-table__row .status-badge")
     ]
-    assert len(statuses) == 4
+    assert len(statuses) == 2
     assert not set(statuses).difference(valid_statuses)
 
 

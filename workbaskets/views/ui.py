@@ -103,7 +103,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
         return (
             WorkBasket.objects.exclude(status=WorkflowStatus.PUBLISHED)
             .exclude(status=WorkflowStatus.ARCHIVED)
-            .exclude(status=WorkflowStatus.SENT)
+            .exclude(status=WorkflowStatus.QUEUED)
             .order_by("-updated_at")
         )
 

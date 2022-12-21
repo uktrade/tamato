@@ -141,7 +141,8 @@ def test_packaged_workbasket_create_form(valid_user_client):
 
 def test_packaged_workbasket_create_form_rule_check_violations(valid_user_client):
     """Tests that Packaged WorkBasket Create returns 302 and redirects to
-    workbasket detail page when there are rule check violations on workbasket."""
+    workbasket detail page when there are rule check violations on
+    workbasket."""
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
@@ -185,8 +186,8 @@ def test_packaged_workbasket_create_form_rule_check_violations(valid_user_client
 
 def test_create_duplicate_awaiting_instances(valid_user_client, valid_user):
     """Tests that Packaged WorkBasket Create returns 302 and redirects to
-    packaged workbasket queue page when trying to package a workbasket that
-    is already on the queue."""
+    packaged workbasket queue page when trying to package a workbasket that is
+    already on the queue."""
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
@@ -206,15 +207,13 @@ def test_create_duplicate_awaiting_instances(valid_user_client, valid_user):
     }
     session.save()
 
-    workbasket.submit_for_approval()
-    workbasket.save()
-    workbasket.approve(valid_user.pk, settings.TRANSACTION_SCHEMA)
+    workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
     workbasket.save()
     existing_packaged = factories.PackagedWorkBasketFactory.create(
         workbasket=workbasket,
     )
 
-    workbasket.unapprove()
+    workbasket.dequeue()
     workbasket.save()
 
     """Test that a WorkBasket cannot enter the packaging queue more than
