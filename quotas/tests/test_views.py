@@ -2,12 +2,14 @@ import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from quotas.views import QuotaList
@@ -225,3 +227,40 @@ def test_quota_definitions_list_title(valid_user_client, quota_order_number):
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     title = soup.select("h1")[0].text
     assert title == f"Quota ID: {quota_order_number.order_number} - Data"
+
+
+def test_quota_definitions_list_current_versions(
+    valid_user_client,
+    approved_transaction,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory()
+    old_quota_definition = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        transaction=approved_transaction,
+    )
+    old_quota_definition2 = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        transaction=approved_transaction,
+    )
+
+    with override_current_transaction(approved_transaction):
+        assert quota_order_number.definitions.current().count() == 2
+
+    new_version = old_quota_definition.new_version(
+        update_type=UpdateType.DELETE,
+        transaction=approved_transaction,
+        workbasket=approved_transaction.workbasket,
+    )
+
+    with override_current_transaction(approved_transaction):
+        assert quota_order_number.definitions.current().count() == 1
+
+    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    num_definitions = len(
+        soup.select("table tr > td:first-child > details > summary > span"),
+    )
+    assert num_definitions == 1

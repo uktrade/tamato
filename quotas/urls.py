@@ -46,7 +46,7 @@ urlpatterns = [
     path("quotas/", include(ui_patterns)),
     path(
         f"quotas/<sid>/quota-definitions/",
-        views.QuotaDefinitions.as_view(),
+        views.QuotaDefinitionList.as_view(),
         name="quota-definitions",
     ),
     path("api/", include(api_router.urls)),

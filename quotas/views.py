@@ -100,13 +100,15 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
         )
 
 
-class QuotaDefinitions(SortingMixin, ListView):
+class QuotaDefinitionList(SortingMixin, ListView):
     template_name = "quotas/definitions.jinja"
     model = models.QuotaDefinition
     sort_by_fields = ["sid", "valid_between"]
 
     def get_queryset(self):
-        self.queryset = models.QuotaDefinition.objects.filter(order_number=self.quota)
+        self.queryset = models.QuotaDefinition.objects.current().filter(
+            order_number=self.quota,
+        )
         return super().get_queryset()
 
     @property
