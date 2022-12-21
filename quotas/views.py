@@ -1,5 +1,7 @@
 from datetime import date
+from urllib.parse import urlencode
 
+from django.urls import reverse
 from django.views.generic.list import ListView
 from rest_framework import permissions
 from rest_framework import viewsets
@@ -9,6 +11,7 @@ from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from measures.models import Measure
 from quotas import business_rules
 from quotas import forms
 from quotas import models
@@ -94,11 +97,18 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
 
     def get_context_data(self, *args, **kwargs):
         definitions = self.object.definitions.current()
+        measures = Measure.objects.filter(order_number=self.object).as_at(date.today())
+        url_params = urlencode({"order_number": self.object.pk})
+        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
         current_definition = definitions.as_at(date.today()).first()
         if not current_definition:
             current_definition = definitions.not_yet_in_effect(date.today()).first()
         return super().get_context_data(
-            current_definition=current_definition, *args, **kwargs
+            current_definition=current_definition,
+            measures=measures,
+            measures_url=measures_url,
+            *args,
+            **kwargs,
         )
 
 

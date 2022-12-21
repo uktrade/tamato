@@ -7,6 +7,7 @@
 
 {% set core_data_tab_html %}{% include "includes/quotas/tabs/core_data.jinja" %}{% endset %}
 {% set definition_details_html %}{% include "includes/quotas/tabs/definition_details.jinja" %}{% endset %}
+{% set measures_html %}{% include "includes/quotas/tabs/measures.jinja" %}{% endset %}
 {% set version_control_tab_html %}{% include "includes/quotas/tabs/version_control.jinja" %}{% endset %}
 
 {% set tabs = {
@@ -23,6 +24,13 @@
         "id": "definition-details",
         "panel": {
           "html": definition_details_html
+        }
+      },
+      {
+        "label": "Measures",
+        "id": "measures",
+        "panel": {
+          "html": measures_html
         }
       },
       {
