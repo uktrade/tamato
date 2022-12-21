@@ -8,6 +8,7 @@
 {% set page_title = "Commodity: " ~ object.item_id %}
 
 {% set core_data_tab_html %}{% include "includes/commodities/tabs/core_data.jinja" %}{% endset %}
+{% set version_control_tab_html %}{% include "includes/common/tabs/version_control.jinja" %}{% endset %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -27,7 +28,14 @@
         "panel": {
           "html": core_data_tab_html
         }
-      }
+      },
+      {
+        "label": "Version control",
+        "id": "version-control",
+        "panel": {
+          "html": version_control_tab_html
+        }
+      },
     ]
   }
 %}
