@@ -264,3 +264,30 @@ def test_quota_definitions_list_current_versions(
         soup.select("table tr > td:first-child > details > summary > span"),
     )
     assert num_definitions == 1
+
+
+def test_quota_definitions_list_current_measures(
+    valid_user_client,
+    date_ranges,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory()
+    old_measures = factories.MeasureFactory.create_batch(
+        5,
+        valid_between=date_ranges.adjacent_earlier_big,
+        order_number=quota_order_number,
+    )
+    current_measures = factories.MeasureFactory.create_batch(
+        4,
+        valid_between=date_ranges.normal,
+        order_number=quota_order_number,
+    )
+
+    url = reverse("quota-ui-detail", kwargs={"sid": quota_order_number.sid})
+
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    num_measures = len(
+        soup.select("#measures table tbody > tr > td:first-child"),
+    )
+    assert num_measures == 4
