@@ -275,6 +275,24 @@ to a file or output to stdout using a management command:
 
 Output defaults to stdout if filename is ``-`` or is not supplied.
 
+Mocking s3 upload with minio
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Follow `instructions <https://min.io/docs/minio/macos/index.html>`_ to install minio server 
+2. Export MINIO_ROOT_USER and MINIO_ROOT_PASSWORD variables of your choice
+3. Run server with: 
+
+.. code:: sh
+    
+    minio server --quiet --address 0.0.0.0:9003 ~/data
+
+4. Navigate to http://localhost:9003/ and login using root user and password credentials just 
+   created. Create a bucket and an access key via the console.
+5. Export environment variables for any storages you wish to dummy (e.g. for sqlite dump export
+   this will be SQLITE_STORAGE_BUCKET_NAME, SQLITE_S3_ACCESS_KEY_ID, SQLITE_S3_SECRET_ACCESS_KEY,
+   SQLITE_S3_ENDPOINT_URL, and SQLITE_STORAGE_DIRECTORY), setting s3 endpoint url to 
+   http://localhost:9003/
+
 How to contribute
 -----------------
 
