@@ -14,6 +14,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.template import loader
+from django.urls import reverse
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -849,7 +850,8 @@ class MeasureQuotaOrderNumberForm(forms.Form):
     order_number = AutoCompleteField(
         label="Quota order number",
         help_text=(
-            "Select the quota order number if a quota measure type has been selected. "
+            "Search for a quota using its order number. "
+            "You can then select the correct quota from the dropdown list. "
             "Leave this field blank if the measure is not a quota."
         ),
         queryset=QuotaOrderNumber.objects.all(),
@@ -864,6 +866,10 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             "order_number",
+            HTML.details(
+                "I don't know what my quota ID number is",
+                f'You can search for the quota number by using <a href="{reverse("quota-ui-list")}" class="govuk-link">find and edit quotas</a>',
+            ),
             Submit(
                 "submit",
                 "Continue",
