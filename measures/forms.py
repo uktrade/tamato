@@ -814,7 +814,11 @@ class MeasureRegulationIdForm(forms.Form):
 
     generating_regulation = AutoCompleteField(
         label="Regulation ID",
-        help_text="Select the regulation which provides the legal basis for the measure.",
+        help_text=(
+            "Search for a regulation using its ID number or a keyword. "
+            "A dropdown list will appear after a few seconds. "
+            "You can then select the regulation from the dropdown list."
+        ),
         queryset=Regulation.objects.all(),
     )
 
