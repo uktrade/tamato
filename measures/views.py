@@ -204,7 +204,7 @@ class MeasureCreateWizard(
             "link_text": "Commodities and duties",
         },
         ADDITIONAL_CODE: {
-            "title": "Assign an additional code",
+            "title": "Assign an additional code (optional)",
             "link_text": "Additional code",
         },
         CONDITIONS: {

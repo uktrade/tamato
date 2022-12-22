@@ -483,7 +483,10 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
     )
     additional_code = AutoCompleteField(
         label="Code and description",
-        help_text="If applicable, select the additional code to which the measure applies.",
+        help_text=(
+            "Search for an additional code by typing in the code's number or a keyword. "
+            "A dropdown list will appear after a few seconds. You can then select the correct code from the dropdown list."
+        ),
         queryset=AdditionalCode.objects.all(),
         required=False,
     )
@@ -987,7 +990,10 @@ class MeasureAdditionalCodeForm(forms.ModelForm):
 
     additional_code = AutoCompleteField(
         label="Additional code",
-        help_text="If applicable, select the additional code to which the measure applies.",
+        help_text=(
+            "Search for an additional code by typing in the code's number or a keyword. "
+            "A dropdown list will appear after a few seconds. You can then select the correct code from the dropdown list."
+        ),
         queryset=AdditionalCode.objects.all(),
         required=False,
     )
