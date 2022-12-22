@@ -208,11 +208,7 @@ class MeasureCreateWizard(
             "link_text": "Additional code",
         },
         CONDITIONS: {
-            "title": "Add any condition codes",
-            "info": (
-                "This section is optional. If there are no condition "
-                "codes, select continue."
-            ),
+            "title": "Add any condition codes (optional)",
             "link_text": "Conditions",
         },
         FOOTNOTES: {

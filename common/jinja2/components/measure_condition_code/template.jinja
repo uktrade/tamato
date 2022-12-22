@@ -1,6 +1,7 @@
 <div id="div_id_{{ field.html_name }}" class="govuk-form-group">
+    <div id="condition-code-hint" class="govuk-hint">Select the condition code from the dropdown list</div>
     {% set selected_code = field.initial | int %}
-    <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}"> 
+    <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}">
         <option value="">-- Please select a condition code --</option>
         {% for condition in form.fields.condition_code.queryset %}
             <option 
