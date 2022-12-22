@@ -212,11 +212,7 @@ class MeasureCreateWizard(
             "link_text": "Conditions",
         },
         FOOTNOTES: {
-            "title": "Add any footnotes",
-            "info": (
-                "This section is optional. If there are no footnotes, "
-                "select continue."
-            ),
+            "title": "Add any footnotes (optional)",
             "link_text": "Footnotes",
         },
         SUMMARY: {

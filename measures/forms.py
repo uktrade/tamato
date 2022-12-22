@@ -1077,6 +1077,10 @@ MeasureCommodityAndDutiesFormSet = formset_factory(
 class MeasureFootnotesForm(forms.Form):
     footnote = AutoCompleteField(
         label="",
+        help_text=(
+            "Search for a footnote by typing in the footnote's number or a keyword. "
+            "A dropdown list will appear after a few seconds. You can then select the correct footnote from the dropdown list."
+        ),
         queryset=Footnote.objects.all(),
     )
 
