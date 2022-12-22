@@ -22,6 +22,11 @@
                 "actions": {"items": []}
             },
             {
+                "key": {"text": "Geographical area exclusions"},
+                "value": {"text": object.geographical_exclusion_descriptions|join(", ") if object.geographical_exclusion_descriptions else "-"},
+                "actions": {"items": []}
+            },
+            {
                 "key": {"text": "Start date"},
                 "value": {"text":  "{:%d %b %Y}".format(object.valid_between.lower)},
                 "actions": {"items": []}
@@ -44,11 +49,6 @@
             {
                 "key": {"text": "Required certificates"},
                 "value": {"text": object.required_certificates.all()|join(", ") if object.is_origin_quota else "-"},
-                "actions": {"items": []}
-            },
-            {
-                "key": {"text": "Geographical area exclusions"},
-                "value": {"text": object.geographical_exclusion_descriptions|join(", ") if object.geographical_exclusion_descriptions else "-"},
                 "actions": {"items": []}
             },
             ]
