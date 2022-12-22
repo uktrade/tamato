@@ -8,6 +8,8 @@
           {% if delete_url %}
             <li><a class="govuk-link" href="{{ delete_url }}">Delete this {{object._meta.verbose_name}}</a></li>
           {% endif %}
+          <br><br>
+          <li><a class="govuk-link" href="https://www.trade-tariff.service.gov.uk/quota_search?order_number={{ object.order_number }}" target="_blank" noopener noreferrer>View this quota on the UK Integrated Online Tariff </a></li>
       </ul>
   </div>
 </div>
