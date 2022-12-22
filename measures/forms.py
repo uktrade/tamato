@@ -882,6 +882,11 @@ class MeasureQuotaOrderNumberForm(forms.Form):
 class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
     geo_area = RadioNested(
         label="",
+        help_text=(
+            "Choose the geographical area to which the measure applies. "
+            "This can be a specific country or a group of countries, and exclusions can be specified. "
+            "The measure will only apply to imports from or exports to the selected area."
+        ),
         choices=GeoAreaType.choices,
         nested_forms={
             GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
@@ -920,14 +925,6 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             "geo_area",
-            HTML.details(
-                "Help with geography",
-                (
-                    "Choose the geographical area to which the measure applies. This can be a specific country "
-                    "or a group of countries, and exclusions can be specified. The measure will only apply to imports "
-                    "from or exports to the selected area."
-                ),
-            ),
             Submit(
                 "submit",
                 "Continue",

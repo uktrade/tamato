@@ -198,7 +198,6 @@ class MeasureCreateWizard(
         GEOGRAPHICAL_AREA: {
             "title": "Select the geographical area",
             "link_text": "Geographical areas",
-            "info": "The measure will only apply to imports from or exports to the selected area. You can specify exclusions.",
         },
         COMMODITIES: {
             "title": "Select commodities and enter the duties",
