@@ -137,7 +137,7 @@ class EnvelopeQueueView(
     """UI view used to download and manage envelope processing."""
 
     model = PackagedWorkBasket
-    permission_required = ""  # TODO: select permissions.
+    permission_required = "common.add_trackedmodel"
 
     def get_template_names(self):
         return ["publishing/envelope_queue.jinja"]
@@ -173,6 +173,8 @@ class EnvelopeQueueView(
 
 
 class DownloadQueuedEnvelopeView(PermissionRequiredMixin, View):
+    """View used to download an XML envelope."""
+
     permission_required = "common.add_trackedmodel"
 
     def get(self, request, *args, **kwargs):
