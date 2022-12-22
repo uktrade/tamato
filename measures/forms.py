@@ -762,7 +762,11 @@ class MeasureDetailsForm(
 
     measure_type = AutoCompleteField(
         label="Measure type",
-        help_text="Select the appropriate measure type.",
+        help_text=(
+            "Search for a measure type using its ID number or a keyword. "
+            "A dropdown list will appear after a few seconds. "
+            "You can then select the measure type from the dropdown list."
+        ),
         queryset=models.MeasureType.objects.all(),
     )
 
