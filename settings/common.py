@@ -310,6 +310,19 @@ TIME_ZONE = "Europe/London"
 # HMRC AWS settings (override the defaults)
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
+# Loading reports AWS settings
+S3_ACCESS_KEY_ID = os.environ.get(
+    "S3_ACCESS_KEY_ID",
+    "test_key_id",
+)
+S3_SECRET_ACCESS_KEY = os.environ.get(
+    "S3_SECRET_ACCESS_KEY",
+    "test_key",
+)
+S3_ENDPOINT_URL = os.environ.get(
+    "S3_ENDPOINT_URL",
+    "https://test-url.local/",
+)
 
 # SQLite AWS settings
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")

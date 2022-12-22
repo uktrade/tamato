@@ -24,13 +24,17 @@ def test_new_envelope_populates_envelope_id():
     # Create 3 envelopes: the first envelope in a year uses
     #                     different logic to subsequent years,
     #                     this verifies that ids increment in both cases.
-    envelope1 = Envelope.new_envelope()
+
+    packaged_wb1 = factories.PackagedWorkBasketFactory.create()
+    packaged_wb2 = factories.PackagedWorkBasketFactory.create()
+    packaged_wb3 = factories.PackagedWorkBasketFactory.create()
+    envelope1 = Envelope.objects.create(packaged_work_basket=packaged_wb1)
     assert envelope1.envelope_id == "300001"
 
-    envelope2 = Envelope.new_envelope()
+    envelope2 = Envelope.objects.create(packaged_work_basket=packaged_wb2)
     assert envelope2.envelope_id == "300002"
 
-    envelope3 = Envelope.new_envelope()
+    envelope3 = Envelope.objects.create(packaged_work_basket=packaged_wb3)
     assert envelope3.envelope_id == "300003"
 
 
