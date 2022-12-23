@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import F
@@ -80,7 +82,15 @@ class LoadingReport(TimestampedMixin):
     """Reported associated with an attempt to load (process) a
     PackagedWorkBasket instance."""
 
-    # TODO
+    # TODO Change report_file to correct field for / s3 object reference.
+    report_file = models.FileField(
+        blank=True,
+        null=True,
+    )
+    comment = models.TextField(
+        blank=True,
+        max_length=200,
+    )
 
 
 def save_after(func):
@@ -94,6 +104,7 @@ def save_after(func):
 
 
 class PackagedWorkBasketManager(models.Manager):
+    @atomic
     def create(self, workbasket, **kwargs):
         """Create a new instance, associating with workbasket."""
 
@@ -209,6 +220,14 @@ class PackagedWorkBasket(TimestampedMixin):
         protected=True,
         editable=False,
     )
+    processing_started_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+    )
+    """The date and time at which processing_state transitioned to
+    CURRENTLY_PROCESSING.
+    """
     loading_report = models.ForeignKey(
         LoadingReport,
         null=True,
@@ -292,6 +311,8 @@ class PackagedWorkBasket(TimestampedMixin):
         operation upon successful transitions.
         """
 
+        self.processing_started_at = datetime.now()
+        self.save()
         self.pop_top()
 
     @save_after
