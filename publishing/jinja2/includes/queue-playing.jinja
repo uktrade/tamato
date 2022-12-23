@@ -2,6 +2,8 @@
 {% from "components/details/macro.njk" import govukDetails %}
 
 
+<h2 class="govuk-heading-m">Workbaskets - Ready to order</h2>
+
 <div class="govuk-grid-column-three-quarters">
   {{ govukDetails({
     "summaryText": "What does pausing and unpausing CDS queue mean?",
@@ -18,10 +20,17 @@
   <form method="post" action="">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
-    {{ govukButton({
-      "text": "Pause CDS queue",
-      "name": "pause_queue",
-      "classes": "govuk-!-margin-bottom-0",
-    }) }}
+    <button
+      class="govuk-button govuk-!-margin-bottom-0"
+      data-module="govuk-button"
+      name="pause_queue"
+    >
+      Pause CDS queue
+      <img
+        class="icon icon-pause-cds-queue"
+        src="{{ static('/common/images/pause-outline.svg') }}"
+        alt="Pause icon"
+      >
+    </button>
   </form>
 </div>

@@ -23,6 +23,13 @@ table.queued-envelopes .icon-download {
   vertical-align: bottom;
 }
 
+.icon-pause-cds-queue,
+.icon-unpause-cds-queue {
+  display: inline-block;
+  margin-left: 0.5rem;
+  vertical-align: bottom;
+}
+
 table.queued-envelopes .disabled-action {
     color: rgb(80, 90, 95);
 }

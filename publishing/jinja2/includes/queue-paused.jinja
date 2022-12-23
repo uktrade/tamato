@@ -1,11 +1,13 @@
-{% from "components/button/macro.njk" import govukButton %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 
+
+<h2 class="govuk-heading-m">Workbaskets - CDS queue paused</h2>
 
 <div class="govuk-grid-column-three-quarters">
   {{ govukWarningText({
     "text": "Queue paused. Click the 'Unpause CDS queue' button to resume ordering.",
-    "iconFallbackText": "Warning"
+    "iconFallbackText": "Warning",
+    "classes": "govuk-!-margin-bottom-0",
   }) }}
 </div>
 
@@ -13,10 +15,17 @@
   <form method="post" action="">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
-    {{ govukButton({
-      "text": "Unpause CDS queue",
-      "name": "unpause_queue",
-      "classes": "govuk-button--secondary govuk-!-margin-bottom-0",
-    }) }}
+    <button
+      class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+      data-module="govuk-button"
+      name="unpause_queue"
+    >
+      Unpause CDS queue
+      <img
+        class="icon icon-unpause-cds-queue"
+        src="{{ static('/common/images/play-arrow-rounded.svg') }}"
+        alt="Play arrow icon"
+      >
+    </button>
   </form>
 </div>
