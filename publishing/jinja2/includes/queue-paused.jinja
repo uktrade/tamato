@@ -1,0 +1,22 @@
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+
+
+<div class="govuk-grid-column-three-quarters">
+  {{ govukWarningText({
+    "text": "Queue paused. Click the 'Unpause CDS queue' button to resume ordering.",
+    "iconFallbackText": "Warning"
+  }) }}
+</div>
+
+<div class="govuk-grid-column-one-quarter">
+  <form method="post" action="">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+    {{ govukButton({
+      "text": "Unpause CDS queue",
+      "name": "unpause_queue",
+      "classes": "govuk-button--secondary govuk-!-margin-bottom-0",
+    }) }}
+  </form>
+</div>

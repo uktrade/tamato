@@ -1,0 +1,27 @@
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/details/macro.njk" import govukDetails %}
+
+
+<div class="govuk-grid-column-three-quarters">
+  {{ govukDetails({
+    "summaryText": "What does pausing and unpausing CDS queue mean?",
+    "html": (
+      "<p>Pausing the CDS queue prevents any envelopes that are waiting in "
+      "this queue from being downloaded by HMRC users.</p>"
+      "<p>Unpausing allows downloads to commence again.</p>"
+    ),
+    "classes": "govuk-!-margin-bottom-0",
+  }) }}
+</div>
+
+<div class="govuk-grid-column-one-quarter">
+  <form method="post" action="">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+    {{ govukButton({
+      "text": "Pause CDS queue",
+      "name": "pause_queue",
+      "classes": "govuk-!-margin-bottom-0",
+    }) }}
+  </form>
+</div>
