@@ -4,6 +4,7 @@ import re
 from crispy_forms.utils import render_crispy_form
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.template.defaultfilters import pluralize
 from django.templatetags.static import static
 from django.urls import reverse
@@ -130,6 +131,7 @@ def environment(**kwargs):
             "render_bundle": render_bundle,
             "settings": settings,
             "static": static,
+            "intcomma": intcomma,
             "url": reverse,
             "webpack_static": webpack_static,
         },
