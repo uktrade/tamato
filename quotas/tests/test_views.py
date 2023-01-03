@@ -317,7 +317,7 @@ def test_quota_detail_blocking_period_tab(valid_user_client, date_ranges):
     response = valid_user_client.get(url)
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-    rows = soup.select(".quota__blocking-period__content > dl > div > dd")
+    rows = soup.select(".quota__blocking-periods__content > dl > div > dd")
     assert len(rows) == 5
 
     for i, value in enumerate(expected_data.values()):

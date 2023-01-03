@@ -7,7 +7,7 @@
 
 {% set core_data_tab_html %}{% include "includes/quotas/tabs/core_data.jinja" %}{% endset %}
 {% set definition_details_html %}{% include "includes/quotas/tabs/definition_details.jinja" %}{% endset %}
-{% set blocking_period_html %}{% include "includes/quotas/tabs/blocking_period.jinja" %}{% endset %}
+{% set blocking_periods_html %}{% include "includes/quotas/tabs/blocking_periods.jinja" %}{% endset %}
 {% set measures_html %}{% include "includes/quotas/tabs/measures.jinja" %}{% endset %}
 {% set version_control_tab_html %}{% include "includes/quotas/tabs/version_control.jinja" %}{% endset %}
 
@@ -28,10 +28,10 @@
         }
       },
       {
-        "label": "Blocking period",
-        "id": "blocking-period",
+        "label": "Blocking periods",
+        "id": "blocking-periods",
         "panel": {
-          "html": blocking_period_html
+          "html": blocking_periods_html
         }
       },
       {
