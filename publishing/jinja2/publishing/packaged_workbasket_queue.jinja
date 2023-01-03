@@ -18,10 +18,7 @@
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
   <div class="govuk-grid-row govuk-!-margin-bottom-5">
-    {#
-    {% if packaging_queue_paused %}
-    #}
-    {% if False %}
+    {% if queue_paused %}
       {% include "includes/queue-paused.jinja" %}
     {% else %}
       {% include "includes/queue-playing.jinja" %}

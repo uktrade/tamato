@@ -16,11 +16,13 @@ from django_fsm import TransitionNotAllowed
 from common.views import WithPaginationListMixin
 from publishing.forms import LoadingReportForm
 from publishing.forms import PackagedWorkBasketCreateForm
+from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
 from publishing.models import PackagedWorkBasketDuplication
 from publishing.models import PackagedWorkBasketInvalidCheckStatus
 from publishing.models import PackagedWorkBasketInvalidQueueOperation
 from publishing.models import ProcessingState
+from publishing.models import QueueState
 from workbaskets.models import WorkBasket
 
 
@@ -47,7 +49,10 @@ class PackagedWorkbasketQueueView(
 
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)
+
         data["currently_processing"] = PackagedWorkBasket.objects.currently_processing()
+        data["queue_paused"] = OperationalStatus.queue_paused()
+
         return data
 
     def post(self, request, *args, **kwargs):
@@ -57,7 +62,11 @@ class PackagedWorkbasketQueueView(
 
         post = request.POST
 
-        if post.get("promote_position"):
+        if post.get("pause_queue"):
+            url = self._pause_queue(request)
+        elif post.get("unpause_queue"):
+            url = self._unpause_queue(request)
+        elif post.get("promote_position"):
             url = self._promote_position(request, post.get("promote_position"))
         elif post.get("demote_position"):
             url = self._demote_position(request, post.get("demote_position"))
@@ -75,6 +84,22 @@ class PackagedWorkbasketQueueView(
         return redirect(url)
 
     # Queue item position management.
+
+    def _pause_queue(self, request):
+        if not OperationalStatus.queue_paused():
+            OperationalStatus.objects.create(
+                queue_state=QueueState.PAUSED,
+                created_by=request.user,
+            )
+        return request.build_absolute_uri()
+
+    def _unpause_queue(self, request):
+        if OperationalStatus.queue_paused():
+            OperationalStatus.objects.create(
+                queue_state=QueueState.UNPAUSED,
+                created_by=request.user,
+            )
+        return request.build_absolute_uri()
 
     def _promote_position(self, request, pk):
         try:

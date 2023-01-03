@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import F
@@ -18,6 +19,63 @@ from notifications.models import NotificationLog
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
+
+
+class OperationalStatusQuerySet(QuerySet):
+    def current_status(self):
+        return self.last()
+
+
+class QueueState(TextChoices):
+    PAUSED = ("PAUSED", "Envelope processing is paused")
+    UNPAUSED = ("UNPAUSED", "Envelope processing is unpaused and may proceed")
+
+
+class OperationalStatus(models.Model):
+    """
+    Operational status of the packaging system. The packaging queue's state.
+
+    is of primary concern here - either unpaused, which allows processing the
+    next available workbasket, or paused, which blocks the begin_processing
+    transition of the next available queued workbasket until the system is
+    unpaused.
+
+    If no OperationalStatus instance exists (as occurs upon initial deployment)
+    then the packaging queue is considered to be paused.
+    """
+
+    class Meta:
+        ordering = ["pk"]
+        """Order is important when retrieving the current status - the last
+        instance."""
+        verbose_name_plural = "operational statuses"
+
+    objects = OperationalStatusQuerySet.as_manager()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    queue_state = models.CharField(
+        max_length=8,
+        default=QueueState.PAUSED,
+        choices=QueueState.choices,
+        editable=False,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        null=True,
+    )
+    """If a new instance is created as a result of direct user action (for
+    instance pausing or unpausing the packaging queue) then `created_by` should
+    be associated with that user."""
+
+    @classmethod
+    def queue_paused(cls):
+        current_status = cls.objects.current_status()
+        if not current_status or current_status.queue_state == QueueState.PAUSED:
+            return True
+        else:
+            return False
 
 
 class PackagedWorkBasketDuplication(Exception):
