@@ -173,7 +173,7 @@
 
 
 <div class="viewcode-block" id="RecordParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.RecordParser">[docs]</a><span class="k">class</span> <span class="nc">RecordParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Parser for TARIC3 `record` element.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parser for TARIC3 `record` element.&quot;&quot;&quot;</span>
 
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;record&quot;</span><span class="p">)</span>
     <span class="n">transaction_id</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;transaction.id&quot;</span><span class="p">))</span>
@@ -183,7 +183,7 @@
     <span class="n">update_type</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;update.type&quot;</span><span class="p">))</span>
 
 <div class="viewcode-block" id="RecordParser.save"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.RecordParser.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the Record to the database.</span>
 
 <span class="sd">        :param data: A dict of the parsed element, mapping field names to values</span>
@@ -202,13 +202,13 @@
 
 
 <div class="viewcode-block" id="MessageParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.MessageParser">[docs]</a><span class="k">class</span> <span class="nc">MessageParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Parser for TARIC3 `message` element.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parser for TARIC3 `message` element.&quot;&quot;&quot;</span>
 
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;app.message&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">ENVELOPE</span><span class="p">)</span>
     <span class="n">record</span> <span class="o">=</span> <span class="n">RecordParser</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MessageParser.save"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.MessageParser.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the contained records to the database.</span>
 
 <span class="sd">        :param data: A dict of parsed element, mapping field names to values</span>
@@ -220,7 +220,7 @@
 
 
 <div class="viewcode-block" id="TransactionParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.TransactionParser">[docs]</a><span class="k">class</span> <span class="nc">TransactionParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Parser for TARIC3 `transaction` element.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parser for TARIC3 `transaction` element.&quot;&quot;&quot;</span>
 
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;transaction&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">ENVELOPE</span><span class="p">)</span>
     <span class="n">message</span> <span class="o">=</span> <span class="n">MessageParser</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -233,7 +233,7 @@
         <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">envelope</span><span class="p">:</span> <span class="n">Envelope</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the transaction and the contained records to the database.</span>
 
 <span class="sd">        :param data: A dict of the parsed element, containing at least an &quot;id&quot; and list</span>
@@ -411,7 +411,7 @@
     <span class="n">username</span><span class="p">,</span>
     <span class="n">record_group</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parse a TARIC XML stream through the import handlers.</span>
 
 <span class="sd">    This will load the data from the stream into the database. This runs inside</span>

@@ -154,7 +154,7 @@
 
 
 <div class="viewcode-block" id="ElementParser"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.ElementParser">[docs]</a><span class="k">class</span> <span class="nc">ElementParser</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Base class for element specific parsers.</span>
 
 <span class="sd">    ElementParser classes uses introspection to build a lookup table of child element</span>
@@ -207,7 +207,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">record_code</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The type id of this model&#39;s type family in the TARIC specification.</span>
 
 <span class="sd">    This number groups together a number of different models into &#39;records&#39;.</span>
@@ -220,7 +220,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">subrecord_code</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The type id of this model in the TARIC specification. The</span>
 <span class="sd">    :attr:`subrecord_code` when combined with the :attr:`record_code` uniquely</span>
 <span class="sd">    identifies the type within the specification.</span>
@@ -263,7 +263,7 @@
         <span class="n">parser</span><span class="p">:</span> <span class="n">ElementParser</span><span class="p">,</span>
         <span class="n">element</span><span class="p">:</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Check if the parser matches the element.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the parser matches the element.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span></div>
 
     <span class="k">def</span> <span class="nf">get_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ElementParser</span><span class="p">]:</span>
@@ -272,7 +272,7 @@
                 <span class="k">return</span> <span class="n">parser</span>
 
 <div class="viewcode-block" id="ElementParser.start"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.ElementParser.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">ElementParser</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Handle the start of an XML tag. The tag may not yet have all of its</span>
 <span class="sd">        children.</span>
 
@@ -343,10 +343,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
 <div class="viewcode-block" id="ElementParser.clean"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.ElementParser.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Clean up data.&quot;&quot;&quot;</span></div>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clean up data.&quot;&quot;&quot;</span></div>
 
 <div class="viewcode-block" id="ElementParser.validate"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.ElementParser.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate data.&quot;&quot;&quot;</span></div>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate data.&quot;&quot;&quot;</span></div>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">register_child</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -361,11 +361,11 @@
 
 
 <div class="viewcode-block" id="ValueElementMixin"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.ValueElementMixin">[docs]</a><span class="k">class</span> <span class="nc">ValueElementMixin</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Provides a convenient way to define a parser for elements that contain</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides a convenient way to define a parser for elements that contain</span>
 <span class="sd">    only a text value and have no attributes or children.&quot;&quot;&quot;</span>
 
     <span class="n">native_type</span><span class="p">:</span> <span class="nb">type</span>
-    <span class="sd">&quot;&quot;&quot;The Python type that most closely matches the type of the XML element.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Python type that most closely matches the type of the XML element.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
@@ -373,7 +373,7 @@
 
 
 <div class="viewcode-block" id="ConstantElement"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.ConstantElement">[docs]</a><span class="k">class</span> <span class="nc">ConstantElement</span><span class="p">(</span><span class="n">ValueElementMixin</span><span class="p">,</span> <span class="n">ElementParser</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents an element that is always a constant value in the XML.</span>
 
 <span class="sd">    The actual value is ignored and not put into the database. The value</span>
@@ -392,7 +392,7 @@
 
 
 <div class="viewcode-block" id="TextElement"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.TextElement">[docs]</a><span class="k">class</span> <span class="nc">TextElement</span><span class="p">(</span><span class="n">ValueElementMixin</span><span class="p">,</span> <span class="n">ElementParser</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents an element which contains a text value.</span>
 
 <span class="sd">    .. code-block:: XML</span>
@@ -404,7 +404,7 @@
 
 
 <div class="viewcode-block" id="IntElement"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.IntElement">[docs]</a><span class="k">class</span> <span class="nc">IntElement</span><span class="p">(</span><span class="n">ValueElementMixin</span><span class="p">,</span> <span class="n">ElementParser</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents an element which contains an integer value.</span>
 
 <span class="sd">    .. code-block:: XML</span>
@@ -423,7 +423,7 @@
 
 
 <div class="viewcode-block" id="BooleanElement"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.BooleanElement">[docs]</a><span class="k">class</span> <span class="nc">BooleanElement</span><span class="p">(</span><span class="n">ValueElementMixin</span><span class="p">,</span> <span class="n">ElementParser</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents an element which contains a true or false value.</span>
 
 <span class="sd">    The actual value in the XML by default is assumed to be a 1 for True and a 0</span>
@@ -452,15 +452,15 @@
 
 
 <div class="viewcode-block" id="RangeLowerElement"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.RangeLowerElement">[docs]</a><span class="k">class</span> <span class="nc">RangeLowerElement</span><span class="p">(</span><span class="n">TextElement</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Represents an element that is the lower part of a range.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an element that is the lower part of a range.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="RangeUpperElement"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.RangeUpperElement">[docs]</a><span class="k">class</span> <span class="nc">RangeUpperElement</span><span class="p">(</span><span class="n">TextElement</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Represents an element that is the upper part of a range.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an element that is the upper part of a range.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="CompoundElement"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.CompoundElement">[docs]</a><span class="k">class</span> <span class="nc">CompoundElement</span><span class="p">(</span><span class="n">ValueElementMixin</span><span class="p">,</span> <span class="n">ElementParser</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents an element in XML that is actually a concatenation of one or more</span>
 <span class="sd">    logical values and separators.</span>
 
@@ -493,7 +493,7 @@
 
 
 <div class="viewcode-block" id="ValidityMixin"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.ValidityMixin">[docs]</a><span class="k">class</span> <span class="nc">ValidityMixin</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Parse validity start and end dates.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse validity start and end dates.&quot;&quot;&quot;</span>
 
     <span class="n">valid_between_lower</span> <span class="o">=</span> <span class="n">RangeLowerElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;validity.start.date&quot;</span><span class="p">))</span>
     <span class="n">valid_between_upper</span> <span class="o">=</span> <span class="n">RangeUpperElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;validity.end.date&quot;</span><span class="p">))</span>
@@ -518,13 +518,13 @@
 
 
 <div class="viewcode-block" id="ValidityStartMixin"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.ValidityStartMixin">[docs]</a><span class="k">class</span> <span class="nc">ValidityStartMixin</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Parse validity start date.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse validity start date.&quot;&quot;&quot;</span>
 
     <span class="n">validity_start</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;validity.start.date&quot;</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="Writable"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.Writable">[docs]</a><span class="k">class</span> <span class="nc">Writable</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A parser which implements the Writable interface can write its changes to</span>
 <span class="sd">    the database.</span>
 
@@ -535,7 +535,7 @@
     <span class="n">nursery</span> <span class="o">=</span> <span class="n">get_nursery</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Writable.create"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.Writable.create">[docs]</a>    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Preps the given data as a create record and submits it to the nursery</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Preps the given data as a create record and submits it to the nursery</span>
 <span class="sd">        for processing.&quot;&quot;&quot;</span>
         <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">update_type</span><span class="o">=</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">)</span>
 
@@ -548,7 +548,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nursery</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">dispatch_object</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Writable.update"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.Writable.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Update a DB record with provided data.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update a DB record with provided data.&quot;&quot;&quot;</span>
         <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">update_type</span><span class="o">=</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
         <span class="n">dispatch_object</span> <span class="o">=</span> <span class="p">{</span>
@@ -560,7 +560,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nursery</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">dispatch_object</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Writable.delete"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.parsers.Writable.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Delete a DB record with provided data.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete a DB record with provided data.&quot;&quot;&quot;</span>
         <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">update_type</span><span class="o">=</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
         <span class="n">dispatch_object</span> <span class="o">=</span> <span class="p">{</span>

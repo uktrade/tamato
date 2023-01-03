@@ -165,31 +165,31 @@ browse and make changes to the UK Global Tariff, and submit these changes to HMR
 <h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
 <p>A local instance of the tool can be run using <a class="reference external" href="https://www.docker.com/">Docker</a>.</p>
 <p>Download the codebase:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:uktrade/tamato
-$ <span class="nb">cd</span> tamato
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:uktrade/tamato
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tamato
 </pre></div>
 </div>
 <p>Build the Docker image:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ cp sample.env .env
-$ docker-compose build
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>cp<span class="w"> </span>sample.env<span class="w"> </span>.env
+$<span class="w"> </span>docker-compose<span class="w"> </span>build
 </pre></div>
 </div>
 <p>Run the tamato app:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ docker-compose up
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>docker-compose<span class="w"> </span>up
 </pre></div>
 </div>
 <p>Go to <a class="reference external" href="http://localhost:8000/">http://localhost:8000/</a> in your web browser to view the app</p>
 <p>Import from a dump of the database:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ docker-compose <span class="nb">exec</span> -T db psql -U postgres &lt; tamato-db-dump.sql
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>docker-compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-T<span class="w"> </span>db<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>&lt;<span class="w"> </span>tamato-db-dump.sql
 </pre></div>
 </div>
 <p>To get a database dump, please contact the <a class="reference external" href="mailto:stephen&#46;corder&#37;&#52;&#48;trade&#46;gov&#46;uk?subject=TaMaTo+database+dump+request">TAP team</a>.</p>
 <p>Run database migrations (in another terminal):</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ docker-compose <span class="nb">exec</span> tamato python manage.py migrate
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>docker-compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>tamato<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>migrate
 </pre></div>
 </div>
 <p>Create a superuser (in another terminal), to enable logging in to the app:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ docker-compose <span class="nb">exec</span> tamato python manage.py createsuperuser
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>docker-compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>tamato<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>createsuperuser
 </pre></div>
 </div>
 </section>
@@ -213,40 +213,40 @@ $ docker-compose build
 <section id="database">
 <h3>Database<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h3>
 <p>Create a database instance and user:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ sudo su - postgres
-postgres $ createdb tamato
-postgres $ psql -c <span class="s2">&quot;CREATE USER &lt;username&gt; SUPERUSER PASSWORD &#39;&lt;password&gt;&#39;;&quot;</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>sudo<span class="w"> </span>su<span class="w"> </span>-<span class="w"> </span>postgres
+postgres<span class="w"> </span>$<span class="w"> </span>createdb<span class="w"> </span>tamato
+postgres<span class="w"> </span>$<span class="w"> </span>psql<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;CREATE USER &lt;username&gt; SUPERUSER PASSWORD &#39;&lt;password&gt;&#39;;&quot;</span>
 </pre></div>
 </div>
 <p>Make a note of the <code class="docutils literal notranslate"><span class="pre">&lt;username&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;password&gt;</span></code> for use in the
 <span class="target" id="index-0"></span><a class="reference internal" href="envvars.html#envvar-DATABASE_URL"><code class="xref std std-envvar docutils literal notranslate"><span class="pre">DATABASE_URL</span></code></a> environment variable.</p>
 <p>Import from a dump of the database:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>postgres $ psql -d tamato -f /tmp/tamato-db-dump.sql
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>postgres<span class="w"> </span>$<span class="w"> </span>psql<span class="w"> </span>-d<span class="w"> </span>tamato<span class="w"> </span>-f<span class="w"> </span>/tmp/tamato-db-dump.sql
 </pre></div>
 </div>
 <p>To get a database dump, please contact the TAP team.</p>
 </section>
 <section id="installing">
 <h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:uktrade/tamato
-$ <span class="nb">cd</span> tamato
-$ python -m venv venv
-$ <span class="nb">source</span> venv/bin/activate
-$ pip install -U pip
-$ pip install wheel -r requirements-dev.txt
-$ npm install
-$ npm run build
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:uktrade/tamato
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tamato
+$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+$<span class="w"> </span><span class="nb">source</span><span class="w"> </span>venv/bin/activate
+$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>pip
+$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>wheel<span class="w"> </span>-r<span class="w"> </span>requirements-dev.txt
+$<span class="w"> </span>npm<span class="w"> </span>install
+$<span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>build
 </pre></div>
 </div>
 <p>Those using Mac m1 laptops may have problems installing certain packages (e.g.
 psycopg2 and lxml) via requirements-dev.txt. In this scenario you should run the
 following from a rosetta terminal (see <a class="reference external" href="https://www.courier.com/blog/tips-and-tricks-to-setup-your-apple-m1-for-development/">this article</a> ),
 substituting your own python version as appropriate:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pip uninstall psycopg2
-$ brew install postgresql
-$ <span class="nb">export</span> <span class="nv">CPPFLAGS</span><span class="o">=</span><span class="s2">&quot;-I/opt/homebrew/opt/openssl@1.1/include&quot;</span>
-$ <span class="nb">export</span> <span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">&quot;-L/opt/homebrew/opt/openssl@1.1/lib -L</span><span class="si">${</span><span class="nv">HOME</span><span class="si">}</span><span class="s2">/.pyenv/versions/3.8.10/lib&quot;</span>
-$ arch -arm64 pip install psycopg2 --no-binary :all:
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>uninstall<span class="w"> </span>psycopg2
+$<span class="w"> </span>brew<span class="w"> </span>install<span class="w"> </span>postgresql
+$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">CPPFLAGS</span><span class="o">=</span><span class="s2">&quot;-I/opt/homebrew/opt/openssl@1.1/include&quot;</span>
+$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">&quot;-L/opt/homebrew/opt/openssl@1.1/lib -L</span><span class="si">${</span><span class="nv">HOME</span><span class="si">}</span><span class="s2">/.pyenv/versions/3.8.10/lib&quot;</span>
+$<span class="w"> </span>arch<span class="w"> </span>-arm64<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>psycopg2<span class="w"> </span>--no-binary<span class="w"> </span>:all:
 </pre></div>
 </div>
 <p>Credit due to armenzg and his <a class="reference external" href="https://github.com/psycopg/psycopg2/issues/1286#issuecomment-914286206">answer here</a> .</p>
@@ -254,20 +254,20 @@ $ arch -arm64 pip install psycopg2 --no-binary :all:
 <section id="running">
 <h3>Running<a class="headerlink" href="#running" title="Permalink to this headline">¶</a></h3>
 <p>Create a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file containing <a class="reference internal" href="envvars.html"><span class="doc">environment variables</span></a></p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ cp sample.env .env
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>cp<span class="w"> </span>sample.env<span class="w"> </span>.env
 </pre></div>
 </div>
 <p>Open another terminal and Compile SCSS and Javascripts:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py collectstatic
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>collectstatic
 </pre></div>
 </div>
 <p>To be able to login to the app, you will first need to create a Django user with
 superuser access:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py createsuperuser
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>createsuperuser
 </pre></div>
 </div>
 <p>Then run the app:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py runserver
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>runserver
 </pre></div>
 </div>
 <p>Then you can browse to <a class="reference external" href="http://localhost:8000/">http://localhost:8000/</a> to view the app.
@@ -276,7 +276,7 @@ To access the Django admin page, browse to <a class="reference external" href="h
 <section id="testing">
 <h3>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h3>
 <p>To run tests use the following command:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py <span class="nb">test</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span><span class="nb">test</span>
 </pre></div>
 </div>
 <p>For more detailed information on running tests, see <a class="reference internal" href="testing.html"><span class="doc">Testing</span></a></p>
@@ -289,7 +289,7 @@ both the EU (for historical data) and from HMRC (for VAT measures).</p>
 <p>TaMaTo provides an import which parses TARIC3 XML and inserts the data
 into the TAMATO database.</p>
 <p>Run the script to see the command line arguments:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py import_taric --help
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>import_taric<span class="w"> </span>--help
 </pre></div>
 </div>
 <p>This command is broken into two stages:</p>
@@ -297,13 +297,13 @@ into the TAMATO database.</p>
 <li><p>Chunking the file and loading into the DB. If a file is greater than
 50MB it is broken into chunks and those chunks saved into the
 database. This can be run in isolation using the command</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py chunk_taric
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>chunk_taric
 </pre></div>
 </div>
 </li>
 <li><p>Passing the chunks through the importer system into TrackedModels.
 This can be run in isolation using the command</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py run_import_batch
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>run_import_batch
 </pre></div>
 </div>
 </li>
@@ -320,28 +320,28 @@ which uploads transactions as XML to the HMRC bucket.</p>
 processes monitor and perform the upload to S3, so as not to block the web
 server.</p>
 <p>To run the exporter queue process, run the following command:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery -A common.celery beat --loglevel<span class="o">=</span>info
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery<span class="w"> </span>-A<span class="w"> </span>common.celery<span class="w"> </span>beat<span class="w"> </span>--loglevel<span class="o">=</span>info
 </pre></div>
 </div>
 <p>Open another terminal and start a Celery worker:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery -A common.celery worker --loglevel<span class="o">=</span>info
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery<span class="w"> </span>-A<span class="w"> </span>common.celery<span class="w"> </span>worker<span class="w"> </span>--loglevel<span class="o">=</span>info
 </pre></div>
 </div>
 <p>To monitor celery workers or individual tasks run:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery flower
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery<span class="w"> </span>flower
 </pre></div>
 </div>
 <p>See <a class="reference external" href="https://flower.readthedocs.io/en/latest/">flower docs</a> for more details</p>
 </section>
 <section id="manually-trigger-the-upload-to-s3">
 <h3>Manually trigger the upload to s3<a class="headerlink" href="#manually-trigger-the-upload-to-s3" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ celery -A common.celery call exporter.tasks.upload_transactions
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>celery<span class="w"> </span>-A<span class="w"> </span>common.celery<span class="w"> </span>call<span class="w"> </span>exporter.tasks.upload_transactions
 </pre></div>
 </div>
 <p>The celery job UUID is output and the command quits. To see output
 switch to the celery workers console. A more ergonomic way of launching
 the celery job is to launch the management command:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py upload_transactions
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>upload_transactions
 </pre></div>
 </div>
 </section>
@@ -349,7 +349,7 @@ the celery job is to launch the management command:</p>
 <h3>Dump transactions<a class="headerlink" href="#dump-transactions" title="Permalink to this headline">¶</a></h3>
 <p>Transactions waiting to be uploaded to the HMRC S3 bucket can be saved
 to a file or output to stdout using a management command:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python manage.py dump_transactions <span class="o">[</span>-o filename<span class="o">]</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>dump_transactions<span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>filename<span class="o">]</span>
 </pre></div>
 </div>
 <p>Output defaults to stdout if filename is <code class="docutils literal notranslate"><span class="pre">-</span></code> or is not supplied.</p>
@@ -361,7 +361,7 @@ to a file or output to stdout using a management command:</p>
 <li><p>Export MINIO_ROOT_USER and MINIO_ROOT_PASSWORD variables of your choice</p></li>
 <li><p>Run server with:</p></li>
 </ol>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>minio server --quiet --address <span class="m">0</span>.0.0.0:9003 ~/data
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>minio<span class="w"> </span>server<span class="w"> </span>--quiet<span class="w"> </span>--address<span class="w"> </span><span class="m">0</span>.0.0.0:9003<span class="w"> </span>~/data
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
@@ -390,21 +390,21 @@ dropdown on the <cite>Build with Parameters</cite> page.</p>
 login and the <a class="reference external" href="https://docs.cloudfoundry.org/cf-cli/install-go-cli.html">cf CLI
 tool</a>.</p>
 <p>You will need to install the <a class="reference external" href="https://github.com/alphagov/paas-cf-conduit">conduit plugin</a>:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf install-plugin conduit
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf<span class="w"> </span>install-plugin<span class="w"> </span>conduit
 </pre></div>
 </div>
 <p>Then you need to login to the DIT GOV.UK PaaS:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf login --sso -s &lt;space&gt;
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf<span class="w"> </span>login<span class="w"> </span>--sso<span class="w"> </span>-s<span class="w"> </span>&lt;space&gt;
 </pre></div>
 </div>
 <p>Where <code class="docutils literal notranslate"><span class="pre">&lt;space&gt;</span></code> is one of <code class="docutils literal notranslate"><span class="pre">tariffs-dev</span></code>, <code class="docutils literal notranslate"><span class="pre">tariffs-staging</span></code>,
 <code class="docutils literal notranslate"><span class="pre">tariffs-training</span></code> or <code class="docutils literal notranslate"><span class="pre">tariffs-uat</span></code>.</p>
 <p>Once you are logged in, you can list the services hosted in the space with</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf services
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf<span class="w"> </span>services
 </pre></div>
 </div>
 <p>You can access <code class="docutils literal notranslate"><span class="pre">postgres</span></code> services with the following command:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf conduit &lt;name&gt; -- psql
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cf<span class="w"> </span>conduit<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--<span class="w"> </span>psql
 </pre></div>
 </div>
 <p>So if you are logged in to the <code class="docutils literal notranslate"><span class="pre">tariffs-dev</span></code> space, you could access the dev

@@ -382,15 +382,15 @@ unlikely to ever be very high.</p></li>
 <section id="getting-all-of-one-child-model">
 <h4>Getting all of one child model<a class="headerlink" href="#getting-all-of-one-child-model" title="Permalink to this headline">¶</a></h4>
 <p>This query gets all Commodity models as an example:</p>
-<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">polymorphic_ctype_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">workbasket_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="p">...</span><span class="w"></span>
-<span class="w">       </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="p">...</span><span class="w"></span>
-<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">commodity</span><span class="w"></span>
-<span class="w"> </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">trackedmodel</span><span class="w"></span>
-<span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">;</span><span class="w"></span>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">,</span>
+<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">polymorphic_ctype_id</span><span class="p">,</span>
+<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">workbasket_id</span><span class="p">,</span>
+<span class="w">       </span><span class="p">...</span>
+<span class="w">       </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="p">,</span>
+<span class="w">       </span><span class="p">...</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">commodity</span>
+<span class="w"> </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">trackedmodel</span>
+<span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">;</span>
 </pre></div>
 </div>
 </section>
@@ -400,39 +400,39 @@ unlikely to ever be very high.</p></li>
 <code class="docutils literal notranslate"><span class="pre">WorkBasket</span></code>. In this case a footnote type and 2 commodities were
 changed.</p>
 <p>This first query gets all the <code class="docutils literal notranslate"><span class="pre">TrackedModel</span></code>s:</p>
-<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="n">polymorphic_ctype_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="n">workbasket_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="p">...</span><span class="w"></span>
-<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">trackedmodel</span><span class="w"></span>
-<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">workbasket_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">id</span><span class="p">,</span>
+<span class="w">       </span><span class="n">polymorphic_ctype_id</span><span class="p">,</span>
+<span class="w">       </span><span class="n">workbasket_id</span><span class="p">,</span>
+<span class="w">       </span><span class="p">...</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">trackedmodel</span>
+<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">workbasket_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
 </pre></div>
 </div>
 <p>The next two queries are generated in code and then executed.</p>
 <p>This one gets all the commodities:</p>
-<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">polymorphic_ctype_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">workbasket_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="p">...</span><span class="w"></span>
-<span class="w">       </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="p">...</span><span class="w"></span>
-<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">commodity</span><span class="w"></span>
-<span class="w"> </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">trackedmodel</span><span class="w"></span>
-<span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="w"></span>
-<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">);</span><span class="w"></span>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">,</span>
+<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">polymorphic_ctype_id</span><span class="p">,</span>
+<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">workbasket_id</span><span class="p">,</span>
+<span class="w">       </span><span class="p">...</span>
+<span class="w">       </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="p">,</span>
+<span class="w">       </span><span class="p">...</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">commodity</span>
+<span class="w"> </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">trackedmodel</span>
+<span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span>
+<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">);</span>
 </pre></div>
 </div>
 <p>This one gets all the footnote types:</p>
-<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">polymorphic_ctype_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">workbasket_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="p">...</span><span class="w"></span>
-<span class="w">       </span><span class="n">footnotetype</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">       </span><span class="p">...</span><span class="w"></span>
-<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">footnotetype</span><span class="w"></span>
-<span class="w"> </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">trackedmodel</span><span class="w"></span>
-<span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">footnotetype</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="w"></span>
-<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">footnotetype</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">);</span><span class="w"></span>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">,</span>
+<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">polymorphic_ctype_id</span><span class="p">,</span>
+<span class="w">       </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">workbasket_id</span><span class="p">,</span>
+<span class="w">       </span><span class="p">...</span>
+<span class="w">       </span><span class="n">footnotetype</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="p">,</span>
+<span class="w">       </span><span class="p">...</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">footnotetype</span>
+<span class="w"> </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">trackedmodel</span>
+<span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">footnotetype</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span>
+<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">footnotetype</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">);</span>
 </pre></div>
 </div>
 </section>
@@ -442,26 +442,26 @@ changed.</p>
 does it by default in 2 (and sometimes by more depending on the code
 implementation). The 2 query method uses the following queries:</p>
 <p>This first query gets all the tracked models which are commodities.</p>
-<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="p">...</span><span class="w"></span>
-<span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">trackedmodel</span><span class="w"></span>
-<span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">content_type</span><span class="w"></span>
-<span class="w">   </span><span class="k">ON</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">polymorphic_ctype_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">content_type</span><span class="p">.</span><span class="n">id</span><span class="w"></span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">workbasket_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"></span>
-<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">content_type</span><span class="p">.</span><span class="n">app_label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ss">&quot;commodities&quot;</span><span class="w"></span>
-<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">content_type</span><span class="p">.</span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ss">&quot;commodity&quot;</span><span class="p">;</span><span class="w"></span>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">,</span>
+<span class="w">      </span><span class="p">...</span>
+<span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">trackedmodel</span>
+<span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">content_type</span>
+<span class="w">   </span><span class="k">ON</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">polymorphic_ctype_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">content_type</span><span class="p">.</span><span class="n">id</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">workbasket_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">content_type</span><span class="p">.</span><span class="n">app_label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ss">&quot;commodities&quot;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">content_type</span><span class="p">.</span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ss">&quot;commodity&quot;</span><span class="p">;</span>
 </pre></div>
 </div>
 <p>This second query gets all the commodity details from the
 <code class="docutils literal notranslate"><span class="pre">TrackedModel</span></code> details.</p>
-<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="p">...</span><span class="w"></span>
-<span class="w">      </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="p">...</span><span class="w"></span>
-<span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">commodity</span><span class="w"></span>
-<span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">trackedmodel</span><span class="w"></span>
-<span class="w">   </span><span class="k">ON</span><span class="w"> </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="w"></span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span><span class="w"></span>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span><span class="p">,</span>
+<span class="w">      </span><span class="p">...</span>
+<span class="w">      </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="p">,</span>
+<span class="w">      </span><span class="p">...</span>
+<span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">commodity</span>
+<span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">trackedmodel</span>
+<span class="w">   </span><span class="k">ON</span><span class="w"> </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trackedmodel</span><span class="p">.</span><span class="n">id</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">commodity</span><span class="p">.</span><span class="n">trackedmodel_ptr_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span>
 </pre></div>
 </div>
 </section>

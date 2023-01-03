@@ -142,12 +142,12 @@
 
 
 <span class="k">def</span> <span class="nf">to_hmrc</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="s2">&quot;Upload&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate the filepath to upload to HMRC.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the filepath to upload to HMRC.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">HMRC_STORAGE_DIRECTORY</span><span class="p">)</span> <span class="o">/</span> <span class="n">filename</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Upload"><a class="viewcode-back" href="../../exporter/celery-tasks.html#exporter.models.Upload">[docs]</a><span class="k">class</span> <span class="nc">Upload</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Represents a TARIC differential update file upload to HMRC.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a TARIC differential update file upload to HMRC.&quot;&quot;&quot;</span>
 
     <span class="n">file</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span><span class="n">storage</span><span class="o">=</span><span class="n">HMRCStorage</span><span class="p">,</span> <span class="n">upload_to</span><span class="o">=</span><span class="n">to_hmrc</span><span class="p">)</span>
     <span class="n">envelope</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Envelope</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
@@ -160,7 +160,7 @@
     <span class="n">MAX_FILE_SIZE</span> <span class="o">=</span> <span class="mi">50</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span>
 
     <span class="k">def</span> <span class="nf">notify_hmrc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param now: datetime to set notification_sent to, defaults to now.</span>
 
 <span class="sd">        :throws and APIRequestError: if the end-point cannot be contacted.</span>

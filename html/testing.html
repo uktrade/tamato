@@ -148,17 +148,17 @@
 <section id="running-tests">
 <h2>Running tests<a class="headerlink" href="#running-tests" title="Permalink to this headline">¶</a></h2>
 <p>There are several ways to run tests, the recommended way is to use <code class="docutils literal notranslate"><span class="pre">make</span></code>:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ make <span class="nb">test</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span><span class="nb">test</span>
 </pre></div>
 </div>
 <p>This will run all tests and generate a test coverage report. To run without coverage
 (which is somewhat faster), use the following:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ make test-fast
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>test-fast
 </pre></div>
 </div>
 <p>Alternatively, you can run tests using <code class="docutils literal notranslate"><span class="pre">pytest</span></code> for more detailed configuration of the test run. See the various
 options with the following:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pytest --help
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pytest<span class="w"> </span>--help
 </pre></div>
 </div>
 <p>When running tests <span class="target" id="index-0"></span><a class="reference internal" href="envvars.html#envvar-DJANGO_SETTINGS_MODULE"><code class="xref std std-envvar docutils literal notranslate"><span class="pre">DJANGO_SETTINGS_MODULE</span></code></a> defaults to
@@ -169,14 +169,14 @@ options with the following:</p>
 <p>The simplest way to find intermittent test failures is to keep running
 them in a loop. It’s worth leaving it running for at least a few test
 runs.</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ <span class="k">while</span> pytest -s -v<span class="p">;</span> <span class="k">do</span> :<span class="p">;</span> <span class="k">done</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="k">while</span><span class="w"> </span>pytest<span class="w"> </span>-s<span class="w"> </span>-v<span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>:<span class="p">;</span><span class="w"> </span><span class="k">done</span>
 </pre></div>
 </div>
 <p>In the example above -s -v is used to output stdout and enable verbose
 output. Timing issues more bugs can be surfaced by setting the amount of
 processes to a number higher than the amount of CPU threads, e.g. 12 or
 16 for an 8 thread CPU:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ <span class="k">while</span> sleep <span class="m">45</span> <span class="o">&amp;&amp;</span> pytest -s -v -n<span class="o">=</span><span class="m">12</span><span class="p">;</span> <span class="k">do</span> :<span class="p">;</span> <span class="k">done</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="k">while</span><span class="w"> </span>sleep<span class="w"> </span><span class="m">45</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pytest<span class="w"> </span>-s<span class="w"> </span>-v<span class="w"> </span>-n<span class="o">=</span><span class="m">12</span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>:<span class="p">;</span><span class="w"> </span><span class="k">done</span>
 </pre></div>
 </div>
 </section>
@@ -188,7 +188,7 @@ work.</p>
 <p>Using webpdb gets round this: <a class="reference external" href="https://pypi.org/project/web-pdb/">https://pypi.org/project/web-pdb/</a></p>
 <p>When running in a single process (see below) pytest-ipdb or pdb++ can be
 good choices, in that case use -s so that pytest doesn’t capture stdout:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pytest -s
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pytest<span class="w"> </span>-s
 </pre></div>
 </div>
 </section>
@@ -196,16 +196,16 @@ good choices, in that case use -s so that pytest doesn’t capture stdout:</p>
 <h2>Run tests in a single process<a class="headerlink" href="#run-tests-in-a-single-process" title="Permalink to this headline">¶</a></h2>
 <p>Running in a single process can eliminate pytest-xdist as a cause of
 errors.</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pytest -n0
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pytest<span class="w"> </span>-n0
 </pre></div>
 </div>
 <p>pytest-random-order randomises the order of test, using it can surface
 bugs around hidden state, install it:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pip install pytest-random-order
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>pytest-random-order
 </pre></div>
 </div>
 <p>Use random order:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pytest -n0 --random-order
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pytest<span class="w"> </span>-n0<span class="w"> </span>--random-order
 </pre></div>
 </div>
 </section>
@@ -224,7 +224,7 @@ bugs around hidden state, install it:</p>
 </ul>
 <div class="govuk-warning-text docutils container">
 <span class="govuk-warning-text__icon">!</span><strong class="govuk-warning-text__text"><span class="govuk-warning-text__assistive">Warning</span>The version of virtualenv on Ubuntu 20.04 is old and incompatible, it is advisable to use venv instead here:</strong></div>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ pyston -mvenv
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pyston<span class="w"> </span>-mvenv
 </pre></div>
 </div>
 </section>

@@ -140,18 +140,18 @@
 
 
 <div class="viewcode-block" id="CT1"><a class="viewcode-back" href="../../business_rules/additional_codes.html#additional_codes.business_rules.CT1">[docs]</a><span class="k">class</span> <span class="nc">CT1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The additional code type must be unique.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The additional code type must be unique.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="ACN1"><a class="viewcode-back" href="../../business_rules/additional_codes.html#additional_codes.business_rules.ACN1">[docs]</a><span class="k">class</span> <span class="nc">ACN1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The combination of additional code type, additional code ID and start</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The combination of additional code type, additional code ID and start</span>
 <span class="sd">    date must be unique.&quot;&quot;&quot;</span>
 
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;code&quot;</span><span class="p">,</span> <span class="s2">&quot;valid_between__lower&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ACN2"><a class="viewcode-back" href="../../business_rules/additional_codes.html#additional_codes.business_rules.ACN2">[docs]</a><span class="k">class</span> <span class="nc">ACN2</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The referenced additional code type must exist and have as application</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The referenced additional code type must exist and have as application</span>
 <span class="sd">    code &quot;non-Meursing&quot; or &quot;Export Refund for Processed Agricultural Goods.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ACN2.validate"><a class="viewcode-back" href="../../business_rules/additional_codes.html#additional_codes.business_rules.ACN2.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additional_code</span><span class="p">):</span>
@@ -177,7 +177,7 @@
 
 
 <div class="viewcode-block" id="ACN4"><a class="viewcode-back" href="../../business_rules/additional_codes.html#additional_codes.business_rules.ACN4">[docs]</a><span class="k">class</span> <span class="nc">ACN4</span><span class="p">(</span><span class="n">NoOverlapping</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The validity period of the additional code must not overlap any other</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The validity period of the additional code must not overlap any other</span>
 <span class="sd">    additional code with the same additional code type, additional code ID and</span>
 <span class="sd">    start date.&quot;&quot;&quot;</span>
 
@@ -189,7 +189,7 @@
 
 
 <div class="viewcode-block" id="ACN13"><a class="viewcode-back" href="../../business_rules/additional_codes.html#additional_codes.business_rules.ACN13">[docs]</a><span class="k">class</span> <span class="nc">ACN13</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When an additional code is used in an additional code nomenclature</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When an additional code is used in an additional code nomenclature</span>
 <span class="sd">    measure then the validity period of the additional code must span the</span>
 <span class="sd">    validity period of the measure.&quot;&quot;&quot;</span>
 
@@ -197,14 +197,14 @@
 
 
 <div class="viewcode-block" id="ACN17"><a class="viewcode-back" href="../../business_rules/additional_codes.html#additional_codes.business_rules.ACN17">[docs]</a><span class="k">class</span> <span class="nc">ACN17</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The validity period of the additional code type must span the validity</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The validity period of the additional code type must span the validity</span>
 <span class="sd">    period of the additional code.&quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;type&quot;</span></div>
 
 
 <div class="viewcode-block" id="ACN5"><a class="viewcode-back" href="../../business_rules/additional_codes.html#additional_codes.business_rules.ACN5">[docs]</a><span class="k">class</span> <span class="nc">ACN5</span><span class="p">(</span><span class="n">DescriptionsRules</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    At least one description is mandatory.</span>
 
 <span class="sd">    The start date of the first description period must be equal to the start</span>
@@ -217,7 +217,7 @@
 
 
 <div class="viewcode-block" id="ACN14"><a class="viewcode-back" href="../../business_rules/additional_codes.html#additional_codes.business_rules.ACN14">[docs]</a><span class="k">class</span> <span class="nc">ACN14</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;An additional code cannot be deleted if it is used in an additional code</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An additional code cannot be deleted if it is used in an additional code</span>
 <span class="sd">    nomenclature measure.&quot;&quot;&quot;</span></div>
 </pre></div>
 

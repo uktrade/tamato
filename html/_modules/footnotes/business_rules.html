@@ -135,15 +135,15 @@
 
 
 <div class="viewcode-block" id="FOT1"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FOT1">[docs]</a><span class="k">class</span> <span class="nc">FOT1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The type of the footnote must be unique.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The type of the footnote must be unique.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="FOT2"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FOT2">[docs]</a><span class="k">class</span> <span class="nc">FOT2</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The footnote type cannot be deleted if it is used in a footnote.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The footnote type cannot be deleted if it is used in a footnote.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="FO2"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO2">[docs]</a><span class="k">class</span> <span class="nc">FO2</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The combination footnote type and code must be unique.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The combination footnote type and code must be unique.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="FO4"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO4">[docs]</a><span class="k">class</span> <span class="nc">FO4</span><span class="p">(</span><span class="n">DescriptionsRules</span><span class="p">):</span>
@@ -151,14 +151,14 @@
 
 
 <div class="viewcode-block" id="FO5"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO5">[docs]</a><span class="k">class</span> <span class="nc">FO5</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When a footnote is used in a measure the validity period of the footnote</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When a footnote is used in a measure the validity period of the footnote</span>
 <span class="sd">    must span the validity period of the measure.&quot;&quot;&quot;</span>
 
     <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;footnoteassociationmeasure__footnoted_measure&quot;</span></div>
 
 
 <div class="viewcode-block" id="FO6"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO6">[docs]</a><span class="k">class</span> <span class="nc">FO6</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When a footnote is used in a goods nomenclature the validity period of</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When a footnote is used in a goods nomenclature the validity period of</span>
 <span class="sd">    the footnote must span the validity period of the association with the goods</span>
 <span class="sd">    nomenclature.&quot;&quot;&quot;</span>
 
@@ -166,7 +166,7 @@
 
 
 <div class="viewcode-block" id="FO9"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO9">[docs]</a><span class="k">class</span> <span class="nc">FO9</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When a footnote is used in an additional code the validity period of the</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When a footnote is used in an additional code the validity period of the</span>
 <span class="sd">    footnote must span the validity period of the association with the</span>
 <span class="sd">    additional code.&quot;&quot;&quot;</span>
 
@@ -174,28 +174,28 @@
 
 
 <div class="viewcode-block" id="FO11"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO11">[docs]</a><span class="k">class</span> <span class="nc">FO11</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When a footnote is used in a measure then the footnote may not be</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When a footnote is used in a measure then the footnote may not be</span>
 <span class="sd">    deleted.&quot;&quot;&quot;</span>
 
     <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;footnoteassociationmeasure&quot;</span></div>
 
 
 <div class="viewcode-block" id="FO12"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO12">[docs]</a><span class="k">class</span> <span class="nc">FO12</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When a footnote is used in a goods nomenclature then the footnote may not</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When a footnote is used in a goods nomenclature then the footnote may not</span>
 <span class="sd">    be deleted.&quot;&quot;&quot;</span>
 
     <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;footnoteassociationgoodsnomenclature&quot;</span></div>
 
 
 <div class="viewcode-block" id="FO15"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO15">[docs]</a><span class="k">class</span> <span class="nc">FO15</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When a footnote is used in an additional code then the footnote may not</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When a footnote is used in an additional code then the footnote may not</span>
 <span class="sd">    be deleted.&quot;&quot;&quot;</span>
 
     <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;footnoteassociationadditionalcode&quot;</span></div>
 
 
 <div class="viewcode-block" id="FO17"><a class="viewcode-back" href="../../business_rules/footnotes.html#footnotes.business_rules.FO17">[docs]</a><span class="k">class</span> <span class="nc">FO17</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The validity period of the footnote type must span the validity period of</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The validity period of the footnote type must span the validity period of</span>
 <span class="sd">    the footnote.&quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;footnote_type&quot;</span></div>

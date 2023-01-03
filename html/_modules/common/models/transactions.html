@@ -148,7 +148,7 @@
 
 
 <span class="k">class</span> <span class="nc">TransactionPartition</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">IntegerChoices</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Transactions are partitioned into global groupings based on type.</span>
 
 <span class="sd">    Within a partition, a transactions order applies, to obtain a global</span>
@@ -169,7 +169,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_highest_approved_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the highest approved partition, this is used by</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the highest approved partition, this is used by</span>
 <span class="sd">        TransactionQuerySet.approved() to filter approved partitions using a</span>
 <span class="sd">        comparison operator as opposed to &quot;in&quot;.&quot;&quot;&quot;</span>
         <span class="c1"># This is a function, not a const as duplicate are not allowed in an Enum.</span>
@@ -200,14 +200,14 @@
 <span class="k">class</span> <span class="nc">TransactionQueryset</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns all tracked models referenced by transactions in this</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns all tracked models referenced by transactions in this</span>
 <span class="sd">        queryset.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">transaction__in</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">approved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Currently approved Transactions are SEED_FILE and REVISION this can</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Currently approved Transactions are SEED_FILE and REVISION this can</span>
 <span class="sd">        be.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">partition__lte</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">get_highest_approved_partition</span><span class="p">(),</span>
@@ -219,7 +219,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">preorder_negative_transactions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Makes all order numbers negative if there is even one negative order</span>
 <span class="sd">        number.</span>
 
@@ -237,7 +237,7 @@
 
     <span class="nd">@atomic</span>
     <span class="k">def</span> <span class="nf">move_to_end_of_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update Transaction partition and order fields to place them at the end</span>
 <span class="sd">        of the specified partition.</span>
 
@@ -277,7 +277,7 @@
 
     <span class="nd">@atomic</span>
     <span class="k">def</span> <span class="nf">save_drafts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save draft transactions as either SEED_FILE or REVISION transactions.</span>
 
 <span class="sd">        Contained tracked models to become the current version. Order field is</span>
@@ -315,7 +315,7 @@
 
     <span class="nd">@atomic</span>
     <span class="k">def</span> <span class="nf">revert_current_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Set current_version to previous version or None on a basket&#39;s tracked</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set current_version to previous version or None on a basket&#39;s tracked</span>
 <span class="sd">        model version groups.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-pk&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;version_group&quot;</span><span class="p">):</span>
             <span class="n">version_group</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">version_group</span>
@@ -332,7 +332,7 @@
 
     <span class="nd">@atomic</span>
     <span class="k">def</span> <span class="nf">move_to_draft</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save SEED_FILE or REVISION transactions as DRAFT.</span>
 
 <span class="sd">        Set current_version to previous version or None on a basket&#39;s tracked</span>
@@ -358,7 +358,7 @@
 
 
 <div class="viewcode-block" id="Transaction"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction">[docs]</a><span class="k">class</span> <span class="nc">Transaction</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Contains a group of one or more TrackedModel instances that must be applied</span>
 <span class="sd">    atomically.</span>
 
@@ -411,7 +411,7 @@
         <span class="n">target</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">REVISION</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">def</span> <span class="nf">save_draft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Finalise a single DRAFT transaction as a REVISION.</span>
 
 <span class="sd">        Delegates to Transaction.objects.save_drafts() which is a better choice</span>
@@ -422,7 +422,7 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="Transaction.to_json"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Serialize to JSON.</span>
 
 <span class="sd">        Used for storing in the session.</span>
@@ -452,7 +452,7 @@
 
     <span class="nd">@lazy_string</span>
     <span class="k">def</span> <span class="nf">_get_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return a short summary of the transaction.</span>
 
 <span class="sd">        Attempts a balance between readability and enough information to debug</span>
@@ -467,7 +467,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return a short summary of the transaction.</span>
 
 <span class="sd">        Attempts a balance between readability and enough information to debug</span>
@@ -482,7 +482,7 @@
 
 
 <span class="k">class</span> <span class="nc">TransactionGroup</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An ordered group of Transactions.</span>
 
 <span class="sd">    Transactions often must be applied in a specific sequence, for example to ensure</span>

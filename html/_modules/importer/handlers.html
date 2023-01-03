@@ -155,7 +155,7 @@
 
 
 <div class="viewcode-block" id="BaseHandlerMeta"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandlerMeta">[docs]</a><span class="k">class</span> <span class="nc">BaseHandlerMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    BaseHandler Metaclass to add validation and registration of each new Handler</span>
 <span class="sd">    class.</span>
 
@@ -202,7 +202,7 @@
 
 
 <div class="viewcode-block" id="BaseHandler"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler">[docs]</a><span class="k">class</span> <span class="nc">BaseHandler</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">BaseHandlerMeta</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The Base class for import handlers.</span>
 
 <span class="sd">    Handlers are designed to build objects which are then ready to be entered into the database.</span>
@@ -378,7 +378,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">resolved_links</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span> <span class="nf">_generate_dependency_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Objects are stored in the cache using unique but identifiable IDs. Any</span>
 <span class="sd">        dependant object must be able to figure out all the keys for its</span>
 <span class="sd">        dependencies.</span>
@@ -407,7 +407,7 @@
         <span class="k">return</span> <span class="n">depends_on</span>
 
 <div class="viewcode-block" id="BaseHandler.resolve_dependencies"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.resolve_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Search the cache for all object dependencies and attempt to resolve</span>
 <span class="sd">        them.</span>
 
@@ -434,7 +434,7 @@
         <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="BaseHandler.get_generic_link"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.get_generic_link">[docs]</a>    <span class="k">def</span> <span class="nf">get_generic_link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fallback method if no specific method is found for fetching a link.</span>
 
 <span class="sd">        Raises DoesNotExist if no kwargs passed.</span>
@@ -469,7 +469,7 @@
             <span class="k">raise</span> <span class="n">e</span></div>
 
 <div class="viewcode-block" id="BaseHandler.load_link"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.load_link">[docs]</a>    <span class="k">def</span> <span class="nf">load_link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">identifying_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optional</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load a given link for a handler.</span>
 
 <span class="sd">        This method first attempts to find any custom method existing on the handler</span>
@@ -505,7 +505,7 @@
         <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="BaseHandler.resolve_links"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.resolve_links">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_links</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extract data specific to links and use this to search the database for</span>
 <span class="sd">        the relevant objects.</span>
 
@@ -522,14 +522,14 @@
         <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="BaseHandler.clean"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Validate the data against the serializer and return the validated</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the data against the serializer and return the validated</span>
 <span class="sd">        data.&quot;&quot;&quot;</span>
         <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">serializer_class</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
         <span class="n">serializer</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">raise_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">serializer</span><span class="o">.</span><span class="n">validated_data</span></div>
 
 <div class="viewcode-block" id="BaseHandler.pre_save"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.pre_save">[docs]</a>    <span class="k">def</span> <span class="nf">pre_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">links</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Pre-processing before the object is saved to the database.</span>
 
 <span class="sd">        Generally this is used for adding the links to the object (as these cannot</span>
@@ -545,7 +545,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">serializer_class</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
 <div class="viewcode-block" id="BaseHandler.post_save"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.post_save">[docs]</a>    <span class="k">def</span> <span class="nf">post_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Post-processing after the object has been saved to the database.</span>
 
 <span class="sd">        By default this caches any new saved object.</span>
@@ -553,7 +553,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nursery</span><span class="o">.</span><span class="n">cache_object</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="BaseHandler.build"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Build up all the data for the object.</span>
 
 <span class="sd">        This method co-ordinates the attempts to fetch the dependent data as well as the linked</span>
@@ -574,7 +574,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_keys</span></div>
 
 <div class="viewcode-block" id="BaseHandler.dispatch"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.dispatch">[docs]</a>    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModel</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the data into the database.</span>
 
 <span class="sd">        This method initially validates all collected data. If valid it then</span>
@@ -592,7 +592,7 @@
         <span class="k">return</span> <span class="n">obj</span></div>
 
 <div class="viewcode-block" id="BaseHandler.serialize"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.serialize">[docs]</a>    <span class="k">def</span> <span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DispatchedObjectType</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Provides a serializable dict of the object to be stored in the cache.</span>
 
 <span class="sd">        Should hold all the necessary data required to rebuild the object</span>
@@ -605,7 +605,7 @@
 
 <div class="viewcode-block" id="BaseHandler.register_dependant"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.register_dependant">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">register_dependant</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dependant</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseHandler</span><span class="p">]):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Allow a handler to retrospectively assign itself to another handlers</span>
 <span class="sd">        list of dependencies.</span>
 

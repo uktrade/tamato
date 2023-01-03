@@ -186,7 +186,7 @@
 
 <div class="viewcode-block" id="Tag"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.namespaces.Tag">[docs]</a><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">Tag</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A dataclass for xml element tags.</span>
 
 <span class="sd">    :py:attr:`name` corresponds to the name attribute of the Element element in the XML</span>
@@ -205,12 +205,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Returns the namespace for the tag.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the namespace for the tag.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsmap</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">qualified_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Returns a fully qualified element tag.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a fully qualified element tag.&quot;&quot;&quot;</span>
         <span class="n">ns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span>
 
         <span class="k">if</span> <span class="n">ns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -220,7 +220,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">prefixed_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Returns the prefixed element tag.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the prefixed element tag.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
 
@@ -228,25 +228,25 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">is_pattern</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Returns true if the tag name is a regex pattern.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns true if the tag name is a regex pattern.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">RE_PATTERN_TEST</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">pattern</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns a compiled regex pattern.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a compiled regex pattern.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_pattern</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qualified_name</span>
 
         <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">{{</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="si">}</span><span class="se">}}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Tag.iter"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.namespaces.Tag.iter">[docs]</a>    <span class="k">def</span> <span class="nf">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">ET</span><span class="o">.</span><span class="n">Element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ET</span><span class="o">.</span><span class="n">Element</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Returns an iterator of descendants of the parent matching this tag&#39;s</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns an iterator of descendants of the parent matching this tag&#39;s</span>
 <span class="sd">        name.&quot;&quot;&quot;</span>
         <span class="n">qname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qualified_name</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">el</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span> <span class="k">if</span> <span class="n">el</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">qname</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Tag.first"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.namespaces.Tag.first">[docs]</a>    <span class="k">def</span> <span class="nf">first</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">ET</span><span class="o">.</span><span class="n">Element</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ET</span><span class="o">.</span><span class="n">Element</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Returns the first descendant of the parent matching this tag&#39;s</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the first descendant of the parent matching this tag&#39;s</span>
 <span class="sd">        name.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">parent</span><span class="p">))</span>
@@ -254,7 +254,7 @@
             <span class="k">return</span></div>
 
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TTag</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Returns true if the qualified names of the two tags are equal.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns true if the qualified names of the two tags are equal.&quot;&quot;&quot;</span>
         <span class="n">is_pattern</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_pattern</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">Tag</span><span class="p">):</span>
@@ -268,19 +268,19 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qualified_name</span> <span class="o">==</span> <span class="n">tag_qualified_name</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns a string representation of the tag.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a string representation of the tag.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qualified_name</span></div>
 
 
 <div class="viewcode-block" id="SchemaTagsBase"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.namespaces.SchemaTagsBase">[docs]</a><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">SchemaTagsBase</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Provides a base dataclass for schema element tag definitions.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides a base dataclass for schema element tag definitions.&quot;&quot;&quot;</span>
 
     <span class="n">XS_ELEMENT</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;element&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;xs&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="make_schema_dataclass"><a class="viewcode-back" href="../../importer/parsers_and_namespaces.html#importer.namespaces.make_schema_dataclass">[docs]</a><span class="k">def</span> <span class="nf">make_schema_dataclass</span><span class="p">(</span><span class="n">xsd_schema_paths</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">TTags</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Returns a dynamic dataclass with taric schema element tag definitions.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a dynamic dataclass with taric schema element tag definitions.&quot;&quot;&quot;</span>
     <span class="n">schema_tags</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">xsd_schema_paths</span><span class="p">:</span>

@@ -135,33 +135,33 @@
 
 
 <div class="viewcode-block" id="CET1"><a class="viewcode-back" href="../../business_rules/certificates.html#certificates.business_rules.CET1">[docs]</a><span class="k">class</span> <span class="nc">CET1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The type of the certificate must be unique.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The type of the certificate must be unique.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="CET2"><a class="viewcode-back" href="../../business_rules/certificates.html#certificates.business_rules.CET2">[docs]</a><span class="k">class</span> <span class="nc">CET2</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The certificate type cannot be deleted if it is used in a certificate.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The certificate type cannot be deleted if it is used in a certificate.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="CE2"><a class="viewcode-back" href="../../business_rules/certificates.html#certificates.business_rules.CE2">[docs]</a><span class="k">class</span> <span class="nc">CE2</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The combination certificate type and code must be unique.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The combination certificate type and code must be unique.&quot;&quot;&quot;</span>
 
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sid&quot;</span><span class="p">,</span> <span class="s2">&quot;certificate_type&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CE4"><a class="viewcode-back" href="../../business_rules/certificates.html#certificates.business_rules.CE4">[docs]</a><span class="k">class</span> <span class="nc">CE4</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;If a certificate is used in a measure condition then the validity periods</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If a certificate is used in a measure condition then the validity periods</span>
 <span class="sd">    of the certificate must span the validity period of the measure.&quot;&quot;&quot;</span>
 
     <span class="n">contained_field_name</span> <span class="o">=</span> <span class="s2">&quot;measurecondition__dependent_measure&quot;</span></div>
 
 
 <div class="viewcode-block" id="CE5"><a class="viewcode-back" href="../../business_rules/certificates.html#certificates.business_rules.CE5">[docs]</a><span class="k">class</span> <span class="nc">CE5</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The certificate cannot be deleted if it is used in a measure</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The certificate cannot be deleted if it is used in a measure</span>
 <span class="sd">    condition.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="CE6"><a class="viewcode-back" href="../../business_rules/certificates.html#certificates.business_rules.CE6">[docs]</a><span class="k">class</span> <span class="nc">CE6</span><span class="p">(</span><span class="n">DescriptionsRules</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    At least one description record is mandatory.</span>
 
 <span class="sd">    The start date of the first description period must be equal to the start</span>
@@ -175,7 +175,7 @@
 
 
 <div class="viewcode-block" id="CE7"><a class="viewcode-back" href="../../business_rules/certificates.html#certificates.business_rules.CE7">[docs]</a><span class="k">class</span> <span class="nc">CE7</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The validity period of the certificate type must span the validity period</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The validity period of the certificate type must span the validity period</span>
 <span class="sd">    of the certificate.&quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;certificate_type&quot;</span></div>

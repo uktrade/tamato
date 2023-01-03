@@ -149,12 +149,12 @@
 
 
 <div class="viewcode-block" id="NIG1"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG1">[docs]</a><span class="k">class</span> <span class="nc">NIG1</span><span class="p">(</span><span class="n">NoOverlapping</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The validity period of the goods nomenclature must not overlap any other</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The validity period of the goods nomenclature must not overlap any other</span>
 <span class="sd">    goods nomenclature with the same SID.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="NIG2"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG2">[docs]</a><span class="k">class</span> <span class="nc">NIG2</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The validity period of the goods nomenclature must be within the validity</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The validity period of the goods nomenclature must be within the validity</span>
 <span class="sd">    period of the product line above in the hierarchy.&quot;&quot;&quot;</span>
 
     <span class="c1"># Note that a complete reading of this rule implies that a commodity&#39;s</span>
@@ -264,14 +264,14 @@
 <div class="viewcode-block" id="NIG5"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG5">[docs]</a><span class="nd">@skip_when_deleted</span>
 <span class="nd">@only_applicable_after</span><span class="p">(</span><span class="n">date</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
 <span class="k">class</span> <span class="nc">NIG5</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    When creating a goods nomenclature code, an origin must exist.</span>
 
 <span class="sd">    This rule is only applicable to update extractions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="NIG5.validate"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG5.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">good</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Almost all goods nomenclatures must have an origin, excluding two</span>
 <span class="sd">        scenarios:</span>
 
@@ -308,11 +308,11 @@
 
 
 <div class="viewcode-block" id="NIG7"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG7">[docs]</a><span class="k">class</span> <span class="nc">NIG7</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The origin must be applicable the day before the start date of the new</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The origin must be applicable the day before the start date of the new</span>
 <span class="sd">    code entered.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="NIG7.validate"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG7.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        By default the upper bound is exclusive whilst the lower bound is</span>
 <span class="sd">        inclusive.</span>
 
@@ -337,7 +337,7 @@
 
 <div class="viewcode-block" id="NIG10"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG10">[docs]</a><span class="nd">@skip_when_deleted</span>
 <span class="k">class</span> <span class="nc">NIG10</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The successor must be applicable the day after the end date of the old</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The successor must be applicable the day after the end date of the old</span>
 <span class="sd">    code.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="NIG10.validate"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG10.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">successor</span><span class="p">):</span>
@@ -366,7 +366,7 @@
 
 
 <div class="viewcode-block" id="NIG11"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG11">[docs]</a><span class="k">class</span> <span class="nc">NIG11</span><span class="p">(</span><span class="n">ValidityStartDateRules</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    At least one indent record is mandatory.</span>
 
 <span class="sd">    The start date of the first indentation must be equal to the start date of</span>
@@ -387,7 +387,7 @@
 
 
 <div class="viewcode-block" id="NIG12"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG12">[docs]</a><span class="k">class</span> <span class="nc">NIG12</span><span class="p">(</span><span class="n">DescriptionsRules</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    At least one description is mandatory.</span>
 
 <span class="sd">    The start date of the first description period must be equal to the start</span>
@@ -400,28 +400,28 @@
 
 
 <div class="viewcode-block" id="NIG18"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG18">[docs]</a><span class="k">class</span> <span class="nc">NIG18</span><span class="p">(</span><span class="n">FootnoteApplicability</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Footnotes with a footnote type for which the application type = &quot;CN</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Footnotes with a footnote type for which the application type = &quot;CN</span>
 <span class="sd">    footnotes&quot; must be linked to CN lines (all codes up to 8 digits).&quot;&quot;&quot;</span>
 
     <span class="n">applicable_field</span> <span class="o">=</span> <span class="s2">&quot;goods_nomenclature&quot;</span></div>
 
 
 <div class="viewcode-block" id="NIG22"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG22">[docs]</a><span class="k">class</span> <span class="nc">NIG22</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The period of the association with a footnote must be within the validity</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The period of the association with a footnote must be within the validity</span>
 <span class="sd">    period of the nomenclature.&quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;goods_nomenclature&quot;</span></div>
 
 
 <div class="viewcode-block" id="NIG23"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG23">[docs]</a><span class="k">class</span> <span class="nc">NIG23</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The period of the association with a footnote must be within the validity</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The period of the association with a footnote must be within the validity</span>
 <span class="sd">    period of the footnote.&quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;associated_footnote&quot;</span></div>
 
 
 <div class="viewcode-block" id="NIG24"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG24">[docs]</a><span class="k">class</span> <span class="nc">NIG24</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When the same footnote is associated more than once with the same</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When the same footnote is associated more than once with the same</span>
 <span class="sd">    nomenclature then there may be no overlap in their association periods.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="NIG24.validate"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG24.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
@@ -445,7 +445,7 @@
 
 
 <div class="viewcode-block" id="NIG30"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG30">[docs]</a><span class="k">class</span> <span class="nc">NIG30</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When a goods nomenclature is used in a goods measure then the validity</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When a goods nomenclature is used in a goods measure then the validity</span>
 <span class="sd">    period of the goods nomenclature must span the validity period of the goods</span>
 <span class="sd">    measure.&quot;&quot;&quot;</span>
 
@@ -453,7 +453,7 @@
 
 
 <div class="viewcode-block" id="NIG31"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG31">[docs]</a><span class="k">class</span> <span class="nc">NIG31</span><span class="p">(</span><span class="n">NIG30</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When a goods nomenclature is used in an additional nomenclature measure</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When a goods nomenclature is used in an additional nomenclature measure</span>
 <span class="sd">    then the validity period of the goods nomenclature must span the validity</span>
 <span class="sd">    period of the additional nomenclature measure.&quot;&quot;&quot;</span>
 
@@ -463,13 +463,13 @@
 
 
 <div class="viewcode-block" id="NIG34"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG34">[docs]</a><span class="k">class</span> <span class="nc">NIG34</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A goods nomenclature cannot be deleted if it is used in a goods</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A goods nomenclature cannot be deleted if it is used in a goods</span>
 <span class="sd">    measure.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="NIG35"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG35">[docs]</a><span class="nd">@skip_when_not_deleted</span>
 <span class="k">class</span> <span class="nc">NIG35</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A goods nomenclature cannot be deleted if it is used in an additional</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A goods nomenclature cannot be deleted if it is used in an additional</span>
 <span class="sd">    nomenclature measure.&quot;&quot;&quot;</span>
 
     <span class="c1"># XXX this is redundant - NIG34 will be violated first</span>

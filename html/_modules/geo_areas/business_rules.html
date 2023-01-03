@@ -142,7 +142,7 @@
 
 
 <div class="viewcode-block" id="GA1"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA1">[docs]</a><span class="k">class</span> <span class="nc">GA1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The combination geographical area id + validity start date must be</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The combination geographical area id + validity start date must be</span>
 <span class="sd">    unique.&quot;&quot;&quot;</span>
 
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;area_id&quot;</span><span class="p">,</span> <span class="s2">&quot;valid_between__lower&quot;</span><span class="p">)</span></div>
@@ -150,7 +150,7 @@
 
 <div class="viewcode-block" id="DescriptionNotEmpty"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.DescriptionNotEmpty">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;1998-02-01&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">DescriptionNotEmpty</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A description cannot be blank.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A description cannot be blank.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="DescriptionNotEmpty.validate"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.DescriptionNotEmpty.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">description</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
@@ -158,7 +158,7 @@
 
 
 <div class="viewcode-block" id="GA3"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA3">[docs]</a><span class="k">class</span> <span class="nc">GA3</span><span class="p">(</span><span class="n">DescriptionsRules</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    At least one description record is mandatory.</span>
 
 <span class="sd">    The start date of the first description period must be equal to the start</span>
@@ -171,7 +171,7 @@
 
 
 <div class="viewcode-block" id="GA4"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA4">[docs]</a><span class="k">class</span> <span class="nc">GA4</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The referenced parent geographical area group must be an existing geographical</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The referenced parent geographical area group must be an existing geographical</span>
 <span class="sd">    area with area code = 1 (geographical area group).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -187,7 +187,7 @@
 
 
 <div class="viewcode-block" id="GA5"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA5">[docs]</a><span class="k">class</span> <span class="nc">GA5</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;If a geographical area has a parent geographical area group then the</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If a geographical area has a parent geographical area group then the</span>
 <span class="sd">    validity period of the parent geographical area group must span the validity</span>
 <span class="sd">    period of the geographical area.&quot;&quot;&quot;</span>
 
@@ -195,7 +195,7 @@
 
 
 <div class="viewcode-block" id="GA6"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA6">[docs]</a><span class="k">class</span> <span class="nc">GA6</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Loops in the parent relation between geographical areas and parent</span>
 <span class="sd">    geographical area groups are not allowed.</span>
 
@@ -210,7 +210,7 @@
         <span class="n">max_depth</span> <span class="o">=</span> <span class="mi">20</span>  <span class="c1"># how deep does the geographical area tree go?</span>
         <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-                <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">                WITH RECURSIVE hierarchy AS (</span>
 <span class="sd">                    SELECT parent_id AS ancestor_id, trackedmodel_ptr_id AS descendant_id, 1 AS depth</span>
 <span class="sd">                    FROM geo_areas_geographicalarea</span>
@@ -234,14 +234,14 @@
 
 
 <div class="viewcode-block" id="GA7"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA7">[docs]</a><span class="k">class</span> <span class="nc">GA7</span><span class="p">(</span><span class="n">NoOverlapping</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The validity period of geographical area must not overlap any other</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The validity period of geographical area must not overlap any other</span>
 <span class="sd">    geographical area with the same geographical area id.&quot;&quot;&quot;</span>
 
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;area_id&quot;</span><span class="p">,)</span></div>
 
 
 <div class="viewcode-block" id="GA10"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA10">[docs]</a><span class="k">class</span> <span class="nc">GA10</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When a geographical area is referenced in a measure then the validity</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When a geographical area is referenced in a measure then the validity</span>
 <span class="sd">    period of the geographical area must span the validity period of the</span>
 <span class="sd">    measure.&quot;&quot;&quot;</span>
 
@@ -249,7 +249,7 @@
 
 
 <div class="viewcode-block" id="GA11"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA11">[docs]</a><span class="k">class</span> <span class="nc">GA11</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;If a geographical area is referenced as an excluded geographical area in</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If a geographical area is referenced as an excluded geographical area in</span>
 <span class="sd">    a measure then the membership period of the geographical area must span the</span>
 <span class="sd">    validity period of the measure.&quot;&quot;&quot;</span>
 
@@ -257,13 +257,13 @@
 
 
 <div class="viewcode-block" id="GA12"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA12">[docs]</a><span class="k">class</span> <span class="nc">GA12</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The referenced geographical area id (member) must exist.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The referenced geographical area id (member) must exist.&quot;&quot;&quot;</span>
 
     <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;member&quot;</span></div>
 
 
 <div class="viewcode-block" id="GA13"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA13">[docs]</a><span class="k">class</span> <span class="nc">GA13</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Group member must be a Country or Region, not a Group.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Group member must be a Country or Region, not a Group.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="GA13.validate"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA13.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">membership</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">membership</span><span class="o">.</span><span class="n">member</span><span class="o">.</span><span class="n">area_code</span> <span class="o">==</span> <span class="n">AreaCode</span><span class="o">.</span><span class="n">GROUP</span><span class="p">:</span>
@@ -271,26 +271,26 @@
 
 
 <div class="viewcode-block" id="GA14"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA14">[docs]</a><span class="k">class</span> <span class="nc">GA14</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The referenced geographical area group id must exist.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The referenced geographical area group id must exist.&quot;&quot;&quot;</span>
 
     <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;geo_group&quot;</span></div>
 
 
 <div class="viewcode-block" id="GA16"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA16">[docs]</a><span class="k">class</span> <span class="nc">GA16</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The validity period of the geographical area group must span all</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The validity period of the geographical area group must span all</span>
 <span class="sd">    membership periods of its members.&quot;&quot;&quot;</span>
 
     <span class="n">container_field_name</span> <span class="o">=</span> <span class="s2">&quot;geo_group&quot;</span></div>
 
 
 <div class="viewcode-block" id="GA17"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA17">[docs]</a><span class="k">class</span> <span class="nc">GA17</span><span class="p">(</span><span class="n">GA16</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The membership period of a geographical area (member) must be within</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The membership period of a geographical area (member) must be within</span>
 <span class="sd">    (inclusive) the validity period of the geographical area group (geographical</span>
 <span class="sd">    area’s start and end date).&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="GA18"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA18">[docs]</a><span class="k">class</span> <span class="nc">GA18</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;When a geographical area is more than once member of the same group then</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When a geographical area is more than once member of the same group then</span>
 <span class="sd">    there may be no overlap in their membership periods.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="GA18.validate"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA18.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">membership</span><span class="p">):</span>
@@ -311,7 +311,7 @@
 
 
 <div class="viewcode-block" id="GA19"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA19">[docs]</a><span class="k">class</span> <span class="nc">GA19</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;If the associated geographical area group has a parent geographical area</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If the associated geographical area group has a parent geographical area</span>
 <span class="sd">    group then all the members of the geographical area group must also be</span>
 <span class="sd">    members of the parent geographical area group.&quot;&quot;&quot;</span>
 
@@ -323,7 +323,7 @@
 
 
 <div class="viewcode-block" id="GA20"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA20">[docs]</a><span class="k">class</span> <span class="nc">GA20</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;If the associated geographical area group has a parent geographical area</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If the associated geographical area group has a parent geographical area</span>
 <span class="sd">    group then the membership period of each member of the parent group must</span>
 <span class="sd">    span the membership period of the same geographical area in the geographical</span>
 <span class="sd">    area group.&quot;&quot;&quot;</span>
@@ -348,7 +348,7 @@
 
 
 <div class="viewcode-block" id="GA21"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA21">[docs]</a><span class="k">class</span> <span class="nc">GA21</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    If a geographical area is referenced in a measure then it may not be</span>
 <span class="sd">    deleted.</span>
 
@@ -360,14 +360,14 @@
 
 
 <div class="viewcode-block" id="GA22"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA22">[docs]</a><span class="k">class</span> <span class="nc">GA22</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A geographical area cannot be deleted if it is referenced as a parent</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A geographical area cannot be deleted if it is referenced as a parent</span>
 <span class="sd">    geographical area group.&quot;&quot;&quot;</span>
 
     <span class="n">via_relation</span> <span class="o">=</span> <span class="s2">&quot;geographicalarea&quot;</span></div>
 
 
 <div class="viewcode-block" id="GA23"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA23">[docs]</a><span class="k">class</span> <span class="nc">GA23</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;If a geographical area is referenced as an excluded geographical area in</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If a geographical area is referenced as an excluded geographical area in</span>
 <span class="sd">    a measure, the membership association with the measure geographical area</span>
 <span class="sd">    group cannot be deleted.&quot;&quot;&quot;</span>
 
