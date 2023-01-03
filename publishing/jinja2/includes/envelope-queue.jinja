@@ -14,12 +14,7 @@
       href="{{ url('publishing:download-queued-envelope-ui-download', args=(obj.pk,)) }}"
       target="_blank"
     >
-      Download envelope
-      <img
-        class="icon icon-download"
-        src="{{ static('/common/images/download-file.svg') }}"
-        alt="Download file icon"
-      >
+      Download envelope <span class="down-arrow">&#11015;</span>
     </a>
   {% else %}
     <form method="post" action="">
