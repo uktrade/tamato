@@ -198,30 +198,21 @@ class MeasureCreateWizard(
         GEOGRAPHICAL_AREA: {
             "title": "Select the geographical area",
             "link_text": "Geographical areas",
-            "info": "The measure will only apply to imports from or exports to the selected area. You can specify exclusions.",
         },
         COMMODITIES: {
             "title": "Select commodities and enter the duties",
             "link_text": "Commodities and duties",
         },
         ADDITIONAL_CODE: {
-            "title": "Assign an additional code",
+            "title": "Assign an additional code (optional)",
             "link_text": "Additional code",
         },
         CONDITIONS: {
-            "title": "Add any condition codes",
-            "info": (
-                "This section is optional. If there are no condition "
-                "codes, select continue."
-            ),
+            "title": "Add any condition codes (optional)",
             "link_text": "Conditions",
         },
         FOOTNOTES: {
-            "title": "Add any footnotes",
-            "info": (
-                "This section is optional. If there are no footnotes, "
-                "select continue."
-            ),
+            "title": "Add any footnotes (optional)",
             "link_text": "Footnotes",
         },
         SUMMARY: {
