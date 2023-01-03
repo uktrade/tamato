@@ -13,9 +13,9 @@
 
 {% macro panel_subtitle(created_measures) %}
   {% if created_measures|length > 1 %}
-    These new measures have been added to your tariff changes
+    These new measures have been added to your workbasket
   {% else %}
-    This new measure has been added to your tariff changes
+    This new measure has been added to your workbasket
   {% endif %}
 {% endmacro %}
 
@@ -38,14 +38,14 @@
       <p class="govuk-body">To complete your task you must publish your change. </p>
       {% if request.session.workbasket %}
       {{ govukButton({
-        "text": "Go to your tariff changes",
-        "href": url("workbaskets:edit-workbasket", args=[request.session.workbasket.id]),
+        "text": "Go to your workbasket summary",
+        "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]),
         "classes": "govuk-button--secondary"
       }) }}
       {% endif %}
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ created_measures.0.get_url('create') }}">Create a new measure</a></li>
-        <li><a href="{{ created_measures.0.get_url('list') }}">Manage more {{ created_measures.0._meta.verbose_name_plural }}</a></li>
+        <li><a href="{{ created_measures.0.get_url('list') }}">Find and edit {{ created_measures.0._meta.verbose_name_plural }}</a></li>
         {% include "includes/common/main-menu-link.jinja" %}
       </ul>
     </div>

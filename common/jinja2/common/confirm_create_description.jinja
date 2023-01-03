@@ -22,7 +22,7 @@
     <div class="govuk-grid-column-two-thirds">
       {{ govukPanel({
         "titleText": "A new description of " ~ described_object._meta.verbose_name ~ " " ~ described_object|string ~ " has been created",
-        "text": "This new description has been added to your tariff changes",
+        "text": "This new description has been added to your workbasket",
         "classes": "govuk-!-margin-bottom-7"
       }) }}
 
@@ -30,16 +30,16 @@
       <p class="govuk-body">To complete your task you must publish your change. </p>
       {% if request.session.workbasket %}
       {{ govukButton({
-        "text": "Go to your tariff changes",
-        "href": url("workbaskets:edit-workbasket", args=[request.session.workbasket.id]),
+        "text": "Go to your workbasket summary",
+        "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]),
         "classes": "govuk-button--secondary"
       }) }}
       {% endif %}
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ described_object.get_url() }}">View {{ described_object._meta.verbose_name }} {{ described_object|string }}</a></li>
-        <li><a class="govuk-link" href="{{ described_object.get_url("list") }}">Manage more {{ described_object._meta.verbose_name_plural }}</a></li>
+        <li><a class="govuk-link" href="{{ described_object.get_url("list") }}">Find and edit {{ described_object._meta.verbose_name_plural }}</a></li>
         {% if request.session.workbasket %}
-        <li><a class="govuk-link" href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}">Return to main menu</a></li>
+        <li><a class="govuk-link" href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}">Return to workbasket</a></li>
         {% endif %}
       </ul>
     </div>
