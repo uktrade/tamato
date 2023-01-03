@@ -293,7 +293,7 @@ def test_quota_definitions_list_current_measures(
     assert num_measures == 4
 
 
-def test_quota_detail_blocking_period_tab(valid_user_client, date_ranges):
+def test_quota_detail_blocking_periods_tab(valid_user_client, date_ranges):
     quota_order_number = factories.QuotaOrderNumberFactory()
     current_definition = factories.QuotaDefinitionFactory.create(
         order_number=quota_order_number,
