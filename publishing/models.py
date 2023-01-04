@@ -33,12 +33,12 @@ class QueueState(TextChoices):
 
 class OperationalStatus(models.Model):
     """
-    Operational status of the packaging system. The packaging queue's state.
+    Operational status of the packaging system.
 
-    is of primary concern here - either unpaused, which allows processing the
-    next available workbasket, or paused, which blocks the begin_processing
-    transition of the next available queued workbasket until the system is
-    unpaused.
+    The packaging queue's state is of primary concern here: either unpaused,
+    which allows processing the next available workbasket, or paused, which
+    blocks the begin_processing transition of the next available queued
+    workbasket until the system is unpaused.
     """
 
     class Meta:
