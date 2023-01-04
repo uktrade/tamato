@@ -182,8 +182,9 @@ class EnvelopeQueueView(
         return redirect(url)
 
     def _process_envelope(self, request, pk):
-        packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
-        packaged_work_basket.begin_processing()
+        if not OperationalStatus.is_queue_paused():
+            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
+            packaged_work_basket.begin_processing()
         return request.build_absolute_uri()
 
 
