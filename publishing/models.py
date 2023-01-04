@@ -23,7 +23,7 @@ from workbaskets.validators import WorkflowStatus
 
 class OperationalStatusQuerySet(QuerySet):
     def current_status(self):
-        return self.last()
+        return self.order_by("pk").last()
 
 
 class QueueState(TextChoices):
@@ -39,15 +39,10 @@ class OperationalStatus(models.Model):
     next available workbasket, or paused, which blocks the begin_processing
     transition of the next available queued workbasket until the system is
     unpaused.
-
-    If no OperationalStatus instance exists (as occurs upon initial deployment)
-    then the packaging queue is considered to be paused.
     """
 
     class Meta:
         ordering = ["pk"]
-        """Order is important when retrieving the current status - the last
-        instance."""
         verbose_name_plural = "operational statuses"
 
     objects = OperationalStatusQuerySet.as_manager()
@@ -70,7 +65,40 @@ class OperationalStatus(models.Model):
     )
 
     @classmethod
-    def queue_paused(cls):
+    def pause_queue(cls, user: settings.AUTH_USER_MODEL) -> "OperationalStatus":
+        """
+        Transition the workbasket queue into a paused state (if it is not
+        already paused) by creating a new `OperationalStatus` and returning it
+        to the caller.
+
+        If the queue is already paused, then do nothing and return None.
+        """
+        if cls.is_queue_paused():
+            return None
+        return OperationalStatus.objects.create(
+            queue_state=QueueState.PAUSED,
+            created_by=user,
+        )
+
+    @classmethod
+    def unpause_queue(cls, user: settings.AUTH_USER_MODEL) -> "OperationalStatus":
+        """
+        Transition the workbasket queue into an unpaused state (if it is not
+        already unpaused) by creating a new `OperationalStatus` and returning it
+        to the caller.
+
+        If the queue is already paused, then do nothing and return None.
+        """
+        if not cls.is_queue_paused():
+            return None
+        return OperationalStatus.objects.create(
+            queue_state=QueueState.UNPAUSED,
+            created_by=user,
+        )
+
+    @classmethod
+    def is_queue_paused(cls) -> bool:
+        """Returns True if the workbasket queue is paused, False otherwise."""
         current_status = cls.objects.current_status()
         if not current_status or current_status.queue_state == QueueState.PAUSED:
             return True
