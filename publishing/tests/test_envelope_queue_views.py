@@ -19,7 +19,7 @@ def test_empty_queue(valid_user_client):
     assert "no envelopes queued" in page.select("p.govuk-body")[0].text
 
 
-def test_nonempty_queue(valid_user_client):
+def test_nonempty_queue(valid_user_client, unpause_queue):
     factories.PackagedWorkBasketFactory()
     factories.PackagedWorkBasketFactory()
 
