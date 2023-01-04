@@ -5,9 +5,7 @@
   {% if obj == currently_processing %}
     Processing started:
     <br>
-    {% if obj.processing_started_at %}
-      {{ '{:%-l:%M %p, %d %b %Y}'.format(obj.processing_started_at) }}
-    {% endif %}
+    {{ '{:%-l:%M %p, %d %b %Y}'.format(obj.processing_started_at) }}
     <br>
     <a
       class="govuk-link process-envelope"
@@ -16,6 +14,8 @@
     >
       Download envelope <span class="down-arrow">&#11015;</span>
     </a>
+  {% elif queue_paused %}
+    <span class="tamato-badge-light-red">QUEUE PAUSED</span>
   {% else %}
     <form method="post" action="">
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">

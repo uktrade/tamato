@@ -22,7 +22,6 @@ from publishing.models import PackagedWorkBasketDuplication
 from publishing.models import PackagedWorkBasketInvalidCheckStatus
 from publishing.models import PackagedWorkBasketInvalidQueueOperation
 from publishing.models import ProcessingState
-from publishing.models import QueueState
 from workbaskets.models import WorkBasket
 
 
@@ -49,10 +48,8 @@ class PackagedWorkbasketQueueView(
 
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)
-
         data["currently_processing"] = PackagedWorkBasket.objects.currently_processing()
-        data["queue_paused"] = OperationalStatus.queue_paused()
-
+        data["queue_paused"] = OperationalStatus.is_queue_paused()
         return data
 
     def post(self, request, *args, **kwargs):
@@ -86,19 +83,11 @@ class PackagedWorkbasketQueueView(
     # Queue item position management.
 
     def _pause_queue(self, request):
-        if not OperationalStatus.queue_paused():
-            OperationalStatus.objects.create(
-                queue_state=QueueState.PAUSED,
-                created_by=request.user,
-            )
+        OperationalStatus.pause_queue(user=request.user)
         return request.build_absolute_uri()
 
     def _unpause_queue(self, request):
-        if OperationalStatus.queue_paused():
-            OperationalStatus.objects.create(
-                queue_state=QueueState.UNPAUSED,
-                created_by=request.user,
-            )
+        OperationalStatus.unpause_queue(user=request.user)
         return request.build_absolute_uri()
 
     def _promote_position(self, request, pk):
@@ -175,6 +164,7 @@ class EnvelopeQueueView(
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)
         data["currently_processing"] = PackagedWorkBasket.objects.currently_processing()
+        data["queue_paused"] = OperationalStatus.is_queue_paused()
         return data
 
     def post(self, request, *args, **kwargs):
@@ -277,6 +267,7 @@ class RejectEnvelopeView(CompleteEnvelopeProcessingView):
         return data
 
     def transition_packaged_work_basket(self, packaged_work_basket):
+        OperationalStatus.pause_queue(user=None)
         return packaged_work_basket.processing_failed()
 
 
