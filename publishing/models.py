@@ -53,12 +53,6 @@ class OperationalStatus(models.Model):
     objects = OperationalStatusQuerySet.as_manager()
 
     created_at = models.DateTimeField(auto_now_add=True)
-    queue_state = models.CharField(
-        max_length=8,
-        default=QueueState.PAUSED,
-        choices=QueueState.choices,
-        editable=False,
-    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -68,6 +62,12 @@ class OperationalStatus(models.Model):
     """If a new instance is created as a result of direct user action (for
     instance pausing or unpausing the packaging queue) then `created_by` should
     be associated with that user."""
+    queue_state = models.CharField(
+        max_length=8,
+        default=QueueState.PAUSED,
+        choices=QueueState.choices,
+        editable=False,
+    )
 
     @classmethod
     def queue_paused(cls):
