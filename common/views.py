@@ -25,12 +25,14 @@ from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.timezone import make_aware
 from django.views import generic
+from django.views.generic.base import TemplateResponseMixin
 from django.views.generic import FormView
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
+from rest_framework import permissions
 
 from common import forms
 from common.business_rules import BusinessRule
@@ -52,6 +54,10 @@ class HomeView(FormView, View):
         elif form.cleaned_data["workbasket_action"] == "CREATE":
             return redirect(reverse("workbaskets:workbasket-ui-create"))
 
+class DashboardView(TemplateView):
+
+    permission_classes = [permissions.IsAuthenticated]
+    template_name = "common/dashboard_overview.jinja"
 
 class HealthCheckResponse(HttpResponse):
     """

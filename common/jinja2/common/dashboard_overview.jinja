@@ -1,0 +1,29 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Tariff Management Dashboard Overview" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+      "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Dashboard Overview" }
+    ]})
+  }}
+{% endblock %}
+
+{% block content %}
+    <span class="govuk-caption-m govuk-!-margin-bottom-9">Dashboard</span>
+    <h1 class="govuk-heading-l govuk-!-margin-bottom-3">{{ page_title }}</h1>
+    
+    <div class="govuk-grid-row">
+
+    </div>
+{% endblock %}
+
+
+
+
+
+

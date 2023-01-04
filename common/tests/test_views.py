@@ -112,3 +112,12 @@ def test_handler500(client):
 
     assert response.status_code == 500
     assert response.template_name == "common/500.jinja"
+
+
+def test_display_dashboard_overview(valid_user_client):
+    response = valid_user_client.get(reverse("overview"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+
