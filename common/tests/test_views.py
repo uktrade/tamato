@@ -115,9 +115,13 @@ def test_handler500(client):
 
 
 def test_display_dashboard_overview(valid_user_client):
+    factories.MeasureFactory.create()
+    factories.MeasureFactory.create()
     response = valid_user_client.get(reverse("overview"))
 
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
+    counts = page.find_all("p", attrs={"class": "govuk-number"})
 
+    assert counts[0].text == '2'

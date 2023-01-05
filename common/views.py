@@ -25,7 +25,6 @@ from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.timezone import make_aware
 from django.views import generic
-from django.views.generic.base import TemplateResponseMixin
 from django.views.generic import FormView
 from django.views.generic import TemplateView
 from django.views.generic.base import View
@@ -42,6 +41,7 @@ from common.models import TrackedModel
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
 from workbaskets.views.mixins import WithCurrentWorkBasket
+from measures.models import Measure
 
 
 class HomeView(FormView, View):
@@ -58,6 +58,17 @@ class DashboardView(TemplateView):
 
     permission_classes = [permissions.IsAuthenticated]
     template_name = "common/dashboard_overview.jinja"
+
+    @property
+    def measure_total_count(self):
+        return Measure.objects.values("sid").count()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["dashboard_contents"] = [
+            { "title": "Total Measure Count", "value": self.measure_total_count}
+        ]
+        return context
 
 class HealthCheckResponse(HttpResponse):
     """
