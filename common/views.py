@@ -72,8 +72,8 @@ class DashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["dashboard_contents"] = [
-            {"title": "Total Measures", "value": self.measure_total_count},
-            {"title": "Total Commodity Codes", "value": self.commodities_total_count},
+            {"title": "Total measures", "value": self.measure_total_count},
+            {"title": "Total commodity codes", "value": self.commodities_total_count},
         ]
         return context
 
