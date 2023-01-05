@@ -87,7 +87,7 @@ class OperationalStatus(models.Model):
         already unpaused) by creating a new `OperationalStatus` and returning it
         to the caller.
 
-        If the queue is already paused, then do nothing and return None.
+        If the queue is already unpaused, then do nothing and return None.
         """
         if not cls.is_queue_paused():
             return None
