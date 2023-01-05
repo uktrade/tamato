@@ -105,7 +105,7 @@ def test_accept_envelope(valid_user_client):
     packaged_work_basket.begin_processing()
 
     accept_view_url = reverse(
-        "publishing:accept-envelope-ui-list",
+        "publishing:accept-envelope-ui-detail",
         kwargs={"pk": packaged_work_basket.pk},
     )
     # Get the form view and ensure it renders correctly.
@@ -134,7 +134,7 @@ def test_reject_envelope(valid_user_client):
     packaged_work_basket.begin_processing()
 
     reject_view_url = reverse(
-        "publishing:reject-envelope-ui-list",
+        "publishing:reject-envelope-ui-detail",
         kwargs={"pk": packaged_work_basket.pk},
     )
     # Get the form view and ensure it renders correctly.

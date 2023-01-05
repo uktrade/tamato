@@ -6,7 +6,6 @@ from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic import DetailView
 from django.views.generic import ListView
@@ -223,7 +222,6 @@ class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
     permission_required = "workbaskets.change_workbasket"
     template_name = "publishing/complete-envelope-processing.jinja"
     form_class = LoadingReportForm
-    success_url = reverse_lazy("publishing:envelope-queue-ui-list")
 
     @atomic
     def form_valid(self, form):
@@ -245,9 +243,20 @@ class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
         raise NotImplementedError()
 
 
+class EnvelopeActionConfirmView(DetailView):
+    template_name = "publishing/complete-envelope-processing-confirm.jinja"
+    model = PackagedWorkBasket
+
+
 class AcceptEnvelopeView(CompleteEnvelopeProcessingView):
     """UI view used to accept an envelope as having been processed by HMRC
     systems (CDS, etc)."""
+
+    def get_success_url(self):
+        return reverse(
+            "publishing:accept-envelope-confirm-ui-detail",
+            kwargs={"pk": self.kwargs["pk"]},
+        )
 
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)
@@ -258,9 +267,24 @@ class AcceptEnvelopeView(CompleteEnvelopeProcessingView):
         return packaged_work_basket.processing_succeeded()
 
 
+class AcceptEnvelopeConfirmView(EnvelopeActionConfirmView):
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        # TODO: Get the envelope ID when envelope management is done.
+        envelop_id = "220999"
+        data["message"] = f" Envelope ID {envelop_id} was accepted."
+        return data
+
+
 class RejectEnvelopeView(CompleteEnvelopeProcessingView):
     """UI view used to reject an envelope as having failed to be processed by
     HMRC systems (CDS, etc)."""
+
+    def get_success_url(self):
+        return reverse(
+            "publishing:reject-envelope-confirm-ui-detail",
+            kwargs={"pk": self.kwargs["pk"]},
+        )
 
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)
@@ -270,6 +294,17 @@ class RejectEnvelopeView(CompleteEnvelopeProcessingView):
     def transition_packaged_work_basket(self, packaged_work_basket):
         OperationalStatus.pause_queue(user=None)
         return packaged_work_basket.processing_failed()
+
+
+class RejectEnvelopeConfirmView(EnvelopeActionConfirmView):
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        # TODO: Get the envelope ID when envelope management is done.
+        envelop_id = "220999"
+        data[
+            "message"
+        ] = f" Envelope ID {envelop_id} was rejected and queue was paused."
+        return data
 
 
 class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):

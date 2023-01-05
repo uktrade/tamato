@@ -39,12 +39,22 @@ ui_patterns = [
     path(
         "envelope-queue/accept/<pk>/",
         views.AcceptEnvelopeView.as_view(),
-        name="accept-envelope-ui-list",
+        name="accept-envelope-ui-detail",
+    ),
+    path(
+        "envelope-queue/accept-confirm/<pk>/",
+        views.AcceptEnvelopeConfirmView.as_view(),
+        name="accept-envelope-confirm-ui-detail",
     ),
     path(
         "envelope-queue/reject/<pk>/",
         views.RejectEnvelopeView.as_view(),
-        name="reject-envelope-ui-list",
+        name="reject-envelope-ui-detail",
+    ),
+    path(
+        "envelope-queue/reject-confirm/<pk>/",
+        views.RejectEnvelopeConfirmView.as_view(),
+        name="reject-envelope-confirm-ui-detail",
     ),
 ]
 
