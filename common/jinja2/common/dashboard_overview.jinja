@@ -2,23 +2,21 @@
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "Tariff Management Dashboard Overview" %}
+{% set page_title = "Tariff management dashboard overview" %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
       "items": [
       {"text": "Home", "href": url("home")},
-      {"text": "Dashboard Overview" }
+      {"text": "Dashboard overview" }
     ]})
   }}
 {% endblock %}
 
 {% macro dashboard_block(context) %}
 <div class="govuk-grid-column-one-quarter">
-  <div class="govuk-data">
-    <h2 class="govuk-heading-s">{{ context.title }}</h2>
-    <p class="govuk-number govuk-bold-xl">{{ context.value }}</p>
-  </div>
+  <h2 class="govuk-heading-s">{{ context.title }}</h2>
+  <p class="govuk-heading-xl">{{ intcomma(context.value) }}</p>
 </div>
 {% endmacro %}
 

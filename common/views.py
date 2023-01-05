@@ -33,6 +33,7 @@ from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 from rest_framework import permissions
 
+from commodities.models import GoodsNomenclature
 from common import forms
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
@@ -40,8 +41,8 @@ from common.celery import app
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
-from workbaskets.views.mixins import WithCurrentWorkBasket
 from measures.models import Measure
+from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class HomeView(FormView, View):
@@ -54,6 +55,7 @@ class HomeView(FormView, View):
         elif form.cleaned_data["workbasket_action"] == "CREATE":
             return redirect(reverse("workbaskets:workbasket-ui-create"))
 
+
 class DashboardView(TemplateView):
 
     permission_classes = [permissions.IsAuthenticated]
@@ -63,12 +65,18 @@ class DashboardView(TemplateView):
     def measure_total_count(self):
         return Measure.objects.values("sid").count()
 
+    @property
+    def commodities_total_count(self):
+        return GoodsNomenclature.objects.values("sid").count()
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["dashboard_contents"] = [
-            { "title": "Total Measure Count", "value": self.measure_total_count}
+            {"title": "Total measures", "value": self.measure_total_count},
+            {"title": "Total commodity codes", "value": self.commodities_total_count},
         ]
         return context
+
 
 class HealthCheckResponse(HttpResponse):
     """
