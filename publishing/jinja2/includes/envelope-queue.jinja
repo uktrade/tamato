@@ -12,7 +12,7 @@
       href="{{ url('publishing:download-queued-envelope-ui-download', args=(obj.pk,)) }}"
       target="_blank"
     >
-      Download envelope <span class="down-arrow">&#11015;</span>
+      Download envelope <span class="down-arrow">&#9660;</span>
     </a>
   {% elif queue_paused %}
     <span class="tamato-badge-light-red">QUEUE PAUSED</span>
@@ -25,13 +25,8 @@
         name="process_envelope"
         value="{{ obj.pk }}"
       >
-        Start processing
-        <img
-          class="icon icon-begin-processing"
-          src="{{ static('/common/images/play-arrow-rounded-blue.svg') }}"
-          alt="Play arrow file icon"
-        >
-        </button>
+        Start processing <span class="right-arrow">&#9654;</span>
+      </button>
       </form>
   {% endif %}
 {% endmacro -%}

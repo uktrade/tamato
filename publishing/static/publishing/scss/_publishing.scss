@@ -19,8 +19,9 @@ table.queued-envelopes .icon {
   display: inline-block;
   width: 1.4rem;
 }
-table.queued-envelopes .down-arrow {
-  font-size: 1.6rem;
+table.queued-envelopes .down-arrow,
+table.queued-envelopes .right-arrow {
+  font-size: 1rem;
 }
 
 .icon-pause-cds-queue,
