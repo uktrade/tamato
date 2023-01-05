@@ -5,22 +5,17 @@
   {% if obj == currently_processing %}
     Processing started:
     <br>
-    {% if obj.processing_started_at %}
-      {{ '{:%-l:%M %p, %d %b %Y}'.format(obj.processing_started_at) }}
-    {% endif %}
+    {{ '{:%-l:%M %p, %d %b %Y}'.format(obj.processing_started_at) }}
     <br>
     <a
       class="govuk-link process-envelope"
       href="{{ url('publishing:download-queued-envelope-ui-download', args=(obj.pk,)) }}"
       target="_blank"
     >
-      Download envelope
-      <img
-        class="icon icon-download"
-        src="{{ static('/common/images/download-file.svg') }}"
-        alt="Download file icon"
-      >
+      Download envelope <span class="down-arrow">&#9660;</span>
     </a>
+  {% elif queue_paused %}
+    <span class="tamato-badge-light-red">QUEUE PAUSED</span>
   {% else %}
     <form method="post" action="">
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -30,13 +25,8 @@
         name="process_envelope"
         value="{{ obj.pk }}"
       >
-        Start processing
-        <img
-          class="icon icon-begin-processing"
-          src="{{ static('/common/images/play-arrow-rounded-blue.svg') }}"
-          alt="Play arrow file icon"
-        >
-        </button>
+        Start processing <span class="right-arrow">&#9654;</span>
+      </button>
       </form>
   {% endif %}
 {% endmacro -%}
@@ -46,7 +36,7 @@
   {% if obj == currently_processing %}
     <a
       class="govuk-link"
-      href="{{ url('publishing:accept-envelope-ui-list', args=(obj.pk,)) }}"
+      href="{{ url('publishing:accept-envelope-ui-detail', args=(obj.pk,)) }}"
     >
       Accept
     </a>
@@ -60,7 +50,7 @@
   {% if obj == currently_processing %}
     <a
       class="govuk-link"
-      href="{{ url('publishing:reject-envelope-ui-list', args=(obj.pk,)) }}"
+      href="{{ url('publishing:reject-envelope-ui-detail', args=(obj.pk,)) }}"
     >
       Reject
     </a>

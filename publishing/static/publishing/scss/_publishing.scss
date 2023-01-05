@@ -19,7 +19,15 @@ table.queued-envelopes .icon {
   display: inline-block;
   width: 1.4rem;
 }
-table.queued-envelopes .icon-download {
+table.queued-envelopes .down-arrow,
+table.queued-envelopes .right-arrow {
+  font-size: 1rem;
+}
+
+.icon-pause-cds-queue,
+.icon-unpause-cds-queue {
+  display: inline-block;
+  margin-left: 0.5rem;
   vertical-align: bottom;
 }
 
