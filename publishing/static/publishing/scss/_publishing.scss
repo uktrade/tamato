@@ -1,14 +1,39 @@
 
-table.packaged-workbaskets td:first-child {
+table.packaged-workbaskets td:first-child,
+table.packaged-workbaskets th:first-child,
+table.queued-envelopes td:first-child,
+table.queued-envelopes th:first-child {
   padding-left: 20px;
 }
-table.packaged-workbaskets td:last-child {
+table.packaged-workbaskets td:last-child,
+table.packaged-workbaskets th:last-child,
+table.queued-envelopes td:last-child,
+table.queued-envelopes th:last-child {
   padding-right: 20px;
 }
 table.first-row-highlight tbody tr:first-child {
   background-color: rgb(243, 242, 241);
 }
-table.packaged-workbaskets .icon {
+table.packaged-workbaskets .icon,
+table.queued-envelopes .icon {
   display: inline-block;
   width: 1.4rem;
+}
+table.queued-envelopes .down-arrow,
+table.queued-envelopes .right-arrow {
+  font-size: 1rem;
+}
+
+.icon-pause-cds-queue,
+.icon-unpause-cds-queue {
+  display: inline-block;
+  margin-left: 0.5rem;
+  vertical-align: bottom;
+}
+
+table.queued-envelopes .disabled-action {
+    color: rgb(80, 90, 95);
+}
+table.queued-envelopes .icon-begin-processing {
+    vertical-align: middle;
 }

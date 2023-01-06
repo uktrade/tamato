@@ -28,6 +28,7 @@ from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
@@ -469,13 +470,18 @@ class WorkBasketChanges(DetailView):
         return context
 
 
-class WorkBasketViolations(WithPaginationListView):
+class WorkBasketViolations(SortingMixin, WithPaginationListView):
     """UI endpoint for viewing a specified workbasket's business rule
     violations."""
 
     model = TrackedModelCheck
     template_name = "workbaskets/violations.jinja"
     paginate_by = 50
+    sort_by_fields = ["model", "date", "check_name"]
+    custom_sorting = {
+        "date": "transaction_check__transaction__created_at",
+        "model": "model__polymorphic_ctype",
+    }
 
     @property
     def workbasket(self):
@@ -485,24 +491,11 @@ class WorkBasketViolations(WithPaginationListView):
         return super().get_context_data(workbasket=self.workbasket, **kwargs)
 
     def get_queryset(self):
-        qs = TrackedModelCheck.objects.filter(
+        self.queryset = TrackedModelCheck.objects.filter(
             transaction_check__transaction__workbasket=self.workbasket,
             successful=False,
         )
-        sort_by = self.request.GET.get("sort_by")
-        order = self.request.GET.get("order")
-        sort_by_fields = ["model", "date", "check_name"]
-        if sort_by and sort_by in sort_by_fields:
-            if sort_by == "date":
-                qs = qs.order_by("transaction_check__transaction__created_at")
-            elif sort_by == "model":
-                qs = qs.order_by("model__polymorphic_ctype")
-            else:
-                qs = qs.order_by(sort_by)
-
-        if order == "desc":
-            qs = qs.reverse()
-        return qs
+        return super().get_queryset()
 
 
 class WorkBasketViolationDetail(DetailView):

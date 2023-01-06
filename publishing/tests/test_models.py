@@ -8,6 +8,7 @@ from django_fsm import TransitionNotAllowed
 from notifications_python_client import prepare_upload
 
 from common.tests import factories
+from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
 from publishing.models import PackagedWorkBasketDuplication
 from publishing.models import PackagedWorkBasketInvalidCheckStatus
@@ -240,3 +241,11 @@ def test_demote_position():
     initially_second.refresh_from_db()
     assert initially_first.position == 2
     assert initially_second.position == 1
+
+
+def test_pause_and_unpause_queue(unpause_queue):
+    assert not OperationalStatus.is_queue_paused()
+    OperationalStatus.pause_queue(user=None)
+    assert OperationalStatus.is_queue_paused()
+    OperationalStatus.unpause_queue(user=None)
+    assert not OperationalStatus.is_queue_paused()

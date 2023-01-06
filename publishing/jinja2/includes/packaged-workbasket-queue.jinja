@@ -63,9 +63,8 @@
       {% endif %}
     {% elif loop.index == 2 %}
       {# Second row. #}
-      {% if obj == currently_processing %}
+      {% if currently_processing %}
         {% if 2 < object_list | length %}
-          <br>
           {{ demote_button(obj) }}
         {% endif %}
       {% else %}

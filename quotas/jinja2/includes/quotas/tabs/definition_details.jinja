@@ -1,5 +1,5 @@
-<div class="quota__core-data">
-    <div class="quota__core-data__content">
+<div class="quota__core-data govuk-grid-row">
+    <div class="quota__core-data__content govuk-grid-column-three-quarters">
         <h2 class="govuk-heading-l">Details</h2>
         {% if current_definition %}
         {{ govukSummaryList({
@@ -26,17 +26,17 @@
                 },
                 {
                     "key": {"text": "Initial volume"},
-                    "value": {"text": current_definition.initial_volume },
+                    "value": {"text": intcomma(current_definition.initial_volume) },
                     "actions": {"items": []}
                 },
                 {
                     "key": {"text": "Volume"},
-                    "value": {"text": current_definition.volume },
+                    "value": {"text": intcomma(current_definition.volume) },
                     "actions": {"items": []}
                 },
                 {
                     "key": {"text": "Measurement unit"},
-                    "value": {"text": current_definition.measurement_unit.description},
+                    "value": {"text": current_definition.measurement_unit.abbreviation|title},
                     "actions": {"items": []}
                 },
                 {
@@ -60,4 +60,5 @@
         <p class="govuk-body">No active or upcoming quota definition.</p>
     {% endif %}
     </div>
+    {% include "includes/quotas/actions.jinja"%}
 </div>

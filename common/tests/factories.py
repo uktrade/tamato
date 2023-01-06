@@ -1243,3 +1243,8 @@ class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
     theme = string_sequence(length=50)
     jira_url = "www.fakejiraticket.com"
     loading_report = factory.SubFactory(LoadingReportFactory)
+
+
+class OperationalStatusFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "publishing.OperationalStatus"

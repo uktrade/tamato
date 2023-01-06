@@ -1,0 +1,38 @@
+
+{% set table_rows = [] %}
+{% for object in measures %}
+  {% set measure_link -%}
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('measure-ui-detail', args=[object.sid]) }}">{{ object.sid }}</a>
+  {%- endset %}
+  {% set commodity_link -%}
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', args=[object.goods_nomenclature.sid]) }}">{{ object.goods_nomenclature.item_id|wordwrap(2) }}</a>
+  {%- endset %}
+  {{ table_rows.append([
+    {"html": measure_link},
+    {"html": commodity_link},
+    {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
+    {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
+  ]) or "" }}
+{% endfor %}
+
+
+<div class="quota__core-data govuk-grid-row">
+    <div class="quota__core-data__content govuk-grid-column-three-quarters">
+        <h2 class="govuk-heading-l">Details</h2>
+        <p class="govuk-body">Showing currently active measures.</p>
+        {% if measures %}
+        {{ govukTable({
+            "head": [
+                {"text": "Measure SID"},
+                {"text": "Commodity code"},
+                {"text": "Start date"},
+                {"text": "End date"},
+            ],
+            "rows": table_rows
+            }) }}
+    {% else %}
+        <p class="govuk-body">No active measures.</p>
+    {% endif %}
+    </div>
+    {% include "includes/quotas/actions.jinja"%}
+</div>
