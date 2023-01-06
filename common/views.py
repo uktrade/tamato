@@ -66,34 +66,14 @@ class DashboardView(TemplateView):
         return Measure.objects.values("sid").count()
 
     @property
-    def measure_active_count(self):
-        return Measure.objects.values("sid").as_at_today().count()
-
-    @property
     def commodities_total_count(self):
         return GoodsNomenclature.objects.values("sid").count()
-
-    @property
-    def commodities_active_count(self):
-        return GoodsNomenclature.objects.values("sid").as_at_today().count()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["dashboard_contents"] = [
-            {
-                "heading": "Measures",
-                "counts": [
-                    {"title": "Total ", "value": self.measure_total_count},
-                    {"title": "Active ", "value": self.measure_active_count},
-                ],
-            },
-            {
-                "heading": "Commodity codes",
-                "counts": [
-                    {"title": "Total", "value": self.commodities_total_count},
-                    {"title": "Active", "value": self.commodities_active_count},
-                ],
-            },
+            {"title": "Total measures", "value": self.measure_total_count},
+            {"title": "Total commodity codes", "value": self.commodities_total_count},
         ]
         return context
 
