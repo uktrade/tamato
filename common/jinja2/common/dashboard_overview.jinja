@@ -14,21 +14,28 @@
 {% endblock %}
 
 {% macro dashboard_block(context) %}
-<div class="govuk-grid-column-one-quarter">
-  <h2 class="govuk-heading-s">{{ context.title }}</h2>
-  <p class="govuk-heading-xl">{{ intcomma(context.value) }}</p>
-</div>
+  <div class="govuk-grid-column-two-thirds">
+    <h2 class="govuk-heading-m">{{ context.heading }}</h2>
+    <div class="govuk-grid-row">
+      {% for count in context.counts %}
+        <div class="govuk-grid-column-one-half">
+          <h2 class="govuk-heading-s">{{ count.title }}</h2>
+          <p class="govuk-heading-xl">{{ intcomma(count.value) }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
 {% endmacro %}
 
 {% block content %}
-    <span class="govuk-caption-m govuk-!-margin-bottom-3">Dashboard</span>
-    <h1 class="govuk-heading-l govuk-!-margin-bottom-9">{{ page_title }}</h1>
-    
-    <div class="govuk-grid-row">
-      {% for content in dashboard_contents %}
-        {{ dashboard_block(content) }} 
-      {% endfor %}    
-    </div>
+  <span class="govuk-caption-m govuk-!-margin-bottom-3">Dashboard</span>
+  <h1 class="govuk-heading-l govuk-!-margin-bottom-9">{{ page_title }}</h1>
+
+  <div class="govuk-grid-row">
+    {% for content in dashboard_contents %}
+      {{ dashboard_block(content) }}
+    {% endfor %}
+  </div>
 {% endblock %}
 
 
