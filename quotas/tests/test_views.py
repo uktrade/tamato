@@ -291,3 +291,34 @@ def test_quota_definitions_list_current_measures(
         soup.select("#measures table tbody > tr > td:first-child"),
     )
     assert num_measures == 4
+
+
+def test_quota_detail_blocking_periods_tab(valid_user_client, date_ranges):
+    quota_order_number = factories.QuotaOrderNumberFactory()
+    current_definition = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+    blocking_period = factories.QuotaBlockingFactory.create(
+        quota_definition=current_definition,
+        description="Test description",
+        valid_between=date_ranges.normal,
+    )
+
+    expected_data = {
+        "Quota blocking period SID": str(blocking_period.sid),
+        "Blocking start date": f"{blocking_period.valid_between.lower:%d %b %Y}",
+        "Blocking end date": f"{blocking_period.valid_between.upper:%d %b %Y}",
+        "Blocking period type": str(blocking_period.blocking_period_type),
+        "Description": blocking_period.description,
+    }
+
+    url = reverse("quota-ui-detail", args=[quota_order_number.sid])
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    rows = soup.select(".quota__blocking-periods__content > dl > div > dd")
+    assert len(rows) == 5
+
+    for i, value in enumerate(expected_data.values()):
+        assert value in rows[i].text
