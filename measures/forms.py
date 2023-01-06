@@ -14,6 +14,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.template import loader
+from django.urls import reverse
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -482,7 +483,10 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
     )
     additional_code = AutoCompleteField(
         label="Code and description",
-        help_text="If applicable, select the additional code to which the measure applies.",
+        help_text=(
+            "Search for an additional code by typing in the code's number or a keyword. "
+            "A dropdown list will appear after a few seconds. You can then select the correct code from the dropdown list."
+        ),
         queryset=AdditionalCode.objects.all(),
         required=False,
     )
@@ -762,7 +766,11 @@ class MeasureDetailsForm(
 
     measure_type = AutoCompleteField(
         label="Measure type",
-        help_text="Select the appropriate measure type.",
+        help_text=(
+            "Search for a measure type using its ID number or a keyword. "
+            "A dropdown list will appear after a few seconds. "
+            "You can then select the measure type from the dropdown list."
+        ),
         queryset=models.MeasureType.objects.all(),
     )
 
@@ -810,7 +818,11 @@ class MeasureRegulationIdForm(forms.Form):
 
     generating_regulation = AutoCompleteField(
         label="Regulation ID",
-        help_text="Select the regulation which provides the legal basis for the measure.",
+        help_text=(
+            "Search for a regulation using its ID number or a keyword. "
+            "A dropdown list will appear after a few seconds. "
+            "You can then select the regulation from the dropdown list."
+        ),
         queryset=Regulation.objects.all(),
     )
 
@@ -841,7 +853,8 @@ class MeasureQuotaOrderNumberForm(forms.Form):
     order_number = AutoCompleteField(
         label="Quota order number",
         help_text=(
-            "Select the quota order number if a quota measure type has been selected. "
+            "Search for a quota using its order number. "
+            "You can then select the correct quota from the dropdown list. "
             "Leave this field blank if the measure is not a quota."
         ),
         queryset=QuotaOrderNumber.objects.all(),
@@ -856,6 +869,10 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             "order_number",
+            HTML.details(
+                "I don't know what my quota ID number is",
+                f'You can search for the quota number by using <a href="{reverse("quota-ui-list")}" class="govuk-link">find and edit quotas</a>',
+            ),
             Submit(
                 "submit",
                 "Continue",
@@ -868,6 +885,11 @@ class MeasureQuotaOrderNumberForm(forms.Form):
 class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
     geo_area = RadioNested(
         label="",
+        help_text=(
+            "Choose the geographical area to which the measure applies. "
+            "This can be a specific country or a group of countries, and exclusions can be specified. "
+            "The measure will only apply to imports from or exports to the selected area."
+        ),
         choices=GeoAreaType.choices,
         nested_forms={
             GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
@@ -906,14 +928,6 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             "geo_area",
-            HTML.details(
-                "Help with geography",
-                (
-                    "Choose the geographical area to which the measure applies. This can be a specific country "
-                    "or a group of countries, and exclusions can be specified. The measure will only apply to imports "
-                    "from or exports to the selected area."
-                ),
-            ),
             Submit(
                 "submit",
                 "Continue",
@@ -976,7 +990,10 @@ class MeasureAdditionalCodeForm(forms.ModelForm):
 
     additional_code = AutoCompleteField(
         label="Additional code",
-        help_text="If applicable, select the additional code to which the measure applies.",
+        help_text=(
+            "Search for an additional code by typing in the code's number or a keyword. "
+            "A dropdown list will appear after a few seconds. You can then select the correct code from the dropdown list."
+        ),
         queryset=AdditionalCode.objects.all(),
         required=False,
     )
@@ -999,7 +1016,11 @@ class MeasureAdditionalCodeForm(forms.ModelForm):
 class MeasureCommodityAndDutiesForm(forms.Form):
     commodity = AutoCompleteField(
         label="Commodity code",
-        help_text="Select the 10-digit commodity code to which the measure applies.",
+        help_text=(
+            "Search for a commodity code by typing in the code's number or a keyword. "
+            "After you've typed at least 3 numbers, a dropdown list will appear. "
+            "You can then select the correct quota from the dropdown list."
+        ),
         queryset=GoodsNomenclature.objects.all(),
         attrs={"min_length": 3},
     )
@@ -1056,6 +1077,10 @@ MeasureCommodityAndDutiesFormSet = formset_factory(
 class MeasureFootnotesForm(forms.Form):
     footnote = AutoCompleteField(
         label="",
+        help_text=(
+            "Search for a footnote by typing in the footnote's number or a keyword. "
+            "A dropdown list will appear after a few seconds. You can then select the correct footnote from the dropdown list."
+        ),
         queryset=Footnote.objects.all(),
     )
 
