@@ -117,11 +117,20 @@ def test_handler500(client):
 def test_display_dashboard_overview(valid_user_client):
     factories.MeasureFactory.create()
     factories.MeasureFactory.create()
+    factories.QuotaOrderNumberFactory.create()
+    factories.QuotaOrderNumberFactory.create()
+    factories.QuotaOrderNumberFactory.create()
     response = valid_user_client.get(reverse("overview"))
 
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
-    counts = page.find_all("p", attrs={"class": "govuk-number"})
+    counts = page.find_all("p", attrs={"class": "govuk-heading-xl"})
 
+    assert len(counts) == 6
     assert counts[0].text == '2'
+    assert counts[1].text == '2'
+    assert counts[2].text == '4'
+    assert counts[3].text == '4'
+    assert counts[4].text == '3'
+    assert counts[5].text == '3'
