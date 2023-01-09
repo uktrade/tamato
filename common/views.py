@@ -43,6 +43,7 @@ from common.pagination import build_pagination_list
 from common.validators import UpdateType
 from measures.models import Measure
 from quotas.models import QuotaOrderNumber
+from regulations.models import Regulation
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
@@ -63,55 +64,40 @@ class DashboardView(TemplateView):
     template_name = "common/dashboard_overview.jinja"
 
     @property
-    def measure_total_count(self):
-        return Measure.objects.values("sid").count()
+    def measures_total_count(self):
+        return Measure.objects.count()
+
+    @property
+    def measures_active_count(self):
+        return Measure.objects.as_at_today().count()
 
     @property
     def measure_active_count(self):
-        return Measure.objects.values("sid").as_at_today().count()
+        return Measure.objects.as_at_today().count()
 
     @property
     def commodities_total_count(self):
-        return GoodsNomenclature.objects.values("sid").count()
-    
+        return GoodsNomenclature.objects.count()
+
     @property
     def commodities_active_count(self):
-        return GoodsNomenclature.objects.values("sid").as_at_today().count()
+        return GoodsNomenclature.objects.as_at_today().count()
+
+    @property
+    def regulations_total_count(self):
+        return Regulation.objects.count()
+
+    @property
+    def regulations_active_count(self):
+        return Regulation.objects.as_at_today().count()
 
     @property
     def quotas_total_count(self):
-        return QuotaOrderNumber.objects.values("sid").count()
+        return QuotaOrderNumber.objects.count()
 
     @property
     def quotas_active_count(self):
-        return QuotaOrderNumber.objects.values("sid").as_at_today().count()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["dashboard_contents"] = [
-            {
-                "heading": "Measures",
-                "counts": [
-                    {"title": "Total ", "value": self.measure_total_count},
-                    {"title": "Active ", "value": self.measure_active_count},
-                ],
-            },
-            {
-                "heading": "Commodity codes",
-                "counts": [
-                    {"title": "Total", "value": self.commodities_total_count},
-                    {"title": "Active", "value": self.commodities_active_count},
-                ],
-            },
-            {
-                "heading": "Quotas",
-                "counts": [
-                    {"title": "Total ", "value": self.quotas_total_count},
-                    {"title": "Active ", "value": self.quotas_active_count},
-                ],
-            }
-        ]
-        return context
+        return QuotaOrderNumber.objects.as_at_today().count()
 
 
 class HealthCheckResponse(HttpResponse):

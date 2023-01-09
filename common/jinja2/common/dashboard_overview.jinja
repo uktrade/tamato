@@ -13,28 +13,45 @@
   }}
 {% endblock %}
 
-{% macro dashboard_block(context) %}
-  <div class="govuk-grid-column-two-thirds">
-    <h2 class="govuk-heading-m">{{ context.heading }}</h2>
-    <div class="govuk-grid-row">
-      {% for count in context.counts %}
-        <div class="govuk-grid-column-one-half">
-          <h2 class="govuk-heading-s">{{ count.title }}</h2>
-          <p class="govuk-heading-xl">{{ intcomma(count.value) }}</p>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
+{% macro dashboard_block(title, value, heading) %}
+<div class="govuk-grid-column-one-half">
+  <{{heading or "h3"}} class="govuk-heading-s">{{ title }}</{{heading or "h3"}}>
+  <p class="govuk-heading-xl">{{ intcomma(value) }}</p>
+</div>
 {% endmacro %}
 
 {% block content %}
   <span class="govuk-caption-m govuk-!-margin-bottom-3">Dashboard</span>
   <h1 class="govuk-heading-l govuk-!-margin-bottom-9">{{ page_title }}</h1>
 
+  <h2 class="govuk-heading-l">Regulations</h2>
   <div class="govuk-grid-row">
-    {% for content in dashboard_contents %}
-      {{ dashboard_block(content) }}
-    {% endfor %}
+    {{ dashboard_block("Total regulations", view.regulations_total_count) }}
+    {{ dashboard_block("Active regulations", view.regulations_active_count) }}
+  </div>
+
+  <h2 class="govuk-heading-l">Measures</h2>
+  <div class="govuk-grid-row">
+    {{ dashboard_block("Total measures", view.measures_total_count) }}
+    {{ dashboard_block("Active measures", view.measures_active_count) }}
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-half">
+      <h3 class="govuk-heading-m">Commodities</h3>
+      <div class="govuk-grid-row">
+        {{ dashboard_block("Total commodities", view.commodities_total_count, "h4") }}
+        {{ dashboard_block("Active commodities", view.commodities_active_count, "h4") }}
+      </div>
+    </div>
+
+    <div class="govuk-grid-column-one-half">
+      <h3 class="govuk-heading-m">Quotas</h3>
+      <div class="govuk-grid-row">
+        {{ dashboard_block("Total quotas", view.quotas_total_count, "h4") }}
+        {{ dashboard_block("Active quotas", view.quotas_active_count, "h4") }}
+      </div>
+    </div>
   </div>
 {% endblock %}
 
