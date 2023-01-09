@@ -13,39 +13,84 @@
   }}
 {% endblock %}
 
-{% macro dashboard_block(context) %}
-  <div class="govuk-grid-column-two-thirds">
-    <h2 class="govuk-heading-m">{{ context.heading }}</h2>
-    <details class="govuk-details" data-module="govuk-details">
-      <summary class="govuk-details__summary">
-        <span class="govuk-details__summary-text">
-          {{ context.summary }}
-        </span>
-      </summary>
-      <div class="govuk-details__text">
-        {{ context.details }} 
-        <a href="{{context.link}}" class="govuk-link" rel="noreferrer noopener"
-         target="_blank">{{context.summary}}</a>
-      </div>
-    </details>
-    <div class="govuk-grid-row">
-      {% for count in context.counts %}
-        <div class="govuk-grid-column-one-half">
-          <h2 class="govuk-heading-s">{{ count.title }}</h2>
-          <p class="govuk-heading-xl">{{ intcomma(count.value) }}</p>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
+{% macro dashboard_block(title, value, heading) %}
+<div class="govuk-grid-column-one-half">
+  <{{heading or "h3"}} class="govuk-heading-s">{{ title }}</{{heading or "h3"}}>
+  <p class="govuk-heading-xl">{{ intcomma(value) }}</p>
+</div>
 {% endmacro %}
+
+{% macro dashboard_details(object, details, link) %}
+  <details class="govuk-details" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">
+        What are {{ object }}?
+      </span>
+    </summary>
+    <div class="govuk-details__text">
+      {{ details }} 
+      <a href="{{link}}" class="govuk-link" rel="noreferrer noopener"
+      target="_blank">More information on {{ object|pluralize }}</a>
+    </div>
+  </details>
+{% endmacro %}
+
 
 {% block content %}
   <span class="govuk-caption-m govuk-!-margin-bottom-3">Dashboard</span>
   <h1 class="govuk-heading-l govuk-!-margin-bottom-9">{{ page_title }}</h1>
 
+  <h2 class="govuk-heading-l">Regulations</h2>
+  {{ dashboard_details(
+    "regulations",
+    "The legal basis for a measure/tariff. A regulation can apply to many measures.",
+    "https://uktrade.github.io/tariff-data-manual/documentation/data-structures/regulations.html#regulations"
+    )}}  
   <div class="govuk-grid-row">
-    {% for content in dashboard_contents %}
-      {{ dashboard_block(content) }}
-    {% endfor %}
+    {{ dashboard_block("Total regulations", view.regulations_total_count) }}
+    {{ dashboard_block("Active regulations", view.regulations_active_count) }}
+  </div>
+
+  <h2 class="govuk-heading-l">Measures</h2>
+  {{ dashboard_details(
+    "measures",
+    "A measure provides information about a commodity code 
+    and conditions for its use. They are based on law and are the 
+    building blocks of any trade tariff.",
+    "https://uktrade.github.io/tariff-data-manual/documentation/data-structures/measures.html#what-measures-are"
+    )}} 
+  <div class="govuk-grid-row">
+    {{ dashboard_block("Total measures", view.measures_total_count) }}
+    {{ dashboard_block("Active measures", view.measures_active_count) }}
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-half">
+      <h3 class="govuk-heading-m">Commodities</h3>
+      {{ dashboard_details(
+        "commodity codes",
+        "A commodity code is a unique 10-digit number used 
+        to classify a good for import and export.",
+        "https://uktrade.github.io/tariff-data-manual/documentation/data-structures/commodity-codes.html#commodity-codes"
+        )}} 
+      <div class="govuk-grid-row">
+        {{ dashboard_block("Total commodities", view.commodities_total_count, "h4") }}
+        {{ dashboard_block("Active commodities", view.commodities_active_count, "h4") }}
+      </div>
+    </div>
+
+    <div class="govuk-grid-column-one-half">
+      <h3 class="govuk-heading-m">Quotas</h3>
+      {{ dashboard_details(
+        "quotas",
+        "Lower tariff rates on importing a good up to a 
+        specific quantity.",
+        "https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#quotas"
+        )}} 
+      <div class="govuk-grid-row">
+        {{ dashboard_block("Total quotas", view.quotas_total_count, "h4") }}
+        {{ dashboard_block("Active quotas", view.quotas_active_count, "h4") }}
+      </div>
+    </div>
   </div>
 {% endblock %}
