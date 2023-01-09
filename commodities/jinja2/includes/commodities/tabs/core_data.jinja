@@ -3,13 +3,7 @@
         <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("commodity-ui-detail", kwargs={"sid": parent.sid}) }}">{{ parent.code }}</a>
     {% endif %}
 {% endset %}
-{% set indent %}
-    <ul class="govuk-table-list">
-        {% for indent in object.indents.all() %}
-            <li>{{indent.indent}}</li>
-        {% endfor %}
-    </ul>
-{% endset %}
+
 <div class="quota__core-data">
     <div class="quota__core-data__content">
         <h2 class="govuk-heading-l">Details</h2>
@@ -32,8 +26,7 @@
             },
             {
                 "key": {"text": "Indent number"},
-                "value": {"text": object.indents.all()},
-                "value": {"text": indent if object.origins.all() else "-"},
+                "value": {"text": object.indents.all().last().indent},
                 "actions": {"items": []}
             },
             {
