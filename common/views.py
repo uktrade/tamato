@@ -88,9 +88,15 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        #<a href="#" class="govuk-link govuk-link--no-visited-state">link text (with no visited state)</a>
         context["dashboard_contents"] = [
             {
                 "heading": "Measures",
+                "summary": "What are measures?",
+                "details": """A measure provides information about a commodity code 
+                and conditions for its use. They are based on law and are the 
+                building blocks of any trade tariff.""",
+                "link": "https://uktrade.github.io/tariff-data-manual/documentation/data-structures/measures.html#what-measures-are",
                 "counts": [
                     {"title": "Total ", "value": self.measure_total_count},
                     {"title": "Active ", "value": self.measure_active_count},
@@ -98,6 +104,10 @@ class DashboardView(TemplateView):
             },
             {
                 "heading": "Commodity codes",
+                "summary": "What are Commodity codes?",
+                "details": """A commodity code is a unique 10-digit number used 
+                to classify a good for import and export.""",
+                "link": "https://uktrade.github.io/tariff-data-manual/documentation/data-structures/commodity-codes.html#commodity-codes",
                 "counts": [
                     {"title": "Total", "value": self.commodities_total_count},
                     {"title": "Active", "value": self.commodities_active_count},
@@ -105,6 +115,10 @@ class DashboardView(TemplateView):
             },
             {
                 "heading": "Quotas",
+                "summary": "What are Quotas?",
+                "details": """Lower tariff rates on importing a good up to a 
+                specific quantity.""",
+                "link": "https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#quotas",
                 "counts": [
                     {"title": "Total ", "value": self.quotas_total_count},
                     {"title": "Active ", "value": self.quotas_active_count},

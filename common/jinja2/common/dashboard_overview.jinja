@@ -14,8 +14,23 @@
 {% endblock %}
 
 {% macro dashboard_block(context) %}
+  {% set detail_text = context.details ~ "<a href='" ~ context.link ~ 
+  "' class='govuk-link' rel='noreferrer noopener' target='_blank'>" ~ 
+  context.summary ~ "</a>" %}
   <div class="govuk-grid-column-two-thirds">
     <h2 class="govuk-heading-m">{{ context.heading }}</h2>
+    <details class="govuk-details" data-module="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">
+          {{ context.summary }}
+        </span>
+      </summary>
+      <div class="govuk-details__text">
+        {{ context.details }} 
+        <a href="{{context.link}}" class="govuk-link" rel="noreferrer noopener"
+         target="_blank">{{context.summary}}</a>
+      </div>
+    </details>
     <div class="govuk-grid-row">
       {% for count in context.counts %}
         <div class="govuk-grid-column-one-half">
@@ -37,6 +52,8 @@
     {% endfor %}
   </div>
 {% endblock %}
+
+
 
 
 
