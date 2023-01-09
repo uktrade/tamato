@@ -1,4 +1,3 @@
-
 {% set table_rows = [] %}
 {% for object in measures %}
   {% set measure_link -%}
@@ -16,11 +15,11 @@
 {% endfor %}
 
 
-<div class="quota__core-data govuk-grid-row">
-    <div class="quota__core-data__content govuk-grid-column-three-quarters">
+<div class="quota__measures govuk-grid-row">
+    <div class="quota__measures__content govuk-grid-column-three-quarters">
         <h2 class="govuk-heading-l">Details</h2>
-        <p class="govuk-body">Showing currently active measures.</p>
         {% if measures %}
+        <p class="govuk-body">Showing currently active measures.</p>
         {{ govukTable({
             "head": [
                 {"text": "Measure SID"},
@@ -30,9 +29,9 @@
             ],
             "rows": table_rows
             }) }}
-    {% else %}
-        <p class="govuk-body">No active measures.</p>
-    {% endif %}
+        {% else %}
+          <p class="govuk-body">No active measures.</p>
+        {% endif %}
     </div>
     {% include "includes/quotas/actions.jinja"%}
 </div>
