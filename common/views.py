@@ -88,7 +88,6 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        #<a href="#" class="govuk-link govuk-link--no-visited-state">link text (with no visited state)</a>
         context["dashboard_contents"] = [
             {
                 "heading": "Measures",
