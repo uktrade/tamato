@@ -42,6 +42,7 @@ from common.models import TrackedModel
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
 from measures.models import Measure
+from quotas.models import QuotaOrderNumber
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
@@ -72,10 +73,18 @@ class DashboardView(TemplateView):
     @property
     def commodities_total_count(self):
         return GoodsNomenclature.objects.values("sid").count()
-
+    
     @property
     def commodities_active_count(self):
         return GoodsNomenclature.objects.values("sid").as_at_today().count()
+
+    @property
+    def quotas_total_count(self):
+        return QuotaOrderNumber.objects.values("sid").count()
+
+    @property
+    def quotas_active_count(self):
+        return QuotaOrderNumber.objects.values("sid").as_at_today().count()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -94,6 +103,13 @@ class DashboardView(TemplateView):
                     {"title": "Active", "value": self.commodities_active_count},
                 ],
             },
+            {
+                "heading": "Quotas",
+                "counts": [
+                    {"title": "Total ", "value": self.quotas_total_count},
+                    {"title": "Active ", "value": self.quotas_active_count},
+                ],
+            }
         ]
         return context
 
