@@ -78,15 +78,13 @@ class CommodityDetail(CommodityMixin, TrackedModelDetailView):
     template_name = "commodities/detail.jinja"
 
     def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
         collection = get_chapter_collection(self.object)
         tx = WorkBasket.get_current_transaction(self.request)
         date = self.object.valid_between.upper
         snapshot = collection.get_snapshot(tx, date)
         commodity = snapshot.get_commodity(self.object, self.object.suffix)
-        parent = snapshot.get_parent(commodity)
+        context["parent"] = snapshot.get_parent(commodity)
 
-        return super().get_context_data(
-            parent=parent,
-            *args,
-            **kwargs,
-        )
+        return context
