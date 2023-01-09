@@ -1,31 +1,9 @@
-{% set parent_sid %}
-    <ul class="govuk-table-list">
-        {% for origin in object.origins.all() %}
-            <li>{{origin.sid}}</li>
-        {% endfor %}
-    </ul>
-{% endset %}
 {% set parent_code %}
-    <ul class="govuk-table-list">
-        {% for origin in object.origins.all() %}
-            <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("commodity-ui-detail", kwargs={"sid": origin.sid}) }}">{{ origin.code }}</a>
-        {% endfor %}
-    </ul>
+    {% if parent %}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("commodity-ui-detail", kwargs={"sid": parent.sid}) }}">{{ parent.code }}</a>
+    {% endif %}
 {% endset %}
-{% set parent_suffix %}
-    <ul class="govuk-table-list">
-        {% for origin in object.origins.all() %}
-            <li>{{origin.suffix}}</li>
-        {% endfor %}
-    </ul>
-{% endset %}
-{% set indent %}
-    <ul class="govuk-table-list">
-        {% for indent in object.indents.all() %}
-            <li>{{indent.indent}}</li>
-        {% endfor %}
-    </ul>
-{% endset %}
+
 <div class="quota__core-data">
     <div class="quota__core-data__content">
         <h2 class="govuk-heading-l">Details</h2>
@@ -37,7 +15,7 @@
                 "actions": {"items": []}
             },
             {
-                "key": {"text": "Commodity Code"},
+                "key": {"text": "Commodity code"},
                 "value": {"text": object.code},
                 "actions": {"items": []}
             },
@@ -48,12 +26,11 @@
             },
             {
                 "key": {"text": "Indent number"},
-                "value": {"text": object.indents.all()},
-                "value": {"text": indent if object.origins.all() else "-"},
+                "value": {"text": object.indents.all().last().indent},
                 "actions": {"items": []}
             },
             {
-                "key": {"text": "Commodity Description"},
+                "key": {"text": "Commodity description"},
                 "value": {"text": object.get_description().description},
                 "actions": {"items": []}
             },
@@ -69,17 +46,17 @@
             },
             {
                 "key": {"text": "Parent commodity SID"},
-                "value": {"text": parent_sid if object.origins.all() else "-"},
+                "value": {"text": parent.sid if parent else "-"},
                 "actions": {"items": []}
             },
             {
-                "key": {"text": "Parent comodity Code"},
-                "value": {"text": parent_code if object.origins.all() else "-"},
+                "key": {"text": "Parent commodity code"},
+                "value": {"text": parent_code if parent else "-"},
                 "actions": {"items": []}
             },
             {
-                "key": {"text": "Parent comodity suffix"},
-                "value": {"text": parent_suffix if object.origins.all() else "-"},
+                "key": {"text": "Parent commodity suffix"},
+                "value": {"text": parent.suffix if parent else "-"},
                 "actions": {"items": []}
             },
             ]
