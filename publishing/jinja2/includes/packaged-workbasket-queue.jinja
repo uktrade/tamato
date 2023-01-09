@@ -112,7 +112,9 @@
       {# First row. #}
       {% if obj == currently_processing %}
         <span class="processing-state tamato-badge-light-green">CDS DOWNLOADED</span>
-      {% elif obj.processing_state == "AWAITING_PROCESSING" and obj.cds_notified_notification_log %}
+      {% elif obj.processing_state == "AWAITING_PROCESSING" and not obj.cds_notified_notification_log %}
+        <span class="processing-state tamato-badge-light-grey">GENERATING ENVELOPE</span>
+      {% else %}
         <span class="processing-state tamato-badge-light-purple">CDS NOTIFIED</span>
       {% endif %}
     {% elif loop.index == 2 and currently_processing %}
