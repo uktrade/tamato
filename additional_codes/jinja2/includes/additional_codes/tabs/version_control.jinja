@@ -1,0 +1,23 @@
+{% from "components/table/macro.njk" import govukTable %}
+
+<h2 class="govuk-heading-l">Version control</h2>
+{% set table_rows = [] %}
+{% for object in object.version_group.versions.all() %}
+  {{ table_rows.append([
+    {"text": object.get_update_type_display()},
+    {"text": "{:%d %b %Y}".format(object.version_group.created_at)},
+    {"text": object.transaction.workbasket.get_status_display()},
+    {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
+    {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
+  ]) or "" }}
+{% endfor %}
+{{ govukTable({
+  "head": [
+    {"text": "Activity"},
+    {"text": "Date"},
+    {"text": "Status"},
+    {"text": "Start date"},
+    {"text": "End date"},
+  ],
+  "rows": table_rows
+}) }}
