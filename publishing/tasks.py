@@ -50,10 +50,6 @@ def create_xml_envelope_file(
         packaged_work_basket.notify_ready_for_processing()
 
 
-class Ta:
-    id: int = 1
-
-
 def schedule_create_xml_envelope_file(
     packaged_work_basket,
     notify_when_done: bool = True,
