@@ -33,6 +33,7 @@ from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 from rest_framework import permissions
 
+from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common import forms
 from common.business_rules import BusinessRule
@@ -98,6 +99,14 @@ class DashboardView(TemplateView):
     @property
     def quotas_active_count(self):
         return QuotaOrderNumber.objects.as_at_today().count()
+
+    @property
+    def certificates_total_count(self):
+        return Certificate.objects.count()
+
+    @property
+    def certificates_active_count(self):
+        return Certificate.objects.as_at_today().count()
 
 
 class HealthCheckResponse(HttpResponse):

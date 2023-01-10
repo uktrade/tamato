@@ -92,5 +92,18 @@
         {{ dashboard_block("Active quotas", view.quotas_active_count, "h4") }}
       </div>
     </div>
+
+    <div class="govuk-grid-column-one-half">
+      <h3 class="govuk-heading-m">Certificates</h3>
+      {{ dashboard_details(
+        "certificates",
+        "Certificates, licenses, and non-paper conditions are sometimes required to bring goods through customs.",
+        "https://uktrade.github.io/tariff-data-manual/documentation/data-structures/certificates.html#certificates"
+        )}}
+      <div class="govuk-grid-row">
+        {{ dashboard_block("Total certificates", view.certificates_total_count, "h4") }}
+        {{ dashboard_block("Active certificates", view.certificates_active_count, "h4") }}
+      </div>
+    </div>
   </div>
 {% endblock %}
