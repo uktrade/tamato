@@ -163,6 +163,7 @@ class HomeForm(forms.Form):
             "EDIT",
             "Edit an existing workbasket",
         )
+        OVERVIEW = "OVERVIEW", "View tariff overview"
 
     workbasket_action = forms.ChoiceField(
         label="",
