@@ -57,6 +57,8 @@ class HomeView(FormView, View):
             return redirect(reverse("workbaskets:workbasket-ui-list"))
         elif form.cleaned_data["workbasket_action"] == "CREATE":
             return redirect(reverse("workbaskets:workbasket-ui-create"))
+        elif form.cleaned_data["workbasket_action"] == "OVERVIEW":
+            return redirect("overview")
 
 
 class DashboardView(TemplateView):

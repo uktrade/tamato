@@ -37,6 +37,12 @@ def test_index_displays_workbasket_action_form(valid_user_client):
             },
             "workbaskets:workbasket-ui-create",
         ),
+        (
+            {
+                "workbasket_action": "OVERVIEW",
+            },
+            "overview",
+        ),
     ),
 )
 def test_workbasket_action_form_response_redirects_user(
@@ -139,3 +145,11 @@ def test_display_dashboard_overview(valid_user_client):
     assert counts[7].text == "3"
     assert counts[8].text == "1"
     assert counts[9].text == "1"
+
+
+def test_dashboard_overiew_403(client):
+    request = client.get("/overview")
+    response = handler403(request)
+
+    assert response.status_code == 403
+    assert response.template_name == "common/403.jinja"
