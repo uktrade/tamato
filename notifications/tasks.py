@@ -8,7 +8,9 @@ from notifications_python_client.notifications import NotificationsAPIClient
 from notifications.models import NotificationLog
 from notifications.models import NotifiedUser
 
-notifications_client = NotificationsAPIClient(settings.NOTIFICATIONS_API_KEY)
+
+def get_notifications_client():
+    return NotificationsAPIClient(settings.NOTIFICATIONS_API_KEY)
 
 
 @shared_task
@@ -21,7 +23,7 @@ def send_emails(template_id: uuid4, personalisation: dict):
     if users.exists():
         recipients = ""
         for user in users:
-            notifications_client.send_email_notification(
+            get_notifications_client.send_email_notification(
                 email_address=user.email,
                 template_id=template_id,
                 personalisation=personalisation,
