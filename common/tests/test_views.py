@@ -120,6 +120,7 @@ def test_display_dashboard_overview(valid_user_client):
     factories.QuotaOrderNumberFactory.create()
     factories.QuotaOrderNumberFactory.create()
     factories.QuotaOrderNumberFactory.create()
+    factories.CertificateFactory.create()
     response = valid_user_client.get(reverse("overview"))
 
     assert response.status_code == 200
@@ -127,10 +128,14 @@ def test_display_dashboard_overview(valid_user_client):
     page = BeautifulSoup(str(response.content), "html.parser")
     counts = page.find_all("p", attrs={"class": "govuk-heading-xl"})
 
-    assert len(counts) == 6
-    assert counts[0].text == '2'
-    assert counts[1].text == '2'
-    assert counts[2].text == '4'
-    assert counts[3].text == '4'
-    assert counts[4].text == '3'
-    assert counts[5].text == '3'
+    assert len(counts) == 10
+    assert counts[0].text == "2"
+    assert counts[1].text == "2"
+    assert counts[2].text == "2"
+    assert counts[3].text == "2"
+    assert counts[4].text == "4"
+    assert counts[5].text == "4"
+    assert counts[6].text == "3"
+    assert counts[7].text == "3"
+    assert counts[8].text == "1"
+    assert counts[9].text == "1"
