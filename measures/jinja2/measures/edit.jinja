@@ -10,7 +10,7 @@
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 
-{% set page_title = "Edit " ~ object._meta.verbose_name ~ " details" %}
+{% set page_title = "Edit" ~ object._meta.verbose_name ~ " details" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
