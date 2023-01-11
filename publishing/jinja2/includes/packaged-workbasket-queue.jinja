@@ -1,20 +1,12 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 
-{%- macro tick_icon() %}
+{%- macro progress_icon(position) %}
+  {% set image_rel_path = "/common/images/progress-green-" ~ position ~ "-of-3.svg" %}
   <img
-    class="icon"
-    src="{{ static('/common/images/tick-solid-circle.svg') }}"
-    alt="Tick icon"
-  >
-{% endmacro -%}
-
-
-{%- macro timer_icon() %}
-  <img
-    class="icon"
-    src="{{ static('/common/images/incomplete-circle.svg') }}"
-    alt="Incomplete circle icon"
+    class="icon-progress"
+    src={{ static(image_rel_path) }}
+    alt="Progress icon"
   >
 {% endmacro -%}
 
@@ -57,9 +49,14 @@
     {% if loop.index == 1 %}
       {# First row. #}
       {% if obj == currently_processing %}
-        {{ tick_icon() }}
+        {# At state CDS DOWNLOADED #}
+        {{ progress_icon(3) }}
+      {% elif obj.processing_state == "AWAITING_PROCESSING" and not obj.cds_notified_notification_log %}
+        {# At state GENERATING ENVELOPE #}
+        {{ progress_icon(1) }}
       {% else %}
-        {{ timer_icon() }}
+        {# At state CDS NOTIFIED #}
+        {{ progress_icon(2) }}
       {% endif %}
     {% elif loop.index == 2 %}
       {# Second row. #}

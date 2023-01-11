@@ -183,7 +183,11 @@ class EnvelopeQueueView(
     def _process_envelope(self, request, pk):
         if not OperationalStatus.is_queue_paused():
             packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
-            packaged_work_basket.begin_processing()
+            try:
+                packaged_work_basket.begin_processing()
+            except TransitionNotAllowed:
+                # No error page right now, just reshow the list view.
+                pass
         return request.build_absolute_uri()
 
 
