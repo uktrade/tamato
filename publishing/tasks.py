@@ -24,7 +24,7 @@ def create_xml_envelope_file(
     PackagedWorkBasketQuerySet.currently_processing() returns no instances.
 
     2. When this instance is moved to queue position 1 and no other
-    PackagedWorkBasket is being processed - i.e.
+    PackagedWorkBasket is being processed -
     PackagedWorkBasketQuerySet.currently_processing() returns no instances.
 
     3. When some other top-most instance has its PackagedWorkBasket.state
@@ -32,7 +32,7 @@ def create_xml_envelope_file(
     this instance (with state == ProcessingState.AWAITING_PROCESSING)
     becomes the new top-most instance.
 
-    TODO: Implement action 2.
+    TODO: Implement action 2 & 3.
 
     If the Celery process used to execute this function fails, then this
     function may be called again in order to generate the envelope.
@@ -46,6 +46,7 @@ def create_xml_envelope_file(
 
     # TODO: Dump workbasket transactions to XML envelope file and save to S3.
 
+    # TODO: Consider chaining this task from schedule_create_xml_envelope_file().
     if notify_when_done:
         packaged_work_basket.notify_ready_for_processing()
 
