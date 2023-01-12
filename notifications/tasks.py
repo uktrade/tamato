@@ -21,9 +21,10 @@ def send_emails(template_id: uuid4, personalisation: dict):
     users = NotifiedUser.objects.filter(enrol_packaging=True)
 
     if users.exists():
+        notifications_client = get_notifications_client()
         recipients = ""
         for user in users:
-            get_notifications_client.send_email_notification(
+            notifications_client.send_email_notification(
                 email_address=user.email,
                 template_id=template_id,
                 personalisation=personalisation,
