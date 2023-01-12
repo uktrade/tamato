@@ -19,6 +19,7 @@ from quotas import serializers
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
 from quotas.models import QuotaBlocking
+from quotas.models import QuotaSuspension
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricDeleteView
 
@@ -109,6 +110,13 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
             )
         else:
             blocking_period = None
+
+        suspension_period = (
+            QuotaSuspension.objects.filter(quota_definition=current_definition)
+            .as_at_and_beyond(date.today())
+            .first()
+        )
+
         measures = Measure.objects.filter(order_number=self.object).as_at(date.today())
         url_params = urlencode({"order_number": self.object.pk})
         measures_url = f"{reverse('measure-ui-list')}?{url_params}"
@@ -116,6 +124,7 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
         return super().get_context_data(
             current_definition=current_definition,
             blocking_period=blocking_period,
+            suspension_period=suspension_period,
             measures=measures,
             measures_url=measures_url,
             *args,

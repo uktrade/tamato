@@ -1,0 +1,34 @@
+<div class="quota__suspension-periods govuk-grid-row">
+    <div class="quota__suspension-periods__content govuk-grid-column-three-quarters">
+        <h2 class="govuk-heading-l">Details</h2>
+        {% if suspension_period %}
+            {{ govukSummaryList({
+                "rows": [
+                    {
+                        "key": {"text": "Quota suspension period SID"},
+                        "value": {"text": suspension_period.sid},
+                        "actions": {"items": []}
+                    },
+                    {
+                        "key": {"text": "Suspension start date"},
+                        "value": {"text": "{:%d %b %Y}".format(suspension_period.valid_between.lower)},
+                        "actions": {"items": []}
+                    },
+                    {
+                        "key": {"text": "Suspension end date"},
+                        "value": {"text": "{:%d %b %Y}".format(suspension_period.valid_between.upper)},
+                        "actions": {"items": []}
+                    },
+                    {
+                        "key": {"text": "Description"},
+                        "value": {"text": suspension_period.description if suspension_period.description else "-"},
+                        "actions": {"items": []}
+                    },
+                ]
+            })}}
+        {% else %}
+            <p class="govuk-body">No active or upcoming suspension period.</p>
+        {% endif %}
+    </div>
+    {% include "includes/quotas/actions.jinja"%}
+</div>
