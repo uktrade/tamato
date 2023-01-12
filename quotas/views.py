@@ -116,7 +116,9 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
             .first()
         )
 
-        context["measures"] = Measure.objects.filter(order_number=self.object).as_at(date.today())
+        context["measures"] = Measure.objects.filter(order_number=self.object).as_at(
+            date.today(),
+        )
         url_params = urlencode({"order_number": self.object.pk})
         context["measures_url"] = f"{reverse('measure-ui-list')}?{url_params}"
 
