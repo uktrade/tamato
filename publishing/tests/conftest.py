@@ -1,3 +1,11 @@
+"""
+Pytest config for publishing module.
+
+Note that a mocked Celery delay() fixture,
+mocked_create_xml_envelope_file_delay(), is applied to all tests in this
+module/app.
+"""
+
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
