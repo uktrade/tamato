@@ -7,8 +7,8 @@ logger = logging.getLogger(__name__)
 
 @app.task
 def create_xml_envelope_file(
-    packaged_work_basket_id,
-    notify_when_done: bool,
+    packaged_work_basket_id: int,
+    notify_when_done: bool = True,
 ):
     """
     Create an XML envelope and save to the configured backing store (normally
@@ -41,10 +41,17 @@ def create_xml_envelope_file(
     from publishing.models import PackagedWorkBasket
 
     packaged_work_basket = PackagedWorkBasket.objects.get(
-        packaged_work_basket_id,
+        pk=packaged_work_basket_id,
     )
 
     # TODO: Dump workbasket transactions to XML envelope file and save to S3.
+    # *** START
+    # Temporary code here - for removal after integrating Anthoni's Envelope
+    # creation and storage PR:
+    from taric.models import Envelope
+
+    packaged_work_basket.envelope = Envelope.new_envelope()
+    # *** END
 
     # TODO: Consider chaining this task from schedule_create_xml_envelope_file().
     if notify_when_done:
