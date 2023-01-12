@@ -1235,4 +1235,3 @@ class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
     workbasket = factory.SubFactory(SimpleQueuedWorkBasketFactory)
     theme = string_sequence(length=50)
     jira_url = "www.fakejiraticket.com"
-    envelope = factory.SubFactory(EnvelopeFactory)
