@@ -19,6 +19,7 @@ from quotas import serializers
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
 from quotas.models import QuotaBlocking
+from quotas.models import QuotaSuspension
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricDeleteView
 
@@ -97,30 +98,31 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
     template_name = "quotas/detail.jinja"
 
     def get_context_data(self, *args, **kwargs):
-        definitions = self.object.definitions.current()
-        current_definition = definitions.as_at(date.today()).first()
-        if not current_definition:
-            current_definition = definitions.not_yet_in_effect(date.today()).first()
-        if current_definition:
-            blocking_period = (
-                QuotaBlocking.objects.filter(quota_definition=current_definition)
-                .as_at_and_beyond(date.today())
-                .first()
-            )
-        else:
-            blocking_period = None
-        measures = Measure.objects.filter(order_number=self.object).as_at(date.today())
-        url_params = urlencode({"order_number": self.object.pk})
-        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+        context = super().get_context_data(*args, **kwargs)
 
-        return super().get_context_data(
-            current_definition=current_definition,
-            blocking_period=blocking_period,
-            measures=measures,
-            measures_url=measures_url,
-            *args,
-            **kwargs,
+        definitions = self.object.definitions.current()
+        current_definition = definitions.as_at_and_beyond(date.today()).first()
+        context["current_definition"] = current_definition
+
+        context["blocking_period"] = (
+            QuotaBlocking.objects.filter(quota_definition=current_definition)
+            .as_at_and_beyond(date.today())
+            .first()
         )
+
+        context["suspension_period"] = (
+            QuotaSuspension.objects.filter(quota_definition=current_definition)
+            .as_at_and_beyond(date.today())
+            .first()
+        )
+
+        context["measures"] = Measure.objects.filter(order_number=self.object).as_at(
+            date.today(),
+        )
+        url_params = urlencode({"order_number": self.object.pk})
+        context["measures_url"] = f"{reverse('measure-ui-list')}?{url_params}"
+
+        return context
 
 
 class QuotaDefinitionList(SortingMixin, ListView):
