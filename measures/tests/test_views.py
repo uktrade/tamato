@@ -132,7 +132,7 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
                 "status": session_workbasket.status,
                 "title": session_workbasket.title,
             },
-            "DELETE_MEASURE_SELECTIONS": {
+            "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: True,
                 measure_2.pk: True,
                 measure_3.pk: True,
@@ -149,7 +149,7 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
 
     # on success, the page redirects to the list page
     assert response.status_code == 302
-    assert client.session["DELETE_MEASURE_SELECTIONS"] == {}
+    assert client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
     for measure in workbasket_measures:
         # check that the update type is delete which is 2
         assert measure.update_type == 2
@@ -176,7 +176,7 @@ def test_multiple_measure_delete_template(client, valid_user, session_workbasket
                 "status": session_workbasket.status,
                 "title": session_workbasket.title,
             },
-            "DELETE_MEASURE_SELECTIONS": {
+            "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: True,
                 measure_2.pk: True,
                 measure_3.pk: True,
@@ -194,7 +194,7 @@ def test_multiple_measure_delete_template(client, valid_user, session_workbasket
 
     # grab the whole measure objects for our pk's we've got in the session, so we can compare attributes.
     selected_measures = Measure.objects.filter(
-        pk__in=session["DELETE_MEASURE_SELECTIONS"].keys(),
+        pk__in=session["MULTIPLE_MEASURE_SELECTIONS"].keys(),
     )
 
     # Get the measure ids that are being shown in the table in the template.
