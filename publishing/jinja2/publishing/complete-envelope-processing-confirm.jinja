@@ -1,0 +1,50 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+
+
+{% set page_title = "Accept envelope confirmation" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {
+        "text": "CDS - Process envelopes",
+        "href": url("publishing:envelope-queue-ui-list"),
+      },
+      {"text": page_title},
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        "titleText": message,
+        "text": "Email was sent to inform DIT",
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <div class="govuk-button-group">
+          {{ govukButton({
+            "text": "Return to queue",
+            "href": url("publishing:envelope-queue-ui-list"),
+          }) }}
+
+          {{ govukButton({
+            "text": "Homepage",
+            "href": url("home"),
+            "classes": "govuk-button--secondary"
+          }) }}
+      </div>
+    </div>
+  </div>
+{% endblock %}

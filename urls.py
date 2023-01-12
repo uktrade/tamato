@@ -19,6 +19,8 @@ from django.contrib import admin
 from django.urls import include
 from django.urls import path
 
+import common
+
 urlpatterns = [
     path("", include("common.urls")),
     path("", include("additional_codes.urls")),
@@ -38,6 +40,13 @@ urlpatterns = [
 ]
 
 handler403 = "common.views.handler403"
+handler500 = "common.views.handler500"
+
+if settings.DEBUG:
+    urlpatterns += [
+        path("403/", common.views.handler403, name="handler403"),
+        path("500/", common.views.handler500, name="handler500"),
+    ]
 
 if settings.SSO_ENABLED:
     urlpatterns = [

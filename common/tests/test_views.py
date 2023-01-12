@@ -6,6 +6,7 @@ from common.tests import factories
 from common.util import xml_fromstring
 from common.views import HealthCheckResponse
 from common.views import handler403
+from common.views import handler500
 
 pytestmark = pytest.mark.django_db
 
@@ -103,3 +104,11 @@ def test_handler403(client):
 
     assert response.status_code == 403
     assert response.template_name == "common/403.jinja"
+
+
+def test_handler500(client):
+    request = client.get("/")
+    response = handler500(request)
+
+    assert response.status_code == 500
+    assert response.template_name == "common/500.jinja"

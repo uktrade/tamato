@@ -15,7 +15,7 @@
 
     {% if request.session.workbasket %}
     {{ govukButton({
-      "text": "Go to your tariff changes",
+      "text": "Go to your workbasket summary",
       "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]),
       "classes": "govuk-button--secondary"
     }) }}

@@ -2,6 +2,8 @@ import os
 import logging
 import tempfile
 from datetime import date
+
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import F
@@ -32,6 +34,91 @@ from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from common.serializers import validate_envelope
 
 logger = logging.getLogger(__name__)
+class OperationalStatusQuerySet(QuerySet):
+    def current_status(self):
+        return self.order_by("pk").last()
+
+
+class QueueState(TextChoices):
+    PAUSED = ("PAUSED", "Envelope processing is paused")
+    UNPAUSED = ("UNPAUSED", "Envelope processing is unpaused and may proceed")
+
+
+class OperationalStatus(models.Model):
+    """
+    Operational status of the packaging system.
+
+    The packaging queue's state is of primary concern here: either unpaused,
+    which allows processing the next available workbasket, or paused, which
+    blocks the begin_processing transition of the next available queued
+    workbasket until the system is unpaused.
+    """
+
+    class Meta:
+        ordering = ["pk"]
+        verbose_name_plural = "operational statuses"
+
+    objects = OperationalStatusQuerySet.as_manager()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        null=True,
+    )
+    """If a new instance is created as a result of direct user action (for
+    instance pausing or unpausing the packaging queue) then `created_by` should
+    be associated with that user."""
+    queue_state = models.CharField(
+        max_length=8,
+        default=QueueState.PAUSED,
+        choices=QueueState.choices,
+        editable=False,
+    )
+
+    @classmethod
+    def pause_queue(cls, user: settings.AUTH_USER_MODEL) -> "OperationalStatus":
+        """
+        Transition the workbasket queue into a paused state (if it is not
+        already paused) by creating a new `OperationalStatus` and returning it
+        to the caller.
+
+        If the queue is already paused, then do nothing and return None.
+        """
+        if cls.is_queue_paused():
+            return None
+        return OperationalStatus.objects.create(
+            queue_state=QueueState.PAUSED,
+            created_by=user,
+        )
+
+    @classmethod
+    def unpause_queue(cls, user: settings.AUTH_USER_MODEL) -> "OperationalStatus":
+        """
+        Transition the workbasket queue into an unpaused state (if it is not
+        already unpaused) by creating a new `OperationalStatus` and returning it
+        to the caller.
+
+        If the queue is already unpaused, then do nothing and return None.
+        """
+        if not cls.is_queue_paused():
+            return None
+        return OperationalStatus.objects.create(
+            queue_state=QueueState.UNPAUSED,
+            created_by=user,
+        )
+
+    @classmethod
+    def is_queue_paused(cls) -> bool:
+        """Returns True if the workbasket queue is paused, False otherwise."""
+        current_status = cls.objects.current_status()
+        if not current_status or current_status.queue_state == QueueState.PAUSED:
+            return True
+        else:
+            return False
+
+
 class PackagedWorkBasketDuplication(Exception):
     pass
 
@@ -277,7 +364,15 @@ class LoadingReport(TimestampedMixin):
     """Reported associated with an attempt to load (process) a
     PackagedWorkBasket instance."""
 
-    # TODO
+    # TODO Change report_file to correct field for / s3 object reference.
+    report_file = models.FileField(
+        blank=True,
+        null=True,
+    )
+    comment = models.TextField(
+        blank=True,
+        max_length=200,
+    )
 
 
 def save_after(func):
@@ -291,6 +386,7 @@ def save_after(func):
 
 
 class PackagedWorkBasketManager(models.Manager):
+    @atomic
     def create(self, workbasket, **kwargs):
         """Create a new instance, associating with workbasket."""
 
@@ -407,6 +503,14 @@ class PackagedWorkBasket(TimestampedMixin):
         protected=True,
         editable=False,
     )
+    processing_started_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+    )
+    """The date and time at which processing_state transitioned to
+    CURRENTLY_PROCESSING.
+    """
     loading_report = models.ForeignKey(
         LoadingReport,
         null=True,
@@ -490,6 +594,8 @@ class PackagedWorkBasket(TimestampedMixin):
         operation upon successful transitions.
         """
 
+        self.processing_started_at = datetime.now()
+        self.save()
         self.pop_top()
 
     @save_after

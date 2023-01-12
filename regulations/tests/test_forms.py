@@ -1,4 +1,5 @@
 import pytest
+from django.utils import timezone
 
 from common.tests import factories
 from regulations import forms
@@ -57,7 +58,8 @@ def test_regulation_create_form_unapproved_and_not_draft(date_ranges, session_re
 def test_regulation_create_form_invalid_part_value(date_ranges, session_request):
     """Test that RegulationCreateForm excepts an IndexError when looking for an
     alphanumeric character after Z and raises a ValidationError."""
-    factories.RegulationFactory.create(regulation_id="C220001Z")
+    year = timezone.now().strftime("%y")
+    factories.RegulationFactory.create(regulation_id=f"C{year}0001Z")
     group = factories.RegulationGroupFactory.create()
     data = {
         "regulation_group": group.pk,

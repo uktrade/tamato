@@ -1,18 +1,24 @@
 from datetime import date
+from urllib.parse import urlencode
 
+from django.urls import reverse
+from django.views.generic.list import ListView
 from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.serializers import AutoCompleteSerializer
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from measures.models import Measure
 from quotas import business_rules
 from quotas import forms
 from quotas import models
 from quotas import serializers
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
+from quotas.models import QuotaBlocking
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricDeleteView
 
@@ -81,6 +87,8 @@ class QuotaMixin:
 
 
 class QuotaList(QuotaMixin, TamatoListView):
+    """Returns a list of QuotaOrderNumber objects."""
+
     template_name = "quotas/list.jinja"
     filterset_class = QuotaFilter
 
@@ -93,9 +101,45 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
         current_definition = definitions.as_at(date.today()).first()
         if not current_definition:
             current_definition = definitions.not_yet_in_effect(date.today()).first()
+        if current_definition:
+            blocking_period = (
+                QuotaBlocking.objects.filter(quota_definition=current_definition)
+                .as_at_and_beyond(date.today())
+                .first()
+            )
+        else:
+            blocking_period = None
+        measures = Measure.objects.filter(order_number=self.object).as_at(date.today())
+        url_params = urlencode({"order_number": self.object.pk})
+        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+
         return super().get_context_data(
-            current_definition=current_definition, *args, **kwargs
+            current_definition=current_definition,
+            blocking_period=blocking_period,
+            measures=measures,
+            measures_url=measures_url,
+            *args,
+            **kwargs,
         )
+
+
+class QuotaDefinitionList(SortingMixin, ListView):
+    template_name = "quotas/definitions.jinja"
+    model = models.QuotaDefinition
+    sort_by_fields = ["sid", "valid_between"]
+
+    def get_queryset(self):
+        self.queryset = models.QuotaDefinition.objects.current().filter(
+            order_number=self.quota,
+        )
+        return super().get_queryset()
+
+    @property
+    def quota(self):
+        return models.QuotaOrderNumber.objects.get(sid=self.kwargs["sid"])
+
+    def get_context_data(self, *args, **kwargs):
+        return super().get_context_data(quota=self.quota, *args, **kwargs)
 
 
 class QuotaDelete(QuotaMixin, TrackedModelDetailMixin, CreateTaricDeleteView):
