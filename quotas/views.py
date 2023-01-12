@@ -98,38 +98,29 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
     template_name = "quotas/detail.jinja"
 
     def get_context_data(self, *args, **kwargs):
-        definitions = self.object.definitions.current()
-        current_definition = definitions.as_at(date.today()).first()
-        if not current_definition:
-            current_definition = definitions.not_yet_in_effect(date.today()).first()
-        if current_definition:
-            blocking_period = (
-                QuotaBlocking.objects.filter(quota_definition=current_definition)
-                .as_at_and_beyond(date.today())
-                .first()
-            )
-        else:
-            blocking_period = None
+        context = super().get_context_data(*args, **kwargs)
 
-        suspension_period = (
+        definitions = self.object.definitions.current()
+        current_definition = definitions.as_at_and_beyond(date.today()).first()
+        context["current_definition"] = current_definition
+
+        context["blocking_period"] = (
+            QuotaBlocking.objects.filter(quota_definition=current_definition)
+            .as_at_and_beyond(date.today())
+            .first()
+        )
+
+        context["suspension_period"] = (
             QuotaSuspension.objects.filter(quota_definition=current_definition)
             .as_at_and_beyond(date.today())
             .first()
         )
 
-        measures = Measure.objects.filter(order_number=self.object).as_at(date.today())
+        context["measures"] = Measure.objects.filter(order_number=self.object).as_at(date.today())
         url_params = urlencode({"order_number": self.object.pk})
-        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+        context["measures_url"] = f"{reverse('measure-ui-list')}?{url_params}"
 
-        return super().get_context_data(
-            current_definition=current_definition,
-            blocking_period=blocking_period,
-            suspension_period=suspension_period,
-            measures=measures,
-            measures_url=measures_url,
-            *args,
-            **kwargs,
-        )
+        return context
 
 
 class QuotaDefinitionList(SortingMixin, ListView):
