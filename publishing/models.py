@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from django.db.models import TextChoices
 from django.db.models import Value
 from django.db.models.functions import Coalesce
 from django.db.transaction import atomic
+from django.urls import reverse
 from django_fsm import FSMField
 from django_fsm import transition
 from notifications_python_client import prepare_upload
@@ -24,6 +26,8 @@ from publishing.tasks import schedule_create_xml_envelope_file
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
+
+logger = logging.getLogger(__name__)
 
 
 class OperationalStatusQuerySet(QuerySet):
@@ -464,6 +468,9 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
+        self.workbasket.cds_confirmed()
+        self.workbasket.save()
+        self.notify_processing_succeeded()
 
     @save_after
     @transition(
@@ -480,6 +487,9 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
+        self.workbasket.cds_error()
+        self.workbasket.save()
+        self.notify_processing_failed()
 
     @save_after
     @transition(
@@ -537,8 +547,17 @@ class PackagedWorkBasket(TimestampedMixin):
         (see `publishing.tasks.create_xml_envelope_file()`).
         """
 
+        if not settings.ENABLE_PACKAGING_NOTIFICATIONS:
+            logger.info(
+                "Skipping 'notify ready for processing' - "
+                "settings.ENABLE_PACKAGING_NOTIFICATIONS=False",
+            )
+            return
+
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
+            "download_url": settings.BASE_SERVICE_URL
+            + reverse("publishing:envelope-queue-ui-list"),
             "theme": self.theme,
             "eif": self.eif if self.eif else "Immediately",
             "jira_url": self.jira_url,
@@ -555,11 +574,21 @@ class PackagedWorkBasket(TimestampedMixin):
         instance - correctly ingested into HMRC systems.
         """
 
-        f = self.loading_report.file.open("rb")
+        if not settings.ENABLE_PACKAGING_NOTIFICATIONS:
+            logger.info(
+                "Skipping 'notify processing succeeded' - "
+                "settings.ENABLE_PACKAGING_NOTIFICATIONS=False",
+            )
+            return
+
+        link_to_file = "None"
+        if self.loading_report.file:
+            f = self.loading_report.file.open("rb")
+            link_to_file = prepare_upload(f)
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
             "transaction_count": self.workbasket.transactions.count(),
-            "link_to_file": prepare_upload(f),
+            "link_to_file": link_to_file,
         }
         send_emails.delay(
             template_id=settings.CDS_ACCEPTED_TEMPLATE_ID,
@@ -570,10 +599,20 @@ class PackagedWorkBasket(TimestampedMixin):
         """Notify users that envelope processing has been failed - HMRC systems
         rejected this instances associated envelope file."""
 
-        f = self.loading_report.file.open("rb")
+        if not settings.ENABLE_PACKAGING_NOTIFICATIONS:
+            logger.info(
+                "Skipping 'notify processing failed' - "
+                "settings.ENABLE_PACKAGING_NOTIFICATIONS=False",
+            )
+            return
+
+        link_to_file = "None"
+        if self.loading_report.file:
+            f = self.loading_report.file.open("rb")
+            link_to_file = prepare_upload(f)
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
-            "link_to_file": prepare_upload(f),
+            "link_to_file": link_to_file,
         }
         send_emails.delay(
             template_id=settings.CDS_REJECTED_TEMPLATE_ID,
