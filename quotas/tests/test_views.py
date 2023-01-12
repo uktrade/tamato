@@ -151,8 +151,8 @@ def test_quota_detail_api_response_has_results(
     assert rows_content[2] == data["attributes"]["status"]
     assert rows_content[3] == f"{quota_definition.valid_between.lower:%d %b %Y}"
     assert rows_content[4] == f"{quota_definition.valid_between.upper:%d %b %Y}"
-    assert rows_content[5] == "0.000"
-    assert rows_content[6] == "0.000"
+    assert rows_content[5] == intcomma(float(quota_definition.initial_volume))
+    assert rows_content[6] == intcomma(float(quota_definition.volume))
     assert rows_content[7] == intcomma(float(data["attributes"]["balance"]))
     assert rows_content[8] == (quota_definition.measurement_unit.abbreviation).title()
     assert rows_content[9] == f"{quota_definition.quota_critical_threshold}%"
