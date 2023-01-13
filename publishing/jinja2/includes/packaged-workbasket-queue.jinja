@@ -51,7 +51,7 @@
       {% if obj == currently_processing %}
         {# At state CDS DOWNLOADED #}
         {{ progress_icon(3) }}
-      {% elif obj.processing_state == "AWAITING_PROCESSING" and not obj.cds_notified_notification_log %}
+      {% elif obj.processing_state == "AWAITING_PROCESSING" and not obj.envelope %}
         {# At state GENERATING ENVELOPE #}
         {{ progress_icon(1) }}
       {% else %}
@@ -109,7 +109,7 @@
       {# First row. #}
       {% if obj == currently_processing %}
         <span class="processing-state tamato-badge-light-green">CDS DOWNLOADED</span>
-      {% elif obj.processing_state == "AWAITING_PROCESSING" and not obj.cds_notified_notification_log %}
+      {% elif obj.processing_state == "AWAITING_PROCESSING" and not obj.envelope %}
         <span class="processing-state tamato-badge-light-grey">GENERATING ENVELOPE</span>
       {% else %}
         <span class="processing-state tamato-badge-light-purple">CDS NOTIFIED</span>
