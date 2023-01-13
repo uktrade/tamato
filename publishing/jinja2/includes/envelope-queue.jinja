@@ -1,7 +1,7 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 
-{%- macro process_download_button(obj) %}
+{%- macro process_envelope_content(obj) %}
   {% if obj == currently_processing %}
     Processing started:
     <br>
@@ -16,6 +16,10 @@
     </a>
   {% elif queue_paused %}
     <span class="tamato-badge-light-red">QUEUE PAUSED</span>
+  {% elif not obj.envelope or not obj.envelope.envelope_id %}
+    <span class="process-envelope tamato-badge-light-grey">
+      GENERATING ENVELOPE
+    </span>
   {% else %}
     <form method="post" action="">
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -86,11 +90,7 @@
   {%- set process_envelope_cell_content %}
     {% if loop.index == 1 %}
       {# First row. #}
-      {% if obj.envelope and obj.envelope.envelope_id %}
-        {{ process_download_button(obj) }}
-      {% else %}
-        <span class="tamato-badge-light-grey">GENERATING ENVELOPE</span>
-      {% endif %}
+      {{ process_envelope_content(obj) }}
     {% endif %}
   {% endset -%}
 
