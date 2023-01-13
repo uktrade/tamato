@@ -32,6 +32,15 @@ def unpause_queue():
     )
 
 
+@pytest.fixture()
+def mocked_publishing_models_send_emails_delay():
+    with patch(
+        "publishing.models.send_emails.delay",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ) as mocked_delay:
+        yield mocked_delay
+
+
 @pytest.fixture(scope="module", autouse=True)
 def mocked_create_xml_envelope_file_apply_sync():
     """Mock the Celery delay() function on
@@ -41,5 +50,5 @@ def mocked_create_xml_envelope_file_apply_sync():
     with patch(
         "publishing.tasks.create_xml_envelope_file.apply_async",
         return_value=MagicMock(id=factory.Faker("uuid4")),
-    ) as mocked_delay:
-        yield mocked_delay
+    ) as mocked_apply_sync:
+        yield mocked_apply_sync
