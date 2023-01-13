@@ -98,7 +98,10 @@ def test_processing_envelope(valid_user_client, unpause_queue):
     assert "Download envelope" in process_envelope[0].text
 
 
-def test_accept_envelope(valid_user_client):
+def test_accept_envelope(
+    mocked_publishing_models_send_emails_delay,
+    valid_user_client,
+):
     packaged_work_basket = factories.PackagedWorkBasketFactory(
         envelope=factories.EnvelopeFactory(),
     )
@@ -129,7 +132,10 @@ def test_accept_envelope(valid_user_client):
     )
 
 
-def test_reject_envelope(valid_user_client):
+def test_reject_envelope(
+    mocked_publishing_models_send_emails_delay,
+    valid_user_client,
+):
     packaged_work_basket = factories.PackagedWorkBasketFactory(
         envelope=factories.EnvelopeFactory(),
     )

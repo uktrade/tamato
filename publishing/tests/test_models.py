@@ -125,7 +125,9 @@ def test_notify_processing_failed(send_emails, loading_report_storage):
     )
 
 
-def test_success_processing_transition():
+def test_success_processing_transition(
+    mocked_publishing_models_send_emails_delay,
+):
     factories.PackagedWorkBasketFactory(
         envelope=factories.EnvelopeFactory(),
     )
