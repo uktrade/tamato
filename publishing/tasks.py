@@ -69,11 +69,13 @@ def schedule_create_xml_envelope_file(
     packaged_work_basket.
 
     If notify_when_done is True, then notification emails are sent after
-    envelope generation completes. If seconds_delay is set to a positive value,
-    then schdeuling is delayed by that number of seconds. This is useful when
-    scheduling envelope creation as part of the PackagedWorkBasket create
-    process in order to ensure instance creation has had sufficient time to
-    complete (the alternative would be a more complex use of signals).
+    envelope generation completes.
+
+    If seconds_delay is set to a positive value, then schdeuling is delayed by
+    that number of seconds. This is useful when scheduling envelope creation as
+    part of the PackagedWorkBasket create process in order to ensure instance
+    creation has had sufficient time to complete (the alternative would be a
+    more complex use of signals).
     """
 
     task = create_xml_envelope_file.apply_async(
