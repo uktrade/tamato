@@ -66,8 +66,9 @@
 
   {%- set envelope_id_cell_content %}
     {% if loop.index == 1 %}
-      {# TODO: Get dynamically generated next envelope ID. #}
-      220999
+      {% if obj.envelope and obj.envelope.envelope_id %}
+        {{ obj.envelope.envelope_id }}
+      {% endif %}
     {% endif %}
   {% endset -%}
 
@@ -85,7 +86,11 @@
   {%- set process_envelope_cell_content %}
     {% if loop.index == 1 %}
       {# First row. #}
-      {{ process_download_button(obj) }}
+      {% if obj.envelope and obj.envelope.envelope_id %}
+        {{ process_download_button(obj) }}
+      {% else %}
+        <span class="tamato-badge-light-grey">GENERATING ENVELOPE</span>
+      {% endif %}
     {% endif %}
   {% endset -%}
 
