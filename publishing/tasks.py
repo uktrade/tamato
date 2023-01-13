@@ -61,10 +61,23 @@ def create_xml_envelope_file(
 def schedule_create_xml_envelope_file(
     packaged_work_basket,
     notify_when_done: bool = True,
+    seconds_delay: int = 0,
 ):
-    task = create_xml_envelope_file.delay(
-        packaged_work_basket.pk,
-        notify_when_done,
+    """
+    Schedule creating and storing the envelope file and associating it with
+    packaged_work_basket.
+
+    If notify_when_done is True, then notification emails are sent after
+    envelope generation completes. If seconds_delay is set to a positive value,
+    then schdeuling is delayed by that number of seconds. This is useful when
+    scheduling envelope creation as part of the PackagedWorkBasket create
+    process in order to ensure instance creation has had sufficient time to
+    complete (the alternative would be a more complex use of signals).
+    """
+
+    task = create_xml_envelope_file.apply_async(
+        (packaged_work_basket.pk, notify_when_done),
+        countdown=seconds_delay,
     )
     logger.info(
         f"Creating XML envelope file for packaged_work_basket.id="
