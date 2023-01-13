@@ -407,7 +407,13 @@ class PackagedWorkBasket(TimestampedMixin):
         """Schedule the envelope generation process for the top-most (position
         1) instance."""
         top = cls.objects.get_top_awaiting()
-        schedule_create_xml_envelope_file(top)
+        if top:
+            schedule_create_xml_envelope_file(top)
+        else:
+            logging.info(
+                "Attempted to schedule top for envelope creation, but no top "
+                "exists.",
+            )
 
     # processing_state transition management.
 
