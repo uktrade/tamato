@@ -289,6 +289,8 @@ class PackagedWorkBasketQuerySet(QuerySet):
         )
 
     def max_position(self) -> int:
+        """Return the maxium position value of any PackagedWorkBasket
+        instance."""
         return PackagedWorkBasket.objects.aggregate(out=Max("position"))["out"]
 
     def get_top_awaiting(self):
