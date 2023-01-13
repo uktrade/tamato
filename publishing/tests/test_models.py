@@ -126,7 +126,9 @@ def test_notify_processing_failed(send_emails, loading_report_storage):
 
 
 def test_success_processing_transition():
-    factories.PackagedWorkBasketFactory()
+    factories.PackagedWorkBasketFactory(
+        envelope=factories.EnvelopeFactory(),
+    )
 
     packaged_work_basket = PackagedWorkBasket.objects.get(position=1)
     assert packaged_work_basket.position == 1
