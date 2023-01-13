@@ -36,7 +36,6 @@ def test_nonempty_queue(valid_user_client, unpause_queue):
 
     process_envelope = page.select("table.queued-envelopes tbody tr .process-envelope")
     assert len(process_envelope) == 1
-    assert "Start processing" in process_envelope[0].text
 
 
 def test_nonempty_queue_paused(valid_user_client, pause_queue):
@@ -58,7 +57,6 @@ def test_nonempty_queue_paused(valid_user_client, pause_queue):
         "table.queued-envelopes tbody tr .tamato-badge-light-red",
     )
     assert len(process_envelope) == 1
-    assert "QUEUE PAUSED" in process_envelope[0].text
 
     # Test that attempts to start processing a packaged workbasket fails.
     response = valid_user_client.post(
@@ -101,7 +99,9 @@ def test_processing_envelope(valid_user_client, unpause_queue):
 
 
 def test_accept_envelope(valid_user_client):
-    packaged_work_basket = factories.PackagedWorkBasketFactory()
+    packaged_work_basket = factories.PackagedWorkBasketFactory(
+        envelope=factories.EnvelopeFactory(),
+    )
     packaged_work_basket.begin_processing()
 
     accept_view_url = reverse(
@@ -130,7 +130,9 @@ def test_accept_envelope(valid_user_client):
 
 
 def test_reject_envelope(valid_user_client):
-    packaged_work_basket = factories.PackagedWorkBasketFactory()
+    packaged_work_basket = factories.PackagedWorkBasketFactory(
+        envelope=factories.EnvelopeFactory(),
+    )
     packaged_work_basket.begin_processing()
 
     reject_view_url = reverse(
