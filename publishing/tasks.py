@@ -51,6 +51,7 @@ def create_xml_envelope_file(
     from taric.models import Envelope
 
     packaged_work_basket.envelope = Envelope.new_envelope()
+    packaged_work_basket.save()
     # *** END
 
     # TODO: Consider chaining this task from schedule_create_xml_envelope_file().
