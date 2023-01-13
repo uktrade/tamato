@@ -244,7 +244,11 @@ class PackagedWorkBasketManager(models.Manager):
             not PackagedWorkBasket.objects.currently_processing()
             and new_obj == PackagedWorkBasket.objects.get_top_awaiting()
         ):
-            schedule_create_xml_envelope_file(new_obj)
+            schedule_create_xml_envelope_file(
+                packaged_work_basket=new_obj,
+                notify_when_done=True,
+                seconds_delay=2,
+            )
 
         return new_obj
 
