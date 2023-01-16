@@ -95,8 +95,9 @@ class QuotaList(QuotaMixin, TamatoListView):
     filterset_class = QuotaFilter
 
 
-class QuotaDetail(QuotaMixin, TrackedModelDetailView):
+class QuotaDetail(QuotaMixin, TrackedModelDetailView, SortingMixin):
     template_name = "quotas/detail.jinja"
+    sort_by_fields = ["goods_nomenclature"]
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -121,8 +122,14 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
             .first()
         )
 
-        context["measures"] = Measure.objects.filter(order_number=self.object).as_at(
-            date.today(),
+        order = self.get_ordering()
+        if not order:
+            order = "goods_nomenclature"
+
+        context["measures"] = (
+            Measure.objects.filter(order_number=self.object)
+            .as_at(date.today())
+            .order_by(order)
         )
         url_params = urlencode({"order_number": self.object.pk})
         context["measures_url"] = f"{reverse('measure-ui-list')}?{url_params}"
