@@ -18,6 +18,7 @@ from quotas import models
 from quotas import serializers
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
+from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
 from workbaskets.models import WorkBasket
@@ -103,6 +104,10 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView):
         definitions = self.object.definitions.current()
         current_definition = definitions.as_at_and_beyond(date.today()).first()
         context["current_definition"] = current_definition
+
+        context["quota_associations"] = QuotaAssociation.objects.filter(
+            main_quota=current_definition,
+        )
 
         context["blocking_period"] = (
             QuotaBlocking.objects.filter(quota_definition=current_definition)
