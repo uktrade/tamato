@@ -76,20 +76,54 @@ def test_nonempty_queue_paused(valid_user_client, pause_queue):
     assert not PackagedWorkBasket.objects.currently_processing()
 
 
-def test_processing_envelope(valid_user_client, unpause_queue):
-    packaged_work_basket = factories.PackagedWorkBasketFactory()
-    # packaged_work_basket.begin_processing()
+def test_start_processing(valid_user_client, unpause_queue):
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        packaged_work_basket_1 = factories.PackagedWorkBasketFactory(
+            envelope=factories.EnvelopeFactory(),
+        )
+
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        packaged_work_basket_2 = factories.PackagedWorkBasketFactory()
+
+    # Demonstrate that the queue begins in the expected state.
+    assert PackagedWorkBasket.objects.all_queued().count() == 2
+    assert packaged_work_basket_1.position == 1
+    assert (
+        packaged_work_basket_1.processing_state == ProcessingState.AWAITING_PROCESSING
+    )
+    assert packaged_work_basket_2.position == 2
+    assert (
+        packaged_work_basket_2.processing_state == ProcessingState.AWAITING_PROCESSING
+    )
 
     # Start processing the workbasket.
     response = valid_user_client.post(
         reverse("publishing:envelope-queue-ui-list"),
-        {"process_envelope": f"{packaged_work_basket.pk}"},
+        {"process_envelope": packaged_work_basket_1.pk},
     )
     assert response.status_code == 302
-    packaged_work_basket.refresh_from_db()
-    assert packaged_work_basket.processing_state == ProcessingState.CURRENTLY_PROCESSING
 
-    # Test that the envelope is showing as transitioned in the UI.
+    # Test that queued instances have been transitions correctly.
+    assert PackagedWorkBasket.objects.all_queued().count() == 2
+    packaged_work_basket_1.refresh_from_db()
+    assert packaged_work_basket_1.position == 0
+    assert (
+        packaged_work_basket_1.processing_state == ProcessingState.CURRENTLY_PROCESSING
+    )
+    packaged_work_basket_2.refresh_from_db()
+    assert packaged_work_basket_2.position == 1
+    assert (
+        packaged_work_basket_2.processing_state == ProcessingState.AWAITING_PROCESSING
+    )
+
+    # Test that the instance that has begun processing is correctly showing as
+    # transitioned in the UI.
     response = valid_user_client.get(
         reverse("publishing:envelope-queue-ui-list"),
     )
