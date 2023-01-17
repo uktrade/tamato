@@ -132,7 +132,7 @@ class ProcessingState(TextChoices):
 
     AWAITING_PROCESSING = (
         "AWAITING_PROCESSING",
-        "Reviewed and awaiting processing",
+        "Awaiting processing",
     )
     """Queued up and awaiting processing."""
     CURRENTLY_PROCESSING = (
