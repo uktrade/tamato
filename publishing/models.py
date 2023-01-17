@@ -204,6 +204,26 @@ def save_after(func):
     return inner
 
 
+def create_envelope_on_new_top(func):
+    def inner(self, *args, **kwargs):
+        if PackagedWorkBasket.objects.currently_processing():
+            # Envelopes are only generated when nothing is currently being
+            # processed, so just execute the wrapped function and then return.
+            return func(self, *args, **kwargs)
+
+        top_before = PackagedWorkBasket.objects.get_top_awaiting()
+
+        result = func(self, *args, **kwargs)
+
+        top_after = PackagedWorkBasket.objects.get_top_awaiting()
+        if top_before != top_after:
+            PackagedWorkBasket.create_envelope_for_top()
+
+        return result
+
+    return inner
+
+
 class PackagedWorkBasketManager(models.Manager):
     @atomic
     def create(self, workbasket, **kwargs):
@@ -247,7 +267,7 @@ class PackagedWorkBasketManager(models.Manager):
             schedule_create_xml_envelope_file(
                 packaged_work_basket=new_obj,
                 notify_when_done=True,
-                seconds_delay=2,
+                seconds_delay=1,
             )
 
         return new_obj
@@ -410,7 +430,11 @@ class PackagedWorkBasket(TimestampedMixin):
         1) instance."""
         top = cls.objects.get_top_awaiting()
         if top:
-            schedule_create_xml_envelope_file(top)
+            schedule_create_xml_envelope_file(
+                packaged_work_basket=top,
+                notify_when_done=True,
+                seconds_delay=1,
+            )
         else:
             logging.info(
                 "Attempted to schedule top for envelope creation, but no top "
@@ -647,6 +671,7 @@ class PackagedWorkBasket(TimestampedMixin):
     # Queue management.
 
     @atomic
+    @create_envelope_on_new_top
     def pop_top(self):
         """
         Pop the top-most instance, shuffling all remaining queued instances
@@ -670,6 +695,7 @@ class PackagedWorkBasket(TimestampedMixin):
         return self
 
     @atomic
+    @create_envelope_on_new_top
     def remove_from_queue(self):
         """
         Remove instance from the queue, shuffling all successive queued
@@ -697,6 +723,7 @@ class PackagedWorkBasket(TimestampedMixin):
         return self
 
     @atomic
+    @create_envelope_on_new_top
     def promote_to_top_position(self):
         """Promote the instance to the top position of the package processing
         queue so that it occupies position 1."""
@@ -716,6 +743,7 @@ class PackagedWorkBasket(TimestampedMixin):
         return self
 
     @atomic
+    @create_envelope_on_new_top
     def promote_position(self):
         """Promote the instance by one position up the package processing
         queue."""
@@ -735,6 +763,7 @@ class PackagedWorkBasket(TimestampedMixin):
         return self
 
     @atomic
+    @create_envelope_on_new_top
     def demote_position(self):
         """Demote the instance by one position down the package processing
         queue."""
