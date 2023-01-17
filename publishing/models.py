@@ -194,7 +194,18 @@ class LoadingReport(TimestampedMixin):
     )
 
 
+# Decorators
+
+
 def save_after(func):
+    """
+    Decorator used to save PackagedWorkBaskert instances after a state
+    transition.
+
+    This ensures a transitioned instance is always saved, which is necessary due
+    to the DB updates that occur as part of a transition.
+    """
+
     @atomic
     def inner(self, *args, **kwargs):
         result = func(self, *args, **kwargs)
@@ -205,6 +216,16 @@ def save_after(func):
 
 
 def create_envelope_on_new_top(func):
+    """
+    Decorator used to wrap functions that may change the top-most
+    PackagedWorkBasket.
+
+    When a when the top-most instance is changed and no other PackagedWorkBasket
+    is being processed (i.e. having processing state CURRENTLY_PROCESSING) then
+    this decorator will schedule envelope creation for the new top-most
+    instance.
+    """
+
     def inner(self, *args, **kwargs):
         if PackagedWorkBasket.objects.currently_processing():
             # Envelopes are only generated when nothing is currently being
@@ -222,6 +243,32 @@ def create_envelope_on_new_top(func):
         return result
 
     return inner
+
+
+def skip_notifications_if_disabled(func):
+    """Decorator used to wrap notification issuing functions, ensuring
+    notifications are not sent when settings.ENABLE_PACKAGING_NOTIFICATIONS is
+    False."""
+
+    def inner(self, *args, **kwargs):
+        if not settings.ENABLE_PACKAGING_NOTIFICATIONS:
+            logger.info(
+                "Skipping ready for processing notifications - "
+                "settings.ENABLE_PACKAGING_NOTIFICATIONS="
+                f"{settings.ENABLE_PACKAGING_NOTIFICATIONS}",
+            )
+            return
+        logger.info(
+            "Sending ready for processing notifications - "
+            "settings.ENABLE_PACKAGING_NOTIFICATIONS=",
+            f"{settings.ENABLE_PACKAGING_NOTIFICATIONS}",
+        )
+        return func(self, *args, **kwargs)
+
+    return inner
+
+
+# Model Managers.
 
 
 class PackagedWorkBasketManager(models.Manager):
@@ -273,6 +320,9 @@ class PackagedWorkBasketManager(models.Manager):
         return new_obj
 
 
+# QuerySets.
+
+
 class PackagedWorkBasketQuerySet(QuerySet):
     def awaiting_processing(self) -> "PackagedWorkBasketQuerySet":
         """Return all PackagedWorkBasket instances whose processing_state is set
@@ -322,6 +372,9 @@ class PackagedWorkBasketQuerySet(QuerySet):
             position=1,
         )
         return top.first() if top else None
+
+
+# Models.
 
 
 class PackagedWorkBasket(TimestampedMixin):
@@ -574,6 +627,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     # Notification management.
 
+    @skip_notifications_if_disabled
     def notify_ready_for_processing(self):
         """
         Notify users that an envelope is ready to download and process.
@@ -583,17 +637,11 @@ class PackagedWorkBasket(TimestampedMixin):
         (see `publishing.tasks.create_xml_envelope_file()`).
         """
 
-        if not settings.ENABLE_PACKAGING_NOTIFICATIONS:
-            logger.info(
-                "Skipping 'notify ready for processing' - "
-                "settings.ENABLE_PACKAGING_NOTIFICATIONS=False",
-            )
-            return
-
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
-            "download_url": settings.BASE_SERVICE_URL
-            + reverse("publishing:envelope-queue-ui-list"),
+            "download_url": (
+                settings.BASE_SERVICE_URL + reverse("publishing:envelope-queue-ui-list")
+            ),
             "theme": self.theme,
             "eif": self.eif if self.eif else "Immediately",
             "jira_url": self.jira_url,
@@ -603,6 +651,7 @@ class PackagedWorkBasket(TimestampedMixin):
             personalisation=personalisation,
         )
 
+    @skip_notifications_if_disabled
     def notify_processing_succeeded(self):
         """
         Notify users that envelope processing has been succeeded for this.
@@ -631,6 +680,7 @@ class PackagedWorkBasket(TimestampedMixin):
             personalisation=personalisation,
         )
 
+    @skip_notifications_if_disabled
     def notify_processing_failed(self):
         """Notify users that envelope processing has been failed - HMRC systems
         rejected this instances associated envelope file."""
