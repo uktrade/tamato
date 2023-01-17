@@ -1140,7 +1140,7 @@ MeasureDeleteForm = delete_form_for(models.Measure)
 
 class MeasureEndDateForm(forms.Form):
     end_date = DateInputFieldFixed(
-        label="EIF date",
+        label="End date",
         help_text="For example, 27 3 2008",
     )
 
