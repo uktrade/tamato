@@ -1,3 +1,7 @@
+from unittest.mock import MagicMock
+from unittest.mock import patch
+
+import factory
 import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
@@ -136,16 +140,37 @@ def test_reject_envelope(
     mocked_publishing_models_send_emails_delay,
     valid_user_client,
 ):
-    packaged_work_basket = factories.PackagedWorkBasketFactory(
-        envelope=factories.EnvelopeFactory(),
-    )
-    packaged_work_basket.begin_processing()
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        packaged_work_basket_1 = factories.PackagedWorkBasketFactory(
+            envelope=factories.EnvelopeFactory(),
+        )
 
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        packaged_work_basket_2 = factories.PackagedWorkBasketFactory()
+
+    # Demonstrate that packaged workbasket transitions correctly.
+    assert packaged_work_basket_1.position == 1
+    assert (
+        packaged_work_basket_1.processing_state == ProcessingState.AWAITING_PROCESSING
+    )
+    packaged_work_basket_1.begin_processing()
+    packaged_work_basket_1.refresh_from_db()
+    assert packaged_work_basket_1.position == 0
+    assert (
+        packaged_work_basket_1.processing_state == ProcessingState.CURRENTLY_PROCESSING
+    )
+
+    # Get the form view and ensure it renders correctly.
     reject_view_url = reverse(
         "publishing:reject-envelope-ui-detail",
-        kwargs={"pk": packaged_work_basket.pk},
+        kwargs={"pk": packaged_work_basket_1.pk},
     )
-    # Get the form view and ensure it renders correctly.
     response = valid_user_client.get(reject_view_url)
     page = BeautifulSoup(
         response.content.decode(response.charset),
@@ -154,11 +179,20 @@ def test_reject_envelope(
     reject_envelope = page.select("h1")
     assert "Reject envelope" in reject_envelope[0].text
 
-    # Submit the form and test the packaged workbasket has transitioned correctly.
+    # Submit the form and test the queued packaged workbaskets have transitioned
+    # correctly.
     response = valid_user_client.post(
         reject_view_url,
         {"report_file": "", "comments": "Test comments."},
     )
     assert response.status_code == 302
-    packaged_work_basket.refresh_from_db()
-    assert packaged_work_basket.processing_state == ProcessingState.FAILED_PROCESSING
+
+    packaged_work_basket_1.refresh_from_db()
+    assert packaged_work_basket_1.position == 0
+    assert packaged_work_basket_1.processing_state == ProcessingState.FAILED_PROCESSING
+
+    packaged_work_basket_2.refresh_from_db()
+    assert packaged_work_basket_2.position == 1
+    assert (
+        packaged_work_basket_2.processing_state == ProcessingState.AWAITING_PROCESSING
+    )
