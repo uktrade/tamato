@@ -413,7 +413,11 @@ def test_quota_detail_blocking_periods_tab(
         assert value in rows[i].text
 
 
-def test_quota_detail_suspension_periods_tab(valid_user_client, date_ranges):
+def test_quota_detail_suspension_periods_tab(
+    valid_user_client,
+    date_ranges,
+    mock_quota_api_no_data,
+):
     quota_order_number = factories.QuotaOrderNumberFactory()
     current_definition = factories.QuotaDefinitionFactory.create(
         order_number=quota_order_number,
