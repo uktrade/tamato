@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from crispy_forms_gds.helper import FormHelper
@@ -1145,6 +1146,7 @@ class MeasureEndDateForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        self.selected_measures = kwargs.pop("selected_measures", None)
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
@@ -1159,3 +1161,22 @@ class MeasureEndDateForm(forms.Form):
                 data_prevent_double_click="true",
             ),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if "end_date" in cleaned_data:
+            for measure in self.selected_measures:
+                year = int(cleaned_data["end_date"].year)
+                month = int(cleaned_data["end_date"].month)
+                day = int(cleaned_data["end_date"].day)
+
+                lower = measure.valid_between.lower
+                upper = datetime.date(year, month, day)
+                if lower > upper:
+                    raise ValidationError(
+                        f"The end date cannot be before the start date: "
+                        f"{lower} does not start before {upper}",
+                    )
+
+        return cleaned_data
