@@ -32,16 +32,27 @@ class CustomProcessingStateFilter(admin.SimpleListFilter):
 
 class PackagedWorkBasketAdmin(admin.ModelAdmin):
     list_display = (
-        "pk",
+        "id",
         "position",
         "processing_state",
-        "workbasket",
+        "workbasket_id",
+        "workbasket_title",
     )
     list_filter = (
         CustomProcessingStateFilter,
         "processing_state",
     )
     ordering = ["position"]
+
+    def workbasket_id(self, obj):
+        if not obj.workbasket:
+            return "Missing workbasket!"
+        return obj.workbasket.id
+
+    def workbasket_title(self, obj):
+        if not obj.workbasket:
+            return "Missing workbasket!"
+        return obj.workbasket.title
 
 
 admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
