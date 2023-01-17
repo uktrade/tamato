@@ -260,7 +260,7 @@ def skip_notifications_if_disabled(func):
             return
         logger.info(
             "Sending ready for processing notifications - "
-            "settings.ENABLE_PACKAGING_NOTIFICATIONS=",
+            "settings.ENABLE_PACKAGING_NOTIFICATIONS="
             f"{settings.ENABLE_PACKAGING_NOTIFICATIONS}",
         )
         return func(self, *args, **kwargs)
