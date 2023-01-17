@@ -31,16 +31,8 @@ async def async_get_all(urls):
         return await asyncio.gather(*[async_get(url, session) for url in urls])
 
 
-def get_quota_definitions_data(order_number, object_list):
-    """
-    Since the API does not return all definition periods past and future from
-    one endpoint we need to make multiple requests with different params.
-
-    We use the quota order number and start date of each of its definition
-    periods to build urls to get the data for all of them.
-    """
-
-    definition_params = [
+def build_urls(order_number, object_list):
+    params = [
         {
             "order_number": order_number,
             "year": d.valid_between.lower.year,
@@ -49,11 +41,10 @@ def get_quota_definitions_data(order_number, object_list):
         }
         for d in object_list
     ]
+    return [f"{QUOTAS}?{urlencode(p)}" for p in params]
 
-    urls = [f"{QUOTAS}?{urlencode(params)}" for params in definition_params]
 
-    data = asyncio.run(async_get_all(urls))
-
+def serialize_quota_data(data):
     json_data = [
         json["data"][0]["attributes"] for json in data if json and json["data"]
     ]
@@ -67,3 +58,19 @@ def get_quota_definitions_data(order_number, object_list):
     }
 
     return serialized
+
+
+def get_quota_definitions_data(order_number, object_list):
+    """
+    Since the API does not return all definition periods past and future from
+    one endpoint we need to make multiple requests with different params.
+
+    We use the quota order number and start date of each of its definition
+    periods to build urls to get the data for all of them.
+    """
+
+    urls = build_urls(order_number, object_list)
+
+    data = asyncio.run(async_get_all(urls))
+
+    return serialize_quota_data(data)
