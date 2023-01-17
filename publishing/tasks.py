@@ -38,8 +38,10 @@ def create_xml_envelope_file(
         pk=packaged_work_basket_id,
     )
 
-    Envelope.objects.create(packaged_work_basket=packaged_work_basket)
-    # TODO: Dump workbasket transactions to XML envelope file and save to S3.
+    packaged_work_basket.envelope = Envelope.objects.create(
+        packaged_work_basket=packaged_work_basket
+        )
+    packaged_work_basket.save()
 
     if notify_when_done:
         packaged_work_basket.notify_ready_for_processing()

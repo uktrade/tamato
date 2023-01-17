@@ -187,10 +187,11 @@ class EnvelopeQueueView(
         return request.build_absolute_uri()
 
 
-class DownloadQueuedEnvelopeView(PermissionRequiredMixin, View):
+class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DetailView):
     """View used to download an XML envelope."""
 
     permission_required = "common.add_trackedmodel"
+    model = PackagedWorkBasket
 
     def get(self, request, *args, **kwargs):
         # TODO:
@@ -198,15 +199,11 @@ class DownloadQueuedEnvelopeView(PermissionRequiredMixin, View):
 
         from django.http import HttpResponse
 
-        file_content = (
-            '<?xml version="1.0" encoding="UTF-8"?>'
-            "<env:envelope "
-            'xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" '
-            'xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" '
-            'id="220999"'
-            "></env:envelope>"
-        )
-        file_name = "DIT220999.xml"
+        packaged_workbasket = self.get_object()
+        
+        envelope = packaged_workbasket.envelope
+        file_content = envelope.xml_file.read()
+        file_name = f"DIT{envelope.envelope_id}.xml"
 
         response = HttpResponse(file_content)
         response["content-type"] = "text/xml"

@@ -1,7 +1,7 @@
 import os
 import logging
 import tempfile
-from datetime import date
+from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -220,9 +220,9 @@ class EnvelopeQuerySet(QuerySet):
         Limitation:  This queries envelope_id which only stores two digit dates.
         """
         if year is None:
-            now = date.today()
+            now = datetime.today()
         else:
-            now = date(year, 1, 1)
+            now = datetime(year, 1, 1)
 
         return self.filter(envelope_id__regex=rf"{now:%y}\d{{4}}").order_by(
             "envelope_id",
@@ -250,7 +250,7 @@ def to_hmrc(instance: "Envelope", filename: str):
     return str(filename)
 class Envelope(models.Model):
     """
-    Represents a TARIC3 envelope.
+    Represents an automated packaged envelope.
     An Envelope contains one or more Transactions, listing changes to be applied
     to the tariff in the sequence defined by the transaction IDs.
     """
@@ -269,16 +269,14 @@ class Envelope(models.Model):
     @classmethod
     def next_envelope_id(cls):
         """ Get packaged workbaskets where proc state SUCCESS
-        Envelope.objects.envelopes_by_year().filter(
-            packagedworkbaskets__processing_state==ProcessingState.SUCCESSFULLY_PROCESSED
-        ).last() """
+       """
         envelope = Envelope.objects.envelopes_by_year().filter(
             packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED
         ).last()
 
         if envelope is None:
             # First envelope of the year.
-            now = date.today()
+            now = datetime.today()
             counter = 1
         else:
             year = int(envelope.envelope_id[:2])
@@ -289,7 +287,7 @@ class Envelope(models.Model):
                     "Cannot create more than 9999 Envelopes on a single year.",
                 )
 
-            now = date(year, 1, 1)
+            now = datetime(year, 1, 1)
 
         return f"{now:%y}{counter:04d}"
 
