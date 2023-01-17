@@ -72,10 +72,10 @@ def schedule_create_xml_envelope_file(
     envelope generation completes.
 
     If seconds_delay is set to a positive value, then schdeuling is delayed by
-    that number of seconds. This is useful when scheduling envelope creation as
-    part of the PackagedWorkBasket create process in order to ensure instance
-    creation has had sufficient time to complete (the alternative would be a
-    more complex use of signals).
+    that number of seconds. This seems to be necessary when scheduling in the
+    same process context as a database save / update operationi (for instance
+    when creating a new top-most PackagedWorkBasket instance), since otherwise
+    the operation can fail.
     """
 
     task = create_xml_envelope_file.apply_async(
