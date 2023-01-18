@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 import boto3
 import pytest
+from aioresponses import aioresponses
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -40,6 +41,7 @@ from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
 from common.serializers import TrackedModelSerializer
+from common.tariffs_api import QUOTAS
 from common.tests import factories
 from common.tests.models import model_with_history
 from common.tests.util import Dates
@@ -1346,3 +1348,55 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture()
 def quota_order_number():
     return factories.QuotaOrderNumberFactory()
+
+
+@pytest.fixture
+def mock_quota_api_no_data(requests_mock):
+    yield requests_mock.get(url=QUOTAS, json={})
+
+
+@pytest.fixture
+def quotas_json():
+    return {
+        "data": [
+            {
+                "id": "12345",
+                "type": "definition",
+                "attributes": {
+                    "quota_definition_sid": "12345",
+                    "quota_order_number_id": "12345",
+                    "initial_volume": "78849000.0",
+                    "validity_start_date": "2023-01-01T00:00:00.000Z",
+                    "validity_end_date": "2023-03-31T23:59:59.000Z",
+                    "status": "Open",
+                    "description": None,
+                    "balance": "76766532.891",
+                    "measurement_unit": "Kilogram (kg)",
+                    "monetary_unit": None,
+                    "measurement_unit_qualifier": None,
+                    "last_allocation_date": "2023-01-10T00:00:00Z",
+                    "suspension_period_start_date": None,
+                    "suspension_period_end_date": None,
+                    "blocking_period_start_date": None,
+                    "blocking_period_end_date": None,
+                },
+                "relationships": {
+                    "incoming_quota_closed_and_transferred_event": {"data": None},
+                    "order_number": {"data": {"id": "1234", "type": "order_number"}},
+                    "measures": {
+                        "data": [
+                            {"id": "1234", "type": "measure"},
+                        ],
+                    },
+                    "quota_balance_events": {},
+                },
+            },
+        ],
+        "meta": {"pagination": {"page": 1, "per_page": 5, "total_count": 1}},
+    }
+
+
+@pytest.fixture
+def mock_aioresponse():
+    with aioresponses() as m:
+        yield m

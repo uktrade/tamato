@@ -782,8 +782,8 @@ class QuotaDefinitionFactory(TrackedModelMixin, ValidityFactoryMixin):
         QuotaOrderNumberFactory,
         valid_between=factory.SelfAttribute("..valid_between"),
     )
-    volume = 0
-    initial_volume = 0
+    volume = Decimal("0.000")
+    initial_volume = Decimal("0.000")
     monetary_unit = None
     measurement_unit = None
     measurement_unit_qualifier = None

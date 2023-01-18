@@ -1,11 +1,13 @@
+{% from "components/sort_by.jinja" import sort_by %}
+
 {% set table_rows = [] %}
 {% for object in measures %}
-  {% set measure_link -%}
+  {% set measure_link %}
     <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('measure-ui-detail', args=[object.sid]) }}">{{ object.sid }}</a>
-  {%- endset %}
-  {% set commodity_link -%}
+  {% endset %}
+  {% set commodity_link %}
     <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', args=[object.goods_nomenclature.sid]) }}">{{ object.goods_nomenclature.item_id|wordwrap(2) }}</a>
-  {%- endset %}
+  {% endset %}
   {{ table_rows.append([
     {"html": measure_link},
     {"html": commodity_link},
@@ -14,6 +16,11 @@
   ]) or "" }}
 {% endfor %}
 
+{% set base_url = url('quota-ui-detail', args=[object.sid]) %}
+
+{% set commodity_code %}
+  {{ sort_by(request, "goods_nomenclature", "Commodity code", base_url, "#measures") }}
+{% endset %}
 
 <div class="quota__measures govuk-grid-row">
     <div class="quota__measures__content govuk-grid-column-three-quarters">
@@ -23,7 +30,7 @@
         {{ govukTable({
             "head": [
                 {"text": "Measure SID"},
-                {"text": "Commodity code"},
+                {"text": commodity_code},
                 {"text": "Start date"},
                 {"text": "End date"},
             ],

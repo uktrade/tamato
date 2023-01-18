@@ -1,3 +1,4 @@
+import datetime
 from itertools import groupby
 from operator import attrgetter
 from typing import Any
@@ -21,6 +22,7 @@ from rest_framework.reverse import reverse
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -87,7 +89,7 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
     def form_valid(self, form):
         store = SessionStore(
             self.request,
-            "DELETE_MEASURE_SELECTIONS",
+            "MULTIPLE_MEASURE_SELECTIONS",
         )
         # clear the store here before adding items
         # in case there was a previous form in progress that was abandoned
@@ -103,7 +105,13 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
             }
             store.add_items(object_pks)
 
-        url = reverse("measure-ui-delete-multiple")
+        if form.data["form-action"] == "remove-selected":
+            url = reverse("measure-ui-delete-multiple")
+        elif form.data["form-action"] == "edit-selected":
+            url = reverse("measure-ui-edit-multiple-end-date")
+        else:
+            url = reverse("measure-ui-list")
+
         return HttpResponseRedirect(url)
 
 
@@ -580,7 +588,7 @@ class MeasureMultipleDelete(TemplateView, ListView):
 
         return SessionStore(
             self.request,
-            "DELETE_MEASURE_SELECTIONS",
+            "MULTIPLE_MEASURE_SELECTIONS",
         )
 
     def get_queryset(self):
@@ -610,5 +618,61 @@ class MeasureMultipleDelete(TemplateView, ListView):
             )
         session_store = self._session_store()
         session_store.clear()
+
+        return redirect(reverse("measure-ui-list"))
+
+
+class MeasureMultipleEndDateEdit(FormView, ListView):
+    """UI for user edit and review of multiple measure end dates."""
+
+    template_name = "measures/edit-multiple-measures-enddates.jinja"
+    form_class = forms.MeasureEndDateForm
+
+    def _session_store(self):
+        """Get the session store to store the measures that will be edited."""
+
+        return SessionStore(
+            self.request,
+            "MULTIPLE_MEASURE_SELECTIONS",
+        )
+
+    def get_queryset(self):
+        """Get the measures that are candidates for editing."""
+        store = self._session_store()
+        return Measure.objects.filter(pk__in=store.data.keys())
+
+    def get_context_data(self, **kwargs):
+        store_objects = self.get_queryset()
+        self.object_list = store_objects
+        context = super().get_context_data(**kwargs)
+
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["selected_measures"] = self.get_queryset()
+        return kwargs
+
+    def form_valid(self, form):
+        if self.request.POST.get("submit", None) != "Save measure end dates":
+            # The user has cancelled out of the editing process.
+            return redirect("home")
+
+        selected_measures = self.get_queryset()
+        for measure in selected_measures:
+            measure.new_version(
+                workbasket=WorkBasket.current(self.request),
+                update_type=UpdateType.UPDATE,
+                valid_between=TaricDateRange(
+                    lower=measure.valid_between.lower,
+                    upper=datetime.date(
+                        form.cleaned_data["end_date"].year,
+                        form.cleaned_data["end_date"].month,
+                        form.cleaned_data["end_date"].day,
+                    ),
+                ),
+            )
+            session_store = self._session_store()
+            session_store.clear()
 
         return redirect(reverse("measure-ui-list"))
