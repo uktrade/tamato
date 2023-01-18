@@ -7,6 +7,8 @@ from rest_framework import permissions
 from rest_framework import viewsets
 
 from common.serializers import AutoCompleteSerializer
+from common.tariffs_api import get_quota_data
+from common.tariffs_api import get_quota_definitions_data
 from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -98,10 +100,18 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView, SortingMixin):
     template_name = "quotas/detail.jinja"
     sort_by_fields = ["goods_nomenclature"]
 
+    @property
+    def quota_data(self):
+        data = get_quota_data(self.object.order_number)
+        if not data or data["meta"]["pagination"]["total_count"] == 0:
+            return None
+        return data.get("data")[0]
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
         definitions = self.object.definitions.current()
+
         current_definition = definitions.as_at_and_beyond(date.today()).first()
         context["current_definition"] = current_definition
 
@@ -116,6 +126,8 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView, SortingMixin):
             .as_at_and_beyond(date.today())
             .first()
         )
+
+        context["quota_data"] = self.quota_data
 
         order = self.get_ordering()
         if not order:
@@ -144,11 +156,17 @@ class QuotaDefinitionList(SortingMixin, ListView):
         return super().get_queryset()
 
     @property
+    def quota_data(self):
+        return get_quota_definitions_data(self.quota.order_number, self.object_list)
+
+    @property
     def quota(self):
         return models.QuotaOrderNumber.objects.get(sid=self.kwargs["sid"])
 
     def get_context_data(self, *args, **kwargs):
-        return super().get_context_data(quota=self.quota, *args, **kwargs)
+        return super().get_context_data(
+            quota=self.quota, quota_data=self.quota_data, *args, **kwargs
+        )
 
 
 class QuotaDelete(QuotaMixin, TrackedModelDetailMixin, CreateTaricDeleteView):

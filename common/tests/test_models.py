@@ -387,7 +387,11 @@ def test_get_description_dates(description_factory, date_ranges):
     assert future == future_description
 
 
-def test_trackedmodel_get_url(trackedmodel_factory, valid_user_client):
+def test_trackedmodel_get_url(
+    trackedmodel_factory,
+    valid_user_client,
+    mock_quota_api_no_data,
+):
     """Verify get_url() returns something sensible and doesn't crash."""
     instance = trackedmodel_factory.create()
     url = instance.get_url()
