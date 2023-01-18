@@ -1,7 +1,10 @@
 {% set table_rows = [] %}
 {% for quota_association in quota_associations %}
   {% set sub_quota_link %}
-    <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('quota-ui-detail', args=[quota_association.sub_quota.order_number.sid]) }}">{{ quota_association.sub_quota.order_number }}</a>
+    <a class="govuk-link govuk-!-font-weight-bold"
+      href="{{ url('quota-ui-detail', args=[quota_association.sub_quota.order_number.sid]) }}">
+      {{ quota_association.sub_quota.order_number }}
+    </a>
   {% endset %}
   {{ table_rows.append([
     {"html": sub_quota_link},
@@ -28,3 +31,4 @@
     </div>
     {% include "includes/quotas/actions.jinja"%}
 </div>
+
