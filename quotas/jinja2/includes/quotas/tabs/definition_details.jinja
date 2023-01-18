@@ -15,6 +15,11 @@
                         "actions": {"items": []}
                     },
                     {
+                        "key": {"text": "Definition period status"},
+                        "value": {"text": quota_data.attributes.status if quota_data else "-" },
+                        "actions": {"items": []}
+                    },
+                    {
                         "key": {"text": "Start date"},
                         "value": {"text": "{:%d %b %Y}".format(current_definition.valid_between.lower) },
                         "actions": {"items": []}
@@ -32,6 +37,11 @@
                     {
                         "key": {"text": "Volume"},
                         "value": {"text": intcomma(current_definition.volume) },
+                        "actions": {"items": []}
+                    },
+                    {
+                        "key": {"text": "Remaining balance"},
+                        "value": {"text": intcomma(quota_data.attributes.balance) if quota_data else "-" },
                         "actions": {"items": []}
                     },
                     {
@@ -56,9 +66,9 @@
                     },
                 ]
             })}}
-        {% else %}
-            <p class="govuk-body">No active or upcoming quota definition.</p>
-        {% endif %}
+    {% else %}
+        <p class="govuk-body">No active or upcoming quota definition.</p>
+    {% endif %}
     </div>
     {% include "includes/quotas/actions.jinja"%}
 </div>
