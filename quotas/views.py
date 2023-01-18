@@ -116,7 +116,9 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView, SortingMixin):
         current_definition = definitions.as_at_and_beyond(date.today()).first()
         context["current_definition"] = current_definition
 
-        context["quota_associations"] = QuotaAssociation.objects.filter(
+        context[
+            "quota_associations"
+        ] = QuotaAssociation.objects.latest_approved().filter(
             main_quota=current_definition,
         )
 
