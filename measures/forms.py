@@ -1174,9 +1174,11 @@ class MeasureEndDateForm(forms.Form):
                 lower = measure.valid_between.lower
                 upper = datetime.date(year, month, day)
                 if lower > upper:
+                    formatted_lower = lower.strftime("%d/%m/%Y")
+                    formatted_upper = upper.strftime("%d/%m/%Y")
                     raise ValidationError(
                         f"The end date cannot be before the start date: "
-                        f"{lower} does not start before {upper}",
+                        f"Start date {formatted_lower} does not start before {formatted_upper}",
                     )
 
         return cleaned_data

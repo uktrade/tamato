@@ -676,33 +676,3 @@ class MeasureMultipleEndDateEdit(FormView, ListView):
             session_store.clear()
 
         return redirect(reverse("measure-ui-list"))
-
-    # def post(self, request):
-    #     if request.POST.get("submit", None) != "Save measure end dates":
-    #         # The user has cancelled out of the editing process.
-    #         return redirect("home")
-
-    #     object_list = self.get_queryset()
-
-    #     for obj in object_list:
-    #         # make a new version of the object with an update type of update, pass in the new end date.
-    #         end_year = int(request.POST["end_date_2"])
-    #         end_month = int(request.POST["end_date_1"])
-    #         end_day = int(request.POST["end_date_0"])
-
-    #         lower = obj.valid_between.lower
-    #         upper = datetime.date(end_year, end_month, end_day)
-
-    #         if upper >= lower:
-    #             obj.new_version(
-    #                 workbasket=WorkBasket.current(request),
-    #                 update_type=UpdateType.UPDATE,
-    #                 valid_between=TaricDateRange(
-    #                     lower=obj.valid_between.lower,
-    #                     upper=datetime.date(end_year, end_month, end_day),
-    #                 ),
-    #             )
-    #     session_store = self._session_store()
-    #     session_store.clear()
-
-    #     return redirect(reverse("measure-ui-list"))
