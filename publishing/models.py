@@ -644,6 +644,7 @@ class PackagedWorkBasket(TimestampedMixin):
             ),
             "theme": self.theme,
             "eif": self.eif if self.eif else "Immediately",
+            "embargo": self.embargo if self.embargo else "None",
             "jira_url": self.jira_url,
         }
         send_emails.delay(
