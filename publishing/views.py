@@ -9,7 +9,6 @@ from django.urls import reverse
 from django.views.generic import CreateView
 from django.views.generic import DetailView
 from django.views.generic import ListView
-from django.views.generic import View
 from django_fsm import TransitionNotAllowed
 
 from common.views import WithPaginationListMixin
@@ -200,7 +199,7 @@ class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DetailView):
         from django.http import HttpResponse
 
         packaged_workbasket = self.get_object()
-        
+
         envelope = packaged_workbasket.envelope
         file_content = envelope.xml_file.read()
         file_name = f"DIT{envelope.envelope_id}.xml"

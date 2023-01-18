@@ -312,7 +312,10 @@ TIME_ZONE = "Europe/London"
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
 # Envelope AWS settings (override the defaults)
-ENVELOPE_STORAGE_BUCKET_NAME = os.environ.get("ENVELOPE_STORAGE_BUCKET_NAME", "envelope")
+ENVELOPE_STORAGE_BUCKET_NAME = os.environ.get(
+    "ENVELOPE_STORAGE_BUCKET_NAME",
+    "envelope",
+)
 ENVELOPE_STORAGE_DIRECTORY = os.environ.get("ENVELOPE_STORAGE_DIRECTORY", "staging/")
 # Loading reports AWS settings
 S3_ACCESS_KEY_ID = os.environ.get(

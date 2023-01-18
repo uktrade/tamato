@@ -1,10 +1,12 @@
-import os
 import logging
+import os
 import tempfile
 from datetime import datetime
+from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import F
 from django.db.models import Max
@@ -16,24 +18,21 @@ from django.db.models.functions import Coalesce
 from django.db.transaction import atomic
 from django_fsm import FSMField
 from django_fsm import transition
-from django.core.files.base import ContentFile
-from django.conf import settings
-from typing import Optional
-from pathlib import Path
 from lxml import etree
 
-
-from publishing.storages import EnvelopeStorage
 from common.models.mixins import TimestampedMixin
+from common.serializers import validate_envelope
+from exporter.serializers import MultiFileEnvelopeTransactionSerializer
+from exporter.util import dit_file_generator
 from notifications.models import NotificationLog
+from publishing.storages import EnvelopeStorage
+from taric import validators
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
-from taric import validators
-from exporter.util import dit_file_generator
-from exporter.serializers import MultiFileEnvelopeTransactionSerializer
-from common.serializers import validate_envelope
 
 logger = logging.getLogger(__name__)
+
+
 class OperationalStatusQuerySet(QuerySet):
     def current_status(self):
         return self.order_by("pk").last()
@@ -134,11 +133,14 @@ class PackagedWorkBasketInvalidQueueOperation(Exception):
 class EnvelopeCurrentlyProccessing(Exception):
     pass
 
+
 class EnvelopeInvalidQueuePosition(Exception):
     pass
 
+
 class WorkBasketNoTransactions(Exception):
     pass
+
 
 class ProcessingState(TextChoices):
     """Processing states of PackagedWorkBasket instances."""
@@ -187,10 +189,17 @@ class ProcessingState(TextChoices):
 
 
 class EnvelopeManager(models.Manager):
-
     @atomic
-    def create(self,packaged_work_basket, **kwargs):
-        """Create a new instance, from the packaged workbasket at the front of the queue"""
+    def create(self, packaged_work_basket, **kwargs):
+        """
+        Create a new instance, from the packaged workbasket at the front of the
+        queue.
+
+         :param packaged_work_basket: packaged workbasket to upload.
+        @throws EnvelopeCurrentlyProccessing if an envelope is currently being processed
+        @throws EnvelopeInvalidQueuePosition if the packaged workbasket is not
+        a the front of the queue
+        """
         currently_processing = PackagedWorkBasket.objects.currently_processing()
         if currently_processing:
             raise EnvelopeCurrentlyProccessing(
@@ -204,18 +213,19 @@ class EnvelopeManager(models.Manager):
                 f"({packaged_work_basket.workbasket}) is not at the front of the queue",
             )
 
-        envelope_id =  Envelope.next_envelope_id()
+        envelope_id = Envelope.next_envelope_id()
         envelope = super().create(envelope_id=envelope_id, **kwargs)
         envelope.upload_envelope(
-            packaged_work_basket.workbasket
+            packaged_work_basket.workbasket,
         )
-        #envelope.save()
         return envelope
+
 
 class EnvelopeQuerySet(QuerySet):
     def envelopes_by_year(self, year: Optional[int] = None):
         """
         Return all envelopes for a year, defaulting to this year.
+
         :param year: int year, defaults to this year.
         Limitation:  This queries envelope_id which only stores two digit dates.
         """
@@ -245,14 +255,14 @@ class EnvelopeId(models.CharField):
         del kwargs["validators"]
         return name, path, args, kwargs
 
-def to_hmrc(instance: "Envelope", filename: str):
-    """Generate the filepath to upload to s3."""
-    return str(filename)
+
 class Envelope(models.Model):
     """
     Represents an automated packaged envelope.
+
     An Envelope contains one or more Transactions, listing changes to be applied
-    to the tariff in the sequence defined by the transaction IDs.
+    to the tariff in the sequence defined by the transaction IDs. Contains
+    xml_file which is a reference to the envelope stored on s3
     """
 
     class Meta:
@@ -263,16 +273,19 @@ class Envelope(models.Model):
     )()
 
     envelope_id = EnvelopeId()
-    xml_file = models.FileField(storage=EnvelopeStorage, upload_to=to_hmrc,  default='')
+    xml_file = models.FileField(storage=EnvelopeStorage, default="")
     created_date = models.DateTimeField(auto_now_add=True, editable=False, null=True)
 
     @classmethod
     def next_envelope_id(cls):
-        """ Get packaged workbaskets where proc state SUCCESS
-       """
-        envelope = Envelope.objects.envelopes_by_year().filter(
-            packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED
-        ).last()
+        """Get packaged workbaskets where proc state SUCCESS."""
+        envelope = (
+            Envelope.objects.envelopes_by_year()
+            .filter(
+                packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+            )
+            .last()
+        )
 
         if envelope is None:
             # First envelope of the year.
@@ -297,10 +310,11 @@ class Envelope(models.Model):
         workbasket,
     ):
         """
-        Upload Envelope data to the the s3 and return artifacts for the database.
-        Side effects on success:
-        Create Xml file and upload envelope XML to an S3 object.
-        :return: xml_file
+        Upload Envelope data to the s3 bucket and return artifacts for the
+        database.
+
+        Side effects on success: Create Xml file and upload envelope XML to an
+        S3 object.
         """
 
         filename = f"DIT{str(self.envelope_id)}.xml"
@@ -313,7 +327,6 @@ class Envelope(models.Model):
             msg = f"transactions to upload:  {transactions.count()} does not contain any transactions."
             logger.info(msg)
             raise WorkBasketNoTransactions(msg)
-
 
         # Envelope XML is written to temporary files for validation before anything is created
         # in the database or uploaded to s3.
@@ -329,12 +342,15 @@ class Envelope(models.Model):
                 max_envelope_size=settings.EXPORTER_MAXIMUM_ENVELOPE_SIZE,
             )
 
-            rendered_envelope = list(serializer.split_render_transactions(transactions))[0]
+            rendered_envelope = list(
+                serializer.split_render_transactions(transactions),
+            )[0]
             logger.info(f"rendered_envelope {rendered_envelope}")
             envelope_file = rendered_envelope.output
             if not rendered_envelope.transactions:
-                #TODO Raise error
-                logger.error(f"{envelope_file.name}  is empty !")
+                msg = f"{envelope_file.name}  is empty !"
+                logger.error(msg)
+                raise WorkBasketNoTransactions(msg)
             # Transaction envelope data XML is valid, ready for upload to s3
             else:
                 envelope_file.seek(0, os.SEEK_SET)
@@ -484,15 +500,18 @@ class PackagedWorkBasket(TimestampedMixin):
         db_index=True,
         editable=False,
     )
-    """Position 1 is the top position, ready for processing. An instance that
-    is being processed or has been processed has its position value set to 0.
+    """
+    Position 1 is the top position, ready for processing.
+
+    An instance that is being processed or has been processed has its position
+    value set to 0.
     """
     envelope = models.ForeignKey(
         Envelope,
         null=True,
         on_delete=models.PROTECT,
         editable=False,
-        related_name="packagedworkbaskets"
+        related_name="packagedworkbaskets",
     )
     processing_state = FSMField(
         default=ProcessingState.AWAITING_PROCESSING,
@@ -507,8 +526,7 @@ class PackagedWorkBasket(TimestampedMixin):
         default=None,
     )
     """The date and time at which processing_state transitioned to
-    CURRENTLY_PROCESSING.
-    """
+    CURRENTLY_PROCESSING."""
     loading_report = models.ForeignKey(
         LoadingReport,
         null=True,
@@ -516,8 +534,7 @@ class PackagedWorkBasket(TimestampedMixin):
         editable=False,
     )
     """The report file associated with an attempt (either successful or failed)
-    to process / load the associated workbasket's envelope file.
-    """
+    to process / load the associated workbasket's envelope file."""
     theme = models.CharField(
         max_length=255,
     )
@@ -529,7 +546,9 @@ class PackagedWorkBasket(TimestampedMixin):
         blank=True,
         help_text="For Example, 27 3 2008",
     )
-    """The enter into force date determines when changes should go live in CDS.
+    """
+    The enter into force date determines when changes should go live in CDS.
+
     A file will need to be ingested by CDS on the day before this. If left,
     blank CDS will ingest the file immediately.
     """
@@ -539,14 +558,12 @@ class PackagedWorkBasket(TimestampedMixin):
         max_length=255,
     )
     """The date until which CDS prevents envelope from being displayed after
-    ingestion.
-    """
+    ingestion."""
     jira_url = models.URLField(
         help_text="Insert Tops Jira ticket link",
     )
     """URL linking the packaged workbasket with a ticket on the Tariff
-    Operations (TOPS) project's Jira board.
-    """
+    Operations (TOPS) project's Jira board."""
 
     # processing_state transition management.
 

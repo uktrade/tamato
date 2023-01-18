@@ -1,4 +1,3 @@
-from functools import cached_property
 from os import path
 
 from storages.backends.s3boto3 import S3Boto3Storage

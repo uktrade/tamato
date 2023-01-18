@@ -32,15 +32,16 @@ def create_xml_envelope_file(
     function may be called again in order to generate the envelope.
     """
 
-    from publishing.models import PackagedWorkBasket, Envelope
+    from publishing.models import Envelope
+    from publishing.models import PackagedWorkBasket
 
     packaged_work_basket = PackagedWorkBasket.objects.get(
         pk=packaged_work_basket_id,
     )
 
     packaged_work_basket.envelope = Envelope.objects.create(
-        packaged_work_basket=packaged_work_basket
-        )
+        packaged_work_basket=packaged_work_basket,
+    )
     packaged_work_basket.save()
 
     if notify_when_done:
