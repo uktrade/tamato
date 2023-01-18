@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from crispy_forms_gds.helper import FormHelper
@@ -21,6 +22,7 @@ from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
+from common.forms import DateInputFieldFixed
 from common.forms import FormSet
 from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
@@ -1135,3 +1137,48 @@ class MeasureReviewForm(forms.Form):
 
 
 MeasureDeleteForm = delete_form_for(models.Measure)
+
+
+class MeasureEndDateForm(forms.Form):
+    end_date = DateInputFieldFixed(
+        label="End date",
+        help_text="For example, 27 3 2008",
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.selected_measures = kwargs.pop("selected_measures", None)
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "end_date",
+            Submit(
+                "submit",
+                "Save measure end dates",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if "end_date" in cleaned_data:
+            for measure in self.selected_measures:
+                year = int(cleaned_data["end_date"].year)
+                month = int(cleaned_data["end_date"].month)
+                day = int(cleaned_data["end_date"].day)
+
+                lower = measure.valid_between.lower
+                upper = datetime.date(year, month, day)
+                if lower > upper:
+                    formatted_lower = lower.strftime("%d/%m/%Y")
+                    formatted_upper = upper.strftime("%d/%m/%Y")
+                    raise ValidationError(
+                        f"The end date cannot be before the start date: "
+                        f"Start date {formatted_lower} does not start before {formatted_upper}",
+                    )
+
+        return cleaned_data

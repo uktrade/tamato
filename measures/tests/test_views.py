@@ -1,3 +1,4 @@
+import datetime
 import unittest
 from datetime import date
 from decimal import Decimal
@@ -19,6 +20,7 @@ from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -132,7 +134,7 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
                 "status": session_workbasket.status,
                 "title": session_workbasket.title,
             },
-            "DELETE_MEASURE_SELECTIONS": {
+            "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: True,
                 measure_2.pk: True,
                 measure_3.pk: True,
@@ -149,7 +151,7 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
 
     # on success, the page redirects to the list page
     assert response.status_code == 302
-    assert client.session["DELETE_MEASURE_SELECTIONS"] == {}
+    assert client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
     for measure in workbasket_measures:
         # check that the update type is delete which is 2
         assert measure.update_type == 2
@@ -176,7 +178,7 @@ def test_multiple_measure_delete_template(client, valid_user, session_workbasket
                 "status": session_workbasket.status,
                 "title": session_workbasket.title,
             },
-            "DELETE_MEASURE_SELECTIONS": {
+            "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: True,
                 measure_2.pk: True,
                 measure_3.pk: True,
@@ -194,7 +196,7 @@ def test_multiple_measure_delete_template(client, valid_user, session_workbasket
 
     # grab the whole measure objects for our pk's we've got in the session, so we can compare attributes.
     selected_measures = Measure.objects.filter(
-        pk__in=session["DELETE_MEASURE_SELECTIONS"].keys(),
+        pk__in=session["MULTIPLE_MEASURE_SELECTIONS"].keys(),
     )
 
     # Get the measure ids that are being shown in the table in the template.
@@ -1208,3 +1210,132 @@ def test_measuretype_api_list_view(valid_user_client):
         valid_user_client,
         equals=True,
     )
+
+
+def test_multiple_measure_end_date_edit_functionality(
+    client,
+    valid_user,
+    session_workbasket,
+):
+    """Tests that MeasureMultipleEndDateEdit view's Post function takes a list
+    of measures, and sets their update type to update, updates their end dates,
+    and clears the session once completed."""
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+
+    measure_3.valid_between = (
+        TaricDateRange(
+            lower=datetime.date(2023, 10, 30),
+        ),
+    )
+
+    url = reverse("measure-ui-edit-multiple-end-date")
+    client.force_login(valid_user)
+    session = client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: True,
+                measure_2.pk: True,
+                measure_3.pk: True,
+            },
+        },
+    )
+    session.save()
+    post_data = {
+        "submit": "Save measure end dates",
+        "end_date_0": "25",
+        "end_date_1": "10",
+        "end_date_2": "2023",
+    }
+    response = client.post(url, data=post_data)
+
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+    ).order_by("sid")
+
+    # on success, the page redirects to the list page
+    assert response.status_code == 302
+    assert client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        # check that the update type is update which is 2
+        assert measure.update_type == 1
+        # Check that if the start date is invalid, there's no end date applied
+        if measure.valid_between.lower == datetime.date(2023, 10, 30):
+            assert measure.valid_between.upper == None
+        else:
+            # Check the end dates have been applied
+            assert measure.effective_end_date == datetime.date(2023, 10, 25)
+
+
+def test_multiple_measure_delete_template(client, valid_user, session_workbasket):
+    """Test that valid user receives a 200 on GET for MeasureMultipleEndDateEdit
+    and correct measures display in html table."""
+    # Make a bunch of measures
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+    measure_4 = factories.MeasureFactory.create()
+    measure_5 = factories.MeasureFactory.create()
+
+    client.force_login(valid_user)
+    session = client.session
+    # Add a workbasket to the session, and add some selected measures to it.
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: True,
+                measure_2.pk: True,
+                measure_3.pk: True,
+            },
+        },
+    )
+    session.save()
+
+    url = reverse("measure-ui-edit-multiple-end-date")
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    # grab the whole measure objects for our pk's we've got in the session, so we can compare attributes.
+    selected_measures = Measure.objects.filter(
+        pk__in=session["MULTIPLE_MEASURE_SELECTIONS"].keys(),
+    )
+
+    # Get the measure ids that are being shown in the table in the template.
+    measure_ids_in_table = [e.text for e in soup.select("table tr td:first-child")]
+
+    # Get the sids for the measures we selected, as these are what are shown in the template.
+    selected_measures_ids = [str(measure.sid) for measure in selected_measures]
+
+    assert measure_ids_in_table == selected_measures_ids
+    assert set(measure_ids_in_table).difference([measure_4.sid, measure_5.sid])
+
+    # 4th column is start date
+    start_dates_in_table = {e.text for e in soup.select("table tr td:nth-child(4)")}
+    measure_start_dates = {
+        f"{m.valid_between.lower:%d %b %Y}" for m in selected_measures
+    }
+    assert not measure_start_dates.difference(start_dates_in_table)
+
+    # 5th column is end date
+    end_dates_in_table = {e.text for e in soup.select("table tr td:nth-child(5)")}
+    measure_end_dates = {
+        f"{m.effective_end_date:%d %b %Y}"
+        for m in selected_measures
+        if m.effective_end_date
+    }
+    assert not measure_end_dates.difference(end_dates_in_table)
