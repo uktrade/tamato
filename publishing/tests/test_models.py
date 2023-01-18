@@ -1,5 +1,11 @@
+from unittest.mock import MagicMock
+from unittest.mock import patch
+
+import factory
 import pytest
+from django.conf import settings
 from django_fsm import TransitionNotAllowed
+from notifications_python_client import prepare_upload
 
 from common.tests import factories
 from publishing.models import OperationalStatus
@@ -16,8 +22,18 @@ def test_create():
     """Test multiple PackagedWorkBasket instances creation is managed
     correctly."""
 
-    first_packaged_work_basket = factories.PackagedWorkBasketFactory()
-    second_packaged_work_basket = factories.PackagedWorkBasketFactory()
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        first_packaged_work_basket = factories.PackagedWorkBasketFactory()
+
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        second_packaged_work_basket = factories.PackagedWorkBasketFactory()
+
     assert first_packaged_work_basket.position > 0
     assert second_packaged_work_basket.position > 0
     assert first_packaged_work_basket.position < second_packaged_work_basket.position
@@ -43,8 +59,88 @@ def test_create_from_invalid_status():
         factories.PackagedWorkBasketFactory(workbasket=editing_workbasket)
 
 
-def test_success_processing_transition():
-    factories.PackagedWorkBasketFactory()
+@pytest.mark.skip(reason="TODO correctly mock S3 and/or Notify")
+@patch("notifications.tasks.send_emails.delay")
+def test_notify_ready_for_processing(send_emails, loading_report_storage):
+    with patch(
+        "exporter.storages.HMRCStorage.save",
+        wraps=MagicMock(side_effect=loading_report_storage.save),
+    ):
+        packaged_wb = factories.PackagedWorkBasketFactory.create(
+            envelope=factories.EnvelopeFactory.create(),
+            loading_report__file=factory.django.FileField(filename="the_file.dat"),
+        )
+    packaged_wb.notify_ready_for_processing()
+    personalisation = {
+        "envelope_id": packaged_wb.envelope.envelope_id,
+        "theme": packaged_wb.theme,
+        "eif": "Immediately",
+        "jira_url": packaged_wb.jira_url,
+    }
+
+    send_emails.assert_called_once_with(
+        template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
+        personalisation=personalisation,
+    )
+
+
+@pytest.mark.skip(reason="TODO correctly mock S3 and/or Notify")
+@patch("notifications.tasks.send_emails.delay")
+def test_notify_processing_succeeded(send_emails, loading_report_storage):
+    with patch(
+        "exporter.storages.HMRCStorage.save",
+        wraps=MagicMock(side_effect=loading_report_storage.save),
+    ):
+        packaged_wb = factories.PackagedWorkBasketFactory.create(
+            envelope=factories.EnvelopeFactory.create(),
+            loading_report__file=factory.django.FileField(filename="the_file.html"),
+        )
+
+    packaged_wb.notify_processing_succeeded()
+    f = packaged_wb.loading_report.file.open("rb")
+    personalisation = {
+        "envelope_id": packaged_wb.envelope.envelope_id,
+        "transaction_count": packaged_wb.workbasket.transactions.count(),
+        "link_to_file": prepare_upload(f),
+    }
+
+    send_emails.assert_called_once_with(
+        template_id=settings.CDS_ACCEPTED_TEMPLATE_ID,
+        personalisation=personalisation,
+    )
+
+
+@pytest.mark.skip(reason="TODO correctly mock S3 and/or Notify")
+@patch("notifications.tasks.send_emails.delay")
+def test_notify_processing_failed(send_emails, loading_report_storage):
+    with patch(
+        "exporter.storages.HMRCStorage.save",
+        wraps=MagicMock(side_effect=loading_report_storage.save),
+    ):
+        packaged_wb = factories.PackagedWorkBasketFactory.create(
+            envelope=factories.EnvelopeFactory.create(),
+            loading_report__file=factory.django.FileField(filename="the_file.html"),
+        )
+
+    packaged_wb.notify_processing_failed()
+    f = packaged_wb.loading_report.file.open("rb")
+    personalisation = {
+        "envelope_id": packaged_wb.envelope.envelope_id,
+        "link_to_file": prepare_upload(f),
+    }
+
+    send_emails.assert_called_once_with(
+        template_id=settings.CDS_REJECTED_TEMPLATE_ID,
+        personalisation=personalisation,
+    )
+
+
+def test_success_processing_transition(
+    mocked_publishing_models_send_emails_delay,
+):
+    factories.PackagedWorkBasketFactory(
+        envelope=factories.EnvelopeFactory(),
+    )
 
     packaged_work_basket = PackagedWorkBasket.objects.get(position=1)
     assert packaged_work_basket.position == 1
@@ -64,8 +160,17 @@ def test_success_processing_transition():
 
 
 def test_begin_processing_transition_invalid_position():
-    factories.PackagedWorkBasketFactory()
-    factories.PackagedWorkBasketFactory()
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
+
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
 
     packaged_work_basket = PackagedWorkBasket.objects.awaiting_processing().last()
     assert packaged_work_basket.position == PackagedWorkBasket.objects.max_position()
@@ -75,8 +180,17 @@ def test_begin_processing_transition_invalid_position():
 
 
 def test_begin_processing_transition_invalid_start_state():
-    factories.PackagedWorkBasketFactory()
-    factories.PackagedWorkBasketFactory()
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
+
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
 
     # Begin processing the first instance in the queue.
     packaged_work_basket = PackagedWorkBasket.objects.awaiting_processing().first()
@@ -121,16 +235,40 @@ def test_abandon_transition_from_invalid_state():
 
 
 def test_remove_from_queue():
-    packaged_work_basket = factories.PackagedWorkBasketFactory()
-    assert packaged_work_basket.position > 0
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        packaged_work_basket_1 = factories.PackagedWorkBasketFactory()
 
-    packaged_work_basket.remove_from_queue()
-    assert packaged_work_basket.position == 0
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        packaged_work_basket_2 = factories.PackagedWorkBasketFactory()
+
+    assert packaged_work_basket_1.position == 1
+    assert packaged_work_basket_2.position == 2
+
+    packaged_work_basket_1.remove_from_queue()
+    packaged_work_basket_2.refresh_from_db()
+
+    assert packaged_work_basket_1.position == 0
+    assert packaged_work_basket_2.position == 1
 
 
 def test_promote_to_top_position():
-    factories.PackagedWorkBasketFactory()
-    factories.PackagedWorkBasketFactory()
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
+
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
 
     packaged_work_basket = PackagedWorkBasket.objects.last()
     assert packaged_work_basket.position == PackagedWorkBasket.objects.max_position()
@@ -141,8 +279,17 @@ def test_promote_to_top_position():
 
 
 def test_promote_position():
-    factories.PackagedWorkBasketFactory()
-    factories.PackagedWorkBasketFactory()
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
+
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
 
     initially_first = PackagedWorkBasket.objects.get(position=1)
     initially_second = PackagedWorkBasket.objects.get(position=2)
@@ -153,8 +300,17 @@ def test_promote_position():
 
 
 def test_demote_position():
-    factories.PackagedWorkBasketFactory()
-    factories.PackagedWorkBasketFactory()
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
+
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
 
     initially_first = PackagedWorkBasket.objects.get(position=1)
     initially_second = PackagedWorkBasket.objects.get(position=2)

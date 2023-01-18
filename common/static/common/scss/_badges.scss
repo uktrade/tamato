@@ -6,6 +6,11 @@
   font-weight: bold;
 }
 
+.tamato-badge-light-grey {
+  @extend .tamato-badge;
+  background-color: rgb(200, 200, 200,);
+  color: rgb(80, 80, 80);
+}
 .tamato-badge-light-purple {
   @extend .tamato-badge;
   background-color: rgb(219, 213, 233);

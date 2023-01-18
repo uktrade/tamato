@@ -17,7 +17,7 @@ from publishing import models
 class LoadingReportForm(ModelForm):
     class Meta:
         model = models.LoadingReport
-        fields = ("report_file", "comment")
+        fields = ("file", "comments")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -26,8 +26,8 @@ class LoadingReportForm(ModelForm):
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            Field("report_file"),
-            Field.textarea("comment", rows=5),
+            Field("file"),
+            Field.textarea("comments", rows=5),
             HTML.warning("Submitting this form sends a notification email to users."),
             Submit(
                 "submit",
@@ -37,8 +37,8 @@ class LoadingReportForm(ModelForm):
             ),
         )
 
-        self.fields["report_file"].label = "Loading report file"
-        self.fields["comment"].label = "Comments"
+        self.fields["file"].label = "Loading report file"
+        self.fields["comments"].label = "Comments"
 
 
 class PackagedWorkBasketCreateForm(forms.ModelForm):

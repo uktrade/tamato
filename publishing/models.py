@@ -2,6 +2,7 @@ import logging
 import os
 import tempfile
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from django.conf import settings
@@ -16,19 +17,26 @@ from django.db.models import TextChoices
 from django.db.models import Value
 from django.db.models.functions import Coalesce
 from django.db.transaction import atomic
+from django.urls import reverse
 from django_fsm import FSMField
 from django_fsm import transition
 from lxml import etree
+from notifications_python_client import prepare_upload
 
 from common.models.mixins import TimestampedMixin
 from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
 from notifications.models import NotificationLog
+from notifications.tasks import send_emails
 from publishing.storages import EnvelopeStorage
+from publishing.storages import LoadingReportStorage
+from publishing.tasks import schedule_create_xml_envelope_file
 from taric import validators
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
+
+logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +155,7 @@ class ProcessingState(TextChoices):
 
     AWAITING_PROCESSING = (
         "AWAITING_PROCESSING",
-        "Reviewed and awaiting processing",
+        "Awaiting processing",
     )
     """Queued up and awaiting processing."""
     CURRENTLY_PROCESSING = (
@@ -374,22 +382,39 @@ class Envelope(models.Model):
         return f'<Envelope: envelope_id="{self.envelope_id}">'
 
 
-class LoadingReport(TimestampedMixin):
-    """Reported associated with an attempt to load (process) a
-    PackagedWorkBasket instance."""
+def report_bucket(instance: "LoadingReport", filename: str):
+    """Generate the filepath to upload to loading report bucket."""
+    return str(Path(settings.LOADING_REPORTS_STORAGE_DIRECTORY) / filename)
 
-    # TODO Change report_file to correct field for / s3 object reference.
-    report_file = models.FileField(
+
+class LoadingReport(TimestampedMixin):
+    """Report associated with an attempt to load (process) a PackagedWorkBasket
+    instance."""
+
+    file = models.FileField(
         blank=True,
         null=True,
+        storage=LoadingReportStorage,
+        upload_to=report_bucket,
     )
-    comment = models.TextField(
+    comments = models.TextField(
         blank=True,
         max_length=200,
     )
 
 
+# Decorators
+
+
 def save_after(func):
+    """
+    Decorator used to save PackagedWorkBaskert instances after a state
+    transition.
+
+    This ensures a transitioned instance is always saved, which is necessary due
+    to the DB updates that occur as part of a transition.
+    """
+
     @atomic
     def inner(self, *args, **kwargs):
         result = func(self, *args, **kwargs)
@@ -397,6 +422,62 @@ def save_after(func):
         return result
 
     return inner
+
+
+def create_envelope_on_new_top(func):
+    """
+    Decorator used to wrap functions that may change the top-most
+    PackagedWorkBasket.
+
+    When a when the top-most instance is changed and no other PackagedWorkBasket
+    is being processed (i.e. having processing state CURRENTLY_PROCESSING) then
+    this decorator will schedule envelope creation for the new top-most
+    instance.
+    """
+
+    def inner(self, *args, **kwargs):
+        if PackagedWorkBasket.objects.currently_processing():
+            # Envelopes are only generated when nothing is currently being
+            # processed, so just execute the wrapped function and then return.
+            return func(self, *args, **kwargs)
+
+        top_before = PackagedWorkBasket.objects.get_top_awaiting()
+
+        result = func(self, *args, **kwargs)
+
+        top_after = PackagedWorkBasket.objects.get_top_awaiting()
+        if top_before != top_after:
+            PackagedWorkBasket.create_envelope_for_top()
+
+        return result
+
+    return inner
+
+
+def skip_notifications_if_disabled(func):
+    """Decorator used to wrap notification issuing functions, ensuring
+    notifications are not sent when settings.ENABLE_PACKAGING_NOTIFICATIONS is
+    False."""
+
+    def inner(self, *args, **kwargs):
+        if not settings.ENABLE_PACKAGING_NOTIFICATIONS:
+            logger.info(
+                "Skipping ready for processing notifications - "
+                "settings.ENABLE_PACKAGING_NOTIFICATIONS="
+                f"{settings.ENABLE_PACKAGING_NOTIFICATIONS}",
+            )
+            return
+        logger.info(
+            "Sending ready for processing notifications - "
+            "settings.ENABLE_PACKAGING_NOTIFICATIONS="
+            f"{settings.ENABLE_PACKAGING_NOTIFICATIONS}",
+        )
+        return func(self, *args, **kwargs)
+
+    return inner
+
+
+# Model Managers.
 
 
 class PackagedWorkBasketManager(models.Manager):
@@ -430,7 +511,25 @@ class PackagedWorkBasketManager(models.Manager):
             + 1
         )
 
-        return super().create(workbasket=workbasket, position=position, **kwargs)
+        new_obj = super().create(workbasket=workbasket, position=position, **kwargs)
+
+        # If this instance is created at queue position 1 and no other
+        # PackagedWorkBasket is being processed then schedule envelope creation.
+        # See `publishing.tasks.create_xml_envelope_file()` for details.
+        if (
+            not PackagedWorkBasket.objects.currently_processing()
+            and new_obj == PackagedWorkBasket.objects.get_top_awaiting()
+        ):
+            schedule_create_xml_envelope_file(
+                packaged_work_basket=new_obj,
+                notify_when_done=True,
+                seconds_delay=1,
+            )
+
+        return new_obj
+
+
+# QuerySets.
 
 
 class PackagedWorkBasketQuerySet(QuerySet):
@@ -469,7 +568,22 @@ class PackagedWorkBasketQuerySet(QuerySet):
         )
 
     def max_position(self) -> int:
+        """Return the maxium position value of any PackagedWorkBasket
+        instance."""
         return PackagedWorkBasket.objects.aggregate(out=Max("position"))["out"]
+
+    def get_top_awaiting(self):
+        """Return the top-most (position 1) PackagedWorkBasket instance with
+        processing_state ProcessingState.AWAITING_PROCESSING, else None if there
+        there are no such instances."""
+        top = self.filter(
+            processing_state=ProcessingState.AWAITING_PROCESSING,
+            position=1,
+        )
+        return top.first() if top else None
+
+
+# Models.
 
 
 class PackagedWorkBasket(TimestampedMixin):
@@ -563,7 +677,34 @@ class PackagedWorkBasket(TimestampedMixin):
         help_text="Insert Tops Jira ticket link",
     )
     """URL linking the packaged workbasket with a ticket on the Tariff
-    Operations (TOPS) project's Jira board."""
+    Operations (TOPS) project's Jira board.
+    """
+    create_envelope_task_id = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        unique=True,
+    )
+    """ID of Celery task used to generate this instance's associated envelope.
+    Its necessary to set null=True (unusually for CharField) in order to support
+    the unique=True attribute."""
+
+    @classmethod
+    def create_envelope_for_top(cls):
+        """Schedule the envelope generation process for the top-most (position
+        1) instance."""
+        top = cls.objects.get_top_awaiting()
+        if top:
+            schedule_create_xml_envelope_file(
+                packaged_work_basket=top,
+                notify_when_done=True,
+                seconds_delay=1,
+            )
+        else:
+            logging.info(
+                "Attempted to schedule top for envelope creation, but no top "
+                "exists.",
+            )
 
     # processing_state transition management.
 
@@ -628,6 +769,9 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
+        self.workbasket.cds_confirmed()
+        self.workbasket.save()
+        self.notify_processing_succeeded()
 
     @save_after
     @transition(
@@ -644,6 +788,9 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
+        self.workbasket.cds_error()
+        self.workbasket.save()
+        self.notify_processing_failed()
 
     @save_after
     @transition(
@@ -662,10 +809,8 @@ class PackagedWorkBasket(TimestampedMixin):
         """
 
         self.remove_from_queue()
-        # TODO:
-        # Transition self.workbasket.status from QUEUED to EDITING by calling
-        # self.workbasket.dequeue() once the transition is implemented.
-        # self.workbasket.dequeue()
+        self.workbasket.dequeue()
+        self.workbasket.save()
 
     @atomic
     def refresh_from_db(self, using=None, fields=None):
@@ -693,42 +838,70 @@ class PackagedWorkBasket(TimestampedMixin):
             self._meta.get_field("processing_state").set_state(self, new_state)
 
     # Notification management.
-    """
-    Sending "Ready to download" email notifications
-    -
-    PackagedWorkBasket.notify_ready_for_processing(self)
-    --
 
-    When an instance first arrives at position 1, and no other instance has
-    PackagedWorkBasket.state == ProcessingState.CURRENTLY_PROCESSING, then
-    call notify_ready_for_processing() with the instance as a parameter.
-
-    When an instance has its PackagedWorkBasket.state transitioned to either
-    SUCCESSFULLY_PROCESSED or FAILED_PROCESSING, and there are instances
-    with PackagedWorkBasket.state == ProcessingState.AWAITING_PROCESSING,
-    then call ready_for_processing() with the instances as a parameter.
-
-
-    Sending "Ingestion succeeded" and "Ingestion failed" notifications
-    -
-    PackagedWorkBasket.notify_processing_succeeded(self)
-    PackagedWorkBasket.notify_processing_failed(self)
-    --
-
-    The functions processing_succeeded() and processing_failed() map to these
-    two cases and are called by the state transition methods
-    PackagedWorkBasket.notify_processing_succeeded() and
-    PackagedWorkBasket.notify_processing_failed(), respectively.
-    """
-
+    @skip_notifications_if_disabled
     def notify_ready_for_processing(self):
-        """TODO."""
+        """
+        Notify users that an envelope is ready to download and process.
 
+        This requires that the envelope has been generated and saved and is
+        therefore normally called when the process for doing that has completed
+        (see `publishing.tasks.create_xml_envelope_file()`).
+        """
+
+        personalisation = {
+            "envelope_id": self.envelope.envelope_id,
+            "download_url": (
+                settings.BASE_SERVICE_URL + reverse("publishing:envelope-queue-ui-list")
+            ),
+            "theme": self.theme,
+            "eif": self.eif if self.eif else "Immediately",
+            "jira_url": self.jira_url,
+        }
+        send_emails.delay(
+            template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
+            personalisation=personalisation,
+        )
+
+    @skip_notifications_if_disabled
     def notify_processing_succeeded(self):
-        """TODO."""
+        """
+        Notify users that envelope processing has been succeeded for this.
 
+        instance - correctly ingested into HMRC systems.
+        """
+
+        link_to_file = "None"
+        if self.loading_report.file:
+            f = self.loading_report.file.open("rb")
+            link_to_file = prepare_upload(f)
+        personalisation = {
+            "envelope_id": self.envelope.envelope_id,
+            "transaction_count": self.workbasket.transactions.count(),
+            "link_to_file": link_to_file,
+        }
+        send_emails.delay(
+            template_id=settings.CDS_ACCEPTED_TEMPLATE_ID,
+            personalisation=personalisation,
+        )
+
+    @skip_notifications_if_disabled
     def notify_processing_failed(self):
-        """TODO."""
+        """Notify users that envelope processing has been failed - HMRC systems
+        rejected this instances associated envelope file."""
+
+        link_to_file = "None"
+        if self.loading_report.file:
+            f = self.loading_report.file.open("rb")
+            link_to_file = prepare_upload(f)
+        personalisation = {
+            "envelope_id": self.envelope.envelope_id,
+            "link_to_file": link_to_file,
+        }
+        send_emails.delay(
+            template_id=settings.CDS_REJECTED_TEMPLATE_ID,
+            personalisation=personalisation,
+        )
 
     @property
     def cds_notified_notification_log(self) -> NotificationLog:
@@ -746,6 +919,7 @@ class PackagedWorkBasket(TimestampedMixin):
     # Queue management.
 
     @atomic
+    @create_envelope_on_new_top
     def pop_top(self):
         """
         Pop the top-most instance, shuffling all remaining queued instances
@@ -769,6 +943,7 @@ class PackagedWorkBasket(TimestampedMixin):
         return self
 
     @atomic
+    @create_envelope_on_new_top
     def remove_from_queue(self):
         """
         Remove instance from the queue, shuffling all successive queued
@@ -796,6 +971,7 @@ class PackagedWorkBasket(TimestampedMixin):
         return self
 
     @atomic
+    @create_envelope_on_new_top
     def promote_to_top_position(self):
         """Promote the instance to the top position of the package processing
         queue so that it occupies position 1."""
@@ -815,6 +991,7 @@ class PackagedWorkBasket(TimestampedMixin):
         return self
 
     @atomic
+    @create_envelope_on_new_top
     def promote_position(self):
         """Promote the instance by one position up the package processing
         queue."""
@@ -834,6 +1011,7 @@ class PackagedWorkBasket(TimestampedMixin):
         return self
 
     @atomic
+    @create_envelope_on_new_top
     def demote_position(self):
         """Demote the instance by one position down the package processing
         queue."""
