@@ -1,6 +1,14 @@
 from django.contrib import admin
 
+from publishing.models import Envelope
 from publishing.models import OperationalStatus
+
+
+class EnvelopeAdmin(admin.ModelAdmin):
+    ordering = ["-pk"]
+
+    def has_delete_permission(self, request, obj=None):
+        return True
 
 
 class OperationalStatusAdmin(admin.ModelAdmin):
@@ -23,3 +31,5 @@ class OperationalStatusAdmin(admin.ModelAdmin):
 
 
 admin.site.register(OperationalStatus, OperationalStatusAdmin)
+
+admin.site.register(Envelope, EnvelopeAdmin)
