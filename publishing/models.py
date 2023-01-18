@@ -659,13 +659,6 @@ class PackagedWorkBasket(TimestampedMixin):
         instance - correctly ingested into HMRC systems.
         """
 
-        if not settings.ENABLE_PACKAGING_NOTIFICATIONS:
-            logger.info(
-                "Skipping 'notify processing succeeded' - "
-                "settings.ENABLE_PACKAGING_NOTIFICATIONS=False",
-            )
-            return
-
         link_to_file = "None"
         if self.loading_report.file:
             f = self.loading_report.file.open("rb")
@@ -684,13 +677,6 @@ class PackagedWorkBasket(TimestampedMixin):
     def notify_processing_failed(self):
         """Notify users that envelope processing has been failed - HMRC systems
         rejected this instances associated envelope file."""
-
-        if not settings.ENABLE_PACKAGING_NOTIFICATIONS:
-            logger.info(
-                "Skipping 'notify processing failed' - "
-                "settings.ENABLE_PACKAGING_NOTIFICATIONS=False",
-            )
-            return
 
         link_to_file = "None"
         if self.loading_report.file:
