@@ -1,9 +1,15 @@
+from unittest.mock import MagicMock
+from unittest.mock import patch
+
+import factory
 import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from common.tests import factories
 from publishing.models import OperationalStatus
+from publishing.models import PackagedWorkBasket
+from publishing.models import ProcessingState
 
 pytestmark = pytest.mark.django_db
 
@@ -95,3 +101,44 @@ def test_pause_queue(valid_user_client, unpause_queue):
     )
     unpause_button = page.select(".unpause-queue-button")
     assert len(unpause_button) == 1
+
+
+def test_remove_from_queue(valid_user_client):
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        packaged_work_basket_1 = factories.PackagedWorkBasketFactory()
+
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        packaged_work_basket_2 = factories.PackagedWorkBasketFactory()
+
+    assert PackagedWorkBasket.objects.all_queued().count() == 2
+    assert packaged_work_basket_1.position == 1
+    assert (
+        packaged_work_basket_1.processing_state == ProcessingState.AWAITING_PROCESSING
+    )
+    assert packaged_work_basket_2.position == 2
+    assert (
+        packaged_work_basket_2.processing_state == ProcessingState.AWAITING_PROCESSING
+    )
+
+    response = valid_user_client.post(
+        reverse("publishing:packaged-workbasket-queue-ui-list"),
+        {"remove_from_queue": packaged_work_basket_1.pk},
+    )
+    assert response.status_code == 302
+
+    packaged_work_basket_1.refresh_from_db()
+    packaged_work_basket_2.refresh_from_db()
+
+    assert PackagedWorkBasket.objects.all_queued().count() == 1
+    assert packaged_work_basket_1.position == 0
+    assert packaged_work_basket_1.processing_state == ProcessingState.ABANDONED
+    assert packaged_work_basket_2.position == 1
+    assert (
+        packaged_work_basket_2.processing_state == ProcessingState.AWAITING_PROCESSING
+    )

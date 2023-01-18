@@ -924,6 +924,19 @@ def sqlite_storage(s3, s3_bucket_names):
     return storage
 
 
+@pytest.fixture
+def loading_report_storage(s3):
+    """Patch LoadingReportStorage with moto so that nothing is really uploaded
+    to s3."""
+    from publishing.storages import LoadingReportStorage
+
+    return make_storage_mock(
+        s3,
+        LoadingReportStorage,
+        bucket_name=settings.LOADING_REPORTS_BUCKET_NAME,
+    )
+
+
 @pytest.fixture(
     params=(
         (make_duplicate_record, True),

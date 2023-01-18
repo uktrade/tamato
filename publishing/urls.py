@@ -8,6 +8,10 @@ app_name = "publishing"
 
 ui_patterns = [
     path(
+        "",
+        RedirectView.as_view(pattern_name="packaged-workbasket-queue-ui-list"),
+    ),
+    path(
         "create/",
         views.PackagedWorkbasketCreateView.as_view(),
         name="packaged-workbasket-queue-ui-create",
@@ -16,10 +20,6 @@ ui_patterns = [
         "<pk>/confirm-create/",
         views.PackagedWorkbasketConfirmCreate.as_view(),
         name="packaged-workbasket-queue-confirm-create",
-    ),
-    path(
-        "",
-        RedirectView.as_view(pattern_name="packaged-workbasket-queue-ui-list"),
     ),
     path(
         "packaging-queue/",
@@ -56,11 +56,6 @@ ui_patterns = [
         views.RejectEnvelopeConfirmView.as_view(),
         name="reject-envelope-confirm-ui-detail",
     ),
-]
-
-
-urlpatterns = [
-    path("publishing/", include(ui_patterns)),
 ]
 
 

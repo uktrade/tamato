@@ -312,6 +312,28 @@ TIME_ZONE = "Europe/London"
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
 
+# Loading reports AWS settings
+LOADING_REPORTS_BUCKET_NAME = os.environ.get(
+    "LOADING_REPORTS_BUCKET_NAME",
+    "loading-reports",
+)
+LOADING_REPORTS_S3_ACCESS_KEY_ID = os.environ.get(
+    "LOADING_REPORTS_S3_ACCESS_KEY_ID",
+    "test_loading_reports_key_id",
+)
+LOADING_REPORTS_S3_SECRET_ACCESS_KEY = os.environ.get(
+    "LOADING_REPORTS_S3_SECRET_ACCESS_KEY",
+    "test_loading_reports_key",
+)
+LOADING_REPORTS_S3_ENDPOINT_URL = os.environ.get(
+    "LOADING_REPORTS_S3_ENDPOINT_URL",
+    "https://test-loading-reports-url.local/",
+)
+LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
+    "LOADING_REPORTS_STORAGE_DIRECTORY",
+    "loading-reports/",
+)
+
 # SQLite AWS settings
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
 SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
@@ -547,3 +569,16 @@ MEASURES_PAGINATOR_MAX_COUNT = int(
 
 # key used to instantiate GOVUK Notify python client
 NOTIFICATIONS_API_KEY = os.environ.get("NOTIFICATIONS_API_KEY")
+
+ENABLE_PACKAGING_NOTIFICATIONS = is_truthy(
+    os.environ.get("ENABLE_PACKAGING_NOTIFICATIONS", "true"),
+)
+
+# GOV.UK Notify template IDs used for publishing package notifications.
+READY_FOR_CDS_TEMPLATE_ID = os.environ.get("READY_FOR_CDS_TEMPLATE_ID")
+CDS_ACCEPTED_TEMPLATE_ID = os.environ.get("CDS_ACCEPTED_TEMPLATE_ID")
+CDS_REJECTED_TEMPLATE_ID = os.environ.get("CDS_REJECTED_TEMPLATE_ID")
+
+# Base service URL - required when constructing an absolute TAP URL to a page
+# from a Celery task where no HTTP request object is available.
+BASE_SERVICE_URL = os.environ.get("BASE_SERVICE_URL")
