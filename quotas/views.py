@@ -134,7 +134,8 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView, SortingMixin):
             order = "goods_nomenclature"
 
         context["measures"] = (
-            Measure.objects.filter(order_number=self.object)
+            Measure.objects.latest_approved()
+            .filter(order_number=self.object)
             .as_at(date.today())
             .order_by(order)
         )
