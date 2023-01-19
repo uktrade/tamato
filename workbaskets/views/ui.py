@@ -110,11 +110,14 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
 
     def post(self, request, *args, **kwargs):
         workbasket_pk = request.POST.get("workbasket")
-
         if workbasket_pk:
             workbasket = WorkBasket.objects.get(pk=workbasket_pk)
 
             if workbasket:
+                if workbasket.status == WorkflowStatus.ERRORED:
+                    workbasket.restore()
+                    workbasket.save()
+
                 workbasket.save_to_session(request.session)
                 redirect_url = reverse(
                     "workbaskets:workbasket-ui-detail",

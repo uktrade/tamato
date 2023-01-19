@@ -242,6 +242,21 @@ def test_select_workbasket_without_permission(client):
     assert response.status_code == 403
 
 
+def test_select_workbasket_with_errored_status(valid_user_client):
+    """Test that the workbasket is transitioned correctly to editing if it is
+    selected for editing while in ERRORED status."""
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.ERRORED,
+    )
+    response = valid_user_client.post(
+        reverse("workbaskets:workbasket-ui-list"),
+        {"workbasket": workbasket.id},
+    )
+    assert response.status_code == 302
+    workbasket.refresh_from_db()
+    assert workbasket.status == WorkflowStatus.EDITING
+
+
 @pytest.mark.parametrize(
     "form_action, url_name",
     [
