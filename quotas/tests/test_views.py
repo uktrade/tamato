@@ -445,3 +445,35 @@ def test_quota_detail_suspension_periods_tab(
 
     for i, value in enumerate(expected_data.values()):
         assert value in rows[i].text
+
+
+def test_quota_detail_sub_quota_tab(
+    valid_user_client,
+    date_ranges,
+    mock_quota_api_no_data,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory()
+    current_definition = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+    quota_associations = factories.QuotaAssociationFactory.create_batch(
+        2,
+        main_quota=current_definition,
+    )
+
+    url = reverse("quota-ui-detail", args=[quota_order_number.sid])
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    order_numbers = {
+        int(element.text)
+        for element in soup.select(
+            ".quota__sub-quotas__content > table > tbody > tr > td:first-child",
+        )
+    }
+    expected_order_numbers = {
+        int(qa.sub_quota.order_number.order_number) for qa in quota_associations
+    }
+    assert not order_numbers.difference(expected_order_numbers)

@@ -7,6 +7,7 @@
 
 {% set core_data_tab_html %}{% include "includes/quotas/tabs/core_data.jinja" %}{% endset %}
 {% set definition_details_html %}{% include "includes/quotas/tabs/definition_details.jinja" %}{% endset %}
+{% set sub_quotas_html %}{% include "includes/quotas/tabs/sub_quotas.jinja" %}{% endset %}
 {% set blocking_periods_html %}{% include "includes/quotas/tabs/blocking_periods.jinja" %}{% endset %}
 {% set suspension_periods_html %}{% include "includes/quotas/tabs/suspension_periods.jinja" %}{% endset %}
 {% set measures_html %}{% include "includes/quotas/tabs/measures.jinja" %}{% endset %}
@@ -26,6 +27,13 @@
         "id": "definition-details",
         "panel": {
           "html": definition_details_html
+        }
+      },
+      {
+        "label": "Sub-quotas",
+        "id": "sub-quotas",
+        "panel": {
+          "html": sub_quotas_html
         }
       },
       {
