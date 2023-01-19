@@ -488,25 +488,9 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
 def test_terminate_rule_check(valid_user_client, session_workbasket):
     session_workbasket.rule_check_task_id = 123
 
-    with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
-        check = TrackedModelCheckFactory.create(
-            transaction_check__transaction=transaction,
-            model=good,
-            successful=False,
-        )
-
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-    }
-    session.save()
-
     url = reverse(
         "workbaskets:workbasket-ui-detail",
-        kwargs={"pk": session_workbasket.id},
+        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.post(
         url,
