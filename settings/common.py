@@ -237,6 +237,7 @@ else:
 
 DATABASES = {
     "default": dj_database_url.parse(DB_URL),
+    "ott": dj_database_url.parse("postgres://localhost:5432/ott"),
 }
 
 SQLITE = DB_URL.startswith("sqlite")
