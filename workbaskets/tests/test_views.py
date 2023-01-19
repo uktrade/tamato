@@ -485,6 +485,25 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     assert not session_workbasket.tracked_model_checks.exists()
 
 
+def test_terminate_rule_check(valid_user_client, session_workbasket):
+    session_workbasket.rule_check_task_id = 123
+
+    url = reverse(
+        "workbaskets:workbasket-ui-detail",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    response = valid_user_client.post(
+        url,
+        {"form-action": "terminate-rule-check"},
+    )
+    assert response.status_code == 302
+    assert response.url[: len(url)] == url
+
+    session_workbasket.refresh_from_db()
+
+    assert not session_workbasket.rule_check_task_id
+
+
 def test_workbasket_violations(valid_user_client, session_workbasket):
     """Test that a GET request to the violations endpoint returns a 200 and
     displays the correct column values for one unsuccessful

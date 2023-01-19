@@ -267,6 +267,7 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
     # Form action mappings to URL names.
     action_success_url_names = {
         "run-business-rules": "workbaskets:workbasket-ui-detail",
+        "terminate-rule-check": "workbaskets:workbasket-ui-detail",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:workbasket-ui-detail",
         "page-next": "workbaskets:workbasket-ui-detail",
@@ -355,6 +356,15 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
             )
         elif form_action == "run-business-rules":
             self.run_business_rules()
+            return self._append_url_page_param(
+                reverse(
+                    self.action_success_url_names[form_action],
+                    kwargs={"pk": self.workbasket.pk},
+                ),
+                form_action,
+            )
+        elif form_action == "terminate-rule-check":
+            self.workbasket.terminate_rule_check()
             return self._append_url_page_param(
                 reverse(
                     self.action_success_url_names[form_action],
