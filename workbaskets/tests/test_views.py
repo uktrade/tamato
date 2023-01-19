@@ -497,8 +497,7 @@ def test_terminate_rule_check(valid_user_client, session_workbasket):
         {"form-action": "terminate-rule-check"},
     )
     assert response.status_code == 302
-    response_url = f"/workbaskets/{session_workbasket.pk}/"
-    assert response.url[: len(response_url)] == response_url
+    assert response.url[: len(url)] == url
 
     session_workbasket.refresh_from_db()
 
