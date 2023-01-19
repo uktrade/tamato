@@ -68,3 +68,7 @@
     display: inline;
   }
 }
+
+ul.govuk-tabs__list[role=tablist] {
+  display: inline-flex;
+}
