@@ -238,7 +238,8 @@ def create_envelope_on_completed_processing(func):
 
     def inner(self, *args, **kwargs):
         result = func(self, *args, **kwargs)
-        PackagedWorkBasket.create_envelope_for_top()
+        if not PackagedWorkBasket.objects.currently_processing():
+            PackagedWorkBasket.create_envelope_for_top()
         return result
 
     return inner
