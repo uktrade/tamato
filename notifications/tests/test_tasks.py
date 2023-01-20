@@ -10,6 +10,7 @@ from notifications import tasks
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.skip(reason="TODO correctly mock S3 and/or Notify")
 @patch("notifications.tasks.NotificationsAPIClient.send_email_notification")
 def test_send_emails(send_email_notification):
     """Tests that email notifications are only sent to users subscribed to
