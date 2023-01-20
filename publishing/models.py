@@ -215,6 +215,35 @@ def save_after(func):
     return inner
 
 
+def pop_top_after(func):
+    """
+    Call pop_top() on an instance.
+
+    This is mainly to allow a state transition to complete before pop_top() is
+    called.
+    """
+
+    def inner(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        self.pop_top()
+        return result
+
+    return inner
+
+
+def create_envelope_on_completed_processing(func):
+    """Decorator used to wrap processing_succeeded and processing_failed
+    processing_state transition functions in order to create the next envelope
+    when they've completed."""
+
+    def inner(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        PackagedWorkBasket.create_envelope_for_top()
+        return result
+
+    return inner
+
+
 def create_envelope_on_new_top(func):
     """
     Decorator used to wrap functions that may change the top-most
@@ -509,6 +538,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
         return not PackagedWorkBasket.objects.currently_processing()
 
+    @pop_top_after
     @save_after
     @transition(
         field=processing_state,
@@ -540,8 +570,8 @@ class PackagedWorkBasket(TimestampedMixin):
 
         self.processing_started_at = datetime.now()
         self.save()
-        self.pop_top()
 
+    @create_envelope_on_completed_processing
     @save_after
     @transition(
         field=processing_state,
@@ -561,6 +591,7 @@ class PackagedWorkBasket(TimestampedMixin):
         self.workbasket.save()
         self.notify_processing_succeeded()
 
+    @create_envelope_on_completed_processing
     @save_after
     @transition(
         field=processing_state,
