@@ -308,16 +308,12 @@ USE_TZ = True
 # Time zone
 TIME_ZONE = "Europe/London"
 
-# HMRC AWS settings (override the defaults)
+# HMRC AWS settings (override the defaults) - DEPRECATED.
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
-# Envelope AWS settings (override the defaults)
-ENVELOPE_STORAGE_BUCKET_NAME = os.environ.get(
-    "ENVELOPE_STORAGE_BUCKET_NAME",
-    "envelope",
-)
-ENVELOPE_STORAGE_DIRECTORY = os.environ.get("ENVELOPE_STORAGE_DIRECTORY", "staging/")
-# Loading reports AWS settings
+
+
+# S3 creds and endpoint.
 S3_ACCESS_KEY_ID = os.environ.get(
     "S3_ACCESS_KEY_ID",
     "test_key_id",
@@ -331,26 +327,18 @@ S3_ENDPOINT_URL = os.environ.get(
     "https://test-url.local/",
 )
 
-# Loading reports AWS settings
-LOADING_REPORTS_BUCKET_NAME = os.environ.get(
-    "LOADING_REPORTS_BUCKET_NAME",
-    "loading-reports",
+# Packaging automation.
+HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
+    "HMRC_PACKAGING_STORAGE_BUCKET_NAME",
+    "hmrc-packaging",
 )
-LOADING_REPORTS_S3_ACCESS_KEY_ID = os.environ.get(
-    "LOADING_REPORTS_S3_ACCESS_KEY_ID",
-    "test_loading_reports_key_id",
+HMRC_ENVELOPE_STORAGE_DIRECTORY = os.environ.get(
+    "HMRC_ENVELOPE_STORAGE_DIRECTORY",
+    "envelope/",
 )
-LOADING_REPORTS_S3_SECRET_ACCESS_KEY = os.environ.get(
-    "LOADING_REPORTS_S3_SECRET_ACCESS_KEY",
-    "test_loading_reports_key",
-)
-LOADING_REPORTS_S3_ENDPOINT_URL = os.environ.get(
-    "LOADING_REPORTS_S3_ENDPOINT_URL",
-    "https://test-loading-reports-url.local/",
-)
-LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
-    "LOADING_REPORTS_STORAGE_DIRECTORY",
-    "loading-reports/",
+HMRC_LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
+    "HMRC_LOADING_REPORTS_STORAGE_DIRECTORY",
+    "loading-report/",
 )
 
 # SQLite AWS settings

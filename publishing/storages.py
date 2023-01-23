@@ -10,7 +10,7 @@ class EnvelopeStorage(S3Boto3Storage):
 
         return dict(
             super().get_default_settings(),
-            bucket_name=settings.ENVELOPE_STORAGE_BUCKET_NAME,
+            bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
             access_key=settings.S3_ACCESS_KEY_ID,
             secret_key=settings.S3_SECRET_ACCESS_KEY,
             endpoint_url=settings.S3_ENDPOINT_URL,
@@ -21,7 +21,7 @@ class EnvelopeStorage(S3Boto3Storage):
         from django.conf import settings
 
         filename = path.join(
-            settings.ENVELOPE_STORAGE_DIRECTORY,
+            settings.HMRC_ENVELOPE_STORAGE_DIRECTORY,
             filename,
         )
         return super().generate_filename(filename)
@@ -40,10 +40,10 @@ class LoadingReportStorage(S3Boto3Storage):
 
         return dict(
             super().get_default_settings(),
-            bucket_name=settings.LOADING_REPORTS_BUCKET_NAME,
-            access_key=settings.LOADING_REPORTS_S3_ACCESS_KEY_ID,
-            secret_key=settings.LOADING_REPORTS_S3_SECRET_ACCESS_KEY,
-            endpoint_url=settings.LOADING_REPORTS_S3_ENDPOINT_URL,
+            bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
+            access_key=settings.S3_ACCESS_KEY_ID,
+            secret_key=settings.S3_SECRET_ACCESS_KEY,
+            endpoint_url=settings.S3_ENDPOINT_URL,
             default_acl="private",
         )
 
@@ -51,7 +51,7 @@ class LoadingReportStorage(S3Boto3Storage):
         from django.conf import settings
 
         filename = path.join(
-            settings.LOADING_REPORTS_STORAGE_DIRECTORY,
+            settings.HMRC_LOADING_REPORTS_STORAGE_DIRECTORY,
             filename,
         )
         return super().generate_filename(filename)

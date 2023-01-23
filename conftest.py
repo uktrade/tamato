@@ -935,7 +935,7 @@ def envelope_storage(s3):
     return make_storage_mock(
         s3,
         EnvelopeStorage,
-        bucket_name=settings.ENVELOPE_STORAGE_BUCKET_NAME,
+        bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
     )
 
 
@@ -948,7 +948,7 @@ def loading_report_storage(s3):
     return make_storage_mock(
         s3,
         LoadingReportStorage,
-        bucket_name=settings.LOADING_REPORTS_BUCKET_NAME,
+        bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
     )
 
 
