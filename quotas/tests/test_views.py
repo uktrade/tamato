@@ -1,7 +1,9 @@
 import pytest
 from bs4 import BeautifulSoup
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.urls import reverse
 
+from common import tariffs_api
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -33,10 +35,92 @@ def test_quota_delete_form(factory, use_delete_form):
     ),
     ids=view_urlpattern_ids,
 )
-def test_quota_detail_views(view, url_pattern, valid_user_client):
+def test_quota_detail_views(
+    view,
+    url_pattern,
+    valid_user_client,
+    mock_quota_api_no_data,
+):
     """Verify that quota detail views are under the url quotas and don't return
     an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
+
+
+def test_quota_detail(valid_user_client, date_ranges, mock_quota_api_no_data):
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    response = valid_user_client.get(
+        reverse("quota-ui-detail", kwargs={"sid": quota.sid}),
+    )
+    assert response.status_code == 200
+
+
+def test_quota_detail_api_response_no_results(
+    valid_user_client,
+    date_ranges,
+    requests_mock,
+):
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.normal,
+    )
+
+    response_json = {"meta": {"pagination": {"total_count": 0}}}
+
+    response = requests_mock.get(url=tariffs_api.QUOTAS, json=response_json)
+
+    response = valid_user_client.get(
+        reverse("quota-ui-detail", kwargs={"sid": quota.sid}),
+    )
+    assert response.status_code == 200
+
+
+def test_quota_detail_api_response_has_results(
+    valid_user_client,
+    date_ranges,
+    requests_mock,
+    quotas_json,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    quota_definition = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.future,
+    )
+
+    response = requests_mock.get(url=tariffs_api.QUOTAS, json=quotas_json)
+
+    response = valid_user_client.get(
+        reverse("quota-ui-detail", kwargs={"sid": quota_order_number.sid}),
+    )
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    rows_content = [
+        el.text.strip()
+        for el in soup.select(".quota__definition-details dl > div > dd")
+    ]
+
+    data = quotas_json["data"][0]
+
+    assert len(rows_content) == 12
+    assert rows_content[0] == str(quota_definition.sid)
+    assert rows_content[1] == quota_definition.description
+    assert rows_content[2] == data["attributes"]["status"]
+    assert rows_content[3] == f"{quota_definition.valid_between.lower:%d %b %Y}"
+    assert rows_content[4] == f"{quota_definition.valid_between.upper:%d %b %Y}"
+    assert rows_content[5] == intcomma(quota_definition.initial_volume)
+    assert rows_content[6] == intcomma(quota_definition.volume)
+    assert rows_content[7] == intcomma(float(data["attributes"]["balance"]))
+    assert rows_content[8] == (quota_definition.measurement_unit.abbreviation).title()
+    assert rows_content[9] == f"{quota_definition.quota_critical_threshold}%"
+    assert rows_content[10] == "Yes" if quota_definition.quota_critical else "No"
+    assert rows_content[11] == str(quota_definition.maximum_precision)
 
 
 @pytest.mark.parametrize(
@@ -269,6 +353,7 @@ def test_quota_definitions_list_current_versions(
 def test_quota_definitions_list_current_measures(
     valid_user_client,
     date_ranges,
+    mock_quota_api_no_data,
 ):
     quota_order_number = factories.QuotaOrderNumberFactory()
     old_measures = factories.MeasureFactory.create_batch(
@@ -293,7 +378,11 @@ def test_quota_definitions_list_current_measures(
     assert num_measures == 4
 
 
-def test_quota_detail_blocking_periods_tab(valid_user_client, date_ranges):
+def test_quota_detail_blocking_periods_tab(
+    valid_user_client,
+    date_ranges,
+    mock_quota_api_no_data,
+):
     quota_order_number = factories.QuotaOrderNumberFactory()
     current_definition = factories.QuotaDefinitionFactory.create(
         order_number=quota_order_number,
@@ -322,3 +411,69 @@ def test_quota_detail_blocking_periods_tab(valid_user_client, date_ranges):
 
     for i, value in enumerate(expected_data.values()):
         assert value in rows[i].text
+
+
+def test_quota_detail_suspension_periods_tab(
+    valid_user_client,
+    date_ranges,
+    mock_quota_api_no_data,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory()
+    current_definition = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+    suspension_period = factories.QuotaSuspensionFactory.create(
+        quota_definition=current_definition,
+        description="Test description",
+        valid_between=date_ranges.normal,
+    )
+
+    expected_data = {
+        "Quota Suspension period SID": str(suspension_period.sid),
+        "Suspension start date": f"{suspension_period.valid_between.lower:%d %b %Y}",
+        "Suspension end date": f"{suspension_period.valid_between.upper:%d %b %Y}",
+        "Description": suspension_period.description,
+    }
+
+    url = reverse("quota-ui-detail", args=[quota_order_number.sid])
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    rows = soup.select(".quota__suspension-periods__content > dl > div > dd")
+    assert len(rows) == 4
+
+    for i, value in enumerate(expected_data.values()):
+        assert value in rows[i].text
+
+
+def test_quota_detail_sub_quota_tab(
+    valid_user_client,
+    date_ranges,
+    mock_quota_api_no_data,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory()
+    current_definition = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+    quota_associations = factories.QuotaAssociationFactory.create_batch(
+        2,
+        main_quota=current_definition,
+    )
+
+    url = reverse("quota-ui-detail", args=[quota_order_number.sid])
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    order_numbers = {
+        int(element.text)
+        for element in soup.select(
+            ".quota__sub-quotas__content > table > tbody > tr > td:first-child",
+        )
+    }
+    expected_order_numbers = {
+        int(qa.sub_quota.order_number.order_number) for qa in quota_associations
+    }
+    assert not order_numbers.difference(expected_order_numbers)

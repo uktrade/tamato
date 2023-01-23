@@ -110,11 +110,14 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
 
     def post(self, request, *args, **kwargs):
         workbasket_pk = request.POST.get("workbasket")
-
         if workbasket_pk:
             workbasket = WorkBasket.objects.get(pk=workbasket_pk)
 
             if workbasket:
+                if workbasket.status == WorkflowStatus.ERRORED:
+                    workbasket.restore()
+                    workbasket.save()
+
                 workbasket.save_to_session(request.session)
                 redirect_url = reverse(
                     "workbaskets:workbasket-ui-detail",
@@ -268,6 +271,7 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
     action_success_url_names = {
         "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
         "run-business-rules": "workbaskets:workbasket-ui-detail",
+        "terminate-rule-check": "workbaskets:workbasket-ui-detail",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:workbasket-ui-detail",
         "page-next": "workbaskets:workbasket-ui-detail",
@@ -366,6 +370,15 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
         elif form_action == "submit-for-packaging":
             return reverse(
                 self.action_success_url_names[form_action],
+            )
+        elif form_action == "terminate-rule-check":
+            self.workbasket.terminate_rule_check()
+            return self._append_url_page_param(
+                reverse(
+                    self.action_success_url_names[form_action],
+                    kwargs={"pk": self.workbasket.pk},
+                ),
+                form_action,
             )
         return reverse("home")
 

@@ -7,7 +7,9 @@
 
 {% set core_data_tab_html %}{% include "includes/quotas/tabs/core_data.jinja" %}{% endset %}
 {% set definition_details_html %}{% include "includes/quotas/tabs/definition_details.jinja" %}{% endset %}
+{% set sub_quotas_html %}{% include "includes/quotas/tabs/sub_quotas.jinja" %}{% endset %}
 {% set blocking_periods_html %}{% include "includes/quotas/tabs/blocking_periods.jinja" %}{% endset %}
+{% set suspension_periods_html %}{% include "includes/quotas/tabs/suspension_periods.jinja" %}{% endset %}
 {% set measures_html %}{% include "includes/quotas/tabs/measures.jinja" %}{% endset %}
 {% set version_control_tab_html %}{% include "includes/quotas/tabs/version_control.jinja" %}{% endset %}
 
@@ -28,10 +30,24 @@
         }
       },
       {
+        "label": "Sub-quotas",
+        "id": "sub-quotas",
+        "panel": {
+          "html": sub_quotas_html
+        }
+      },
+      {
         "label": "Blocking periods",
         "id": "blocking-periods",
         "panel": {
           "html": blocking_periods_html
+        }
+      },
+      {
+        "label": "Suspension periods",
+        "id": "suspension-periods",
+        "panel": {
+          "html": suspension_periods_html
         }
       },
       {
