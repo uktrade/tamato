@@ -927,6 +927,19 @@ def sqlite_storage(s3, s3_bucket_names):
 
 
 @pytest.fixture
+def envelope_storage(s3):
+    """Patch EnvelopeStorage with moto so that nothing is really uploaded to
+    s3."""
+    from publishing.storages import EnvelopeStorage
+
+    return make_storage_mock(
+        s3,
+        EnvelopeStorage,
+        bucket_name=settings.ENVELOPE_STORAGE_BUCKET_NAME,
+    )
+
+
+@pytest.fixture
 def loading_report_storage(s3):
     """Patch LoadingReportStorage with moto so that nothing is really uploaded
     to s3."""

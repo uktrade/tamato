@@ -82,7 +82,7 @@ def test_start_processing(valid_user_client, unpause_queue):
         return_value=MagicMock(id=factory.Faker("uuid4")),
     ):
         packaged_work_basket_1 = factories.PackagedWorkBasketFactory(
-            envelope=factories.EnvelopeFactory(),
+            envelope=factories.PublishedEnvelopeFactory(),
         )
 
     with patch(
@@ -141,7 +141,7 @@ def test_accept_envelope(
     valid_user_client,
 ):
     packaged_work_basket = factories.PackagedWorkBasketFactory(
-        envelope=factories.EnvelopeFactory(),
+        envelope=factories.PublishedEnvelopeFactory(),
     )
     packaged_work_basket.begin_processing()
 
@@ -179,7 +179,7 @@ def test_reject_envelope(
         return_value=MagicMock(id=factory.Faker("uuid4")),
     ):
         packaged_work_basket_1 = factories.PackagedWorkBasketFactory(
-            envelope=factories.EnvelopeFactory(),
+            envelope=factories.PublishedEnvelopeFactory(),
         )
 
     with patch(
