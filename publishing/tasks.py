@@ -37,7 +37,6 @@ def create_xml_envelope_file(
     If the Celery process used to execute this function fails, then this
     function may be called again in order to generate the envelope.
     """
-
     from publishing.models import Envelope
     from publishing.models import PackagedWorkBasket
 

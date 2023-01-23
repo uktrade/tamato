@@ -1243,6 +1243,29 @@ class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
     theme = string_sequence(length=50)
     jira_url = "www.fakejiraticket.com"
     loading_report = factory.SubFactory(LoadingReportFactory)
+    # create_envelope_task_id = string_sequence(length=50)
+
+
+class QueuedPackagedWorkBasketFactory(PackagedWorkBasketFactory):
+    """Creates a PackagedWorkBasket instance associated with an approved
+    WorkBasket that contains transactions."""
+
+    workbasket = factory.SubFactory(QueuedWorkBasketFactory)
+
+
+class PublishedEnvelopeFactory(factory.django.DjangoModelFactory):
+    """Creates an Envelope instance."""
+
+    class Meta:
+        model = "publishing.Envelope"
+
+    # envelope_id = factory.Sequence(lambda x: f"{Dates().now:%y}{(x + 1):04d}")
+    # xml_file =
+    packaged_work_basket = factory.SubFactory(QueuedPackagedWorkBasketFactory)
+
+
+class UploadedPackagedWorkBasketFactory(PackagedWorkBasketFactory):
+    envelope = factory.SubFactory(PublishedEnvelopeFactory)
 
 
 class OperationalStatusFactory(factory.django.DjangoModelFactory):

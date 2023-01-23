@@ -38,8 +38,6 @@ from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
-
 
 class OperationalStatusQuerySet(QuerySet):
     def current_status(self):
