@@ -64,13 +64,13 @@
 
     {{ table_rows.append([
       {"text": object_details },
-      {"text": "-" },
+      {"text": quota_data[object.sid].status if quota_data[object.sid] else "-" },
       {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
       {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
       {"text": intcomma(object.initial_volume) },
       {"text": intcomma(object.volume) },
+      {"text": intcomma(quota_data[object.sid].balance) if quota_data[object.sid] else "-" },
       {"text": object.measurement_unit.abbreviation|title},
-      {"text": "-" },
     ]) or "" }}
   {% endfor %}
 
@@ -94,8 +94,8 @@
     {"text": "End date"},
     {"text": "Initial volume"},
     {"text": "Volume"},
+    {"text": "Balance"},
     {"text": "Measurement unit"},
-    {"text": "Balance"}
   ],
   "rows": table_rows
 }) }}

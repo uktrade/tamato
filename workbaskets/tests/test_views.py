@@ -485,6 +485,25 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     assert not session_workbasket.tracked_model_checks.exists()
 
 
+def test_terminate_rule_check(valid_user_client, session_workbasket):
+    session_workbasket.rule_check_task_id = 123
+
+    url = reverse(
+        "workbaskets:workbasket-ui-detail",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    response = valid_user_client.post(
+        url,
+        {"form-action": "terminate-rule-check"},
+    )
+    assert response.status_code == 302
+    assert response.url[: len(url)] == url
+
+    session_workbasket.refresh_from_db()
+
+    assert not session_workbasket.rule_check_task_id
+
+
 def test_workbasket_violations(valid_user_client, session_workbasket):
     """Test that a GET request to the violations endpoint returns a 200 and
     displays the correct column values for one unsuccessful
@@ -562,7 +581,21 @@ def setup(session_workbasket, valid_user_client):
         good = GoodsNomenclatureFactory.create(transaction=transaction)
         measure = MeasureFactory.create(transaction=transaction)
         geo_area = GeographicalAreaFactory.create(transaction=transaction)
-        objects = [good, measure, geo_area]
+        regulation = factories.RegulationFactory.create(transaction=transaction)
+        additional_code = factories.AdditionalCodeFactory.create(
+            transaction=transaction,
+        )
+        certificate = factories.CertificateFactory.create(transaction=transaction)
+        footnote = factories.FootnoteFactory.create(transaction=transaction)
+        objects = [
+            good,
+            measure,
+            geo_area,
+            regulation,
+            additional_code,
+            certificate,
+            footnote,
+        ]
         for obj in objects:
             TrackedModelCheckFactory.create(
                 transaction_check__transaction=transaction,
@@ -681,3 +714,17 @@ def test_violation_list_page_sorting_ignores_invalid_params(
     response = valid_user_client.get(f"{url}?sort_by=foo&order=bar")
 
     assert response.status_code == 200
+
+
+def test_workbasket_changes_view(setup, valid_user_client, session_workbasket):
+    url = reverse(
+        "workbaskets:workbasket-ui-changes",
+        kwargs={"pk": session_workbasket.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    version_control_tabs = soup.select('a[href="#version-control"]')
+    assert len(version_control_tabs) == 2

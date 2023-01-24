@@ -25,9 +25,27 @@
   </form>
 {% endset %}
 
+{% set terminate_rule_check_form %}
+  <form
+    method="post"
+    class="govuk-!-display-inline-block govuk-!-margin-left-5"
+  >
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+    {{ govukButton({
+        "text": "Stop rule check",
+        "classes": "govuk-button--warning govuk-!-margin-0",
+        "name": "form-action",
+        "value": "terminate-rule-check",
+        "preventDoubleClick": true,
+    }) }}
+  </form>
+{% endset %}
+
 {% set rule_check_status %}
   {% if rule_check_in_progress %}
       : rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket. Come back later or refresh to see results.
+      {{ terminate_rule_check_form }}
   {% elif workbasket.tracked_model_check_errors.exists() %}
        ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }}): failing business rules.
     {{ run_business_rules_form }}
