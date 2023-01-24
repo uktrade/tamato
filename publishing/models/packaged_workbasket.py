@@ -96,6 +96,9 @@ def create_envelope_on_new_top(func):
 
         top_after = PackagedWorkBasket.objects.get_top_awaiting()
         if top_before != top_after:
+            # Deletes the envelope created for the previous packaged workbasket
+            # Deletes from s3 and the Envelope model, nulls reference in packaged workbasket
+            top_before.envelope.delete()
             PackagedWorkBasket.create_envelope_for_top()
 
         return result
@@ -263,7 +266,7 @@ class PackagedWorkBasket(TimestampedMixin):
     envelope = models.ForeignKey(
         "publishing.Envelope",
         null=True,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         editable=False,
         related_name="packagedworkbaskets",
     )

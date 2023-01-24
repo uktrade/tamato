@@ -44,7 +44,8 @@ class Migration(migrations.Migration):
                         upload_to="",
                     ),
                 ),
-                ("created_date", models.DateTimeField(auto_now_add=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
                 "ordering": ("envelope_id",),
@@ -139,7 +140,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         editable=False,
                         null=True,
-                        on_delete=django.db.models.deletion.PROTECT,
+                        on_delete=django.db.models.deletion.SET_NULL,
                         related_name="packagedworkbaskets",
                         to="publishing.envelope",
                     ),

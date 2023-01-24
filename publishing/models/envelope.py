@@ -10,6 +10,7 @@ from django.db import models
 from django.db.transaction import atomic
 from lxml import etree
 
+from common.models.mixins import TimestampedMixin
 from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
@@ -93,7 +94,7 @@ class EnvelopeId(models.CharField):
         return name, path, args, kwargs
 
 
-class Envelope(models.Model):
+class Envelope(TimestampedMixin):
     """
     Represents an automated packaged envelope.
 
@@ -111,7 +112,6 @@ class Envelope(models.Model):
 
     envelope_id = EnvelopeId()
     xml_file = models.FileField(storage=EnvelopeStorage, default="")
-    created_date = models.DateTimeField(auto_now_add=True, editable=False, null=True)
 
     @classmethod
     def next_envelope_id(cls):
@@ -140,6 +140,13 @@ class Envelope(models.Model):
             now = datetime(year, 1, 1)
 
         return f"{now:%y}{counter:04d}"
+
+    @atomic
+    def delete(self, **kwargs):
+        """Override delete function within model to ensure that the file is
+        deleted from s3 before the model object is deleted."""
+        self.xml_file.delete()
+        return super().delete(**kwargs)
 
     @atomic
     def upload_envelope(
