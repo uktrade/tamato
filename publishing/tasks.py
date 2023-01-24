@@ -32,13 +32,12 @@ def create_xml_envelope_file(
     this instance (with state == ProcessingState.AWAITING_PROCESSING)
     becomes the new top-most instance.
 
-    TODO: Implement action 2 & 3.
 
     If the Celery process used to execute this function fails, then this
     function may be called again in order to generate the envelope.
     """
-    from publishing.models import Envelope
-    from publishing.models import PackagedWorkBasket
+    from publishing.models.envelope import Envelope
+    from publishing.models.packaged_workbasket import PackagedWorkBasket
 
     packaged_work_basket = PackagedWorkBasket.objects.get(
         pk=packaged_work_basket_id,

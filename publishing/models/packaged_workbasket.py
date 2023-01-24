@@ -1,407 +1,28 @@
 import logging
-import os
-import tempfile
 from datetime import datetime
-from pathlib import Path
-from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import ContentFile
 from django.db import models
-from django.db.models import F
-from django.db.models import Max
-from django.db.models import Q
-from django.db.models import QuerySet
-from django.db.models import TextChoices
-from django.db.models import Value
-from django.db.models.functions import Coalesce
 from django.db.transaction import atomic
 from django.urls import reverse
 from django_fsm import FSMField
 from django_fsm import transition
-from lxml import etree
 from notifications_python_client import prepare_upload
 
 from common.models.mixins import TimestampedMixin
-from common.serializers import validate_envelope
-from exporter.serializers import MultiFileEnvelopeTransactionSerializer
-from exporter.util import dit_file_generator
 from notifications.models import NotificationLog
 from notifications.tasks import send_emails
-from publishing.storages import EnvelopeStorage
-from publishing.storages import LoadingReportStorage
+from publishing.models.exceptions import PackagedWorkBasketDuplication
+from publishing.models.exceptions import PackagedWorkBasketInvalidCheckStatus
+from publishing.models.exceptions import PackagedWorkBasketInvalidQueueOperation
+from publishing.models.loading_report import LoadingReport
+from publishing.models.state import ProcessingState
 from publishing.tasks import schedule_create_xml_envelope_file
-from taric import validators
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
-
-
-class OperationalStatusQuerySet(QuerySet):
-    def current_status(self):
-        return self.order_by("pk").last()
-
-
-class QueueState(TextChoices):
-    PAUSED = ("PAUSED", "Envelope processing is paused")
-    UNPAUSED = ("UNPAUSED", "Envelope processing is unpaused and may proceed")
-
-
-class OperationalStatus(models.Model):
-    """
-    Operational status of the packaging system.
-
-    The packaging queue's state is of primary concern here: either unpaused,
-    which allows processing the next available workbasket, or paused, which
-    blocks the begin_processing transition of the next available queued
-    workbasket until the system is unpaused.
-    """
-
-    class Meta:
-        ordering = ["pk"]
-        verbose_name_plural = "operational statuses"
-
-    objects = OperationalStatusQuerySet.as_manager()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        editable=False,
-        null=True,
-    )
-    """If a new instance is created as a result of direct user action (for
-    instance pausing or unpausing the packaging queue) then `created_by` should
-    be associated with that user."""
-    queue_state = models.CharField(
-        max_length=8,
-        default=QueueState.PAUSED,
-        choices=QueueState.choices,
-        editable=False,
-    )
-
-    @classmethod
-    def pause_queue(cls, user: settings.AUTH_USER_MODEL) -> "OperationalStatus":
-        """
-        Transition the workbasket queue into a paused state (if it is not
-        already paused) by creating a new `OperationalStatus` and returning it
-        to the caller.
-
-        If the queue is already paused, then do nothing and return None.
-        """
-        if cls.is_queue_paused():
-            return None
-        return OperationalStatus.objects.create(
-            queue_state=QueueState.PAUSED,
-            created_by=user,
-        )
-
-    @classmethod
-    def unpause_queue(cls, user: settings.AUTH_USER_MODEL) -> "OperationalStatus":
-        """
-        Transition the workbasket queue into an unpaused state (if it is not
-        already unpaused) by creating a new `OperationalStatus` and returning it
-        to the caller.
-
-        If the queue is already unpaused, then do nothing and return None.
-        """
-        if not cls.is_queue_paused():
-            return None
-        return OperationalStatus.objects.create(
-            queue_state=QueueState.UNPAUSED,
-            created_by=user,
-        )
-
-    @classmethod
-    def is_queue_paused(cls) -> bool:
-        """Returns True if the workbasket queue is paused, False otherwise."""
-        current_status = cls.objects.current_status()
-        if not current_status or current_status.queue_state == QueueState.PAUSED:
-            return True
-        else:
-            return False
-
-
-class PackagedWorkBasketDuplication(Exception):
-    pass
-
-
-class PackagedWorkBasketInvalidCheckStatus(Exception):
-    pass
-
-
-class PackagedWorkBasketInvalidQueueOperation(Exception):
-    pass
-
-
-class EnvelopeCurrentlyProccessing(Exception):
-    pass
-
-
-class EnvelopeInvalidQueuePosition(Exception):
-    pass
-
-
-class WorkBasketNoTransactions(Exception):
-    pass
-
-
-class ProcessingState(TextChoices):
-    """Processing states of PackagedWorkBasket instances."""
-
-    AWAITING_PROCESSING = (
-        "AWAITING_PROCESSING",
-        "Awaiting processing",
-    )
-    """Queued up and awaiting processing."""
-    CURRENTLY_PROCESSING = (
-        "CURRENTLY_PROCESSING",
-        "Currently processing",
-    )
-    """Picked off the queue and now currently being processed - now attempting
-    to ingest envelope into CDS."""
-    SUCCESSFULLY_PROCESSED = (
-        "SUCCESSFULLY_PROCESSED",
-        "Successfully processed",
-    )
-    """Processing now completed with a successful outcome - envelope ingested
-    into CDS."""
-    FAILED_PROCESSING = (
-        "FAILED_PROCESSING",
-        "Failed processing",
-    )
-    """Processing now completed with a failure outcome - CDS rejected the
-    envelope."""
-    ABANDONED = (
-        "ABANDONED",
-        "Abandoned",
-    )
-    """Processing has been abandoned."""
-
-    @classmethod
-    def queued_states(cls):
-        """Returns all states that represent a queued  instance, including those
-        that are being processed."""
-        return (cls.AWAITING_PROCESSING, cls.CURRENTLY_PROCESSING)
-
-    @classmethod
-    def completed_processing_states(cls):
-        return (
-            cls.SUCCESSFULLY_PROCESSED,
-            cls.FAILED_PROCESSING,
-        )
-
-
-class EnvelopeManager(models.Manager):
-    @atomic
-    def create(self, packaged_work_basket, **kwargs):
-        """
-        Create a new instance, from the packaged workbasket at the front of the
-        queue.
-
-         :param packaged_work_basket: packaged workbasket to upload.
-        @throws EnvelopeCurrentlyProccessing if an envelope is currently being processed
-        @throws EnvelopeInvalidQueuePosition if the packaged workbasket is not
-        a the front of the queue
-        """
-        currently_processing = PackagedWorkBasket.objects.currently_processing()
-        if currently_processing:
-            raise EnvelopeCurrentlyProccessing(
-                "Unable to create Envelope,"
-                f"({currently_processing}) is currently proccessing",
-            )
-
-        if packaged_work_basket.position != 1:
-            raise EnvelopeInvalidQueuePosition(
-                "Unable to create Envelope,"
-                f"({packaged_work_basket.workbasket}) is not at the front of the queue",
-            )
-
-        envelope_id = Envelope.next_envelope_id()
-        envelope = super().create(envelope_id=envelope_id, **kwargs)
-        envelope.upload_envelope(
-            packaged_work_basket.workbasket,
-        )
-        return envelope
-
-
-class EnvelopeQuerySet(QuerySet):
-    def envelopes_by_year(self, year: Optional[int] = None):
-        """
-        Return all envelopes for a year, defaulting to this year.
-
-        :param year: int year, defaults to this year.
-        Limitation:  This queries envelope_id which only stores two digit dates.
-        """
-        if year is None:
-            now = datetime.today()
-        else:
-            now = datetime(year, 1, 1)
-
-        return self.filter(envelope_id__regex=rf"{now:%y}\d{{4}}").order_by(
-            "envelope_id",
-        )
-
-
-class EnvelopeId(models.CharField):
-    """An envelope ID must match the format YYxxxx, where YY is the last two
-    digits of the current year and xxxx is a zero padded integer, incrementing
-    from 0001 for the first envelope of the year."""
-
-    def __init__(self, *args, **kwargs):
-        kwargs["max_length"] = 6
-        kwargs["validators"] = [validators.EnvelopeIdValidator]
-        super().__init__(*args, **kwargs)
-
-    def deconstruct(self):
-        name, path, args, kwargs = super().deconstruct()
-        del kwargs["max_length"]
-        del kwargs["validators"]
-        return name, path, args, kwargs
-
-
-class Envelope(models.Model):
-    """
-    Represents an automated packaged envelope.
-
-    An Envelope contains one or more Transactions, listing changes to be applied
-    to the tariff in the sequence defined by the transaction IDs. Contains
-    xml_file which is a reference to the envelope stored on s3
-    """
-
-    class Meta:
-        ordering = ("envelope_id",)
-
-    objects: EnvelopeQuerySet = EnvelopeManager.from_queryset(
-        EnvelopeQuerySet,
-    )()
-
-    envelope_id = EnvelopeId()
-    xml_file = models.FileField(storage=EnvelopeStorage, default="")
-    created_date = models.DateTimeField(auto_now_add=True, editable=False, null=True)
-
-    @classmethod
-    def next_envelope_id(cls):
-        """Get packaged workbaskets where proc state SUCCESS."""
-        envelope = (
-            Envelope.objects.envelopes_by_year()
-            .filter(
-                packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
-            )
-            .last()
-        )
-
-        if envelope is None:
-            # First envelope of the year.
-            now = datetime.today()
-            counter = 1
-        else:
-            year = int(envelope.envelope_id[:2])
-            counter = int(envelope.envelope_id[2:]) + 1
-
-            if counter > 9999:
-                raise ValueError(
-                    "Cannot create more than 9999 Envelopes on a single year.",
-                )
-
-            now = datetime(year, 1, 1)
-
-        return f"{now:%y}{counter:04d}"
-
-    @atomic
-    def upload_envelope(
-        self,
-        workbasket,
-    ):
-        """
-        Upload Envelope data to the s3 bucket and return artifacts for the
-        database.
-
-        Side effects on success: Create Xml file and upload envelope XML to an
-        S3 object.
-        """
-
-        filename = f"DIT{str(self.envelope_id)}.xml"
-
-        # transactions: will be serialized, then added to an envelope for upload.
-        workbaskets = WorkBasket.objects.filter(pk=workbasket.pk)
-        transactions = workbaskets.ordered_transactions()
-
-        if not transactions:
-            msg = f"transactions to upload:  {transactions.count()} does not contain any transactions."
-            logger.info(msg)
-            raise WorkBasketNoTransactions(msg)
-
-        # Envelope XML is written to temporary files for validation before anything is created
-        # in the database or uploaded to s3.
-        with tempfile.TemporaryDirectory(prefix="dit-tamato_") as temporary_directory:
-            output_file_constructor = dit_file_generator(
-                temporary_directory,
-                int(self.envelope_id),
-            )
-
-            serializer = MultiFileEnvelopeTransactionSerializer(
-                output_file_constructor,
-                envelope_id=self.envelope_id,
-                max_envelope_size=settings.EXPORTER_MAXIMUM_ENVELOPE_SIZE,
-            )
-
-            rendered_envelope = list(
-                serializer.split_render_transactions(transactions),
-            )[0]
-            logger.info(f"rendered_envelope {rendered_envelope}")
-            envelope_file = rendered_envelope.output
-            if not rendered_envelope.transactions:
-                msg = f"{envelope_file.name}  is empty !"
-                logger.error(msg)
-                raise WorkBasketNoTransactions(msg)
-            # Transaction envelope data XML is valid, ready for upload to s3
-            else:
-                envelope_file.seek(0, os.SEEK_SET)
-                try:
-                    validate_envelope(envelope_file)
-                except etree.DocumentInvalid:
-                    logger.error(f"{envelope_file.name}  is Envelope invalid !")
-                else:
-                    envelope_file.seek(0, os.SEEK_SET)
-                    content_file = ContentFile(envelope_file.read())
-                    self.xml_file = content_file
-
-                    envelope_file.seek(0, os.SEEK_SET)
-
-                    self.xml_file.save(filename, content_file)
-
-                    logger.info("Workbasket saved to CDS S3 bucket")
-                    logger.debug("Uploaded: %s", filename)
-
-    def __repr__(self):
-        return f'<Envelope: envelope_id="{self.envelope_id}">'
-
-
-def report_bucket(instance: "LoadingReport", filename: str):
-    """Generate the filepath to upload to loading report bucket."""
-    return str(Path(settings.LOADING_REPORTS_STORAGE_DIRECTORY) / filename)
-
-
-class LoadingReport(TimestampedMixin):
-    """Report associated with an attempt to load (process) a PackagedWorkBasket
-    instance."""
-
-    file = models.FileField(
-        blank=True,
-        null=True,
-        storage=LoadingReportStorage,
-        upload_to=report_bucket,
-    )
-    comments = models.TextField(
-        blank=True,
-        max_length=200,
-    )
-
-
-# Decorators
 
 
 def save_after(func):
@@ -505,9 +126,6 @@ def skip_notifications_if_disabled(func):
     return inner
 
 
-# Model Managers.
-
-
 class PackagedWorkBasketManager(models.Manager):
     @atomic
     def create(self, workbasket, **kwargs):
@@ -531,9 +149,9 @@ class PackagedWorkBasketManager(models.Manager):
 
         position = (
             PackagedWorkBasket.objects.aggregate(
-                out=Coalesce(
-                    Max("position"),
-                    Value(0),
+                out=models.functions.Coalesce(
+                    models.Max("position"),
+                    models.Value(0),
                 ),
             )["out"]
             + 1
@@ -557,10 +175,7 @@ class PackagedWorkBasketManager(models.Manager):
         return new_obj
 
 
-# QuerySets.
-
-
-class PackagedWorkBasketQuerySet(QuerySet):
+class PackagedWorkBasketQuerySet(models.QuerySet):
     def awaiting_processing(self) -> "PackagedWorkBasketQuerySet":
         """Return all PackagedWorkBasket instances whose processing_state is set
         to AWAITING_PROCESSING."""
@@ -598,7 +213,7 @@ class PackagedWorkBasketQuerySet(QuerySet):
     def max_position(self) -> int:
         """Return the maxium position value of any PackagedWorkBasket
         instance."""
-        return PackagedWorkBasket.objects.aggregate(out=Max("position"))["out"]
+        return PackagedWorkBasket.objects.aggregate(out=models.Max("position"))["out"]
 
     def get_top_awaiting(self):
         """Return the top-most (position 1) PackagedWorkBasket instance with
@@ -609,9 +224,6 @@ class PackagedWorkBasketQuerySet(QuerySet):
             position=1,
         )
         return top.first() if top else None
-
-
-# Models.
 
 
 class PackagedWorkBasket(TimestampedMixin):
@@ -649,7 +261,7 @@ class PackagedWorkBasket(TimestampedMixin):
     value set to 0.
     """
     envelope = models.ForeignKey(
-        Envelope,
+        "publishing.Envelope",
         null=True,
         on_delete=models.PROTECT,
         editable=False,
@@ -729,7 +341,7 @@ class PackagedWorkBasket(TimestampedMixin):
                 seconds_delay=1,
             )
         else:
-            logging.info(
+            logger.info(
                 "Attempted to schedule top for envelope creation, but no top "
                 "exists.",
             )
@@ -967,7 +579,7 @@ class PackagedWorkBasket(TimestampedMixin):
             )
 
         PackagedWorkBasket.objects.filter(position__gt=0).update(
-            position=F("position") - 1,
+            position=models.F("position") - 1,
         )
         self.refresh_from_db()
 
@@ -995,7 +607,7 @@ class PackagedWorkBasket(TimestampedMixin):
         self.save()
 
         PackagedWorkBasket.objects.filter(position__gt=current_position).update(
-            position=F("position") - 1,
+            position=models.F("position") - 1,
         )
         self.refresh_from_db()
 
@@ -1013,8 +625,8 @@ class PackagedWorkBasket(TimestampedMixin):
         position = self.position
 
         PackagedWorkBasket.objects.filter(
-            Q(position__gte=1) & Q(position__lt=position),
-        ).update(position=F("position") + 1)
+            models.Q(position__gte=1) & models.Q(position__lt=position),
+        ).update(position=models.F("position") + 1)
 
         self.position = 1
         self.save()

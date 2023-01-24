@@ -11,12 +11,13 @@ from django.forms import ModelForm
 
 from common.forms import DateInputFieldFixed
 from common.forms import DescriptionHelpBox
-from publishing import models
+from publishing.models.loading_report import LoadingReport
+from publishing.models.packaged_workbasket import PackagedWorkBasket
 
 
 class LoadingReportForm(ModelForm):
     class Meta:
-        model = models.LoadingReport
+        model = LoadingReport
         fields = ("file", "comments")
 
     def __init__(self, *args, **kwargs):
@@ -43,7 +44,7 @@ class LoadingReportForm(ModelForm):
 
 class PackagedWorkBasketCreateForm(forms.ModelForm):
     class Meta:
-        model = models.PackagedWorkBasket
+        model = PackagedWorkBasket
         fields = ("theme", "description", "eif", "embargo", "jira_url")
 
     theme = forms.CharField(

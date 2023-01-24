@@ -6,7 +6,10 @@ from django.conf import settings
 from django.db import migrations
 from django.db import models
 
-import publishing.models
+import publishing.models.envelope
+import publishing.models.loading_report
+import publishing.models.operational_status
+import publishing.models.packaged_workbasket
 import publishing.storages
 
 
@@ -32,7 +35,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("envelope_id", publishing.models.EnvelopeId()),
+                ("envelope_id", publishing.models.envelope.EnvelopeId()),
                 (
                     "xml_file",
                     models.FileField(
@@ -67,7 +70,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         storage=publishing.storages.LoadingReportStorage,
-                        upload_to=publishing.models.report_bucket,
+                        upload_to="",
                     ),
                 ),
                 ("comments", models.TextField(blank=True, max_length=200)),

@@ -14,12 +14,12 @@ from django_fsm import TransitionNotAllowed
 from common.views import WithPaginationListMixin
 from publishing.forms import LoadingReportForm
 from publishing.forms import PackagedWorkBasketCreateForm
-from publishing.models import OperationalStatus
-from publishing.models import PackagedWorkBasket
-from publishing.models import PackagedWorkBasketDuplication
-from publishing.models import PackagedWorkBasketInvalidCheckStatus
-from publishing.models import PackagedWorkBasketInvalidQueueOperation
-from publishing.models import ProcessingState
+from publishing.models.exceptions import PackagedWorkBasketDuplication
+from publishing.models.exceptions import PackagedWorkBasketInvalidCheckStatus
+from publishing.models.exceptions import PackagedWorkBasketInvalidQueueOperation
+from publishing.models.operational_status import OperationalStatus
+from publishing.models.packaged_workbasket import PackagedWorkBasket
+from publishing.models.state import ProcessingState
 from workbaskets.models import WorkBasket
 
 
@@ -197,9 +197,6 @@ class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DetailView):
     model = PackagedWorkBasket
 
     def get(self, request, *args, **kwargs):
-        # TODO:
-        # * This is dummy implementation - get the envelope file object from S3.
-
         from django.http import HttpResponse
 
         packaged_workbasket = self.get_object()
@@ -270,9 +267,11 @@ class AcceptEnvelopeView(CompleteEnvelopeProcessingView):
 class AcceptEnvelopeConfirmView(EnvelopeActionConfirmView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
-        # TODO: Get the envelope ID when envelope management is done.
-        envelop_id = "220999"
-        data["message"] = f" Envelope ID {envelop_id} was accepted."
+
+        packaged_workbasket = self.get_object()
+        envelope = packaged_workbasket.envelope
+
+        data["message"] = f" Envelope ID {envelope.envelop_id} was accepted."
         return data
 
 
@@ -299,11 +298,13 @@ class RejectEnvelopeView(CompleteEnvelopeProcessingView):
 class RejectEnvelopeConfirmView(EnvelopeActionConfirmView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
-        # TODO: Get the envelope ID when envelope management is done.
-        envelop_id = "220999"
+
+        packaged_workbasket = self.get_object()
+        envelope = packaged_workbasket.envelope
+
         data[
             "message"
-        ] = f" Envelope ID {envelop_id} was rejected and queue was paused."
+        ] = f" Envelope ID {envelope.envelop_id} was rejected and queue was paused."
         return data
 
 

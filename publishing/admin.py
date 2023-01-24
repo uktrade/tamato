@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
-from publishing.models import Envelope
-from publishing.models import OperationalStatus
-from publishing.models import PackagedWorkBasket
+from publishing.models.envelope import Envelope
+from publishing.models.operational_status import OperationalStatus
+from publishing.models.packaged_workbasket import PackagedWorkBasket
 
 
 class CustomProcessingStateFilter(admin.SimpleListFilter):
