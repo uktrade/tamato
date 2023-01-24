@@ -1,0 +1,1 @@
+worker: celery -A common.celery worker -O fair -l info
