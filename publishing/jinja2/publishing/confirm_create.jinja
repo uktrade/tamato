@@ -18,8 +18,8 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ govukPanel({
-        "titleText": message,
-        "text": "Email was sent to inform DIT",
+        "titleText": "Workbasket queued at position " ~ object.position,
+        "text": "Workbasket ID: " ~ object.workbasket.id,
         "classes": "govuk-!-margin-bottom-7"
       }) }}
     </div>
