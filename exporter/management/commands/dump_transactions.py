@@ -122,7 +122,6 @@ class Command(BaseCommand):
                 f"Nothing to upload:  {workbaskets.count()} Workbaskets QUEUED but none contain any transactions.",
             )
 
-        ### TODO throw error if wb has no packaged wb and not at queue front
         if options.get("envelope_id") == ["auto"]:
             envelope_id = int(Envelope.next_envelope_id())
         else:
@@ -144,7 +143,7 @@ class Command(BaseCommand):
             max_envelope_size=max_envelope_size,
         )
         errors = False
-        ###TODO upload to s3 and saved to system so it can be exported to sharepoint
+
         for time_to_render, rendered_envelope in item_timer(
             serializer.split_render_transactions(transactions),
         ):

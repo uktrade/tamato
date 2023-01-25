@@ -62,9 +62,6 @@ admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
 class EnvelopeAdmin(admin.ModelAdmin):
     ordering = ["-pk"]
 
-    def has_delete_permission(self, request, obj=None):
-        return True
-
 
 class OperationalStatusAdmin(admin.ModelAdmin):
     list_display = (

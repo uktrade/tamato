@@ -1,15 +1,20 @@
 from django.conf import settings
-from django.db import models
+from django.db.models import PROTECT
+from django.db.models import CharField
+from django.db.models import DateTimeField
+from django.db.models import ForeignKey
+from django.db.models import Model
+from django.db.models import QuerySet
 
 from publishing.models.state import QueueState
 
 
-class OperationalStatusQuerySet(models.QuerySet):
+class OperationalStatusQuerySet(QuerySet):
     def current_status(self):
         return self.order_by("pk").last()
 
 
-class OperationalStatus(models.Model):
+class OperationalStatus(Model):
     """
     Operational status of the packaging system.
 
@@ -25,17 +30,17 @@ class OperationalStatus(models.Model):
 
     objects = OperationalStatusQuerySet.as_manager()
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
+    created_at = DateTimeField(auto_now_add=True)
+    created_by = ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=PROTECT,
         editable=False,
         null=True,
     )
     """If a new instance is created as a result of direct user action (for
     instance pausing or unpausing the packaging queue) then `created_by` should
     be associated with that user."""
-    queue_state = models.CharField(
+    queue_state = CharField(
         max_length=8,
         default=QueueState.PAUSED,
         choices=QueueState.choices,

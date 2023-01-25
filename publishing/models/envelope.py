@@ -6,7 +6,10 @@ from typing import Optional
 
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.db import models
+from django.db.models import CharField
+from django.db.models import FileField
+from django.db.models import Manager
+from django.db.models import QuerySet
 from django.db.transaction import atomic
 from lxml import etree
 
@@ -26,7 +29,7 @@ from workbaskets.models import WorkBasket
 logger = logging.getLogger(__name__)
 
 
-class EnvelopeManager(models.Manager):
+class EnvelopeManager(Manager):
     @atomic
     def create(self, packaged_work_basket, **kwargs):
         """
@@ -59,8 +62,8 @@ class EnvelopeManager(models.Manager):
         return envelope
 
 
-class EnvelopeQuerySet(models.QuerySet):
-    def envelopes_by_year(self, year: Optional[int] = None):
+class EnvelopeQuerySet(QuerySet):
+    def for_year(self, year: Optional[int] = None):
         """
         Return all envelopes for a year, defaulting to this year.
 
@@ -77,7 +80,7 @@ class EnvelopeQuerySet(models.QuerySet):
         )
 
 
-class EnvelopeId(models.CharField):
+class EnvelopeId(CharField):
     """An envelope ID must match the format YYxxxx, where YY is the last two
     digits of the current year and xxxx is a zero padded integer, incrementing
     from 0001 for the first envelope of the year."""
@@ -111,13 +114,13 @@ class Envelope(TimestampedMixin):
     )()
 
     envelope_id = EnvelopeId()
-    xml_file = models.FileField(storage=EnvelopeStorage, default="")
+    xml_file = FileField(storage=EnvelopeStorage, default="")
 
     @classmethod
     def next_envelope_id(cls):
         """Get packaged workbaskets where proc state SUCCESS."""
         envelope = (
-            Envelope.objects.envelopes_by_year()
+            Envelope.objects.for_year()
             .filter(
                 packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
             )
@@ -127,10 +130,13 @@ class Envelope(TimestampedMixin):
         if envelope is None:
             # First envelope of the year.
             now = datetime.today()
-            counter = 1
+            counter = max(1, int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID[2:]))
         else:
             year = int(envelope.envelope_id[:2])
-            counter = int(envelope.envelope_id[2:]) + 1
+            counter = max(
+                int(envelope.envelope_id[2:]) + 1,
+                int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID[2:]),
+            )
 
             if counter > 9999:
                 raise ValueError(
@@ -183,7 +189,6 @@ class Envelope(TimestampedMixin):
             serializer = MultiFileEnvelopeTransactionSerializer(
                 output_file_constructor,
                 envelope_id=self.envelope_id,
-                max_envelope_size=settings.EXPORTER_MAXIMUM_ENVELOPE_SIZE,
             )
 
             rendered_envelope = list(

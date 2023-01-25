@@ -3,7 +3,22 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+from django.db.models import PROTECT
+from django.db.models import SET_NULL
+from django.db.models import CharField
+from django.db.models import DateField
+from django.db.models import DateTimeField
+from django.db.models import F
+from django.db.models import ForeignKey
+from django.db.models import Manager
+from django.db.models import Max
+from django.db.models import PositiveSmallIntegerField
+from django.db.models import Q
+from django.db.models import QuerySet
+from django.db.models import TextField
+from django.db.models import URLField
+from django.db.models import Value
+from django.db.models.functions import Coalesce
 from django.db.transaction import atomic
 from django.urls import reverse
 from django_fsm import FSMField
@@ -98,7 +113,10 @@ def create_envelope_on_new_top(func):
         if top_before != top_after:
             # Deletes the envelope created for the previous packaged workbasket
             # Deletes from s3 and the Envelope model, nulls reference in packaged workbasket
-            top_before.envelope.delete()
+            if top_before.envelope:
+                top_before.envelope.delete()
+                # so save_after does not throw foreign key restraint
+                top_before.envelope = None
             PackagedWorkBasket.create_envelope_for_top()
 
         return result
@@ -129,7 +147,7 @@ def skip_notifications_if_disabled(func):
     return inner
 
 
-class PackagedWorkBasketManager(models.Manager):
+class PackagedWorkBasketManager(Manager):
     @atomic
     def create(self, workbasket, **kwargs):
         """Create a new instance, associating with workbasket."""
@@ -152,9 +170,9 @@ class PackagedWorkBasketManager(models.Manager):
 
         position = (
             PackagedWorkBasket.objects.aggregate(
-                out=models.functions.Coalesce(
-                    models.Max("position"),
-                    models.Value(0),
+                out=Coalesce(
+                    Max("position"),
+                    Value(0),
                 ),
             )["out"]
             + 1
@@ -178,7 +196,7 @@ class PackagedWorkBasketManager(models.Manager):
         return new_obj
 
 
-class PackagedWorkBasketQuerySet(models.QuerySet):
+class PackagedWorkBasketQuerySet(QuerySet):
     def awaiting_processing(self) -> "PackagedWorkBasketQuerySet":
         """Return all PackagedWorkBasket instances whose processing_state is set
         to AWAITING_PROCESSING."""
@@ -216,7 +234,7 @@ class PackagedWorkBasketQuerySet(models.QuerySet):
     def max_position(self) -> int:
         """Return the maxium position value of any PackagedWorkBasket
         instance."""
-        return PackagedWorkBasket.objects.aggregate(out=models.Max("position"))["out"]
+        return PackagedWorkBasket.objects.aggregate(out=Max("position"))["out"]
 
     def get_top_awaiting(self):
         """Return the top-most (position 1) PackagedWorkBasket instance with
@@ -248,12 +266,12 @@ class PackagedWorkBasket(TimestampedMixin):
         PackagedWorkBasketQuerySet,
     )()
 
-    workbasket = models.ForeignKey(
+    workbasket = ForeignKey(
         WorkBasket,
-        on_delete=models.PROTECT,
+        on_delete=PROTECT,
         editable=False,
     )
-    position = models.PositiveSmallIntegerField(
+    position = PositiveSmallIntegerField(
         db_index=True,
         editable=False,
     )
@@ -263,10 +281,10 @@ class PackagedWorkBasket(TimestampedMixin):
     An instance that is being processed or has been processed has its position
     value set to 0.
     """
-    envelope = models.ForeignKey(
+    envelope = ForeignKey(
         "publishing.Envelope",
         null=True,
-        on_delete=models.SET_NULL,
+        on_delete=SET_NULL,
         editable=False,
         related_name="packagedworkbaskets",
     )
@@ -277,28 +295,28 @@ class PackagedWorkBasket(TimestampedMixin):
         protected=True,
         editable=False,
     )
-    processing_started_at = models.DateTimeField(
+    processing_started_at = DateTimeField(
         null=True,
         blank=True,
         default=None,
     )
     """The date and time at which processing_state transitioned to
     CURRENTLY_PROCESSING."""
-    loading_report = models.ForeignKey(
+    loading_report = ForeignKey(
         LoadingReport,
         null=True,
-        on_delete=models.PROTECT,
+        on_delete=PROTECT,
         editable=False,
     )
     """The report file associated with an attempt (either successful or failed)
     to process / load the associated workbasket's envelope file."""
-    theme = models.CharField(
+    theme = CharField(
         max_length=255,
     )
-    description = models.TextField(
+    description = TextField(
         blank=True,
     )
-    eif = models.DateField(
+    eif = DateField(
         null=True,
         blank=True,
         help_text="For Example, 27 3 2008",
@@ -309,20 +327,20 @@ class PackagedWorkBasket(TimestampedMixin):
     A file will need to be ingested by CDS on the day before this. If left,
     blank CDS will ingest the file immediately.
     """
-    embargo = models.CharField(
+    embargo = CharField(
         blank=True,
         null=True,
         max_length=255,
     )
     """The date until which CDS prevents envelope from being displayed after
     ingestion."""
-    jira_url = models.URLField(
+    jira_url = URLField(
         help_text="Insert Tops Jira ticket link",
     )
     """URL linking the packaged workbasket with a ticket on the Tariff
     Operations (TOPS) project's Jira board.
     """
-    create_envelope_task_id = models.CharField(
+    create_envelope_task_id = CharField(
         max_length=50,
         null=True,
         blank=True,
@@ -582,7 +600,7 @@ class PackagedWorkBasket(TimestampedMixin):
             )
 
         PackagedWorkBasket.objects.filter(position__gt=0).update(
-            position=models.F("position") - 1,
+            position=F("position") - 1,
         )
         self.refresh_from_db()
 
@@ -610,7 +628,7 @@ class PackagedWorkBasket(TimestampedMixin):
         self.save()
 
         PackagedWorkBasket.objects.filter(position__gt=current_position).update(
-            position=models.F("position") - 1,
+            position=F("position") - 1,
         )
         self.refresh_from_db()
 
@@ -628,8 +646,8 @@ class PackagedWorkBasket(TimestampedMixin):
         position = self.position
 
         PackagedWorkBasket.objects.filter(
-            models.Q(position__gte=1) & models.Q(position__lt=position),
-        ).update(position=models.F("position") + 1)
+            Q(position__gte=1) & Q(position__lt=position),
+        ).update(position=F("position") + 1)
 
         self.position = 1
         self.save()

@@ -41,7 +41,6 @@ class Migration(migrations.Migration):
                     models.FileField(
                         default="",
                         storage=publishing.storages.EnvelopeStorage,
-                        upload_to="",
                     ),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -71,7 +70,6 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         storage=publishing.storages.LoadingReportStorage,
-                        upload_to="",
                     ),
                 ),
                 ("comments", models.TextField(blank=True, max_length=200)),
