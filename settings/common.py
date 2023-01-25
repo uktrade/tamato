@@ -464,6 +464,11 @@ LOGGING = {
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
+        "publishing": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
         "workbaskets": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
