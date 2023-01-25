@@ -1,0 +1,25 @@
+
+<h2 class="govuk-heading-l">Blocking periods</h2>
+
+{% set table_rows = [] %}
+
+{% if blocking_periods %}
+  {% for object in blocking_periods %}
+      {{ table_rows.append([
+        {"text": object.sid },
+        {"text": object.get_blocking_period_type_display() },
+        {"text": object.description },
+      ]) or "" }}
+    {% endfor %}
+
+  {{ govukTable({
+    "head": [
+      {"text": "Quota definition sid"},
+      {"text": "Blocking period type"},
+      {"text": "Description"},
+    ],
+    "rows": table_rows
+  }) }}
+{% else %}
+  <p class="govuk-body">There are no blocking periods for this quota order number.</p>
+{% endif %}

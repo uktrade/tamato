@@ -1,0 +1,25 @@
+
+<h2 class="govuk-heading-l">Sub quotas</h2>
+
+{% set table_rows = [] %}
+
+{% if sub_quotas %}
+  {% for object in sub_quotas %}
+    {{ table_rows.append([
+      {"text": object.sub_quota.sid },
+      {"text": object.get_sub_quota_relation_type_display() },
+      {"text": object.coefficient },
+    ]) or "" }}
+  {% endfor %}
+
+  {{ govukTable({
+    "head": [
+      {"text": "Quota definition sid"},
+      {"text": "Relation type"},
+      {"text": "Coefficient"},
+    ],
+    "rows": table_rows
+  }) }}
+{% else %}
+  <p class="govuk-body">There are no sub quotas for this quota order number.</p>
+{% endif %}
