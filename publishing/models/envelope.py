@@ -6,6 +6,7 @@ from typing import Optional
 
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import FileField
 from django.db.models import Manager
@@ -115,6 +116,7 @@ class Envelope(TimestampedMixin):
 
     envelope_id = EnvelopeId()
     xml_file = FileField(storage=EnvelopeStorage, default="")
+    deleted = BooleanField(default=False)
 
     @classmethod
     def next_envelope_id(cls):
@@ -147,12 +149,11 @@ class Envelope(TimestampedMixin):
 
         return f"{now:%y}{counter:04d}"
 
-    @atomic
-    def delete(self, **kwargs):
-        """Override delete function within model to ensure that the file is
-        deleted from s3 before the model object is deleted."""
+    def delete_envelope(self, **kwargs):
+        """delete function within model to ensure that the file is deleted from
+        s3 and then set the delete flag in the model."""
         self.xml_file.delete()
-        return super().delete(**kwargs)
+        self.deleted = True
 
     @atomic
     def upload_envelope(

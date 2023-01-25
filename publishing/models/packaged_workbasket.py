@@ -114,9 +114,8 @@ def create_envelope_on_new_top(func):
             # Deletes the envelope created for the previous packaged workbasket
             # Deletes from s3 and the Envelope model, nulls reference in packaged workbasket
             if top_before.envelope:
-                top_before.envelope.delete()
-                # so save_after does not throw foreign key restraint
-                top_before.envelope = None
+                top_before.envelope.delete_envelope()
+                top_before.envelope.save()
             PackagedWorkBasket.create_envelope_for_top()
 
         return result

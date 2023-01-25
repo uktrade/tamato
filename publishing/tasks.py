@@ -71,14 +71,18 @@ def schedule_create_xml_envelope_file(
     when creating a new top-most PackagedWorkBasket instance), since otherwise
     the operation can fail.
     """
-
-    task = create_xml_envelope_file.apply_async(
-        (packaged_work_basket.pk, notify_when_done),
-        countdown=seconds_delay,
-    )
-    logger.info(
-        f"Creating XML envelope file for packaged_work_basket.id="
-        f"{packaged_work_basket.pk} on task.id={task.id}.",
-    )
-    packaged_work_basket.create_envelope_task_id = task.id
-    packaged_work_basket.save()
+    if packaged_work_basket.envelope and packaged_work_basket.envelope.deleted != True:
+        logger.info(
+            "Not scheduling envelope creation as envelope is deleted.",
+        )
+    else:
+        task = create_xml_envelope_file.apply_async(
+            (packaged_work_basket.pk, notify_when_done),
+            countdown=seconds_delay,
+        )
+        logger.info(
+            f"Creating XML envelope file for packaged_work_basket.id="
+            f"{packaged_work_basket.pk} on task.id={task.id}.",
+        )
+        packaged_work_basket.create_envelope_task_id = task.id
+        packaged_work_basket.save()

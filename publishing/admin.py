@@ -4,6 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from publishing.models.envelope import Envelope
 from publishing.models.operational_status import OperationalStatus
 from publishing.models.packaged_workbasket import PackagedWorkBasket
+from publishing.models.state import ProcessingState
 
 
 class CustomProcessingStateFilter(admin.SimpleListFilter):
@@ -59,8 +60,55 @@ class PackagedWorkBasketAdmin(admin.ModelAdmin):
 admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
 
 
+class CustomEnvelopeProcessingStateFilter(admin.SimpleListFilter):
+    title = "Uploaded Envelopes"
+    parameter_name = "packagedworkbaskets__processing_state"
+
+    def lookups(self, request, model_admin):
+        return (
+            (
+                ProcessingState.AWAITING_PROCESSING
+                and ProcessingState.CURRENTLY_PROCESSING,
+                _("Unprocessed"),
+            ),
+            (ProcessingState.SUCCESSFULLY_PROCESSED, _("Accepted")),
+            (ProcessingState.FAILED_PROCESSING, _("Rejected")),
+            ("all", _("All")),
+        )
+
+    def choices(self, changelist):
+        for lookup, title in self.lookup_choices:
+            yield {
+                "selected": self.value() == str(lookup),
+                "query_string": changelist.get_query_string(
+                    {self.parameter_name: lookup},
+                ),
+                "display": title,
+            }
+
+    def queryset(self, request, queryset):
+        if self.value() == None:
+            return queryset.for_year()
+
+
 class EnvelopeAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "envelope_id",
+        "packagedworkbaskets_processing_state",
+        "packagedworkbaskets_workbasket_id",
+        "deleted",
+        # TODO add user
+    )
     ordering = ["-pk"]
+
+    list_filter = (CustomEnvelopeProcessingStateFilter,)
+
+    def packagedworkbaskets_processing_state(self, obj):
+        return obj.packagedworkbaskets.get().processing_state
+
+    def packagedworkbaskets_workbasket_id(self, obj):
+        return obj.packagedworkbaskets.get().workbasket_id
 
 
 class OperationalStatusAdmin(admin.ModelAdmin):
@@ -85,3 +133,9 @@ class OperationalStatusAdmin(admin.ModelAdmin):
 admin.site.register(OperationalStatus, OperationalStatusAdmin)
 
 admin.site.register(Envelope, EnvelopeAdmin)
+
+
+#   Envelope.objects.for_year()
+#     .filter(
+#         packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+#     )
