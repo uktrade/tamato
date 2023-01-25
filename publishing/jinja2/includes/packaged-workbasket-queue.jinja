@@ -109,7 +109,9 @@
       {# First row. #}
       {% if obj == currently_processing %}
         <span class="processing-state tamato-badge-light-green">CDS DOWNLOADED</span>
-      {% elif obj.processing_state == "AWAITING_PROCESSING" and not obj.envelope %}
+      {% elif obj.processing_state == "AWAITING_PROCESSING" and 
+        (not obj.envelope or not obj.envelope.xml_file) 
+      %}
         <span class="processing-state tamato-badge-light-grey">GENERATING ENVELOPE</span>
       {% else %}
         <span class="processing-state tamato-badge-light-purple">CDS NOTIFIED</span>

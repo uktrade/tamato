@@ -208,6 +208,7 @@ class Envelope(TimestampedMixin):
                     validate_envelope(envelope_file)
                 except etree.DocumentInvalid:
                     logger.error(f"{envelope_file.name}  is Envelope invalid !")
+                    raise
                 else:
                     envelope_file.seek(0, os.SEEK_SET)
                     content_file = ContentFile(envelope_file.read())
