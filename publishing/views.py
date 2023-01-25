@@ -271,6 +271,7 @@ class AcceptEnvelopeConfirmView(EnvelopeActionConfirmView):
         packaged_workbasket = self.get_object()
         envelope = packaged_workbasket.envelope
 
+        data["page_title"] = "Accept envelope confirmation"
         data["message"] = f"Envelope ID {envelope.envelope_id} was accepted."
         return data
 
@@ -302,6 +303,7 @@ class RejectEnvelopeConfirmView(EnvelopeActionConfirmView):
         packaged_workbasket = self.get_object()
         envelope = packaged_workbasket.envelope
 
+        data["page_title"] = "Reject envelope confirmation"
         data[
             "message"
         ] = f"Envelope ID {envelope.envelope_id} was rejected and queue was paused."
