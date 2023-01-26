@@ -143,6 +143,7 @@ class Command(BaseCommand):
             max_envelope_size=max_envelope_size,
         )
         errors = False
+
         for time_to_render, rendered_envelope in item_timer(
             serializer.split_render_transactions(transactions),
         ):

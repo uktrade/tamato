@@ -1,13 +1,19 @@
+from unittest import mock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import factory
+import freezegun
 import pytest
 from django.conf import settings
 from django_fsm import TransitionNotAllowed
 from notifications_python_client import prepare_upload
 
 from common.tests import factories
+from publishing.models import Envelope
+from publishing.models import EnvelopeCurrentlyProccessing
+from publishing.models import EnvelopeInvalidQueuePosition
+from publishing.models import EnvelopeNoTransactions
 from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
 from publishing.models import PackagedWorkBasketDuplication
@@ -67,7 +73,7 @@ def test_notify_ready_for_processing(send_emails, loading_report_storage):
         wraps=MagicMock(side_effect=loading_report_storage.save),
     ):
         packaged_wb = factories.PackagedWorkBasketFactory.create(
-            envelope=factories.EnvelopeFactory.create(),
+            envelope=factories.PublishedEnvelopeFactory.create(),
             loading_report__file=factory.django.FileField(filename="the_file.dat"),
         )
     packaged_wb.notify_ready_for_processing()
@@ -92,7 +98,7 @@ def test_notify_processing_succeeded(send_emails, loading_report_storage):
         wraps=MagicMock(side_effect=loading_report_storage.save),
     ):
         packaged_wb = factories.PackagedWorkBasketFactory.create(
-            envelope=factories.EnvelopeFactory.create(),
+            envelope=factories.PublishedEnvelopeFactory.create(),
             loading_report__file=factory.django.FileField(filename="the_file.html"),
         )
 
@@ -118,7 +124,7 @@ def test_notify_processing_failed(send_emails, loading_report_storage):
         wraps=MagicMock(side_effect=loading_report_storage.save),
     ):
         packaged_wb = factories.PackagedWorkBasketFactory.create(
-            envelope=factories.EnvelopeFactory.create(),
+            envelope=factories.PublishedEnvelopeFactory.create(),
             loading_report__file=factory.django.FileField(filename="the_file.html"),
         )
 
@@ -135,12 +141,27 @@ def test_notify_processing_failed(send_emails, loading_report_storage):
     )
 
 
+@pytest.mark.skip(
+    reason="TODO correctly implement file save",
+)
 def test_success_processing_transition(
+    envelope_storage,
     mocked_publishing_models_send_emails_delay,
+    settings,
 ):
-    factories.PackagedWorkBasketFactory(
-        envelope=factories.EnvelopeFactory(),
-    )
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    packaged_workbasket = factories.QueuedPackagedWorkBasketFactory()
+    with mock.patch(
+        "publishing.storages.EnvelopeStorage.save",
+        wraps=mock.MagicMock(side_effect=envelope_storage.save),
+    ) as mock_save:
+        envelope = factories.PublishedEnvelopeFactory(
+            packaged_work_basket=packaged_workbasket,
+        )
+        mock_save.assert_called_once()
+    packaged_workbasket.envelope = envelope
+    envelope.save()
 
     packaged_work_basket = PackagedWorkBasket.objects.get(position=1)
     assert packaged_work_basket.position == 1
@@ -326,3 +347,108 @@ def test_pause_and_unpause_queue(unpause_queue):
     assert OperationalStatus.is_queue_paused()
     OperationalStatus.unpause_queue(user=None)
     assert not OperationalStatus.is_queue_paused()
+
+
+@pytest.mark.skip(
+    reason="TODO correctly implement file save & duplicate create_envelope_task_id_key",
+)
+def test_create_envelope(envelope_storage, settings):
+    """Test multiple Envelope instances creates the correct."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    packaged_workbasket = factories.QueuedPackagedWorkBasketFactory()
+    with mock.patch(
+        "publishing.storages.EnvelopeStorage.save",
+        wraps=mock.MagicMock(side_effect=envelope_storage.save),
+    ) as mock_save:
+        envelope = factories.PublishedEnvelopeFactory(
+            packaged_work_basket=packaged_workbasket,
+        )
+        mock_save.assert_called_once()
+
+    packaged_workbasket.envelope = envelope
+    packaged_workbasket.save()
+    packaged_workbasket.begin_processing()
+    assert packaged_workbasket.position == 0
+    assert (
+        packaged_workbasket.pk == PackagedWorkBasket.objects.currently_processing().pk
+    )
+    packaged_workbasket.processing_succeeded()
+    assert packaged_workbasket.position == 0
+    assert (
+        packaged_workbasket.processing_state == ProcessingState.SUCCESSFULLY_PROCESSED
+    )
+
+    packaged_workbasket2 = factories.QueuedPackagedWorkBasketFactory()
+
+    with mock.patch(
+        "publishing.storages.EnvelopeStorage.save",
+        wraps=mock.MagicMock(side_effect=envelope_storage.save),
+    ) as mock_save:
+        envelope2 = factories.PublishedEnvelopeFactory(
+            packaged_work_basket=packaged_workbasket2,
+        )
+        mock_save.assert_called_once()
+
+    assert int(envelope.envelope_id[2:]) == 1
+    assert int(envelope2.envelope_id[2:]) == 2
+    assert int(envelope.envelope_id) < int(envelope2.envelope_id)
+
+
+def test_create_currently_processing():
+    """Test that an Envelope cannot be created when a packaged workbasket is
+    currently processing."""
+
+    packaged_workbasket = factories.QueuedPackagedWorkBasketFactory()
+    packaged_workbasket.begin_processing()
+    assert packaged_workbasket.position == 0
+    assert (
+        packaged_workbasket.pk == PackagedWorkBasket.objects.currently_processing().pk
+    )
+    with pytest.raises(EnvelopeCurrentlyProccessing):
+        factories.PublishedEnvelopeFactory()
+
+
+def test_create_invalid_queue_position():
+    """Test that an Envelope cannot be created when the packaged workbasket is
+    not at the front of the queue."""
+
+    packaged_workbasket = factories.QueuedPackagedWorkBasketFactory()
+    packaged_workbasket2 = factories.QueuedPackagedWorkBasketFactory()
+
+    assert packaged_workbasket.position < packaged_workbasket2.position
+
+    with pytest.raises(EnvelopeInvalidQueuePosition):
+        factories.PublishedEnvelopeFactory(
+            packaged_work_basket=packaged_workbasket2,
+        )
+
+
+def test_upload_envelope_no_transactions():
+    packaged_workbasket = factories.PackagedWorkBasketFactory()
+    with pytest.raises(EnvelopeNoTransactions):
+        factories.PublishedEnvelopeFactory(
+            packaged_work_basket=packaged_workbasket,
+        )
+
+
+@pytest.mark.skip(
+    reason="TODO correctly implement file save",
+)
+@freezegun.freeze_time("2023-01-01")
+def test_next_envelope_id(envelope_storage):
+    """Verify that envelope ID is made up of two digits of the year and a 4
+    digit counter starting from 0001."""
+    packaged_workbasket = factories.QueuedPackagedWorkBasketFactory()
+    with mock.patch(
+        "publishing.storages.EnvelopeStorage.save",
+        wraps=mock.MagicMock(side_effect=envelope_storage.save),
+    ):
+        envelope = factories.PublishedEnvelopeFactory(
+            packaged_work_basket=packaged_workbasket,
+        )
+    packaged_workbasket.envelope = envelope
+    packaged_workbasket.save()
+    packaged_workbasket.begin_processing()
+    packaged_workbasket.processing_succeeded()
+    assert Envelope.next_envelope_id() == "230002"

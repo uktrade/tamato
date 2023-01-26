@@ -101,7 +101,8 @@
       {{ rule_check_result_content() }} 
       <a href="{{ url('workbaskets:workbasket-ui-violations', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">View violations</a>
     </div>
-  {% elif workbasket.tracked_model_checks.exists() %}
+  {% elif workbasket.tracked_model_checks.exists() and 
+    not workbasket.unchecked_or_errored_transactions.exists() %}
     <div class="govuk-notification-banner govuk-notification-banner--success"   
       aria-labelledby="summary-title" role="region" data-module="govuk-notification-banner">
       <div class="govuk-notification-banner__content">

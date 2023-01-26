@@ -1245,6 +1245,26 @@ class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
     loading_report = factory.SubFactory(LoadingReportFactory)
 
 
+class QueuedPackagedWorkBasketFactory(PackagedWorkBasketFactory):
+    """Creates a PackagedWorkBasket instance associated with an approved
+    WorkBasket that contains transactions."""
+
+    workbasket = factory.SubFactory(QueuedWorkBasketFactory)
+
+
+class PublishedEnvelopeFactory(factory.django.DjangoModelFactory):
+    """Creates an Envelope instance."""
+
+    class Meta:
+        model = "publishing.Envelope"
+
+    packaged_work_basket = factory.SubFactory(QueuedPackagedWorkBasketFactory)
+
+
+class UploadedPackagedWorkBasketFactory(PackagedWorkBasketFactory):
+    envelope = factory.SubFactory(PublishedEnvelopeFactory)
+
+
 class OperationalStatusFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "publishing.OperationalStatus"

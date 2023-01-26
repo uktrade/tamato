@@ -1,15 +1,22 @@
 import logging
 from datetime import datetime
-from pathlib import Path
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+from django.db.models import PROTECT
+from django.db.models import SET_NULL
+from django.db.models import CharField
+from django.db.models import DateField
+from django.db.models import DateTimeField
 from django.db.models import F
+from django.db.models import ForeignKey
+from django.db.models import Manager
 from django.db.models import Max
+from django.db.models import PositiveSmallIntegerField
 from django.db.models import Q
 from django.db.models import QuerySet
-from django.db.models import TextChoices
+from django.db.models import TextField
+from django.db.models import URLField
 from django.db.models import Value
 from django.db.models.functions import Coalesce
 from django.db.transaction import atomic
@@ -21,178 +28,13 @@ from notifications_python_client import prepare_upload
 from common.models.mixins import TimestampedMixin
 from notifications.models import NotificationLog
 from notifications.tasks import send_emails
-from publishing.storages import LoadingReportStorage
+from publishing.models.loading_report import LoadingReport
+from publishing.models.state import ProcessingState
 from publishing.tasks import schedule_create_xml_envelope_file
-from taric.models import Envelope
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
-
-
-class OperationalStatusQuerySet(QuerySet):
-    def current_status(self):
-        return self.order_by("pk").last()
-
-
-class QueueState(TextChoices):
-    PAUSED = ("PAUSED", "Envelope processing is paused")
-    UNPAUSED = ("UNPAUSED", "Envelope processing is unpaused and may proceed")
-
-
-class OperationalStatus(models.Model):
-    """
-    Operational status of the packaging system.
-
-    The packaging queue's state is of primary concern here: either unpaused,
-    which allows processing the next available workbasket, or paused, which
-    blocks the begin_processing transition of the next available queued
-    workbasket until the system is unpaused.
-    """
-
-    class Meta:
-        ordering = ["pk"]
-        verbose_name_plural = "operational statuses"
-
-    objects = OperationalStatusQuerySet.as_manager()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        editable=False,
-        null=True,
-    )
-    """If a new instance is created as a result of direct user action (for
-    instance pausing or unpausing the packaging queue) then `created_by` should
-    be associated with that user."""
-    queue_state = models.CharField(
-        max_length=8,
-        default=QueueState.PAUSED,
-        choices=QueueState.choices,
-        editable=False,
-    )
-
-    @classmethod
-    def pause_queue(cls, user: settings.AUTH_USER_MODEL) -> "OperationalStatus":
-        """
-        Transition the workbasket queue into a paused state (if it is not
-        already paused) by creating a new `OperationalStatus` and returning it
-        to the caller.
-
-        If the queue is already paused, then do nothing and return None.
-        """
-        if cls.is_queue_paused():
-            return None
-        return OperationalStatus.objects.create(
-            queue_state=QueueState.PAUSED,
-            created_by=user,
-        )
-
-    @classmethod
-    def unpause_queue(cls, user: settings.AUTH_USER_MODEL) -> "OperationalStatus":
-        """
-        Transition the workbasket queue into an unpaused state (if it is not
-        already unpaused) by creating a new `OperationalStatus` and returning it
-        to the caller.
-
-        If the queue is already unpaused, then do nothing and return None.
-        """
-        if not cls.is_queue_paused():
-            return None
-        return OperationalStatus.objects.create(
-            queue_state=QueueState.UNPAUSED,
-            created_by=user,
-        )
-
-    @classmethod
-    def is_queue_paused(cls) -> bool:
-        """Returns True if the workbasket queue is paused, False otherwise."""
-        current_status = cls.objects.current_status()
-        if not current_status or current_status.queue_state == QueueState.PAUSED:
-            return True
-        else:
-            return False
-
-
-class PackagedWorkBasketDuplication(Exception):
-    pass
-
-
-class PackagedWorkBasketInvalidCheckStatus(Exception):
-    pass
-
-
-class PackagedWorkBasketInvalidQueueOperation(Exception):
-    pass
-
-
-class ProcessingState(TextChoices):
-    """Processing states of PackagedWorkBasket instances."""
-
-    AWAITING_PROCESSING = (
-        "AWAITING_PROCESSING",
-        "Awaiting processing",
-    )
-    """Queued up and awaiting processing."""
-    CURRENTLY_PROCESSING = (
-        "CURRENTLY_PROCESSING",
-        "Currently processing",
-    )
-    """Picked off the queue and now currently being processed - now attempting
-    to ingest envelope into CDS."""
-    SUCCESSFULLY_PROCESSED = (
-        "SUCCESSFULLY_PROCESSED",
-        "Successfully processed",
-    )
-    """Processing now completed with a successful outcome - envelope ingested
-    into CDS."""
-    FAILED_PROCESSING = (
-        "FAILED_PROCESSING",
-        "Failed processing",
-    )
-    """Processing now completed with a failure outcome - CDS rejected the
-    envelope."""
-    ABANDONED = (
-        "ABANDONED",
-        "Abandoned",
-    )
-    """Processing has been abandoned."""
-
-    @classmethod
-    def queued_states(cls):
-        """Returns all states that represent a queued  instance, including those
-        that are being processed."""
-        return (cls.AWAITING_PROCESSING, cls.CURRENTLY_PROCESSING)
-
-    @classmethod
-    def completed_processing_states(cls):
-        return (
-            cls.SUCCESSFULLY_PROCESSED,
-            cls.FAILED_PROCESSING,
-        )
-
-
-def report_bucket(instance: "LoadingReport", filename: str):
-    """Generate the filepath to upload to loading report bucket."""
-    return str(Path(settings.LOADING_REPORTS_STORAGE_DIRECTORY) / filename)
-
-
-class LoadingReport(TimestampedMixin):
-    """Report associated with an attempt to load (process) a PackagedWorkBasket
-    instance."""
-
-    file = models.FileField(
-        blank=True,
-        null=True,
-        storage=LoadingReportStorage,
-        upload_to=report_bucket,
-    )
-    comments = models.TextField(
-        blank=True,
-        max_length=200,
-    )
-
 
 # Decorators
 
@@ -268,6 +110,14 @@ def create_envelope_on_new_top(func):
 
         top_after = PackagedWorkBasket.objects.get_top_awaiting()
         if top_before != top_after:
+            # Deletes the envelope created for the previous packaged workbasket
+            # Deletes from s3 and the Envelope model, nulls reference in packaged workbasket
+            top_before.refresh_from_db()
+            if top_before.envelope:
+                top_before.envelope.delete_envelope()
+                top_before.envelope.save()
+                top_before.envelope = None
+                top_before.save()
             PackagedWorkBasket.create_envelope_for_top()
 
         return result
@@ -298,10 +148,20 @@ def skip_notifications_if_disabled(func):
     return inner
 
 
-# Model Managers.
+# Exceptions
+class PackagedWorkBasketDuplication(Exception):
+    pass
 
 
-class PackagedWorkBasketManager(models.Manager):
+class PackagedWorkBasketInvalidCheckStatus(Exception):
+    pass
+
+
+class PackagedWorkBasketInvalidQueueOperation(Exception):
+    pass
+
+
+class PackagedWorkBasketManager(Manager):
     @atomic
     def create(self, workbasket, **kwargs):
         """Create a new instance, associating with workbasket."""
@@ -348,9 +208,6 @@ class PackagedWorkBasketManager(models.Manager):
             )
 
         return new_obj
-
-
-# QuerySets.
 
 
 class PackagedWorkBasketQuerySet(QuerySet):
@@ -404,9 +261,6 @@ class PackagedWorkBasketQuerySet(QuerySet):
         return top.first() if top else None
 
 
-# Models.
-
-
 class PackagedWorkBasket(TimestampedMixin):
     """
     Encapsulates state and behaviour of a WorkBasket on its journey through the
@@ -426,23 +280,27 @@ class PackagedWorkBasket(TimestampedMixin):
         PackagedWorkBasketQuerySet,
     )()
 
-    workbasket = models.ForeignKey(
+    workbasket = ForeignKey(
         WorkBasket,
-        on_delete=models.PROTECT,
+        on_delete=PROTECT,
         editable=False,
     )
-    position = models.PositiveSmallIntegerField(
+    position = PositiveSmallIntegerField(
         db_index=True,
         editable=False,
     )
-    """Position 1 is the top position, ready for processing. An instance that
-    is being processed or has been processed has its position value set to 0.
     """
-    envelope = models.ForeignKey(
-        Envelope,
+    Position 1 is the top position, ready for processing.
+
+    An instance that is being processed or has been processed has its position
+    value set to 0.
+    """
+    envelope = ForeignKey(
+        "publishing.Envelope",
         null=True,
-        on_delete=models.PROTECT,
+        on_delete=SET_NULL,
         editable=False,
+        related_name="packagedworkbaskets",
     )
     processing_state = FSMField(
         default=ProcessingState.AWAITING_PROCESSING,
@@ -451,53 +309,52 @@ class PackagedWorkBasket(TimestampedMixin):
         protected=True,
         editable=False,
     )
-    processing_started_at = models.DateTimeField(
+    processing_started_at = DateTimeField(
         null=True,
         blank=True,
         default=None,
     )
     """The date and time at which processing_state transitioned to
-    CURRENTLY_PROCESSING.
-    """
-    loading_report = models.ForeignKey(
+    CURRENTLY_PROCESSING."""
+    loading_report = ForeignKey(
         LoadingReport,
         null=True,
-        on_delete=models.PROTECT,
+        on_delete=PROTECT,
         editable=False,
     )
     """The report file associated with an attempt (either successful or failed)
-    to process / load the associated workbasket's envelope file.
-    """
-    theme = models.CharField(
+    to process / load the associated workbasket's envelope file."""
+    theme = CharField(
         max_length=255,
     )
-    description = models.TextField(
+    description = TextField(
         blank=True,
     )
-    eif = models.DateField(
+    eif = DateField(
         null=True,
         blank=True,
         help_text="For Example, 27 3 2008",
     )
-    """The enter into force date determines when changes should go live in CDS.
+    """
+    The enter into force date determines when changes should go live in CDS.
+
     A file will need to be ingested by CDS on the day before this. If left,
     blank CDS will ingest the file immediately.
     """
-    embargo = models.CharField(
+    embargo = CharField(
         blank=True,
         null=True,
         max_length=255,
     )
     """The date until which CDS prevents envelope from being displayed after
-    ingestion.
-    """
-    jira_url = models.URLField(
+    ingestion."""
+    jira_url = URLField(
         help_text="Insert Tops Jira ticket link",
     )
     """URL linking the packaged workbasket with a ticket on the Tariff
     Operations (TOPS) project's Jira board.
     """
-    create_envelope_task_id = models.CharField(
+    create_envelope_task_id = CharField(
         max_length=50,
         null=True,
         blank=True,
@@ -506,6 +363,11 @@ class PackagedWorkBasket(TimestampedMixin):
     """ID of Celery task used to generate this instance's associated envelope.
     Its necessary to set null=True (unusually for CharField) in order to support
     the unique=True attribute."""
+
+    @property
+    def has_envelope(self):
+        """Conditional check for if the packaged workbasket has an evnvelope."""
+        return self.envelope and self.envelope.xml_file and not self.envelope.deleted
 
     @classmethod
     def create_envelope_for_top(cls):
@@ -519,7 +381,7 @@ class PackagedWorkBasket(TimestampedMixin):
                 seconds_delay=1,
             )
         else:
-            logging.info(
+            logger.info(
                 "Attempted to schedule top for envelope creation, but no top "
                 "exists.",
             )

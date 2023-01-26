@@ -22,7 +22,23 @@
         "text": "Workbasket ID: " ~ object.workbasket.id,
         "classes": "govuk-!-margin-bottom-7"
       }) }}
-      <a href="{{ url('publishing:packaged-workbasket-queue-ui-list') }}" class="govuk-button govuk-button--primary">Go to queue</a>
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <div class="govuk-button-group">
+          {{ govukButton({
+            "text": "Go to queue",
+            "href": url("publishing:packaged-workbasket-queue-ui-list"),
+            "classes": "govuk-button--primary"
+          }) }}
+          {{ govukButton({
+            "text": "Homepage",
+            "href": url("home"),
+            "classes": "govuk-button--secondary"
+          }) }}
+      </div>
     </div>
   </div>
 {% endblock %}

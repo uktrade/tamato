@@ -308,30 +308,43 @@ USE_TZ = True
 # Time zone
 TIME_ZONE = "Europe/London"
 
-# HMRC AWS settings (override the defaults)
+# HMRC AWS settings (override the defaults) - DEPRECATED.
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
 
-# Loading reports AWS settings
-LOADING_REPORTS_BUCKET_NAME = os.environ.get(
-    "LOADING_REPORTS_BUCKET_NAME",
-    "loading-reports",
+
+# S3 creds and endpoint.
+S3_ACCESS_KEY_ID = os.environ.get(
+    "S3_ACCESS_KEY_ID",
+    "test_key_id",
 )
-LOADING_REPORTS_S3_ACCESS_KEY_ID = os.environ.get(
-    "LOADING_REPORTS_S3_ACCESS_KEY_ID",
-    "test_loading_reports_key_id",
+S3_SECRET_ACCESS_KEY = os.environ.get(
+    "S3_SECRET_ACCESS_KEY",
+    "test_key",
 )
-LOADING_REPORTS_S3_SECRET_ACCESS_KEY = os.environ.get(
-    "LOADING_REPORTS_S3_SECRET_ACCESS_KEY",
-    "test_loading_reports_key",
+S3_ENDPOINT_URL = os.environ.get(
+    "S3_ENDPOINT_URL",
+    "https://test-url.local/",
 )
-LOADING_REPORTS_S3_ENDPOINT_URL = os.environ.get(
-    "LOADING_REPORTS_S3_ENDPOINT_URL",
-    "https://test-loading-reports-url.local/",
+
+# Packaging automation.
+HMRC_PACKAGING_SEED_ENVELOPE_ID = int(
+    os.environ.get(
+        "HMRC_PACKAGING_SEED_ENVELOPE_ID",
+        "0001",
+    ),
 )
-LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
-    "LOADING_REPORTS_STORAGE_DIRECTORY",
-    "loading-reports/",
+HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
+    "HMRC_PACKAGING_STORAGE_BUCKET_NAME",
+    "hmrc-packaging",
+)
+HMRC_ENVELOPE_STORAGE_DIRECTORY = os.environ.get(
+    "HMRC_ENVELOPE_STORAGE_DIRECTORY",
+    "envelope/",
+)
+HMRC_LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
+    "HMRC_LOADING_REPORTS_STORAGE_DIRECTORY",
+    "loading-report/",
 )
 
 # SQLite AWS settings
@@ -449,6 +462,11 @@ LOGGING = {
             "propagate": False,
         },
         "checks": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "publishing": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,

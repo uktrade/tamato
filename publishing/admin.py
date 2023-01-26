@@ -1,8 +1,10 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
+from publishing.models import Envelope
 from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
+from publishing.models import ProcessingState
 
 
 class CustomProcessingStateFilter(admin.SimpleListFilter):
@@ -58,6 +60,71 @@ class PackagedWorkBasketAdmin(admin.ModelAdmin):
 admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
 
 
+class EnvelopeDeletedFilter(admin.SimpleListFilter):
+    title = "Deleted state"
+    parameter_name = "deleted_state"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("DELETED", _("Deleted")),
+            ("NOT_DELETED", _("Not deleted")),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == "DELETED":
+            return queryset.deleted()
+        elif value == "NOT_DELETED":
+            return queryset.non_deleted()
+
+
+class CustomEnvelopeProcessingStateFilter(admin.SimpleListFilter):
+    title = "Processing state"
+    parameter_name = "processing_state"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("UNPROCESSED", _("Unprocessed")),
+            (ProcessingState.CURRENTLY_PROCESSING, _("Currently processing")),
+            (ProcessingState.SUCCESSFULLY_PROCESSED, _("Successfully processed")),
+            (ProcessingState.FAILED_PROCESSING, _("Failed processing")),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == "UNPROCESSED":
+            return queryset.unprocessed()
+        elif value == ProcessingState.CURRENTLY_PROCESSING:
+            return queryset.currently_processing()
+        elif value == ProcessingState.SUCCESSFULLY_PROCESSED:
+            return queryset.successfully_processed()
+        elif value == ProcessingState.FAILED_PROCESSING:
+            return queryset.failed_processing()
+
+
+class EnvelopeAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "envelope_id",
+        "packagedworkbaskets_processing_state",
+        "packagedworkbaskets_workbasket_id",
+        "deleted",
+        # TODO add user
+    )
+    ordering = ["-pk"]
+
+    list_filter = (
+        EnvelopeDeletedFilter,
+        CustomEnvelopeProcessingStateFilter,
+    )
+
+    def packagedworkbaskets_processing_state(self, obj):
+        return obj.packagedworkbaskets.get().processing_state
+
+    def packagedworkbaskets_workbasket_id(self, obj):
+        return obj.packagedworkbaskets.get().workbasket_id
+
+
 class OperationalStatusAdmin(admin.ModelAdmin):
     list_display = (
         "pk",
@@ -78,3 +145,5 @@ class OperationalStatusAdmin(admin.ModelAdmin):
 
 
 admin.site.register(OperationalStatus, OperationalStatusAdmin)
+
+admin.site.register(Envelope, EnvelopeAdmin)

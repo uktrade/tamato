@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from checks.tests.factories import TransactionCheckFactory
 from common.tests import factories
-from publishing import models
+from publishing.models import PackagedWorkBasket
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -73,7 +73,7 @@ def test_packaged_workbasket_create_form_no_rule_check(
     response = valid_user_client.post(create_url, form_data)
 
     assert (
-        not models.PackagedWorkBasket.objects.all_queued()
+        not PackagedWorkBasket.objects.all_queued()
         .filter(
             workbasket=session_workbasket,
         )
@@ -122,7 +122,7 @@ def test_packaged_workbasket_create_form(valid_user_client):
     assert "/confirm-create/" in response.url
     #  get the packaged workbasket we have made from the queued, filtering it by workbasket
     second_packaged_work_basket = (
-        models.PackagedWorkBasket.objects.all_queued()
+        PackagedWorkBasket.objects.all_queued()
         .filter(
             workbasket=workbasket.pk,
         )
@@ -171,7 +171,7 @@ def test_packaged_workbasket_create_form_rule_check_violations(valid_user_client
     response = valid_user_client.post(create_url, form_data)
     #  assert the packaged workbasket does not exist
     assert (
-        not models.PackagedWorkBasket.objects.all_queued()
+        not PackagedWorkBasket.objects.all_queued()
         .filter(
             workbasket=workbasket,
         )

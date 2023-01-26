@@ -32,27 +32,21 @@ def create_xml_envelope_file(
     this instance (with state == ProcessingState.AWAITING_PROCESSING)
     becomes the new top-most instance.
 
-    TODO: Implement action 2 & 3.
 
     If the Celery process used to execute this function fails, then this
     function may be called again in order to generate the envelope.
     """
-
+    from publishing.models import Envelope
     from publishing.models import PackagedWorkBasket
 
     packaged_work_basket = PackagedWorkBasket.objects.get(
         pk=packaged_work_basket_id,
     )
 
-    # TODO: Dump workbasket transactions to XML envelope file and save to S3.
-    # *** START
-    # Temporary code here - for removal after integrating Anthoni's Envelope
-    # creation and storage PR:
-    from taric.models import Envelope
-
-    packaged_work_basket.envelope = Envelope.new_envelope()
+    packaged_work_basket.envelope = Envelope.objects.create(
+        packaged_work_basket=packaged_work_basket,
+    )
     packaged_work_basket.save()
-    # *** END
 
     # TODO: Consider chaining this task from schedule_create_xml_envelope_file().
     if notify_when_done:
@@ -77,14 +71,19 @@ def schedule_create_xml_envelope_file(
     when creating a new top-most PackagedWorkBasket instance), since otherwise
     the operation can fail.
     """
-
-    task = create_xml_envelope_file.apply_async(
-        (packaged_work_basket.pk, notify_when_done),
-        countdown=seconds_delay,
-    )
-    logger.info(
-        f"Creating XML envelope file for packaged_work_basket.id="
-        f"{packaged_work_basket.pk} on task.id={task.id}.",
-    )
-    packaged_work_basket.create_envelope_task_id = task.id
-    packaged_work_basket.save()
+    if packaged_work_basket.envelope and packaged_work_basket.envelope.deleted is True:
+        logger.info(
+            f"Envelope deleted, Not scheduling envelope creation for",
+            f"packaged_work_basket.id={packaged_work_basket.pk} ",
+        )
+    else:
+        task = create_xml_envelope_file.apply_async(
+            (packaged_work_basket.pk, notify_when_done),
+            countdown=seconds_delay,
+        )
+        logger.info(
+            f"Creating XML envelope file for packaged_work_basket.id="
+            f"{packaged_work_basket.pk} on task.id={task.id}.",
+        )
+        packaged_work_basket.create_envelope_task_id = task.id
+        packaged_work_basket.save()

@@ -1237,8 +1237,6 @@ Merge
 indent=0
 0005_workbasket_rule_check_task_id
 run_business_rules_form
-<<<<<<< HEAD
-=======
 Base Report
 Base Text Report
 Base Chart Report
@@ -1252,7 +1250,6 @@ Email
 Postcode
 View Reports
 View Report
->>>>>>> master
 f"empty
 Exit
 meth:`~workbaskets.models
@@ -1262,7 +1259,6 @@ Implementing RegulationY-%m-%d
 date_time_start
 Y-%m-%d
 Skipping ME119: update_type
-<<<<<<< HEAD
 Implementing RegulationLoadingReport
 loading_report
 Queued
@@ -1272,8 +1268,6 @@ NotificationLog
 template_id
 template_id"
 GOVUK Notify
-=======
 Implementing Regulation
 measure.effective_valid_between.upper
 Tests that MeasureMultipleDelete
->>>>>>> master
