@@ -14,6 +14,7 @@ class EnvelopeStorage(S3Boto3Storage):
             access_key=settings.S3_ACCESS_KEY_ID,
             secret_key=settings.S3_SECRET_ACCESS_KEY,
             endpoint_url=settings.S3_ENDPOINT_URL,
+            region_name=settings.S3_REGION_NAME,
             default_acl="private",
         )
 
@@ -44,6 +45,7 @@ class LoadingReportStorage(S3Boto3Storage):
             access_key=settings.S3_ACCESS_KEY_ID,
             secret_key=settings.S3_SECRET_ACCESS_KEY,
             endpoint_url=settings.S3_ENDPOINT_URL,
+            region_name=settings.S3_REGION_NAME,
             default_acl="private",
         )
 
