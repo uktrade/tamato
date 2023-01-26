@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from publishing.models.packaged_workbasket import PackagedWorkBasket
+from publishing.models import PackagedWorkBasket
 
 
 class Command(BaseCommand):

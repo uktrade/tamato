@@ -6,7 +6,7 @@ from django.db.models import ForeignKey
 from django.db.models import Model
 from django.db.models import QuerySet
 
-from publishing.models.state import QueueState
+from publishing.models import QueueState
 
 
 class OperationalStatusQuerySet(QuerySet):

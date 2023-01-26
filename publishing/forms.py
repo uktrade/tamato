@@ -11,8 +11,8 @@ from django.forms import ModelForm
 
 from common.forms import DateInputFieldFixed
 from common.forms import DescriptionHelpBox
-from publishing.models.loading_report import LoadingReport
-from publishing.models.packaged_workbasket import PackagedWorkBasket
+from publishing.models import LoadingReport
+from publishing.models import PackagedWorkBasket
 
 
 class LoadingReportForm(ModelForm):

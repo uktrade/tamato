@@ -28,16 +28,15 @@ from notifications_python_client import prepare_upload
 from common.models.mixins import TimestampedMixin
 from notifications.models import NotificationLog
 from notifications.tasks import send_emails
-from publishing.models.exceptions import PackagedWorkBasketDuplication
-from publishing.models.exceptions import PackagedWorkBasketInvalidCheckStatus
-from publishing.models.exceptions import PackagedWorkBasketInvalidQueueOperation
-from publishing.models.loading_report import LoadingReport
-from publishing.models.state import ProcessingState
+from publishing.models import LoadingReport
+from publishing.models import ProcessingState
 from publishing.tasks import schedule_create_xml_envelope_file
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
+
+# Decorators
 
 
 def save_after(func):
@@ -113,9 +112,12 @@ def create_envelope_on_new_top(func):
         if top_before != top_after:
             # Deletes the envelope created for the previous packaged workbasket
             # Deletes from s3 and the Envelope model, nulls reference in packaged workbasket
+            top_before.refresh_from_db()
             if top_before.envelope:
                 top_before.envelope.delete_envelope()
                 top_before.envelope.save()
+                top_before.envelope = None
+                top_before.save()
             PackagedWorkBasket.create_envelope_for_top()
 
         return result
@@ -144,6 +146,19 @@ def skip_notifications_if_disabled(func):
         return func(self, *args, **kwargs)
 
     return inner
+
+
+# Exceptions
+class PackagedWorkBasketDuplication(Exception):
+    pass
+
+
+class PackagedWorkBasketInvalidCheckStatus(Exception):
+    pass
+
+
+class PackagedWorkBasketInvalidQueueOperation(Exception):
+    pass
 
 
 class PackagedWorkBasketManager(Manager):
@@ -348,6 +363,11 @@ class PackagedWorkBasket(TimestampedMixin):
     """ID of Celery task used to generate this instance's associated envelope.
     Its necessary to set null=True (unusually for CharField) in order to support
     the unique=True attribute."""
+
+    @property
+    def has_envelope(self):
+        """Conditional check for if the packaged workbasket has an evnvelope."""
+        return self.envelope and self.envelope.xml_file and not self.envelope.deleted
 
     @classmethod
     def create_envelope_for_top(cls):

@@ -36,8 +36,8 @@ def create_xml_envelope_file(
     If the Celery process used to execute this function fails, then this
     function may be called again in order to generate the envelope.
     """
-    from publishing.models.envelope import Envelope
-    from publishing.models.packaged_workbasket import PackagedWorkBasket
+    from publishing.models import Envelope
+    from publishing.models import PackagedWorkBasket
 
     packaged_work_basket = PackagedWorkBasket.objects.get(
         pk=packaged_work_basket_id,
@@ -71,9 +71,10 @@ def schedule_create_xml_envelope_file(
     when creating a new top-most PackagedWorkBasket instance), since otherwise
     the operation can fail.
     """
-    if packaged_work_basket.envelope and packaged_work_basket.envelope.deleted != True:
+    if packaged_work_basket.envelope and packaged_work_basket.envelope.deleted is True:
         logger.info(
-            "Not scheduling envelope creation as envelope is deleted.",
+            f"Envelope deleted, Not scheduling envelope creation for",
+            f"packaged_work_basket.id={packaged_work_basket.pk} ",
         )
     else:
         task = create_xml_envelope_file.apply_async(

@@ -13,7 +13,7 @@ import factory
 import pytest
 
 from common.tests import factories
-from publishing.models.state import QueueState
+from publishing.models import QueueState
 
 
 @pytest.fixture()
@@ -35,7 +35,7 @@ def unpause_queue():
 @pytest.fixture()
 def mocked_publishing_models_send_emails_delay():
     with patch(
-        "publishing.models.packaged_workbasket.send_emails.delay",
+        "publishing.models.send_emails.delay",
         return_value=MagicMock(id=factory.Faker("uuid4")),
     ) as mocked_delay:
         yield mocked_delay

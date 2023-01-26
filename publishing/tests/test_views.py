@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from checks.tests.factories import TransactionCheckFactory
 from common.tests import factories
-from publishing.models.packaged_workbasket import PackagedWorkBasket
+from publishing.models import PackagedWorkBasket
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db

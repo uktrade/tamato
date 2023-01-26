@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from common.tests import factories
-from publishing.models.packaged_workbasket import PackagedWorkBasket
-from publishing.models.state import ProcessingState
+from publishing.models import PackagedWorkBasket
+from publishing.models import ProcessingState
 
 pytestmark = pytest.mark.django_db
 

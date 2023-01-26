@@ -10,15 +10,15 @@ from django_fsm import TransitionNotAllowed
 from notifications_python_client import prepare_upload
 
 from common.tests import factories
-from publishing.models.envelope import Envelope
-from publishing.models.exceptions import EnvelopeCurrentlyProccessing
-from publishing.models.exceptions import EnvelopeInvalidQueuePosition
-from publishing.models.exceptions import EnvelopeNoTransactions
-from publishing.models.exceptions import PackagedWorkBasketDuplication
-from publishing.models.exceptions import PackagedWorkBasketInvalidCheckStatus
-from publishing.models.operational_status import OperationalStatus
-from publishing.models.packaged_workbasket import PackagedWorkBasket
-from publishing.models.state import ProcessingState
+from publishing.models import Envelope
+from publishing.models import EnvelopeCurrentlyProccessing
+from publishing.models import EnvelopeInvalidQueuePosition
+from publishing.models import EnvelopeNoTransactions
+from publishing.models import OperationalStatus
+from publishing.models import PackagedWorkBasket
+from publishing.models import PackagedWorkBasketDuplication
+from publishing.models import PackagedWorkBasketInvalidCheckStatus
+from publishing.models import ProcessingState
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
