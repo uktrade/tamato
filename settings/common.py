@@ -316,11 +316,11 @@ HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/stagin
 # S3 creds and endpoint.
 S3_ACCESS_KEY_ID = os.environ.get(
     "S3_ACCESS_KEY_ID",
-    "test_key_id",
+    "",
 )
 S3_SECRET_ACCESS_KEY = os.environ.get(
     "S3_SECRET_ACCESS_KEY",
-    "test_key",
+    "",
 )
 S3_ENDPOINT_URL = os.environ.get(
     "S3_ENDPOINT_URL",
