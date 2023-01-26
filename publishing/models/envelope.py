@@ -107,7 +107,7 @@ class EnvelopeQuerySet(QuerySet):
 
     def unprocessed(self):
         return self.filter(
-            packagedworkbaskets__processing_state__in=ProcessingState.queued_states(),
+            packagedworkbaskets__processing_state=ProcessingState.AWAITING_PROCESSING,
         )
 
     def currently_processing(self):
