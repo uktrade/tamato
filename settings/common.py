@@ -323,7 +323,7 @@ if VCAP_SERVICES.get("aws-s3-bucket"):
     S3_SECRET_ACCESS_KEY = app_bucket_creds["aws_secret_access_key"]
     HMRC_PACKAGING_STORAGE_BUCKET_NAME = app_bucket_creds["bucket_name"]
 else:
-    S3_REGION_NAME = os.env.get("AWS_REGION", default="")
+    S3_REGION_NAME = os.environ.get("AWS_REGION")
     S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
     S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY")
     HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
