@@ -117,6 +117,7 @@ class Envelope(TimestampedMixin):
     envelope_id = EnvelopeId()
     xml_file = FileField(storage=EnvelopeStorage, default="")
     deleted = BooleanField(default=False)
+    """marks an envelope as deleted within contexts where an instance can not be immediately deleted from the DB."""
 
     @classmethod
     def next_envelope_id(cls):
