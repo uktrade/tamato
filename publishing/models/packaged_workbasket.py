@@ -28,8 +28,8 @@ from notifications_python_client import prepare_upload
 from common.models.mixins import TimestampedMixin
 from notifications.models import NotificationLog
 from notifications.tasks import send_emails
-from publishing.models import LoadingReport
-from publishing.models import ProcessingState
+from publishing.models.loading_report import LoadingReport
+from publishing.models.state import ProcessingState
 from publishing.tasks import schedule_create_xml_envelope_file
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus

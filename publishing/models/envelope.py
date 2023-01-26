@@ -18,8 +18,8 @@ from common.models.mixins import TimestampedMixin
 from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
-from publishing.models import PackagedWorkBasket
-from publishing.models import ProcessingState
+from publishing.models.packaged_workbasket import PackagedWorkBasket
+from publishing.models.state import ProcessingState
 from publishing.storages import EnvelopeStorage
 from taric import validators
 from workbaskets.models import WorkBasket
