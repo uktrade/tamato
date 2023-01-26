@@ -60,35 +60,46 @@ class PackagedWorkBasketAdmin(admin.ModelAdmin):
 admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
 
 
-class CustomEnvelopeProcessingStateFilter(admin.SimpleListFilter):
-    title = "Uploaded Envelopes"
-    parameter_name = "packagedworkbaskets__processing_state"
+class EnvelopeDeletedFilter(admin.SimpleListFilter):
+    title = "Deleted state"
+    parameter_name = "deleted_state"
 
     def lookups(self, request, model_admin):
         return (
-            (
-                ProcessingState.AWAITING_PROCESSING
-                and ProcessingState.CURRENTLY_PROCESSING,
-                _("Unprocessed"),
-            ),
-            (ProcessingState.SUCCESSFULLY_PROCESSED, _("Accepted")),
-            (ProcessingState.FAILED_PROCESSING, _("Rejected")),
-            ("all", _("All")),
+            ("DELETED", _("Deleted")),
+            ("NOT_DELETED", _("Not deleted")),
         )
 
-    def choices(self, changelist):
-        for lookup, title in self.lookup_choices:
-            yield {
-                "selected": self.value() == str(lookup),
-                "query_string": changelist.get_query_string(
-                    {self.parameter_name: lookup},
-                ),
-                "display": title,
-            }
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == "DELETED":
+            return queryset.deleted()
+        elif value == "NOT_DELETED":
+            return queryset.non_deleted()
+
+
+class CustomEnvelopeProcessingStateFilter(admin.SimpleListFilter):
+    title = "Processing state"
+    parameter_name = "processing_state"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("UNPROCESSED", _("Unprocessed")),
+            (ProcessingState.CURRENTLY_PROCESSING, _("Currently processing")),
+            (ProcessingState.SUCCESSFULLY_PROCESSED, _("Successfully processed")),
+            (ProcessingState.FAILED_PROCESSING, _("Failed processing")),
+        )
 
     def queryset(self, request, queryset):
-        if self.value() == None:
-            return queryset.for_year()
+        value = self.value()
+        if value == "UNPROCESSED":
+            return queryset.unprocessed()
+        elif value == ProcessingState.CURRENTLY_PROCESSING:
+            return queryset.currently_processing()
+        elif value == ProcessingState.SUCCESSFULLY_PROCESSED:
+            return queryset.successfully_processed()
+        elif value == ProcessingState.FAILED_PROCESSING:
+            return queryset.failed_processing()
 
 
 class EnvelopeAdmin(admin.ModelAdmin):
@@ -102,7 +113,10 @@ class EnvelopeAdmin(admin.ModelAdmin):
     )
     ordering = ["-pk"]
 
-    list_filter = (CustomEnvelopeProcessingStateFilter,)
+    list_filter = (
+        EnvelopeDeletedFilter,
+        CustomEnvelopeProcessingStateFilter,
+    )
 
     def packagedworkbaskets_processing_state(self, obj):
         return obj.packagedworkbaskets.get().processing_state
