@@ -10,6 +10,7 @@ from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import FileField
 from django.db.models import Manager
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.transaction import atomic
 from lxml import etree
@@ -73,6 +74,21 @@ class EnvelopeManager(Manager):
 
 
 class EnvelopeQuerySet(QuerySet):
+    def deleted(self):
+        """Filter in only those Envelope instances that have either a `deleted`
+        attribute of `True` or no valid `xml_file` attribute (i.e. None)."""
+        return self.filter(
+            Q(deleted=True) | Q(xml_file__isnull=True),
+        )
+
+    def non_deleted(self):
+        """Filter in only those Envelope instances that have both a `deleted`
+        attribute of `False` and a valid `xml_file` attribute (i.e. not
+        None)."""
+        return self.filter(
+            Q(deleted=False) & Q(xml_file__isnull=False),
+        )
+
     def for_year(self, year: Optional[int] = None):
         """
         Return all envelopes for a year, defaulting to this year.
@@ -87,6 +103,26 @@ class EnvelopeQuerySet(QuerySet):
 
         return self.filter(envelope_id__regex=rf"{now:%y}\d{{4}}").order_by(
             "envelope_id",
+        )
+
+    def unprocessed(self):
+        return self.filter(
+            packagedworkbaskets__processing_state__in=ProcessingState.queued_states(),
+        )
+
+    def currently_processing(self):
+        return self.filter(
+            packagedworkbaskets__processing_state=ProcessingState.CURRENTLY_PROCESSING,
+        )
+
+    def successfully_processed(self):
+        return self.filter(
+            packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+        )
+
+    def failed_processing(self):
+        return self.filter(
+            packagedworkbaskets__processing_state=ProcessingState.FAILED_PROCESSING,
         )
 
 
