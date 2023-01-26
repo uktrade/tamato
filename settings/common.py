@@ -330,7 +330,7 @@ S3_ENDPOINT_URL = os.environ.get(
 # Packaging automation.
 HMRC_PACKAGING_SEED_ENVELOPE_ID = os.environ.get(
     "HMRC_PACKAGING_SEED_ENVELOPE_ID",
-    "230000",
+    "0000",
 )
 HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
     "HMRC_PACKAGING_STORAGE_BUCKET_NAME",

@@ -142,12 +142,12 @@ class Envelope(TimestampedMixin):
         if envelope is None:
             # First envelope of the year.
             now = datetime.today()
-            counter = max(1, int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID[2:]))
+            counter = max(1, int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID))
         else:
             year = int(envelope.envelope_id[:2])
             counter = max(
                 int(envelope.envelope_id[2:]) + 1,
-                int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID[2:]),
+                int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID),
             )
 
             if counter > 9999:
