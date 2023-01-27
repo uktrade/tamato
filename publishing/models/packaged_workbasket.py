@@ -275,6 +275,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     class Meta:
         ordering = ["position"]
+        verbose_name_plural = "packaged workbaskets"
 
     objects: PackagedWorkBasketQuerySet = PackagedWorkBasketManager.from_queryset(
         PackagedWorkBasketQuerySet,
@@ -562,6 +563,7 @@ class PackagedWorkBasket(TimestampedMixin):
             "envelope_id": self.envelope.envelope_id,
             "transaction_count": self.workbasket.transactions.count(),
             "link_to_file": link_to_file,
+            "comments": self.loading_report.comments,
         }
         send_emails.delay(
             template_id=settings.CDS_ACCEPTED_TEMPLATE_ID,
@@ -580,6 +582,7 @@ class PackagedWorkBasket(TimestampedMixin):
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
             "link_to_file": link_to_file,
+            "comments": self.loading_report.comments,
         }
         send_emails.delay(
             template_id=settings.CDS_REJECTED_TEMPLATE_ID,
