@@ -7,6 +7,8 @@
   {% for object in blocking_periods %}
       {{ table_rows.append([
         {"text": object.sid },
+        {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
+        {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
         {"text": object.get_blocking_period_type_display() },
         {"text": object.description },
       ]) or "" }}
@@ -15,8 +17,10 @@
   {{ govukTable({
     "head": [
       {"text": "Quota definition sid"},
-      {"text": "Blocking period type"},
-      {"text": "Description"},
+      {"text": "Start date"},
+      {"text": "End date"},
+      {"text": "Blocking period type", "classes": "govuk-!-width-one-third"},
+      {"text": "Description", "classes": "govuk-!-width-one-third"},
     ],
     "rows": table_rows
   }) }}

@@ -7,6 +7,8 @@
   {% for object in sub_quotas %}
     {{ table_rows.append([
       {"text": object.sub_quota.sid },
+      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
       {"text": object.get_sub_quota_relation_type_display() },
       {"text": object.coefficient },
     ]) or "" }}
@@ -15,6 +17,8 @@
   {{ govukTable({
     "head": [
       {"text": "Quota definition sid"},
+      {"text": "Start date"},
+      {"text": "End date"},
       {"text": "Relation type"},
       {"text": "Coefficient"},
     ],
