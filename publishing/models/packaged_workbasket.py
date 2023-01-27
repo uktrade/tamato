@@ -28,10 +28,8 @@ from notifications_python_client import prepare_upload
 from common.models.mixins import TimestampedMixin
 from notifications.models import NotificationLog
 from notifications.tasks import send_emails
-from publishing.models.loading_report import LoadingReport
 from publishing.models.state import ProcessingState
 from publishing.tasks import schedule_create_xml_envelope_file
-from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -282,7 +280,7 @@ class PackagedWorkBasket(TimestampedMixin):
     )()
 
     workbasket = ForeignKey(
-        WorkBasket,
+        "workbaskets.WorkBasket",
         on_delete=PROTECT,
         editable=False,
     )
@@ -318,10 +316,11 @@ class PackagedWorkBasket(TimestampedMixin):
     """The date and time at which processing_state transitioned to
     CURRENTLY_PROCESSING."""
     loading_report = ForeignKey(
-        LoadingReport,
+        "publishing.LoadingReport",
         null=True,
         on_delete=PROTECT,
         editable=False,
+        related_name="packagedworkbaskets",
     )
     """The report file associated with an attempt (either successful or failed)
     to process / load the associated workbasket's envelope file."""
