@@ -5,8 +5,11 @@
 
 {% if suspension_periods %}
   {% for object in suspension_periods %}
+    {% set definition_link -%}
+      <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.quota_definition.order_number.sid]) }}#definition-details">{{ object.quota_definition.sid }}</a>
+    {% endset %}
       {{ table_rows.append([
-        {"text": object.sid },
+        {"text": definition_link },
         {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
         {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
         {"text": object.description },
