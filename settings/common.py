@@ -313,18 +313,27 @@ HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
 
 
-# S3 creds and endpoint.
-S3_ACCESS_KEY_ID = os.environ.get(
-    "S3_ACCESS_KEY_ID",
-    "",
-)
-S3_SECRET_ACCESS_KEY = os.environ.get(
-    "S3_SECRET_ACCESS_KEY",
-    "",
-)
+# S3 settings for packaging automation.
+
+if VCAP_SERVICES.get("aws-s3-bucket"):
+    app_bucket_creds = VCAP_SERVICES["aws-s3-bucket"][0]["credentials"]
+
+    S3_REGION_NAME = app_bucket_creds["aws_region"]
+    S3_ACCESS_KEY_ID = app_bucket_creds["aws_access_key_id"]
+    S3_SECRET_ACCESS_KEY = app_bucket_creds["aws_secret_access_key"]
+    HMRC_PACKAGING_STORAGE_BUCKET_NAME = app_bucket_creds["bucket_name"]
+else:
+    S3_REGION_NAME = os.environ.get("AWS_REGION")
+    S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
+    S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY")
+    HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
+        "HMRC_PACKAGING_STORAGE_BUCKET_NAME",
+        "hmrc-packaging",
+    )
+
 S3_ENDPOINT_URL = os.environ.get(
     "S3_ENDPOINT_URL",
-    "https://test-url.local/",
+    "",
 )
 
 # Packaging automation.
@@ -333,10 +342,6 @@ HMRC_PACKAGING_SEED_ENVELOPE_ID = int(
         "HMRC_PACKAGING_SEED_ENVELOPE_ID",
         "0001",
     ),
-)
-HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
-    "HMRC_PACKAGING_STORAGE_BUCKET_NAME",
-    "hmrc-packaging",
 )
 HMRC_ENVELOPE_STORAGE_DIRECTORY = os.environ.get(
     "HMRC_ENVELOPE_STORAGE_DIRECTORY",
