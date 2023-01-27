@@ -8,6 +8,12 @@ from notifications.models import NotifiedUser
 class NotifiedUserAdmin(admin.ModelAdmin):
     form = NotifiedUserAdminForm
 
+    list_display = (
+        "email",
+        "enrol_packaging",
+    )
+    ordering = ["email"]
+
 
 class NotificationLogAdmin(admin.ModelAdmin):
     """Class providing read-only list and detail views for notification logs."""
