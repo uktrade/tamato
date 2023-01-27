@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView
@@ -197,9 +198,14 @@ class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DetailView):
     model = PackagedWorkBasket
 
     def get(self, request, *args, **kwargs):
-        from django.http import HttpResponse
-
         packaged_workbasket = self.get_object()
+
+        # Only permit downloading an envelope through this view if it is the one
+        # currently being processed. This avoids accidentally downloading an
+        # envelope that has already completed its processing step from a stale
+        # page view.
+        if packaged_workbasket != PackagedWorkBasket.objects.currently_processing():
+            return redirect("publishing:envelope-queue-ui-list")
 
         envelope = packaged_workbasket.envelope
         file_content = envelope.xml_file.read()
