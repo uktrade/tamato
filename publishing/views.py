@@ -33,7 +33,7 @@ class PackagedWorkbasketQueueView(
     workbaskets."""
 
     model = PackagedWorkBasket
-    permission_required = "common.add_trackedmodel"
+    permission_required = "publishing.manage_packaging_queue"
 
     def get_template_names(self):
         return ["publishing/packaged_workbasket_queue.jinja"]
@@ -150,7 +150,7 @@ class EnvelopeQueueView(
     """UI view used to download and manage envelope processing."""
 
     model = PackagedWorkBasket
-    permission_required = "common.add_trackedmodel"
+    permission_required = "publishing.consume_from_packaging_queue"
 
     def get_template_names(self):
         return ["publishing/envelope_queue.jinja"]
@@ -194,7 +194,7 @@ class EnvelopeQueueView(
 class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DetailView):
     """View used to download an XML envelope."""
 
-    permission_required = "common.add_trackedmodel"
+    permission_required = "publishing.consume_from_packaging_queue"
     model = PackagedWorkBasket
 
     def get(self, request, *args, **kwargs):
@@ -222,7 +222,7 @@ class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DetailView):
 class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
     """Generic UI view used to confirm envelope processing."""
 
-    permission_required = "workbaskets.change_workbasket"
+    permission_required = "publishing.consume_from_packaging_queue"
     template_name = "publishing/complete-envelope-processing.jinja"
     form_class = LoadingReportForm
 
@@ -247,6 +247,7 @@ class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
 
 
 class EnvelopeActionConfirmView(DetailView):
+    permission_required = "publishing.consume_from_packaging_queue"
     template_name = "publishing/complete-envelope-processing-confirm.jinja"
     model = PackagedWorkBasket
 
@@ -319,7 +320,7 @@ class RejectEnvelopeConfirmView(EnvelopeActionConfirmView):
 class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
     """UI endpoint for creating packaged workbaskets."""
 
-    permission_required = "publishing.add_packagedworkbasket"
+    permission_required = "publishing.manage_packaging_queue"
     template_name = "publishing/create.jinja"
     form_class = PackagedWorkBasketCreateForm
 
@@ -383,6 +384,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
 
 
 class PackagedWorkbasketConfirmCreate(DetailView):
+    permission_required = "publishing.manage_packaging_queue"
     template_name = "publishing/confirm_create.jinja"
     model = PackagedWorkBasket
 
