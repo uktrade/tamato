@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from publishing.models import Envelope
@@ -108,6 +110,7 @@ class EnvelopeAdmin(admin.ModelAdmin):
         "envelope_id",
         "packagedworkbaskets_processing_state",
         "packagedworkbaskets_workbasket_id",
+        "download_envelope",
         "published_to_tariffs_api",
         "deleted",
     )
@@ -118,6 +121,24 @@ class EnvelopeAdmin(admin.ModelAdmin):
         CustomEnvelopeProcessingStateFilter,
         "published_to_tariffs_api",
     )
+
+    def download_envelope(self, obj):
+        if (
+            self.packagedworkbaskets_processing_state
+            in ProcessingState.completed_processing_states()
+            and not obj.xml_file
+        ):
+            return "Missing envelope!"
+        elif not obj.xml_file:
+            return None
+
+        download_url = reverse(
+            "publishing:admin-envelope-ui-download",
+            args=(obj.packagedworkbaskets.get().pk,),
+        )
+        return mark_safe(
+            f'<a href="{download_url}">{obj.envelope_id}</a>',
+        )
 
     def packagedworkbaskets_processing_state(self, obj):
         return obj.packagedworkbaskets.get().processing_state
