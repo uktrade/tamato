@@ -119,11 +119,13 @@ class EnvelopeAdmin(admin.ModelAdmin):
         "processing_state",
         "packaged_workbasket_id",
         "workbasket_id",
+        "published_to_tariffs_api",
         "deleted",
     )
     list_filter = (
         EnvelopeDeletedFilter,
         EnvelopeProcessingStateFilter,
+        "published_to_tariffs_api",
     )
 
     def processing_state(self, obj):
