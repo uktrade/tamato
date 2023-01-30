@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db.models import BooleanField
 from django.db.models import CharField
+from django.db.models import DateTimeField
 from django.db.models import FileField
 from django.db.models import Manager
 from django.db.models import Q
@@ -160,9 +161,24 @@ class Envelope(TimestampedMixin):
     )()
 
     envelope_id = EnvelopeId()
-    xml_file = FileField(storage=EnvelopeStorage, default="")
-    deleted = BooleanField(default=False)
-    """marks an envelope as deleted within contexts where an instance can not be immediately deleted from the DB."""
+    xml_file = FileField(
+        storage=EnvelopeStorage,
+        default="",
+    )
+    published_to_tariffs_api = DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+    )
+    """Used to manually set when an envelope has been published to the
+    production tariff-api. When non-null indicates that an envelope has been
+    published to the tariff-api service and when that was done."""
+    deleted = BooleanField(
+        default=False,
+        editable=False,
+    )
+    """Marks an envelope as deleted within contexts where an instance can not be
+    immediately deleted from the DB."""
 
     @classmethod
     def next_envelope_id(cls):
