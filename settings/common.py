@@ -21,6 +21,7 @@ ENV = os.environ.get("ENV", "dev")
 # Global variables
 SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "true"))
 VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
+VCAP_APPLICATION = json.loads(os.environ.get("VCAP_APPLICATION", "{}"))
 
 # -- Paths
 
@@ -604,4 +605,9 @@ CDS_REJECTED_TEMPLATE_ID = os.environ.get("CDS_REJECTED_TEMPLATE_ID")
 
 # Base service URL - required when constructing an absolute TAP URL to a page
 # from a Celery task where no HTTP request object is available.
-BASE_SERVICE_URL = os.environ.get("BASE_SERVICE_URL")
+if VCAP_APPLICATION.get("application_uris") and len(
+    VCAP_APPLICATION["application_uris"],
+):
+    BASE_SERVICE_URL = "https://" + VCAP_APPLICATION["application_uris"][0]
+else:
+    BASE_SERVICE_URL = os.environ.get("BASE_SERVICE_URL")
