@@ -9,7 +9,7 @@ from common.models import Transaction
 from common.serializers import EnvelopeSerializer
 from common.tests import factories
 from common.tests.factories import ApprovedTransactionFactory
-from common.tests.factories import ApprovedWorkBasketFactory
+from common.tests.factories import QueuedWorkBasketFactory
 from common.tests.util import taric_xml_record_codes
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.serializers import RenderedTransactions
@@ -47,12 +47,12 @@ def test_serializer_min_envelope_size_is_large_enough():
     assert EnvelopeSerializer.MIN_ENVELOPE_SIZE > templates_size + min_content_size
 
 
-def test_envelope_serializer_outputs_expected_items(approved_workbasket):
+def test_envelope_serializer_outputs_expected_items(queued_workbasket):
     """EnvelopeSerializer should output all the models passed to it and
     generated records for descriptions."""
     # Transaction context manager is not used to create transactions,
     # as it creates phantom workbaskets and transactions which cause XSD failures later.
-    tx = ApprovedTransactionFactory.create(workbasket=approved_workbasket)
+    tx = ApprovedTransactionFactory.create(workbasket=queued_workbasket)
     regulation = factories.RegulationFactory.create(
         transaction=tx,
         regulation_group=None,
@@ -73,7 +73,7 @@ def test_envelope_serializer_outputs_expected_items(approved_workbasket):
 
     assertQuerysetEqual(
         expected_items,
-        approved_workbasket.tracked_models.all(),
+        queued_workbasket.tracked_models.all(),
         transform=lambda o: o,
         ordered=False,
     )  # Some of the factories create other data so sanity check expected items.
@@ -81,7 +81,7 @@ def test_envelope_serializer_outputs_expected_items(approved_workbasket):
     output = io.BytesIO()
     with EnvelopeSerializer(output, random.randint(2, 9999)) as env:
         env.render_transaction(
-            models=approved_workbasket.tracked_models.all(),
+            models=queued_workbasket.tracked_models.all(),
             transaction_id=tx.order,
         )
 
@@ -104,15 +104,15 @@ def test_transaction_envelope_serializer_splits_output():
     after just one transaction.
     """
     # Add transactions with different kinds of data to the workbasket.
-    approved_workbasket = ApprovedWorkBasketFactory.create()
-    with ApprovedTransactionFactory.create(workbasket=approved_workbasket) as tx1:
+    queued_workbasket = QueuedWorkBasketFactory.create()
+    with ApprovedTransactionFactory.create(workbasket=queued_workbasket) as tx1:
         factories.RegulationFactory.create()
 
-    with ApprovedTransactionFactory.create(workbasket=approved_workbasket) as tx2:
+    with ApprovedTransactionFactory.create(workbasket=queued_workbasket) as tx2:
         factories.RegulationFactory.create(regulation_group=None),
         factories.FootnoteTypeFactory.create()
 
-    with ApprovedTransactionFactory.create(workbasket=approved_workbasket) as tx3:
+    with ApprovedTransactionFactory.create(workbasket=queued_workbasket) as tx3:
         factories.FootnoteTypeFactory.create()
 
     transactions = Transaction.objects.filter(pk__in=[tx1.pk, tx2.pk, tx3.pk])

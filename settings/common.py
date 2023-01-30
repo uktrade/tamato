@@ -21,6 +21,7 @@ ENV = os.environ.get("ENV", "dev")
 # Global variables
 SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "true"))
 VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
+VCAP_APPLICATION = json.loads(os.environ.get("VCAP_APPLICATION", "{}"))
 
 # -- Paths
 
@@ -107,7 +108,9 @@ DOMAIN_APPS = [
 TAMATO_APPS = [
     "hmrc_sdes",
     "importer",
+    "notifications",
     # XXX need to keep this for migrations. delete later.
+    "publishing",
     "taric",
     "workbaskets",
     "exporter.apps.ExporterConfig",
@@ -306,9 +309,49 @@ USE_TZ = True
 # Time zone
 TIME_ZONE = "Europe/London"
 
-# HMRC AWS settings (override the defaults)
+# HMRC AWS settings (override the defaults) - DEPRECATED.
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
+
+
+# S3 settings for packaging automation.
+
+if VCAP_SERVICES.get("aws-s3-bucket"):
+    app_bucket_creds = VCAP_SERVICES["aws-s3-bucket"][0]["credentials"]
+
+    S3_REGION_NAME = app_bucket_creds["aws_region"]
+    S3_ACCESS_KEY_ID = app_bucket_creds["aws_access_key_id"]
+    S3_SECRET_ACCESS_KEY = app_bucket_creds["aws_secret_access_key"]
+    HMRC_PACKAGING_STORAGE_BUCKET_NAME = app_bucket_creds["bucket_name"]
+else:
+    S3_REGION_NAME = os.environ.get("AWS_REGION")
+    S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
+    S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY")
+    HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
+        "HMRC_PACKAGING_STORAGE_BUCKET_NAME",
+        "hmrc-packaging",
+    )
+
+S3_ENDPOINT_URL = os.environ.get(
+    "S3_ENDPOINT_URL",
+    "",
+)
+
+# Packaging automation.
+HMRC_PACKAGING_SEED_ENVELOPE_ID = int(
+    os.environ.get(
+        "HMRC_PACKAGING_SEED_ENVELOPE_ID",
+        "0001",
+    ),
+)
+HMRC_ENVELOPE_STORAGE_DIRECTORY = os.environ.get(
+    "HMRC_ENVELOPE_STORAGE_DIRECTORY",
+    "envelope/",
+)
+HMRC_LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
+    "HMRC_LOADING_REPORTS_STORAGE_DIRECTORY",
+    "loading-report/",
+)
 
 # SQLite AWS settings
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
@@ -429,6 +472,11 @@ LOGGING = {
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
+        "publishing": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
         "workbaskets": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
@@ -542,3 +590,24 @@ LIMITED_PAGINATOR_MAX_COUNT = 200
 MEASURES_PAGINATOR_MAX_COUNT = int(
     os.environ.get("MEASURES_PAGINATOR_MAX_COUNT", "1000"),
 )
+
+# key used to instantiate GOVUK Notify python client
+NOTIFICATIONS_API_KEY = os.environ.get("NOTIFICATIONS_API_KEY")
+
+ENABLE_PACKAGING_NOTIFICATIONS = is_truthy(
+    os.environ.get("ENABLE_PACKAGING_NOTIFICATIONS", "true"),
+)
+
+# GOV.UK Notify template IDs used for publishing package notifications.
+READY_FOR_CDS_TEMPLATE_ID = os.environ.get("READY_FOR_CDS_TEMPLATE_ID")
+CDS_ACCEPTED_TEMPLATE_ID = os.environ.get("CDS_ACCEPTED_TEMPLATE_ID")
+CDS_REJECTED_TEMPLATE_ID = os.environ.get("CDS_REJECTED_TEMPLATE_ID")
+
+# Base service URL - required when constructing an absolute TAP URL to a page
+# from a Celery task where no HTTP request object is available.
+if VCAP_APPLICATION.get("application_uris") and len(
+    VCAP_APPLICATION["application_uris"],
+):
+    BASE_SERVICE_URL = "https://" + VCAP_APPLICATION["application_uris"][0]
+else:
+    BASE_SERVICE_URL = os.environ.get("BASE_SERVICE_URL")

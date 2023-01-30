@@ -1,0 +1,30 @@
+{% extends 'layouts/form.jinja' %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+
+{%- set page_title = accept_reject | capitalize ~ " envelope" -%}
+{%- set page_label = "Upload the loading report, add any relevant comments and " ~ accept_reject ~ " the envelope" -%}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {
+        "text": "CDS - Process envelopes",
+        "href": url("publishing:envelope-queue-ui-list"),
+      },
+      {"text": page_title},
+    ]
+  }) }}
+{% endblock %}
+
+{% block form %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% call django_form() %}
+        {{ crispy(form) }}
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %}

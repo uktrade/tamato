@@ -48,7 +48,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "workbasket_ids",
             help=(
-                "Override the default selection of APPROVED workbaskets "
+                "Override the default selection of QUEUED workbaskets "
                 "with a comma-separated list of workbasket ids."
             ),
             nargs="*",
@@ -85,11 +85,11 @@ class Command(BaseCommand):
         if workbasket_ids:
             query = dict(id__in=workbasket_ids)
         else:
-            query = dict(status=WorkflowStatus.APPROVED)
+            query = dict(status=WorkflowStatus.QUEUED)
 
         workbaskets = WorkBasket.objects.filter(**query)
         if not workbaskets:
-            sys.exit("Nothing to upload:  No workbaskets with status APPROVED.")
+            sys.exit("Nothing to upload:  No workbaskets with status QUEUED.")
 
         if options.get("force_unchecked_rules"):
             self.stdout.write(
@@ -119,7 +119,7 @@ class Command(BaseCommand):
 
         if not transactions:
             sys.exit(
-                f"Nothing to upload:  {workbaskets.count()} Workbaskets APPROVED but none contain any transactions.",
+                f"Nothing to upload:  {workbaskets.count()} Workbaskets QUEUED but none contain any transactions.",
             )
 
         if options.get("envelope_id") == ["auto"]:
@@ -143,6 +143,7 @@ class Command(BaseCommand):
             max_envelope_size=max_envelope_size,
         )
         errors = False
+
         for time_to_render, rendered_envelope in item_timer(
             serializer.split_render_transactions(transactions),
         ):
