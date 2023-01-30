@@ -108,14 +108,15 @@ class EnvelopeAdmin(admin.ModelAdmin):
         "envelope_id",
         "packagedworkbaskets_processing_state",
         "packagedworkbaskets_workbasket_id",
+        "published_to_tariffs_api",
         "deleted",
-        # TODO add user
     )
     ordering = ["-pk"]
 
     list_filter = (
         EnvelopeDeletedFilter,
         CustomEnvelopeProcessingStateFilter,
+        "published_to_tariffs_api",
     )
 
     def packagedworkbaskets_processing_state(self, obj):
