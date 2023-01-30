@@ -72,8 +72,14 @@ class Checker:
         try:
             with override_current_transaction(context.transaction):
                 success, message = self.run(model)
-        except Exception as e:
+        except BusinessRuleViolation as e:
             success, message = False, str(e)
+        except Exception as e:
+            success, message = (
+                False,
+                f"An internal error occurred when processing checks, please notify a "
+                f"TAP developer of this issue : {str(e)}",
+            )
         finally:
             return TrackedModelCheck.objects.create(
                 model=model,
