@@ -153,6 +153,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-checks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">checks</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-notifications"><code class="xref py py-mod docutils literal notranslate"><span class="pre">notifications</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id5"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id6"><code class="xref py py-mod docutils literal notranslate"><span class="pre">workbaskets</span></code></a></li>
 </ul>
@@ -224,6 +225,7 @@
 <li><a class="reference internal" href="#module-exporter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">exporter</span></code></a></li>
 <li><a class="reference internal" href="#module-checks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">checks</span></code></a></li>
 <li><a class="reference internal" href="#module-hmrc_sdes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hmrc_sdes</span></code></a></li>
+<li><a class="reference internal" href="#module-notifications"><code class="xref py py-mod docutils literal notranslate"><span class="pre">notifications</span></code></a></li>
 <li><a class="reference internal" href="#id5"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a></li>
 <li><a class="reference internal" href="#id6"><code class="xref py py-mod docutils literal notranslate"><span class="pre">workbaskets</span></code></a></li>
 </ul>
@@ -372,7 +374,7 @@ exporter generates xml by passing over each transaction sequentially (see
 order with each transaction only aware of objects in preceding transactions in the same
 basket and transactions in an already “approved” basket.</p>
 <p>A workbasket is a <a class="reference external" href="https://github.com/viewflow/django-fsm">finite state machine</a> and
-a workbasket can be considered “approved” when it is in an <cite>APPROVED</cite>, <cite>SENT</cite>, or
+a workbasket can be considered “approved” when it is in an <cite>QUEUED</cite>, <cite>SENT</cite>, or
 <cite>PUBLISHED</cite> state. Other states include <cite>ARCHIVED</cite>, <cite>PROPOSED</cite>, and <cite>ERRORED</cite>. See below
 for a full map of the different possible state transitions.</p>
 <img alt="../_images/wb-state.svg" src="../_images/wb-state.svg" /><p>Certain transition methods do more than just change a workbasket’s status:</p>
@@ -799,6 +801,11 @@ invalidated, so in the worst case this is a waste of resources.)</p></li>
 then notify SDES via an HTTPS API that a file is ready to be downloaded. This
 module makes available the API client library to make the call.</p>
 <p>More information about SDES is available from <a class="reference external" href="https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/secure-data-exchange-notifications/1.0">the HMRC developer hub</a>.</p>
+</section>
+<section id="module-notifications">
+<span id="notifications"></span><h3><a class="reference internal" href="#module-notifications" title="notifications"><code class="xref py py-mod docutils literal notranslate"><span class="pre">notifications</span></code></a><a class="headerlink" href="#module-notifications" title="Permalink to this headline">¶</a></h3>
+<p>Provides classes and models for tracking notifications sent to and recieved
+from CDS, as well as logic for connecting with GOV.UK Notify API.</p>
 </section>
 <section id="id5">
 <h3><a class="reference internal" href="#module-taric" title="taric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">taric</span></code></a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
