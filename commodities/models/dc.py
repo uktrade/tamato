@@ -906,7 +906,7 @@ class CommodityChange(BaseModel):
     Provides a model for commodity collection change requests.
 
     The model supports two Commodity instances:
-    - current refers to an member of the commodity collection pre-change
+    - current refers to a member of the commodity collection pre-change
     - candidate refers to a new commmodity (state) that represents the pending change
 
     The update type implies whether current and/or candidate are required
@@ -1551,11 +1551,11 @@ class CommodityCollectionLoader:
         sids = Subquery(qs.values("sid"))
 
         indent_query = (
-            _apply_filters(GoodsNomenclatureIndent.objects)
+            _apply_filters(GoodsNomenclatureIndent.objects.latest_approved())
             .with_end_date()
             .filter(indented_goods_nomenclature__sid__in=sids)
             .annotate(goods_sid=F("indented_goods_nomenclature__sid"))
-            .all()
+            .order_by("trackedmodel_ptr_id")
         )
 
         indents = {indent.goods_sid: indent for indent in indent_query}
