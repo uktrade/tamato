@@ -9,7 +9,9 @@ app_name = "publishing"
 ui_patterns = [
     path(
         "",
-        RedirectView.as_view(pattern_name="packaged-workbasket-queue-ui-list"),
+        RedirectView.as_view(
+            pattern_name="publishing:packaged-workbasket-queue-ui-list",
+        ),
     ),
     path(
         "create/",

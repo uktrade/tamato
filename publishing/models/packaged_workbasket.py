@@ -276,6 +276,10 @@ class PackagedWorkBasket(TimestampedMixin):
     class Meta:
         ordering = ["position"]
         verbose_name_plural = "packaged workbaskets"
+        permissions = [
+            ("manage_packaging_queue", "Can manage the packaging queue"),
+            ("consume_from_packaging_queue", "Can consume from the packaging queue"),
+        ]
 
     objects: PackagedWorkBasketQuerySet = PackagedWorkBasketManager.from_queryset(
         PackagedWorkBasketQuerySet,
