@@ -36,11 +36,6 @@ class TestCommodityCollection:
         target = CommodityCollection([parent_good, child_good_1, child_good_2])
         assert len(target.commodities) == 3
 
-    def test_init_invalid_arguments(self):
-        # with pytest.raises()
-        target = CommodityCollection(["a", "b"])
-        assert len(target.commodities) == 2
-
     def test_update_delete(self):
         change_sequence = []
         # for delete, only current is required
@@ -51,6 +46,9 @@ class TestCommodityCollection:
         )
 
         target = CommodityCollection([Commodity(current)])
+
+        assert len(target.commodities) == 1
+
         change_sequence.append(
             CommodityChange(
                 collection=target,
@@ -59,3 +57,5 @@ class TestCommodityCollection:
             ),
         )
         target.update(change_sequence)
+
+        assert len(target.commodities) == 0

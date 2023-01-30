@@ -692,6 +692,8 @@ class CommodityCollection(CommodityTreeBase):
     - see the docs to `CommodityCollection.get_snapshot` method for more details.
     """
 
+    # TODO : add validation to initializer, currently can be initialised with invalid arguments as long as its in a list
+
     def update(self, changes: Sequence["CommodityChange"]) -> None:
         """
         Update the commodity collection using CommodityChange constructs.
