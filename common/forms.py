@@ -156,23 +156,42 @@ class RadioNested(TypedChoiceField):
         return super().get_bound_field(form, field_name)
 
 
+class WorkbasketActions(TextChoices):
+    CREATE = "CREATE", "Create a new workbasket"
+    EDIT = "EDIT", "Edit an existing workbasket"
+
+
+class DITTariffManagerActions(TextChoices):
+    PACKAGE_WORKBASKETS = "PACKAGE_WORKBASKETS", "Order and package workbaskets"
+
+
+class HMRCCDSManagerActions(TextChoices):
+    PROCESS_ENVELOPES = "PROCESS_ENVELOPES", "CDS - Process envelopes"
+
+
 class HomeForm(forms.Form):
-    class WorkbasketActions(TextChoices):
-        CREATE = "CREATE", "Create a new workbasket"
-        EDIT = (
-            "EDIT",
-            "Edit an existing workbasket",
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+
+        choices = []
+
+        if self.user.has_perm("workbaskets.add_workbasket"):
+            choices += WorkbasketActions.choices
+
+        if self.user.has_perm("publishing.manage_packaging_queue"):
+            choices += DITTariffManagerActions.choices
+
+        if self.user.has_perm("publishing.consume_from_packaging_queue"):
+            choices += HMRCCDSManagerActions.choices
+
+        self.fields["workbasket_action"] = forms.ChoiceField(
+            label="",
+            choices=choices,
+            widget=forms.RadioSelect,
+            required=True,
         )
 
-    workbasket_action = forms.ChoiceField(
-        label="",
-        choices=WorkbasketActions.choices,
-        widget=forms.RadioSelect,
-        required=True,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Fieldset(

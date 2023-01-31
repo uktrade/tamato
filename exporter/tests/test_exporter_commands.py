@@ -16,7 +16,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.skip()
-def test_upload_command_uploads_approved_workbasket_to_s3(
+def test_upload_command_uploads_queued_workbasket_to_s3(
     approved_transaction,
     hmrc_storage,
     s3,
@@ -66,7 +66,7 @@ def test_upload_command_uploads_approved_workbasket_to_s3(
 
 
 @pytest.mark.skip(reason="broken test - TODO")
-def test_dump_command_outputs_approved_workbasket(approved_transaction, capsys):
+def test_dump_command_outputs_queued_workbasket(approved_transaction, capsys):
     """Exercise HMRCStorage and verify content is saved to bucket."""
     with capsys.disabled():
         RegulationFactory.create(transaction=approved_transaction)

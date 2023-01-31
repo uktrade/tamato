@@ -4,11 +4,11 @@ from datetime import timedelta
 import pytest
 from psycopg2._range import DateTimeTZRange
 
-from common.tests.factories import ApprovedWorkBasketFactory
 from common.tests.factories import DutyExpressionFactory
 from common.tests.factories import GeographicalAreaFactory
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.factories import MeasureTypeFactory
+from common.tests.factories import QueuedWorkBasketFactory
 from common.tests.factories import RegulationFactory
 from common.tests.factories import RegulationGroupFactory
 
@@ -37,7 +37,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types):
     assert measurement_class.objects.filter(sid=20194967).exists() is False
 
     # mock up workbasket
-    new_work_basket = ApprovedWorkBasketFactory.create(id=target_workbasket_id).save()
+    new_work_basket = QueuedWorkBasketFactory.create(id=target_workbasket_id).save()
 
     # create the three goods
     goods_1 = GoodsNomenclatureFactory.create(item_id="0306920000").save(
