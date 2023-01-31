@@ -191,32 +191,43 @@ class EnvelopeQueueView(
         return request.build_absolute_uri()
 
 
-class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DetailView):
+class DownloadEnvelopeView(DetailView):
     """View used to download an XML envelope."""
 
-    permission_required = "publishing.consume_from_packaging_queue"
     model = PackagedWorkBasket
 
     def get(self, request, *args, **kwargs):
         packaged_workbasket = self.get_object()
 
+        envelope = packaged_workbasket.envelope
+        file_content = envelope.xml_file.read()
+        file_name = f"DIT{envelope.envelope_id}.xml"
+        response = HttpResponse(file_content)
+        response["content-type"] = "text/xml"
+        response["content-length"] = len(file_content)
+        response["content-disposition"] = f'attachment; filename="{file_name}"'
+        return response
+
+
+class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeView):
+    permission_required = "publishing.consume_from_packaging_queue"
+
+    def get(self, request, *args, **kwargs):
+        packaged_workbasket = self.get_object()
         # Only permit downloading an envelope through this view if it is the one
         # currently being processed. This avoids accidentally downloading an
         # envelope that has already completed its processing step from a stale
         # page view.
         if packaged_workbasket != PackagedWorkBasket.objects.currently_processing():
             return redirect("publishing:envelope-queue-ui-list")
+        return super().get(request, *args, **kwargs)
 
-        envelope = packaged_workbasket.envelope
-        file_content = envelope.xml_file.read()
-        file_name = f"DIT{envelope.envelope_id}.xml"
 
-        response = HttpResponse(file_content)
-        response["content-type"] = "text/xml"
-        response["content-length"] = len(file_content)
-        response["content-disposition"] = f'attachment; filename="{file_name}"'
+class DownloadAdminEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeView):
+    permission_required = "publishing.manage_packaging_queue"
 
-        return response
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):

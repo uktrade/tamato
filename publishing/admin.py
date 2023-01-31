@@ -119,6 +119,7 @@ class EnvelopeAdmin(admin.ModelAdmin):
         "processing_state",
         "packaged_workbasket_id",
         "workbasket_id",
+        "download_envelope",
         "published_to_tariffs_api",
         "deleted",
     )
@@ -156,6 +157,24 @@ class EnvelopeAdmin(admin.ModelAdmin):
         )
         return mark_safe(
             f'<a href="{workbasket_url}">{pwb.workbasket.pk}</a>',
+        )
+
+    def download_envelope(self, obj):
+        if (
+            self.packagedworkbaskets_processing_state
+            in ProcessingState.completed_processing_states()
+            and not obj.xml_file
+        ):
+            return "Missing envelope!"
+        elif not obj.xml_file:
+            return None
+
+        download_url = reverse(
+            "publishing:admin-envelope-ui-download",
+            args=(obj.packagedworkbaskets.get().pk,),
+        )
+        return mark_safe(
+            f'<a href="{download_url}">{obj.envelope_id}</a>',
         )
 
 
