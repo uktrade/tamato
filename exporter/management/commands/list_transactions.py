@@ -14,7 +14,7 @@ class Command(BaseCommand):
     Invalid envelopes are output but with error level set.
     """
 
-    help = "List workbaskets with status APPROVED."
+    help = "List workbaskets with status QUEUED."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -36,16 +36,16 @@ class Command(BaseCommand):
 
     @atomic
     def handle(self, *args, **options):
-        workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.APPROVED)
+        workbaskets = WorkBasket.objects.filter(status=WorkflowStatus.QUEUED)
         if not workbaskets:
-            self.stdout.write("No workbaskets with status APPROVED.")
+            self.stdout.write("No workbaskets with status QUEUED.")
 
         # transactions:  will be serialized, then added to an envelope for uploaded.
         transactions = workbaskets.ordered_transactions()
 
         if not transactions:
             sys.exit(
-                f"Nothing to upload:  {workbaskets.count()} Workbaskets APPROVED but none contain any transactions.",
+                f"Nothing to upload:  {workbaskets.count()} Workbaskets QUEUED but none contain any transactions.",
             )
 
         self.stdout.write(f"{workbaskets.count()}  Workbaskets ready for export")
