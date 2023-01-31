@@ -46,11 +46,20 @@ class HomeView(FormView, View):
     template_name = "common/workbasket_action.jinja"
     form_class = forms.HomeForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         if form.cleaned_data["workbasket_action"] == "EDIT":
             return redirect(reverse("workbaskets:workbasket-ui-list"))
         elif form.cleaned_data["workbasket_action"] == "CREATE":
             return redirect(reverse("workbaskets:workbasket-ui-create"))
+        elif form.cleaned_data["workbasket_action"] == "PACKAGE_WORKBASKETS":
+            return redirect(reverse("publishing:packaged-workbasket-queue-ui-list"))
+        elif form.cleaned_data["workbasket_action"] == "PROCESS_ENVELOPES":
+            return redirect(reverse("publishing:envelope-queue-ui-list"))
 
 
 class HealthCheckResponse(HttpResponse):
@@ -160,8 +169,9 @@ class LogoutView(django.contrib.auth.views.LogoutView):
     template_name = "common/logged_out.jinja"
 
 
-class WithPaginationListView(FilterView):
-    """Generic list view enabling pagination."""
+class WithPaginationListMixin:
+    """Mixin that can be inherited by a ListView subclass to enable this
+    project's pagination capabilities."""
 
     paginator_class = Paginator
     paginate_by = settings.REST_FRAMEWORK["PAGE_SIZE"]
@@ -176,6 +186,10 @@ class WithPaginationListView(FilterView):
             page_obj.paginator.num_pages,
         )
         return data
+
+
+class WithPaginationListView(WithPaginationListMixin, FilterView):
+    """Generic filtered list view enabling pagination."""
 
 
 class RequiresSuperuserMixin(UserPassesTestMixin):

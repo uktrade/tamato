@@ -1259,6 +1259,15 @@ Implementing RegulationY-%m-%d
 date_time_start
 Y-%m-%d
 Skipping ME119: update_type
+Implementing RegulationLoadingReport
+loading_report
+Queued
+LoadingReport
+NotifiedUser
+NotificationLog
+template_id
+template_id"
+GOVUK Notify
 Implementing Regulation
 measure.effective_valid_between.upper
 Tests that MeasureMultipleDelete

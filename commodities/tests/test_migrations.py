@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from common.tests.factories import ApprovedWorkBasketFactory
+from common.tests.factories import QueuedWorkBasketFactory
 from common.util import TaricDateRange
 from common.validators import UpdateType
 
@@ -26,7 +26,7 @@ def test_main_migration_works(migrator):
     Workbasket = old_state.apps.get_model("workbaskets", "WorkBasket")
     VersionGroup = old_state.apps.get_model("common", "VersionGroup")
 
-    ApprovedWorkBasketFactory.create().save()
+    QueuedWorkBasketFactory.create().save()
     workbasket = Workbasket.objects.create(id=238, author_id=1)
     new_transaction = Transaction.objects.create(
         workbasket=workbasket,

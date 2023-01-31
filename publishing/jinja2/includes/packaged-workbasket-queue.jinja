@@ -1,0 +1,178 @@
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{%- macro progress_icon(position) %}
+  {% set image_rel_path = "/common/images/progress-green-" ~ position ~ "-of-3.svg" %}
+  <img
+    class="icon-progress"
+    src={{ static(image_rel_path) }}
+    alt="Progress icon"
+  >
+{% endmacro -%}
+
+
+{%- macro promote_button(obj) %}
+  <button
+    class="govuk-link fake-link"
+    name="promote_position"
+    value="{{ obj.pk }}"
+  >
+    <img
+      class="icon"
+      src="{{ static('/common/images/chevron-up.svg') }}"
+      alt="Chevron up icon"
+    >
+  </button>
+{% endmacro -%}
+
+
+{%- macro demote_button(obj) %}
+  <button
+    class="govuk-link fake-link"
+    name="demote_position"
+    value="{{ obj.pk }}"
+  >
+    <img
+      class="icon"
+      src="{{ static('/common/images/chevron-down.svg') }}"
+      alt="Chevron down icon"
+    >
+  </button>
+{% endmacro -%}
+
+
+{%- set table_rows = [] -%}
+
+{%- for obj in object_list %}
+
+  {%- set up_down_cell_content %}
+    {% if loop.index == 1 %}
+      {# First row. #}
+      {% if obj == currently_processing %}
+        {# At state CDS DOWNLOADED #}
+        {{ progress_icon(3) }}
+      {% elif obj.processing_state == "AWAITING_PROCESSING" and not obj.envelope %}
+        {# At state GENERATING ENVELOPE #}
+        {{ progress_icon(1) }}
+      {% else %}
+        {# At state CDS NOTIFIED #}
+        {{ progress_icon(2) }}
+      {% endif %}
+    {% elif loop.index == 2 %}
+      {# Second row. #}
+      {% if currently_processing %}
+        {% if 2 < object_list | length %}
+          {{ demote_button(obj) }}
+        {% endif %}
+      {% else %}
+        {{ promote_button(obj) }}
+        <br>
+        {% if 2 < object_list | length %}
+          {{ demote_button(obj) }}
+        {% endif %}
+      {% endif %}
+    {% elif loop.index == object_list | length %}
+      {# Last row. #}
+      {{ promote_button(obj) }}
+    {% else %}
+      {# All other rows. #}
+      {{ promote_button(obj) }}
+      <br>
+      {{ demote_button(obj) }}
+    {% endif %}
+  {% endset -%}
+
+
+  {%- set workbasket_id_cell_content %}
+    <a
+      href="{{ url('workbaskets:workbasket-ui-changes', args=(obj.workbasket.pk,)) }}"
+      class="govuk-link"
+    >{{ obj.workbasket.pk }}</a>
+  {% endset -%}
+
+
+  {%- set jira_cell_content %}
+    <a
+      href="{{ obj.jira_url }}"
+      class="govuk-link"
+    >{{ obj.workbasket.title }}</a>
+  {% endset -%}
+
+
+  {%- set description_cell_content %}
+    <span>{{ obj.workbasket.reason }}</span>
+  {% endset -%}
+
+
+  {%- set order_cell_content %}
+    {% if loop.index == 1 %}
+      {# First row. #}
+      {% if obj == currently_processing %}
+        <span class="processing-state tamato-badge-light-green">CDS DOWNLOADED</span>
+      {% elif obj.processing_state == "AWAITING_PROCESSING" and not obj.has_envelope %}
+        <span class="processing-state tamato-badge-light-grey">GENERATING ENVELOPE</span>
+      {% else %}
+        <span class="processing-state tamato-badge-light-purple">CDS NOTIFIED</span>
+      {% endif %}
+    {% elif loop.index == 2 and currently_processing %}
+      {# Second row. #}
+      <button
+        class="govuk-link fake-link"
+        name="demote_position"
+        value="{{ obj.pk }}"
+      >
+        Move down
+      </button>
+    {% else %}
+      {# All other rows. #}
+      <button
+        class="govuk-link fake-link"
+        name="promote_to_top_position"
+        value="{{ obj.pk }}"
+      >
+        Move to top to notify CDS
+      </button>
+    {% endif %}
+  {% endset -%}
+
+
+  {%- set remove_cell_content %}
+    {% if obj != currently_processing %}
+      <button
+        class="govuk-link fake-link"
+        name="remove_from_queue"
+        value="{{ obj.pk }}"
+      >
+        Remove from queue
+      </button>
+    {% endif %}
+  {% endset -%}
+
+
+  {{ table_rows.append([
+    {"html": up_down_cell_content},
+    {"html": workbasket_id_cell_content},
+    {"html": jira_cell_content},
+    {"html": description_cell_content},
+    {"html": order_cell_content},
+    {"html": remove_cell_content},
+  ]) or "" }}
+
+{% endfor -%}
+
+<form method="post" action="">
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+  {{ govukTable({
+    "head": [
+      {"text": ""},
+      {"text": "Workbasket ID"},
+      {"text": "TOPS/Jira"},
+      {"text": "Description"},
+      {"text": "Order"},
+      {"text": "Remove"},
+    ],
+    "rows": table_rows,
+    "classes": "packaged-workbaskets first-row-highlight",
+  }) }}
+</form>
