@@ -102,7 +102,7 @@ class PackagedWorkBasketCreateForm(forms.ModelForm):
                 HTML(
                     '<strong class="govuk-warning-text__text">'
                     '<span class="govuk-warning-text__assistive">Warning</span>'
-                    "The workbasket will be added to the queue ready to send to CDS."
+                    "The workbasket will be added to the packaging queue to send to CDS."
                     "</strong>",
                 ),
                 css_class="govuk-warning-text",
