@@ -26,7 +26,7 @@
                     },
                     {
                         "key": {"text": "End date"},
-                        "value": {"text": "{:%d %b %Y}".format(current_definition.valid_between.upper) },
+                        "value": {"text": "{:%d %b %Y}".format(current_definition.valid_between.upper) if current_definition.valid_between.upper else "-" },
                         "actions": {"items": []}
                     },
                     {

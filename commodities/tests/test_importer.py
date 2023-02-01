@@ -223,7 +223,7 @@ def test_footnote_association_goods_nomenclature_importer(imported_fields_match)
 #         TARIC_RECORD_GROUPS["commodities"],
 #         # Need a draft workbasket status so that the measure generated
 #         # as a side effect is ordered *after* the commodity it is on.
-#         WorkflowStatus.PROPOSED,
+#         WorkflowStatus.QUEUED,
 #     )
 
 #     workbasket = imported_good.transaction.workbasket

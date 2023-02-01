@@ -104,17 +104,20 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
         return (
             WorkBasket.objects.exclude(status=WorkflowStatus.PUBLISHED)
             .exclude(status=WorkflowStatus.ARCHIVED)
-            .exclude(status=WorkflowStatus.SENT)
+            .exclude(status=WorkflowStatus.QUEUED)
             .order_by("-updated_at")
         )
 
     def post(self, request, *args, **kwargs):
         workbasket_pk = request.POST.get("workbasket")
-
         if workbasket_pk:
             workbasket = WorkBasket.objects.get(pk=workbasket_pk)
 
             if workbasket:
+                if workbasket.status == WorkflowStatus.ERRORED:
+                    workbasket.restore()
+                    workbasket.save()
+
                 workbasket.save_to_session(request.session)
                 redirect_url = reverse(
                     "workbaskets:workbasket-ui-detail",
@@ -266,6 +269,7 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
 
     # Form action mappings to URL names.
     action_success_url_names = {
+        "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
         "run-business-rules": "workbaskets:workbasket-ui-detail",
         "terminate-rule-check": "workbaskets:workbasket-ui-detail",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
@@ -362,6 +366,10 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
                     kwargs={"pk": self.workbasket.pk},
                 ),
                 form_action,
+            )
+        elif form_action == "submit-for-packaging":
+            return reverse(
+                self.action_success_url_names[form_action],
             )
         elif form_action == "terminate-rule-check":
             self.workbasket.terminate_rule_check()

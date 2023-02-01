@@ -2,6 +2,14 @@
 
 {% block head %}
   {% if settings.GOOGLE_ANALYTICS_ID %}
+    <!-- Google tag (gtag.js) -->
+      <script async src=https://www.googletagmanager.com/gtag/js?id=UA-57533520-61></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ settings.GOOGLE_ANALYTICS_ID }}');
+      </script>
     <!-- Google Tag Manager -->
       <script>
         (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
