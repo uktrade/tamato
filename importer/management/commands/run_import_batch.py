@@ -43,8 +43,7 @@ class Command(BaseCommand):
             "--status",
             choices=[
                 WorkflowStatus.EDITING.value,
-                WorkflowStatus.PROPOSED.value,
-                WorkflowStatus.APPROVED.value,
+                WorkflowStatus.QUEUED.value,
                 WorkflowStatus.PUBLISHED.value,
             ],
             help="The status of the workbaskets containing the import changes.",

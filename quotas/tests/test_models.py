@@ -1,5 +1,6 @@
 import pytest
 from django.db import IntegrityError
+from django.urls import reverse
 
 from common.tests import factories
 from common.tests.util import raises_if
@@ -93,3 +94,13 @@ def test_quota_definition_must_have_one_unit(has_unit, has_currency, error_expec
             is_monetary=has_currency,
             is_physical=has_unit,
         )
+
+
+def test_quota_definition_get_url():
+    order_number = factories.QuotaOrderNumberFactory.create()
+    definition = factories.QuotaDefinitionFactory.create(order_number=order_number)
+
+    assert (
+        definition.get_url()
+        == f"{reverse('quota-ui-detail', kwargs={'sid': order_number.sid})}#definition-details"
+    )

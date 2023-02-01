@@ -369,13 +369,29 @@ class WorkBasket(TimestampedMixin):
     def unarchive(self):
         """Restore a workbasket to an in use state."""
 
+    def approve(self, user: int, scheme_name: str):
+        """
+        Sets the approver_id to a user pk and moves all transactions to the
+        specified partition.
+
+        (This will normally mean a move from DRAFT to REVISION).
+        """
+
+        self.approver_id = user
+
+        # Move transactions from the DRAFT partition into the REVISION partition.
+        partition_scheme = get_partition_scheme(scheme_name)
+        self.transactions.save_drafts(partition_scheme)
+
     @transition(
         field=status,
         source=WorkflowStatus.EDITING,
-        target=WorkflowStatus.PROPOSED,
-        custom={"label": "Submit for approval"},
+        target=WorkflowStatus.QUEUED,
+        custom={"label": "Add to packaging queue."},
     )
-    def submit_for_approval(self):
+    def queue(self, user: int, scheme_name: str):
+        """Add workbasket to packaging queue."""
+
         self.full_clean()
 
         if not self.transactions.exists():
@@ -386,59 +402,23 @@ class WorkBasket(TimestampedMixin):
                 "Transactions have not yet been fully checked or contain errors",
             )
 
+        self.approve(user, scheme_name)
+
     @transition(
         field=status,
-        source=WorkflowStatus.PROPOSED,
+        source=WorkflowStatus.QUEUED,
         target=WorkflowStatus.EDITING,
-        custom={"label": "Withdraw or reject submission"},
+        custom={"label": "Restore a queued workbasket to an in use state."},
     )
-    def withdraw(self):
-        """Withdraw/reject a proposed workbasket."""
-
-    @transition(
-        field=status,
-        source=WorkflowStatus.PROPOSED,
-        target=WorkflowStatus.APPROVED,
-        custom={"label": "Approve"},
-    )
-    def approve(self, user: int, scheme_name: str):
-        """Once a workbasket has been approved all related Tracked Models must
-        be updated to the current versions of themselves and the workbasket
-        uploaded to CDS S3 bucket."""
-
-        self.approver_id = user
-
-        # Move transactions from the DRAFT partition into the REVISION partition.
-        partition_scheme = get_partition_scheme(scheme_name)
-        self.transactions.save_drafts(partition_scheme)
-
-        from exporter.tasks import upload_workbaskets
-
-        upload_workbaskets.delay()
-
-    @transition(
-        field=status,
-        source=WorkflowStatus.APPROVED,
-        target=WorkflowStatus.EDITING,
-        custom={"label": "Restore an approved workbasket to an in use state."},
-    )
-    def unapprove(self):
-        """A workbasket that has not yet been sent to CDS requires further
+    def dequeue(self):
+        """A queued workbasket not yet downloaded by CDS requires further
         changes to be added."""
+
         self.transactions.move_to_draft()
 
     @transition(
         field=status,
-        source=WorkflowStatus.APPROVED,
-        target=WorkflowStatus.SENT,
-        custom={"label": "Send to HMRC"},
-    )
-    def export_to_cds(self):
-        """Tariff changes in workbasket have been sent to HMRC CDS."""
-
-    @transition(
-        field=status,
-        source=WorkflowStatus.SENT,
+        source=WorkflowStatus.QUEUED,
         target=WorkflowStatus.PUBLISHED,
         custom={"label": "Publish"},
     )
@@ -447,7 +427,7 @@ class WorkBasket(TimestampedMixin):
 
     @transition(
         field=status,
-        source=WorkflowStatus.SENT,
+        source=WorkflowStatus.QUEUED,
         target=WorkflowStatus.ERRORED,
         custom={"label": "Mark as in error"},
     )
