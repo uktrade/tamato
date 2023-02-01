@@ -1566,6 +1566,8 @@ class CommodityCollectionLoader:
             Commodity(obj=obj, indent_obj=indents.get(obj.sid)) for obj in qs.all()
         ]
 
+        commodities.sort(key=lambda x: (x.item_id, x.suffix))
+
         return CommodityCollection(commodities=commodities)
 
 
