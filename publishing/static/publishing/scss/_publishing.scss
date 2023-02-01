@@ -23,6 +23,7 @@ table.packaged-workbaskets .icon-progress {
   display: inline-block;
   vertical-align: middle;
   width: 5.6rem;
+  display: none;
 }
 table.queued-envelopes .down-arrow,
 table.queued-envelopes .right-arrow {
@@ -41,4 +42,8 @@ table.queued-envelopes .disabled-action {
 }
 table.queued-envelopes .icon-begin-processing {
     vertical-align: middle;
+}
+
+button.pause-queue-button {
+  float: right;
 }
