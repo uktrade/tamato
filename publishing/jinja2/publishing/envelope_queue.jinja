@@ -31,17 +31,15 @@
         }) }}
       {% else %}
         {{ govukDetails({
-          "summaryText": "What happens when an envelope is downloaded?",
+          "summaryText": "How to process an envelope?",
           "html": (
-            "<p>Downloading an envelope 'locks' the associated workbasket, "
-            "preventing it from being removed from or reordered in the queue by "
-            "DIT staff.</p>"
-
-            "<p>After downloading, you should process the envelope and then "
-            "choose to either <em>Accept</em> or <em>Reject</em> it, depending "
-            "upon the processing results. This will unlock the workbasket, "
-            "remove it from the queue, and make the next envelope available for "
-            "downloading.</p>"
+            "<p>To begin, simply click on the \"Process envelope\" link "
+            "to alert DIT that you are currently processing this file. "
+            "Click the \"Download envelope\" link to download the envelope "
+            "in XML format. Once you ingest the envelope into CDS, you can "
+            "use the options on the interface to accept or reject it. "
+            "After accepting or rejecting, the next available envelope will be "
+            "ready for download.</p>"
           ),
         }) }}
 
