@@ -169,6 +169,10 @@ class HMRCCDSManagerActions(TextChoices):
     PROCESS_ENVELOPES = "PROCESS_ENVELOPES", "CDS - Process envelopes"
 
 
+class CommonUserActions(TextChoices):
+    SEARCH = "SEARCH", "Search the tariff"
+
+
 class HomeForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user")
@@ -184,6 +188,8 @@ class HomeForm(forms.Form):
 
         if self.user.has_perm("publishing.consume_from_packaging_queue"):
             choices += HMRCCDSManagerActions.choices
+
+        choices += CommonUserActions.choices
 
         self.fields["workbasket_action"] = forms.ChoiceField(
             label="",

@@ -60,6 +60,12 @@ class HomeView(FormView, View):
             return redirect(reverse("publishing:packaged-workbasket-queue-ui-list"))
         elif form.cleaned_data["workbasket_action"] == "PROCESS_ENVELOPES":
             return redirect(reverse("publishing:envelope-queue-ui-list"))
+        elif form.cleaned_data["workbasket_action"] == "SEARCH":
+            return redirect(reverse("search-page"))
+
+
+class SearchPageView(TemplateView):
+    template_name = "common/search_page.jinja"
 
 
 class HealthCheckResponse(HttpResponse):
