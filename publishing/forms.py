@@ -18,9 +18,10 @@ from publishing.models import PackagedWorkBasket
 class LoadingReportForm(ModelForm):
     class Meta:
         model = LoadingReport
-        fields = ("file", "comments")
+        fields = ("file", "file_name", "comments")
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request")
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
@@ -40,6 +41,18 @@ class LoadingReportForm(ModelForm):
 
         self.fields["file"].label = "Loading report file"
         self.fields["comments"].label = "Comments"
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.errors:
+            return cleaned_data
+
+        cleaned_data["file_name"] = (
+            self.request.FILES["file"].name if "file" in self.request.FILES else ""
+        )
+
+        return cleaned_data
 
 
 class PackagedWorkBasketCreateForm(forms.ModelForm):
