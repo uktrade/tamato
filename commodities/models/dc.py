@@ -692,8 +692,6 @@ class CommodityCollection(CommodityTreeBase):
     - see the docs to `CommodityCollection.get_snapshot` method for more details.
     """
 
-    # TODO : add validation to initializer, currently can be initialised with invalid arguments as long as its in a list
-
     def update(self, changes: Sequence["CommodityChange"]) -> None:
         """
         Update the commodity collection using CommodityChange constructs.
@@ -908,7 +906,7 @@ class CommodityChange(BaseModel):
     Provides a model for commodity collection change requests.
 
     The model supports two Commodity instances:
-    - current refers to a member of the commodity collection pre-change
+    - current refers to an member of the commodity collection pre-change
     - candidate refers to a new commmodity (state) that represents the pending change
 
     The update type implies whether current and/or candidate are required
@@ -1553,11 +1551,11 @@ class CommodityCollectionLoader:
         sids = Subquery(qs.values("sid"))
 
         indent_query = (
-            _apply_filters(GoodsNomenclatureIndent.objects.latest_approved())
+            _apply_filters(GoodsNomenclatureIndent.objects)
             .with_end_date()
             .filter(indented_goods_nomenclature__sid__in=sids)
             .annotate(goods_sid=F("indented_goods_nomenclature__sid"))
-            .order_by("trackedmodel_ptr_id")
+            .all()
         )
 
         indents = {indent.goods_sid: indent for indent in indent_query}
