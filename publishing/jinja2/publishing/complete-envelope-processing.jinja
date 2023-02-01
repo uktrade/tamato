@@ -22,7 +22,7 @@
 {% block form %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {% call django_form() %}
+      {% call django_form(action="", method="post", extra_form_attrs="enctype=multipart/form-data") %}
         {{ crispy(form) }}
       {% endcall %}
     </div>
