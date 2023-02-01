@@ -219,13 +219,27 @@ class LoadingReportAdmin(admin.ModelAdmin):
     ordering = ["-pk"]
     list_display = (
         "id",
-        "file",
+        "file_download",
         "comments",
         "accepted_or_rejected",
         "packaged_workbasket_id",
         "workbasket_id",
     )
     list_filter = (LoadingReportAcceptedRejectedFilter,)
+
+    def file_download(self, obj):
+        if not obj.file:
+            return None
+
+        file_name = obj.file_name if obj.file_name else "UNKNOWN_FILENAME"
+
+        download_url = reverse(
+            "publishing:admin-loading-report-ui-download",
+            args=(obj.pk,),
+        )
+        return mark_safe(
+            f'<a href="{download_url}">{file_name}</a>',
+        )
 
     def accepted_or_rejected(self, obj):
         pwb = obj.packagedworkbaskets.last()
