@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 from bs4 import BeautifulSoup
 from django.contrib.humanize.templatetags.humanize import intcomma
@@ -276,6 +278,23 @@ def test_quota_definitions_list_200(valid_user_client, quota_order_number):
     url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
 
     response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+
+def test_quota_definitions_list_no_quota_data(valid_user_client, quota_order_number):
+    factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
+
+    url = (
+        reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+        + "?quota_type=sub_quotas"
+    )
+
+    with mock.patch(
+        "common.tariffs_api.get_quota_definitions_data",
+    ) as mock_get_quotas:
+        response = valid_user_client.get(url)
+        mock_get_quotas.assert_not_called()
 
     assert response.status_code == 200
 

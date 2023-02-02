@@ -1,0 +1,37 @@
+
+<h2 class="govuk-heading-l">Sub quotas</h2>
+
+{% set table_rows = [] %}
+
+{% if sub_quotas %}
+  {% for object in sub_quotas %}
+    {% set definition_link -%}
+      <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}#definition-details">{{ object.sub_quota.sid }}</a>
+    {% endset %}
+    {% set sub_quota_link -%}
+      <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}">{{ object.sub_quota.order_number.order_number }}</a>
+    {% endset %}
+    {{ table_rows.append([
+      {"text": definition_link },
+      {"text": sub_quota_link },
+      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
+      {"text": object.get_sub_quota_relation_type_display() },
+      {"text": object.coefficient },
+    ]) or "" }}
+  {% endfor %}
+
+  {{ govukTable({
+    "head": [
+      {"text": "Quota definition sid"},
+      {"text": "Sub quota order number"},
+      {"text": "Start date"},
+      {"text": "End date"},
+      {"text": "Relation type"},
+      {"text": "Coefficient"},
+    ],
+    "rows": table_rows
+  }) }}
+{% else %}
+  <p class="govuk-body">There are no sub quotas for this quota order number.</p>
+{% endif %}

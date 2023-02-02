@@ -2,6 +2,8 @@ from datetime import date
 from urllib.parse import urlencode
 
 from django.urls import reverse
+from django.utils.functional import cached_property
+from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 from rest_framework import permissions
 from rest_framework import viewsets
@@ -20,6 +22,7 @@ from quotas import models
 from quotas import serializers
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
+from quotas.forms import QuotaDefinitionFilterForm
 from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
@@ -152,28 +155,65 @@ class QuotaDetail(QuotaMixin, TrackedModelDetailView, SortingMixin):
         return context
 
 
-class QuotaDefinitionList(SortingMixin, ListView):
+class QuotaDefinitionList(FormMixin, SortingMixin, ListView):
     template_name = "quotas/definitions.jinja"
     model = models.QuotaDefinition
     sort_by_fields = ["sid", "valid_between"]
+    form_class = QuotaDefinitionFilterForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["object_sid"] = self.quota.sid
+        kwargs["form_initial"] = self.quota_type
+        return kwargs
 
     def get_queryset(self):
-        self.queryset = models.QuotaDefinition.objects.filter(
+        return models.QuotaDefinition.objects.filter(
             order_number__sid=self.quota.sid,
         ).current()
-        return super().get_queryset()
 
     @property
+    def blocking_periods(self):
+        return QuotaBlocking.objects.filter(quota_definition__order_number=self.quota)
+
+    @property
+    def suspension_periods(self):
+        return QuotaSuspension.objects.filter(quota_definition__order_number=self.quota)
+
+    @property
+    def sub_quotas(self):
+        return QuotaAssociation.objects.filter(main_quota__order_number=self.quota)
+
+    @cached_property
     def quota_data(self):
-        return get_quota_definitions_data(self.quota.order_number, self.object_list)
+        if not self.quota_type:
+            return get_quota_definitions_data(self.quota.order_number, self.object_list)
+        return None
 
     @property
     def quota(self):
         return models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
 
+    @property
+    def quota_type(self):
+        return (
+            self.request.GET.get("quota_type")
+            if self.request.GET.get("quota_type")
+            in ["sub_quotas", "blocking_periods", "suspension_periods"]
+            else None
+        )
+
     def get_context_data(self, *args, **kwargs):
         return super().get_context_data(
-            quota=self.quota, quota_data=self.quota_data, *args, **kwargs
+            quota=self.quota,
+            quota_type=self.quota_type,
+            quota_data=self.quota_data,
+            blocking_periods=self.blocking_periods,
+            suspension_periods=self.suspension_periods,
+            sub_quotas=self.sub_quotas,
+            form_url=reverse("quota-definitions", kwargs={"sid": self.quota.sid}),
+            *args,
+            **kwargs,
         )
 
 
