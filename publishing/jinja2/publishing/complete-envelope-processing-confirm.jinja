@@ -19,14 +19,22 @@
   }) }}
 {% endblock %}
 
+{% set notified_message %}
+  {% if page_title == "Accept envelope confirmation" %}
+    Email was sent to inform DIT.
+  {% else %}
+    The DIT team has been notified of the rejection. Once the envelope has been corrected, new envelopes will be available for download.
+  {% endif %}
+{% endset %}
+
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ govukPanel({
-        "titleText": message,
-        "text": "Email was sent to inform DIT",
-        "classes": "govuk-!-margin-bottom-7"
-      }) }}
+        {{ govukPanel({
+          "titleText": message,
+          "text": notified_message,
+          "classes": "govuk-!-margin-bottom-7"
+        }) }}
     </div>
   </div>
 
