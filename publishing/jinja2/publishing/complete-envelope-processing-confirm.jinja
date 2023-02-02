@@ -19,7 +19,7 @@
   }) }}
 {% endblock %}
 
-{% macro notified_message() %}
+{% set notified_message %}
   {% if page_title == "Accept envelope confirmation" %}
     Email was sent to inform DIT.
   {% else %}
@@ -32,7 +32,7 @@
     <div class="govuk-grid-column-two-thirds">
         {{ govukPanel({
           "titleText": message,
-          "text": notified_message(),
+          "text": notified_message,
           "classes": "govuk-!-margin-bottom-7"
         }) }}
     </div>
