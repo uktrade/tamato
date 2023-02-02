@@ -4,6 +4,7 @@ from typing import FrozenSet
 
 import wrapt
 from django.db.models import Value
+from django.urls import reverse
 
 _thread_locals = threading.local()
 
@@ -110,3 +111,20 @@ class TransactionMiddleware:
             response = self.get_response(request)
         # No post-view processing required.
         return response
+
+
+class GetTabURLMixin:
+    """Used for models whose information in the UI is displayed in a tab on the
+    page of their related model."""
+
+    url_pattern_name_prefix = ""
+    url_suffix = "#"
+    url_relation_field = ""
+
+    def get_url(self) -> str:
+        """Generate a URL to a representation of the model in the webapp."""
+        url = reverse(
+            f"{self.get_url_pattern_name_prefix()}-ui-detail",
+            kwargs={"sid": getattr(self, self.url_relation_field).sid},
+        )
+        return f"{url}{self.url_suffix}"
