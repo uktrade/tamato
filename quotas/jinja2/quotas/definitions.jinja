@@ -18,86 +18,32 @@
 {% endblock %}
 
 {% block content %}
+
+<h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  {% set filters_html -%}
+    <form action="">
+      {{ crispy(form) }}
+    </form>
+  {% endset %}
+
+  {{ govukDetails({
+      "summaryText": "Customise table",
+      "html": filters_html
+  }) }}
+
 <div class="quota-definitions">
-
-  {% set table_rows = [] %}
-
-  {% for object in object_list %}
-
-    {% set object_details_html -%}
-    {{ govukSummaryList({
-      "rows": [
-        {
-          "key": { "text": "Description" },
-          "value": { "text": object.description if object.description else "-" },
-          "actions": {"items": []}
-        },
-        {
-          "key": { "text": "Measurement Unit" },
-          "value": { "text": object.measurement_unit.description },
-          "actions": {"items": []}
-        },
-        {
-          "key": { "text": "Critical threshold" },
-          "value": { "text": object.quota_critical_threshold ~ "%" },
-          "actions": {"items": []}
-        },
-        {
-          "key": { "text": "Critical state" },
-          "value": { "text": "Yes" if object.quota_critical else "No" },
-          "actions": {"items": []}
-        },
-        {
-          "key": { "text": "Maximum precision" },
-          "value": { "text": object.maximum_precision },
-          "actions": {"items": []}
-        },
-    ]}) }}
-    {% endset %}
-    
-    {% set object_details -%}
-    {{ govukDetails({
-        "summaryText": object.sid,
-        "html": object_details_html
-    }) }}
-    {% endset %}
-
-    {{ table_rows.append([
-      {"text": object_details },
-      {"text": quota_data[object.sid].status if quota_data[object.sid] else "-" },
-      {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
-      {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
-      {"text": intcomma(object.initial_volume) },
-      {"text": intcomma(object.volume) },
-      {"text": intcomma(quota_data[object.sid].balance) if quota_data[object.sid] else "-" },
-      {"text": object.measurement_unit.abbreviation|title},
-    ]) or "" }}
-  {% endfor %}
-
-  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-
   {% set base_url = url('quota-definitions', args=[quota.sid] ) %}
 
-  {% set sid %}
-    {{ sort_by(request, "sid", "Quota definition sid", base_url) }}
-  {% endset %}
+  {% if quota_type == "blocking_periods" %}
+    {% include "quotas/tables/blocking_periods.jinja" %}
+  {% elif quota_type == "suspension_periods" %}
+    {% include "quotas/tables/suspension_periods.jinja" %}
+  {% elif quota_type == "sub_quotas" %}
+    {% include "quotas/tables/sub_quotas.jinja" %}
+  {% else %}
+    {% include "quotas/tables/definitions.jinja" %}
+  {% endif %}
 
-  {% set start_date %}
-    {{ sort_by(request, "valid_between", "Start date", base_url) }}
-  {% endset %}
-
-  {{ govukTable({
-  "head": [
-    {"text": sid},
-    {"text": "Definition period status"},
-    {"text": start_date},
-    {"text": "End date"},
-    {"text": "Initial volume"},
-    {"text": "Volume"},
-    {"text": "Balance"},
-    {"text": "Measurement unit"},
-  ],
-  "rows": table_rows
-}) }}
 </div>
 {% endblock %}
