@@ -38,7 +38,9 @@
   {%- set up_down_cell_content %}
     {% if loop.index == 1 %}
       {# First row. #}
-      {{ demote_button(obj) }}
+      {% if obj != currently_processing %}
+        {{ demote_button(obj) }}
+      {% endif %}
     {% elif loop.index == 2 %}
       {# Second row. #}
       {% if currently_processing %}
