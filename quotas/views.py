@@ -168,9 +168,9 @@ class QuotaDefinitionList(FormMixin, SortingMixin, ListView):
         return kwargs
 
     def get_queryset(self):
-        return models.QuotaDefinition.objects.current().filter(
-            order_number=self.quota,
-        )
+        return models.QuotaDefinition.objects.filter(
+            order_number__sid=self.quota.sid,
+        ).current()
 
     @property
     def blocking_periods(self):
@@ -192,7 +192,7 @@ class QuotaDefinitionList(FormMixin, SortingMixin, ListView):
 
     @property
     def quota(self):
-        return models.QuotaOrderNumber.objects.get(sid=self.kwargs["sid"])
+        return models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
 
     @property
     def quota_type(self):

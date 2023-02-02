@@ -46,8 +46,7 @@ class TestImportTaricCommand(TestCommandBase):
 
         assert "batch                 The batch Id to be imported" in out
         assert (
-            "-s {EDITING,PROPOSED,APPROVED,PUBLISHED}, --status {EDITING,PROPOSED,APPROVED,PUBLISHED}"
-            in out
+            "-s {EDITING,QUEUED,PUBLISHED}, --status {EDITING,QUEUED,PUBLISHED}" in out
         )
         assert (
             "-p {SEED_FIRST,SEED_ONLY,REVISION_ONLY}, --partition-scheme {SEED_FIRST,SEED_ONLY,REVISION_ONLY}"

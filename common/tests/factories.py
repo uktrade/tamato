@@ -121,24 +121,24 @@ class WorkBasketFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("sentence", nb_words=4)
 
 
-class ApprovedWorkBasketFactory(WorkBasketFactory):
+class QueuedWorkBasketFactory(WorkBasketFactory):
     class Meta:
         model = "workbaskets.WorkBasket"
 
     approver = factory.SubFactory(UserFactory)
-    status = WorkflowStatus.APPROVED
+    status = WorkflowStatus.QUEUED
     transaction = factory.RelatedFactory(
         "common.tests.factories.ApprovedTransactionFactory",
         factory_related_name="workbasket",
     )
 
 
-class SimpleApprovedWorkBasketFactory(WorkBasketFactory):
+class SimpleQueuedWorkBasketFactory(WorkBasketFactory):
     class Meta:
         model = "workbaskets.WorkBasket"
 
     approver = factory.SubFactory(UserFactory)
-    status = WorkflowStatus.APPROVED
+    status = WorkflowStatus.QUEUED
 
 
 class TransactionFactory(factory.django.DjangoModelFactory):
@@ -147,7 +147,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
     order = factory.Sequence(lambda x: x + 10)
     import_transaction_id = factory.Sequence(lambda x: x + 10)
-    workbasket = factory.SubFactory(SimpleApprovedWorkBasketFactory)
+    workbasket = factory.SubFactory(SimpleQueuedWorkBasketFactory)
     composite_key = factory.Sequence(str)
 
     class Params:
@@ -1207,3 +1207,64 @@ class BatchDependenciesFactory(factory.django.DjangoModelFactory):
 
     dependent_batch = factory.SubFactory(ImportBatchFactory)
     depends_on = factory.SubFactory(ImportBatchFactory)
+
+
+class NotifiedUserFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "notifications.NotifiedUser"
+
+    email = factory.Faker("email")
+    enrol_packaging = True
+
+
+class NotificationLogFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "notifications.NotificationLog"
+
+    template_id = string_sequence(length=10)
+    recipients = factory.Faker("text", max_nb_chars=24)
+
+
+class LoadingReportFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "publishing.LoadingReport"
+
+    comments = short_description()
+
+
+class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):
+    """Creates a PackagedWorkBasket instance associated with an approved
+    WorkBasket."""
+
+    class Meta:
+        model = "publishing.PackagedWorkBasket"
+
+    workbasket = factory.SubFactory(SimpleQueuedWorkBasketFactory)
+    theme = string_sequence(length=50)
+    jira_url = "www.fakejiraticket.com"
+    loading_report = factory.SubFactory(LoadingReportFactory)
+
+
+class QueuedPackagedWorkBasketFactory(PackagedWorkBasketFactory):
+    """Creates a PackagedWorkBasket instance associated with an approved
+    WorkBasket that contains transactions."""
+
+    workbasket = factory.SubFactory(QueuedWorkBasketFactory)
+
+
+class PublishedEnvelopeFactory(factory.django.DjangoModelFactory):
+    """Creates an Envelope instance."""
+
+    class Meta:
+        model = "publishing.Envelope"
+
+    packaged_work_basket = factory.SubFactory(QueuedPackagedWorkBasketFactory)
+
+
+class UploadedPackagedWorkBasketFactory(PackagedWorkBasketFactory):
+    envelope = factory.SubFactory(PublishedEnvelopeFactory)
+
+
+class OperationalStatusFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "publishing.OperationalStatus"

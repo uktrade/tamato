@@ -496,3 +496,26 @@ def test_quota_detail_sub_quota_tab(
         int(qa.sub_quota.order_number.order_number) for qa in quota_associations
     }
     assert not order_numbers.difference(expected_order_numbers)
+
+
+def test_current_quota_order_number_returned(
+    workbasket,
+    valid_user_client,
+    mock_quota_api_no_data,
+    date_ranges,
+):
+    old_version = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.starts_1_month_ago_no_end,
+    )
+    current_version = old_version.new_version(
+        workbasket,
+        valid_between=date_ranges.starts_1_month_ago_to_1_month_ahead,
+    )
+    factories.QuotaDefinitionFactory.create(
+        order_number=current_version,
+        valid_between=date_ranges.normal,
+    )
+    url = reverse("quota-definitions", kwargs={"sid": current_version.sid})
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200

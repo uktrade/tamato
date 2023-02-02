@@ -10,6 +10,7 @@ from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
+from common.models.utils import GetTabURLMixin
 from quotas import business_rules
 from quotas import querysets
 from quotas import validators
@@ -168,7 +169,7 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
     )
 
 
-class QuotaDefinition(TrackedModel, ValidityMixin):
+class QuotaDefinition(GetTabURLMixin, TrackedModel, ValidityMixin):
     """
     Defines the validity period and quantity for which a quota is applicable.
     This model also represents sub-quotas, via a parent-child recursive relation
@@ -186,6 +187,10 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     subrecord_code = "00"
 
     identifying_fields = ("sid",)
+
+    url_pattern_name_prefix = "quota"
+    url_suffix = "#definition-details"
+    url_relation_field = "order_number"
 
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(
