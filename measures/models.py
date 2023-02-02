@@ -2,7 +2,6 @@ from datetime import date
 from typing import Set
 
 from django.db import models
-from django.urls import reverse
 
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
@@ -12,6 +11,7 @@ from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
+from common.models.utils import GetTabURLMixin
 from common.util import TaricDateRange
 from common.util import classproperty
 from footnotes import validators as footnote_validators
@@ -666,7 +666,7 @@ class MeasureComponent(TrackedModel):
     objects = TrackedModelManager.from_queryset(ComponentQuerySet)()
 
 
-class MeasureCondition(TrackedModel):
+class MeasureCondition(GetTabURLMixin, TrackedModel):
     """
     A measure may be dependent on conditions.
 
@@ -679,6 +679,7 @@ class MeasureCondition(TrackedModel):
     subrecord_code = "10"
     url_pattern_name_prefix = "measure"
     url_suffix = "#conditions"
+    url_relation_field = "dependent_measure"
 
     identifying_fields = ("sid",)
 
@@ -816,14 +817,6 @@ class MeasureCondition(TrackedModel):
     @property
     def duty_sentence(self) -> str:
         return MeasureConditionComponent.objects.duty_sentence(self)
-
-    def get_url(self) -> str:
-        """Generate a URL to a representation of the model in the webapp."""
-        url = reverse(
-            f"{self.get_url_pattern_name_prefix()}-ui-detail",
-            kwargs={"sid": self.dependent_measure.sid},
-        )
-        return f"{url}{self.url_suffix}"
 
 
 class MeasureConditionComponent(TrackedModel):
