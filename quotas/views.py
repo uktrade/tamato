@@ -158,9 +158,9 @@ class QuotaDefinitionList(SortingMixin, ListView):
     sort_by_fields = ["sid", "valid_between"]
 
     def get_queryset(self):
-        self.queryset = models.QuotaDefinition.objects.current().filter(
-            order_number=self.quota,
-        )
+        self.queryset = models.QuotaDefinition.objects.filter(
+            order_number__sid=self.quota.sid,
+        ).current()
         return super().get_queryset()
 
     @property
@@ -169,7 +169,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
 
     @property
     def quota(self):
-        return models.QuotaOrderNumber.objects.get(sid=self.kwargs["sid"])
+        return models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
 
     def get_context_data(self, *args, **kwargs):
         return super().get_context_data(
