@@ -157,8 +157,8 @@ class RadioNested(TypedChoiceField):
 
 
 class WorkbasketActions(TextChoices):
-    CREATE = "CREATE", "Create a new workbasket"
-    EDIT = "EDIT", "Edit an existing workbasket"
+    CREATE = "CREATE", "Create new workbasket"
+    EDIT = "EDIT", "Select an existing workbasket"
 
 
 class DITTariffManagerActions(TextChoices):
@@ -166,7 +166,10 @@ class DITTariffManagerActions(TextChoices):
 
 
 class HMRCCDSManagerActions(TextChoices):
-    PROCESS_ENVELOPES = "PROCESS_ENVELOPES", "CDS - Process envelopes"
+    PROCESS_ENVELOPES = (
+        "PROCESS_ENVELOPES",
+        "Customs Declaration Service (CDS) - Process envelopes",
+    )
 
 
 class CommonUserActions(TextChoices):
