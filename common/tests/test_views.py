@@ -124,9 +124,9 @@ def test_index_displays_footer_links(valid_user_client):
     )
 
 
-def test_search_page_response(client):
+def test_search_page_response(valid_user_client):
     url = reverse("search-page")
-    response = client.get(url)
+    response = valid_user_client.get(url)
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
