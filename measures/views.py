@@ -86,6 +86,20 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
         self.filterset = self.get_filterset(filterset_class)
         return MeasurePaginator(self.filterset.qs, per_page=20)
 
+    @property
+    def measure_selections(self):
+        store = SessionStore(
+            self.request,
+            "MULTIPLE_MEASURE_SELECTIONS",
+        )
+        return [*store.data]
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            measure_selections=self.measure_selections,
+            **kwargs,
+        )
+
     def form_valid(self, form):
         store = SessionStore(
             self.request,
@@ -251,7 +265,6 @@ class MeasureCreateWizard(
         for commodity_data in data.get("formset-commodities", []):
             if not commodity_data.get("DELETE"):
                 for geo_area in data["geo_area_list"]:
-
                     measure_data = {
                         "measure_type": data["measure_type"],
                         "geographical_area": geo_area,
@@ -285,7 +298,6 @@ class MeasureCreateWizard(
                 start=1,
             ):
                 if not condition_data.get("DELETE"):
-
                     measure_creation_pattern.create_condition_and_components(
                         condition_data,
                         component_sequence_number,
@@ -585,7 +597,6 @@ class MeasureMultipleDelete(TemplateView, ListView):
 
     def _session_store(self):
         """Get the session store to store the measures that will be deleted."""
-
         return SessionStore(
             self.request,
             "MULTIPLE_MEASURE_SELECTIONS",
@@ -630,7 +641,6 @@ class MeasureMultipleEndDateEdit(FormView, ListView):
 
     def _session_store(self):
         """Get the session store to store the measures that will be edited."""
-
         return SessionStore(
             self.request,
             "MULTIPLE_MEASURE_SELECTIONS",

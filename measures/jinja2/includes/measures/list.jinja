@@ -37,6 +37,15 @@
 <form method="post">
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
+  {% set checkbox_names -%}
+    [{% for field in form %}"{{ field.name }}",{% endfor %}]
+  {% endset  %}
+
+  <script>
+  const MULTIPLE_MEASURE_SELECTIONS = {{ mark_safe(view.measure_selections) }};
+  const CHECKBOX_NAMES = {{ mark_safe(checkbox_names) }};
+  </script>
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       {% if form.fields %}
