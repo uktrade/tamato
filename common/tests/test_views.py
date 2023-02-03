@@ -20,10 +20,7 @@ def test_index_displays_workbasket_action_form(valid_user_client):
     assert "Create new workbasket" in page.select("label")[0].text
     assert "Select an existing workbasket" in page.select("label")[1].text
     assert "Order and package workbaskets" in page.select("label")[2].text
-    assert (
-        "Customs Declaration Service (CDS) - Process envelopes"
-        in page.select("label")[3].text
-    )
+    assert "Process envelopes" in page.select("label")[3].text
     assert "Search the tariff" in page.select("label")[4].text
 
 

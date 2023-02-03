@@ -166,10 +166,7 @@ class DITTariffManagerActions(TextChoices):
 
 
 class HMRCCDSManagerActions(TextChoices):
-    PROCESS_ENVELOPES = (
-        "PROCESS_ENVELOPES",
-        "Customs Declaration Service (CDS) - Process envelopes",
-    )
+    PROCESS_ENVELOPES = "PROCESS_ENVELOPES", "Process envelopes"
 
 
 class CommonUserActions(TextChoices):
