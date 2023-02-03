@@ -1,4 +1,5 @@
 import datetime
+import json
 from itertools import groupby
 from operator import attrgetter
 from typing import Any
@@ -9,6 +10,7 @@ from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -686,3 +688,17 @@ class MeasureMultipleEndDateEdit(FormView, ListView):
             session_store.clear()
 
         return redirect(reverse("measure-ui-list"))
+
+
+class MeasureSelectionUpdate(View):
+    def post(self, request, *args, **kwargs):
+        store = SessionStore(
+            self.request,
+            "MULTIPLE_MEASURE_SELECTIONS",
+        )
+        store.clear()
+        data = json.loads(request.body)
+        cleaned_data = {k: v for k, v in data.items() if "selectableobject_" in k}
+        selected_objects = {k: v for k, v in cleaned_data.items() if v == 1}
+        store.add_items(selected_objects)
+        return JsonResponse(store.data)

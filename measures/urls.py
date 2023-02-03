@@ -44,8 +44,17 @@ ui_patterns = [
     ),
 ]
 
+ajax_patterns = [
+    path(
+        "update-measure-selections/",
+        views.MeasureSelectionUpdate.as_view(),
+        name="update-measure-selections",
+    ),
+]
+
 
 urlpatterns = [
     path("measures/", include(ui_patterns)),
+    path("ajax/", include(ajax_patterns)),
     path("api/", include(api_router.urls)),
 ]

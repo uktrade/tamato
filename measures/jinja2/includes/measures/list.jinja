@@ -44,6 +44,7 @@
   <script>
   const MULTIPLE_MEASURE_SELECTIONS = {{ mark_safe(view.measure_selections) }};
   const CHECKBOX_NAMES = {{ mark_safe(checkbox_names) }};
+  const CSRF_TOKEN = "{{ csrf_token }}";
   </script>
 
   <div class="govuk-grid-row">
