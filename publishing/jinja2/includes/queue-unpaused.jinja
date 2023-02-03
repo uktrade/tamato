@@ -8,11 +8,15 @@
 
 <div class="govuk-grid-column-three-quarters">
   {{ govukDetails({
-    "summaryText": "What does pausing and unpausing CDS queue mean?",
+    "summaryText": "What does pausing and unpausing the CDS queue mean?",
     "html": (
-      "<p>Pausing the CDS queue prevents any envelopes that are waiting in "
-      "this queue from being downloaded by HMRC users.</p>"
-      "<p>Unpausing allows downloads to commence again.</p>"
+      "<p>It is essentially a way to temporarily stop the automatic sending of envelopes to CDS. "
+      "You can manually pause the queue if you want to temporarily stop the automatic process "
+      "of sending envelopes to CDS. The CDS queue will be paused automatically when "
+      "an envelope is rejected by CDS.</p>"
+      "<p>It is important to check the reason why the processing queue was initially paused "
+      "before restarting the process, as the first file in the queue will be "
+      "automatically sent to CDS once you resume.</p>"
     ),
     "classes": "govuk-!-margin-bottom-0",
   }) }}
