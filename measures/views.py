@@ -103,24 +103,8 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
         )
 
     def form_valid(self, form):
-        store = SessionStore(
-            self.request,
-            "MULTIPLE_MEASURE_SELECTIONS",
-        )
-        # clear the store here before adding items
-        # in case there was a previous form in progress that was abandoned
-        store.clear()
-        # If the user selects all, adds all the measures to the store
-        select_all = self.request.POST.get("select-all-pages")
-        if select_all:
-            object_pks = {key: True for key, value in form.fields if value}
-            store.add_items(object_pks)
-        else:
-            object_pks = {
-                key: True for key, value in form.cleaned_data_no_prefix.items() if value
-            }
-            store.add_items(object_pks)
-
+        # measure selections in the session are now handled with JS
+        # see checkboxes.js
         if form.data["form-action"] == "remove-selected":
             url = reverse("measure-ui-delete-multiple")
         elif form.data["form-action"] == "edit-selected":
@@ -592,22 +576,28 @@ class MeasureDelete(
     success_path = "list"
 
 
-class MeasureMultipleDelete(TemplateView, ListView):
-    """UI for user review and deletion of multiple Measures."""
+class MeasureSelectionMixin:
+    def get_queryset(self):
+        """Get the measures that are candidates for deletion."""
+        return Measure.objects.filter(pk__in=self.measure_selections)
 
-    template_name = "measures/delete-multiple-measures.jinja"
-
-    def _session_store(self):
+    @property
+    def measure_selections(self):
         """Get the session store to store the measures that will be deleted."""
-        return SessionStore(
+        store = SessionStore(
             self.request,
             "MULTIPLE_MEASURE_SELECTIONS",
         )
+        return [
+            SelectableObjectsForm.object_id_from_field_name(name)
+            for name in [*store.data]
+        ]
 
-    def get_queryset(self):
-        """Get the measures that are candidates for deletion."""
-        store = self._session_store()
-        return Measure.objects.filter(pk__in=store.data.keys())
+
+class MeasureMultipleDelete(MeasureSelectionMixin, TemplateView, ListView):
+    """UI for user review and deletion of multiple Measures."""
+
+    template_name = "measures/delete-multiple-measures.jinja"
 
     def get_context_data(self, **kwargs):
         store_objects = self.get_queryset()
@@ -635,23 +625,11 @@ class MeasureMultipleDelete(TemplateView, ListView):
         return redirect(reverse("measure-ui-list"))
 
 
-class MeasureMultipleEndDateEdit(FormView, ListView):
+class MeasureMultipleEndDateEdit(MeasureSelectionMixin, FormView, ListView):
     """UI for user edit and review of multiple measure end dates."""
 
     template_name = "measures/edit-multiple-measures-enddates.jinja"
     form_class = forms.MeasureEndDateForm
-
-    def _session_store(self):
-        """Get the session store to store the measures that will be edited."""
-        return SessionStore(
-            self.request,
-            "MULTIPLE_MEASURE_SELECTIONS",
-        )
-
-    def get_queryset(self):
-        """Get the measures that are candidates for editing."""
-        store = self._session_store()
-        return Measure.objects.filter(pk__in=store.data.keys())
 
     def get_context_data(self, **kwargs):
         store_objects = self.get_queryset()
