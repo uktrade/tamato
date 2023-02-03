@@ -2,34 +2,6 @@
 
 {% set page_title = "Tariff Management Tool" %}
 
-{% block beforeContent %}
-{{ super() }}
-<nav class="homepage-navigation" role="navigation" aria-labelledby="homepage-navigation-heading">
-  <ul class="govuk-list">
-    <li>
-      <a href="{{ url('app-info') }}" class="govuk-link govuk-link--no-underline">
-        Application information
-      </a>
-    </li>
-    <li>
-      <a href="{{ url('workbaskets:workbasket-ui-list-all') }}" class="govuk-link govuk-link--no-underline">
-        Show all workbaskets
-      </a>
-    </li>
-    <li>
-      <a href="{{ url('import_batch-ui-list') }}" class="govuk-link govuk-link--no-underline">
-        Master importer
-      </a>
-    </li>
-    <li>
-      <a href="{{ url('reports:index') }}" class="govuk-link govuk-link--no-underline">
-        TAP reports
-      </a>
-    </li>
-  </ul>
-</nav>
-{% endblock %}
-
 {% block content %}
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
     <span class="govuk-caption-xl govuk-!-margin-bottom-9">This service lets you manage UK trade tariffs</span>

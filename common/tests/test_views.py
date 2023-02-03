@@ -96,16 +96,6 @@ def test_app_info(valid_user_client):
     assert "Active business rule checks" in page.select("h2")[0].text
 
 
-def test_index_displays_navbar_links(valid_user_client):
-    response = valid_user_client.get(reverse("home"))
-
-    assert response.status_code == 200
-
-    page = BeautifulSoup(str(response.content), "html.parser")
-    links = page.select(".homepage-navigation > ul > li > a")
-    assert len(links) == 4
-
-
 def test_index_displays_footer_links(valid_user_client):
     response = valid_user_client.get(reverse("home"))
 
