@@ -82,7 +82,6 @@ def test_unpause_queue(valid_user_client, pause_queue):
 
 def test_pause_queue(valid_user_client, unpause_queue):
     """Pause the queue and ensure UI and system state correctly reflect that."""
-
     assert not OperationalStatus.is_queue_paused()
 
     response = valid_user_client.post(
