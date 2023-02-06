@@ -597,6 +597,9 @@ NOTIFICATIONS_API_KEY = os.environ.get("NOTIFICATIONS_API_KEY")
 ENABLE_PACKAGING_NOTIFICATIONS = is_truthy(
     os.environ.get("ENABLE_PACKAGING_NOTIFICATIONS", "true"),
 )
+MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES = int(
+    os.environ.get("MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES", "2"),
+)
 
 # GOV.UK Notify template IDs used for publishing package notifications.
 READY_FOR_CDS_TEMPLATE_ID = os.environ.get("READY_FOR_CDS_TEMPLATE_ID")
