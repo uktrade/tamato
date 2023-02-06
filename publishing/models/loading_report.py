@@ -46,7 +46,7 @@ class LoadingReport(TimestampedMixin):
     """The original name of the report provided when it was uploaded."""
     comments = TextField(
         blank=True,
-        max_length=1000,
+        max_length=1000 * 5,  # Max words * average character word length.
     )
     """Optional comments provided by HMRC staff when either accepting or
     rejecting an envelope file."""
