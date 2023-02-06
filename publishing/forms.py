@@ -7,6 +7,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.conf import settings
 from django.forms import ModelForm
 
 from common.forms import DateInputFieldFixed
@@ -48,9 +49,20 @@ class LoadingReportForm(ModelForm):
         if self.errors:
             return cleaned_data
 
-        cleaned_data["file_name"] = (
-            self.request.FILES["file"].name if "file" in self.request.FILES else ""
-        )
+        file = self.request.FILES["file"] if "file" in self.request.FILES else None
+
+        if file:
+            cleaned_data["file_name"] = file.name
+
+        if (
+            file
+            and file.size
+            > settings.MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES * 1024 * 1024
+        ):
+            raise forms.ValidationError(
+                f"Report file exceeds {settings.MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES} "
+                f"megabytes maximum file size.",
+            )
 
         return cleaned_data
 
