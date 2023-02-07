@@ -582,15 +582,19 @@ class MeasureSelectionMixin:
         return Measure.objects.filter(pk__in=self.measure_selections)
 
     @property
-    def measure_selections(self):
-        """Get the session store to store the measures that will be deleted."""
-        store = SessionStore(
+    def session_store(self):
+        """Get the session store to store the measures that will be
+        edited/deleted."""
+        return SessionStore(
             self.request,
             "MULTIPLE_MEASURE_SELECTIONS",
         )
+
+    @property
+    def measure_selections(self):
         return [
             SelectableObjectsForm.object_id_from_field_name(name)
-            for name in [*store.data]
+            for name in [*self.session_store.data]
         ]
 
 
@@ -619,8 +623,7 @@ class MeasureMultipleDelete(MeasureSelectionMixin, TemplateView, ListView):
                 workbasket=WorkBasket.current(request),
                 update_type=UpdateType.DELETE,
             )
-        session_store = self._session_store()
-        session_store.clear()
+        self.session_store.clear()
 
         return redirect(reverse("measure-ui-list"))
 
@@ -662,8 +665,7 @@ class MeasureMultipleEndDateEdit(MeasureSelectionMixin, FormView, ListView):
                     ),
                 ),
             )
-            session_store = self._session_store()
-            session_store.clear()
+            self.session_store.clear()
 
         return redirect(reverse("measure-ui-list"))
 
