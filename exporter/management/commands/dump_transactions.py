@@ -9,6 +9,7 @@ from lxml import etree
 from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
+from exporter.util import envelope_checker
 from exporter.util import item_timer
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
@@ -155,9 +156,6 @@ class Command(BaseCommand):
                 errors = True
             else:
                 envelope_file.seek(0, os.SEEK_SET)
-                import pdb
-
-                pdb.set_trace()
                 try:
                     validate_envelope(envelope_file)
                 except etree.DocumentInvalid:
@@ -165,14 +163,13 @@ class Command(BaseCommand):
                         f"{envelope_file.name} {WARNING_SIGN_EMOJI}️ Envelope invalid:",
                     )
                 else:
-
-                    if (
-                        len(rendered_envelope.transactions)
-                        != workbaskets.ordered_transactions().count()
-                    ):
-                        self.stdout.write(
-                            f"{envelope_file.name} {WARNING_SIGN_EMOJI} Envelope does not contain all transactions! Try again or consult developers if error persists.",
-                        )
+                    # Run through sense checks to make sure envelope copied over correctly
+                    results = envelope_checker(workbaskets, rendered_envelope)
+                    if not results["checks_pass"]:
+                        for error in results["error_message_list"]:
+                            self.stdout.write(
+                                f"{envelope_file.name} {WARNING_SIGN_EMOJI} {error} Try again or consult developers if error persists.",
+                            )
                         errors = True
                     else:
                         total_transactions = len(rendered_envelope.transactions)
