@@ -532,16 +532,22 @@ class PackagedWorkBasket(TimestampedMixin):
         therefore normally called when the process for doing that has completed
         (see `publishing.tasks.create_xml_envelope_file()`).
         """
+        eif = "Immediately"
+        if self.eif:
+            eif = self.eif.strftime("%d:%m:%Y")
+
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
+            "description": self.description,
             "download_url": (
                 settings.BASE_SERVICE_URL + reverse("publishing:envelope-queue-ui-list")
             ),
             "theme": self.theme,
-            "eif": self.eif if self.eif else "Immediately",
+            "eif": eif,
             "embargo": self.embargo if self.embargo else "None",
             "jira_url": self.jira_url,
         }
+
         send_emails.delay(
             template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
             personalisation=personalisation,
