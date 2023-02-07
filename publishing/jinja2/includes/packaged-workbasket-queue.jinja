@@ -1,16 +1,6 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 
-{%- macro progress_icon(position) %}
-  {% set image_rel_path = "/common/images/progress-green-" ~ position ~ "-of-3.svg" %}
-  <img
-    class="icon-progress"
-    src={{ static(image_rel_path) }}
-    alt="Progress icon"
-  >
-{% endmacro -%}
-
-
 {%- macro promote_button(obj) %}
   <button
     class="govuk-link fake-link"
@@ -48,15 +38,8 @@
   {%- set up_down_cell_content %}
     {% if loop.index == 1 %}
       {# First row. #}
-      {% if obj == currently_processing %}
-        {# At state CDS DOWNLOADED #}
-        {{ progress_icon(3) }}
-      {% elif obj.processing_state == "AWAITING_PROCESSING" and not obj.envelope %}
-        {# At state GENERATING ENVELOPE #}
-        {{ progress_icon(1) }}
-      {% else %}
-        {# At state CDS NOTIFIED #}
-        {{ progress_icon(2) }}
+      {% if obj != currently_processing %}
+        {{ demote_button(obj) }}
       {% endif %}
     {% elif loop.index == 2 %}
       {# Second row. #}
@@ -131,7 +114,7 @@
         name="promote_to_top_position"
         value="{{ obj.pk }}"
       >
-        Move to top to notify CDS
+        Move to top
       </button>
     {% endif %}
   {% endset -%}
@@ -144,7 +127,7 @@
         name="remove_from_queue"
         value="{{ obj.pk }}"
       >
-        Remove from queue
+        Remove
       </button>
     {% endif %}
   {% endset -%}

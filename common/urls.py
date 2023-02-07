@@ -15,6 +15,7 @@ register_converter(NumericSIDConverter, "sid")
 
 urlpatterns = [
     path("", views.HomeView.as_view(), name="home"),
+    path("search", views.SearchPageView.as_view(), name="search-page"),
     path("healthcheck", views.healthcheck, name="healthcheck"),
     path("app-info", views.AppInfoView.as_view(), name="app-info"),
     path("login", views.LoginView.as_view(), name="login"),

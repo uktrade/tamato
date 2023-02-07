@@ -348,9 +348,7 @@ class RejectEnvelopeConfirmView(EnvelopeActionConfirmView):
         envelope = packaged_workbasket.envelope
 
         data["page_title"] = "Reject envelope confirmation"
-        data[
-            "message"
-        ] = f"Envelope ID {envelope.envelope_id} was rejected and queue was paused."
+        data["message"] = f"Envelope ID {envelope.envelope_id} has been rejected."
         return data
 
 

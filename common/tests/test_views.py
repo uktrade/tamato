@@ -17,14 +17,22 @@ def test_index_displays_workbasket_action_form(valid_user_client):
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
-    assert "What would you like to do?" in page.select("legend")[0].text
-    assert "Edit an existing workbasket" in page.select("label")[1].text
-    assert "Create a new workbasket" in page.select("label")[0].text
+    assert "Create new workbasket" in page.select("label")[0].text
+    assert "Select an existing workbasket" in page.select("label")[1].text
+    assert "Order and package workbaskets" in page.select("label")[2].text
+    assert "Process envelopes" in page.select("label")[3].text
+    assert "Search the tariff" in page.select("label")[4].text
 
 
 @pytest.mark.parametrize(
     ("data", "response_url"),
     (
+        (
+            {
+                "workbasket_action": "CREATE",
+            },
+            "workbaskets:workbasket-ui-create",
+        ),
         (
             {
                 "workbasket_action": "EDIT",
@@ -33,9 +41,21 @@ def test_index_displays_workbasket_action_form(valid_user_client):
         ),
         (
             {
-                "workbasket_action": "CREATE",
+                "workbasket_action": "PACKAGE_WORKBASKETS",
             },
-            "workbaskets:workbasket-ui-create",
+            "publishing:packaged-workbasket-queue-ui-list",
+        ),
+        (
+            {
+                "workbasket_action": "PROCESS_ENVELOPES",
+            },
+            "publishing:envelope-queue-ui-list",
+        ),
+        (
+            {
+                "workbasket_action": "SEARCH",
+            },
+            "search-page",
         ),
     ),
 )
@@ -84,11 +104,22 @@ def test_index_displays_footer_links(valid_user_client):
     page = BeautifulSoup(str(response.content), "html.parser")
     a_tags = page.select("footer a")
 
+    assert len(a_tags) == 6
     assert "Privacy policy" in a_tags[0].text
     assert (
         a_tags[0].attrs["href"]
         == "https://workspace.trade.gov.uk/working-at-dit/policies-and-guidance/policies/tariff-application-privacy-policy/"
     )
+
+
+def test_search_page_displays_links(valid_user_client):
+    url = reverse("search-page")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    links = page.select(".govuk-link")
+    assert len(links) == 8
 
 
 def test_handler403(client):
