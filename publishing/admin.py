@@ -161,7 +161,7 @@ class EnvelopeAdmin(admin.ModelAdmin):
 
     def download_envelope(self, obj):
         if (
-            self.packagedworkbaskets_processing_state
+            obj.packagedworkbaskets.get().processing_state
             in ProcessingState.completed_processing_states()
             and not obj.xml_file
         ):
