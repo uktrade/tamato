@@ -24,7 +24,7 @@ class CheckBoxes {
     }
 
     updateSession() {
-        const data = { csrfmiddlewaretoken: CSRF_TOKEN, ...this.state };
+        const data = { ...this.state };
         fetch(this.url, {
             method: "POST",
             headers: { "X-CSRFToken": CSRF_TOKEN, "Content-Type": "application/json" },
@@ -69,7 +69,10 @@ class CheckBoxes {
 }
 
 const initCheckboxes = () => {
-    new CheckBoxes();
+    const measurePage = document.querySelector("#measure-select-checkboxes-script");
+    if (measurePage) {
+        new CheckBoxes();
+    }
 }
 
 export default initCheckboxes;
