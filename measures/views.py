@@ -4,6 +4,7 @@ from itertools import groupby
 from operator import attrgetter
 from typing import Any
 from typing import Type
+from urllib.parse import urlencode
 
 from crispy_forms.helper import FormHelper
 from django.db.transaction import atomic
@@ -89,18 +90,24 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
         return MeasurePaginator(self.filterset.qs, per_page=20)
 
     @property
-    def measure_selections(self):
-        store = SessionStore(
+    def session_store(self):
+        return SessionStore(
             self.request,
             "MULTIPLE_MEASURE_SELECTIONS",
         )
-        return [*store.data]
+
+    @property
+    def measure_selections(self):
+        return [*self.session_store.data]
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(
             measure_selections=self.measure_selections,
             **kwargs,
         )
+
+    def get_initial(self):
+        return {**self.session_store.data}
 
     def form_valid(self, form):
         # measure selections in the session are now handled with JS
@@ -109,6 +116,19 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
             url = reverse("measure-ui-delete-multiple")
         elif form.data["form-action"] == "edit-selected":
             url = reverse("measure-ui-edit-multiple-end-date")
+        elif form.data["form-action"] == "persist-selection":
+            # keep selections from other pages. only update newly selected/removed measures from the current page
+            selected_objects = {k: v for k, v in form.cleaned_data.items() if v}
+
+            # clear this page from the session
+            self.session_store.remove_items(form.cleaned_data)
+
+            # then add the selected items
+            selected_objects = {k: v for k, v in form.cleaned_data.items() if v}
+            self.session_store.add_items(selected_objects)
+
+            params = urlencode(self.request.GET)
+            url = f"{reverse('measure-ui-list')}?{params}"
         else:
             url = reverse("measure-ui-list")
 

@@ -1,6 +1,8 @@
 
 class CheckBoxes {
     PARENT_CHECKBOX = "[data-check-all]";
+    CHECK_ALL_CHECKBOX = "check-all-checkbox";
+    PERSIST_MEASURES_BUTTON = "persist-measure-selections-button";
     url = "/ajax/update-measure-selections/"
 
     constructor() {
@@ -13,6 +15,8 @@ class CheckBoxes {
         MULTIPLE_MEASURE_SELECTIONS.forEach(selection => {
             this.state[selection] = 1;
         })
+        const persistMeasures = document.getElementById(this.PERSIST_MEASURES_BUTTON);
+        persistMeasures.remove();
         this.initCheckboxes();
         this.addEventListeners();
         this.addParentCheckboxEventListener();
@@ -59,6 +63,35 @@ class CheckBoxes {
                 element.checked = Boolean(this.state[name]);
             }
         }
+        // init check all checkbox
+        const container = document.createElement("div");
+        container.setAttribute("class", "govuk-form-group");
+        const fieldset = document.createElement("fieldset");
+        fieldset.setAttribute("class", "govuk-fieldset");
+        const container2 = document.createElement("div");
+        container2.setAttribute("class", "govuk-checkboxes govuk-checkboxes--small");
+        const container3 = document.createElement("div");
+        container3.setAttribute("class", "govuk-checkboxes__item");
+        const inputElement = document.createElement("input");
+        inputElement.setAttribute("class", "govuk-checkboxes__input");
+        inputElement.setAttribute("id", "select-all");
+        inputElement.setAttribute("name", "select-all");
+        inputElement.setAttribute("type", "checkbox");
+        inputElement.setAttribute("data-check-all", "data-check-trackedmodel");
+        const labelElement = document.createElement("label");
+        labelElement.setAttribute("class", "govuk-label govuk-checkboxes__label govuk-!-padding-right-0");
+        labelElement.setAttribute("for", "selected");
+
+        container.appendChild(fieldset);
+        fieldset.appendChild(container2);
+        container2.appendChild(container3);
+        container3.appendChild(inputElement);
+        container3.appendChild(labelElement);
+
+        const checkboxContainer = document.getElementById(this.CHECK_ALL_CHECKBOX);
+
+        checkboxContainer.appendChild(container);
+
     }
 
     addEventListeners() {
