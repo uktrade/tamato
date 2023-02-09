@@ -563,7 +563,6 @@ class PackagedWorkBasket(TimestampedMixin):
         """
         loading_report_message = "No loading report was provided."
         if self.loading_report.file:
-            self.loading_report.file
             loading_report_message = (
                 f'The loading report "{self.loading_report.file_name}" was '
                 "uploaded and is available to download from TAP."
