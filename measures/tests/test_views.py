@@ -1381,3 +1381,28 @@ def test_measure_selection_update_view_updates_session(
         f"selectableobject_{measure_1.pk}": 1,
         f"selectableobject_{measure_3.pk}": 1,
     }
+
+
+@pytest.mark.parametrize(
+    "form_action",
+    [
+        "persist-selection",
+        "remove-selected",
+        "edit-selected",
+        "foo",
+    ],
+)
+def test_measure_list_redirect(form_action, valid_user_client, session_workbasket):
+    params = "page=2&start_date_modifier=exact&end_date_modifier=exact"
+    url = f"{reverse('measure-ui-list')}?{params}"
+    response = valid_user_client.post(url, {"form-action": form_action})
+
+    url_mapping = {
+        "remove-selected": reverse("measure-ui-delete-multiple"),
+        "edit-selected": reverse("measure-ui-edit-multiple-end-date"),
+        "persist-selection": f"{reverse('measure-ui-list')}?{params}",
+        "foo": reverse("measure-ui-list"),
+    }
+
+    assert response.status_code == 302
+    assert response.url == url_mapping[form_action]
