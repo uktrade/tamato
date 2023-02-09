@@ -7,6 +7,35 @@ from publishing.models import LoadingReport
 from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
 from publishing.models import ProcessingState
+from workbaskets.models import WorkBasket
+
+
+class WorkBasketAdminMixin:
+    """Provides admin utility methods."""
+
+    def workbasket_id_link(self, workbasket: WorkBasket):
+        """Returns a HRML anchor element linked to `workbasket`'s admin change
+        view."""
+        workbasket_url = reverse(
+            "admin:workbaskets_workbasket_change",
+            args=(workbasket.pk,),
+        )
+        return mark_safe(
+            f'<a href="{workbasket_url}">{workbasket.pk}</a>',
+        )
+
+
+class PackagedWorkBasketAdminMixin:
+    """Provide utility methods."""
+
+    def packaged_workbasket_id_link(self, packaged_workbasket: PackagedWorkBasket):
+        """Returns a HRML anchor element linked to `packaged_workbasket`'s admin
+        change view."""
+        pwb_url = reverse(
+            "admin:publishing_packagedworkbasket_change",
+            args=(packaged_workbasket.pk,),
+        )
+        return mark_safe(f'<a href="{pwb_url}">{packaged_workbasket.pk}</a>')
 
 
 class PackagedWorkBasketProcessingStateFilter(admin.SimpleListFilter):
@@ -34,7 +63,7 @@ class PackagedWorkBasketProcessingStateFilter(admin.SimpleListFilter):
             return queryset.all_queued()
 
 
-class PackagedWorkBasketAdmin(admin.ModelAdmin):
+class PackagedWorkBasketAdmin(WorkBasketAdminMixin, admin.ModelAdmin):
     ordering = ["position"]
     list_display = (
         "id",
@@ -51,22 +80,12 @@ class PackagedWorkBasketAdmin(admin.ModelAdmin):
     def workbasket_id(self, obj):
         if not obj.workbasket:
             return "Missing workbasket!"
-
-        workbasket_url = reverse(
-            "admin:workbaskets_workbasket_change",
-            args=(obj.workbasket.pk,),
-        )
-        return mark_safe(
-            f'<a href="{workbasket_url}">{obj.workbasket.pk}</a>',
-        )
+        return self.workbasket_id_link(obj.workbasket)
 
     def workbasket_title(self, obj):
         if not obj.workbasket:
             return "Missing workbasket!"
         return obj.workbasket.title
-
-
-admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
 
 
 class EnvelopeDeletedFilter(admin.SimpleListFilter):
@@ -111,7 +130,11 @@ class EnvelopeProcessingStateFilter(admin.SimpleListFilter):
             return queryset.failed_processing()
 
 
-class EnvelopeAdmin(admin.ModelAdmin):
+class EnvelopeAdmin(
+    PackagedWorkBasketAdminMixin,
+    WorkBasketAdminMixin,
+    admin.ModelAdmin,
+):
     ordering = ["-pk"]
     list_display = (
         "id",
@@ -136,12 +159,7 @@ class EnvelopeAdmin(admin.ModelAdmin):
         pwb = obj.packagedworkbaskets.last()
         if not pwb:
             return None
-
-        pwb_url = reverse(
-            "admin:publishing_packagedworkbasket_change",
-            args=(pwb.pk,),
-        )
-        return mark_safe(f'<a href="{pwb_url}">{pwb.pk}</a>')
+        return self.packaged_workbasket_id_link(pwb)
 
     def workbasket_id(self, obj):
         pwb = obj.packagedworkbaskets.last()
@@ -151,13 +169,7 @@ class EnvelopeAdmin(admin.ModelAdmin):
         if not pwb.workbasket:
             return None
 
-        workbasket_url = reverse(
-            "admin:workbaskets_workbasket_change",
-            args=(pwb.workbasket.pk,),
-        )
-        return mark_safe(
-            f'<a href="{workbasket_url}">{pwb.workbasket.pk}</a>',
-        )
+        return self.workbasket_id_link(pwb.workbasket)
 
     def download_envelope(self, obj):
         if (
@@ -215,7 +227,11 @@ class LoadingReportAcceptedRejectedFilter(admin.SimpleListFilter):
             return queryset.rejected()
 
 
-class LoadingReportAdmin(admin.ModelAdmin):
+class LoadingReportAdmin(
+    PackagedWorkBasketAdminMixin,
+    WorkBasketAdminMixin,
+    admin.ModelAdmin,
+):
     ordering = ["-pk"]
     list_display = (
         "id",
@@ -258,12 +274,7 @@ class LoadingReportAdmin(admin.ModelAdmin):
         pwb = obj.packagedworkbaskets.last()
         if not pwb:
             return "Missing packaged workbasket!"
-
-        pwb_url = reverse(
-            "admin:publishing_packagedworkbasket_change",
-            args=(pwb.pk,),
-        )
-        return mark_safe(f'<a href="{pwb_url}">{pwb.pk}</a>')
+        return self.packaged_workbasket_id_link(pwb)
 
     def workbasket_id(self, obj):
         pwb = obj.packagedworkbaskets.last()
@@ -273,17 +284,13 @@ class LoadingReportAdmin(admin.ModelAdmin):
         if not pwb.workbasket:
             return "Missing workbasket!"
 
-        workbasket_url = reverse(
-            "admin:workbaskets_workbasket_change",
-            args=(pwb.workbasket.pk,),
-        )
-        return mark_safe(
-            f'<a href="{workbasket_url}">{pwb.workbasket.pk}</a>',
-        )
+        return self.workbasket_id_link(pwb.workbasket)
 
-
-admin.site.register(OperationalStatus, OperationalStatusAdmin)
 
 admin.site.register(Envelope, EnvelopeAdmin)
 
 admin.site.register(LoadingReport, LoadingReportAdmin)
+
+admin.site.register(OperationalStatus, OperationalStatusAdmin)
+
+admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
