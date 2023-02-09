@@ -110,8 +110,6 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
         return {**self.session_store.data}
 
     def form_valid(self, form):
-        # measure selections in the session are now handled with JS
-        # see checkboxes.js
         if form.data["form-action"] == "remove-selected":
             url = reverse("measure-ui-delete-multiple")
         elif form.data["form-action"] == "edit-selected":
