@@ -1,22 +1,51 @@
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
 
 from publishing.models import Envelope
+from publishing.models import LoadingReport
 from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
 from publishing.models import ProcessingState
+from workbaskets.models import WorkBasket
 
 
-class CustomProcessingStateFilter(admin.SimpleListFilter):
+class WorkBasketAdminMixin:
+    """Provides admin utility methods."""
+
+    def workbasket_id_link(self, workbasket: WorkBasket):
+        """Returns a HRML anchor element linked to `workbasket`'s admin change
+        view."""
+        workbasket_url = reverse(
+            "admin:workbaskets_workbasket_change",
+            args=(workbasket.pk,),
+        )
+        return mark_safe(
+            f'<a href="{workbasket_url}">{workbasket.pk}</a>',
+        )
+
+
+class PackagedWorkBasketAdminMixin:
+    """Provide utility methods."""
+
+    def packaged_workbasket_id_link(self, packaged_workbasket: PackagedWorkBasket):
+        """Returns a HRML anchor element linked to `packaged_workbasket`'s admin
+        change view."""
+        pwb_url = reverse(
+            "admin:publishing_packagedworkbasket_change",
+            args=(packaged_workbasket.pk,),
+        )
+        return mark_safe(f'<a href="{pwb_url}">{packaged_workbasket.pk}</a>')
+
+
+class PackagedWorkBasketProcessingStateFilter(admin.SimpleListFilter):
     title = "Custom processing state"
     parameter_name = "custom_processing_state"
 
     def lookups(self, request, model_admin):
         return (
             (None, "Only queued"),
-            ("all", _("All")),
+            ("all", "All"),
         )
 
     def choices(self, changelist):
@@ -34,7 +63,8 @@ class CustomProcessingStateFilter(admin.SimpleListFilter):
             return queryset.all_queued()
 
 
-class PackagedWorkBasketAdmin(admin.ModelAdmin):
+class PackagedWorkBasketAdmin(WorkBasketAdminMixin, admin.ModelAdmin):
+    ordering = ["position"]
     list_display = (
         "id",
         "position",
@@ -43,23 +73,19 @@ class PackagedWorkBasketAdmin(admin.ModelAdmin):
         "workbasket_title",
     )
     list_filter = (
-        CustomProcessingStateFilter,
+        PackagedWorkBasketProcessingStateFilter,
         "processing_state",
     )
-    ordering = ["position"]
 
     def workbasket_id(self, obj):
         if not obj.workbasket:
             return "Missing workbasket!"
-        return obj.workbasket.id
+        return self.workbasket_id_link(obj.workbasket)
 
     def workbasket_title(self, obj):
         if not obj.workbasket:
             return "Missing workbasket!"
         return obj.workbasket.title
-
-
-admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
 
 
 class EnvelopeDeletedFilter(admin.SimpleListFilter):
@@ -68,8 +94,8 @@ class EnvelopeDeletedFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return (
-            ("DELETED", _("Deleted")),
-            ("NOT_DELETED", _("Not deleted")),
+            ("DELETED", "Deleted"),
+            ("NOT_DELETED", "Not deleted"),
         )
 
     def queryset(self, request, queryset):
@@ -80,16 +106,16 @@ class EnvelopeDeletedFilter(admin.SimpleListFilter):
             return queryset.non_deleted()
 
 
-class CustomEnvelopeProcessingStateFilter(admin.SimpleListFilter):
+class EnvelopeProcessingStateFilter(admin.SimpleListFilter):
     title = "Processing state"
     parameter_name = "processing_state"
 
     def lookups(self, request, model_admin):
         return (
-            ("UNPROCESSED", _("Unprocessed")),
-            (ProcessingState.CURRENTLY_PROCESSING, _("Currently processing")),
-            (ProcessingState.SUCCESSFULLY_PROCESSED, _("Successfully processed")),
-            (ProcessingState.FAILED_PROCESSING, _("Failed processing")),
+            ("UNPROCESSED", "Unprocessed"),
+            (ProcessingState.CURRENTLY_PROCESSING, "Currently processing"),
+            (ProcessingState.SUCCESSFULLY_PROCESSED, "Successfully processed"),
+            (ProcessingState.FAILED_PROCESSING, "Failed processing"),
         )
 
     def queryset(self, request, queryset):
@@ -104,27 +130,50 @@ class CustomEnvelopeProcessingStateFilter(admin.SimpleListFilter):
             return queryset.failed_processing()
 
 
-class EnvelopeAdmin(admin.ModelAdmin):
+class EnvelopeAdmin(
+    PackagedWorkBasketAdminMixin,
+    WorkBasketAdminMixin,
+    admin.ModelAdmin,
+):
+    ordering = ["-pk"]
     list_display = (
         "id",
         "envelope_id",
-        "packagedworkbaskets_processing_state",
-        "packagedworkbaskets_workbasket_id",
+        "processing_state",
+        "packaged_workbasket_id",
+        "workbasket_id",
         "download_envelope",
         "published_to_tariffs_api",
         "deleted",
     )
-    ordering = ["-pk"]
-
     list_filter = (
         EnvelopeDeletedFilter,
-        CustomEnvelopeProcessingStateFilter,
+        EnvelopeProcessingStateFilter,
         "published_to_tariffs_api",
     )
 
+    def processing_state(self, obj):
+        return obj.packagedworkbaskets.get().get_processing_state_display()
+
+    def packaged_workbasket_id(self, obj):
+        pwb = obj.packagedworkbaskets.last()
+        if not pwb:
+            return None
+        return self.packaged_workbasket_id_link(pwb)
+
+    def workbasket_id(self, obj):
+        pwb = obj.packagedworkbaskets.last()
+        if not pwb:
+            return None
+
+        if not pwb.workbasket:
+            return None
+
+        return self.workbasket_id_link(pwb.workbasket)
+
     def download_envelope(self, obj):
         if (
-            self.packagedworkbaskets_processing_state
+            obj.packagedworkbaskets.get().processing_state
             in ProcessingState.completed_processing_states()
             and not obj.xml_file
         ):
@@ -139,12 +188,6 @@ class EnvelopeAdmin(admin.ModelAdmin):
         return mark_safe(
             f'<a href="{download_url}">{obj.envelope_id}</a>',
         )
-
-    def packagedworkbaskets_processing_state(self, obj):
-        return obj.packagedworkbaskets.get().processing_state
-
-    def packagedworkbaskets_workbasket_id(self, obj):
-        return obj.packagedworkbaskets.get().workbasket_id
 
 
 class OperationalStatusAdmin(admin.ModelAdmin):
@@ -166,6 +209,88 @@ class OperationalStatusAdmin(admin.ModelAdmin):
         return False
 
 
-admin.site.register(OperationalStatus, OperationalStatusAdmin)
+class LoadingReportAcceptedRejectedFilter(admin.SimpleListFilter):
+    title = "Accepted or rejected"
+    parameter_name = "accepted_rejected"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("ACCEPTED", "Accepted"),
+            ("REJECTED", "Rejected"),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == "ACCEPTED":
+            return queryset.accepted()
+        elif value == "REJECTED":
+            return queryset.rejected()
+
+
+class LoadingReportAdmin(
+    PackagedWorkBasketAdminMixin,
+    WorkBasketAdminMixin,
+    admin.ModelAdmin,
+):
+    ordering = ["-pk"]
+    list_display = (
+        "id",
+        "file_download",
+        "comments",
+        "accepted_or_rejected",
+        "packaged_workbasket_id",
+        "workbasket_id",
+    )
+    list_filter = (LoadingReportAcceptedRejectedFilter,)
+
+    def file_download(self, obj):
+        if not obj.file:
+            return None
+
+        file_name = obj.file_name if obj.file_name else "UNKNOWN_FILENAME"
+
+        download_url = reverse(
+            "publishing:admin-loading-report-ui-download",
+            args=(obj.pk,),
+        )
+        return mark_safe(
+            f'<a href="{download_url}">{file_name}</a>',
+        )
+
+    def accepted_or_rejected(self, obj):
+        pwb = obj.packagedworkbaskets.last()
+        if not pwb:
+            return "Missing packaged workbasket!"
+
+        state = pwb.processing_state
+        if state == ProcessingState.SUCCESSFULLY_PROCESSED:
+            return "Accepted"
+        elif state == ProcessingState.FAILED_PROCESSING:
+            return "Rejected"
+
+        return f"Unexpected state"
+
+    def packaged_workbasket_id(self, obj):
+        pwb = obj.packagedworkbaskets.last()
+        if not pwb:
+            return "Missing packaged workbasket!"
+        return self.packaged_workbasket_id_link(pwb)
+
+    def workbasket_id(self, obj):
+        pwb = obj.packagedworkbaskets.last()
+        if not pwb:
+            return "Missing packaged workbasket!"
+
+        if not pwb.workbasket:
+            return "Missing workbasket!"
+
+        return self.workbasket_id_link(pwb.workbasket)
+
 
 admin.site.register(Envelope, EnvelopeAdmin)
+
+admin.site.register(LoadingReport, LoadingReportAdmin)
+
+admin.site.register(OperationalStatus, OperationalStatusAdmin)
+
+admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)

@@ -15,6 +15,7 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
+import magic
 import wrapt
 from defusedxml.common import DTDForbidden
 from django.db import transaction
@@ -559,3 +560,15 @@ def xml_fromstring(text, forbid_dtd=True):
     check_docinfo(elementtree, forbid_dtd=forbid_dtd)
 
     return rootelement
+
+
+def get_mime_type(file):
+    """Get MIME type of the file by inspecting and infering its type from its
+    first 2048 bytes."""
+
+    initial_pos = file.tell()
+    file.seek(0)
+    mime_type = magic.from_buffer(file.read(2048), mime=True)
+    file.seek(initial_pos)
+
+    return mime_type
