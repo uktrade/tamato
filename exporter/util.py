@@ -42,6 +42,7 @@ def envelope_checker(workbasket, envelope):
         workbasket_transaction_pks = [
             transaction.pk for transaction in workbasket.ordered_transactions()
         ].sort()
+        #  I sorted it all as it may give an error if they're just in the wrong order. 
         workbasket_transaction_partitions = [
             transaction.partition for transaction in workbasket.ordered_transactions()
         ].sort()

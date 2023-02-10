@@ -82,6 +82,7 @@ class Command(BaseCommand):
 
     @atomic
     def handle(self, *args, **options):
+        # This is the function that takes the workbasket transactions and puts them in an envelope.
         workbasket_ids = options.get("workbasket_ids")
         if workbasket_ids:
             query = dict(id__in=workbasket_ids)
@@ -144,7 +145,9 @@ class Command(BaseCommand):
             max_envelope_size=max_envelope_size,
         )
         errors = False
-
+        # import pdb
+        # pdb.set_trace()
+        # Here's where it seriaizes the transactions, and kicks off making the envelope!!!
         for time_to_render, rendered_envelope in item_timer(
             serializer.split_render_transactions(transactions),
         ):
@@ -163,7 +166,11 @@ class Command(BaseCommand):
                         f"{envelope_file.name} {WARNING_SIGN_EMOJI}️ Envelope invalid:",
                     )
                 else:
+                    # pdb.set_trace()
                     # Run through sense checks to make sure envelope copied over correctly
+
+                    # Envelope checker is in the utils file, It checks whether id, count, and partitions match and returns checks_pass boolean and
+                    # a list of error messages, as you could have missmatch partitions and count etc.. 
                     results = envelope_checker(workbaskets, rendered_envelope)
                     if not results["checks_pass"]:
                         for error in results["error_message_list"]:
@@ -176,5 +183,7 @@ class Command(BaseCommand):
                         self.stdout.write(
                             f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
                         )
+                    # In practice this works. If you get a workbasket with queued status, run the dump transactions command, but slap a PDB in there after the envelope has been made
+                    # but before the envelope checker is called, p the transactions in the envelope and take one out, then c to run the envelope checker, it'll give you the right error.
         if errors:
             sys.exit(1)
