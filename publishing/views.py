@@ -12,6 +12,7 @@ from django.views.generic import DetailView
 from django.views.generic import ListView
 from django_fsm import TransitionNotAllowed
 
+from common.util import get_mime_type
 from common.views import WithPaginationListMixin
 from publishing.forms import LoadingReportForm
 from publishing.forms import PackagedWorkBasketCreateForm
@@ -245,6 +246,7 @@ class DownloadAdminLoadingReportView(PermissionRequiredMixin, DetailView):
         content = loading_report.file.read()
         response = HttpResponse(content)
         response["content-length"] = len(content)
+        response["content-type"] = get_mime_type(loading_report.file)
         response["content-disposition"] = f'attachment; filename="{file_name}"'
 
         return response
