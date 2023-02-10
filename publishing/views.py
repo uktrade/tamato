@@ -12,9 +12,11 @@ from django.views.generic import DetailView
 from django.views.generic import ListView
 from django_fsm import TransitionNotAllowed
 
+from common.util import get_mime_type
 from common.views import WithPaginationListMixin
 from publishing.forms import LoadingReportForm
 from publishing.forms import PackagedWorkBasketCreateForm
+from publishing.models import LoadingReport
 from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
 from publishing.models import PackagedWorkBasketDuplication
@@ -198,6 +200,7 @@ class DownloadEnvelopeView(DetailView):
 
     def get(self, request, *args, **kwargs):
         packaged_workbasket = self.get_object()
+
         envelope = packaged_workbasket.envelope
         file_content = envelope.xml_file.read()
         file_name = f"DIT{envelope.envelope_id}.xml"
@@ -229,12 +232,37 @@ class DownloadAdminEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeView):
         return super().get(request, *args, **kwargs)
 
 
+class DownloadAdminLoadingReportView(PermissionRequiredMixin, DetailView):
+    """View used to download a loading report."""
+
+    permission_required = "publishing.manage_packaging_queue"
+    model = LoadingReport
+
+    def get(self, request, *args, **kwargs):
+        loading_report = self.get_object()
+        file_name = (
+            loading_report.file_name if loading_report.file_name else "UNKNOWN_FILENAME"
+        )
+        content = loading_report.file.read()
+        response = HttpResponse(content)
+        response["content-length"] = len(content)
+        response["content-type"] = get_mime_type(loading_report.file)
+        response["content-disposition"] = f'attachment; filename="{file_name}"'
+
+        return response
+
+
 class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
     """Generic UI view used to confirm envelope processing."""
 
     permission_required = "publishing.consume_from_packaging_queue"
     template_name = "publishing/complete-envelope-processing.jinja"
     form_class = LoadingReportForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
     @atomic
     def form_valid(self, form):
@@ -245,6 +273,7 @@ class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
         packaged_work_basket = PackagedWorkBasket.objects.get(
             pk=self.kwargs["pk"],
         )
+
         self.object = form.save()
         packaged_work_basket.loading_report = self.object
         packaged_work_basket.save()

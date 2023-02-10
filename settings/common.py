@@ -597,6 +597,9 @@ NOTIFICATIONS_API_KEY = os.environ.get("NOTIFICATIONS_API_KEY")
 ENABLE_PACKAGING_NOTIFICATIONS = is_truthy(
     os.environ.get("ENABLE_PACKAGING_NOTIFICATIONS", "true"),
 )
+MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES = int(
+    os.environ.get("MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES", "2"),
+)
 
 # GOV.UK Notify template IDs used for publishing package notifications.
 READY_FOR_CDS_TEMPLATE_ID = os.environ.get("READY_FOR_CDS_TEMPLATE_ID")
@@ -605,9 +608,7 @@ CDS_REJECTED_TEMPLATE_ID = os.environ.get("CDS_REJECTED_TEMPLATE_ID")
 
 # Base service URL - required when constructing an absolute TAP URL to a page
 # from a Celery task where no HTTP request object is available.
-if VCAP_APPLICATION.get("application_uris") and len(
-    VCAP_APPLICATION["application_uris"],
-):
+if VCAP_APPLICATION.get("application_uris"):
     BASE_SERVICE_URL = "https://" + VCAP_APPLICATION["application_uris"][0]
 else:
     BASE_SERVICE_URL = os.environ.get("BASE_SERVICE_URL")
