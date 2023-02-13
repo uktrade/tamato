@@ -122,7 +122,6 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
             self.session_store.remove_items(form.cleaned_data)
 
             # then add the selected items
-            selected_objects = {k: v for k, v in form.cleaned_data.items() if v}
             self.session_store.add_items(selected_objects)
 
             params = urlencode(self.request.GET)
