@@ -5,7 +5,7 @@
             <a href="{{ url('workbaskets:current-workbasket') }}" class="govuk-link">View summary</a>
         </li>
         <li class="{% if active_link == 'edit' %}active{% endif %}">
-            <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-link">Add/edit items</a>
+            <a href="{{ url('workbaskets:edit-workbasket') }}" class="govuk-link">Add/edit items</a>
         </li>
         <li class="{% if active_link == 'violations' %}active{% endif %}">
             <a href="{{ url('workbaskets:workbasket-ui-violations', args=[request.session.workbasket.id]) }}" class="govuk-link">View violations ({{request.session.workbasket.error_count}})</a>

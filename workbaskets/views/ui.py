@@ -347,13 +347,11 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
         if form_action == "remove-selected":
             return reverse(
                 self.action_success_url_names[form_action],
-                kwargs={"pk": self.workbasket.pk},
             )
         elif form_action in ("page-prev", "page-next"):
             return self._append_url_page_param(
                 reverse(
                     self.action_success_url_names[form_action],
-                    kwargs={"pk": self.workbasket.pk},
                 ),
                 form_action,
             )
@@ -362,7 +360,6 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
             return self._append_url_page_param(
                 reverse(
                     self.action_success_url_names[form_action],
-                    kwargs={"pk": self.workbasket.pk},
                 ),
                 form_action,
             )
@@ -375,7 +372,6 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
             return self._append_url_page_param(
                 reverse(
                     self.action_success_url_names[form_action],
-                    kwargs={"pk": self.workbasket.pk},
                 ),
                 form_action,
             )

@@ -178,7 +178,7 @@ def test_review_workbasket_displays_rule_violation_summary(
 
 def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbasket):
     response = valid_user_client.get(
-        reverse("workbaskets:edit-workbasket", kwargs={"pk": session_workbasket.pk}),
+        reverse("workbaskets:edit-workbasket"),
     )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
@@ -276,7 +276,7 @@ def test_review_workbasket_redirects(
     data = {"form-action": form_action}
     response = valid_user_client.post(f"{url}?page=2", data)
     assert response.status_code == 302
-    assert reverse(url_name, kwargs={"pk": workbasket.pk}) in response.url
+    assert reverse(url_name) in response.url
 
     if form_action == "page-prev":
         assert "?page=1" in response.url
@@ -306,7 +306,6 @@ def test_workbasket_views_without_permission(url_name, client, session_workbaske
     permissions."""
     url = reverse(
         url_name,
-        kwargs={"pk": session_workbasket.pk},
     )
     user = factories.UserFactory.create()
     client.force_login(user)
@@ -481,7 +480,7 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     )
 
     assert response.status_code == 302
-    response_url = f"/workbaskets/{session_workbasket.pk}/"
+    response_url = url
     # Only compare the response URL up to the query string.
     assert response.url[: len(response_url)] == response_url
 

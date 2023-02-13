@@ -81,7 +81,7 @@ def test_packaged_workbasket_create_form_no_rule_check(
     )
 
     assert response.status_code == 302
-    response_url = f"/workbaskets/{session_workbasket.id}/"
+    response_url = reverse("workbaskets:current-workbasket")
     # Only compare the response URL up to the query string.
     assert response.url[: len(response_url)] == response_url
 
@@ -179,7 +179,7 @@ def test_packaged_workbasket_create_form_rule_check_violations(valid_user_client
     )
 
     assert response.status_code == 302
-    response_url = f"/workbaskets/{workbasket.pk}/"
+    response_url = reverse("workbaskets:current-workbasket")
     # Only compare the response URL up to the query string.
     assert response.url[: len(response_url)] == response_url
 
