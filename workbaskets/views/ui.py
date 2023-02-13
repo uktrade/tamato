@@ -120,8 +120,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
 
                 workbasket.save_to_session(request.session)
                 redirect_url = reverse(
-                    "workbaskets:workbasket-ui-detail",
-                    kwargs={"pk": workbasket_pk},
+                    "workbaskets:current-workbasket",
                 )
 
                 return redirect(redirect_url)
@@ -263,18 +262,18 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
+class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
     template_name = "workbaskets/summary-workbasket.jinja"
     form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.
     action_success_url_names = {
         "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
-        "run-business-rules": "workbaskets:workbasket-ui-detail",
-        "terminate-rule-check": "workbaskets:workbasket-ui-detail",
+        "run-business-rules": "workbaskets:current-workbasket",
+        "terminate-rule-check": "workbaskets:current-workbasket",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
-        "page-prev": "workbaskets:workbasket-ui-detail",
-        "page-next": "workbaskets:workbasket-ui-detail",
+        "page-prev": "workbaskets:current-workbasket",
+        "page-next": "workbaskets:current-workbasket",
     }
 
     @property

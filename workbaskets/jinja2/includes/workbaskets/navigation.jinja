@@ -2,7 +2,7 @@
 <nav class="workbasket-navigation govuk-!-margin-bottom-7">
     <ul class="govuk-list">
         <li class="{% if active_link == 'summary' %}active{% endif %}">
-            <a href="{{ url('workbaskets:workbasket-ui-detail', args=[request.session.workbasket.id]) }}" class="govuk-link">View summary</a>
+            <a href="{{ url('workbaskets:current-workbasket') }}" class="govuk-link">View summary</a>
         </li>
         <li class="{% if active_link == 'edit' %}active{% endif %}">
             <a href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}" class="govuk-link">Add/edit items</a>

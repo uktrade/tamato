@@ -42,9 +42,9 @@ ui_patterns = [
         name="review-workbasket",
     ),
     path(
-        f"<pk>/",
-        ui_views.WorkBasketDetail.as_view(),
-        name="workbasket-ui-detail",
+        f"current/",
+        ui_views.CurrentWorkBasket.as_view(),
+        name="current-workbasket",
     ),
     path(
         f"<pk>/confirm-create/",

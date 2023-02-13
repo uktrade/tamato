@@ -129,8 +129,7 @@ def test_review_workbasket_displays_objects_in_current_workbasket(
 
     response = valid_user_client.get(
         reverse(
-            "workbaskets:workbasket-ui-detail",
-            kwargs={"pk": session_workbasket.id},
+            "workbaskets:current-workbasket",
         ),
     )
     page = BeautifulSoup(
@@ -159,8 +158,7 @@ def test_review_workbasket_displays_rule_violation_summary(
 
     response = valid_user_client.get(
         reverse(
-            "workbaskets:workbasket-ui-detail",
-            kwargs={"pk": session_workbasket.id},
+            "workbaskets:current-workbasket",
         ),
     )
     page = BeautifulSoup(
@@ -192,8 +190,7 @@ def test_workbasket_detail_page_url_params(
     session_workbasket,
 ):
     url = reverse(
-        "workbaskets:workbasket-ui-detail",
-        kwargs={"pk": session_workbasket.pk},
+        "workbaskets:current-workbasket",
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
@@ -261,8 +258,8 @@ def test_select_workbasket_with_errored_status(valid_user_client):
     "form_action, url_name",
     [
         ("remove-selected", "workbaskets:workbasket-ui-delete-changes"),
-        ("page-prev", "workbaskets:workbasket-ui-detail"),
-        ("page-next", "workbaskets:workbasket-ui-detail"),
+        ("page-prev", "workbaskets:current-workbasket"),
+        ("page-next", "workbaskets:current-workbasket"),
     ],
 )
 def test_review_workbasket_redirects(
@@ -275,7 +272,7 @@ def test_review_workbasket_redirects(
     )
     with workbasket.new_transaction() as tx:
         factories.FootnoteTypeFactory.create_batch(30, transaction=tx)
-    url = reverse("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk})
+    url = reverse("workbaskets:current-workbasket")
     data = {"form-action": form_action}
     response = valid_user_client.post(f"{url}?page=2", data)
     assert response.status_code == 302
@@ -476,8 +473,7 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     }
     session.save()
     url = reverse(
-        "workbaskets:workbasket-ui-detail",
-        kwargs={"pk": session_workbasket.id},
+        "workbaskets:current-workbasket",
     )
     response = valid_user_client.post(
         url,
@@ -520,8 +516,7 @@ def test_submit_for_packaging(valid_user_client, session_workbasket):
     session.save()
 
     url = reverse(
-        "workbaskets:workbasket-ui-detail",
-        kwargs={"pk": session_workbasket.id},
+        "workbaskets:current-workbasket",
     )
     response = valid_user_client.post(
         url,
@@ -538,8 +533,7 @@ def test_terminate_rule_check(valid_user_client, session_workbasket):
     session_workbasket.rule_check_task_id = 123
 
     url = reverse(
-        "workbaskets:workbasket-ui-detail",
-        kwargs={"pk": session_workbasket.pk},
+        "workbaskets:current-workbasket",
     )
     response = valid_user_client.post(
         url,

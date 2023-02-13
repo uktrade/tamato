@@ -18,16 +18,10 @@
 {% endset %}
 
 {% block header %}
-{% set workbasket_url %}
-  {% if request.session.workbasket %}
-    {{ url('workbaskets:workbasket-ui-detail', args=[request.session.workbasket.id]) }}
-  {% else %}
-  {% endif %}
-{% endset %}
 
 {% set workbasket_html %}
   {% if request.session.workbasket %}
-    <a href="{{ url('workbaskets:workbasket-ui-detail', args=[request.session.workbasket.id]) }}" class="govuk-header__link workbasket-link">Workbasket  {{ request.session.workbasket.id }} {{ workbasket_svg }}</a>
+    <a href="{{ url('workbaskets:current-workbasket') }}" class="govuk-header__link workbasket-link">Workbasket  {{ request.session.workbasket.id }} {{ workbasket_svg }}</a>
   {% endif %}
 {% endset %}
 
