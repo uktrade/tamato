@@ -1,22 +1,31 @@
 
 class CheckBoxes {
     PARENT_CHECKBOX = "[data-check-all]";
+    CHEKCKBOXES = "[data-check-trackedmodel]";
     CHECK_ALL_CHECKBOX = "check-all-checkbox";
     PERSIST_MEASURES_BUTTON = "persist-measure-selections-button";
     url = "/ajax/update-measure-selections/"
 
-    constructor() {
+    constructor(page) {
         // initial state set server side from session
         this.state = {};
-        // CHECKBOX_NAMES and MULTIPLE_MEASURE_SELECTIONS are set in the template includes/measures/list.jinja
-        CHECKBOX_NAMES.forEach(name => {
-            this.state[name] = 0;
+        if (page) { this.page = page; } else this.page = "";
+
+        // get names for checkboxes
+        const checkboxes = document.querySelectorAll(this.CHEKCKBOXES);
+        checkboxes.forEach(checkbox => {
+            this.state[checkbox.name] = 0;
         })
-        MULTIPLE_MEASURE_SELECTIONS.forEach(selection => {
-            this.state[selection] = 1;
-        })
-        const persistMeasures = document.getElementById(this.PERSIST_MEASURES_BUTTON);
-        persistMeasures.remove();
+
+        if (this.page === "measures") {
+            // MULTIPLE_MEASURE_SELECTIONS is set in the template includes/measures/list.jinja
+            MULTIPLE_MEASURE_SELECTIONS.forEach(selection => {
+                this.state[selection] = 1;
+            })
+            const persistMeasures = document.getElementById(this.PERSIST_MEASURES_BUTTON);
+            persistMeasures.remove();
+        }
+
         this.initCheckboxes();
         this.addEventListeners();
         this.addParentCheckboxEventListener();
@@ -28,12 +37,14 @@ class CheckBoxes {
     }
 
     updateSession() {
-        const data = { ...this.state };
-        fetch(this.url, {
-            method: "POST",
-            headers: { "X-CSRFToken": CSRF_TOKEN, "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        })
+        if (this.page === "measures") {
+            const data = { ...this.state };
+            fetch(this.url, {
+                method: "POST",
+                headers: { "X-CSRFToken": CSRF_TOKEN, "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            })
+        }
     }
 
     toggleCheckAll(event) {
@@ -104,8 +115,8 @@ class CheckBoxes {
 const initCheckboxes = () => {
     const measurePage = document.querySelector("#measure-select-checkboxes-script");
     if (measurePage) {
-        new CheckBoxes();
-    }
+        new CheckBoxes("measures");
+    } else new CheckBoxes();
 }
 
 export default initCheckboxes;
