@@ -14,7 +14,7 @@ class LoadingReportQuerySet(QuerySet):
         related `PackagedWorkBasket` instance has a `processing_state` attribute
         value of SUCCESSFULLY_PROCESSED."""
         return self.filter(
-            packagedworkbasket__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+            packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
         )
 
     def rejected(self):
@@ -22,7 +22,7 @@ class LoadingReportQuerySet(QuerySet):
         related `PackagedWorkBasket` instance has a `processing_state` attribute
         value of FAILED_PROCESSING."""
         return self.filter(
-            packagedworkbasket__processing_state=ProcessingState.FAILED_PROCESSING,
+            packagedworkbaskets__processing_state=ProcessingState.FAILED_PROCESSING,
         )
 
 
