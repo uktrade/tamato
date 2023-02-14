@@ -1,4 +1,5 @@
 import datetime
+import json
 import unittest
 from datetime import date
 from decimal import Decimal
@@ -1339,3 +1340,69 @@ def test_multiple_measure_delete_template(client, valid_user, session_workbasket
         if m.effective_end_date
     }
     assert not measure_end_dates.difference(end_dates_in_table)
+
+
+def test_measure_selection_update_view_updates_session(
+    client,
+    valid_user,
+    session_workbasket,
+):
+    # Make a bunch of measures
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+
+    client.force_login(valid_user)
+    session = client.session
+    session.update(
+        {
+            f"selectableobject_{measure_1.pk}": 1,
+            f"selectableobject_{measure_2.pk}": 1,
+            f"selectableobject_{measure_3.pk}": 1,
+        },
+    )
+
+    json_data = {
+        f"selectableobject_{measure_1.pk}": 1,
+        f"selectableobject_{measure_2.pk}": 0,
+        f"selectableobject_{measure_3.pk}": 1,
+    }
+
+    url = reverse("update-measure-selections")
+    response = client.post(
+        url,
+        json.dumps(json_data),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    # session only stores the selected objects so measure_2 isn't in here
+    assert response.json() == {
+        f"selectableobject_{measure_1.pk}": 1,
+        f"selectableobject_{measure_3.pk}": 1,
+    }
+
+
+@pytest.mark.parametrize(
+    "form_action",
+    [
+        "persist-selection",
+        "remove-selected",
+        "edit-selected",
+        "foo",
+    ],
+)
+def test_measure_list_redirect(form_action, valid_user_client, session_workbasket):
+    params = "page=2&start_date_modifier=exact&end_date_modifier=exact"
+    url = f"{reverse('measure-ui-list')}?{params}"
+    response = valid_user_client.post(url, {"form-action": form_action})
+
+    url_mapping = {
+        "remove-selected": reverse("measure-ui-delete-multiple"),
+        "edit-selected": reverse("measure-ui-edit-multiple-end-date"),
+        "persist-selection": f"{reverse('measure-ui-list')}?{params}",
+        "foo": reverse("measure-ui-list"),
+    }
+
+    assert response.status_code == 302
+    assert response.url == url_mapping[form_action]

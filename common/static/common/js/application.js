@@ -6,7 +6,7 @@ import showHideCheckboxes from './showHideCheckboxes';
 import initAutocomplete from './autocomplete';
 import initStepNav from './step-by-step-nav';
 import { initAll } from 'govuk-frontend';
-import initCheckAllCheckboxes from './checkAllCheckboxes';
+import initCheckboxes from './checkboxes';
 import initConditionalMeasureConditions from './conditionalMeasureConditions';
 showHideCheckboxes();
 // Initialise accessible-autocomplete components without a `name` attr in order
@@ -15,5 +15,5 @@ showHideCheckboxes();
 initAutocomplete(false);
 initStepNav();
 initAll();
-initCheckAllCheckboxes();
+initCheckboxes();
 initConditionalMeasureConditions();
