@@ -493,8 +493,8 @@ class WorkBasketViolations(SortingMixin, WithPaginationListView):
     }
 
     @property
-    def workbasket(self):
-        return WorkBasket.objects.get(id=self.kwargs.get("pk"))
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(workbasket=self.workbasket, **kwargs)
@@ -515,8 +515,8 @@ class WorkBasketViolationDetail(DetailView):
     template_name = "workbaskets/violation_detail.jinja"
 
     @property
-    def workbasket(self):
-        return WorkBasket.objects.get(id=self.kwargs.get("wb_pk"))
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(workbasket=self.workbasket, **kwargs)

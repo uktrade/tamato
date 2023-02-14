@@ -99,7 +99,7 @@
   {% elif workbasket.tracked_model_check_errors.exists() %}
     <div class="govuk-error-summary" aria-labelledby="summary-title" role="alert" data-module="govuk-error-summary">
       {{ rule_check_result_content() }} 
-      <a href="{{ url('workbaskets:workbasket-ui-violations', args=[request.session.workbasket.id]) }}" class="govuk-button govuk-button--primary">View violations</a>
+      <a href="{{ url('workbaskets:workbasket-ui-violations') }}" class="govuk-button govuk-button--primary">View violations</a>
     </div>
   {% elif workbasket.tracked_model_checks.exists() and 
     not workbasket.unchecked_or_errored_transactions.exists() %}

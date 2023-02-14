@@ -13,7 +13,7 @@ details
   "items": [
     {"text": "Home", "href": url("home")},
     {"text": "Workbasket " ~ workbasket.id, "href": url('workbaskets:edit-workbasket')},
-    {"text": "Workbasket " ~ workbasket.id ~ " - Rule violations", "href": url('workbaskets:workbasket-ui-violations', kwargs={"pk": workbasket.id})},
+    {"text": "Workbasket " ~ workbasket.id ~ " - Rule violations", "href": url('workbaskets:workbasket-ui-violations')},
     {"text": page_title}
 ]
 }) }}

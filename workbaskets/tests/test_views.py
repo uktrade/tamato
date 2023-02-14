@@ -552,7 +552,6 @@ def test_workbasket_violations(valid_user_client, session_workbasket):
     `TrackedModelCheck`."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
     )
     with session_workbasket.new_transaction() as transaction:
         good = GoodsNomenclatureFactory.create(transaction=transaction)
@@ -658,7 +657,6 @@ def test_violation_list_page_sorting_date(setup, valid_user_client, session_work
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.get(f"{url}?sort_by=date&order=asc")
 
@@ -690,7 +688,6 @@ def test_violation_list_page_sorting_model_name(
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.get(f"{url}?sort_by=model&order=asc")
 
@@ -722,7 +719,6 @@ def test_violation_list_page_sorting_check_name(
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.get(f"{url}?sort_by=check_name&order=asc")
 
@@ -751,7 +747,6 @@ def test_violation_list_page_sorting_ignores_invalid_params(
     """Tests that the page doesn't break if invalid params are sent."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.get(f"{url}?sort_by=foo&order=bar")
 

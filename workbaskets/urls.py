@@ -47,6 +47,11 @@ ui_patterns = [
         name="review-workbasket",
     ),
     path(
+        f"current/violations/",
+        ui_views.WorkBasketViolations.as_view(),
+        name="workbasket-ui-violations",
+    ),
+    path(
         f"<pk>/confirm-create/",
         ui_views.WorkBasketConfirmCreate.as_view(),
         name="workbasket-ui-confirm-create",
@@ -65,11 +70,6 @@ ui_patterns = [
         f"<pk>/changes/",
         ui_views.WorkBasketChanges.as_view(),
         name="workbasket-ui-changes",
-    ),
-    path(
-        f"<pk>/violations/",
-        ui_views.WorkBasketViolations.as_view(),
-        name="workbasket-ui-violations",
     ),
     path(
         f"<wb_pk>/violations/<pk>/",
