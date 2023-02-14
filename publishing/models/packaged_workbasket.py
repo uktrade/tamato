@@ -23,15 +23,12 @@ from django.db.transaction import atomic
 from django.urls import reverse
 from django_fsm import FSMField
 from django_fsm import transition
-from notifications_python_client import prepare_upload
 
 from common.models.mixins import TimestampedMixin
 from notifications.models import NotificationLog
 from notifications.tasks import send_emails
-from publishing.models.loading_report import LoadingReport
 from publishing.models.state import ProcessingState
 from publishing.tasks import schedule_create_xml_envelope_file
-from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -165,7 +162,6 @@ class PackagedWorkBasketManager(Manager):
     @atomic
     def create(self, workbasket, **kwargs):
         """Create a new instance, associating with workbasket."""
-
         if workbasket.status in WorkflowStatus.unchecked_statuses():
             raise PackagedWorkBasketInvalidCheckStatus(
                 "Unable to create PackagedWorkBasket from WorkBasket instance "
@@ -286,7 +282,7 @@ class PackagedWorkBasket(TimestampedMixin):
     )()
 
     workbasket = ForeignKey(
-        WorkBasket,
+        "workbaskets.WorkBasket",
         on_delete=PROTECT,
         editable=False,
     )
@@ -322,10 +318,11 @@ class PackagedWorkBasket(TimestampedMixin):
     """The date and time at which processing_state transitioned to
     CURRENTLY_PROCESSING."""
     loading_report = ForeignKey(
-        LoadingReport,
+        "publishing.LoadingReport",
         null=True,
         on_delete=PROTECT,
         editable=False,
+        related_name="packagedworkbaskets",
     )
     """The report file associated with an attempt (either successful or failed)
     to process / load the associated workbasket's envelope file."""
@@ -357,17 +354,19 @@ class PackagedWorkBasket(TimestampedMixin):
         help_text="Insert Tops Jira ticket link",
     )
     """URL linking the packaged workbasket with a ticket on the Tariff
-    Operations (TOPS) project's Jira board.
-    """
+    Operations (TOPS) project's Jira board."""
     create_envelope_task_id = CharField(
         max_length=50,
         null=True,
         blank=True,
         unique=True,
     )
-    """ID of Celery task used to generate this instance's associated envelope.
+    """
+    ID of Celery task used to generate this instance's associated envelope.
+
     Its necessary to set null=True (unusually for CharField) in order to support
-    the unique=True attribute."""
+    the unique=True attribute.
+    """
 
     @property
     def has_envelope(self):
@@ -435,7 +434,6 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
-
         self.processing_started_at = datetime.now()
         self.save()
 
@@ -494,7 +492,6 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
-
         self.remove_from_queue()
         self.workbasket.dequeue()
         self.workbasket.save()
@@ -535,63 +532,68 @@ class PackagedWorkBasket(TimestampedMixin):
         therefore normally called when the process for doing that has completed
         (see `publishing.tasks.create_xml_envelope_file()`).
         """
+        eif = "Immediately"
+        if self.eif:
+            eif = self.eif.strftime("%d:%m:%Y")
 
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
+            "description": self.description,
             "download_url": (
                 settings.BASE_SERVICE_URL + reverse("publishing:envelope-queue-ui-list")
             ),
             "theme": self.theme,
-            "eif": self.eif if self.eif else "Immediately",
+            "eif": eif,
             "embargo": self.embargo if self.embargo else "None",
             "jira_url": self.jira_url,
         }
+
         send_emails.delay(
             template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
             personalisation=personalisation,
         )
 
-    @skip_notifications_if_disabled
-    def notify_processing_succeeded(self):
+    def notify_processing_completed(self, template_id):
         """
-        Notify users that envelope processing has been succeeded for this.
+        Notify users that envelope processing has completed (accepted or
+        rejected) for this instance.
 
-        instance - correctly ingested into HMRC systems.
+        `template_id` should be the ID of the Notify email template of either
+        the successfully processed email or failed processing.
         """
-
-        link_to_file = "None"
+        loading_report_message = "No loading report was provided."
         if self.loading_report.file:
-            f = self.loading_report.file.open("rb")
-            link_to_file = prepare_upload(f)
+            loading_report_message = (
+                f'The loading report "{self.loading_report.file_name}" was '
+                "uploaded and is available to download from TAP."
+            )
+
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
             "transaction_count": self.workbasket.transactions.count(),
-            "link_to_file": link_to_file,
+            "link_to_file": "",  # TODO: Remove link_to_file after deployment.
+            "loading_report_message": loading_report_message,
             "comments": self.loading_report.comments,
         }
+
         send_emails.delay(
-            template_id=settings.CDS_ACCEPTED_TEMPLATE_ID,
+            template_id=template_id,
             personalisation=personalisation,
         )
 
     @skip_notifications_if_disabled
-    def notify_processing_failed(self):
-        """Notify users that envelope processing has been failed - HMRC systems
-        rejected this instances associated envelope file."""
+    def notify_processing_succeeded(self):
+        """Notify users that envelope processing has succeeded (i.e. the
+        associated envelope was correctly ingested into HMRC systems)."""
 
-        link_to_file = "None"
-        if self.loading_report.file:
-            f = self.loading_report.file.open("rb")
-            link_to_file = prepare_upload(f)
-        personalisation = {
-            "envelope_id": self.envelope.envelope_id,
-            "link_to_file": link_to_file,
-            "comments": self.loading_report.comments,
-        }
-        send_emails.delay(
-            template_id=settings.CDS_REJECTED_TEMPLATE_ID,
-            personalisation=personalisation,
-        )
+        self.notify_processing_completed(settings.CDS_ACCEPTED_TEMPLATE_ID)
+
+    @skip_notifications_if_disabled
+    def notify_processing_failed(self):
+        """Notify users that envelope processing has failed (i.e. HMRC systems
+        rejected this instance's associated envelope file)."""
+
+        self.notify_processing_completed(settings.CDS_REJECTED_TEMPLATE_ID)
 
     @property
     def cds_notified_notification_log(self) -> NotificationLog:
@@ -618,7 +620,6 @@ class PackagedWorkBasket(TimestampedMixin):
         Management of the popped instance's `processing_state` is not altered by
         this function and should be managed separately by the caller.
         """
-
         if self.position != 1:
             raise PackagedWorkBasketInvalidQueueOperation(
                 "Unable to pop instance at position {self.position} in queue "
@@ -642,7 +643,6 @@ class PackagedWorkBasket(TimestampedMixin):
         Management of the queued instance's `processing_state` is not altered by
         this function and should be managed separately by the caller.
         """
-
         if self.position == 0:
             raise PackagedWorkBasketInvalidQueueOperation(
                 "Unable to remove instance with a position value of 0 from "

@@ -435,10 +435,11 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
         return super().form_valid(form)
 
 
-class WorkBasketList(WithPaginationListView):
+class WorkBasketList(PermissionRequiredMixin, WithPaginationListView):
     """UI endpoint for viewing and filtering workbaskets."""
 
     template_name = "workbaskets/list.jinja"
+    permission_required = "workbaskets.change_workbasket"
     filterset_class = WorkBasketFilter
     search_fields = [
         "title",
