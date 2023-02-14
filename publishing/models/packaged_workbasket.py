@@ -571,7 +571,6 @@ class PackagedWorkBasket(TimestampedMixin):
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
             "transaction_count": self.workbasket.transactions.count(),
-            "link_to_file": "",  # TODO: Remove link_to_file after deployment.
             "loading_report_message": loading_report_message,
             "comments": self.loading_report.comments,
         }
