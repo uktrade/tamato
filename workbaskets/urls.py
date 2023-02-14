@@ -52,17 +52,17 @@ ui_patterns = [
         name="workbasket-ui-violations",
     ),
     path(
+        f"current/delete-changes/",
+        ui_views.WorkBasketDeleteChanges.as_view(),
+        name="workbasket-ui-delete-changes",
+    ),
+    path(
         f"<pk>/confirm-create/",
         ui_views.WorkBasketConfirmCreate.as_view(),
         name="workbasket-ui-confirm-create",
     ),
     path(
-        f"<pk>/delete-changes/",
-        ui_views.WorkBasketDeleteChanges.as_view(),
-        name="workbasket-ui-delete-changes",
-    ),
-    path(
-        f"<pk>/delete-changes-done/",
+        f"current/delete-changes-done/",
         ui_views.WorkBasketDeleteChangesDone.as_view(),
         name="workbasket-ui-delete-changes-done",
     ),

@@ -288,7 +288,6 @@ def test_review_workbasket_redirects(
 def test_delete_changes_confirm_200(valid_user_client, session_workbasket):
     url = reverse(
         "workbaskets:workbasket-ui-delete-changes-done",
-        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200

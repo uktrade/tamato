@@ -134,14 +134,9 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
     template_name = "workbaskets/delete_changes.jinja"
     permission_required = "workbaskets.change_workbasket"
 
-    def _workbasket(self):
-        """Get the WorkBasket instance associated with this view's deletion."""
-
-        try:
-            workbasket = WorkBasket.objects.get(pk=self.kwargs["pk"])
-        except WorkBasket.DoesNotExist:
-            workbasket = WorkBasket.objects.none()
-        return workbasket
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     def _session_store(self, workbasket):
         """Get the current user's SessionStore for the WorkBasket that they're
@@ -157,9 +152,8 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
         """Get TrackedModelQuerySet of instances that are candidates for
         deletion."""
 
-        workbasket = self._workbasket()
-        store = self._session_store(workbasket)
-        return workbasket.tracked_models.filter(pk__in=store.data.keys())
+        store = self._session_store(self.workbasket)
+        return self.workbasket.tracked_models.filter(pk__in=store.data.keys())
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
@@ -182,13 +176,11 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
                 # UI component(s) design in the backlog for this: TP-1148.
                 pass
 
-        workbasket = self._workbasket()
-        session_store = self._session_store(workbasket)
+        session_store = self._session_store(self.workbasket)
         session_store.clear()
 
         redirect_url = reverse(
             "workbaskets:workbasket-ui-delete-changes-done",
-            kwargs={"pk": self.kwargs["pk"]},
         )
         return redirect(redirect_url)
 
