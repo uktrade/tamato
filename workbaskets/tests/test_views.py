@@ -362,7 +362,7 @@ def test_workbasket_measures_review(valid_user_client):
     with workbasket.new_transaction() as tx:
         factories.MeasureFactory.create_batch(30, transaction=tx)
 
-    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    url = reverse("workbaskets:review-workbasket")
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
@@ -407,7 +407,7 @@ def test_workbasket_measures_review_pagination(
         )
         factories.MeasureFactory.create_batch(40, transaction=unapproved_transaction)
 
-    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    url = reverse("workbaskets:review-workbasket")
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
@@ -436,7 +436,7 @@ def test_workbasket_measures_review_conditions(valid_user_client):
         required_certificate=certificate,
         action__code="27",
     )
-    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    url = reverse("workbaskets:review-workbasket")
     response = valid_user_client.get(url)
     soup = BeautifulSoup(str(response.content), "html.parser")
     # 11th column is conditions. We're interested in the first (and only) row.

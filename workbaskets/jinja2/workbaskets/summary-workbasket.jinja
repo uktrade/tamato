@@ -48,7 +48,7 @@
     <span class="govuk-!-font-weight-bold">
       Number of changes: {{workbasket.tracked_models.count()}} &nbsp
     </span>
-    <a href={{ url('workbaskets:review-workbasket', args=[request.session.workbasket.id]) }}>Review changes</a>
+    <a href={{ url('workbaskets:review-workbasket') }}>Review changes</a>
     <span class="govuk-!-font-weight-bold" style="float:right">
       Last Run: ({{ "{:%d %b %Y %H:%M}".format(localtime(workbasket.tracked_model_checks.order_by("created_at").last().created_at)) }})
       {{ run_business_rules_form_icon }}

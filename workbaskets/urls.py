@@ -32,11 +32,6 @@ ui_patterns = [
         name="workbasket-download",
     ),
     path(
-        f"<pk>/review/",
-        ui_views.ReviewMeasuresWorkbasketView.as_view(),
-        name="review-workbasket",
-    ),
-    path(
         f"current/",
         ui_views.CurrentWorkBasket.as_view(),
         name="current-workbasket",
@@ -45,6 +40,11 @@ ui_patterns = [
         f"current/edit/",
         ui_views.EditWorkbasketView.as_view(),
         name="edit-workbasket",
+    ),
+    path(
+        f"current/review/",
+        ui_views.ReviewMeasuresWorkbasketView.as_view(),
+        name="review-workbasket",
     ),
     path(
         f"<pk>/confirm-create/",
