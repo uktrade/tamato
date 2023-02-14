@@ -102,3 +102,33 @@
     </div>
   </div>
 </form>
+
+<details class="govuk-details" data-module="govuk-details">
+  <summary class="govuk-details__summary">
+    <span class="govuk-details__summary-text">
+      View all selected measures
+    </span>
+  </summary>
+  <div class="govuk-details__text">
+  {% if measure_selections %}
+    {% set table_rows = [] %}
+      {% for measure in measure_selections %}
+        {% set measure_link %}
+          <a class="govuk-link govuk-!-font-weight-bold" href="{{measure.get_url()}}">{{measure.sid}}</a>
+        {% endset %}
+        {{ table_rows.append([
+          {"html": measure_link},
+          ]) or "" }}
+      {% endfor %}
+      {{ govukTable({
+        "head": [
+        {"text": "ID"},
+      ],
+      "rows": table_rows,
+      "classes": "govuk-table-m"
+      }) }}
+  {% else %}
+    No measures selected.
+  {% endif %}
+  </div>
+</details>
