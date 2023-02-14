@@ -63,15 +63,25 @@ def test_measure_form_invalid_conditions_data(
     # formset errors messages are test in view tests
 
 
-def test_measure_forms_details_valid_data(measure_type, erga_omnes):
-    data = {
+def test_measure_forms_details_valid_data(measure_type):
+    start_date = {
         "measure_type": measure_type.pk,
-        "start_date_0": 2,
-        "start_date_1": 4,
-        "start_date_2": 2021,
-        "geographical_area": erga_omnes.pk,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2023,
     }
-    form = forms.MeasureDetailsForm(data, prefix="")
+    start_and_end_dates = {
+        "measure_type": measure_type.pk,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2023,
+        "end_date_0": 2,
+        "end_date_1": 2,
+        "end_date_2": 2024,
+    }
+    form = forms.MeasureDetailsForm(start_date, prefix="")
+    assert form.is_valid()
+    form = forms.MeasureDetailsForm(start_and_end_dates, prefix="")
     assert form.is_valid()
 
 
@@ -377,22 +387,26 @@ def test_measure_forms_quota_order_number_invalid_data():
     assert not form.is_valid()
 
 
-def test_measure_forms_details_invalid_date_range(measure_type, regulation, erga_omnes):
+def test_measure_forms_details_invalid_date_range(measure_type):
     data = {
         "measure_type": measure_type.pk,
-        "generating_regulation": regulation.pk,
-        "order_number": None,
         "start_date_0": 1,
         "start_date_1": 1,
         "start_date_2": 2000,
-        "geographical_area": erga_omnes.pk,
+        "end_date_0": 1,
+        "end_date_1": 1,
+        "end_date_2": 1999,
     }
     form = forms.MeasureDetailsForm(data, initial={}, prefix="")
     # In the real wizard view the prefix will be populated with the name of the form. It's left blank here to make the mock form data simpler
     assert not form.is_valid()
     assert (
         form.errors["__all__"][0]
-        == "The date range of the measure can't be outside that of the measure type: [2020-01-01, None) does not contain [2000-01-01, None)"
+        == "The date range of the measure can't be outside that of the measure type: [2020-01-01, None) does not contain [2000-01-01, 1999-01-01]"
+    )
+    assert (
+        form.errors["end_date"][0]
+        == "The end date must be the same as or after the start date."
     )
 
 
