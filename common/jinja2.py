@@ -8,6 +8,7 @@ from django.contrib.humanize.templatetags.humanize import intcomma
 from django.template.defaultfilters import pluralize
 from django.templatetags.static import static
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.timezone import template_localtime
 from govuk_frontend_jinja.templates import Environment
 from govuk_frontend_jinja.templates import NunjucksExtension
@@ -134,6 +135,7 @@ def environment(**kwargs):
             "intcomma": intcomma,
             "url": reverse,
             "webpack_static": webpack_static,
+            "mark_safe": mark_safe,
         },
     )
 
