@@ -479,9 +479,8 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     )
 
     assert response.status_code == 302
-    response_url = url
     # Only compare the response URL up to the query string.
-    assert response.url[: len(response_url)] == response_url
+    assert response.url[: len(url)] == url
 
     session_workbasket.refresh_from_db()
 
