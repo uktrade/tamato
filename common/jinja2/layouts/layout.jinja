@@ -30,7 +30,7 @@
   "serviceName": service_name,
   "serviceUrl": "/",
   "navigation": [
-    { "html": workbasket_html } if request.session.workbasket else "",
+    { "html": workbasket_html } if workbasket_html else "",
     {
       "href": url("logout") if request.user.is_authenticated else settings.LOGIN_URL,
       "text": "Sign out" if request.user.is_authenticated else "Sign In"
