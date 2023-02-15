@@ -1407,7 +1407,7 @@ def test_measure_list_redirect(form_action, valid_user_client, session_workbaske
 
     url_mapping = {
         "remove-selected": reverse("measure-ui-delete-multiple"),
-        "edit-selected": reverse("measure-ui-edit-multiple-end-date"),
+        "edit-selected": reverse("measure-ui-edit-multiple"),
         "persist-selection": f"{reverse('measure-ui-list')}?{params}",
         "foo": reverse("measure-ui-list"),
     }

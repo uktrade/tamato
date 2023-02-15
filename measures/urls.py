@@ -4,6 +4,7 @@ from rest_framework import routers
 
 from common.paths import get_ui_paths
 from measures import views
+from measures.conditions import measure_edit_condition_dict
 
 api_router = routers.DefaultRouter()
 api_router.register(r"measure_types", views.MeasureTypeViewSet, basename="measuretype")
@@ -18,6 +19,24 @@ ui_patterns = [
             done_step_name="complete",
         ),
         name="measure-ui-create",
+    ),
+    path(
+        "edit-multiple/",
+        views.MeasureEditWizard.as_view(
+            url_name="measure-ui-edit-multiple",
+            done_step_name="complete",
+            condition_dict=measure_edit_condition_dict,
+        ),
+        name="measure-ui-edit-multiple",
+    ),
+    path(
+        "edit-multiple/<step>/",
+        views.MeasureEditWizard.as_view(
+            url_name="measure-ui-edit-multiple",
+            done_step_name="complete",
+            condition_dict=measure_edit_condition_dict,
+        ),
+        name="measure-ui-edit-multiple",
     ),
     path(
         "delete-multiple-measures/",

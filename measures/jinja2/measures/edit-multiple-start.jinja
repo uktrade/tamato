@@ -1,0 +1,26 @@
+
+{% extends "layouts/form.jinja" %}
+{% from 'macros/create_link.jinja' import create_link %}
+
+{% set page_title = step_metadata[wizard.steps.current].title %}
+{% set page_subtitle = "Edit measures" %}
+{% set info = "Edit measures" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds govuk-!-padding-right-9">
+      <span class="govuk-caption-l">{{ page_subtitle|default("") }}</span>
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+      <p class="govuk-body">Editing measures:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        {% for measure in measures %}<li>{{ create_link(url("measure-ui-detail", kwargs={"sid": measure.sid}), measure.sid) }}</li>{% endfor %}
+      </ul>
+
+      {% call django_form(action=view.get_step_url(wizard.steps.current)) %}
+        {{ wizard.management_form }}
+        {% block form %}{{ crispy(form) }}{% endblock %}
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %}
