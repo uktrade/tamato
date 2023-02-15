@@ -9,8 +9,8 @@ class HmrcSdesClient(APIClient):
     """
     Client for HMRC Secure Data Exchange Notifications API.
 
-    See https://developer.service.hmrc.gov.uk/api-
-    documentation/docs/api/service/secure-data-exchange-notifications/1.0
+    See
+    https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/secure-data-exchange-notifications/1.0
     """
 
     base_url = "https://test-api.service.hmrc.gov.uk"
@@ -64,7 +64,6 @@ class HmrcSdesClient(APIClient):
 
     def notify_transfer_complete(self, upload):
         """Notifies that a given bulk file transfer is complete."""
-
         return self.post(
             f"{self.base_url}/organisations/notification/files/transfer/complete/{self.srn}",
             data=upload.notification_payload,
@@ -72,7 +71,6 @@ class HmrcSdesClient(APIClient):
 
     def notify_transfer_ready(self, upload):
         """Notifies that a given bulk file transfer is ready for processing."""
-
         return self.post(
             f"{self.base_url}/organisations/notification/files/transfer/ready/{self.srn}",
             data=upload.notification_payload,

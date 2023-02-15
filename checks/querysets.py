@@ -126,7 +126,6 @@ class TransactionCheckQueryset(CTEQuerySet):
         By default transactions in ARCHIVED workbaskets are ignored, since these
         workbaskets exist outside of the normal workflow.
         """
-
         if include_archived:
             ignore_filter = {}
         else:

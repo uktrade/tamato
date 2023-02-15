@@ -99,7 +99,6 @@ class ValidityStartQueryset(CTEQuerySet):
                 valid_between__contains=date.today(),
             )
         """
-
         # Models with a single validity date always represent some feature of a
         # "parent model" and are only live for as long as that model is live.
         # The `over_field` is the field on this model that is a foreign key to

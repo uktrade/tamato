@@ -452,10 +452,12 @@ class FormSet(forms.BaseFormSet):
     """
     Adds the ability to add another form to the formset on submit.
 
-    If the form POST data contains an "ADD" field with the value "1", the formset
+    If the form POST data contains an "ADD" field with the value "1", the
+    formset
     will be redisplayed with a new empty form appended.
 
-    Deleting a subform will also redisplay the formset, with the order of the forms
+    Deleting a subform will also redisplay the formset, with the order of the
+    forms
     preserved.
     """
 

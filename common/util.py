@@ -368,7 +368,6 @@ def get_field_tuple(model: Model, field_name: str) -> Tuple[str, Any]:
     :param field str: The name of the field (including relation spanning lookups) to fetch
     :rtype: Any
     """
-
     if field_name == "valid_between__lower":
         return "valid_between__startswith", model.valid_between.lower
 
@@ -486,7 +485,6 @@ def get_taric_template(model) -> str:
 
     Doesn't need to handle anything beyond WordsLikeThis.
     """
-
     snake_case_name = CAMEL_CASE_CAPS.sub(r"_\1", model.__class__.__name__).lower()
     template_name = f"taric/{snake_case_name}.xml"
 
@@ -505,7 +503,6 @@ def get_taric_template(model) -> str:
 
 def get_model_indefinite_article(model_instance: Model) -> Optional[str]:
     """Returns "a" or "an" based on the verbose_name."""
-
     # XXX naive, but works for all current models
     name = model_instance._meta.verbose_name
 

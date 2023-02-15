@@ -174,9 +174,9 @@ def assert_spanning_enforced(spanning_dates, update_type):
 
     This is useful in implementing tests for business rules of the form:
 
-        When a "contained object" is used in a "container object" the validity
-        period of the "container object" must span the validity period of the
-        "contained object".
+    When a "contained object" is used in a "container object" the validity
+    period of the "container object" must span the validity period of the
+    "contained object".
     """
 
     def check(
@@ -1396,10 +1396,12 @@ def unordered_transactions():
     Fixture that creates some transactions, where one is a draft.
 
     The draft transaction has approved transactions on either side, this allows
-    testing of save_draft and it's callers to verify the transactions are getting
+    testing of save_draft and it's callers to verify the transactions are
+    getting
     sorted.
 
-    UnorderedTransactionData is returned, so the user can set the new_transaction partition to DRAFT
+    UnorderedTransactionData is returned, so the user can set the
+    new_transaction partition to DRAFT
     and while also using an existing_transaction.
     """
     from common.tests.factories import ApprovedTransactionFactory

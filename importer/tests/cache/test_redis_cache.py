@@ -80,7 +80,6 @@ def test_dump_return_correctly():
     Only used for pickle to write to file - but
     exists in base class.
     """
-
     object_cache = redis.RedisCacheEngine()
     assert object_cache.dump() is None
 

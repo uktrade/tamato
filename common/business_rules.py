@@ -38,7 +38,6 @@ class BusinessRuleViolation(Exception):
 
         :return Optional[str]: The error message
         """
-
         if self.__doc__:
             # use the docstring as the error message, up to the first blank line
             message, *_ = self.__doc__.split("\n\n", 1)
@@ -187,7 +186,6 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
     :param cutoff Union[date, datetime, str]: The date, datetime or isoformat
         date string of the time before which the rule should not apply
     """
-
     if isinstance(cutoff, str):
         cutoff = date.fromisoformat(cutoff)
 
@@ -351,9 +349,9 @@ class ValidityPeriodContained(BusinessRule):
 
     Checks that the following is true:
 
-        for contained_object in contained_objects:
-            container_object.valid_between contains
-            contained_object.valid_between
+    for contained_object in contained_objects:
+    container_object.valid_between contains
+    contained_object.valid_between
     """
 
     container_field_name: Optional[str] = None

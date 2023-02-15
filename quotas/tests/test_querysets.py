@@ -16,7 +16,6 @@ def test_with_is_origin_quota(number_of_certificates, is_origin_quota: bool):
     After creating an instance of the model, checks whether it is marked as an
     origin quota.
     """
-
     model_factory = factories.QuotaOrderNumberFactory.create(
         required_certificates=[
             factories.CertificateFactory.create()

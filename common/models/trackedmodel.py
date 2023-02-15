@@ -135,7 +135,8 @@ class TrackedModel(PolymorphicModel):
     """
     The fields which together form a composite unique key for each model.
 
-    The system ID (or SID) field, 'sid' is normally the unique identifier of a TARIC
+    The system ID (or SID) field, 'sid' is normally the unique identifier of a
+    TARIC
     model, but in places where this does not exist models can declare their own.
     (Note that because multiple versions of each model will exist this does not
     actually equate to a ``UNIQUE`` constraint in the database.)
@@ -163,7 +164,8 @@ class TrackedModel(PolymorphicModel):
         Create and return a new version of the object. Callers can override
         existing data by passing in keyword args.
 
-        The new version is added to a transaction which is created and added to the passed in workbasket
+        The new version is added to a transaction which is created and added to
+        the passed in workbasket
         (or may be supplied as a keyword arg).
 
         `update_type` must be UPDATE or DELETE, with UPDATE as the default.

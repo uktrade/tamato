@@ -21,7 +21,6 @@ pytestmark = pytest.mark.django_db
 
 def test_ON1(assert_handles_duplicates):
     """Quota order number id + start date must be unique."""
-
     assert_handles_duplicates(
         factories.QuotaOrderNumberFactory,
         business_rules.ON1,
@@ -108,7 +107,6 @@ def test_ON6(date_ranges):
     Only applies to quota order numbers with a validity start date after
     2006-12-31.
     """
-
     origin = factories.QuotaOrderNumberOriginFactory.create(
         geographical_area__valid_between=date_ranges.normal,
         valid_between=date_ranges.normal,
@@ -153,7 +151,6 @@ def test_ON9(date_ranges):
 
     This rule is only applicable for measure with start date after 31/12/2007.
     """
-
     order_number = factories.QuotaOrderNumberFactory.create(
         valid_between=date_ranges.normal,
     )
@@ -174,7 +171,6 @@ def test_ON10(date_ranges):
 
     This rule is only applicable for measures with start date after 31/12/2007.
     """
-
     measure = factories.MeasureWithQuotaFactory.create(
         order_number__origin__valid_between=date_ranges.normal,
         valid_between=date_ranges.overlap_normal,
@@ -209,7 +205,6 @@ def test_ON11(delete_record):
 
     This rule is only applicable for measure with start date after 31/12/2007.
     """
-
     measure = factories.MeasureWithQuotaFactory.create()
     deleted = delete_record(measure.order_number)
     with pytest.raises(BusinessRuleViolation):
@@ -223,7 +218,6 @@ def test_ON12(delete_record):
 
     This rule is only applicable for measure with start date after 31/12/2007.
     """
-
     measure = factories.MeasureWithQuotaFactory.create()
     deleted = delete_record(measure.order_number.quotaordernumberorigin_set.first())
 
@@ -237,7 +231,6 @@ def test_ON12_does_not_raise(delete_record):
 
     This rule is only applicable for measure with start date after 31/12/2007.
     """
-
     # create measure, and quota order and origin
     measure = factories.MeasureWithQuotaFactory.create()
 
@@ -264,7 +257,6 @@ def test_ON13(area_code, expect_error):
     """An exclusion can only be entered if the order number origin is a geographical
     area group (area code = 1).
     """
-
     origin = factories.QuotaOrderNumberOriginFactory.create(
         geographical_area__area_code=area_code,
     )
@@ -333,7 +325,6 @@ def test_CertificateValidityPeriodMustSpanQuotaOrderNumber(assert_spanning_enfor
 
 def test_QD1(assert_handles_duplicates):
     """Quota order number id + start date must be unique."""
-
     assert_handles_duplicates(
         factories.QuotaDefinitionFactory,
         business_rules.QD1,
@@ -343,7 +334,6 @@ def test_QD1(assert_handles_duplicates):
 
 def test_QD2(date_ranges):
     """The start date must be less than or equal to the end date."""
-
     with pytest.raises(DataError):
         factories.QuotaDefinitionFactory.create(valid_between=date_ranges.backwards)
 
@@ -675,7 +665,6 @@ def test_volume_and_initial_volume_must_match_sub_quota():
 
 def test_QA1(assert_handles_duplicates):
     """The association between two quota definitions must be unique."""
-
     assert_handles_duplicates(
         factories.QuotaAssociationFactory,
         business_rules.QA1,
@@ -740,7 +729,6 @@ def test_QA4(coefficient, expect_error):
 
     When it is not specified a value of 1 is always assumed
     """
-
     kwargs = {}
     if coefficient is not None:
         kwargs["coefficient"] = coefficient
@@ -771,7 +759,6 @@ def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
 
     A sub-quota defined with the 'normal' type must have a coefficient of 1.
     """
-
     existing = factories.QuotaAssociationFactory.create(
         sub_quota__volume=Decimal(existing_volume),
         sub_quota_relation_type=type,

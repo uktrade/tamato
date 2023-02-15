@@ -97,7 +97,6 @@ def test_dump_return_correctly(target):
     Only used for pickle to write to file - but
     exists in base class.
     """
-
     object_cache = target()
     assert object_cache.dump() is None
 

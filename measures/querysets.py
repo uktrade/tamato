@@ -207,7 +207,6 @@ class MeasuresQuerySet(TrackedModelQuerySet, ValidityQuerySet):
         set when other types of regulations are used (abrogation, prorogation,
         etc).
         """
-
         # Computing the end date for case 4 is expensive because it involves
         # aggregating over all of the modifications to the base regulation,
         # where there is one. So we pull this out into a CTE to let Postgres

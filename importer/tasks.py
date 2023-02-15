@@ -144,7 +144,7 @@ def find_and_run_next_batch_chunks(
 
     1) Commodity codes can be split and run by chapter heading as well.
     2) Measures from split files are assumed to be able to run completely
-       asynchronously and so all chunks are setup as tasks once unblocked.
+    asynchronously and so all chunks are setup as tasks once unblocked.
     """
     if batch.dependencies.still_running().exists():
         return

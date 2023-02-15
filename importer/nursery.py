@@ -27,12 +27,16 @@ class TariffObjectNursery:
     Provides an interface between raw data and the Django modelling system for
     the tariff.
 
-    The primary function is to take a raw python object (generally a dictionary) and convert
+    The primary function is to take a raw python object (generally a dictionary)
+    and convert
     it into a row in the database via the Django models.
 
-    This layer of separation comes from the fact that often, when receiving data, the system
-    will receive incomplete data objects which depend on data received later. As a result
-    this "Nursery" is designed to store and look after incomplete data objects until it can
+    This layer of separation comes from the fact that often, when receiving
+    data, the system
+    will receive incomplete data objects which depend on data received later. As
+    a result
+    this "Nursery" is designed to store and look after incomplete data objects
+    until it can
     be matched with the rest of the data and then dispatched to the database.
     """
 

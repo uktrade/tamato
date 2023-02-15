@@ -13,6 +13,7 @@ from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.factories import date_ranges
 from common.tests.factories import end_date
+from common.tests.util import Dates
 from common.tests.util import only_applicable_after
 from common.tests.util import raises_if
 from common.tests.util import requires_export_refund_nomenclature
@@ -55,7 +56,6 @@ def test_MTS2(delete_record):
 
 def test_MTS3(date_ranges):
     """The start date must be less than or equal to the end date."""
-
     with pytest.raises(DataError):
         factories.MeasureTypeSeriesFactory.create(valid_between=date_ranges.backwards)
 
@@ -73,7 +73,6 @@ def test_MT1(assert_handles_duplicates):
 
 def test_MT2(date_ranges):
     """The start date must be less than or equal to the end date."""
-
     with pytest.raises(DataError):
         factories.MeasureTypeFactory.create(valid_between=date_ranges.backwards)
 
@@ -93,7 +92,6 @@ def test_MT3(assert_spanning_enforced):
 
 def test_MT4(reference_nonexistent_record):
     """The referenced measure type series must exist."""
-
     with reference_nonexistent_record(
         factories.MeasureTypeFactory,
         "measure_type_series",
@@ -104,7 +102,6 @@ def test_MT4(reference_nonexistent_record):
 
 def test_MT7(delete_record):
     """A measure type can not be deleted if it is used in a measure."""
-
     measure = factories.MeasureFactory.create()
     deleted = delete_record(measure.measure_type)
     with pytest.raises(BusinessRuleViolation):
@@ -134,7 +131,6 @@ def test_MC1(assert_handles_duplicates):
 
 def test_MC2(date_ranges):
     """The start date must be less than or equal to the end date."""
-
     with pytest.raises(DataError):
         factories.MeasureConditionCodeFactory.create(
             valid_between=date_ranges.backwards,
@@ -185,7 +181,6 @@ def test_MA2(delete_record):
 
 def test_MA3(date_ranges):
     """The start date must be less than or equal to the end date."""
-
     with pytest.raises(DataError):
         factories.MeasureActionFactory.create(valid_between=date_ranges.backwards)
 
@@ -227,7 +222,6 @@ def test_ME1(assert_handles_duplicates):
 
 def test_ME2(reference_nonexistent_record):
     """The measure type must exist."""
-
     with reference_nonexistent_record(
         factories.MeasureFactory,
         "measure_type",
@@ -247,7 +241,6 @@ def test_ME3(assert_spanning_enforced):
 
 def test_ME4(reference_nonexistent_record):
     """The geographical area must exist."""
-
     with reference_nonexistent_record(
         factories.MeasureFactory,
         "geographical_area",
@@ -412,6 +405,243 @@ def test_ME25(
         business_rules.ME25(measure.transaction).validate(measure)
 
 
+@pytest.fixture
+def existing_goods_nomenclature(date_ranges):
+    return factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.big,
+    )
+
+
+def updated_goods_nomenclature(e):
+    original = e.indents.get()
+    original.indent = 1
+    original.save(force_write=True)
+
+    good = factories.GoodsNomenclatureFactory.create(
+        item_id=e.item_id[:8] + "90",
+        valid_between=e.valid_between,
+        indent__indent=e.indents.first().indent + 1,
+    )
+
+    factories.GoodsNomenclatureIndentFactory.create(
+        indented_goods_nomenclature=good,
+        update_type=UpdateType.UPDATE,
+        version_group=good.indents.first().version_group,
+        validity_start=good.indents.first().validity_start,
+        indent=e.indents.first().indent - 1,
+    )
+
+    return good
+
+
+@pytest.fixture(
+    params=(
+        (lambda e: e, True),
+        (
+            lambda e: factories.GoodsNomenclatureFactory.create(
+                item_id=e.item_id[:8] + "90",
+                valid_between=e.valid_between,
+            ),
+            True,
+        ),
+        (
+            updated_goods_nomenclature,
+            False,
+        ),
+    ),
+    ids=[
+        "current:self",
+        "current:child",
+        "former:parent",
+    ],
+)
+def related_goods_nomenclature(request, existing_goods_nomenclature):
+    callable, expected = request.param
+    return callable(existing_goods_nomenclature), expected
+
+
+@pytest.fixture(
+    params=(
+        (None, {"valid_between": factories.date_ranges("normal")}, True),
+        (
+            None,
+            {
+                "valid_between": factories.date_ranges("no_end"),
+                "generating_regulation__valid_between": factories.date_ranges("normal"),
+                "generating_regulation__effective_end_date": factories.end_date(
+                    "normal",
+                ),
+            },
+            True,
+        ),
+        (
+            {"valid_between": factories.date_ranges("no_end")},
+            {"update_type": UpdateType.DELETE},
+            False,
+        ),
+    ),
+    ids=[
+        "explicit",
+        "implicit",
+        "draft:previously",
+    ],
+)
+def existing_measure(request, existing_goods_nomenclature):
+    """
+    Returns a measure that with an attached quota and a flag indicating whether
+    the date range of the measure overlaps with the "normal" date range.
+
+    The measure will either be a new measure or a draft UPDATE to an existing
+    measure. If it is an UPDATE, the measure will be in an unapproved
+    workbasket.
+    """
+    data = {
+        "goods_nomenclature": existing_goods_nomenclature,
+        "additional_code": factories.AdditionalCodeFactory.create(),
+    }
+
+    previous, now, overlaps_normal = request.param
+    if previous:
+        old_version = factories.MeasureWithQuotaFactory.create(**data, **previous)
+        return (
+            factories.MeasureWithQuotaFactory.create(
+                version_group=old_version.version_group,
+                transaction=factories.UnapprovedTransactionFactory(),
+                **data,
+                **now,
+            ),
+            overlaps_normal,
+        )
+    else:
+        return factories.MeasureWithQuotaFactory.create(**data, **now), overlaps_normal
+
+
+@pytest.fixture(
+    params=(
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+            },
+            True,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "measure_type": factories.MeasureTypeFactory.create(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "geographical_area": factories.GeographicalAreaFactory.create(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "order_number": factories.QuotaOrderNumberFactory.create(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "additional_code": factories.AdditionalCodeFactory.create(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "reduction": None,
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": Dates.no_end_before(d.adjacent_earlier.lower),
+                "generating_regulation__valid_between": d.adjacent_earlier,
+                "generating_regulation__effective_end_date": d.adjacent_earlier.upper,
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.later,
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "update_type": UpdateType.DELETE,
+            },
+            False,
+        ),
+    ),
+    ids=[
+        "explicit:overlapping",
+        "explicit:overlapping:measure_type",
+        "explicit:overlapping:geographical_area",
+        "explicit:overlapping:order_number",
+        "explicit:overlapping:additional_code",
+        "explicit:overlapping:reduction",
+        "implicit:not-overlapping",
+        "explicit:not-overlapping",
+        "deleted",
+    ],
+)
+def related_measure_dates(request, date_ranges):
+    callable, date_overlap = request.param
+    return callable(date_ranges), date_overlap
+
+
+@pytest.fixture
+def related_measure_data(
+    related_measure_dates,
+    related_goods_nomenclature,
+    existing_measure,
+):
+    nomenclature, nomenclature_overlap = related_goods_nomenclature
+    validity_data, date_overlap = related_measure_dates
+    existing_measure, overlaps_normal = existing_measure
+    full_data = {
+        "goods_nomenclature": nomenclature,
+        "measure_type": existing_measure.measure_type,
+        "geographical_area": existing_measure.geographical_area,
+        "order_number": existing_measure.order_number,
+        "additional_code": existing_measure.additional_code,
+        "reduction": existing_measure.reduction,
+        "transaction": existing_measure.transaction.workbasket.new_transaction(),
+        **validity_data,
+    }
+    error_expected = date_overlap and nomenclature_overlap and overlaps_normal
+
+    return full_data, error_expected
+
+
+def test_ME32(related_measure_data):
+    """
+    There may be no overlap in time with other measure occurrences with a goods
+    code in the same nomenclature hierarchy which references the same measure
+    type, geo area, order number, additional code and reduction indicator. This
+    rule is not applicable for Meursing additional codes.
+
+    This is an extension of the previously described ME1 to all commodity codes
+    in the upward hierarchy and all commodity codes in the downward hierarchy.
+    """
+    related_data, error_expected = related_measure_data
+    related = factories.MeasureFactory.create(**related_data)
+
+    with raises_if(BusinessRuleViolation, error_expected):
+        business_rules.ME32(related.transaction).validate(related)
+
+
+# -- Ceiling/quota definition existence
+
+
 def test_ME10():
     """
     The order number must be specified if the "order number flag" (specified in
@@ -465,7 +695,6 @@ def test_ME117():
     Only origins for quota order numbers managed by the first come first served
     principle are in scope
     """
-
     origin = factories.QuotaOrderNumberOriginFactory.create(
         order_number__mechanism=AdministrationMechanism.FCFS,
     )
@@ -493,7 +722,6 @@ def test_ME118():
 
     This rule is only applicable for measures with start date after 31/12/2007.
     """
-
     assert False
 
 
@@ -505,7 +733,6 @@ def test_ME119(date_ranges):
 
     This rule is only applicable for measures with start date after 31/12/2007.
     """
-
     measure = factories.MeasureWithQuotaFactory.create(
         order_number__origin__valid_between=date_ranges.starts_with_normal,
         valid_between=date_ranges.normal,
@@ -587,7 +814,6 @@ def test_ME9(additional_code, goods_nomenclature, expect_error):
     This means that a goods code is always mandatory in the UK tariff, however this
     business rule is still needed for historical EU measures.
     """
-
     if additional_code:
         additional_code = factories.AdditionalCodeFactory.create()
 
@@ -671,7 +897,6 @@ def test_ME17(reference_nonexistent_record):
     UK tariff does not use meursing tables, so this is essentially saying that
     an additional code must exist.
     """
-
     with reference_nonexistent_record(
         factories.MeasureWithAdditionalCodeFactory,
         "additional_code",
@@ -743,7 +968,6 @@ def test_ME24(reference_nonexistent_record):
     If no measure start date is specified it defaults to the regulation start
     date.
     """
-
     with reference_nonexistent_record(
         factories.MeasureFactory,
         "generating_regulation",
@@ -780,7 +1004,6 @@ def test_ME87(date_ranges):
       tariff to make way for UK equivalents, and to avoid data clashes such as ME32, we DO
       need to be aware of this multiplicity of end dates.
     """
-
     # explicit
     measure = factories.MeasureFactory.create(
         generating_regulation__valid_between=date_ranges.starts_with_normal,
@@ -939,7 +1162,6 @@ def test_ME40(applicability_code, component, condition_component, error_expected
     but not both. CDS will generate errors if either of these conditions are not
     met.
     """
-
     measure = factories.MeasureFactory.create(
         measure_type__measure_component_applicability_code=applicability_code,
     )
@@ -968,7 +1190,6 @@ def test_ME40_skipped_when_deleted(capfd):
 
 def test_ME41(reference_nonexistent_record):
     """The referenced duty expression must exist."""
-
     with reference_nonexistent_record(
         factories.MeasureComponentFactory,
         "duty_expression",
@@ -994,7 +1215,6 @@ def test_ME43():
     than once in a measure, we must use a different expression ID, never the
     same one twice.
     """
-
     measure = factories.MeasureFactory.create()
     existing = factories.MeasureComponentFactory.create(component_measure=measure)
     component = factories.MeasureComponentFactory.create(
@@ -1019,7 +1239,6 @@ def test_ME45(applicability_code, amount):
 
     If the flag is set "not permitted" then no amount may be entered.
     """
-
     measure = factories.MeasureFactory.create()
     component = factories.MeasureComponentFactory.create(
         component_measure=measure,
@@ -1045,7 +1264,6 @@ def test_ME46(applicability_code, monetary_unit):
 
     If the flag is set "not permitted" then no monetary unit may be entered.
     """
-
     if monetary_unit:
         monetary_unit = factories.MonetaryUnitFactory.create()
 
@@ -1074,7 +1292,6 @@ def test_ME47(applicability_code, measurement):
 
     If the flag is set "not permitted" then no measurement unit may be entered.
     """
-
     if measurement:
         measurement = factories.MeasurementFactory.create()
 
@@ -1091,7 +1308,6 @@ def test_ME47(applicability_code, measurement):
 
 def test_ME48(reference_nonexistent_record):
     """The referenced monetary unit must exist."""
-
     with reference_nonexistent_record(
         factories.MeasureComponentWithMonetaryUnitFactory,
         "monetary_unit",
@@ -1144,7 +1360,6 @@ def test_ME52(assert_spanning_enforced):
 
 def test_ME53(reference_nonexistent_record):
     """The referenced measure condition must exist."""
-
     with reference_nonexistent_record(
         factories.MeasureConditionComponentFactory,
         "condition",
@@ -1273,7 +1488,6 @@ def test_ME58(
 
 def test_ME59(reference_nonexistent_record):
     """The referenced action code must exist."""
-
     with reference_nonexistent_record(
         factories.MeasureConditionFactory,
         "action",
@@ -1284,7 +1498,6 @@ def test_ME59(reference_nonexistent_record):
 
 def test_ME60(reference_nonexistent_record):
     """The referenced monetary unit must exist."""
-
     with reference_nonexistent_record(
         factories.MeasureConditionFactory,
         "monetary_unit",
@@ -1334,7 +1547,6 @@ def test_ME64(assert_spanning_enforced):
 
 def test_ME105(reference_nonexistent_record):
     """The referenced duty expression must exist."""
-
     with reference_nonexistent_record(
         factories.MeasureConditionComponentFactory,
         "duty_expression",
@@ -1368,7 +1580,6 @@ def test_ME108(expression, same_condition, expect_error):
     (i.e. it can be re-used in other conditions, no matter what condition type,
     of the same measure)
     """
-
     measure = factories.MeasureFactory.create()
     condition = factories.MeasureConditionFactory.create(dependent_measure=measure)
     factories.MeasureConditionComponentFactory.create(
@@ -1564,7 +1775,6 @@ def test_ME109(applicability_code, amount, error_expected):
 
     If the flag is set to 'not permitted' then no amount may be entered.
     """
-
     measure = factories.MeasureFactory.create()
     condition = factories.MeasureConditionComponentFactory.create(
         condition__dependent_measure=measure,
@@ -1594,7 +1804,6 @@ def test_ME110(applicability_code, monetary_unit, error_expected):
 
     If the flag is set to 'not permitted' then no monetary unit may be entered.
     """
-
     monetary_unit = factories.MonetaryUnitFactory.create() if monetary_unit else None
 
     measure = factories.MeasureFactory.create()
@@ -1627,7 +1836,6 @@ def test_ME111(applicability_code, measurement, error_expected):
     If the flag is set to 'not permitted' then no measurement unit may be
     entered.
     """
-
     measurement = factories.MeasurementFactory.create() if measurement else None
 
     measure = factories.MeasureFactory.create()
@@ -1734,7 +1942,6 @@ def test_ME68():
 
 def test_ME69(reference_nonexistent_record):
     """The associated footnote must exist."""
-
     with reference_nonexistent_record(
         factories.FootnoteAssociationMeasureFactory,
         "associated_footnote",
@@ -1745,7 +1952,6 @@ def test_ME69(reference_nonexistent_record):
 
 def test_ME70():
     """The same footnote can only be associated once with the same measure."""
-
     existing = factories.FootnoteAssociationMeasureFactory.create()
     business_rules.ME70(existing.transaction).validate(existing)
 
@@ -1855,7 +2061,6 @@ def test_ME104(date_ranges, unapproved_transaction):
     If the measure’s measure-generating regulation is ‘approved’, then so must be the
     justification regulation.
     """
-
     measure = factories.MeasureFactory.create(
         valid_between=date_ranges.normal,
         transaction=unapproved_transaction,
