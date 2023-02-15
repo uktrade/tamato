@@ -1406,3 +1406,30 @@ def test_measure_list_redirect(form_action, valid_user_client, session_workbaske
 
     assert response.status_code == 302
     assert response.url == url_mapping[form_action]
+
+
+def test_measure_list_selected_measures_list(valid_user_client):
+    measures = factories.MeasureFactory.create_batch(3)
+
+    session = valid_user_client.session
+    session.update(
+        {
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                f"selectableobject_{measures[0].pk}": 1,
+                f"selectableobject_{measures[1].pk}": 1,
+                f"selectableobject_{measures[2].pk}": 1,
+            },
+        },
+    )
+    session.save()
+
+    url = reverse("measure-ui-list")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    measure_ids_in_table = [a.text for a in soup.select("details table tr td a")]
+
+    selected_measures_ids = [str(measure.sid) for measure in measures]
+
+    assert measure_ids_in_table == selected_measures_ids
