@@ -534,7 +534,7 @@ class PackagedWorkBasket(TimestampedMixin):
         """
         eif = "Immediately"
         if self.eif:
-            eif = self.eif.strftime("%d:%m:%Y")
+            eif = self.eif.strftime("%d/%m/%Y")
 
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
@@ -561,17 +561,13 @@ class PackagedWorkBasket(TimestampedMixin):
         `template_id` should be the ID of the Notify email template of either
         the successfully processed email or failed processing.
         """
-        loading_report_message = "No loading report was provided."
+        loading_report_message = "Loading report: No loading report was provided."
         if self.loading_report.file:
-            loading_report_message = (
-                f'The loading report "{self.loading_report.file_name}" was '
-                "uploaded and is available to download from TAP."
-            )
+            loading_report_message = f"Loading report: {self.loading_report.file_name}"
 
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
             "transaction_count": self.workbasket.transactions.count(),
-            "link_to_file": "",  # TODO: Remove link_to_file after deployment.
             "loading_report_message": loading_report_message,
             "comments": self.loading_report.comments,
         }
