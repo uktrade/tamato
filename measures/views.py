@@ -101,10 +101,15 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
         return [*self.session_store.data]
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(
-            measure_selections=self.measure_selections,
-            **kwargs,
+        context = super().get_context_data(**kwargs)
+        measure_selections = [
+            SelectableObjectsForm.object_id_from_field_name(name)
+            for name in self.measure_selections
+        ]
+        context["measure_selections"] = Measure.objects.filter(
+            pk__in=measure_selections,
         )
+        return context
 
     def get_initial(self):
         return {**self.session_store.data}
