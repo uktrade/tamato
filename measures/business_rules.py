@@ -590,11 +590,13 @@ class ME17(MustExist):
     If the additional code type has as application "non-Meursing" then the
     additional code must exist as a non-Meursing additional code.
 
-    UK tariff does not use meursing tables, so this is essentially saying that an
+    UK tariff does not use meursing tables, so this is essentially saying that
+    an
     additional code must exist.
 
     This refers to the fact that the TARIC Measure record has separate
-    additional_code_type and additional_code fields. Our data model combines these into
+    additional_code_type and additional_code fields. Our data model combines
+    these into
     a single foreign key relation to AdditionalCode.
 
     It is not possible to violate this rule as a result.

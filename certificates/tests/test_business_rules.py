@@ -11,7 +11,6 @@ pytestmark = pytest.mark.django_db
 
 def test_CET1(assert_handles_duplicates):
     """The type of the Certificate must be unique."""
-
     assert_handles_duplicates(
         factories.CertificateTypeFactory,
         business_rules.CET1,
@@ -20,7 +19,6 @@ def test_CET1(assert_handles_duplicates):
 
 def test_CET2(delete_record):
     """The Certificate type cannot be deleted if it is used in a Certificate."""
-
     certificate = factories.CertificateFactory.create()
 
     with pytest.raises(BusinessRuleViolation):
@@ -31,7 +29,6 @@ def test_CET2(delete_record):
 
 def test_CET3(date_ranges):
     """The start date must be less than or equal to the end date."""
-
     with pytest.raises(DataError):
         factories.CertificateTypeFactory.create(valid_between=date_ranges.backwards)
 
@@ -39,7 +36,6 @@ def test_CET3(date_ranges):
 @pytest.mark.xfail(reason="CE2 disabled")
 def test_CE2(assert_handles_duplicates):
     """The combination certificate type and code must be unique."""
-
     assert_handles_duplicates(
         factories.CertificateFactory,
         business_rules.CE2,
@@ -49,7 +45,6 @@ def test_CE2(assert_handles_duplicates):
 
 def test_CE3(date_ranges):
     """The start date must be less than or equal to the end date."""
-
     with pytest.raises(DataError):
         factories.CertificateFactory.create(valid_between=date_ranges.backwards)
 

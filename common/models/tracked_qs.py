@@ -62,7 +62,8 @@ class TrackedModelQuerySet(
         Otherwise, if TransactionMiddleware has not been executed (for
         instance, when running from the shell / Jupyter), then care must be
         taken to ensure the global current transaction is set up correctly
-        (see ``set_current_transaction()`` and ``override_current_transaction()``
+        (see ``set_current_transaction()`` and
+        ``override_current_transaction()``
         in ``common.models.utils``).
         """
         return self.approved_up_to_transaction(
@@ -303,7 +304,6 @@ class TrackedModelQuerySet(
 
     def with_workbasket(self, workbasket):
         """Add the latest versions of objects from the specified workbasket."""
-
         if workbasket is None:
             return self
 

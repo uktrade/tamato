@@ -118,7 +118,6 @@ def build_dependency_tree(use_subrecord_codes: bool = False) -> Dict[str, Set[st
             "220": {"215", "210"},
         }
     """
-
     dependency_map = {}
 
     record_codes = {

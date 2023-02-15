@@ -114,7 +114,6 @@ class TransactionQueryset(models.QuerySet):
 
         Transaction order is updated to be contiguous.
         """
-
         transactions = self.order_by("partition", "order")
 
         # Ensure order of the transactions in this query to start at end of the partition.
@@ -298,7 +297,6 @@ class Transaction(TimestampedMixin):
 
         Used for storing in the session.
         """
-
         return json.dumps(
             {key: val for key, val in self.__dict__.items() if key != "_state"},
             cls=DjangoJSONEncoder,
@@ -329,7 +327,8 @@ class Transaction(TimestampedMixin):
         Attempts a balance between readability and enough information to debug
         issues, so contains the pk and status of the transaction and workbasket.
 
-        Stringification is lazily evaluated, so this property can be passed to loggers.
+        Stringification is lazily evaluated, so this property can be passed to
+        loggers.
         """
         return (
             f"transaction: {self.partition}, {self.pk} "
@@ -356,10 +355,12 @@ class TransactionGroup(models.Model):
     """
     An ordered group of Transactions.
 
-    Transactions often must be applied in a specific sequence, for example to ensure
+    Transactions often must be applied in a specific sequence, for example to
+    ensure
     a Measure exists before a Footnote can be associated with it.
 
-    A Transaction may belong to several groups, for example a group associated with an
+    A Transaction may belong to several groups, for example a group associated
+    with an
     imported Envelope, and with a WorkBasket.
     """
 

@@ -45,17 +45,17 @@ def renumber_paths(element: ElementTree.Element, start_from: int, *paths: str):
 
     Example input:
 
-        <root>
-            <element id="123"/>
-            <something>124</something>
-        </root>
+    <root>
+    <element id="123"/>
+    <something>124</something>
+    </root>
 
     Calling ``renumber(input, 456, "element[@id]", "something")`` results in:
 
-        <root>
-            <element id="456"/>
-            <sometihng>457</something>
-        </root>
+    <root>
+    <element id="456"/>
+    <sometihng>457</something>
+    </root>
     """
     add_value = None
     for path in paths:

@@ -32,7 +32,6 @@ def test_ROIMB3(date_ranges):
 
 def test_ROIMB4(reference_nonexistent_record):
     """The referenced regulation group must exist."""
-
     with reference_nonexistent_record(
         factories.BaseRegulationFactory,
         "regulation_group",
@@ -73,7 +72,6 @@ def test_ROIMB8(date_ranges):
 
     Only applicable for measures with start date after 31/12/2003.
     """
-
     measure = factories.MeasureFactory.create(
         generating_regulation=factories.BaseRegulationFactory.create(
             valid_between=date_ranges.normal,

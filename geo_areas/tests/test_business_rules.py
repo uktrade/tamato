@@ -34,7 +34,6 @@ def test_GA1(assert_handles_duplicates):
 
 def test_GA2(date_ranges):
     """The start date must be less than or equal to the end date."""
-
     with pytest.raises(DataError):
         factories.GeographicalAreaFactory.create(valid_between=date_ranges.backwards)
 
@@ -70,7 +69,6 @@ def test_GA3_first_description_must_have_same_start_date(date_ranges):
 
 def test_GA3_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
-
     existing = factories.GeographicalAreaDescriptionFactory.create()
     duplicate = factories.GeographicalAreaDescriptionFactory.create(
         described_geographicalarea=existing.described_geographicalarea,
@@ -100,7 +98,6 @@ def test_GA3_description_start_before_geographical_area_end(date_ranges):
 
 def test_GA4():
     """A parent geographical area must be a group."""
-
     parent = factories.GeographicalAreaFactory.create(area_code=0)
     child = factories.GeographicalAreaFactory.create(area_code=1, parent=parent)
     with pytest.raises(BusinessRuleViolation):
@@ -133,7 +130,6 @@ def test_GA6():
 @pytest.mark.xfail(reason="GA7 disabled")
 def test_GA7(date_ranges):
     """Geographic Areas with the same area id must not overlap."""
-
     existing = factories.GeographicalAreaFactory.create(
         valid_between=date_ranges.normal,
     )
@@ -175,7 +171,6 @@ def test_GA11(assert_spanning_enforced):
 
 def test_GA12(reference_nonexistent_record):
     """The referenced geographical area id (member) must exist."""
-
     with reference_nonexistent_record(
         factories.GeographicalMembershipFactory,
         "member",
@@ -206,7 +201,6 @@ def test_GA13(area_code, expect_error):
 
 def test_GA14(reference_nonexistent_record):
     """The referenced geographical area group id must exist."""
-
     with reference_nonexistent_record(
         factories.GeographicalMembershipFactory,
         "geo_group",

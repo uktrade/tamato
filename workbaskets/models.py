@@ -378,7 +378,6 @@ class WorkBasket(TimestampedMixin):
 
         (This will normally mean a move from DRAFT to REVISION).
         """
-
         self.approver_id = user
 
         # Move transactions from the DRAFT partition into the REVISION partition.
@@ -393,7 +392,6 @@ class WorkBasket(TimestampedMixin):
     )
     def queue(self, user: int, scheme_name: str):
         """Add workbasket to packaging queue."""
-
         self.full_clean()
 
         if not self.transactions.exists():
@@ -475,7 +473,6 @@ class WorkBasket(TimestampedMixin):
     @classmethod
     def current(cls, request):
         """Get the current workbasket in the session."""
-
         if "workbasket" in request.session:
             workbasket = cls.load_from_session(request.session)
 

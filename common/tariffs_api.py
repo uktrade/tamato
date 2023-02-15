@@ -68,7 +68,6 @@ def get_quota_definitions_data(order_number, object_list):
     We use the quota order number and start date of each of its definition
     periods to build urls to get the data for all of them.
     """
-
     urls = build_urls(order_number, object_list)
 
     data = asyncio.run(async_get_all(urls))

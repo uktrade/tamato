@@ -160,14 +160,14 @@ def get_checkable_data(model: TrackedModel, ignore=frozenset()):
 
     For example:
 
-        get_checkable_data(FootnoteDescriptionFactory(), ignore={"sid"})
-        # {
-        #   "description": "My sample footnote text",
-        #   "described_footnote": {
-        #     "footnote_type__footnote_type_id": "FN"
-        #     "footnote_id": "123",
-        #    },
-        # }
+    get_checkable_data(FootnoteDescriptionFactory(), ignore={"sid"})
+    # {
+    #   "description": "My sample footnote text",
+    #   "described_footnote": {
+    #     "footnote_type__footnote_type_id": "FN"
+    #     "footnote_id": "123",
+    #    },
+    # }
     """
     checked_field_names = {f.name for f in model.copyable_fields} - set(ignore)
     data = {
@@ -776,7 +776,6 @@ def only_applicable_after(cutoff):
 
     :param cutoff: A date string, or datetime object before which the test should fail.
     """
-
     cutoff = parse_date(cutoff)
 
     def decorator(fn):

@@ -125,11 +125,13 @@ class TransactionPartitionQuerySet(QuerySet):
 
         This differs from `object.versions` which includes all draft versions.
 
-        At the database level, that is any transaction in this partition with lower
+        At the database level, that is any transaction in this partition with
+        lower
         order (and in this workbasket in the case of DRAFT), or any transaction
         in an earlier partition [1].
 
-        [1] Partition values roughly encode temporal data:  Each value represents
+        [1] Partition values roughly encode temporal data:  Each value
+        represents
         an "era" of transactions, starting at SEED_FILE and ending at DRAFT.
         """
         from common.models.transactions import TransactionPartition

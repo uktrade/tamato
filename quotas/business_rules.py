@@ -177,7 +177,6 @@ class ON12(BusinessRule):
         Get all the origins linked to this measure. Loop over these origins and
         check that there are no measures linked to the origin .
         """
-
         measures = measures_models.Measure.objects.approved_up_to_transaction(
             order_number_origin.transaction,
         )

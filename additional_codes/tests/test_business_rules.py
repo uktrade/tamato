@@ -19,7 +19,6 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.xfail(reason="CT1 disabled")
 def test_CT1(assert_handles_duplicates):
     """The additional code type must be unique."""
-
     assert_handles_duplicates(
         factories.AdditionalCodeTypeFactory,
         business_rules.CT1,
@@ -37,7 +36,6 @@ def test_CT2():
 @requires_meursing_tables
 def test_CT3():
     """The Meursing table plan must exist."""
-
     assert False
 
 
@@ -63,7 +61,6 @@ def test_ACN1(assert_handles_duplicates):
 
 def test_ACN2_type_must_exist(reference_nonexistent_record):
     """The referenced additional code type must exist."""
-
     with pytest.raises(models.AdditionalCodeType.DoesNotExist):
         with reference_nonexistent_record(
             factories.AdditionalCodeFactory,
@@ -162,7 +159,6 @@ footnote_association = pytest.mark.skip(reason="Footnote association is not requ
 @footnote_association
 def test_ACN6():
     """The footnotes that are referenced must exist."""
-
     assert False
 
 
@@ -235,7 +231,6 @@ def test_ACN5_first_description_must_have_same_start_date(date_ranges):
 
 def test_ACN5_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
-
     existing = factories.AdditionalCodeDescriptionFactory.create()
     duplicate = factories.AdditionalCodeDescriptionFactory.create(
         described_additionalcode=existing.described_additionalcode,

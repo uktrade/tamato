@@ -25,7 +25,6 @@ def check_model(trackedmodel_id: int, context_id: int):
     6-7 seconds max. So if the check is taking considerably longer than this, it
     is probably broken and should be killed to free up the worker.
     """
-
     model: TrackedModel = TrackedModel.objects.get(pk=trackedmodel_id)
     context: TransactionCheck = TransactionCheck.objects.get(pk=context_id)
     transaction = context.transaction
@@ -103,7 +102,6 @@ def setup_or_resume_transaction_check(transaction: Transaction):
 @app.task(bind=True)
 def check_transaction(self, transaction_id: int):
     """Run and record checks for the passed transaction ID, asynchronously."""
-
     transaction = Transaction.objects.get(pk=transaction_id)
     check, model_ids = setup_or_resume_transaction_check(transaction)
     if check.completed and not any(model_ids):
@@ -156,7 +154,6 @@ def update_checks(self):
 
     TODO: Ensure this task is *not* stacking up and blocking the worker!
     """
-
     ids_require_update = (
         Transaction.objects.exclude(
             pk__in=TransactionCheck.objects.requires_update(False).values(

@@ -71,7 +71,6 @@ class Checker:
 
     def apply(self, model: TrackedModel, context: TransactionCheck):
         """Applies the check to the model and records success."""
-
         success, message = False, None
         try:
             with override_current_transaction(context.transaction):

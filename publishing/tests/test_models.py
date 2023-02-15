@@ -353,7 +353,6 @@ def test_pause_and_unpause_queue(unpause_queue):
 )
 def test_create_envelope(envelope_storage, settings):
     """Test multiple Envelope instances creates the correct."""
-
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     packaged_workbasket = factories.QueuedPackagedWorkBasketFactory()
     with mock.patch(

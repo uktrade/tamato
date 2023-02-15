@@ -119,10 +119,13 @@ class DescribedMixin:
         Get the latest descriptions related to this instance of the Tracked
         Model.
 
-        If there is no Description relation existing a `NoDescriptionError` is raised.
+        If there is no Description relation existing a `NoDescriptionError` is
+        raised.
 
-        If a transaction is provided then all latest descriptions that are either approved
-        or in the workbasket of the transaction up to the transaction will be provided.
+        If a transaction is provided then all latest descriptions that are
+        either approved
+        or in the workbasket of the transaction up to the transaction will be
+        provided.
         """
         try:
             descriptions_model = self.descriptions.model

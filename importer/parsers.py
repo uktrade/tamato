@@ -115,8 +115,6 @@ class ElementParser:
         self.text = None
         self.started = False
 
-        print(tag)
-
         if tag:
             self.tag = tag
 
@@ -167,7 +165,6 @@ class ElementParser:
         don't want to select any child parsers. If it is not, we know that this
         is an element that this parser should be parsing.
         """
-
         self.parent = parent
         if not self.started:
             self.data = dict()
@@ -270,7 +267,7 @@ class TextElement(ValueElementMixin, ElementParser):
 
     .. code-block:: XML
 
-        <msg:record.code>Example Text</msg:record.code>
+    <msg:record.code>Example Text</msg:record.code>
     """
 
     native_type = str
@@ -282,7 +279,7 @@ class IntElement(ValueElementMixin, ElementParser):
 
     .. code-block:: XML
 
-        <msg:record.code>430</msg:record.code>
+    <msg:record.code>430</msg:record.code>
     """
 
     native_type = int
@@ -304,8 +301,8 @@ class BooleanElement(ValueElementMixin, ElementParser):
 
     .. code-block:: XML
 
-        <msg:some.value>1</msg:some.value>
-        <msg:some.value>0</msg:some.value>
+    <msg:some.value>1</msg:some.value>
+    <msg:some.value>0</msg:some.value>
     """
 
     native_type = bool
@@ -344,7 +341,7 @@ class CompoundElement(ValueElementMixin, ElementParser):
 
     .. code-block:: XML
 
-        <msg:some.value>one|two|three</msg:some.value>
+    <msg:some.value>one|two|three</msg:some.value>
     """
 
     native_type = tuple

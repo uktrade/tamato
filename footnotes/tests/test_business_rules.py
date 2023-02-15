@@ -15,7 +15,6 @@ pytestmark = pytest.mark.django_db
 
 def test_FOT1(assert_handles_duplicates):
     """The type of the footnote must be unique."""
-
     assert_handles_duplicates(
         factories.FootnoteTypeFactory,
         business_rules.FOT1,
@@ -24,7 +23,6 @@ def test_FOT1(assert_handles_duplicates):
 
 def test_FOT2(delete_record):
     """The footnote type cannot be deleted if it is used in a footnote."""
-
     footnote = factories.FootnoteFactory.create()
     deleted_record = delete_record(footnote.footnote_type)
 
@@ -34,7 +32,6 @@ def test_FOT2(delete_record):
 
 def test_FOT3(date_ranges):
     """The start date must be less than or equal to the end date."""
-
     with pytest.raises(DataError):
         factories.FootnoteTypeFactory.create(valid_between=date_ranges.backwards)
 
@@ -44,7 +41,6 @@ def test_FOT3(date_ranges):
 
 def test_FO2(assert_handles_duplicates):
     """The combination footnote type and code must be unique."""
-
     assert_handles_duplicates(
         factories.FootnoteFactory,
         business_rules.FO2,
@@ -53,7 +49,6 @@ def test_FO2(assert_handles_duplicates):
 
 def test_FO3(date_ranges):
     """The start date must be less than or equal to the end date."""
-
     with pytest.raises(DataError):
         factories.FootnoteFactory.create(valid_between=date_ranges.backwards)
 
@@ -79,7 +74,6 @@ def test_FO4_first_description_must_have_same_start_date(date_ranges):
 
 def test_FO4_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
-
     footnote = factories.FootnoteFactory.create()
     duplicate = factories.FootnoteDescriptionFactory.create(
         described_footnote=footnote,

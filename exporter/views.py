@@ -72,7 +72,6 @@ def tracked_model_to_activity_stream_item(obj: TrackedModel):
     Instead of providing the full nested data for every related object the
     relations are removed and provided as their equivalent ActivityStream IDs.
     """
-
     item_type = get_activity_stream_item_type(obj)
     item_id = get_activity_stream_item_id(obj)
     published = obj.transaction.updated_at.isoformat()
@@ -136,6 +135,14 @@ def activity_stream(request):
     are given.
 
     The response conforms to the ActivityStream format defined at
+
+
+
+
+
+
+
+
     https://www.w3.org/TR/activitystreams-core/
     """
     per_page = 50

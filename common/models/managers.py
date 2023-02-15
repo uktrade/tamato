@@ -56,7 +56,6 @@ class TrackedModelManager(PolymorphicManager):
         The logic duplicates RelatedManager and ManyRelatedManager, but for the
         former uses version groups instead of foreign keys.
         """
-
         if hasattr(self, "field"):
             # RelatedManager: find all of the remote objects that refer to this
             # instance by querying on the field name on the remote objects.

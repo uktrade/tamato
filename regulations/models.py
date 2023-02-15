@@ -265,10 +265,12 @@ class Amendment(TrackedModel):
     """
     This regulation amends a base regulation or an antidumping regulation.
 
-    It can affect the tariff and commercial aspects of the updated regulation but it
+    It can affect the tariff and commercial aspects of the updated regulation
+    but it
     does not extend nor close the regulation itself.
 
-    If the modification regulation has no end date of validity, its end date is defined
+    If the modification regulation has no end date of validity, its end date is
+    defined
     by the end date of the regulations it modifies.
     """
 
@@ -300,10 +302,12 @@ class Extension(TrackedModel):
     validity end date of a base or modification regulation. This means that the
     measures falling under the prorogued regulation are prorogued as well.
 
-    A prorogation regulation can extend several regulations at different dates and a
+    A prorogation regulation can extend several regulations at different dates
+    and a
     regulation can be extended several times.
 
-    If a regulation has been prorogued, its published end date does not take into
+    If a regulation has been prorogued, its published end date does not take
+    into
     account the prorogation and is different from its effective end date.
 
     Prorogation regulations are also called "extension regulations".
@@ -373,10 +377,12 @@ class Termination(TrackedModel):
     applies by definition to all measures under the abrogated regulation; unless
     these measures have a specific end dates.
 
-    If a regulation has been abrogated, its published end date does not take into
+    If a regulation has been abrogated, its published end date does not take
+    into
     account the abrogation and is different from its effective end date.
 
-    An explicit abrogation regulation has no validity period; it ends the validity
+    An explicit abrogation regulation has no validity period; it ends the
+    validity
     period of a measure generating regulation or an FTS regulation.
     """
 

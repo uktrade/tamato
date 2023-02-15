@@ -164,7 +164,8 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
 
     Only a region or a country may be a member, and only a group can be a group.
 
-    The validity ranges of all memberships must also fit completely within the validity
+    The validity ranges of all memberships must also fit completely within the
+    validity
     ranges of the groups.
     """
 

@@ -310,7 +310,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         Raises DoesNotExist if no kwargs passed.
 
-        First attempts to retrieve the object PK from the cache (saves queries). If this
+        First attempts to retrieve the object PK from the cache (saves queries).
+        If this
         is not found a database query is made to find the object.
 
         returns tuple(Object: model, bool: From Cache)
@@ -343,14 +344,17 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         """
         Load a given link for a handler.
 
-        This method first attempts to find any custom method existing on the handler
+        This method first attempts to find any custom method existing on the
+        handler
         for finding the specific link. The custom method must be named:
 
-            get_{LINK_NAME}_link
+        get_{LINK_NAME}_link
 
-        If no custom method is found then :py:meth:`.BaseHandler.get_generic_link` is used.
+        If no custom method is found then
+        :py:meth:`.BaseHandler.get_generic_link` is used.
 
-        If no object matching the given link is found and the link is non-optional then a
+        If no object matching the given link is found and the link is non-
+        optional then a
         DoesNotExist error is raised.
         """
         identifying_fields = identifying_fields or model.identifying_fields
@@ -382,7 +386,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         Once found attach the object to the `resolved_links` dictionary.
 
-        If a non-optional object can't be found return False. This signifies the links cannot be resolved.
+        If a non-optional object can't be found return False. This signifies the
+        links cannot be resolved.
         If all non-optional objects are found then return True.
         """
         if not self.links:
@@ -403,7 +408,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         """
         Pre-processing before the object is saved to the database.
 
-        Generally this is used for adding the links to the object (as these cannot
+        Generally this is used for adding the links to the object (as these
+        cannot
         be easily validated against the serializer).
 
         Return the final dataset to be used when saving to the database.
@@ -427,11 +433,15 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         """
         Build up all the data for the object.
 
-        This method co-ordinates the attempts to fetch the dependent data as well as the linked
-        data. If at any point one of these steps fails an empty set returns (signifying failure).
+        This method co-ordinates the attempts to fetch the dependent data as
+        well as the linked
+        data. If at any point one of these steps fails an empty set returns
+        (signifying failure).
 
-        if all steps are deemed successful the object is dispatched to the database automatically.
-        On success a set of all the keys for any objects used which may be in the cache is returned.
+        if all steps are deemed successful the object is dispatched to the
+        database automatically.
+        On success a set of all the keys for any objects used which may be in
+        the cache is returned.
         """
         if not self.dependency_keys and not self.links:
             self.dispatch()

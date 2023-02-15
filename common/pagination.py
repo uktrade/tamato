@@ -49,7 +49,8 @@ class LimitedPaginator(Paginator):
 
     In TaMato, some list views, such as Find and Edit Measures,
     can include a very long object list (millions of records)
-    in addition to a large number of outer joins to all sorts of related entities.
+    in addition to a large number of outer joins to all sorts of related
+    entities.
     The resulting database query is extremely inefficient.
 
     The limited paginator imposes a limit beyond which

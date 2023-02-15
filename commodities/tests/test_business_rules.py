@@ -99,7 +99,6 @@ def test_NIG2_only_checks_future_dates_of_parent(date_ranges):
 
     Also covers NIG3
     """
-
     parent_1 = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__valid_between=getattr(
             date_ranges,
@@ -367,7 +366,6 @@ def test_NIG10(date_ranges, update_type, valid_between, expect_error):
 
 def test_NIG11_one_indent_mandatory():
     """At least one indent record is mandatory."""
-
     good = factories.GoodsNomenclatureFactory.create(indent=None)
     with pytest.raises(BusinessRuleViolation):
         business_rules.NIG11(good.transaction).validate(good)
@@ -390,7 +388,6 @@ def test_NIG11_first_indent_must_have_same_start_date(date_ranges):
 
 def test_NIG11_no_overlapping_indents():
     """No two associated indentations may have the same start date."""
-
     existing = factories.GoodsNomenclatureIndentFactory.create()
     duplicate = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature=existing.indented_goods_nomenclature,
@@ -438,7 +435,6 @@ def test_NIG12_first_description_must_have_same_start_date(date_ranges):
 
 def test_NIG12_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
-
     goods_nomenclature = factories.GoodsNomenclatureFactory.create()
     duplicate = factories.GoodsNomenclatureDescriptionFactory.create(
         described_goods_nomenclature=goods_nomenclature,

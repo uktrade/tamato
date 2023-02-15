@@ -189,7 +189,6 @@ class NIG7(BusinessRule):
 
         So we just need to make sure the bounds match.
         """
-
         origin_range = origin.derived_from_goods_nomenclature.valid_between
         starts_on = origin.new_goods_nomenclature.valid_between.lower
         day_before_start = starts_on - timedelta(days=1)

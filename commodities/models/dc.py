@@ -647,10 +647,12 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         """
         Returns a snapshot diff for a given relation on a sinlge commodity.
 
-        For detailed overview on snapshot diffs, see the docs for the SnapshotDiff class.
+        For detailed overview on snapshot diffs, see the docs for the
+        SnapshotDiff class.
 
         You can get one diff per commodity and relation type
-        (e.g. diff the children of '9999.20.00.00' or diff the siblings of '9999.30.20.10')
+        (e.g. diff the children of '9999.20.00.00' or diff the siblings of
+        '9999.30.20.10')
         """
         if snapshot.moment.clock_type != self.moment.clock_type:
             raise ValueError("Cannot diff snapshots with different clock types.")
@@ -1432,7 +1434,6 @@ class CommodityChange(BaseModel):
 
     def _handle_validation_issue(self, msg: str, warn_only: bool = False) -> None:
         """Logs a warning message or raises an error."""
-
         if self.ignore_validation_rules or warn_only:
             logger.warning(f"The operation is {self.update_type} but {msg}")
         else:

@@ -224,7 +224,6 @@ class MeasureChangeReports:
         Not all measures related to the imported commodities are also affected
         by the side effects of the import.
         """
-
         goods = self.updated_goods + self.deleted_goods
         return tuple(get_goods_mad_items(goods))
 
@@ -239,7 +238,6 @@ class MeasureChangeReports:
         would be the result of preemptive actions
         taken by the commodity change handler.
         """
-
         return tuple(
             [
                 record
