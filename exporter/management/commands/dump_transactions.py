@@ -145,8 +145,7 @@ class Command(BaseCommand):
             max_envelope_size=max_envelope_size,
         )
         errors = False
-        # import pdb
-        # pdb.set_trace()
+
         # Here's where it seriaizes the transactions, and kicks off making the envelope!!!
         for time_to_render, rendered_envelope in item_timer(
             serializer.split_render_transactions(transactions),
@@ -166,11 +165,10 @@ class Command(BaseCommand):
                         f"{envelope_file.name} {WARNING_SIGN_EMOJI}️ Envelope invalid:",
                     )
                 else:
-                    # pdb.set_trace()
                     # Run through sense checks to make sure envelope copied over correctly
 
                     # Envelope checker is in the utils file, It checks whether id, count, and partitions match and returns checks_pass boolean and
-                    # a list of error messages, as you could have missmatch partitions and count etc.. 
+                    # a list of error messages, as you could have missmatch partitions and count etc..
                     results = envelope_checker(workbaskets, rendered_envelope)
                     if not results["checks_pass"]:
                         for error in results["error_message_list"]:

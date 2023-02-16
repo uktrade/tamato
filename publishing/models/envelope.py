@@ -20,6 +20,7 @@ from common.models.mixins import TimestampedMixin
 from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
+from exporter.util import envelope_checker
 from publishing.models.packaged_workbasket import PackagedWorkBasket
 from publishing.models.state import ProcessingState
 from publishing.storages import EnvelopeStorage
@@ -27,6 +28,9 @@ from taric import validators
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
+# VARIATION_SELECTOR enables emoji presentation
+WARNING_SIGN_EMOJI = "\N{WARNING SIGN}\N{VARIATION SELECTOR-16}"
+
 
 # Exceptions
 class EnvelopeCurrentlyProccessing(Exception):
@@ -170,9 +174,13 @@ class Envelope(TimestampedMixin):
         blank=True,
         default=None,
     )
-    """Used to manually set when an envelope has been published to the
-    production tariff-api. When non-null indicates that an envelope has been
-    published to the tariff-api service and when that was done."""
+    """
+    Used to manually set when an envelope has been published to the production
+    tariff-api.
+
+    When non-null indicates that an envelope has been published to the tariff-
+    api service and when that was done.
+    """
     deleted = BooleanField(
         default=False,
         editable=False,
@@ -254,17 +262,28 @@ class Envelope(TimestampedMixin):
                 envelope_id=self.envelope_id,
             )
 
+            # todo check envelope
             rendered_envelope = list(
                 serializer.split_render_transactions(transactions),
             )[0]
             logger.info(f"rendered_envelope {rendered_envelope}")
             envelope_file = rendered_envelope.output
-            if not rendered_envelope.transactions:
-                msg = f"{envelope_file.name}  is empty !"
-                logger.error(msg)
-                raise EnvelopeNoTransactions(msg)
-            # Transaction envelope data XML is valid, ready for upload to s3
+            results = envelope_checker(workbaskets, rendered_envelope)
+            if not results["checks_pass"]:
+                msg = []
+                for error in results["error_message_list"]:
+                    msg.append(
+                        f"{envelope_file.name} {WARNING_SIGN_EMOJI} {error} Try again or consult developers if error persists.",
+                    )
+
+                logger.error("\n".join(msg))
+                raise EnvelopeNoTransactions("\n".join(msg))
             else:
+                total_transactions = len(rendered_envelope.transactions)
+                logger.info(
+                    f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, using {envelope_file.tell()} bytes.",
+                )
+                # Transaction envelope data XML is valid, ready for upload to s3
                 envelope_file.seek(0, os.SEEK_SET)
                 try:
                     validate_envelope(envelope_file)
