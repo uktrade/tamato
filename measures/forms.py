@@ -1218,6 +1218,7 @@ class MeasureStartDateForm(forms.Form):
 
                 upper = measure.valid_between.upper
                 lower = datetime.date(year, month, day)
+                # for an open-ended measure the end date can be None
                 if upper and lower > upper:
                     formatted_lower = lower.strftime("%d/%m/%Y")
                     formatted_upper = upper.strftime("%d/%m/%Y")
@@ -1234,7 +1235,7 @@ class MeasuresEditStartForm(forms.Form):
         choices=MeasureEditSteps.choices,
         widget=forms.CheckboxSelectMultiple,
         label="",
-        help_text="Select all that apply",
+        help_text="Select the fields you wish to edit",
     )
 
     def __init__(self, *args, **kwargs):
