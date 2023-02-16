@@ -68,6 +68,6 @@ sphinx-gherkindoc==3.6.2
 sqlite-s3vfs==0.0.26
 urllib3==1.26.5
 wrapt==1.12.1
-Werkzeug==1.0.1
+Werkzeug==2.2.3
 whitenoise==5.2.0
 xmldiff==2.4
