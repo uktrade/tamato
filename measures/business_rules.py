@@ -336,7 +336,7 @@ class ME32(BusinessRule):
 
         return query
 
-    def clashing_measures(self, measure) -> MeasuresQuerySet:
+    def clashing_measures(self, measure):
         """
         Returns all of the measures that clash with the passed measure over its
         lifetime.
@@ -348,12 +348,15 @@ class ME32(BusinessRule):
         from measures.snapshots import MeasureSnapshot
 
         query = self.compile_query(measure)
-        clashing_measures = type(measure).objects.none()
+        clashing_measures = []
         for snapshot in MeasureSnapshot.get_snapshots(measure, self.transaction):
-            clashing_measures = clashing_measures.union(
-                snapshot.overlaps(measure).filter(query),
-                all=True,
-            )
+            for clash in snapshot.overlaps(measure).filter(query):
+                clashing_measures.append(clash)
+
+            # clashing_measures = clashing_measures.union(
+            #     snapshot.overlaps(measure).filter(query),
+            #     all=True,
+            # )
 
         return clashing_measures
 
