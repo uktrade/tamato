@@ -172,6 +172,19 @@ FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 # -- Auth
 LOGIN_URL = reverse_lazy("login")
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 12,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+]
+
 if SSO_ENABLED:
     LOGIN_URL = reverse_lazy("authbroker_client:login")
 
