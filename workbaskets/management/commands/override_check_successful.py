@@ -54,7 +54,9 @@ class Command(WorkBasketCommandMixin, BaseCommand):
             )
             exit(1)
 
-        if not model_check.message.startswith("An internal error occurred"):
+        if not model_check.message or not model_check.message.startswith(
+            "An internal error occurred",
+        ):
             self.stdout.write(
                 self.style.ERROR(
                     f"Model check {model_check_id} appears to be a valid error. "
