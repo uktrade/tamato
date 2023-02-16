@@ -391,8 +391,8 @@ def test_measure_detail_version_control(valid_user_client):
         response.content.decode(response.charset),
         "html.parser",
     )
-    rows = len(soup.select("#versions table > tbody > tr"))
-    assert rows == 3
+    num_rows = len(soup.select("#versions table > tbody > tr"))
+    assert num_rows == 3
 
     update_types = {
         cell.text
@@ -404,7 +404,7 @@ def test_measure_detail_version_control(valid_user_client):
         date.text
         for date in soup.select("#versions table > tbody > tr > td:nth-of-type(2)")
     ]
-    expected_dates = [f"{measure.transaction.updated_at:%d %b %Y}"] * rows
+    expected_dates = [f"{measure.transaction.updated_at:%d %b %Y}"] * num_rows
     assert activity_dates == expected_dates
 
 
