@@ -235,9 +235,6 @@ class MeasureEditWizard(
         return kwargs
 
     def done(self, form_list, **kwargs):
-        # if self.request.POST.get("submit", None) != "Save measure end dates":
-        #     # The user has cancelled out of the editing process.
-        #     return redirect("home")
         cleaned_data = self.get_all_cleaned_data()
         selected_measures = self.get_queryset()
         workbasket = WorkBasket.current(self.request)
