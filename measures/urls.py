@@ -44,11 +44,6 @@ ui_patterns = [
         name="measure-ui-delete-multiple",
     ),
     path(
-        "edit-multiple-measures-end-dates/",
-        views.MeasureMultipleEndDateEdit.as_view(),
-        name="measure-ui-edit-multiple-end-date",
-    ),
-    path(
         "create/<step>/",
         views.MeasureCreateWizard.as_view(
             url_name="measure-ui-create",

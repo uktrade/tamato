@@ -727,48 +727,6 @@ class MeasureMultipleDelete(MeasureSelectionQuerysetMixin, TemplateView, ListVie
         return redirect(reverse("measure-ui-list"))
 
 
-class MeasureMultipleEndDateEdit(MeasureSelectionQuerysetMixin, FormView, ListView):
-    """UI for user edit and review of multiple measure end dates."""
-
-    template_name = "measures/edit-multiple-measures-enddates.jinja"
-    form_class = forms.MeasureEndDateForm
-
-    def get_context_data(self, **kwargs):
-        store_objects = self.get_queryset()
-        self.object_list = store_objects
-        context = super().get_context_data(**kwargs)
-
-        return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["selected_measures"] = self.get_queryset()
-        return kwargs
-
-    def form_valid(self, form):
-        if self.request.POST.get("submit", None) != "Save measure end dates":
-            # The user has cancelled out of the editing process.
-            return redirect("home")
-
-        selected_measures = self.get_queryset()
-        for measure in selected_measures:
-            measure.new_version(
-                workbasket=WorkBasket.current(self.request),
-                update_type=UpdateType.UPDATE,
-                valid_between=TaricDateRange(
-                    lower=measure.valid_between.lower,
-                    upper=datetime.date(
-                        form.cleaned_data["end_date"].year,
-                        form.cleaned_data["end_date"].month,
-                        form.cleaned_data["end_date"].day,
-                    ),
-                ),
-            )
-            self.session_store.clear()
-
-        return redirect(reverse("measure-ui-list"))
-
-
 class MeasureSelectionUpdate(MeasureSessionStoreMixin, View):
     def post(self, request, *args, **kwargs):
         self.session_store.clear()
