@@ -243,7 +243,11 @@ class MeasureEditWizard(
                 workbasket=workbasket,
                 update_type=UpdateType.UPDATE,
                 valid_between=TaricDateRange(
-                    lower=measure.valid_between.lower,
+                    lower=datetime.date(
+                        cleaned_data["start_date"].year,
+                        cleaned_data["start_date"].month,
+                        cleaned_data["start_date"].day,
+                    ),
                     upper=datetime.date(
                         cleaned_data["end_date"].year,
                         cleaned_data["end_date"].month,
