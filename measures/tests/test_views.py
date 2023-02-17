@@ -378,26 +378,34 @@ def test_measure_detail_quota_order_number(client, valid_user):
     assert str(quota_order_number) in items
 
 
-def test_measure_detail_version_control(client, valid_user):
+def test_measure_detail_version_control(valid_user_client):
     measure = factories.MeasureFactory.create()
     measure.new_version(measure.transaction.workbasket)
     measure.new_version(measure.transaction.workbasket)
 
     url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#versions"
-    client.force_login(valid_user)
-    response = client.get(url)
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
     soup = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",
     )
-    rows = soup.select("#versions table > tbody > tr")
-    assert len(rows) == 3
+    num_rows = len(soup.select("#versions table > tbody > tr"))
+    assert num_rows == 3
 
     update_types = {
         cell.text
         for cell in soup.select("#versions table > tbody > tr > td:first-child")
     }
     assert update_types == {"Create", "Update"}
+
+    activity_dates = [
+        date.text
+        for date in soup.select("#versions table > tbody > tr > td:nth-of-type(2)")
+    ]
+    expected_dates = [f"{measure.transaction.updated_at:%d %b %Y}"] * num_rows
+    assert activity_dates == expected_dates
 
 
 @pytest.mark.parametrize(
