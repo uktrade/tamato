@@ -218,11 +218,11 @@ class MeasureCreateWizard(
             "link_text": "Measure details",
         },
         REGULATION_ID: {
-            "title": "Enter the Regulation ID",
+            "title": "Enter the regulation ID",
             "link_text": "Regulation ID",
         },
         QUOTA_ORDER_NUMBER: {
-            "title": "Enter the Quota Order Number",
+            "title": "Enter a quota order number (optional)",
             "link_text": "Quota Order Number",
         },
         GEOGRAPHICAL_AREA: {
