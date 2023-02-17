@@ -99,6 +99,14 @@ def test_measure_forms_quota_order_number_valid_data(quota_order_number):
     }
     form = forms.MeasureQuotaOrderNumberForm(data, prefix="")
     assert form.is_valid()
+    assert form.cleaned_data["order_number"] == quota_order_number
+
+    empty = {
+        "order_number": "",
+    }
+    form = forms.MeasureQuotaOrderNumberForm(empty, prefix="")
+    assert form.is_valid()
+    assert form.cleaned_data["order_number"] == None
 
 
 def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
