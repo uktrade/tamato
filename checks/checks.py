@@ -20,6 +20,10 @@ CheckResult = Tuple[bool, Optional[str]]
 
 
 Self = TypeVar("Self")
+INTERNAL_ERROR_MESSAGE = (
+    "An internal error occurred when processing checks, please notify the TAP "
+    "support team of this issue"
+)
 
 
 class Checker:
@@ -77,8 +81,7 @@ class Checker:
         except Exception as e:
             success, message = (
                 False,
-                f"An internal error occurred when processing checks, please notify a "
-                f"TAP developer of this issue : {str(e)}",
+                INTERNAL_ERROR_MESSAGE + " : " + str(e),
             )
         finally:
             return TrackedModelCheck.objects.create(
