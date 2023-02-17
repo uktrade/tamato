@@ -23,7 +23,7 @@ def _create_workbasket_with_tracked_models():
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.QUEUED,
     )
-    with factories.TransactionFactory.create(workbasket=workbasket):
+    with factories.ApprovedTransactionFactory.create(workbasket=workbasket):
         factories.FootnoteTypeFactory()
         factories.AdditionalCodeFactory()
     return workbasket
@@ -179,9 +179,8 @@ def test_queryset_deleted_no_xml_file(envelope_storage):
         envelope_storage,
         xml_file=None,
     )
-    envelope.xml_file = None
+    envelope.xml_file = ""
     envelope.save()
-
     deleted_envelopes = Envelope.objects.deleted()
 
     assert envelope in deleted_envelopes

@@ -32,49 +32,6 @@ def dit_file_generator(directory: str, start: int = 1):
     return lambda: next(files)
 
 
-def envelope_checker(workbasket, envelope):
-    """Checks that the transactions in a workbasket have been correctly copied
-    into the envelope."""
-    checks_pass = True
-    error_message_list = []
-
-    if workbasket and envelope:
-        workbasket_transaction_pks = [
-            transaction.pk for transaction in workbasket.ordered_transactions()
-        ].sort()
-        #  I sorted it all as it may give an error if they're just in the wrong order. 
-        workbasket_transaction_partitions = [
-            transaction.partition for transaction in workbasket.ordered_transactions()
-        ].sort()
-        workbasket_transaction_count = workbasket.ordered_transactions().count()
-        envelope_transaction_pks = [
-            transaction.pk for transaction in envelope.transactions
-        ].sort()
-        envelope_transaction_partitions = [
-            transaction.partition for transaction in envelope.transactions
-        ].sort()
-        envelope_transaction_count = len(envelope.transactions)
-
-        if envelope_transaction_count != workbasket_transaction_count:
-            checks_pass = False
-            error_message_list.append("Envelope does not contain all transactions!")
-        elif envelope_transaction_pks != workbasket_transaction_pks:
-            checks_pass = False
-            error_message_list.append(
-                "Envelope transaction pks don't match the workbasket transaction pks!",
-            )
-        elif envelope_transaction_partitions != workbasket_transaction_partitions:
-            checks_pass = False
-            error_message_list.append(
-                "Envelope transaction partitions don't match the workbasket transaction partitions!",
-            )
-
-    return {
-        "checks_pass": checks_pass,
-        "error_message_list": error_message_list,
-    }
-
-
 class UploadTaskResultData(dict):
     """
     Manage an underlying dict that is used to pass data from Task to Task that

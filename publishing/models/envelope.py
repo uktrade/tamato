@@ -20,10 +20,10 @@ from common.models.mixins import TimestampedMixin
 from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
-from exporter.util import envelope_checker
 from publishing.models.packaged_workbasket import PackagedWorkBasket
 from publishing.models.state import ProcessingState
 from publishing.storages import EnvelopeStorage
+from publishing.util import envelope_checker
 from taric import validators
 from workbaskets.models import WorkBasket
 
@@ -42,6 +42,10 @@ class EnvelopeInvalidQueuePosition(Exception):
 
 
 class EnvelopeNoTransactions(Exception):
+    pass
+
+
+class MultipleEnvelopesGenerated(Exception):
     pass
 
 
@@ -83,7 +87,7 @@ class EnvelopeQuerySet(QuerySet):
         """Filter in only those Envelope instances that have either a `deleted`
         attribute of `True` or no valid `xml_file` attribute (i.e. None)."""
         return self.filter(
-            Q(deleted=True) | Q(xml_file__isnull=True),
+            Q(deleted=True) | Q(xml_file=""),
         )
 
     def non_deleted(self):
@@ -91,7 +95,7 @@ class EnvelopeQuerySet(QuerySet):
         attribute of `False` and a valid `xml_file` attribute (i.e. not
         None)."""
         return self.filter(
-            Q(deleted=False) & Q(xml_file__isnull=False),
+            Q(deleted=False) & ~Q(xml_file=""),
         )
 
     def for_year(self, year: Optional[int] = None):
@@ -246,7 +250,7 @@ class Envelope(TimestampedMixin):
 
         if not transactions:
             msg = f"transactions to upload:  {transactions.count()} does not contain any transactions."
-            logger.info(msg)
+            logger.error(msg)
             raise EnvelopeNoTransactions(msg)
 
         # Envelope XML is written to temporary files for validation before anything is created
@@ -262,12 +266,19 @@ class Envelope(TimestampedMixin):
                 envelope_id=self.envelope_id,
             )
 
-            # todo check envelope
-            rendered_envelope = list(
+            rendered_envelopes = list(
                 serializer.split_render_transactions(transactions),
-            )[0]
+            )
+            if len(rendered_envelopes) > 1:
+                msg = f"Multiple envelopes generated for workbasket:  {workbasket.pk}."
+                logger.error(msg)
+                raise MultipleEnvelopesGenerated(msg)
+
+            rendered_envelope = rendered_envelopes[0]
             logger.info(f"rendered_envelope {rendered_envelope}")
             envelope_file = rendered_envelope.output
+
+            # Check envelope is as expected
             results = envelope_checker(workbaskets, rendered_envelope)
             if not results["checks_pass"]:
                 msg = []
@@ -275,32 +286,33 @@ class Envelope(TimestampedMixin):
                     msg.append(
                         f"{envelope_file.name} {WARNING_SIGN_EMOJI} {error} Try again or consult developers if error persists.",
                     )
-
                 logger.error("\n".join(msg))
                 raise EnvelopeNoTransactions("\n".join(msg))
+
+            # Transaction envelope data XML is valid, ready for upload to s3
+            envelope_file.seek(0, os.SEEK_SET)
+            try:
+                validate_envelope(envelope_file)
+            except etree.DocumentInvalid:
+                logger.error(f"{envelope_file.name}  is Envelope invalid !")
+                raise
             else:
+                # If valid upload to s3
                 total_transactions = len(rendered_envelope.transactions)
                 logger.info(
                     f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, using {envelope_file.tell()} bytes.",
                 )
-                # Transaction envelope data XML is valid, ready for upload to s3
+
                 envelope_file.seek(0, os.SEEK_SET)
-                try:
-                    validate_envelope(envelope_file)
-                except etree.DocumentInvalid:
-                    logger.error(f"{envelope_file.name}  is Envelope invalid !")
-                    raise
-                else:
-                    envelope_file.seek(0, os.SEEK_SET)
-                    content_file = ContentFile(envelope_file.read())
-                    self.xml_file = content_file
+                content_file = ContentFile(envelope_file.read())
+                self.xml_file = content_file
 
-                    envelope_file.seek(0, os.SEEK_SET)
+                envelope_file.seek(0, os.SEEK_SET)
 
-                    self.xml_file.save(filename, content_file)
+                self.xml_file.save(filename, content_file)
 
-                    logger.info("Workbasket saved to CDS S3 bucket")
-                    logger.debug("Uploaded: %s", filename)
+                logger.info("Workbasket saved to CDS S3 bucket")
+                logger.debug("Uploaded: %s", filename)
 
     def __repr__(self):
         return f'<Envelope: envelope_id="{self.envelope_id}">'

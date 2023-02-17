@@ -9,8 +9,8 @@ from lxml import etree
 from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
-from exporter.util import envelope_checker
 from exporter.util import item_timer
+from publishing.util import envelope_checker
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
@@ -166,9 +166,6 @@ class Command(BaseCommand):
                     )
                 else:
                     # Run through sense checks to make sure envelope copied over correctly
-
-                    # Envelope checker is in the utils file, It checks whether id, count, and partitions match and returns checks_pass boolean and
-                    # a list of error messages, as you could have missmatch partitions and count etc..
                     results = envelope_checker(workbaskets, rendered_envelope)
                     if not results["checks_pass"]:
                         for error in results["error_message_list"]:
@@ -181,7 +178,5 @@ class Command(BaseCommand):
                         self.stdout.write(
                             f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
                         )
-                    # In practice this works. If you get a workbasket with queued status, run the dump transactions command, but slap a PDB in there after the envelope has been made
-                    # but before the envelope checker is called, p the transactions in the envelope and take one out, then c to run the envelope checker, it'll give you the right error.
         if errors:
             sys.exit(1)
