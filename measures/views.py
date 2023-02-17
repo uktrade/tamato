@@ -257,9 +257,7 @@ class MeasureEditWizard(
             )
             self.session_store.clear()
 
-        return redirect(
-            reverse("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk}),
-        )
+        return redirect(reverse("workbaskets:current-workbasket"))
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
