@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 
+from checks.checks import INTERNAL_ERROR_MESSAGE
 from checks.models import TrackedModelCheck
 from workbaskets.management.util import WorkBasketCommandMixin
 
@@ -55,7 +56,7 @@ class Command(WorkBasketCommandMixin, BaseCommand):
             exit(1)
 
         if not model_check.message or not model_check.message.startswith(
-            "An internal error occurred",
+            INTERNAL_ERROR_MESSAGE[:49],
         ):
             self.stdout.write(
                 self.style.ERROR(
@@ -69,7 +70,8 @@ class Command(WorkBasketCommandMixin, BaseCommand):
         if model_check.transaction_check.transaction.workbasket != workbasket:
             self.stdout.write(
                 self.style.ERROR(
-                    f"Model check {model_check_id} is not associated with workbasket {workbasket_id}",
+                    f"Model check {model_check_id} is not associated with "
+                    f"workbasket {workbasket_id}. Exiting.",
                 ),
             )
             exit(1)
@@ -98,10 +100,21 @@ class Command(WorkBasketCommandMixin, BaseCommand):
             self.stdout.write("Done:")
             self.output_check_summary(model_check, tranx_check)
             self.stdout.write(
-                f"{bad_m_checks_on_t_check.count()} unsuccessful model checks "
-                f"remaining on related transaction check, {tranx_check.pk}",
+                f"Related transaction check, {tranx_check.completed}, can not "
+                f"be set as successful because it contains "
+                f"{bad_m_checks_on_t_check.count()} additional unsuccessful "
+                f"model checks ({bad_m_checks_on_t_check.values_list('id', flat=True)}).",
             )
-            exit(0)
+            return
+
+        if not tranx_check.completed:
+            self.stdout.write("Done:")
+            self.output_check_summary(model_check, tranx_check)
+            self.stdout.write(
+                f"Related transaction check, {tranx_check.pk}, has not "
+                f"completed so it can not be set as successful.",
+            )
+            return
 
         tranx_check.successful = True
         tranx_check.save()
@@ -112,6 +125,10 @@ class Command(WorkBasketCommandMixin, BaseCommand):
 
         self.stdout.write("Done:")
         self.output_check_summary(model_check, tranx_check)
+        self.stdout.write(
+            f"Model check, {model_check.pk}, and related transaction check, "
+            f"{tranx_check.pk}, both set as successful.",
+        )
 
     def output_check_summary(self, model_check, tranx_check, indent_count=4):
         spaces = " " * indent_count
@@ -119,5 +136,6 @@ class Command(WorkBasketCommandMixin, BaseCommand):
             f"{spaces}model_check({model_check.pk}).successful = {model_check.successful}",
         )
         self.stdout.write(
-            f"{spaces}model_check({model_check.pk}).tranx_check({tranx_check.pk}).successful = {tranx_check.successful}",
+            f"{spaces}model_check({model_check.pk}).tranx_check({tranx_check.pk})"
+            f".successful = {tranx_check.successful}",
         )
