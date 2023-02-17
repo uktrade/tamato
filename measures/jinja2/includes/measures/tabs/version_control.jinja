@@ -3,7 +3,7 @@
 {% for object in object.version_group.versions.all() %}
   {{ table_rows.append([
     {"text": object.get_update_type_display()},
-    {"text": "{:%d %b %Y}".format(object.version_group.created_at)},
+    {"text": "{:%d %b %Y}".format(object.transaction.updated_at)},
     {"text": object.transaction.workbasket.get_status_display()},
     {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
     {"text": "{:%d %b %Y}".format(object.effective_end_date) if object.effective_end_date else "-"},

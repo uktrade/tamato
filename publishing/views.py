@@ -386,8 +386,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
                 self.workbasket.id,
             )
             return redirect(
-                "workbaskets:workbasket-ui-detail",
-                pk=self.workbasket.id,
+                "workbaskets:current-workbasket",
             )
 
         queued_wb = None
@@ -410,8 +409,7 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
                 self.workbasket.id,
             )
             return redirect(
-                "workbaskets:workbasket-ui-detail",
-                pk=self.workbasket.id,
+                "workbaskets:current-workbasket",
             )
 
         return redirect(
