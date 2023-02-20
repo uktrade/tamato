@@ -223,7 +223,7 @@ class MeasureCreateWizard(
         },
         QUOTA_ORDER_NUMBER: {
             "title": "Enter a quota order number (optional)",
-            "link_text": "Quota Order Number",
+            "link_text": "Quota order number",
         },
         GEOGRAPHICAL_AREA: {
             "title": "Select the geographical area",
