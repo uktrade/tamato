@@ -1,25 +1,18 @@
 import pytest
 
-from common.tests import factories
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
 from publishing.util import envelope_checker
 from workbaskets.models import WorkBasket
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
 
-def test_envelope_checker():
-    """Test that the checker provides the right error messages for failing
-    envelope checks."""
+def test_envelope_checker(queued_workbasket_factory):
+    """Test that the checker passes on valid workbasket."""
 
-    workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.QUEUED,
-    )
-    with factories.ApprovedTransactionFactory.create(workbasket=workbasket):
-        factories.FootnoteTypeFactory()
-        factories.AdditionalCodeFactory()
+    # queued workbasket built with approved transaction and tracked models
+    workbasket = queued_workbasket_factory()
 
     # Make a envelope from the files
     output_file_constructor = dit_file_generator("/tmp", 230001)
@@ -41,12 +34,12 @@ def test_envelope_checker():
     assert results["checks_pass"] is True
 
 
-def test_envelope_checker_transaction_mismatch():
+def test_envelope_checker_transaction_mismatch(queued_workbasket):
     """Test that the checker provides the right error messages for failing
     envelope checks."""
 
     # empty workbasket but has an approved transaction
-    workbasket = factories.QueuedWorkBasketFactory()
+    workbasket = queued_workbasket
 
     # Make a envelope from the files
     output_file_constructor = dit_file_generator("/tmp", 230001)

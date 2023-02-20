@@ -9,9 +9,12 @@ from typing import Dict
 from typing import Optional
 from typing import Sequence
 from typing import Type
+from unittest import mock
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import boto3
+import factory as factory_library
 import pytest
 from aioresponses import aioresponses
 from django.conf import settings
@@ -55,6 +58,7 @@ from common.tests.util import raises_if
 from common.validators import UpdateType
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
+from publishing.models import PackagedWorkBasket
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
@@ -358,6 +362,85 @@ def session_workbasket(client, new_workbasket):
     new_workbasket.save_to_session(client.session)
     client.session.save()
     return new_workbasket
+
+
+@pytest.fixture
+def queued_workbasket_factory():
+    def factory():
+        workbasket = factories.WorkBasketFactory.create(
+            status=WorkflowStatus.QUEUED,
+        )
+        with factories.ApprovedTransactionFactory.create(workbasket=workbasket):
+            factories.FootnoteTypeFactory()
+            factories.AdditionalCodeFactory()
+        return workbasket
+
+    return factory
+
+
+@pytest.fixture
+def packaged_workbasket_factory(queued_workbasket_factory):
+    def factory():
+        with patch(
+            "publishing.tasks.create_xml_envelope_file.apply_async",
+            return_value=MagicMock(id=factory_library.Faker("uuid4")),
+        ):
+            packaged_workbasket = factories.QueuedPackagedWorkBasketFactory(
+                workbasket=queued_workbasket_factory(),
+            )
+        return packaged_workbasket
+
+    return factory
+
+
+@pytest.fixture
+def envelope_factory(packaged_workbasket_factory, envelope_storage):
+    def factory(**kwargs):
+        if "packaged_workbasket" in kwargs:
+            packaged_workbasket = kwargs.pop(
+                "packaged_workbasket",
+            )
+        else:
+            packaged_workbasket = packaged_workbasket_factory()
+
+        with mock.patch(
+            "publishing.storages.EnvelopeStorage.save",
+            wraps=mock.MagicMock(side_effect=envelope_storage.save),
+        ) as mock_save:
+            envelope = factories.PublishedEnvelopeFactory(
+                packaged_work_basket=packaged_workbasket,
+                **kwargs,
+            )
+            mock_save.assert_called_once()
+
+        packaged_workbasket.envelope = envelope
+        packaged_workbasket.save()
+        return envelope
+
+    return factory
+
+
+@pytest.fixture
+def successful_envelope_factory(envelope_factory):
+    def factory(**kwargs):
+        envelope = envelope_factory(**kwargs)
+
+        packaged_workbasket = PackagedWorkBasket.objects.get(
+            envelope=envelope,
+        )
+
+        packaged_workbasket.begin_processing()
+        assert packaged_workbasket.position == 0
+        assert (
+            packaged_workbasket.pk
+            == PackagedWorkBasket.objects.currently_processing().pk
+        )
+        packaged_workbasket.processing_succeeded()
+        packaged_workbasket.save()
+        assert packaged_workbasket.position == 0
+        return envelope
+
+    return factory
 
 
 @pytest.fixture(scope="function")
