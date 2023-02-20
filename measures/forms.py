@@ -857,7 +857,6 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         help_text=(
             "Search for a quota using its order number. "
             "You can then select the correct quota from the dropdown list. "
-            "Leave this field blank if the measure is not a quota."
         ),
         queryset=QuotaOrderNumber.objects.all(),
         required=False,
@@ -954,7 +953,6 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
 
         if geo_area_choice:
             if not self.formset_submit():
-
                 if geo_area_choice == GeoAreaType.ERGA_OMNES:
                     cleaned_data["geo_area_list"] = [self.erga_omnes_instance]
 
