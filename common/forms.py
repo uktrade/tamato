@@ -157,8 +157,8 @@ class RadioNested(TypedChoiceField):
 
 
 class WorkbasketActions(TextChoices):
-    CREATE = "CREATE", "Create a new workbasket"
-    EDIT = "EDIT", "Edit an existing workbasket"
+    CREATE = "CREATE", "Create new workbasket"
+    EDIT = "EDIT", "Select an existing workbasket"
 
 
 class DITTariffManagerActions(TextChoices):
@@ -166,7 +166,11 @@ class DITTariffManagerActions(TextChoices):
 
 
 class HMRCCDSManagerActions(TextChoices):
-    PROCESS_ENVELOPES = "PROCESS_ENVELOPES", "CDS - Process envelopes"
+    PROCESS_ENVELOPES = "PROCESS_ENVELOPES", "Process envelopes"
+
+
+class CommonUserActions(TextChoices):
+    SEARCH = "SEARCH", "Search the tariff"
 
 
 class HomeForm(forms.Form):
@@ -184,6 +188,8 @@ class HomeForm(forms.Form):
 
         if self.user.has_perm("publishing.consume_from_packaging_queue"):
             choices += HMRCCDSManagerActions.choices
+
+        choices += CommonUserActions.choices
 
         self.fields["workbasket_action"] = forms.ChoiceField(
             label="",

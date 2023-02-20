@@ -1,0 +1,30 @@
+
+<h2 class="govuk-heading-l">Suspension periods</h2>
+
+{% set table_rows = [] %}
+
+{% if suspension_periods %}
+  {% for object in suspension_periods %}
+    {% set definition_link -%}
+      <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.quota_definition.order_number.sid]) }}#definition-details">{{ object.quota_definition.sid }}</a>
+    {% endset %}
+      {{ table_rows.append([
+        {"text": definition_link },
+        {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
+        {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
+        {"text": object.description },
+      ]) or "" }}
+    {% endfor %}
+
+  {{ govukTable({
+    "head": [
+      {"text": "Quota definition sid"},
+      {"text": "Start date"},
+      {"text": "End date"},
+      {"text": "Description", "classes": "govuk-!-width-one-half"},
+    ],
+    "rows": table_rows
+  }) }}
+{% else %}
+  <p class="govuk-body">There are no suspension periods for this quota order number.</p>
+{% endif %}
