@@ -1,6 +1,7 @@
 {% from 'macros/create_link.jinja' import create_link %} 
 {% from "includes/measures/conditions.jinja" import conditions_list %}
 {% from "components/button/macro.njk" import govukButton %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
 
 {# Sets out checkbox #}
 {% macro checkbox_item(field) -%}
@@ -21,21 +22,21 @@
 
 {# Sets out checking all checkbox #}
 {% set checkbox_check_all -%}
-  <div class="govuk-form-group">
-    <fieldset class="govuk-fieldset">
-      <div class="govuk-checkboxes govuk-checkboxes--small">
-        <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="select-all" name="select-all" type="checkbox" data-check-all="data-check-trackedmodel">
-          <label class="govuk-label govuk-checkboxes__label govuk-!-padding-right-0" for="selected"></label>
-        </div>
-      </div>
-    </fieldset>
-  </div>
+<div id="check-all-checkbox"></div>
 {%- endset %}
 
 {# sets out form #}
 <form method="post">
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+  {% set checkbox_names -%}
+    [{% for field in form %}"{{ field.name }}",{% endfor %}]
+  {% endset  %}
+
+  <script id="measure-select-checkboxes-script">
+  const MULTIPLE_MEASURE_SELECTIONS = {{ mark_safe(view.measure_selections) }};
+  const CSRF_TOKEN = "{{ csrf_token }}";
+  </script>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
@@ -90,4 +91,44 @@
   </div>
   <button value="edit-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Edit selected measures </button>
   <button value="remove-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Delete selected measures </button>
+
+  <div id="persist-measure-selections-button" class="govuk-grid-row">
+    <div class="govuk-grid-column-one-half">
+      {{ govukWarningText({
+        "text": "If you wish to select multiple measures across different pages, make your selection using the checkboxes, then click \"Persist measure selection\" before changing pages.",
+        "iconFallbackText": "Warning"
+      }) }}
+      <button value="persist-selection" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Persist measure selection</button>
+    </div>
+  </div>
 </form>
+
+<details class="govuk-details" data-module="govuk-details">
+  <summary class="govuk-details__summary">
+    <span class="govuk-details__summary-text">
+      View all selected measures
+    </span>
+  </summary>
+  <div class="govuk-details__text">
+  {% if measure_selections %}
+    {% set table_rows = [] %}
+      {% for measure in measure_selections %}
+        {% set measure_link %}
+          <a class="govuk-link govuk-!-font-weight-bold" href="{{measure.get_url()}}">{{measure.sid}}</a>
+        {% endset %}
+        {{ table_rows.append([
+          {"html": measure_link},
+          ]) or "" }}
+      {% endfor %}
+      {{ govukTable({
+        "head": [
+        {"text": "ID"},
+      ],
+      "rows": table_rows,
+      "classes": "govuk-table-m"
+      }) }}
+  {% else %}
+    No measures selected.
+  {% endif %}
+  </div>
+</details>

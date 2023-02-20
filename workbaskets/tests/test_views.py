@@ -129,8 +129,7 @@ def test_review_workbasket_displays_objects_in_current_workbasket(
 
     response = valid_user_client.get(
         reverse(
-            "workbaskets:workbasket-ui-detail",
-            kwargs={"pk": session_workbasket.id},
+            "workbaskets:current-workbasket",
         ),
     )
     page = BeautifulSoup(
@@ -159,8 +158,7 @@ def test_review_workbasket_displays_rule_violation_summary(
 
     response = valid_user_client.get(
         reverse(
-            "workbaskets:workbasket-ui-detail",
-            kwargs={"pk": session_workbasket.id},
+            "workbaskets:current-workbasket",
         ),
     )
     page = BeautifulSoup(
@@ -180,7 +178,7 @@ def test_review_workbasket_displays_rule_violation_summary(
 
 def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbasket):
     response = valid_user_client.get(
-        reverse("workbaskets:edit-workbasket", kwargs={"pk": session_workbasket.pk}),
+        reverse("workbaskets:edit-workbasket"),
     )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
@@ -192,8 +190,7 @@ def test_workbasket_detail_page_url_params(
     session_workbasket,
 ):
     url = reverse(
-        "workbaskets:workbasket-ui-detail",
-        kwargs={"pk": session_workbasket.pk},
+        "workbaskets:current-workbasket",
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
@@ -261,8 +258,8 @@ def test_select_workbasket_with_errored_status(valid_user_client):
     "form_action, url_name",
     [
         ("remove-selected", "workbaskets:workbasket-ui-delete-changes"),
-        ("page-prev", "workbaskets:workbasket-ui-detail"),
-        ("page-next", "workbaskets:workbasket-ui-detail"),
+        ("page-prev", "workbaskets:current-workbasket"),
+        ("page-next", "workbaskets:current-workbasket"),
     ],
 )
 def test_review_workbasket_redirects(
@@ -275,11 +272,11 @@ def test_review_workbasket_redirects(
     )
     with workbasket.new_transaction() as tx:
         factories.FootnoteTypeFactory.create_batch(30, transaction=tx)
-    url = reverse("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk})
+    url = reverse("workbaskets:current-workbasket")
     data = {"form-action": form_action}
     response = valid_user_client.post(f"{url}?page=2", data)
     assert response.status_code == 302
-    assert reverse(url_name, kwargs={"pk": workbasket.pk}) in response.url
+    assert reverse(url_name) in response.url
 
     if form_action == "page-prev":
         assert "?page=1" in response.url
@@ -291,7 +288,6 @@ def test_review_workbasket_redirects(
 def test_delete_changes_confirm_200(valid_user_client, session_workbasket):
     url = reverse(
         "workbaskets:workbasket-ui-delete-changes-done",
-        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
@@ -309,7 +305,6 @@ def test_workbasket_views_without_permission(url_name, client, session_workbaske
     permissions."""
     url = reverse(
         url_name,
-        kwargs={"pk": session_workbasket.pk},
     )
     user = factories.UserFactory.create()
     client.force_login(user)
@@ -366,7 +361,7 @@ def test_workbasket_measures_review(valid_user_client):
     with workbasket.new_transaction() as tx:
         factories.MeasureFactory.create_batch(30, transaction=tx)
 
-    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    url = reverse("workbaskets:review-workbasket")
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
@@ -411,7 +406,7 @@ def test_workbasket_measures_review_pagination(
         )
         factories.MeasureFactory.create_batch(40, transaction=unapproved_transaction)
 
-    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    url = reverse("workbaskets:review-workbasket")
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
@@ -440,7 +435,7 @@ def test_workbasket_measures_review_conditions(valid_user_client):
         required_certificate=certificate,
         action__code="27",
     )
-    url = reverse("workbaskets:review-workbasket", kwargs={"pk": workbasket.pk})
+    url = reverse("workbaskets:review-workbasket")
     response = valid_user_client.get(url)
     soup = BeautifulSoup(str(response.content), "html.parser")
     # 11th column is conditions. We're interested in the first (and only) row.
@@ -476,8 +471,7 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     }
     session.save()
     url = reverse(
-        "workbaskets:workbasket-ui-detail",
-        kwargs={"pk": session_workbasket.id},
+        "workbaskets:current-workbasket",
     )
     response = valid_user_client.post(
         url,
@@ -485,9 +479,8 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     )
 
     assert response.status_code == 302
-    response_url = f"/workbaskets/{session_workbasket.pk}/"
     # Only compare the response URL up to the query string.
-    assert response.url[: len(response_url)] == response_url
+    assert response.url[: len(url)] == url
 
     session_workbasket.refresh_from_db()
 
@@ -520,8 +513,7 @@ def test_submit_for_packaging(valid_user_client, session_workbasket):
     session.save()
 
     url = reverse(
-        "workbaskets:workbasket-ui-detail",
-        kwargs={"pk": session_workbasket.id},
+        "workbaskets:current-workbasket",
     )
     response = valid_user_client.post(
         url,
@@ -538,8 +530,7 @@ def test_terminate_rule_check(valid_user_client, session_workbasket):
     session_workbasket.rule_check_task_id = 123
 
     url = reverse(
-        "workbaskets:workbasket-ui-detail",
-        kwargs={"pk": session_workbasket.pk},
+        "workbaskets:current-workbasket",
     )
     response = valid_user_client.post(
         url,
@@ -559,7 +550,6 @@ def test_workbasket_violations(valid_user_client, session_workbasket):
     `TrackedModelCheck`."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
     )
     with session_workbasket.new_transaction() as transaction:
         good = GoodsNomenclatureFactory.create(transaction=transaction)
@@ -665,7 +655,6 @@ def test_violation_list_page_sorting_date(setup, valid_user_client, session_work
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.get(f"{url}?sort_by=date&order=asc")
 
@@ -697,7 +686,6 @@ def test_violation_list_page_sorting_model_name(
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.get(f"{url}?sort_by=model&order=asc")
 
@@ -729,7 +717,6 @@ def test_violation_list_page_sorting_check_name(
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.get(f"{url}?sort_by=check_name&order=asc")
 
@@ -758,7 +745,6 @@ def test_violation_list_page_sorting_ignores_invalid_params(
     """Tests that the page doesn't break if invalid params are sent."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
-        kwargs={"pk": session_workbasket.pk},
     )
     response = valid_user_client.get(f"{url}?sort_by=foo&order=bar")
 
