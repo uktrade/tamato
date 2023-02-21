@@ -1,3 +1,5 @@
+from unittest import mock
+
 import freezegun
 import pytest
 from freezegun import freeze_time
@@ -159,7 +161,7 @@ def test_queryset_processing_states(
     assert envelope2 in success_processing_result
 
 
-def test_delete_envelope(envelope_factory, settings):
+def test_delete_envelope(envelope_storage, envelope_factory, settings):
     """Test Envelope deleted_envelope() returns expected results."""
 
     # unit testing envelope not notification integration
@@ -167,10 +169,13 @@ def test_delete_envelope(envelope_factory, settings):
 
     envelope = envelope_factory()
 
-    envelope.delete_envelope()
-    envelope.save()
+    with mock.patch(
+        "publishing.storages.EnvelopeStorage.delete",
+        wraps=mock.MagicMock(side_effect=envelope_storage.delete),
+    ) as mock_delete:
+        envelope.delete_envelope()
+        mock_delete.assert_called_once()
     assert envelope.deleted is True
-    assert envelope.xml_file.name is None
 
 
 @freezegun.freeze_time("2023-01-01")
