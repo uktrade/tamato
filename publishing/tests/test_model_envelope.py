@@ -131,7 +131,10 @@ def test_queryset_processing_states(
     failed_processing_result = Envelope.objects.failed_processing()
     assert envelope in failed_processing_result
 
-    envelope2 = successful_envelope_factory()
+    packaged_workbasket2 = packaged_workbasket_factory()
+    envelope2 = successful_envelope_factory(
+        packaged_workbasket=packaged_workbasket2,
+    )
 
     success_processing_result = Envelope.objects.successfully_processed()
     assert envelope2 in success_processing_result
