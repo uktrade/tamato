@@ -12,9 +12,11 @@ from publishing.models import PackagedWorkBasket
 pytestmark = pytest.mark.django_db
 
 
-def test_create_envelope(successful_envelope_factory, envelope_factory):
+def test_create_envelope(successful_envelope_factory, envelope_factory, settings):
     """Test multiple Envelope instances creates the correct."""
 
+    # unit testing envelope not notification integration
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     envelope = successful_envelope_factory()
     envelope2 = envelope_factory()
 
@@ -62,8 +64,12 @@ def test_upload_envelope_no_transactions():
         )
 
 
-def test_queryset_deleted(successful_envelope_factory):
+def test_queryset_deleted(successful_envelope_factory, settings):
     """Test Envelope queryset deleted returns expected envelopes."""
+
+    # unit testing envelope not notification integration
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
     envelope = successful_envelope_factory(deleted=True)
     envelope2 = successful_envelope_factory()
     envelope2.xml_file = ""
@@ -76,8 +82,12 @@ def test_queryset_deleted(successful_envelope_factory):
     assert envelope3 not in deleted_envelopes
 
 
-def test_queryset_nondeleted(successful_envelope_factory):
+def test_queryset_nondeleted(successful_envelope_factory, settings):
     """Test Envelope queryset non_deleted returns expected envelopes."""
+
+    # unit testing envelope not notification integration
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
     envelope = successful_envelope_factory()
     envelope2 = successful_envelope_factory(
         deleted=True,
@@ -92,8 +102,12 @@ def test_queryset_nondeleted(successful_envelope_factory):
     assert envelope3 not in non_deleted_envelopes
 
 
-def test_queryset_for_year(successful_envelope_factory):
+def test_queryset_for_year(successful_envelope_factory, settings):
     """Test Envelope queryset for_year returns expected envelopes."""
+
+    # unit testing envelope not notification integration
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
     with freeze_time("2022-01-01"):
         envelope = successful_envelope_factory()
     with freeze_time("2023-01-01"):
@@ -111,8 +125,13 @@ def test_queryset_processing_states(
     packaged_workbasket_factory,
     envelope_factory,
     successful_envelope_factory,
+    settings,
 ):
     """Test Envelope queryset processing_states returns expected envelopes."""
+
+    # unit testing envelope not notification integration
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
     packaged_workbasket = packaged_workbasket_factory()
     envelope = envelope_factory(packaged_workbasket=packaged_workbasket)
 
@@ -140,8 +159,12 @@ def test_queryset_processing_states(
     assert envelope2 in success_processing_result
 
 
-def test_delete_envelope(envelope_factory):
+def test_delete_envelope(envelope_factory, settings):
     """Test Envelope deleted_envelope() returns expected results."""
+
+    # unit testing envelope not notification integration
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
     envelope = envelope_factory()
 
     envelope.delete_envelope()
@@ -151,9 +174,12 @@ def test_delete_envelope(envelope_factory):
 
 
 @freezegun.freeze_time("2023-01-01")
-def test_next_envelope_id(successful_envelope_factory):
+def test_next_envelope_id(successful_envelope_factory, settings):
     """Verify that envelope ID is made up of two digits of the year and a 4
     digit counter starting from 0001."""
+
+    # unit testing envelope not notification integration
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
     successful_envelope_factory()
     assert Envelope.next_envelope_id() == "230002"
