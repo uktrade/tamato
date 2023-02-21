@@ -1011,16 +1011,21 @@ def sqlite_storage(s3, s3_bucket_names):
 
 
 @pytest.fixture
-def envelope_storage(s3):
+def envelope_storage(s3, s3_bucket_names):
     """Patch EnvelopeStorage with moto so that nothing is really uploaded to
     s3."""
     from publishing.storages import EnvelopeStorage
 
-    return make_storage_mock(
+    storage = make_storage_mock(
         s3,
         EnvelopeStorage,
         bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
     )
+    assert storage.endpoint_url is settings.S3_ENDPOINT_URL
+    assert storage.access_key is settings.S3_ACCESS_KEY_ID
+    assert storage.secret_key is settings.S3_SECRET_ACCESS_KEY
+    assert storage.bucket_name in s3_bucket_names()
+    return storage
 
 
 @pytest.fixture

@@ -334,7 +334,7 @@ else:
 
 S3_ENDPOINT_URL = os.environ.get(
     "S3_ENDPOINT_URL",
-    "",
+    "https://test-s3-url.local/",
 )
 
 # Packaging automation.
