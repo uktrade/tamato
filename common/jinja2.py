@@ -12,7 +12,7 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import template_localtime
 from govuk_frontend_jinja.templates import Environment
 from govuk_frontend_jinja.templates import NunjucksExtension
-from jinja2 import Markup
+from jinja2.utils import markupsafe
 from webpack_loader.templatetags.webpack_loader import render_bundle
 from webpack_loader.templatetags.webpack_loader import webpack_static
 
@@ -87,7 +87,7 @@ def break_words(word):
     >>> break_words("hello/goodbye")
     "hello&8203;/&8203;goodbye"
     """
-    return Markup(re.sub(r"([^\w]+)", r"&#8203;\1&#8203;", word))
+    return markupsafe.Markup(re.sub(r"([^\w]+)", r"&#8203;\1&#8203;", word))
 
 
 def query_transform(request, **kwargs):
