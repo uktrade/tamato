@@ -84,6 +84,7 @@ class MeasureSessionStoreMixin:
 class MeasureSelectionMixin(MeasureSessionStoreMixin):
     @property
     def measure_selections(self):
+        """Get the IDs of measure that are candidates for editing/deletion."""
         return [
             SelectableObjectsForm.object_id_from_field_name(name)
             for name in [*self.session_store.data]
@@ -92,7 +93,8 @@ class MeasureSelectionMixin(MeasureSessionStoreMixin):
 
 class MeasureSelectionQuerysetMixin(MeasureSelectionMixin):
     def get_queryset(self):
-        """Get the measures that are candidates for deletion."""
+        """Get the queryset for measures that are candidates for
+        editing/deletion."""
         return Measure.objects.filter(pk__in=self.measure_selections)
 
 
