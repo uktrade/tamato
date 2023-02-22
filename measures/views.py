@@ -183,6 +183,12 @@ class MeasureEditWizard(
     MeasureSelectionQuerysetMixin,
     NamedUrlSessionWizardView,
 ):
+    """
+    Multipart form wizard for editing multiple measures.
+
+    https://django-formtools.readthedocs.io/en/latest/wizard.html
+    """
+
     storage_name = "measures.wizard.MeasureEditSessionStorage"
 
     form_list = [
@@ -264,6 +270,12 @@ class MeasureEditWizard(
 class MeasureCreateWizard(
     NamedUrlSessionWizardView,
 ):
+    """
+    Multipart form wizard for creating a single measure.
+
+    https://django-formtools.readthedocs.io/en/latest/wizard.html
+    """
+
     storage_name = "measures.wizard.MeasureCreateSessionStorage"
 
     START = "start"
