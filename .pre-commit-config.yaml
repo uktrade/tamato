@@ -35,7 +35,6 @@ repos:
       - id: black
   - repo: https://github.com/ikamensh/flynt/
     rev: '0.77'
-    rev: '0.77'
     hooks:
       - id: flynt
   - repo: https://github.com/uktrade/pii-secret-check-hooks
