@@ -1,11 +1,9 @@
 repos:
   - repo: https://github.com/asottile/add-trailing-comma
     rev: v2.4.0
-    rev: v2.4.0
     hooks:
       - id: add-trailing-comma
   - repo: https://github.com/myint/autoflake.git
-    rev: v2.0.1
     rev: v2.0.1
     hooks:
       - id: autoflake
@@ -16,7 +14,6 @@ repos:
             "--remove-unused-variable",
           ]
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
     rev: 5.12.0
     hooks:
       - id: isort
@@ -34,7 +31,6 @@ repos:
           ]
   - repo: https://github.com/psf/black
     rev: 23.1.0
-    rev: 23.1.0
     hooks:
       - id: black
   - repo: https://github.com/ikamensh/flynt/
@@ -43,7 +39,6 @@ repos:
     hooks:
       - id: flynt
   - repo: https://github.com/uktrade/pii-secret-check-hooks
-    rev: 0.0.0.35
     rev: 0.0.0.35
     hooks:
     -   id: pii_secret_filename
