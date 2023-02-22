@@ -1230,7 +1230,7 @@ class MeasureStartDateForm(forms.Form):
         return cleaned_data
 
 
-class MeasuresEditStartForm(forms.Form):
+class MeasuresEditFieldsForm(forms.Form):
     fields_to_edit = forms.MultipleChoiceField(
         choices=MeasureEditSteps.choices,
         widget=forms.CheckboxSelectMultiple,

@@ -194,7 +194,7 @@ class MeasureEditWizard(
     storage_name = "measures.wizard.MeasureEditSessionStorage"
 
     form_list = [
-        (START, forms.MeasuresEditStartForm),
+        (START, forms.MeasuresEditFieldsForm),
         (MeasureEditSteps.START_DATE, forms.MeasureStartDateForm),
         (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
     ]
