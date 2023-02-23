@@ -256,6 +256,8 @@ CSRF_COOKIE_HTTPONLY = True
 # Secure the session cookie
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 1 * 60
 
 # Check specified header for whether connection is via HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
