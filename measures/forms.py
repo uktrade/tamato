@@ -858,7 +858,6 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         help_text=(
             "Search for a quota using its order number. "
             "You can then select the correct quota from the dropdown list. "
-            "Leave this field blank if the measure is not a quota."
         ),
         queryset=QuotaOrderNumber.objects.all(),
         required=False,

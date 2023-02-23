@@ -23,6 +23,11 @@ SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "true"))
 VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
 VCAP_APPLICATION = json.loads(os.environ.get("VCAP_APPLICATION", "{}"))
 
+# -- Debug
+
+# Activates debugging
+DEBUG = is_truthy(os.environ.get("DEBUG", False))
+
 # -- Paths
 
 # Name of the project
@@ -172,6 +177,20 @@ FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 # -- Auth
 LOGIN_URL = reverse_lazy("login")
+
+if DEBUG is False:
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+            "OPTIONS": {
+                "min_length": 12,
+            },
+        },
+        {
+            "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        },
+    ]
+
 if SSO_ENABLED:
     LOGIN_URL = reverse_lazy("authbroker_client:login")
 
@@ -225,11 +244,6 @@ ROOT_URLCONF = f"urls"
 
 # URL path where static files are served
 STATIC_URL = "/assets/"
-
-# -- Debug
-
-# Activates debugging
-DEBUG = is_truthy(os.environ.get("DEBUG", False))
 
 # -- Database
 
