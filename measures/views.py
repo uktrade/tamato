@@ -31,6 +31,8 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from measures import forms
+from measures.constants import START
+from measures.constants import MeasureEditSteps
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
 from measures.models import FootnoteAssociationMeasure
@@ -70,7 +72,33 @@ class MeasureMixin:
         return Measure.objects.approved_up_to_transaction(tx)
 
 
-class MeasureList(MeasureMixin, FormView, TamatoListView):
+class MeasureSessionStoreMixin:
+    @property
+    def session_store(self):
+        return SessionStore(
+            self.request,
+            "MULTIPLE_MEASURE_SELECTIONS",
+        )
+
+
+class MeasureSelectionMixin(MeasureSessionStoreMixin):
+    @property
+    def measure_selections(self):
+        """Get the IDs of measure that are candidates for editing/deletion."""
+        return [
+            SelectableObjectsForm.object_id_from_field_name(name)
+            for name in [*self.session_store.data]
+        ]
+
+
+class MeasureSelectionQuerysetMixin(MeasureSelectionMixin):
+    def get_queryset(self):
+        """Get the queryset for measures that are candidates for
+        editing/deletion."""
+        return Measure.objects.filter(pk__in=self.measure_selections)
+
+
+class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView):
     """UI endpoint for viewing and filtering Measures."""
 
     template_name = "measures/list.jinja"
@@ -88,17 +116,6 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
         filterset_class = self.get_filterset_class()
         self.filterset = self.get_filterset(filterset_class)
         return MeasurePaginator(self.filterset.qs, per_page=20)
-
-    @property
-    def session_store(self):
-        return SessionStore(
-            self.request,
-            "MULTIPLE_MEASURE_SELECTIONS",
-        )
-
-    @property
-    def measure_selections(self):
-        return [*self.session_store.data]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -118,7 +135,7 @@ class MeasureList(MeasureMixin, FormView, TamatoListView):
         if form.data["form-action"] == "remove-selected":
             url = reverse("measure-ui-delete-multiple")
         elif form.data["form-action"] == "edit-selected":
-            url = reverse("measure-ui-edit-multiple-end-date")
+            url = reverse("measure-ui-edit-multiple")
         elif form.data["form-action"] == "persist-selection":
             # keep selections from other pages. only update newly selected/removed measures from the current page
             selected_objects = {k: v for k, v in form.cleaned_data.items() if v}
@@ -164,9 +181,111 @@ class MeasureDetail(MeasureMixin, TrackedModelDetailView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
+class MeasureEditWizard(
+    MeasureSelectionQuerysetMixin,
+    NamedUrlSessionWizardView,
+):
+    """
+    Multipart form wizard for editing multiple measures.
+
+    https://django-formtools.readthedocs.io/en/latest/wizard.html
+    """
+
+    storage_name = "measures.wizard.MeasureEditSessionStorage"
+
+    form_list = [
+        (START, forms.MeasuresEditFieldsForm),
+        (MeasureEditSteps.START_DATE, forms.MeasureStartDateForm),
+        (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
+    ]
+
+    templates = {
+        START: "measures/edit-multiple-start.jinja",
+        MeasureEditSteps.START_DATE: "measures/edit-wizard-step.jinja",
+        MeasureEditSteps.END_DATE: "measures/edit-wizard-step.jinja",
+    }
+
+    step_metadata = {
+        START: {
+            "title": "Edit measures",
+            "link_text": "Start",
+        },
+        MeasureEditSteps.START_DATE: {
+            "title": "Edit the start date",
+            "link_text": "Start date",
+        },
+        MeasureEditSteps.END_DATE: {
+            "title": "Edit the end date",
+            "link_text": "End date",
+        },
+    }
+
+    def get_template_names(self):
+        return self.templates.get(
+            self.steps.current,
+            "measures/edit-wizard-step.jinja",
+        )
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form=form, **kwargs)
+        context["step_metadata"] = self.step_metadata
+        if form:
+            context["form"].is_bound = False
+        context["no_form_tags"] = FormHelper()
+        context["no_form_tags"].form_tag = False
+        context["measures"] = self.get_queryset()
+        return context
+
+    def get_form_kwargs(self, step):
+        kwargs = {}
+        if step != START:
+            kwargs["selected_measures"] = self.get_queryset()
+        return kwargs
+
+    def done(self, form_list, **kwargs):
+        cleaned_data = self.get_all_cleaned_data()
+        selected_measures = self.get_queryset()
+        workbasket = WorkBasket.current(self.request)
+        new_start_date = None
+        new_end_date = None
+        if cleaned_data.get("start_date"):
+            new_start_date = datetime.date(
+                cleaned_data["start_date"].year,
+                cleaned_data["start_date"].month,
+                cleaned_data["start_date"].day,
+            )
+        if cleaned_data.get("end_date"):
+            new_end_date = datetime.date(
+                cleaned_data["end_date"].year,
+                cleaned_data["end_date"].month,
+                cleaned_data["end_date"].day,
+            )
+        for measure in selected_measures:
+            measure.new_version(
+                workbasket=workbasket,
+                update_type=UpdateType.UPDATE,
+                valid_between=TaricDateRange(
+                    lower=new_start_date
+                    if new_start_date
+                    else measure.valid_between.lower,
+                    upper=new_end_date if new_end_date else measure.valid_between.upper,
+                ),
+            )
+            self.session_store.clear()
+
+        return redirect(reverse("workbaskets:current-workbasket"))
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
 class MeasureCreateWizard(
     NamedUrlSessionWizardView,
 ):
+    """
+    Multipart form wizard for creating a single measure.
+
+    https://django-formtools.readthedocs.io/en/latest/wizard.html
+    """
+
     storage_name = "measures.wizard.MeasureCreateSessionStorage"
 
     START = "start"
@@ -598,29 +717,7 @@ class MeasureDelete(
     success_path = "list"
 
 
-class MeasureSelectionMixin:
-    def get_queryset(self):
-        """Get the measures that are candidates for deletion."""
-        return Measure.objects.filter(pk__in=self.measure_selections)
-
-    @property
-    def session_store(self):
-        """Get the session store to store the measures that will be
-        edited/deleted."""
-        return SessionStore(
-            self.request,
-            "MULTIPLE_MEASURE_SELECTIONS",
-        )
-
-    @property
-    def measure_selections(self):
-        return [
-            SelectableObjectsForm.object_id_from_field_name(name)
-            for name in [*self.session_store.data]
-        ]
-
-
-class MeasureMultipleDelete(MeasureSelectionMixin, TemplateView, ListView):
+class MeasureMultipleDelete(MeasureSelectionQuerysetMixin, TemplateView, ListView):
     """UI for user review and deletion of multiple Measures."""
 
     template_name = "measures/delete-multiple-measures.jinja"
@@ -650,57 +747,11 @@ class MeasureMultipleDelete(MeasureSelectionMixin, TemplateView, ListView):
         return redirect(reverse("measure-ui-list"))
 
 
-class MeasureMultipleEndDateEdit(MeasureSelectionMixin, FormView, ListView):
-    """UI for user edit and review of multiple measure end dates."""
-
-    template_name = "measures/edit-multiple-measures-enddates.jinja"
-    form_class = forms.MeasureEndDateForm
-
-    def get_context_data(self, **kwargs):
-        store_objects = self.get_queryset()
-        self.object_list = store_objects
-        context = super().get_context_data(**kwargs)
-
-        return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["selected_measures"] = self.get_queryset()
-        return kwargs
-
-    def form_valid(self, form):
-        if self.request.POST.get("submit", None) != "Save measure end dates":
-            # The user has cancelled out of the editing process.
-            return redirect("home")
-
-        selected_measures = self.get_queryset()
-        for measure in selected_measures:
-            measure.new_version(
-                workbasket=WorkBasket.current(self.request),
-                update_type=UpdateType.UPDATE,
-                valid_between=TaricDateRange(
-                    lower=measure.valid_between.lower,
-                    upper=datetime.date(
-                        form.cleaned_data["end_date"].year,
-                        form.cleaned_data["end_date"].month,
-                        form.cleaned_data["end_date"].day,
-                    ),
-                ),
-            )
-            self.session_store.clear()
-
-        return redirect(reverse("measure-ui-list"))
-
-
-class MeasureSelectionUpdate(View):
+class MeasureSelectionUpdate(MeasureSessionStoreMixin, View):
     def post(self, request, *args, **kwargs):
-        store = SessionStore(
-            self.request,
-            "MULTIPLE_MEASURE_SELECTIONS",
-        )
-        store.clear()
+        self.session_store.clear()
         data = json.loads(request.body)
         cleaned_data = {k: v for k, v in data.items() if "selectableobject_" in k}
         selected_objects = {k: v for k, v in cleaned_data.items() if v == 1}
-        store.add_items(selected_objects)
-        return JsonResponse(store.data)
+        self.session_store.add_items(selected_objects)
+        return JsonResponse(self.session_store.data)

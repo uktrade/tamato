@@ -1,3 +1,4 @@
+import datetime
 from unittest.mock import patch
 
 import pytest
@@ -6,9 +7,12 @@ from django.forms.models import model_to_dict
 from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
+from common.util import TaricDateRange
 from geo_areas.validators import AreaCode
 from measures import forms
+from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
+from measures.forms import MeasureStartDateForm
 from measures.models import Measure
 
 pytestmark = pytest.mark.django_db
@@ -911,3 +915,53 @@ def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
         )
         assert form.is_valid()
         assert form.cleaned_data["exclusions"] == [excluded_country1, excluded_country2]
+
+
+def test_measure_start_date_validation_fail():
+    valid_between = TaricDateRange(
+        lower=datetime.date(2000, 1, 1),
+        upper=datetime.date(2100, 1, 1),
+    )
+    selected_measures = factories.MeasureFactory.create_batch(
+        3,
+        valid_between=valid_between,
+    )
+    form = MeasureStartDateForm(
+        data={
+            "start_date_0": "01",
+            "start_date_1": "01",
+            "start_date_2": "2200",
+        },
+        selected_measures=selected_measures,
+    )
+
+    assert not form.is_valid()
+    assert (
+        "The start date cannot be after the end date: Start date 01/01/2200 does not start before 01/01/2100"
+        in form.errors["__all__"]
+    )
+
+
+def test_measure_end_date_validation_fail():
+    valid_between = TaricDateRange(
+        lower=datetime.date(2000, 1, 1),
+        upper=datetime.date(2100, 1, 1),
+    )
+    selected_measures = factories.MeasureFactory.create_batch(
+        3,
+        valid_between=valid_between,
+    )
+    form = MeasureEndDateForm(
+        data={
+            "end_date_0": "01",
+            "end_date_1": "01",
+            "end_date_2": "1999",
+        },
+        selected_measures=selected_measures,
+    )
+
+    assert not form.is_valid()
+    assert (
+        "The end date cannot be before the start date: Start date 01/01/2000 does not start before 01/01/1999"
+        in form.errors["__all__"]
+    )
