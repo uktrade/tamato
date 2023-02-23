@@ -246,21 +246,29 @@ class MeasureEditWizard(
         cleaned_data = self.get_all_cleaned_data()
         selected_measures = self.get_queryset()
         workbasket = WorkBasket.current(self.request)
+        new_start_date = None
+        new_end_date = None
+        if cleaned_data.get("start_date"):
+            new_start_date = datetime.date(
+                cleaned_data["start_date"].year,
+                cleaned_data["start_date"].month,
+                cleaned_data["start_date"].day,
+            )
+        if cleaned_data.get("end_date"):
+            new_end_date = datetime.date(
+                cleaned_data["end_date"].year,
+                cleaned_data["end_date"].month,
+                cleaned_data["end_date"].day,
+            )
         for measure in selected_measures:
             measure.new_version(
                 workbasket=workbasket,
                 update_type=UpdateType.UPDATE,
                 valid_between=TaricDateRange(
-                    lower=datetime.date(
-                        cleaned_data["start_date"].year,
-                        cleaned_data["start_date"].month,
-                        cleaned_data["start_date"].day,
-                    ),
-                    upper=datetime.date(
-                        cleaned_data["end_date"].year,
-                        cleaned_data["end_date"].month,
-                        cleaned_data["end_date"].day,
-                    ),
+                    lower=new_start_date
+                    if new_start_date
+                    else measure.valid_between.lower,
+                    upper=new_end_date if new_end_date else measure.valid_between.upper,
                 ),
             )
             self.session_store.clear()
