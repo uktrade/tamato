@@ -1019,7 +1019,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         help_text=(
             "Search for a commodity code by typing in the code's number or a keyword. "
             "After you've typed at least 3 numbers, a dropdown list will appear. "
-            "You can then select the correct quota from the dropdown list."
+            "You can then select the correct commodity from the dropdown list."
         ),
         queryset=GoodsNomenclature.objects.all(),
         attrs={"min_length": 3},
