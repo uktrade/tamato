@@ -467,7 +467,7 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
         ("", "This field is required."),
     ],
 )
-def test_measure_forms_comm_and_duties_form_invalid(
+def test_measure_forms_commodity_and_duties_form_invalid(
     commodity,
     error_message,
     duty_sentence_parser,
@@ -483,15 +483,6 @@ def test_measure_forms_comm_and_duties_form_invalid(
     )
     assert not form.is_valid()
     assert error_message in form.errors["commodity"]
-
-    empty = {}
-    form = forms.MeasureCommodityAndDutiesForm(
-        empty,
-        prefix="",
-        measure_start_date=date_ranges.normal,
-    )
-    assert not form.is_valid()
-    assert "This field is required." in form.errors["commodity"]
 
 
 def test_measure_forms_conditions_form_valid_data():
