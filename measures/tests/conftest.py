@@ -66,6 +66,49 @@ def existing_goods_nomenclature(date_ranges):
     )
 
 
+@pytest.fixture()
+def seed_database_with_indented_goods():
+    transaction = factories.TransactionFactory.create()
+
+    factories.GoodsNomenclatureFactory.create(
+        item_id="2903000000",
+        suffix=10,
+        indent__indent=0,
+    )
+
+    factories.GoodsNomenclatureFactory.create(
+        item_id="2903000000",
+        suffix=10,
+        indent__indent=1,
+    )
+
+    factories.GoodsNomenclatureFactory.create(
+        item_id="2903690000",
+        suffix=10,
+        indent__indent=2,
+    )
+
+    factories.GoodsNomenclatureFactory.create(
+        item_id="2903691100",
+        suffix=10,
+        indent__indent=3,
+    )
+
+    child_good_1 = factories.GoodsNomenclatureFactory.create(
+        item_id="2903691100",
+        suffix=80,
+        indent__indent=4,
+    )
+
+    factories.GoodsNomenclatureFactory.create(
+        item_id="2903691900",
+        suffix=80,
+        indent__indent=4,
+    )
+
+    # duplicate indent for child_good_1, with indent of 3
+    child_good_1.indents.first().copy(indent=3, transaction=transaction)
+
 @pytest.fixture(
     params=(
         (None, {"valid_between": factories.date_ranges("normal")}, True),
