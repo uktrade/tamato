@@ -1063,7 +1063,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         return cleaned_data
 
 
-MeasureCommodityAndDutiesFormSetBase = formset_factory(
+MeasureCommodityAndDutiesBaseFormSet = formset_factory(
     MeasureCommodityAndDutiesForm,
     prefix="measure_commodities_duties_formset",
     formset=FormSet,
@@ -1075,13 +1075,14 @@ MeasureCommodityAndDutiesFormSetBase = formset_factory(
 )
 
 
-class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesFormSetBase):
-    def full_clean(self):
-        super().full_clean()
-        if self._non_form_errors:
-            for e in self._non_form_errors.as_data():
-                if e.code == "too_few_forms":
-                    e.message = "Select one or more commodity codes"
+class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
+    def non_form_errors(self):
+        self._non_form_errors = super().non_form_errors()
+        for e in self._non_form_errors.as_data():
+            if e.code == "too_few_forms":
+                e.message = "Select one or more commodity codes"
+
+        return self._non_form_errors
 
 
 class MeasureFootnotesForm(forms.Form):
