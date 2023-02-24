@@ -464,7 +464,7 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
             "test",
             "Select a valid choice. That choice is not one of the available choices.",
         ),
-        ("", "This field is required."),
+        ("", "Select a commodity code"),
     ],
 )
 def test_measure_forms_commodity_and_duties_form_invalid(
