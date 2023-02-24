@@ -12,68 +12,68 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture(
     params=(
-        (
-            lambda d: {
-                "valid_between": d.overlap_normal_earlier,
-            },
-            True,
-        ),
-        (
-            lambda d: {
-                "valid_between": d.overlap_normal_earlier,
-                "measure_type": factories.MeasureTypeFactory.create(),
-            },
-            False,
-        ),
-        (
-            lambda d: {
-                "valid_between": d.overlap_normal_earlier,
-                "geographical_area": factories.GeographicalAreaFactory.create(),
-            },
-            False,
-        ),
-        (
-            lambda d: {
-                "valid_between": d.overlap_normal_earlier,
-                "order_number": factories.QuotaOrderNumberFactory.create(),
-            },
-            False,
-        ),
-        (
-            lambda d: {
-                "valid_between": d.overlap_normal_earlier,
-                "additional_code": factories.AdditionalCodeFactory.create(),
-            },
-            False,
-        ),
-        (
-            lambda d: {
-                "valid_between": d.overlap_normal_earlier,
-                "reduction": None,
-            },
-            False,
-        ),
-        (
-            lambda d: {
-                "valid_between": Dates.no_end_before(d.adjacent_earlier.lower),
-                "generating_regulation__valid_between": d.adjacent_earlier,
-                "generating_regulation__effective_end_date": d.adjacent_earlier.upper,
-            },
-            False,
-        ),
-        (
-            lambda d: {
-                "valid_between": d.later,
-            },
-            False,
-        ),
-        (
-            lambda d: {
-                "valid_between": d.overlap_normal_earlier,
-                "update_type": UpdateType.DELETE,
-            },
-            False,
-        ),
+            (
+                    lambda d: {
+                        "valid_between": d.overlap_normal_earlier,
+                    },
+                    True,
+            ),
+            (
+                    lambda d: {
+                        "valid_between": d.overlap_normal_earlier,
+                        "measure_type": factories.MeasureTypeFactory.create(),
+                    },
+                    False,
+            ),
+            (
+                    lambda d: {
+                        "valid_between": d.overlap_normal_earlier,
+                        "geographical_area": factories.GeographicalAreaFactory.create(),
+                    },
+                    False,
+            ),
+            (
+                    lambda d: {
+                        "valid_between": d.overlap_normal_earlier,
+                        "order_number": factories.QuotaOrderNumberFactory.create(),
+                    },
+                    False,
+            ),
+            (
+                    lambda d: {
+                        "valid_between": d.overlap_normal_earlier,
+                        "additional_code": factories.AdditionalCodeFactory.create(),
+                    },
+                    False,
+            ),
+            (
+                    lambda d: {
+                        "valid_between": d.overlap_normal_earlier,
+                        "reduction": None,
+                    },
+                    False,
+            ),
+            (
+                    lambda d: {
+                        "valid_between": Dates.no_end_before(d.adjacent_earlier.lower),
+                        "generating_regulation__valid_between": d.adjacent_earlier,
+                        "generating_regulation__effective_end_date": d.adjacent_earlier.upper,
+                    },
+                    False,
+            ),
+            (
+                    lambda d: {
+                        "valid_between": d.later,
+                    },
+                    False,
+            ),
+            (
+                    lambda d: {
+                        "valid_between": d.overlap_normal_earlier,
+                        "update_type": UpdateType.DELETE,
+                    },
+                    False,
+            ),
     ),
     ids=[
         "explicit:overlapping",
@@ -114,21 +114,20 @@ def updated_goods_nomenclature(e):
     return good
 
 
-
 @pytest.fixture(
     params=(
-        (lambda e: e, True),
-        (
-            lambda e: factories.GoodsNomenclatureFactory.create(
-                item_id=e.item_id[:8] + "90",
-                valid_between=e.valid_between,
+            (lambda e: e, True),
+            (
+                    lambda e: factories.GoodsNomenclatureFactory.create(
+                        item_id=e.item_id[:8] + "90",
+                        valid_between=e.valid_between,
+                    ),
+                    True,
             ),
-            True,
-        ),
-        (
-            updated_goods_nomenclature,
-            False,
-        ),
+            (
+                    updated_goods_nomenclature,
+                    False,
+            ),
     ),
     ids=[
         "current:self",
@@ -141,11 +140,31 @@ def related_goods_nomenclature(request, existing_goods_nomenclature):
     return callable(existing_goods_nomenclature), expected
 
 
+@pytest.fixture(
+    params=(
+            {'with_order_number': True},
+            {'with_dead_order_number': True},
+            {'with_additional_code': True},
+            {'with_dead_additional_code': True},
+            {},
+    ),
+    ids=[
+        "with_order_number",
+        "with_dead_order_number",
+        "with_additional_code",
+        "with_dead_additional_code",
+        "nothing",
+    ],
+)
+def measure_data_for_compile_query(request):
+    return factories.MeasureFactory.create(**request.param)
+
+
 @pytest.fixture
 def related_measure_data(
-    related_measure_dates,
-    related_goods_nomenclature,
-    existing_measure,
+        related_measure_dates,
+        related_goods_nomenclature,
+        existing_measure,
 ):
     nomenclature, nomenclature_overlap = related_goods_nomenclature
     validity_data, date_overlap = related_measure_dates
@@ -181,4 +200,41 @@ def test_ME32(related_measure_data):
 
     with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME32(related.transaction).validate(related)
+
+
+def test_ME32_compile_query(measure_data_for_compile_query):
+    """
+    Test that the compile_query method does check against  measure
+    type, geo area, order number, additional code and reduction indicator.
+    """
+
+    measure = measure_data_for_compile_query
+
+    me32 = business_rules.ME32(measure.transaction)
+    # e.g. "(AND: ('geographical_area__sid', 1), ('measure_type__sid', '000'), ('reduction', 1), ('order_number__sid', 1), ('additional_code__sid', 1))"
+
+    target = str(me32.compile_query(measure))
+    assert f"'measure_type__sid', '{measure.measure_type.sid}'" in target
+    assert f"'geographical_area__sid', {measure.geographical_area.sid}" in target
+
+    assert f"'reduction', {measure.reduction}" in target
+
+    if measure.order_number:
+        assert f"'order_number__sid', {measure.order_number.sid}" in target
+    else:
+        assert f"'order_number__isnull', True" in target
+        if measure.dead_order_number:
+            assert f"'dead_order_number__sid', {measure.order_number.sid}" in target
+        else:
+            assert f"'dead_order_number__isnull', True" in target
+
+    if measure.additional_code:
+        assert f"'additional_code__sid', {measure.additional_code.sid}" in target
+    else:
+        if measure.dead_additional_code:
+            assert f"'dead_additional_code', 'AAAA'" in target
+        else:
+            assert f"'dead_additional_code__isnull', True" in target
+            assert f"'additional_code__isnull', True" in target
+
 
