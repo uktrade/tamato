@@ -90,6 +90,16 @@ class MeasureSelectionMixin(MeasureSessionStoreMixin):
             for name in [*self.session_store.data]
         ]
 
+    @property
+    def measure_selectors(self):
+        """
+        Used for JavaScript.
+
+        Get the checkbox names of measure that are candidates for
+        editing/deletion.
+        """
+        return list(self.session_store.data.keys())
+
 
 class MeasureSelectionQuerysetMixin(MeasureSelectionMixin):
     def get_queryset(self):

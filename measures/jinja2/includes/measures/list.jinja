@@ -34,7 +34,7 @@
   {% endset  %}
 
   <script id="measure-select-checkboxes-script">
-  const MULTIPLE_MEASURE_SELECTIONS = {{ mark_safe(view.measure_selections) }};
+  const MULTIPLE_MEASURE_SELECTIONS = {{ mark_safe(view.measure_selectors) }};
   const CSRF_TOKEN = "{{ csrf_token }}";
   </script>
 
