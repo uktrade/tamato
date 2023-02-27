@@ -34,6 +34,7 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.validators import AreaCode
 from measures import models
+from measures.constants import MeasureEditSteps
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
@@ -1191,3 +1192,76 @@ class MeasureEndDateForm(forms.Form):
                     )
 
         return cleaned_data
+
+
+class MeasureStartDateForm(forms.Form):
+    start_date = DateInputFieldFixed(
+        label="Start date",
+        help_text="For example, 27 3 2008",
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.selected_measures = kwargs.pop("selected_measures", None)
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "start_date",
+            Submit(
+                "submit",
+                "Save measure start dates",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if "start_date" in cleaned_data:
+            for measure in self.selected_measures:
+                year = int(cleaned_data["start_date"].year)
+                month = int(cleaned_data["start_date"].month)
+                day = int(cleaned_data["start_date"].day)
+
+                upper = measure.valid_between.upper
+                lower = datetime.date(year, month, day)
+                # for an open-ended measure the end date can be None
+                if upper and lower > upper:
+                    formatted_lower = lower.strftime("%d/%m/%Y")
+                    formatted_upper = upper.strftime("%d/%m/%Y")
+                    raise ValidationError(
+                        f"The start date cannot be after the end date: "
+                        f"Start date {formatted_lower} does not start before {formatted_upper}",
+                    )
+
+        return cleaned_data
+
+
+class MeasuresEditFieldsForm(forms.Form):
+    fields_to_edit = forms.MultipleChoiceField(
+        choices=MeasureEditSteps.choices,
+        widget=forms.CheckboxSelectMultiple,
+        label="",
+        help_text="Select the fields you wish to edit",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "fields_to_edit",
+            ),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
