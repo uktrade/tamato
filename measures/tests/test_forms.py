@@ -461,6 +461,38 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
         assert "Enter a valid duty sentence." in form.errors["__all__"]
 
 
+@pytest.mark.parametrize(
+    "commodity, error_message",
+    [
+        (
+            "test",
+            "Select a valid choice. That choice is not one of the available choices.",
+        ),
+        ("", "Select a commodity code"),
+    ],
+)
+def test_measure_forms_commodity_and_duties_form_invalid(
+    commodity,
+    error_message,
+    duty_sentence_parser,
+    date_ranges,
+):
+    data = {
+        "commodity": commodity,
+    }
+    form = forms.MeasureCommodityAndDutiesForm(
+        data,
+        prefix="",
+        measure_start_date=date_ranges.normal,
+    )
+    assert not form.is_valid()
+    assert error_message in form.errors["commodity"]
+
+    formset = forms.MeasureCommodityAndDutiesFormSet({})
+    assert not formset.is_valid()
+    assert "Select one or more commodity codes" in formset.non_form_errors()
+
+
 def test_measure_forms_conditions_form_valid_data():
     """Tests that MeasureConditionsForm is valid when initialised with minimal
     required fields."""
