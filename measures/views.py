@@ -207,12 +207,11 @@ class MeasureEditWizard(
         (START, forms.MeasuresEditFieldsForm),
         (MeasureEditSteps.START_DATE, forms.MeasureStartDateForm),
         (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
+        (MeasureEditSteps.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
     ]
 
     templates = {
         START: "measures/edit-multiple-start.jinja",
-        MeasureEditSteps.START_DATE: "measures/edit-wizard-step.jinja",
-        MeasureEditSteps.END_DATE: "measures/edit-wizard-step.jinja",
     }
 
     step_metadata = {
@@ -227,6 +226,10 @@ class MeasureEditWizard(
         MeasureEditSteps.END_DATE: {
             "title": "Edit the end date",
             "link_text": "End date",
+        },
+        MeasureEditSteps.QUOTA_ORDER_NUMBER: {
+            "title": "Edit the quota order number",
+            "link_text": "Quota order number",
         },
     }
 
@@ -248,7 +251,7 @@ class MeasureEditWizard(
 
     def get_form_kwargs(self, step):
         kwargs = {}
-        if step != START:
+        if step not in [START, MeasureEditSteps.QUOTA_ORDER_NUMBER]:
             kwargs["selected_measures"] = self.get_queryset()
         return kwargs
 
@@ -258,6 +261,7 @@ class MeasureEditWizard(
         workbasket = WorkBasket.current(self.request)
         new_start_date = None
         new_end_date = None
+        new_quota_order_number = None
         if cleaned_data.get("start_date"):
             new_start_date = datetime.date(
                 cleaned_data["start_date"].year,
@@ -270,6 +274,7 @@ class MeasureEditWizard(
                 cleaned_data["end_date"].month,
                 cleaned_data["end_date"].day,
             )
+        new_quota_order_number = cleaned_data.get("order_number", None)
         for measure in selected_measures:
             measure.new_version(
                 workbasket=workbasket,
@@ -280,6 +285,9 @@ class MeasureEditWizard(
                     else measure.valid_between.lower,
                     upper=new_end_date if new_end_date else measure.valid_between.upper,
                 ),
+                order_number=new_quota_order_number
+                if new_quota_order_number
+                else measure.order_number,
             )
             self.session_store.clear()
 

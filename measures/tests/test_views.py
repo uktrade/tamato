@@ -1577,3 +1577,78 @@ def test_measure_list_selected_measures_list(valid_user_client):
     selected_measures_ids = [str(measure.sid) for measure in measures]
 
     assert measure_ids_in_table == selected_measures_ids
+
+
+def test_multiple_measure_edit_only_quota_order_number(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests the regulation step in MeasureEditWizard."""
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+    quota_order_number = factories.QuotaOrderNumberFactory()
+
+    url = reverse("measure-ui-edit-multiple")
+    session = valid_user_client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: 1,
+                measure_2.pk: 1,
+                measure_3.pk: 1,
+            },
+        },
+    )
+    session.save()
+
+    STEP_KEY = "measure_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: START,
+                "start-fields_to_edit": ["quota_order_number"],
+            },
+            "next_step": "quota_order_number",
+        },
+        {
+            "data": {
+                STEP_KEY: MeasureEditSteps.QUOTA_ORDER_NUMBER,
+                "quota_order_number-order_number": quota_order_number.id,
+            },
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+    ).order_by("sid")
+
+    complete_response = valid_user_client.get(response.url)
+    # on success, the page redirects to the workbasket page
+    assert complete_response.status_code == 302
+    assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        assert measure.update_type == UpdateType.UPDATE
+        assert measure.order_number == quota_order_number
