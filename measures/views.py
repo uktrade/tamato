@@ -7,6 +7,7 @@ from typing import Type
 from urllib.parse import urlencode
 
 from crispy_forms.helper import FormHelper
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
@@ -192,6 +193,7 @@ class MeasureDetail(MeasureMixin, TrackedModelDetailView):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class MeasureEditWizard(
+    PermissionRequiredMixin,
     MeasureSelectionQuerysetMixin,
     NamedUrlSessionWizardView,
 ):
@@ -202,6 +204,7 @@ class MeasureEditWizard(
     """
 
     storage_name = "measures.wizard.MeasureEditSessionStorage"
+    permission_required = ["common.change_trackedmodel"]
 
     form_list = [
         (START, forms.MeasuresEditFieldsForm),
@@ -300,6 +303,7 @@ class MeasureEditWizard(
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class MeasureCreateWizard(
+    PermissionRequiredMixin,
     NamedUrlSessionWizardView,
 ):
     """
@@ -309,6 +313,8 @@ class MeasureCreateWizard(
     """
 
     storage_name = "measures.wizard.MeasureCreateSessionStorage"
+
+    permission_required = ["common.add_trackedmodel"]
 
     START = "start"
     MEASURE_DETAILS = "measure_details"
