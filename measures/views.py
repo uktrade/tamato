@@ -208,6 +208,7 @@ class MeasureEditWizard(
         (MeasureEditSteps.START_DATE, forms.MeasureStartDateForm),
         (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
         (MeasureEditSteps.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
+        (MeasureEditSteps.REGULATION, forms.MeasureRegulationForm),
     ]
 
     templates = {
@@ -217,15 +218,15 @@ class MeasureEditWizard(
     step_metadata = {
         START: {
             "title": "Edit measures",
-            "link_text": "Start",
         },
         MeasureEditSteps.START_DATE: {
             "title": "Edit the start date",
-            "link_text": "Start date",
         },
         MeasureEditSteps.END_DATE: {
             "title": "Edit the end date",
-            "link_text": "End date",
+        },
+        MeasureEditSteps.REGULATION: {
+            "title": "Edit the regulation",
         },
         MeasureEditSteps.QUOTA_ORDER_NUMBER: {
             "title": "Edit the quota order number",
@@ -274,6 +275,7 @@ class MeasureEditWizard(
                 cleaned_data["end_date"].day,
             )
         new_quota_order_number = cleaned_data.get("order_number", None)
+        new_generating_regulation = cleaned_data.get("generating_regulation", None)
         for measure in selected_measures:
             measure.new_version(
                 workbasket=workbasket,
@@ -287,6 +289,9 @@ class MeasureEditWizard(
                 order_number=new_quota_order_number
                 if new_quota_order_number
                 else measure.order_number,
+                generating_regulation=new_generating_regulation
+                if new_generating_regulation
+                else measure.generating_regulation,
             )
             self.session_store.clear()
 

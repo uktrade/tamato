@@ -1265,3 +1265,30 @@ class MeasuresEditFieldsForm(forms.Form):
                 data_prevent_double_click="true",
             ),
         )
+
+
+class MeasureRegulationForm(forms.Form):
+    generating_regulation = AutoCompleteField(
+        label="Regulation ID",
+        help_text="Select the regulation which provides the legal basis for the measures.",
+        queryset=Regulation.objects.all(),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.selected_measures = kwargs.pop("selected_measures", None)
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "generating_regulation",
+            ),
+            Submit(
+                "submit",
+                "Save measure regulations",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )

@@ -157,7 +157,7 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
     assert client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
     for measure in workbasket_measures:
         # check that the update type is delete which is 2
-        assert measure.update_type == 2
+        assert measure.update_type == UpdateType.DELETE
 
 
 def test_multiple_measure_delete_template(client, valid_user, session_workbasket):
@@ -470,7 +470,7 @@ def test_measure_update_duty_sentence(
     # Remove keys with null value to avoid TypeError
     post_data = {k: v for k, v in post_data.items() if v is not None}
     post_data.update(update_data)
-    post_data["update_type"] = 1
+    post_data["update_type"] = UpdateType.UPDATE
     url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
     client.force_login(valid_user)
     response = client.post(url, data=post_data)
@@ -505,7 +505,7 @@ def test_measure_form_save_called_on_measure_update(
     MeasureForm.save(commit=False)"""
     post_data = measure_form.data
     post_data = {k: v for k, v in post_data.items() if v is not None}
-    post_data["update_type"] = 1
+    post_data["update_type"] = UpdateType.UPDATE
     url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
     client.force_login(valid_user)
     client.post(url, data=post_data)
@@ -537,7 +537,7 @@ def test_measure_update_updates_footnote_association(measure_form, client, valid
     point at the new, updated version of the measure."""
     post_data = measure_form.data
     post_data = {k: v for k, v in post_data.items() if v is not None}
-    post_data["update_type"] = 1
+    post_data["update_type"] = UpdateType.UPDATE
     assoc = factories.FootnoteAssociationMeasureFactory.create(
         footnoted_measure=measure_form.instance,
     )
@@ -1315,8 +1315,7 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
     assert complete_response.status_code == 302
     assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
     for measure in workbasket_measures:
-        # check that the update type is update which is 2
-        assert measure.update_type == 1
+        assert measure.update_type == UpdateType.UPDATE
         assert measure.valid_between.lower == datetime.date(2000, 1, 1)
         assert measure.valid_between.upper == datetime.date(2100, 1, 1)
         assert measure.effective_end_date == datetime.date(2100, 1, 1)
@@ -1416,8 +1415,82 @@ def test_multiple_measure_edit_single_form_functionality(
     assert complete_response.status_code == 302
     assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
     for measure in workbasket_measures:
-        # check that the update type is update which is 2
-        assert measure.update_type == 1
+        assert measure.update_type == UpdateType.UPDATE
+
+
+def test_multiple_measure_edit_only_regulation(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests the regulation step in MeasureEditWizard."""
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+    regulation = factories.RegulationFactory()
+
+    url = reverse("measure-ui-edit-multiple")
+    session = valid_user_client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: 1,
+                measure_2.pk: 1,
+                measure_3.pk: 1,
+            },
+        },
+    )
+    session.save()
+
+    STEP_KEY = "measure_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: START,
+                "start-fields_to_edit": ["regulation"],
+            },
+            "next_step": "regulation",
+        },
+        {
+            "data": {
+                STEP_KEY: MeasureEditSteps.REGULATION,
+                "regulation-generating_regulation": regulation.id,
+            },
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+    ).order_by("sid")
+
+    complete_response = valid_user_client.get(response.url)
+    # on success, the page redirects to the workbasket page
+    assert complete_response.status_code == 302
+    assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        assert measure.update_type == UpdateType.UPDATE
+        assert measure.generating_regulation == regulation
 
 
 def test_multiple_measure_edit_template(valid_user_client, session_workbasket):
