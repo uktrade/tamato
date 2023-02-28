@@ -46,7 +46,7 @@ def test_init(seed_database_with_indented_goods):
     assert len(target.tree.commodities) == 6
     assert len(target.tree.ancestors) == 6
 
-    assert target.extent == TaricDateRange(date(2023, 2, 22))
+    assert target.extent == TaricDateRange(date.today())
 
 
 def test_get_branch_measures(seed_database_with_indented_goods):
