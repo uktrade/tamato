@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
@@ -45,10 +46,14 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class CommodityImportView(FormView, WithCurrentWorkBasket):
+class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBasket):
     template_name = "commodities/import.jinja"
     form_class = CommodityImportForm
     success_url = reverse_lazy("commodity-ui-import-success")
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
 
     def form_valid(self, form):
         form.save(user=self.request.user, workbasket_id=self.workbasket.id)
