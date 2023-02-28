@@ -276,8 +276,7 @@ class MeasureEditWizard(
                 cleaned_data["end_date"].day,
             )
         new_quota_order_number = cleaned_data.get("order_number", None)
-        if cleaned_data.get("generating_regulation"):
-            new_generating_regulation = cleaned_data.get("generating_regulation")
+        new_generating_regulation = cleaned_data.get("generating_regulation", None)
         for measure in selected_measures:
             measure.new_version(
                 workbasket=workbasket,

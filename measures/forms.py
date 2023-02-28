@@ -1278,8 +1278,6 @@ class MeasureRegulationForm(forms.Form):
         self.selected_measures = kwargs.pop("selected_measures", None)
         super().__init__(*args, **kwargs)
 
-        self.fields["generating_regulation"].queryset = Regulation.objects.all()
-
         self.helper = FormHelper(self)
         self.helper.form_tag = False
         self.helper.legend_size = Size.SMALL
