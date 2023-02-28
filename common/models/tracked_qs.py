@@ -22,6 +22,7 @@ from common.querysets import TransactionPartitionQuerySet
 from common.querysets import ValidityQuerySet
 from common.util import resolve_path
 from common.validators import UpdateType
+from workbaskets.validators import WorkflowStatus
 
 
 class TrackedModelQuerySet(
@@ -87,7 +88,12 @@ class TrackedModelQuerySet(
                 ),
             )
             .filter(latest=F("id"))
-            .exclude(update_type=UpdateType.DELETE)
+            .exclude(
+                update_type=UpdateType.DELETE
+            )
+            .exclude(
+                transaction__workbasket__status=WorkflowStatus.ARCHIVED
+            )
         )
 
     def latest_deleted(self) -> TrackedModelQuerySet:
