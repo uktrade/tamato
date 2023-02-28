@@ -17,7 +17,6 @@ from typing import Union
 
 from parsec import Parser
 from parsec import Value
-from parsec import eof
 from parsec import joint
 from parsec import optional
 from parsec import regex

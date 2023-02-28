@@ -485,7 +485,9 @@ class MeasureCreateWizard(
     def get_form_kwargs(self, step):
         kwargs = {}
         if step == self.COMMODITIES:
-            count = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get("min_commodity_count")
+            count = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(
+                "min_commodity_count"
+            )
             print(count)
             kwargs["form_kwargs"] = {"extra": int(count)}
 
