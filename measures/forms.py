@@ -1020,10 +1020,11 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         help_text=(
             "Search for a commodity code by typing in the code's number or a keyword. "
             "After you've typed at least 3 numbers, a dropdown list will appear. "
-            "You can then select the correct quota from the dropdown list."
+            "You can then select the correct commodity from the dropdown list."
         ),
         queryset=GoodsNomenclature.objects.all(),
         attrs={"min_length": 3},
+        error_messages={"required": "Select a commodity code"},
     )
 
     duties = forms.CharField(
@@ -1063,7 +1064,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         return cleaned_data
 
 
-MeasureCommodityAndDutiesFormSet = formset_factory(
+MeasureCommodityAndDutiesBaseFormSet = formset_factory(
     MeasureCommodityAndDutiesForm,
     prefix="measure_commodities_duties_formset",
     formset=FormSet,
@@ -1073,6 +1074,16 @@ MeasureCommodityAndDutiesFormSet = formset_factory(
     validate_min=True,
     validate_max=True,
 )
+
+
+class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
+    def non_form_errors(self):
+        self._non_form_errors = super().non_form_errors()
+        for e in self._non_form_errors.as_data():
+            if e.code == "too_few_forms":
+                e.message = "Select one or more commodity codes"
+
+        return self._non_form_errors
 
 
 class MeasureFootnotesForm(forms.Form):
