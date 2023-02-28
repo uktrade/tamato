@@ -490,7 +490,8 @@ class MeasureCreateWizard(
             ).get(
                 "min_commodity_count",
             )
-            kwargs.update({"extra": min_commodity_count})
+            kwargs["form_kwargs"] = {"min_commodity_count": min_commodity_count}
+            kwargs.update({"min_commodity_count": min_commodity_count})
 
         if step == self.COMMODITIES or step == self.CONDITIONS:
             # duty sentence validation requires the measure start date so pass it to form kwargs here
