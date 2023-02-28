@@ -1,11 +1,17 @@
+from datetime import date, timedelta
+
 import pytest
 
+from commodities.models import GoodsNomenclature
+from commodities.models.dc import CommodityCollectionLoader, CommodityTreeSnapshot, SnapshotMoment
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import Dates
 from common.tests.util import raises_if
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from measures import business_rules
+from measures.models import Measure
 
 pytestmark = pytest.mark.django_db
 
@@ -238,3 +244,34 @@ def test_ME32_compile_query(measure_data_for_compile_query):
             assert f"'additional_code__isnull', True" in target
 
 
+def test_ME32_works_with_wonky_archived_measure(seed_database_with_indented_goods):
+    # setup data with archived workbasket and published workbasket
+    goods = GoodsNomenclature.objects.all().get(item_id="2903691900")
+    commodities_collection = CommodityCollectionLoader(prefix='2903').load()
+
+    archived_transaction = factories.TransactionFactory.create(archived=True)
+    old_regulation = factories.RegulationFactory.create(
+        valid_between=TaricDateRange(date(1982, 1, 1), date(1982, 12, 31))
+    )
+    wonky_archived_measure = factories.MeasureFactory.create(
+        transaction=archived_transaction,
+        goods_nomenclature=goods,
+        generating_regulation=old_regulation,
+        terminating_regulation=old_regulation,
+        valid_between=TaricDateRange(date.today() + timedelta(days=-100))
+    )
+
+    draft_transaction = factories.TransactionFactory.create(draft=True)
+    draft_measure = factories.MeasureFactory.create(
+        goods_nomenclature=goods,
+        valid_between=TaricDateRange(date.today() + timedelta(days=-100))
+    )
+
+    rule = business_rules.ME32(draft_transaction)
+
+    # if this fails, it will give amn out of range error
+    result = rule.validate(draft_measure)
+
+    assert result is None
+    assert Measure.objects.all().count() == 2
+    assert wonky_archived_measure.generating_regulation == old_regulation
