@@ -262,7 +262,6 @@ class MeasureEditWizard(
         workbasket = WorkBasket.current(self.request)
         new_start_date = None
         new_end_date = None
-        new_generating_regulation = None
         if cleaned_data.get("start_date"):
             new_start_date = datetime.date(
                 cleaned_data["start_date"].year,
