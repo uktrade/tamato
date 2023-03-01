@@ -6,7 +6,6 @@ import common.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("regulations", "0003_auto_20210210_1516"),
     ]

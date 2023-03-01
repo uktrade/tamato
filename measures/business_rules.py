@@ -842,7 +842,6 @@ class ComponentApplicability(BusinessRule):
             ApplicabilityCode.MANDATORY,
             ApplicabilityCode.NOT_PERMITTED,
         ):
-
             inapplicable = Q(**{self.get_applicability_field(): code}) & Q(
                 **{
                     f"{self.component_field}__isnull": code

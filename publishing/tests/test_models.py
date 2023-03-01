@@ -149,7 +149,6 @@ def test_success_processing_transition(
     mocked_publishing_models_send_emails_delay,
     settings,
 ):
-
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     packaged_workbasket = factories.QueuedPackagedWorkBasketFactory()
     with mock.patch(

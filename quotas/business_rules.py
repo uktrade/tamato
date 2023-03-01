@@ -316,7 +316,6 @@ class OverlappingQuotaDefinition(BusinessRule):
     quota order number id."""
 
     def validate(self, quota_definition):
-
         potential_quota_definition_matches = (
             type(quota_definition)
             .objects.approved_up_to_transaction(
@@ -348,7 +347,6 @@ class VolumeAndInitialVolumeMustMatch(BusinessRule):
     """
 
     def validate(self, quota_definition):
-
         if quota_definition.valid_between.lower < datetime.date.today():
             return True
 
@@ -421,7 +419,6 @@ class QA5(BusinessRule):
 
     def validate(self, association):
         if association.sub_quota_relation_type == SubQuotaType.EQUIVALENT:
-
             if association.coefficient == Decimal("1.00000"):
                 raise self.violation(
                     model=association,

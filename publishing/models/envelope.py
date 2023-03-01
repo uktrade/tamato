@@ -28,6 +28,7 @@ from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
 
+
 # Exceptions
 class EnvelopeCurrentlyProccessing(Exception):
     pass
@@ -170,9 +171,13 @@ class Envelope(TimestampedMixin):
         blank=True,
         default=None,
     )
-    """Used to manually set when an envelope has been published to the
-    production tariff-api. When non-null indicates that an envelope has been
-    published to the tariff-api service and when that was done."""
+    """
+    Used to manually set when an envelope has been published to the production
+    tariff-api.
+
+    When non-null indicates that an envelope has been published to the tariff-
+    api service and when that was done.
+    """
     deleted = BooleanField(
         default=False,
         editable=False,

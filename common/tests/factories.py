@@ -1029,11 +1029,11 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
                 MeasureTypeFactory,
                 order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
             ),
-            order_number = subfactory(
+            order_number=subfactory(
                 QuotaOrderNumberFactory,
                 origin__geographical_area=factory.SelfAttribute("...geographical_area"),
                 valid_between=factory.SelfAttribute("..valid_between"),
-            )
+            ),
         )
 
         with_dead_order_number = factory.Trait(
@@ -1045,15 +1045,15 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
                 QuotaOrderNumberFactory,
                 origin__geographical_area=factory.SelfAttribute("...geographical_area"),
                 valid_between=factory.SelfAttribute("..valid_between"),
-            )
+            ),
         )
 
         with_dead_additional_code = factory.Trait(
-            dead_additional_code='AAAA'
+            dead_additional_code="AAAA",
         )
 
         with_additional_code = factory.Trait(
-            additional_code=subfactory(AdditionalCodeFactory)
+            additional_code=subfactory(AdditionalCodeFactory),
         )
 
         with_footnote = factory.Trait(

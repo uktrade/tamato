@@ -49,7 +49,6 @@ class FootnoteFilter(
     StartYearMixin,
     ActiveStateMixin,
 ):
-
     footnote_type = LazyMultipleChoiceFilter(
         choices=type_choices(models.FootnoteType.objects.latest_approved()),
         widget=CheckboxSelectMultiple,

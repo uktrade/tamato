@@ -89,10 +89,10 @@ class TrackedModelQuerySet(
             )
             .filter(latest=F("id"))
             .exclude(
-                update_type=UpdateType.DELETE
+                update_type=UpdateType.DELETE,
             )
             .exclude(
-                transaction__workbasket__status=WorkflowStatus.ARCHIVED
+                transaction__workbasket__status=WorkflowStatus.ARCHIVED,
             )
         )
 

@@ -40,7 +40,6 @@ class BindNestedFormMixin:
             kwargs.pop("instance")  # this mixin does not support ModelForm as subforms
 
         for name, field in self.fields.items():
-
             if isinstance(field, RadioNested):
                 all_forms = {}
                 for choice, form_list in field.nested_forms.items():
@@ -510,7 +509,6 @@ class FormSet(forms.BaseFormSet):
         formset_initial = defaultdict(dict)
         delete_forms = []
         for field, value in self.data.items():
-
             # filter out non-field data
             if field.startswith(f"{self.prefix}-"):
                 form, field_name = field.rsplit("-", 1)
@@ -541,7 +539,6 @@ class FormSet(forms.BaseFormSet):
 
         for i, (form, form_initial) in enumerate(formset_initial.items()):
             for field, value in form_initial.items():
-
                 # convert submitted value to python object
                 form_field = self.form.declared_fields.get(field)
                 if form_field:

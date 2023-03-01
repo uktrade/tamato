@@ -136,7 +136,6 @@ class FootnoteCreateBaseForm(ValidityPeriodForm):
 
 
 class FootnoteCreateForm(FootnoteCreateBaseForm):
-
     description = forms.CharField(
         label="Footnote description",
         help_text=(

@@ -5,7 +5,6 @@ from django.db import models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("certificates", "0003_auto_20210219_0955"),
         ("quotas", "0004_auto_20210317_1533"),
