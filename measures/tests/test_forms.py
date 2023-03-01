@@ -73,6 +73,7 @@ def test_measure_forms_details_valid_data(measure_type):
         "start_date_0": 1,
         "start_date_1": 1,
         "start_date_2": 2023,
+        "min_commodity_count": 1,
     }
     start_and_end_dates = {
         "measure_type": measure_type.pk,
@@ -82,6 +83,7 @@ def test_measure_forms_details_valid_data(measure_type):
         "end_date_0": 2,
         "end_date_1": 2,
         "end_date_2": 2024,
+        "min_commodity_count": 99,
     }
     form = forms.MeasureDetailsForm(start_date, prefix="")
     assert form.is_valid()
@@ -366,12 +368,17 @@ def test_measure_forms_details_invalid_data():
         "start_date_0": 2,
         "start_date_1": 4,
         "start_date_2": 2021,
+        "min_commodity_count": 100,
     }
     form = forms.MeasureDetailsForm(data, initial={}, prefix="")
-    error_string = [
+    invalid_choice = [
         "Select a valid choice. That choice is not one of the available choices.",
     ]
-    assert form.errors["measure_type"] == error_string
+    invalid_count = [
+        "Enter a number between 1 and 99",
+    ]
+    assert form.errors["measure_type"] == invalid_choice
+    assert form.errors["min_commodity_count"] == invalid_count
     assert not form.is_valid()
 
 
