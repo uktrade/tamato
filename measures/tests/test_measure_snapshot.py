@@ -1,21 +1,18 @@
-from datetime import date, timedelta
+from datetime import date
+from datetime import timedelta
 
 import pytest
 
 from commodities.models import GoodsNomenclature
-from commodities.models.dc import SnapshotMoment, CommodityTreeSnapshot, Commodity, CommodityCollectionLoader
-from common.business_rules import BusinessRuleViolation
+from commodities.models.dc import CommodityCollectionLoader
+from commodities.models.dc import CommodityTreeSnapshot
+from commodities.models.dc import SnapshotMoment
 from common.models import Transaction
 from common.tests import factories
-from common.tests.util import Dates
-from common.tests.util import raises_if
 from common.util import TaricDateRange
-from common.validators import UpdateType
-from measures import business_rules
 from measures.snapshots import MeasureSnapshot
 
 pytestmark = pytest.mark.django_db
-
 
 
 @pytest.fixture
@@ -51,7 +48,7 @@ def test_init(seed_database_with_indented_goods):
 
 def test_get_branch_measures(seed_database_with_indented_goods):
     goods = GoodsNomenclature.objects.all().get(item_id="2903691900")
-    commodities_collection = CommodityCollectionLoader(prefix='2903').load()
+    commodities_collection = CommodityCollectionLoader(prefix="2903").load()
 
     target_commodity = None
 
@@ -61,20 +58,20 @@ def test_get_branch_measures(seed_database_with_indented_goods):
 
     archived_transaction = factories.TransactionFactory.create(archived=True)
     old_regulation = factories.RegulationFactory.create(
-        valid_between=TaricDateRange(date(1982, 1, 1), date(1982, 12, 31))
+        valid_between=TaricDateRange(date(1982, 1, 1), date(1982, 12, 31)),
     )
     wonky_archived_measure = factories.MeasureFactory.create(
         transaction=archived_transaction,
         goods_nomenclature=goods,
         generating_regulation=old_regulation,
         terminating_regulation=old_regulation,
-        valid_between=TaricDateRange(date.today() + timedelta(days=-100))
+        valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
     )
 
     draft_transaction = factories.TransactionFactory.create(draft=True)
     draft_measure = factories.MeasureFactory.create(
         goods_nomenclature=goods,
-        valid_between=TaricDateRange(date.today() + timedelta(days=-100))
+        valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
     )
 
     # call get_dependent_measures and check archived measure does not exist in results
@@ -99,5 +96,3 @@ def test_get_branch_measures(seed_database_with_indented_goods):
     assert len(target.tree.ancestors) == 6
 
     assert target.extent == TaricDateRange(date.today())
-
-
