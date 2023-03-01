@@ -13,7 +13,6 @@ from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.factories import date_ranges
 from common.tests.factories import end_date
-from common.tests.util import Dates
 from common.tests.util import only_applicable_after
 from common.tests.util import raises_if
 from common.tests.util import requires_export_refund_nomenclature
@@ -411,11 +410,6 @@ def test_ME25(
 
     with raises_if(BusinessRuleViolation, error_expected):
         business_rules.ME25(measure.transaction).validate(measure)
-
-
-
-
-
 
 
 def test_ME10():

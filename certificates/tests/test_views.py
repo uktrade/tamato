@@ -34,7 +34,6 @@ def test_certificate_delete(factory, use_delete_form):
 def test_certificate_create_form_creates_certificate_description_object(
     valid_user_api_client,
 ):
-
     # Post a form
     create_url = reverse("certificate-ui-create")
 

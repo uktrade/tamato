@@ -14,7 +14,8 @@ from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
-from common.validators import ApplicabilityCode, UpdateType
+from common.validators import ApplicabilityCode
+from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from measures.forms import MeasureForm
 from measures.models import DutyExpression
@@ -108,6 +109,7 @@ def seed_database_with_indented_goods():
 
     # duplicate indent for child_good_1, with indent of 3
     child_good_1.indents.first().copy(indent=3, transaction=transaction)
+
 
 @pytest.fixture(
     params=(

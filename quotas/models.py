@@ -89,7 +89,6 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
 
     @property
     def geographical_exclusion_descriptions(self):
-
         origin_ids = list(
             self.quotaordernumberorigin_set.latest_approved().values_list(
                 "pk",

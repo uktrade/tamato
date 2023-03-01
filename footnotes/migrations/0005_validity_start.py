@@ -7,7 +7,6 @@ from common import migration_operations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("footnotes", "0004_auto_20210419_1247"),
     ]

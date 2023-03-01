@@ -16,7 +16,6 @@ class OrderNumberFilterBackend(TamatoFilterBackend):
 
 
 class QuotaFilter(TamatoFilter):
-
     order_number = AutoCompleteFilter(
         label="Order number",
         field_name="order_number",

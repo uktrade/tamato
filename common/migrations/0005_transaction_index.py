@@ -5,7 +5,6 @@ from django.db import models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("common", "0004_transaction_partition_3_of_3"),
     ]

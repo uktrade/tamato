@@ -36,7 +36,6 @@ def test_upload_command_uploads_queued_workbasket_to_s3(
         "exporter.storages.HMRCStorage.save",
         wraps=mock.MagicMock(side_effect=hmrc_storage.save),
     ) as mock_save:
-
         call_command("upload_transactions", "-l")
 
         mock_save.assert_called_once()

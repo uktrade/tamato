@@ -17,7 +17,6 @@ class TestCommandBase(ABC):
         *args,
         **kwargs,
     ):
-
         call_command(
             self.TARGET_COMMAND,
             *args,

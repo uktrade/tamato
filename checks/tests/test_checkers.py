@@ -65,7 +65,6 @@ def test_indirect_business_rule_validation():
         TestRule,
         indirect=True,
     ):
-
         checker_type = IndirectBusinessRuleChecker.of(TestRule)
 
         # Verify the cache returns the same object if .of is called a second time.
