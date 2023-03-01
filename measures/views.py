@@ -490,7 +490,6 @@ class MeasureCreateWizard(
             ).get(
                 "min_commodity_count",
             )
-            kwargs["form_kwargs"] = {"min_commodity_count": min_commodity_count}
             kwargs.update({"min_commodity_count": min_commodity_count})
 
         if step == self.COMMODITIES or step == self.CONDITIONS:
