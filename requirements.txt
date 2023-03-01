@@ -39,7 +39,7 @@ freezegun==1.1.0
 gevent==21.12.0
 govuk-frontend-jinja @ git+https://github.com/alphagov/govuk-frontend-jinja.git@15845e4cca3a05df72c6e13ec6a7e35acc682f52
 govuk-tech-docs-sphinx-theme==1.0.0
-gunicorn==20.0.4
+gunicorn==20.1.0
 Jinja2==3.1.2
 lxml==4.9.1
 markupsafe==2.1.2
