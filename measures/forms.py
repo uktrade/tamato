@@ -14,7 +14,6 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
-from django.template import loader
 from django.urls import reverse
 
 from additional_codes.models import AdditionalCode
@@ -1027,11 +1026,6 @@ class MeasureAdditionalCodeForm(forms.ModelForm):
 class MeasureCommodityAndDutiesForm(forms.Form):
     commodity = AutoCompleteField(
         label="Commodity code",
-        help_text=(
-            "Search for a commodity code by typing in the code's number or a keyword. "
-            "After you've typed at least 3 numbers, a dropdown list will appear. "
-            "You can then select the correct commodity from the dropdown list."
-        ),
         queryset=GoodsNomenclature.objects.all(),
         attrs={"min_length": 3},
         error_messages={"required": "Select a commodity code"},
@@ -1054,12 +1048,6 @@ class MeasureCommodityAndDutiesForm(forms.Form):
             Fieldset(
                 "commodity",
                 "duties",
-                HTML(
-                    loader.render_to_string(
-                        "components/duty_help.jinja",
-                        context={"component": "measure"},
-                    ),
-                ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
                 else None,
