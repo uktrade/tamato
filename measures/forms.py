@@ -781,8 +781,14 @@ class MeasureDetailsForm(
         help_text=(
             "Enter how many commodity codes you intend to apply to the measure. You can add more later, up to 99 in total."
         ),
+        min_value=1,
+        max_value=99,
         required=True,
-        error_messages={"required": "Enter a number between 1 and 99"},
+        error_messages={
+            "required": "Enter a number between 1 and 99",
+            "min_value": "Enter a number between 1 and 99",
+            "max_value": "Enter a number between 1 and 99",
+        },
     )
 
     def __init__(self, *args, **kwargs):
