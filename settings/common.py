@@ -259,8 +259,8 @@ SESSION_COOKIE_SECURE = True
 
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 28800
-# 8 hours in seconds
+SESSION_COOKIE_AGE = 40 * 60
+# 40 minutes
 
 # Check specified header for whether connection is via HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
