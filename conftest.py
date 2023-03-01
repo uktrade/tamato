@@ -14,7 +14,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import boto3
-import factory as factory_library
+import factory
 import pytest
 from aioresponses import aioresponses
 from django.conf import settings
