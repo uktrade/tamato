@@ -783,6 +783,7 @@ class MeasureDetailsForm(
             "Enter how many commodity codes you intend to apply to the measure. You can add more later, up to 99 in total."
         ),
         required=True,
+        error_messages={"required": "Enter a number between 1 and 99"},
     )
 
     def __init__(self, *args, **kwargs):
@@ -795,7 +796,7 @@ class MeasureDetailsForm(
             "measure_type",
             "start_date",
             "end_date",
-            "min_commodity_count",
+            Field("min_commodity_count", css_class="govuk-input govuk-input--width-2"),
             Submit(
                 "submit",
                 "Continue",
