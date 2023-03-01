@@ -1,0 +1,56 @@
+{% extends "measures/create-wizard-step.jinja" %}
+
+{% from "components/details/macro.njk" import govukDetails %}
+{% from "components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "components/fieldset/macro.njk" import govukFieldset %}
+
+{% set page_title = step_metadata[wizard.steps.current].title %}
+
+
+{% block form %}
+  {{ govukDetails({
+    "summaryText": "Help with commodity codes",
+    "text": "Search for a commodity code by typing in the code's number or a keyword. After you've typed at least 3 numbers, a dropdown list will appear. You can then select the correct commodity from the dropdown list."
+  })}}
+
+  {{ govukDetails({
+    "summaryText": "Help with duties",
+    "text": "Enter the duty that applies to the measure. This is expressed as a percentage (for example, 4%), a specific duty (for example, 33 GBP/100kg) or a compound duty (for example, 3.5% + 11 GBP / 100 kg)."
+  }) }}
+
+  {% set formset = form %}
+  {{ crispy(formset.management_form, no_form_tags) }}
+
+  {% if formset.non_form_errors() %}
+    {% set error_list = [] %}
+    {% for error in formset.non_form_errors() %}
+      {{ error_list.append({
+        "html": '<p class="govuk-error-message">' ~ error ~ '</p>',
+      }) or "" }}
+    {% endfor %}
+
+    {{ govukErrorSummary({
+      "titleText": "There is a problem",
+      "errorList": error_list
+    }) }}
+  {% endif %}
+
+  {% for form in formset %}
+    {{ crispy(form) }}
+  {% endfor %}
+
+  {% if formset.data[formset.prefix ~ "-ADD"] %}
+    {{ crispy(formset.empty_form)|replace("__prefix__", formset.forms|length)|safe }}
+  {% endif %}
+
+  {% call govukFieldset({"legend": {}, "classes": "govuk-!-padding-top-3"}) %}
+    {{ govukButton({
+      "text": "Add new",
+      "classes": "govuk-button--secondary",
+      "value": "1",
+      "name": formset.prefix ~ "-ADD",
+    }) }}
+  {% endcall %}
+
+  {{ govukButton({"text": "Continue"}) }}
+{% endblock %}

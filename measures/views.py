@@ -341,7 +341,7 @@ class MeasureCreateWizard(
         REGULATION_ID: "measures/create-wizard-step.jinja",
         QUOTA_ORDER_NUMBER: "measures/create-wizard-step.jinja",
         GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
-        COMMODITIES: "measures/create-formset.jinja",
+        COMMODITIES: "measures/create-comm-codes-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
         CONDITIONS: "measures/create-formset.jinja",
         FOOTNOTES: "measures/create-formset.jinja",

@@ -1041,16 +1041,29 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         self.measure_start_date = kwargs.pop("measure_start_date")
         super().__init__(*args, **kwargs)
 
+        delete_button = (
+            Field("DELETE", template="includes/common/formset-delete-button.jinja")
+            if not self.prefix.endswith("__prefix__")
+            else None
+        )
+
         self.helper = FormHelper(self)
         self.helper.form_tag = False
         self.helper.label_size = Size.SMALL
         self.helper.layout = Layout(
             Fieldset(
-                "commodity",
-                "duties",
-                Field("DELETE", template="includes/common/formset-delete-button.jinja")
-                if not self.prefix.endswith("__prefix__")
-                else None,
+                Div(
+                    Div(
+                        Field.text("commodity"),
+                        css_class="govuk-grid-column-one-half",
+                    ),
+                    Div(
+                        Field.text("duties"),
+                        css_class="govuk-grid-column-one-half",
+                    ),
+                    css_class="govuk-grid-row",
+                ),
+                delete_button,
             ),
         )
 

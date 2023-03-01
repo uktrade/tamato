@@ -15,18 +15,6 @@
       <p class="govuk-body">{{ step_metadata[wizard.steps.current].info }}</p>
       {% endif %}
 
-      {% if wizard.steps.current == "commodities" %}
-        {{ govukDetails({
-          "summaryText": "Help with commodity code",
-          "text": "Search for a commodity code by typing in the code's number or a keyword. After you've typed at least 3 numbers, a dropdown list will appear. You can then select the correct commodity from the dropdown list."
-        }) }}
-
-        {{ govukDetails({
-          "summaryText": "Help with duties",
-          "text": "Enter the duty that applies to the measure. This is expressed as a percentage (for example, 4%), a specific duty (for example, 33 GBP/100kg) or a compound duty (for example, 3.5% + 11 GBP / 100 kg)."
-        }) }}
-      {% endif %}
-
       {% call django_form(action=view.get_step_url(wizard.steps.current)) %}
         {{ wizard.management_form }}
         {% block form %}{{ crispy(form) }}{% endblock %}
