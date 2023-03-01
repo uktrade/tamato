@@ -778,8 +778,11 @@ class MeasureDetailsForm(
     )
 
     min_commodity_count = forms.IntegerField(
-        label="Commodity count",
-        help_text=("Enter..."),
+        label="Commodity code count",
+        help_text=(
+            "Enter how many commodity codes you intend to apply to the measure. You can add more later, up to 99 in total."
+        ),
+        required=True,
     )
 
     def __init__(self, *args, **kwargs):
@@ -1076,7 +1079,7 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
     formset=FormSet,
     min_num=1,
     max_num=100,
-    # extra=1,
+    extra=0,
     validate_min=True,
     validate_max=True,
 )
@@ -1084,7 +1087,7 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
 
 class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
     def __init__(self, *args, **kwargs):
-        self.min_num = kwargs.pop("min_commodity_count")
+        self.extra = kwargs.pop("min_commodity_count")
         super().__init__(*args, **kwargs)
 
     def non_form_errors(self):
