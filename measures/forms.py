@@ -1088,7 +1088,9 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
 
 class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
     def __init__(self, *args, **kwargs):
-        self.extra = kwargs.pop("min_commodity_count")
+        min_commodity_count = kwargs.pop("min_commodity_count")
+        default_extra = 2
+        self.extra = min_commodity_count - default_extra
         super().__init__(*args, **kwargs)
 
     def non_form_errors(self):
