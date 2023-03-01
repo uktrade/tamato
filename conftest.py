@@ -12,6 +12,7 @@ from typing import Type
 from unittest.mock import patch
 
 import boto3
+import factory
 import pytest
 from aioresponses import aioresponses
 from django.conf import settings
@@ -997,14 +998,23 @@ def reference_nonexistent_record():
 
     @contextlib.contextmanager
     def make_record(
-        factory,
+        factory_instance,
         reference_field_name: str,
         teardown: Optional[Callable[[Any], Any]] = None,
     ):
-        # XXX relies on private API
-        dependency_factory = factory._meta.declarations[
+        # relies on private API
+        dependency_declaration = factory_instance._meta.declarations[
             reference_field_name
-        ].get_factory()
+        ]
+
+        # if factory returns multiple options (factory.declarations.Maybe) we need to select the "no" option
+        # (default factory) until we get to a factory we can then call get_factory() on. It does not really
+        # matter since the factory will create and then delete the record, leaving a reference to the PK that was
+        # removed.
+        while isinstance(dependency_declaration, factory.declarations.Maybe):
+            dependency_declaration = dependency_declaration.no
+
+        dependency_factory = dependency_declaration.get_factory()
 
         dependency = dependency_factory.create()
         non_existent_id = dependency.pk
@@ -1013,7 +1023,9 @@ def reference_nonexistent_record():
         else:
             dependency.delete()
 
-        record = factory.create(**{f"{reference_field_name}_id": non_existent_id})
+        record = factory_instance.create(
+            **{f"{reference_field_name}_id": non_existent_id}
+        )
 
         try:
             yield record
