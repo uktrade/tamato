@@ -1,9 +1,10 @@
-from datetime import date, timedelta
+from datetime import date
+from datetime import timedelta
 
 import pytest
 
 from commodities.models import GoodsNomenclature
-from commodities.models.dc import CommodityCollectionLoader, CommodityTreeSnapshot, SnapshotMoment
+from commodities.models.dc import CommodityCollectionLoader
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import Dates
@@ -18,68 +19,68 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture(
     params=(
-            (
-                    lambda d: {
-                        "valid_between": d.overlap_normal_earlier,
-                    },
-                    True,
-            ),
-            (
-                    lambda d: {
-                        "valid_between": d.overlap_normal_earlier,
-                        "measure_type": factories.MeasureTypeFactory.create(),
-                    },
-                    False,
-            ),
-            (
-                    lambda d: {
-                        "valid_between": d.overlap_normal_earlier,
-                        "geographical_area": factories.GeographicalAreaFactory.create(),
-                    },
-                    False,
-            ),
-            (
-                    lambda d: {
-                        "valid_between": d.overlap_normal_earlier,
-                        "order_number": factories.QuotaOrderNumberFactory.create(),
-                    },
-                    False,
-            ),
-            (
-                    lambda d: {
-                        "valid_between": d.overlap_normal_earlier,
-                        "additional_code": factories.AdditionalCodeFactory.create(),
-                    },
-                    False,
-            ),
-            (
-                    lambda d: {
-                        "valid_between": d.overlap_normal_earlier,
-                        "reduction": None,
-                    },
-                    False,
-            ),
-            (
-                    lambda d: {
-                        "valid_between": Dates.no_end_before(d.adjacent_earlier.lower),
-                        "generating_regulation__valid_between": d.adjacent_earlier,
-                        "generating_regulation__effective_end_date": d.adjacent_earlier.upper,
-                    },
-                    False,
-            ),
-            (
-                    lambda d: {
-                        "valid_between": d.later,
-                    },
-                    False,
-            ),
-            (
-                    lambda d: {
-                        "valid_between": d.overlap_normal_earlier,
-                        "update_type": UpdateType.DELETE,
-                    },
-                    False,
-            ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+            },
+            True,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "measure_type": factories.MeasureTypeFactory.create(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "geographical_area": factories.GeographicalAreaFactory.create(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "order_number": factories.QuotaOrderNumberFactory.create(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "additional_code": factories.AdditionalCodeFactory.create(),
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "reduction": None,
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": Dates.no_end_before(d.adjacent_earlier.lower),
+                "generating_regulation__valid_between": d.adjacent_earlier,
+                "generating_regulation__effective_end_date": d.adjacent_earlier.upper,
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.later,
+            },
+            False,
+        ),
+        (
+            lambda d: {
+                "valid_between": d.overlap_normal_earlier,
+                "update_type": UpdateType.DELETE,
+            },
+            False,
+        ),
     ),
     ids=[
         "explicit:overlapping",
@@ -122,18 +123,18 @@ def updated_goods_nomenclature(e):
 
 @pytest.fixture(
     params=(
-            (lambda e: e, True),
-            (
-                    lambda e: factories.GoodsNomenclatureFactory.create(
-                        item_id=e.item_id[:8] + "90",
-                        valid_between=e.valid_between,
-                    ),
-                    True,
+        (lambda e: e, True),
+        (
+            lambda e: factories.GoodsNomenclatureFactory.create(
+                item_id=e.item_id[:8] + "90",
+                valid_between=e.valid_between,
             ),
-            (
-                    updated_goods_nomenclature,
-                    False,
-            ),
+            True,
+        ),
+        (
+            updated_goods_nomenclature,
+            False,
+        ),
     ),
     ids=[
         "current:self",
@@ -148,11 +149,11 @@ def related_goods_nomenclature(request, existing_goods_nomenclature):
 
 @pytest.fixture(
     params=(
-            {'with_order_number': True},
-            {'with_dead_order_number': True},
-            {'with_additional_code': True},
-            {'with_dead_additional_code': True},
-            {},
+        {"with_order_number": True},
+        {"with_dead_order_number": True},
+        {"with_additional_code": True},
+        {"with_dead_additional_code": True},
+        {},
     ),
     ids=[
         "with_order_number",
@@ -168,9 +169,9 @@ def measure_data_for_compile_query(request):
 
 @pytest.fixture
 def related_measure_data(
-        related_measure_dates,
-        related_goods_nomenclature,
-        existing_measure,
+    related_measure_dates,
+    related_goods_nomenclature,
+    existing_measure,
 ):
     nomenclature, nomenclature_overlap = related_goods_nomenclature
     validity_data, date_overlap = related_measure_dates
@@ -209,10 +210,8 @@ def test_ME32(related_measure_data):
 
 
 def test_ME32_compile_query(measure_data_for_compile_query):
-    """
-    Test that the compile_query method does check against  measure
-    type, geo area, order number, additional code and reduction indicator.
-    """
+    """Test that the compile_query method does check against  measure type, geo
+    area, order number, additional code and reduction indicator."""
 
     measure = measure_data_for_compile_query
 
@@ -247,24 +246,24 @@ def test_ME32_compile_query(measure_data_for_compile_query):
 def test_ME32_works_with_wonky_archived_measure(seed_database_with_indented_goods):
     # setup data with archived workbasket and published workbasket
     goods = GoodsNomenclature.objects.all().get(item_id="2903691900")
-    commodities_collection = CommodityCollectionLoader(prefix='2903').load()
+    commodities_collection = CommodityCollectionLoader(prefix="2903").load()
 
     archived_transaction = factories.TransactionFactory.create(archived=True)
     old_regulation = factories.RegulationFactory.create(
-        valid_between=TaricDateRange(date(1982, 1, 1), date(1982, 12, 31))
+        valid_between=TaricDateRange(date(1982, 1, 1), date(1982, 12, 31)),
     )
     wonky_archived_measure = factories.MeasureFactory.create(
         transaction=archived_transaction,
         goods_nomenclature=goods,
         generating_regulation=old_regulation,
         terminating_regulation=old_regulation,
-        valid_between=TaricDateRange(date.today() + timedelta(days=-100))
+        valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
     )
 
     draft_transaction = factories.TransactionFactory.create(draft=True)
     draft_measure = factories.MeasureFactory.create(
         goods_nomenclature=goods,
-        valid_between=TaricDateRange(date.today() + timedelta(days=-100))
+        valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
     )
 
     rule = business_rules.ME32(draft_transaction)
