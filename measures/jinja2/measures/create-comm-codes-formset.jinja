@@ -8,16 +8,6 @@
 
 
 {% block form %}
-  {{ govukDetails({
-    "summaryText": "Help with commodity codes",
-    "text": "Search for a commodity code by typing in the code's number or a keyword. After you've typed at least 3 numbers, a dropdown list will appear. You can then select the correct commodity from the dropdown list."
-  })}}
-
-  {{ govukDetails({
-    "summaryText": "Help with duties",
-    "text": "Enter the duty that applies to the measure. This is expressed as a percentage (for example, 4%), a specific duty (for example, 33 GBP/100kg) or a compound duty (for example, 3.5% + 11 GBP / 100 kg)."
-  }) }}
-
   {% set formset = form %}
   {{ crispy(formset.management_form, no_form_tags) }}
 
@@ -35,6 +25,20 @@
     }) }}
   {% endif %}
 
+  <div class="govuk-grid-row">
+  {{ govukDetails({
+    "summaryText": "Help with commodity codes",
+    "text": "Search for a commodity code by typing in the code's number or a keyword. After you've typed at least 3 numbers, a dropdown list will appear. You can then select the correct commodity from the dropdown list.",
+    "classes": "govuk-grid-column-one-half",
+  })}}
+
+  {{ govukDetails({
+    "summaryText": "Help with duties",
+    "text": "Enter the duty that applies to the measure. This is expressed as a percentage (for example, 4%), a specific duty (for example, 33 GBP/100kg) or a compound duty (for example, 3.5% + 11 GBP / 100 kg).",
+    "classes": "govuk-grid-column-one-half",
+  }) }}
+  </div>
+
   {% for form in formset %}
     {{ crispy(form) }}
   {% endfor %}
@@ -43,14 +47,14 @@
     {{ crispy(formset.empty_form)|replace("__prefix__", formset.forms|length)|safe }}
   {% endif %}
 
-  {% call govukFieldset({"legend": {}, "classes": "govuk-!-padding-top-3"}) %}
-    {{ govukButton({
+  <div class="govuk-button-group">
+  {{ govukButton({"text": "Continue"}) }}
+
+  {{ govukButton({
       "text": "Add new",
       "classes": "govuk-button--secondary",
       "value": "1",
       "name": formset.prefix ~ "-ADD",
     }) }}
-  {% endcall %}
-
-  {{ govukButton({"text": "Continue"}) }}
+  </div>
 {% endblock %}
