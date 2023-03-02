@@ -17,13 +17,13 @@ from django.db.transaction import atomic
 from lxml import etree
 
 from common.models.mixins import TimestampedMixin
-from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
 from publishing.models.packaged_workbasket import PackagedWorkBasket
 from publishing.models.state import ProcessingState
 from publishing.storages import EnvelopeStorage
-from publishing.util import envelope_checker
+from publishing.util import TaricDataAssertionError
+from publishing.util import validate_envelope
 from taric import validators
 from workbaskets.models import WorkBasket
 
@@ -278,23 +278,15 @@ class Envelope(TimestampedMixin):
             logger.info(f"rendered_envelope {rendered_envelope}")
             envelope_file = rendered_envelope.output
 
-            # Check envelope is as expected
-            results = envelope_checker(workbaskets, rendered_envelope)
-            if not results["checks_pass"]:
-                msg = []
-                for error in results["error_message_list"]:
-                    msg.append(
-                        f"{envelope_file.name} {WARNING_SIGN_EMOJI} {error} Try again or consult developers if error persists.",
-                    )
-                logger.error("\n".join(msg))
-                raise EnvelopeNoTransactions("\n".join(msg))
-
             # Transaction envelope data XML is valid, ready for upload to s3
             envelope_file.seek(0, os.SEEK_SET)
             try:
-                validate_envelope(envelope_file)
+                validate_envelope(envelope_file, workbaskets)
             except etree.DocumentInvalid:
                 logger.error(f"{envelope_file.name}  is Envelope invalid !")
+                raise
+            except TaricDataAssertionError:
+                # Logged error in validate_envelope
                 raise
             else:
                 # If valid upload to s3
