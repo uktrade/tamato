@@ -27,7 +27,7 @@ model_taric_record_count = dict(
         "FootnoteType": 2,
         "Footnote": 1,
         "GeographicalAreaDescription": 2,
-        "GeographicalMembership": 2,
+        "GeographicalMembership": 1,
         "GeographicalArea": 1,
         "DutyExpression": 2,
         "AdditionalCodeTypeMeasureType": 1,
@@ -48,7 +48,6 @@ model_taric_record_count = dict(
         "QuotaAssociation": 1,
         "QuotaBlocking": 1,
         "QuotaDefinition": 1,
-        # "QuotaEventTypes": 1, #maybe 7?
         "QuotaEvent": 1,
         "QuotaOrderNumberOriginExclusion": 1,
         "QuotaOrderNumberOrigin": 1,
