@@ -1,9 +1,5 @@
-import pytest
-
 from exporter.util import exceptions_as_messages
 from exporter.util import item_timer
-
-pytestmark = pytest.mark.django_db
 
 
 def test_exceptions_as_messages():
