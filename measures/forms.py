@@ -104,7 +104,7 @@ class GeoGroupForm(forms.Form):
         # descriptions__description" should make this implicitly distinct()
         self.fields[
             "geographical_area_group"
-        ].label_from_instance = lambda obj: obj.description
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
 
         if self.initial.get("geo_area") == GeoAreaType.GROUP.value:
             self.initial["geographical_area_group"] = self.initial["geographical_area"]
@@ -130,7 +130,7 @@ class ErgaOmnesExclusionsForm(forms.Form):
         )
         self.fields[
             "erga_omnes_exclusion"
-        ].label_from_instance = lambda obj: obj.description
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
 
 
 class GeoGroupExclusionsForm(forms.Form):
@@ -153,7 +153,7 @@ class GeoGroupExclusionsForm(forms.Form):
         )
         self.fields[
             "geo_group_exclusion"
-        ].label_from_instance = lambda obj: obj.description
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
 
 
 GeoGroupFormSet = formset_factory(
@@ -213,7 +213,7 @@ class CountryRegionForm(forms.Form):
 
         self.fields[
             "geographical_area_country_or_region"
-        ].label_from_instance = lambda obj: obj.description
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
 
         if self.initial.get("geo_area") == GeoAreaType.COUNTRY.value:
             self.initial["geographical_area_country_or_region"] = self.initial[
