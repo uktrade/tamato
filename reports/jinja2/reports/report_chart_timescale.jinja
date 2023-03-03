@@ -8,10 +8,10 @@
 {% endblock %}
 
 {% block content %}
-    <script src="{{ static("chart.js") }}"></script>
-    <script src="{{ static("moment.min.js") }}"></script>
-    <script src="{{ static("chartjs-adapter-moment.js") }}"></script>
-    <script>
+    <script nonce="{{ request.csp_nonce }}" src="{{ static("chart.js") }}"></script>
+    <script nonce="{{ request.csp_nonce }}" src="{{ static("moment.min.js") }}"></script>
+    <script nonce="{{ request.csp_nonce }}" src="{{ static("chartjs-adapter-moment.js") }}"></script>
+    <script nonce="{{ request.csp_nonce }}">
 
         const data = {
             datasets: [{

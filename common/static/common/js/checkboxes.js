@@ -28,12 +28,8 @@ class CheckBoxes {
 
         this.initCheckboxes();
         this.addEventListeners();
-        this.addParentCheckboxEventListener();
-    }
-
-    addParentCheckboxEventListener() {
         const parentCheckbox = document.querySelector(this.PARENT_CHECKBOX)
-        parentCheckbox.onchange = this.toggleCheckAll.bind(this);
+        if (parentCheckbox) parentCheckbox.onchange = this.toggleCheckAll.bind(this);
     }
 
     updateSession() {
@@ -75,33 +71,34 @@ class CheckBoxes {
             }
         }
         // init check all checkbox
-        const container = document.createElement("div");
-        container.setAttribute("class", "govuk-form-group");
-        const fieldset = document.createElement("fieldset");
-        fieldset.setAttribute("class", "govuk-fieldset");
-        const container2 = document.createElement("div");
-        container2.setAttribute("class", "govuk-checkboxes govuk-checkboxes--small");
-        const container3 = document.createElement("div");
-        container3.setAttribute("class", "govuk-checkboxes__item");
-        const inputElement = document.createElement("input");
-        inputElement.setAttribute("class", "govuk-checkboxes__input");
-        inputElement.setAttribute("id", "select-all");
-        inputElement.setAttribute("name", "select-all");
-        inputElement.setAttribute("type", "checkbox");
-        inputElement.setAttribute("data-check-all", "data-check-trackedmodel");
-        const labelElement = document.createElement("label");
-        labelElement.setAttribute("class", "govuk-label govuk-checkboxes__label govuk-!-padding-right-0");
-        labelElement.setAttribute("for", "selected");
-
-        container.appendChild(fieldset);
-        fieldset.appendChild(container2);
-        container2.appendChild(container3);
-        container3.appendChild(inputElement);
-        container3.appendChild(labelElement);
-
         const checkboxContainer = document.getElementById(this.CHECK_ALL_CHECKBOX);
+        if (checkboxContainer) {
+            const container = document.createElement("div");
+            container.setAttribute("class", "govuk-form-group");
+            const fieldset = document.createElement("fieldset");
+            fieldset.setAttribute("class", "govuk-fieldset");
+            const container2 = document.createElement("div");
+            container2.setAttribute("class", "govuk-checkboxes govuk-checkboxes--small");
+            const container3 = document.createElement("div");
+            container3.setAttribute("class", "govuk-checkboxes__item");
+            const inputElement = document.createElement("input");
+            inputElement.setAttribute("class", "govuk-checkboxes__input");
+            inputElement.setAttribute("id", "select-all");
+            inputElement.setAttribute("name", "select-all");
+            inputElement.setAttribute("type", "checkbox");
+            inputElement.setAttribute("data-check-all", "data-check-trackedmodel");
+            const labelElement = document.createElement("label");
+            labelElement.setAttribute("class", "govuk-label govuk-checkboxes__label govuk-!-padding-right-0");
+            labelElement.setAttribute("for", "selected");
 
-        checkboxContainer.appendChild(container);
+            container.appendChild(fieldset);
+            fieldset.appendChild(container2);
+            container2.appendChild(container3);
+            container3.appendChild(inputElement);
+            container3.appendChild(labelElement);
+
+            checkboxContainer.appendChild(container);
+        }
 
     }
 

@@ -143,6 +143,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "common.models.utils.TransactionMiddleware",
+    "csp.middleware.CSPMiddleware",
 ]
 if SSO_ENABLED:
     MIDDLEWARE += [
@@ -174,6 +175,27 @@ TEMPLATES = [
 ]
 
 FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
+
+# Content Security Policy
+# double quotes here are important!!
+# https://django-csp.readthedocs.io/en/latest/configuration.html
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_STYLE_SRC = (
+    "'self'",
+    "'unsafe-inline'",
+    "https://tagmanager.google.com/",
+)
+CSP_SCRIPT_SRC = (
+    "'self'",
+    "'unsafe-eval'",
+    "'unsafe-inline'",
+    "https://tagmanager.google.com/",
+    "https://www.googletagmanager.com/",
+    "ajax.googleapis.com/",
+)
+CSP_FONT_SRC = ("'self'", "'unsafe-inline'")
+CSP_INCLUDE_NONCE_IN = ("script-src",)
+CSP_REPORT_ONLY = False
 
 # -- Auth
 LOGIN_URL = reverse_lazy("login")
