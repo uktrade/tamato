@@ -70,24 +70,16 @@ def test_all_tracked_models_validate_envelope(queued_workbasket):
         target_regulation=reg2,
         enacting_regulation=reg1,
     )
-    factories.ReplacementFactory(
-        transaction=approved_transaction,
-        target_regulation=reg2,
-        enacting_regulation=reg1,
-    )
     factories.SuspensionFactory(
         transaction=approved_transaction,
         target_regulation=reg2,
         enacting_regulation=reg1,
     )
-    # FIXME cannot serialize factory built tracked model
-    # error : AssertionError: `HyperlinkedRelatedField` requires the request in the serializer context.
-    #         Add `context={'request': request}` when instantiating the serializer.
-    # factories.TerminationFactory(
-    #     transaction=approved_transaction,
-    #     enacting_regulation=reg1,
-    #     )
-
+    factories.ReplacementFactory(
+        transaction=approved_transaction,
+        target_regulation=reg2,
+        enacting_regulation=reg1,
+    )
     factories.CertificateFactory(
         transaction=approved_transaction,
         certificate_type=factories.CertificateTypeFactory(
