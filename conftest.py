@@ -380,12 +380,16 @@ def queued_workbasket_factory():
 
 @pytest.fixture
 def packaged_workbasket_factory(queued_workbasket_factory):
-    def factory(**kwargs):
-        if "workbasket" in kwargs:
-            workbasket = kwargs.pop(
-                "workbasket",
-            )
-        else:
+    """
+    Factory fixture to create a packaged workbasket.
+
+    params:
+    workbasket defaults to queued_workbasket_factory() which creates a
+    Workbasket in the state QUEUED with an approved transaction and tracked models
+    """
+
+    def factory(workbasket=None, **kwargs):
+        if not workbasket:
             workbasket = queued_workbasket_factory()
         with patch(
             "publishing.tasks.create_xml_envelope_file.apply_async",
@@ -400,13 +404,19 @@ def packaged_workbasket_factory(queued_workbasket_factory):
 
 
 @pytest.fixture
-def envelope_factory(packaged_workbasket_factory, envelope_storage):
-    def factory(**kwargs):
-        if "packaged_workbasket" in kwargs:
-            packaged_workbasket = kwargs.pop(
-                "packaged_workbasket",
-            )
-        else:
+def published_envelope_factory(packaged_workbasket_factory, envelope_storage):
+    """
+    Factory fixture to create an envelope and update the packaged_workbasket
+    envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory(packaged_workbasket=None, **kwargs):
+        if not packaged_workbasket:
             packaged_workbasket = packaged_workbasket_factory()
 
         with mock.patch(
@@ -428,6 +438,16 @@ def envelope_factory(packaged_workbasket_factory, envelope_storage):
 
 @pytest.fixture
 def successful_envelope_factory(envelope_factory):
+    """
+    Factory fixture to create a successfully processed envelope and update the
+    packaged_workbasket envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
     def factory(**kwargs):
         envelope = envelope_factory(**kwargs)
 

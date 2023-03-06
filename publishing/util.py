@@ -9,6 +9,11 @@ from common.xml.namespaces import nsmap
 
 logger = logging.getLogger(__name__)
 
+"""
+TrackedModel types make up the keys of the dictionary 
+and they map to the TARIC record count they represent
+These records can be found in each of the models under /jinja2/taric/*.xml
+"""
 model_taric_record_count = dict(
     {
         "AdditionalCodeDescription": 2,

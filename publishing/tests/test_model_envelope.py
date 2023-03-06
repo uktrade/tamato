@@ -15,13 +15,17 @@ from publishing.util import TaricDataAssertionError
 pytestmark = pytest.mark.django_db
 
 
-def test_create_envelope(successful_envelope_factory, envelope_factory, settings):
+def test_create_envelope(
+    successful_envelope_factory,
+    published_envelope_factory,
+    settings,
+):
     """Test multiple Envelope instances creates the correct."""
 
     # unit testing envelope not notification integration
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     envelope = successful_envelope_factory()
-    envelope2 = envelope_factory()
+    envelope2 = published_envelope_factory()
 
     assert int(envelope.envelope_id[2:]) == 1
     assert int(envelope2.envelope_id[2:]) == 2
@@ -126,7 +130,7 @@ def test_queryset_for_year(successful_envelope_factory, settings):
 
 def test_queryset_processing_states(
     packaged_workbasket_factory,
-    envelope_factory,
+    published_envelope_factory,
     successful_envelope_factory,
     settings,
 ):
@@ -136,7 +140,7 @@ def test_queryset_processing_states(
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
     packaged_workbasket = packaged_workbasket_factory()
-    envelope = envelope_factory(packaged_workbasket=packaged_workbasket)
+    envelope = published_envelope_factory(packaged_workbasket=packaged_workbasket)
 
     unprocessed_result = Envelope.objects.unprocessed()
     assert envelope in unprocessed_result
@@ -162,13 +166,13 @@ def test_queryset_processing_states(
     assert envelope2 in success_processing_result
 
 
-def test_delete_envelope(envelope_storage, envelope_factory, settings):
+def test_delete_envelope(envelope_storage, published_envelope_factory, settings):
     """Test Envelope deleted_envelope() returns expected results."""
 
     # unit testing envelope not notification integration
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
-    envelope = envelope_factory()
+    envelope = published_envelope_factory()
 
     with mock.patch(
         "publishing.storages.EnvelopeStorage.delete",
