@@ -4,13 +4,13 @@ import os
 import re
 import sys
 import uuid
-from datetime import timedelta
 from os.path import abspath
 from os.path import dirname
 from os.path import join
 from pathlib import Path
 
 import dj_database_url
+from celery.schedules import crontab
 from django.urls import reverse_lazy
 
 from common.util import is_truthy
@@ -440,7 +440,7 @@ CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
-        "schedule": timedelta(minutes=30),
+        "schedule": crontab(hour=4, minute=10),
     },
 }
 
