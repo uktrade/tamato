@@ -56,6 +56,7 @@ model_taric_record_count = dict(
         "Amendment": 1,
         "Group": 2,
         "Regulation": 1,
+        "Replacement": 1,
         "Suspension": 2,
         "Termination": 1,
     },
