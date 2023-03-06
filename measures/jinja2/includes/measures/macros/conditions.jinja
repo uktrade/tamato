@@ -1,0 +1,12 @@
+{% from 'macros/create_link.jinja' import create_link %}
+
+{% macro requirement(condition) -%}
+    {%- if condition.required_certificate -%}
+        {{ create_link(condition.required_certificate.get_url(), condition.required_certificate.code) }}:
+        {{ condition.required_certificate.get_description().description }}
+    {%- elif condition.duty_amount -%}
+        {{ duty_amount(condition) }}
+    {%- else -%}
+        Condition not fulfilled
+    {%- endif -%}
+{%- endmacro %}
