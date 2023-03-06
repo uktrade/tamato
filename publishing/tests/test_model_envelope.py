@@ -10,6 +10,7 @@ from publishing.models import EnvelopeCurrentlyProccessing
 from publishing.models import EnvelopeInvalidQueuePosition
 from publishing.models import EnvelopeNoTransactions
 from publishing.models import PackagedWorkBasket
+from publishing.util import TaricDataAssertionError
 
 pytestmark = pytest.mark.django_db
 
@@ -188,3 +189,21 @@ def test_next_envelope_id(successful_envelope_factory, settings):
 
     successful_envelope_factory()
     assert Envelope.next_envelope_id() == "230002"
+
+
+def test_upload_envelope_handles_validate_envelope(packaged_workbasket_factory):
+    """Mock Error repsonse from validate envelope and test it is raised."""
+
+    packaged_workbasket = packaged_workbasket_factory()
+
+    with mock.patch(
+        "publishing.models.envelope.validate_envelope",
+        side_effect=TaricDataAssertionError(
+            "Missing records in XML: 4, while 6 expected",
+        ),
+    ) as mock_validate:
+        with pytest.raises(TaricDataAssertionError):
+            factories.PublishedEnvelopeFactory(
+                packaged_work_basket=packaged_workbasket,
+            )
+        mock_validate.assert_called_once()
