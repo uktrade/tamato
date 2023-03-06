@@ -360,9 +360,11 @@ if VCAP_SERVICES.get("aws-s3-bucket"):
     S3_SECRET_ACCESS_KEY = app_bucket_creds["aws_secret_access_key"]
     HMRC_PACKAGING_STORAGE_BUCKET_NAME = app_bucket_creds["bucket_name"]
 else:
-    S3_REGION_NAME = os.environ.get("AWS_REGION")
+    S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
     S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
-    S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY")
+    S3_SECRET_ACCESS_KEY = os.environ.get(
+        "S3_SECRET_ACCESS_KEY",
+    )
     HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
         "HMRC_PACKAGING_STORAGE_BUCKET_NAME",
         "hmrc-packaging",
@@ -370,7 +372,6 @@ else:
 
 S3_ENDPOINT_URL = os.environ.get(
     "S3_ENDPOINT_URL",
-    "",
 )
 
 # Packaging automation.
