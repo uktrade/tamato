@@ -23,6 +23,11 @@ SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "true"))
 VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
 VCAP_APPLICATION = json.loads(os.environ.get("VCAP_APPLICATION", "{}"))
 
+# -- Debug
+
+# Activates debugging
+DEBUG = is_truthy(os.environ.get("DEBUG", False))
+
 # -- Paths
 
 # Name of the project
@@ -138,6 +143,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "common.models.utils.TransactionMiddleware",
+    "csp.middleware.CSPMiddleware",
 ]
 if SSO_ENABLED:
     MIDDLEWARE += [
@@ -170,8 +176,43 @@ TEMPLATES = [
 
 FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
+# Content Security Policy
+# double quotes here are important!!
+# https://django-csp.readthedocs.io/en/latest/configuration.html
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_STYLE_SRC = (
+    "'self'",
+    "'unsafe-inline'",
+    "https://tagmanager.google.com/",
+)
+CSP_SCRIPT_SRC = (
+    "'self'",
+    "'unsafe-eval'",
+    "'unsafe-inline'",
+    "https://tagmanager.google.com/",
+    "https://www.googletagmanager.com/",
+    "ajax.googleapis.com/",
+)
+CSP_FONT_SRC = ("'self'", "'unsafe-inline'")
+CSP_INCLUDE_NONCE_IN = ("script-src",)
+CSP_REPORT_ONLY = False
+
 # -- Auth
 LOGIN_URL = reverse_lazy("login")
+
+if DEBUG is False:
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+            "OPTIONS": {
+                "min_length": 12,
+            },
+        },
+        {
+            "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        },
+    ]
+
 if SSO_ENABLED:
     LOGIN_URL = reverse_lazy("authbroker_client:login")
 
@@ -225,11 +266,6 @@ ROOT_URLCONF = f"urls"
 
 # URL path where static files are served
 STATIC_URL = "/assets/"
-
-# -- Debug
-
-# Activates debugging
-DEBUG = is_truthy(os.environ.get("DEBUG", False))
 
 # -- Database
 
