@@ -75,11 +75,6 @@ def test_all_tracked_models_validate_envelope(queued_workbasket):
         target_regulation=reg2,
         enacting_regulation=reg1,
     )
-    factories.ReplacementFactory(
-        transaction=approved_transaction,
-        target_regulation=reg2,
-        enacting_regulation=reg1,
-    )
     factories.CertificateFactory(
         transaction=approved_transaction,
         certificate_type=factories.CertificateTypeFactory(
@@ -302,3 +297,45 @@ def test_validate_envelope_records_out_of_order(queued_workbasket):
         envelope_file.seek(0, os.SEEK_SET)
         validate_envelope(envelope_file, workbaskets=workbaskets)
         assert "Elements out of order in XML:" in e
+
+
+def test_validate_envelope_fails_unexpected_model(queued_workbasket):
+    """Test that the checker passes on valid workbasket with all tracked
+    models."""
+
+    approved_transaction = queued_workbasket.transactions.approved().last()
+    # add a tracked_models to the workbasket
+
+    factories.AdditionalCodeTypeFactory(transaction=approved_transaction)
+    factories.AdditionalCodeDescriptionFactory(transaction=approved_transaction)
+
+    reg1 = factories.RegulationFactory(
+        transaction=approved_transaction,
+        regulation_group=factories.RegulationGroupFactory(
+            transaction=approved_transaction,
+        ),
+    )
+    factories.ReplacementFactory(
+        transaction=approved_transaction,
+        enacting_regulation=reg1,
+    )
+
+    # Make a envelope from the files
+    output_file_constructor = dit_file_generator("/tmp", 230001)
+    serializer = MultiFileEnvelopeTransactionSerializer(
+        output_file_constructor,
+        envelope_id=230001,
+    )
+
+    workbaskets = WorkBasket.objects.filter(pk=queued_workbasket.pk)
+    transactions = workbaskets.ordered_transactions()
+
+    envelope = list(serializer.split_render_transactions(transactions))[0]
+
+    assert len(envelope.transactions) > 0
+
+    envelope_file = envelope.output
+    with pytest.raises(KeyError):
+        # Key error for unexpected model
+        envelope_file.seek(0, os.SEEK_SET)
+        validate_envelope(envelope_file, workbaskets=workbaskets)

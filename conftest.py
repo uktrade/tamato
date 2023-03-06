@@ -380,13 +380,19 @@ def queued_workbasket_factory():
 
 @pytest.fixture
 def packaged_workbasket_factory(queued_workbasket_factory):
-    def factory():
+    def factory(**kwargs):
+        if "workbasket" in kwargs:
+            workbasket = kwargs.pop(
+                "workbasket",
+            )
+        else:
+            workbasket = queued_workbasket_factory()
         with patch(
             "publishing.tasks.create_xml_envelope_file.apply_async",
             return_value=MagicMock(id=factory_library.Faker("uuid4")),
         ):
             packaged_workbasket = factories.QueuedPackagedWorkBasketFactory(
-                workbasket=queued_workbasket_factory(),
+                workbasket=workbasket, **kwargs
             )
         return packaged_workbasket
 
