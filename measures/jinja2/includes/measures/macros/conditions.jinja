@@ -1,4 +1,5 @@
 {% from 'macros/create_link.jinja' import create_link %}
+{% from 'includes/measures/macros/duty_amount.jinja' import duty_amount %}
 
 {% macro requirement(condition) -%}
     {%- if condition.required_certificate -%}
