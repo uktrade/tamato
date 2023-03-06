@@ -5,7 +5,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 
-from common.forms import DescriptionHelpBox
+from common.validators import alphanumeric
 from workbaskets import models
 from workbaskets import validators
 
@@ -27,8 +27,9 @@ class WorkbasketCreateForm(forms.ModelForm):
 
     reason = forms.CharField(
         label="Description",
-        help_text="Add your notes here. You may enter HTML formatting if required. See the guide below for more information.",
+        help_text="Add your notes here.",
         widget=forms.Textarea,
+        validators=[alphanumeric],
         required=True,
     )
 
@@ -42,7 +43,6 @@ class WorkbasketCreateForm(forms.ModelForm):
         self.helper.layout = Layout(
             "title",
             Field.textarea("reason", rows=5),
-            DescriptionHelpBox(),
             Submit(
                 "submit",
                 "Create",

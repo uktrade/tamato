@@ -21,6 +21,15 @@ def test_workbasket_form_validation():
 
     form = WorkbasketCreateForm(
         {
+            "title": "1000",
+            "reason": "<Bad_Code></>",
+        },
+    )
+    assert not form.is_valid()
+    assert "reason" in form.errors
+
+    form = WorkbasketCreateForm(
+        {
             "title": "",
             "reason": "some reason",
         },
