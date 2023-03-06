@@ -437,7 +437,7 @@ def published_envelope_factory(packaged_workbasket_factory, envelope_storage):
 
 
 @pytest.fixture
-def successful_envelope_factory(envelope_factory):
+def successful_envelope_factory(published_envelope_factory):
     """
     Factory fixture to create a successfully processed envelope and update the
     packaged_workbasket envelope field.
@@ -449,7 +449,7 @@ def successful_envelope_factory(envelope_factory):
     """
 
     def factory(**kwargs):
-        envelope = envelope_factory(**kwargs)
+        envelope = published_envelope_factory(**kwargs)
 
         packaged_workbasket = PackagedWorkBasket.objects.get(
             envelope=envelope,
