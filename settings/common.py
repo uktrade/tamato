@@ -450,7 +450,6 @@ SQLITE_EXCLUDED_APPS = [
 
 # -- Google Tag Manager
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID")
-GTM_AUTH = os.environ.get("GTM_AUTH")
 
 # -- Logging
 LOGGING = {
