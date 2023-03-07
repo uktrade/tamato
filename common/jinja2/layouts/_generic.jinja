@@ -7,12 +7,12 @@
   {% if settings.GOOGLE_ANALYTICS_ID %}
     <!-- Google tag (gtag.js) -->
       <script nonce="{{ request.csp_nonce }}" async 
-      src=https://www.googletagmanager.com/gtag/js?id={{ settings.GOOGLE_ANALYTICS_ID }}></script>
+      src=https://www.googletagmanager.com/gtag/js?id={{ settings.GOOGLE_APP_ID }}></script>
       <script nonce="{{ request.csp_nonce }}">
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', '{{ settings.GOOGLE_ANALYTICS_ID }}');
+        gtag('config', '{{ settings.GOOGLE_APP_ID }}');
       </script>
     <!-- Google Tag Manager -->
       <script nonce="{{ request.csp_nonce }}">
