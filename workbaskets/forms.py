@@ -5,7 +5,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 
-from common.validators import alphanumeric
+from common.validators import AlphanumericValidator
 from workbaskets import models
 from workbaskets import validators
 
@@ -29,7 +29,7 @@ class WorkbasketCreateForm(forms.ModelForm):
         label="Description",
         help_text="Add your notes here.",
         widget=forms.Textarea,
-        validators=[alphanumeric],
+        validators=[AlphanumericValidator],
         required=True,
     )
 
