@@ -137,6 +137,9 @@ class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandle
     serializer_class = serializers.GoodsNomenclatureDescriptionSerializer
     tag = parsers.GoodsNomenclatureDescriptionParser.tag.name
 
+    def create_missing_goods_nomenclature_description_period(self):
+        return True
+
 
 @GoodsNomenclatureDescriptionHandler.register_dependant
 class GoodsNomenclatureDescriptionPeriodHandler(
