@@ -128,7 +128,7 @@ def test_radio_nested_form_validation():
     assert form.is_valid() is False
     assert "geo_area" in form.errors
     assert (
-        "Please submit 1 or more forms."
+        "Please submit at least 1 form."
         in form.fields["geo_area"]
         .nested_forms[RadioNestedForm.COUNTRY][0]
         .non_form_errors()
