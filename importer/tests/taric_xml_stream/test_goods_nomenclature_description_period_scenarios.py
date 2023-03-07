@@ -382,7 +382,7 @@ def seed_database_with_indented_goods():
     )
 
 
-def test_process_taric_xml_stream_correctly_imports_comm_code_description_with_period(
+def test_correctly_imports_comm_code_description_with_period_after(
     seed_database_with_indented_goods,
     goods_description_with_period_create_xml_as_text,
     valid_user,
@@ -432,7 +432,7 @@ def test_process_taric_xml_stream_correctly_imports_comm_code_description_with_p
     ).order_by("trackedmodel_ptr_id").last().validity_start == date(2022, 5, 13)
 
 
-def test_process_taric_xml_stream_correctly_imports_comm_code_description_with_period_first(
+def test_correctly_imports_comm_code_description_with_period_before(
     seed_database_with_indented_goods,
     goods_description_with_period_create_period_first_xml_as_text,
     valid_user,
@@ -482,7 +482,7 @@ def test_process_taric_xml_stream_correctly_imports_comm_code_description_with_p
     ).order_by("trackedmodel_ptr_id").last().validity_start == date(2022, 5, 13)
 
 
-def test_process_taric_xml_stream_correctly_imports_comm_code_description_with_no_period(
+def test_correctly_imports_comm_code_description_with_no_period(
     seed_database_with_indented_goods,
     goods_description_only_create_xml_as_text,
     valid_user,
@@ -514,8 +514,6 @@ def test_process_taric_xml_stream_correctly_imports_comm_code_description_with_n
         valid_user.username,
     )
 
-    print("after xml processing")
-
     assert (
         GoodsNomenclatureDescription.objects.all()
         .filter(
@@ -523,8 +521,7 @@ def test_process_taric_xml_stream_correctly_imports_comm_code_description_with_n
             described_goods_nomenclature__suffix=80,
         )
         .count()
-        == 2
-    )
+    ) == 2
 
     assert GoodsNomenclatureDescription.objects.all().filter(
         described_goods_nomenclature__item_id="2903691100",
