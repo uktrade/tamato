@@ -32,8 +32,6 @@ logger = logging.getLogger(__name__)
 WARNING_SIGN_EMOJI = "\N{WARNING SIGN}\N{VARIATION SELECTOR-16}"
 
 
-
-
 # Exceptions
 class EnvelopeCurrentlyProccessing(Exception):
     pass
