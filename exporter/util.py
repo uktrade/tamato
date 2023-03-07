@@ -48,7 +48,6 @@ class UploadTaskResultData(dict):
 
         Add a list of general messages for display to the user, associated with something other than an Envelope in the upload.
         """
-
         self.setdefault("messages", [])
         self["messages"].extend(messages)
         return self
