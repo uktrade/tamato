@@ -32,7 +32,6 @@ QuotaDeleteForm = delete_form_for(models.QuotaOrderNumber)
 
 
 class QuotaDefinitionFilterForm(forms.Form):
-
     quota_type = forms.MultipleChoiceField(
         label="View by",
         choices=[

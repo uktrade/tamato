@@ -133,12 +133,31 @@ class QueuedWorkBasketFactory(WorkBasketFactory):
     )
 
 
+class PublishedWorkBasketFactory(WorkBasketFactory):
+    class Meta:
+        model = "workbaskets.WorkBasket"
+
+    approver = factory.SubFactory(UserFactory)
+    status = WorkflowStatus.PUBLISHED
+    transaction = factory.RelatedFactory(
+        "common.tests.factories.ApprovedTransactionFactory",
+        factory_related_name="workbasket",
+    )
+
+
 class SimpleQueuedWorkBasketFactory(WorkBasketFactory):
     class Meta:
         model = "workbaskets.WorkBasket"
 
     approver = factory.SubFactory(UserFactory)
     status = WorkflowStatus.QUEUED
+
+
+class ArchivedWorkBasketFactory(WorkBasketFactory):
+    class Meta:
+        model = "workbaskets.WorkBasket"
+
+    status = WorkflowStatus.ARCHIVED
 
 
 class TransactionFactory(factory.django.DjangoModelFactory):
@@ -155,6 +174,11 @@ class TransactionFactory(factory.django.DjangoModelFactory):
             partition=TransactionPartition.REVISION,
         )
 
+        published = factory.Trait(
+            partition=TransactionPartition.REVISION,
+            workbasket=factory.SubFactory(PublishedWorkBasketFactory),
+        )
+
         seed = factory.Trait(
             partition=TransactionPartition.SEED_FILE,
         )
@@ -162,6 +186,11 @@ class TransactionFactory(factory.django.DjangoModelFactory):
         draft = factory.Trait(
             partition=TransactionPartition.DRAFT,
             workbasket=factory.SubFactory(WorkBasketFactory),
+        )
+
+        archived = factory.Trait(
+            partition=TransactionPartition.DRAFT,
+            workbasket=factory.SubFactory(ArchivedWorkBasketFactory),
         )
 
 
@@ -174,6 +203,10 @@ class ApprovedTransactionFactory(TransactionFactory):
 
 
 class UnapprovedTransactionFactory(TransactionFactory):
+    draft = True
+
+
+class ArchivedTransactionFactory(TransactionFactory):
     draft = True
 
 
@@ -991,6 +1024,38 @@ class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
     export_refund_nomenclature_sid = None
 
     class Params:
+        with_order_number = factory.Trait(
+            measure_type=subfactory(
+                MeasureTypeFactory,
+                order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
+            ),
+            order_number=subfactory(
+                QuotaOrderNumberFactory,
+                origin__geographical_area=factory.SelfAttribute("...geographical_area"),
+                valid_between=factory.SelfAttribute("..valid_between"),
+            ),
+        )
+
+        with_dead_order_number = factory.Trait(
+            measure_type=subfactory(
+                MeasureTypeFactory,
+                order_number_capture_code=OrderNumberCaptureCode.MANDATORY,
+            ),
+            order_number=subfactory(
+                QuotaOrderNumberFactory,
+                origin__geographical_area=factory.SelfAttribute("...geographical_area"),
+                valid_between=factory.SelfAttribute("..valid_between"),
+            ),
+        )
+
+        with_dead_additional_code = factory.Trait(
+            dead_additional_code="AAAA",
+        )
+
+        with_additional_code = factory.Trait(
+            additional_code=subfactory(AdditionalCodeFactory),
+        )
+
         with_footnote = factory.Trait(
             association=factory.RelatedFactory(
                 "common.tests.factories.FootnoteAssociationMeasureFactory",

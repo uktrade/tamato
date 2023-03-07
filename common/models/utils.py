@@ -22,13 +22,12 @@ class LazyValue(Value):
     Before `LazyValue` instances are evaluated, we allow access to the proxied
     value's attributes by returning them from `__getattr__()` as `LazyValue`
     instances themselves.
+
     It is only possible to do this by knowing in advance the set of attributes
-    that should be handled in this way.
-    `allow_list` provides this set of attributes and should be overridden by
-    subclasses of LazyValue.
-    See `LazyTransaction.allow_list` for an example of how this is implemented
-    for a `LazyValue` subclass that supports lazily evaluated Transaction
-    instances.
+    that should be handled in this way. `allow_list` provides this set of
+    attributes and should be overridden by subclasses of LazyValue. See
+    `LazyTransaction.allow_list` for an example of how this is implemented for a
+    `LazyValue` subclass that supports lazily evaluated Transaction instances.
     """
 
     def __init__(self, **kwargs) -> None:

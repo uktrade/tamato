@@ -5,7 +5,6 @@ from common.migration_operations import ConvertTaricDateRange
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("geo_areas", "0001_initial"),
     ]

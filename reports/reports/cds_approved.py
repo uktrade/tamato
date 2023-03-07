@@ -24,7 +24,6 @@ class Report(ReportBaseChart):
         return str(date.today())
 
     def data(self):
-
         result = []
 
         for row in self.query():
