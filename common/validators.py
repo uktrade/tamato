@@ -73,7 +73,7 @@ class ApplicabilityCode(models.IntegerChoices):
 
 EnvelopeIdValidator = RegexValidator(r"^(?P<year>\d\d)(?P<counter>\d{4})$")
 
-alphanumeric = RegexValidator(
-    r"^[0-9a-zA-Z]*$",
+AlphanumericValidator = RegexValidator(
+    r"^[0-9a-zA-Z.,()&£$% ]*$",
     "Only alphanumeric characters are allowed.",
 )
