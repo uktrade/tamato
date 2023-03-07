@@ -125,6 +125,8 @@ class TransactionParser(ElementParser):
                 ),
             )
 
+        # not sure if this is a good idea! might need to remove this, no comments, and it seems to simpy return without
+        # raising the exception :/
         except IntegrityError:
             return
 
@@ -221,6 +223,7 @@ class EnvelopeError(ParserError):
 class EnvelopeParser(ElementParser):
     tag = Tag("envelope", prefix=ENVELOPE)
     transaction = TransactionParser(many=True)
+    issues = list()
 
     def __init__(
         self,
@@ -299,6 +302,7 @@ def process_taric_xml_stream(
         record_group=record_group,
     )
     for event, elem in xmlparser:
+        print(f"{elem} : {event}")
         if event == "start":
             handler.start(elem)
 
