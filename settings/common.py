@@ -191,6 +191,8 @@ CSP_SCRIPT_SRC = (
     "'unsafe-inline'",
     "https://tagmanager.google.com/",
     "https://www.googletagmanager.com/",
+    "https://www.google-analytics.com/",
+    "https://region1.google-analytics.com",
     "ajax.googleapis.com/",
 )
 CSP_FONT_SRC = ("'self'", "'unsafe-inline'")
