@@ -75,6 +75,16 @@ class MeasureFilter(TamatoFilter):
         },
     )
 
+    goods_nomenclature__item_id = CharFilter(
+        label="Commodity code starts with:",
+        widget=forms.TextInput(
+            attrs={
+                "class": GOV_UK_TWO_THIRDS,
+            },
+        ),
+        lookup_expr="startswith",
+    )
+
     additional_code = AutoCompleteFilter(
         label="Additional code",
         field_name="additional_code",

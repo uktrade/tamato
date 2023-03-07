@@ -712,6 +712,7 @@ class MeasureFilterForm(forms.Form):
             Div(
                 Field.text("sid", field_width=Fluid.TWO_THIRDS),
                 "goods_nomenclature",
+                "goods_nomenclature__item_id",
                 "additional_code",
                 "order_number",
                 "measure_type",
