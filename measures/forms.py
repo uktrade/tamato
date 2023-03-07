@@ -1061,15 +1061,16 @@ class MeasureCommodityAndDutiesForm(forms.Form):
                 Div(
                     Div(
                         Field.text("commodity"),
-                        css_class="govuk-grid-column-one-half",
+                        css_class="tap-column",
                     ),
                     Div(
                         Field.text("duties"),
-                        css_class="govuk-grid-column-one-half",
+                        css_class="tap-column",
                     ),
-                    css_class="govuk-grid-row",
+                    css_class="tap-row",
                 ),
                 delete_button,
+                css_class="tap-inline",
             ),
         )
 
