@@ -127,7 +127,6 @@ class TaricDateRange(DateRange):
         super().__init__(lower, upper, bounds, empty)
 
     def overlaps(self, compared_date_range: TaricDateRange):
-
         if self.upper_inf:
             if compared_date_range.upper_inf:
                 # will overlap regardless

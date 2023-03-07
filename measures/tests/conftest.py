@@ -15,6 +15,7 @@ from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
+from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from measures.forms import MeasureForm
 from measures.models import DutyExpression
@@ -57,6 +58,113 @@ def component_applicability():
         return True
 
     return check
+
+
+@pytest.fixture
+def existing_goods_nomenclature(date_ranges):
+    return factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.big,
+    )
+
+
+@pytest.fixture()
+def seed_database_with_indented_goods():
+    transaction = factories.TransactionFactory.create()
+
+    factories.GoodsNomenclatureFactory.create(
+        item_id="2903000000",
+        suffix=10,
+        indent__indent=0,
+    )
+
+    factories.GoodsNomenclatureFactory.create(
+        item_id="2903000000",
+        suffix=10,
+        indent__indent=1,
+    )
+
+    factories.GoodsNomenclatureFactory.create(
+        item_id="2903690000",
+        suffix=10,
+        indent__indent=2,
+    )
+
+    factories.GoodsNomenclatureFactory.create(
+        item_id="2903691100",
+        suffix=10,
+        indent__indent=3,
+    )
+
+    child_good_1 = factories.GoodsNomenclatureFactory.create(
+        item_id="2903691100",
+        suffix=80,
+        indent__indent=4,
+    )
+
+    factories.GoodsNomenclatureFactory.create(
+        item_id="2903691900",
+        suffix=80,
+        indent__indent=4,
+    )
+
+    # duplicate indent for child_good_1, with indent of 3
+    child_good_1.indents.first().copy(indent=3, transaction=transaction)
+
+
+@pytest.fixture(
+    params=(
+        (None, {"valid_between": factories.date_ranges("normal")}, True),
+        (
+            None,
+            {
+                "valid_between": factories.date_ranges("no_end"),
+                "generating_regulation__valid_between": factories.date_ranges("normal"),
+                "generating_regulation__effective_end_date": factories.end_date(
+                    "normal",
+                ),
+            },
+            True,
+        ),
+        (
+            {"valid_between": factories.date_ranges("no_end")},
+            {"update_type": UpdateType.DELETE},
+            False,
+        ),
+    ),
+    ids=[
+        "explicit",
+        "implicit",
+        "draft:previously",
+    ],
+)
+def existing_measure(request, existing_goods_nomenclature):
+    """
+    Returns a measure that with an attached quota and a flag indicating whether
+    the date range of the measure overlaps with the "normal" date range.
+
+    The measure will either be a new measure or a draft UPDATE to an existing
+    measure. If it is an UPDATE, the measure will be in an unapproved
+    workbasket.
+    """
+    data = {
+        "goods_nomenclature": existing_goods_nomenclature,
+        "additional_code": factories.AdditionalCodeFactory.create(),
+    }
+
+    previous, now, overlaps_normal = request.param
+    if previous:
+        old_version = factories.MeasureWithQuotaFactory.create(**data, **previous)
+        return (
+            factories.MeasureWithQuotaFactory.create(
+                version_group=old_version.version_group,
+                transaction=factories.UnapprovedTransactionFactory(),
+                **data,
+                **now,
+            ),
+            overlaps_normal,
+        )
+    else:
+        return factories.MeasureWithQuotaFactory.create(**data, **now), overlaps_normal
 
 
 @pytest.fixture

@@ -20,7 +20,6 @@ class Report(ReportBaseTable):
         ]
 
     def row(self, row: GoodsNomenclatureDescription) -> [dict]:
-
         desc = ""
 
         if row.descriptions.count() > 0:

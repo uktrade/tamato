@@ -34,7 +34,6 @@ class GeographicalAreaFilter(
     GeographicalAreaFilterMixin,
     ActiveStateMixin,
 ):
-
     area_code = MultipleChoiceFilter(
         choices=AreaCode.choices,
         widget=forms.CheckboxSelectMultiple,

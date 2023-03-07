@@ -8,7 +8,6 @@ import exporter.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("exporter", "0001_initial"),
     ]

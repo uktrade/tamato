@@ -49,7 +49,7 @@ def test_pop_returns_none_if_not_present():
     value not present."""
 
     object_cache = redis.RedisCacheEngine()
-    assert object_cache.pop("test") is None
+    assert object_cache.pop("zzz") is None
 
 
 @FakeRedis("django.core.cache")

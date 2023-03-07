@@ -347,7 +347,6 @@ def test_base_handler_get_generic_link_importer_cache_cached(
     handler_test_data,
     object_nursery,
 ):
-
     # add object to nursery
     fnt = factories.FootnoteTypeFactory.create(
         footnote_type_id="XZX",

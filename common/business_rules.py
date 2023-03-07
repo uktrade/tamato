@@ -360,10 +360,10 @@ class ValidityPeriodContained(BusinessRule):
     """
     The name of the field on the passed model that gives the object who's
     validity range should be bigger or equal at both ends.
-    
+
     This value can be unspecified, in which case the default is that the passed
     model is the container model.
-    
+
     The container may be null because some business rules refer to optional
     links. E.g. between additional codes and measures: in many cases the measure
     just may not be using an addiitonal code, but this rule is run against every
@@ -378,15 +378,15 @@ class ValidityPeriodContained(BusinessRule):
     The name of a field (or double-underscore-seperated path to a field) on the
     passed model that gives the object(s) who's validity range should be smaller
     or equal at both ends.
-    
+
     This value can be unspecified, in which case the default is that the passed
     model is the contained model.
-    
+
     The contained object may be null because subrecords are not routinely
     deleted when the parent record is deleted. For example, if a footnote is
     attached to a measure but the measure is deleted, the footnote association
-    may not be routinely cleared up. 
-    
+    may not be routinely cleared up.
+
     Note that this one reason is why it is important to make sure we are
     checking against the latest versions because the object will still be
     linking via FK to the contained object version it was first attached to. The
@@ -540,8 +540,12 @@ class FootnoteApplicability(BusinessRule):
     reports is valid for itself."""
 
     applicable_field: str
-    """The field containing a model to check applicability for. It must have a
-    property or attribute called :attr:`footnote_application_codes`."""
+    """
+    The field containing a model to check applicability for.
+
+    It must have a property or attribute called
+    :attr:`footnote_application_codes`.
+    """
 
     footnote_type_field: str = "associated_footnote__footnote_type"
     """The field containing a footnote type to check for applicability."""
