@@ -445,7 +445,6 @@
 <span class="sd">    quota order number id.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="OverlappingQuotaDefinition.validate"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.OverlappingQuotaDefinition.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
-
         <span class="n">potential_quota_definition_matches</span> <span class="o">=</span> <span class="p">(</span>
             <span class="nb">type</span><span class="p">(</span><span class="n">quota_definition</span><span class="p">)</span>
             <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
@@ -477,7 +476,6 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="VolumeAndInitialVolumeMustMatch.validate"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.VolumeAndInitialVolumeMustMatch.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quota_definition</span><span class="p">):</span>
-
         <span class="k">if</span> <span class="n">quota_definition</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&lt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">():</span>
             <span class="k">return</span> <span class="kc">True</span>
 
@@ -550,7 +548,6 @@
 
 <div class="viewcode-block" id="QA5.validate"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.QA5.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">association</span><span class="o">.</span><span class="n">sub_quota_relation_type</span> <span class="o">==</span> <span class="n">SubQuotaType</span><span class="o">.</span><span class="n">EQUIVALENT</span><span class="p">:</span>
-
             <span class="k">if</span> <span class="n">association</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">==</span> <span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;1.00000&quot;</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
                     <span class="n">model</span><span class="o">=</span><span class="n">association</span><span class="p">,</span>

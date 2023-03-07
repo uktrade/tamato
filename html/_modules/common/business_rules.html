@@ -489,10 +489,10 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The name of the field on the passed model that gives the object who&#39;s</span>
 <span class="sd">    validity range should be bigger or equal at both ends.</span>
-<span class="sd">    </span>
+
 <span class="sd">    This value can be unspecified, in which case the default is that the passed</span>
 <span class="sd">    model is the container model.</span>
-<span class="sd">    </span>
+
 <span class="sd">    The container may be null because some business rules refer to optional</span>
 <span class="sd">    links. E.g. between additional codes and measures: in many cases the measure</span>
 <span class="sd">    just may not be using an addiitonal code, but this rule is run against every</span>
@@ -507,15 +507,15 @@
 <span class="sd">    The name of a field (or double-underscore-seperated path to a field) on the</span>
 <span class="sd">    passed model that gives the object(s) who&#39;s validity range should be smaller</span>
 <span class="sd">    or equal at both ends.</span>
-<span class="sd">    </span>
+
 <span class="sd">    This value can be unspecified, in which case the default is that the passed</span>
 <span class="sd">    model is the contained model.</span>
-<span class="sd">    </span>
+
 <span class="sd">    The contained object may be null because subrecords are not routinely</span>
 <span class="sd">    deleted when the parent record is deleted. For example, if a footnote is</span>
 <span class="sd">    attached to a measure but the measure is deleted, the footnote association</span>
-<span class="sd">    may not be routinely cleared up. </span>
-<span class="sd">    </span>
+<span class="sd">    may not be routinely cleared up.</span>
+
 <span class="sd">    Note that this one reason is why it is important to make sure we are</span>
 <span class="sd">    checking against the latest versions because the object will still be</span>
 <span class="sd">    linking via FK to the contained object version it was first attached to. The</span>
@@ -669,8 +669,12 @@
 <span class="sd">    reports is valid for itself.&quot;&quot;&quot;</span>
 
     <span class="n">applicable_field</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The field containing a model to check applicability for. It must have a</span>
-<span class="sd">    property or attribute called :attr:`footnote_application_codes`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The field containing a model to check applicability for.</span>
+
+<span class="sd">    It must have a property or attribute called</span>
+<span class="sd">    :attr:`footnote_application_codes`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">footnote_type_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;associated_footnote__footnote_type&quot;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The field containing a footnote type to check for applicability.&quot;&quot;&quot;</span>

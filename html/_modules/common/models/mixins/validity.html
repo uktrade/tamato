@@ -322,15 +322,18 @@
     <span class="n">validity_start</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="n">db_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="n">validity_over</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Models with a single validity date always represent some feature of a</span>
-<span class="sd">    related model and are only live for as long as that model is live. The is</span>
-<span class="sd">    the name of the field on this model that is a foreign key to the related</span>
-<span class="sd">    model. E.g. for a description it is the described model.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Models with a single validity date always represent some feature of a</span>
+<span class="sd">    related model and are only live for as long as that model is live.</span>
+
+<span class="sd">    The is the name of the field on this model that is a foreign key to the</span>
+<span class="sd">    related model. E.g. for a description it is the described model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">objects</span><span class="p">:</span> <span class="n">ValidityStartQueryset</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The :meth:`~common.models.mixins.ValidityStartQuerySet.with_end_date`</span>
 <span class="sd">    method is used to automatically compute the end date based on the other</span>
-<span class="sd">    models in the series. &quot;&quot;&quot;</span>
+<span class="sd">    models in the series.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ValidityStartMixin.Meta"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.ValidityStartMixin.Meta">[docs]</a>    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span></div></div>

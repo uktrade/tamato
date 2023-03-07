@@ -230,10 +230,8 @@
     <span class="n">current_objects</span><span class="p">:</span> <span class="n">TrackedModelQuerySet</span> <span class="o">=</span> <span class="n">CurrentTrackedModelManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span>
         <span class="n">TrackedModelQuerySet</span><span class="p">,</span>
     <span class="p">)()</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The `current_objects` model manager provides a default queryset that, by</span>
-<span class="sd">    default, filters to the &#39;current&#39; transaction.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The `current_objects` model manager provides a default queryset that, by</span>
+<span class="sd">    default, filters to the &#39;current&#39; transaction.&quot;&quot;&quot;</span>
 
     <span class="n">business_rules</span><span class="p">:</span> <span class="n">Iterable</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">indirect_business_rules</span><span class="p">:</span> <span class="n">Iterable</span> <span class="o">=</span> <span class="p">()</span>
@@ -277,8 +275,10 @@
     <span class="n">url_suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This is to add a link within a page for get_url() e.g. for linking to a</span>
-<span class="sd">    Measure&#39;s conditions tab. If url_suffix is set to &#39;#conditions&#39; the output</span>
-<span class="sd">    detail url will be /measures/12345678/#conditions</span>
+<span class="sd">    Measure&#39;s conditions tab.</span>
+
+<span class="sd">    If url_suffix is set to &#39;#conditions&#39; the output detail url will be</span>
+<span class="sd">    /measures/12345678/#conditions</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="TrackedModel.new_version"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.new_version">[docs]</a>    <span class="k">def</span> <span class="nf">new_version</span><span class="p">(</span>

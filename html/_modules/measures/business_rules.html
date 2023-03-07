@@ -971,7 +971,6 @@
             <span class="n">ApplicabilityCode</span><span class="o">.</span><span class="n">MANDATORY</span><span class="p">,</span>
             <span class="n">ApplicabilityCode</span><span class="o">.</span><span class="n">NOT_PERMITTED</span><span class="p">,</span>
         <span class="p">):</span>
-
             <span class="n">inapplicable</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_applicability_field</span><span class="p">():</span> <span class="n">code</span><span class="p">})</span> <span class="o">&amp;</span> <span class="n">Q</span><span class="p">(</span>
                 <span class="o">**</span><span class="p">{</span>
                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">component_field</span><span class="si">}</span><span class="s2">__isnull&quot;</span><span class="p">:</span> <span class="n">code</span>
