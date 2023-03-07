@@ -178,6 +178,7 @@ class ComponentQuerySet(TrackedModelQuerySet):
                 ),
                 delimiter=" ",
                 ordering="duty_expression__sid",
+                output_field=CharField,
             ),
         )
         return duty_sentence.get("duty_sentence", "")

@@ -1,6 +1,7 @@
 import re
 
 from django.contrib.postgres.aggregates import StringAgg
+from django.db.models import CharField
 from django.forms import CheckboxSelectMultiple
 from django.urls import reverse_lazy
 
@@ -28,10 +29,10 @@ class AdditionalCodeFilterMixin(TamatoFilterMixin):
     """
 
     search_fields = (
-        StringAgg("type__sid", delimiter=" "),
+        StringAgg("type__sid", delimiter=" ", output_field=CharField),
         "code",
         "sid",
-        StringAgg("descriptions__description", delimiter=" "),
+        StringAgg("descriptions__description", delimiter=" ", output_field=CharField),
     )  # XXX order is significant
 
     search_regex = COMBINED_ADDITIONAL_CODE_AND_TYPE_ID
