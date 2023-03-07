@@ -8,7 +8,6 @@ import common.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("regulations", "0001_initial"),
     ]

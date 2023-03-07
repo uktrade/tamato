@@ -9,8 +9,8 @@
 {% endblock %}
 
 {% block content %}
-    <script src="{{ static("chart.js") }}"></script>
-    <script>
+    <script nonce="{{ request.csp_nonce }}" src="{{ static("chart.js") }}"></script>
+    <script nonce="{{ request.csp_nonce }}">
     var config = {
             type: '{{ report.chart_type|safe }}',
             data: {

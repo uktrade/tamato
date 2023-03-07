@@ -5,7 +5,6 @@ from common.migration_operations import ConvertTaricDateRange
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("commodities", "0001_initial"),
     ]

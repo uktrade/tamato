@@ -48,7 +48,6 @@ def create_xml_envelope_file(
     )
     packaged_work_basket.save()
 
-    # TODO: Consider chaining this task from schedule_create_xml_envelope_file().
     if notify_when_done:
         packaged_work_basket.notify_ready_for_processing()
 

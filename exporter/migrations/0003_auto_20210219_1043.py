@@ -8,7 +8,6 @@ import exporter.storages
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("exporter", "0002_auto_20210218_1132"),
     ]

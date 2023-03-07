@@ -8,11 +8,18 @@ from notifications.models import NotifiedUser
 class NotifiedUserAdmin(admin.ModelAdmin):
     form = NotifiedUserAdminForm
 
+    ordering = ["email"]
     list_display = (
         "email",
         "enrol_packaging",
     )
-    ordering = ["email"]
+    actions = ["set_enrol_packaging", "unset_enrol_packaging"]
+
+    def set_enrol_packaging(self, request, queryset):
+        queryset.update(enrol_packaging=True)
+
+    def unset_enrol_packaging(self, request, queryset):
+        queryset.update(enrol_packaging=False)
 
 
 class NotificationLogAdmin(admin.ModelAdmin):

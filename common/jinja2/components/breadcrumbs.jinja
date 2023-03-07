@@ -7,7 +7,7 @@
     </li>
     {% if request.session.workbasket %}
       <li class="govuk-breadcrumbs__list-item">
-        <a class="govuk-breadcrumbs__link" href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}">Workbasket {{ request.session.workbasket.id }}</a>
+        <a class="govuk-breadcrumbs__link" href="{{ url('workbaskets:edit-workbasket') }}">Workbasket {{ request.session.workbasket.id }}</a>
       </li>
     {% endif %}
     {% for crumb in breadcrumbs_list %}

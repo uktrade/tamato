@@ -1,5 +1,4 @@
 import lxml
-import magic
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Submit
@@ -11,21 +10,13 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from sentry_sdk import capture_exception
 
+from common.util import get_mime_type
 from common.util import parse_xml
 from importer import models
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
 from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.validators import WorkflowStatus
-
-
-def get_mime_type(file):
-    """Get MIME by reading the header of the file."""
-    initial_pos = file.tell()
-    file.seek(0)
-    mime_type = magic.from_buffer(file.read(1024), mime=True)
-    file.seek(initial_pos)
-    return mime_type
 
 
 class ImportForm(forms.ModelForm):

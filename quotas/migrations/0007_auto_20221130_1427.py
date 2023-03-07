@@ -6,7 +6,6 @@ from django.db import models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("quotas", "0006_auto_20211218_1900"),
     ]

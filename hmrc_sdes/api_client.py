@@ -9,7 +9,8 @@ class HmrcSdesClient(APIClient):
     """
     Client for HMRC Secure Data Exchange Notifications API.
 
-    See https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/secure-data-exchange-notifications/1.0
+    See https://developer.service.hmrc.gov.uk/api-
+    documentation/docs/api/service/secure-data-exchange-notifications/1.0
     """
 
     base_url = "https://test-api.service.hmrc.gov.uk"

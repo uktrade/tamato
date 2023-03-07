@@ -6,7 +6,6 @@ from django.db import models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("commodities", "0008_allow_blank_descriptions"),
     ]

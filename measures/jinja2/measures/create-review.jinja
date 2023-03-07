@@ -1,6 +1,7 @@
 {% extends "measures/create-wizard-step.jinja" %}
 
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
+{% from 'includes/measures/macros/conditions.jinja' import requirement %}
 
 {% set page_title = step_metadata[wizard.steps.current].title %}
 
@@ -108,7 +109,12 @@
     {% if data %}
       {% for item in data  %}
         {% if not item.DELETE %}
-          {{ rows.append(("Condition code", item.condition_code)) }}
+          {{ rows.extend([
+            ("Condition code", item.condition_code),
+            ("Required certificate or amount", requirement(item)),
+            ("Action", item.action.description),
+            ("Applicable duties", item.duty_sentence if item.duty_sentence else "-"),
+          ]) }}
         {% endif %}
       {% endfor %}
     {% endif %}

@@ -7,6 +7,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.conf import settings
 from django.forms import ModelForm
 
 from common.forms import DateInputFieldFixed
@@ -18,9 +19,10 @@ from publishing.models import PackagedWorkBasket
 class LoadingReportForm(ModelForm):
     class Meta:
         model = LoadingReport
-        fields = ("file", "comments")
+        fields = ("file", "file_name", "comments")
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request")
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
@@ -40,6 +42,29 @@ class LoadingReportForm(ModelForm):
 
         self.fields["file"].label = "Loading report file"
         self.fields["comments"].label = "Comments"
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.errors:
+            return cleaned_data
+
+        file = self.request.FILES["file"] if "file" in self.request.FILES else None
+
+        if file:
+            cleaned_data["file_name"] = file.name
+
+        if (
+            file
+            and file.size
+            > settings.MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES * 1024 * 1024
+        ):
+            raise forms.ValidationError(
+                f"Report file exceeds {settings.MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES} "
+                f"megabytes maximum file size.",
+            )
+
+        return cleaned_data
 
 
 class PackagedWorkBasketCreateForm(forms.ModelForm):

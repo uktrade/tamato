@@ -1,36 +1,42 @@
+from datetime import date
+from datetime import timedelta
+
 import pytest
 
-from commodities.models.dc import Commodity
+from commodities.models import GoodsNomenclature
+from commodities.models.dc import CommodityCollectionLoader
 from commodities.models.dc import CommodityTreeSnapshot
 from commodities.models.dc import SnapshotMoment
 from common.tests import factories
+from common.util import TaricDateRange
+from measures.models import Measure
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture()
-def prepair_commodity_tree_snapshot():
+def seed_database_with_indented_goods():
     transaction = factories.TransactionFactory.create()
 
-    great_great_grand_parent_good = factories.GoodsNomenclatureFactory.create(
+    factories.GoodsNomenclatureFactory.create(
         item_id="2903000000",
         suffix=10,
         indent__indent=0,
     )
 
-    great_grand_parent_good = factories.GoodsNomenclatureFactory.create(
+    factories.GoodsNomenclatureFactory.create(
         item_id="2903000000",
         suffix=10,
         indent__indent=1,
     )
 
-    grand_parent_good = factories.GoodsNomenclatureFactory.create(
+    factories.GoodsNomenclatureFactory.create(
         item_id="2903690000",
         suffix=10,
         indent__indent=2,
     )
 
-    parent_good = factories.GoodsNomenclatureFactory.create(
+    factories.GoodsNomenclatureFactory.create(
         item_id="2903691100",
         suffix=10,
         indent__indent=3,
@@ -42,53 +48,90 @@ def prepair_commodity_tree_snapshot():
         indent__indent=4,
     )
 
-    child_good_2 = factories.GoodsNomenclatureFactory.create(
+    factories.GoodsNomenclatureFactory.create(
         item_id="2903691900",
         suffix=80,
         indent__indent=4,
     )
 
-    commodities = [
-        Commodity(
-            great_great_grand_parent_good,
-            indent_obj=great_great_grand_parent_good.indents.first(),
-        ),
-        Commodity(
-            great_grand_parent_good,
-            indent_obj=great_grand_parent_good.indents.first(),
-        ),
-        Commodity(grand_parent_good, indent_obj=grand_parent_good.indents.first()),
-        Commodity(parent_good, indent_obj=parent_good.indents.first()),
-        Commodity(child_good_1, indent_obj=child_good_1.indents.first()),
-        Commodity(child_good_2, indent_obj=child_good_2.indents.first()),
-    ]
+    # duplicate indent for child_good_1, with indent of 3
+    child_good_1.indents.first().copy(indent=3, transaction=transaction)
 
-    return CommodityTreeSnapshot(
-        commodities=commodities,
-        moment=SnapshotMoment(transaction=transaction),
+
+def test_get_dependent_measures_ignores_archived_measures(
+    seed_database_with_indented_goods,
+):
+    # setup data with archived workbasket and published workbasket
+    goods = GoodsNomenclature.objects.all().get(item_id="2903691900")
+    commodities_collection = CommodityCollectionLoader(prefix="2903").load()
+
+    for commodity in commodities_collection.commodities:
+        if commodity.item_id == "2903691900":
+            pass
+
+    archived_transaction = factories.TransactionFactory.create(archived=True)
+    archived_measure = factories.MeasureFactory.create(
+        transaction=archived_transaction,
+        goods_nomenclature=goods,
     )
 
+    published_transaction = factories.TransactionFactory.create(published=True)
+    published_measure = factories.MeasureFactory.create(goods_nomenclature=goods)
 
-class TestCommodityTreeSnapshot:
-    def test_init(self, prepair_commodity_tree_snapshot):
-        target = prepair_commodity_tree_snapshot
-        assert len(target.commodities) == 6
-        assert len(target.edges) == 6
+    # call get_dependent_measures and check archived measure does not exist in results
 
-    def test_get_parent(self, prepair_commodity_tree_snapshot):
-        target = prepair_commodity_tree_snapshot
-        assert target.get_parent(target.commodities[4]) == target.commodities[3]
+    target = CommodityTreeSnapshot(
+        commodities=commodities_collection.commodities,
+        moment=SnapshotMoment(transaction=published_measure.transaction),
+    )
 
-    def test_get_parent_2(self, prepair_commodity_tree_snapshot):
-        target = prepair_commodity_tree_snapshot
-        assert target.get_parent(target.commodities[5]) == target.commodities[3]
+    assert target.get_dependent_measures().count() == 1
+    assert Measure.objects.all().count() == 2
 
-    def test_get_siblings(self, prepair_commodity_tree_snapshot):
-        target = prepair_commodity_tree_snapshot
-        assert target.commodities[5] in target.get_siblings(target.commodities[4])
-        assert target.commodities[4] in target.get_siblings(target.commodities[5])
 
-    def test_get_children(self, prepair_commodity_tree_snapshot):
-        target = prepair_commodity_tree_snapshot
-        assert target.commodities[5] in target.get_children(target.commodities[3])
-        assert target.commodities[4] in target.get_children(target.commodities[3])
+def test_get_dependent_measures_works_with_wonky_archived_measure(
+    seed_database_with_indented_goods,
+):
+    # setup data with archived workbasket and published workbasket
+    goods = GoodsNomenclature.objects.all().get(item_id="2903691900")
+    commodities_collection = CommodityCollectionLoader(prefix="2903").load()
+
+    target_commodity = None
+
+    for commodity in commodities_collection.commodities:
+        if commodity.item_id == "2903691900":
+            target_commodity = commodity
+
+    archived_transaction = factories.TransactionFactory.create(archived=True)
+    old_regulation = factories.RegulationFactory.create(
+        valid_between=TaricDateRange(date(1982, 1, 1), date(1982, 12, 31)),
+    )
+    wonky_archived_measure = factories.MeasureFactory.create(
+        transaction=archived_transaction,
+        goods_nomenclature=goods,
+        generating_regulation=old_regulation,
+        terminating_regulation=old_regulation,
+        valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
+    )
+
+    published_transaction = factories.TransactionFactory.create(published=True)
+    published_measure = factories.MeasureFactory.create(
+        goods_nomenclature=goods,
+        valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
+    )
+
+    # call get_dependent_measures and check archived measure does not exist in results
+
+    target = CommodityTreeSnapshot(
+        commodities=commodities_collection.commodities,
+        moment=SnapshotMoment(
+            transaction=published_measure.transaction,
+            date=date.today(),
+        ),
+    )
+
+    assert target.get_dependent_measures().count() == 1
+    assert Measure.objects.all().count() == 2
+    assert wonky_archived_measure.generating_regulation == old_regulation
+    assert target_commodity in commodities_collection.commodities
+    assert target_commodity in target.commodities

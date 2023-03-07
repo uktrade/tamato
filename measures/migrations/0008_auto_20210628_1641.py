@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("measures", "0007_add_duty_expression_prefixes_and_measurement_unit_abbrevs"),
     ]

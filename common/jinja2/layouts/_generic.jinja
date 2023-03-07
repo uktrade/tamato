@@ -1,17 +1,20 @@
 {% extends "template.njk" %}
 
+{# base govuk "template.njk" uses the variable name cspNonce so set it here #}
+{% set cspNonce=request.csp_nonce %}
+
 {% block head %}
   {% if settings.GOOGLE_ANALYTICS_ID %}
     <!-- Google tag (gtag.js) -->
-      <script async src=https://www.googletagmanager.com/gtag/js?id={{ settings.GOOGLE_ANALYTICS_ID }}></script>
-      <script>
+      <script nonce="{{ request.csp_nonce }}" async src=https://www.googletagmanager.com/gtag/js?id=UA-57533520-61></script>
+      <script nonce="{{ request.csp_nonce }}">
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', '{{ settings.GOOGLE_ANALYTICS_ID }}');
       </script>
     <!-- Google Tag Manager -->
-      <script>
+      <script nonce="{{ request.csp_nonce }}">
         (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
         new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
         j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
@@ -52,5 +55,6 @@
 {% endblock %}
 
 {% block bodyEnd %}
-  {{ render_bundle("main", "js") }}
+  {% set csp_nonce -%}nonce="{{ cspNonce }}"{% endset %}
+  {{ render_bundle("main", "js", attrs=csp_nonce) }}
 {% endblock %}

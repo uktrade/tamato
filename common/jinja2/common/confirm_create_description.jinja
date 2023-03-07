@@ -28,18 +28,16 @@
 
       <h2 class="govuk-heading-m">Next steps</h2>
       <p class="govuk-body">To complete your task you must publish your change. </p>
-      {% if request.session.workbasket %}
       {{ govukButton({
         "text": "Go to your workbasket summary",
-        "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]),
+        "href": url("workbaskets:current-workbasket"),
         "classes": "govuk-button--secondary"
       }) }}
-      {% endif %}
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ described_object.get_url() }}">View {{ described_object._meta.verbose_name }} {{ described_object|string }}</a></li>
         <li><a class="govuk-link" href="{{ described_object.get_url("list") }}">Find and edit {{ described_object._meta.verbose_name_plural }}</a></li>
         {% if request.session.workbasket %}
-        <li><a class="govuk-link" href="{{ url('workbaskets:edit-workbasket', args=[request.session.workbasket.id]) }}">Return to workbasket</a></li>
+        <li><a class="govuk-link" href="{{ url('workbaskets:edit-workbasket') }}">Return to workbasket</a></li>
         {% endif %}
       </ul>
     </div>

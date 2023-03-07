@@ -7,7 +7,6 @@ from common import migration_operations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("commodities", "0006_auto_20210317_1153"),
     ]

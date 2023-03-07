@@ -40,7 +40,6 @@ class BindNestedFormMixin:
             kwargs.pop("instance")  # this mixin does not support ModelForm as subforms
 
         for name, field in self.fields.items():
-
             if isinstance(field, RadioNested):
                 all_forms = {}
                 for choice, form_list in field.nested_forms.items():
@@ -371,13 +370,19 @@ class ValidityPeriodForm(forms.ModelForm):
 
         # Data may not be present, e.g. if the user skips ahead in the sidebar
         valid_between = self.initial.get("valid_between")
-        if valid_between and end_date and start_date and end_date < start_date:
-            if start_date != valid_between.lower:
-                self.add_error(
-                    "start_date",
-                    "The start date must be the same as or before the end date.",
-                )
-            if end_date != self.initial["valid_between"].upper:
+        if end_date and start_date and end_date < start_date:
+            if valid_between:
+                if start_date != valid_between.lower:
+                    self.add_error(
+                        "start_date",
+                        "The start date must be the same as or before the end date.",
+                    )
+                if end_date != self.initial["valid_between"].upper:
+                    self.add_error(
+                        "end_date",
+                        "The end date must be the same as or after the start date.",
+                    )
+            else:
                 self.add_error(
                     "end_date",
                     "The end date must be the same as or after the start date.",
@@ -504,7 +509,6 @@ class FormSet(forms.BaseFormSet):
         formset_initial = defaultdict(dict)
         delete_forms = []
         for field, value in self.data.items():
-
             # filter out non-field data
             if field.startswith(f"{self.prefix}-"):
                 form, field_name = field.rsplit("-", 1)
@@ -535,7 +539,6 @@ class FormSet(forms.BaseFormSet):
 
         for i, (form, form_initial) in enumerate(formset_initial.items()):
             for field, value in form_initial.items():
-
                 # convert submitted value to python object
                 form_field = self.form.declared_fields.get(field)
                 if form_field:
