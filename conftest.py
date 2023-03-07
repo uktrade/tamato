@@ -366,7 +366,7 @@ def session_workbasket(client, new_workbasket):
 
 @pytest.fixture
 def queued_workbasket_factory():
-    def factory():
+    def factory_method():
         workbasket = factories.WorkBasketFactory.create(
             status=WorkflowStatus.QUEUED,
         )
@@ -375,7 +375,7 @@ def queued_workbasket_factory():
             factories.AdditionalCodeFactory()
         return workbasket
 
-    return factory
+    return factory_method
 
 
 @pytest.fixture
@@ -388,19 +388,19 @@ def packaged_workbasket_factory(queued_workbasket_factory):
     Workbasket in the state QUEUED with an approved transaction and tracked models
     """
 
-    def factory(workbasket=None, **kwargs):
+    def factory_method(workbasket=None, **kwargs):
         if not workbasket:
             workbasket = queued_workbasket_factory()
         with patch(
             "publishing.tasks.create_xml_envelope_file.apply_async",
-            return_value=MagicMock(id=factory_library.Faker("uuid4")),
+            return_value=MagicMock(id=factory.Faker("uuid4")),
         ):
             packaged_workbasket = factories.QueuedPackagedWorkBasketFactory(
                 workbasket=workbasket, **kwargs
             )
         return packaged_workbasket
 
-    return factory
+    return factory_method
 
 
 @pytest.fixture
@@ -415,7 +415,7 @@ def published_envelope_factory(packaged_workbasket_factory, envelope_storage):
     with an approved transaction and tracked models
     """
 
-    def factory(packaged_workbasket=None, **kwargs):
+    def factory_method(packaged_workbasket=None, **kwargs):
         if not packaged_workbasket:
             packaged_workbasket = packaged_workbasket_factory()
 
@@ -433,7 +433,7 @@ def published_envelope_factory(packaged_workbasket_factory, envelope_storage):
         packaged_workbasket.save()
         return envelope
 
-    return factory
+    return factory_method
 
 
 @pytest.fixture
@@ -448,7 +448,7 @@ def successful_envelope_factory(published_envelope_factory):
     with an approved transaction and tracked models
     """
 
-    def factory(**kwargs):
+    def factory_method(**kwargs):
         envelope = published_envelope_factory(**kwargs)
 
         packaged_workbasket = PackagedWorkBasket.objects.get(
@@ -466,7 +466,7 @@ def successful_envelope_factory(published_envelope_factory):
         assert packaged_workbasket.position == 0
         return envelope
 
-    return factory
+    return factory_method
 
 
 @pytest.fixture(scope="function")
@@ -1111,23 +1111,35 @@ def reference_nonexistent_record():
 
     @contextlib.contextmanager
     def make_record(
-        factory,
+        factory_instance,
         reference_field_name: str,
         teardown: Optional[Callable[[Any], Any]] = None,
     ):
-        # XXX relies on private API
-        dependency_factory = factory._meta.declarations[
+        # relies on private API
+        dependency_declaration = factory_instance._meta.declarations[
             reference_field_name
-        ].get_factory()
+        ]
+
+        # if factory returns multiple options (factory.declarations.Maybe) we need to select the "no" option
+        # (default factory) until we get to a factory we can then call get_factory() on. It does not really
+        # matter since the factory will create and then delete the record, leaving a reference to the PK that was
+        # removed.
+        while isinstance(dependency_declaration, factory.declarations.Maybe):
+            dependency_declaration = dependency_declaration.no
+
+        dependency_factory = dependency_declaration.get_factory()
 
         dependency = dependency_factory.create()
         non_existent_id = dependency.pk
+
         if teardown:
             teardown(dependency)
         else:
             dependency.delete()
 
-        record = factory.create(**{f"{reference_field_name}_id": non_existent_id})
+        record = factory_instance.create(
+            **{f"{reference_field_name}_id": non_existent_id}
+        )
 
         try:
             yield record
