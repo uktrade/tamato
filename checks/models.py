@@ -28,9 +28,9 @@ class TransactionCheck(models.Model):
 
     successful = fields.BooleanField(null=True)
     """
-    True if all of the checks carried out against the models in this
-    transaction returned a positive result.
-    
+    True if all of the checks carried out against the models in this transaction
+    returned a positive result.
+
     This value will be null until ``completed`` is `True`.
     """
 
@@ -68,7 +68,7 @@ class TransactionCheck(models.Model):
     """
     The latest tracked model in the transaction at the moment this check was
     carried out.
-    
+
     If some models are removed and subsequent ones added to the transaction, the
     count may be the same but the latest transaction will have a new primary
     key. This is used to detect if the check is now stale.

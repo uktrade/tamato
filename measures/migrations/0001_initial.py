@@ -10,7 +10,6 @@ import measures.validators
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [

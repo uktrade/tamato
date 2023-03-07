@@ -5,7 +5,6 @@ from django.db import models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("quotas", "0005_quotaordernumber_required_certificates"),
     ]

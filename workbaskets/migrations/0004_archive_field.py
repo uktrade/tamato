@@ -5,7 +5,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("workbaskets", "0003_update_deprecated_statuses"),
     ]

@@ -252,8 +252,10 @@ class WorkBasket(TimestampedMixin):
     """
     A WorkBasket groups tariff edits which will be applied at the same time.
 
-    WorkBasket status is controlled by a state machine:
-    See https://uktrade.atlassian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow # /PS-IGNORE
+    WorkBasket
+    fmt: off
+    statusssian.net/wiki/spaces/TARIFFSALPHA/pages/953581609/a.+Workbasket+workflow /PS-IGNORE
+    fmt: on
     """
 
     objects: WorkBasketQueryset = WorkBasketQueryset.as_manager()

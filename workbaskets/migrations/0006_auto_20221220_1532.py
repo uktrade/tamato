@@ -5,7 +5,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("workbaskets", "0005_workbasket_rule_check_task_id"),
     ]

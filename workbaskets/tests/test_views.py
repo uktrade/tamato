@@ -25,7 +25,6 @@ pytestmark = pytest.mark.django_db
 def test_workbasket_create_form_creates_workbasket_object(
     valid_user_api_client,
 ):
-
     # Post a form
     create_url = reverse("workbaskets:workbasket-ui-create")
 

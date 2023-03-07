@@ -4,13 +4,13 @@ import os
 import re
 import sys
 import uuid
-from datetime import timedelta
 from os.path import abspath
 from os.path import dirname
 from os.path import join
 from pathlib import Path
 
 import dj_database_url
+from celery.schedules import crontab
 from django.urls import reverse_lazy
 
 from common.util import is_truthy
@@ -143,6 +143,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "common.models.utils.TransactionMiddleware",
+    "csp.middleware.CSPMiddleware",
 ]
 if SSO_ENABLED:
     MIDDLEWARE += [
@@ -174,6 +175,27 @@ TEMPLATES = [
 ]
 
 FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
+
+# Content Security Policy
+# double quotes here are important!!
+# https://django-csp.readthedocs.io/en/latest/configuration.html
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_STYLE_SRC = (
+    "'self'",
+    "'unsafe-inline'",
+    "https://tagmanager.google.com/",
+)
+CSP_SCRIPT_SRC = (
+    "'self'",
+    "'unsafe-eval'",
+    "'unsafe-inline'",
+    "https://tagmanager.google.com/",
+    "https://www.googletagmanager.com/",
+    "ajax.googleapis.com/",
+)
+CSP_FONT_SRC = ("'self'", "'unsafe-inline'")
+CSP_INCLUDE_NONCE_IN = ("script-src",)
+CSP_REPORT_ONLY = False
 
 # -- Auth
 LOGIN_URL = reverse_lazy("login")
@@ -338,9 +360,11 @@ if VCAP_SERVICES.get("aws-s3-bucket"):
     S3_SECRET_ACCESS_KEY = app_bucket_creds["aws_secret_access_key"]
     HMRC_PACKAGING_STORAGE_BUCKET_NAME = app_bucket_creds["bucket_name"]
 else:
-    S3_REGION_NAME = os.environ.get("AWS_REGION")
+    S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
     S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
-    S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY")
+    S3_SECRET_ACCESS_KEY = os.environ.get(
+        "S3_SECRET_ACCESS_KEY",
+    )
     HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
         "HMRC_PACKAGING_STORAGE_BUCKET_NAME",
         "hmrc-packaging",
@@ -348,7 +372,6 @@ else:
 
 S3_ENDPOINT_URL = os.environ.get(
     "S3_ENDPOINT_URL",
-    "",
 )
 
 # Packaging automation.
@@ -417,7 +440,7 @@ CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
-        "schedule": timedelta(minutes=30),
+        "schedule": crontab(hour=4, minute=10),
     },
 }
 

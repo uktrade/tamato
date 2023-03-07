@@ -65,7 +65,6 @@ def test_goods_nomenclature_successor_importer_create(
     run_xml_import,
     date_ranges,
 ):
-
     good = factories.GoodsNomenclatureFactory(
         update_type=UpdateType.CREATE.value,
         valid_between=date_ranges.normal,

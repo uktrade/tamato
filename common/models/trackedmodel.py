@@ -101,10 +101,8 @@ class TrackedModel(PolymorphicModel):
     current_objects: TrackedModelQuerySet = CurrentTrackedModelManager.from_queryset(
         TrackedModelQuerySet,
     )()
-    """
-    The `current_objects` model manager provides a default queryset that, by
-    default, filters to the 'current' transaction.
-    """
+    """The `current_objects` model manager provides a default queryset that, by
+    default, filters to the 'current' transaction."""
 
     business_rules: Iterable = ()
     indirect_business_rules: Iterable = ()
@@ -148,8 +146,10 @@ class TrackedModel(PolymorphicModel):
     url_suffix = ""
     """
     This is to add a link within a page for get_url() e.g. for linking to a
-    Measure's conditions tab. If url_suffix is set to '#conditions' the output
-    detail url will be /measures/12345678/#conditions
+    Measure's conditions tab.
+
+    If url_suffix is set to '#conditions' the output detail url will be
+    /measures/12345678/#conditions
     """
 
     def new_version(

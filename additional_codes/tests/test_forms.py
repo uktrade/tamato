@@ -5,6 +5,7 @@ from common.tests import factories
 
 pytestmark = pytest.mark.django_db
 
+
 # https://uktrade.atlassian.net/browse/TP2000-296
 def test_additional_code_create_sid(session_with_workbasket, date_ranges):
     """Tests that additional code type is NOT considered when generating a new

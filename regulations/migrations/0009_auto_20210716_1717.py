@@ -5,7 +5,6 @@ from django.db import models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("regulations", "0008_auto_20210715_1427"),
     ]
