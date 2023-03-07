@@ -66,7 +66,7 @@ class MeasureFilter(TamatoFilter):
     )
 
     goods_nomenclature = AutoCompleteFilter(
-        label="Commodity code",
+        label="Specific commodity code",
         field_name="goods_nomenclature__item_id",
         queryset=GoodsNomenclature.objects.all(),
         attrs={
@@ -76,7 +76,7 @@ class MeasureFilter(TamatoFilter):
     )
 
     goods_nomenclature__item_id = CharFilter(
-        label="Commodity code starts with:",
+        label="Commodity code starts with",
         widget=forms.TextInput(
             attrs={
                 "class": GOV_UK_TWO_THIRDS,
