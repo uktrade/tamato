@@ -60,13 +60,6 @@ def test_get_branch_measures(seed_database_with_indented_goods):
     old_regulation = factories.RegulationFactory.create(
         valid_between=TaricDateRange(date(1982, 1, 1), date(1982, 12, 31)),
     )
-    wonky_archived_measure = factories.MeasureFactory.create(
-        transaction=archived_transaction,
-        goods_nomenclature=goods,
-        generating_regulation=old_regulation,
-        terminating_regulation=old_regulation,
-        valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
-    )
 
     draft_transaction = factories.TransactionFactory.create(draft=True)
     draft_measure = factories.MeasureFactory.create(
