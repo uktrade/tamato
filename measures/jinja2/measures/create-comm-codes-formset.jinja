@@ -50,11 +50,13 @@
   <div class="govuk-button-group">
   {{ govukButton({"text": "Continue"}) }}
 
+  {% if formset.total_form_count() + 1 < formset.max_num %}
   {{ govukButton({
       "text": "Add new",
       "classes": "govuk-button--secondary",
       "value": "1",
       "name": formset.prefix ~ "-ADD",
     }) }}
+  {% endif %}
   </div>
 {% endblock %}

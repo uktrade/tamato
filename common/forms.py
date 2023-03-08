@@ -569,8 +569,6 @@ class FormSet(forms.BaseFormSet):
         # Re-present the form to show the result of adding another form or
         # deleting an existing one.
         if self.formset_action == "ADD" or self.formset_action == "DELETE":
-            for form in self.forms:
-                form.errors.clear()
             return False
 
         # An empty set of forms is valid.
