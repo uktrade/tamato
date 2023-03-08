@@ -88,7 +88,7 @@
 
 
   {%- set process_envelope_cell_content %}
-    {% if loop.index == 1 %}
+    {% if loop.index == 1 and page_obj.number == 1 %}
       {# First row. #}
       {{ process_envelope_content(obj) }}
     {% endif %}
@@ -96,7 +96,7 @@
 
 
   {%- set accept_envelope_cell_content %}
-    {% if loop.index == 1 %}
+    {% if loop.index == 1 and page_obj.number == 1 %}
       {# First row. #}
       {{ accept_envelope_link(obj) }}
     {% endif %}
@@ -104,7 +104,7 @@
 
 
   {%- set reject_cell_content %}
-    {% if loop.index == 1 %}
+    {% if loop.index == 1 and page_obj.number == 1 %}
       {# First row. #}
       {{ reject_envelope_link(obj) }}
     {% endif %}
