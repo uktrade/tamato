@@ -20,6 +20,7 @@ from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
+from django_filters.views import FilterView
 from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
@@ -109,12 +110,31 @@ class MeasureSelectionQuerysetMixin(MeasureSelectionMixin):
         return Measure.objects.filter(pk__in=self.measure_selections)
 
 
+class MeasureSearch(FilterView):
+    """
+    UI endpoint for filtering Measures.
+
+    Does not list any measures. Redirects to MeasureList on form submit.
+    """
+
+    template_name = "measures/search.jinja"
+    filterset_class = MeasureFilter
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(reverse("measure-ui-list"))
+
+
 class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView):
     """UI endpoint for viewing and filtering Measures."""
 
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
     form_class = SelectableObjectsForm
+
+    def dispatch(self, *args, **kwargs):
+        if not self.request.GET:
+            return HttpResponseRedirect(reverse("measure-ui-search"))
+        return super().dispatch(*args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -780,7 +800,7 @@ class MeasureMultipleDelete(MeasureSelectionQuerysetMixin, TemplateView, ListVie
             )
         self.session_store.clear()
 
-        return redirect(reverse("measure-ui-list"))
+        return redirect(reverse("workbaskets:current-workbasket"))
 
 
 class MeasureSelectionUpdate(MeasureSessionStoreMixin, View):
