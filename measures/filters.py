@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
+from django.db.models import CharField
 from django.db.models import Q
 from django.urls import reverse_lazy
 from django_filters import CharFilter
@@ -37,8 +38,8 @@ class GovUKDateFilter(DateFilter):
 
 class MeasureTypeFilterBackend(TamatoFilterBackend):
     search_fields = (
-        StringAgg("sid", delimiter=" "),
-        StringAgg("description", delimiter=" "),
+        StringAgg("sid", delimiter=" ", output_field=CharField),
+        StringAgg("description", delimiter=" ", output_field=CharField),
     )  # XXX order is significant
 
 
@@ -66,13 +67,23 @@ class MeasureFilter(TamatoFilter):
     )
 
     goods_nomenclature = AutoCompleteFilter(
-        label="Commodity code",
+        label="Specific commodity code",
         field_name="goods_nomenclature__item_id",
         queryset=GoodsNomenclature.objects.all(),
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
             "min_length": 4,
         },
+    )
+
+    goods_nomenclature__item_id = CharFilter(
+        label="Commodity code starts with",
+        widget=forms.TextInput(
+            attrs={
+                "class": GOV_UK_TWO_THIRDS,
+            },
+        ),
+        lookup_expr="startswith",
     )
 
     additional_code = AutoCompleteFilter(

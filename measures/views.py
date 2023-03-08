@@ -347,7 +347,7 @@ class MeasureCreateWizard(
         REGULATION_ID: "measures/create-wizard-step.jinja",
         QUOTA_ORDER_NUMBER: "measures/create-wizard-step.jinja",
         GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
-        COMMODITIES: "measures/create-formset.jinja",
+        COMMODITIES: "measures/create-comm-codes-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
         CONDITIONS: "measures/create-formset.jinja",
         FOOTNOTES: "measures/create-formset.jinja",
@@ -490,6 +490,14 @@ class MeasureCreateWizard(
 
     def get_form_kwargs(self, step):
         kwargs = {}
+        if step == self.COMMODITIES:
+            min_commodity_count = self.get_cleaned_data_for_step(
+                self.MEASURE_DETAILS,
+            ).get(
+                "min_commodity_count",
+            )
+            kwargs.update({"min_commodity_count": min_commodity_count})
+
         if step == self.COMMODITIES or step == self.CONDITIONS:
             # duty sentence validation requires the measure start date so pass it to form kwargs here
             valid_between = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(

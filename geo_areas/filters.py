@@ -2,6 +2,7 @@ import logging
 
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
+from django.db.models import CharField
 from django.urls import reverse_lazy
 from django_filters import MultipleChoiceFilter
 
@@ -21,7 +22,7 @@ class GeographicalAreaFilterMixin(TamatoFilterMixin):
 
     search_fields = (
         "area_id",
-        StringAgg("descriptions__description", delimiter=" "),
+        StringAgg("descriptions__description", delimiter=" ", output_field=CharField),
     )
 
 

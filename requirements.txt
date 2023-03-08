@@ -12,7 +12,8 @@ coverage[toml]==5.4
 crispy-forms-gds @ git+https://github.com/uktrade/crispy-forms-gds.git@b50168d0e23ffacbdd30e7819ec8f9a08e055c8e
 defusedxml==0.7.*
 dj-database-url==0.5.0
-django==3.1.14
+django==3.2.18
+django-crispy-forms==1.12.0
 django-dotenv==1.4.2
 drf-extra-fields==3.0.2
 django-cte==1.1.5

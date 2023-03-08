@@ -179,7 +179,11 @@ FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 # Content Security Policy
 # double quotes here are important!!
 # https://django-csp.readthedocs.io/en/latest/configuration.html
-CSP_DEFAULT_SRC = ("'self'",)
+CSP_DEFAULT_SRC = (
+    "'self'",
+    "https://www.google-analytics.com/",
+    "https://region1.google-analytics.com/",
+)
 CSP_STYLE_SRC = (
     "'self'",
     "'unsafe-inline'",
@@ -450,6 +454,7 @@ SQLITE_EXCLUDED_APPS = [
 
 # -- Google Tag Manager
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID")
+GOOGLE_ANALYTICS_APP_ID = os.environ.get("GOOGLE_ANALYTICS_APP_ID", GOOGLE_ANALYTICS_ID)
 
 # -- Logging
 LOGGING = {
