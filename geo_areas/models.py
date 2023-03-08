@@ -56,7 +56,7 @@ class GeographicalAreaQuerySet(TrackedModelQuerySet):
             .values("described_geographicalarea__version_group")
         )
         agg_descriptions = current_descriptions.annotate(
-            chained_description=StringAgg("description", " ", output_field=CharField),
+            chained_description=StringAgg("description", delimiter=" "),
         ).values("chained_description")
         return qs.annotate(
             description=Subquery(agg_descriptions[:1]),
