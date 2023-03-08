@@ -179,7 +179,11 @@ FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 # Content Security Policy
 # double quotes here are important!!
 # https://django-csp.readthedocs.io/en/latest/configuration.html
-CSP_DEFAULT_SRC = ("'self'",)
+CSP_DEFAULT_SRC = (
+    "'self'",
+    "https://www.google-analytics.com/",
+    "https://region1.google-analytics.com/",
+)
 CSP_STYLE_SRC = (
     "'self'",
     "'unsafe-inline'",
@@ -191,8 +195,6 @@ CSP_SCRIPT_SRC = (
     "'unsafe-inline'",
     "https://tagmanager.google.com/",
     "https://www.googletagmanager.com/",
-    "https://www.google-analytics.com/",
-    "https://region1.google-analytics.com",
     "ajax.googleapis.com/",
 )
 CSP_FONT_SRC = ("'self'", "'unsafe-inline'")
