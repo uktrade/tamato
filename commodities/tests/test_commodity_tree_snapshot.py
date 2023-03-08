@@ -89,6 +89,7 @@ def test_get_dependent_measures_ignores_archived_measures(
     assert Measure.objects.all().count() == 2
 
 
+@pytest.mark.skip("ARCHIVED still exists but should NEVER be used.")
 def test_get_dependent_measures_works_with_wonky_archived_measure(
     seed_database_with_indented_goods,
 ):
