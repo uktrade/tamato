@@ -25,7 +25,7 @@ def test_index_displays_workbasket_action_form(valid_user_client):
     assert "Search the tariff" in page.select("label")[4].text
 
 
-def test_index_displays_login_buttons_correctly_SSO_off_logged_in(valid_user_client):
+def test_index_displays_logout_buttons_correctly_SSO_off_logged_in(valid_user_client):
     settings.SSO_ENABLED = False
     response = valid_user_client.get(reverse("home"))
 
@@ -35,11 +35,12 @@ def test_index_displays_login_buttons_correctly_SSO_off_logged_in(valid_user_cli
     assert page.find_all("a", {"href": "/logout"})
 
 
-def test_index_displays_login_buttons_correctly_SSO_off_logged_out(client):
+def test_index_redirects_to_login_page_logged_out_SSO_off(client):
     settings.SSO_ENABLED = False
     response = client.get(reverse("home"))
 
     assert response.status_code == 302
+    assert response.url == "/auth/login/?next=%2F"
 
 
 def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
