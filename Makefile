@@ -30,7 +30,6 @@ ifndef PYTHON
 PYTHON=python
 endif
 
-
 clean-static:
 	@echo
 	@echo "> Removing collected static files..."
