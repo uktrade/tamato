@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
+from django.db import models
 from django.urls import reverse_lazy
 from django_filters import CharFilter
 
@@ -13,7 +14,11 @@ from common.filters import TamatoFilterBackend
 class GoodsNomenclatureFilterBackend(TamatoFilterBackend):
     search_fields = (
         "item_id",
-        StringAgg("descriptions__description", delimiter=" "),
+        StringAgg(
+            "descriptions__description",
+            delimiter=" ",
+            output_field=models.CharField,
+        ),
     )  # XXX order is significant
 
     def search_queryset(self, queryset, search_term):

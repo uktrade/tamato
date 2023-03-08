@@ -1,6 +1,7 @@
 import re
 
 from django.contrib.postgres.aggregates import StringAgg
+from django.db.models import CharField
 from django.forms import CheckboxSelectMultiple
 from django.urls import reverse_lazy
 
@@ -31,9 +32,13 @@ class FootnoteFilterMixin(TamatoFilterMixin):
     """
 
     search_fields = (
-        StringAgg("footnote_type__footnote_type_id", delimiter=" "),
+        StringAgg(
+            "footnote_type__footnote_type_id",
+            delimiter=" ",
+            output_field=CharField,
+        ),
         "footnote_id",
-        StringAgg("descriptions__description", delimiter=" "),
+        StringAgg("descriptions__description", delimiter=" ", output_field=CharField),
     )  # XXX order is important
 
     search_regex = COMBINED_FOOTNOTE_AND_TYPE_ID
