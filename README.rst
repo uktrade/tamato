@@ -11,7 +11,13 @@ The tool is available at https://www.manage-trade-tariffs.trade.gov.uk/
 Getting started
 ---------------
 
-A local instance of the tool can be run using `Docker <https://www.docker.com/>`__.
+Prerequisites:
+    - A local instance of the tool can be run using `Docker <https://www.docker.com/>`__.
+    - A database dump
+
+To get a database dump, please contact the `TAP team`_.
+
+.. _`TAP team`: mailto:stephen.corder@trade.gov.uk?subject=TaMaTo+database+dump+request
 
 Download the codebase:
 
@@ -20,24 +26,26 @@ Download the codebase:
     $ git clone git@github.com:uktrade/tamato
     $ cd tamato
 
-Build the Docker image:
+Build and Run for the first time:
 
 .. code:: sh
 
     $ cp sample.env .env
-    $ make docker-image
+        # Not used will be used for specific local docker stuff
+        # cp docker-compose.override.yml.example docker-compose.override.yml
 
-Run the tamato app first time:
+    # to overwrite default db dump name pass in DUMP_FILE=db_dump.sql
+    $ make docker-first-use
+        # take a tea break to import the db dump then
+        # enter super user details when prompted 
+        # and visit localhost:8000/ when the containers are up
+
+Run the tamato app every other time:
 
  .. code:: sh
 
-    $ make migrate or make first-use
-
-Run the tamato app:  
-
-.. code:: sh
-
-    $ make docker-run
+    $ make docker-build
+    $ make docker-up
 
 Go to http://localhost:8000/ in your web browser to view the app
 
@@ -45,11 +53,21 @@ Import from a dump of the database:
 
 .. code:: sh
 
-    $ docker-compose exec -T db psql -U postgres < tamato-db-dump.sql
+    # to overwrite default db dump name pass in DUMP_FILE=db_dump.sql
+    $ make docker-db-dump
 
 To get a database dump, please contact the `TAP team`_.
 
 .. _`TAP team`: mailto:stephen.corder@trade.gov.uk?subject=TaMaTo+database+dump+request
+
+Sometimes docker gets clogged up and we need to clean it:
+
+.. code:: sh
+
+    # cleans up images & volumes
+    $ make docker-clean
+    # cleans up everything including the cache which can get filled up because of db dumps
+    $ make docker-deep-clean
 
 Run database migrations:
 
@@ -68,7 +86,18 @@ Run tests from within a docker container:
 .. code:: sh
 
     $ make docker-test
-    $ make docker-pytest
+    $ make docker-test-fast
+
+DOCKER_RUN=run --rm by default but can be set to exec if you have containers up and running
+General commands:
+
+.. code:: sh
+
+    $ make docker-down # brings down containers
+    $ make docker-up-db # brings up db in the background
+    $ make docker-migrations # runs django makemigrations
+    $ make docker-bash # bash shell in tamato container
+    $ make docker-shell # django shell in tamato container
 
 
 Development environment

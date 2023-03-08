@@ -7,7 +7,9 @@ services:
     volumes:
       - tamato-data-volume:/var/lib/postgresql/data
     ports:
-      - "5431:5432"
+      - "127.0.0.1:5431:5432"
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    shm_size: 32g
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -16,59 +18,72 @@ services:
 
   cache-redis:
     image: redis
-    restart: always
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     ports:
-      - "6379:6379"
-    volumes:
-      - .:/redis.conf
+      - "127.0.0.1:6379:6379"
 
   celery-redis:
     image: redis
-    restart: always
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     ports:
-      - "6378:6379"
+      - "127.0.0.1:6378:6379"
+
+  celery:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
     volumes:
-      - .:/redis.conf
+      - ./:/app/
+    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info"]
+    env_file: 
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    depends_on:
+      - celery-redis
 
   s3:
     image: minio/minio
-    restart: always
     ports:
-      - "9003:9003"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - tamato-s3-volume:/data
     env_file: .env
-    command: server --quiet --address 0.0.0.0:9003 /data
+    entrypoint: sh
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    # TODO improve set up of buckets currently only hmrc-packaging set up automatically 
+    command: ['-c', 'mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"']
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
 
   tamato:
     build: 
       context: .
-      dockerfile: "docker/Dockerfile"
+      args:
+        - "ENV=${ENV:-prod}"
     image: tamato
+    volumes:
+      - "${DOCKER_WEB_VOLUME:-./:/app/}"
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       - db
       - s3
       - cache-redis
       - celery-redis
-    links:
-      - db
-      - s3
-      - cache-redis
-      - celery-redis
-    environment:
-      DATABASE_URL: "postgres://postgres@db/postgres"
-      DJANGO_SETTINGS_MODULE: "settings.dev"
-      ENABLE_DJANGO_DEBUG_TOOLBAR: "False"
-      PYTHONUNBUFFERED: "1"
-      STARTING_TRANSACTION: "0"
-      NURSERY_CACHE_ENGINE: "importer.cache.redis.RedisCacheEngine"
-      CACHE_URL: "redis://cache-redis:6378/1"
-      CELERY_BROKER_URL: "redis://celery-redis:6378/1"
-      SSO_ENABLED: "false"
-    command: python manage.py runserver 0.0.0.0:8000
+    env_file:
+      - .env
+      - settings/envs/docker.env
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stdin_open: true
+    tty: true     
 
 volumes:
-  tamato-data-volume:
-  tamato-s3-volume:
+  tamato-data-volume: {}
+  tamato-s3-volume: {}
