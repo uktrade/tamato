@@ -462,6 +462,7 @@ class FormSet(forms.BaseFormSet):
     extra = 0
     can_order = False
     can_delete = True
+    can_delete_extra = True
     max_num = 1000
     min_num = 0
     absolute_max = 1000
