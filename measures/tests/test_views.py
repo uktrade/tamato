@@ -870,6 +870,7 @@ def test_measure_form_wizard_finish(
                 "measure_details-start_date_0": 2,
                 "measure_details-start_date_1": 4,
                 "measure_details-start_date_2": 2021,
+                "measure_details-min_commodity_count": 2,
             },
             "next_step": "regulation_id",
         },
@@ -1153,6 +1154,7 @@ def test_measure_create_wizard_get_form_kwargs(
         "measure_details-start_date_0": [2],
         "measure_details-start_date_1": [4],
         "measure_details-start_date_2": [2021],
+        "measure_details-min_commodity_count": [2],
     }
     storage = MeasureCreateSessionStorage(request=session_request, prefix="")
     storage.set_step_data("measure_details", details_data)

@@ -1,0 +1,27 @@
+
+.tap-inline {
+    .tap-row {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .tap-column {
+        flex-grow: 1;
+        display: flex;
+
+        .govuk-form-group {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            padding-left: 15px;
+
+            .autocomplete__wrapper {
+                margin-bottom: 0 !important;
+            }
+            .autocomplete,
+            input {
+                margin-top: auto;
+            }
+        }
+    }
+}

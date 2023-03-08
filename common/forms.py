@@ -519,7 +519,7 @@ class FormSet(forms.BaseFormSet):
                     del data[field]
 
                 # group by subform
-                if value:
+                if value or self.formset_action == "ADD":
                     formset_initial[form].update({field_name: value})
 
                 if field_name == "DELETE" and value == "1":
