@@ -519,7 +519,11 @@ class Measure(TrackedModel, ValidityMixin):
         business_rules.ME7,
         business_rules.ME8,
         business_rules.ME88,
-        business_rules.ME16,
+        # business_rules.ME16,
+        # ME16 has been causing intermittent issues and now needs to be
+        # temporarily overridden (removed) to allow a data fix for HMRC,
+        # which relies upon overlapping measures with and without additional
+        # codes: https://uktrade.atlassian.net/browse/TP2000-794
         business_rules.ME115,
         business_rules.ME25,
         business_rules.ME32,
