@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("measures", "0004_rename_condition_component_measurement"),
     ]

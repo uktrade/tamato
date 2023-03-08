@@ -34,6 +34,7 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.validators import AreaCode
 from measures import models
+from measures.constants import MeasureEditSteps
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
@@ -103,7 +104,7 @@ class GeoGroupForm(forms.Form):
         # descriptions__description" should make this implicitly distinct()
         self.fields[
             "geographical_area_group"
-        ].label_from_instance = lambda obj: obj.description
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
 
         if self.initial.get("geo_area") == GeoAreaType.GROUP.value:
             self.initial["geographical_area_group"] = self.initial["geographical_area"]
@@ -129,7 +130,7 @@ class ErgaOmnesExclusionsForm(forms.Form):
         )
         self.fields[
             "erga_omnes_exclusion"
-        ].label_from_instance = lambda obj: obj.description
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
 
 
 class GeoGroupExclusionsForm(forms.Form):
@@ -152,7 +153,7 @@ class GeoGroupExclusionsForm(forms.Form):
         )
         self.fields[
             "geo_group_exclusion"
-        ].label_from_instance = lambda obj: obj.description
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
 
 
 GeoGroupFormSet = formset_factory(
@@ -212,7 +213,7 @@ class CountryRegionForm(forms.Form):
 
         self.fields[
             "geographical_area_country_or_region"
-        ].label_from_instance = lambda obj: obj.description
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
 
         if self.initial.get("geo_area") == GeoAreaType.COUNTRY.value:
             self.initial["geographical_area_country_or_region"] = self.initial[
@@ -711,6 +712,7 @@ class MeasureFilterForm(forms.Form):
             Div(
                 Field.text("sid", field_width=Fluid.TWO_THIRDS),
                 "goods_nomenclature",
+                "goods_nomenclature__item_id",
                 "additional_code",
                 "order_number",
                 "measure_type",
@@ -857,7 +859,6 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         help_text=(
             "Search for a quota using its order number. "
             "You can then select the correct quota from the dropdown list. "
-            "Leave this field blank if the measure is not a quota."
         ),
         queryset=QuotaOrderNumber.objects.all(),
         required=False,
@@ -954,7 +955,6 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
 
         if geo_area_choice:
             if not self.formset_submit():
-
                 if geo_area_choice == GeoAreaType.ERGA_OMNES:
                     cleaned_data["geo_area_list"] = [self.erga_omnes_instance]
 
@@ -1021,10 +1021,11 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         help_text=(
             "Search for a commodity code by typing in the code's number or a keyword. "
             "After you've typed at least 3 numbers, a dropdown list will appear. "
-            "You can then select the correct quota from the dropdown list."
+            "You can then select the correct commodity from the dropdown list."
         ),
         queryset=GoodsNomenclature.objects.all(),
         attrs={"min_length": 3},
+        error_messages={"required": "Select a commodity code"},
     )
 
     duties = forms.CharField(
@@ -1064,7 +1065,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         return cleaned_data
 
 
-MeasureCommodityAndDutiesFormSet = formset_factory(
+MeasureCommodityAndDutiesBaseFormSet = formset_factory(
     MeasureCommodityAndDutiesForm,
     prefix="measure_commodities_duties_formset",
     formset=FormSet,
@@ -1074,6 +1075,16 @@ MeasureCommodityAndDutiesFormSet = formset_factory(
     validate_min=True,
     validate_max=True,
 )
+
+
+class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
+    def non_form_errors(self):
+        self._non_form_errors = super().non_form_errors()
+        for e in self._non_form_errors.as_data():
+            if e.code == "too_few_forms":
+                e.message = "Select one or more commodity codes"
+
+        return self._non_form_errors
 
 
 class MeasureFootnotesForm(forms.Form):
@@ -1182,3 +1193,103 @@ class MeasureEndDateForm(forms.Form):
                     )
 
         return cleaned_data
+
+
+class MeasureStartDateForm(forms.Form):
+    start_date = DateInputFieldFixed(
+        label="Start date",
+        help_text="For example, 27 3 2008",
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.selected_measures = kwargs.pop("selected_measures", None)
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "start_date",
+            Submit(
+                "submit",
+                "Save measure start dates",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if "start_date" in cleaned_data:
+            for measure in self.selected_measures:
+                year = int(cleaned_data["start_date"].year)
+                month = int(cleaned_data["start_date"].month)
+                day = int(cleaned_data["start_date"].day)
+
+                upper = measure.valid_between.upper
+                lower = datetime.date(year, month, day)
+                # for an open-ended measure the end date can be None
+                if upper and lower > upper:
+                    formatted_lower = lower.strftime("%d/%m/%Y")
+                    formatted_upper = upper.strftime("%d/%m/%Y")
+                    raise ValidationError(
+                        f"The start date cannot be after the end date: "
+                        f"Start date {formatted_lower} does not start before {formatted_upper}",
+                    )
+
+        return cleaned_data
+
+
+class MeasuresEditFieldsForm(forms.Form):
+    fields_to_edit = forms.MultipleChoiceField(
+        choices=MeasureEditSteps.choices,
+        widget=forms.CheckboxSelectMultiple,
+        label="",
+        help_text="Select the fields you wish to edit",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "fields_to_edit",
+            ),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
+class MeasureRegulationForm(forms.Form):
+    generating_regulation = AutoCompleteField(
+        label="Regulation ID",
+        help_text="Select the regulation which provides the legal basis for the measures.",
+        queryset=Regulation.objects.all(),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.selected_measures = kwargs.pop("selected_measures", None)
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "generating_regulation",
+            ),
+            Submit(
+                "submit",
+                "Save measure regulations",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )

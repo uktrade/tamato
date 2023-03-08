@@ -63,6 +63,11 @@ ui_patterns = [
         views.RejectEnvelopeConfirmView.as_view(),
         name="reject-envelope-confirm-ui-detail",
     ),
+    path(
+        "download-admin-loading-report/<pk>/",
+        views.DownloadAdminLoadingReportView.as_view(),
+        name="admin-loading-report-ui-download",
+    ),
 ]
 
 

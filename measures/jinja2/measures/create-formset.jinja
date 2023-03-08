@@ -1,12 +1,27 @@
 {% extends "measures/create-wizard-step.jinja" %}
 
 {% from "components/fieldset/macro.njk" import govukFieldset %}
+{% from "components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% set page_title = step_metadata[wizard.steps.current].title %}
 
 {% block form %}
   {% set formset = form %}
   {{ crispy(formset.management_form, no_form_tags) }}
+
+  {% if formset.non_form_errors() %}
+    {% set error_list = [] %}
+    {% for error in formset.non_form_errors() %}
+      {{ error_list.append({
+        "html": '<p class="govuk-error-message">' ~ error ~ '</p>',
+      }) or "" }}
+    {% endfor %}
+
+    {{ govukErrorSummary({
+      "titleText": "There is a problem",
+      "errorList": error_list
+    }) }}
+  {% endif %}
 
   {% for form in formset %}
     {{ crispy(form) }}

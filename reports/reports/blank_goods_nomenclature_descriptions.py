@@ -20,7 +20,6 @@ class Report(ReportBaseTable):
         ]
 
     def row(self, row: GoodsNomenclatureDescription) -> [dict]:
-
         live_description = (
             row.described_goods_nomenclature.get_description().description
         )

@@ -32,7 +32,7 @@
     {{ govukButton({"text": "Start now", "isStartButton": True}) }}
     {{ govukButton({
       "text": "Back",
-      "href": url("workbaskets:edit-workbasket", args=[request.session.workbasket.id]),
+      "href": url("workbaskets:edit-workbasket"),
       "classes": "govuk-button--secondary"
     }) }}
   </div>

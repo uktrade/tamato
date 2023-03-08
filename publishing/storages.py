@@ -1,5 +1,6 @@
 from os import path
 
+from django.utils import timezone
 from storages.backends.s3boto3 import S3Boto3Storage
 
 
@@ -52,9 +53,11 @@ class LoadingReportStorage(S3Boto3Storage):
     def generate_filename(self, filename: str) -> str:
         from django.conf import settings
 
+        # Use a time-based filename prefix to avoid overwriting stored files
+        # that have the same name and to make sorting by date / time easier.
         filename = path.join(
             settings.HMRC_LOADING_REPORTS_STORAGE_DIRECTORY,
-            filename,
+            timezone.now().isoformat() + "__" + filename,
         )
         return super().generate_filename(filename)
 

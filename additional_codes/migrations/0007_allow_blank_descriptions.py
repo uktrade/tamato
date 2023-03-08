@@ -6,7 +6,6 @@ import common.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("additional_codes", "0006_validity_start"),
     ]

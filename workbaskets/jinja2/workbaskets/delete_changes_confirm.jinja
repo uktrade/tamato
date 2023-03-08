@@ -13,13 +13,11 @@
       "classes": "govuk-!-margin-bottom-7"
     }) }}
 
-    {% if request.session.workbasket %}
     {{ govukButton({
       "text": "Go to your workbasket summary",
-      "href": url("workbaskets:workbasket-ui-detail", args=[request.session.workbasket.id]),
+      "href": url("workbaskets:current-workbasket"),
       "classes": "govuk-button--secondary"
     }) }}
-    {% endif %}
     <ul class="govuk-list govuk-list-spaced">
       {% include "includes/common/main-menu-link.jinja" %}
     </ul>

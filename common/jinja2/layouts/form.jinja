@@ -40,8 +40,8 @@
   {% endif %}
 {% endmacro %}
 
-{% macro django_form(action="", method="post") %}
-  <form method="{{ method }}" action="{{ action }}" novalidate="">
+{% macro django_form(action="", method="post", extra_form_attrs="") %}
+  <form method="{{ method }}" action="{{ action }}" novalidate="" {{extra_form_attrs}}>
     {% if method|lower == "post" %}{{ csrf_input }}{% endif %}
     {% set formset = form if form.forms else None %}
     {% set forms = formset.forms if formset else [form] %}

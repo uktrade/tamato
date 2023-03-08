@@ -12,7 +12,7 @@
   {%- endset -%}
   {{ table_rows.append([
     {"text": workbasket_linked_id},
-    {"html": workbasket.title},
+    {"text": workbasket.title},
     {"text": workbasket.reason},
     {"text": '{:,}'.format(workbasket.transactions.count()) },
     {"text": '{:,}'.format(workbasket.tracked_models.count()) },

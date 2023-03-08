@@ -13,3 +13,7 @@ class MeasureCreateSessionStorage(SessionStorage):
             if key.endswith("-ADD") or key.endswith("-DELETE"):
                 cleaned_data_copy.pop(key)
         super().set_step_data(step, cleaned_data_copy)
+
+
+class MeasureEditSessionStorage(MeasureCreateSessionStorage):
+    pass

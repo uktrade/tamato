@@ -6,7 +6,6 @@ import common.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("tests", "0002_allow_blank_descriptions"),
     ]
