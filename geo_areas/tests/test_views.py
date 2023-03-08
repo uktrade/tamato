@@ -5,6 +5,7 @@ from rest_framework.reverse import reverse
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
+from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
@@ -103,3 +104,14 @@ def test_geographical_area_list_filter(search_terms, valid_user_client):
     )
 
     assert page.find("tbody").find("td", text="Greenland")
+
+
+def test_geo_area_api_list_view(valid_user_client):
+    expected_results = [factories.GeographicalAreaFactory.create()]
+    assert_read_only_model_view_returns_list(
+        "geo_area",
+        "value",
+        "pk",
+        expected_results,
+        valid_user_client,
+    )

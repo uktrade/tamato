@@ -1,5 +1,6 @@
 {% from "components/phase-banner/macro.njk" import govukPhaseBanner %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/footer/macro.njk" import govukFooter %}
 
 {% extends "layouts/_generic.jinja" %}
 
@@ -17,16 +18,10 @@
 {% endset %}
 
 {% block header %}
-{% set workbasket_url %}
-  {% if request.session.workbasket %}
-    {{ url('workbaskets:workbasket-ui-detail', args=[request.session.workbasket.id]) }}
-  {% else %}
-  {% endif %}
-{% endset %}
 
 {% set workbasket_html %}
   {% if request.session.workbasket %}
-    <a href="{{ url('workbaskets:workbasket-ui-detail', args=[request.session.workbasket.id]) }}" class="govuk-header__link workbasket-link">Workbasket  {{ request.session.workbasket.id }} {{ workbasket_svg }}</a>
+    <a href="{{ url('workbaskets:current-workbasket') }}" class="govuk-header__link workbasket-link">Workbasket  {{ request.session.workbasket.id }} {{ workbasket_svg }}</a>
   {% endif %}
 {% endset %}
 
@@ -35,7 +30,7 @@
   "serviceName": service_name,
   "serviceUrl": "/",
   "navigation": [
-    { "html": workbasket_html } if request.session.workbasket else "",
+    { "html": workbasket_html } if workbasket_html else "",
     {
       "href": url("logout") if request.user.is_authenticated else settings.LOGIN_URL,
       "text": "Sign out" if request.user.is_authenticated else "Sign In"
@@ -48,11 +43,44 @@
     "tag": {
       "text": "alpha"
     },
-    "html": "This is a new service – your feedback will help us to improve it."
+    "text": "This is a new service – your feedback will help us to improve it."
   }) }}
   {% block breadcrumb %}
   {% if request.path != "/" %}
     {{ breadcrumbs(request, [{"text": page_title}]) }}
   {% endif %}
   {% endblock %}
+{% endblock %}
+
+{% block footer %}
+  {{ govukFooter({
+    "meta": {
+      "items": [
+        {
+          "href": "https://workspace.trade.gov.uk/working-at-dit/policies-and-guidance/policies/tariff-application-privacy-policy/",
+          "text": "Privacy policy"
+        },
+        {
+          "href": "https://uktrade.github.io/tariff-data-manual/#home",
+          "text": "Tariff data manual"
+        },
+        {
+          "href": url("app-info"),
+          "text": "Application information"
+        },
+        {
+          "href": url("workbaskets:workbasket-ui-list-all"),
+          "text": "Workbasket finder"
+        },
+        {
+          "href": url("import_batch-ui-list"),
+          "text": "Master importer"
+        },
+        {
+          "href": url("reports:index"),
+          "text": "TAP reports"
+        },
+      ]
+    }
+  }) }}
 {% endblock %}

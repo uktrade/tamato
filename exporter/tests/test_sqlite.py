@@ -67,7 +67,7 @@ def test_table_export(factory, sqlite_database: Runner):
         transaction__workbasket__status=WorkflowStatus.PUBLISHED,
     )
     unpublished = factory.create(
-        transaction__workbasket__status=WorkflowStatus.PROPOSED,
+        transaction__workbasket__status=WorkflowStatus.EDITING,
         transaction__partition=TransactionPartition.DRAFT,
     )
 

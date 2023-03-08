@@ -1,0 +1,44 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Confirmation" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Order and packaging workbasket", "href": url("publishing:packaged-workbasket-queue-ui-list")},
+      {"text": "Send to packaging", "href": url("publishing:packaged-workbasket-queue-ui-create")},
+      {"text": page_title}
+    ]
+  ) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        "titleText": "Workbasket queued at position " ~ object.position,
+        "text": "Workbasket ID: " ~ object.workbasket.id,
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <div class="govuk-button-group">
+          {{ govukButton({
+            "text": "Go to queue",
+            "href": url("publishing:packaged-workbasket-queue-ui-list"),
+            "classes": "govuk-button--primary"
+          }) }}
+          {{ govukButton({
+            "text": "Homepage",
+            "href": url("home"),
+            "classes": "govuk-button--secondary"
+          }) }}
+      </div>
+    </div>
+  </div>
+{% endblock %}

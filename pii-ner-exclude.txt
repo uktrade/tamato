@@ -1237,6 +1237,19 @@ Merge
 indent=0
 0005_workbasket_rule_check_task_id
 run_business_rules_form
+Base Report
+Base Text Report
+Base Chart Report
+Base Table Report
+FF5722
+Chart(ctx
+f'<a href="/reports/{row.slug()}">View Report</a
+Blank Goods Nomenclature
+ReportsConfig
+Email
+Postcode
+View Reports
+View Report
 f"empty
 Exit
 meth:`~workbaskets.models
@@ -1246,7 +1259,19 @@ Implementing RegulationY-%m-%d
 date_time_start
 Y-%m-%d
 Skipping ME119: update_type
+Implementing RegulationLoadingReport
+loading_report
+Queued
+LoadingReport
+NotifiedUser
+NotificationLog
+template_id
+template_id"
+GOVUK Notify
 Implementing Regulation
+measure.effective_valid_between.upper
+Tests that MeasureMultipleDelete
+
 {PYTHON}  manage.py migrate
 {PYTHON}  manage.py makemigrations
 {PYTHON}  manage.py collectstatic

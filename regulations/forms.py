@@ -159,12 +159,12 @@ class RegulationCreateForm(RegulationFormBase):
         regulation_usage,
     ):
         """
-        Make a partial regulation_id using bound form data. The result will not
-        include the single digit at the last position of a valid regulation_id,
-        which is only applied when the regulation instance is saved (the part
-        number provides a uniqueness element among potentially.
+        Make a partial regulation_id using bound form data.
 
-        < 10 + 26 partial regulation_ids).
+        The result will not include the single digit at the last position of a
+        valid regulation_id, which is only applied when the regulation instance
+        is saved (the part number provides a uniqueness element among
+        potentially more than 10 + 26 partial regulation_ids).
         """
         publication_year = str(published_at.year)[-2:]
         sequence_number = f"{sequence_number:0>4}"
@@ -201,7 +201,7 @@ class RegulationCreateForm(RegulationFormBase):
         #   [0]   - RegulationUsage key (e.g. "C" for "C: Draft regulation").
         #   [1-2] - last two digits from published_at (publication date),
         #           e.g. 21 for year 2021.
-        #   [3-6] - sequence number, right padded with zeros eg. 0002.
+        #   [3-6] - sequence number, left padded with zeros eg. 0002.
         #   [7]   - Part value, allows same regulation to be entered into the
         #           system several times, each instance referencing a specific
         #           part of a regulation by adding a unique trailing value.

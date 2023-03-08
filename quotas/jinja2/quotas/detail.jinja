@@ -2,18 +2,66 @@
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set page_title = "Quota: " ~ object.order_number %}
+{% set page_title = "Quota ID: " ~ object.order_number %}
 {% set find_edit_url = url("quota-ui-list") %}
 
 {% set core_data_tab_html %}{% include "includes/quotas/tabs/core_data.jinja" %}{% endset %}
+{% set definition_details_html %}{% include "includes/quotas/tabs/definition_details.jinja" %}{% endset %}
+{% set sub_quotas_html %}{% include "includes/quotas/tabs/sub_quotas.jinja" %}{% endset %}
+{% set blocking_periods_html %}{% include "includes/quotas/tabs/blocking_periods.jinja" %}{% endset %}
+{% set suspension_periods_html %}{% include "includes/quotas/tabs/suspension_periods.jinja" %}{% endset %}
+{% set measures_html %}{% include "includes/quotas/tabs/measures.jinja" %}{% endset %}
+{% set version_control_tab_html %}{% include "includes/quotas/tabs/version_control.jinja" %}{% endset %}
 
 {% set tabs = {
     "items": [
       {
-        "label": "Details",
+        "label": "Order number details",
         "id": "core-data",
         "panel": {
           "html": core_data_tab_html
+        }
+      },
+      {
+        "label": "Definition details",
+        "id": "definition-details",
+        "panel": {
+          "html": definition_details_html
+        }
+      },
+      {
+        "label": "Sub-quotas",
+        "id": "sub-quotas",
+        "panel": {
+          "html": sub_quotas_html
+        }
+      },
+      {
+        "label": "Blocking periods",
+        "id": "blocking-periods",
+        "panel": {
+          "html": blocking_periods_html
+        }
+      },
+      {
+        "label": "Suspension periods",
+        "id": "suspension-periods",
+        "panel": {
+          "html": suspension_periods_html
+        }
+      },
+      {
+        "label": "Measures",
+        "id": "measures",
+        "panel": {
+          "html": measures_html
+        }
+      },
+      {
+        "label": "Version control",
+        "id": "versions",
+        "panel": {
+          "html": version_control_tab_html
         }
       }
     ]

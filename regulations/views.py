@@ -15,9 +15,10 @@ from regulations.forms import RegulationDeleteForm
 from regulations.forms import RegulationEditForm
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
-from workbaskets.views.generic import DraftCreateView
-from workbaskets.views.generic import DraftDeleteView
-from workbaskets.views.generic import DraftUpdateView
+from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.generic import EditTaricView
 
 
 class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -57,18 +58,35 @@ class RegulationDetail(RegulationMixin, TrackedModelDetailView):
     template_name = "regulations/detail.jinja"
 
 
-class RegulationCreate(DraftCreateView):
-    """UI to create new regulations."""
-
+class RegulationCreateMixin:
     template_name = "regulations/create.jinja"
     form_class = RegulationCreateForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         # Make the request available to the form allowing transaction management
-        # from the form.
+        # from there.
         kwargs["request"] = self.request
         return kwargs
+
+
+class RegulationCreate(
+    RegulationCreateMixin,
+    CreateTaricCreateView,
+):
+    """UI to create new regulation CREATE instances."""
+
+
+class RegulationEditCreate(
+    RegulationCreateMixin,
+    RegulationMixin,
+    TrackedModelDetailMixin,
+    EditTaricView,
+):
+    """UI to edit regulation CREATE instances."""
+
+    template_name = "regulations/create.jinja"
+    form_class = RegulationEditForm
 
 
 class RegulationConfirmCreate(TrackedModelDetailView):
@@ -80,10 +98,9 @@ class RegulationConfirmCreate(TrackedModelDetailView):
         return Regulation.objects.approved_up_to_transaction(tx)
 
 
-class RegulationUpdate(
+class RegulationUpdateMixin(
     RegulationMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
 ):
     template_name = "regulations/edit.jinja"
     form_class = RegulationEditForm
@@ -96,6 +113,20 @@ class RegulationUpdate(
     )
 
 
+class RegulationUpdate(
+    RegulationUpdateMixin,
+    CreateTaricUpdateView,
+):
+    """UI to create regulation UPDATE instances."""
+
+
+class RegulationEditUpdate(
+    RegulationUpdateMixin,
+    EditTaricView,
+):
+    """UI to edit regulation UPDATE instances."""
+
+
 class RegulationConfirmUpdate(
     RegulationMixin,
     TrackedModelDetailView,
@@ -106,7 +137,7 @@ class RegulationConfirmUpdate(
 class RegulationDelete(
     RegulationMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = RegulationDeleteForm
     success_path = "list"

@@ -1,0 +1,108 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Search the Tariff Management Tool" %}
+{% set page_subtitle = "What would you like to do?" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Search" }
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3"> {{ page_title }} </h1>
+  <span class="govuk-caption-xl govuk-!-margin-bottom-9"> {{ page_subtitle }} </span>
+
+  {{ search_links}}
+{% endblock %}
+
+{% set search_links %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Additional codes</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url("additional_code-ui-list") }}">
+            Find additional codes
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Certificates</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url("certificate-ui-list") }}">
+            Find certificates
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Footnotes</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('footnote-ui-list') }}">
+            Find footnotes
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Geographical areas</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('geo_area-ui-list') }}">
+            Find geographical areas
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Commodities</h2>
+      <ul class="govuk-list">
+         <li>
+          <a class="govuk-link" href="{{ url('commodity-ui-list') }}">
+            Find commodities
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Measures</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('measure-ui-list') }}">
+            Find measures
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Quotas</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('quota-ui-list') }}">
+            Find quotas
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Regulations</h2>
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="{{ url('regulation-ui-list') }}">
+            Find regulations
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+{% endset %}

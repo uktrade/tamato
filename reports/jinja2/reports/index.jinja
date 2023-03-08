@@ -1,0 +1,24 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = 'Reports Index' %}
+
+{% block breadcrumb %}
+    {{ breadcrumbs(request, [
+      {'text': "Report index"}
+    ]) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        Reports Index
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">You will find a list of reports below that can be viewed.</span>
+
+    <div>
+        {{ govukTable({ "head": report.headers(), "rows": report.rows() }) }}
+    </div>
+{% endblock %}
+
+
+

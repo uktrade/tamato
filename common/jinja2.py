@@ -4,13 +4,15 @@ import re
 from crispy_forms.utils import render_crispy_form
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.template.defaultfilters import pluralize
 from django.templatetags.static import static
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.timezone import template_localtime
 from govuk_frontend_jinja.templates import Environment
 from govuk_frontend_jinja.templates import NunjucksExtension
-from jinja2 import Markup
+from jinja2.utils import markupsafe
 from webpack_loader.templatetags.webpack_loader import render_bundle
 from webpack_loader.templatetags.webpack_loader import webpack_static
 
@@ -85,7 +87,7 @@ def break_words(word):
     >>> break_words("hello/goodbye")
     "hello&8203;/&8203;goodbye"
     """
-    return Markup(re.sub(r"([^\w]+)", r"&#8203;\1&#8203;", word))
+    return markupsafe.Markup(re.sub(r"([^\w]+)", r"&#8203;\1&#8203;", word))
 
 
 def query_transform(request, **kwargs):
@@ -94,6 +96,12 @@ def query_transform(request, **kwargs):
     for key, value in kwargs.items():
         updated[key] = value
     return updated.urlencode()
+
+
+def debug_output(text):
+    if settings.DEBUG:
+        print(text)
+    return ""
 
 
 def environment(**kwargs):
@@ -107,12 +115,14 @@ def environment(**kwargs):
     env.filters.update(
         {
             "localtime": template_localtime,
+            "pluralize": pluralize,
         },
     )
     env.globals.update(
         {
             "break_words": break_words,
             "query_transform": query_transform,
+            "debug_output": debug_output,
             "crispy": render_crispy_form,
             "env": os.environ.get("ENV", "dev"),
             "get_messages": messages.get_messages,
@@ -122,8 +132,10 @@ def environment(**kwargs):
             "render_bundle": render_bundle,
             "settings": settings,
             "static": static,
+            "intcomma": intcomma,
             "url": reverse,
             "webpack_static": webpack_static,
+            "mark_safe": mark_safe,
         },
     )
 

@@ -18,9 +18,10 @@ from footnotes.filters import FootnoteFilter
 from footnotes.filters import FootnoteFilterBackend
 from footnotes.serializers import FootnoteTypeSerializer
 from workbaskets.models import WorkBasket
-from workbaskets.views.generic import DraftCreateView
-from workbaskets.views.generic import DraftDeleteView
-from workbaskets.views.generic import DraftUpdateView
+from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.generic import EditTaricView
 
 
 class FootnoteViewSet(viewsets.ReadOnlyModelViewSet):
@@ -101,7 +102,9 @@ class FootnoteList(FootnoteMixin, TamatoListView):
     ]
 
 
-class FootnoteCreate(DraftCreateView):
+class FootnoteCreate(CreateTaricCreateView):
+    """UI endpoint for creating Footnote CREATE instances."""
+
     template_name = "footnotes/create.jinja"
     form_class = forms.FootnoteCreateForm
 
@@ -127,6 +130,27 @@ class FootnoteCreate(DraftCreateView):
         return kwargs
 
 
+class FootnoteEditCreate(
+    FootnoteMixin,
+    TrackedModelDetailMixin,
+    EditTaricView,
+):
+    """UI endpoint for editing Footnote CREATE instances."""
+
+    template_name = "footnotes/create.jinja"
+    form_class = forms.FootnoteEditCreateForm
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
 class FootnoteConfirmCreate(FootnoteMixin, TrackedModelDetailView):
     template_name = "common/confirm_create.jinja"
 
@@ -135,10 +159,9 @@ class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
     template_name = "footnotes/detail.jinja"
 
 
-class FootnoteUpdate(
+class FootnoteUpdateMixin(
     FootnoteMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
 ):
     form_class = forms.FootnoteForm
 
@@ -152,6 +175,20 @@ class FootnoteUpdate(
     )
 
 
+class FootnoteUpdate(
+    FootnoteUpdateMixin,
+    CreateTaricUpdateView,
+):
+    """UI endpoint for creating Footnote UPDATE instances."""
+
+
+class FootnoteEditUpdate(
+    FootnoteUpdateMixin,
+    EditTaricView,
+):
+    """UI endpoint for editing Footnote UPDATE instances."""
+
+
 class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
 
@@ -159,7 +196,7 @@ class FootnoteConfirmUpdate(FootnoteMixin, TrackedModelDetailView):
 class FootnoteDelete(
     FootnoteMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = forms.FootnoteDeleteForm
     success_path = "list"
@@ -174,8 +211,10 @@ class FootnoteDelete(
 class FootnoteDescriptionCreate(
     FootnoteCreateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftCreateView,
+    CreateTaricCreateView,
 ):
+    """UI endpoint for creating FootnoteDescription CREATE instances."""
+
     def get_initial(self):
         initial = super().get_initial()
         initial["described_footnote"] = models.Footnote.objects.get(
@@ -193,8 +232,10 @@ class FootnoteDescriptionCreate(
 class FootnoteDescriptionUpdate(
     FootnoteDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
+    """UI endpoint for creating FootnoteDescription UPDATE instances."""
+
     form_class = forms.FootnoteDescriptionForm
     template_name = "common/edit_description.jinja"
 
@@ -204,6 +245,22 @@ class FootnoteDescriptionConfirmCreate(
     TrackedModelDetailView,
 ):
     template_name = "common/confirm_create_description.jinja"
+
+
+class FootnoteDescriptionEditCreate(
+    FootnoteDescriptionMixin,
+    TrackedModelDetailMixin,
+    EditTaricView,
+):
+    """UI endpoint for editing FootnoteDescription CREATE instances."""
+
+    form_class = forms.FootnoteDescriptionForm
+    template_name = "common/edit_description.jinja"
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class FootnoteDescriptionConfirmUpdate(
@@ -216,7 +273,7 @@ class FootnoteDescriptionConfirmUpdate(
 class FootnoteDescriptionDelete(
     FootnoteDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = forms.FootnoteDescriptionDeleteForm
     success_path = "detail"

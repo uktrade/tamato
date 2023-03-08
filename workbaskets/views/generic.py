@@ -7,7 +7,7 @@ from workbaskets.views.decorators import require_current_workbasket
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class DraftCreateView(
+class CreateTaricCreateView(
     TrackedModelChangeView,
     generic.CreateView,
 ):
@@ -30,7 +30,7 @@ class DraftCreateView(
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class DraftUpdateView(
+class CreateTaricUpdateView(
     TrackedModelChangeView,
     generic.UpdateView,
 ):
@@ -44,7 +44,7 @@ class DraftUpdateView(
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class DraftDeleteView(
+class CreateTaricDeleteView(
     TrackedModelChangeView,
     generic.UpdateView,
 ):
@@ -53,3 +53,28 @@ class DraftDeleteView(
     update_type = UpdateType.DELETE
     permission_required = "common.add_trackedmodel"
     template_name = "common/delete.jinja"
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class EditTaricView(
+    TrackedModelChangeView,
+    generic.UpdateView,
+):
+    """
+    View used to change an existing model instance in the current workbasket
+    without creating a new version. The model instance may have an update_type.
+
+    of either Create or Update - Delete is not an editable update type.
+    """
+
+    permission_required = "common.add_trackedmodel"
+    success_path = "confirm-update"
+
+    def get_template_names(self):
+        return "common/edit.jinja"
+
+    def get_result_object(self, form):
+        """Override the default behaviour in order to only update the existing
+        instance of the TrackedModel (i.e. without changing the object's
+        version)."""
+        return form.save()

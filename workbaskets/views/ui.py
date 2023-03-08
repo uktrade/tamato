@@ -28,6 +28,7 @@ from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
@@ -103,21 +104,23 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
         return (
             WorkBasket.objects.exclude(status=WorkflowStatus.PUBLISHED)
             .exclude(status=WorkflowStatus.ARCHIVED)
-            .exclude(status=WorkflowStatus.SENT)
+            .exclude(status=WorkflowStatus.QUEUED)
             .order_by("-updated_at")
         )
 
     def post(self, request, *args, **kwargs):
         workbasket_pk = request.POST.get("workbasket")
-
         if workbasket_pk:
             workbasket = WorkBasket.objects.get(pk=workbasket_pk)
 
             if workbasket:
+                if workbasket.status == WorkflowStatus.ERRORED:
+                    workbasket.restore()
+                    workbasket.save()
+
                 workbasket.save_to_session(request.session)
                 redirect_url = reverse(
-                    "workbaskets:workbasket-ui-detail",
-                    kwargs={"pk": workbasket_pk},
+                    "workbaskets:current-workbasket",
                 )
 
                 return redirect(redirect_url)
@@ -131,14 +134,9 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
     template_name = "workbaskets/delete_changes.jinja"
     permission_required = "workbaskets.change_workbasket"
 
-    def _workbasket(self):
-        """Get the WorkBasket instance associated with this view's deletion."""
-
-        try:
-            workbasket = WorkBasket.objects.get(pk=self.kwargs["pk"])
-        except WorkBasket.DoesNotExist:
-            workbasket = WorkBasket.objects.none()
-        return workbasket
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     def _session_store(self, workbasket):
         """Get the current user's SessionStore for the WorkBasket that they're
@@ -154,9 +152,8 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
         """Get TrackedModelQuerySet of instances that are candidates for
         deletion."""
 
-        workbasket = self._workbasket()
-        store = self._session_store(workbasket)
-        return workbasket.tracked_models.filter(pk__in=store.data.keys())
+        store = self._session_store(self.workbasket)
+        return self.workbasket.tracked_models.filter(pk__in=store.data.keys())
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
@@ -179,13 +176,11 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
                 # UI component(s) design in the backlog for this: TP-1148.
                 pass
 
-        workbasket = self._workbasket()
-        session_store = self._session_store(workbasket)
+        session_store = self._session_store(self.workbasket)
         session_store.clear()
 
         redirect_url = reverse(
             "workbaskets:workbasket-ui-delete-changes-done",
-            kwargs={"pk": self.kwargs["pk"]},
         )
         return redirect(redirect_url)
 
@@ -259,16 +254,18 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
+class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
     template_name = "workbaskets/summary-workbasket.jinja"
     form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.
     action_success_url_names = {
-        "run-business-rules": "workbaskets:workbasket-ui-detail",
+        "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
+        "run-business-rules": "workbaskets:current-workbasket",
+        "terminate-rule-check": "workbaskets:current-workbasket",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
-        "page-prev": "workbaskets:workbasket-ui-detail",
-        "page-next": "workbaskets:workbasket-ui-detail",
+        "page-prev": "workbaskets:current-workbasket",
+        "page-next": "workbaskets:current-workbasket",
     }
 
     @property
@@ -342,13 +339,11 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
         if form_action == "remove-selected":
             return reverse(
                 self.action_success_url_names[form_action],
-                kwargs={"pk": self.workbasket.pk},
             )
         elif form_action in ("page-prev", "page-next"):
             return self._append_url_page_param(
                 reverse(
                     self.action_success_url_names[form_action],
-                    kwargs={"pk": self.workbasket.pk},
                 ),
                 form_action,
             )
@@ -357,7 +352,18 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
             return self._append_url_page_param(
                 reverse(
                     self.action_success_url_names[form_action],
-                    kwargs={"pk": self.workbasket.pk},
+                ),
+                form_action,
+            )
+        elif form_action == "submit-for-packaging":
+            return reverse(
+                self.action_success_url_names[form_action],
+            )
+        elif form_action == "terminate-rule-check":
+            self.workbasket.terminate_rule_check()
+            return self._append_url_page_param(
+                reverse(
+                    self.action_success_url_names[form_action],
                 ),
                 form_action,
             )
@@ -416,10 +422,11 @@ class WorkBasketDetail(TemplateResponseMixin, FormMixin, View):
         return super().form_valid(form)
 
 
-class WorkBasketList(WithPaginationListView):
+class WorkBasketList(PermissionRequiredMixin, WithPaginationListView):
     """UI endpoint for viewing and filtering workbaskets."""
 
     template_name = "workbaskets/list.jinja"
+    permission_required = "workbaskets.change_workbasket"
     filterset_class = WorkBasketFilter
     search_fields = [
         "title",
@@ -464,40 +471,32 @@ class WorkBasketChanges(DetailView):
         return context
 
 
-class WorkBasketViolations(WithPaginationListView):
+class WorkBasketViolations(SortingMixin, WithPaginationListView):
     """UI endpoint for viewing a specified workbasket's business rule
     violations."""
 
     model = TrackedModelCheck
     template_name = "workbaskets/violations.jinja"
     paginate_by = 50
+    sort_by_fields = ["model", "date", "check_name"]
+    custom_sorting = {
+        "date": "transaction_check__transaction__created_at",
+        "model": "model__polymorphic_ctype",
+    }
 
     @property
-    def workbasket(self):
-        return WorkBasket.objects.get(id=self.kwargs.get("pk"))
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(workbasket=self.workbasket, **kwargs)
 
     def get_queryset(self):
-        qs = TrackedModelCheck.objects.filter(
+        self.queryset = TrackedModelCheck.objects.filter(
             transaction_check__transaction__workbasket=self.workbasket,
             successful=False,
         )
-        sort_by = self.request.GET.get("sort_by")
-        order = self.request.GET.get("order")
-        sort_by_fields = ["model", "date", "check_name"]
-        if sort_by and sort_by in sort_by_fields:
-            if sort_by == "date":
-                qs = qs.order_by("transaction_check__transaction__created_at")
-            elif sort_by == "model":
-                qs = qs.order_by("model__polymorphic_ctype")
-            else:
-                qs = qs.order_by(sort_by)
-
-        if order == "desc":
-            qs = qs.reverse()
-        return qs
+        return super().get_queryset()
 
 
 class WorkBasketViolationDetail(DetailView):
@@ -508,8 +507,8 @@ class WorkBasketViolationDetail(DetailView):
     template_name = "workbaskets/violation_detail.jinja"
 
     @property
-    def workbasket(self):
-        return WorkBasket.objects.get(id=self.kwargs.get("wb_pk"))
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(workbasket=self.workbasket, **kwargs)

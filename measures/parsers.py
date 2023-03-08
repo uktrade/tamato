@@ -17,9 +17,11 @@ from typing import Union
 
 from parsec import Parser
 from parsec import Value
+from parsec import eof
 from parsec import joint
 from parsec import optional
 from parsec import regex
+from parsec import space
 from parsec import spaces
 from parsec import string
 from parsec import try_choice
@@ -92,7 +94,7 @@ def measurement(m: Measurement) -> Parser:
     if m.measurement_unit_qualifier:
         qualifier = token("/") >> abbrev(m.measurement_unit_qualifier)
     else:
-        qualifier = empty
+        qualifier = try_choice(eof(), space())
     return joint(unit, qualifier).result(m)
 
 

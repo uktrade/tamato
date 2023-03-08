@@ -19,6 +19,8 @@ from django.contrib import admin
 from django.urls import include
 from django.urls import path
 
+import common
+
 urlpatterns = [
     path("", include("common.urls")),
     path("", include("additional_codes.urls")),
@@ -29,11 +31,22 @@ urlpatterns = [
     path("", include("geo_areas.urls")),
     path("", include("importer.urls")),
     path("", include("measures.urls")),
+    path("", include("publishing.urls", namespace="publishing")),
     path("", include("quotas.urls")),
     path("", include("regulations.urls")),
+    path("", include("reports.urls")),
     path("", include("workbaskets.urls", namespace="workbaskets")),
     path("admin/", admin.site.urls),
 ]
+
+handler403 = "common.views.handler403"
+handler500 = "common.views.handler500"
+
+if settings.DEBUG:
+    urlpatterns += [
+        path("403/", common.views.handler403, name="handler403"),
+        path("500/", common.views.handler500, name="handler500"),
+    ]
 
 if settings.SSO_ENABLED:
     urlpatterns = [

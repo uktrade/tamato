@@ -29,7 +29,6 @@ def translate_status(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("workbaskets", "0002_change_status_per_ADR008"),
     ]

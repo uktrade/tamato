@@ -57,7 +57,6 @@ def reverse(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("measures", "0009_add_abbrev_to_unit_qualifier_with_code_n"),
     ]

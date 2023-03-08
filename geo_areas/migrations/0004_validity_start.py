@@ -7,7 +7,6 @@ from common import migration_operations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("geo_areas", "0003_auto_20210219_0953"),
     ]

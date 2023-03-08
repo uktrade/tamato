@@ -133,6 +133,23 @@ Installing
     $ npm install
     $ npm run build
 
+Those using Mac m1 laptops may have problems installing certain packages (e.g. 
+psycopg2 and lxml) via requirements-dev.txt. In this scenario you should run the 
+following from a rosetta terminal (see `this article 
+<https://www.courier.com/blog/tips-and-tricks-to-setup-your-apple-m1-for-development/>`_ ), 
+substituting your own python version as appropriate:
+
+.. code:: sh
+
+    $ pip uninstall psycopg2
+    $ brew install postgresql
+    $ export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
+    $ export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib -L${HOME}/.pyenv/versions/3.8.10/lib"
+    $ arch -arm64 pip install psycopg2 --no-binary :all:
+
+Credit due to armenzg and his `answer here 
+<https://github.com/psycopg/psycopg2/issues/1286#issuecomment-914286206>`_ .
+
 Running
 ~~~~~~~
 
@@ -270,6 +287,24 @@ to a file or output to stdout using a management command:
 
 
 Output defaults to stdout if filename is ``-`` or is not supplied.
+
+Mocking s3 upload with minio
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Follow `instructions <https://min.io/docs/minio/macos/index.html>`_ to install minio server 
+2. Export MINIO_ROOT_USER and MINIO_ROOT_PASSWORD variables of your choice
+3. Run server with: 
+
+.. code:: sh
+    
+    minio server --quiet --address 0.0.0.0:9003 ~/data
+
+4. Navigate to http://localhost:9003/ and login using root user and password credentials just 
+   created. Create a bucket and an access key via the console.
+5. Export environment variables for any storages you wish to dummy (e.g. for sqlite dump export
+   this will be SQLITE_STORAGE_BUCKET_NAME, SQLITE_S3_ACCESS_KEY_ID, SQLITE_S3_SECRET_ACCESS_KEY,
+   SQLITE_S3_ENDPOINT_URL, and SQLITE_STORAGE_DIRECTORY), setting s3 endpoint url to 
+   http://localhost:9003/
 
 How to contribute
 -----------------

@@ -13,6 +13,7 @@ from additional_codes.forms import AdditionalCodeCreateForm
 from additional_codes.forms import AdditionalCodeDeleteForm
 from additional_codes.forms import AdditionalCodeDescriptionDeleteForm
 from additional_codes.forms import AdditionalCodeDescriptionForm
+from additional_codes.forms import AdditionalCodeEditCreateForm
 from additional_codes.forms import AdditionalCodeForm
 from additional_codes.models import AdditionalCode
 from additional_codes.models import AdditionalCodeDescription
@@ -25,9 +26,10 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from workbaskets.models import WorkBasket
-from workbaskets.views.generic import DraftCreateView
-from workbaskets.views.generic import DraftDeleteView
-from workbaskets.views.generic import DraftUpdateView
+from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.generic import EditTaricView
 
 
 class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -63,25 +65,6 @@ class AdditionalCodeMixin:
         )
 
 
-class AdditionalCodeCreateDescriptionMixin:
-    model: Type[TrackedModel] = AdditionalCodeDescription
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["described_object"] = AdditionalCode.objects.get(
-            sid=(self.kwargs.get("sid")),
-        )
-        return context
-
-
-class AdditionalCodeDescriptionMixin:
-    model: Type[TrackedModel] = AdditionalCodeDescription
-
-    def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return AdditionalCodeDescription.objects.approved_up_to_transaction(tx)
-
-
 class AdditionalCodeList(AdditionalCodeMixin, TamatoListView):
     """UI endpoint for viewing and filtering Additional Codes."""
 
@@ -95,7 +78,9 @@ class AdditionalCodeList(AdditionalCodeMixin, TamatoListView):
     ]
 
 
-class AdditionalCodeCreate(DraftCreateView):
+class AdditionalCodeCreate(CreateTaricCreateView):
+    """UI endpoint for creating AdditionalCode CREATE instances."""
+
     template_name = "additional_codes/create.jinja"
     form_class = AdditionalCodeCreateForm
 
@@ -120,6 +105,27 @@ class AdditionalCodeCreate(DraftCreateView):
         return kwargs
 
 
+class AdditionalCodeEditCreate(
+    AdditionalCodeMixin,
+    TrackedModelDetailMixin,
+    EditTaricView,
+):
+    """UI endpoint for editing AdditionalCode CREATE instances."""
+
+    template_name = "additional_codes/create.jinja"
+    form_class = AdditionalCodeEditCreateForm
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
 class AdditionalCodeConfirmCreate(AdditionalCodeMixin, TrackedModelDetailView):
     template_name = "common/confirm_create.jinja"
 
@@ -128,10 +134,9 @@ class AdditionalCodeDetail(AdditionalCodeMixin, TrackedModelDetailView):
     template_name = "additional_codes/detail.jinja"
 
 
-class AdditionalCodeUpdate(
+class AdditionalCodeUpdateMixin(
     AdditionalCodeMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
 ):
     form_class = AdditionalCodeForm
 
@@ -145,11 +150,46 @@ class AdditionalCodeUpdate(
     )
 
 
+class AdditionalCodeUpdate(
+    AdditionalCodeUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class AdditionalCodeEditUpdate(
+    AdditionalCodeUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class AdditionalCodeCreateDescriptionMixin:
+    model: Type[TrackedModel] = AdditionalCodeDescription
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["described_object"] = AdditionalCode.objects.get(
+            sid=(self.kwargs.get("sid")),
+        )
+        return context
+
+
+class AdditionalCodeDescriptionMixin:
+    model: Type[TrackedModel] = AdditionalCodeDescription
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return AdditionalCodeDescription.objects.approved_up_to_transaction(tx)
+
+
 class AdditionalCodeDescriptionCreate(
     AdditionalCodeCreateDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftCreateView,
+    CreateTaricCreateView,
 ):
+    """UI endpoint for creating AdditionalCodeDescription CREATE instances."""
+
     def get_initial(self):
         initial = super().get_initial()
         initial["described_additionalcode"] = AdditionalCode.objects.get(
@@ -161,11 +201,29 @@ class AdditionalCodeDescriptionCreate(
     template_name = "common/create_description.jinja"
 
 
+class AdditionalCodeDescriptionEditCreate(
+    AdditionalCodeDescriptionMixin,
+    TrackedModelDetailMixin,
+    EditTaricView,
+):
+    """UI endpoint for editing AdditionalCodeDescription CREATE instances."""
+
+    form_class = AdditionalCodeDescriptionForm
+    template_name = "common/edit_description.jinja"
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+
 class AdditionalCodeDescriptionUpdate(
     AdditionalCodeDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftUpdateView,
+    CreateTaricUpdateView,
 ):
+    """UI endpoint for AdditionalCodeDescription UPDATE instances."""
+
     form_class = AdditionalCodeDescriptionForm
     template_name = "common/edit_description.jinja"
 
@@ -191,7 +249,7 @@ class AdditionalCodeConfirmUpdate(AdditionalCodeMixin, TrackedModelDetailView):
 class AdditionalCodeDelete(
     AdditionalCodeMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = AdditionalCodeDeleteForm
     success_path = "list"
@@ -202,7 +260,7 @@ class AdditionalCodeDelete(
 class AdditionalCodeDescriptionDelete(
     AdditionalCodeDescriptionMixin,
     TrackedModelDetailMixin,
-    DraftDeleteView,
+    CreateTaricDeleteView,
 ):
     form_class = AdditionalCodeDescriptionDeleteForm
     success_path = "detail"

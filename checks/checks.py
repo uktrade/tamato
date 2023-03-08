@@ -20,6 +20,10 @@ CheckResult = Tuple[bool, Optional[str]]
 
 
 Self = TypeVar("Self")
+INTERNAL_ERROR_MESSAGE = (
+    "An internal error occurred when processing checks, please notify the TAP "
+    "support team of this issue"
+)
 
 
 class Checker:
@@ -72,8 +76,13 @@ class Checker:
         try:
             with override_current_transaction(context.transaction):
                 success, message = self.run(model)
-        except Exception as e:
+        except BusinessRuleViolation as e:
             success, message = False, str(e)
+        except Exception as e:
+            success, message = (
+                False,
+                INTERNAL_ERROR_MESSAGE + " : " + str(e),
+            )
         finally:
             return TrackedModelCheck.objects.create(
                 model=model,

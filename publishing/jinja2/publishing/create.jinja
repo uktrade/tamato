@@ -1,0 +1,15 @@
+{% extends "layouts/create.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+
+{% set page_title = "Send to packaging" %}
+{% set page_label = "Add workbasket to packaging queue" %}
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Order and packaging workbasket", "href": url("publishing:packaged-workbasket-queue-ui-list")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}

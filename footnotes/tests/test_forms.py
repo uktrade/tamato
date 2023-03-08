@@ -15,6 +15,7 @@ from footnotes import models
 
 pytestmark = pytest.mark.django_db
 
+
 # https://uktrade.atlassian.net/browse/TP-851
 def test_form_save_creates_new_footnote_id_and_footnote_type_id_combo(
     session_with_workbasket,

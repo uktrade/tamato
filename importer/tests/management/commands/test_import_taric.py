@@ -68,9 +68,8 @@ class TestImportTaricCommand(TestCommandBase):
         assert "-u USERNAME, --username USERNAME" in out
         assert "The username to use for the owner of the workbaskets" in out
         assert (
-            "-S {ARCHIVED,EDITING,PROPOSED,APPROVED,SENT,PUBLISHED,ERRORED}, "
-            "--status {ARCHIVED,EDITING,PROPOSED,APPROVED,SENT,PUBLISHED,ERRORED}"
-            in out
+            "-S {ARCHIVED,EDITING,QUEUED,PUBLISHED,ERRORED}, "
+            "--status {ARCHIVED,EDITING,QUEUED,PUBLISHED,ERRORED}" in out
         )
         assert "The status of the workbaskets containing the import" in out
         assert (

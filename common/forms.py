@@ -4,8 +4,10 @@ from typing import Type
 
 from crispy_forms_gds.fields import DateInputField
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -38,7 +40,6 @@ class BindNestedFormMixin:
             kwargs.pop("instance")  # this mixin does not support ModelForm as subforms
 
         for name, field in self.fields.items():
-
             if isinstance(field, RadioNested):
                 all_forms = {}
                 for choice, form_list in field.nested_forms.items():
@@ -154,27 +155,60 @@ class RadioNested(TypedChoiceField):
         return super().get_bound_field(form, field_name)
 
 
+class WorkbasketActions(TextChoices):
+    CREATE = "CREATE", "Create new workbasket"
+    EDIT = "EDIT", "Select an existing workbasket"
+
+
+class DITTariffManagerActions(TextChoices):
+    PACKAGE_WORKBASKETS = "PACKAGE_WORKBASKETS", "Order and package workbaskets"
+
+
+class HMRCCDSManagerActions(TextChoices):
+    PROCESS_ENVELOPES = "PROCESS_ENVELOPES", "Process envelopes"
+
+
+class CommonUserActions(TextChoices):
+    SEARCH = "SEARCH", "Search the tariff"
+
+
 class HomeForm(forms.Form):
-    class WorkbasketActions(TextChoices):
-        CREATE = "CREATE", "Create a new workbasket"
-        EDIT = (
-            "EDIT",
-            "Edit an existing workbasket",
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+
+        choices = []
+
+        if self.user.has_perm("workbaskets.add_workbasket"):
+            choices += WorkbasketActions.choices
+
+        if self.user.has_perm("publishing.manage_packaging_queue"):
+            choices += DITTariffManagerActions.choices
+
+        if self.user.has_perm("publishing.consume_from_packaging_queue"):
+            choices += HMRCCDSManagerActions.choices
+
+        choices += CommonUserActions.choices
+
+        self.fields["workbasket_action"] = forms.ChoiceField(
+            label="",
+            choices=choices,
+            widget=forms.RadioSelect,
+            required=True,
         )
 
-    workbasket_action = forms.ChoiceField(
-        label="What would you like to do?",
-        choices=WorkbasketActions.choices,
-        widget=forms.RadioSelect,
-        required=True,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
-        self.helper.legend_size = Size.EXTRA_LARGE
         self.helper.layout = Layout(
-            "workbasket_action",
+            Fieldset(
+                HTML.details(
+                    "What is a workbasket?",
+                    "A workbasket is used to collect all the changes you make to the UK's Import and Export Tariff data. "
+                    "Workbaskets group these changes so they can be checked by Customs Declaration Service (CDS) before going live.",
+                ),
+                "workbasket_action",
+                legend="What would you like to do?",
+                legend_size=Size.LARGE,
+            ),
             Submit(
                 "submit",
                 "Continue",
@@ -336,13 +370,19 @@ class ValidityPeriodForm(forms.ModelForm):
 
         # Data may not be present, e.g. if the user skips ahead in the sidebar
         valid_between = self.initial.get("valid_between")
-        if valid_between and end_date and start_date and end_date < start_date:
-            if start_date != valid_between.lower:
-                self.add_error(
-                    "start_date",
-                    "The start date must be the same as or before the end date.",
-                )
-            if end_date != self.initial["valid_between"].upper:
+        if end_date and start_date and end_date < start_date:
+            if valid_between:
+                if start_date != valid_between.lower:
+                    self.add_error(
+                        "start_date",
+                        "The start date must be the same as or before the end date.",
+                    )
+                if end_date != self.initial["valid_between"].upper:
+                    self.add_error(
+                        "end_date",
+                        "The end date must be the same as or after the start date.",
+                    )
+            else:
                 self.add_error(
                     "end_date",
                     "The end date must be the same as or after the start date.",
@@ -469,7 +509,6 @@ class FormSet(forms.BaseFormSet):
         formset_initial = defaultdict(dict)
         delete_forms = []
         for field, value in self.data.items():
-
             # filter out non-field data
             if field.startswith(f"{self.prefix}-"):
                 form, field_name = field.rsplit("-", 1)
@@ -500,7 +539,6 @@ class FormSet(forms.BaseFormSet):
 
         for i, (form, form_initial) in enumerate(formset_initial.items()):
             for field, value in form_initial.items():
-
                 # convert submitted value to python object
                 form_field = self.form.declared_fields.get(field)
                 if form_field:

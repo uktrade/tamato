@@ -1,0 +1,41 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Order and package workbaskets" %}
+{% set list_include = "includes/packaged-workbasket-queue.jinja" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  <div class="govuk-grid-row govuk-!-margin-bottom-5">
+    {% if queue_paused %}
+      {% include "includes/queue-paused.jinja" %}
+    {% else %}
+      {% include "includes/queue-unpaused.jinja" %}
+    {% endif %}
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      {% if object_list %}
+        {% include list_include %}
+      {% else %}
+        <p class="govuk-body">There are no workbaskets in the packaging queue.</p>
+      {% endif %}
+
+      {% include "includes/common/pagination.jinja" %}
+
+    </div>
+  </div>
+{% endblock %}

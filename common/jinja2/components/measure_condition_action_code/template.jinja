@@ -3,6 +3,7 @@
     <label for="id_{{ field.html_name }}" class="govuk-label">
         Action code
     </label>
+    <div id="action-code-hint" class="govuk-hint">Select the action code from the dropdown list</div>
     <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}"> 
         <option value="">-- Please select an action code --</option>
         {% for action in form.fields.action.queryset %}

@@ -193,15 +193,18 @@ class ValidityStartMixin(models.Model):
     validity_start = models.DateField(db_index=True, null=False, blank=False)
 
     validity_over: str
-    """Models with a single validity date always represent some feature of a
-    related model and are only live for as long as that model is live. The is
-    the name of the field on this model that is a foreign key to the related
-    model. E.g. for a description it is the described model."""
+    """
+    Models with a single validity date always represent some feature of a
+    related model and are only live for as long as that model is live.
+
+    The is the name of the field on this model that is a foreign key to the
+    related model. E.g. for a description it is the described model.
+    """
 
     objects: ValidityStartQueryset
     """The :meth:`~common.models.mixins.ValidityStartQuerySet.with_end_date`
     method is used to automatically compute the end date based on the other
-    models in the series. """
+    models in the series."""
 
     class Meta:
         abstract = True

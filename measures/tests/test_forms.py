@@ -1,3 +1,4 @@
+import datetime
 from unittest.mock import patch
 
 import pytest
@@ -6,9 +7,12 @@ from django.forms.models import model_to_dict
 from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
+from common.util import TaricDateRange
 from geo_areas.validators import AreaCode
 from measures import forms
+from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
+from measures.forms import MeasureStartDateForm
 from measures.models import Measure
 
 pytestmark = pytest.mark.django_db
@@ -63,15 +67,25 @@ def test_measure_form_invalid_conditions_data(
     # formset errors messages are test in view tests
 
 
-def test_measure_forms_details_valid_data(measure_type, erga_omnes):
-    data = {
+def test_measure_forms_details_valid_data(measure_type):
+    start_date = {
         "measure_type": measure_type.pk,
-        "start_date_0": 2,
-        "start_date_1": 4,
-        "start_date_2": 2021,
-        "geographical_area": erga_omnes.pk,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2023,
     }
-    form = forms.MeasureDetailsForm(data, prefix="")
+    start_and_end_dates = {
+        "measure_type": measure_type.pk,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2023,
+        "end_date_0": 2,
+        "end_date_1": 2,
+        "end_date_2": 2024,
+    }
+    form = forms.MeasureDetailsForm(start_date, prefix="")
+    assert form.is_valid()
+    form = forms.MeasureDetailsForm(start_and_end_dates, prefix="")
     assert form.is_valid()
 
 
@@ -89,6 +103,14 @@ def test_measure_forms_quota_order_number_valid_data(quota_order_number):
     }
     form = forms.MeasureQuotaOrderNumberForm(data, prefix="")
     assert form.is_valid()
+    assert form.cleaned_data["order_number"] == quota_order_number
+
+    empty = {
+        "order_number": "",
+    }
+    form = forms.MeasureQuotaOrderNumberForm(empty, prefix="")
+    assert form.is_valid()
+    assert form.cleaned_data["order_number"] == None
 
 
 def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
@@ -377,22 +399,26 @@ def test_measure_forms_quota_order_number_invalid_data():
     assert not form.is_valid()
 
 
-def test_measure_forms_details_invalid_date_range(measure_type, regulation, erga_omnes):
+def test_measure_forms_details_invalid_date_range(measure_type):
     data = {
         "measure_type": measure_type.pk,
-        "generating_regulation": regulation.pk,
-        "order_number": None,
         "start_date_0": 1,
         "start_date_1": 1,
         "start_date_2": 2000,
-        "geographical_area": erga_omnes.pk,
+        "end_date_0": 1,
+        "end_date_1": 1,
+        "end_date_2": 1999,
     }
     form = forms.MeasureDetailsForm(data, initial={}, prefix="")
     # In the real wizard view the prefix will be populated with the name of the form. It's left blank here to make the mock form data simpler
     assert not form.is_valid()
     assert (
         form.errors["__all__"][0]
-        == "The date range of the measure can't be outside that of the measure type: [2020-01-01, None) does not contain [2000-01-01, None)"
+        == "The date range of the measure can't be outside that of the measure type: [2020-01-01, None) does not contain [2000-01-01, 1999-01-01]"
+    )
+    assert (
+        form.errors["end_date"][0]
+        == "The end date must be the same as or after the start date."
     )
 
 
@@ -433,6 +459,38 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
     assert form.is_valid() == is_valid
     if not form.is_valid():
         assert "Enter a valid duty sentence." in form.errors["__all__"]
+
+
+@pytest.mark.parametrize(
+    "commodity, error_message",
+    [
+        (
+            "test",
+            "Select a valid choice. That choice is not one of the available choices.",
+        ),
+        ("", "Select a commodity code"),
+    ],
+)
+def test_measure_forms_commodity_and_duties_form_invalid(
+    commodity,
+    error_message,
+    duty_sentence_parser,
+    date_ranges,
+):
+    data = {
+        "commodity": commodity,
+    }
+    form = forms.MeasureCommodityAndDutiesForm(
+        data,
+        prefix="",
+        measure_start_date=date_ranges.normal,
+    )
+    assert not form.is_valid()
+    assert error_message in form.errors["commodity"]
+
+    formset = forms.MeasureCommodityAndDutiesFormSet({})
+    assert not formset.is_valid()
+    assert "Select one or more commodity codes" in formset.non_form_errors()
 
 
 def test_measure_forms_conditions_form_valid_data():
@@ -889,3 +947,53 @@ def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
         )
         assert form.is_valid()
         assert form.cleaned_data["exclusions"] == [excluded_country1, excluded_country2]
+
+
+def test_measure_start_date_validation_fail():
+    valid_between = TaricDateRange(
+        lower=datetime.date(2000, 1, 1),
+        upper=datetime.date(2100, 1, 1),
+    )
+    selected_measures = factories.MeasureFactory.create_batch(
+        3,
+        valid_between=valid_between,
+    )
+    form = MeasureStartDateForm(
+        data={
+            "start_date_0": "01",
+            "start_date_1": "01",
+            "start_date_2": "2200",
+        },
+        selected_measures=selected_measures,
+    )
+
+    assert not form.is_valid()
+    assert (
+        "The start date cannot be after the end date: Start date 01/01/2200 does not start before 01/01/2100"
+        in form.errors["__all__"]
+    )
+
+
+def test_measure_end_date_validation_fail():
+    valid_between = TaricDateRange(
+        lower=datetime.date(2000, 1, 1),
+        upper=datetime.date(2100, 1, 1),
+    )
+    selected_measures = factories.MeasureFactory.create_batch(
+        3,
+        valid_between=valid_between,
+    )
+    form = MeasureEndDateForm(
+        data={
+            "end_date_0": "01",
+            "end_date_1": "01",
+            "end_date_2": "1999",
+        },
+        selected_measures=selected_measures,
+    )
+
+    assert not form.is_valid()
+    assert (
+        "The end date cannot be before the start date: Start date 01/01/2000 does not start before 01/01/1999"
+        in form.errors["__all__"]
+    )

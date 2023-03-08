@@ -1,4 +1,10 @@
+from django.core.validators import RegexValidator
 from django.db import models
+
+tops_jira_number_validator = RegexValidator(
+    r"^[0-9]+$",
+    message="Your TOPS/Jira number must only include numbers. You do not need to add ‘TOPS’ or ‘Jira’ in front of the number.",
+)
 
 
 class WorkflowStatus(models.TextChoices):
@@ -6,12 +12,8 @@ class WorkflowStatus(models.TextChoices):
     ARCHIVED = "ARCHIVED", "Archived"
     # Workbasket can still be edited
     EDITING = "EDITING", "Editing"
-    # Submitted for approval, pending response from an approver
-    PROPOSED = "PROPOSED", "Proposed"
-    # Approved and scheduled for sending to CDS
-    APPROVED = "APPROVED", "Approved"
-    # Send to CDS and waiting for response
-    SENT = "SENT", "Sent"
+    # Workbasket added to the queue, ready to be downloaded by CDS
+    QUEUED = "QUEUED", "Queued"
     # Received a validation receipt from CDS systems
     PUBLISHED = "PUBLISHED", "Published"
     # Sent to CDS, but CDS returned an invalid data receipt
@@ -20,8 +22,7 @@ class WorkflowStatus(models.TextChoices):
     @classmethod
     def approved_statuses(cls):
         return (
-            cls.APPROVED,
-            cls.SENT,
+            cls.QUEUED,
             cls.PUBLISHED,
         )
 

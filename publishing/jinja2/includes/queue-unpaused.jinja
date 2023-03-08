@@ -1,0 +1,43 @@
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/details/macro.njk" import govukDetails %}
+
+
+<div class="govuk-grid-column-full">
+  <h2 class="govuk-heading-m">Workbaskets - Ready to order</h2>
+</div>
+
+<div class="govuk-grid-column-three-quarters">
+  {{ govukDetails({
+    "summaryText": "What does pausing and unpausing the CDS queue mean?",
+    "html": (
+      "<p>It is essentially a way to temporarily stop the automatic sending of envelopes to CDS. "
+      "You can manually pause the queue if you want to temporarily stop the automatic process "
+      "of sending envelopes to CDS. The CDS queue will be paused automatically when "
+      "an envelope is rejected by CDS.</p>"
+      "<p>It is important to check the reason why the processing queue was initially paused "
+      "before restarting the process, as the first file in the queue will be "
+      "automatically sent to CDS once you resume.</p>"
+    ),
+    "classes": "govuk-!-margin-bottom-0",
+  }) }}
+</div>
+
+<div class="govuk-grid-column-one-quarter">
+  <form method="post" action="">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+    <button
+      class="govuk-button govuk-!-margin-bottom-0 pause-queue-button"
+      data-module="govuk-button"
+      name="pause_queue"
+      value="pause_queue"
+    >
+      Pause CDS queue
+      <img
+        class="icon icon-pause-cds-queue"
+        src="{{ static('/common/images/pause-outline.svg') }}"
+        alt="Pause icon"
+      >
+    </button>
+  </form>
+</div>

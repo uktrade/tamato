@@ -1,3 +1,5 @@
+import datetime
+import json
 import unittest
 from datetime import date
 from decimal import Decimal
@@ -14,14 +16,18 @@ from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
+from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from measures.business_rules import ME70
+from measures.constants import START
+from measures.constants import MeasureEditSteps
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureCondition
@@ -111,6 +117,115 @@ def test_measure_footnotes_update_post_without_remove_ignores_delete_keys(
 
 def test_measure_delete(use_delete_form):
     use_delete_form(factories.MeasureFactory())
+
+
+def test_multiple_measure_delete_functionality(client, valid_user, session_workbasket):
+    """Tests that MeasureMultipleDelete view's Post function takes a list of
+    measures, and sets their update type to delete, clearing the session once
+    completed."""
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+
+    url = reverse("measure-ui-delete-multiple")
+    client.force_login(valid_user)
+    session = client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: True,
+                measure_2.pk: True,
+                measure_3.pk: True,
+            },
+        },
+    )
+    session.save()
+    post_data = {"action": "delete"}
+    response = client.post(url, data=post_data)
+
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+    ).order_by("sid")
+
+    # on success, the page redirects to the list page
+    assert response.status_code == 302
+    assert client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        # check that the update type is delete which is 2
+        assert measure.update_type == UpdateType.DELETE
+
+
+def test_multiple_measure_delete_template(client, valid_user, session_workbasket):
+    """Test that valid user receives a 200 on GET for MultipleMeasureDelete and
+    correct measures display in html table."""
+    # Make a bunch of measures
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+    measure_4 = factories.MeasureFactory.create()
+    measure_5 = factories.MeasureFactory.create()
+
+    url = reverse("measure-ui-delete-multiple")
+    client.force_login(valid_user)
+    session = client.session
+    # Add a workbasket to the session, and add some selected measures to it.
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: True,
+                measure_2.pk: True,
+                measure_3.pk: True,
+            },
+        },
+    )
+    session.save()
+
+    url = reverse("measure-ui-delete-multiple")
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    # grab the whole measure objects for our pk's we've got in the session, so we can compare attributes.
+    selected_measures = Measure.objects.filter(
+        pk__in=session["MULTIPLE_MEASURE_SELECTIONS"].keys(),
+    )
+
+    # Get the measure ids that are being shown in the table in the template.
+    measure_ids_in_table = [e.text for e in soup.select("table tr td:first-child")]
+
+    # Get the sids for the measures we selected, as these are what are shown in the template.
+    selected_measures_ids = [str(measure.sid) for measure in selected_measures]
+
+    assert measure_ids_in_table == selected_measures_ids
+    assert set(measure_ids_in_table).difference([measure_4.sid, measure_5.sid])
+
+    # 4th column is start date
+    start_dates_in_table = {e.text for e in soup.select("table tr td:nth-child(4)")}
+    measure_start_dates = {
+        f"{m.valid_between.lower:%d %b %Y}" for m in selected_measures
+    }
+    assert not measure_start_dates.difference(start_dates_in_table)
+
+    # 5th column is end date
+    end_dates_in_table = {e.text for e in soup.select("table tr td:nth-child(5)")}
+    measure_end_dates = {
+        f"{m.effective_end_date:%d %b %Y}"
+        for m in selected_measures
+        if m.effective_end_date
+    }
+    assert not measure_end_dates.difference(end_dates_in_table)
 
 
 @pytest.mark.parametrize(
@@ -265,26 +380,34 @@ def test_measure_detail_quota_order_number(client, valid_user):
     assert str(quota_order_number) in items
 
 
-def test_measure_detail_version_control(client, valid_user):
+def test_measure_detail_version_control(valid_user_client):
     measure = factories.MeasureFactory.create()
     measure.new_version(measure.transaction.workbasket)
     measure.new_version(measure.transaction.workbasket)
 
     url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#versions"
-    client.force_login(valid_user)
-    response = client.get(url)
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
     soup = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",
     )
-    rows = soup.select("#versions table > tbody > tr")
-    assert len(rows) == 3
+    num_rows = len(soup.select("#versions table > tbody > tr"))
+    assert num_rows == 3
 
     update_types = {
         cell.text
         for cell in soup.select("#versions table > tbody > tr > td:first-child")
     }
     assert update_types == {"Create", "Update"}
+
+    activity_dates = [
+        date.text
+        for date in soup.select("#versions table > tbody > tr > td:nth-of-type(2)")
+    ]
+    expected_dates = [f"{measure.transaction.updated_at:%d %b %Y}"] * num_rows
+    assert activity_dates == expected_dates
 
 
 @pytest.mark.parametrize(
@@ -347,7 +470,7 @@ def test_measure_update_duty_sentence(
     # Remove keys with null value to avoid TypeError
     post_data = {k: v for k, v in post_data.items() if v is not None}
     post_data.update(update_data)
-    post_data["update_type"] = 1
+    post_data["update_type"] = UpdateType.UPDATE
     url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
     client.force_login(valid_user)
     response = client.post(url, data=post_data)
@@ -382,7 +505,7 @@ def test_measure_form_save_called_on_measure_update(
     MeasureForm.save(commit=False)"""
     post_data = measure_form.data
     post_data = {k: v for k, v in post_data.items() if v is not None}
-    post_data["update_type"] = 1
+    post_data["update_type"] = UpdateType.UPDATE
     url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
     client.force_login(valid_user)
     client.post(url, data=post_data)
@@ -414,7 +537,7 @@ def test_measure_update_updates_footnote_association(measure_form, client, valid
     point at the new, updated version of the measure."""
     post_data = measure_form.data
     post_data = {k: v for k, v in post_data.items() if v is not None}
-    post_data["update_type"] = 1
+    post_data["update_type"] = UpdateType.UPDATE
     assoc = factories.FootnoteAssociationMeasureFactory.create(
         footnoted_measure=measure_form.instance,
     )
@@ -1078,3 +1201,527 @@ def test_measure_form_creates_exclusions(
     assert not set(
         [e.excluded_geographical_area for e in measure.exclusions.all()],
     ).difference({excluded_country1, excluded_country2})
+
+
+def test_measuretype_api_list_view(valid_user_client):
+    expected_results = [
+        factories.MeasureTypeFactory.create(
+            description="1 test description",
+        ),
+        factories.MeasureTypeFactory.create(
+            description="2 test description",
+        ),
+    ]
+
+    assert_read_only_model_view_returns_list(
+        "measuretype",
+        "value",
+        "pk",
+        expected_results,
+        valid_user_client,
+        equals=True,
+    )
+
+
+def test_multiple_measure_start_and_end_date_edit_functionality(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that MeasureEditWizard takes a list of measures, and sets their
+    update type to update, updates their end dates and start dates, and clears
+    the session once completed."""
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+
+    measure_3.valid_between = (
+        TaricDateRange(
+            lower=datetime.date(2023, 10, 30),
+        ),
+    )
+
+    url = reverse("measure-ui-edit-multiple")
+    session = valid_user_client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: 1,
+                measure_2.pk: 1,
+                measure_3.pk: 1,
+            },
+        },
+    )
+    session.save()
+
+    STEP_KEY = "measure_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: START,
+                "start-fields_to_edit": [
+                    MeasureEditSteps.END_DATE,
+                    MeasureEditSteps.START_DATE,
+                ],
+            },
+            "next_step": MeasureEditSteps.START_DATE,
+        },
+        {
+            "data": {
+                STEP_KEY: MeasureEditSteps.START_DATE,
+                "start_date-start_date_0": "01",
+                "start_date-start_date_1": "01",
+                "start_date-start_date_2": "2000",
+            },
+            "next_step": MeasureEditSteps.END_DATE,
+        },
+        {
+            "data": {
+                STEP_KEY: MeasureEditSteps.END_DATE,
+                "end_date-end_date_0": "01",
+                "end_date-end_date_1": "01",
+                "end_date-end_date_2": "2100",
+            },
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+    ).order_by("sid")
+
+    complete_response = valid_user_client.get(response.url)
+    # on success, the page redirects to the workbasket page
+    assert complete_response.status_code == 302
+    assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        assert measure.update_type == UpdateType.UPDATE
+        assert measure.valid_between.lower == datetime.date(2000, 1, 1)
+        assert measure.valid_between.upper == datetime.date(2100, 1, 1)
+        assert measure.effective_end_date == datetime.date(2100, 1, 1)
+
+
+@pytest.mark.parametrize(
+    "step,data",
+    [
+        (
+            "start_date",
+            {
+                "measure_edit_wizard-current_step": MeasureEditSteps.START_DATE,
+                "start_date-start_date_0": "01",
+                "start_date-start_date_1": "01",
+                "start_date-start_date_2": "2000",
+            },
+        ),
+        (
+            "end_date",
+            {
+                "measure_edit_wizard-current_step": MeasureEditSteps.END_DATE,
+                "end_date-end_date_0": "01",
+                "end_date-end_date_1": "01",
+                "end_date-end_date_2": "2100",
+            },
+        ),
+    ],
+)
+def test_multiple_measure_edit_single_form_functionality(
+    step,
+    data,
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that MeasureEditWizard takes a list of measures, and sets their
+    update type to update, updates their end dates and start dates, and clears
+    the session once completed."""
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+
+    url = reverse("measure-ui-edit-multiple")
+    session = valid_user_client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: 1,
+                measure_2.pk: 1,
+                measure_3.pk: 1,
+            },
+        },
+    )
+    session.save()
+
+    STEP_KEY = "measure_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: START,
+                "start-fields_to_edit": [step],
+            },
+            "next_step": step,
+        },
+        {
+            "data": data,
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+    ).order_by("sid")
+
+    complete_response = valid_user_client.get(response.url)
+    # on success, the page redirects to the workbasket page
+    assert complete_response.status_code == 302
+    assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        assert measure.update_type == UpdateType.UPDATE
+
+
+def test_multiple_measure_edit_only_regulation(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests the regulation step in MeasureEditWizard."""
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+    regulation = factories.RegulationFactory()
+
+    url = reverse("measure-ui-edit-multiple")
+    session = valid_user_client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: 1,
+                measure_2.pk: 1,
+                measure_3.pk: 1,
+            },
+        },
+    )
+    session.save()
+
+    STEP_KEY = "measure_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: START,
+                "start-fields_to_edit": ["regulation"],
+            },
+            "next_step": "regulation",
+        },
+        {
+            "data": {
+                STEP_KEY: MeasureEditSteps.REGULATION,
+                "regulation-generating_regulation": regulation.id,
+            },
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+    ).order_by("sid")
+
+    complete_response = valid_user_client.get(response.url)
+    # on success, the page redirects to the workbasket page
+    assert complete_response.status_code == 302
+    assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        assert measure.update_type == UpdateType.UPDATE
+        assert measure.generating_regulation == regulation
+
+
+def test_multiple_measure_edit_template(valid_user_client, session_workbasket):
+    """Test that valid user receives a 200 on GET for MeasureEditWizard and
+    correct measures display in html table."""
+    # Make a bunch of measures
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+    measure_4 = factories.MeasureFactory.create()
+    measure_5 = factories.MeasureFactory.create()
+
+    session = valid_user_client.session
+    # Add a workbasket to the session, and add some selected measures to it.
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: True,
+                measure_2.pk: True,
+                measure_3.pk: True,
+            },
+        },
+    )
+    session.save()
+
+    url = reverse("measure-ui-edit-multiple", kwargs={"step": "start"})
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    # grab the whole measure objects for our pk's we've got in the session, so we can compare attributes.
+    selected_measures = Measure.objects.filter(
+        pk__in=session["MULTIPLE_MEASURE_SELECTIONS"].keys(),
+    )
+
+    # Get the measure ids that are being shown in the table in the template.
+    measure_ids_in_table = [e.text for e in soup.select("table tr td:first-child")]
+
+    # Get the sids for the measures we selected, as these are what are shown in the template.
+    selected_measures_ids = [str(measure.sid) for measure in selected_measures]
+
+    assert measure_ids_in_table == selected_measures_ids
+    assert set(measure_ids_in_table).difference([measure_4.sid, measure_5.sid])
+
+    # 4th column is start date
+    start_dates_in_table = {e.text for e in soup.select("table tr td:nth-child(4)")}
+    measure_start_dates = {
+        f"{m.valid_between.lower:%d %b %Y}" for m in selected_measures
+    }
+    assert not measure_start_dates.difference(start_dates_in_table)
+
+    # 5th column is end date
+    end_dates_in_table = {e.text for e in soup.select("table tr td:nth-child(5)")}
+    measure_end_dates = {
+        f"{m.effective_end_date:%d %b %Y}"
+        for m in selected_measures
+        if m.effective_end_date
+    }
+    assert not measure_end_dates.difference(end_dates_in_table)
+
+
+def test_measure_selection_update_view_updates_session(
+    client,
+    valid_user,
+    session_workbasket,
+):
+    # Make a bunch of measures
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+
+    client.force_login(valid_user)
+    session = client.session
+    session.update(
+        {
+            f"selectableobject_{measure_1.pk}": 1,
+            f"selectableobject_{measure_2.pk}": 1,
+            f"selectableobject_{measure_3.pk}": 1,
+        },
+    )
+
+    json_data = {
+        f"selectableobject_{measure_1.pk}": 1,
+        f"selectableobject_{measure_2.pk}": 0,
+        f"selectableobject_{measure_3.pk}": 1,
+    }
+
+    url = reverse("update-measure-selections")
+    response = client.post(
+        url,
+        json.dumps(json_data),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    # session only stores the selected objects so measure_2 isn't in here
+    assert response.json() == {
+        f"selectableobject_{measure_1.pk}": 1,
+        f"selectableobject_{measure_3.pk}": 1,
+    }
+
+
+@pytest.mark.parametrize(
+    "form_action",
+    [
+        "persist-selection",
+        "remove-selected",
+        "edit-selected",
+        "foo",
+    ],
+)
+def test_measure_list_redirect(form_action, valid_user_client, session_workbasket):
+    params = "page=2&start_date_modifier=exact&end_date_modifier=exact"
+    url = f"{reverse('measure-ui-list')}?{params}"
+    response = valid_user_client.post(url, {"form-action": form_action})
+
+    url_mapping = {
+        "remove-selected": reverse("measure-ui-delete-multiple"),
+        "edit-selected": reverse("measure-ui-edit-multiple"),
+        "persist-selection": f"{reverse('measure-ui-list')}?{params}",
+        "foo": reverse("measure-ui-list"),
+    }
+
+    assert response.status_code == 302
+    assert response.url == url_mapping[form_action]
+
+
+def test_measure_list_selected_measures_list(valid_user_client):
+    measures = factories.MeasureFactory.create_batch(3)
+
+    session = valid_user_client.session
+    session.update(
+        {
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                f"selectableobject_{measures[0].pk}": 1,
+                f"selectableobject_{measures[1].pk}": 1,
+                f"selectableobject_{measures[2].pk}": 1,
+            },
+        },
+    )
+    session.save()
+
+    url = reverse("measure-ui-list")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    measure_ids_in_table = [a.text for a in soup.select("details table tr td a")]
+
+    selected_measures_ids = [str(measure.sid) for measure in measures]
+
+    assert measure_ids_in_table == selected_measures_ids
+
+
+def test_multiple_measure_edit_only_quota_order_number(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests the regulation step in MeasureEditWizard."""
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+    quota_order_number = factories.QuotaOrderNumberFactory()
+
+    url = reverse("measure-ui-edit-multiple")
+    session = valid_user_client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: 1,
+                measure_2.pk: 1,
+                measure_3.pk: 1,
+            },
+        },
+    )
+    session.save()
+
+    STEP_KEY = "measure_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: START,
+                "start-fields_to_edit": ["quota_order_number"],
+            },
+            "next_step": "quota_order_number",
+        },
+        {
+            "data": {
+                STEP_KEY: MeasureEditSteps.QUOTA_ORDER_NUMBER,
+                "quota_order_number-order_number": quota_order_number.id,
+            },
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+    ).order_by("sid")
+
+    complete_response = valid_user_client.get(response.url)
+    # on success, the page redirects to the workbasket page
+    assert complete_response.status_code == 302
+    assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        assert measure.update_type == UpdateType.UPDATE
+        assert measure.order_number == quota_order_number

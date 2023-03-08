@@ -1,0 +1,49 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/details/macro.njk" import govukDetails %}
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
+{% from "components/sort_by.jinja" import sort_by %}
+
+{% set page_title = "Quota ID: " ~ quota.order_number ~ " - Data" %}
+{% set find_edit_url = url("quota-ui-list") %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+    {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+    {"text": "Quota " ~ quota.order_number, "href": url("quota-ui-detail", args=[quota.sid])},
+    {"text": page_title}
+  ])}}
+{% endblock %}
+
+{% block content %}
+
+<h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  {% set filters_html -%}
+    <form action="">
+      {{ crispy(form) }}
+    </form>
+  {% endset %}
+
+  {{ govukDetails({
+      "summaryText": "Customise table",
+      "html": filters_html
+  }) }}
+
+<div class="quota-definitions">
+  {% set base_url = url('quota-definitions', args=[quota.sid] ) %}
+
+  {% if quota_type == "blocking_periods" %}
+    {% include "quotas/tables/blocking_periods.jinja" %}
+  {% elif quota_type == "suspension_periods" %}
+    {% include "quotas/tables/suspension_periods.jinja" %}
+  {% elif quota_type == "sub_quotas" %}
+    {% include "quotas/tables/sub_quotas.jinja" %}
+  {% else %}
+    {% include "quotas/tables/definitions.jinja" %}
+  {% endif %}
+
+</div>
+{% endblock %}

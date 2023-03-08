@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
@@ -11,6 +12,7 @@ from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
 from commodities.forms import CommodityImportForm
 from commodities.models import GoodsNomenclature
+from commodities.models.dc import get_chapter_collection
 from common.serializers import AutoCompleteSerializer
 from common.views import TrackedModelDetailView
 from common.views import WithPaginationListView
@@ -44,10 +46,14 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class CommodityImportView(FormView, WithCurrentWorkBasket):
+class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBasket):
     template_name = "commodities/import.jinja"
     form_class = CommodityImportForm
     success_url = reverse_lazy("commodity-ui-import-success")
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
 
     def form_valid(self, form):
         form.save(user=self.request.user, workbasket_id=self.workbasket.id)
@@ -75,3 +81,15 @@ class CommodityList(CommodityMixin, WithPaginationListView):
 
 class CommodityDetail(CommodityMixin, TrackedModelDetailView):
     template_name = "commodities/detail.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        collection = get_chapter_collection(self.object)
+        tx = WorkBasket.get_current_transaction(self.request)
+        date = self.object.valid_between.upper
+        snapshot = collection.get_snapshot(tx, date)
+        commodity = snapshot.get_commodity(self.object, self.object.suffix)
+        context["parent"] = snapshot.get_parent(commodity)
+
+        return context

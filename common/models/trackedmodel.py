@@ -101,10 +101,8 @@ class TrackedModel(PolymorphicModel):
     current_objects: TrackedModelQuerySet = CurrentTrackedModelManager.from_queryset(
         TrackedModelQuerySet,
     )()
-    """
-    The `current_objects` model manager provides a default queryset that, by
-    default, filters to the 'current' transaction.
-    """
+    """The `current_objects` model manager provides a default queryset that, by
+    default, filters to the 'current' transaction."""
 
     business_rules: Iterable = ()
     indirect_business_rules: Iterable = ()
@@ -148,8 +146,10 @@ class TrackedModel(PolymorphicModel):
     url_suffix = ""
     """
     This is to add a link within a page for get_url() e.g. for linking to a
-    Measure's conditions tab. If url_suffix is set to '#conditions' the output
-    detail url will be /measures/12345678/#conditions
+    Measure's conditions tab.
+
+    If url_suffix is set to '#conditions' the output detail url will be
+    /measures/12345678/#conditions
     """
 
     def new_version(
@@ -636,6 +636,17 @@ class TrackedModel(PolymorphicModel):
         if action not in ["list", "create"]:
             kwargs = self.get_identifying_fields()
         try:
+            if (
+                action == "edit"
+                and self.transaction.workbasket.status == WorkflowStatus.EDITING
+            ):
+                # Edits in WorkBaskets that are in EDITING state get real
+                # changes via DB updates, not newly created UPDATE instances.
+                if self.update_type == UpdateType.CREATE:
+                    action += "-create"
+                elif self.update_type == UpdateType.UPDATE:
+                    action += "-update"
+
             url = reverse(
                 f"{self.get_url_pattern_name_prefix()}-ui-{action}",
                 kwargs=kwargs,

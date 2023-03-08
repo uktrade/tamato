@@ -1,0 +1,116 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/inset-text/macro.njk" import govukInsetText %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% from 'macros/create_link.jinja' import create_link %} 
+{% from "includes/measures/conditions.jinja" import conditions_list %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "Edit measure end dates" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Find and edit measures", "href": url("measure-ui-list")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">
+        Edit measures
+        <span class="govuk-caption-xl"></span>
+      </h1>
+    </div>
+  </div>
+
+  <div class="govuk-grid-row govuk-!-margin-bottom-5">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body"> You are about to edit the end dates of your selected measures.</p>
+      {{ govukWarningText({
+        "text": "You are currently only able to change the end dates of multiple measures.",
+        "iconFallbackText": "Warning"
+      }) }}
+    
+      <div class="govuk-inset-text">
+        <p>Your edited measures will be added to your workbasket as items.</p>
+        <p>If you need to undo your edits later, you will need to remove the items from the workbasket.</p>
+      </div>
+
+      {% block form %}
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-two-thirds">
+            {% call django_form() %}
+                {{ crispy(form) }}
+            {% endcall %}
+            </div>
+        </div>
+      {% endblock %}
+    
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full"></div>
+      <details class="govuk-details" data-module="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">
+            View all selected measures
+          </span>
+        </summary>
+        <div class="govuk-details__text">
+          {% if object_list %}
+            {% set table_rows = [] %}
+            {% for measure in object_list %}
+                {% set measure_link -%}
+                  <a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a>
+                {%- endset %}
+                {% set footnotes %}
+                  {% for footnote in measure.footnotes.all() %}
+                      {{ create_link(footnote.get_url(), footnote|string) }}{{ ", " if not loop.last else "" }}
+                  {% endfor %}
+                {% endset %}
+                {{ table_rows.append([
+                  {"html": measure_link},
+                  {"text": measure.measure_type.sid ~ " - " ~ measure.measure_type.description},
+                  {"text": measure.goods_nomenclature.item_id|wordwrap(2)|replace("\n", " ") if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
+                  {"text": "{:%d %b %Y}".format(measure.effective_valid_between.lower) if measure.effective_valid_between.lower else '-'},
+                  {"text": "{:%d %b %Y}".format(measure.effective_valid_between.upper) if measure.effective_valid_between.upper else '-'},
+                  {"text": measure.duty_sentence if measure.duty_sentence else '-'},
+                  {"html": create_link(url("additional_code-ui-detail", kwargs={"sid": measure.additional_code.sid}), measure.additional_code.type.sid ~ measure.additional_code.code) if measure.additional_code else '-'},
+                  {"html": create_link(url("geo_area-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
+                  {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
+                  {"text": footnotes if measure.footnotes.all() else '-'},
+                ]) or "" }}
+            {% endfor %}
+            {{ govukTable({
+              "head": [
+                {"text": "ID"},
+                {"text": "Type"},
+                {"text": "Commodity code"},
+                {"text": "Start date"},
+                {"text": "End date"},
+                {"text": "Duties"},
+                {"text": "Additional code"},
+                {"text": "Geographical area"},
+                {"text": "Quota"},
+                {"text": "Footnote"},
+              ],
+              "rows": table_rows,
+              "classes": "govuk-table-m"
+            }) }}
+
+          {% endif %}
+        </div>
+      </details>
+    </div>
+  </div>
+
+{% endblock %}

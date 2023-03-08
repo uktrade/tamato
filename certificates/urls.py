@@ -17,7 +17,10 @@ api_router.register(
     views.CertificatesViewSet,
     basename="certificate",
 )
-api_router.register(r"certificate_types", views.CertificateTypeViewSet)
+api_router.register(
+    r"certificate_types",
+    views.CertificateTypeViewSet,
+)
 
 detail = "<ctype_sid:certificate_type__sid><cert_sid:sid>"
 description_detail = "<ctype_sid:described_certificate__certificate_type__sid><cert_sid:described_certificate__sid>/description/<sid:sid>"

@@ -47,7 +47,7 @@ def test_current_queryset_returns_correct_results(
     else:
         latest = common_factories.TransactionFactory.create(
             approved=True,
-            order=head_order + 1,
+            order=head_order + 2,
         )
     assert Transaction.approved.last() == latest
 

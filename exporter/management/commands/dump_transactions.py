@@ -6,10 +6,11 @@ from django.core.management import BaseCommand
 from django.db.transaction import atomic
 from lxml import etree
 
-from common.serializers import validate_envelope
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.util import dit_file_generator
 from exporter.util import item_timer
+from publishing.util import TaricDataAssertionError
+from publishing.util import validate_envelope
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
@@ -48,7 +49,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "workbasket_ids",
             help=(
-                "Override the default selection of APPROVED workbaskets "
+                "Override the default selection of QUEUED workbaskets "
                 "with a comma-separated list of workbasket ids."
             ),
             nargs="*",
@@ -81,15 +82,16 @@ class Command(BaseCommand):
 
     @atomic
     def handle(self, *args, **options):
+        # This is the function that takes the workbasket transactions and puts them in an envelope.
         workbasket_ids = options.get("workbasket_ids")
         if workbasket_ids:
             query = dict(id__in=workbasket_ids)
         else:
-            query = dict(status=WorkflowStatus.APPROVED)
+            query = dict(status=WorkflowStatus.QUEUED)
 
         workbaskets = WorkBasket.objects.filter(**query)
         if not workbaskets:
-            sys.exit("Nothing to upload:  No workbaskets with status APPROVED.")
+            sys.exit("Nothing to upload:  No workbaskets with status QUEUED.")
 
         if options.get("force_unchecked_rules"):
             self.stdout.write(
@@ -119,7 +121,7 @@ class Command(BaseCommand):
 
         if not transactions:
             sys.exit(
-                f"Nothing to upload:  {workbaskets.count()} Workbaskets APPROVED but none contain any transactions.",
+                f"Nothing to upload:  {workbaskets.count()} Workbaskets QUEUED but none contain any transactions.",
             )
 
         if options.get("envelope_id") == ["auto"]:
@@ -143,6 +145,8 @@ class Command(BaseCommand):
             max_envelope_size=max_envelope_size,
         )
         errors = False
+
+        # Here's where it seriaizes the transactions, and kicks off making the envelope!!!
         for time_to_render, rendered_envelope in item_timer(
             serializer.split_render_transactions(transactions),
         ):
@@ -155,15 +159,20 @@ class Command(BaseCommand):
             else:
                 envelope_file.seek(0, os.SEEK_SET)
                 try:
-                    validate_envelope(envelope_file)
+                    # Check will fail for multiple workbaskets spread over multiple envelopes
+                    validate_envelope(envelope_file, workbaskets)
                 except etree.DocumentInvalid:
                     self.stdout.write(
-                        f"{envelope_file.name} {WARNING_SIGN_EMOJI}️ Envelope invalid:",
+                        f"{envelope_file.name} {WARNING_SIGN_EMOJI}️ Envelope invalid!",
+                    )
+                except TaricDataAssertionError:
+                    self.stdout.write(
+                        f"{envelope_file.name} {WARNING_SIGN_EMOJI}️ Taric Envelope invalid!",
                     )
                 else:
                     total_transactions = len(rendered_envelope.transactions)
                     self.stdout.write(
-                        f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
+                        f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid. {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
                     )
         if errors:
             sys.exit(1)

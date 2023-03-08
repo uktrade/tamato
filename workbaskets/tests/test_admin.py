@@ -163,7 +163,7 @@ def test_workbasket_empty_rule_check_task_id_value(client, superadmin):
     response = client.post(
         change_url,
         data={
-            "transition": "submit_for_approval",
+            "transition": "queue",
             "reason": workbasket.reason,
             "title": workbasket.title,
         },

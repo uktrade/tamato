@@ -169,15 +169,15 @@ def test_with_latest_description_multiple_descriptions(date_ranges):
         assert qs.first().description == later_description.description
 
 
-def test_with_current_descriptions(approved_workbasket):
+def test_with_current_descriptions(queued_workbasket):
     """Tests that, where multiple current descriptions exist for an area,
     with_current_descriptions returns a queryset annotated with those
     descriptions chained together and separated by a space."""
     description_1 = factories.GeographicalAreaDescriptionFactory.create(
-        transaction__workbasket=approved_workbasket,
+        transaction__workbasket=queued_workbasket,
     )
     description_2 = factories.GeographicalAreaDescriptionFactory.create(
-        transaction__workbasket=approved_workbasket,
+        transaction__workbasket=queued_workbasket,
         described_geographicalarea=description_1.described_geographicalarea,
     )
     with override_current_transaction(description_2.transaction):

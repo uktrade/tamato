@@ -9,14 +9,19 @@ from typing import Dict
 from typing import Optional
 from typing import Sequence
 from typing import Type
+from unittest import mock
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import boto3
+import factory
 import pytest
+from aioresponses import aioresponses
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.management import create_contenttypes
 from django.core.exceptions import ValidationError
 from django.test.client import RequestFactory
 from django.test.html import parse_html
@@ -29,6 +34,7 @@ from pytest_bdd import parsers
 from pytest_bdd import then
 from rest_framework.test import APIClient
 
+from checks.tests.factories import TransactionCheckFactory
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.business_rules import UpdateValidity
@@ -38,6 +44,7 @@ from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
 from common.serializers import TrackedModelSerializer
+from common.tariffs_api import QUOTAS
 from common.tests import factories
 from common.tests.models import model_with_history
 from common.tests.util import Dates
@@ -51,6 +58,7 @@ from common.tests.util import raises_if
 from common.validators import UpdateType
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
+from publishing.models import PackagedWorkBasket
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
@@ -126,6 +134,31 @@ def spanning_dates(request, date_ranges):
         getattr(date_ranges, contained_validity),
         container_spans_contained,
     )
+
+
+@pytest.fixture
+def setup_content_types():
+    """This fixture is used to set-up content types, needed for migration
+    testing, when a clean new database and the content types have not been
+    populated yet."""
+
+    def _method(apps):
+        tamato_apps = settings.DOMAIN_APPS + settings.TAMATO_APPS
+
+        app_labels = []
+
+        for app in apps.get_app_configs():
+            app_labels.append(app.label)
+
+        for app_name in tamato_apps:
+            app_label = app_name.split(".")[0]
+            if app_label in app_labels:
+                app_config = apps.get_app_config(app_label)
+                app_config.models_module = True
+
+                create_contenttypes(app_config)
+
+    return _method
 
 
 @pytest.fixture
@@ -216,6 +249,8 @@ def policy_group(db) -> Group:
         ("common", "change_trackedmodel"),
         ("workbaskets", "add_workbasket"),
         ("workbaskets", "change_workbasket"),
+        ("publishing", "manage_packaging_queue"),
+        ("publishing", "consume_from_packaging_queue"),
     ]:
         group.permissions.add(
             Permission.objects.get(
@@ -296,8 +331,29 @@ def new_workbasket() -> WorkBasket:
 
 
 @pytest.fixture
-def approved_workbasket():
-    return factories.ApprovedWorkBasketFactory.create()
+def queued_workbasket():
+    return factories.QueuedWorkBasketFactory.create()
+
+
+@pytest.fixture
+def published_additional_code_type(queued_workbasket):
+    return factories.AdditionalCodeTypeFactory(
+        transaction=queued_workbasket.new_transaction(),
+    )
+
+
+@pytest.fixture
+def published_certificate_type(queued_workbasket):
+    return factories.CertificateTypeFactory(
+        transaction=queued_workbasket.new_transaction(),
+    )
+
+
+@pytest.fixture
+def published_footnote_type(queued_workbasket):
+    return factories.FootnoteTypeFactory(
+        transaction=queued_workbasket.new_transaction(),
+    )
 
 
 @pytest.fixture
@@ -306,6 +362,111 @@ def session_workbasket(client, new_workbasket):
     new_workbasket.save_to_session(client.session)
     client.session.save()
     return new_workbasket
+
+
+@pytest.fixture
+def queued_workbasket_factory():
+    def factory_method():
+        workbasket = factories.WorkBasketFactory.create(
+            status=WorkflowStatus.QUEUED,
+        )
+        with factories.ApprovedTransactionFactory.create(workbasket=workbasket):
+            factories.FootnoteTypeFactory()
+            factories.AdditionalCodeFactory()
+        return workbasket
+
+    return factory_method
+
+
+@pytest.fixture
+def packaged_workbasket_factory(queued_workbasket_factory):
+    """
+    Factory fixture to create a packaged workbasket.
+
+    params:
+    workbasket defaults to queued_workbasket_factory() which creates a
+    Workbasket in the state QUEUED with an approved transaction and tracked models
+    """
+
+    def factory_method(workbasket=None, **kwargs):
+        if not workbasket:
+            workbasket = queued_workbasket_factory()
+        with patch(
+            "publishing.tasks.create_xml_envelope_file.apply_async",
+            return_value=MagicMock(id=factory.Faker("uuid4")),
+        ):
+            packaged_workbasket = factories.QueuedPackagedWorkBasketFactory(
+                workbasket=workbasket, **kwargs
+            )
+        return packaged_workbasket
+
+    return factory_method
+
+
+@pytest.fixture
+def published_envelope_factory(packaged_workbasket_factory, envelope_storage):
+    """
+    Factory fixture to create an envelope and update the packaged_workbasket
+    envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(packaged_workbasket=None, **kwargs):
+        if not packaged_workbasket:
+            packaged_workbasket = packaged_workbasket_factory()
+
+        with mock.patch(
+            "publishing.storages.EnvelopeStorage.save",
+            wraps=mock.MagicMock(side_effect=envelope_storage.save),
+        ) as mock_save:
+            envelope = factories.PublishedEnvelopeFactory(
+                packaged_work_basket=packaged_workbasket,
+                **kwargs,
+            )
+            mock_save.assert_called_once()
+
+        packaged_workbasket.envelope = envelope
+        packaged_workbasket.save()
+        return envelope
+
+    return factory_method
+
+
+@pytest.fixture
+def successful_envelope_factory(published_envelope_factory):
+    """
+    Factory fixture to create a successfully processed envelope and update the
+    packaged_workbasket envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(**kwargs):
+        envelope = published_envelope_factory(**kwargs)
+
+        packaged_workbasket = PackagedWorkBasket.objects.get(
+            envelope=envelope,
+        )
+
+        packaged_workbasket.begin_processing()
+        assert packaged_workbasket.position == 0
+        assert (
+            packaged_workbasket.pk
+            == PackagedWorkBasket.objects.currently_processing().pk
+        )
+        packaged_workbasket.processing_succeeded()
+        packaged_workbasket.save()
+        assert packaged_workbasket.position == 0
+        return envelope
+
+    return factory_method
 
 
 @pytest.fixture(scope="function")
@@ -321,6 +482,17 @@ def approved_transaction():
 @pytest.fixture(scope="function")
 def unapproved_transaction():
     return factories.UnapprovedTransactionFactory.create()
+
+
+@pytest.fixture(scope="function")
+def unapproved_checked_transaction(unapproved_transaction):
+    TransactionCheckFactory.create(
+        transaction=unapproved_transaction,
+        completed=True,
+        successful=True,
+    )
+
+    return unapproved_transaction
 
 
 @pytest.fixture(scope="function")
@@ -429,11 +601,52 @@ def use_create_form(valid_user_api_client: APIClient):
 
 
 @pytest.fixture
+def use_edit_view(valid_user_api_client: APIClient):
+    """
+    Uses the default edit form and view for a model in a workbasket with EDITING
+    status.
+
+    The ``object`` param is the TrackedModel instance that is to be edited and
+    saved, which should not create a new version.
+    ``data_changes`` should be a dictionary to apply to the object, effectively
+    applying edits.
+
+    Will raise :class:`~django.core.exceptions.ValidationError` if the form
+    contains errors.
+    """
+
+    def use(obj: TrackedModel, data_changes: dict[str, str]):
+        Model = type(obj)
+        obj_count = Model.objects.filter(**obj.get_identifying_fields()).count()
+        url = obj.get_url("edit")
+
+        # Check initial form rendering.
+        get_response = valid_user_api_client.get(url)
+        assert get_response.status_code == 200
+
+        # Edit and submit the data.
+        initial_form = get_response.context_data["form"]
+        form_data = get_form_data(initial_form)
+        form_data.update(data_changes)
+        post_response = valid_user_api_client.post(url, form_data)
+
+        # POSTing a real edits form should never create new object instances.
+        assert Model.objects.filter(**obj.get_identifying_fields()).count() == obj_count
+        if post_response.status_code not in (301, 302):
+            raise ValidationError(
+                f"Form contained errors: {dict(post_response.context_data['form'].errors)}",
+            )
+
+    return use
+
+
+@pytest.fixture
 def use_update_form(valid_user_api_client: APIClient):
     """
-    Uses the default edit form and view for a model to update an object to have
-    the passed new data and returns the new version of the object.
+    Uses the default create form and view for a model with update_type=UPDATE.
 
+    The ``object`` param is the TrackedModel instance for which a new UPDATE
+    instance is to be created.
     The ``new_data`` dictionary should contain callable objects that when passed
     the existing value will return a new value to be sent with the form.
 
@@ -823,6 +1036,37 @@ def sqlite_storage(s3, s3_bucket_names):
     return storage
 
 
+@pytest.fixture
+def envelope_storage(s3, s3_bucket_names):
+    """Patch EnvelopeStorage with moto so that nothing is really uploaded to
+    s3."""
+    from publishing.storages import EnvelopeStorage
+
+    storage = make_storage_mock(
+        s3,
+        EnvelopeStorage,
+        bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
+    )
+    assert storage.endpoint_url is settings.S3_ENDPOINT_URL
+    assert storage.access_key is settings.S3_ACCESS_KEY_ID
+    assert storage.secret_key is settings.S3_SECRET_ACCESS_KEY
+    assert storage.bucket_name in s3_bucket_names()
+    return storage
+
+
+@pytest.fixture
+def loading_report_storage(s3):
+    """Patch LoadingReportStorage with moto so that nothing is really uploaded
+    to s3."""
+    from publishing.storages import LoadingReportStorage
+
+    return make_storage_mock(
+        s3,
+        LoadingReportStorage,
+        bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
+    )
+
+
 @pytest.fixture(
     params=(
         (make_duplicate_record, True),
@@ -867,23 +1111,35 @@ def reference_nonexistent_record():
 
     @contextlib.contextmanager
     def make_record(
-        factory,
+        factory_instance,
         reference_field_name: str,
         teardown: Optional[Callable[[Any], Any]] = None,
     ):
-        # XXX relies on private API
-        dependency_factory = factory._meta.declarations[
+        # relies on private API
+        dependency_declaration = factory_instance._meta.declarations[
             reference_field_name
-        ].get_factory()
+        ]
+
+        # if factory returns multiple options (factory.declarations.Maybe) we need to select the "no" option
+        # (default factory) until we get to a factory we can then call get_factory() on. It does not really
+        # matter since the factory will create and then delete the record, leaving a reference to the PK that was
+        # removed.
+        while isinstance(dependency_declaration, factory.declarations.Maybe):
+            dependency_declaration = dependency_declaration.no
+
+        dependency_factory = dependency_declaration.get_factory()
 
         dependency = dependency_factory.create()
         non_existent_id = dependency.pk
+
         if teardown:
             teardown(dependency)
         else:
             dependency.delete()
 
-        record = factory.create(**{f"{reference_field_name}_id": non_existent_id})
+        record = factory_instance.create(
+            **{f"{reference_field_name}_id": non_existent_id}
+        )
 
         try:
             yield record
@@ -912,7 +1168,7 @@ def in_use_check_respects_deletes(valid_user):
         assert not in_use(instance.transaction), f"New {instance!r} already in use"
 
         workbasket = factories.WorkBasketFactory.create(
-            status=WorkflowStatus.PROPOSED,
+            status=WorkflowStatus.EDITING,
         )
         with workbasket.new_transaction():
             create_kwargs = {relation: instance}
@@ -926,15 +1182,22 @@ def in_use_check_respects_deletes(valid_user):
             Transaction.approved.last(),
         ), f"Unapproved {instance!r} already in use"
 
+        for tx in workbasket.transactions.all():
+            TransactionCheckFactory.create(
+                transaction=tx,
+                successful=True,
+                completed=True,
+            )
+
         with patch(
             "exporter.tasks.upload_workbaskets.delay",
         ):
-            workbasket.approve(
+            workbasket.queue(
                 valid_user.pk,
                 settings.TRANSACTION_SCHEMA,
             )
         workbasket.save()
-        assert in_use(dependant.transaction), f"Approved {instance!r} not in use"
+        assert in_use(dependant.transaction), f"Queued {instance!r} not in use"
 
         deleted = dependant.new_version(
             workbasket,
@@ -1220,3 +1483,60 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "s" in item.keywords:
             item.add_marker(skip_s)
+
+
+@pytest.fixture()
+def quota_order_number():
+    return factories.QuotaOrderNumberFactory()
+
+
+@pytest.fixture
+def mock_quota_api_no_data(requests_mock):
+    yield requests_mock.get(url=QUOTAS, json={})
+
+
+@pytest.fixture
+def quotas_json():
+    return {
+        "data": [
+            {
+                "id": "12345",
+                "type": "definition",
+                "attributes": {
+                    "quota_definition_sid": "12345",
+                    "quota_order_number_id": "12345",
+                    "initial_volume": "78849000.0",
+                    "validity_start_date": "2023-01-01T00:00:00.000Z",
+                    "validity_end_date": "2023-03-31T23:59:59.000Z",
+                    "status": "Open",
+                    "description": None,
+                    "balance": "76766532.891",
+                    "measurement_unit": "Kilogram (kg)",
+                    "monetary_unit": None,
+                    "measurement_unit_qualifier": None,
+                    "last_allocation_date": "2023-01-10T00:00:00Z",
+                    "suspension_period_start_date": None,
+                    "suspension_period_end_date": None,
+                    "blocking_period_start_date": None,
+                    "blocking_period_end_date": None,
+                },
+                "relationships": {
+                    "incoming_quota_closed_and_transferred_event": {"data": None},
+                    "order_number": {"data": {"id": "1234", "type": "order_number"}},
+                    "measures": {
+                        "data": [
+                            {"id": "1234", "type": "measure"},
+                        ],
+                    },
+                    "quota_balance_events": {},
+                },
+            },
+        ],
+        "meta": {"pagination": {"page": 1, "per_page": 5, "total_count": 1}},
+    }
+
+
+@pytest.fixture
+def mock_aioresponse():
+    with aioresponses() as m:
+        yield m

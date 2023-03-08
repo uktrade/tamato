@@ -5,8 +5,9 @@
         {% endfor %}
     </ul>
 {% endset %}
-<div class="quota__core-data">
-    <div class="quota__core-data__content">
+
+<div class="quota__core-data govuk-grid-row">
+    <div class="quota__core-data__content govuk-grid-column-three-quarters">
         <h2 class="govuk-heading-l">Details</h2>
         {{ govukSummaryList({
             "rows": [
@@ -18,6 +19,11 @@
             {
                 "key": {"text": "Geographical area"},
                 "value": {"text": origins if object.origins.all() else "-"},
+                "actions": {"items": []}
+            },
+            {
+                "key": {"text": "Geographical area exclusions"},
+                "value": {"text": object.geographical_exclusion_descriptions|join(", ") if object.geographical_exclusion_descriptions else "-"},
                 "actions": {"items": []}
             },
             {
@@ -45,12 +51,8 @@
                 "value": {"text": object.required_certificates.all()|join(", ") if object.is_origin_quota else "-"},
                 "actions": {"items": []}
             },
-            {
-                "key": {"text": "Geographical area exclusions"},
-                "value": {"text": object.geographical_exclusion_descriptions|join(", ") if object.geographical_exclusion_descriptions else "-"},
-                "actions": {"items": []}
-            },
             ]
         })}}
     </div>
+    {% include "includes/quotas/actions.jinja"%}
 </div>
