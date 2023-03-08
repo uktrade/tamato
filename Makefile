@@ -7,8 +7,6 @@ DEV=true
 DOCKER_RUN?=run --rm
 #db import file name
 DUMP_FILE?=tamato_db_seed.sql
-# add falgs or test path
-TEST_PATH?=
 
 -include .env
 export

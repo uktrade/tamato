@@ -57,4 +57,6 @@ RUN python manage.py collectstatic --noinput
 
 USER tamato
 
+EXPOSE 8000
+
 CMD ["/home/tamato/.local/bin/gunicorn", "-b", "0.0.0.0:8000", "-w", "1", "wsgi:application"]
