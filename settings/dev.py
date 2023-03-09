@@ -6,6 +6,8 @@ DEBUG = True
 # Allow all hostnames to access the server
 ALLOWED_HOSTS = ["*"]
 
+INTERNAL_IPS = ["127.0.0.1"]
+
 # Enable Django debug toolbar
 if is_truthy(os.environ.get("ENABLE_DJANGO_DEBUG_TOOLBAR")):
     MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
@@ -24,8 +26,14 @@ if is_truthy(os.environ.get("ENABLE_DJANGO_DEBUG_TOOLBAR")):
         "debug_toolbar.panels.logging.LoggingPanel",
         "debug_toolbar.panels.redirects.RedirectsPanel",
     ]
+    import socket
 
-INTERNAL_IPS = ["127.0.0.1"]
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + [
+        "127.0.0.1",
+        "10.0.2.2",
+    ]
+
 
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
