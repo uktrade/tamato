@@ -52,6 +52,7 @@ const autoCompleteElement = (element, includeNameAttr=true) => {
 
 const initAutocomplete = (includeNameAttr=true) => { 
   for (let element of document.querySelectorAll(".autocomplete")) {
+    console.log(element);
     autoCompleteElement(element, includeNameAttr);
   }
 }
@@ -59,41 +60,39 @@ const initAutocomplete = (includeNameAttr=true) => {
 const initAddNewEnhancement = () => {
   console.log("*** initAddNewEnhancement()");
 
-  const btn = document.querySelector("#add-form");
+  const btn = document.querySelector("#add-new");
 
   console.log(btn);
 
   if (btn) {
-    btn.addEventListener("click", add_form);
+    btn.addEventListener("click", addNewForm);
   }
 }
 
-function add_form() {
-  let fieldsets = document.getElementsByTagName("fieldset");
-  let fieldset = fieldsets[0].cloneNode(true);
-  let form_count = fieldsets.length
+function addNewForm(event) {
+  event.preventDefault();
 
-  contents = fieldset.innerHTML;
-  new_contents = contents.replaceAll("formset-0", "formset-" + form_count);
-  fieldset.innerHTML = new_contents
+  let numForms = document.querySelectorAll("fieldset").length;
+  let buttonGroup = document.querySelector(".govuk-button-group");
+  let addNewButton = document.querySelector("#add-new");
+  let fieldset  = document.querySelector("fieldset");
+  let formset = fieldset.parentNode;
 
-  let formset = fieldsets[0].parentNode;
-  let buttons = document.getElementsByClassName("govuk-button-group")[0]
-
-  formset.insertBefore(fieldset, buttons);
-  fieldset.scrollIntoView();
-
-  let total_forms = document.getElementById("id_measure_commodities_duties_formset-TOTAL_FORMS");
-  let total_form_count = Number(total_forms.value);
-
-  total_forms.value = total_form_count + 1;
-
-  let max_forms = document.getElementById("id_measure_commodities_duties_formset-MAX_NUM_FORMS");
-  let max_num_forms = Number(max_forms.value);
-
-  if (total_form_count == max_num_forms - 1) {
-      btn.remove();
+  let newForm = fieldset.cloneNode(true);
+  newForm.querySelector(".autocomplete__wrapper").remove();
+  newForm.innerHTML = newForm.innerHTML.replaceAll("formset-0", "formset-" + numForms);
+  let fieldInputs = newForm.querySelectorAll("input")
+  for (let input of fieldInputs.values()) {
+    input.value = null;
   }
+  autoCompleteElement(newForm.querySelector(".autocomplete"));
+  formset.insertBefore(newForm, buttonGroup);
+
+  addNewButton.scrollIntoView(false);
+
+  let totalForms = document.querySelector("#id_measure_commodities_duties_formset-TOTAL_FORMS");
+  let numTotalForms = Number(totalForms.value);
+  totalForms.value = numTotalForms + 1;
 }
 
 
