@@ -3,7 +3,8 @@ const imagePath = (name) => images(name, true)
 
 require.context('govuk-frontend/govuk/assets');
 import showHideCheckboxes from './showHideCheckboxes';
-import { initAddNewEnhancement, initAutocomplete } from './autocomplete';
+import { initAutocomplete } from './autocomplete';
+import { initAddNewEnhancement } from './addNewForm';
 import initStepNav from './step-by-step-nav';
 import { initAll } from 'govuk-frontend';
 import initCheckboxes from './checkboxes';
