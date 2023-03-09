@@ -95,9 +95,11 @@ General commands:
 
     $ make docker-down # brings down containers
     $ make docker-up-db # brings up db in the background
-    $ make docker-migrations # runs django makemigrations
+    $ make docker-makemigrations # runs django makemigrations
+    $ make docker-checkmigrations # runs django checkmigrations
     $ make docker-bash # bash shell in tamato container
     $ make docker-shell # django shell in tamato container
+    
 
 
 Development environment

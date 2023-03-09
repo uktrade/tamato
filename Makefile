@@ -15,7 +15,8 @@ SPHINXOPTS    ?=
 
 .PHONY: help clean clean-bytecode clean-static collectstatic compilescss dependencies \
 	 docker-clean docker-deep-clean docker-down docker-up-db docker-down docker-image \
-	 docker-db-dump docker-test node_modules run test test-fast build-docs 
+	 docker-db-dump docker-test node_modules run test test-fast docker-makemigrations \
+	 docker-checkmigrations docker-migrate build-docs 
 
 
 
