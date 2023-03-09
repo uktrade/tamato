@@ -22,7 +22,6 @@ ENV ENV="${ENV}" \
 RUN groupadd -g 1000 tamato && \
     useradd -u 1000 -g tamato -m tamato
 
-# WORKDIR /home/tamato/app
 WORKDIR /app
 
 # add git client

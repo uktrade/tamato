@@ -6,7 +6,7 @@ DEV=true
 #default run can be replaced with exec
 DOCKER_RUN?=run --rm
 #db import file name
-DUMP_FILE?=tamato_db_seed.sql
+DUMP_FILE?=tamato_db.sql
 
 -include .env
 export
@@ -164,8 +164,8 @@ docker-db-dump: docker-up-db
 ## docker-first-use: Run application for first time in Docker 
 docker-first-use: docker-clean docker-build docker-down docker-db-dump docker-migrate docker-superuser docker-up 
 
-## docker-migrations: Run django makemigrations in Docker
-docker-migrations: 
+## docker-makemigrations: Run django makemigrations in Docker
+docker-makemigrations: 
 	@echo
 	@echo "> Running makemigrations in docker..."
 	@${COMPOSE_LOCAL} ${DOCKER_RUN} \
@@ -178,7 +178,7 @@ docker-migrate:
 	@${COMPOSE_LOCAL} ${DOCKER_RUN} \
 		${PROJECT} ${PYTHON}  manage.py migrate
 
-## docker-migrations: Run django makemigrations in Docker container
+## docker-checkmigrations: Run django makemigrations checks in Docker container
 docker-checkmigrations:
 	@echo
 	@echo "> Running check migrations in docker..."
