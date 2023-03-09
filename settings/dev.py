@@ -26,13 +26,12 @@ if is_truthy(os.environ.get("ENABLE_DJANGO_DEBUG_TOOLBAR")):
         "debug_toolbar.panels.logging.LoggingPanel",
         "debug_toolbar.panels.redirects.RedirectsPanel",
     ]
+
+    # Update the Internal IPs to work with docker
     import socket
 
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-    INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + [
-        "127.0.0.1",
-        "10.0.2.2",
-    ]
+    INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + INTERNAL_IPS
 
 
 CSRF_COOKIE_SECURE = False
