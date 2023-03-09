@@ -162,7 +162,7 @@ class MeasureFilter(TamatoFilter):
         method="filter_end_date",
     )
 
-    clear_url = reverse_lazy("measure-ui-list")
+    clear_url = reverse_lazy("measure-ui-search")
 
     def date_modifier(self, queryset, name, value):
         return queryset

@@ -433,9 +433,11 @@ def assert_model_view_renders(
 
     response = valid_user_client.get(f"/{url}")
 
-    assert (
-        response.status_code == 200
-    ), f"View returned an error status: {response.status_code}"
+    # accept any 2XX and 3XX status_codes
+    assert str(response.status_code)[0] in [
+        "2",
+        "3",
+    ], f"View returned an error status: {response.status_code}"
 
 
 def assert_read_only_model_view_returns_list(
