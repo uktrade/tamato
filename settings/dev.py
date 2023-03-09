@@ -27,6 +27,7 @@ if is_truthy(os.environ.get("ENABLE_DJANGO_DEBUG_TOOLBAR")):
         "debug_toolbar.panels.redirects.RedirectsPanel",
     ]
 
+    # Required for using debug in docker
     DEBUG_TOOLBAR_CONFIG = {
         "SHOW_TOOLBAR_CALLBACK": lambda request: True,
     }
