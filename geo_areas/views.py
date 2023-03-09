@@ -114,7 +114,7 @@ class GeoAreaDescriptionCreate(
         return initial
 
     form_class = GeographicalAreaCreateDescriptionForm
-    template_name = "common/create_description.jinja"
+    template_name = "common/create_description_no_description_help.jinja"
 
 
 class GeoAreaDescriptionConfirmCreate(
