@@ -71,9 +71,9 @@ const initAddNewEnhancement = () => {
 function addNewForm(event) {
   event.preventDefault();
 
-  let numForms = document.querySelectorAll("fieldset").length;
   let buttonGroup = document.querySelector(".govuk-button-group");
   let addNewButton = document.querySelector("#add-new");
+  let numForms = document.querySelectorAll("fieldset").length;
   let fieldset  = document.querySelector("fieldset");
   let formset = fieldset.parentNode;
 
@@ -92,6 +92,12 @@ function addNewForm(event) {
   let totalForms = document.querySelector("#id_measure_commodities_duties_formset-TOTAL_FORMS");
   let numTotalForms = Number(totalForms.value);
   totalForms.value = numTotalForms + 1;
+
+  let maxForms = document.querySelector("#id_measure_commodities_duties_formset-MAX_NUM_FORMS");
+  let numMaxForms = Number(maxForms.value);
+  if (numForms == numMaxForms - 1) {
+    addNewButton.remove();
+  }
 }
 
 
