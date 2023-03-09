@@ -89,11 +89,11 @@ function addNewForm(event) {
 
   addNewButton.scrollIntoView(false);
 
-  let totalForms = document.querySelector("#id_measure_commodities_duties_formset-TOTAL_FORMS");
+  let totalForms = document.querySelector('[id$="-TOTAL_FORMS"]');
   let numTotalForms = Number(totalForms.value);
   totalForms.value = numTotalForms + 1;
 
-  let maxForms = document.querySelector("#id_measure_commodities_duties_formset-MAX_NUM_FORMS");
+  let maxForms = document.querySelector('[id$="-MAX_NUM_FORMS"]')
   let numMaxForms = Number(maxForms.value);
   if (numForms == numMaxForms - 1) {
     addNewButton.remove();
