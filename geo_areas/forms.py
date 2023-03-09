@@ -18,6 +18,7 @@ from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.util import TaricDateRange
+from common.validators import AlphanumericValidator
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
@@ -35,6 +36,7 @@ class GeographicalAreaCreateDescriptionForm(CreateDescriptionForm):
             ),
         )
         self.fields["description"].label = "Geographical area description"
+        self.fields["description"].validators = [AlphanumericValidator]
 
     class Meta:
         model = GeographicalAreaDescription
