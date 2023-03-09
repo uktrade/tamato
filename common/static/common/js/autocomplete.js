@@ -52,7 +52,6 @@ const autoCompleteElement = (element, includeNameAttr=true) => {
 
 const initAutocomplete = (includeNameAttr=true) => { 
   for (let element of document.querySelectorAll(".autocomplete")) {
-    console.log(element);
     autoCompleteElement(element, includeNameAttr);
   }
 }
