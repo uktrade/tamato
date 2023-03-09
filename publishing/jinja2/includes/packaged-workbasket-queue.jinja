@@ -89,7 +89,7 @@
 
 
   {%- set order_cell_content %}
-    {% if loop.index == 1 %}
+    {% if loop.index == 1 and page_obj.number == 1 %}
       {# First row. #}
       {% if obj == currently_processing %}
         <span class="processing-state tamato-badge-light-green">CDS DOWNLOADED</span>
@@ -98,7 +98,7 @@
       {% else %}
         <span class="processing-state tamato-badge-light-purple">CDS NOTIFIED</span>
       {% endif %}
-    {% elif loop.index == 2 and currently_processing %}
+    {% elif loop.index == 2 and currently_processing and page_obj.number == 1 %}
       {# Second row. #}
       <button
         class="govuk-link fake-link"
