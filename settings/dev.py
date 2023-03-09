@@ -27,11 +27,9 @@ if is_truthy(os.environ.get("ENABLE_DJANGO_DEBUG_TOOLBAR")):
         "debug_toolbar.panels.redirects.RedirectsPanel",
     ]
 
-    # Update the Internal IPs to work with docker
-    import socket
-
-    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-    INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + INTERNAL_IPS
+    DEBUG_TOOLBAR_CONFIG = {
+        "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+    }
 
 
 CSRF_COOKIE_SECURE = False
