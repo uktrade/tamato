@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
+from django.db.models import CharField
 from django.db.models import Q
 from django.urls import reverse_lazy
 from django_filters import CharFilter
@@ -37,8 +38,8 @@ class GovUKDateFilter(DateFilter):
 
 class MeasureTypeFilterBackend(TamatoFilterBackend):
     search_fields = (
-        StringAgg("sid", delimiter=" "),
-        StringAgg("description", delimiter=" "),
+        StringAgg("sid", delimiter=" ", output_field=CharField),
+        StringAgg("description", delimiter=" ", output_field=CharField),
     )  # XXX order is significant
 
 
@@ -161,7 +162,7 @@ class MeasureFilter(TamatoFilter):
         method="filter_end_date",
     )
 
-    clear_url = reverse_lazy("measure-ui-list")
+    clear_url = reverse_lazy("measure-ui-search")
 
     def date_modifier(self, queryset, name, value):
         return queryset

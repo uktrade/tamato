@@ -13,6 +13,11 @@ detail = "<sid:sid>"
 ui_patterns = [
     *get_ui_paths(views, detail),
     path(
+        "search/",
+        views.MeasureSearch.as_view(),
+        name="measure-ui-search",
+    ),
+    path(
         "create/",
         views.MeasureCreateWizard.as_view(
             url_name="measure-ui-create",

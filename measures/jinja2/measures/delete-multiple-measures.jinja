@@ -15,7 +15,7 @@
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("home")},
-      {"text": "Find and edit measures", "href": url("measure-ui-list")},
+      {"text": "Find and edit measures", "href": url("measure-ui-search")},
       {"text": page_title}
     ]
   }) }}
@@ -53,7 +53,7 @@
             "classes": "govuk-button--secondary",
             "name": "action",
             "value": "cancel",
-            "href": url("measure-ui-list")
+            "href": url("measure-ui-search")
           }) }}
           {% if object_list %}
             {{ govukButton({

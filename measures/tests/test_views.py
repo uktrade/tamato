@@ -870,6 +870,7 @@ def test_measure_form_wizard_finish(
                 "measure_details-start_date_0": 2,
                 "measure_details-start_date_1": 4,
                 "measure_details-start_date_2": 2021,
+                "measure_details-min_commodity_count": 2,
             },
             "next_step": "regulation_id",
         },
@@ -1153,6 +1154,7 @@ def test_measure_create_wizard_get_form_kwargs(
         "measure_details-start_date_0": [2],
         "measure_details-start_date_1": [4],
         "measure_details-start_date_2": [2021],
+        "measure_details-min_commodity_count": [2],
     }
     storage = MeasureCreateSessionStorage(request=session_request, prefix="")
     storage.set_step_data("measure_details", details_data)
@@ -1639,8 +1641,8 @@ def test_measure_list_selected_measures_list(valid_user_client):
         },
     )
     session.save()
-
-    url = reverse("measure-ui-list")
+    # list view needs params or it will redirect to the search page
+    url = reverse("measure-ui-list") + "?page=1"
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
@@ -1725,3 +1727,14 @@ def test_multiple_measure_edit_only_quota_order_number(
     for measure in workbasket_measures:
         assert measure.update_type == UpdateType.UPDATE
         assert measure.order_number == quota_order_number
+
+
+def test_measure_list_redirects_to_search_with_no_params(valid_user_client):
+    response = valid_user_client.get(reverse("measure-ui-list"))
+    assert response.status_code == 302
+    assert response.url == reverse("measure-ui-search")
+
+
+def test_measure_search_200(valid_user_client):
+    response = valid_user_client.get(reverse("measure-ui-search"))
+    assert response.status_code == 200

@@ -462,6 +462,7 @@ class FormSet(forms.BaseFormSet):
     extra = 0
     can_order = False
     can_delete = True
+    can_delete_extra = True
     max_num = 1000
     min_num = 0
     absolute_max = 1000
@@ -518,7 +519,7 @@ class FormSet(forms.BaseFormSet):
                     del data[field]
 
                 # group by subform
-                if value:
+                if value or self.formset_action == "ADD":
                     formset_initial[form].update({field_name: value})
 
                 if field_name == "DELETE" and value == "1":

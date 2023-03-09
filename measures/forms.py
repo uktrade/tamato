@@ -14,7 +14,6 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
-from django.template import loader
 from django.urls import reverse
 
 from additional_codes.models import AdditionalCode
@@ -778,6 +777,21 @@ class MeasureDetailsForm(
         queryset=models.MeasureType.objects.all(),
     )
 
+    min_commodity_count = forms.IntegerField(
+        label="Commodity code count",
+        help_text=(
+            "Enter how many commodity codes you intend to apply to the measure. You can add more later, up to 99 in total."
+        ),
+        min_value=1,
+        max_value=99,
+        required=True,
+        error_messages={
+            "required": "Enter a number between 1 and 99",
+            "min_value": "Enter a number between 1 and 99",
+            "max_value": "Enter a number between 1 and 99",
+        },
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -788,6 +802,7 @@ class MeasureDetailsForm(
             "measure_type",
             "start_date",
             "end_date",
+            Field("min_commodity_count", css_class="govuk-input govuk-input--width-2"),
             Submit(
                 "submit",
                 "Continue",
@@ -1018,11 +1033,6 @@ class MeasureAdditionalCodeForm(forms.ModelForm):
 class MeasureCommodityAndDutiesForm(forms.Form):
     commodity = AutoCompleteField(
         label="Commodity code",
-        help_text=(
-            "Search for a commodity code by typing in the code's number or a keyword. "
-            "After you've typed at least 3 numbers, a dropdown list will appear. "
-            "You can then select the correct commodity from the dropdown list."
-        ),
         queryset=GoodsNomenclature.objects.all(),
         attrs={"min_length": 3},
         error_messages={"required": "Select a commodity code"},
@@ -1038,22 +1048,30 @@ class MeasureCommodityAndDutiesForm(forms.Form):
         self.measure_start_date = kwargs.pop("measure_start_date")
         super().__init__(*args, **kwargs)
 
+        delete_button = (
+            Field("DELETE", template="includes/common/formset-delete-button.jinja")
+            if not self.prefix.endswith("__prefix__")
+            else None
+        )
+
         self.helper = FormHelper(self)
         self.helper.form_tag = False
         self.helper.label_size = Size.SMALL
         self.helper.layout = Layout(
             Fieldset(
-                "commodity",
-                "duties",
-                HTML(
-                    loader.render_to_string(
-                        "components/duty_help.jinja",
-                        context={"component": "measure"},
+                Div(
+                    Div(
+                        Field.text("commodity"),
+                        css_class="tap-column",
                     ),
+                    Div(
+                        Field.text("duties"),
+                        css_class="tap-column",
+                    ),
+                    css_class="tap-row",
                 ),
-                Field("DELETE", template="includes/common/formset-delete-button.jinja")
-                if not self.prefix.endswith("__prefix__")
-                else None,
+                delete_button,
+                css_class="tap-inline",
             ),
         )
 
@@ -1070,14 +1088,20 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
     prefix="measure_commodities_duties_formset",
     formset=FormSet,
     min_num=1,
-    max_num=100,
-    extra=1,
+    max_num=99,
+    extra=0,
     validate_min=True,
     validate_max=True,
 )
 
 
 class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
+    def __init__(self, *args, **kwargs):
+        min_commodity_count = kwargs.pop("min_commodity_count", 2)
+        default_extra = 2
+        self.extra = min_commodity_count - default_extra
+        super().__init__(*args, **kwargs)
+
     def non_form_errors(self):
         self._non_form_errors = super().non_form_errors()
         for e in self._non_form_errors.as_data():

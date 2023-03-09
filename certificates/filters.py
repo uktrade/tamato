@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
+from django.db.models import CharField
 from django.urls import reverse_lazy
 
 from certificates import models
@@ -14,9 +15,9 @@ from common.filters import type_choices
 
 class CertificateFilterMixin(TamatoFilterMixin):
     search_fields = (
-        StringAgg("certificate_type__sid", delimiter=" "),
+        StringAgg("certificate_type__sid", delimiter=" ", output_field=CharField),
         "sid",
-        StringAgg("descriptions__description", delimiter=" "),
+        StringAgg("descriptions__description", delimiter=" ", output_field=CharField),
     )
 
     search_regex = COMBINED_CERTIFICATE_AND_TYPE_ID

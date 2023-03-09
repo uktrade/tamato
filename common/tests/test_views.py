@@ -1,5 +1,6 @@
 import pytest
 from bs4 import BeautifulSoup
+from django.conf import settings
 from django.urls import reverse
 
 from common.tests import factories
@@ -22,6 +23,35 @@ def test_index_displays_workbasket_action_form(valid_user_client):
     assert "Order and package workbaskets" in page.select("label")[2].text
     assert "Process envelopes" in page.select("label")[3].text
     assert "Search the tariff" in page.select("label")[4].text
+
+
+def test_index_displays_logout_buttons_correctly_SSO_off_logged_in(valid_user_client):
+    settings.SSO_ENABLED = False
+    response = valid_user_client.get(reverse("home"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert page.find_all("a", {"href": "/logout"})
+
+
+def test_index_redirects_to_login_page_logged_out_SSO_off(client):
+    settings.SSO_ENABLED = False
+    response = client.get(reverse("home"))
+
+    assert response.status_code == 302
+    assert response.url == "/auth/login/?next=%2F"
+
+
+def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
+    settings.SSO_ENABLED = True
+    response = valid_user_client.get(reverse("home"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert not page.find_all("a", {"href": "/logout"})
+    assert not page.find_all("a", {"href": "/login"})
 
 
 @pytest.mark.parametrize(

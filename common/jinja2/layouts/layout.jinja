@@ -29,13 +29,13 @@
   "homepageUrl": "https://gov.uk/",
   "serviceName": service_name,
   "serviceUrl": "/",
-  "navigation": [
+  "navigation": [ 
     { "html": workbasket_html } if workbasket_html else "",
     {
       "href": url("logout") if request.user.is_authenticated else settings.LOGIN_URL,
       "text": "Sign out" if request.user.is_authenticated else "Sign In"
-    },
-  ]
+    } if not settings.SSO_ENABLED else "",
+  ],
 }) }}
 {% endblock %}
 {% block beforeContent %}
