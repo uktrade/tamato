@@ -101,7 +101,7 @@ docker-up:
 	@${COMPOSE_LOCAL} up
 
 ## docker-test: Run tests in Docker container
-docker-test: docker
+docker-test:
 	@echo
 	@echo "> Running tests in Docker..."
 	@${COMPOSE_LOCAL} ${DOCKER_RUN} \
@@ -109,7 +109,7 @@ docker-test: docker
 		--alluredir=allure-results --nomigrations --cov --cov-report \
 		 html:htmlcov --cov-report=term --cov-report=xml
 
-docker-test-fast: docker
+docker-test-fast:
 	@echo
 	@echo "> Running tests in docker..."
 	@${COMPOSE_LOCAL} ${DOCKER_RUN} \
