@@ -71,22 +71,24 @@ const initAddNewEnhancement = () => {
 function addNewForm(event) {
   event.preventDefault();
 
-  let buttonGroup = document.querySelector(".govuk-button-group");
   let addNewButton = document.querySelector("#add-new");
+  let buttonGroup = document.querySelector(".govuk-button-group");
+
   let numForms = document.querySelectorAll("fieldset").length;
   let fieldset  = document.querySelector("fieldset");
   let formset = fieldset.parentNode;
-
   let newForm = fieldset.cloneNode(true);
-  newForm.querySelector(".autocomplete__wrapper").remove();
+  let formFields = newForm.querySelectorAll("input");
+  
   newForm.innerHTML = newForm.innerHTML.replaceAll("formset-0", "formset-" + numForms);
-  let fieldInputs = newForm.querySelectorAll("input")
-  for (let input of fieldInputs.values()) {
-    input.value = null;
+  newForm.querySelector(".autocomplete").removeAttribute("data-original-value");
+  for (let field of formFields.values()) {
+    field.value = null;
   }
+  newForm.querySelector(".autocomplete__wrapper").remove();
   autoCompleteElement(newForm.querySelector(".autocomplete"));
-  formset.insertBefore(newForm, buttonGroup);
 
+  formset.insertBefore(newForm, buttonGroup);
   addNewButton.scrollIntoView(false);
 
   let totalForms = document.querySelector('[id$="-TOTAL_FORMS"]');
