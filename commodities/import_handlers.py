@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from datetime import timedelta
 
 from django.db import transaction
@@ -137,8 +138,38 @@ class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandle
     serializer_class = serializers.GoodsNomenclatureDescriptionSerializer
     tag = parsers.GoodsNomenclatureDescriptionParser.tag.name
 
-    def create_missing_goods_nomenclature_description_period(self):
-        return True
+    def create_missing_goods_nomenclature_description_period(
+        self,
+        goods_nomenclature_description_handler,
+    ):
+        """
+        in some circumstances, we will receive an EU update that will reference
+        a historic description period, and since TAP does not track SIDs
+        currently for this data we cant resolve the reference. This allows the
+        import to proceed by providing an invented dispatch object that can be
+        processed alongside the update.
+
+        returns a data object that replaces the missing dependency with the validity_start date set to today.
+        TODO : implement correct period handling to correctly resolve this workaround
+        """
+        dispatch_object = dict()
+        dispatch_object["tag"] = list(
+            self.dependencies[0].dependency_key_mapping.values(),
+        )[0]["tag"]
+        dispatch_object["data"] = list(
+            self.dependencies[0].dependency_key_mapping.values(),
+        )[0]
+        dispatch_object["data"]["validity_start"] = date.today()
+        dispatch_object["data"]["sid"] = 99999
+        # dispatch_object['data']['start_date'] = date.today()
+        # dispatch_object['data']['validity_start_date'] = date.today()
+        dispatch_object["transaction_id"] = 1
+        dispatch_object["data"]["update_type"] = UpdateType.CREATE
+
+        # add start date
+        # goods_nomenclature_description_handler.data['start_date'] = date.today()
+
+        return dispatch_object
 
 
 @GoodsNomenclatureDescriptionHandler.register_dependant
