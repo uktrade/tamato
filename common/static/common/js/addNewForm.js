@@ -35,15 +35,11 @@ const addNewForm = (event) => {
   }
 
 const initAddNewEnhancement = () => {
-    console.log("*** initAddNewEnhancement()");
-  
     const btn = document.querySelector("#add-new");
-  
-    console.log(btn);
-  
     if (btn) {
-      btn.addEventListener("click", addNewForm);
+        btn.addEventListener("click", addNewForm);
     }
   }
 
-  export { initAddNewEnhancement }
+
+export { initAddNewEnhancement }
