@@ -151,7 +151,6 @@ class EnvelopeQueueView(
 ):
     """UI view used to download and manage envelope processing."""
 
-    paginate_by = 2
     model = PackagedWorkBasket
     permission_required = "publishing.consume_from_packaging_queue"
 
