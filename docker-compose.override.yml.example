@@ -1,0 +1,2 @@
+version: '3'
+# Not used currently, would be used for local only docker-compose

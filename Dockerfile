@@ -12,7 +12,17 @@ FROM python:3.8-buster
 
 LABEL maintainer="webops@digital.trade.gov.uk"
 
-ENV DJANGO_SETTINGS_MODULE "settings"
+ARG ENV="prod"
+ENV ENV="${ENV}" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1\
+    PATH="${PATH}:/home/tamato/.local/bin" 
+
+# don't run as root
+RUN groupadd -g 1000 tamato && \
+    useradd -u 1000 -g tamato -m tamato
+
+WORKDIR /app
 
 # add git client
 RUN apt-get -qq update && apt-get install --no-install-recommends -qqy \
@@ -20,26 +30,26 @@ RUN apt-get -qq update && apt-get install --no-install-recommends -qqy \
     ca-certificates \
     git
 
-# don't run as root
-RUN groupadd -g 1000 tamato && \
-    useradd -u 1000 -g tamato -m tamato
-
-WORKDIR /home/tamato/app
-
-# Extend PATH for dev ease-of-use and to stop pip complaining.
-ENV PATH="${PATH}:/home/tamato/.local/bin"
+# fix permissions
+RUN chown -R 1000:1000 /app
 
 # install python dependencies
-COPY requirements.txt ./
-RUN pip install -U pip && \
-    pip install -r requirements.txt --no-warn-script-location
+COPY requirements.txt requirements-dev.txt /app/
+RUN pip install --upgrade pip
+# Only install dev requirements in dev do not want to expose build tools in production
+# RUN  if [ "${ENV}" == "dev" ]; then \
+#     pip install -r requirements-dev.txt --no-warn-script-location ; \
+#     else pip install -r requirements.txt --no-warn-script-location ; fi
+RUN pip install -r requirements-dev.txt --no-warn-script-location
 
 # Copying an empty file works while the directory is mounted as a volume.
-COPY --chown=tamato:tamato .empty .env
-COPY --chown=tamato:tamato . .
+COPY --chown=tamato:tamato . /app/
 COPY --chown=tamato:tamato --from=jsdeps node_modules/govuk-frontend/govuk node_modules/govuk-frontend/govuk
+COPY --chown=tamato:tamato --from=jsdeps node_modules/chart.js/dist node_modules/chart.js/dist
+COPY --chown=tamato:tamato --from=jsdeps node_modules/moment/min node_modules/moment/min
+COPY --chown=tamato:tamato --from=jsdeps node_modules/chartjs-adapter-moment/dist node_modules/chartjs-adapter-moment/dist
 COPY --chown=tamato:tamato --from=jsdeps static/webpack_bundles static/webpack_bundles
-COPY --chown=tamato:tamato --from=jsdeps webpack-stats.json ./
+COPY --chown=tamato:tamato --from=jsdeps webpack-stats.json /app/
 
 # collect static files for deployment
 RUN python manage.py collectstatic --noinput
@@ -47,4 +57,5 @@ RUN python manage.py collectstatic --noinput
 USER tamato
 
 EXPOSE 8000
+
 CMD ["/home/tamato/.local/bin/gunicorn", "-b", "0.0.0.0:8000", "-w", "1", "wsgi:application"]

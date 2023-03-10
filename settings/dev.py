@@ -6,6 +6,8 @@ DEBUG = True
 # Allow all hostnames to access the server
 ALLOWED_HOSTS = ["*"]
 
+INTERNAL_IPS = ["127.0.0.1"]
+
 # Enable Django debug toolbar
 if is_truthy(os.environ.get("ENABLE_DJANGO_DEBUG_TOOLBAR")):
     MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
@@ -25,7 +27,11 @@ if is_truthy(os.environ.get("ENABLE_DJANGO_DEBUG_TOOLBAR")):
         "debug_toolbar.panels.redirects.RedirectsPanel",
     ]
 
-INTERNAL_IPS = ["127.0.0.1"]
+    # Required for using debug in docker
+    DEBUG_TOOLBAR_CONFIG = {
+        "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+    }
+
 
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False

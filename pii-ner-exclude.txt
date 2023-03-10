@@ -1271,3 +1271,7 @@ GOVUK Notify
 Implementing Regulation
 measure.effective_valid_between.upper
 Tests that MeasureMultipleDelete
+
+{PYTHON}  manage.py migrate
+{PYTHON}  manage.py makemigrations
+{PYTHON}  manage.py collectstatic
