@@ -124,6 +124,36 @@ class TariffObjectNursery:
                 if handler is None:
                     self.cache.pop(key)
                     continue
+
+                # for known possible missing objects, this handles the just in time final check to see if a handler
+                # has a method to correct the missing data
+                dispatch_objects = []
+                for issue in handler.get_import_issues():
+                    if hasattr(
+                        handler,
+                        "create_missing_" + issue.missing_object_method_name(),
+                    ):
+                        dispatch_obj = getattr(
+                            handler,
+                            "create_missing_" + issue.missing_object_method_name(),
+                        )(handler)
+                        dispatch_objects.append(dispatch_obj)
+                #
+                for obj in dispatch_objects:
+                    dep_handler = self.get_handler(tag=obj["tag"])
+                    # add the new object to the mix
+                    dep_handler_inst = dep_handler(
+                        dispatched_object=obj,
+                        nursery=get_nursery(),
+                    )
+                    dep_handler_inst.key = list(handler.dependency_key_mapping.keys())[
+                        0
+                    ]  # dodgy first item
+                    dep_handler_inst.build()
+                    dep_handler_inst.dispatch()
+
+                handler.import_issues = []
+
                 result = handler.build()
                 if not result:
                     self._cache_handler(handler)
