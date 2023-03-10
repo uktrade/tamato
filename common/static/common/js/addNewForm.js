@@ -1,4 +1,6 @@
-import { autoCompleteElement } from './autocomplete';
+import { autoCompleteElement } from "./autocomplete";
+import { setupClickHandler } from "./copyDuties";
+
 
 const addNewForm = (event) => {
     event.preventDefault();
@@ -22,7 +24,11 @@ const addNewForm = (event) => {
   
     formset.insertBefore(newForm, buttonGroup);
     addNewButton.scrollIntoView(false);
-  
+
+    let dutiesInput = newForm.querySelector("input.duties");
+    let copyButton = newForm.querySelector("button.tap-copy-down");
+    setupClickHandler(dutiesInput, copyButton);
+
     let totalForms = document.querySelector('[id$="-TOTAL_FORMS"]');
     let numTotalForms = Number(totalForms.value);
     totalForms.value = numTotalForms + 1;
