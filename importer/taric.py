@@ -302,7 +302,6 @@ def process_taric_xml_stream(
         record_group=record_group,
     )
     for event, elem in xmlparser:
-        print(f"{elem} : {event}")
         if event == "start":
             handler.start(elem)
 
