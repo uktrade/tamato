@@ -15,6 +15,8 @@ from common.filters import TamatoFilterBackend
 from common.forms import DateInputFieldFixed
 from common.util import EndDate
 from common.util import StartDate
+from common.validators import NumericValidator
+from common.validators import SymbolValidator
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from measures.forms import MeasureFilterForm
@@ -54,7 +56,14 @@ class MeasureFilter(TamatoFilter):
             kwargs["data"]._mutable = False
         super(MeasureFilter, self).__init__(*args, **kwargs)
 
-    sid = CharFilter(label="ID", widget=forms.TextInput())
+    sid = CharFilter(
+        label="ID",
+        widget=forms.TextInput(),
+        validators=[
+            NumericValidator,
+            SymbolValidator,
+        ],
+    )
 
     measure_type = AutoCompleteFilter(
         label="Type",
