@@ -32,11 +32,13 @@ class ImportIssueReportItem:
         object_type: str,
         related_object_type: str,
         related_object_identity_keys: dict,
+        related_cache_key: str,
         description: str,
     ):
         self.object_type = object_type
         self.related_object_type = related_object_type
         self.related_object_identity_keys = related_object_identity_keys
+        self.related_cache_key = related_cache_key
         self.description = description
 
     def missing_object_method_name(self):
@@ -530,6 +532,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
                             self.tag,
                             missing_dependency_data["tag"],
                             missing_dependency_data["identifying_fields"],
+                            key,
                             dep_missing_details,
                         ),
                     )
