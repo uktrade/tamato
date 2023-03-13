@@ -2,9 +2,9 @@ const dutiesInputSelector = "input.duties";
 
 
 const getNextDOMElement = (startElement, selector) => {
-    /* Get the next element, that matches selector, and that comes after
+    /* Get the next element that matches selector and that comes after
     startElement within the DOM or null if no successive matching elements
-    exist. startElement must be matchable usng selector.
+    exist. startElement must itself be matchable usng selector.
     */
 
     const allElements = document.querySelectorAll(selector);
@@ -67,7 +67,7 @@ const setupCopyToNextDuties = (dutiesInput) => {
 
 const initCopyToNextDuties = () => {
     /* Set up copy to next duties for a formset containing duties input
-    elements. Duties input elements must must have the duties CSS class applied
+    elements. Duties input elements must have the 'duties' CSS class applied
     in order that selector matching can be performed againt "input.duties".
     */
 
