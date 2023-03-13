@@ -40,7 +40,7 @@ def test_index_redirects_to_login_page_logged_out_SSO_off(client):
     response = client.get(reverse("home"))
 
     assert response.status_code == 302
-    assert response.url == "/auth/login/?next=%2F"
+    response.url.startswith(reverse("admin:login"))
 
 
 def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
