@@ -1004,3 +1004,36 @@ def test_measure_end_date_validation_fail():
         "The end date cannot be before the start date: Start date 01/01/2000 does not start before 01/01/1999"
         in form.errors["__all__"]
     )
+
+
+def test_measure_forms_footnotes_valid():
+    footnote = factories.FootnoteFactory.create()
+    data = {
+        "footnote": footnote.pk,
+    }
+    form = forms.MeasureFootnotesForm(data, prefix="")
+    assert form.is_valid()
+    assert form.cleaned_data["footnote"] == footnote
+
+
+def test_measure_forms_footnotes_invalid():
+    data = {
+        "footnote": "foo",
+    }
+    form = forms.MeasureFootnotesForm(data, prefix="")
+    assert form.errors["footnote"] == [
+        "Select a valid choice. That choice is not one of the available choices.",
+    ]
+    assert not form.is_valid()
+
+    footnote = factories.FootnoteFactory.create()
+    data = {
+        "form-0-footnote": footnote.pk,
+        "form-1-footnote": footnote.pk,
+    }
+    formset = forms.MeasureFootnotesFormSet(data)
+    assert not formset.is_valid()
+    assert (
+        "The same footnote cannot be selected more than once"
+        in formset.non_form_errors()
+    )
