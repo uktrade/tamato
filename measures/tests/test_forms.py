@@ -1034,6 +1034,5 @@ def test_measure_forms_footnotes_invalid():
     formset = forms.MeasureFootnotesFormSet(data)
     assert not formset.is_valid()
     assert (
-        "The same footnote cannot be selected more than once"
-        in formset.non_form_errors()
+        "The same footnote cannot be added more than once" in formset.non_form_errors()
     )

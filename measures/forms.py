@@ -1147,7 +1147,7 @@ class MeasureFootnotesFormSet(FormSet):
         footnotes = [d["footnote"] for d in cleaned_data if "footnote" in d]
         num_unique = len(set(footnotes))
         if len(footnotes) != num_unique:
-            raise ValidationError("The same footnote cannot be selected more than once")
+            raise ValidationError("The same footnote cannot be added more than once")
         return cleaned_data
 
 
