@@ -221,6 +221,7 @@ class EnvelopeError(ParserError):
 class EnvelopeParser(ElementParser):
     tag = Tag("envelope", prefix=ENVELOPE)
     transaction = TransactionParser(many=True)
+    issues = list()
 
     def __init__(
         self,
