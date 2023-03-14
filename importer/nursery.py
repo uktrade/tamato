@@ -132,18 +132,10 @@ class TariffObjectNursery:
                         handler,
                         "create_missing_" + issue.missing_object_method_name(),
                     ):
-                        dispatch_obj = getattr(
+                        getattr(
                             handler,
                             "create_missing_" + issue.missing_object_method_name(),
                         )(handler)
-
-                        dep_handler = self.get_handler(tag=dispatch_obj["tag"])
-                        # add the new object to the mix
-                        dep_handler_inst = dep_handler(
-                            dispatched_object=dispatch_obj,
-                            nursery=get_nursery(),
-                        )
-                        dep_handler_inst.key = issue.related_cache_key
 
                 handler.import_issues = []
 
