@@ -8,7 +8,7 @@ const addNewForm = (event) => {
     let formset = fieldset.parentNode;
     let newForm = fieldset.cloneNode(true);
     
-    newForm.innerHTML = newForm.innerHTML.replaceAll("formset-0", "formset-" + numForms);
+    newForm.innerHTML = newForm.innerHTML.replaceAll("-0-", "-" + numForms + "-");
     newForm.querySelector(".autocomplete").removeAttribute("data-original-value");
 
     let formFields = newForm.querySelectorAll("input");
