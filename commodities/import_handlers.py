@@ -150,26 +150,26 @@ class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandle
         processed alongside the update.
 
         returns a data object that replaces the missing dependency with the validity_start date set to today.
-        TODO : implement correct period handling to correctly resolve this workaround
+        TODO : implement correct period handling to correctly resolve this crude workaround
         """
-        dispatch_object = dict()
-        dispatch_object["tag"] = list(
-            self.dependencies[0].dependency_key_mapping.values(),
-        )[0]["tag"]
-        dispatch_object["data"] = list(
-            self.dependencies[0].dependency_key_mapping.values(),
-        )[0]
-        dispatch_object["data"]["validity_start"] = date.today()
-        dispatch_object["data"]["sid"] = 99999
-        # dispatch_object['data']['start_date'] = date.today()
-        # dispatch_object['data']['validity_start_date'] = date.today()
-        dispatch_object["transaction_id"] = 1
-        dispatch_object["data"]["update_type"] = UpdateType.CREATE
+        data = dict()
+        # Setting to today's date is not perfect, and could cause issues in circumstances where the end date of the
+        # goods nomenclature is before today, however if that's the case it does not really matter.
+        # an additional possibility is that there already exists a description with this date, which will cause a rule
+        # violation, also unlikely but possible.
 
-        # add start date
-        # goods_nomenclature_description_handler.data['start_date'] = date.today()
+        # Ultimately this is a crude temporary measure that will be superseded by a correct implementation splitting
+        # out description periods into a new table
+        data["validity_start"] = date.today()
 
-        return dispatch_object
+        # Update the goods nomenclature description with the start date
+        goods_nomenclature_description_handler.data.update(data)
+
+        # goods nomenclature descriptions only have 1 dependency, and that's on period, so we are safe to make this an
+        # empty set since we are populating the validity_start date
+        goods_nomenclature_description_handler.dependency_keys = set()
+
+        return
 
 
 @GoodsNomenclatureDescriptionHandler.register_dependant
