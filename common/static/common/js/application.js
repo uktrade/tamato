@@ -3,7 +3,8 @@ const imagePath = (name) => images(name, true)
 
 require.context('govuk-frontend/govuk/assets');
 import showHideCheckboxes from './showHideCheckboxes';
-import initAutocomplete from './autocomplete';
+import { initAutocomplete } from './autocomplete';
+import { initAddNewEnhancement } from './addNewForm';
 import initStepNav from './step-by-step-nav';
 import { initAll } from 'govuk-frontend';
 import initCheckboxes from './checkboxes';
@@ -12,6 +13,7 @@ showHideCheckboxes();
 // Initialise accessible-autocomplete components without a `name` attr in order
 // to avoid the "dummy" autocomplete field being submitted as part of the form
 // to the server.
+initAddNewEnhancement();
 initAutocomplete(false);
 initStepNav();
 initAll();
