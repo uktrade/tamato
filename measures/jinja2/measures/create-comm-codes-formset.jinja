@@ -53,6 +53,7 @@
   {% if formset.total_form_count() + 1 < formset.max_num %}
   {{ govukButton({
       "text": "Add new",
+      "attributes": {"id": "add-new"},
       "classes": "govuk-button--secondary",
       "value": "1",
       "name": formset.prefix ~ "-ADD",

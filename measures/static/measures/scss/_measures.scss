@@ -13,7 +13,6 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            padding-left: 15px;
 
             .autocomplete__wrapper {
                 margin-bottom: 0 !important;
@@ -23,5 +22,8 @@
                 margin-top: auto;
             }
         }
+    }
+    .tap-column:nth-child(2) {
+        margin-left: 15px;
     }
 }
