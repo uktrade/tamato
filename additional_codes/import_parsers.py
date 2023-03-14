@@ -16,17 +16,17 @@ class AdditionalCodeParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-        <xs:element name="additional.code" substitutionGroup="abstract.record">
-            <xs:complexType>
-                <xs:sequence>
-                    <xs:element name="additional.code.sid" type="SID"/>
-                    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
-                    <xs:element name="additional.code" type="AdditionalCode"/>
-                    <xs:element name="validity.start.date" type="Date"/>
-                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                </xs:sequence>
-            </xs:complexType>
-        </xs:element>
+    <xs:element name="additional.code" substitutionGroup="abstract.record">
+    <xs:complexType>
+    <xs:sequence>
+    <xs:element name="additional.code.sid" type="SID"/>
+    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
+    <xs:element name="additional.code" type="AdditionalCode"/>
+    <xs:element name="validity.start.date" type="Date"/>
+    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+    </xs:sequence>
+    </xs:complexType>
+    </xs:element>
     """
 
     record_code = "245"
@@ -52,17 +52,18 @@ class AdditionalCodeDescriptionPeriodParser(
 
     .. code-block:: XML
 
-        <xs:element name="additional.code.description.period" substitutionGroup="abstract.record">
-            <xs:complexType>
-                <xs:sequence>
-                    <xs:element name="additional.code.description.period.sid" type="SID"/>
-                    <xs:element name="additional.code.sid" type="SID"/>
-                    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
-                    <xs:element name="additional.code" type="AdditionalCode"/>
-                    <xs:element name="validity.start.date" type="Date"/>
-                </xs:sequence>
-            </xs:complexType>
-        </xs:element>
+    <xs:element name="additional.code.description.period"
+    substitutionGroup="abstract.record">
+    <xs:complexType>
+    <xs:sequence>
+    <xs:element name="additional.code.description.period.sid" type="SID"/>
+    <xs:element name="additional.code.sid" type="SID"/>
+    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
+    <xs:element name="additional.code" type="AdditionalCode"/>
+    <xs:element name="validity.start.date" type="Date"/>
+    </xs:sequence>
+    </xs:complexType>
+    </xs:element>
     """
 
     record_code = "245"
@@ -86,18 +87,19 @@ class AdditionalCodeDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-        <xs:element name="additional.code.description" substitutionGroup="abstract.record">
-            <xs:complexType>
-                <xs:sequence>
-                    <xs:element name="additional.code.description.period.sid" type="SID"/>
-                    <xs:element name="language.id" type="LanguageId"/>
-                    <xs:element name="additional.code.sid" type="SID"/>
-                    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
-                    <xs:element name="additional.code" type="AdditionalCode"/>
-                    <xs:element name="description" type="LongDescription" minOccurs="0"/>
-                </xs:sequence>
-            </xs:complexType>
-        </xs:element>
+    <xs:element name="additional.code.description"
+    substitutionGroup="abstract.record">
+    <xs:complexType>
+    <xs:sequence>
+    <xs:element name="additional.code.description.period.sid" type="SID"/>
+    <xs:element name="language.id" type="LanguageId"/>
+    <xs:element name="additional.code.sid" type="SID"/>
+    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
+    <xs:element name="additional.code" type="AdditionalCode"/>
+    <xs:element name="description" type="LongDescription" minOccurs="0"/>
+    </xs:sequence>
+    </xs:complexType>
+    </xs:element>
     """
 
     record_code = "245"
@@ -122,17 +124,18 @@ class AdditionalCodeTypeParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-        <xs:element name="additional.code.type" substitutionGroup="abstract.record">
-            <xs:complexType>
-                <xs:sequence>
-                    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
-                    <xs:element name="validity.start.date" type="Date"/>
-                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                    <xs:element name="application.code" type="ApplicationCodeAdditionalCode"/>
-                    <xs:element name="meursing.table.plan.id" type="MeursingTablePlanId" minOccurs="0"/>
-                </xs:sequence>
-            </xs:complexType>
-        </xs:element>
+    <xs:element name="additional.code.type" substitutionGroup="abstract.record">
+    <xs:complexType>
+    <xs:sequence>
+    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
+    <xs:element name="validity.start.date" type="Date"/>
+    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+    <xs:element name="application.code" type="ApplicationCodeAdditionalCode"/>
+    <xs:element name="meursing.table.plan.id" type="MeursingTablePlanId"
+    minOccurs="0"/>
+    </xs:sequence>
+    </xs:complexType>
+    </xs:element>
     """
 
     record_code = "120"
@@ -153,15 +156,16 @@ class AdditionalCodeTypeDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-        <xs:element name="additional.code.type.description" substitutionGroup="abstract.record">
-            <xs:complexType>
-                <xs:sequence>
-                    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
-                    <xs:element name="language.id" type="LanguageId"/>
-                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-                </xs:sequence>
-            </xs:complexType>
-        </xs:element>
+    <xs:element name="additional.code.type.description"
+    substitutionGroup="abstract.record">
+    <xs:complexType>
+    <xs:sequence>
+    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
+    <xs:element name="language.id" type="LanguageId"/>
+    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+    </xs:sequence>
+    </xs:complexType>
+    </xs:element>
     """
 
     record_code = "120"
@@ -181,19 +185,20 @@ class FootnoteAssociationAdditionalCodeParser(ValidityMixin, Writable, ElementPa
 
     .. code-block: XML
 
-        <xs:element name="footnote.association.additional.code" substitutionGroup="abstract.record">
-            <xs:complexType>
-                <xs:sequence>
-                    <xs:element name="additional.code.sid" type="SID"/>
-                    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
-                    <xs:element name="footnote.id" type="FootnoteId"/>
-                    <xs:element name="validity.start.date" type="Date"/>
-                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
-                    <xs:element name="additional.code" type="AdditionalCode"/>
-                </xs:sequence>
-            </xs:complexType>
-        </xs:element>
+    <xs:element name="footnote.association.additional.code"
+    substitutionGroup="abstract.record">
+    <xs:complexType>
+    <xs:sequence>
+    <xs:element name="additional.code.sid" type="SID"/>
+    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
+    <xs:element name="footnote.id" type="FootnoteId"/>
+    <xs:element name="validity.start.date" type="Date"/>
+    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
+    <xs:element name="additional.code" type="AdditionalCode"/>
+    </xs:sequence>
+    </xs:complexType>
+    </xs:element>
     """
 
     record_code = "245"
