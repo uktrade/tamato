@@ -621,6 +621,8 @@ class GoodsNomenclatureFactory(SimpleGoodsNomenclatureFactory):
         factory_related_name="new_goods_nomenclature",
     )
 
+    version_group = factory.SubFactory(VersionGroupFactory)
+
 
 SimpleGoodsNomenclatureFactory.reset_sequence(1)
 
