@@ -340,7 +340,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes
                 f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
                 "country_region_formset-0-geographical_area_country_or_region": "",
             },
-            "Please submit at least 1 form.",
+            "Please submit 1 or more forms.",
         ),
         (
             {
