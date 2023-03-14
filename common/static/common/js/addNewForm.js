@@ -13,7 +13,7 @@ const addNewForm = (event) => {
 
     let formFields = newForm.querySelectorAll("input");
     for (let field of formFields.values()) {
-      field.value = null;
+      field.value = "";
     }
 
     newForm.querySelector(".autocomplete__wrapper").remove();
