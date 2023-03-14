@@ -17,16 +17,16 @@ class QuotaOrderNumberParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="quota.order.number" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="quota.order.number.sid" type="SID"/>
-    <xs:element name="quota.order.number.id" type="OrderNumber"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="quota.order.number" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="quota.order.number.sid" type="SID"/>
+                    <xs:element name="quota.order.number.id" type="OrderNumber"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "360"
@@ -53,19 +53,18 @@ class QuotaOrderNumberOriginParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="quota.order.number.origin"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="quota.order.number.origin.sid" type="SID"/>
-    <xs:element name="quota.order.number.sid" type="SID"/>
-    <xs:element name="geographical.area.id" type="GeographicalAreaId"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    <xs:element name="geographical.area.sid" type="SID"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="quota.order.number.origin" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="quota.order.number.origin.sid" type="SID"/>
+                    <xs:element name="quota.order.number.sid" type="SID"/>
+                    <xs:element name="geographical.area.id" type="GeographicalAreaId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="geographical.area.sid" type="SID"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "360"
@@ -88,15 +87,14 @@ class QuotaOrderNumberOriginExclusionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="quota.order.number.origin.exclusions"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="quota.order.number.origin.sid" type="SID"/>
-    <xs:element name="excluded.geographical.area.sid" type="SID"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="quota.order.number.origin.exclusions" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="quota.order.number.origin.sid" type="SID"/>
+                    <xs:element name="excluded.geographical.area.sid" type="SID"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "360"
@@ -117,29 +115,26 @@ class QuotaDefinitionParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="quota.definition" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="quota.definition.sid" type="SID"/>
-    <xs:element name="quota.order.number.id" type="OrderNumber"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    <xs:element name="quota.order.number.sid" type="SID"/>
-    <xs:element name="volume" type="QuotaAmount"/>
-    <xs:element name="initial.volume" type="QuotaAmount"/>
-    <xs:element name="monetary.unit.code" type="MonetaryUnitCode"
-    minOccurs="0"/>
-    <xs:element name="measurement.unit.code" type="MeasurementUnitCode"
-    minOccurs="0"/>
-    <xs:element name="measurement.unit.qualifier.code"
-    type="MeasurementUnitQualifierCode" minOccurs="0"/>
-    <xs:element name="maximum.precision" type="QuotaPrecision"/>
-    <xs:element name="critical.state" type="QuotaCriticalStateCode"/>
-    <xs:element name="critical.threshold" type="QuotaCriticalTreshold"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="quota.definition" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="quota.definition.sid" type="SID"/>
+                    <xs:element name="quota.order.number.id" type="OrderNumber"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="quota.order.number.sid" type="SID"/>
+                    <xs:element name="volume" type="QuotaAmount"/>
+                    <xs:element name="initial.volume" type="QuotaAmount"/>
+                    <xs:element name="monetary.unit.code" type="MonetaryUnitCode" minOccurs="0"/>
+                    <xs:element name="measurement.unit.code" type="MeasurementUnitCode" minOccurs="0"/>
+                    <xs:element name="measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode" minOccurs="0"/>
+                    <xs:element name="maximum.precision" type="QuotaPrecision"/>
+                    <xs:element name="critical.state" type="QuotaCriticalStateCode"/>
+                    <xs:element name="critical.threshold" type="QuotaCriticalTreshold"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "370"
@@ -176,16 +171,16 @@ class QuotaAssociationParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="quota.association" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="main.quota.definition.sid" type="SID"/>
-    <xs:element name="sub.quota.definition.sid" type="SID"/>
-    <xs:element name="relation.type" type="RelationType"/>
-    <xs:element name="coefficient" type="QuotaCoefficient" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="quota.association" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="main.quota.definition.sid" type="SID"/>
+                    <xs:element name="sub.quota.definition.sid" type="SID"/>
+                    <xs:element name="relation.type" type="RelationType"/>
+                    <xs:element name="coefficient" type="QuotaCoefficient" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "370"
@@ -206,19 +201,18 @@ class QuotaBlockingParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="quota.blocking.period"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="quota.blocking.period.sid" type="SID"/>
-    <xs:element name="quota.definition.sid" type="SID"/>
-    <xs:element name="blocking.start.date" type="Date"/>
-    <xs:element name="blocking.end.date" type="Date"/>
-    <xs:element name="blocking.period.type" type="QuotaBlockingPeriodType"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="quota.blocking.period" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="quota.blocking.period.sid" type="SID"/>
+                    <xs:element name="quota.definition.sid" type="SID"/>
+                    <xs:element name="blocking.start.date" type="Date"/>
+                    <xs:element name="blocking.end.date" type="Date"/>
+                    <xs:element name="blocking.period.type" type="QuotaBlockingPeriodType"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "370"
@@ -241,18 +235,17 @@ class QuotaSuspensionParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="quota.suspension.period"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="quota.suspension.period.sid" type="SID"/>
-    <xs:element name="quota.definition.sid" type="SID"/>
-    <xs:element name="suspension.start.date" type="Date"/>
-    <xs:element name="suspension.end.date" type="Date"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="quota.suspension.period" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="quota.suspension.period.sid" type="SID"/>
+                    <xs:element name="quota.definition.sid" type="SID"/>
+                    <xs:element name="suspension.start.date" type="Date"/>
+                    <xs:element name="suspension.end.date" type="Date"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "370"

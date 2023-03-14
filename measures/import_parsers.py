@@ -16,16 +16,16 @@ class MeasureTypeSeriesParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.type.series" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.type.series" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "140"
@@ -46,16 +46,15 @@ class MeasureTypeSeriesDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.type.series.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.type.series.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "140"
@@ -75,15 +74,15 @@ class MeasurementUnitParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measurement.unit" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measurement.unit.code" type="MeasurementUnitCode"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measurement.unit" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measurement.unit.code" type="MeasurementUnitCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "210"
@@ -103,16 +102,15 @@ class MeasurementUnitDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measurement.unit.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measurement.unit.code" type="MeasurementUnitCode"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measurement.unit.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measurement.unit.code" type="MeasurementUnitCode"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "210"
@@ -132,17 +130,15 @@ class MeasurementUnitQualifierParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measurement.unit.qualifier"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measurement.unit.qualifier.code"
-    type="MeasurementUnitQualifierCode"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measurement.unit.qualifier" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "215"
@@ -162,17 +158,15 @@ class MeasurementUnitQualifierDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measurement.unit.qualifier.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measurement.unit.qualifier.code"
-    type="MeasurementUnitQualifierCode"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measurement.unit.qualifier.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "215"
@@ -192,17 +186,16 @@ class MeasurementParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measurement" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measurement.unit.code" type="MeasurementUnitCode"/>
-    <xs:element name="measurement.unit.qualifier.code"
-    type="MeasurementUnitQualifierCode"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measurement" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measurement.unit.code" type="MeasurementUnitCode"/>
+                    <xs:element name="measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "220"
@@ -225,15 +218,15 @@ class MonetaryUnitParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="monetary.unit" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="monetary.unit.code" type="MonetaryUnitCode"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="monetary.unit" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="monetary.unit.code" type="MonetaryUnitCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "225"
@@ -253,16 +246,15 @@ class MonetaryUnitDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="monetary.unit.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="monetary.unit.code" type="MonetaryUnitCode"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="monetary.unit.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="monetary.unit.code" type="MonetaryUnitCode"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "225"
@@ -282,21 +274,18 @@ class DutyExpressionParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="duty.expression" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="duty.expression.id" type="DutyExpressionId"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    <xs:element name="duty.amount.applicability.code"
-    type="DutyAmountApplicabilityCode"/>
-    <xs:element name="measurement.unit.applicability.code"
-    type="MeasurementUnitApplicabilityCode"/>
-    <xs:element name="monetary.unit.applicability.code"
-    type="MonetaryUnitApplicabilityCode"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="duty.expression" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="duty.expression.id" type="DutyExpressionId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="duty.amount.applicability.code" type="DutyAmountApplicabilityCode"/>
+                    <xs:element name="measurement.unit.applicability.code" type="MeasurementUnitApplicabilityCode"/>
+                    <xs:element name="monetary.unit.applicability.code" type="MonetaryUnitApplicabilityCode"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "230"
@@ -325,16 +314,15 @@ class DutyExpressionDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="duty.expression.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="duty.expression.id" type="DutyExpressionId"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="duty.expression.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="duty.expression.id" type="DutyExpressionId"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "230"
@@ -354,23 +342,22 @@ class MeasureTypeParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.type" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.type.id" type="MeasureTypeId"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    <xs:element name="trade.movement.code" type="TradeMovementCode"/>
-    <xs:element name="priority.code" type="PriorityCode"/>
-    <xs:element name="measure.component.applicable.code"
-    type="MeasurementUnitApplicabilityCode"/>
-    <xs:element name="origin.dest.code" type="OriginCode"/>
-    <xs:element name="order.number.capture.code" type="OrderNumberCaptureCode"/>
-    <xs:element name="measure.explosion.level" type="MeasureExplosionLevel"/>
-    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.type" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.type.id" type="MeasureTypeId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="trade.movement.code" type="TradeMovementCode"/>
+                    <xs:element name="priority.code" type="PriorityCode"/>
+                    <xs:element name="measure.component.applicable.code" type="MeasurementUnitApplicabilityCode"/>
+                    <xs:element name="origin.dest.code" type="OriginCode"/>
+                    <xs:element name="order.number.capture.code" type="OrderNumberCaptureCode"/>
+                    <xs:element name="measure.explosion.level" type="MeasureExplosionLevel"/>
+                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "235"
@@ -399,16 +386,15 @@ class MeasureTypeDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.type.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.type.id" type="MeasureTypeId"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.type.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.type.id" type="MeasureTypeId"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "235"
@@ -428,17 +414,16 @@ class AdditionalCodeTypeMeasureTypeParser(ValidityMixin, Writable, ElementParser
 
     .. code-block:: XML
 
-    <xs:element name="additional.code.type.measure.type"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.type.id" type="MeasureTypeId"/>
-    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="additional.code.type.measure.type" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.type.id" type="MeasureTypeId"/>
+                    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "240"
@@ -459,16 +444,15 @@ class MeasureConditionCodeParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.condition.code"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="condition.code" type="ConditionCode"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.condition.code" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="condition.code" type="ConditionCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "350"
@@ -488,16 +472,15 @@ class MeasureConditionCodeDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.condition.code.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="condition.code" type="ConditionCode"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.condition.code.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="condition.code" type="ConditionCode"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "350"
@@ -517,15 +500,15 @@ class MeasureActionParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.action" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="action.code" type="ActionCode"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.action" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="action.code" type="ActionCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "355"
@@ -545,16 +528,15 @@ class MeasureActionDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.action.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="action.code" type="ActionCode"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.action.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="action.code" type="ActionCode"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "355"
@@ -574,37 +556,31 @@ class MeasureParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.sid" type="SID"/>
-    <xs:element name="measure.type" type="MeasureTypeId"/>
-    <xs:element name="geographical.area" type="GeographicalAreaId"/>
-    <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId"
-    minOccurs="0"/>
-    <xs:element name="additional.code.type" type="AdditionalCodeTypeId"
-    minOccurs="0"/>
-    <xs:element name="additional.code" type="AdditionalCode" minOccurs="0"/>
-    <xs:element name="ordernumber" type="OrderNumber" minOccurs="0"/>
-    <xs:element name="reduction.indicator" type="ReductionIndicator"
-    minOccurs="0"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="measure.generating.regulation.role"
-    type="RegulationRoleTypeId"/>
-    <xs:element name="measure.generating.regulation.id" type="RegulationId"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    <xs:element name="justification.regulation.role" type="RegulationRoleTypeId"
-    minOccurs="0"/>
-    <xs:element name="justification.regulation.id" type="RegulationId"
-    minOccurs="0"/>
-    <xs:element name="stopped.flag" type="StoppedFlag"/>
-    <xs:element name="geographical.area.sid" type="SID" minOccurs="0"/>
-    <xs:element name="goods.nomenclature.sid" type="SID" minOccurs="0"/>
-    <xs:element name="additional.code.sid" type="SID" minOccurs="0"/>
-    <xs:element name="export.refund.nomenclature.sid" type="SID" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.sid" type="SID"/>
+                    <xs:element name="measure.type" type="MeasureTypeId"/>
+                    <xs:element name="geographical.area" type="GeographicalAreaId"/>
+                    <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId" minOccurs="0"/>
+                    <xs:element name="additional.code.type" type="AdditionalCodeTypeId" minOccurs="0"/>
+                    <xs:element name="additional.code" type="AdditionalCode" minOccurs="0"/>
+                    <xs:element name="ordernumber" type="OrderNumber" minOccurs="0"/>
+                    <xs:element name="reduction.indicator" type="ReductionIndicator" minOccurs="0"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="measure.generating.regulation.role" type="RegulationRoleTypeId"/>
+                    <xs:element name="measure.generating.regulation.id" type="RegulationId"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="justification.regulation.role" type="RegulationRoleTypeId" minOccurs="0"/>
+                    <xs:element name="justification.regulation.id" type="RegulationId" minOccurs="0"/>
+                    <xs:element name="stopped.flag" type="StoppedFlag"/>
+                    <xs:element name="geographical.area.sid" type="SID" minOccurs="0"/>
+                    <xs:element name="goods.nomenclature.sid" type="SID" minOccurs="0"/>
+                    <xs:element name="additional.code.sid" type="SID" minOccurs="0"/>
+                    <xs:element name="export.refund.nomenclature.sid" type="SID" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "430"
@@ -647,21 +623,18 @@ class MeasureComponentParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.component" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.sid" type="SID"/>
-    <xs:element name="duty.expression.id" type="DutyExpressionId"/>
-    <xs:element name="duty.amount" type="DutyAmount" minOccurs="0"/>
-    <xs:element name="monetary.unit.code" type="MonetaryUnitCode"
-    minOccurs="0"/>
-    <xs:element name="measurement.unit.code" type="MeasurementUnitCode"
-    minOccurs="0"/>
-    <xs:element name="measurement.unit.qualifier.code"
-    type="MeasurementUnitQualifierCode" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.component" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.sid" type="SID"/>
+                    <xs:element name="duty.expression.id" type="DutyExpressionId"/>
+                    <xs:element name="duty.amount" type="DutyAmount" minOccurs="0"/>
+                    <xs:element name="monetary.unit.code" type="MonetaryUnitCode" minOccurs="0"/>
+                    <xs:element name="measurement.unit.code" type="MeasurementUnitCode" minOccurs="0"/>
+                    <xs:element name="measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "430"
@@ -688,28 +661,23 @@ class MeasureConditionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.condition" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.condition.sid" type="SID"/>
-    <xs:element name="measure.sid" type="SID"/>
-    <xs:element name="condition.code" type="ConditionCode"/>
-    <xs:element name="component.sequence.number"
-    type="ComponentSequenceNumber"/>
-    <xs:element name="condition.duty.amount" type="DutyAmount" minOccurs="0"/>
-    <xs:element name="condition.monetary.unit.code" type="MonetaryUnitCode"
-    minOccurs="0"/>
-    <xs:element name="condition.measurement.unit.code"
-    type="MeasurementUnitCode" minOccurs="0"/>
-    <xs:element name="condition.measurement.unit.qualifier.code"
-    type="MeasurementUnitQualifierCode" minOccurs="0"/>
-    <xs:element name="action.code" type="ActionCode" minOccurs="0"/>
-    <xs:element name="certificate.type.code" type="CertificateTypeCode"
-    minOccurs="0"/>
-    <xs:element name="certificate.code" type="CertificateCode" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.condition" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.condition.sid" type="SID"/>
+                    <xs:element name="measure.sid" type="SID"/>
+                    <xs:element name="condition.code" type="ConditionCode"/>
+                    <xs:element name="component.sequence.number" type="ComponentSequenceNumber"/>
+                    <xs:element name="condition.duty.amount" type="DutyAmount" minOccurs="0"/>
+                    <xs:element name="condition.monetary.unit.code" type="MonetaryUnitCode" minOccurs="0"/>
+                    <xs:element name="condition.measurement.unit.code" type="MeasurementUnitCode" minOccurs="0"/>
+                    <xs:element name="condition.measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode" minOccurs="0"/>
+                    <xs:element name="action.code" type="ActionCode" minOccurs="0"/>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode" minOccurs="0"/>
+                    <xs:element name="certificate.code" type="CertificateCode" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "430"
@@ -743,22 +711,18 @@ class MeasureConditionComponentParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.condition.component"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.condition.sid" type="SID"/>
-    <xs:element name="duty.expression.id" type="DutyExpressionId"/>
-    <xs:element name="duty.amount" type="DutyAmount" minOccurs="0"/>
-    <xs:element name="monetary.unit.code" type="MonetaryUnitCode"
-    minOccurs="0"/>
-    <xs:element name="measurement.unit.code" type="MeasurementUnitCode"
-    minOccurs="0"/>
-    <xs:element name="measurement.unit.qualifier.code"
-    type="MeasurementUnitQualifierCode" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.condition.component" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.condition.sid" type="SID"/>
+                    <xs:element name="duty.expression.id" type="DutyExpressionId"/>
+                    <xs:element name="duty.amount" type="DutyAmount" minOccurs="0"/>
+                    <xs:element name="monetary.unit.code" type="MonetaryUnitCode" minOccurs="0"/>
+                    <xs:element name="measurement.unit.code" type="MeasurementUnitCode" minOccurs="0"/>
+                    <xs:element name="measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "430"
@@ -785,16 +749,15 @@ class MeasureExcludedGeographicalAreaParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="measure.excluded.geographical.area"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.sid" type="SID"/>
-    <xs:element name="excluded.geographical.area" type="GeographicalAreaId"/>
-    <xs:element name="geographical.area.sid" type="SID"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="measure.excluded.geographical.area" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.sid" type="SID"/>
+                    <xs:element name="excluded.geographical.area" type="GeographicalAreaId"/>
+                    <xs:element name="geographical.area.sid" type="SID"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "430"
@@ -816,16 +779,15 @@ class FootnoteAssociationMeasureParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="footnote.association.measure"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="measure.sid" type="SID"/>
-    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
-    <xs:element name="footnote.id" type="FootnoteId"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="footnote.association.measure" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="measure.sid" type="SID"/>
+                    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
+                    <xs:element name="footnote.id" type="FootnoteId"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "430"

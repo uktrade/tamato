@@ -16,15 +16,15 @@ class CertificateTypeParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="certificate.type" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="certificate.type" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "110"
@@ -44,16 +44,15 @@ class CertificateTypeDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="certificate.type.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="certificate.type.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "110"
@@ -73,16 +72,16 @@ class CertificateParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="certificate" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
-    <xs:element name="certificate.code" type="CertificateCode"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="certificate" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="certificate.code" type="CertificateCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "205"
@@ -103,18 +102,17 @@ class CertificateDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="certificate.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="certificate.description.period.sid" type="SID"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
-    <xs:element name="certificate.code" type="CertificateCode"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="certificate.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="certificate.description.period.sid" type="SID"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="certificate.code" type="CertificateCode"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "205"
@@ -138,17 +136,16 @@ class CertificateDescriptionPeriodParser(ValidityStartMixin, Writable, ElementPa
 
     .. code-block:: XML
 
-    <xs:element name="certificate.description.period"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="certificate.description.period.sid" type="SID"/>
-    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
-    <xs:element name="certificate.code" type="CertificateCode"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="certificate.description.period" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="certificate.description.period.sid" type="SID"/>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="certificate.code" type="CertificateCode"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "205"
