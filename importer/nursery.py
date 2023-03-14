@@ -80,11 +80,6 @@ class TariffObjectNursery:
         handler_class = self.get_handler(obj["tag"])
         handler = handler_class(obj, self)
         try:
-            # for issue in handler.get_import_issues():
-            #     if hasattr(handler, 'create_missing_' + issue.missing_object_method_name()):
-            #         missing_obj = getattr(handler, 'create_missing_' + issue.missing_object_method_name())()
-            #         self.submit(missing_obj)
-
             result = handler.build()
             if not result:
                 self._cache_handler(handler)

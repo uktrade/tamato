@@ -125,8 +125,6 @@ class TransactionParser(ElementParser):
                 ),
             )
 
-        # not sure if this is a good idea! might need to remove this, no comments, and it seems to simpy return without
-        # raising the exception :/
         except IntegrityError:
             return
 
