@@ -21,19 +21,18 @@ class GoodsNomenclatureParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="goods.nomenclature" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="goods.nomenclature.sid" type="SID"/>
-    <xs:element name="goods.nomenclature.item.id"
-    type="GoodsNomenclatureItemId"/>
-    <xs:element name="producline.suffix" type="ProductLineSuffix"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    <xs:element name="statistical.indicator" type="StatisticalIndicator"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="goods.nomenclature" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="goods.nomenclature.sid" type="SID"/>
+                    <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                    <xs:element name="producline.suffix" type="ProductLineSuffix"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="statistical.indicator" type="StatisticalIndicator"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "400"
@@ -56,20 +55,17 @@ class GoodsNomenclatureOriginParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="goods.nomenclature.origin"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="goods.nomenclature.sid" type="SID"/>
-    <xs:element name="derived.goods.nomenclature.item.id"
-    type="GoodsNomenclatureItemId"/>
-    <xs:element name="derived.productline.suffix" type="ProductLineSuffix"/>
-    <xs:element name="goods.nomenclature.item.id"
-    type="GoodsNomenclatureItemId"/>
-    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="goods.nomenclature.origin" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="goods.nomenclature.sid" type="SID"/>
+                    <xs:element name="derived.goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                    <xs:element name="derived.productline.suffix" type="ProductLineSuffix"/>
+                    <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "400"
@@ -97,20 +93,17 @@ class GoodsNomenclatureSuccessorParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="goods.nomenclature.successor"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="goods.nomenclature.sid" type="SID"/>
-    <xs:element name="absorbed.goods.nomenclature.item.id"
-    type="GoodsNomenclatureItemId"/>
-    <xs:element name="absorbed.productline.suffix" type="ProductLineSuffix"/>
-    <xs:element name="goods.nomenclature.item.id"
-    type="GoodsNomenclatureItemId"/>
-    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="goods.nomenclature.successor" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="goods.nomenclature.sid" type="SID"/>
+                    <xs:element name="absorbed.goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                    <xs:element name="absorbed.productline.suffix" type="ProductLineSuffix"/>
+                    <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "400"
@@ -138,20 +131,18 @@ class GoodsNomenclatureDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="goods.nomenclature.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="goods.nomenclature.description.period.sid" type="SID"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="goods.nomenclature.sid" type="SID"/>
-    <xs:element name="goods.nomenclature.item.id"
-    type="GoodsNomenclatureItemId"/>
-    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
-    <xs:element name="description" type="LongDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="goods.nomenclature.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="goods.nomenclature.description.period.sid" type="SID"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="goods.nomenclature.sid" type="SID"/>
+                    <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
+                    <xs:element name="description" type="LongDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "400"
@@ -182,19 +173,17 @@ class GoodsNomenclatureDescriptionPeriodParser(
 
     .. code-block:: XML
 
-    <xs:element name="goods.nomenclature.description.period"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="goods.nomenclature.description.period.sid" type="SID"/>
-    <xs:element name="goods.nomenclature.sid" type="SID"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="goods.nomenclature.item.id"
-    type="GoodsNomenclatureItemId"/>
-    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="goods.nomenclature.description.period" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="goods.nomenclature.description.period.sid" type="SID"/>
+                    <xs:element name="goods.nomenclature.sid" type="SID"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "400"
@@ -220,20 +209,18 @@ class GoodsNomenclatureIndentParser(ValidityStartMixin, Writable, ElementParser)
 
     .. code-block:: XML
 
-    <xs:element name="goods.nomenclature.indents"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="goods.nomenclature.indent.sid" type="SID"/>
-    <xs:element name="goods.nomenclature.sid" type="SID"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="number.indents" type="NumberOf"/>
-    <xs:element name="goods.nomenclature.item.id"
-    type="GoodsNomenclatureItemId"/>
-    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="goods.nomenclature.indents" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="goods.nomenclature.indent.sid" type="SID"/>
+                    <xs:element name="goods.nomenclature.sid" type="SID"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="number.indents" type="NumberOf"/>
+                    <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "400"
@@ -262,21 +249,19 @@ class FootnoteAssociationGoodsNomenclatureParser(
 
     .. code-block:: XML
 
-    <xs:element name="footnote.association.goods.nomenclature"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="goods.nomenclature.sid" type="SID"/>
-    <xs:element name="footnote.type" type="FootnoteTypeId"/>
-    <xs:element name="footnote.id" type="FootnoteId"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    <xs:element name="goods.nomenclature.item.id"
-    type="GoodsNomenclatureItemId"/>
-    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="footnote.association.goods.nomenclature" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="goods.nomenclature.sid" type="SID"/>
+                    <xs:element name="footnote.type" type="FootnoteTypeId"/>
+                    <xs:element name="footnote.id" type="FootnoteId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId"/>
+                    <xs:element name="productline.suffix" type="ProductLineSuffix"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "400"

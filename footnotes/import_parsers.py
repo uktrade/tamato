@@ -20,16 +20,16 @@ class FootnoteTypeParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="footnote.type" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    <xs:element name="application.code" type="ApplicationCodeFootnote"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="footnote.type" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="application.code" type="ApplicationCodeFootnote"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "100"
@@ -50,16 +50,15 @@ class FootnoteTypeDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="footnote.type.description"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="footnote.type.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="description" type="ShortDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "100"
@@ -79,16 +78,16 @@ class FootnoteParser(ValidityMixin, Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="footnote" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
-    <xs:element name="footnote.id" type="FootnoteId"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="footnote" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
+                    <xs:element name="footnote.id" type="FootnoteId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "200"
@@ -109,17 +108,17 @@ class FootnoteDescriptionParser(Writable, ElementParser):
 
     .. code-block:: XML
 
-    <xs:element name="footnote.description" substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="footnote.description.period.sid" type="SID"/>
-    <xs:element name="language.id" type="LanguageId"/>
-    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
-    <xs:element name="footnote.id" type="FootnoteId"/>
-    <xs:element name="description" type="LongDescription" minOccurs="0"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="footnote.description" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="footnote.description.period.sid" type="SID"/>
+                    <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
+                    <xs:element name="footnote.id" type="FootnoteId"/>
+                    <xs:element name="description" type="LongDescription" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "200"
@@ -143,17 +142,16 @@ class FootnoteDescriptionPeriodParser(ValidityStartMixin, Writable, ElementParse
 
     .. code-block:: XML
 
-    <xs:element name="footnote.description.period"
-    substitutionGroup="abstract.record">
-    <xs:complexType>
-    <xs:sequence>
-    <xs:element name="footnote.description.period.sid" type="SID"/>
-    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
-    <xs:element name="footnote.id" type="FootnoteId"/>
-    <xs:element name="validity.start.date" type="Date"/>
-    </xs:sequence>
-    </xs:complexType>
-    </xs:element>
+        <xs:element name="footnote.description.period" substitutionGroup="abstract.record">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="footnote.description.period.sid" type="SID"/>
+                    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
+                    <xs:element name="footnote.id" type="FootnoteId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
     """
 
     record_code = "200"
