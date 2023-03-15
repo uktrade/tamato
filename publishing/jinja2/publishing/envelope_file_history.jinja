@@ -25,12 +25,25 @@
 
 {% block content %}
 
+{%- macro envelope_version_link(envelope_id, version_id) -%}
+  <a
+    class="govuk-link"
+    href="{{ url('publishing:download-envelope-version-ui-download', kwargs={'envelope_id': envelope_id, 'version_id': version_id}) }}"
+    target="_blank"
+  >download</a>
+{%- endmacro -%}
+
 {%- set table_rows = [] -%}
-{% for version in list(envelope.get_xml_file_versions()) %}
+{% for version in envelope.get_xml_file_versions() %}
+  {%- set file_size = 0 %}
+  {% if version.size %}
+    {%- set file_size = version.size|filesizeformat(true) %}
+  {% endif %}
+
   {{ table_rows.append([
-      {"text": version.size|filesizeformat(true)},
+      {"text": file_size},
       {"text": "{:%d %b %Y, %H:%M}".format(version.last_modified)},
-      {"text": version.id},
+      {"html": envelope_version_link(envelope.id, version.id)},
   ]) or "" }}
 {% endfor %}
 
@@ -45,7 +58,7 @@
       "head": [
         {"text": "File size"},
         {"text": "Created"},
-        {"text": "Download"},
+        {"text": "Action"},
       ],
       "rows": table_rows
     }) }}

@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 import boto3
+import botocore
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db.models import BooleanField
@@ -125,13 +126,16 @@ class EnvelopeQuerySet(QuerySet):
             packagedworkbaskets__processing_state=ProcessingState.CURRENTLY_PROCESSING,
         )
 
-    def processed(self):
+    def all_latest(self):
         return self.filter(
             Q(
-                packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+                packagedworkbaskets__processing_state=ProcessingState.AWAITING_PROCESSING,
             )
             | Q(
-                packagedworkbaskets__processing_state=ProcessingState.FAILED_PROCESSING,
+                packagedworkbaskets__processing_state=ProcessingState.CURRENTLY_PROCESSING,
+            )
+            | Q(
+                packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
             ),
         )
 
@@ -161,6 +165,21 @@ class EnvelopeId(CharField):
         del kwargs["max_length"]
         del kwargs["validators"]
         return name, path, args, kwargs
+
+
+def is_delete_marker(s3_object_version):
+    """Return True if an object version is a delete marker (i.e. has been
+    deleted), False otherwise."""
+    try:
+        # Use the more efficient head() rather than get().
+        s3_object_version.head()
+        return False
+    except botocore.exceptions.ClientError as e:
+        if "x-amz-delete-marker" in e.response["ResponseMetadata"]["HTTPHeaders"]:
+            return True
+        elif "404" == e.response["Error"]["Code"]:
+            # An older version of the key but not a DeleteMarker
+            return False
 
 
 class Envelope(TimestampedMixin):
@@ -240,13 +259,15 @@ class Envelope(TimestampedMixin):
         self.xml_file.delete()
         self.deleted = True
 
-    def get_xml_file_versions(self):
-        """Return an instance of
-        boto3.resources.collection.s3.Bucket.object_versionsCollection, an
-        iterable that can be used to retrieve instances of
-        boto3.resources.factory.s3.ObjectVersion, each representing a version of
-        the S3 object that stores the instance's XML envelope file,
-        `xml_file`."""
+    def get_xml_file_versions(self, include_deleted=False):
+        """
+        Return a list of boto3.resources.factory.s3.ObjectVersion instances,
+        each representing a version of the S3 object that stores the instance's
+        XML envelope file, `xml_file`.
+
+        If `include_deleted` is True, then versions that have delete markers
+        (i.e. have been deleted) will be included in the returned list.
+        """
         s3 = boto3.resource(
             "s3",
             aws_access_key_id=settings.S3_ACCESS_KEY_ID,
@@ -254,7 +275,16 @@ class Envelope(TimestampedMixin):
             endpoint_url=settings.S3_ENDPOINT_URL,
         )
         bucket = s3.Bucket(settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME)
-        return bucket.object_versions.filter(Prefix=f"{self.xml_file}")
+        versions = bucket.object_versions.filter(Prefix=f"{self.xml_file}")
+
+        if include_deleted:
+            return list(versions)
+        else:
+            non_deleted_versions = []
+            for version in versions:
+                if not is_delete_marker(version):
+                    non_deleted_versions.append(version)
+            return non_deleted_versions
 
     @property
     def xml_file_name(self):

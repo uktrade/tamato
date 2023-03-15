@@ -8,13 +8,13 @@
   {%- set published_envelope_download_link -%}
     <a
       class="govuk-link download-envelope"
-      href="{{ url('publishing:download-published-envelope-ui-download', kwargs={'pk': envelope.pk}) }}"
+      href="{{ url('publishing:download-envelope-ui-download', kwargs={'pk': envelope.pk}) }}"
       target="_blank"
     >{{ envelope.envelope_id }}</a>
   {%- endset -%}
 
   {%- set envelope_file_history_link -%}
-    {{ list(envelope.get_xml_file_versions())|length }}
+    {{ envelope.get_xml_file_versions()|length }}
     (<a
       class="govuk-link"
       href="{{ url('publishing:envelope-file-history-ui-detail', kwargs={'pk': envelope.pk}) }}"
