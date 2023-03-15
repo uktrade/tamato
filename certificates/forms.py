@@ -14,6 +14,7 @@ from common.forms import DescriptionHelpBox
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.util import get_next_id
+from common.validators import AlphanumericValidator
 from workbaskets.models import WorkBasket
 
 
@@ -25,6 +26,7 @@ class CertificateCreateBaseForm(ValidityPeriodForm):
         help_text="If another government department has supplied you with a 3 letter identifer, enter it in here.",
         widget=forms.TextInput,
         required=False,
+        validation=[AlphanumericValidator],
     )
 
     certificate_type = forms.ModelChoiceField(
