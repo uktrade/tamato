@@ -52,7 +52,7 @@ class WorkBasketFilter(TamatoFilter):
         "reason",
         "title",
     )
-    clear_url = reverse_lazy("workbaskets:workbasket-ui-list")
+    clear_url = reverse_lazy("workbaskets:workbasket-ui-list-all")
 
     class Meta:
         model = WorkBasket
