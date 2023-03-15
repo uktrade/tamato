@@ -349,6 +349,37 @@ def test_workbasket_list_all_view(valid_user_client):
     assert wb.reason in row_text
 
 
+@pytest.mark.parametrize(
+    ("status", "search_term"),
+    [
+        (WorkflowStatus.ARCHIVED, "ARCHIVED"),
+        (WorkflowStatus.EDITING, "EDITING"),
+        (WorkflowStatus.QUEUED, "QUEUED"),
+        (WorkflowStatus.PUBLISHED, "PUBLISHED"),
+        (WorkflowStatus.ERRORED, "ERRORED"),
+    ],
+)
+def test_workbasket_list_all_view_search_filters(
+    valid_user_client,
+    status,
+    search_term,
+):
+    wb = factories.WorkBasketFactory.create(status=status)
+
+    list_url = reverse("workbaskets:workbasket-ui-list-all")
+    url = f"{list_url}?search=&status={search_term}"
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    rows = soup.select("table > tbody > tr")
+    row_text = [td.text for td in rows[0]]
+    assert len(rows) == 1
+    assert wb.get_status_display() in row_text
+
+
 def test_workbasket_measures_review(valid_user_client):
     """Test that valid user receives a 200 on GET for
     ReviewMeasuresWorkbasketView and correct measures display in html table."""
