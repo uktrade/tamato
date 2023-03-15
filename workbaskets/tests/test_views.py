@@ -228,16 +228,6 @@ def test_select_workbasket_page_200(valid_user_client):
     assert not set(statuses).difference(valid_statuses)
 
 
-def test_select_workbasket_without_permission(client):
-    """Tests that SelectWorkbasketView returns 403 to user without
-    change_workbasket permission."""
-    user = factories.UserFactory.create()
-    client.force_login(user)
-    response = client.get(reverse("workbaskets:workbasket-ui-list"))
-
-    assert response.status_code == 403
-
-
 def test_select_workbasket_with_errored_status(valid_user_client):
     """Test that the workbasket is transitioned correctly to editing if it is
     selected for editing while in ERRORED status."""
@@ -295,13 +285,15 @@ def test_delete_changes_confirm_200(valid_user_client, session_workbasket):
 @pytest.mark.parametrize(
     "url_name,",
     (
+        "workbaskets:workbasket-ui-list",
+        "workbaskets:workbasket-ui-list-all",
         "workbaskets:workbasket-ui-delete-changes",
         "workbaskets:edit-workbasket",
     ),
 )
 def test_workbasket_views_without_permission(url_name, client, session_workbasket):
-    """Tests that delete and edit endpoints return 403s to user without
-    permissions."""
+    """Tests that select, list-all, delete, and edit workbasket view endpoints
+    return 403 to users without change_workbasket permission."""
     url = reverse(
         url_name,
     )
@@ -820,3 +812,15 @@ def test_workbasket_changes_view_changes(setup, valid_user_client, session_workb
 
     version_control_tabs = soup.select('a[href="#version-control"]')
     assert len(version_control_tabs) == 2
+
+
+def test_workbasket_changes_view_without_permission(client, session_workbasket):
+    url = reverse(
+        "workbaskets:workbasket-ui-changes",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(url)
+
+    assert response.status_code == 403
