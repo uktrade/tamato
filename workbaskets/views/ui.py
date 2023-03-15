@@ -437,11 +437,12 @@ class WorkBasketList(PermissionRequiredMixin, WithPaginationListView):
         return WorkBasket.objects.order_by("-updated_at")
 
 
-class WorkBasketChanges(DetailView):
+class WorkBasketChanges(PermissionRequiredMixin, DetailView):
     """UI endpoint for viewing a specified workbasket."""
 
     model = WorkBasket
     template_name = "workbaskets/detail.jinja"
+    permission_required = "workbaskets.change_workbasket"
     paginate_by = 50
 
     def get_context_data(self, **kwargs):
