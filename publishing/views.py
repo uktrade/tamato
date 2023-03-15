@@ -7,15 +7,19 @@ from django.db.transaction import atomic
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic import DetailView
 from django.views.generic import ListView
 from django_fsm import TransitionNotAllowed
 
+from common.filters import TamatoFilter
 from common.util import get_mime_type
 from common.views import WithPaginationListMixin
+from common.views import WithPaginationListView
 from publishing.forms import LoadingReportForm
 from publishing.forms import PackagedWorkBasketCreateForm
+from publishing.models import Envelope
 from publishing.models import LoadingReport
 from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
@@ -428,3 +432,50 @@ class PackagedWorkbasketConfirmCreate(DetailView):
         return PackagedWorkBasket.objects.filter(
             id=self.kwargs.get("pk"),
         )
+
+
+class EnvelopeListFilter(TamatoFilter):
+    search_fields = ("envelope_id",)
+    clear_url = reverse_lazy("publishing:envelope-list-ui-list")
+
+    class Meta:
+        model = Envelope
+        fields = ["search"]
+
+
+class EnvelopeListView(
+    # PermissionRequiredMixin,
+    WithPaginationListView,
+):
+    """UI view used to view processed (accepted / published and rejected)
+    envelopes."""
+
+    model = Envelope
+    template_name = "publishing/envelope_list.jinja"
+    # permission_required = "publishing.consume_from_packaging_queue"
+    filterset_class = EnvelopeListFilter
+    search_fields = [
+        "title",
+        "reason",
+    ]
+
+    def get_queryset(self):
+        return Envelope.objects.processed().reverse()
+
+
+class EnvelopeFileHistoryView(
+    # PermissionRequiredMixin,
+    DetailView,
+):
+    """UI view used to view the XML file history of an envelope."""
+
+    template_name = "publishing/envelope_file_history.jinja"
+    # permission_required = "publishing.manage_packaging_queue"
+
+    def get_queryset(self):
+        return Envelope.objects.processed()
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data["xml_file_versions"] = self.get_object().get_xml_file_versions()
+        return data

@@ -68,6 +68,16 @@ ui_patterns = [
         views.DownloadAdminLoadingReportView.as_view(),
         name="admin-loading-report-ui-download",
     ),
+    path(
+        "envelope-list/",
+        views.EnvelopeListView.as_view(),
+        name="envelope-list-ui-list",
+    ),
+    path(
+        "envelope-file-history/<pk>/",
+        views.EnvelopeFileHistoryView.as_view(),
+        name="envelope-file-history-ui-detail",
+    ),
 ]
 
 

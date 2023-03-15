@@ -1,0 +1,61 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{% set page_title = "Envelope " ~ object.xml_file_name ~ " history"%}
+
+
+{% block breadcrumb %}
+<div class="govuk-breadcrumbs">
+  <ol class="govuk-breadcrumbs__list">
+    <li class="govuk-breadcrumbs__list-item">
+      <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
+    </li>
+    <li class="govuk-breadcrumbs__list-item">
+      <a class="govuk-breadcrumbs__link" href="{{ url('publishing:envelope-list-ui-list') }}">Find processed envelopes</a>
+    </li>
+    <li class="govuk-breadcrumbs__list-item">
+      {{ page_title }}
+    </li>
+  </ol>
+</div>
+{% endblock %}
+
+
+{%- set table_rows = [] -%}
+{#
+{% for version in envelope.xml_file_versions %}
+  {{ table_rows.append([
+      {"text": envelope.envelope_id},
+      {"text": envelope.packagedworkbaskets.last().workbasket.title},
+      {
+      "html": "<span title=\"{:%d %b %y, %H:%M}\">{:%d %b %y, %H:%M}</span>".format(
+          envelope.created_at,
+          envelope.created_at,
+      )
+      },
+  ]) or "" }}
+{% endfor %}
+#}
+
+{% block content %}
+<h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+<div class="govuk-grid-row govuk-!-margin-bottom-6">
+  <div class="govuk-grid-column-full">
+
+    <h2 class="govuk-heading-l">Details</h2>
+
+    {{ govukTable({
+      "head": [
+        {"text": "Envelope ID"},
+        {"text": "Workbasket title"},
+        {"text": "Created"},
+      ],
+      "rows": table_rows
+    }) }}
+
+  </div>
+</div>
+{% endblock %}

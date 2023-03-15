@@ -4,6 +4,7 @@ import tempfile
 from datetime import datetime
 from typing import Optional
 
+import boto3
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db.models import BooleanField
@@ -124,6 +125,16 @@ class EnvelopeQuerySet(QuerySet):
             packagedworkbaskets__processing_state=ProcessingState.CURRENTLY_PROCESSING,
         )
 
+    def processed(self):
+        return self.filter(
+            Q(
+                packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+            )
+            | Q(
+                packagedworkbaskets__processing_state=ProcessingState.FAILED_PROCESSING,
+            ),
+        )
+
     def successfully_processed(self):
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
@@ -229,6 +240,26 @@ class Envelope(TimestampedMixin):
         self.xml_file.delete()
         self.deleted = True
 
+    def get_xml_file_versions(self):
+        """Return an instance of
+        boto3.resources.collection.s3.Bucket.object_versionsCollection, an
+        iterable that can be used to retrieve instances of
+        boto3.resources.factory.s3.ObjectVersion, each representing a version of
+        the S3 object that stores the instance's XML envelope file,
+        `xml_file`."""
+        s3 = boto3.resource(
+            "s3",
+            aws_access_key_id=settings.S3_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY,
+            endpoint_url=settings.S3_ENDPOINT_URL,
+        )
+        bucket = s3.Bucket(settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME)
+        return bucket.object_versions.filter(Prefix=f"{self.xml_file}")
+
+    @property
+    def xml_file_name(self):
+        return f"DIT{str(self.envelope_id)}.xml"
+
     @atomic
     def upload_envelope(
         self,
@@ -241,8 +272,6 @@ class Envelope(TimestampedMixin):
         Side effects on success: Create Xml file and upload envelope XML to an
         S3 object.
         """
-
-        filename = f"DIT{str(self.envelope_id)}.xml"
 
         # transactions: will be serialized, then added to an envelope for upload.
         workbaskets = WorkBasket.objects.filter(pk=workbasket.pk)
@@ -301,10 +330,10 @@ class Envelope(TimestampedMixin):
 
                 envelope_file.seek(0, os.SEEK_SET)
 
-                self.xml_file.save(filename, content_file)
+                self.xml_file.save(self.xml_file_name, content_file)
 
                 logger.info("Workbasket saved to CDS S3 bucket")
-                logger.debug("Uploaded: %s", filename)
+                logger.debug("Uploaded: %s", self.xml_file_name)
 
     def __repr__(self):
         return f'<Envelope: envelope_id="{self.envelope_id}">'
