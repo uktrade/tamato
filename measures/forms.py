@@ -1145,6 +1145,21 @@ class MeasureFootnotesForm(forms.Form):
 class MeasureFootnotesFormSet(FormSet):
     form = MeasureFootnotesForm
 
+    def clean(self):
+        """
+        Hook for formset-wide cleaning to check if the same footnote has been
+        added more than once.
+
+        If so, raises a ValidationError that will be accessibile via
+        formset.non_form_errors()
+        """
+        cleaned_data = super().cleaned_data
+        footnotes = [d["footnote"] for d in cleaned_data if "footnote" in d]
+        num_unique = len(set(footnotes))
+        if len(footnotes) != num_unique:
+            raise ValidationError("The same footnote cannot be added more than once")
+        return cleaned_data
+
 
 class MeasureUpdateFootnotesForm(MeasureFootnotesForm):
     """

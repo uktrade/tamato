@@ -1,34 +1,35 @@
 import { autoCompleteElement } from "./autocomplete";
 import { setupClickHandler } from "./copyDuties";
 
-
 const addNewForm = (event) => {
     event.preventDefault();
-  
-    let addNewButton = document.querySelector("#add-new");
-    let buttonGroup = document.querySelector(".govuk-button-group");
   
     let numForms = document.querySelectorAll("fieldset").length;
     let fieldset  = document.querySelector("fieldset");
     let formset = fieldset.parentNode;
     let newForm = fieldset.cloneNode(true);
-    let formFields = newForm.querySelectorAll("input");
     
-    newForm.innerHTML = newForm.innerHTML.replaceAll("formset-0", "formset-" + numForms);
+    newForm.innerHTML = newForm.innerHTML.replaceAll("-0-", "-" + numForms + "-");
     newForm.querySelector(".autocomplete").removeAttribute("data-original-value");
+
+    let formFields = newForm.querySelectorAll("input");
     for (let field of formFields.values()) {
-      field.value = null;
+      field.value = "";
     }
+
     newForm.querySelector(".autocomplete__wrapper").remove();
     autoCompleteElement(newForm.querySelector(".autocomplete"));
   
+    let buttonGroup = document.querySelector(".govuk-button-group");
     formset.insertBefore(newForm, buttonGroup);
-    addNewButton.scrollIntoView(false);
 
+    let addNewButton = document.querySelector("#add-new");
+    addNewButton.scrollIntoView(false);
+    
     let dutiesInput = newForm.querySelector("input.duties");
     let copyButton = newForm.querySelector("button.tap-copy-down");
     setupClickHandler(dutiesInput, copyButton);
-
+  
     let totalForms = document.querySelector('[id$="-TOTAL_FORMS"]');
     let numTotalForms = Number(totalForms.value);
     totalForms.value = numTotalForms + 1;
@@ -42,10 +43,10 @@ const addNewForm = (event) => {
 
 const initAddNewEnhancement = () => {
     const btn = document.querySelector("#add-new");
+  
     if (btn) {
-        btn.addEventListener("click", addNewForm);
+      btn.addEventListener("click", addNewForm);
     }
   }
 
-
-export { initAddNewEnhancement }
+  export { initAddNewEnhancement }
