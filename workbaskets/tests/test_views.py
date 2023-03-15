@@ -773,7 +773,11 @@ def test_violation_list_page_sorting_ignores_invalid_params(
     assert response.status_code == 200
 
 
-def test_workbasket_changes_view_details(setup, valid_user_client, session_workbasket):
+def test_workbasket_changes_view_workbasket_details(
+    setup,
+    valid_user_client,
+    session_workbasket,
+):
     url = reverse(
         "workbaskets:workbasket-ui-changes",
         kwargs={"pk": session_workbasket.pk},
@@ -796,7 +800,11 @@ def test_workbasket_changes_view_details(setup, valid_user_client, session_workb
     assert session_workbasket.get_status_display() in row_text
 
 
-def test_workbasket_changes_view_changes(setup, valid_user_client, session_workbasket):
+def test_workbasket_changes_view_workbasket_changes(
+    setup,
+    valid_user_client,
+    session_workbasket,
+):
     url = reverse(
         "workbaskets:workbasket-ui-changes",
         kwargs={"pk": session_workbasket.pk},
