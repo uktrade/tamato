@@ -5,6 +5,7 @@ require.context('govuk-frontend/govuk/assets');
 import showHideCheckboxes from './showHideCheckboxes';
 import { initAutocomplete } from './autocomplete';
 import { initAddNewEnhancement } from './addNewForm';
+import { initCopyToNextDuties } from './copyDuties';
 import initStepNav from './step-by-step-nav';
 import { initAll } from 'govuk-frontend';
 import initCheckboxes from './checkboxes';
@@ -15,6 +16,7 @@ showHideCheckboxes();
 // to the server.
 initAddNewEnhancement();
 initAutocomplete(false);
+initCopyToNextDuties();
 initStepNav();
 initAll();
 initCheckboxes();

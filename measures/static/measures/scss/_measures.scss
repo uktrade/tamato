@@ -18,7 +18,8 @@
                 margin-bottom: 0 !important;
             }
             .autocomplete,
-            input {
+            > input,
+            > .tap-copy-down-wrapper {
                 margin-top: auto;
             }
         }
@@ -26,4 +27,19 @@
     .tap-column:nth-child(2) {
         margin-left: 15px;
     }
+}
+
+.tap-copy-down {
+    padding: 10px;
+    background-image: url("/common/static/common/images/copy-down-arrow.svg");
+    background-repeat: no-repeat;
+    background-origin: content-box;
+    background-color: #f3f2f1;
+    box-shadow: inset 0 -2px 0 #929191;
+    border: 0;
+    cursor: pointer;
+}
+.tap-copy-down:hover {
+    color: #0b0c0c;
+    background-color: #dbdad9;
 }
