@@ -781,7 +781,7 @@ def test_violation_list_page_sorting_ignores_invalid_params(
     assert response.status_code == 200
 
 
-def test_workbasket_changes_view(setup, valid_user_client, session_workbasket):
+def test_workbasket_changes_view_details(setup, valid_user_client, session_workbasket):
     url = reverse(
         "workbaskets:workbasket-ui-changes",
         kwargs={"pk": session_workbasket.pk},
@@ -791,5 +791,32 @@ def test_workbasket_changes_view(setup, valid_user_client, session_workbasket):
     assert response.status_code == 200
 
     soup = BeautifulSoup(str(response.content), "html.parser")
+
+    table = soup.select("table")[0]
+    row_text = [row.text for row in table.findChildren("td")]
+
+    assert str(session_workbasket.id) in row_text
+    assert session_workbasket.title in row_text
+    assert session_workbasket.reason in row_text
+    assert str(session_workbasket.tracked_models.count()) in row_text
+    assert session_workbasket.created_at.strftime("%d %b %y %H:%M") in row_text
+    assert session_workbasket.updated_at.strftime("%d %b %y %H:%M") in row_text
+    assert session_workbasket.get_status_display() in row_text
+
+
+def test_workbasket_changes_view_changes(setup, valid_user_client, session_workbasket):
+    url = reverse(
+        "workbaskets:workbasket-ui-changes",
+        kwargs={"pk": session_workbasket.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    num_changes = len(soup.select(".govuk-accordion__section"))
+    assert num_changes == session_workbasket.tracked_models.count()
+
     version_control_tabs = soup.select('a[href="#version-control"]')
     assert len(version_control_tabs) == 2
