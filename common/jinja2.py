@@ -127,6 +127,7 @@ def environment(**kwargs):
             "env": os.environ.get("ENV", "dev"),
             "get_messages": messages.get_messages,
             "get_current_workbasket": WorkBasket.current,
+            "list": list,
             "localtime": template_localtime,
             "pluralize": pluralize,
             "render_bundle": render_bundle,
