@@ -14,6 +14,7 @@ from common.forms import DescriptionForm
 from common.forms import DescriptionHelpBox
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
+from common.validators import NumericValidator
 from workbaskets.models import WorkBasket
 
 
@@ -100,6 +101,7 @@ class AdditionalCodeCreateBaseForm(ValidityPeriodForm):
             "Must be 3 numeric characters and form a unique combination with "
             "the additional code type"
         ),
+        validators=[NumericValidator],
     )
 
     def __init__(self, *args, **kwargs):
