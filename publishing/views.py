@@ -11,6 +11,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic import DetailView
 from django.views.generic import ListView
+from django.views.generic.detail import BaseDetailView
 from django_fsm import TransitionNotAllowed
 
 from common.filters import TamatoFilter
@@ -197,15 +198,11 @@ class EnvelopeQueueView(
         return request.build_absolute_uri()
 
 
-class DownloadEnvelopeView(DetailView):
-    """View used to download an XML envelope."""
+class DownloadEnvelopeMixin:
+    def download_response(self, envelope):
+        """Returns a Respond object with associated payload containing the
+        contents of `envelope.xml_file`."""
 
-    model = PackagedWorkBasket
-
-    def get(self, request, *args, **kwargs):
-        packaged_workbasket = self.get_object()
-
-        envelope = packaged_workbasket.envelope
         file_content = envelope.xml_file.read()
         file_name = f"DIT{envelope.envelope_id}.xml"
         response = HttpResponse(file_content)
@@ -215,7 +212,20 @@ class DownloadEnvelopeView(DetailView):
         return response
 
 
-class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeView):
+class DownloadEnvelopeViewBase(DownloadEnvelopeMixin, DetailView):
+    """View used to download an XML envelope."""
+
+    model = PackagedWorkBasket
+
+    def get(self, request, *args, **kwargs):
+        packaged_workbasket = self.get_object()
+        return self.download_response(packaged_workbasket.envelope)
+
+
+class DownloadQueuedEnvelopeView(
+    PermissionRequiredMixin,
+    DownloadEnvelopeViewBase,
+):
     permission_required = "publishing.consume_from_packaging_queue"
 
     def get(self, request, *args, **kwargs):
@@ -229,7 +239,7 @@ class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeView):
         return super().get(request, *args, **kwargs)
 
 
-class DownloadAdminEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeView):
+class DownloadAdminEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeViewBase):
     permission_required = "publishing.manage_packaging_queue"
 
     def get(self, request, *args, **kwargs):
@@ -450,9 +460,8 @@ class EnvelopeListView(
     """UI view used to view processed (accepted / published and rejected)
     envelopes."""
 
-    model = Envelope
-    template_name = "publishing/envelope_list.jinja"
     # permission_required = "publishing.consume_from_packaging_queue"
+    template_name = "publishing/envelope_list.jinja"
     filterset_class = EnvelopeListFilter
     search_fields = [
         "title",
@@ -469,8 +478,8 @@ class EnvelopeFileHistoryView(
 ):
     """UI view used to view the XML file history of an envelope."""
 
-    template_name = "publishing/envelope_file_history.jinja"
     # permission_required = "publishing.manage_packaging_queue"
+    template_name = "publishing/envelope_file_history.jinja"
 
     def get_queryset(self):
         return Envelope.objects.processed()
@@ -479,3 +488,18 @@ class EnvelopeFileHistoryView(
         data = super().get_context_data(**kwargs)
         data["xml_file_versions"] = self.get_object().get_xml_file_versions()
         return data
+
+
+class DownloadPublishedEnvelopeView(
+    DownloadEnvelopeMixin,
+    # PermissionRequiredMixin,
+    BaseDetailView,
+):
+    # permission_required = "publishing.manage_packaging_queue"
+
+    def get_queryset(self):
+        # Only permit downloading envelopes that have been processed.
+        return Envelope.objects.processed()
+
+    def get(self, request, *args, **kwargs):
+        return self.download_response(self.get_object())
