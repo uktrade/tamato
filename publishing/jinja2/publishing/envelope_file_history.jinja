@@ -23,23 +23,19 @@
 {% endblock %}
 
 
+{% block content %}
+
 {%- set table_rows = [] -%}
-{#
-{% for version in envelope.xml_file_versions %}
+{% for version in list(envelope.get_xml_file_versions()) %}
   {{ table_rows.append([
-      {"text": envelope.envelope_id},
-      {"text": envelope.packagedworkbaskets.last().workbasket.title},
-      {
-      "html": "<span title=\"{:%d %b %y, %H:%M}\">{:%d %b %y, %H:%M}</span>".format(
-          envelope.created_at,
-          envelope.created_at,
-      )
-      },
+      {"text": version.size|filesizeformat(true)},
+      {"text": "{:%d %b %Y, %H:%M}".format(version.last_modified)},
+      {"text": version.id},
   ]) or "" }}
 {% endfor %}
+{#
 #}
 
-{% block content %}
 <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
 <div class="govuk-grid-row govuk-!-margin-bottom-6">
@@ -49,9 +45,9 @@
 
     {{ govukTable({
       "head": [
-        {"text": "Envelope ID"},
-        {"text": "Workbasket title"},
+        {"text": "File size"},
         {"text": "Created"},
+        {"text": "Download"},
       ],
       "rows": table_rows
     }) }}
