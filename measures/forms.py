@@ -1061,11 +1061,14 @@ class MeasureCommodityAndDutiesForm(forms.Form):
             Fieldset(
                 Div(
                     Div(
-                        Field.text("commodity"),
+                        Field("commodity"),
                         css_class="tap-column",
                     ),
                     Div(
-                        Field.text("duties"),
+                        Field(
+                            "duties",
+                            css_class="duties",
+                        ),
                         css_class="tap-column",
                     ),
                     css_class="tap-row",
