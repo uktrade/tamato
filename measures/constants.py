@@ -8,3 +8,4 @@ class MeasureEditSteps(models.TextChoices):
     END_DATE = ("end_date", "End date")
     QUOTA_ORDER_NUMBER = ("quota_order_number", "Quota order number")
     REGULATION = ("regulation", "Regulation")
+    DUTIES = ("duties", "Duties")
