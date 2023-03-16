@@ -180,6 +180,8 @@ def is_delete_marker(s3_object_version):
         elif "404" == e.response["Error"]["Code"]:
             # An older version of the key but not a DeleteMarker
             return False
+        else:
+            return False
 
 
 class Envelope(TimestampedMixin):
