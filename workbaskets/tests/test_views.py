@@ -228,16 +228,6 @@ def test_select_workbasket_page_200(valid_user_client):
     assert not set(statuses).difference(valid_statuses)
 
 
-def test_select_workbasket_without_permission(client):
-    """Tests that SelectWorkbasketView returns 403 to user without
-    change_workbasket permission."""
-    user = factories.UserFactory.create()
-    client.force_login(user)
-    response = client.get(reverse("workbaskets:workbasket-ui-list"))
-
-    assert response.status_code == 403
-
-
 def test_select_workbasket_with_errored_status(valid_user_client):
     """Test that the workbasket is transitioned correctly to editing if it is
     selected for editing while in ERRORED status."""
@@ -295,13 +285,15 @@ def test_delete_changes_confirm_200(valid_user_client, session_workbasket):
 @pytest.mark.parametrize(
     "url_name,",
     (
+        "workbaskets:workbasket-ui-list",
+        "workbaskets:workbasket-ui-list-all",
         "workbaskets:workbasket-ui-delete-changes",
         "workbaskets:edit-workbasket",
     ),
 )
 def test_workbasket_views_without_permission(url_name, client, session_workbasket):
-    """Tests that delete and edit endpoints return 403s to user without
-    permissions."""
+    """Tests that select, list-all, delete, and edit workbasket view endpoints
+    return 403 to users without change_workbasket permission."""
     url = reverse(
         url_name,
     )
@@ -347,6 +339,37 @@ def test_workbasket_list_all_view(valid_user_client):
     assert wb.created_at.strftime("%d %b %y") in row_text
     assert str(wb.tracked_models.count()) in row_text
     assert wb.reason in row_text
+
+
+@pytest.mark.parametrize(
+    ("status", "search_term"),
+    [
+        (WorkflowStatus.ARCHIVED, "ARCHIVED"),
+        (WorkflowStatus.EDITING, "EDITING"),
+        (WorkflowStatus.QUEUED, "QUEUED"),
+        (WorkflowStatus.PUBLISHED, "PUBLISHED"),
+        (WorkflowStatus.ERRORED, "ERRORED"),
+    ],
+)
+def test_workbasket_list_all_view_search_filters(
+    valid_user_client,
+    status,
+    search_term,
+):
+    wb = factories.WorkBasketFactory.create(status=status)
+
+    list_url = reverse("workbaskets:workbasket-ui-list-all")
+    url = f"{list_url}?search=&status={search_term}"
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    rows = soup.select("table > tbody > tr")
+    row_text = [td.text for td in rows[0]]
+    assert len(rows) == 1
+    assert wb.get_status_display() in row_text
 
 
 def test_workbasket_measures_review(valid_user_client):
@@ -750,7 +773,11 @@ def test_violation_list_page_sorting_ignores_invalid_params(
     assert response.status_code == 200
 
 
-def test_workbasket_changes_view(setup, valid_user_client, session_workbasket):
+def test_workbasket_changes_view_workbasket_details(
+    setup,
+    valid_user_client,
+    session_workbasket,
+):
     url = reverse(
         "workbaskets:workbasket-ui-changes",
         kwargs={"pk": session_workbasket.pk},
@@ -760,5 +787,48 @@ def test_workbasket_changes_view(setup, valid_user_client, session_workbasket):
     assert response.status_code == 200
 
     soup = BeautifulSoup(str(response.content), "html.parser")
+
+    table = soup.select("table")[0]
+    row_text = [row.text for row in table.findChildren("td")]
+
+    assert str(session_workbasket.id) in row_text
+    assert session_workbasket.title in row_text
+    assert session_workbasket.reason in row_text
+    assert str(session_workbasket.tracked_models.count()) in row_text
+    assert session_workbasket.created_at.strftime("%d %b %y %H:%M") in row_text
+    assert session_workbasket.updated_at.strftime("%d %b %y %H:%M") in row_text
+    assert session_workbasket.get_status_display() in row_text
+
+
+def test_workbasket_changes_view_workbasket_changes(
+    setup,
+    valid_user_client,
+    session_workbasket,
+):
+    url = reverse(
+        "workbaskets:workbasket-ui-changes",
+        kwargs={"pk": session_workbasket.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    num_changes = len(soup.select(".govuk-accordion__section"))
+    assert num_changes == session_workbasket.tracked_models.count()
+
     version_control_tabs = soup.select('a[href="#version-control"]')
     assert len(version_control_tabs) == 2
+
+
+def test_workbasket_changes_view_without_permission(client, session_workbasket):
+    url = reverse(
+        "workbaskets:workbasket-ui-changes",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(url)
+
+    assert response.status_code == 403

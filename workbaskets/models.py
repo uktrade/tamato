@@ -560,3 +560,7 @@ class WorkBasket(TimestampedMixin):
             )
             .values("transaction__pk"),
         )
+
+    class Meta:
+        verbose_name = "workbasket"
+        verbose_name_plural = "workbaskets"
