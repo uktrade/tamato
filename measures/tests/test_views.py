@@ -1781,11 +1781,9 @@ def test_multiple_measure_edit_only_duties(
             "measure-ui-edit-multiple",
             kwargs={"step": step_data["data"][STEP_KEY]},
         )
-        print(url)
         response = valid_user_client.get(url)
         assert response.status_code == 200
 
-        print(step_data["data"])
         response = valid_user_client.post(url, step_data["data"])
         assert response.status_code == 302
 
