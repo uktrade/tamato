@@ -77,7 +77,7 @@ def test_alphanumeric_validator(value, expected_valid):
         ("Text When There Shouldn't be.", False),
         (1234, False),
         ("<Sketchy_Code></>", False),
-        (".,'()&£$%/@!", True),
+        (".,'()&£$%/@!-", True),
     ],
 )
 def test_symbol_validator(value, expected_valid):

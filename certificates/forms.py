@@ -26,7 +26,7 @@ class CertificateCreateBaseForm(ValidityPeriodForm):
         help_text="If another government department has supplied you with a 3 letter identifer, enter it in here.",
         widget=forms.TextInput,
         required=False,
-        validation=[AlphanumericValidator],
+        validators=[AlphanumericValidator],
     )
 
     certificate_type = forms.ModelChoiceField(
