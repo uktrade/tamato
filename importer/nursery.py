@@ -118,7 +118,6 @@ class TariffObjectNursery:
 
                 # for known possible missing objects, this handles the just in time final check to see if a handler
                 # has a method to correct the missing data
-                issues_to_remove = []
                 for issue in handler.get_import_issues():
                     if hasattr(
                         handler,
@@ -128,11 +127,7 @@ class TariffObjectNursery:
                             handler,
                             "create_missing_" + issue.missing_object_method_name(),
                         )(handler)
-                        issues_to_remove.append(issue)
-
-                handler.import_issues = list(
-                    set(handler.import_issues) - set(issues_to_remove),
-                )
+                        issue.to_warning()
 
                 result = handler.build()
                 if not result:

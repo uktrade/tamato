@@ -15,6 +15,7 @@ from rest_framework.serializers import ModelSerializer
 
 from common.models import TrackedModel
 from common.validators import UpdateType
+from importer.models import ImportErrorStatus
 from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
 from importer.utils import LinksType
@@ -45,21 +46,34 @@ class ImportIssueReportItem:
     def __init__(
         self,
         object_type: str,
+        object_identity_keys: dict,
         related_object_type: str,
         related_object_identity_keys: Iterable[str],
         related_cache_key: str,
         description: str,
+        import_error_status: ImportErrorStatus = ImportErrorStatus.ERROR,
     ):
+        if import_error_status not in ImportErrorStatus.values:
+            raise ValueError(
+                f"The value {import_error_status} for import_error_status is not an option from ImportErrorStatus.values",
+            )
+
         self.object_type = object_type
+        self.object_identity_keys = object_identity_keys
         self.related_object_type = related_object_type
         self.related_object_identity_keys = related_object_identity_keys
         self.related_cache_key = related_cache_key
         self.description = description
+        self.import_error_status = import_error_status
 
     def missing_object_method_name(self):
         """Returns a string representing the related object data type (but
         replaces full stops with underscores for readability."""
         return re.sub("\\.", "_", self.related_object_type)
+
+    def to_warning(self):
+        self.import_error_status = ImportErrorStatus.WARNING
+        return
 
 
 @dataclass
@@ -542,7 +556,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         self.dependency_keys.add(self.key)
         return self.dependency_keys
 
-    def get_import_issues(self):
+    def get_import_issues(self, filter_to_state: ImportErrorStatus.values = None):
         """
         Iterates through missing dependencies and returns a list of missing
         dependencies as a list of ImportIssueReportItems objects.
@@ -551,8 +565,6 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         GoodsNomenclatureDescriptionOPeriod for example.
         """
         if not self.resolve_dependencies():
-            # generic error - can do better to resolve later
-
             dep_missing_details = ""
 
             for key in self._get_missing_dependencies():
@@ -572,6 +584,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
                 self.import_issues.append(
                     ImportIssueReportItem(
                         self.tag,
+                        self.identifying_fields.__dict__,
                         missing_dependency_data.tag,
                         missing_dependency_data.identifying_fields,
                         key,
@@ -579,7 +592,15 @@ class BaseHandler(metaclass=BaseHandlerMeta):
                     ),
                 )
 
-        return self.import_issues
+        result = self.import_issues
+
+        if filter_to_state:
+            result = []
+            for issue in self.import_issues:
+                if issue.import_error_status == filter_to_state:
+                    result.append(issue)
+
+        return result
 
     def _get_dependency_key_data(self, key: str):
         """

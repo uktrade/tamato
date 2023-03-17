@@ -19,6 +19,12 @@ running_statuses = (
 )
 
 
+class ImportErrorStatus(models.IntegerChoices):
+    ERROR = 1, "Error"
+    WARNING = 2, "Warning"
+    INFO = 3, "Information"
+
+
 class ImporterQuerySet(QuerySet):
     def has_dependencies(self) -> QuerySet:
         return self.filter(dependencies__chunks__status__in=running_statuses)
@@ -66,6 +72,28 @@ class ImportBatch(TimestampedMixin):
 
     def __str__(self):
         return f"Batch {self.name}"
+
+
+class ImporterError(TimestampedMixin):
+    """Database storable error detected as part of the import process."""
+
+    batch = models.ForeignKey(
+        ImportBatch,
+        on_delete=models.PROTECT,
+        related_name="errors",
+    )
+
+    status = models.PositiveSmallIntegerField(
+        choices=ImportErrorStatus.choices,
+        default=1,
+    )
+
+    description = models.TextField(blank=False, null=False)
+
+    object_type = models.TextField(blank=False, null=False)
+    object_identity_keys = models.TextField(blank=False, null=False)
+    related_object_type = models.TextField(blank=False, null=False)
+    related_object_identity_keys = models.TextField(blank=False, null=False)
 
 
 class ImporterXMLChunk(TimestampedMixin):
