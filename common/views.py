@@ -1,4 +1,5 @@
 """Common views."""
+import os
 import time
 from datetime import datetime
 from typing import Optional
@@ -163,6 +164,10 @@ class AppInfoView(
             data["celery_healthy"] = True
         except kombu.exceptions.OperationalError as oe:
             data["celery_healthy"] = False
+
+        if self.request.user.is_superuser:
+            data["GIT_BRANCH"] = os.getenv("GIT_BRANCH", "Unavailable")
+            data["GIT_COMMIT"] = os.getenv("GIT_COMMIT", "Unavailable")
 
         return data
 
