@@ -41,6 +41,41 @@ class ImportIssueReportItem:
         return re.sub("\\.", "_", self.related_object_type)
 
 
+class DependencyMappingData:
+    """
+    Data class for temporarily storing dependency data while checking and
+    reporting issues. It is used to populate the issue report if issues are
+    detected.
+
+    params:
+        key: string, required.
+            The string used to identify the expected cached key for the dependency
+        tag: string, required.
+            the string of the tag that is used in TARIC3 to represent the object type of the dependency
+        identifying_fields: dict, required.
+            A dictionary of the identity fields and values defined for the current object
+        data: dict, required.
+            A dictionary if all associated data for the current object
+    """
+
+    key = None
+    tag = None
+    identifying_fields = Iterable[str]
+    data = dict()
+
+    def __init__(
+        self,
+        key: str,
+        tag: str,
+        identifying_fields: Iterable[str],
+        data: dict,
+    ):
+        self.key = key
+        self.tag = tag
+        self.identifying_fields = identifying_fields
+        self.data = data
+
+
 class MismatchedSerializerError(Exception):
     pass
 
@@ -246,7 +281,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     links: Iterable[LinksType] = None
     serializer_class: Type[ModelSerializer] = None
     tag: str = None
-    dependency_key_mapping = {}
+    dependency_key_mapping = list[DependencyMappingData]
     import_issues: List[ImportIssueReportItem] = list()
 
     def __init__(
@@ -298,11 +333,14 @@ class BaseHandler(metaclass=BaseHandlerMeta):
             )
 
             # using this to allow the correct mapping to be used later when reporting back to user
-            self.dependency_key_mapping[key] = {
-                "tag": dependency.tag,
-                "identifying_fields": self.identifying_fields,
-                "data": self.data,
-            }
+            self.dependency_key_mapping.append(
+                DependencyMappingData(
+                    key,
+                    dependency.tag,
+                    self.identifying_fields,
+                    self.data,
+                ),
+            )
 
             depends_on.add(key)
 
@@ -497,38 +535,33 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
     def get_import_issues(self):
         if not self.resolve_dependencies():
-            if not self.resolve_dependencies():
-                # generic error - can do better to resolve later
+            # generic error - can do better to resolve later
 
-                dep_missing_details = ""
+            dep_missing_details = ""
 
-                for key in self._get_missing_dependencies():
-                    missing_dependency_data = self._get_dependency_key_data(key)
+            for key in self._get_missing_dependencies():
+                missing_dependency_data = self._get_dependency_key_data(key)
 
-                    dep_missing_details += f' type: {missing_dependency_data["tag"]}, '
+                dep_missing_details += f' type: {missing_dependency_data["tag"]}, '
 
-                    for index, field in enumerate(
-                        missing_dependency_data["identifying_fields"],
-                    ):
-                        dep_missing_details += (
-                            f'{field}:{missing_dependency_data["data"][field]} '
-                        )
-
-                    dep_missing_details += "."
-
-                    self.import_issues.append(
-                        ImportIssueReportItem(
-                            self.tag,
-                            missing_dependency_data["tag"],
-                            missing_dependency_data["identifying_fields"],
-                            key,
-                            dep_missing_details,
-                        ),
+                for index, field in enumerate(
+                    missing_dependency_data["identifying_fields"],
+                ):
+                    dep_missing_details += (
+                        f'{field}:{missing_dependency_data["data"][field]} '
                     )
 
-                    # raise exception
+                dep_missing_details += "."
 
-                    # raise Exception(f'There are missing dependencies for {self.tag} : {dep_missing_details}')
+                self.import_issues.append(
+                    ImportIssueReportItem(
+                        self.tag,
+                        missing_dependency_data["tag"],
+                        missing_dependency_data["identifying_fields"],
+                        key,
+                        dep_missing_details,
+                    ),
+                )
 
         return self.import_issues
 
