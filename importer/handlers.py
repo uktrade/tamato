@@ -23,11 +23,29 @@ logger = logging.getLogger(__name__)
 
 
 class ImportIssueReportItem:
+    """
+    Class for in memory representation if an issue detected on import, the
+    status may change during the process so this will not be committed until the
+    import process is complete or has been found to have errors.
+
+    params:
+        object_type: str,
+            String representation of the object type, as found in XML e.g. goods.nomenclature
+        related_object_type: str,
+            String representation of the related object type, as found in XML e.g. goods.nomenclature.description
+        related_object_identity_keys: dict,
+            Dictionary of identity names and values used to link the related object
+        related_cache_key: str,
+            The string expected to be used to cache the related object
+        description: str,
+            Description of the detected issue
+    """
+
     def __init__(
         self,
         object_type: str,
         related_object_type: str,
-        related_object_identity_keys: dict,
+        related_object_identity_keys: Iterable[str],
         related_cache_key: str,
         description: str,
     ):
@@ -38,6 +56,8 @@ class ImportIssueReportItem:
         self.description = description
 
     def missing_object_method_name(self):
+        """Returns a string representing the related object data type (but
+        replaces full stops with underscores for readability."""
         return re.sub("\\.", "_", self.related_object_type)
 
 
@@ -281,7 +301,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     links: Iterable[LinksType] = None
     serializer_class: Type[ModelSerializer] = None
     tag: str = None
-    dependency_key_mapping = list[DependencyMappingData]
+    dependency_key_mapping: List[DependencyMappingData] = list()
     import_issues: List[ImportIssueReportItem] = list()
 
     def __init__(
@@ -534,6 +554,13 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         return self.dependency_keys
 
     def get_import_issues(self):
+        """
+        Iterates through missing dependencies and returns a list of missing
+        dependencies as a list of ImportIssueReportItems objects.
+
+        This is later used for handling known issues with missing dependencies
+        GoodsNomenclatureDescriptionOPeriod for example.
+        """
         if not self.resolve_dependencies():
             # generic error - can do better to resolve later
 
@@ -542,13 +569,13 @@ class BaseHandler(metaclass=BaseHandlerMeta):
             for key in self._get_missing_dependencies():
                 missing_dependency_data = self._get_dependency_key_data(key)
 
-                dep_missing_details += f' type: {missing_dependency_data["tag"]}, '
+                dep_missing_details += f" type: {missing_dependency_data.tag}, "
 
                 for index, field in enumerate(
-                    missing_dependency_data["identifying_fields"],
+                    missing_dependency_data.identifying_fields,
                 ):
                     dep_missing_details += (
-                        f'{field}:{missing_dependency_data["data"][field]} '
+                        f"{field}:{missing_dependency_data.data[field]} "
                     )
 
                 dep_missing_details += "."
@@ -556,8 +583,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
                 self.import_issues.append(
                     ImportIssueReportItem(
                         self.tag,
-                        missing_dependency_data["tag"],
-                        missing_dependency_data["identifying_fields"],
+                        missing_dependency_data.tag,
+                        missing_dependency_data.identifying_fields,
                         key,
                         dep_missing_details,
                     ),
@@ -565,8 +592,20 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         return self.import_issues
 
-    def _get_dependency_key_data(self, key):
-        return self.dependency_key_mapping[key]
+    def _get_dependency_key_data(self, key: str):
+        """
+        Returns the matching DependencyMappingData object based on the provided
+        key.
+
+        params:
+            key, str.
+                key used to identify / store the object in cache
+        """
+        for dep in self.dependency_key_mapping:
+            if dep.key == key:
+                return dep
+
+        return None
 
     def dispatch(self) -> TrackedModel:
         """
