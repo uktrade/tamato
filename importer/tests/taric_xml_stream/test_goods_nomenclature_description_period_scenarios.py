@@ -145,6 +145,8 @@ def test_correctly_imports_comm_code_description_with_no_period(
     object_nursery,
     settings,
 ):
+    """This test simulates an uncommon but valid update from the EU where a
+    description links to a previously defined period."""
     settings.CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
