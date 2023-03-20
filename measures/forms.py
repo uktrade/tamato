@@ -328,7 +328,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
                 else None,
-                legend="Condition code",
+                legend="Condition",
                 legend_size=Size.SMALL,
                 data_field="condition_code",
             ),
@@ -474,7 +474,7 @@ class MeasureConditionsWizardStepFormSet(FormSet):
         # list of tuples of condition code and it's action code
         condition_action_tuple = []
         for condition in cleaned_data:
-            if "required_certificate" in condition:
+            if condition["required_certificate"]:
                 condition_certificates.append(
                     (condition["condition_code"], condition["required_certificate"]),
                 )
@@ -488,6 +488,7 @@ class MeasureConditionsWizardStepFormSet(FormSet):
         num_unique_condition_action_codes = len(set(condition_action_tuple))
         # for the number of certificates the number of unique certificate, condition code tuples
         # must be equal if the form is valid. Ie/ there are no duplicate certiicates for a condition code
+
         if len(condition_certificates) != num_unique_certificates:
             raise ValidationError(
                 "The same certificate cannot be added more than once to the same condition code",

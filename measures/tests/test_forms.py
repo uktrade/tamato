@@ -1057,9 +1057,8 @@ def test_measure_forms_footnotes_invalid():
 
 
 def test_measure_forms_conditions_invalid(
-    measurements,
-    monetary_units,
     date_ranges,
+    duty_sentence_parser,
 ):
     (
         condition_code1,
@@ -1070,23 +1069,13 @@ def test_measure_forms_conditions_invalid(
 
     data = {
         "form-0-condition_code": condition_code1.pk,
-        "form-0-duty_amount": 4.000,
-        "form-0-condition_measurement": measurements[("DTN", None)],
-        "form-0-monetary_unit": monetary_units["GBP"],
-        "form-0-required_certificate": None,
+        "form-0-reference_price": "2%",
         "form-0-action": action1.pk,
-        "form-0-DELETE": False,
+        "form-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
         "form-1-condition_code": condition_code1.pk,
-        "form-1-duty_amount": None,
-        "form-1-required_certificate": None,
+        "form-1-reference_price": "2%",
         "form-1-action": action2.pk,
         "form-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
-        "form-1-DELETE": False,
-        "form-TOTAL_FORMS": 2,
-        "form-INITIAL_FORMS": 1,
-        "form-MIN_NUM_FORMS": 0,
-        "form-MAX_NUM_FORMS": 1000,
-        "measure_create_wizard-current_step": "conditions",
     }
     formset = forms.MeasureConditionsWizardStepFormSet(
         data,
