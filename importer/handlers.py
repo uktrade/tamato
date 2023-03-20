@@ -303,6 +303,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     tag: str = None
     dependency_key_mapping: List[DependencyMappingData] = list()
     import_issues: List[ImportIssueReportItem] = list()
+    dependency_keys: List[str] = list()
 
     def __init__(
         self,
@@ -395,13 +396,11 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
     def _get_missing_dependencies(self) -> list:
         """
-        Search the cache for all object dependencies and collect the keys and
-        return them.
+        Returns a list of dependencies that are not in the cache.
 
-        Previously found objects, which are dependent on the current object,
-        should be stored in the cache. This method loops over the current
-        objects dependencies and attempts to where there is no match it will
-        return the matching key
+        returns:
+            list(str).
+                A list of dependency keys expected / required for the current object but are not in cache.
         """
         dependencies = self.dependency_keys.copy()
 

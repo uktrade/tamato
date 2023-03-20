@@ -64,12 +64,10 @@ def test_correctly_imports_comm_code_description_with_period_after(
     }
 
     assert (
-        GoodsNomenclatureDescription.objects.all()
-        .filter(
+        GoodsNomenclatureDescription.objects.filter(
             described_goods_nomenclature__item_id="2903691100",
             described_goods_nomenclature__suffix=80,
-        )
-        .count()
+        ).count()
         == 1
     )
 
@@ -82,16 +80,14 @@ def test_correctly_imports_comm_code_description_with_period_after(
     )
 
     assert (
-        GoodsNomenclatureDescription.objects.all()
-        .filter(
+        GoodsNomenclatureDescription.objects.filter(
             described_goods_nomenclature__item_id="2903691100",
             described_goods_nomenclature__suffix=80,
-        )
-        .count()
+        ).count()
         == 2
     )
 
-    assert GoodsNomenclatureDescription.objects.all().filter(
+    assert GoodsNomenclatureDescription.objects.filter(
         described_goods_nomenclature__item_id="2903691100",
         described_goods_nomenclature__suffix=80,
     ).order_by("trackedmodel_ptr_id").last().validity_start == date(2022, 5, 13)
@@ -112,12 +108,10 @@ def test_correctly_imports_comm_code_description_with_period_before(
     }
 
     assert (
-        GoodsNomenclatureDescription.objects.all()
-        .filter(
+        GoodsNomenclatureDescription.objects.filter(
             described_goods_nomenclature__item_id="2903691100",
             described_goods_nomenclature__suffix=80,
-        )
-        .count()
+        ).count()
         == 1
     )
 
@@ -130,16 +124,14 @@ def test_correctly_imports_comm_code_description_with_period_before(
     )
 
     assert (
-        GoodsNomenclatureDescription.objects.all()
-        .filter(
+        GoodsNomenclatureDescription.objects.filter(
             described_goods_nomenclature__item_id="2903691100",
             described_goods_nomenclature__suffix=80,
-        )
-        .count()
+        ).count()
         == 2
     )
 
-    assert GoodsNomenclatureDescription.objects.all().filter(
+    assert GoodsNomenclatureDescription.objects.filter(
         described_goods_nomenclature__item_id="2903691100",
         described_goods_nomenclature__suffix=80,
     ).order_by("trackedmodel_ptr_id").last().validity_start == date(2022, 5, 13)
@@ -160,12 +152,10 @@ def test_correctly_imports_comm_code_description_with_no_period(
     }
 
     assert (
-        GoodsNomenclatureDescription.objects.all()
-        .filter(
+        GoodsNomenclatureDescription.objects.filter(
             described_goods_nomenclature__item_id="2903691100",
             described_goods_nomenclature__suffix=80,
-        )
-        .count()
+        ).count()
         == 1
     )
 
@@ -178,17 +168,14 @@ def test_correctly_imports_comm_code_description_with_no_period(
     )
 
     assert (
-        GoodsNomenclatureDescription.objects.all()
-        .filter(
+        GoodsNomenclatureDescription.objects.filter(
             described_goods_nomenclature__item_id="2903691100",
             described_goods_nomenclature__suffix=80,
-        )
-        .count()
+        ).count()
     ) == 2
 
     assert (
-        GoodsNomenclatureDescription.objects.all()
-        .filter(
+        GoodsNomenclatureDescription.objects.filter(
             described_goods_nomenclature__item_id="2903691100",
             described_goods_nomenclature__suffix=80,
         )
