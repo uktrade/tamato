@@ -85,5 +85,3 @@ SymbolValidator = RegexValidator(
     r"^[.',()&£$%@!/\-]*$",
     "Only .,'()&£$%/@!.', symbols are allowed.",
 )
-
-# ()&£$%@!.',
