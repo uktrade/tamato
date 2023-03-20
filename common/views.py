@@ -168,6 +168,7 @@ class AppInfoView(
         if self.request.user.is_superuser:
             data["GIT_BRANCH"] = os.getenv("GIT_BRANCH", "Unavailable")
             data["GIT_COMMIT"] = os.getenv("GIT_COMMIT", "Unavailable")
+            data["UPDATED_TIME"] = datetime.fromtimestamp(os.path.getmtime(__file__))
 
         return data
 

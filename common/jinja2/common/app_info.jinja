@@ -77,22 +77,30 @@
   {% if request.user.is_superuser %}
   <div class="govuk-grid-row govuk-!-margin-top-6">
     <div class="govuk-grid-column-full">
-      <h2 class="govuk-heading-m">Environment Variables</h2>
+      <h2 class="govuk-heading-m">Deployment Information</h2>
 
       {% set table_head = [
         {"text": "Name"},
         {"text": "Value"},
+        {"text": "Description"},
       ] %}
 
       {% set table_rows = [
         [
           {"text": "GIT_BRANCH"},
           {"text": GIT_BRANCH},
+          {"text": "Environment variable"},
         ],
         [
           {"text": "GIT_COMMIT"},
           {"text": GIT_COMMIT},
+          {"text": "Environment variable"},
         ],
+        [
+          {"text": "UPDATED_TIME"},
+          {"text": "{:%d %b %Y, %H:%M}".format(UPDATED_TIME|localtime)},
+          {"text": "Estimated deploy time"},
+        ]
       ] %}
 
       {{ govukTable({
