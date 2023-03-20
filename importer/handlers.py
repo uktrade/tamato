@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import re
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import Iterable
 from typing import List
 from typing import Set
@@ -61,6 +62,7 @@ class ImportIssueReportItem:
         return re.sub("\\.", "_", self.related_object_type)
 
 
+@dataclass
 class DependencyMappingData:
     """
     Data class for temporarily storing dependency data while checking and
@@ -78,22 +80,10 @@ class DependencyMappingData:
             A dictionary if all associated data for the current object
     """
 
-    key = None
-    tag = None
-    identifying_fields = Iterable[str]
-    data = dict()
-
-    def __init__(
-        self,
-        key: str,
-        tag: str,
-        identifying_fields: Iterable[str],
-        data: dict,
-    ):
-        self.key = key
-        self.tag = tag
-        self.identifying_fields = identifying_fields
-        self.data = data
+    key: str
+    tag: str
+    identifying_fields: Iterable[str]
+    data: dict
 
 
 class MismatchedSerializerError(Exception):
