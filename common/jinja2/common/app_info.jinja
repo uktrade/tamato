@@ -6,6 +6,7 @@
 
 {% set page_title = "Application information" %}
 
+
 {% block breadcrumb %}
   <div class="govuk-breadcrumbs">
     <ol class="govuk-breadcrumbs__list">
@@ -19,6 +20,7 @@
   </div>
 {% endblock %}
 
+
 {% block content %}
   <h1 class="govuk-heading-xl">
     {% block page_title %}
@@ -26,46 +28,87 @@
     {% endblock %}
   </h1>
 
-  <h2 class="govuk-heading-m">
-    Active business rule checks
-  </h2>
 
-  {% set table_head = [
-      {"text": "Workbasket ID"},
-      {"text": "Time started"},
-      {"text": "Celery task ID"},
-  ] %}
-  {% set table_rows = [] %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h2 class="govuk-heading-m">Active business rule checks</h2>
 
-  {% if celery_healthy %}
-    {% if active_checks %}
-      {% for check in active_checks %}
-        {{ table_rows.append([
-            {"text": check.workbasket_id},
-            {"text": check.date_time_start},
-            {"text": check.task_id},
-        ]) or "" }}
-      {% endfor %}
-    {% else %}
-      {{ table_rows.append([
-        {
-          "text": "No active checks.",
-          "colspan": 3,
-        }
-      ]) or "" }}
-    {% endif %}
-  {% else %}
-      {{ table_rows.append([
-        {
-          "text": "Business rule check details are currently unavailable.",
-          "colspan": 3,
-        }
-      ]) or "" }}
-  {% endif %}
+      {% set table_head = [
+          {"text": "Workbasket ID"},
+          {"text": "Time started"},
+          {"text": "Celery task ID"},
+      ] %}
+      {% set table_rows = [] %}
 
-  {{ govukTable({
-      "head": table_head,
-      "rows": table_rows
-  }) }}
+      {% if celery_healthy %}
+        {% if active_checks %}
+          {% for check in active_checks %}
+            {{ table_rows.append([
+                {"text": check.workbasket_id},
+                {"text": check.date_time_start},
+                {"text": check.task_id},
+            ]) or "" }}
+          {% endfor %}
+        {% else %}
+          {{ table_rows.append([
+            {
+              "text": "No active checks.",
+              "colspan": 3,
+            }
+          ]) or "" }}
+        {% endif %}
+      {% else %}
+          {{ table_rows.append([
+            {
+              "text": "Business rule check details are currently unavailable.",
+              "colspan": 3,
+            }
+          ]) or "" }}
+      {% endif %}
+
+      {{ govukTable({
+          "head": table_head,
+          "rows": table_rows
+      }) }}
+    </div>
+  </div>
+
+
+  {% if request.user.is_superuser %}
+  <div class="govuk-grid-row govuk-!-margin-top-6">
+    <div class="govuk-grid-column-full">
+      <h2 class="govuk-heading-m">Deployment Information</h2>
+
+      {% set table_head = [
+        {"text": "Name"},
+        {"text": "Value"},
+        {"text": "Description"},
+      ] %}
+
+      {% set table_rows = [
+        [
+          {"text": "GIT_BRANCH"},
+          {"text": GIT_BRANCH},
+          {"text": "Environment variable"},
+        ],
+        [
+          {"text": "GIT_COMMIT"},
+          {"text": GIT_COMMIT},
+          {"text": "Environment variable"},
+        ],
+        [
+          {"text": "UPDATED_TIME"},
+          {"text": "{:%d %b %Y, %H:%M}".format(UPDATED_TIME|localtime)},
+          {"text": "Estimated deploy time"},
+        ]
+      ] %}
+
+      {{ govukTable({
+          "head": table_head,
+          "rows": table_rows
+      }) }}
+    </div>
+  </div>
+{% endif %}
 
 {% endblock %}
