@@ -130,7 +130,9 @@
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Set</span>
@@ -148,6 +150,69 @@
 <span class="kn">from</span> <span class="nn">importer.utils</span> <span class="kn">import</span> <span class="n">generate_key</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ImportIssueReportItem"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.ImportIssueReportItem">[docs]</a><span class="k">class</span> <span class="nc">ImportIssueReportItem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for in memory representation if an issue detected on import, the</span>
+<span class="sd">    status may change during the process so this will not be committed until the</span>
+<span class="sd">    import process is complete or has been found to have errors.</span>
+
+<span class="sd">    params:</span>
+<span class="sd">        object_type: str,</span>
+<span class="sd">            String representation of the object type, as found in XML e.g. goods.nomenclature</span>
+<span class="sd">        related_object_type: str,</span>
+<span class="sd">            String representation of the related object type, as found in XML e.g. goods.nomenclature.description</span>
+<span class="sd">        related_object_identity_keys: dict,</span>
+<span class="sd">            Dictionary of identity names and values used to link the related object</span>
+<span class="sd">        related_cache_key: str,</span>
+<span class="sd">            The string expected to be used to cache the related object</span>
+<span class="sd">        description: str,</span>
+<span class="sd">            Description of the detected issue</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">object_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">related_object_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">related_object_identity_keys</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">related_cache_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_type</span> <span class="o">=</span> <span class="n">object_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">related_object_type</span> <span class="o">=</span> <span class="n">related_object_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">related_object_identity_keys</span> <span class="o">=</span> <span class="n">related_object_identity_keys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">related_cache_key</span> <span class="o">=</span> <span class="n">related_cache_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">description</span>
+
+<div class="viewcode-block" id="ImportIssueReportItem.missing_object_method_name"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.ImportIssueReportItem.missing_object_method_name">[docs]</a>    <span class="k">def</span> <span class="nf">missing_object_method_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a string representing the related object data type (but</span>
+<span class="sd">        replaces full stops with underscores for readability.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">related_object_type</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DependencyMappingData"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.DependencyMappingData">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DependencyMappingData</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Data class for temporarily storing dependency data while checking and</span>
+<span class="sd">    reporting issues. It is used to populate the issue report if issues are</span>
+<span class="sd">    detected.</span>
+
+<span class="sd">    params:</span>
+<span class="sd">        key: string, required.</span>
+<span class="sd">            The string used to identify the expected cached key for the dependency</span>
+<span class="sd">        tag: string, required.</span>
+<span class="sd">            the string of the tag that is used in TARIC3 to represent the object type of the dependency</span>
+<span class="sd">        identifying_fields: dict, required.</span>
+<span class="sd">            A dictionary of the identity fields and values defined for the current object</span>
+<span class="sd">        data: dict, required.</span>
+<span class="sd">            A dictionary if all associated data for the current object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span></div>
 
 
 <div class="viewcode-block" id="MismatchedSerializerError"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.MismatchedSerializerError">[docs]</a><span class="k">class</span> <span class="nc">MismatchedSerializerError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -355,6 +420,9 @@
     <span class="n">links</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">LinksType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">serializer_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">ModelSerializer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dependency_key_mapping</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DependencyMappingData</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">import_issues</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ImportIssueReportItem</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">dependency_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -397,13 +465,25 @@
                     <span class="sa">f</span><span class="s2">&quot;serializer_class </span><span class="si">{</span><span class="n">dependency</span><span class="o">.</span><span class="n">serializer_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">. &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has serializer_class </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">serializer_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
-            <span class="n">depends_on</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-                <span class="n">generate_key</span><span class="p">(</span>
-                    <span class="n">tag</span><span class="o">=</span><span class="n">dependency</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
-                    <span class="n">identifying_fields</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span><span class="p">,</span>
-                    <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+
+            <span class="n">key</span> <span class="o">=</span> <span class="n">generate_key</span><span class="p">(</span>
+                <span class="n">tag</span><span class="o">=</span><span class="n">dependency</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+                <span class="n">identifying_fields</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># using this to allow the correct mapping to be used later when reporting back to user</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dependency_key_mapping</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">DependencyMappingData</span><span class="p">(</span>
+                    <span class="n">key</span><span class="p">,</span>
+                    <span class="n">dependency</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
                 <span class="p">),</span>
             <span class="p">)</span>
+
+            <span class="n">depends_on</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">depends_on</span>
 
 <div class="viewcode-block" id="BaseHandler.resolve_dependencies"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.resolve_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -432,6 +512,24 @@
             <span class="n">resolved_dependencies</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
             <span class="n">dependencies</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dependency</span><span class="o">.</span><span class="n">dependency_keys</span><span class="p">)</span> <span class="o">-</span> <span class="n">resolved_dependencies</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_missing_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of dependencies that are not in the cache.</span>
+
+<span class="sd">        returns:</span>
+<span class="sd">            list(str).</span>
+<span class="sd">                A list of dependency keys expected / required for the current object but are not in cache.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dependencies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_keys</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">missing_dependency_keys</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">while</span> <span class="n">dependencies</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">dependencies</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="n">dependency</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nursery</span><span class="o">.</span><span class="n">get_handler_from_cache</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dependency</span><span class="p">:</span>
+                <span class="n">missing_dependency_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">missing_dependency_keys</span>
 
 <div class="viewcode-block" id="BaseHandler.get_generic_link"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.get_generic_link">[docs]</a>    <span class="k">def</span> <span class="nf">get_generic_link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -572,6 +670,60 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dependency_keys</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_keys</span></div>
+
+<div class="viewcode-block" id="BaseHandler.get_import_issues"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.get_import_issues">[docs]</a>    <span class="k">def</span> <span class="nf">get_import_issues</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterates through missing dependencies and returns a list of missing</span>
+<span class="sd">        dependencies as a list of ImportIssueReportItems objects.</span>
+
+<span class="sd">        This is later used for handling known issues with missing dependencies</span>
+<span class="sd">        GoodsNomenclatureDescriptionOPeriod for example.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_dependencies</span><span class="p">():</span>
+            <span class="c1"># generic error - can do better to resolve later</span>
+
+            <span class="n">dep_missing_details</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_missing_dependencies</span><span class="p">():</span>
+                <span class="n">missing_dependency_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dependency_key_data</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+                <span class="n">dep_missing_details</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; type: </span><span class="si">{</span><span class="n">missing_dependency_data</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2">, &quot;</span>
+
+                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                    <span class="n">missing_dependency_data</span><span class="o">.</span><span class="n">identifying_fields</span><span class="p">,</span>
+                <span class="p">):</span>
+                    <span class="n">dep_missing_details</span> <span class="o">+=</span> <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">missing_dependency_data</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="p">)</span>
+
+                <span class="n">dep_missing_details</span> <span class="o">+=</span> <span class="s2">&quot;.&quot;</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">import_issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ImportIssueReportItem</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+                        <span class="n">missing_dependency_data</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+                        <span class="n">missing_dependency_data</span><span class="o">.</span><span class="n">identifying_fields</span><span class="p">,</span>
+                        <span class="n">key</span><span class="p">,</span>
+                        <span class="n">dep_missing_details</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_issues</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_dependency_key_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the matching DependencyMappingData object based on the provided</span>
+<span class="sd">        key.</span>
+
+<span class="sd">        params:</span>
+<span class="sd">            key, str.</span>
+<span class="sd">                key used to identify / store the object in cache</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency_key_mapping</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dep</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">dep</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="BaseHandler.dispatch"><a class="viewcode-back" href="../../importer/handlers.html#importer.handlers.BaseHandler.dispatch">[docs]</a>    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModel</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>

@@ -296,6 +296,15 @@ is not found a database query is made to find the object.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="importer.handlers.BaseHandler.get_import_issues">
+<span class="sig-name descname"><span class="pre">get_import_issues</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/importer/handlers.html#BaseHandler.get_import_issues"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.handlers.BaseHandler.get_import_issues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates through missing dependencies and returns a list of missing
+dependencies as a list of ImportIssueReportItems objects.</p>
+<p>This is later used for handling known issues with missing dependencies
+GoodsNomenclatureDescriptionOPeriod for example.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="importer.handlers.BaseHandler.load_link">
 <span class="sig-name descname"><span class="pre">load_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/importer/handlers.html#BaseHandler.load_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.handlers.BaseHandler.load_link" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load a given link for a handler.</p>
@@ -384,6 +393,57 @@ time (i.e. on import).</p>
 <p>The second requirement is that handlers need to be attached to the nursery. This is so that the nursery
 can match them against the incoming data. To accommodate this all handlers are automatically registered
 with the nursery class once validated. This reduces boilerplate code.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="importer.handlers.DependencyMappingData">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">importer.handlers.</span></span><span class="sig-name descname"><span class="pre">DependencyMappingData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">identifying_fields</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/importer/handlers.html#DependencyMappingData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.handlers.DependencyMappingData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data class for temporarily storing dependency data while checking and
+reporting issues. It is used to populate the issue report if issues are
+detected.</p>
+<dl class="simple">
+<dt>params:</dt><dd><dl class="simple">
+<dt>key: string, required.</dt><dd><p>The string used to identify the expected cached key for the dependency</p>
+</dd>
+<dt>tag: string, required.</dt><dd><p>the string of the tag that is used in TARIC3 to represent the object type of the dependency</p>
+</dd>
+<dt>identifying_fields: dict, required.</dt><dd><p>A dictionary of the identity fields and values defined for the current object</p>
+</dd>
+<dt>data: dict, required.</dt><dd><p>A dictionary if all associated data for the current object</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="importer.handlers.ImportIssueReportItem">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">importer.handlers.</span></span><span class="sig-name descname"><span class="pre">ImportIssueReportItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">object_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">related_object_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">related_object_identity_keys</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">related_cache_key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/importer/handlers.html#ImportIssueReportItem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.handlers.ImportIssueReportItem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for in memory representation if an issue detected on import, the
+status may change during the process so this will not be committed until the
+import process is complete or has been found to have errors.</p>
+<dl class="simple">
+<dt>params:</dt><dd><dl class="simple">
+<dt>object_type: str,</dt><dd><p>String representation of the object type, as found in XML e.g. goods.nomenclature</p>
+</dd>
+<dt>related_object_type: str,</dt><dd><p>String representation of the related object type, as found in XML e.g. goods.nomenclature.description</p>
+</dd>
+<dt>related_object_identity_keys: dict,</dt><dd><p>Dictionary of identity names and values used to link the related object</p>
+</dd>
+<dt>related_cache_key: str,</dt><dd><p>The string expected to be used to cache the related object</p>
+</dd>
+<dt>description: str,</dt><dd><p>Description of the detected issue</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="importer.handlers.ImportIssueReportItem.missing_object_method_name">
+<span class="sig-name descname"><span class="pre">missing_object_method_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/importer/handlers.html#ImportIssueReportItem.missing_object_method_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.handlers.ImportIssueReportItem.missing_object_method_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a string representing the related object data type (but
+replaces full stops with underscores for readability.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py exception">
