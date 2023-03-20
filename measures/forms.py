@@ -265,6 +265,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         label="",
         queryset=models.MeasureConditionCode.objects.latest_approved(),
         empty_label="-- Please select a condition code --",
+        error_messages={"required": "A condition code is required."},
     )
     # This field used to be called duty_amount, but forms.ModelForm expects a decimal value when it sees that duty_amount is a DecimalField on the MeasureCondition model.
     # reference_price expects a non-compound duty string (e.g. "11 GBP / 100 kg".
@@ -282,6 +283,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         label="Action code",
         queryset=models.MeasureAction.objects.latest_approved(),
         empty_label="-- Please select an action code --",
+        error_messages={"required": "An action code is required."},
     )
     applicable_duty = forms.CharField(
         label="Duty",
@@ -298,23 +300,30 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         self.helper.layout = Layout(
             Fieldset(
                 Div(
-                    Field(
-                        "condition_code",
-                        template="components/measure_condition_code/template.jinja",
+                    Div(
+                        Div(
+                            Field(
+                                "condition_code",
+                                template="components/measure_condition_code/template.jinja",
+                            ),
+                            "condition_sid",
+                        ),
+                        Div(
+                            Field("reference_price", css_class="govuk-input"),
+                            "required_certificate",
+                            css_class="govuk-radios__conditional",
+                        ),
                     ),
-                    "condition_sid",
-                ),
-                Div(
-                    Field("reference_price", css_class="govuk-input"),
-                    "required_certificate",
-                    css_class="govuk-radios__conditional",
-                ),
-                Field(
-                    "action",
-                    template="components/measure_condition_action_code/template.jinja",
-                ),
-                Div(
-                    MeasureConditionComponentDuty("applicable_duty"),
+                    Div(
+                        Field(
+                            "action",
+                            template="components/measure_condition_action_code/template.jinja",
+                        ),
+                        Div(
+                            MeasureConditionComponentDuty("applicable_duty"),
+                        ),
+                    ),
+                    style="display: grid; grid-template-columns: 90% 90%; grid-gap: 10%",
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
@@ -338,7 +347,13 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         component.
         """
         price = cleaned_data.get("reference_price")
+        certificate = cleaned_data.get("required_certificate")
 
+        # todo add comment
+        if not price and not certificate:
+            raise ValidationError(
+                "A Reference price, quantity, certificate, licence or document is required.",
+            )
         if price and measure_start_date is not None:
             validate_duties(price, measure_start_date)
 
@@ -447,6 +462,44 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
 
 class MeasureConditionsWizardStepFormSet(FormSet):
     form = MeasureConditionsWizardStepForm
+
+    def clean(self):
+        """"""
+        print("clean")
+        cleaned_data = super().cleaned_data
+        # list of tuples of condition code and certification
+        condition_certificates = []
+        # list of condition codes
+        condition_codes = []
+        # list of tuples of condition code and it's action code
+        condition_action_tuple = []
+        for condition in cleaned_data:
+            if "required_certificate" in condition:
+                condition_certificates.append(
+                    (condition["condition_code"], condition["required_certificate"]),
+                )
+            condition_action_tuple.append(
+                (condition["condition_code"], condition["action"]),
+            )
+            condition_codes.append(condition["condition_code"])
+
+        num_unique_certificates = len(set(condition_certificates))
+        num_unique_conditions = len(set(condition_codes))
+        num_unique_condition_action_codes = len(set(condition_action_tuple))
+        # for the number of certificates the number of unique certificate, condition code tuples
+        # must be equal if the form is valid. Ie/ there are no duplicate certiicates for a condition code
+        if len(condition_certificates) != num_unique_certificates:
+            raise ValidationError(
+                "The same certificate cannot be added more than once to the same condition code",
+            )
+
+        # for all unique condition codes the number of unique action codes will be equal
+        # if the form is valid
+        if num_unique_conditions != num_unique_condition_action_codes:
+            raise ValidationError(
+                "For the same condition code all action code's must be equal",
+            )
+        return cleaned_data
 
 
 class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):

@@ -1,4 +1,7 @@
 <div id="div_id_{{ field.html_name }}" class="govuk-form-group">
+    <label for="id_{{ field.html_name }}" class="govuk-label">
+        Condition details
+    </label>
     <div id="condition-code-hint" class="govuk-hint">Select the condition code from the dropdown list</div>
     {% set selected_code = field.initial | int %}
     <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}">
