@@ -1,30 +1,35 @@
-<h2 class="govuk-heading-l">Memberships</h2>
-{% if object.get_area_code_display() in ["Country", "Region"] %}
-  <p class="govuk-body">This {{ object.get_area_code_display().lower() }} is a member of:</p>
-{% else %}
-  <p class="govuk-body">This {{ object.get_area_code_display().lower() }} has the following members:</p>
-{% endif %}
-{% set table_rows = [] %}
-{% for membership in object.get_current_memberships() %}
-  {{ table_rows.append([
-    {"text": "{:%d %b %Y}".format(membership.valid_between.lower)},
-    {"text": "{:%d %b %Y}".format(membership.valid_between.upper) if membership.valid_between.upper else "-"},
-    {"text": membership.other(object).area_id},
-    {"text": membership.other(object).get_description().description},
-    {"text": membership.other(object).get_area_code_display()},
-  ]) or "" }}
-{% endfor %}
-{% if table_rows == [] %}
-  <p class="govuk-body">There are no memberships for this geographical area.</p>
-{% else %}
-  {{ govukTable({
-    "head": [
-      {"text": "Start date"},
-      {"text": "End date"},
-      {"text": "ID"},
-      {"text": "Description", "classes": "govuk-!-width-one-half"},
-      {"text": "Area code"},
-    ],
-    "rows": table_rows
-  }) }}
-{% endif %}
+<div class="geo_areas__core-data govuk-grid-row">
+	<div class="geo_areas__core-data__content govuk-grid-column-three-quarters">
+    <h2 class="govuk-heading-l">Memberships</h2>
+    {% if object.get_area_code_display() in ["Country", "Region"] %}
+      <p class="govuk-body">This {{ object.get_area_code_display().lower() }} is a member of:</p>
+    {% else %}
+      <p class="govuk-body">This {{ object.get_area_code_display().lower() }} has the following members:</p>
+    {% endif %}
+    {% set table_rows = [] %}
+    {% for membership in object.get_current_memberships() %}
+      {{ table_rows.append([
+        {"text": "{:%d %b %Y}".format(membership.valid_between.lower)},
+        {"text": "{:%d %b %Y}".format(membership.valid_between.upper) if membership.valid_between.upper else "-"},
+        {"text": membership.other(object).area_id},
+        {"text": membership.other(object).get_description().description},
+        {"text": membership.other(object).get_area_code_display()},
+      ]) or "" }}
+    {% endfor %}
+    {% if table_rows == [] %}
+      <p class="govuk-body">There are no memberships for this geographical area.</p>
+    {% else %}
+      {{ govukTable({
+        "head": [
+          {"text": "Start date"},
+          {"text": "End date"},
+          {"text": "ID"},
+          {"text": "Description", "classes": "govuk-!-width-one-half"},
+          {"text": "Area code"},
+        ],
+        "rows": table_rows
+        }) }}
+      {% endif %}
+  </div>
+	{% include "includes/common/actions.jinja"%}
+</div>
