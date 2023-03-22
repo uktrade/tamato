@@ -18,7 +18,7 @@
         {{ description_row.append({"html": create_link(delete_url, "Delete") }) or "" }}
       {% endif %}
         {{ description_rows.append(description_row) or "" }}
-      {% endfor %}
+    {% endfor %}
 
     <h2 class="govuk-heading-l">Descriptions</h2>
     <p><a class="govuk-link" href={{object.get_url("description-create")}}>Create a new description</a></p>
