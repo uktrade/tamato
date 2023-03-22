@@ -83,5 +83,5 @@ NumericValidator = RegexValidator(
 )
 SymbolValidator = RegexValidator(
     r"^[.',()&£$%@!/\-]*$",
-    "Only symbols .,/()&£$@!-% are allowed.",
+    ValidationError("Only symbols .,/()&£$@!-% are allowed."),
 )
