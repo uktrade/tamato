@@ -317,7 +317,7 @@ class MeasureEditWizard(
         new_generating_regulation = cleaned_data.get("generating_regulation", None)
         new_duties = cleaned_data.get("duties", None)
         for measure in selected_measures:
-            measure.new_version(
+            new_measure = measure.new_version(
                 workbasket=workbasket,
                 update_type=UpdateType.UPDATE,
                 valid_between=TaricDateRange(
@@ -335,11 +335,20 @@ class MeasureEditWizard(
             )
             if new_duties:
                 diff_components(
-                    instance=measure,
+                    instance=new_measure,
                     duty_sentence=new_duties,
-                    start_date=measure.valid_between.lower,
+                    start_date=new_measure.valid_between.lower,
                     workbasket=workbasket,
                     transaction=workbasket.current_transaction,
+                )
+            footnote_associations = FootnoteAssociationMeasure.objects.current().filter(
+                footnoted_measure=measure,
+            )
+            for fa in footnote_associations:
+                fa.new_version(
+                    workbasket=workbasket,
+                    update_type=UpdateType.UPDATE,
+                    footnoted_measure=new_measure,
                 )
             self.session_store.clear()
 
