@@ -1815,8 +1815,8 @@ def test_multiple_measure_edit_preserves_footnote_associations(
     footnote_association = factories.FootnoteAssociationMeasureFactory.create(
         footnoted_measure=measure,
     )
-    exp_footnote_count = measure.footnotes.count()
-    exp_footnotes = measure.footnotes.all()
+    expected_footnote_count = measure.footnotes.count()
+    expected_footnotes = measure.footnotes.all()
 
     url = reverse("measure-ui-edit-multiple")
     session = valid_user_client.session
@@ -1880,9 +1880,9 @@ def test_multiple_measure_edit_preserves_footnote_associations(
     assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
     for measure in workbasket_measures:
         assert measure.update_type == UpdateType.UPDATE
-        assert measure.footnotes.count() == exp_footnote_count
+        assert measure.footnotes.count() == expected_footnote_count
         for footnote in measure.footnotes.all():
-            assert footnote in exp_footnotes
+            assert footnote in expected_footnotes
 
 
 def test_measure_list_redirects_to_search_with_no_params(valid_user_client):
