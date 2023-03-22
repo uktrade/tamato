@@ -31,7 +31,7 @@ class LoadingReportForm(ModelForm):
         self.helper.layout = Layout(
             Field("file"),
             Field.textarea("comments", rows=5),
-            HTML.warning("Upon submission, DIT and HMRC will be notified."),
+            HTML.warning("Upon submission, DBT and HMRC will be notified."),
             Submit(
                 "submit",
                 "Submit",
