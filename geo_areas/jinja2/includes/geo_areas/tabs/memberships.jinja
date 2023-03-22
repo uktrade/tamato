@@ -1,4 +1,9 @@
 <h2 class="govuk-heading-l">Memberships</h2>
+{% if object.get_area_code_display() in ["Country", "Region"] %}
+  <p class="govuk-body">This {{ object.get_area_code_display().lower() }} is a member of:</p>
+{% else %}
+  <p class="govuk-body">This {{ object.get_area_code_display().lower() }} has the following members:</p>
+{% endif %}
 {% set table_rows = [] %}
 {% for membership in object.get_current_memberships() %}
   {{ table_rows.append([
