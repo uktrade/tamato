@@ -1551,11 +1551,11 @@ class CommodityCollectionLoader:
         sids = Subquery(qs.values("sid"))
 
         indent_query = (
-            _apply_filters(GoodsNomenclatureIndent.objects)
+            _apply_filters(GoodsNomenclatureIndent.objects.latest_approved())
             .with_end_date()
             .filter(indented_goods_nomenclature__sid__in=sids)
             .annotate(goods_sid=F("indented_goods_nomenclature__sid"))
-            .all()
+            .order_by("trackedmodel_ptr_id")
         )
 
         indents = {indent.goods_sid: indent for indent in indent_query}
