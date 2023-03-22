@@ -1815,7 +1815,8 @@ def test_multiple_measure_edit_preserves_footnote_associations(
     footnote_association = factories.FootnoteAssociationMeasureFactory.create(
         footnoted_measure=measure,
     )
-    exp_footnote = measure.footnotes.first()
+    exp_footnote_count = measure.footnotes.count()
+    exp_footnotes = measure.footnotes.all()
 
     url = reverse("measure-ui-edit-multiple")
     session = valid_user_client.session
@@ -1870,7 +1871,7 @@ def test_multiple_measure_edit_preserves_footnote_associations(
         )
 
     workbasket_measures = Measure.objects.filter(
-        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+        transaction__workbasket=session_workbasket,
     ).order_by("sid")
 
     complete_response = valid_user_client.get(response.url)
@@ -1879,7 +1880,9 @@ def test_multiple_measure_edit_preserves_footnote_associations(
     assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
     for measure in workbasket_measures:
         assert measure.update_type == UpdateType.UPDATE
-        assert measure.footnotes.first() == exp_footnote
+        assert measure.footnotes.count() == exp_footnote_count
+        for footnote in measure.footnotes.all():
+            assert footnote in exp_footnotes
 
 
 def test_measure_list_redirects_to_search_with_no_params(valid_user_client):
