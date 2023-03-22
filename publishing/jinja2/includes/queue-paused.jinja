@@ -7,7 +7,7 @@
 
 <div class="govuk-grid-column-three-quarters">
   {{ govukWarningText({
-    "text": "Queue paused. Click the 'Unpause CDS queue' button to resume ordering.",
+    "text": "Queue stopped. Click the 'Start CDS queue' button to resume ordering.",
     "iconFallbackText": "Warning",
     "classes": "govuk-!-margin-bottom-0",
   }) }}
@@ -23,7 +23,7 @@
       name="unpause_queue"
       value="unpause_queue"
     >
-      Unpause CDS queue
+      Start CDS queue
       <img
         class="icon icon-unpause-cds-queue"
         src="{{ static('/common/images/play-arrow-rounded.svg') }}"
