@@ -2,22 +2,22 @@
 {% from 'macros/create_link.jinja' import create_link %}
 
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-three-quarters">
-	{% set description_rows = [] %}
-	{% for description in object.get_descriptions() %}
-		{% set edit_url = description.get_url("edit") %}
-		{% set delete_url = description.get_url("delete") %}
-		{% set description_row = [
-			{"text": "{:%d %b %Y}".format(description.validity_start)},
-			{"text": description.description},
-		]%}
-		{% if not omit_actions and edit_url %}
-			{{ description_row.append({"html": create_link(edit_url, "Edit") }) or "" }}
-		{% endif %}
-		{% if not omit_actions and delete_url %}
-			{{ description_row.append({"html": create_link(delete_url, "Delete") }) or "" }}
-		{% endif %}
-			{{ description_rows.append(description_row) or "" }}
+	<div class="govuk-grid-column-three-quarters">
+		{% set description_rows = [] %}
+		{% for description in object.get_descriptions() %}
+			{% set edit_url = description.get_url("edit") %}
+			{% set delete_url = description.get_url("delete") %}
+			{% set description_row = [
+				{"text": "{:%d %b %Y}".format(description.validity_start)},
+				{"text": description.description},
+			]%}
+			{% if not omit_actions and edit_url %}
+				{{ description_row.append({"html": create_link(edit_url, "Edit") }) or "" }}
+			{% endif %}
+			{% if not omit_actions and delete_url %}
+				{{ description_row.append({"html": create_link(delete_url, "Delete") }) or "" }}
+			{% endif %}
+				{{ description_rows.append(description_row) or "" }}
 		{% endfor %}
 
 		<h2 class="govuk-heading-l">Descriptions</h2>
