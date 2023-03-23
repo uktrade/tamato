@@ -161,7 +161,7 @@ class WorkbasketActions(TextChoices):
 
 
 class DITTariffManagerActions(TextChoices):
-    PACKAGE_WORKBASKETS = "PACKAGE_WORKBASKETS", "Order and package workbaskets"
+    PACKAGE_WORKBASKETS = "PACKAGE_WORKBASKETS", "Package Workbaskets"
 
 
 class HMRCCDSManagerActions(TextChoices):

@@ -1115,11 +1115,14 @@ class MeasureCommodityAndDutiesForm(forms.Form):
             Fieldset(
                 Div(
                     Div(
-                        Field.text("commodity"),
+                        Field("commodity"),
                         css_class="tap-column",
                     ),
                     Div(
-                        Field.text("duties"),
+                        Field(
+                            "duties",
+                            css_class="duties",
+                        ),
                         css_class="tap-column",
                     ),
                     css_class="tap-row",
@@ -1386,3 +1389,47 @@ class MeasureRegulationForm(forms.Form):
                 data_prevent_double_click="true",
             ),
         )
+
+
+class MeasureDutiesForm(forms.Form):
+    duties = forms.CharField(
+        label="Duties",
+        help_text="Enter the duty that applies to the measures.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.selected_measures = kwargs.pop("selected_measures", None)
+        self.measures_start_date = kwargs.pop("measures_start_date", None)
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "duties",
+                HTML.details(
+                    "Help with duties",
+                    "This is expressed as a percentage (for example, 4%), "
+                    "a specific duty (for example, 33 GBP/100kg) "
+                    "or a compound duty (for example, 3.5% + 11 GBP / 100 kg).",
+                ),
+            ),
+            Submit(
+                "submit",
+                "Save measure duties",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        duties = cleaned_data.get("duties", "")
+        if self.measures_start_date:
+            validate_duties(duties, self.measures_start_date)
+        else:
+            for measure in self.selected_measures:
+                validate_duties(duties, measure.valid_between.lower)
+
+        return cleaned_data
