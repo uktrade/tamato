@@ -323,6 +323,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                             MeasureConditionComponentDuty("applicable_duty"),
                         ),
                     ),
+                    # TODO move into css
                     style="display: grid; grid-template-columns: 90% 90%; grid-gap: 10%",
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
@@ -349,20 +350,29 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         price = cleaned_data.get("reference_price")
         certificate = cleaned_data.get("required_certificate")
 
-        # todo add comment
-        if not price and not certificate:
-            raise ValidationError(
-                "A Reference price, quantity, certificate, licence or document is required.",
+        # Price or certificate must be present but no both
+        if (not price and not certificate) or (price and certificate):
+            self.add_error(
+                None,
+                ValidationError(
+                    "A Reference price or certificate is required but not both.",
+                ),
             )
         if price and measure_start_date is not None:
-            validate_duties(price, measure_start_date)
+            try:
+                validate_duties(price, measure_start_date)
+            except ValidationError as e:
+                self.add_error("reference_price", e)
 
         if price:
             parser = DutySentenceParser.get(measure_start_date)
             components = parser.parse(price)
             if len(components) > 1:
-                raise ValidationError(
-                    "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+                self.add_error(
+                    "reference_price",
+                    ValidationError(
+                        "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+                    ),
                 )
             cleaned_data["duty_amount"] = components[0].duty_amount
             cleaned_data["monetary_unit"] = components[0].monetary_unit
@@ -397,7 +407,10 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
         applicable_duty = self.cleaned_data["applicable_duty"]
 
         if applicable_duty and self.get_start_date(self.data) is not None:
-            validate_duties(applicable_duty, self.get_start_date(self.data))
+            try:
+                validate_duties(applicable_duty, self.get_start_date(self.data))
+            except ValidationError as e:
+                self.add_error("applicable_duty", e)
 
         return applicable_duty
 
@@ -417,6 +430,64 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
         measure_start_date = self.get_start_date(self.data)
 
         return self.conditions_clean(cleaned_data, measure_start_date)
+
+
+# class MeasureConditionsBaseFormSet(FormSet):
+# def clean(self):
+#     """"""
+#     #TODO add errors to list
+
+#     cleaned_data = super().cleaned_data
+#     # list of tuples of condition code and certification
+#     condition_certificates = []
+#     # list of tuples of condition code and duty amount data
+#     condition_duty_amounts = []
+#     # list of condition codes
+#     condition_codes = []
+#     # list of tuples of condition code and it's action code
+#     condition_action_tuple = []
+#     for condition in cleaned_data:
+#         if condition["duty_amount"]:
+#             condition_duty_amounts.append(
+#                 (condition["condition_code"], condition["duty_amount"],
+#                 condition["monetary_unit"], condition["condition_measurement"],)
+#             )
+#         if condition["required_certificate"]:
+#             condition_certificates.append(
+#                 (condition["condition_code"], condition["required_certificate"]),
+#             )
+#         condition_action_tuple.append(
+#             (condition["condition_code"], condition["action"]),
+#         )
+#         condition_codes.append(condition["condition_code"])
+
+#     num_unique_certificates = len(set(condition_certificates))
+#     num_unique_duty_amounts = len(set(condition_duty_amounts))
+#     num_unique_conditions = len(set(condition_codes))
+#     num_unique_condition_action_codes = len(set(condition_action_tuple))
+#     # for the number of certificates the number of unique certificate, condition code tuples
+#     # must be equal if the form is valid. Ie/ there are no duplicate certiicates for a condition code
+
+#     if len(condition_certificates) != num_unique_certificates:
+#         raise ValidationError(
+#             "The same certificate cannot be added more than once to the same condition code",
+#         )
+#         #self.add_error(None, "The same certificate cannot be added more than once to the same condition code")
+
+#     if len(condition_duty_amounts) != num_unique_duty_amounts:
+#         raise ValidationError(
+#             "The same referenced price cannot be added more than once to the same condition code",
+#         )
+#         #self.add_error(None, "The same referenced price cannot be added more than once to the same condition code")
+#     # for all unique condition codes the number of unique action codes will be equal
+#     # if the form is valid
+#     if num_unique_conditions != num_unique_condition_action_codes:
+#         raise ValidationError(
+#             "For the same condition code all action code's must be equal",
+#         )
+#         #self.add_error(None, "For the same condition code all action code's must be equal")
+#     return cleaned_data
+## self.forms[3].add_error('field_name', 'error message')
 
 
 class MeasureConditionsFormSet(FormSet):
@@ -441,8 +512,10 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         applicable_duty = self.cleaned_data["applicable_duty"]
 
         if applicable_duty and self.measure_start_date is not None:
-            validate_duties(applicable_duty, self.measure_start_date)
-
+            try:
+                validate_duties(applicable_duty, self.measure_start_date)
+            except ValidationError as e:
+                self.add_error("applicable_duty", e)
         return applicable_duty
 
     def clean(self):
@@ -462,45 +535,6 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
 
 class MeasureConditionsWizardStepFormSet(FormSet):
     form = MeasureConditionsWizardStepForm
-
-    def clean(self):
-        """"""
-        print("clean")
-        cleaned_data = super().cleaned_data
-        # list of tuples of condition code and certification
-        condition_certificates = []
-        # list of condition codes
-        condition_codes = []
-        # list of tuples of condition code and it's action code
-        condition_action_tuple = []
-        for condition in cleaned_data:
-            if condition["required_certificate"]:
-                condition_certificates.append(
-                    (condition["condition_code"], condition["required_certificate"]),
-                )
-            condition_action_tuple.append(
-                (condition["condition_code"], condition["action"]),
-            )
-            condition_codes.append(condition["condition_code"])
-
-        num_unique_certificates = len(set(condition_certificates))
-        num_unique_conditions = len(set(condition_codes))
-        num_unique_condition_action_codes = len(set(condition_action_tuple))
-        # for the number of certificates the number of unique certificate, condition code tuples
-        # must be equal if the form is valid. Ie/ there are no duplicate certiicates for a condition code
-
-        if len(condition_certificates) != num_unique_certificates:
-            raise ValidationError(
-                "The same certificate cannot be added more than once to the same condition code",
-            )
-
-        # for all unique condition codes the number of unique action codes will be equal
-        # if the form is valid
-        if num_unique_conditions != num_unique_condition_action_codes:
-            raise ValidationError(
-                "For the same condition code all action code's must be equal",
-            )
-        return cleaned_data
 
 
 class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
@@ -1135,7 +1169,10 @@ class MeasureCommodityAndDutiesForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         duties = cleaned_data.get("duties", "")
-        validate_duties(duties, self.measure_start_date)
+        try:
+            validate_duties(duties, self.measure_start_date)
+        except ValidationError as e:
+            self.add_error("duties", e)
 
         return cleaned_data
 

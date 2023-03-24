@@ -1,20 +1,34 @@
-<div id="div_id_{{ field.html_name }}" class="govuk-form-group">
-    <label for="id_{{ field.html_name }}" class="govuk-label">
-        Condition Code
-    </label>
-    <div id="condition-code-hint" class="govuk-hint">Select the condition code from the dropdown list</div>
-    {% set selected_code = field.initial | int %}
-    <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}">
-        <option value="">-- Please select a condition code --</option>
-        {% for condition in form.fields.condition_code.queryset %}
-            <option 
-                value={{ condition.id }}
-                data-certificate={{ condition.accepts_certificate }}
-                data-price={{ condition.accepts_price }}
-                {% if condition.id == selected_code %}selected{% endif %}
-            >
-                {{ condition }}
-            </option>
-        {% endfor %}
-    </select> 
+{% if field.errors %}
+<div class="govuk-form-group govuk-form-group--error">
+{% endif %}
+    <div id="div_id_{{ field.html_name }}" class="govuk-form-group">
+        <label for="id_{{ field.html_name }}" class="govuk-label">
+            Condition Code
+        </label>
+        <div id="condition-code-hint" class="govuk-hint">Select the condition code from the dropdown list</div>
+        {% if field.errors %}
+            {% for error in field.errors %} 
+            <p id="id_{{ field.html_name }}-error" class="govuk-error-message">
+                <span class="govuk-visually-hidden">Error:</span>  
+                    {{error}} <br>
+            </p>
+            {% endfor %}
+        {% endif %}
+        {% set selected_code = field.initial | int %}
+        <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}">
+            <option value="">-- Please select a condition code --</option>
+            {% for condition in form.fields.condition_code.queryset %}
+                <option 
+                    value={{ condition.id }}
+                    data-certificate={{ condition.accepts_certificate }}
+                    data-price={{ condition.accepts_price }}
+                    {% if condition.id == selected_code %}selected{% endif %}
+                >
+                    {{ condition }}
+                </option>
+            {% endfor %}
+        </select> 
+    </div>
+{% if field.errors %}
 </div>
+{% endif %}

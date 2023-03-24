@@ -45,17 +45,25 @@ def test_diff_components_called(diff_components, measure_form, duty_sentence_par
 def test_measure_form_invalid_conditions_data(
     measure_form_data,
     session_with_workbasket,
+    date_ranges,
     erga_omnes,
     duty_sentence_parser,
 ):
     """Tests that MeasureForm.is_valid() returns False when
     MeasureConditionsFormSet returns False."""
+    condition_code1 = factories.MeasureConditionCodeFactory.create()
+    action1 = factories.MeasureActionFactory.create()
+
     prefix = "measure-conditions-formset"
     measure_form_data[f"{prefix}-TOTAL_FORMS"] = 1
     measure_form_data[f"{prefix}-INITIAL_FORMS"] = 0
     measure_form_data[f"{prefix}-MIN_NUM_FORMS"] = 0
     measure_form_data[f"{prefix}-MAX_NUM_FORMS"] = 1000
     measure_form_data[f"{prefix}-0-applicable_duty"] = "invalid"
+    measure_form_data[f"{prefix}-0-condition_code"] = condition_code1.pk
+    measure_form_data[f"{prefix}-0-reference_price"] = "2%"
+    measure_form_data[f"{prefix}-0-action"] = action1.pk
+
     measure_form = MeasureForm(
         data=measure_form_data,
         initial={},
@@ -1056,16 +1064,12 @@ def test_measure_forms_footnotes_invalid():
     )
 
 
-def test_measure_forms_conditions_invalid(
+def test_measure_formset_conditions_invalid(
     date_ranges,
     duty_sentence_parser,
 ):
-    (
-        condition_code1,
-        condition_code2,
-        condition_code3,
-    ) = factories.MeasureConditionCodeFactory.create_batch(3)
-    action1, action2, action3 = factories.MeasureActionFactory.create_batch(3)
+    condition_code1 = factories.MeasureConditionCodeFactory.create()
+    action1, action2 = factories.MeasureActionFactory.create_batch(2)
 
     data = {
         "form-0-condition_code": condition_code1.pk,
@@ -1073,25 +1077,69 @@ def test_measure_forms_conditions_invalid(
         "form-0-action": action1.pk,
         "form-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
         "form-1-condition_code": condition_code1.pk,
-        "form-1-reference_price": "2%",
+        "form-1-reference_price": "3%",
         "form-1-action": action2.pk,
         "form-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
     }
+
     formset = forms.MeasureConditionsWizardStepFormSet(
         data,
         prefix="",
         form_kwargs={"measure_start_date": date_ranges.normal},
     )
-    assert not formset.is_valid()
-    # assert (
-    #     "The same certificate cannot be added more than once to the same condition code"
-    #     in formset.non_form_errors()
-    # )
 
+    assert not formset.is_valid()
     assert (
         "For the same condition code all action code's must be equal"
         in formset.non_form_errors()
     )
 
+    data = {
+        "form-0-condition_code": condition_code1.pk,
+        "form-0-reference_price": "2%",
+        "form-0-action": action2.pk,
+        "form-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+        "form-1-condition_code": condition_code1.pk,
+        "form-1-reference_price": "2%",
+        "form-1-action": action2.pk,
+        "form-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+    }
+    formset3 = forms.MeasureConditionsWizardStepFormSet(
+        data,
+        prefix="",
+        form_kwargs={"measure_start_date": date_ranges.normal},
+    )
+    assert not formset3.is_valid()
+    assert (
+        "The same referenced price cannot be added more than once to the same condition code"
+        in formset3.non_form_errors()
+    )
+
+    certificate = factories.CertificateFactory.create()
+    code_with_certificate = factories.MeasureConditionCodeFactory(
+        accepts_certificate=True,
+    )
+    action = factories.MeasureActionFactory.create()
+    data = {
+        "form-0-condition_code": code_with_certificate.pk,
+        "form-0-required_certificate": certificate.pk,
+        "form-0-action": action.pk,
+        "form-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+        "form-1-condition_code": code_with_certificate.pk,
+        "form-1-required_certificate": certificate.pk,
+        "form-1-action": action.pk,
+        "form-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+    }
+    formset2 = forms.MeasureConditionsWizardStepFormSet(
+        data,
+        prefix="",
+        form_kwargs={"measure_start_date": date_ranges.normal},
+    )
+    with override_current_transaction(action.transaction):
+        assert not formset2.is_valid()
+        assert (
+            "The same certificate cannot be added more than once to the same condition code"
+            in formset2.non_form_errors()
+        )
     # test diff conditions diff action codes
     # diff conditions, dif action codes

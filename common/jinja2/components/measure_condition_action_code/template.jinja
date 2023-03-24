@@ -1,9 +1,20 @@
+{% if field.errors %}
+<div class="govuk-form-group govuk-form-group--error">
+{% endif %}
 <div id="div_id_{{ field.html_name }}" class="govuk-form-group">
     {% set selected_action = field.initial | int %}
     <label for="id_{{ field.html_name }}" class="govuk-label">
         Action code
     </label>
     <div id="action-code-hint" class="govuk-hint">Select the action code from the dropdown list</div>
+    {% if field.errors %}
+        {% for error in field.errors %} 
+        <p id="id_{{ field.html_name }}-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>  
+                {{error}} <br>
+        </p>
+        {% endfor %}
+    {% endif %}
     <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}"> 
         <option value="">-- Please select an action code --</option>
         {% for action in form.fields.action.queryset %}
@@ -17,3 +28,6 @@
         {% endfor %}
     </select> 
 </div>
+{% if field.errors %}
+</div>
+{% endif %}
