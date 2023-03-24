@@ -54,6 +54,18 @@ def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
     assert not page.find_all("a", {"href": "/login"})
 
 
+def test_login_displays_lockout_page(valid_user_client):
+    settings.SSO_ENABLED = False
+    response = valid_user_client.get(reverse("login"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert 0
+    assert not page.find_all("a", {"href": "/logout"})
+    assert not page.find_all("a", {"href": "/login"})
+
+
 @pytest.mark.parametrize(
     ("data", "response_url"),
     (
