@@ -121,6 +121,7 @@ TAMATO_APPS = [
     "exporter.apps.ExporterConfig",
     "crispy_forms",
     "crispy_forms_gds",
+    "axes",
 ]
 
 APPS_THAT_MUST_COME_LAST = ["django.forms"]
@@ -144,6 +145,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "common.models.utils.TransactionMiddleware",
     "csp.middleware.CSPMiddleware",
+    "axes.middleware.AxesMiddleware",
 ]
 if SSO_ENABLED:
     MIDDLEWARE += [
@@ -226,7 +228,11 @@ AUTHBROKER_URL = os.environ.get("AUTHBROKER_URL", "https://sso.trade.gov.uk")
 AUTHBROKER_CLIENT_ID = os.environ.get("AUTHBROKER_CLIENT_ID")
 AUTHBROKER_CLIENT_SECRET = os.environ.get("AUTHBROKER_CLIENT_SECRET")
 
-AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
+AUTHENTICATION_BACKENDS = [
+    # Axes must be at the top
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
 if SSO_ENABLED:
     AUTHENTICATION_BACKENDS += [
         "authbroker_client.backends.AuthbrokerBackend",
@@ -659,3 +665,9 @@ if VCAP_APPLICATION.get("application_uris"):
     BASE_SERVICE_URL = "https://" + VCAP_APPLICATION["application_uris"][0]
 else:
     BASE_SERVICE_URL = os.environ.get("BASE_SERVICE_URL")
+
+
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 0.05
+AXES_LOCKOUT_TEMPLATE = "/common/locked_out.jinja"

@@ -11,7 +11,12 @@ INTERNAL_IPS = ["127.0.0.1"]
 # Enable Django debug toolbar
 if is_truthy(os.environ.get("ENABLE_DJANGO_DEBUG_TOOLBAR")):
     MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
-    INSTALLED_APPS.extend(["debug_toolbar", "whitenoise.runserver_nostatic"])
+    INSTALLED_APPS.extend(
+        [
+            "debug_toolbar",
+            "whitenoise.runserver_nostatic",
+        ],
+    )
     DEBUG_TOOLBAR_PANELS = [
         "debug_toolbar.panels.versions.VersionsPanel",
         "debug_toolbar.panels.timer.TimerPanel",
