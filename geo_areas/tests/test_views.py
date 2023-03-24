@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 from bs4 import BeautifulSoup
 from rest_framework.reverse import reverse
@@ -9,6 +11,8 @@ from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.util import TaricDateRange
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from geo_areas.models import GeographicalArea
@@ -115,3 +119,58 @@ def test_geo_area_api_list_view(valid_user_client):
         expected_results,
         valid_user_client,
     )
+
+
+def test_geo_area_update_view_200(valid_user_client):
+    geo_area = factories.GeographicalAreaFactory.create()
+    url = reverse(
+        "geo_area-ui-edit",
+        kwargs={"sid": geo_area.sid},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+def test_geo_area_edit_update_view_200(valid_user_client):
+    geo_area = factories.GeographicalAreaFactory.create()
+    url = reverse(
+        "geo_area-ui-edit-update",
+        kwargs={"sid": geo_area.sid},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+def test_geo_area_update_view_edit_end_date(valid_user_client, session_workbasket):
+    valid_between = TaricDateRange(
+        datetime.date(1999, 1, 1),
+        datetime.date(1999, 9, 9),
+    )
+    geo_area = factories.GeographicalAreaFactory.create(valid_between=valid_between)
+
+    form_data = {
+        "end_date_0": "2",
+        "end_date_1": "2",
+        "end_date_2": "2000",
+    }
+    new_end_date = datetime.date(2000, 2, 2)
+
+    url = reverse(
+        "geo_area-ui-edit",
+        kwargs={"sid": geo_area.sid},
+    )
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    redirect_url = reverse(
+        "geo_area-ui-confirm-update",
+        kwargs={"sid": geo_area.sid},
+    )
+    assert response.url == redirect_url
+
+    geo_areas = GeographicalArea.objects.filter(
+        transaction__workbasket=session_workbasket,
+    )
+    for geo_area in geo_areas:
+        assert geo_area.valid_between.upper == new_end_date
+        assert geo_area.update_type == UpdateType.UPDATE
