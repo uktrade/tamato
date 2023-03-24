@@ -958,8 +958,13 @@ def test_measure_form_wizard_create_measures(
     commodity1,
     commodity2,
 ):
-    """Pass data to the MeasureWizard and verify that the created Measures
-    contain the expected data."""
+    """
+    Pass data to the MeasureWizard and verify that the created Measures contain
+    the expected data.
+
+    This test will skip form validation so it will not catch data errors that
+    are caught at form level.
+    """
     mock_workbasket.return_value = factories.WorkBasketFactory.create()
 
     commodity3 = factories.GoodsNomenclatureFactory.create()
@@ -971,7 +976,13 @@ def test_measure_form_wizard_create_measures(
         condition_code2,
         condition_code3,
     ) = factories.MeasureConditionCodeFactory.create_batch(3)
-    action1, action2, action3 = factories.MeasureActionFactory.create_batch(3)
+
+    # create postive & negative action pairs
+    action1 = factories.MeasureActionFactory.create(code="25")
+    action1_pair = factories.MeasureActionFactory.create(code="05")
+    action2 = factories.MeasureActionFactory.create(code="26")
+    action2_pair = factories.MeasureActionFactory.create(code="06")
+    action3 = factories.MeasureActionFactory.create(code="01")
 
     form_data = {
         "measure_type": measure_type,
@@ -1000,6 +1011,15 @@ def test_measure_form_wizard_create_measures(
                 "duty_amount": None,
                 "required_certificate": None,
                 "action": action2,
+                "applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+                "DELETE": False,
+            },
+            # action code 01 has no pair test that no negative condition is created
+            {
+                "condition_code": condition_code3,
+                "duty_amount": None,
+                "required_certificate": None,
+                "action": action3,
                 "applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
                 "DELETE": False,
             },
@@ -1064,6 +1084,7 @@ def test_measure_form_wizard_create_measures(
             "conditions__duty_amount",
             "conditions__condition_measurement",
             "conditions__monetary_unit",
+            "conditions__action",
         ),
     ) == {
         (
@@ -1073,8 +1094,20 @@ def test_measure_form_wizard_create_measures(
             Decimal("4.000"),
             measurements[("DTN", None)].pk,
             monetary_units["GBP"].pk,
+            action1.pk,
         ),
-        (measure_data[0].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[0].pk,
+            2,
+            condition_code1.pk,
+            None,
+            None,
+            None,
+            action1_pair.pk,
+        ),
+        (measure_data[0].pk, 3, condition_code2.pk, None, None, None, action2.pk),
+        (measure_data[0].pk, 4, condition_code2.pk, None, None, None, action2_pair.pk),
+        (measure_data[0].pk, 5, condition_code3.pk, None, None, None, action3.pk),
         (
             measure_data[1].pk,
             1,
@@ -1082,8 +1115,20 @@ def test_measure_form_wizard_create_measures(
             Decimal("4.000"),
             measurements[("DTN", None)].pk,
             monetary_units["GBP"].pk,
+            action1.pk,
         ),
-        (measure_data[1].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[1].pk,
+            2,
+            condition_code1.pk,
+            None,
+            None,
+            None,
+            action1_pair.pk,
+        ),
+        (measure_data[1].pk, 3, condition_code2.pk, None, None, None, action2.pk),
+        (measure_data[1].pk, 4, condition_code2.pk, None, None, None, action2_pair.pk),
+        (measure_data[1].pk, 5, condition_code3.pk, None, None, None, action3.pk),
         (
             measure_data[2].pk,
             1,
@@ -1091,8 +1136,20 @@ def test_measure_form_wizard_create_measures(
             Decimal("4.000"),
             measurements[("DTN", None)].pk,
             monetary_units["GBP"].pk,
+            action1.pk,
         ),
-        (measure_data[2].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[2].pk,
+            2,
+            condition_code1.pk,
+            None,
+            None,
+            None,
+            action1_pair.pk,
+        ),
+        (measure_data[2].pk, 3, condition_code2.pk, None, None, None, action2.pk),
+        (measure_data[2].pk, 4, condition_code2.pk, None, None, None, action2_pair.pk),
+        (measure_data[2].pk, 5, condition_code3.pk, None, None, None, action3.pk),
         (
             measure_data[3].pk,
             1,
@@ -1100,8 +1157,20 @@ def test_measure_form_wizard_create_measures(
             Decimal("4.000"),
             measurements[("DTN", None)].pk,
             monetary_units["GBP"].pk,
+            action1.pk,
         ),
-        (measure_data[3].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[3].pk,
+            2,
+            condition_code1.pk,
+            None,
+            None,
+            None,
+            action1_pair.pk,
+        ),
+        (measure_data[3].pk, 3, condition_code2.pk, None, None, None, action2.pk),
+        (measure_data[3].pk, 4, condition_code2.pk, None, None, None, action2_pair.pk),
+        (measure_data[3].pk, 5, condition_code3.pk, None, None, None, action3.pk),
     }
 
     # Verify that MeasureComponents were created for each formset-condition containing an applicable-duty
@@ -1170,6 +1239,46 @@ def test_measure_create_wizard_get_form_kwargs(
 
     assert "measure_start_date" in form_kwargs["form_kwargs"]
     assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
+
+
+# @pytest.mark.parametrize("step", ["commodities", "conditions"])
+def test_measure_create_wizard_measure_condition_fails(
+    # step,
+    session_request,
+    measure_type,
+    regulation,
+    erga_omnes,
+):
+    (
+        condition_code1,
+        condition_code2,
+        condition_code3,
+    ) = factories.MeasureConditionCodeFactory.create_batch(3)
+    action1, action2, action3 = factories.MeasureActionFactory.create_batch(3)
+    details_data = {
+        "measure_create_wizard-current_step": "commodities",
+        "measure_details-measure_type": [measure_type.pk],
+        "measure_details-generating_regulation": [regulation.pk],
+        "measure_details-geo_area_type": ["ERGA_OMNES"],
+        "measure_details-start_date_0": [2],
+        "measure_details-start_date_1": [4],
+        "measure_details-start_date_2": [2021],
+        "measure_details-min_commodity_count": [2],
+    }
+    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+    storage.set_step_data("measure_details", details_data)
+    storage._set_current_step("commodities")
+    wizard = MeasureCreateWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"commodities": {}},
+        instance_dict={"measure_details": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    # form_kwargs = wizard.get_form_kwargs(step)
+
+    # assert "measure_start_date" in form_kwargs["form_kwargs"]
+    # assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
 
 
 def test_measure_form_creates_exclusions(

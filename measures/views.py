@@ -39,6 +39,7 @@ from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
+from measures.models import MeasureAction
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
@@ -355,6 +356,18 @@ class MeasureEditWizard(
         return redirect(reverse("workbaskets:review-workbasket"))
 
 
+action_code_mappings = {
+    24: "04",
+    25: "05",
+    26: "06",
+    27: "07",
+    28: "08",
+    29: "09",
+    34: "14",
+    36: "16",
+}
+
+
 @method_decorator(require_current_workbasket, name="dispatch")
 class MeasureCreateWizard(
     PermissionRequiredMixin,
@@ -497,16 +510,21 @@ class MeasureCreateWizard(
         created_measures = []
 
         for measure_data in measures_data:
+            # creates measure in DB
             measure = measure_creation_pattern.create(**measure_data)
             parser = DutySentenceParser.get(
                 measure.valid_between.lower,
                 component_output=MeasureConditionComponent,
             )
-            for component_sequence_number, condition_data in enumerate(
+
+            # component number not tied to position in formset as negative conditions are auto generated
+            component_sequence_number = 1
+            for index, condition_data in enumerate(
                 data.get("formset-conditions", []),
-                start=1,
             ):
                 if not condition_data.get("DELETE"):
+                    # creates a list of tuples with condition and action code
+                    # this will be used to create the corresponding negative action
                     measure_creation_pattern.create_condition_and_components(
                         condition_data,
                         component_sequence_number,
@@ -514,6 +532,43 @@ class MeasureCreateWizard(
                         parser,
                         workbasket,
                     )
+
+                    # set next code unless last item set None
+                    next_condition_code = (
+                        data["formset-conditions"][index + 1]["condition_code"]
+                        if (index + 1 < len(data["formset-conditions"]))
+                        else None
+                    )
+                    action_code = int(condition_data.get("action").code)
+                    # if the next condition code is different create the negative action for the current condition
+                    # only create a negative action if the action has a negative pair
+                    if (
+                        action_code in action_code_mappings
+                        and data["formset-conditions"][index]["condition_code"]
+                        != next_condition_code
+                    ):
+                        # not all action codes have pair's this will fail for them
+
+                        component_sequence_number += 1
+                        measure_creation_pattern.create_condition_and_components(
+                            {
+                                "condition_code": condition_data.get("condition_code"),
+                                "duty_amount": None,
+                                "required_certificate": None,
+                                # corresponding negative action to the postive one.
+                                "action": MeasureAction.objects.get(
+                                    code=action_code_mappings[action_code],
+                                ),
+                                "DELETE": False,
+                            },
+                            component_sequence_number,
+                            measure,
+                            parser,
+                            workbasket,
+                        )
+
+                # deletes also increment or well did when using the enumerated index
+                component_sequence_number += 1
 
             created_measures.append(measure)
 
@@ -732,6 +787,7 @@ class MeasureUpdate(
                 conditions_data,
                 start=1,
             ):
+                ## TODO be aware
                 # Create conditions and measure condition components, using instance as `dependent_measure`
                 measure_creation_pattern.create_condition_and_components(
                     condition_data,
