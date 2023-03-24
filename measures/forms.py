@@ -28,7 +28,6 @@ from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.util import validity_range_contains_range
-from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
 from common.validators import UpdateType
 from footnotes.models import Footnote
@@ -275,7 +274,6 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         label="Reference price or quantity",
         required=False,
         validators=[
-            AlphanumericValidator,
             SymbolValidator,
         ],
     )
@@ -293,7 +291,6 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         label="Duty",
         required=False,
         validators=[
-            AlphanumericValidator,
             SymbolValidator,
         ],
     )
@@ -1051,7 +1048,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
     duties = forms.CharField(
         label="Duties",
         required=False,
-        validators=[AlphanumericValidator, SymbolValidator],
+        validators=[SymbolValidator],
     )
 
     def __init__(self, *args, **kwargs):

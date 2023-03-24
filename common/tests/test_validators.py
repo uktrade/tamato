@@ -74,10 +74,11 @@ def test_alphanumeric_validator(value, expected_valid):
 @pytest.mark.parametrize(
     ("value", "expected_valid"),
     [
-        ("Text When There Shouldn't be.", False),
-        (1234, False),
-        ("<Sketchy_Code></>", False),
-        (".,'()&£$%/@!-", True),
+        ("Text without symbols is fine", True),
+        ("Numbers are also fine 3678767", True),
+        ("These specific symbols are fine .,'()&£$%/@!", True),
+        ("<Sketchy_Code>This is not fine</>", False),
+        ("{{ This is also not [fine] }}", False),
     ],
 )
 def test_symbol_validator(value, expected_valid):

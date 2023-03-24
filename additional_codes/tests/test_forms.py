@@ -82,7 +82,7 @@ def test_additional_code_create_invalid_data(date_ranges):
     }
     form = forms.AdditionalCodeCreateForm(data=data, instance=None)
     assert not form.is_valid()
-    assert "Only numbers are allowed." in form.errors["code"]
+    assert "Enter a valid value." in form.errors["code"]
 
 
 def test_additional_code_form_valid_no_instance(date_ranges):

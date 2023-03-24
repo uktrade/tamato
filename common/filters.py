@@ -33,7 +33,6 @@ from common.jinja2 import break_words
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.util import StartDate
 from common.util import TaricDateRange
-from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
 
 ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
@@ -213,7 +212,7 @@ class TamatoFilter(FilterSet, TamatoFilterMixin):
     search = CharFilter(
         method="filter_search",
         label="Search",
-        validators=[AlphanumericValidator, SymbolValidator],
+        validators=[SymbolValidator],
     )
 
     clear_url = None

@@ -10,7 +10,6 @@ from common.filters import ActiveStateMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.validators import NumericValidator
-from common.validators import SymbolValidator
 
 
 class GoodsNomenclatureFilterBackend(TamatoFilterBackend):
@@ -36,7 +35,7 @@ class CommodityFilter(ActiveStateMixin, TamatoFilter):
         label="Code",
         widget=forms.TextInput(),
         lookup_expr="startswith",
-        validators=[NumericValidator, SymbolValidator],
+        validators=[NumericValidator],
     )
     clear_url = reverse_lazy("commodity-ui-list")
 

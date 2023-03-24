@@ -75,8 +75,7 @@ def test_geographical_area_create_description_form_invalid_description(date_rang
         "validity_start_2": date_ranges.normal.lower.year,
         "validity_start_2": date_ranges.normal.lower.year,
     }
-    form = forms.GeographicalAreaCreateDescriptionForm(data={})
+    form = forms.GeographicalAreaCreateDescriptionForm(data=data)
 
-    assert 0
     assert not form.is_valid()
-    assert "This field is required." in form.errors["description"]
+    assert "Only symbols .,/()&£$@!+-% are allowed." in form.errors["description"]
