@@ -133,6 +133,7 @@ class GeoAreaDescriptionDelete(
 
 class GeoAreaUpdateMixin(GeoAreaMixin, TrackedModelDetailMixin):
     form_class = GeographicalAreaEditForm
+    permission_required = "common.change_trackedmodel"
 
     validate_business_rules = (
         business_rules.GA1,

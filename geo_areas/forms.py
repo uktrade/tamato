@@ -39,10 +39,20 @@ class GeographicalAreaEndDateForm(ValidityPeriodForm):
         super().__init__(*args, **kwargs)
 
         self.fields["start_date"].required = False
-        self.fields[
-            "end_date"
-        ].help_text = (
-            "Leave empty if a geographical area is needed for an unlimited time"
+        self.fields["end_date"].required = False
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            "end_date",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
         )
 
     def clean(self):
