@@ -13,6 +13,8 @@ from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalMembership
+from geo_areas.validators import AreaCode
 from geo_areas.views import GeoAreaList
 
 pytestmark = pytest.mark.django_db
@@ -172,4 +174,103 @@ def test_geo_area_update_view_edit_end_date(
     )
     for geo_area in geo_areas:
         assert geo_area.valid_between.upper == new_end_date
+        assert geo_area.update_type == UpdateType.UPDATE
+
+
+def test_geo_area_update_view_membership_add_country_or_region(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that a country or region can be added to the membership of the area
+    group being edited."""
+    area_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
+    country = factories.GeographicalAreaFactory.create(area_code=AreaCode.COUNTRY)
+
+    membership = GeographicalMembership.objects.filter(
+        geo_group__sid=area_group.sid,
+        member__sid=country.sid,
+    )
+    assert not membership
+    expected_valid_between = area_group.valid_between
+
+    form_data = {
+        "member": "COUNTRY",
+        "country": country.pk,
+        "membership_start_date_0": area_group.valid_between.lower.day,
+        "membership_start_date_1": area_group.valid_between.lower.month,
+        "membership_start_date_2": area_group.valid_between.lower.year,
+    }
+    url = reverse(
+        "geo_area-ui-edit",
+        kwargs={"sid": area_group.sid},
+    )
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    redirect_url = reverse(
+        "geo_area-ui-confirm-update",
+        kwargs={"sid": area_group.sid},
+    )
+    assert response.url == redirect_url
+
+    workbasket = GeographicalArea.objects.filter(
+        transaction__workbasket=session_workbasket,
+    )
+    for geo_area in workbasket:
+        membership = GeographicalMembership.objects.get(
+            geo_group__sid=geo_area.sid,
+            member__sid=country.sid,
+        )
+        assert membership
+        assert membership.valid_between == expected_valid_between
+        assert geo_area.update_type == UpdateType.UPDATE
+
+
+def test_geo_area_update_view_membership_add_to_group(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that the country or region being edited can be added to the
+    membership of an area group."""
+    region = factories.GeographicalAreaFactory.create(area_code=AreaCode.REGION)
+    area_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
+
+    membership = GeographicalMembership.objects.filter(
+        geo_group__sid=area_group.sid,
+        member__sid=region.sid,
+    )
+    assert not membership
+
+    expected_valid_between = area_group.valid_between
+
+    form_data = {
+        "geo_group": area_group.pk,
+        "membership_start_date_0": area_group.valid_between.lower.day,
+        "membership_start_date_1": area_group.valid_between.lower.month,
+        "membership_start_date_2": area_group.valid_between.lower.year,
+    }
+
+    url = reverse(
+        "geo_area-ui-edit",
+        kwargs={"sid": region.sid},
+    )
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    redirect_url = reverse(
+        "geo_area-ui-confirm-update",
+        kwargs={"sid": region.sid},
+    )
+    assert response.url == redirect_url
+
+    workbasket = GeographicalArea.objects.filter(
+        transaction__workbasket=session_workbasket,
+    )
+    for geo_area in workbasket:
+        membership = GeographicalMembership.objects.get(
+            geo_group__sid=area_group.sid,
+            member__sid=region.sid,
+        )
+        assert membership
+        assert membership.valid_between == expected_valid_between
         assert geo_area.update_type == UpdateType.UPDATE

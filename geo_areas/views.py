@@ -5,6 +5,7 @@ from rest_framework import viewsets
 
 from common.models.trackedmodel import TrackedModel
 from common.serializers import AutoCompleteSerializer
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -15,6 +16,7 @@ from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.forms import GeographicalAreaEditForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
+from geo_areas.models import GeographicalMembership
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
@@ -146,6 +148,33 @@ class GeoAreaUpdateMixin(GeoAreaMixin, TrackedModelDetailMixin):
         business_rules.GA21,
         business_rules.GA22,
     )
+
+    def create_membership(self, form):
+        if form.cleaned_data["geo_group"]:
+            geo_group = form.cleaned_data["geo_group"]
+            member = form.instance
+        elif form.cleaned_data["member"]:
+            geo_group = form.instance
+            member = form.cleaned_data["member"]
+        else:
+            return
+
+        tx = WorkBasket.get_current_transaction(self.request)
+        valid_between = form.cleaned_data["membership_valid_between"]
+        membership = GeographicalMembership(
+            geo_group=geo_group,
+            member=member,
+            valid_between=valid_between,
+            transaction=tx,
+            update_type=UpdateType.CREATE,
+        )
+        membership.save()
+
+    def get_result_object(self, form):
+        geo_area = super().get_result_object(form)
+        form.instance = geo_area
+        self.create_membership(form)
+        return geo_area
 
 
 class GeoAreaUpdate(GeoAreaUpdateMixin, CreateTaricUpdateView):
