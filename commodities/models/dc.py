@@ -761,6 +761,16 @@ class CommodityCollection(CommodityTreeBase):
         transaction: Transaction,
         snapshot_date: Optional[date] = None,
     ) -> CommodityTreeSnapshot:
+        """
+        Returns a commodity tree snapshot as of `transaction`.
+
+        If `snapshot_date` is also provided, then the returned tree will only
+        include commodities whose `valid_between` date range includes
+        `snapshot_date`. If no `snapshot_date` is provided, then only those
+        commodities that are valid as of now will be included in the returned
+        results.
+        """
+
         if transaction is None:
             raise ValueError(
                 "SnapshotMoments require a transaction.",
@@ -1555,7 +1565,7 @@ class CommodityCollectionLoader:
             .with_end_date()
             .filter(indented_goods_nomenclature__sid__in=sids)
             .annotate(goods_sid=F("indented_goods_nomenclature__sid"))
-            .all()
+            .order_by("transaction")
         )
 
         indents = {indent.goods_sid: indent for indent in indent_query}
