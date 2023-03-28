@@ -39,7 +39,6 @@ class GeographicalAreaEndDateForm(ValidityPeriodForm):
         super().__init__(*args, **kwargs)
 
         self.fields["start_date"].required = False
-        self.fields["end_date"].required = False
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
