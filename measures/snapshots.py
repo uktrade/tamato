@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-from datetime import date
 from datetime import timedelta
 
 from commodities.models.dc import Commodity
-from commodities.models.dc import CommodityCollection
 from commodities.models.dc import CommodityCollectionLoader
 from commodities.models.dc import CommodityTreeSnapshot
 from commodities.models.dc import SnapshotMoment
@@ -69,20 +67,11 @@ class MeasureSnapshot:
         )
 
     @classmethod
-    def _get_snapshot_from_tree(
+    def get_snapshots(
         cls,
-        collection: CommodityCollection,
-        as_at: date,
+        measure: Measure,
         transaction: Transaction,
-    ):
-        tree = collection.get_snapshot(transaction, as_at)
-        # `None` is not a bug! We want the commodity code tree to be
-        # linked to a specific date, but the measure date actually
-        # represents a range of dates, and not a specific one.
-        return cls(SnapshotMoment(transaction, None), tree)
-
-    @classmethod
-    def get_snapshots(cls, measure: Measure, transaction: Transaction):
+    ) -> "MeasureSnapshot":
         """
         Yield a MeasureSnapshot for each commodity tree that contains the goods
         nomenclature on the measure.
@@ -91,22 +80,23 @@ class MeasureSnapshot:
         measure, so this method will yield a snapshot for each of the commodity
         trees that existed over that lifetime.
         """
+
         loader = CommodityCollectionLoader(
             prefix=measure.goods_nomenclature.code.chapter,
         )
         collection = loader.load()
 
-        snapshot = cls._get_snapshot_from_tree(
-            collection,
-            measure.effective_valid_between.lower,
-            transaction,
-        )
-        yield snapshot
-
-        while measure.effective_valid_between.upper_is_greater(snapshot.extent):
-            snapshot = cls._get_snapshot_from_tree(
-                collection,
-                snapshot.extent.upper + timedelta(days=1),
-                transaction,
+        snapshot_date = measure.effective_valid_between.lower
+        while True:
+            # Set SnapshotMoment.date to None since measure date ranges are used
+            # to filter the commodity code tree.
+            snapshot = MeasureSnapshot(
+                SnapshotMoment(transaction, None),
+                collection.get_snapshot(transaction, snapshot_date),
             )
             yield snapshot
+
+            if measure.effective_valid_between.upper_is_greater(snapshot.extent):
+                snapshot_date = snapshot.extent.upper + timedelta(days=1)
+            else:
+                break
