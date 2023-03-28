@@ -358,13 +358,16 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                     "A Reference price or certificate is required but not both.",
                 ),
             )
+
+        price_errored = False
         if price and measure_start_date is not None:
             try:
                 validate_duties(price, measure_start_date)
             except ValidationError as e:
+                price_errored = True
                 self.add_error("reference_price", e)
 
-        if price:
+        if price and not price_errored:
             parser = DutySentenceParser.get(measure_start_date)
             components = parser.parse(price)
             if len(components) > 1:
@@ -432,65 +435,81 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
         return self.conditions_clean(cleaned_data, measure_start_date)
 
 
-# class MeasureConditionsBaseFormSet(FormSet):
-# def clean(self):
-#     """"""
-#     #TODO add errors to list
+class MeasureConditionsBaseFormSet(FormSet):
+    def clean(self):
+        """"""
 
-#     cleaned_data = super().cleaned_data
-#     # list of tuples of condition code and certification
-#     condition_certificates = []
-#     # list of tuples of condition code and duty amount data
-#     condition_duty_amounts = []
-#     # list of condition codes
-#     condition_codes = []
-#     # list of tuples of condition code and it's action code
-#     condition_action_tuple = []
-#     for condition in cleaned_data:
-#         if condition["duty_amount"]:
-#             condition_duty_amounts.append(
-#                 (condition["condition_code"], condition["duty_amount"],
-#                 condition["monetary_unit"], condition["condition_measurement"],)
-#             )
-#         if condition["required_certificate"]:
-#             condition_certificates.append(
-#                 (condition["condition_code"], condition["required_certificate"]),
-#             )
-#         condition_action_tuple.append(
-#             (condition["condition_code"], condition["action"]),
-#         )
-#         condition_codes.append(condition["condition_code"])
+        # cleaned_data is only set if forms are all valid
+        if any(self.errors):
+            # Don't bother validating the formset unless each form is valid on its own
+            return
+        cleaned_data = super().cleaned_data
 
-#     num_unique_certificates = len(set(condition_certificates))
-#     num_unique_duty_amounts = len(set(condition_duty_amounts))
-#     num_unique_conditions = len(set(condition_codes))
-#     num_unique_condition_action_codes = len(set(condition_action_tuple))
-#     # for the number of certificates the number of unique certificate, condition code tuples
-#     # must be equal if the form is valid. Ie/ there are no duplicate certiicates for a condition code
+        errors_list = []
+        # list of tuples of condition code and certification
+        condition_certificates = []
+        # list of tuples of condition code and duty amount data
+        condition_duty_amounts = []
+        # list of condition codes
+        condition_codes = []
+        # list of tuples of condition code and it's action code
+        condition_action_tuple = []
+        for condition in cleaned_data:
+            if condition["duty_amount"]:
+                condition_duty_amounts.append(
+                    (
+                        condition["condition_code"],
+                        condition["duty_amount"],
+                        condition["monetary_unit"],
+                        condition["condition_measurement"],
+                    ),
+                )
+            if condition["required_certificate"]:
+                condition_certificates.append(
+                    (condition["condition_code"], condition["required_certificate"]),
+                )
+            condition_action_tuple.append(
+                (condition["condition_code"], condition["action"]),
+            )
+            condition_codes.append(condition["condition_code"])
 
-#     if len(condition_certificates) != num_unique_certificates:
-#         raise ValidationError(
-#             "The same certificate cannot be added more than once to the same condition code",
-#         )
-#         #self.add_error(None, "The same certificate cannot be added more than once to the same condition code")
+        num_unique_certificates = len(set(condition_certificates))
+        num_unique_duty_amounts = len(set(condition_duty_amounts))
+        num_unique_conditions = len(set(condition_codes))
+        num_unique_condition_action_codes = len(set(condition_action_tuple))
+        # for the number of certificates the number of unique certificate, condition code tuples
+        # must be equal if the form is valid. Ie/ there are no duplicate certiicates for a condition code
 
-#     if len(condition_duty_amounts) != num_unique_duty_amounts:
-#         raise ValidationError(
-#             "The same referenced price cannot be added more than once to the same condition code",
-#         )
-#         #self.add_error(None, "The same referenced price cannot be added more than once to the same condition code")
-#     # for all unique condition codes the number of unique action codes will be equal
-#     # if the form is valid
-#     if num_unique_conditions != num_unique_condition_action_codes:
-#         raise ValidationError(
-#             "For the same condition code all action code's must be equal",
-#         )
-#         #self.add_error(None, "For the same condition code all action code's must be equal")
-#     return cleaned_data
-## self.forms[3].add_error('field_name', 'error message')
+        if len(condition_certificates) != num_unique_certificates:
+            errors_list.append(
+                ValidationError(
+                    "The same certificate cannot be added more than once to the same condition code",
+                ),
+            )
+            # self.add_error(None, "The same certificate cannot be added more than once to the same condition code")
+
+        if len(condition_duty_amounts) != num_unique_duty_amounts:
+            errors_list.append(
+                ValidationError(
+                    "The same referenced price cannot be added more than once to the same condition code",
+                ),
+            )
+            # self.add_error(None, "The same referenced price cannot be added more than once to the same condition code")
+        # for all unique condition codes the number of unique action codes will be equal
+        # if the form is valid
+        if num_unique_conditions != num_unique_condition_action_codes:
+            errors_list.append(
+                ValidationError(
+                    "For the same condition code all action code's must be equal",
+                ),
+            )
+            # self.add_error(None, "For the same condition code all action code's must be equal")
+        if errors_list:
+            raise ValidationError(errors_list)
+        return cleaned_data
 
 
-class MeasureConditionsFormSet(FormSet):
+class MeasureConditionsFormSet(MeasureConditionsBaseFormSet):
     prefix = "measure-conditions-formset"
     form = MeasureConditionsForm
 
@@ -533,7 +552,7 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         return self.conditions_clean(cleaned_data, self.measure_start_date)
 
 
-class MeasureConditionsWizardStepFormSet(FormSet):
+class MeasureConditionsWizardStepFormSet(MeasureConditionsBaseFormSet):
     form = MeasureConditionsWizardStepForm
 
 

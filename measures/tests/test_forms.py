@@ -473,7 +473,7 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
     )
     assert form.is_valid() == is_valid
     if not form.is_valid():
-        assert "Enter a valid duty sentence." in form.errors["__all__"]
+        assert "Enter a valid duty sentence." in form.errors["duties"]
 
 
 @pytest.mark.parametrize(
@@ -671,7 +671,7 @@ def test_measure_forms_conditions_invalid_duty(
     form = forms.MeasureConditionsForm(data, prefix="")
 
     assert not form.is_valid()
-    assert message in form.errors["__all__"]
+    assert message in form.errors["reference_price"]
 
 
 @pytest.mark.parametrize(
@@ -709,7 +709,7 @@ def test_measure_forms_conditions_wizard_invalid_duty(
     )
 
     assert not form.is_valid()
-    assert message in form.errors["__all__"]
+    assert message in form.errors["reference_price"]
 
 
 @pytest.mark.parametrize(

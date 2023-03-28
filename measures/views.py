@@ -787,7 +787,6 @@ class MeasureUpdate(
                 conditions_data,
                 start=1,
             ):
-                ## TODO be aware
                 # Create conditions and measure condition components, using instance as `dependent_measure`
                 measure_creation_pattern.create_condition_and_components(
                     condition_data,

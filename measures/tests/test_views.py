@@ -775,9 +775,14 @@ def test_measure_update_invalid_conditions(
 
     assert a_tags[0].attrs["href"] == "#measure-conditions-formset-0-applicable_duty"
     assert a_tags[0].text == "Enter a valid duty sentence."
+
     assert a_tags[1].attrs["href"] == "#measure-conditions-formset-0-__all__"
     assert (
-        a_tags[1].text
+        a_tags[1].text == "A Reference price or certificate is required but not both."
+    )
+    assert a_tags[2].attrs["href"] == "#measure-conditions-formset-0-reference_price"
+    assert (
+        a_tags[2].text
         == "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
     )
 
@@ -982,6 +987,7 @@ def test_measure_form_wizard_create_measures(
     action1_pair = factories.MeasureActionFactory.create(code="05")
     action2 = factories.MeasureActionFactory.create(code="26")
     action2_pair = factories.MeasureActionFactory.create(code="06")
+    # action with no pair
     action3 = factories.MeasureActionFactory.create(code="01")
 
     form_data = {
