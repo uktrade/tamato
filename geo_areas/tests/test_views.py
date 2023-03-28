@@ -1,5 +1,3 @@
-import datetime
-
 import pytest
 from bs4 import BeautifulSoup
 from rest_framework.reverse import reverse
@@ -11,7 +9,6 @@ from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
-from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -141,19 +138,21 @@ def test_geo_area_edit_update_view_200(valid_user_client):
     assert response.status_code == 200
 
 
-def test_geo_area_update_view_edit_end_date(valid_user_client, session_workbasket):
-    valid_between = TaricDateRange(
-        datetime.date(1999, 1, 1),
-        datetime.date(1999, 9, 9),
+def test_geo_area_update_view_edit_end_date(
+    valid_user_client,
+    session_workbasket,
+    date_ranges,
+):
+    geo_area = factories.GeographicalAreaFactory.create(
+        valid_between=date_ranges.normal,
     )
-    geo_area = factories.GeographicalAreaFactory.create(valid_between=valid_between)
 
     form_data = {
-        "end_date_0": "2",
-        "end_date_1": "2",
-        "end_date_2": "2000",
+        "end_date_0": date_ranges.later.upper.day,
+        "end_date_1": date_ranges.later.upper.month,
+        "end_date_2": date_ranges.later.upper.year,
     }
-    new_end_date = datetime.date(2000, 2, 2)
+    new_end_date = date_ranges.later.upper
 
     url = reverse(
         "geo_area-ui-edit",
