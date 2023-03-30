@@ -16,6 +16,7 @@ from common.models.mixins.description import DescriptionMixin
 from common.models.mixins.validity import ValidityMixin
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
+from common.models.utils import GetTabURLMixin
 from geo_areas import business_rules
 from geo_areas.validators import AreaCode
 from geo_areas.validators import area_id_validator
@@ -157,7 +158,7 @@ class GeographicalArea(TrackedModel, ValidityMixin, DescribedMixin):
         )
 
 
-class GeographicalMembership(TrackedModel, ValidityMixin):
+class GeographicalMembership(GetTabURLMixin, TrackedModel, ValidityMixin):
     """
     A Geographical Membership describes the membership of a region or country to
     a group.
@@ -167,6 +168,10 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
     The validity ranges of all memberships must also fit completely within the validity
     ranges of the groups.
     """
+
+    url_pattern_name_prefix = "geo_area"
+    url_suffix = "#memberships"
+    url_relation_field = "geo_group"
 
     record_code = "250"
     subrecord_code = "15"

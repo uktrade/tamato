@@ -75,12 +75,13 @@ def test_get_current_memberships_when_region_and_country_share_sid():
 
 def test_other_on_membership():
     membership = factories.GeographicalMembershipFactory()
-    assert membership.other(membership.member) == membership.geo_group
-    assert membership.other(membership.geo_group) == membership.member
-    with pytest.raises(ValueError):
-        membership.other(factories.GeoGroupFactory())
-    with pytest.raises(ValueError):
-        membership.other(factories.CountryFactory())
+    with override_current_transaction(membership.transaction):
+        assert membership.other(membership.member) == membership.geo_group
+        assert membership.other(membership.geo_group) == membership.member
+        with pytest.raises(ValueError):
+            membership.other(factories.GeoGroupFactory())
+        with pytest.raises(ValueError):
+            membership.other(factories.CountryFactory())
 
 
 def test_other_on_later_version():
