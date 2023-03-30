@@ -44,6 +44,7 @@ from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
+from measures.util import diff_components
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
@@ -232,6 +233,7 @@ class MeasureEditWizard(
         (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
         (MeasureEditSteps.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
         (MeasureEditSteps.REGULATION, forms.MeasureRegulationForm),
+        (MeasureEditSteps.DUTIES, forms.MeasureDutiesForm),
     ]
 
     templates = {
@@ -255,6 +257,9 @@ class MeasureEditWizard(
             "title": "Edit the quota order number",
             "link_text": "Quota order number",
         },
+        MeasureEditSteps.DUTIES: {
+            "title": "Edit the duties",
+        },
     }
 
     def get_template_names(self):
@@ -277,6 +282,17 @@ class MeasureEditWizard(
         kwargs = {}
         if step not in [START, MeasureEditSteps.QUOTA_ORDER_NUMBER]:
             kwargs["selected_measures"] = self.get_queryset()
+
+        if step == MeasureEditSteps.DUTIES:
+            start_date = (
+                self.get_cleaned_data_for_step(MeasureEditSteps.START_DATE).get(
+                    "start_date",
+                )
+                if self.get_cleaned_data_for_step(MeasureEditSteps.START_DATE)
+                else None
+            )
+            kwargs["measures_start_date"] = start_date
+
         return kwargs
 
     def done(self, form_list, **kwargs):
@@ -299,8 +315,9 @@ class MeasureEditWizard(
             )
         new_quota_order_number = cleaned_data.get("order_number", None)
         new_generating_regulation = cleaned_data.get("generating_regulation", None)
+        new_duties = cleaned_data.get("duties", None)
         for measure in selected_measures:
-            measure.new_version(
+            new_measure = measure.new_version(
                 workbasket=workbasket,
                 update_type=UpdateType.UPDATE,
                 valid_between=TaricDateRange(
@@ -316,6 +333,23 @@ class MeasureEditWizard(
                 if new_generating_regulation
                 else measure.generating_regulation,
             )
+            if new_duties:
+                diff_components(
+                    instance=new_measure,
+                    duty_sentence=new_duties,
+                    start_date=new_measure.valid_between.lower,
+                    workbasket=workbasket,
+                    transaction=workbasket.current_transaction,
+                )
+            footnote_associations = FootnoteAssociationMeasure.objects.current().filter(
+                footnoted_measure=measure,
+            )
+            for fa in footnote_associations:
+                fa.new_version(
+                    workbasket=workbasket,
+                    update_type=UpdateType.UPDATE,
+                    footnoted_measure=new_measure,
+                )
             self.session_store.clear()
 
         return redirect(reverse("workbaskets:review-workbasket"))

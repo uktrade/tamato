@@ -34,7 +34,6 @@ from common.views import WithPaginationListView
 from exporter.models import Upload
 from measures.filters import MeasureFilter
 from measures.models import Measure
-from measures.pagination import MeasurePaginator
 from workbaskets import forms
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
@@ -243,7 +242,6 @@ class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
 
     template_name = "workbaskets/review-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
-    paginator_class = MeasurePaginator
     filterset_class = MeasureFilter
 
 
