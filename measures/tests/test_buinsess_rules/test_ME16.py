@@ -284,7 +284,9 @@ def test_ME16_query_similar_measures(measure_instance_for_compile_query):
         assert f"'additional_code__isnull', False" in target
 
 
-def test_ME16_works_with_wonky_archived_measure(seed_database_with_indented_goods):
+def test_ME16_works_and_ignores_archived_measure_data(
+    seed_database_with_indented_goods,
+):
     # setup data with archived workbasket and published workbasket
     goods = GoodsNomenclature.objects.all().get(item_id="2903691900")
     commodities_collection = CommodityCollectionLoader(prefix="2903").load()
