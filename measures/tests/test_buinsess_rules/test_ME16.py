@@ -103,8 +103,8 @@ pytestmark = pytest.mark.django_db
     ],
 )
 def related_measure_dates(request, date_ranges):
-    callable, date_overlap = request.param
-    return callable(date_ranges), date_overlap
+    get_measure_factory_properties, date_overlap = request.param
+    return get_measure_factory_properties(date_ranges), date_overlap
 
 
 @pytest.mark.parametrize(
@@ -137,15 +137,24 @@ def test_ME16(existing_code, overlapping_code, error_expected):
         business_rules.ME16(measure.transaction).validate(measure)
 
 
-def updated_goods_nomenclature(e):
-    original = e.indents.get()
+def create_goods_nomenclature_with_clashing_indents(source_goods_nomenclature):
+    """
+    Updates the source goods nomenclature indent to be 1, and creates a new
+    goods nomenclature with multiple indents with the same start date but
+    different indent values.
+
+    This is used to create a known issue in tap where it will alternate between
+    indents randomly and potentially present indents incorrectly (until fixed,
+    currently WIP)
+    """
+    original = source_goods_nomenclature.indents.get()
     original.indent = 1
     original.save(force_write=True)
 
     good = factories.GoodsNomenclatureFactory.create(
-        item_id=e.item_id[:8] + "90",
-        valid_between=e.valid_between,
-        indent__indent=e.indents.first().indent + 1,
+        item_id=source_goods_nomenclature.item_id[:8] + "90",
+        valid_between=source_goods_nomenclature.valid_between,
+        indent__indent=source_goods_nomenclature.indents.first().indent + 1,
     )
 
     factories.GoodsNomenclatureIndentFactory.create(
@@ -153,7 +162,7 @@ def updated_goods_nomenclature(e):
         update_type=UpdateType.UPDATE,
         version_group=good.indents.first().version_group,
         validity_start=good.indents.first().validity_start,
-        indent=e.indents.first().indent - 1,
+        indent=source_goods_nomenclature.indents.first().indent - 1,
     )
 
     return good
@@ -170,7 +179,7 @@ def updated_goods_nomenclature(e):
             True,
         ),
         (
-            updated_goods_nomenclature,
+            create_goods_nomenclature_with_clashing_indents,
             False,
         ),
     ),
@@ -181,8 +190,11 @@ def updated_goods_nomenclature(e):
     ],
 )
 def related_goods_nomenclature(request, existing_goods_nomenclature):
-    callable, expected = request.param
-    return callable(existing_goods_nomenclature), expected
+    create_goods_nomenclature_function, expected_result = request.param
+    return (
+        create_goods_nomenclature_function(existing_goods_nomenclature),
+        expected_result,
+    )
 
 
 @pytest.fixture(
@@ -199,7 +211,7 @@ def related_goods_nomenclature(request, existing_goods_nomenclature):
         "nothing",
     ],
 )
-def measure_data_for_compile_query(request):
+def measure_instance_for_compile_query(request):
     return factories.MeasureFactory.create(**request.param)
 
 
@@ -229,13 +241,11 @@ def related_measure_data(
 
 def test_ME16_part_2(related_measure_data):
     """
-    There may be no overlap in time with other measure occurrences with a goods
-    code in the same nomenclature hierarchy which references the same measure
-    type, geo area, order number, additional code and reduction indicator. This
-    rule is not applicable for Meursing additional codes.
+    Tests that another measure within the chapter with matching properties :
+    measure type, geo area, order number and reduction indicator and the
+    inverted absence of additional code raise exceptions correctly.
 
-    This is an extension of the previously described ME1 to all commodity codes
-    in the upward hierarchy and all commodity codes in the downward hierarchy.
+    (see ME16 business rule for more details)
     """
 
     related_data, error_expected = related_measure_data
@@ -245,15 +255,15 @@ def test_ME16_part_2(related_measure_data):
         business_rules.ME16(related.transaction).validate(related)
 
 
-def test_ME16_compile_query(measure_data_for_compile_query):
-    """Test that the compile_query method does check against  measure type, geo
-    area, order number, additional code and reduction indicator."""
+def test_ME16_query_similar_measures(measure_instance_for_compile_query):
+    """Test that the query_similar_measures method does check against  measure
+    type, geo area, order number, additional code and reduction indicator."""
 
-    measure = measure_data_for_compile_query
+    measure = measure_instance_for_compile_query
 
     me16 = business_rules.ME16(measure.transaction)
 
-    target = str(me16.compile_query(measure))
+    target = str(me16.query_similar_measures(measure))
     assert f"'measure_type__sid', '{measure.measure_type.sid}'" in target
     assert f"'geographical_area__sid', {measure.geographical_area.sid}" in target
 

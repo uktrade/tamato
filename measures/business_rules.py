@@ -227,70 +227,35 @@ class ME88(BusinessRule):
             raise self.violation(measure)
 
 
-#
-# @only_applicable_after("2004-12-31")
-# class ME16(BusinessRule):
-#     """Integrating a measure with an additional code when an equivalent or
-#     overlapping measures without additional code already exists and vice-versa,
-#     should be forbidden."""
-#
-#     def validate(self, measure):
-#         kwargs = {}
-#         if measure.order_number:
-#             kwargs["order_number__order_number"] = measure.order_number.order_number
-#         elif measure.dead_order_number:
-#             kwargs["dead_order_number"] = measure.dead_order_number
-#         else:
-#             kwargs["order_number__isnull"] = True
-#             kwargs["dead_order_number__isnull"] = True
-#
-#         if measure.additional_code or measure.dead_additional_code:
-#             additional_code_query = Q(additional_code__isnull=True) & Q(
-#                 dead_additional_code__isnull=True,
-#             )
-#         else:
-#             additional_code_query = Q(additional_code__isnull=False) | Q(
-#                 dead_additional_code__isnull=False,
-#             )
-#         if (
-#             type(measure)
-#             .objects.with_effective_valid_between()
-#             .filter(
-#                 additional_code_query,
-#                 measure_type__sid=measure.measure_type.sid,
-#                 geographical_area__sid=measure.geographical_area.sid,
-#                 goods_nomenclature__sid=measure.goods_nomenclature.sid
-#                 if measure.goods_nomenclature
-#                 else None,
-#                 reduction=measure.reduction,
-#                 db_effective_valid_between__overlap=measure.effective_valid_between,
-#                 **kwargs,
-#             )
-#             .exclude(pk=measure.pk or None)
-#             .excluding_versions_of(version_group=measure.version_group)
-#             .approved_up_to_transaction(measure.transaction)
-#             .exists()
-#         ):
-#             raise self.violation(
-#                 measure,
-#                 "A measure with an additional code cannot be added when an equivalent "
-#                 "or overlapping measure without an additional code already exists and "
-#                 "vice-versa.",
-#             )
-
-
 @skip_when_deleted
 @only_applicable_after("2004-12-31")
 class ME16(BusinessRule):
     """
-    There may be no overlap in time with other measure occurrences with a goods
-    code in the same nomenclature hierarchy which references the same measure
-    type, geo area, order number, additional code and reduction indicator.
+    Integrating a measure with an additional code when an equivalent or
+    overlapping measures without additional code already exists and vice-versa,
+    should be forbidden.
 
-    This rule is not applicable for Meursing additional codes.
+    Note :
+        Our understanding is that this should behave like ME32 with except checking for the inverse of the
+        presence of the additional code.
+
+        This is based on our understanding of the intention and the poor wording of the business rule and the use of
+        the word "should" are indicators that the language of this rule has not been through the same scrutiny as other
+        similar rules.
+
+    Interpreted meaning:
+        Clashing measures :
+            Has a goods code in the same nomenclature hierarchy which references the same measure type, geo area,
+            order number and reduction indicator and has no additional code, where one is defined on the validating
+            measure or vice versa.
     """
 
-    def compile_query(self, measure):
+    @staticmethod
+    def query_similar_measures(measure):
+        """Query measures where measure type, geo area, reduction, order number
+        (or dead order number) match and additional code is null when the target
+        measure has a populated additional code, or is not null when the target
+        measure has a null additional code."""
         query = Q(
             measure_type__sid=measure.measure_type.sid,
             geographical_area__sid=measure.geographical_area.sid,
@@ -309,7 +274,7 @@ class ME16(BusinessRule):
 
     def clashing_measures(self, measure) -> MeasuresQuerySet:
         """
-        Returns all of the measures that clash with the passed measure over its
+        Returns all the measures that clash with the passed measure over its
         lifetime.
 
         Two measures clash if any of their fields listed in this business rule
@@ -318,7 +283,7 @@ class ME16(BusinessRule):
         """
         from measures.snapshots import MeasureSnapshot
 
-        query = self.compile_query(measure)
+        query = ME16.query_similar_measures(measure)
         clashing_measures = type(measure).objects.none()
         for snapshot in MeasureSnapshot.get_snapshots(measure, self.transaction):
             clashing_measures = clashing_measures.union(
