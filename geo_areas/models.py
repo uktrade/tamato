@@ -195,6 +195,9 @@ class GeographicalMembership(TrackedModel, ValidityMixin):
         UpdateValidity,
     )
 
+    def __str__(self):
+        return f"{self.geo_group.get_area_code_display()} {self.geo_group.structure_description} member {self.member.get_area_code_display()} {self.member.structure_description}"
+
     def other(self, area: GeographicalArea) -> GeographicalArea:
         """
         When passed an area that is part of this membership, returns the other

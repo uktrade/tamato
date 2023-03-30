@@ -449,10 +449,12 @@ def test_trackedmodel_str(trackedmodel_factory):
     """Verify no __str__ methods of TrackedModel classes crash or return non-
     strings."""
     instance = trackedmodel_factory.create()
-    result = instance.__str__()
 
-    assert isinstance(result, str)
-    assert len(result.strip())
+    with override_current_transaction(instance.transaction):
+        result = instance.__str__()
+
+        assert isinstance(result, str)
+        assert len(result.strip())
 
 
 @pytest.mark.django_db(transaction=True, reset_sequences=True)

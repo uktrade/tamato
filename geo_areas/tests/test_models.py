@@ -189,3 +189,17 @@ def test_with_current_descriptions(queued_workbasket):
     assert (
         area.description == f"{description_1.description} {description_2.description}"
     )
+
+
+def test_geo_membership_str():
+    instance = factories.GeographicalMembershipFactory.create()
+
+    with override_current_transaction(instance.transaction):
+        result = instance.__str__()
+        assert isinstance(result, str)
+        assert len(result.strip())
+
+        assert str(instance.geo_group.get_area_code_display()) in result
+        assert str(instance.geo_group.structure_description) in result
+        assert str(instance.member.get_area_code_display()) in result
+        assert str(instance.member.structure_description) in result
