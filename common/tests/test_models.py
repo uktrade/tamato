@@ -451,7 +451,7 @@ def test_trackedmodel_str(trackedmodel_factory):
     instance = trackedmodel_factory.create()
 
     with override_current_transaction(instance.transaction):
-        result = instance.__str__()
+        result = str(instance)
 
         assert isinstance(result, str)
         assert len(result.strip())

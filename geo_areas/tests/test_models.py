@@ -196,7 +196,7 @@ def test_geo_membership_str():
     instance = factories.GeographicalMembershipFactory.create()
 
     with override_current_transaction(instance.transaction):
-        result = instance.__str__()
+        result = str(instance)
         assert isinstance(result, str)
         assert len(result.strip())
 

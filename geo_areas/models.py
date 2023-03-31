@@ -201,7 +201,12 @@ class GeographicalMembership(GetTabURLMixin, TrackedModel, ValidityMixin):
     )
 
     def __str__(self):
-        return f"{self.geo_group.get_area_code_display()} {self.geo_group.structure_description} member {self.member.get_area_code_display()} {self.member.structure_description}"
+        return (
+            f"{self.geo_group.get_area_code_display()} "
+            f"{self.geo_group.structure_description} member "
+            f"{self.member.get_area_code_display()} "
+            f"{self.member.structure_description}"
+        )
 
     def other(self, area: GeographicalArea) -> GeographicalArea:
         """
