@@ -152,7 +152,7 @@ class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
         fields = ["valid_between"]
 
 
-class GeographicalMembershipEditForm(
+class GeographicalMembershipAddForm(
     BindNestedFormMixin,
     GeographicalMembershipValidityPeriodForm,
 ):
@@ -278,7 +278,7 @@ class GeographicalAreaEndDateForm(ValidityPeriodForm):
 
 class GeographicalAreaEditForm(
     GeographicalAreaEndDateForm,
-    GeographicalMembershipEditForm,
+    GeographicalMembershipAddForm,
 ):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
