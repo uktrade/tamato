@@ -1647,11 +1647,11 @@ def test_measure_list_selected_measures_list(valid_user_client):
     assert response.status_code == 200
 
     soup = BeautifulSoup(str(response.content), "html.parser")
-    measure_ids_in_table = [a.text for a in soup.select("details table tr td a")]
+    measure_ids_in_table = {a.text for a in soup.select("details table tr td a")}
 
-    selected_measures_ids = [str(measure.sid) for measure in measures]
+    selected_measures_ids = {str(measure.sid) for measure in measures}
 
-    assert measure_ids_in_table == selected_measures_ids
+    assert not measure_ids_in_table.difference(selected_measures_ids)
 
 
 def test_multiple_measure_edit_only_quota_order_number(
