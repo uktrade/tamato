@@ -147,10 +147,6 @@ class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
 
         return cleaned_data
 
-    class Meta:
-        model = GeographicalMembership
-        fields = ["valid_between"]
-
 
 class GeographicalMembershipAddForm(
     BindNestedFormMixin,
