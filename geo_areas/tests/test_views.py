@@ -181,8 +181,8 @@ def test_geo_area_update_view_membership_add_country_or_region(
     valid_user_client,
     session_workbasket,
 ):
-    """Tests that a country or region can be added to the membership of the area
-    group being edited."""
+    """Tests that a country or region can be added as a member of the area group
+    being edited."""
     area_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     country = factories.GeographicalAreaFactory.create(area_code=AreaCode.COUNTRY)
 
@@ -191,7 +191,6 @@ def test_geo_area_update_view_membership_add_country_or_region(
         member__sid=country.sid,
     )
     assert not membership
-    expected_valid_between = area_group.valid_between
 
     form_data = {
         "member": "COUNTRY",
@@ -200,6 +199,8 @@ def test_geo_area_update_view_membership_add_country_or_region(
         "membership_start_date_1": area_group.valid_between.lower.month,
         "membership_start_date_2": area_group.valid_between.lower.year,
     }
+    expected_valid_between = area_group.valid_between
+
     url = reverse(
         "geo_area-ui-edit",
         kwargs={"sid": area_group.sid},
@@ -223,6 +224,7 @@ def test_geo_area_update_view_membership_add_country_or_region(
         )
         assert membership
         assert membership.valid_between == expected_valid_between
+        assert membership.update_type == UpdateType.CREATE
         assert geo_area.update_type == UpdateType.UPDATE
 
 
@@ -230,8 +232,8 @@ def test_geo_area_update_view_membership_add_to_group(
     valid_user_client,
     session_workbasket,
 ):
-    """Tests that the country or region being edited can be added to the
-    membership of an area group."""
+    """Tests that the country or region being edited can be added as a member of
+    an area group."""
     region = factories.GeographicalAreaFactory.create(area_code=AreaCode.REGION)
     area_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
 
@@ -241,14 +243,13 @@ def test_geo_area_update_view_membership_add_to_group(
     )
     assert not membership
 
-    expected_valid_between = area_group.valid_between
-
     form_data = {
         "geo_group": area_group.pk,
         "membership_start_date_0": area_group.valid_between.lower.day,
         "membership_start_date_1": area_group.valid_between.lower.month,
         "membership_start_date_2": area_group.valid_between.lower.year,
     }
+    expected_valid_between = area_group.valid_between
 
     url = reverse(
         "geo_area-ui-edit",
@@ -273,4 +274,5 @@ def test_geo_area_update_view_membership_add_to_group(
         )
         assert membership
         assert membership.valid_between == expected_valid_between
+        assert membership.update_type == UpdateType.CREATE
         assert geo_area.update_type == UpdateType.UPDATE
