@@ -206,24 +206,26 @@ class GeographicalMembershipAddForm(
 
         if area_group and member:
             # Check if membership already exists
-            if GeographicalMembership.objects.filter(
+            is_member = GeographicalMembership.objects.filter(
                 geo_group=self.instance,
                 member=member,
-            ):
+            )
+            has_member = GeographicalMembership.objects.filter(
+                geo_group=area_group,
+                member=self.instance,
+            )
+            if is_member:
                 self.add_error(
                     "member",
                     "The selected country or region is already a member of this area group.",
                 )
-            if GeographicalMembership.objects.filter(
-                geo_group=area_group,
-                member=self.instance,
-            ):
+            if has_member:
                 self.add_error(
                     "geo_group",
                     "The selected area group already has this country or region as a member.",
                 )
 
-            # A membership start date is required
+            # Check if membership start and end date is valid
             rule_message = "must be within the validity period of the area group."
             if not start_date:
                 self.add_error(
@@ -236,18 +238,16 @@ class GeographicalMembershipAddForm(
                         "membership_start_date",
                         "The start date " + rule_message,
                     )
-                if area_group.valid_between.upper:
-                    if end_date:
-                        if end_date > area_group.valid_between.upper:
-                            self.add_error(
-                                "membership_end_date",
-                                "The end date " + rule_message,
-                            )
-                    else:
-                        self.add_error(
-                            "membership_end_date",
-                            "The end date " + rule_message,
-                        )
+            if area_group.valid_between.upper:
+                if (
+                    end_date
+                    and end_date > area_group.valid_between.upper
+                    or not end_date
+                ):
+                    self.add_error(
+                        "membership_end_date",
+                        "The end date " + rule_message,
+                    )
 
         return cleaned_data
 
