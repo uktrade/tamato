@@ -12,11 +12,14 @@ from geo_areas import business_rules
 from geo_areas import forms
 from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.forms import GeographicalAreaCreateDescriptionForm
+from geo_areas.forms import GeographicalAreaEditForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.generic import EditTaricView
 
 
 class GeoAreaViewSet(viewsets.ReadOnlyModelViewSet):
@@ -126,3 +129,35 @@ class GeoAreaDescriptionDelete(
 ):
     form_class = forms.GeographicalAreaDescriptionDeleteForm
     success_path = "detail"
+
+
+class GeoAreaUpdateMixin(GeoAreaMixin, TrackedModelDetailMixin):
+    form_class = GeographicalAreaEditForm
+
+    validate_business_rules = (
+        business_rules.GA1,
+        business_rules.GA3,
+        business_rules.GA4,
+        business_rules.GA5,
+        business_rules.GA6,
+        business_rules.GA7,
+        business_rules.GA10,
+        business_rules.GA11,
+        business_rules.GA21,
+        business_rules.GA22,
+    )
+
+
+class GeoAreaUpdate(GeoAreaUpdateMixin, CreateTaricUpdateView):
+    """UI endpoint to create geo area UPDATE instances."""
+
+
+class GeoAreaConfirmUpdate(GeoAreaMixin, TrackedModelDetailView):
+    template_name = "common/confirm_update.jinja"
+
+
+class GeoAreaEditUpdate(
+    GeoAreaUpdateMixin,
+    EditTaricView,
+):
+    """UI endpoint to edit geo area UPDATE instances."""
