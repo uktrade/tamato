@@ -55,7 +55,7 @@ class GeoAreaType(TextChoices):
 class GeoAreaCountryForm(forms.Form):
     country = forms.ModelChoiceField(
         label="Country",
-        queryset=GeographicalArea.objects.filter(area_code=AreaCode.COUNTRY),
+        queryset=None,  # populated in __init__
         required=False,
     )
 
@@ -77,7 +77,7 @@ class GeoAreaCountryForm(forms.Form):
 class GeoAreaRegionForm(forms.Form):
     region = forms.ModelChoiceField(
         label="Region",
-        queryset=GeographicalArea.objects.filter(area_code=AreaCode.REGION),
+        queryset=None,  # populated in __init__
         required=False,
     )
 
