@@ -444,7 +444,7 @@ class MeasureCreateWizard(
             "link_text": "Conditions",
             "info": """Add conditions and resulting actions to your measure(s). If a condition group is not met, the opposite action will be applied. 
             The opposite action is created automatically.
-            You must add conditions in order of their condition code. For example, add all B conditions first then C next.""",
+            """,
         },
         FOOTNOTES: {
             "title": "Add any footnotes (optional)",
