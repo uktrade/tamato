@@ -78,7 +78,7 @@ AlphanumericValidator = RegexValidator(
     ValidationError("Only alphanumeric characters are allowed."),
 )
 NumericValidator = RegexValidator(
-    r"^[0-9\s]*$",
+    r"^[0-9]*$",
     ValidationError("Only numbers are allowed."),
 )
 SymbolValidator = RegexValidator(
