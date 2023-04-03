@@ -39,7 +39,7 @@ from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
-from measures.models import MeasureAction
+from measures.models import MeasureActionPair
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
@@ -356,18 +356,6 @@ class MeasureEditWizard(
         return redirect(reverse("workbaskets:review-workbasket"))
 
 
-action_code_mappings = {
-    24: "04",
-    25: "05",
-    26: "06",
-    27: "07",
-    28: "08",
-    29: "09",
-    34: "14",
-    36: "16",
-}
-
-
 @method_decorator(require_current_workbasket, name="dispatch")
 class MeasureCreateWizard(
     PermissionRequiredMixin,
@@ -454,6 +442,9 @@ class MeasureCreateWizard(
         CONDITIONS: {
             "title": "Add any condition codes (optional)",
             "link_text": "Conditions",
+            "info": """Add conditions and resulting actions to your measure(s). If a condition group is not met, the opposite action will be applied. 
+            The opposite action is created automatically.
+            You must add conditions in order of their condition code. For example, add all B conditions first then C next.""",
         },
         FOOTNOTES: {
             "title": "Add any footnotes (optional)",
@@ -539,16 +530,17 @@ class MeasureCreateWizard(
                         if (index + 1 < len(data["formset-conditions"]))
                         else None
                     )
-                    action_code = int(condition_data.get("action").code)
+                    # corresponding negative action to the postive one. None if the action code has no pair
+                    action_pair = MeasureActionPair.objects.filter(
+                        positive_action__code=condition_data.get("action").code,
+                    ).first()
                     # if the next condition code is different create the negative action for the current condition
                     # only create a negative action if the action has a negative pair
                     if (
-                        action_code in action_code_mappings
+                        action_pair
                         and data["formset-conditions"][index]["condition_code"]
                         != next_condition_code
                     ):
-                        # not all action codes have pair's this will fail for them
-
                         component_sequence_number += 1
                         measure_creation_pattern.create_condition_and_components(
                             {
@@ -556,9 +548,7 @@ class MeasureCreateWizard(
                                 "duty_amount": None,
                                 "required_certificate": None,
                                 # corresponding negative action to the postive one.
-                                "action": MeasureAction.objects.get(
-                                    code=action_code_mappings[action_code],
-                                ),
+                                "action": action_pair.negative_action,
                                 "DELETE": False,
                             },
                             component_sequence_number,

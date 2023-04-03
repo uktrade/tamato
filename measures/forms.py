@@ -37,6 +37,7 @@ from measures.constants import MeasureEditSteps
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
+from measures.validators import validate_conditions_formset
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -281,7 +282,19 @@ class MeasureConditionsFormMixin(forms.ModelForm):
     )
     action = forms.ModelChoiceField(
         label="Action code",
-        queryset=models.MeasureAction.objects.latest_approved(),
+        # Filters out negative actions
+        queryset=models.MeasureAction.objects.latest_approved()
+        .exclude(
+            pk__in=models.MeasureActionPair.objects.values_list(
+                "negative_action",
+                flat=True,
+            ).distinct(),
+        )
+        .order_by("code"),
+        # This query could be implemented as raw sql in an optimised way
+        # A left join on the Measure Action table joining the pks to the negative action fk
+        # Where we only choose the rows where the negative action fk is null.
+        # Choose all rows that aren't negative actions, this would be a single query
         empty_label="-- Please select an action code --",
         error_messages={"required": "An action code is required."},
     )
@@ -309,8 +322,11 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                             "condition_sid",
                         ),
                         Div(
-                            Field("reference_price", css_class="govuk-input"),
-                            "required_certificate",
+                            Div(
+                                Field("reference_price", css_class="govuk-input"),
+                                "required_certificate",
+                                css_class="govuk-form-group",
+                            ),
                             css_class="govuk-radios__conditional",
                         ),
                     ),
@@ -323,7 +339,6 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                             MeasureConditionComponentDuty("applicable_duty"),
                         ),
                     ),
-                    # TODO move into css
                     style="display: grid; grid-template-columns: 90% 90%; grid-gap: 10%",
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
@@ -354,6 +369,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         if (not price and not certificate) or (price and certificate):
             self.add_error(
                 None,
+                # TODO update content
                 ValidationError(
                     "A Reference price or certificate is required but not both.",
                 ),
@@ -363,9 +379,13 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         if price and measure_start_date is not None:
             try:
                 validate_duties(price, measure_start_date)
-            except ValidationError as e:
+            except ValidationError:
+                # invalid price's will not parse
                 price_errored = True
-                self.add_error("reference_price", e)
+                self.add_error(
+                    "reference_price",
+                    "Enter a valid reference price or quantity.",
+                )
 
         if price and not price_errored:
             parser = DutySentenceParser.get(measure_start_date)
@@ -437,7 +457,14 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
 
 class MeasureConditionsBaseFormSet(FormSet):
     def clean(self):
-        """"""
+        """
+        We get the cleaned_data from the forms in the formset if any of the
+        forms are not valid the form set checks are skipped until they are
+        valid.
+
+        Validates formset using validate_conditions_formset which will raise a
+        ValidationError if the formset contains errors.
+        """
 
         # cleaned_data is only set if forms are all valid
         if any(self.errors):
@@ -445,67 +472,8 @@ class MeasureConditionsBaseFormSet(FormSet):
             return
         cleaned_data = super().cleaned_data
 
-        errors_list = []
-        # list of tuples of condition code and certification
-        condition_certificates = []
-        # list of tuples of condition code and duty amount data
-        condition_duty_amounts = []
-        # list of condition codes
-        condition_codes = []
-        # list of tuples of condition code and it's action code
-        condition_action_tuple = []
-        for condition in cleaned_data:
-            if condition["duty_amount"]:
-                condition_duty_amounts.append(
-                    (
-                        condition["condition_code"],
-                        condition["duty_amount"],
-                        condition["monetary_unit"],
-                        condition["condition_measurement"],
-                    ),
-                )
-            if condition["required_certificate"]:
-                condition_certificates.append(
-                    (condition["condition_code"], condition["required_certificate"]),
-                )
-            condition_action_tuple.append(
-                (condition["condition_code"], condition["action"]),
-            )
-            condition_codes.append(condition["condition_code"])
+        validate_conditions_formset(cleaned_data)
 
-        num_unique_certificates = len(set(condition_certificates))
-        num_unique_duty_amounts = len(set(condition_duty_amounts))
-        num_unique_conditions = len(set(condition_codes))
-        num_unique_condition_action_codes = len(set(condition_action_tuple))
-        # for the number of certificates the number of unique certificate, condition code tuples
-        # must be equal if the form is valid. Ie/ there are no duplicate certiicates for a condition code
-
-        if len(condition_certificates) != num_unique_certificates:
-            errors_list.append(
-                ValidationError(
-                    "The same certificate cannot be added more than once to the same condition code",
-                ),
-            )
-            # self.add_error(None, "The same certificate cannot be added more than once to the same condition code")
-
-        if len(condition_duty_amounts) != num_unique_duty_amounts:
-            errors_list.append(
-                ValidationError(
-                    "The same referenced price cannot be added more than once to the same condition code",
-                ),
-            )
-            # self.add_error(None, "The same referenced price cannot be added more than once to the same condition code")
-        # for all unique condition codes the number of unique action codes will be equal
-        # if the form is valid
-        if num_unique_conditions != num_unique_condition_action_codes:
-            errors_list.append(
-                ValidationError(
-                    "For the same condition code all action code's must be equal",
-                ),
-            )
-            # self.add_error(None, "For the same condition code all action code's must be equal")
-        if errors_list:
-            raise ValidationError(errors_list)
         return cleaned_data
 
 

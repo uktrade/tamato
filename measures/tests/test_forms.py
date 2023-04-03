@@ -641,7 +641,7 @@ def test_measure_forms_conditions_wizard_valid_duty(date_ranges, duty_sentence_p
 @pytest.mark.parametrize(
     "reference_price, message",
     [
-        ("invalid duty", "Enter a valid duty sentence."),
+        ("invalid duty", "Enter a valid reference price or quantity."),
         (
             "3.5 % + 11 GBP / 100 kg",
             "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
@@ -677,7 +677,7 @@ def test_measure_forms_conditions_invalid_duty(
 @pytest.mark.parametrize(
     "reference_price, message",
     [
-        ("invalid duty", "Enter a valid duty sentence."),
+        ("invalid duty", "Enter a valid reference price or quantity."),
         (
             "3.5 % + 11 GBP / 100 kg",
             "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
@@ -1068,6 +1068,8 @@ def test_measure_formset_conditions_invalid(
     date_ranges,
     duty_sentence_parser,
 ):
+    """Test for all formset level errors across the form in Measure
+    conditions."""
     condition_code1 = factories.MeasureConditionCodeFactory.create()
     action1, action2 = factories.MeasureActionFactory.create_batch(2)
 
@@ -1090,7 +1092,7 @@ def test_measure_formset_conditions_invalid(
 
     assert not formset.is_valid()
     assert (
-        "For the same condition code all action code's must be equal"
+        "All conditions of the same condition code must have the same resulting action."
         in formset.non_form_errors()
     )
 
@@ -1111,7 +1113,7 @@ def test_measure_formset_conditions_invalid(
     )
     assert not formset3.is_valid()
     assert (
-        "The same referenced price cannot be added more than once to the same condition code"
+        "The same price cannot be added more than once to the same condition code."
         in formset3.non_form_errors()
     )
 
@@ -1138,8 +1140,31 @@ def test_measure_formset_conditions_invalid(
     with override_current_transaction(action.transaction):
         assert not formset2.is_valid()
         assert (
-            "The same certificate cannot be added more than once to the same condition code"
+            "The same certificate cannot be added more than once to the same condition code."
             in formset2.non_form_errors()
         )
-    # test diff conditions diff action codes
-    # diff conditions, dif action codes
+
+    condition_code1 = factories.MeasureConditionCodeFactory.create(code="A")
+    condition_code2 = factories.MeasureConditionCodeFactory.create(code="B")
+    action1, action2 = factories.MeasureActionFactory.create_batch(2)
+
+    data = {
+        "form-0-condition_code": condition_code2.pk,
+        "form-0-reference_price": "2%",
+        "form-0-action": action1.pk,
+        "form-1-condition_code": condition_code1.pk,
+        "form-1-reference_price": "3%",
+        "form-1-action": action2.pk,
+    }
+
+    formset = forms.MeasureConditionsWizardStepFormSet(
+        data,
+        prefix="",
+        form_kwargs={"measure_start_date": date_ranges.normal},
+    )
+
+    assert not formset.is_valid()
+    assert (
+        "All conditions codes must be added in alphabetical order."
+        in formset.non_form_errors()
+    )

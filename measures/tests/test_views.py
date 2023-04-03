@@ -987,6 +987,14 @@ def test_measure_form_wizard_create_measures(
     action1_pair = factories.MeasureActionFactory.create(code="05")
     action2 = factories.MeasureActionFactory.create(code="26")
     action2_pair = factories.MeasureActionFactory.create(code="06")
+    factories.MeasureActionPairFactory.create(
+        positive_action=action1,
+        negative_action=action1_pair,
+    )
+    factories.MeasureActionPairFactory.create(
+        positive_action=action2,
+        negative_action=action2_pair,
+    )
     # action with no pair
     action3 = factories.MeasureActionFactory.create(code="01")
 
@@ -1245,46 +1253,6 @@ def test_measure_create_wizard_get_form_kwargs(
 
     assert "measure_start_date" in form_kwargs["form_kwargs"]
     assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
-
-
-# @pytest.mark.parametrize("step", ["commodities", "conditions"])
-def test_measure_create_wizard_measure_condition_fails(
-    # step,
-    session_request,
-    measure_type,
-    regulation,
-    erga_omnes,
-):
-    (
-        condition_code1,
-        condition_code2,
-        condition_code3,
-    ) = factories.MeasureConditionCodeFactory.create_batch(3)
-    action1, action2, action3 = factories.MeasureActionFactory.create_batch(3)
-    details_data = {
-        "measure_create_wizard-current_step": "commodities",
-        "measure_details-measure_type": [measure_type.pk],
-        "measure_details-generating_regulation": [regulation.pk],
-        "measure_details-geo_area_type": ["ERGA_OMNES"],
-        "measure_details-start_date_0": [2],
-        "measure_details-start_date_1": [4],
-        "measure_details-start_date_2": [2021],
-        "measure_details-min_commodity_count": [2],
-    }
-    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
-    storage.set_step_data("measure_details", details_data)
-    storage._set_current_step("commodities")
-    wizard = MeasureCreateWizard(
-        request=session_request,
-        storage=storage,
-        initial_dict={"commodities": {}},
-        instance_dict={"measure_details": None},
-    )
-    wizard.form_list = OrderedDict(wizard.form_list)
-    # form_kwargs = wizard.get_form_kwargs(step)
-
-    # assert "measure_start_date" in form_kwargs["form_kwargs"]
-    # assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
 
 
 def test_measure_form_creates_exclusions(
@@ -2009,3 +1977,49 @@ def test_measure_list_redirects_to_search_with_no_params(valid_user_client):
 def test_measure_search_200(valid_user_client):
     response = valid_user_client.get(reverse("measure-ui-search"))
     assert response.status_code == 200
+
+
+@pytest.mark.skip(reason="Test not finished")
+def test_measure_conditions_action_code_list(
+    valid_user_client,
+    session_request,
+    measure_type,
+    regulation,
+):
+    (
+        positive_action,
+        negative_action,
+        single_action,
+    ) = factories.MeasureActionFactory.create_batch(3)
+
+    factories.MeasureActionPairFactory(
+        positive_action=positive_action,
+        negative_action=negative_action,
+    )
+
+    step = "conditions"
+    details_data = {
+        "measure_create_wizard-current_step": "measure_details",
+        "measure_details-measure_type": [measure_type.pk],
+        "measure_details-generating_regulation": [regulation.pk],
+        "measure_details-geo_area_type": ["ERGA_OMNES"],
+        "measure_details-start_date_0": [2],
+        "measure_details-start_date_1": [4],
+        "measure_details-start_date_2": [2021],
+        "measure_details-min_commodity_count": [2],
+    }
+    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+    storage.set_step_data("measure_details", details_data)
+    storage._set_current_step(step)
+    wizard = MeasureCreateWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={step: {}},
+        instance_dict={"measure_details": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+
+    conditions_form = wizard.get_form(step=step)
+    assert conditions_form
+    print(conditions_form)
+    print(conditions_form.forms)
