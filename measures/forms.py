@@ -369,9 +369,8 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         if (not price and not certificate) or (price and certificate):
             self.add_error(
                 None,
-                # TODO update content
                 ValidationError(
-                    "A Reference price or certificate is required but not both.",
+                    "For each condition you must complete at least one of the following fields: Reference price or quantity; Certificate, licence or document.",
                 ),
             )
 
