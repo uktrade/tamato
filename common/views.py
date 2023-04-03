@@ -383,3 +383,7 @@ def handler403(request, *args, **kwargs):
 
 def handler500(request, *args, **kwargs):
     return TemplateResponse(request=request, template="common/500.jinja", status=500)
+
+
+class AccessibilityStatementView(TemplateView):
+    template_name = "common/accessibility.jinja"
