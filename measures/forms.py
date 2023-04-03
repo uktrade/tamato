@@ -339,7 +339,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                             MeasureConditionComponentDuty("applicable_duty"),
                         ),
                     ),
-                    style="display: grid; grid-template-columns: 90% 90%; grid-gap: 10%",
+                    style="display: grid; grid-template-columns: 80% 80%; grid-gap: 5%",
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
