@@ -426,19 +426,17 @@ class MeasureActionPair(models.Model):
     query - values list on negative action and exclude from MeasureAction
     """
 
-    positive_action = models.ForeignKey(
+    positive_action = models.OneToOneField(
         MeasureAction,
         on_delete=models.PROTECT,
         editable=False,
         related_name="positive_measure_action",
-        unique=True,
     )
-    negative_action = models.ForeignKey(
+    negative_action = models.OneToOneField(
         MeasureAction,
         on_delete=models.PROTECT,
         editable=False,
         related_name="negative_measure_action",
-        unique=True,
     )
 
     class Meta:
