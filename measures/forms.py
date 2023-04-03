@@ -370,7 +370,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
             self.add_error(
                 None,
                 ValidationError(
-                    "For each condition you must complete at least one of the following fields: Reference price or quantity; Certificate, licence or document.",
+                    "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’.",
                 ),
             )
 

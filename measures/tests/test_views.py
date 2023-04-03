@@ -779,7 +779,7 @@ def test_measure_update_invalid_conditions(
     assert a_tags[1].attrs["href"] == "#measure-conditions-formset-0-__all__"
     assert (
         a_tags[1].text
-        == "For each condition you must complete at least one of the following fields: Reference price or quantity; Certificate, licence or document."
+        == "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’."
     )
     assert a_tags[2].attrs["href"] == "#measure-conditions-formset-0-reference_price"
     assert (
