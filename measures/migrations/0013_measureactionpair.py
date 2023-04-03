@@ -25,20 +25,22 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "negative_action",
-                    models.OneToOneField(
+                    models.ForeignKey(
                         editable=False,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="negative_measure_action",
                         to="measures.measureaction",
+                        unique=True,
                     ),
                 ),
                 (
                     "positive_action",
-                    models.OneToOneField(
+                    models.ForeignKey(
                         editable=False,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="positive_measure_action",
                         to="measures.measureaction",
+                        unique=True,
                     ),
                 ),
             ],
