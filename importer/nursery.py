@@ -129,6 +129,10 @@ class TariffObjectNursery:
                         )(handler)
                         issue.to_warning()
 
+                    # create record for import errors and warnings
+                    # todo: add record to import batch
+                    # ImporterError.objects.create(batch=)
+
                 result = handler.build()
                 if not result:
                     self._cache_handler(handler)
@@ -148,6 +152,8 @@ class TariffObjectNursery:
             return
 
         self.clear_cache(repeats)
+
+        # create
 
     def get_handler_from_cache(self, key):
         match = self.cache.get(key)
