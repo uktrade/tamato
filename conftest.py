@@ -263,7 +263,7 @@ def policy_group(db) -> Group:
 
 @pytest.fixture
 def valid_user(db, policy_group):
-    user = factories.UserFactory.create()
+    user = factories.UserFactory.create(password="GottaHaveTwelveCharactersNow")
     policy_group.user_set.add(user)
     return user
 
@@ -1540,3 +1540,22 @@ def quotas_json():
 def mock_aioresponse():
     with aioresponses() as m:
         yield m
+
+
+@pytest.fixture(autouse=False)
+def disable_sso(settings):
+    settings.SSO_ENABLED = False
+    settings.INSTALLED_APPS.pop(settings.INSTALLED_APPS.index("authbroker_client"))
+    settings.MIDDLEWARE.pop(
+        settings.MIDDLEWARE.index(
+            "authbroker_client.middleware.ProtectAllViewsMiddleware",
+        ),
+    )
+    settings.LOGIN_URL = "/login"
+    settings.AUTHBROKER_CLIENT_ID = None
+    settings.AUTHBROKER_CLIENT_SECRET = None
+    settings.AUTHENTICATION_BACKENDS.pop(
+        settings.AUTHENTICATION_BACKENDS.index(
+            "authbroker_client.backends.AuthbrokerBackend",
+        ),
+    )
