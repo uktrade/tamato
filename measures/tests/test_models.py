@@ -313,7 +313,8 @@ def test_measure_action_pair():
         positive_action=action_1,
         negative_action=action_2,
     )
-    assert action_pair
+    assert action_1.code in str(action_pair)
+    assert action_2.code in str(action_pair)
 
 
 def test_measure_action_pair_invalid():
