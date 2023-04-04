@@ -1168,3 +1168,30 @@ def test_measure_formset_conditions_invalid(
         "All conditions codes must be added in alphabetical order."
         in formset.non_form_errors()
     )
+
+
+def test_measure_formset_conditions_field_queryset(
+    date_ranges,
+):
+    (
+        positive_action,
+        negative_action,
+        single_action,
+    ) = factories.MeasureActionFactory.create_batch(3)
+
+    factories.MeasureActionPairFactory(
+        positive_action=positive_action,
+        negative_action=negative_action,
+    )
+
+    form = forms.MeasureConditionsWizardStepForm(
+        data={},
+        prefix="",
+        measure_start_date=date_ranges.normal,
+        instance=None,
+    )
+
+    assert form
+    assert positive_action in form["action"].field.queryset
+    assert single_action in form["action"].field.queryset
+    assert negative_action not in form["action"].field.queryset
