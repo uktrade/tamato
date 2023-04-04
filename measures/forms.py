@@ -28,6 +28,7 @@ from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.util import validity_range_contains_range
+from common.validators import SymbolValidator
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -272,6 +273,9 @@ class MeasureConditionsFormMixin(forms.ModelForm):
     reference_price = forms.CharField(
         label="Reference price or quantity",
         required=False,
+        validators=[
+            SymbolValidator,
+        ],
     )
     required_certificate = AutoCompleteField(
         label="Certificate, licence or document",
@@ -286,6 +290,9 @@ class MeasureConditionsFormMixin(forms.ModelForm):
     applicable_duty = forms.CharField(
         label="Duty",
         required=False,
+        validators=[
+            SymbolValidator,
+        ],
     )
     condition_sid = forms.CharField(required=False, widget=forms.HiddenInput())
 
@@ -1041,6 +1048,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
     duties = forms.CharField(
         label="Duties",
         required=False,
+        validators=[SymbolValidator],
     )
 
     def __init__(self, *args, **kwargs):

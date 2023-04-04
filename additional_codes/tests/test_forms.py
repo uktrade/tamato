@@ -69,6 +69,22 @@ def test_additional_code_form_valid_instance(date_ranges):
     assert form.cleaned_data["type"] == code.type
 
 
+def test_additional_code_create_invalid_data(date_ranges):
+    """Tests that AdditionalCode.is_valid() returns False when the code field is
+    passed letters and symbols."""
+    code_type = factories.AdditionalCodeTypeFactory.create()
+    data = {
+        "type": code_type.pk,
+        "code": "$AB",
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+    }
+    form = forms.AdditionalCodeCreateForm(data=data, instance=None)
+    assert not form.is_valid()
+    assert "Enter a valid value." in form.errors["code"]
+
+
 def test_additional_code_form_valid_no_instance(date_ranges):
     """Tests that AdditionalCodeForm.is_valid() returns True when passed
     required fields without a code instance."""

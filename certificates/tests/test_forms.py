@@ -93,6 +93,7 @@ def test_certificate_create_form_validates_data(session_with_workbasket):
 
     certificate_data = {
         "certificate_type": "I am not right",
+        "sid": "<bad_code></>",
         "start_date_0": 2,
         "start_date_1": 13,
         "start_date_2": 2022,
@@ -108,8 +109,13 @@ def test_certificate_create_form_validates_data(session_with_workbasket):
     date_error_string = [
         "Month must be in 1..12",
     ]
+    sid_validation_error_string = [
+        "Only alphanumeric characters are allowed.",
+    ]
     assert form.errors["certificate_type"] == error_string
     assert form.errors["start_date"] == date_error_string
+    assert form.errors["sid"] == sid_validation_error_string
+
     assert not form.is_valid()
 
 
