@@ -160,7 +160,7 @@ class GeoAreaUpdateMixin(GeoAreaMixin, TrackedModelDetailMixin):
             return
 
         tx = WorkBasket.get_current_transaction(self.request)
-        valid_between = form.cleaned_data["membership_valid_between"]
+        valid_between = form.cleaned_data["new_membership_valid_between"]
         membership = GeographicalMembership(
             geo_group=geo_group,
             member=member,

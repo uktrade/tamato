@@ -99,16 +99,16 @@ class GeoAreaRegionForm(forms.Form):
 
 
 class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
-    membership_start_date = DateInputFieldFixed(
+    new_membership_start_date = DateInputFieldFixed(
         label="Start date",
         required=False,
     )
-    membership_end_date = DateInputFieldFixed(
+    new_membership_end_date = DateInputFieldFixed(
         label="End date",
         help_text="Leave empty if a membership is needed for an unlimited time.",
         required=False,
     )
-    membership_valid_between = GovukDateRangeField(required=False)
+    new_membership_valid_between = GovukDateRangeField(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -116,24 +116,27 @@ class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        start_date = cleaned_data.pop("membership_start_date", None)
-        end_date = cleaned_data.pop("membership_end_date", None)
+        start_date = cleaned_data.pop("new_membership_start_date", None)
+        end_date = cleaned_data.pop("new_membership_end_date", None)
 
         if end_date and start_date and end_date < start_date:
             self.add_error(
-                "membership_start_date",
+                "new_membership_start_date",
                 "The start date must be the same as or before the end date.",
             )
             self.add_error(
-                "membership_end_date",
+                "new_membership_end_date",
                 "The end date must be the same as or after the start date.",
             )
 
-        cleaned_data["membership_valid_between"] = TaricDateRange(start_date, end_date)
+        cleaned_data["new_membership_valid_between"] = TaricDateRange(
+            start_date,
+            end_date,
+        )
 
         if start_date:
             day, month, year = (start_date.day, start_date.month, start_date.year)
-            self.fields["membership_start_date"].initial = date(
+            self.fields["new_membership_start_date"].initial = date(
                 day=int(day),
                 month=int(month),
                 year=int(year),
@@ -141,7 +144,7 @@ class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
 
         if end_date:
             day, month, year = (end_date.day, end_date.month, end_date.year)
-            self.fields["membership_end_date"].initial = date(
+            self.fields["new_membership_end_date"].initial = date(
                 day=int(day),
                 month=int(month),
                 year=int(year),
@@ -156,7 +159,7 @@ class GeographicalMembershipAddForm(
 ):
     geo_group = forms.ModelChoiceField(
         help_text="Select the area group to add this country or region to from the dropdown.",
-        queryset=GeographicalArea.objects.filter(area_code=AreaCode.GROUP),
+        queryset=None,  # populated in __init__
         required=False,
     )
 
@@ -172,6 +175,8 @@ class GeographicalMembershipAddForm(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.bind_nested_forms(*args, **kwargs)
 
         self.fields["geo_group"].queryset = (
             GeographicalArea.objects.filter(area_code=AreaCode.GROUP)
@@ -203,8 +208,8 @@ class GeographicalMembershipAddForm(
         member = (
             self.instance if not self.instance.is_group() else cleaned_data["member"]
         )
-        start_date = cleaned_data["membership_valid_between"].lower
-        end_date = cleaned_data["membership_valid_between"].upper
+        start_date = cleaned_data["new_membership_valid_between"].lower
+        end_date = cleaned_data["new_membership_valid_between"].upper
 
         if area_group and member:
             # Check if membership already exists
@@ -231,13 +236,13 @@ class GeographicalMembershipAddForm(
             rule_message = "must be within the validity period of the area group."
             if not start_date:
                 self.add_error(
-                    "membership_start_date",
+                    "new_membership_start_date",
                     "A start date is required.",
                 )
             else:
                 if start_date < area_group.valid_between.lower:
                     self.add_error(
-                        "membership_start_date",
+                        "new_membership_start_date",
                         "The start date " + rule_message,
                     )
             if area_group.valid_between.upper:
@@ -247,7 +252,7 @@ class GeographicalMembershipAddForm(
                     or not end_date
                 ):
                     self.add_error(
-                        "membership_end_date",
+                        "new_membership_end_date",
                         "The end date " + rule_message,
                     )
 
@@ -288,8 +293,6 @@ class GeographicalAreaEditForm(
         else:
             form_field = "geo_group"
 
-        self.bind_nested_forms(*args, **kwargs)
-
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -299,8 +302,8 @@ class GeographicalAreaEditForm(
                 AccordionSection(
                     "Memberships",
                     form_field,
-                    "membership_start_date",
-                    "membership_end_date",
+                    "new_membership_start_date",
+                    "new_membership_end_date",
                 ),
                 AccordionSection("End date", "end_date"),
             ),
