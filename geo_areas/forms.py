@@ -1,6 +1,7 @@
 from datetime import date
 
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Accordion
 from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Field
@@ -47,6 +48,11 @@ GeographicalAreaDeleteForm = delete_form_for(GeographicalArea)
 
 
 GeographicalAreaDescriptionDeleteForm = delete_form_for(GeographicalAreaDescription)
+
+
+class GeoMembershipAction(TextChoices):
+    END_DATE = "END DATE", "End date"
+    DELETE = "DELETE", "Delete"
 
 
 class GeoAreaType(TextChoices):
@@ -96,6 +102,17 @@ class GeoAreaRegionForm(forms.Form):
         self.fields[
             "region"
         ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+
+
+class GeographicalMembershipEndDateForm(forms.Form):
+    membership_end_date = DateInputFieldFixed(
+        label="",
+        help_text="Leave empty if the membership is needed for an unlimited time.",
+        required=False,
+    )
+
+    # def clean(self):
+    #     pass
 
 
 class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
@@ -175,8 +192,6 @@ class GeographicalMembershipAddForm(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.bind_nested_forms(*args, **kwargs)
 
         self.fields["geo_group"].queryset = (
             GeographicalArea.objects.filter(area_code=AreaCode.GROUP)
@@ -263,12 +278,53 @@ class GeographicalMembershipAddForm(
         fields = ["geo_group", "member"]
 
 
+class GeographicalMembershipEditForm(BindNestedFormMixin, forms.Form):
+    membership = forms.ModelChoiceField(
+        label="",
+        queryset=None,  # populated in __init__
+        required=False,
+    )
+
+    action = RadioNested(
+        label="",
+        choices=GeoMembershipAction.choices,
+        nested_forms={
+            GeoMembershipAction.END_DATE.value: [GeographicalMembershipEndDateForm],
+            GeoMembershipAction.DELETE.value: [],
+        },
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["membership"].queryset = self.instance.get_current_memberships()
+
+        self.fields["membership"].label_from_instance = (
+            lambda obj: f"{obj.member.area_id} - {obj.member.structure_description}"
+            if self.instance.is_group()
+            else f"{obj.geo_group.area_id} - {obj.geo_group.structure_description}"
+        )
+
+        if self.instance.is_group():
+            self.fields[
+                "membership"
+            ].help_text = "Select a country or region from the dropdown to edit the membership of this area group."
+        else:
+            self.fields[
+                "membership"
+            ].help_text = "Select an area group from the dropdown to edit the membership of this country or region."
+
+
 class GeographicalAreaEndDateForm(ValidityPeriodForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["start_date"].required = False
         self.fields["end_date"].label = ""
+        self.fields[
+            "end_date"
+        ].help_text = "End date this geographical area. Leave empty if the geographical area is needed for an unlimited time."
 
     def clean(self):
         self.cleaned_data["start_date"] = self.instance.valid_between.lower
@@ -282,6 +338,7 @@ class GeographicalAreaEndDateForm(ValidityPeriodForm):
 class GeographicalAreaEditForm(
     GeographicalAreaEndDateForm,
     GeographicalMembershipAddForm,
+    GeographicalMembershipEditForm,
 ):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -293,6 +350,8 @@ class GeographicalAreaEditForm(
         else:
             form_field = "geo_group"
 
+        self.bind_nested_forms(*args, **kwargs)
+
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -300,10 +359,18 @@ class GeographicalAreaEditForm(
         self.helper.layout = Layout(
             Accordion(
                 AccordionSection(
-                    "Memberships",
+                    "Add membership",
                     form_field,
                     "new_membership_start_date",
                     "new_membership_end_date",
+                ),
+                AccordionSection(
+                    "Edit membership",
+                    "membership",
+                    "action",
+                    HTML.warning(
+                        "Deleting a country or region from an area group will make it as though it was never a member, which may have implications for users of the tariff data. You should only delete a member if end dating the membership is not appropriate.",
+                    ),
                 ),
                 AccordionSection("End date", "end_date"),
             ),

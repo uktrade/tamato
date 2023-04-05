@@ -5,6 +5,7 @@ from rest_framework import viewsets
 
 from common.models.trackedmodel import TrackedModel
 from common.serializers import AutoCompleteSerializer
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -14,6 +15,7 @@ from geo_areas import forms
 from geo_areas.filters import GeographicalAreaFilter
 from geo_areas.forms import GeographicalAreaCreateDescriptionForm
 from geo_areas.forms import GeographicalAreaEditForm
+from geo_areas.forms import GeoMembershipAction
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
@@ -170,10 +172,39 @@ class GeoAreaUpdateMixin(GeoAreaMixin, TrackedModelDetailMixin):
         )
         membership.save()
 
+    def edit_membership(self, form):
+        if (
+            form.cleaned_data["membership"]
+            and form.cleaned_data["action"] == GeoMembershipAction.DELETE
+        ):
+            membership = form.cleaned_data["membership"]
+            membership.new_version(
+                workbasket=self.workbasket,
+                update_type=UpdateType.DELETE,
+            )
+
+        elif (
+            form.cleaned_data["membership"]
+            and form.cleaned_data["action"] == GeoMembershipAction.END_DATE
+        ):
+            membership = form.cleaned_data["membership"]
+            end_date = form.cleaned_data["membership_end_date"]
+            valid_between = TaricDateRange(membership.valid_between.lower, end_date)
+
+            membership.new_version(
+                workbasket=self.workbasket,
+                valid_between=valid_between,
+                update_type=UpdateType.UPDATE,
+            )
+
+        else:
+            return
+
     def get_result_object(self, form):
         geo_area = super().get_result_object(form)
         form.instance = geo_area
         self.create_membership(form)
+        self.edit_membership(form)
         return geo_area
 
 
