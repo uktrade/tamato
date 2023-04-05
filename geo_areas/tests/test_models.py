@@ -75,12 +75,13 @@ def test_get_current_memberships_when_region_and_country_share_sid():
 
 def test_other_on_membership():
     membership = factories.GeographicalMembershipFactory()
-    assert membership.other(membership.member) == membership.geo_group
-    assert membership.other(membership.geo_group) == membership.member
-    with pytest.raises(ValueError):
-        membership.other(factories.GeoGroupFactory())
-    with pytest.raises(ValueError):
-        membership.other(factories.CountryFactory())
+    with override_current_transaction(membership.transaction):
+        assert membership.other(membership.member) == membership.geo_group
+        assert membership.other(membership.geo_group) == membership.member
+        with pytest.raises(ValueError):
+            membership.other(factories.GeoGroupFactory())
+        with pytest.raises(ValueError):
+            membership.other(factories.CountryFactory())
 
 
 def test_other_on_later_version():
@@ -189,3 +190,17 @@ def test_with_current_descriptions(queued_workbasket):
     assert (
         area.description == f"{description_1.description} {description_2.description}"
     )
+
+
+def test_geo_membership_str():
+    instance = factories.GeographicalMembershipFactory.create()
+
+    with override_current_transaction(instance.transaction):
+        result = str(instance)
+        assert isinstance(result, str)
+        assert len(result.strip())
+
+        assert str(instance.geo_group.get_area_code_display()) in result
+        assert str(instance.geo_group.structure_description) in result
+        assert str(instance.member.get_area_code_display()) in result
+        assert str(instance.member.structure_description) in result
