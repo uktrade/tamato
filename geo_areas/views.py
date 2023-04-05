@@ -151,6 +151,11 @@ class GeoAreaUpdateMixin(GeoAreaMixin, TrackedModelDetailMixin):
         business_rules.GA22,
     )
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
     def create_membership(self, form):
         if form.cleaned_data["geo_group"]:
             geo_group = form.cleaned_data["geo_group"]

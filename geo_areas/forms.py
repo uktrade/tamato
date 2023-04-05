@@ -24,6 +24,7 @@ from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
 from geo_areas.validators import AreaCode
+from workbaskets.models import WorkBasket
 
 
 class GeographicalAreaCreateDescriptionForm(CreateDescriptionForm):
@@ -111,9 +112,6 @@ class GeographicalMembershipEndDateForm(forms.Form):
         required=False,
     )
 
-    # def clean(self):
-    #     pass
-
 
 class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
     new_membership_start_date = DateInputFieldFixed(
@@ -122,7 +120,7 @@ class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
     )
     new_membership_end_date = DateInputFieldFixed(
         label="End date",
-        help_text="Leave empty if a membership is needed for an unlimited time.",
+        help_text="Leave empty if the membership is needed for an unlimited time.",
         required=False,
     )
     new_membership_valid_between = GovukDateRangeField(required=False)
@@ -278,7 +276,7 @@ class GeographicalMembershipAddForm(
         fields = ["geo_group", "member"]
 
 
-class GeographicalMembershipEditForm(BindNestedFormMixin, forms.Form):
+class GeographicalMembershipEditForm(BindNestedFormMixin, forms.ModelForm):
     membership = forms.ModelChoiceField(
         label="",
         queryset=None,  # populated in __init__
@@ -315,6 +313,57 @@ class GeographicalMembershipEditForm(BindNestedFormMixin, forms.Form):
                 "membership"
             ].help_text = "Select an area group from the dropdown to edit the membership of this country or region."
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        membership = cleaned_data.get("membership")
+        action = cleaned_data.get("action")
+        end_date = cleaned_data.get("membership_end_date")
+
+        if membership:
+            area_group_end_date = membership.geo_group.valid_between.upper
+            area_group_start_date = membership.geo_group.valid_between.lower
+
+            if action == GeoMembershipAction.END_DATE:
+                if end_date and area_group_end_date and end_date > area_group_end_date:
+                    self.fields["action"].nested_forms["END DATE"][0].add_error(
+                        "membership_end_date",
+                        "",
+                    )
+                    self.add_error(
+                        "",
+                        "The membership end date must be the same as or before the area group's end date.",
+                    )
+                if end_date and end_date < area_group_start_date:
+                    self.fields["action"].nested_forms["END DATE"][0].add_error(
+                        "membership_end_date",
+                        "",
+                    )
+                    self.add_error(
+                        "",
+                        "The membership end date must be the same as or after the area group's start date.",
+                    )
+
+            if action == GeoMembershipAction.DELETE:
+                tx = WorkBasket.get_current_transaction(self.request)
+                if membership.member_used_in_measure_exclusion(transaction=tx):
+                    self.add_error(
+                        "membership",
+                        f"{membership.member.structure_description} is referenced as an excluded geographical area in a measure and cannot be deleted as a member of the area group.",
+                    )
+
+        return cleaned_data
+
+    class Meta:
+        model = GeographicalMembership
+        exclude = [
+            "valid_between",
+            "update_type",
+            "version_group",
+            "geo_group",
+            "member",
+        ]
+
 
 class GeographicalAreaEndDateForm(ValidityPeriodForm):
     def __init__(self, *args, **kwargs):
@@ -341,6 +390,7 @@ class GeographicalAreaEditForm(
     GeographicalMembershipEditForm,
 ):
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         # Which geographical membership form field is shown depends
