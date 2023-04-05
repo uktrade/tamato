@@ -277,7 +277,7 @@ class ME16(BusinessRule):
         Returns all the measures that clash with the passed measure over its
         lifetime.
 
-        Two measures clash if any of their fields listed in this business rule
+        Two measures clash if all their fields listed in this business rule
         description are equal, their date ranges overlap, and one of their
         commodity codes is an ancestor or equal to the other.
         """
