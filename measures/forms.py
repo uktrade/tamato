@@ -283,12 +283,14 @@ class MeasureConditionsFormMixin(forms.ModelForm):
     action = forms.ModelChoiceField(
         label="Action code",
         # Filters out negative actions
-        queryset=models.MeasureAction.objects.latest_approved()
-        .exclude(
-            pk__in=models.MeasureActionPair.objects.values_list(
-                "negative_action",
-                flat=True,
-            ).distinct(),
+        queryset=(
+            models.MeasureAction.objects.latest_approved()
+            .exclude(
+                pk__in=models.MeasureActionPair.objects.values_list(
+                    "negative_action",
+                    flat=True,
+                ).distinct(),
+            )
         )
         .order_by("code"),
         # This query could be implemented as raw sql in an optimised way
