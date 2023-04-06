@@ -53,7 +53,7 @@ def test_geographical_area_create_description_form_invalid_description(date_rang
     assert "Only symbols .,/()&£$@!+-% are allowed." in form.errors["description"]
 
 
-def test_geographical_area_end_date_form_valid(date_ranges):
+def test_geographical_area_end_date_form_valid_date(date_ranges):
     geo_area = factories.GeographicalAreaFactory.create(
         valid_between=date_ranges.normal,
     )
@@ -68,7 +68,7 @@ def test_geographical_area_end_date_form_valid(date_ranges):
     assert form.is_valid()
 
 
-def test_geographical_area_end_date_form_invalid(date_ranges):
+def test_geographical_area_end_date_form_invalid_date(date_ranges):
     geo_area = factories.GeographicalAreaFactory.create(
         valid_between=date_ranges.normal,
     )
@@ -98,7 +98,7 @@ def test_geographical_membership_add_form_valid_data(date_ranges):
         "new_membership_end_date_2": area_group.valid_between.upper.year,
     }
     with override_current_transaction(Transaction.objects.last()):
-        form = forms.GeographicalMembershipAddForm(data=form_data, instance=area_group)
+        form = forms.GeographicalAreaEditForm(data=form_data, instance=area_group)
         assert form.is_valid()
 
 
@@ -118,7 +118,7 @@ def test_geographical_membership_add_form_invalid_dates(date_ranges):
         "new_membership_end_date_2": area_group.valid_between.upper.year + 1,
     }
     with override_current_transaction(Transaction.objects.last()):
-        form = forms.GeographicalMembershipAddForm(data=form_data, instance=area_group)
+        form = forms.GeographicalAreaEditForm(data=form_data, instance=area_group)
         assert not form.is_valid()
         assert "A start date is required." in form.errors["new_membership_start_date"]
         assert (
@@ -144,7 +144,7 @@ def test_geographical_membership_add_form_invalid_selection(date_ranges):
     }
 
     with override_current_transaction(Transaction.objects.last()):
-        form = forms.GeographicalMembershipAddForm(
+        form = forms.GeographicalAreaEditForm(
             data=country_form_data,
             instance=area_group,
         )
@@ -154,7 +154,7 @@ def test_geographical_membership_add_form_invalid_selection(date_ranges):
             in form.errors["member"]
         )
 
-        form = forms.GeographicalMembershipAddForm(
+        form = forms.GeographicalAreaEditForm(
             data=group_form_data,
             instance=country,
         )
@@ -162,4 +162,139 @@ def test_geographical_membership_add_form_invalid_selection(date_ranges):
         assert (
             "The selected area group already has this country or region as a member."
             in form.errors["geo_group"]
+        )
+
+
+def test_geographical_membership_edit_form_valid_deletion(
+    date_ranges,
+    session_with_workbasket,
+):
+    country = factories.CountryFactory.create()
+    area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
+    membership = factories.GeographicalMembershipFactory.create(
+        geo_group=area_group,
+        member=country,
+    )
+
+    form_data = {
+        "membership": membership.pk,
+        "action": forms.GeoMembershipAction.DELETE,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalAreaEditForm(
+            data=form_data,
+            instance=area_group,
+            request=session_with_workbasket,
+        )
+        assert form.is_valid()
+
+
+def test_geographical_membership_edit_form_invalid_deletion(
+    date_ranges,
+    session_with_workbasket,
+):
+    country = factories.CountryFactory.create()
+    area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
+    membership = factories.GeographicalMembershipFactory.create(
+        geo_group=area_group,
+        member=country,
+    )
+    exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
+        excluded_geographical_area=country,
+    )
+
+    form_data = {
+        "membership": membership.pk,
+        "action": forms.GeoMembershipAction.DELETE,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalAreaEditForm(
+            data=form_data,
+            instance=area_group,
+            request=session_with_workbasket,
+        )
+        assert not form.is_valid()
+        assert (
+            f"{membership.member.structure_description} is referenced as an excluded geographical area in a measure and cannot be deleted as a member of the area group."
+            in form.errors["membership"]
+        )
+
+
+def test_geographical_membership_edit_form_valid_end_date(
+    date_ranges,
+    session_with_workbasket,
+):
+    country = factories.CountryFactory.create()
+    area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
+    membership = factories.GeographicalMembershipFactory.create(
+        geo_group=area_group,
+        member=country,
+    )
+
+    form_data = {
+        "membership": membership.pk,
+        "action": forms.GeoMembershipAction.END_DATE,
+        "membership_end_date_0": area_group.valid_between.upper.day,
+        "membership_end_date_1": area_group.valid_between.upper.month,
+        "membership_end_date_2": area_group.valid_between.upper.year,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalAreaEditForm(
+            data=form_data,
+            instance=area_group,
+            request=session_with_workbasket,
+        )
+        assert form.is_valid()
+
+
+def test_geographical_membership_edit_form_invalid_end_date(
+    date_ranges,
+    session_with_workbasket,
+):
+    country = factories.CountryFactory.create()
+    area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
+    membership = factories.GeographicalMembershipFactory.create(
+        geo_group=area_group,
+        member=country,
+    )
+
+    invalid_end_date_1 = {
+        "membership": membership.pk,
+        "action": forms.GeoMembershipAction.END_DATE,
+        "membership_end_date_0": area_group.valid_between.upper.day + 1,
+        "membership_end_date_1": area_group.valid_between.upper.month + 1,
+        "membership_end_date_2": area_group.valid_between.upper.year + 1,
+    }
+    invalid_end_date_2 = {
+        "membership": membership.pk,
+        "action": forms.GeoMembershipAction.END_DATE,
+        "membership_end_date_0": area_group.valid_between.lower.day - 1,
+        "membership_end_date_1": area_group.valid_between.lower.month - 1,
+        "membership_end_date_2": area_group.valid_between.lower.year - 1,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalAreaEditForm(
+            data=invalid_end_date_1,
+            instance=area_group,
+            request=session_with_workbasket,
+        )
+        assert not form.is_valid()
+        assert (
+            "The membership end date must be the same as or before the area group's end date."
+            in form.errors["__all__"]
+        )
+
+        form = forms.GeographicalAreaEditForm(
+            data=invalid_end_date_2,
+            instance=area_group,
+            request=session_with_workbasket,
+        )
+        assert not form.is_valid()
+        assert (
+            "The membership end date must be the same as or after the area group's start date."
+            in form.errors["__all__"]
         )
