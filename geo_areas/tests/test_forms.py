@@ -122,7 +122,7 @@ def test_geographical_membership_add_form_invalid_dates(date_ranges):
         assert not form.is_valid()
         assert "A start date is required." in form.errors["new_membership_start_date"]
         assert (
-            "The end date must be within the validity period of the area group."
+            "The end date must be the same as or before the area group's end date."
             in form.errors["new_membership_end_date"]
         )
 
@@ -284,7 +284,7 @@ def test_geographical_membership_edit_form_invalid_end_date(
         )
         assert not form.is_valid()
         assert (
-            "The membership end date must be the same as or before the area group's end date."
+            "The end date must be the same as or before the area group's end date."
             in form.errors["__all__"]
         )
 
@@ -295,6 +295,6 @@ def test_geographical_membership_edit_form_invalid_end_date(
         )
         assert not form.is_valid()
         assert (
-            "The membership end date must be the same as or after the area group's start date."
+            "The end date must be the same as or after the area group's start date."
             in form.errors["__all__"]
         )

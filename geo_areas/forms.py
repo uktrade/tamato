@@ -24,6 +24,7 @@ from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
 from geo_areas.validators import AreaCode
+from geo_areas.validators import validate_dates
 from workbaskets.models import WorkBasket
 
 
@@ -134,16 +135,6 @@ class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
         start_date = cleaned_data.pop("new_membership_start_date", None)
         end_date = cleaned_data.pop("new_membership_end_date", None)
 
-        if end_date and start_date and end_date < start_date:
-            self.add_error(
-                "new_membership_start_date",
-                "The start date must be the same as or before the end date.",
-            )
-            self.add_error(
-                "new_membership_end_date",
-                "The end date must be the same as or after the start date.",
-            )
-
         cleaned_data["new_membership_valid_between"] = TaricDateRange(
             start_date,
             end_date,
@@ -245,29 +236,24 @@ class GeographicalMembershipAddForm(
                     "The selected area group already has this country or region as a member.",
                 )
 
-            # Check if membership start and end date is valid
-            rule_message = "must be within the validity period of the area group."
             if not start_date:
                 self.add_error(
                     "new_membership_start_date",
                     "A start date is required.",
                 )
-            else:
-                if start_date < area_group.valid_between.lower:
-                    self.add_error(
-                        "new_membership_start_date",
-                        "The start date " + rule_message,
-                    )
-            if area_group.valid_between.upper:
-                if (
-                    end_date
-                    and end_date > area_group.valid_between.upper
-                    or not end_date
-                ):
-                    self.add_error(
-                        "new_membership_end_date",
-                        "The end date " + rule_message,
-                    )
+            validate_dates(
+                form=self,
+                field="new_membership_start_date",
+                start_date=start_date,
+                group_start_date=area_group.valid_between.lower,
+            )
+            validate_dates(
+                form=self,
+                field="new_membership_end_date",
+                start_date=start_date,
+                end_date=end_date,
+                group_end_date=area_group.valid_between.upper,
+            )
 
         return cleaned_data
 
@@ -276,7 +262,7 @@ class GeographicalMembershipAddForm(
         fields = ["geo_group", "member"]
 
 
-class GeographicalMembershipEditForm(BindNestedFormMixin, forms.ModelForm):
+class GeographicalMembershipEditForm(BindNestedFormMixin, forms.Form):
     membership = forms.ModelChoiceField(
         label="",
         queryset=None,  # populated in __init__
@@ -304,14 +290,11 @@ class GeographicalMembershipEditForm(BindNestedFormMixin, forms.ModelForm):
             else f"{obj.geo_group.area_id} - {obj.geo_group.structure_description}"
         )
 
-        if self.instance.is_group():
-            self.fields[
-                "membership"
-            ].help_text = "Select a country or region from the dropdown to edit the membership of this area group."
-        else:
-            self.fields[
-                "membership"
-            ].help_text = "Select an area group from the dropdown to edit the membership of this country or region."
+        self.fields["membership"].help_text = (
+            "Select a country or region from the dropdown to edit the membership of this area group."
+            if self.instance.is_group()
+            else "Select an area group from the dropdown to edit the membership of this country or region."
+        )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -320,49 +303,41 @@ class GeographicalMembershipEditForm(BindNestedFormMixin, forms.ModelForm):
         action = cleaned_data.get("action")
         end_date = cleaned_data.get("membership_end_date")
 
-        if membership:
-            area_group_end_date = membership.geo_group.valid_between.upper
-            area_group_start_date = membership.geo_group.valid_between.lower
+        if membership and action == GeoMembershipAction.END_DATE:
+            validate_dates(
+                form=self.fields["action"].nested_forms["END DATE"][0],
+                field="membership_end_date",
+                end_date=end_date,
+                group_end_date=membership.geo_group.valid_between.upper,
+            )
+            validate_dates(
+                form=self,
+                field="",
+                end_date=end_date,
+                group_end_date=membership.geo_group.valid_between.upper,
+            )
+            validate_dates(
+                form=self.fields["action"].nested_forms["END DATE"][0],
+                field="membership_end_date",
+                end_date=end_date,
+                group_start_date=membership.geo_group.valid_between.lower,
+            )
+            validate_dates(
+                form=self,
+                field="",
+                end_date=end_date,
+                group_start_date=membership.geo_group.valid_between.lower,
+            )
 
-            if action == GeoMembershipAction.END_DATE:
-                if end_date and area_group_end_date and end_date > area_group_end_date:
-                    self.fields["action"].nested_forms["END DATE"][0].add_error(
-                        "membership_end_date",
-                        "",
-                    )
-                    self.add_error(
-                        "",
-                        "The membership end date must be the same as or before the area group's end date.",
-                    )
-                if end_date and end_date < area_group_start_date:
-                    self.fields["action"].nested_forms["END DATE"][0].add_error(
-                        "membership_end_date",
-                        "",
-                    )
-                    self.add_error(
-                        "",
-                        "The membership end date must be the same as or after the area group's start date.",
-                    )
-
-            if action == GeoMembershipAction.DELETE:
-                tx = WorkBasket.get_current_transaction(self.request)
-                if membership.member_used_in_measure_exclusion(transaction=tx):
-                    self.add_error(
-                        "membership",
-                        f"{membership.member.structure_description} is referenced as an excluded geographical area in a measure and cannot be deleted as a member of the area group.",
-                    )
+        if membership and action == GeoMembershipAction.DELETE:
+            tx = WorkBasket.get_current_transaction(self.request)
+            if membership.member_used_in_measure_exclusion(transaction=tx):
+                self.add_error(
+                    "membership",
+                    f"{membership.member.structure_description} is referenced as an excluded geographical area in a measure and cannot be deleted as a member of the area group.",
+                )
 
         return cleaned_data
-
-    class Meta:
-        model = GeographicalMembership
-        exclude = [
-            "valid_between",
-            "update_type",
-            "version_group",
-            "geo_group",
-            "member",
-        ]
 
 
 class GeographicalAreaEndDateForm(ValidityPeriodForm):
@@ -419,7 +394,9 @@ class GeographicalAreaEditForm(
                     "membership",
                     "action",
                     HTML.warning(
-                        "Deleting a country or region from an area group will make it as though it was never a member, which may have implications for users of the tariff data. You should only delete a member if end dating the membership is not appropriate.",
+                        "Deleting a country or region from an area group will make it as though it was never a member, "
+                        "which may have implications for users of the tariff data. "
+                        "You should only delete a member if end dating the membership is not appropriate.",
                     ),
                 ),
                 AccordionSection("End date", "end_date"),
