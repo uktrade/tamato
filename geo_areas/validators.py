@@ -21,10 +21,11 @@ def validate_dates(
     group_end_date=None,
 ):
     """
-    Adds an error message to a form field if a member's start and end date is
-    not within a Geographical Area Group's start and end date.
+    Adds an error message to a form field if a start and end date is not within
+    a Geographical Area Group's start and end date.
 
-    Used by forms in GeographicalAreaEditForm.
+    Used by forms in GeographicalAreaEditForm for creating and updating
+    Geographical Memberships.
     """
 
     if end_date and start_date and end_date < start_date:
