@@ -13,6 +13,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.db.models import TextChoices
 from django.urls import reverse
 
@@ -282,21 +283,13 @@ class MeasureConditionsFormMixin(forms.ModelForm):
     )
     action = forms.ModelChoiceField(
         label="Action code",
-        # Filters out negative actions
-        queryset=(
-            models.MeasureAction.objects.latest_approved()
-            .exclude(
-                pk__in=models.MeasureActionPair.objects.values_list(
-                    "negative_action",
-                    flat=True,
-                ).distinct(),
-            )
+        # Filters out 'negative' actions in a positive/negative pair, doesn't filter out action that have no pair
+        queryset=models.MeasureAction.objects.latest_approved()
+        .filter(
+            Q(negative_measure_action__isnull=True),
         )
+        .select_related("negative_measure_action")
         .order_by("code"),
-        # This query could be implemented as raw sql in an optimised way
-        # A left join on the Measure Action table joining the pks to the negative action fk
-        # Where we only choose the rows where the negative action fk is null.
-        # Choose all rows that aren't negative actions, this would be a single query
         empty_label="-- Please select an action code --",
         error_messages={"required": "An action code is required."},
     )
