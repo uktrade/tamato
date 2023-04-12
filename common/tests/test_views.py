@@ -1,6 +1,8 @@
+import re
+
 import pytest
 from bs4 import BeautifulSoup
-from django.conf import settings
+from django.http import HttpRequest
 from django.urls import reverse
 
 from common.tests import factories
@@ -25,18 +27,52 @@ def test_index_displays_workbasket_action_form(valid_user_client):
     assert "Search the tariff" in page.select("label")[4].text
 
 
-def test_index_displays_logout_buttons_correctly_SSO_off_logged_in(valid_user_client):
-    settings.SSO_ENABLED = False
-    response = valid_user_client.get(reverse("home"))
+def test_index_displays_restricted_workbasket_action_form_invalid_user(
+    client,
+    disable_sso,
+):
+    response = client.get(reverse("home"))
 
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
+    assert "Search the tariff" in page.select("label")[0].text
+
+
+def test_index_displays_auth_buttons_SSO_off(client, valid_user, disable_sso):
+    # Make sure login button is rendered when SSO is off
+    response = client.get(reverse("home"))
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert page.find_all("a", {"href": "/login"})
+
+    # Make sure logout button is rendered when SSO is off
+    user = factories.UserFactory.create(
+        username="GregPasty",
+        password="GottaHaveTwelveCharactersNow",
+    )
+    HttpRequest()
+    client.post(
+        reverse("login"),
+        {"username": user.username, "passwords": user.password},
+    )
+    assert user.is_authenticated
+    assert 0
+    response = client.get(reverse("home"))
+    page = BeautifulSoup(str(response.content), "html.parser")
     assert page.find_all("a", {"href": "/logout"})
 
 
-def test_index_redirects_to_login_page_logged_out_SSO_off(client):
-    settings.SSO_ENABLED = False
+def test_index_displays_logout_buttons_correctly_SSO_off_logged_in(
+    valid_user_client,
+    disable_sso,
+):
+    response = valid_user_client.get(reverse("home"))
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert page.find_all("a", {"href": "/logout"})
+
+
+def test_index_redirects_to_login_page_logged_out_SSO_off(client, disable_sso):
     response = client.get(reverse("home"))
 
     assert response.status_code == 302
@@ -44,7 +80,6 @@ def test_index_redirects_to_login_page_logged_out_SSO_off(client):
 
 
 def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
-    settings.SSO_ENABLED = True
     response = valid_user_client.get(reverse("home"))
 
     assert response.status_code == 200
@@ -52,6 +87,22 @@ def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
     page = BeautifulSoup(str(response.content), "html.parser")
     assert not page.find_all("a", {"href": "/logout"})
     assert not page.find_all("a", {"href": "/login"})
+
+
+def test_login_displays_lockout_page(client, disable_sso):
+    login_url = reverse("login")
+    form_data = {
+        "username": "wrong username",
+        "password": "wrong password",
+    }
+    for x in range(4):
+        client.post(login_url, form_data)
+
+    response = client.post(login_url, form_data)
+    assert response.status_code == 403
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert page.find("h1").text == "Locked out"
+    assert page.find_all(string=re.compile("You have been locked out of your account"))
 
 
 @pytest.mark.parametrize(

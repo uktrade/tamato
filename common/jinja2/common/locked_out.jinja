@@ -1,0 +1,10 @@
+{% extends "layouts/layout.jinja" %}
+
+{% set page_title = "Locked out" %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <p class="govuk-body">You have been locked out of your account due to too many incorrect password
+    submissions. Please try again in 15 minutes
+    </p>
+{% endblock %}
