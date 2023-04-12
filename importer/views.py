@@ -35,7 +35,7 @@ class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
             ),
         )
     )
-    template_name = "importer/list.jinja"
+    template_name = "importer/select-imports.jinja"
     filterset_class = ImportBatchFilter
 
 
