@@ -1,7 +1,4 @@
-{% if field.errors %}
-<div class="govuk-form-group govuk-form-group--error">
-{% endif %}
-<div id="div_id_{{ field.html_name }}" class="govuk-form-group">
+<div id="div_id_{{ field.html_name }}" class="govuk-form-group {% if field.errors %} govuk-form-group--error{% endif %}">
     {% set selected_action = field.initial | int %}
     <label for="id_{{ field.html_name }}" class="govuk-label">
         Action code
@@ -28,6 +25,3 @@
         {% endfor %}
     </select> 
 </div>
-{% if field.errors %}
-</div>
-{% endif %}

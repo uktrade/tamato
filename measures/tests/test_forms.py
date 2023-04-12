@@ -1064,16 +1064,11 @@ def test_measure_forms_footnotes_invalid():
     )
 
 
-def test_measure_formset_conditions_invalid(
-    date_ranges,
-    duty_sentence_parser,
-):
-    """Test for all formset level errors across the form in Measure
-    conditions."""
+def measure_conditions_different_actions_data():
     condition_code1 = factories.MeasureConditionCodeFactory.create()
     action1, action2 = factories.MeasureActionFactory.create_batch(2)
 
-    data = {
+    return {
         "form-0-condition_code": condition_code1.pk,
         "form-0-reference_price": "2%",
         "form-0-action": action1.pk,
@@ -1084,39 +1079,85 @@ def test_measure_formset_conditions_invalid(
         "form-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
     }
 
+
+def measure_conditions_duplicate_price_data():
+    condition_code1 = factories.MeasureConditionCodeFactory.create()
+    action1 = factories.MeasureActionFactory.create()
+    return {
+        "form-0-condition_code": condition_code1.pk,
+        "form-0-reference_price": "2%",
+        "form-0-action": action1.pk,
+        "form-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+        "form-1-condition_code": condition_code1.pk,
+        "form-1-reference_price": "2%",
+        "form-1-action": action1.pk,
+        "form-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+    }
+
+
+def measure_conditions_incorrect_order_data():
+    condition_code1 = factories.MeasureConditionCodeFactory.create(code="A")
+    condition_code2 = factories.MeasureConditionCodeFactory.create(code="B")
+    action1, action2 = factories.MeasureActionFactory.create_batch(2)
+
+    return {
+        "form-0-condition_code": condition_code2.pk,
+        "form-0-reference_price": "2%",
+        "form-0-action": action1.pk,
+        "form-1-condition_code": condition_code1.pk,
+        "form-1-reference_price": "3%",
+        "form-1-action": action2.pk,
+    }
+
+
+@pytest.mark.parametrize(
+    ("data", "error_expected", "error_message"),
+    (
+        (
+            measure_conditions_different_actions_data,
+            True,
+            "All conditions of the same condition code must have the same resulting action.",
+        ),
+        (
+            measure_conditions_duplicate_price_data,
+            True,
+            "The same price cannot be added more than once to the same condition code.",
+        ),
+        (
+            measure_conditions_incorrect_order_data,
+            True,
+            "All conditions codes must be added in alphabetical order.",
+        ),
+    ),
+)
+def test_measure_formset_conditions_invalid(
+    data,
+    error_expected,
+    error_message,
+    date_ranges,
+    duty_sentence_parser,
+):
+    """Test for all formset level errors across the form in Measure
+    conditions."""
+
+    # setup
+    data = data()
+    # execution
     formset = forms.MeasureConditionsWizardStepFormSet(
         data,
         prefix="",
         form_kwargs={"measure_start_date": date_ranges.normal},
     )
 
-    assert not formset.is_valid()
-    assert (
-        "All conditions of the same condition code must have the same resulting action."
-        in formset.non_form_errors()
-    )
+    # validation
+    if error_expected:
+        assert not formset.is_valid()
+        assert error_message in formset.non_form_errors()
+    else:
+        assert formset.is_valid()
 
-    data = {
-        "form-0-condition_code": condition_code1.pk,
-        "form-0-reference_price": "2%",
-        "form-0-action": action2.pk,
-        "form-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
-        "form-1-condition_code": condition_code1.pk,
-        "form-1-reference_price": "2%",
-        "form-1-action": action2.pk,
-        "form-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
-    }
-    formset3 = forms.MeasureConditionsWizardStepFormSet(
-        data,
-        prefix="",
-        form_kwargs={"measure_start_date": date_ranges.normal},
-    )
-    assert not formset3.is_valid()
-    assert (
-        "The same price cannot be added more than once to the same condition code."
-        in formset3.non_form_errors()
-    )
 
+def test_measure_formset_invalid_duplicate_certs(date_ranges, duty_sentence_parser):
     certificate = factories.CertificateFactory.create()
     code_with_certificate = factories.MeasureConditionCodeFactory(
         accepts_certificate=True,
@@ -1143,31 +1184,6 @@ def test_measure_formset_conditions_invalid(
             "The same certificate cannot be added more than once to the same condition code."
             in formset2.non_form_errors()
         )
-
-    condition_code1 = factories.MeasureConditionCodeFactory.create(code="A")
-    condition_code2 = factories.MeasureConditionCodeFactory.create(code="B")
-    action1, action2 = factories.MeasureActionFactory.create_batch(2)
-
-    data = {
-        "form-0-condition_code": condition_code2.pk,
-        "form-0-reference_price": "2%",
-        "form-0-action": action1.pk,
-        "form-1-condition_code": condition_code1.pk,
-        "form-1-reference_price": "3%",
-        "form-1-action": action2.pk,
-    }
-
-    formset = forms.MeasureConditionsWizardStepFormSet(
-        data,
-        prefix="",
-        form_kwargs={"measure_start_date": date_ranges.normal},
-    )
-
-    assert not formset.is_valid()
-    assert (
-        "All conditions codes must be added in alphabetical order."
-        in formset.non_form_errors()
-    )
 
 
 def test_measure_formset_conditions_field_queryset(

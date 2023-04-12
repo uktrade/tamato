@@ -54,6 +54,7 @@ Import from a dump of the database:
 .. code:: sh
 
     # to overwrite default db dump name pass in DUMP_FILE=tamato_db.sql
+    # this overwrites the default file set in the makefile variable
     $ make docker-db-dump
 
 To get a database dump, please contact the `TAP team`_.
