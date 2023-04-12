@@ -1,7 +1,6 @@
 {% set table_rows = [] %}
 {% for object in object_list %}
   {{ table_rows.append([
-    {"text": object.pk},
     {"text": object.name},
     {"text": "{:%d %b %Y}".format(object.created_at)},
     {"text": object.chunks_waiting},
@@ -12,13 +11,10 @@
 {% endfor %}
 {{ govukTable({
   "head": [
-    {"text": "ID"},
-    {"text": "Name"},
-    {"text": "Start date"},
-    {"text": "Chunks waiting"},
-    {"text": "Chunks running"},
-    {"text": "Chunks done"},
-    {"text": "Chunks errored"},
+    {"text": "Taric ID number"},
+    {"text": "Date added"},
+    {"text": "Uploaded by"},
+    {"text": "Status"},
   ],
   "rows": table_rows
 }) }}
