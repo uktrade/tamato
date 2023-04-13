@@ -1,7 +1,8 @@
 {% extends "layouts/form.jinja" %}
-{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/button/macro.njk" import govukButton %}
 
 {% set page_title = "Delete " ~ object._meta.verbose_name ~ " " ~ object|string %}
 
@@ -21,5 +22,10 @@
   {% call django_form(action=object.get_url("delete")) %}
     {{ crispy(form) }}
   {% endcall %}
-  <a href="{{ object.get_url() }}" class="govuk-link">Cancel</a>
+
+  {{ govukButton({
+    "html": "Cancel",
+    "href": object.get_url(),
+    "classes": "govuk-button--secondary"
+  }) }}
 {% endblock %}
