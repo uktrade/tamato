@@ -356,55 +356,85 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ME16"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME16">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2004-12-31&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ME16"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME16">[docs]</a><span class="nd">@skip_when_deleted</span>
+<span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2004-12-31&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ME16</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Integrating a measure with an additional code when an equivalent or</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Integrating a measure with an additional code when an equivalent or</span>
 <span class="sd">    overlapping measures without additional code already exists and vice-versa,</span>
-<span class="sd">    should be forbidden.&quot;&quot;&quot;</span>
+<span class="sd">    should be forbidden.</span>
+
+<span class="sd">    Note :</span>
+<span class="sd">        Our understanding is that this should behave like ME32 with except checking for the inverse of the</span>
+<span class="sd">        presence of the additional code.</span>
+
+<span class="sd">        This is based on our understanding of the intention and the poor wording of the business rule and the use of</span>
+<span class="sd">        the word &quot;should&quot; are indicators that the language of this rule has not been through the same scrutiny as other</span>
+<span class="sd">        similar rules.</span>
+
+<span class="sd">    Interpreted meaning:</span>
+<span class="sd">        Clashing measures :</span>
+<span class="sd">            Has a goods code in the same nomenclature hierarchy which references the same measure type, geo area,</span>
+<span class="sd">            order number and reduction indicator and has no additional code, where one is defined on the validating</span>
+<span class="sd">            measure or vice versa.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ME16.query_similar_measures"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME16.query_similar_measures">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">query_similar_measures</span><span class="p">(</span><span class="n">measure</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Query measures where measure type, geo area, reduction, order number</span>
+<span class="sd">        (or dead order number) match and additional code is null when the target</span>
+<span class="sd">        measure has a populated additional code, or is not null when the target</span>
+<span class="sd">        measure has a null additional code.&quot;&quot;&quot;</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span>
+            <span class="n">measure_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="n">geographical_area__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+            <span class="n">reduction</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">reduction</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">order_number__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">dead_order_number</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">order_number__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dead_order_number__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">query</span></div>
+
+<div class="viewcode-block" id="ME16.clashing_measures"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME16.clashing_measures">[docs]</a>    <span class="k">def</span> <span class="nf">clashing_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MeasuresQuerySet</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns all the measures that clash with the passed measure over its</span>
+<span class="sd">        lifetime.</span>
+
+<span class="sd">        Two measures clash if all their fields listed in this business rule</span>
+<span class="sd">        description are equal, their date ranges overlap, and one of their</span>
+<span class="sd">        commodity codes is an ancestor or equal to the other.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">measures.snapshots</span> <span class="kn">import</span> <span class="n">MeasureSnapshot</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="n">ME16</span><span class="o">.</span><span class="n">query_similar_measures</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+        <span class="n">clashing_measures</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">snapshot</span> <span class="ow">in</span> <span class="n">MeasureSnapshot</span><span class="o">.</span><span class="n">get_snapshots</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">):</span>
+            <span class="n">clashing_measures</span> <span class="o">=</span> <span class="n">clashing_measures</span><span class="o">.</span><span class="n">union</span><span class="p">(</span>
+                <span class="n">snapshot</span><span class="o">.</span><span class="n">overlaps</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>
+                <span class="nb">all</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">clashing_measures</span></div>
 
 <div class="viewcode-block" id="ME16.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME16.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;order_number__order_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">order_number</span><span class="o">.</span><span class="n">order_number</span>
-        <span class="k">elif</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;dead_order_number&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_order_number</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;order_number__isnull&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;dead_order_number__isnull&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
 
-        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">additional_code</span> <span class="ow">or</span> <span class="n">measure</span><span class="o">.</span><span class="n">dead_additional_code</span><span class="p">:</span>
-            <span class="n">additional_code_query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">Q</span><span class="p">(</span>
-                <span class="n">dead_additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">additional_code_query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">|</span> <span class="n">Q</span><span class="p">(</span>
-                <span class="n">dead_additional_code__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_effective_valid_between</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">additional_code_query</span><span class="p">,</span>
-                <span class="n">measure_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-                <span class="n">geographical_area__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-                <span class="n">goods_nomenclature__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span><span class="o">.</span><span class="n">sid</span>
-                <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">goods_nomenclature</span>
-                <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                <span class="n">reduction</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">reduction</span><span class="p">,</span>
-                <span class="n">db_effective_valid_between__overlap</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">effective_valid_between</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">pk</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">excluding_versions_of</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">version_group</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">measure</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="n">measure</span><span class="p">,</span>
-                <span class="s2">&quot;A measure with an additional code cannot be added when an equivalent &quot;</span>
-                <span class="s2">&quot;or overlapping measure without an additional code already exists and &quot;</span>
-                <span class="s2">&quot;vice-versa.&quot;</span><span class="p">,</span>
-            <span class="p">)</span></div></div>
+        <span class="n">clashing_measures</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clashing_measures</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">clashing_measures</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="n">default_message</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="se">\n</span><span class="s2">&quot;</span>
+
+            <span class="k">for</span> <span class="n">clashing_measure</span> <span class="ow">in</span> <span class="n">clashing_measures</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Clash with Measure SID </span><span class="si">{</span><span class="n">clashing_measure</span><span class="o">.</span><span class="n">sid</span><span class="si">}</span><span class="s2">. &quot;</span>
+
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="ME115"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME115">[docs]</a><span class="k">class</span> <span class="nc">ME115</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>

@@ -633,12 +633,61 @@ have a relationship with the measure type.</p>
 <dd><p>Integrating a measure with an additional code when an equivalent or
 overlapping measures without additional code already exists and vice-versa,
 should be forbidden.</p>
+<dl>
+<dt>Note :</dt><dd><p>Our understanding is that this should behave like ME32 with except checking for the inverse of the
+presence of the additional code.</p>
+<p>This is based on our understanding of the intention and the poor wording of the business rule and the use of
+the word “should” are indicators that the language of this rule has not been through the same scrutiny as other
+similar rules.</p>
+</dd>
+<dt>Interpreted meaning:</dt><dd><dl class="simple">
+<dt>Clashing measures :</dt><dd><p>Has a goods code in the same nomenclature hierarchy which references the same measure type, geo area,
+order number and reduction indicator and has no additional code, where one is defined on the validating
+measure or vice versa.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="measures.business_rules.ME16.Violation">
 <em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME16.Violation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Integrating a measure with an additional code when an equivalent or
 overlapping measures without additional code already exists and vice-versa,
 should be forbidden.</p>
+<dl>
+<dt>Note :</dt><dd><p>Our understanding is that this should behave like ME32 with except checking for the inverse of the
+presence of the additional code.</p>
+<p>This is based on our understanding of the intention and the poor wording of the business rule and the use of
+the word “should” are indicators that the language of this rule has not been through the same scrutiny as other
+similar rules.</p>
+</dd>
+<dt>Interpreted meaning:</dt><dd><dl class="simple">
+<dt>Clashing measures :</dt><dd><p>Has a goods code in the same nomenclature hierarchy which references the same measure type, geo area,
+order number and reduction indicator and has no additional code, where one is defined on the validating
+measure or vice versa.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="measures.business_rules.ME16.clashing_measures">
+<span class="sig-name descname"><span class="pre">clashing_measures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">measures.querysets.MeasuresQuerySet</span></span></span><a class="reference internal" href="../_modules/measures/business_rules.html#ME16.clashing_measures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME16.clashing_measures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all the measures that clash with the passed measure over its
+lifetime.</p>
+<p>Two measures clash if all their fields listed in this business rule
+description are equal, their date ranges overlap, and one of their
+commodity codes is an ancestor or equal to the other.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="measures.business_rules.ME16.query_similar_measures">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">query_similar_measures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME16.query_similar_measures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME16.query_similar_measures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query measures where measure type, geo area, reduction, order number
+(or dead order number) match and additional code is null when the target
+measure has a populated additional code, or is not null when the target
+measure has a null additional code.</p>
 </dd></dl>
 
 <dl class="py method">
