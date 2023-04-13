@@ -1,4 +1,4 @@
-COMPOSE_LOCAL=docker-compose 
+COMPOSE_LOCAL=docker-compose
 DOCKER=docker
 PROJECT=tamato
 DEV=true
@@ -135,7 +135,7 @@ docker-clean:
 	@echo "> Cleaning unused volumes in docker..."	
 	@${DOCKER} volume prune -f 
 
-## docker-deep-clean: deep clean all unused systems (containers, networks, images, volumes)
+## docker-deep-clean: deep clean all unused systems (containers, networks, images, cache)
 docker-deep-clean:
 	@echo
 	@echo "> Cleaning unused systems in docker..."	
@@ -163,7 +163,8 @@ docker-db-dump: docker-up-db
 	@cat ${DUMP_FILE} | ${COMPOSE_LOCAL} exec -T db psql -U postgres 
 
 ## docker-first-use: Run application for first time in Docker 
-docker-first-use: docker-clean docker-build docker-down docker-db-dump docker-migrate docker-superuser docker-up 
+docker-first-use: docker-down docker-clean docker-build docker-db-dump \
+	docker-migrate docker-superuser docker-up 
 
 ## docker-makemigrations: Run django makemigrations in Docker
 docker-makemigrations: 
@@ -186,12 +187,12 @@ docker-checkmigrations:
 	@${COMPOSE_LOCAL} ${DOCKER_RUN} --no-deps \
 		${PROJECT} ${PYTHON}  manage.py makemigrations --check
 
-## docker-shell: Run django shell in Docker container
-docker-shell:
+## docker-django-shell: Run django shell in Docker container
+docker-django-shell:
 	@echo
 	@echo "> Running django shell  in docker..."
 	@${COMPOSE_LOCAL} ${DOCKER_RUN} \
-		${PROJECT} ${PYTHON} manage.py shell
+		${PROJECT} ${PYTHON} manage.py shell_plus
 
 ## docker-collectstatic: Run django collectstatic in Docker container
 docker-collectstatic:

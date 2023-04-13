@@ -124,6 +124,84 @@ def validate_duties(duties, measure_start_date):
         raise ValidationError("Enter a valid duty sentence.")
 
 
+def validate_conditions_formset(cleaned_data):
+    """
+    Checks condition formset level errors using set checks:
+
+    Checks that all certficates are unique for the same condition code Checks
+    that all referenced prices are unique for the same condition code Checks
+    that all action codes for the same condition code are equal Checks that all
+    condition codes are entered in the correct order
+    """
+    errors_list = []
+    # list of tuples of condition code and certification
+    condition_certificates = []
+    # list of tuples of condition code and duty amount data
+    condition_duty_amounts = []
+    # list of condition codes
+    condition_codes = []
+    # list of tuples of condition code and it's action code
+    condition_action_tuple = []
+    for condition in cleaned_data:
+        if condition["duty_amount"]:
+            condition_duty_amounts.append(
+                (
+                    condition["condition_code"],
+                    condition["duty_amount"],
+                    condition["monetary_unit"],
+                    condition["condition_measurement"],
+                ),
+            )
+        if condition["required_certificate"]:
+            condition_certificates.append(
+                (condition["condition_code"], condition["required_certificate"]),
+            )
+        condition_action_tuple.append(
+            (condition["condition_code"], condition["action"]),
+        )
+        condition_codes.append(condition["condition_code"])
+
+    num_unique_certificates = len(set(condition_certificates))
+    num_unique_duty_amounts = len(set(condition_duty_amounts))
+    num_unique_conditions = len(set(condition_codes))
+    num_unique_condition_action_codes = len(set(condition_action_tuple))
+    ordered_condition_codes = sorted(condition_codes)
+
+    # for the number of certificates the number of unique certificate, condition code tuples
+    # must be equal if the form is valid. Ie/ there are no duplicate certiicates for a condition code
+    if len(condition_certificates) != num_unique_certificates:
+        errors_list.append(
+            ValidationError(
+                "The same certificate cannot be added more than once to the same condition code.",
+            ),
+        )
+    if len(condition_duty_amounts) != num_unique_duty_amounts:
+        errors_list.append(
+            ValidationError(
+                "The same price cannot be added more than once to the same condition code.",
+            ),
+        )
+
+    # for all unique condition codes the number of unique action codes will be equal
+    # if the form is valid
+    if num_unique_conditions != num_unique_condition_action_codes:
+        errors_list.append(
+            ValidationError(
+                "All conditions of the same condition code must have the same resulting action.",
+            ),
+        )
+
+    # Condition codes must be added in order
+    if condition_codes != ordered_condition_codes:
+        errors_list.append(
+            ValidationError(
+                "All conditions codes must be added in alphabetical order.",
+            ),
+        )
+    if errors_list:
+        raise ValidationError(errors_list)
+
+
 validate_reduction_indicator = NumberRangeValidator(1, 9)
 
 validate_component_sequence_number = NumberRangeValidator(1, 999)

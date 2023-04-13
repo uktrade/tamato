@@ -1,5 +1,16 @@
-<div id="div_id_{{ field.html_name }}" class="govuk-form-group">
+<div id="div_id_{{ field.html_name }}" class="govuk-form-group {% if field.errors %} govuk-form-group--error{% endif %}">
+    <label for="id_{{ field.html_name }}" class="govuk-label">
+        Condition Code
+    </label>
     <div id="condition-code-hint" class="govuk-hint">Select the condition code from the dropdown list</div>
+    {% if field.errors %}
+        {% for error in field.errors %} 
+        <p id="id_{{ field.html_name }}-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>  
+                {{error}} <br>
+        </p>
+        {% endfor %}
+    {% endif %}
     {% set selected_code = field.initial | int %}
     <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}">
         <option value="">-- Please select a condition code --</option>
