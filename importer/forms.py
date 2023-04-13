@@ -102,7 +102,9 @@ class UploadTaricForm(ImportForm):
 
     @transaction.atomic
     def save(self, user: User, commit=True):
-        batch = super().save(commit)
+        batch = super().save(commit=False)
+        batch.author = user
+        batch.save()
 
         if self.data.get("commodities") is not None:
             record_group = TARIC_RECORD_GROUPS["commodities"]

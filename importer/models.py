@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.db.models import QuerySet
@@ -45,6 +46,12 @@ class ImportBatch(TimestampedMixin):
     """
 
     name = models.CharField(max_length=32, unique=True)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        null=True,
+    )
     split_job = models.BooleanField(
         default=False,
     )  # XXX could be termed "seed file" instead?
