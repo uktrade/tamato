@@ -197,7 +197,8 @@ $<span class="w"> </span>make<span class="w"> </span>docker-up
 </div></blockquote>
 <p>Go to <a class="reference external" href="http://localhost:8000/">http://localhost:8000/</a> in your web browser to view the app</p>
 <p>Import from a dump of the database:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># to overwrite default db dump name pass in DUMP_FILE=db_dump.sql</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># to overwrite default db dump name pass in DUMP_FILE=tamato_db.sql</span>
+<span class="c1"># this overwrites the default file set in the makefile variable</span>
 $<span class="w"> </span>make<span class="w"> </span>docker-db-dump
 </pre></div>
 </div>
@@ -229,7 +230,7 @@ $<span class="w"> </span>make<span class="w"> </span>docker-up-db<span class="w"
 $<span class="w"> </span>make<span class="w"> </span>docker-makemigrations<span class="w"> </span><span class="c1"># runs django makemigrations</span>
 $<span class="w"> </span>make<span class="w"> </span>docker-checkmigrations<span class="w"> </span><span class="c1"># runs django checkmigrations</span>
 $<span class="w"> </span>make<span class="w"> </span>docker-bash<span class="w"> </span><span class="c1"># bash shell in tamato container</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-shell<span class="w"> </span><span class="c1"># django shell in tamato container</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-django-shell<span class="w"> </span><span class="c1"># django shell in tamato container</span>
 </pre></div>
 </div>
 </section>
