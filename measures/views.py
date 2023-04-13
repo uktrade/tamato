@@ -460,13 +460,86 @@ class MeasureCreateWizard(
         },
     }
 
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    def create_measure_conditions(
+        self,
+        data,
+        measure: Measure,
+        measure_creation_pattern: MeasureCreationPattern,
+        parser: DutySentenceParser,
+    ):
+        """
+        Create's measure conditions, components, and their corresponding negative actions
+        Args:
+            data: object with the form wizards data
+            measure: Current created measure
+            measure_creation_pattern: MeasureCreationPattern
+            parser: DutySentenceParser
+        Returns:
+            None
+        """
+        # component number not tied to position in formset as negative conditions are auto generated
+        component_sequence_number = 1
+        for index, condition_data in enumerate(
+            data.get("formset-conditions", []),
+        ):
+            if not condition_data.get("DELETE"):
+                # creates a list of tuples with condition and action code
+                # this will be used to create the corresponding negative action
+                measure_creation_pattern.create_condition_and_components(
+                    condition_data,
+                    component_sequence_number,
+                    measure,
+                    parser,
+                    self.workbasket,
+                )
+
+                # set next code unless last item set None
+                next_condition_code = (
+                    data["formset-conditions"][index + 1]["condition_code"]
+                    if (index + 1 < len(data["formset-conditions"]))
+                    else None
+                )
+                # corresponding negative action to the postive one. None if the action code has no pair
+                action_pair = MeasureActionPair.objects.filter(
+                    positive_action__code=condition_data.get("action").code,
+                ).first()
+                # if the next condition code is different create the negative action for the current condition
+                # only create a negative action if the action has a negative pair
+                if (
+                    action_pair
+                    and data["formset-conditions"][index]["condition_code"]
+                    != next_condition_code
+                ):
+                    component_sequence_number += 1
+                    measure_creation_pattern.create_condition_and_components(
+                        {
+                            "condition_code": condition_data.get("condition_code"),
+                            "duty_amount": None,
+                            "required_certificate": None,
+                            # corresponding negative action to the postive one.
+                            "action": action_pair.negative_action,
+                            "DELETE": False,
+                        },
+                        component_sequence_number,
+                        measure,
+                        parser,
+                        self.workbasket,
+                    )
+
+            # deletes also increment or well did when using the enumerated index
+            component_sequence_number += 1
+
     @atomic
     def create_measures(self, data):
         """Returns a list of the created measures."""
         measure_start_date = data["valid_between"].lower
-        workbasket = WorkBasket.current(self.request)
+
         measure_creation_pattern = MeasureCreationPattern(
-            workbasket=workbasket,
+            workbasket=self.workbasket,
             base_date=measure_start_date,
             defaults={
                 "generating_regulation": data["generating_regulation"],
@@ -507,58 +580,12 @@ class MeasureCreateWizard(
                 measure.valid_between.lower,
                 component_output=MeasureConditionComponent,
             )
-
-            # component number not tied to position in formset as negative conditions are auto generated
-            component_sequence_number = 1
-            for index, condition_data in enumerate(
-                data.get("formset-conditions", []),
-            ):
-                if not condition_data.get("DELETE"):
-                    # creates a list of tuples with condition and action code
-                    # this will be used to create the corresponding negative action
-                    measure_creation_pattern.create_condition_and_components(
-                        condition_data,
-                        component_sequence_number,
-                        measure,
-                        parser,
-                        workbasket,
-                    )
-
-                    # set next code unless last item set None
-                    next_condition_code = (
-                        data["formset-conditions"][index + 1]["condition_code"]
-                        if (index + 1 < len(data["formset-conditions"]))
-                        else None
-                    )
-                    # corresponding negative action to the postive one. None if the action code has no pair
-                    action_pair = MeasureActionPair.objects.filter(
-                        positive_action__code=condition_data.get("action").code,
-                    ).first()
-                    # if the next condition code is different create the negative action for the current condition
-                    # only create a negative action if the action has a negative pair
-                    if (
-                        action_pair
-                        and data["formset-conditions"][index]["condition_code"]
-                        != next_condition_code
-                    ):
-                        component_sequence_number += 1
-                        measure_creation_pattern.create_condition_and_components(
-                            {
-                                "condition_code": condition_data.get("condition_code"),
-                                "duty_amount": None,
-                                "required_certificate": None,
-                                # corresponding negative action to the postive one.
-                                "action": action_pair.negative_action,
-                                "DELETE": False,
-                            },
-                            component_sequence_number,
-                            measure,
-                            parser,
-                            workbasket,
-                        )
-
-                # deletes also increment or well did when using the enumerated index
-                component_sequence_number += 1
+            self.create_measure_conditions(
+                data,
+                measure,
+                measure_creation_pattern,
+                parser,
+            )
 
             created_measures.append(measure)
 

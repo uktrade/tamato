@@ -13,7 +13,6 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import Q
 from django.db.models import TextChoices
 from django.urls import reverse
 
@@ -286,7 +285,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         # Filters out 'negative' actions in a positive/negative pair, doesn't filter out action that have no pair
         queryset=models.MeasureAction.objects.latest_approved()
         .filter(
-            Q(negative_measure_action__isnull=True),
+            negative_measure_action__isnull=True,
         )
         .select_related("negative_measure_action")
         .order_by("code"),
