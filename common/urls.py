@@ -18,6 +18,11 @@ urlpatterns = [
     path("search/", views.SearchPageView.as_view(), name="search-page"),
     path("healthcheck", views.healthcheck, name="healthcheck"),
     path("app-info", views.AppInfoView.as_view(), name="app-info"),
+    path(
+        "accessibility-statement",
+        views.AccessibilityStatementView.as_view(),
+        name="accessibility-statement",
+    ),
     path("login", views.LoginView.as_view(), name="login"),
     path("logout", views.LogoutView.as_view(), name="logout"),
     path("api-auth/", include("rest_framework.urls")),

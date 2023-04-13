@@ -1,9 +1,12 @@
 import pytest
 
 from common.tests.util import check_validator
+from common.validators import AlphanumericValidator
 from common.validators import EnvelopeIdValidator
 from common.validators import NumberRangeValidator
 from common.validators import NumericSIDValidator
+from common.validators import NumericValidator
+from common.validators import SymbolValidator
 
 
 @pytest.mark.parametrize(
@@ -53,3 +56,43 @@ def test_numeric_sid_validator(value, expected_valid):
 )
 def test_envelope_id_validator(value, expected_valid):
     check_validator(EnvelopeIdValidator, value, expected_valid)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected_valid"),
+    [
+        ("A Good Description", True),
+        ("A Good description with Numbers in 001", True),
+        (1234, True),
+        ("<Sketchy_Code></>", False),
+    ],
+)
+def test_alphanumeric_validator(value, expected_valid):
+    check_validator(AlphanumericValidator, value, expected_valid)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected_valid"),
+    [
+        ("Text without symbols is fine", True),
+        ("Numbers are also fine 3678767", True),
+        ("These specific symbols are fine .,'()&£$%/@!", True),
+        ("<Sketchy_Code>This is not fine</>", False),
+        ("{{ This is also not [fine] }}", False),
+    ],
+)
+def test_symbol_validator(value, expected_valid):
+    check_validator(SymbolValidator, value, expected_valid)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected_valid"),
+    [
+        ("Text When There Shouldn't be.", False),
+        (1234, True),
+        ("<Sketchy_Code></>", False),
+        (".,'()&£$%/@!", False),
+    ],
+)
+def test_numeric_validator(value, expected_valid):
+    check_validator(NumericValidator, value, expected_valid)
