@@ -7,6 +7,7 @@ COPY . .
 
 RUN npm install && npm run build
 
+############################################################
 
 FROM python:3.8-buster
 

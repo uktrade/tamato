@@ -1,6 +1,7 @@
 from datetime import date
 from typing import Set
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from common.business_rules import UniqueIdentifyingFields
@@ -370,6 +371,10 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
     def __str__(self):
         return f"{self.code} - {self.description}"
 
+    def __lt__(self, other):
+        """Can sort MeasureConditionCode by their alphabetical code."""
+        return self.code < other.code
+
 
 class MeasureAction(TrackedModel, ValidityMixin):
     """
@@ -410,6 +415,58 @@ class MeasureAction(TrackedModel, ValidityMixin):
 
     def __str__(self):
         return f"{self.code} - {self.description}"
+
+
+class MeasureActionPair(models.Model):
+    """
+    Defines the positive and negative linkage between two MeasureActions Not all
+    MeasureActions will have a pair when querying on measure action do a left
+    join.
+
+    query - values list on negative action and exclude from MeasureAction
+    """
+
+    positive_action = models.ForeignKey(
+        MeasureAction,
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="positive_measure_action",
+        unique=True,
+    )
+    negative_action = models.ForeignKey(
+        MeasureAction,
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="negative_measure_action",
+        unique=True,
+    )
+
+    class Meta:
+        ordering = ["pk"]
+
+    def save(self, *args, **kwargs):
+        """Throws a validation error if the positive and negative action are
+        equal Throws a validation error if the positive action has already been
+        created as a negative action Throws a validation error if the negative
+        action has already been created as a positive action."""
+        positive_action = getattr(self, "positive_action")
+        negative_action = getattr(self, "negative_action")
+
+        if positive_action == negative_action:
+            raise ValidationError("Positive and negative action cannot be equal.")
+        elif MeasureActionPair.objects.filter(negative_action=positive_action).exists():
+            raise ValidationError(
+                "Cannot create positive action as it is already a negative action.",
+            )
+        elif MeasureActionPair.objects.filter(positive_action=negative_action).exists():
+            raise ValidationError(
+                "Cannot create negative action as it is already a positive action.",
+            )
+
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Positive Action: {self.positive_action.code} - Negative Action: {self.negative_action.code}"
 
 
 class Measure(TrackedModel, ValidityMixin):
