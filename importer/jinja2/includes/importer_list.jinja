@@ -1,12 +1,13 @@
 {% set table_rows = [] %}
+
 {% for object in object_list %}
   {{ table_rows.append([
     {"text": object.name},
     {"text": "{:%d %b %Y}".format(object.created_at)},
-    {"text": object.chunks_waiting},
-    {"text": object.chunks_running},
-    {"text": object.chunks_done},
-    {"text": object.chunks_errored},
+    {"text": object.author.get_full_name() if object.author else "-"},
+    {"text": "Placeholder Status"},
+    {"text": ""},
+
   ]) or "" }}
 {% endfor %}
 {{ govukTable({
