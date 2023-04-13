@@ -1,6 +1,9 @@
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.utils import IntegrityError
 
 from common.tests import factories
 from common.validators import UpdateType
@@ -301,3 +304,65 @@ def test_effective_valid_between(measure_regulation, measure_dates, date_ranges)
     )
     assert measure.effective_valid_between == expected_dates
     assert measure.effective_end_date == expected_dates.upper
+
+
+def test_measure_action_pair():
+    action_1 = factories.MeasureActionFactory.create()
+    action_2 = factories.MeasureActionFactory.create()
+    action_pair = factories.MeasureActionPairFactory.create(
+        positive_action=action_1,
+        negative_action=action_2,
+    )
+    assert action_1.code in str(action_pair)
+    assert action_2.code in str(action_pair)
+
+
+def test_measure_action_pair_invalid():
+    """Tests that invalid measure pairs cannot be created."""
+
+    action_1 = factories.MeasureActionFactory.create()
+    action_2 = factories.MeasureActionFactory.create()
+    action_3 = factories.MeasureActionFactory.create()
+    action_4 = factories.MeasureActionFactory.create()
+
+    # cannot pair with itself
+    with pytest.raises(ValidationError):
+        factories.MeasureActionPairFactory.create(
+            positive_action=action_1,
+            negative_action=action_1,
+        )
+
+    factories.MeasureActionPairFactory.create(
+        positive_action=action_1,
+        negative_action=action_2,
+    )
+
+    # cannot reuse positive action
+    with pytest.raises(IntegrityError):
+        with transaction.atomic():
+            factories.MeasureActionPairFactory.create(
+                positive_action=action_1,
+                negative_action=action_4,
+            )
+
+    # cannot reuse negative action
+    with pytest.raises(IntegrityError):
+        with transaction.atomic():
+            factories.MeasureActionPairFactory.create(
+                positive_action=action_3,
+                negative_action=action_2,
+            )
+
+    # cannot use already used negative action in positive
+    with pytest.raises(ValidationError):
+        factories.MeasureActionPairFactory.create(
+            positive_action=action_2,
+            negative_action=action_4,
+        )
+
+    # cannot use already used positive action in negative
+    with pytest.raises(ValidationError):
+        factories.MeasureActionPairFactory.create(
+            positive_action=action_3,
+            negative_action=action_1,
+        )

@@ -1010,6 +1010,14 @@ class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
     description = short_description()
 
 
+class MeasureActionPairFactory(factory.django.DjangoModelFactory):
+    """Factory that takes two Measure Actions positive_action &
+    negative_action."""
+
+    class Meta:
+        model = "measures.MeasureActionPair"
+
+
 class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "measures.Measure"
