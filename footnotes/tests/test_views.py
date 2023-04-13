@@ -91,12 +91,24 @@ def test_footnote_business_rule_application(
     )
 
 
-@pytest.mark.parametrize(
-    "factory",
-    (factories.FootnoteFactory, factories.FootnoteDescriptionFactory),
-)
-def test_delete_form(factory, use_delete_form):
-    use_delete_form(factory())
+def test_delete_form(use_delete_form):
+    use_delete_form(factories.FootnoteFactory())
+
+
+def test_footnote_description_delete_form(use_delete_form):
+    footnote = factories.FootnoteFactory()
+    description1, description2 = factories.FootnoteDescriptionFactory.create_batch(
+        2,
+        described_footnote=footnote,
+    )
+    use_delete_form(description1)
+    try:
+        use_delete_form(description2)
+    except ValidationError as e:
+        assert (
+            "This description cannot be deleted because at least one description record is mandatory."
+            in e.message
+        )
 
 
 @pytest.mark.parametrize(

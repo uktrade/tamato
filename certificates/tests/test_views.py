@@ -23,12 +23,24 @@ from common.views import TrackedModelDetailMixin
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.parametrize(
-    "factory",
-    (factories.CertificateFactory, factories.CertificateDescriptionFactory),
-)
-def test_certificate_delete(factory, use_delete_form):
-    use_delete_form(factory())
+def test_certificate_delete(use_delete_form):
+    use_delete_form(factories.CertificateFactory())
+
+
+def test_certificate_description_delete_form(use_delete_form):
+    certificate = factories.CertificateFactory()
+    description1, description2 = factories.CertificateDescriptionFactory.create_batch(
+        2,
+        described_certificate=certificate,
+    )
+    use_delete_form(description1)
+    try:
+        use_delete_form(description2)
+    except ValidationError as e:
+        assert (
+            "This description cannot be deleted because at least one description record is mandatory."
+            in e.message
+        )
 
 
 def test_certificate_create_form_creates_certificate_description_object(
