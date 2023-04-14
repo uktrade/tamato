@@ -335,6 +335,21 @@ class TrackedModelChangeView(
         return FormMixin.form_valid(self, form)
 
 
+class DescriptionDeleteMixin:
+    """Prevents the only description of the described object from being
+    deleted."""
+
+    def form_valid(self, form):
+        described_object = self.object.get_described_object()
+        if described_object.get_descriptions().count() == 1:
+            form.add_error(
+                None,
+                "This description cannot be deleted because at least one description record is mandatory.",
+            )
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
+
 class SortingMixin:
     """
     Can be used to sort a queryset in a view using GET params. Checks the GET
