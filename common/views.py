@@ -336,7 +336,7 @@ class TrackedModelChangeView(
 
 
 class DescriptionDeleteMixin:
-    """Prevents the last description of the described object from being
+    """Prevents the only description of the described object from being
     deleted."""
 
     def form_valid(self, form):
