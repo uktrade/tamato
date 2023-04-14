@@ -91,7 +91,7 @@ def test_footnote_business_rule_application(
     )
 
 
-def test_delete_form(use_delete_form):
+def test_footnote_delete_form(use_delete_form):
     use_delete_form(factories.FootnoteFactory())
 
 
