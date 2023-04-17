@@ -195,44 +195,6 @@ def test_geo_area_update_view_edit_end_date(
         assert geo_area.update_type == UpdateType.UPDATE
 
 
-def test_geo_area_update_view_edit_end_date_invalid_date(
-    valid_user_client,
-    session_workbasket,
-    date_ranges,
-):
-    """Tests that HTML contains a form validation error after posting to geo
-    area update endpoint with an invalid end date as checked against indirect
-    business rule ON6."""
-
-    geo_area = factories.GeographicalAreaFactory.create(
-        valid_between=date_ranges.normal,
-    )
-    order_origin_number = factories.QuotaOrderNumberOriginFactory.create(
-        geographical_area=geo_area,
-        valid_between=date_ranges.no_end,
-    )
-
-    form_data = {
-        "end_date_0": date_ranges.later.upper.day,
-        "end_date_1": date_ranges.later.upper.month,
-        "end_date_2": date_ranges.later.upper.year,
-    }
-
-    url = reverse(
-        "geo_area-ui-edit",
-        kwargs={"sid": geo_area.sid},
-    )
-    response = valid_user_client.post(url, form_data)
-    assert response.status_code == 200
-
-    page = BeautifulSoup(str(response.content), "html.parser")
-    a_tags = page.select("ul.govuk-list.govuk-error-summary__list a")
-    assert (
-        a_tags[0].text
-        == "The validity period of the geographical area must span the validity period of the quota order number origin."
-    )
-
-
 def test_geo_area_update_view_membership_add_country_or_region(
     valid_user_client,
     session_workbasket,

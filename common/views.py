@@ -33,7 +33,6 @@ from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from checks.checks import IndirectBusinessRuleChecker
 from common import forms
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
@@ -281,14 +280,6 @@ class BusinessRulesMixin:
             except BusinessRuleViolation as v:
                 form.add_error(None, v.args[0])
                 violations = True
-
-        for rule in self.validate_indirect_business_rules:
-            checkers = IndirectBusinessRuleChecker.of(rule).checkers_for(self.object)
-            for checker in checkers:
-                (rule_passed, message) = checker.run(self.object)
-                if not rule_passed:
-                    form.add_error(None, message.partition(": ")[-1])
-                    violations = True
 
         return violations
 
