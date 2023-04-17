@@ -1,12 +1,16 @@
 {% set table_rows = [] %}
 
+{%- set object_status -%}
+    <span class="status-badge">Placeholder Status</a>
+  {%- endset -%}
+
 {% for object in object_list %}
   {{ table_rows.append([
     {"text": object.name},
     {"text": "{:%d %b %Y}".format(object.created_at)},
     {"text": object.author.get_full_name() if object.author else "-"},
-    {"text": "Placeholder Status"},
-    {"text": ""},
+    {"text": object_status},
+    {"text": "Placeholder Resume Link"},
 
   ]) or "" }}
 {% endfor %}
@@ -16,6 +20,7 @@
     {"text": "Date added"},
     {"text": "Uploaded by"},
     {"text": "Status"},
+    {"text": ""},
   ],
   "rows": table_rows
 }) }}
