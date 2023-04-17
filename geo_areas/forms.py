@@ -25,6 +25,7 @@ from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
 from geo_areas.validators import AreaCode
 from geo_areas.validators import validate_dates
+from quotas.models import QuotaOrderNumberOrigin
 from workbaskets.models import WorkBasket
 
 
@@ -352,6 +353,20 @@ class GeographicalAreaEndDateForm(ValidityPeriodForm):
 
     def clean(self):
         self.cleaned_data["start_date"] = self.instance.valid_between.lower
+        end_date = self.cleaned_data.get("end_date")
+        if end_date:
+            origins = QuotaOrderNumberOrigin.objects.current().filter(
+                geographical_area__sid=self.instance.sid,
+            )
+            for origin in origins:
+                if (
+                    not origin.valid_between.upper
+                    or origin.valid_between.upper < end_date
+                ):
+                    self.add_error(
+                        "end_date",
+                        "The end date must span the validity period of the quota order number origin that specifies this geographical area.",
+                    )
         return super().clean()
 
     class Meta:

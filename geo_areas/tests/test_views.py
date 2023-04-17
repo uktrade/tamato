@@ -162,6 +162,7 @@ def test_geo_area_update_view_edit_end_date(
     session_workbasket,
     date_ranges,
 ):
+    """Tests that a geographical area's end date can be edited."""
     geo_area = factories.GeographicalAreaFactory.create(
         valid_between=date_ranges.normal,
     )

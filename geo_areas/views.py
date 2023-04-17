@@ -141,16 +141,11 @@ class GeoAreaUpdateMixin(GeoAreaMixin, TrackedModelDetailMixin):
     form_class = GeographicalAreaEditForm
 
     validate_business_rules = (
-        business_rules.GA1,
-        business_rules.GA3,
-        business_rules.GA4,
         business_rules.GA5,
         business_rules.GA6,
         business_rules.GA7,
         business_rules.GA10,
         business_rules.GA11,
-        business_rules.GA21,
-        business_rules.GA22,
     )
 
     def get_form_kwargs(self):
