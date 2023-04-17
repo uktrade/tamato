@@ -20,7 +20,6 @@ from geo_areas.forms import GeoMembershipAction
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
-from quotas import business_rules as quotas_business_rules
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
@@ -142,19 +141,12 @@ class GeoAreaUpdateMixin(GeoAreaMixin, TrackedModelDetailMixin):
     form_class = GeographicalAreaEditForm
 
     validate_business_rules = (
-        business_rules.GA1,
-        business_rules.GA3,
-        business_rules.GA4,
         business_rules.GA5,
         business_rules.GA6,
         business_rules.GA7,
         business_rules.GA10,
         business_rules.GA11,
-        business_rules.GA21,
-        business_rules.GA22,
     )
-
-    validate_indirect_business_rules = (quotas_business_rules.ON6,)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
