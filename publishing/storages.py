@@ -22,11 +22,14 @@ class EnvelopeStorage(S3Boto3Storage):
     def generate_filename(self, filename: str) -> str:
         from django.conf import settings
 
-        filename = path.join(
-            settings.HMRC_ENVELOPE_STORAGE_DIRECTORY,
-            filename,
-        )
-        return super().generate_filename(filename)
+        # Suffix the filename with a time stamp so that envelopes are not
+        # overwritten on S3 instances with versioning disabled.
+        name, extension = path.splitext(filename)
+        date_time = timezone.now().isoformat()
+        filename = f"{name}__{date_time}{extension}"
+        filepath = path.join(settings.HMRC_ENVELOPE_STORAGE_DIRECTORY, filename)
+
+        return super().generate_filename(filepath)
 
     def get_object_parameters(self, name):
         self.object_parameters.update(
