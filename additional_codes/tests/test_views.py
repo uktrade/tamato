@@ -93,12 +93,27 @@ def test_additional_code_edit_views(
         use_edit_view(additional_code, data_changes)
 
 
-@pytest.mark.parametrize(
-    "factory",
-    (factories.AdditionalCodeFactory, factories.AdditionalCodeDescriptionFactory),
-)
-def test_additional_code_delete_form(factory, use_delete_form):
-    use_delete_form(factory())
+def test_additional_code_delete_form(use_delete_form):
+    use_delete_form(factories.AdditionalCodeFactory())
+
+
+def test_additional_code_description_delete_form(use_delete_form):
+    additional_code = factories.AdditionalCodeFactory()
+    (
+        description1,
+        description2,
+    ) = factories.AdditionalCodeDescriptionFactory.create_batch(
+        2,
+        described_additionalcode=additional_code,
+    )
+    use_delete_form(description1)
+    try:
+        use_delete_form(description2)
+    except ValidationError as e:
+        assert (
+            "This description cannot be deleted because at least one description record is mandatory."
+            in e.message
+        )
 
 
 @pytest.mark.parametrize(

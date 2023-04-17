@@ -1,5 +1,6 @@
 import pytest
 from bs4 import BeautifulSoup
+from django.core.exceptions import ValidationError
 from rest_framework.reverse import reverse
 
 from common.models.utils import override_current_transaction
@@ -21,12 +22,27 @@ from geo_areas.views import GeoAreaList
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.parametrize(
-    "factory",
-    (factories.GeographicalAreaFactory, factories.GeographicalAreaDescriptionFactory),
-)
-def test_geo_area_delete(factory, use_delete_form):
-    use_delete_form(factory())
+def test_geo_area_delete(use_delete_form):
+    use_delete_form(factories.GeographicalAreaFactory())
+
+
+def test_geo_area_description_delete_form(use_delete_form):
+    geo_area = factories.GeographicalAreaFactory()
+    (
+        description1,
+        description2,
+    ) = factories.GeographicalAreaDescriptionFactory.create_batch(
+        2,
+        described_geographicalarea=geo_area,
+    )
+    use_delete_form(description1)
+    try:
+        use_delete_form(description2)
+    except ValidationError as e:
+        assert (
+            "This description cannot be deleted because at least one description record is mandatory."
+            in e.message
+        )
 
 
 @pytest.mark.parametrize(
@@ -146,6 +162,7 @@ def test_geo_area_update_view_edit_end_date(
     session_workbasket,
     date_ranges,
 ):
+    """Tests that a geographical area's end date can be edited."""
     geo_area = factories.GeographicalAreaFactory.create(
         valid_between=date_ranges.normal,
     )

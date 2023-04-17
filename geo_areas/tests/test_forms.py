@@ -63,24 +63,40 @@ def test_geographical_area_end_date_form_valid_date(date_ranges):
         "end_date_1": date_ranges.later.upper.month,
         "end_date_2": date_ranges.later.upper.year,
     }
-    form = forms.GeographicalAreaEndDateForm(data=form_data, instance=geo_area)
-
-    assert form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalAreaEndDateForm(data=form_data, instance=geo_area)
+        assert form.is_valid()
 
 
 def test_geographical_area_end_date_form_invalid_date(date_ranges):
     geo_area = factories.GeographicalAreaFactory.create(
-        valid_between=date_ranges.normal,
+        valid_between=date_ranges.no_end,
+    )
+    order_origin_number = factories.QuotaOrderNumberOriginFactory.create(
+        geographical_area=geo_area,
+        valid_between=date_ranges.no_end,
     )
 
-    form_data = {
+    invalid_date_1 = {
         "end_date_0": "z",
         "end_date_1": "z",
         "end_date_2": "zzzz",
     }
-    form = forms.GeographicalAreaEndDateForm(data=form_data, instance=geo_area)
-
+    form = forms.GeographicalAreaEndDateForm(data=invalid_date_1, instance=geo_area)
     assert not form.is_valid()
+
+    invalid_date_2 = {
+        "end_date_0": date_ranges.later.upper.day,
+        "end_date_1": date_ranges.later.upper.month,
+        "end_date_2": date_ranges.later.upper.year,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalAreaEndDateForm(data=invalid_date_2, instance=geo_area)
+        assert not form.is_valid()
+        assert (
+            "The end date must span the validity period of the quota order number origin that specifies this geographical area."
+            in form.errors["end_date"]
+        )
 
 
 def test_geographical_membership_add_form_valid_data(date_ranges):

@@ -7,6 +7,7 @@ from common.models.trackedmodel import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from common.views import DescriptionDeleteMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -128,6 +129,7 @@ class GeoAreaDescriptionConfirmCreate(
 
 class GeoAreaDescriptionDelete(
     GeoAreaDescriptionMixin,
+    DescriptionDeleteMixin,
     TrackedModelDetailMixin,
     CreateTaricDeleteView,
 ):
@@ -139,16 +141,11 @@ class GeoAreaUpdateMixin(GeoAreaMixin, TrackedModelDetailMixin):
     form_class = GeographicalAreaEditForm
 
     validate_business_rules = (
-        business_rules.GA1,
-        business_rules.GA3,
-        business_rules.GA4,
         business_rules.GA5,
         business_rules.GA6,
         business_rules.GA7,
         business_rules.GA10,
         business_rules.GA11,
-        business_rules.GA21,
-        business_rules.GA22,
     )
 
     def get_form_kwargs(self):
