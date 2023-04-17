@@ -73,30 +73,33 @@ class MeasureSnapshot:
         transaction: Transaction,
     ) -> "MeasureSnapshot":
         """
-        Yield a MeasureSnapshot for each commodity tree that contains the goods
-        nomenclature on the measure.
+        Generator that yields a MeasureSnapshot for each commodity tree that
+        contains the goods nomenclature on the measure.
 
         It is possible for the commodity tree to change over the lifetime of the
         measure, so this method will yield a snapshot for each of the commodity
         trees that existed over that lifetime.
         """
 
-        loader = CommodityCollectionLoader(
+        collection = CommodityCollectionLoader(
             prefix=measure.goods_nomenclature.code.chapter,
-        )
-        collection = loader.load()
+        ).load()
 
         snapshot_date = measure.effective_valid_between.lower
+
         while True:
-            # Set SnapshotMoment.date to None since measure date ranges are used
-            # to filter the commodity code tree.
+            # Set SnapshotMoment.date to None on the SnapshotMoment instance
+            # since measure date ranges are used to filter the comm code tree.
             snapshot = MeasureSnapshot(
                 SnapshotMoment(transaction, None),
                 collection.get_snapshot(transaction, snapshot_date),
             )
+
             yield snapshot
 
-            if measure.effective_valid_between.upper_is_greater(snapshot.extent):
-                snapshot_date = snapshot.extent.upper + timedelta(days=1)
+            # See `CommodityTreeSnapshot.extent()` for a definition of extent.
+            snapshot_extent = snapshot.extent
+            if measure.effective_valid_between.upper_is_greater(snapshot_extent):
+                snapshot_date = snapshot_extent.upper + timedelta(days=1)
             else:
                 break
