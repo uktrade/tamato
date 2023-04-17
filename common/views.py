@@ -262,7 +262,6 @@ class BusinessRulesMixin:
     """Check business rules on form_submission."""
 
     validate_business_rules: Tuple[Type[BusinessRule], ...] = tuple()
-    validate_indirect_business_rules: Tuple[Type[BusinessRule], ...] = tuple()
 
     def form_violates(self, form) -> bool:
         """
