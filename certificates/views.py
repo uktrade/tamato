@@ -14,6 +14,7 @@ from certificates.serializers import CertificateTypeSerializer
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.validators import UpdateType
+from common.views import DescriptionDeleteMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -259,6 +260,7 @@ class CertificateDelete(
 
 class CertificateDescriptionDelete(
     CertificateDescriptionMixin,
+    DescriptionDeleteMixin,
     TrackedModelDetailMixin,
     CreateTaricDeleteView,
 ):
