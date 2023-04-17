@@ -63,9 +63,9 @@ def test_geographical_area_end_date_form_valid_date(date_ranges):
         "end_date_1": date_ranges.later.upper.month,
         "end_date_2": date_ranges.later.upper.year,
     }
-    form = forms.GeographicalAreaEndDateForm(data=form_data, instance=geo_area)
-
-    assert form.is_valid()
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalAreaEndDateForm(data=form_data, instance=geo_area)
+        assert form.is_valid()
 
 
 def test_geographical_area_end_date_form_invalid_date(date_ranges):
