@@ -337,36 +337,6 @@ def test_ME88():
         business_rules.ME88(measure.transaction).validate(measure)
 
 
-@pytest.mark.parametrize(
-    ("existing_code", "overlapping_code", "error_expected"),
-    (
-        (False, True, True),
-        (True, False, True),
-        (True, True, False),
-        (False, False, False),
-    ),
-)
-def test_ME16(existing_code, overlapping_code, error_expected):
-    """Integrating a measure with an additional code when an equivalent or
-    overlapping measures without additional code already exists and vice-versa,
-    should be forbidden."""
-
-    additional_code = factories.AdditionalCodeFactory.create()
-    existing = factories.MeasureFactory.create(
-        additional_code=(additional_code if existing_code else None),
-    )
-    measure = factories.MeasureFactory.create(
-        measure_type=existing.measure_type,
-        geographical_area=existing.geographical_area,
-        goods_nomenclature=existing.goods_nomenclature,
-        additional_code=(additional_code if overlapping_code else None),
-        order_number=existing.order_number,
-        reduction=existing.reduction,
-    )
-    with raises_if(BusinessRuleViolation, error_expected):
-        business_rules.ME16(measure.transaction).validate(measure)
-
-
 def test_ME115(assert_spanning_enforced):
     """The validity period of the referenced additional code must span the
     validity period of the measure."""

@@ -4,9 +4,11 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-three-quarters">
     {% set description_rows = [] %}
-    {% for description in object.get_descriptions() %}
+    {% set descriptions = object.get_descriptions() %}
+    {% set is_only_description = descriptions|length == 1 %}
+    {% for description in descriptions %}
       {% set edit_url = description.get_url("edit") %}
-      {% set delete_url = description.get_url("delete") %}
+      {% set delete_url = "" if is_only_description else description.get_url("delete") %}
       {% set description_row = [
         {"text": "{:%d %b %Y}".format(description.validity_start)},
         {"text": description.description},
