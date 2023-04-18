@@ -1,10 +1,9 @@
 {% set table_rows = [] %}
 
-{%- set object_status -%}
-    <span class="status-badge">Placeholder Status</a>
-  {%- endset -%}
-
 {% for object in object_list %}
+  {%- set object_status -%}
+    <span class="status-badge">{{object.status}}</a>
+  {%- endset -%}
   {{ table_rows.append([
     {"text": object.name},
     {"text": "{:%d %b %Y}".format(object.created_at)},
