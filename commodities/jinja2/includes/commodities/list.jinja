@@ -7,12 +7,16 @@
     {%- endset %}
     {{ table_rows.append([
         {"html": commodity_link},
+        {"text": commodity.suffix},
+        {"text": commodity.indents.all().last().indent},
         {"text": commodity.get_description().description},
     ]) or "" }}
 {% endfor %}
 {{ govukTable({
     "head": [
         {"text": "Commodity code"},
+        {"text": "Suffix"},
+        {"text": "Indent"},
         {"text": "Commodity description"},
 
     ],
