@@ -36,6 +36,7 @@
       {% set table_head = [
           {"text": "Workbasket ID"},
           {"text": "Time started"},
+          {"text": "Checks completed"},
           {"text": "Celery task ID"},
       ] %}
       {% set table_rows = [] %}
@@ -46,6 +47,7 @@
             {{ table_rows.append([
                 {"text": check.workbasket_id},
                 {"text": check.date_time_start},
+                {"text": check.checks_completed},
                 {"text": check.task_id},
             ]) or "" }}
           {% endfor %}
