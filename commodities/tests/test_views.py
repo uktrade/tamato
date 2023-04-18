@@ -68,9 +68,11 @@ def test_commodities_import_failure(file_name, error_msg, valid_user_client):
     assert error_msg in soup.select(".govuk-error-message")[0].text
 
 
-def test_commodity_list_displays_commodity_and_description(valid_user_client):
-    """Test that a list of commodity codes with links and their descriptions are
-    displayed on the list view template."""
+def test_commodity_list_displays_commodity_suffix_indent_and_description(
+    valid_user_client,
+):
+    """Test that a list of commodity codes with links and their suffixes,
+    indents and descriptions are displayed on the list view template."""
     commodity1 = GoodsNomenclatureDescriptionFactory.create(
         description="A commodity code description",
     ).described_goods_nomenclature
@@ -86,9 +88,14 @@ def test_commodity_list_displays_commodity_and_description(valid_user_client):
     )
     assert page.find("tbody").find("td", text=commodity1.item_id)
     assert page.find("tbody").find(href=f"/commodities/{commodity1.sid}/")
+    assert page.find("tbody").find("td", text=commodity1.suffix)
+    assert page.find("tbody").find("td", text=commodity1.indents.all().last().indent)
     assert page.find("tbody").find("td", text="A commodity code description")
+
     assert page.find("tbody").find("td", text=commodity2.item_id)
     assert page.find("tbody").find(href=f"/commodities/{commodity2.sid}/")
+    assert page.find("tbody").find("td", text=commodity2.suffix)
+    assert page.find("tbody").find("td", text=commodity2.indents.all().last().indent)
     assert page.find("tbody").find("td", text="A second commodity code description")
 
 
