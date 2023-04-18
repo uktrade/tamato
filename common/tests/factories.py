@@ -621,6 +621,8 @@ class GoodsNomenclatureFactory(SimpleGoodsNomenclatureFactory):
         factory_related_name="new_goods_nomenclature",
     )
 
+    version_group = factory.SubFactory(VersionGroupFactory)
+
 
 SimpleGoodsNomenclatureFactory.reset_sequence(1)
 
@@ -1006,6 +1008,14 @@ class MeasureActionFactory(TrackedModelMixin, ValidityFactoryMixin):
     # Code should only contain 3 digits, modulo 1000 is used to wrap it.
     code = factory.Sequence(lambda x: f"{wrap_numbers_over_max_digits(x + 1, 3):02d}")
     description = short_description()
+
+
+class MeasureActionPairFactory(factory.django.DjangoModelFactory):
+    """Factory that takes two Measure Actions positive_action &
+    negative_action."""
+
+    class Meta:
+        model = "measures.MeasureActionPair"
 
 
 class MeasureFactory(TrackedModelMixin, ValidityFactoryMixin):

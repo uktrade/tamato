@@ -198,6 +198,56 @@ def chunk() -> models.ImporterXMLChunk:
 
 
 @pytest.fixture
+def goods_description_only_update_xml_as_text():
+    src = os.path.join(
+        get_project_root(),
+        "importer/tests/test_files/goods_description_only_update.xml",
+    )
+    xml_text = open(src).read()
+    return xml_text
+
+
+@pytest.fixture
+def goods_description_with_period_create_xml_as_text():
+    src = os.path.join(
+        get_project_root(),
+        "importer/tests/test_files/goods_description_with_period_create_same_transaction.xml",
+    )
+    xml_text = open(src).read()
+    return xml_text
+
+
+@pytest.fixture
+def goods_description_with_period_create_period_first_xml_as_text():
+    src = os.path.join(
+        get_project_root(),
+        "importer/tests/test_files/goods_description_with_period_create_same_transaction_period_first.xml",
+    )
+    xml_text = open(src).read()
+    return xml_text
+
+
+@pytest.fixture
+def goods_description_only_create_xml_as_text():
+    src = os.path.join(
+        get_project_root(),
+        "importer/tests/test_files/goods_description_no_period_create.xml",
+    )
+    xml_text = open(src).read()
+    return xml_text
+
+
+@pytest.fixture
+def create_goods_xml_as_text():
+    src = os.path.join(
+        get_project_root(),
+        "importer/tests/test_files/goods.xml",
+    )
+    xml_text = open(src).read()
+    return xml_text
+
+
+@pytest.fixture
 def batch() -> models.ImportBatch:
     return factories.ImportBatchFactory.create()
 

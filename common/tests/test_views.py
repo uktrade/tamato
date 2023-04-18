@@ -20,7 +20,7 @@ def test_index_displays_workbasket_action_form(valid_user_client):
     page = BeautifulSoup(str(response.content), "html.parser")
     assert "Create new workbasket" in page.select("label")[0].text
     assert "Select an existing workbasket" in page.select("label")[1].text
-    assert "Order and package workbaskets" in page.select("label")[2].text
+    assert "Package Workbaskets" in page.select("label")[2].text
     assert "Process envelopes" in page.select("label")[3].text
     assert "Search the tariff" in page.select("label")[4].text
 
@@ -134,7 +134,7 @@ def test_index_displays_footer_links(valid_user_client):
     page = BeautifulSoup(str(response.content), "html.parser")
     a_tags = page.select("footer a")
 
-    assert len(a_tags) == 6
+    assert len(a_tags) == 7
     assert "Privacy policy" in a_tags[0].text
     assert (
         a_tags[0].attrs["href"]
@@ -173,3 +173,16 @@ def test_handler500(client):
 
     assert response.status_code == 500
     assert response.template_name == "common/500.jinja"
+
+
+def test_accessibility_statement_view_returns_200(valid_user_client):
+    url = reverse("accessibility-statement")
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert (
+        "Accessibility statement for the Tariff application platform"
+        in page.select("h1")[0].text
+    )

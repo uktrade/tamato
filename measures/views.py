@@ -39,11 +39,13 @@ from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
+from measures.models import MeasureActionPair
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
+from measures.util import diff_components
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
@@ -232,6 +234,7 @@ class MeasureEditWizard(
         (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
         (MeasureEditSteps.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
         (MeasureEditSteps.REGULATION, forms.MeasureRegulationForm),
+        (MeasureEditSteps.DUTIES, forms.MeasureDutiesForm),
     ]
 
     templates = {
@@ -255,6 +258,9 @@ class MeasureEditWizard(
             "title": "Edit the quota order number",
             "link_text": "Quota order number",
         },
+        MeasureEditSteps.DUTIES: {
+            "title": "Edit the duties",
+        },
     }
 
     def get_template_names(self):
@@ -277,6 +283,17 @@ class MeasureEditWizard(
         kwargs = {}
         if step not in [START, MeasureEditSteps.QUOTA_ORDER_NUMBER]:
             kwargs["selected_measures"] = self.get_queryset()
+
+        if step == MeasureEditSteps.DUTIES:
+            start_date = (
+                self.get_cleaned_data_for_step(MeasureEditSteps.START_DATE).get(
+                    "start_date",
+                )
+                if self.get_cleaned_data_for_step(MeasureEditSteps.START_DATE)
+                else None
+            )
+            kwargs["measures_start_date"] = start_date
+
         return kwargs
 
     def done(self, form_list, **kwargs):
@@ -299,8 +316,9 @@ class MeasureEditWizard(
             )
         new_quota_order_number = cleaned_data.get("order_number", None)
         new_generating_regulation = cleaned_data.get("generating_regulation", None)
+        new_duties = cleaned_data.get("duties", None)
         for measure in selected_measures:
-            measure.new_version(
+            new_measure = measure.new_version(
                 workbasket=workbasket,
                 update_type=UpdateType.UPDATE,
                 valid_between=TaricDateRange(
@@ -316,6 +334,23 @@ class MeasureEditWizard(
                 if new_generating_regulation
                 else measure.generating_regulation,
             )
+            if new_duties:
+                diff_components(
+                    instance=new_measure,
+                    duty_sentence=new_duties,
+                    start_date=new_measure.valid_between.lower,
+                    workbasket=workbasket,
+                    transaction=workbasket.current_transaction,
+                )
+            footnote_associations = FootnoteAssociationMeasure.objects.current().filter(
+                footnoted_measure=measure,
+            )
+            for fa in footnote_associations:
+                fa.new_version(
+                    workbasket=workbasket,
+                    update_type=UpdateType.UPDATE,
+                    footnoted_measure=new_measure,
+                )
             self.session_store.clear()
 
         return redirect(reverse("workbaskets:review-workbasket"))
@@ -407,6 +442,9 @@ class MeasureCreateWizard(
         CONDITIONS: {
             "title": "Add any condition codes (optional)",
             "link_text": "Conditions",
+            "info": """Add conditions and resulting actions to your measure(s). If a condition group is not met, the opposite action will be applied. 
+            The opposite action is created automatically.
+            """,
         },
         FOOTNOTES: {
             "title": "Add any footnotes (optional)",
@@ -422,13 +460,86 @@ class MeasureCreateWizard(
         },
     }
 
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    def create_measure_conditions(
+        self,
+        data,
+        measure: Measure,
+        measure_creation_pattern: MeasureCreationPattern,
+        parser: DutySentenceParser,
+    ):
+        """
+        Create's measure conditions, components, and their corresponding negative actions
+        Args:
+            data: object with the form wizards data
+            measure: Current created measure
+            measure_creation_pattern: MeasureCreationPattern
+            parser: DutySentenceParser
+        Returns:
+            None
+        """
+        # component number not tied to position in formset as negative conditions are auto generated
+        component_sequence_number = 1
+        for index, condition_data in enumerate(
+            data.get("formset-conditions", []),
+        ):
+            if not condition_data.get("DELETE"):
+                # creates a list of tuples with condition and action code
+                # this will be used to create the corresponding negative action
+                measure_creation_pattern.create_condition_and_components(
+                    condition_data,
+                    component_sequence_number,
+                    measure,
+                    parser,
+                    self.workbasket,
+                )
+
+                # set next code unless last item set None
+                next_condition_code = (
+                    data["formset-conditions"][index + 1]["condition_code"]
+                    if (index + 1 < len(data["formset-conditions"]))
+                    else None
+                )
+                # corresponding negative action to the postive one. None if the action code has no pair
+                action_pair = MeasureActionPair.objects.filter(
+                    positive_action__code=condition_data.get("action").code,
+                ).first()
+                # if the next condition code is different create the negative action for the current condition
+                # only create a negative action if the action has a negative pair
+                if (
+                    action_pair
+                    and data["formset-conditions"][index]["condition_code"]
+                    != next_condition_code
+                ):
+                    component_sequence_number += 1
+                    measure_creation_pattern.create_condition_and_components(
+                        {
+                            "condition_code": condition_data.get("condition_code"),
+                            "duty_amount": None,
+                            "required_certificate": None,
+                            # corresponding negative action to the postive one.
+                            "action": action_pair.negative_action,
+                            "DELETE": False,
+                        },
+                        component_sequence_number,
+                        measure,
+                        parser,
+                        self.workbasket,
+                    )
+
+            # deletes also increment or well did when using the enumerated index
+            component_sequence_number += 1
+
     @atomic
     def create_measures(self, data):
         """Returns a list of the created measures."""
         measure_start_date = data["valid_between"].lower
-        workbasket = WorkBasket.current(self.request)
+
         measure_creation_pattern = MeasureCreationPattern(
-            workbasket=workbasket,
+            workbasket=self.workbasket,
             base_date=measure_start_date,
             defaults={
                 "generating_regulation": data["generating_regulation"],
@@ -463,23 +574,18 @@ class MeasureCreateWizard(
         created_measures = []
 
         for measure_data in measures_data:
+            # creates measure in DB
             measure = measure_creation_pattern.create(**measure_data)
             parser = DutySentenceParser.get(
                 measure.valid_between.lower,
                 component_output=MeasureConditionComponent,
             )
-            for component_sequence_number, condition_data in enumerate(
-                data.get("formset-conditions", []),
-                start=1,
-            ):
-                if not condition_data.get("DELETE"):
-                    measure_creation_pattern.create_condition_and_components(
-                        condition_data,
-                        component_sequence_number,
-                        measure,
-                        parser,
-                        workbasket,
-                    )
+            self.create_measure_conditions(
+                data,
+                measure,
+                measure_creation_pattern,
+                parser,
+            )
 
             created_measures.append(measure)
 

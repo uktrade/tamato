@@ -1,4 +1,5 @@
 """Common views."""
+import os
 import time
 from datetime import datetime
 from typing import Optional
@@ -163,6 +164,11 @@ class AppInfoView(
             data["celery_healthy"] = True
         except kombu.exceptions.OperationalError as oe:
             data["celery_healthy"] = False
+
+        if self.request.user.is_superuser:
+            data["GIT_BRANCH"] = os.getenv("GIT_BRANCH", "Unavailable")
+            data["GIT_COMMIT"] = os.getenv("GIT_COMMIT", "Unavailable")
+            data["UPDATED_TIME"] = datetime.fromtimestamp(os.path.getmtime(__file__))
 
         return data
 
@@ -329,6 +335,21 @@ class TrackedModelChangeView(
         return FormMixin.form_valid(self, form)
 
 
+class DescriptionDeleteMixin:
+    """Prevents the only description of the described object from being
+    deleted."""
+
+    def form_valid(self, form):
+        described_object = self.object.get_described_object()
+        if described_object.get_descriptions().count() == 1:
+            form.add_error(
+                None,
+                "This description cannot be deleted because at least one description record is mandatory.",
+            )
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
+
 class SortingMixin:
     """
     Can be used to sort a queryset in a view using GET params. Checks the GET
@@ -377,3 +398,7 @@ def handler403(request, *args, **kwargs):
 
 def handler500(request, *args, **kwargs):
     return TemplateResponse(request=request, template="common/500.jinja", status=500)
+
+
+class AccessibilityStatementView(TemplateView):
+    template_name = "common/accessibility.jinja"

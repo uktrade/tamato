@@ -34,7 +34,6 @@ from common.views import WithPaginationListView
 from exporter.models import Upload
 from measures.filters import MeasureFilter
 from measures.models import Measure
-from measures.pagination import MeasurePaginator
 from workbaskets import forms
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
@@ -52,7 +51,7 @@ class WorkBasketFilter(TamatoFilter):
         "reason",
         "title",
     )
-    clear_url = reverse_lazy("workbaskets:workbasket-ui-list")
+    clear_url = reverse_lazy("workbaskets:workbasket-ui-list-all")
 
     class Meta:
         model = WorkBasket
@@ -243,7 +242,6 @@ class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
 
     template_name = "workbaskets/review-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
-    paginator_class = MeasurePaginator
     filterset_class = MeasureFilter
 
 
@@ -437,11 +435,12 @@ class WorkBasketList(PermissionRequiredMixin, WithPaginationListView):
         return WorkBasket.objects.order_by("-updated_at")
 
 
-class WorkBasketChanges(DetailView):
+class WorkBasketChanges(PermissionRequiredMixin, DetailView):
     """UI endpoint for viewing a specified workbasket."""
 
     model = WorkBasket
     template_name = "workbaskets/detail.jinja"
+    permission_required = "workbaskets.change_workbasket"
     paginate_by = 50
 
     def get_context_data(self, **kwargs):

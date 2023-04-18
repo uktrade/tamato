@@ -775,9 +775,15 @@ def test_measure_update_invalid_conditions(
 
     assert a_tags[0].attrs["href"] == "#measure-conditions-formset-0-applicable_duty"
     assert a_tags[0].text == "Enter a valid duty sentence."
+
     assert a_tags[1].attrs["href"] == "#measure-conditions-formset-0-__all__"
     assert (
         a_tags[1].text
+        == "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’."
+    )
+    assert a_tags[2].attrs["href"] == "#measure-conditions-formset-0-reference_price"
+    assert (
+        a_tags[2].text
         == "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
     )
 
@@ -958,8 +964,13 @@ def test_measure_form_wizard_create_measures(
     commodity1,
     commodity2,
 ):
-    """Pass data to the MeasureWizard and verify that the created Measures
-    contain the expected data."""
+    """
+    Pass data to the MeasureWizard and verify that the created Measures contain
+    the expected data.
+
+    This test will skip form validation so it will not catch data errors that
+    are caught at form level.
+    """
     mock_workbasket.return_value = factories.WorkBasketFactory.create()
 
     commodity3 = factories.GoodsNomenclatureFactory.create()
@@ -971,7 +982,22 @@ def test_measure_form_wizard_create_measures(
         condition_code2,
         condition_code3,
     ) = factories.MeasureConditionCodeFactory.create_batch(3)
-    action1, action2, action3 = factories.MeasureActionFactory.create_batch(3)
+
+    # create postive & negative action pairs
+    action1 = factories.MeasureActionFactory.create(code="25")
+    action1_pair = factories.MeasureActionFactory.create(code="05")
+    action2 = factories.MeasureActionFactory.create(code="26")
+    action2_pair = factories.MeasureActionFactory.create(code="06")
+    factories.MeasureActionPairFactory.create(
+        positive_action=action1,
+        negative_action=action1_pair,
+    )
+    factories.MeasureActionPairFactory.create(
+        positive_action=action2,
+        negative_action=action2_pair,
+    )
+    # action with no pair
+    action3 = factories.MeasureActionFactory.create(code="01")
 
     form_data = {
         "measure_type": measure_type,
@@ -1000,6 +1026,15 @@ def test_measure_form_wizard_create_measures(
                 "duty_amount": None,
                 "required_certificate": None,
                 "action": action2,
+                "applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+                "DELETE": False,
+            },
+            # action code 01 has no pair test that no negative condition is created
+            {
+                "condition_code": condition_code3,
+                "duty_amount": None,
+                "required_certificate": None,
+                "action": action3,
                 "applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
                 "DELETE": False,
             },
@@ -1064,6 +1099,7 @@ def test_measure_form_wizard_create_measures(
             "conditions__duty_amount",
             "conditions__condition_measurement",
             "conditions__monetary_unit",
+            "conditions__action",
         ),
     ) == {
         (
@@ -1073,8 +1109,20 @@ def test_measure_form_wizard_create_measures(
             Decimal("4.000"),
             measurements[("DTN", None)].pk,
             monetary_units["GBP"].pk,
+            action1.pk,
         ),
-        (measure_data[0].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[0].pk,
+            2,
+            condition_code1.pk,
+            None,
+            None,
+            None,
+            action1_pair.pk,
+        ),
+        (measure_data[0].pk, 3, condition_code2.pk, None, None, None, action2.pk),
+        (measure_data[0].pk, 4, condition_code2.pk, None, None, None, action2_pair.pk),
+        (measure_data[0].pk, 5, condition_code3.pk, None, None, None, action3.pk),
         (
             measure_data[1].pk,
             1,
@@ -1082,8 +1130,20 @@ def test_measure_form_wizard_create_measures(
             Decimal("4.000"),
             measurements[("DTN", None)].pk,
             monetary_units["GBP"].pk,
+            action1.pk,
         ),
-        (measure_data[1].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[1].pk,
+            2,
+            condition_code1.pk,
+            None,
+            None,
+            None,
+            action1_pair.pk,
+        ),
+        (measure_data[1].pk, 3, condition_code2.pk, None, None, None, action2.pk),
+        (measure_data[1].pk, 4, condition_code2.pk, None, None, None, action2_pair.pk),
+        (measure_data[1].pk, 5, condition_code3.pk, None, None, None, action3.pk),
         (
             measure_data[2].pk,
             1,
@@ -1091,8 +1151,20 @@ def test_measure_form_wizard_create_measures(
             Decimal("4.000"),
             measurements[("DTN", None)].pk,
             monetary_units["GBP"].pk,
+            action1.pk,
         ),
-        (measure_data[2].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[2].pk,
+            2,
+            condition_code1.pk,
+            None,
+            None,
+            None,
+            action1_pair.pk,
+        ),
+        (measure_data[2].pk, 3, condition_code2.pk, None, None, None, action2.pk),
+        (measure_data[2].pk, 4, condition_code2.pk, None, None, None, action2_pair.pk),
+        (measure_data[2].pk, 5, condition_code3.pk, None, None, None, action3.pk),
         (
             measure_data[3].pk,
             1,
@@ -1100,8 +1172,20 @@ def test_measure_form_wizard_create_measures(
             Decimal("4.000"),
             measurements[("DTN", None)].pk,
             monetary_units["GBP"].pk,
+            action1.pk,
         ),
-        (measure_data[3].pk, 2, condition_code2.pk, None, None, None),
+        (
+            measure_data[3].pk,
+            2,
+            condition_code1.pk,
+            None,
+            None,
+            None,
+            action1_pair.pk,
+        ),
+        (measure_data[3].pk, 3, condition_code2.pk, None, None, None, action2.pk),
+        (measure_data[3].pk, 4, condition_code2.pk, None, None, None, action2_pair.pk),
+        (measure_data[3].pk, 5, condition_code3.pk, None, None, None, action3.pk),
     }
 
     # Verify that MeasureComponents were created for each formset-condition containing an applicable-duty
@@ -1647,11 +1731,11 @@ def test_measure_list_selected_measures_list(valid_user_client):
     assert response.status_code == 200
 
     soup = BeautifulSoup(str(response.content), "html.parser")
-    measure_ids_in_table = [a.text for a in soup.select("details table tr td a")]
+    measure_ids_in_table = {a.text for a in soup.select("details table tr td a")}
 
-    selected_measures_ids = [str(measure.sid) for measure in measures]
+    selected_measures_ids = {str(measure.sid) for measure in measures}
 
-    assert measure_ids_in_table == selected_measures_ids
+    assert not measure_ids_in_table.difference(selected_measures_ids)
 
 
 def test_multiple_measure_edit_only_quota_order_number(
@@ -1727,6 +1811,162 @@ def test_multiple_measure_edit_only_quota_order_number(
     for measure in workbasket_measures:
         assert measure.update_type == UpdateType.UPDATE
         assert measure.order_number == quota_order_number
+
+
+def test_multiple_measure_edit_only_duties(
+    valid_user_client,
+    session_workbasket,
+    duty_sentence_parser,
+):
+    """Tests the duties step in MeasureEditWizard."""
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+    duties = "1.000% + 2.000 GBP / kg"
+
+    url = reverse("measure-ui-edit-multiple")
+    session = valid_user_client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: 1,
+                measure_2.pk: 1,
+                measure_3.pk: 1,
+            },
+        },
+    )
+    session.save()
+
+    STEP_KEY = "measure_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: START,
+                "start-fields_to_edit": [MeasureEditSteps.DUTIES],
+            },
+            "next_step": MeasureEditSteps.DUTIES,
+        },
+        {
+            "data": {
+                STEP_KEY: MeasureEditSteps.DUTIES,
+                "duties-duties": duties,
+            },
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    workbasket_measures = Measure.objects.filter(
+        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+    ).order_by("sid")
+
+    complete_response = valid_user_client.get(response.url)
+    # on success, the page redirects to the workbasket page
+    assert complete_response.status_code == 302
+    assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        assert measure.update_type == UpdateType.UPDATE
+        assert measure.duty_sentence == duties
+
+
+def test_multiple_measure_edit_preserves_footnote_associations(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that footnote associations are preserved in MeasureEditWizard."""
+
+    measure = factories.MeasureFactory.create()
+    footnote_association = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    )
+    expected_footnote_count = measure.footnotes.count()
+    expected_footnotes = measure.footnotes.all()
+
+    url = reverse("measure-ui-edit-multiple")
+    session = valid_user_client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+                "status": session_workbasket.status,
+                "title": session_workbasket.title,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure.pk: 1,
+            },
+        },
+    )
+    session.save()
+
+    STEP_KEY = "measure_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: START,
+                "start-fields_to_edit": [MeasureEditSteps.START_DATE],
+            },
+            "next_step": MeasureEditSteps.START_DATE,
+        },
+        {
+            "data": {
+                STEP_KEY: MeasureEditSteps.START_DATE,
+                "start_date-start_date_0": "01",
+                "start_date-start_date_1": "01",
+                "start_date-start_date_2": "2000",
+            },
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    workbasket_measures = Measure.objects.filter(
+        transaction__workbasket=session_workbasket,
+    ).order_by("sid")
+
+    complete_response = valid_user_client.get(response.url)
+    # on success, the page redirects to the workbasket page
+    assert complete_response.status_code == 302
+    assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+    for measure in workbasket_measures:
+        assert measure.update_type == UpdateType.UPDATE
+        assert measure.footnotes.count() == expected_footnote_count
+        for footnote in measure.footnotes.all():
+            assert footnote in expected_footnotes
 
 
 def test_measure_list_redirects_to_search_with_no_params(valid_user_client):

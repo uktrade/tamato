@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import logging
+import re
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import Iterable
 from typing import List
 from typing import Set
@@ -19,6 +21,69 @@ from importer.utils import LinksType
 from importer.utils import generate_key
 
 logger = logging.getLogger(__name__)
+
+
+class ImportIssueReportItem:
+    """
+    Class for in memory representation if an issue detected on import, the
+    status may change during the process so this will not be committed until the
+    import process is complete or has been found to have errors.
+
+    params:
+        object_type: str,
+            String representation of the object type, as found in XML e.g. goods.nomenclature
+        related_object_type: str,
+            String representation of the related object type, as found in XML e.g. goods.nomenclature.description
+        related_object_identity_keys: dict,
+            Dictionary of identity names and values used to link the related object
+        related_cache_key: str,
+            The string expected to be used to cache the related object
+        description: str,
+            Description of the detected issue
+    """
+
+    def __init__(
+        self,
+        object_type: str,
+        related_object_type: str,
+        related_object_identity_keys: Iterable[str],
+        related_cache_key: str,
+        description: str,
+    ):
+        self.object_type = object_type
+        self.related_object_type = related_object_type
+        self.related_object_identity_keys = related_object_identity_keys
+        self.related_cache_key = related_cache_key
+        self.description = description
+
+    def missing_object_method_name(self):
+        """Returns a string representing the related object data type (but
+        replaces full stops with underscores for readability."""
+        return re.sub("\\.", "_", self.related_object_type)
+
+
+@dataclass
+class DependencyMappingData:
+    """
+    Data class for temporarily storing dependency data while checking and
+    reporting issues. It is used to populate the issue report if issues are
+    detected.
+
+    params:
+        key: string, required.
+            The string used to identify the expected cached key for the dependency
+        tag: string, required.
+            the string of the tag that is used in TARIC3 to represent the object type of the dependency
+        identifying_fields: dict, required.
+            A dictionary of the identity fields and values defined for the current object
+        data: dict, required.
+            A dictionary if all associated data for the current object
+    """
+
+    key: str
+    tag: str
+    identifying_fields: Iterable[str]
+    data: dict
 
 
 class MismatchedSerializerError(Exception):
@@ -226,6 +291,9 @@ class BaseHandler(metaclass=BaseHandlerMeta):
     links: Iterable[LinksType] = None
     serializer_class: Type[ModelSerializer] = None
     tag: str = None
+    dependency_key_mapping: List[DependencyMappingData] = list()
+    import_issues: List[ImportIssueReportItem] = list()
+    dependency_keys: List[str] = list()
 
     def __init__(
         self,
@@ -268,13 +336,25 @@ class BaseHandler(metaclass=BaseHandlerMeta):
                     f"serializer_class {dependency.serializer_class.__name__}. "
                     f"{self.__class__.__name__} has serializer_class {self.serializer_class.__name__}.",
                 )
-            depends_on.add(
-                generate_key(
-                    tag=dependency.tag,
-                    identifying_fields=self.identifying_fields,
-                    data=self.data,
+
+            key = generate_key(
+                tag=dependency.tag,
+                identifying_fields=self.identifying_fields,
+                data=self.data,
+            )
+
+            # using this to allow the correct mapping to be used later when reporting back to user
+            self.dependency_key_mapping.append(
+                DependencyMappingData(
+                    key,
+                    dependency.tag,
+                    self.identifying_fields,
+                    self.data,
                 ),
             )
+
+            depends_on.add(key)
+
         return depends_on
 
     def resolve_dependencies(self) -> bool:
@@ -303,6 +383,24 @@ class BaseHandler(metaclass=BaseHandlerMeta):
             resolved_dependencies.add(key)
             dependencies.update(set(dependency.dependency_keys) - resolved_dependencies)
         return True
+
+    def _get_missing_dependencies(self) -> list:
+        """
+        Returns a list of dependencies that are not in the cache.
+
+        returns:
+            list(str).
+                A list of dependency keys expected / required for the current object but are not in cache.
+        """
+        dependencies = self.dependency_keys.copy()
+
+        missing_dependency_keys = []
+        while dependencies:
+            key = dependencies.pop()
+            dependency = self.nursery.get_handler_from_cache(key)
+            if not dependency:
+                missing_dependency_keys.append(key)
+        return missing_dependency_keys
 
     def get_generic_link(self, model, kwargs):
         """
@@ -443,6 +541,60 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         self.dispatch()
         self.dependency_keys.add(self.key)
         return self.dependency_keys
+
+    def get_import_issues(self):
+        """
+        Iterates through missing dependencies and returns a list of missing
+        dependencies as a list of ImportIssueReportItems objects.
+
+        This is later used for handling known issues with missing dependencies
+        GoodsNomenclatureDescriptionOPeriod for example.
+        """
+        if not self.resolve_dependencies():
+            # generic error - can do better to resolve later
+
+            dep_missing_details = ""
+
+            for key in self._get_missing_dependencies():
+                missing_dependency_data = self._get_dependency_key_data(key)
+
+                dep_missing_details += f" type: {missing_dependency_data.tag}, "
+
+                for index, field in enumerate(
+                    missing_dependency_data.identifying_fields,
+                ):
+                    dep_missing_details += (
+                        f"{field}:{missing_dependency_data.data[field]} "
+                    )
+
+                dep_missing_details += "."
+
+                self.import_issues.append(
+                    ImportIssueReportItem(
+                        self.tag,
+                        missing_dependency_data.tag,
+                        missing_dependency_data.identifying_fields,
+                        key,
+                        dep_missing_details,
+                    ),
+                )
+
+        return self.import_issues
+
+    def _get_dependency_key_data(self, key: str):
+        """
+        Returns the matching DependencyMappingData object based on the provided
+        key.
+
+        params:
+            key, str.
+                key used to identify / store the object in cache
+        """
+        for dep in self.dependency_key_mapping:
+            if dep.key == key:
+                return dep
+
+        return None
 
     def dispatch(self) -> TrackedModel:
         """

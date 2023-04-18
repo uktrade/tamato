@@ -9,6 +9,7 @@ from django import forms
 from django.db.models import Max
 
 from additional_codes import models
+from additional_codes.validators import additional_code_validator
 from common.forms import CreateDescriptionForm
 from common.forms import DescriptionForm
 from common.forms import DescriptionHelpBox
@@ -100,6 +101,7 @@ class AdditionalCodeCreateBaseForm(ValidityPeriodForm):
             "Must be 3 numeric characters and form a unique combination with "
             "the additional code type"
         ),
+        validators=[additional_code_validator],
     )
 
     def __init__(self, *args, **kwargs):

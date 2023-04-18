@@ -28,6 +28,7 @@ from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.util import validity_range_contains_range
+from common.validators import SymbolValidator
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -37,6 +38,7 @@ from measures.constants import MeasureEditSteps
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
+from measures.validators import validate_conditions_formset
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -265,6 +267,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         label="",
         queryset=models.MeasureConditionCode.objects.latest_approved(),
         empty_label="-- Please select a condition code --",
+        error_messages={"required": "A condition code is required."},
     )
     # This field used to be called duty_amount, but forms.ModelForm expects a decimal value when it sees that duty_amount is a DecimalField on the MeasureCondition model.
     # reference_price expects a non-compound duty string (e.g. "11 GBP / 100 kg".
@@ -272,6 +275,9 @@ class MeasureConditionsFormMixin(forms.ModelForm):
     reference_price = forms.CharField(
         label="Reference price or quantity",
         required=False,
+        validators=[
+            SymbolValidator,
+        ],
     )
     required_certificate = AutoCompleteField(
         label="Certificate, licence or document",
@@ -280,12 +286,22 @@ class MeasureConditionsFormMixin(forms.ModelForm):
     )
     action = forms.ModelChoiceField(
         label="Action code",
-        queryset=models.MeasureAction.objects.latest_approved(),
+        # Filters out 'negative' actions in a positive/negative pair, doesn't filter out action that have no pair
+        queryset=models.MeasureAction.objects.latest_approved()
+        .filter(
+            negative_measure_action__isnull=True,
+        )
+        .select_related("negative_measure_action")
+        .order_by("code"),
         empty_label="-- Please select an action code --",
+        error_messages={"required": "An action code is required."},
     )
     applicable_duty = forms.CharField(
         label="Duty",
         required=False,
+        validators=[
+            SymbolValidator,
+        ],
     )
     condition_sid = forms.CharField(required=False, widget=forms.HiddenInput())
 
@@ -298,28 +314,38 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         self.helper.layout = Layout(
             Fieldset(
                 Div(
-                    Field(
-                        "condition_code",
-                        template="components/measure_condition_code/template.jinja",
+                    Div(
+                        Div(
+                            Field(
+                                "condition_code",
+                                template="components/measure_condition_code/template.jinja",
+                            ),
+                            "condition_sid",
+                        ),
+                        Div(
+                            Div(
+                                Field("reference_price", css_class="govuk-input"),
+                                "required_certificate",
+                                css_class="govuk-form-group",
+                            ),
+                            css_class="govuk-radios__conditional",
+                        ),
                     ),
-                    "condition_sid",
-                ),
-                Div(
-                    Field("reference_price", css_class="govuk-input"),
-                    "required_certificate",
-                    css_class="govuk-radios__conditional",
-                ),
-                Field(
-                    "action",
-                    template="components/measure_condition_action_code/template.jinja",
-                ),
-                Div(
-                    MeasureConditionComponentDuty("applicable_duty"),
+                    Div(
+                        Field(
+                            "action",
+                            template="components/measure_condition_action_code/template.jinja",
+                        ),
+                        Div(
+                            MeasureConditionComponentDuty("applicable_duty"),
+                        ),
+                    ),
+                    style="display: grid; grid-template-columns: 80% 80%; grid-gap: 5%",
                 ),
                 Field("DELETE", template="includes/common/formset-delete-button.jinja")
                 if not self.prefix.endswith("__prefix__")
                 else None,
-                legend="Condition code",
+                legend="Condition",
                 legend_size=Size.SMALL,
                 data_field="condition_code",
             ),
@@ -338,16 +364,38 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         component.
         """
         price = cleaned_data.get("reference_price")
+        certificate = cleaned_data.get("required_certificate")
 
+        # Price or certificate must be present but no both
+        if (not price and not certificate) or (price and certificate):
+            self.add_error(
+                None,
+                ValidationError(
+                    "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’.",
+                ),
+            )
+
+        price_errored = False
         if price and measure_start_date is not None:
-            validate_duties(price, measure_start_date)
+            try:
+                validate_duties(price, measure_start_date)
+            except ValidationError:
+                # invalid price's will not parse
+                price_errored = True
+                self.add_error(
+                    "reference_price",
+                    "Enter a valid reference price or quantity.",
+                )
 
-        if price:
+        if price and not price_errored:
             parser = DutySentenceParser.get(measure_start_date)
             components = parser.parse(price)
             if len(components) > 1:
-                raise ValidationError(
-                    "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+                self.add_error(
+                    "reference_price",
+                    ValidationError(
+                        "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+                    ),
                 )
             cleaned_data["duty_amount"] = components[0].duty_amount
             cleaned_data["monetary_unit"] = components[0].monetary_unit
@@ -382,7 +430,10 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
         applicable_duty = self.cleaned_data["applicable_duty"]
 
         if applicable_duty and self.get_start_date(self.data) is not None:
-            validate_duties(applicable_duty, self.get_start_date(self.data))
+            try:
+                validate_duties(applicable_duty, self.get_start_date(self.data))
+            except ValidationError as e:
+                self.add_error("applicable_duty", e)
 
         return applicable_duty
 
@@ -404,7 +455,29 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
         return self.conditions_clean(cleaned_data, measure_start_date)
 
 
-class MeasureConditionsFormSet(FormSet):
+class MeasureConditionsBaseFormSet(FormSet):
+    def clean(self):
+        """
+        We get the cleaned_data from the forms in the formset if any of the
+        forms are not valid the form set checks are skipped until they are
+        valid.
+
+        Validates formset using validate_conditions_formset which will raise a
+        ValidationError if the formset contains errors.
+        """
+
+        # cleaned_data is only set if forms are all valid
+        if any(self.errors):
+            # Don't bother validating the formset unless each form is valid on its own
+            return
+        cleaned_data = super().cleaned_data
+
+        validate_conditions_formset(cleaned_data)
+
+        return cleaned_data
+
+
+class MeasureConditionsFormSet(MeasureConditionsBaseFormSet):
     prefix = "measure-conditions-formset"
     form = MeasureConditionsForm
 
@@ -426,8 +499,10 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         applicable_duty = self.cleaned_data["applicable_duty"]
 
         if applicable_duty and self.measure_start_date is not None:
-            validate_duties(applicable_duty, self.measure_start_date)
-
+            try:
+                validate_duties(applicable_duty, self.measure_start_date)
+            except ValidationError as e:
+                self.add_error("applicable_duty", e)
         return applicable_duty
 
     def clean(self):
@@ -445,7 +520,7 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         return self.conditions_clean(cleaned_data, self.measure_start_date)
 
 
-class MeasureConditionsWizardStepFormSet(FormSet):
+class MeasureConditionsWizardStepFormSet(MeasureConditionsBaseFormSet):
     form = MeasureConditionsWizardStepForm
 
 
@@ -1041,6 +1116,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
     duties = forms.CharField(
         label="Duties",
         required=False,
+        validators=[SymbolValidator],
     )
 
     def __init__(self, *args, **kwargs):
@@ -1081,7 +1157,10 @@ class MeasureCommodityAndDutiesForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         duties = cleaned_data.get("duties", "")
-        validate_duties(duties, self.measure_start_date)
+        try:
+            validate_duties(duties, self.measure_start_date)
+        except ValidationError as e:
+            self.add_error("duties", e)
 
         return cleaned_data
 
@@ -1335,3 +1414,47 @@ class MeasureRegulationForm(forms.Form):
                 data_prevent_double_click="true",
             ),
         )
+
+
+class MeasureDutiesForm(forms.Form):
+    duties = forms.CharField(
+        label="Duties",
+        help_text="Enter the duty that applies to the measures.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.selected_measures = kwargs.pop("selected_measures", None)
+        self.measures_start_date = kwargs.pop("measures_start_date", None)
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "duties",
+                HTML.details(
+                    "Help with duties",
+                    "This is expressed as a percentage (for example, 4%), "
+                    "a specific duty (for example, 33 GBP/100kg) "
+                    "or a compound duty (for example, 3.5% + 11 GBP / 100 kg).",
+                ),
+            ),
+            Submit(
+                "submit",
+                "Save measure duties",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        duties = cleaned_data.get("duties", "")
+        if self.measures_start_date:
+            validate_duties(duties, self.measures_start_date)
+        else:
+            for measure in self.selected_measures:
+                validate_duties(duties, measure.valid_between.lower)
+
+        return cleaned_data

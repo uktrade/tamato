@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from datetime import timedelta
 
 from django.db import transaction
@@ -136,6 +137,40 @@ class BaseGoodsNomenclatureDescriptionHandler(BaseHandler):
 class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandler):
     serializer_class = serializers.GoodsNomenclatureDescriptionSerializer
     tag = parsers.GoodsNomenclatureDescriptionParser.tag.name
+
+    def create_missing_goods_nomenclature_description_period(
+        self,
+        goods_nomenclature_description_handler,
+    ):
+        """
+        in some circumstances, we will receive an EU update that will reference
+        a historic description period, and since TAP does not track SIDs
+        currently for this data we cant resolve the reference.
+
+        This allows the
+        import to proceed by providing an invented dispatch object that can be
+        processed alongside the update.
+        returns a data object that replaces the missing dependency with the validity_start date set to today.
+        TODO : implement correct period handling to correctly resolve this crude workaround
+        """
+        data = dict()
+        # Setting to today's date is not perfect, and could cause issues in circumstances where the end date of the
+        # goods nomenclature is before today, however if that's the case it does not really matter.
+        # an additional possibility is that there already exists a description with this date, which will cause a rule
+        # violation, also unlikely but possible.
+
+        # Ultimately this is a crude temporary measure that will be superseded by a correct implementation splitting
+        # out description periods into a new table
+        data["validity_start"] = date.today()
+
+        # Update the goods nomenclature description with the start date
+        goods_nomenclature_description_handler.data.update(data)
+
+        # goods nomenclature descriptions only have 1 dependency, and that's on period, so we are safe to make this an
+        # empty set since we are populating the validity_start date
+        goods_nomenclature_description_handler.dependency_keys = set()
+
+        return
 
 
 @GoodsNomenclatureDescriptionHandler.register_dependant

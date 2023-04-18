@@ -196,6 +196,8 @@ class MeasureCreationPattern:
         measure: Measure,
         conditions: str,
     ) -> Iterator[MeasureCondition]:
+        # To create negative actions in the correct order store conditions sentence
+        # in a list so conditions can be traverse within loop
         for index, (condition, component) in enumerate(
             self.condition_sentence_parser.parse(conditions),
             start=1,

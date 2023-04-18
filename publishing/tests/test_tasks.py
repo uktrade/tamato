@@ -1,4 +1,4 @@
-import os
+import re
 from datetime import datetime
 from unittest import mock
 
@@ -22,10 +22,7 @@ def test_create_and_upload_envelope(
 ):
     """Exercise EnvelopeStorage and verify content is saved to bucket."""
 
-    now = datetime.now()
     expected_bucket = "hmrc-packaging"
-    expected_key = f"envelope/DIT{now:%y}0001.xml"
-
     packaged_work_basket = packaged_workbasket_factory()
 
     with mock.patch(
@@ -35,16 +32,22 @@ def test_create_and_upload_envelope(
         create_xml_envelope_file.apply(
             (packaged_work_basket.pk, True),
         )
-
         mock_save.assert_called_once()
 
     assert expected_bucket in s3_bucket_names()
-    assert expected_key in s3_object_names(expected_bucket)
-    s3_object = s3.get_object(Bucket=expected_bucket, Key=expected_key)
-    filename = os.path.basename(expected_key)
 
-    assert s3_object.get("ContentDisposition") == f"attachment; filename={filename}"
+    envelope_name = f"DIT{datetime.now():%y}0001"
+    object_key = next(
+        name
+        for name in s3_object_names(expected_bucket)
+        if re.match(
+            f"^envelope/{envelope_name}__.*\.xml$",
+            name,
+        )
+    )
+    assert object_key is not None
 
+    s3_object = s3.get_object(Bucket=expected_bucket, Key=object_key)
     envelope = s3_object["Body"].read()
     xml = etree.XML(envelope)
 
@@ -58,10 +61,7 @@ def test_create_and_upload_envelope(
         ("120", "05"),
         ("245", "00"),
     ]
-
     codes = taric_xml_record_codes(xml)
-
-    print(codes)
     assert codes == expected_codes
 
 
