@@ -8,7 +8,7 @@
     {{ table_rows.append([
         {"html": commodity_link},
         {"text": commodity.suffix},
-        {"text": commodity.indents.filter(validity_start__lte=today).last().indent},
+        {"text": commodity.get_indent_as_at(today).indent},
         {"text": commodity.get_description().description},
     ]) or "" }}
 {% endfor %}

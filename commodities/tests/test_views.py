@@ -92,9 +92,7 @@ def test_commodity_list_displays_commodity_suffix_indent_and_description(
     assert page.find("tbody").find("td", text=commodity1.suffix)
     assert page.find("tbody").find(
         "td",
-        text=commodity1.indents.filter(validity_start__lte=datetime.date.today())
-        .last()
-        .indent,
+        text=commodity1.get_indent_as_at(datetime.date.today()).indent,
     )
     assert page.find("tbody").find("td", text="A commodity code description")
 
@@ -103,9 +101,7 @@ def test_commodity_list_displays_commodity_suffix_indent_and_description(
     assert page.find("tbody").find("td", text=commodity2.suffix)
     assert page.find("tbody").find(
         "td",
-        text=commodity2.indents.filter(validity_start__lte=datetime.date.today())
-        .last()
-        .indent,
+        text=commodity2.get_indent_as_at(datetime.date.today()).indent,
     )
     assert page.find("tbody").find("td", text="A second commodity code description")
 
