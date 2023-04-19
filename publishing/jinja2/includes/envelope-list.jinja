@@ -2,6 +2,7 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 
+
 {%- set table_rows = [] -%}
 {% for envelope in object_list %}
 
@@ -14,10 +15,10 @@
   {%- endset -%}
 
   {%- set envelope_file_history_link -%}
-    {{ envelope.get_xml_file_versions()|length }}
+    {{ envelope.get_versions()|length }}
     (<a
       class="govuk-link"
-      href="{{ url('publishing:envelope-file-history-ui-detail', kwargs={'pk': envelope.pk}) }}"
+      href="{{ url('publishing:envelope-file-history-ui-detail', kwargs={'envelope_id': envelope.envelope_id}) }}"
     >view all</a>)
   {%- endset -%}
 

@@ -1,6 +1,5 @@
 import logging
 
-import boto3
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
@@ -12,7 +11,6 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic import DetailView
 from django.views.generic import ListView
-from django.views.generic import View
 from django.views.generic.detail import BaseDetailView
 from django_fsm import TransitionNotAllowed
 
@@ -471,24 +469,33 @@ class EnvelopeListView(
     ]
 
     def get_queryset(self):
-        return Envelope.objects.all_latest().reverse()
+        return Envelope.objects.successfully_processed().reverse()
 
 
 class EnvelopeFileHistoryView(
     # PermissionRequiredMixin,
-    DetailView,
+    WithPaginationListMixin,
+    ListView,
 ):
-    """UI view used to view the XML file history of an envelope."""
+    """UI view used to list the XML file history of a published envelope and its
+    previously rejected envelopes (if any)."""
 
     # permission_required = "publishing.manage_packaging_queue"
     template_name = "publishing/envelope_file_history.jinja"
 
+    def get_published_envelope(self):
+        """Get the published envelope instance for the envelope ID (as given by
+        the `envelope_id` captured parameter)."""
+        return Envelope.objects.successfully_processed().get(
+            envelope_id=self.kwargs["envelope_id"],
+        )
+
     def get_queryset(self):
-        return Envelope.objects.all_latest()
+        return self.get_published_envelope().get_versions()
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
-        data["xml_file_versions"] = self.get_object().get_xml_file_versions()
+        data["xml_file_name"] = self.get_published_envelope().xml_file_name
         return data
 
 
@@ -506,41 +513,3 @@ class DownloadEnvelopeView(
 
     def get(self, request, *args, **kwargs):
         return self.download_response(self.get_object())
-
-
-class DownloadEnvelopeVersionView(
-    # PermissionRequiredMixin,
-    View,
-):
-    """UI view to download a specific version (identified by its AWS S3 object
-    id) of an envelope."""
-
-    # permission_required = "publishing.manage_packaging_queue"
-
-    def get(self, request, envelope_id, version_id):
-        """Returns a Respond object with associated payload containing the
-        contents of `envelope.xml_file`."""
-
-        envelope = Envelope.objects.get(pk=envelope_id)
-        s3 = boto3.resource(
-            "s3",
-            aws_access_key_id=settings.S3_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY,
-            endpoint_url=settings.S3_ENDPOINT_URL,
-        )
-        key = str(envelope.xml_file)
-        object_version = s3.ObjectVersion(
-            settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
-            key,
-            version_id,
-        ).get()
-
-        file_content = object_version["Body"].read()
-        file_name = envelope.xml_file_name
-
-        response = HttpResponse(file_content)
-        response["content-type"] = "text/xml"
-        response["content-length"] = len(file_content)
-        response["content-disposition"] = f'attachment; filename="{file_name}"'
-
-        return response

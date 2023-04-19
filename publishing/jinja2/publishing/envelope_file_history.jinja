@@ -3,7 +3,7 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 
-{% set page_title = "Envelope " ~ object.xml_file_name ~ " history"%}
+{% set page_title = "Envelope history for " ~ xml_file_name %}
 
 
 {% block breadcrumb %}
@@ -25,25 +25,28 @@
 
 {% block content %}
 
-{%- macro envelope_version_link(envelope_id, version_id) -%}
+{%- macro version_download_link(envelope_pk) -%}
   <a
     class="govuk-link"
-    href="{{ url('publishing:download-envelope-version-ui-download', kwargs={'envelope_id': envelope_id, 'version_id': version_id}) }}"
+    href="{{ url('publishing:download-envelope-ui-download', kwargs={'pk': envelope_pk}) }}"
     target="_blank"
-  >download</a>
+  >Download</a>
 {%- endmacro -%}
 
 {%- set table_rows = [] -%}
-{% for version in envelope.get_xml_file_versions() %}
-  {%- set file_size = 0 %}
-  {% if version.size %}
-    {%- set file_size = version.size|filesizeformat(true) %}
+{% for version in object_list %}
+  {%- set size = "Unknown" %}
+  {%- set date = "{:%d %b %Y, %H:%M}".format(version.created_at) %}
+  {%- set link = "Unavailable" %}
+  {% if version.xml_file_exists() %}
+    {%- set size = version.xml_file.size|filesizeformat(true) %}
+    {%- set link = version_download_link(version.pk) %}
   {% endif %}
 
   {{ table_rows.append([
-      {"text": file_size},
-      {"text": "{:%d %b %Y, %H:%M}".format(version.last_modified)},
-      {"html": envelope_version_link(envelope.id, version.id)},
+      {"text": size},
+      {"text": date},
+      {"html": link},
   ]) or "" }}
 {% endfor %}
 
@@ -51,8 +54,6 @@
 
 <div class="govuk-grid-row govuk-!-margin-bottom-6">
   <div class="govuk-grid-column-full">
-
-    <h2 class="govuk-heading-l">File version history</h2>
 
     {{ govukTable({
       "head": [
