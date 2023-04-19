@@ -27,7 +27,7 @@
 
 {%- set table_rows = [] -%}
 {%- for envelope in object_list %}
-  {%- set size = "Unknown" %}
+  {%- set size = "Unavailable" %}
   {%- set status = envelope.processing_state_description %}
 
   {%- set workbasket_link %}
@@ -37,7 +37,7 @@
         href="{{ url('workbaskets:workbasket-ui-changes', kwargs={'pk': envelope.packagedworkbaskets.last().workbasket.id}) }}"
       >{{ envelope.packagedworkbaskets.last().workbasket.id }}</a>
     {%- else %}
-      Unknown
+      Unavailable
     {%- endif %}
   {%- endset %}
 
