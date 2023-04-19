@@ -79,7 +79,7 @@ ui_patterns = [
         name="envelope-history-ui-detail",
     ),
     path(
-        "download-envelope-file/<pk>/",
+        "download-envelope/<pk>/",
         views.DownloadEnvelopeView.as_view(),
         name="download-envelope-ui-download",
     ),
