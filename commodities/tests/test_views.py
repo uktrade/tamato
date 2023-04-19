@@ -1,3 +1,4 @@
+import datetime
 import json
 from os import path
 from unittest.mock import patch
@@ -89,13 +90,23 @@ def test_commodity_list_displays_commodity_suffix_indent_and_description(
     assert page.find("tbody").find("td", text=commodity1.item_id)
     assert page.find("tbody").find(href=f"/commodities/{commodity1.sid}/")
     assert page.find("tbody").find("td", text=commodity1.suffix)
-    assert page.find("tbody").find("td", text=commodity1.indents.all().last().indent)
+    assert page.find("tbody").find(
+        "td",
+        text=commodity1.indents.filter(validity_start__lte=datetime.date.today())
+        .last()
+        .indent,
+    )
     assert page.find("tbody").find("td", text="A commodity code description")
 
     assert page.find("tbody").find("td", text=commodity2.item_id)
     assert page.find("tbody").find(href=f"/commodities/{commodity2.sid}/")
     assert page.find("tbody").find("td", text=commodity2.suffix)
-    assert page.find("tbody").find("td", text=commodity2.indents.all().last().indent)
+    assert page.find("tbody").find(
+        "td",
+        text=commodity2.indents.filter(validity_start__lte=datetime.date.today())
+        .last()
+        .indent,
+    )
     assert page.find("tbody").find("td", text="A second commodity code description")
 
 
