@@ -44,7 +44,7 @@
   {%- set date = "{:%d\xa0%b\xa0%Y, %H:%M}".format(envelope.created_at) %}
   {%- set download_link = "Unavailable" %}
 
-  {%- if envelope.xml_file_exists() %}
+  {%- if envelope.xml_file_exists %}
     {%- set size = envelope.xml_file.size|filesizeformat(true) %}
     {%- set download_link %}
       <a

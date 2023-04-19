@@ -283,6 +283,7 @@ class Envelope(TimestampedMixin):
         )
         return envelope_qs
 
+    @property
     def xml_file_exists(self) -> bool:
         """Returns True if an S3 object exists for this instance's `xml_file`
         attribute, False otherwise."""

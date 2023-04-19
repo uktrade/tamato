@@ -7,11 +7,15 @@
 {% for envelope in object_list %}
 
   {%- set published_envelope_download_link -%}
-    <a
-      class="govuk-link download-envelope"
-      href="{{ url('publishing:download-envelope-ui-download', kwargs={'pk': envelope.pk}) }}"
-      target="_blank"
-    >{{ envelope.envelope_id }}</a>
+    {% if envelope.xml_file_exists %}
+      <a
+        class="govuk-link download-envelope"
+        href="{{ url('publishing:download-envelope-ui-download', kwargs={'pk': envelope.pk}) }}"
+        target="_blank"
+      >{{ envelope.envelope_id }}</a>
+    {% else %}
+      {{ envelope.envelope_id }}
+    {% endif %}
   {%- endset -%}
 
   {%- set envelope_file_history_link -%}
