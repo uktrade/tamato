@@ -301,6 +301,10 @@ class Envelope(TimestampedMixin):
     def xml_file_name(self):
         return f"DIT{str(self.envelope_id)}.xml"
 
+    @property
+    def processing_state_description(self) -> str:
+        return self.packagedworkbaskets.last().get_processing_state_display()
+
     @atomic
     def upload_envelope(
         self,
