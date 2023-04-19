@@ -116,6 +116,16 @@ class EnvelopeQuerySet(QuerySet):
             "envelope_id",
         )
 
+    def processed(self):
+        return self.filter(
+            Q(
+                packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+            )
+            | Q(
+                packagedworkbaskets__processing_state=ProcessingState.FAILED_PROCESSING,
+            ),
+        )
+
     def unprocessed(self):
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.AWAITING_PROCESSING,
@@ -261,15 +271,21 @@ class Envelope(TimestampedMixin):
         self.xml_file.delete()
         self.deleted = True
 
-    def get_xml_file_versions(self, include_deleted=False):
-        """
-        Return a list of boto3.resources.factory.s3.ObjectVersion instances,
-        each representing a version of the S3 object that stores the instance's
-        XML envelope file, `xml_file`.
+    def get_versions(self) -> EnvelopeQuerySet:
+        """Return a queryset of all processed Envelopes (all those that have
+        been accepted or rejected) that have the same envelope ID as this
+        envelope instance."""
+        envelope_qs = (
+            Envelope.objects.filter(envelope_id=self.envelope_id)
+            .non_deleted()
+            .processed()
+            .order_by("-pk")
+        )
+        return envelope_qs
 
-        If `include_deleted` is True, then versions that have delete markers
-        (i.e. have been deleted) will be included in the returned list.
-        """
+    def xml_file_exists(self) -> bool:
+        """Returns True if an S3 object exists for this instance's `xml_file`
+        attribute, False otherwise."""
         s3 = boto3.resource(
             "s3",
             aws_access_key_id=settings.S3_ACCESS_KEY_ID,
@@ -278,16 +294,8 @@ class Envelope(TimestampedMixin):
             region_name=settings.S3_REGION_NAME,
         )
         bucket = s3.Bucket(settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME)
-        versions = bucket.object_versions.filter(Prefix=f"{self.xml_file}")
-
-        if include_deleted:
-            return list(versions)
-        else:
-            non_deleted_versions = []
-            for version in versions:
-                if not is_delete_marker(version):
-                    non_deleted_versions.append(version)
-            return non_deleted_versions
+        objs = bucket.objects.filter(Prefix=self.xml_file.name, MaxKeys=1)
+        return len(list(objs)) > 0
 
     @property
     def xml_file_name(self):
