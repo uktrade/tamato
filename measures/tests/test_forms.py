@@ -55,24 +55,28 @@ def test_measure_form_invalid_conditions_data(
     action1 = factories.MeasureActionFactory.create()
 
     prefix = "measure-conditions-formset"
-    measure_form_data[f"{prefix}-TOTAL_FORMS"] = 1
-    measure_form_data[f"{prefix}-INITIAL_FORMS"] = 0
-    measure_form_data[f"{prefix}-MIN_NUM_FORMS"] = 0
-    measure_form_data[f"{prefix}-MAX_NUM_FORMS"] = 1000
-    measure_form_data[f"{prefix}-0-applicable_duty"] = "invalid"
-    measure_form_data[f"{prefix}-0-condition_code"] = condition_code1.pk
-    measure_form_data[f"{prefix}-0-reference_price"] = "2%"
-    measure_form_data[f"{prefix}-0-action"] = action1.pk
+    data = {
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2023,
+        f"{prefix}-__prefix__-applicable_duty": "invalid",
+        f"{prefix}-__prefix__-condition_code": condition_code1.pk,
+        f"{prefix}-__prefix__-reference_price": "2%",
+        f"{prefix}-__prefix__-action": action1.pk,
+        "submit": "submit",
+    }
+    form_data = {**data, **measure_form_data}
+    measure = Measure.objects.first()
+    with override_current_transaction(measure.transaction):
+        measure_form = MeasureForm(
+            data=form_data,
+            initial=form_data,
+            instance=measure,
+            request=session_with_workbasket,
+        )
 
-    measure_form = MeasureForm(
-        data=measure_form_data,
-        initial={},
-        instance=Measure.objects.first(),
-        request=session_with_workbasket,
-    )
-
-    assert not measure_form.is_valid()
-    # formset errors messages are test in view tests
+        assert not measure_form.is_valid()
+        # formset errors messages are test in view tests
 
 
 def test_measure_forms_details_valid_data(measure_type):
@@ -130,7 +134,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial=data,
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert form.is_valid()
@@ -140,15 +144,26 @@ def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
 def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions(erga_omnes):
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_area2 = factories.GeographicalAreaFactory.create()
+    formset_prefix = "erga_omnes_exclusions_formset"
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": geo_area2.pk,
+        "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": "",
+        "submit": "submit",
     }
+    initial = [
+        {
+            "erga_omnes_exclusion": geo_area1.pk,
+        },
+        {
+            "erga_omnes_exclusion": geo_area2.pk,
+        },
+    ]
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial={**data, formset_prefix: initial},
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert form.is_valid()
@@ -163,11 +178,17 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_delete(erga_omn
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-0-DELETE": "1",
+        "submit": "submit",
     }
+    initial = [
+        {
+            "erga_omnes_exclusion": geo_area1.pk,
+        },
+    ]
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial={**data, "erga_omnes_exclusions_formset": initial},
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert not form.is_valid()
@@ -180,11 +201,17 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions(erga_omnes):
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
+        "submit": "submit",
     }
+    initial = [
+        {
+            "geo_group_exclusion": geo_area1.pk,
+        },
+    ]
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial={**data, "geo_group_exclusions_formset": initial},
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert form.is_valid()
@@ -201,11 +228,17 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions_delete(erga_omne
         "geographical_area_group-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
         "geo_group_exclusions_formset-0-DELETE": "1",
+        "submit": "submit",
     }
+    initial = [
+        {
+            "geo_group_exclusion": geo_area1.pk,
+        },
+    ]
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial={**data, "geo_group_exclusions_formset": initial},
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert not form.is_valid()
@@ -216,14 +249,15 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_add(erga_omnes)
     FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
-        "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
+        "geo_area": forms.GeoAreaType.ERGA_OMNES,
+        "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-ADD": "1",
+        "submit": "submit",
     }
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial={**data, "erga_omnes_exclusions_formset": []},
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert not form.is_valid()
@@ -234,11 +268,12 @@ def test_measure_forms_geo_area_valid_data_geo_group(erga_omnes):
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": geo_group.pk,
+        "submit": "submit",
     }
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial=data,
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert form.is_valid()
@@ -246,18 +281,23 @@ def test_measure_forms_geo_area_valid_data_geo_group(erga_omnes):
         assert form.cleaned_data["geo_area_list"] == [geo_group]
 
 
-def test_measure_forms_geo_area_valid_data_countries(erga_omnes):
+def test_measure_forms_geo_area_valid_data_countries_submit(erga_omnes):
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_area2 = factories.GeographicalAreaFactory.create()
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
+        "submit": "submit",
     }
+    initial = [
+        {"geographical_area_country_or_region": geo_area1.pk},
+        {"geographical_area_country_or_region": geo_area2.pk},
+    ]
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial={**data, "country_region_formset": initial},
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert form.is_valid()
@@ -275,10 +315,14 @@ def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
         "country_region_formset-1-DELETE": "on",
     }
+    initial = [
+        {"geographical_area_country_or_region": geo_area1.pk},
+        {"geographical_area_country_or_region": geo_area2.pk},
+    ]
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial={**data, "country_region_formset": initial},
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert not form.is_valid()
@@ -292,11 +336,12 @@ def test_measure_forms_geo_area_valid_data_countries_add(erga_omnes):
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-ADD": "1",
+        "submit": "submit",
     }
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial=data,
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert not form.is_valid()
@@ -308,11 +353,12 @@ def test_measure_forms_geo_area_invalid_data_geo_group_missing_field(erga_omnes)
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         "geographical_area-geographical_area_group": None,
+        "submit": "submit",
     }
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial=data,
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert not form.is_valid()
@@ -326,11 +372,12 @@ def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes
     data = {
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         "geographical_area-geographical_area_group": geo_area1.pk,
+        "submit": "submit",
     }
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial=data,
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert not form.is_valid()
@@ -347,6 +394,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes
             {
                 f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
                 "country_region_formset-0-geographical_area_country_or_region": "",
+                "submit": "submit",
             },
             "Please submit at least 1 form.",
         ),
@@ -354,6 +402,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes
             {
                 f"{GEO_AREA_FORM_PREFIX}-geo_area": "",
                 "country_region_formset-0-geographical_area_country_or_region": "",
+                "submit": "submit",
             },
             "A Geographical area must be selected",
         ),
@@ -363,7 +412,10 @@ def test_measure_forms_geo_area_invalid_data_error_messages(data, error, erga_om
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
             data,
-            initial={},
+            initial={
+                **data,
+                "country_region_formset": [],
+            },
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert not form.is_valid()
@@ -935,12 +987,13 @@ def test_measure_form_cleaned_data_geo_exclusions_group(
         "geographical_area_group-geographical_area_group": group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": excluded_country1.pk,
         "geo_group_exclusions_formset-1-geo_group_exclusion": excluded_country2.pk,
+        "submit": "submit",
     }
     data.update(exclusions_data)
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureForm(
             data=data,
-            initial={},
+            initial=data,
             instance=Measure.objects.first(),
             request=session_with_workbasket,
         )
@@ -969,12 +1022,13 @@ def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
         "geo_area": "ERGA_OMNES",
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": excluded_country1.pk,
         "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": excluded_country2.pk,
+        "submit": "submit",
     }
     data.update(exclusions_data)
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureForm(
             data=data,
-            initial={},
+            initial=data,
             instance=Measure.objects.first(),
             request=session_with_workbasket,
         )
@@ -1042,7 +1096,7 @@ def test_measure_forms_footnotes_valid():
     assert form.cleaned_data["footnote"] == footnote
 
 
-def test_measure_forms_footnotes_invalid():
+def test_measure_forms_footnotes_invalid_footnote_choice():
     data = {
         "footnote": "foo",
     }
@@ -1052,12 +1106,22 @@ def test_measure_forms_footnotes_invalid():
     ]
     assert not form.is_valid()
 
+
+def test_measure_forms_footnotes_invalid_duplicate_footnote():
     footnote = factories.FootnoteFactory.create()
     data = {
         "form-0-footnote": footnote.pk,
         "form-1-footnote": footnote.pk,
     }
-    formset = forms.MeasureFootnotesFormSet(data)
+    initial = [
+        {
+            "footnote": footnote.pk,
+        },
+        {
+            "footnote": footnote.pk,
+        },
+    ]
+    formset = forms.MeasureFootnotesFormSet(data, initial=initial)
     assert not formset.is_valid()
     assert (
         "The same footnote cannot be added more than once" in formset.non_form_errors()

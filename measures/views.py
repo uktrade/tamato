@@ -709,18 +709,23 @@ class MeasureUpdate(
             f"formset_initial_{self.kwargs.get('sid')}",
             [],
         )
-        formset = forms.MeasureUpdateFootnotesFormSet()
-        formset.initial = initial
-        formset.form_kwargs = {"path": self.request.path}
-        context["formset"] = formset
+        footnotes_formset = forms.MeasureUpdateFootnotesFormSet()
+        footnotes_formset.initial = initial
+        footnotes_formset.form_kwargs = {"path": self.request.path}
+        context["footnotes_formset"] = footnotes_formset
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
         context["footnotes"] = self.get_footnotes(context["measure"])
 
         if self.request.POST:
-            conditions_formset = forms.MeasureConditionsFormSet(self.request.POST)
+            conditions_formset = forms.MeasureConditionsFormSet(
+                self.request.POST,
+                prefix="measure-conditions-formset",
+            )
         else:
-            conditions_formset = forms.MeasureConditionsFormSet()
+            conditions_formset = forms.MeasureConditionsFormSet(
+                prefix="measure-conditions-formset",
+            )
         conditions = self.get_conditions(context["measure"])
         form_fields = conditions_formset.form.Meta.fields
         conditions_formset.initial = []

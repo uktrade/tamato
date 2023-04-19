@@ -816,6 +816,7 @@ def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
             "start_date_2": start_date.year,
             "geo_area": "ERGA_OMNES",
             "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": geo_group.pk,
+            "submit": "submit",
         },
     )
 
@@ -899,6 +900,7 @@ def test_measure_form_wizard_finish(
                 "measure_create_wizard-current_step": "geographical_area",
                 "geographical_area-geo_area": "ERGA_OMNES",
                 "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": "",
+                "submit": "submit",
             },
             "next_step": "commodities",
         },
@@ -1275,8 +1277,14 @@ def test_measure_form_creates_exclusions(
     )
     exclusions_data = {
         "geo_area": "ERGA_OMNES",
+        "erga_omnes_exclusions_formset-TOTAL_FORMS": "2",
+        "erga_omnes_exclusions_formset-INITIAL_FORMS": "2",
+        "erga_omnes_exclusions_formset-MIN_NUM_FORMS": "0",
+        "erga_omnes_exclusions_formset-MAX_NUM_FORMS": "100",
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": excluded_country1.pk,
         "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": excluded_country2.pk,
+        "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": "",
+        "submit": "submit",
     }
     data.update(exclusions_data)
     client.force_login(valid_user)

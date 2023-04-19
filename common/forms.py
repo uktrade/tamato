@@ -46,7 +46,23 @@ class BindNestedFormMixin:
                     nested_forms = []
 
                     for form_class in form_list:
-                        bound_form = form_class(*args, **kwargs)
+                        if issubclass(form_class, FormSet):
+                            formset_kwargs = kwargs.copy()
+                            if "initial" in formset_kwargs:
+                                formset_kwargs.pop("initial")
+                            formset_initial = None
+                            if kwargs.get("initial"):
+                                formset_initial = kwargs.get("initial").get(
+                                    form_class.prefix,
+                                )
+
+                            bound_form = form_class(
+                                *args,
+                                **formset_kwargs,
+                                initial=formset_initial,
+                            )
+                        else:
+                            bound_form = form_class(*args, **kwargs)
                         nested_forms.append(bound_form)
                     all_forms[choice] = nested_forms
                 field.bind_nested_forms(all_forms)
@@ -479,6 +495,7 @@ class FormSet(forms.BaseFormSet):
         initial=None,
         error_class=ErrorList,
         form_kwargs=None,
+        error_messages=None,
     ):
         # Not calling super().__init__() here because it overwrites any custom prefix we try to
         # pass to the formset and its subforms with the default value from the above 'prefix' kwarg
@@ -492,6 +509,13 @@ class FormSet(forms.BaseFormSet):
         self.error_class = error_class
         self._errors = None
         self._non_form_errors = None
+
+        messages = {}
+        for cls in reversed(type(self).__mro__):
+            messages.update(getattr(cls, "default_error_messages", {}))
+        if error_messages is not None:
+            messages.update(error_messages)
+        self.error_messages = messages
 
         # If we have form data, then capture the any user "add form" or
         # "delete form" actions.
@@ -552,8 +576,12 @@ class FormSet(forms.BaseFormSet):
                 # reinsert into data, with updated numbering
                 data[f"{self.prefix}-{i}-{field}"] = value
 
-        self.initial = list(formset_initial.values())
-        num_initial = len(self.initial)
+        self.initial = initial
+
+        if initial:
+            num_initial = len(initial)
+        else:
+            num_initial = 0
 
         if num_initial < 1:
             data[f"{self.prefix}-ADD"] = "1"
@@ -563,13 +591,20 @@ class FormSet(forms.BaseFormSet):
         data[f"{self.prefix}-TOTAL_FORMS"] = num_initial
         self.data = data
 
+    @property
+    def formset_add_delete(self):
+        """Re-present the form to show the result of adding another form or
+        deleting an existing one."""
+        if self.formset_action == "ADD" or self.formset_action == "DELETE":
+            return True
+        return False
+
     def is_valid(self):
         """Invalidates the formset if "Add another" or "Delete" are submitted,
         to redisplay the formset with an extra empty form or the selected form
         removed."""
-        # Re-present the form to show the result of adding another form or
-        # deleting an existing one.
-        if self.formset_action == "ADD" or self.formset_action == "DELETE":
+
+        if self.formset_add_delete:
             return False
 
         # An empty set of forms is valid.
@@ -626,3 +661,65 @@ def formset_factory(
         "renderer": renderer or get_default_renderer(),
     }
     return type(form.__name__ + "FormSet", (formset,), attrs)
+
+
+def unprefix_formset_data(prefix, data):
+    """Takes form data and filters out everything but the formset data for a
+    given formset prefix."""
+    output = []
+    formset_data = {}
+
+    # management form data is not needed
+    management_form_fields = [
+        "INITIAL_FORMS",
+        "MAX_NUM_FORMS",
+        "MIN_NUM_FORMS",
+        "TOTAL_FORMS",
+        "ADD",
+        "DELETE",
+    ]
+
+    for field in management_form_fields:
+        if f"{prefix}-{field}" in data.keys():
+            del data[f"{prefix}-{field}"]
+
+    for k, v in data.items():
+        if prefix in k:
+            formset_data[k] = v
+
+    if not formset_data:
+        return []
+
+    num_items = len(formset_data.items())
+
+    for i in range(0, num_items):
+        subform_initial = {}
+        for k, v in formset_data.items():
+            if v:
+                if k.startswith(f"{prefix}-{i}-"):
+                    subform_initial[k.split(f"{prefix}-{i}-")[1]] = v
+        if subform_initial:
+            output.append(subform_initial)
+
+    for k, v in formset_data.items():
+        subform_initial = {}
+        if v:
+            if k.startswith(f"{prefix}-__prefix__-"):
+                subform_initial[k.split(f"{prefix}-__prefix__-")[1]] = v
+    if subform_initial:
+        output.append(subform_initial)
+
+    return output
+
+
+def formset_add_or_delete(prefixes, data):
+    """Find any {prefix}-ADD or {prefix}-DELETE in submitted data and return the
+    result as a boolean."""
+    formset_data = {}
+    for k, v in data.items():
+        for prefix in prefixes:
+            if k in [f"{prefix}-ADD", f"{prefix}-DELETE"]:
+                formset_data[k] = v
+    if len(formset_data) > 0:
+        return True
+    return False
