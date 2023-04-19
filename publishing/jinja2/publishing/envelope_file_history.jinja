@@ -25,30 +25,44 @@
 
 {% block content %}
 
-{%- macro version_download_link(envelope_pk) -%}
-  <a
-    class="govuk-link"
-    href="{{ url('publishing:download-envelope-ui-download', kwargs={'pk': envelope_pk}) }}"
-    target="_blank"
-  >Download</a>
-{%- endmacro -%}
-
 {%- set table_rows = [] -%}
-{% for version in object_list %}
+{%- for envelope in object_list %}
   {%- set size = "Unknown" %}
-  {%- set date = "{:%d %b %Y, %H:%M}".format(version.created_at) %}
-  {%- set link = "Unavailable" %}
-  {% if version.xml_file_exists() %}
-    {%- set size = version.xml_file.size|filesizeformat(true) %}
-    {%- set link = version_download_link(version.pk) %}
-  {% endif %}
+  {%- set status = envelope.processing_state_description %}
+
+  {%- set workbasket_link %}
+    {%- if envelope.packagedworkbaskets.all() and envelope.packagedworkbaskets.last().workbasket %}
+      <a
+        class="govuk-link"
+        href="{{ url('workbaskets:workbasket-ui-changes', kwargs={'pk': envelope.packagedworkbaskets.last().workbasket.id}) }}"
+      >{{ envelope.packagedworkbaskets.last().workbasket.id }}</a>
+    {%- else %}
+      Unknown
+    {%- endif %}
+  {%- endset %}
+
+  {%- set date = "{:%d\xa0%b\xa0%Y, %H:%M}".format(envelope.created_at) %}
+  {%- set download_link = "Unavailable" %}
+
+  {%- if envelope.xml_file_exists() %}
+    {%- set size = envelope.xml_file.size|filesizeformat(true) %}
+    {%- set download_link %}
+      <a
+        class="govuk-link"
+        href="{{ url('publishing:download-envelope-ui-download', kwargs={'pk': envelope.pk}) }}"
+        target="_blank"
+      >Download</a>
+    {% endset %}
+  {%- endif %}
 
   {{ table_rows.append([
       {"text": size},
+      {"text": status},
+      {"text": workbasket_link},
       {"text": date},
-      {"html": link},
+      {"html": download_link},
   ]) or "" }}
-{% endfor %}
+{%- endfor %}
 
 <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
@@ -58,7 +72,9 @@
     {{ govukTable({
       "head": [
         {"text": "File size"},
-        {"text": "Created"},
+        {"text": "Status"},
+        {"text": "Workbasket"},
+        {"text": "Date & time"},
         {"text": "Action"},
       ],
       "rows": table_rows
