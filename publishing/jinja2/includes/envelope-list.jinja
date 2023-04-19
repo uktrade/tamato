@@ -18,7 +18,7 @@
     {{ envelope.get_versions()|length }}
     (<a
       class="govuk-link"
-      href="{{ url('publishing:envelope-file-history-ui-detail', kwargs={'envelope_id': envelope.envelope_id}) }}"
+      href="{{ url('publishing:envelope-history-ui-detail', kwargs={'envelope_id': envelope.envelope_id}) }}"
     >view</a>)
   {%- endset -%}
 
