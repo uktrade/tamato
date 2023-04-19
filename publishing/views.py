@@ -454,13 +454,13 @@ class EnvelopeListFilter(TamatoFilter):
 
 
 class EnvelopeListView(
-    # PermissionRequiredMixin,
+    PermissionRequiredMixin,
     WithPaginationListView,
 ):
     """UI view used to view processed (accepted / published and rejected)
     envelopes."""
 
-    # permission_required = "publishing.consume_from_packaging_queue"
+    permission_required = "publishing.can_view_envelope"
     template_name = "publishing/envelope_list.jinja"
     filterset_class = EnvelopeListFilter
     search_fields = [
@@ -473,14 +473,14 @@ class EnvelopeListView(
 
 
 class EnvelopeFileHistoryView(
-    # PermissionRequiredMixin,
+    PermissionRequiredMixin,
     WithPaginationListMixin,
     ListView,
 ):
     """UI view used to list the XML file history of a published envelope and its
     previously rejected envelopes (if any)."""
 
-    # permission_required = "publishing.manage_packaging_queue"
+    permission_required = "publishing.can_view_envelope"
     template_name = "publishing/envelope_file_history.jinja"
 
     def get_published_envelope(self):
@@ -501,12 +501,12 @@ class EnvelopeFileHistoryView(
 
 class DownloadEnvelopeView(
     DownloadEnvelopeMixin,
-    # PermissionRequiredMixin,
+    PermissionRequiredMixin,
     BaseDetailView,
 ):
     """UI view to download the last version of an envelope."""
 
-    # permission_required = "publishing.manage_packaging_queue"
+    permission_required = "publishing.can_view_envelope"
 
     def get_queryset(self):
         return Envelope.objects.all()
