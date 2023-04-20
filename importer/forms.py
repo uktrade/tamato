@@ -118,5 +118,8 @@ class UploadTaricForm(ImportForm):
             record_group=record_group,
             status=self.data["status"],
         )
-
+        batch.imported()
+        batch.save()
         return batch
+
+    # Check if the batch has errored chunks and give her an failed status
