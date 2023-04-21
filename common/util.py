@@ -62,7 +62,7 @@ else:
         return classmethod(property(fn))
 
 
-def is_truthy(value: Optional[str, bool]) -> bool:
+def is_truthy(value: Union[str, bool]) -> bool:
     """
     Check whether a string represents a True boolean value.
 
