@@ -42,6 +42,7 @@ from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
+from common.util import as_date
 from common.util import contained_date_range
 from common.util import date_ranges_overlap
 from common.util import get_latest_versions
@@ -148,16 +149,17 @@ class Commodity(BaseModel):
     correct indent to be selected for a snapshot given the point in time from
     its SnapshotMoment."""
 
-    def __repr__(self) -> str:
+    def get_info_repr(self) -> str:
+        """Return an informational representation for the instance."""
         return (
-            f"Commodity("
+            "Commodity("
             f"pk='{self.obj.pk}', "
             f"item_id='{self.item_id}', "
             f"suffix='{self.suffix}', "
             f"indent={self.indent}, "
             f"valid_between={self.valid_between}, "
             f"extent={self.extent}"
-            f")"
+            ")"
         )
 
     def __post_init__(self) -> None:
@@ -181,7 +183,7 @@ class Commodity(BaseModel):
             return None
 
         for indent in reversed(self.indent_history):
-            if date >= indent.validity_start:
+            if as_date(date) >= as_date(indent.validity_start):
                 return indent
 
         return None
@@ -604,8 +606,12 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         indents = [[]]
 
         for commodity in self.commodities:
-            indent_obj = commodity.get_indent_at(self.moment.date)
-            indent = (indent_obj and indent_obj.indent) or commodity.indent
+            if self.moment.date:
+                indent_obj = commodity.get_indent_at(self.moment.date)
+                indent = (indent_obj and indent_obj.indent) or commodity.indent
+            else:
+                indent = commodity.indent
+
             if indent is None:
                 logger.warning(
                     "No indent found for %s: "
