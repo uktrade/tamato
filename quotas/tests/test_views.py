@@ -140,6 +140,37 @@ def test_quota_list_view(view, url_pattern, valid_user_client):
     assert_model_view_renders(view, url_pattern, valid_user_client)
 
 
+@pytest.mark.parametrize(
+    ("search_filter", "search_term"),
+    [
+        ("active_state", "active"),
+        ("active_state", "terminated"),
+    ],
+)
+def test_quota_list_view_active_state_filter(
+    valid_user_client,
+    date_ranges,
+    search_filter,
+    search_term,
+):
+    active_quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+    )
+    inactive_quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.earlier,
+    )
+
+    list_url = reverse("quota-ui-list")
+    url = f"{list_url}?{search_filter}={search_term}"
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    search_results = soup.select("tbody .govuk-table__row")
+    assert len(search_results) == 1
+
+
 def test_quota_ordernumber_api_list_view(valid_user_client, date_ranges):
     expected_results = [
         factories.QuotaOrderNumberFactory.create(
