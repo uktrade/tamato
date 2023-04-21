@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import re
+from datetime import date
+from datetime import datetime
 from datetime import timedelta
 from functools import lru_cache
 from functools import partial
@@ -571,3 +573,11 @@ def get_mime_type(file):
     file.seek(initial_pos)
 
     return mime_type
+
+
+def as_date(date_or_datetime: Union(date, datetime)) -> date:
+    """Given an object of type datetime.date or datetime.datetime return the
+    date portion as type datetime.date."""
+    if type(date_or_datetime) is datetime:
+        return date_or_datetime.date()
+    return date_or_datetime
