@@ -398,6 +398,13 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
             else:
                 self.workbasket.save_to_session(self.request.session)
 
+            num_completed, total = self.workbasket.rule_check_progress()
+            context.update(
+                {
+                    "rule_check_progress": f"Completed {num_completed} out of {total} checks",
+                },
+            )
+
         return context
 
     def form_valid(self, form):
