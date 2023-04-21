@@ -64,7 +64,7 @@
   <h2 class="govuk-heading-s">
     Live status : 
     {% if context == 'in-progress' %}
-      rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket. Come back later or refresh to see results.
+      rule check in progress.
       {{ terminate_rule_check_form }}
     {% elif context == 'no-checks'%}
       no rule check performed yet.
@@ -95,7 +95,12 @@
 
 {% set rule_check_block %}
   {% if rule_check_in_progress %}
-    {{ live_rule_check('in-progress') }}    
+    {{ live_rule_check('in-progress') }}
+    <p class="govuk-body govuk-!-font-weight-bold">
+      Checking {{ workbasket.tracked_models.count() }} objects in basket.
+      {{rule_check_progress}}.
+      Come back later or refresh to see results.
+    </p>
   {% elif workbasket.tracked_model_check_errors.exists() %}
     <div class="govuk-error-summary" aria-labelledby="summary-title" role="alert" data-module="govuk-error-summary">
       {{ rule_check_result_content() }} 

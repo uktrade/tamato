@@ -5,6 +5,7 @@ import pytest
 from django.conf import settings
 from django_fsm import TransitionNotAllowed
 
+from checks.tests.factories import TransactionCheckFactory
 from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
@@ -369,3 +370,15 @@ def test_queue(valid_user, unapproved_checked_transaction):
 
     for transaction in wb.transactions.all():
         assert transaction.partition == TransactionPartition.REVISION
+
+
+def test_workbasket_rule_check_progress():
+    """Tests that `rule_check_progress()` returns the number of completed
+    transaction checks and total number of transactions to be checked for the
+    workbasket."""
+    workbasket = factories.WorkBasketFactory.create()
+    transactions = TransactionFactory.create_batch(3, workbasket=workbasket)
+    check = TransactionCheckFactory.create(transaction=transactions[0], completed=True)
+    num_completed, total = workbasket.rule_check_progress()
+    assert num_completed == 1
+    assert total == len(transactions)
