@@ -4,6 +4,7 @@ import logging
 from abc import ABCMeta
 from abc import abstractmethod
 from typing import Optional
+from typing import Tuple
 
 from celery.result import AsyncResult
 from django.conf import settings
@@ -345,6 +346,27 @@ class WorkBasket(TimestampedMixin):
         if not task_result:
             return None
         return task_result.status
+
+    def rule_check_progress(self) -> Tuple[int, int]:
+        """
+        Provides progress of a rule check for the WorkBasket.
+
+        Returns:
+            num_completed: the number of transaction checks already completed
+            total: the total number of transactions to be checked
+        """
+        transaction_checks = TransactionCheck.objects.filter(
+            transaction__workbasket=self,
+            completed=True,
+        )
+        num_completed = transaction_checks.count()
+
+        transactions = Transaction.objects.filter(
+            workbasket=self,
+        )
+        total = transactions.count()
+
+        return num_completed, total
 
     @property
     def approved(self):
