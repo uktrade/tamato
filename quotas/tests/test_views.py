@@ -141,7 +141,7 @@ def test_quota_list_view(view, url_pattern, valid_user_client):
 
 
 @pytest.mark.parametrize(
-    ("search_filter", "search_term", "valid"),
+    ("search_filter", "checkbox", "valid"),
     [
         ("active_state", "active", True),
         ("active_state", "terminated", True),
@@ -152,7 +152,7 @@ def test_quota_list_view_active_state_filter(
     valid_user_client,
     date_ranges,
     search_filter,
-    search_term,
+    checkbox,
     valid,
 ):
     active_quota = factories.QuotaOrderNumberFactory.create(
@@ -163,7 +163,7 @@ def test_quota_list_view_active_state_filter(
     )
 
     list_url = reverse("quota-ui-list")
-    url = f"{list_url}?{search_filter}={search_term}"
+    url = f"{list_url}?{search_filter}={checkbox}"
 
     response = valid_user_client.get(url)
     assert response.status_code == 200
