@@ -576,7 +576,7 @@ class Measure(TrackedModel, ValidityMixin):
         business_rules.ME7,
         business_rules.ME8,
         business_rules.ME88,
-        business_rules.ME16,
+        # business_rules.ME16,
         business_rules.ME115,
         business_rules.ME25,
         business_rules.ME32,
