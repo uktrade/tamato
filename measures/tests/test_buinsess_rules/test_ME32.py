@@ -99,26 +99,29 @@ def related_measure_dates(request, date_ranges):
     return callable(date_ranges), date_overlap
 
 
-def updated_goods_nomenclature(e):
-    original = e.indents.get()
+def create_updated_goods_nomenclature(good):
+    """Create a new GoodsNomenclature instance from an existing instance,
+    applying a change to the indent of the related GoodsNomenclatureIndent."""
+
+    original = good.indents.get()
     original.indent = 1
     original.save(force_write=True)
 
-    good = factories.GoodsNomenclatureFactory.create(
-        item_id=e.item_id[:8] + "90",
-        valid_between=e.valid_between,
-        indent__indent=e.indents.first().indent + 1,
+    new_good = factories.GoodsNomenclatureFactory.create(
+        item_id=good.item_id[:8] + "90",
+        valid_between=good.valid_between,
+        indent__indent=good.indents.first().indent + 1,
     )
 
     factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature=good,
+        indented_goods_nomenclature=new_good,
         update_type=UpdateType.UPDATE,
-        version_group=good.indents.first().version_group,
-        validity_start=good.indents.first().validity_start,
-        indent=e.indents.first().indent - 1,
+        version_group=new_good.indents.first().version_group,
+        validity_start=new_good.indents.first().validity_start,
+        indent=good.indents.first().indent - 1,
     )
 
-    return good
+    return new_good
 
 
 @pytest.fixture(
@@ -132,7 +135,7 @@ def updated_goods_nomenclature(e):
             True,
         ),
         (
-            updated_goods_nomenclature,
+            create_updated_goods_nomenclature,
             False,
         ),
     ),
