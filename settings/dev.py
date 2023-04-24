@@ -39,3 +39,10 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 1209600
 
 CELERY_TASK_ALWAYS_EAGER = is_truthy(os.environ.get("CELERY_TASK_ALWAYS_EAGER"))
+
+# Set to True if you need to upload documents and you are not running
+# the ClamAV service locally.
+SKIP_CLAM_AV_FILE_UPLOAD = False
+
+if SKIP_CLAM_AV_FILE_UPLOAD:
+    FILE_UPLOAD_HANDLERS = ()
