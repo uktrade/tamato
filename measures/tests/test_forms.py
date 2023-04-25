@@ -345,7 +345,7 @@ def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
         f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
-        "country_region_formset-1-DELETE": "on",
+        "country_region_formset-DELETE": "on",
     }
     initial = [
         {"geographical_area_country_or_region": geo_area1.pk},
@@ -358,6 +358,8 @@ def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
             prefix=GEO_AREA_FORM_PREFIX,
         )
         assert not form.is_valid()
+        # when we submit ADD or DELETE no errors are raised
+        assert not form.errors
 
 
 def test_measure_forms_geo_area_valid_data_countries_add(erga_omnes):
