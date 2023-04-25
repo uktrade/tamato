@@ -581,7 +581,7 @@ class FormSet(forms.BaseFormSet):
         if initial:
             num_initial = len(initial)
         else:
-            num_initial = 0
+            num_initial = len(formset_initial.values())
 
         if num_initial < 1:
             data[f"{self.prefix}-ADD"] = "1"
