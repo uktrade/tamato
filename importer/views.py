@@ -11,7 +11,7 @@ from importer.filters import ImportBatchFilter
 
 
 class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
-    """UI endpoint for viewing and filtering Import Batches."""
+    """UI endpoint for viewing and filtering General Import Batches."""
 
     queryset = (
         models.ImportBatch.objects.all()
@@ -35,7 +35,36 @@ class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
             ),
         )
     )
-    template_name = "importer/select-imports.jinja"
+    template_name = "importer/list.jinja"
+    filterset_class = ImportBatchFilter
+
+
+class TaricImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
+    """UI endpoint for viewing and filtering Taric Import Batches."""
+
+    queryset = (
+        models.ImportBatch.objects.all()
+        .order_by("-created_at")
+        .annotate(
+            chunks_done=Count(
+                "chunks",
+                filter=Q(chunks__status=models.ImporterChunkStatus.DONE),
+            ),
+            chunks_running=Count(
+                "chunks",
+                filter=Q(chunks__status=models.ImporterChunkStatus.RUNNING),
+            ),
+            chunks_waiting=Count(
+                "chunks",
+                filter=Q(chunks__status=models.ImporterChunkStatus.WAITING),
+            ),
+            chunks_errored=Count(
+                "chunks",
+                filter=Q(chunks__status=models.ImporterChunkStatus.ERRORED),
+            ),
+        )
+    )
+    template_name = "eu-importer/select-imports.jinja"
     filterset_class = ImportBatchFilter
 
 

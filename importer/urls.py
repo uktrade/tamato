@@ -13,4 +13,10 @@ urlpatterns = [
         views.UploadTaricFileView.as_view(),
         name="import_batch-ui-create",
     ),
+    # new comm code importer url
+    path(
+        "eu-importer/",
+        views.TaricImportBatchList.as_view(),
+        name="eu_import_batch-ui-list",
+    ),
 ]
