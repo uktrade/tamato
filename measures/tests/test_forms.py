@@ -4,12 +4,16 @@ from unittest.mock import patch
 import pytest
 from django.forms.models import model_to_dict
 
+from common.forms import unprefix_formset_data
 from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
 from geo_areas.validators import AreaCode
 from measures import forms
+from measures.forms import MEASURE_COMMODITIES_FORMSET_PREFIX
+from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
+from measures.forms import MeasureConditionsFormSet
 from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
 from measures.forms import MeasureStartDateForm
@@ -42,6 +46,38 @@ def test_diff_components_called(diff_components, measure_form, duty_sentence_par
     assert diff_components.called == True
 
 
+def test_measure_conditions_formset_invalid(
+    measure_form_data,
+    duty_sentence_parser,
+):
+    """Tests MeasureConditionsFormSet validation."""
+    condition_code1 = factories.MeasureConditionCodeFactory.create()
+    action1 = factories.MeasureActionFactory.create()
+
+    data = {
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-__prefix__-condition_code": condition_code1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-__prefix__-reference_price": "2%",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-__prefix__-action": action1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-__prefix__-applicable_duty": "invalid",
+    }
+    initial = [
+        {
+            "applicable_duty": "invalid",
+            "condition_code": condition_code1.pk,
+            "reference_price": "2%",
+            "action": action1.pk,
+        },
+    ]
+    form_data = {**data, **measure_form_data}
+    form = MeasureConditionsFormSet(
+        data=form_data,
+        initial=initial,
+    )
+
+    assert not form.is_valid()
+    assert {"applicable_duty": ["Enter a valid duty sentence."]} in form.errors
+
+
 def test_measure_form_invalid_conditions_data(
     measure_form_data,
     session_with_workbasket,
@@ -54,15 +90,11 @@ def test_measure_form_invalid_conditions_data(
     condition_code1 = factories.MeasureConditionCodeFactory.create()
     action1 = factories.MeasureActionFactory.create()
 
-    prefix = "measure-conditions-formset"
     data = {
-        "start_date_0": 1,
-        "start_date_1": 1,
-        "start_date_2": 2023,
-        f"{prefix}-__prefix__-applicable_duty": "invalid",
-        f"{prefix}-__prefix__-condition_code": condition_code1.pk,
-        f"{prefix}-__prefix__-reference_price": "2%",
-        f"{prefix}-__prefix__-action": action1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-__prefix__-applicable_duty": "invalid",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-__prefix__-condition_code": condition_code1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-__prefix__-reference_price": "2%",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-__prefix__-action": action1.pk,
         "submit": "submit",
     }
     form_data = {**data, **measure_form_data}
@@ -555,9 +587,46 @@ def test_measure_forms_commodity_and_duties_form_invalid(
     assert not form.is_valid()
     assert error_message in form.errors["commodity"]
 
-    formset = forms.MeasureCommodityAndDutiesFormSet({})
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {
+            f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": "",
+            f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": "",
+            "submit": "submit",
+        },
+        {},
+    ],
+)
+def test_measure_forms_commodity_and_duties_formset_no_data(data):
+    formset = forms.MeasureCommodityAndDutiesFormSet(
+        data=data,
+        initial=unprefix_formset_data(MEASURE_CONDITIONS_FORMSET_PREFIX, data),
+    )
     assert not formset.is_valid()
     assert "Select one or more commodity codes" in formset.non_form_errors()
+
+
+def test_measure_forms_commodity_and_duties_formset_valid_data(
+    date_ranges,
+    duty_sentence_parser,
+):
+    commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
+    data = {
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity1.pk,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": "33 GBP/100kg",
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-commodity": commodity2.pk,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-duties": "40 GBP/100kg",
+        "submit": "submit",
+    }
+    formset = forms.MeasureCommodityAndDutiesFormSet(
+        data=data,
+        initial=unprefix_formset_data(MEASURE_COMMODITIES_FORMSET_PREFIX, data),
+        min_commodity_count=2,
+        form_kwargs={"measure_start_date": date_ranges.normal.lower},
+    )
+    assert formset.is_valid()
 
 
 def test_measure_forms_conditions_form_valid_data(date_ranges):
@@ -1133,14 +1202,14 @@ def measure_conditions_different_actions_data():
     action1, action2 = factories.MeasureActionFactory.create_batch(2)
 
     return {
-        "form-0-condition_code": condition_code1.pk,
-        "form-0-reference_price": "2%",
-        "form-0-action": action1.pk,
-        "form-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
-        "form-1-condition_code": condition_code1.pk,
-        "form-1-reference_price": "3%",
-        "form-1-action": action2.pk,
-        "form-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code": condition_code1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price": "2%",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action": action1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code": condition_code1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-reference_price": "3%",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-action": action2.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
     }
 
 
@@ -1148,14 +1217,14 @@ def measure_conditions_duplicate_price_data():
     condition_code1 = factories.MeasureConditionCodeFactory.create()
     action1 = factories.MeasureActionFactory.create()
     return {
-        "form-0-condition_code": condition_code1.pk,
-        "form-0-reference_price": "2%",
-        "form-0-action": action1.pk,
-        "form-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
-        "form-1-condition_code": condition_code1.pk,
-        "form-1-reference_price": "2%",
-        "form-1-action": action1.pk,
-        "form-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code": condition_code1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price": "2%",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action": action1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code": condition_code1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-reference_price": "2%",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-action": action1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
     }
 
 
@@ -1165,12 +1234,12 @@ def measure_conditions_incorrect_order_data():
     action1, action2 = factories.MeasureActionFactory.create_batch(2)
 
     return {
-        "form-0-condition_code": condition_code2.pk,
-        "form-0-reference_price": "2%",
-        "form-0-action": action1.pk,
-        "form-1-condition_code": condition_code1.pk,
-        "form-1-reference_price": "3%",
-        "form-1-action": action2.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code": condition_code2.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price": "2%",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action": action1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code": condition_code1.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-reference_price": "3%",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-action": action2.pk,
     }
 
 
@@ -1209,7 +1278,7 @@ def test_measure_formset_conditions_invalid(
     # execution
     formset = forms.MeasureConditionsWizardStepFormSet(
         data,
-        prefix="",
+        initial=unprefix_formset_data(MEASURE_CONDITIONS_FORMSET_PREFIX, data),
         form_kwargs={"measure_start_date": date_ranges.normal},
     )
 
@@ -1228,17 +1297,18 @@ def test_measure_formset_invalid_duplicate_certs(date_ranges, duty_sentence_pars
     )
     action = factories.MeasureActionFactory.create()
     data = {
-        "form-0-condition_code": code_with_certificate.pk,
-        "form-0-required_certificate": certificate.pk,
-        "form-0-action": action.pk,
-        "form-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
-        "form-1-condition_code": code_with_certificate.pk,
-        "form-1-required_certificate": certificate.pk,
-        "form-1-action": action.pk,
-        "form-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code": code_with_certificate.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-required_certificate": certificate.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action": action.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code": code_with_certificate.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-required_certificate": certificate.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-action": action.pk,
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-applicable_duty": "8.80 % + 1.70 EUR / 100 kg",
     }
     formset2 = forms.MeasureConditionsWizardStepFormSet(
         data,
+        initial=unprefix_formset_data(MEASURE_CONDITIONS_FORMSET_PREFIX, data),
         prefix="",
         form_kwargs={"measure_start_date": date_ranges.normal},
     )
@@ -1266,7 +1336,7 @@ def test_measure_formset_conditions_field_queryset(
 
     form = forms.MeasureConditionsWizardStepForm(
         data={},
-        prefix="",
+        prefix=MEASURE_CONDITIONS_FORMSET_PREFIX,
         measure_start_date=date_ranges.normal,
         instance=None,
     )

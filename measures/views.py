@@ -25,6 +25,7 @@ from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
 
+from common.forms import unprefix_formset_data
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
@@ -37,6 +38,7 @@ from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
+from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureActionPair
@@ -717,13 +719,21 @@ class MeasureUpdate(
         context["no_form_tags"].form_tag = False
         context["footnotes"] = self.get_footnotes(context["measure"])
 
+        conditions_initial = []
+
         if self.request.POST:
+            conditions_initial = unprefix_formset_data(
+                MEASURE_CONDITIONS_FORMSET_PREFIX,
+                self.request.POST.copy(),
+            )
             conditions_formset = forms.MeasureConditionsFormSet(
                 self.request.POST,
+                initial=conditions_initial,
                 prefix="measure-conditions-formset",
             )
         else:
             conditions_formset = forms.MeasureConditionsFormSet(
+                initial=conditions_initial,
                 prefix="measure-conditions-formset",
             )
         conditions = self.get_conditions(context["measure"])

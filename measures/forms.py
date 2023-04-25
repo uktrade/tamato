@@ -49,7 +49,8 @@ from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
 
-
+MEASURE_CONDITIONS_FORMSET_PREFIX = "measure-conditions-formset"
+MEASURE_COMMODITIES_FORMSET_PREFIX = "measure_commodities_duties_formset"
 ERGA_OMNES_EXCLUSIONS_PREFIX = "erga_omnes_exclusions"
 ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX = (
     f"{ERGA_OMNES_EXCLUSIONS_PREFIX}_formset"  # /PS-IGNORE
@@ -507,6 +508,8 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
 
 
 class MeasureConditionsBaseFormSet(FormSet):
+    prefix = MEASURE_CONDITIONS_FORMSET_PREFIX
+
     def clean(self):
         """
         We get the cleaned_data from the forms in the formset if any of the
@@ -529,7 +532,6 @@ class MeasureConditionsBaseFormSet(FormSet):
 
 
 class MeasureConditionsFormSet(MeasureConditionsBaseFormSet):
-    prefix = "measure-conditions-formset"
     form = MeasureConditionsForm
 
 
@@ -871,7 +873,7 @@ class MeasureForm(
         )
         conditions_formset = MeasureConditionsFormSet(
             self.data,
-            {MeasureConditionsFormSet.prefix: initial},
+            initial=initial,
         )
         if not conditions_formset.is_valid():
             return False
@@ -1315,7 +1317,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
 
 MeasureCommodityAndDutiesBaseFormSet = formset_factory(
     MeasureCommodityAndDutiesForm,
-    prefix="measure_commodities_duties_formset",
+    prefix=MEASURE_COMMODITIES_FORMSET_PREFIX,
     formset=FormSet,
     min_num=1,
     max_num=99,

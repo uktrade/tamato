@@ -552,8 +552,7 @@ def test_measure_update_updates_footnote_association(measure_form, client, valid
 
 
 def test_measure_update_create_conditions(
-    client,
-    valid_user,
+    valid_user_client,
     measure_edit_conditions_data,
     duty_sentence_parser,
     erga_omnes,
@@ -568,8 +567,11 @@ def test_measure_update_create_conditions(
     """
     measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
-    client.force_login(valid_user)
-    client.post(url, data=measure_edit_conditions_data)
+    response = valid_user_client.post(url, data=measure_edit_conditions_data)
+
+    assert response.status_code == 302
+    assert response.url == reverse("measure-ui-confirm-update", args=(measure.sid,))
+
     tx = Transaction.objects.last()
     updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
         sid=measure.sid,
@@ -911,6 +913,7 @@ def test_measure_form_wizard_finish(
                 "measure_commodities_duties_formset-0-duties": "33 GBP/100kg",  # /PS-IGNORE
                 "measure_commodities_duties_formset-1-commodity": commodity2.pk,
                 "measure_commodities_duties_formset-1-duties": "40 GBP/100kg",
+                "submit": "submit",
             },
             "next_step": "additional_code",
         },
