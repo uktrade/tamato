@@ -304,6 +304,8 @@ class Envelope(TimestampedMixin):
 
     @property
     def processing_state_description(self) -> str:
+        """Get the humanised description string of the associated packaged
+        workbasket's processing state."""
         return self.packagedworkbaskets.last().get_processing_state_display()
 
     @atomic
