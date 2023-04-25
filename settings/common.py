@@ -676,6 +676,3 @@ CLAM_AV_DOMAIN = os.environ.get("CLAM_AV_DOMAIN", default=None)
 FILE_UPLOAD_HANDLERS = (
     "django_chunk_upload_handlers.clam_av.ClamAVFileUploadHandler",
 )  # Order is important
-
-# Celery file upload config
-IGNORE_ANTI_VIRUS = is_truthy(os.getenv("IGNORE_ANTI_VIRUS", False))

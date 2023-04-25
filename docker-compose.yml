@@ -97,7 +97,6 @@ services:
     stdin_open: true
     tty: true  
 
-
 networks:
   inside:
     external: false
