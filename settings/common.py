@@ -668,9 +668,9 @@ else:
 
 
 # ClamAV
-CLAM_AV_USERNAME = os.environ.get("CLAM_AV_USERNAME", default=None)
-CLAM_AV_PASSWORD = os.environ.get("CLAM_AV_PASSWORD", default=None)
-CLAM_AV_DOMAIN = os.environ.get("CLAM_AV_DOMAIN", default=None)
+CLAM_AV_USERNAME = os.environ.get("CLAM_AV_USERNAME")
+CLAM_AV_PASSWORD = os.environ.get("CLAM_AV_PASSWORD")
+CLAM_AV_DOMAIN = os.environ.get("CLAM_AV_DOMAIN")
 
 
 FILE_UPLOAD_HANDLERS = (
