@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
 
+from commodities import validators
 from importer.forms import ImportForm
 
 
@@ -36,6 +37,7 @@ class CommodityImportForm(ImportForm):
         required=True,
         help_text="",
         label="Upload a TARIC file",
+        validators=[validators.validate_file_type],
     )
     xsd_file = settings.PATH_XSD_COMMODITIES_TARIC
 
