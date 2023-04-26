@@ -73,6 +73,7 @@ class GeoAreaInitialDataMixin:
                 GROUP_EXCLUSIONS_FORMSET_PREFIX,
                 GEO_GROUP_FORMSET_PREFIX,
                 COUNTRY_REGION_FORMSET_PREFIX,
+                ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
             ],
             self.data,
         )
