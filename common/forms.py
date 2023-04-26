@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from datetime import date
 from typing import Type
@@ -669,19 +670,16 @@ def unprefix_formset_data(prefix, data):
     output = []
     formset_data = {}
 
-    # management form data is not needed
-    management_form_fields = [
-        "INITIAL_FORMS",
-        "MAX_NUM_FORMS",
-        "MIN_NUM_FORMS",
-        "TOTAL_FORMS",
-        "ADD",
-        "DELETE",
-    ]
+    pattern = f"({prefix}-([0-9]-)?DELETE|ADD|INITIAL_FORMS|MAX_NUM_FORMS|MIN_NUM_FORMS|TOTAL_FORMS)+"
+    keys_to_delete = []
 
-    for field in management_form_fields:
-        if f"{prefix}-{field}" in data.keys():
-            del data[f"{prefix}-{field}"]
+    for key in data.keys():
+        found = re.search(pattern, key)
+        if found:
+            keys_to_delete.append(key)
+
+    for key in keys_to_delete:
+        del data[key]
 
     for k, v in data.items():
         if prefix in k:

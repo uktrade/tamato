@@ -224,6 +224,21 @@ def test_radio_nested_form_nested_formset_cleaned_data():
                 },
             ],
         ),
+        (
+            {
+                "measure-conditions-formset-0-applicable_duty": "test1",
+                "measure-conditions-formset-__prefix__-applicable_duty": "test2",
+                "measure-conditions-formset-0-DELETE": "1",
+            },
+            [
+                {
+                    "applicable_duty": "test1",
+                },
+                {
+                    "applicable_duty": "test2",
+                },
+            ],
+        ),
     ],
 )
 def test_unprefix_formset_data(data, exp):
