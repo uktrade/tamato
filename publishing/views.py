@@ -504,12 +504,12 @@ class DownloadEnvelopeView(
     PermissionRequiredMixin,
     BaseDetailView,
 ):
-    """UI view to download the last version of an envelope."""
+    """UI view to download a processed (succeeded or failed) envelope file."""
 
     permission_required = "publishing.view_envelope"
 
     def get_queryset(self):
-        return Envelope.objects.all()
+        return Envelope.objects.processed()
 
     def get(self, request, *args, **kwargs):
         return self.download_response(self.get_object())
