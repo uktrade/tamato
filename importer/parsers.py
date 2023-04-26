@@ -12,7 +12,6 @@ from typing import Union
 
 from common.validators import UpdateType
 from importer.namespaces import Tag
-from importer.new_importer.importer import MessageInfo
 from importer.nursery import get_nursery
 
 logger = logging.getLogger(__name__)
@@ -24,15 +23,6 @@ class ParserError(Exception):
 
 class InvalidDataError(Exception):
     pass
-
-
-class NewElementParser:
-    record_code: str
-    subrecord_code: str
-    xml_object_tag: str
-
-    def __init__(self, message: Tag, message_info: MessageInfo):
-        pass
 
 
 class ElementParser:
