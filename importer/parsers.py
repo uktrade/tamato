@@ -462,34 +462,3 @@ class NewWritable:
             "geographical_area": resolve_geo_area(order_number["origin"]),
             "valid_between": valid_between,
         }
-
-    def create(self, data: Mapping[str, Any], transaction_id: int):
-        """Preps the given data as a create record and submits it to the nursery
-        for processing."""
-        data.update(update_type=UpdateType.CREATE)
-
-        dispatch_object = {
-            "data": data,
-            "tag": self.tag.name,
-            "transaction_id": transaction_id,
-        }
-
-    def update(self, data: Mapping[str, Any], transaction_id: int):
-        """Update a DB record with provided data."""
-        data.update(update_type=UpdateType.UPDATE.value)
-
-        dispatch_object = {
-            "data": data,
-            "tag": self.tag.name,
-            "transaction_id": transaction_id,
-        }
-
-    def delete(self, data: Mapping[str, Any], transaction_id: int):
-        """Delete a DB record with provided data."""
-        data.update(update_type=UpdateType.DELETE.value)
-
-        dispatch_object = {
-            "data": data,
-            "tag": self.tag.name,
-            "transaction_id": transaction_id,
-        }

@@ -1,70 +1,7 @@
-import bs4
 from bs4 import BeautifulSoup
-from bs4 import NavigableString
-from bs4 import Tag
 
-from common.validators import UpdateType
-
-
-class MessageInfo:
-    transaction_id: int
-    record_code: str
-    subrecord_code: str
-    sequence_number: int
-    update_type: int
-    update_type_name: str
-    object_type: str
-    message: Tag
-    data: dict
-
-    def __init__(self, message: bs4.Tag):
-        # get transaction_id, record_code, subrecord_code, sequence.number, update.type and object type
-        self.message = message
-        self.transaction_id = self.message.find("oub:transaction.id").value
-        self.record_code = self.message.find("oub:record.code").value
-        self.subrecord_code = self.message.find("oub:subrecord.code").value
-        self.sequence_number = self.message.find("oub:record.sequence.number").value
-        self.update_type = int(self.message.find("oub:update.type").text)
-        self.object_type = ""
-        # get object type
-        sibling = self.message.find("oub:update.type").next_sibling
-
-        while self.object_type == "":
-            if sibling is None:
-                break
-            elif isinstance(sibling, NavigableString):
-                sibling = sibling.next_sibling
-                continue
-            elif isinstance(sibling, Tag):
-                self.object_type = sibling.name
-                break
-
-        for update_type in UpdateType:
-            if update_type.value == self.update_type:
-                self.update_type_name = update_type.name.lower()
-
-        self._populate_data_dict()
-
-    def _populate_data_dict(self):
-        """Iterates through properties in the object tag and returns a
-        dictionary of those properties."""
-        self.data = dict()
-        for tag in self.message.find(self.object_type).children:
-            if isinstance(tag, NavigableString):
-                continue
-            elif isinstance(tag, Tag):
-                self.data[tag.name] = tag.text
-
-        return
-
-
-class NewElementParser:
-    record_code: str
-    subrecord_code: str
-    xml_object_tag: str
-
-    def __init__(self, message: Tag, message_info: MessageInfo):
-        pass
+from importer.new_parsers import MessageInfo
+from importer.new_parsers import NewElementParser
 
 
 class NewImporter:
@@ -75,6 +12,7 @@ class NewImporter:
     bs_taric3_file: BeautifulSoup
     raw_xml: str
     objects = []
+    _parsers = {}
 
     def __init__(
         self,
@@ -129,18 +67,20 @@ class NewImporter:
                     + "_"
                     + message_info.update_type_name
                 )
-                print(message_info.data)
                 if key in update_stats.keys():
                     update_stats[key] += 1
                 else:
                     update_stats[key] = 1
 
+                self.objects.append(self.create_tmp_object(message_info))
+
         update_stats["transactions"] = transaction_count
         update_stats["messages"] = total_message_count
         self.print_import_file_stats(update_stats)
 
-    def create_tmp_object(self, message, message_info: MessageInfo):
-        self.get_parser(message_info.object_type)
+    def create_tmp_object(self, message_info: MessageInfo):
+        parser = self.get_parser(message_info.object_type)
+        return parser(message_info)
 
     def get_parser(self, object_type: str):
         classes = self._get_parser_classes()

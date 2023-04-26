@@ -1,4 +1,4 @@
-import importer
+import importer.new_importer as new_importer
 
 file_name = "./DIT099069.xml"
-new_importer = importer.NewImporter(file_name)
+new_importer = new_importer.NewImporter(file_name)
