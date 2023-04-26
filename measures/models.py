@@ -939,7 +939,7 @@ class MeasureExcludedGeographicalArea(TrackedModel):
 
     record_code = "430"
     subrecord_code = "15"
-
+    url_pattern_name_prefix = "geo_area"
     identifying_fields = ("modified_measure__sid", "excluded_geographical_area__sid")
 
     modified_measure = models.ForeignKey(
@@ -959,6 +959,12 @@ class MeasureExcludedGeographicalArea(TrackedModel):
         business_rules.ME68,
         UpdateValidity,
     )
+
+    def __str__(self):
+        return (
+            f"{self.excluded_geographical_area.get_area_code_display()} "
+            f"{self.excluded_geographical_area.structure_description} {self.excluded_geographical_area.area_id}"
+        )
 
 
 class FootnoteAssociationMeasure(TrackedModel):
