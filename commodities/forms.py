@@ -35,7 +35,7 @@ class CommodityImportForm(ImportForm):
     taric_file = forms.FileField(
         required=True,
         help_text="",
-        label="Select an XML file",
+        label="Upload a TARIC file",
     )
     xsd_file = settings.PATH_XSD_COMMODITIES_TARIC
 
@@ -47,7 +47,7 @@ class CommodityImportForm(ImportForm):
             "taric_file",
             Submit(
                 "submit",
-                "Continue",
+                "Upload",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),
