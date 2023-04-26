@@ -718,7 +718,7 @@ def formset_add_or_delete(prefixes, data):
     formset_data = {}
     for k, v in data.items():
         for prefix in prefixes:
-            if k in [f"{prefix}-ADD", f"{prefix}-DELETE"]:
+            if k.endswith("-ADD") or k.endswith("-DELETE"):
                 formset_data[k] = v
     if len(formset_data) > 0:
         return True

@@ -4,6 +4,7 @@ from django import forms
 from common.forms import BindNestedFormMixin
 from common.forms import FormSet
 from common.forms import RadioNested
+from common.forms import formset_add_or_delete
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
 
@@ -258,3 +259,43 @@ def test_unprefix_formset_data(data, exp):
         unprefix_formset_data("measure-conditions-formset", {**base_data, **data})
         == exp
     )
+
+
+@pytest.mark.parametrize(
+    "data,exp",
+    [
+        (
+            {
+                "measure-conditions-formset-0-applicable_duty": "test1",
+                "measure-conditions-formset-1-applicable_duty": "test2",
+                "measure-conditions-formset-2-applicable_duty": "test3",
+                "measure-conditions-formset-3-applicable_duty": "test4",
+            },
+            False,
+        ),
+        (
+            {
+                "measure-conditions-formset-0-applicable_duty": "test1",
+            },
+            False,
+        ),
+        (
+            {
+                "measure-conditions-formset-0-applicable_duty": "test1",
+                "measure-conditions-formset-__prefix__-applicable_duty": "test2",
+                "measure-conditions-formset-ADD": "1",
+            },
+            True,
+        ),
+        (
+            {
+                "measure-conditions-formset-0-applicable_duty": "test1",
+                "measure-conditions-formset-__prefix__-applicable_duty": "test2",
+                "measure-conditions-formset-0-DELETE": "1",
+            },
+            True,
+        ),
+    ],
+)
+def test_formset_add_or_delete(data, exp):
+    assert formset_add_or_delete(["measure-conditions-formset"], data) == exp
