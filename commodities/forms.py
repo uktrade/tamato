@@ -62,7 +62,9 @@ class CommodityImportForm(ImportForm):
         current_time = now.strftime("%H%M%S")
         batch_name = f"{self.cleaned_data['taric_file'].name}_{current_time}"
         self.instance.name = batch_name
-        batch = super().save(commit)
+        batch = super().save(commit=False)
+        batch.author = user
+        batch.save()
 
         self.process_file(
             self.cleaned_data["taric_file"],
@@ -70,7 +72,8 @@ class CommodityImportForm(ImportForm):
             user,
             workbasket_id=workbasket_id,
         )
-
+        batch.imported()
+        batch.save()
         return batch
 
     class Meta(ImportForm.Meta):
