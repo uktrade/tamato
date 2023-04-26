@@ -2,6 +2,7 @@ from django import forms
 from django.urls import reverse_lazy
 from django_filters import MultipleChoiceFilter
 
+from common.filters import ActiveStateMixin
 from common.filters import AutoCompleteFilter
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
@@ -15,7 +16,7 @@ class OrderNumberFilterBackend(TamatoFilterBackend):
     search_fields = ("order_number",)  # XXX order is significant
 
 
-class QuotaFilter(TamatoFilter):
+class QuotaFilter(TamatoFilter, ActiveStateMixin):
     order_number = AutoCompleteFilter(
         label="Order number",
         field_name="order_number",

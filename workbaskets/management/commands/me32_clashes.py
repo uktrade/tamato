@@ -65,21 +65,72 @@ class Command(WorkBasketCommandMixin, BaseCommand):
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"{clashes.count()} ME32 rule clashe(s) against "
-                    f"Measure sid={sid}, update_type={measure.update_type}, "
-                    f"transaction.id={measure.transaction.id}.",
+                    f"Measure:  "
+                    f"sid={sid},  "
+                    f"update_type={measure.get_update_type_display()},  "
+                    f"effective_valid_between={measure.effective_valid_between}  "
+                    f"transaction.id={measure.transaction.id}  "
+                    f"workbasket.pk={measure.transaction.workbasket.pk}, ",
                 ),
             )
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"  having the attached commodity:  "
+                    f"item_id={measure.goods_nomenclature.item_id},  "
+                    f"sid={measure.goods_nomenclature.sid},  "
+                    f"valid_between={measure.goods_nomenclature.valid_between}, ",
+                ),
+            )
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"    with Indents:",
+                ),
+            )
+            for indent in measure.goods_nomenclature.indents.all():
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"      sid={indent.sid},  "
+                        f"indent={indent.indent},  "
+                        f"valid_start={indent.validity_start}, "
+                        f"version_group={indent.version_group.pk}, ",
+                    ),
+                )
+
             if clashes:
-                self.stdout.write("Clashes:")
+                self.stdout.write(f"{clashes.count()} ME32 rule clashe(s) found:")
                 for c in clashes:
                     self.stdout.write(
                         self.style.ERROR(
-                            self.stdout.write(
-                                f"     Measure "
-                                f"sid={c.sid}, update_type={c.update_type}, "
-                                f"transaction.id={c.transaction.id}, "
-                                f"workbasket.pk={c.transaction.workbasket.pk}.",
-                            ),
+                            f"Measure:  "
+                            f"sid={c.sid},  "
+                            f"update_type={c.get_update_type_display()},  "
+                            f"effective_valid_between={c.effective_valid_between}  "
+                            f"transaction.id={c.transaction.id},  "
+                            f"workbasket.pk={c.transaction.workbasket.pk}, ",
                         ),
                     )
+                    # NOTE: Is this commodity the latest as at measure tranx?
+                    self.stdout.write(
+                        self.style.ERROR(
+                            f"  having the attached Commodity:  "
+                            f"item_id={c.goods_nomenclature.item_id},  "
+                            f"sid={c.goods_nomenclature.sid},  "
+                            f"valid_between={c.goods_nomenclature.valid_between}, ",
+                        ),
+                    )
+                    self.stdout.write(
+                        self.style.ERROR(
+                            f"  with Indents:",
+                        ),
+                    )
+                    for indent in c.goods_nomenclature.indents.all():
+                        self.stdout.write(
+                            self.style.ERROR(
+                                f"    sid={indent.sid},  "
+                                f"indent={indent.indent},  "
+                                f"validity_start={indent.validity_start}, "
+                                f"version_group={indent.version_group.pk}, ",
+                            ),
+                        )
+
+                    self.stdout.write()

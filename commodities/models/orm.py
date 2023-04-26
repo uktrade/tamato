@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Optional
 from typing import Set
 
@@ -147,6 +148,19 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
             indent_shift += 1
 
         return indent_shift
+
+    def get_indent_as_at(self, date: date) -> Optional[GoodsNomenclatureIndent]:
+        """
+        Returns the indent instance for the commodity as at the given date.
+
+        The returned indent instance will be the most recent one whose
+        `validity_start` date was the same as or before the given date. Returns
+        `None` if no indent instance was valid as at the given date.
+        """
+        indents = self.indents.filter(validity_start__lte=date)
+        if not indents:
+            return None
+        return indents.last()
 
 
 class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):

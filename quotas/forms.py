@@ -21,6 +21,7 @@ class QuotaFilterForm(forms.Form):
             Field.text("origin", label_size=Size.SMALL),
             Field.radios("mechanism", legend_size=Size.SMALL),
             Field.radios("category", legend_size=Size.SMALL),
+            Field.radios("active_state", legend_size=Size.SMALL),
             Button("submit", "Search and Filter", css_class="govuk-!-margin-top-6"),
             HTML(
                 f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',

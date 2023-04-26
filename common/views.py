@@ -40,6 +40,7 @@ from common.celery import app
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
+from workbaskets.models import WorkBasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
@@ -147,11 +148,17 @@ class AppInfoView(
                             task_info.get("time_start"),
                         ),
                     ).strftime("%Y-%m-%d, %H:%M:%S")
+
+                    workbasket_id = task_info.get("args", [""])[0]
+                    workbasket = WorkBasket.objects.get(id=workbasket_id)
+                    num_completed, total = workbasket.rule_check_progress()
+
                     results.append(
                         {
                             "task_id": task_info.get("id"),
-                            "workbasket_id": task_info.get("args", [""])[0],
+                            "workbasket_id": workbasket_id,
                             "date_time_start": date_time_start,
+                            "checks_completed": f"{num_completed} out of {total}",
                         },
                     )
 

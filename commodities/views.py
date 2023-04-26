@@ -78,6 +78,11 @@ class CommodityList(CommodityMixin, WithPaginationListView):
     def get_queryset(self):
         return GoodsNomenclature.objects.current().order_by("item_id")
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["today"] = date.today()
+        return context
+
 
 class CommodityDetail(CommodityMixin, TrackedModelDetailView):
     template_name = "commodities/detail.jinja"
@@ -85,10 +90,13 @@ class CommodityDetail(CommodityMixin, TrackedModelDetailView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
+        indent = self.object.get_indent_as_at(date.today())
+        context["indent_number"] = indent.indent if indent else "-"
+
         collection = get_chapter_collection(self.object)
         tx = WorkBasket.get_current_transaction(self.request)
-        date = self.object.valid_between.upper
-        snapshot = collection.get_snapshot(tx, date)
+        snapshot_date = self.object.valid_between.upper
+        snapshot = collection.get_snapshot(tx, snapshot_date)
         commodity = snapshot.get_commodity(self.object, self.object.suffix)
         context["parent"] = snapshot.get_parent(commodity)
 
