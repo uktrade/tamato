@@ -26,17 +26,20 @@ from common.forms import FormSet
 from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
+from common.forms import formset_add_or_delete
 from common.forms import formset_factory
+from common.forms import unprefix_formset_data
 from common.util import validity_range_contains_range
 from common.validators import SymbolValidator
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalMembership
 from geo_areas.validators import AreaCode
 from measures import models
 from measures.constants import MeasureEditSteps
+from measures.models import MeasureExcludedGeographicalArea
 from measures.parsers import DutySentenceParser
-from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
 from measures.validators import validate_conditions_formset
 from measures.validators import validate_duties
@@ -46,7 +49,8 @@ from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
 
-
+MEASURE_CONDITIONS_FORMSET_PREFIX = "measure-conditions-formset"
+MEASURE_COMMODITIES_FORMSET_PREFIX = "measure_commodities_duties_formset"
 ERGA_OMNES_EXCLUSIONS_PREFIX = "erga_omnes_exclusions"
 ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX = (
     f"{ERGA_OMNES_EXCLUSIONS_PREFIX}_formset"  # /PS-IGNORE
@@ -61,6 +65,54 @@ COUNTRY_REGION_PREFIX = "country_region"
 COUNTRY_REGION_FORMSET_PREFIX = f"{COUNTRY_REGION_PREFIX}_formset"
 
 
+class GeoAreaInitialDataMixin:
+    @property
+    def formset_submitted(self):
+        return formset_add_or_delete(
+            [
+                GROUP_EXCLUSIONS_FORMSET_PREFIX,
+                GEO_GROUP_FORMSET_PREFIX,
+                COUNTRY_REGION_FORMSET_PREFIX,
+                ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
+            ],
+            self.data,
+        )
+
+    @property
+    def whole_form_submit(self):
+        return bool(self.data.get("submit"))
+
+    def get_geo_area_initial(self):
+        initial = {}
+        geo_area_type = self.initial.get(self.geo_area_field_name) or self.data.get(
+            self.geo_area_field_name,
+        )
+        if geo_area_type in [
+            GeoAreaType.GROUP.value,
+            GeoAreaType.ERGA_OMNES.value,
+        ]:
+            field_name = FIELD_NAME_MAPPING[geo_area_type]
+            prefix = FORMSET_PREFIX_MAPPING[geo_area_type]
+            initial_exclusions = []
+            if hasattr(self, "instance"):
+                initial_exclusions = [
+                    {field_name: exclusion.excluded_geographical_area}
+                    for exclusion in self.instance.exclusions.all()
+                ]
+            # if we just submitted the form, add the new data to initial
+            if self.formset_submitted or self.whole_form_submit:
+                new_data = unprefix_formset_data(prefix, self.data.copy())
+                for g in new_data:
+                    if g[field_name]:
+                        id = int(g[field_name])
+                        g[field_name] = GeographicalArea.objects.get(id=id)
+                initial_exclusions = new_data
+
+            initial[FORMSET_PREFIX_MAPPING[geo_area_type]] = initial_exclusions
+
+        return initial
+
+
 class GeoAreaType(TextChoices):
     ERGA_OMNES = "ERGA_OMNES", "All countries (erga omnes)"
     GROUP = "GROUP", "A group of countries"
@@ -72,15 +124,16 @@ SUBFORM_PREFIX_MAPPING = {
     GeoAreaType.COUNTRY: COUNTRY_REGION_FORMSET_PREFIX,
 }
 
-EXCLUSIONS_FORMSET_PREFIX_MAPPING = {
+FORMSET_PREFIX_MAPPING = {
     GeoAreaType.ERGA_OMNES: ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
     GeoAreaType.GROUP: GROUP_EXCLUSIONS_FORMSET_PREFIX,
-    GeoAreaType.COUNTRY: None,
+    GeoAreaType.COUNTRY: COUNTRY_REGION_FORMSET_PREFIX,
 }
 
 FIELD_NAME_MAPPING = {
     GeoAreaType.ERGA_OMNES: "erga_omnes_exclusion",
     GeoAreaType.GROUP: "geo_group_exclusion",
+    GeoAreaType.COUNTRY: "geographical_area_country_or_region",
 }
 
 
@@ -163,7 +216,7 @@ GeoGroupFormSet = formset_factory(
     formset=FormSet,
     min_num=1,
     max_num=2,
-    extra=1,
+    extra=0,
     validate_min=True,
     validate_max=True,
 )
@@ -173,8 +226,8 @@ ErgaOmnesExclusionsFormSet = formset_factory(
     prefix=ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
     formset=FormSet,
     min_num=0,
-    max_num=10,
-    extra=1,
+    max_num=100,
+    extra=0,
     validate_min=True,
     validate_max=True,
 )
@@ -184,8 +237,8 @@ GeoGroupExclusionsFormSet = formset_factory(
     prefix=GROUP_EXCLUSIONS_FORMSET_PREFIX,
     formset=FormSet,
     min_num=0,
-    max_num=10,
-    extra=1,
+    max_num=100,
+    extra=0,
     validate_min=True,
     validate_max=True,
 )
@@ -228,7 +281,7 @@ CountryRegionFormSet = formset_factory(
     formset=FormSet,
     min_num=1,
     max_num=2,
-    extra=1,
+    extra=0,
     validate_min=True,
     validate_max=True,
 )
@@ -456,6 +509,8 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
 
 
 class MeasureConditionsBaseFormSet(FormSet):
+    prefix = MEASURE_CONDITIONS_FORMSET_PREFIX
+
     def clean(self):
         """
         We get the cleaned_data from the forms in the formset if any of the
@@ -478,7 +533,6 @@ class MeasureConditionsBaseFormSet(FormSet):
 
 
 class MeasureConditionsFormSet(MeasureConditionsBaseFormSet):
-    prefix = "measure-conditions-formset"
     form = MeasureConditionsForm
 
 
@@ -524,7 +578,14 @@ class MeasureConditionsWizardStepFormSet(MeasureConditionsBaseFormSet):
     form = MeasureConditionsWizardStepForm
 
 
-class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
+class MeasureForm(
+    GeoAreaInitialDataMixin,
+    ValidityPeriodForm,
+    BindNestedFormMixin,
+    forms.ModelForm,
+):
+    """Form used for editing individual Measures."""
+
     class Meta:
         model = models.Measure
         fields = (
@@ -535,6 +596,8 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
             "additional_code",
             "order_number",
         )
+
+    geo_area_field_name = "geo_area"
 
     measure_type = AutoCompleteField(
         label="Measure type",
@@ -621,6 +684,8 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
 
         nested_forms_initial = {**self.initial}
         nested_forms_initial["geographical_area"] = self.instance.geographical_area
+        geo_area_initial_data = self.get_geo_area_initial()
+        nested_forms_initial.update(geo_area_initial_data)
         kwargs.pop("initial")
         self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
 
@@ -657,15 +722,11 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
             cleaned_data["geographical_area"] = geographical_area_fields[
                 geo_area_choice
             ]
-            exclusions = cleaned_data.get(
-                EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
-            )
+            exclusions = cleaned_data.get(FORMSET_PREFIX_MAPPING[geo_area_choice])
             if exclusions:
                 cleaned_data["exclusions"] = [
                     exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
-                    for exclusion in cleaned_data[
-                        EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
-                    ]
+                    for exclusion in exclusions
                 ]
 
         cleaned_data["sid"] = self.instance.sid
@@ -683,23 +744,65 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
 
         sid = instance.sid
 
-        measure_creation_pattern = MeasureCreationPattern(
-            workbasket=WorkBasket.current(self.request),
-            base_date=instance.valid_between.lower,
-            defaults={
-                "generating_regulation": self.cleaned_data["generating_regulation"],
-            },
-        )
-
         if self.cleaned_data.get("exclusions"):
-            for exclusion in self.cleaned_data.get("exclusions"):
-                pattern = (
-                    measure_creation_pattern.create_measure_excluded_geographical_areas(
-                        instance,
-                        exclusion,
+            exclusions = self.cleaned_data.get("exclusions")
+            valid_memberships = GeographicalMembership.objects.as_at(
+                instance.valid_between.lower,
+            )
+
+            # pull individual countries out of groups and add to the list
+            all_exclusions = []
+            for exclusion in exclusions:
+                if exclusion.area_code == AreaCode.GROUP:
+                    measure_origins = set(
+                        m.member
+                        for m in valid_memberships.filter(
+                            geo_group=instance.geographical_area,
+                        )
                     )
+                    for membership in valid_memberships.filter(geo_group=exclusion):
+                        if membership.member.sid in [m.sid for m in measure_origins]:
+                            all_exclusions.append(membership.member)
+                else:
+                    all_exclusions.append(exclusion)
+
+            for geo_area in all_exclusions:
+                existing_exclusion = (
+                    instance.exclusions.filter(excluded_geographical_area=geo_area)
+                    .current()
+                    .first()
                 )
-                [p for p in pattern]
+
+                if existing_exclusion:
+                    existing_exclusion.new_version(
+                        workbasket=WorkBasket.current(self.request),
+                        transaction=instance.transaction,
+                        modified_measure=instance,
+                    )
+                else:
+                    MeasureExcludedGeographicalArea.objects.create(
+                        modified_measure=instance,
+                        excluded_geographical_area=geo_area,
+                        update_type=UpdateType.CREATE,
+                        transaction=instance.transaction,
+                    )
+
+            removed_excluded_areas = {
+                e.excluded_geographical_area for e in instance.exclusions.current()
+            }.difference(set(self.cleaned_data["exclusions"]))
+
+            removed_exclusions = [
+                instance.exclusions.current().get(excluded_geographical_area__id=e.id)
+                for e in removed_excluded_areas
+            ]
+
+            for removed in removed_exclusions:
+                removed.new_version(
+                    update_type=UpdateType.DELETE,
+                    workbasket=WorkBasket.current(self.request),
+                    transaction=instance.transaction,
+                    modified_measure=instance,
+                )
 
         if (
             self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
@@ -765,8 +868,14 @@ class MeasureForm(ValidityPeriodForm, BindNestedFormMixin, forms.ModelForm):
     def is_valid(self) -> bool:
         """Check that measure conditions data is valid before calling super() on
         the rest of the form data."""
-        conditions_formset = MeasureConditionsFormSet(self.data)
-
+        initial = unprefix_formset_data(
+            MeasureConditionsFormSet.prefix,
+            self.data.copy(),
+        )
+        conditions_formset = MeasureConditionsFormSet(
+            self.data,
+            initial=initial,
+        )
         if not conditions_formset.is_valid():
             return False
 
@@ -975,7 +1084,18 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         )
 
 
-class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
+class MeasureGeographicalAreaForm(
+    GeoAreaInitialDataMixin,
+    BindNestedFormMixin,
+    forms.Form,
+):
+    """
+    Used in the MeasureCreateWizard.
+
+    Allows creation of multiple measures for multiple commodity codes and
+    countries.
+    """
+
     geo_area = RadioNested(
         label="",
         help_text=(
@@ -992,12 +1112,36 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
         error_messages={"required": "A Geographical area must be selected"},
     )
 
+    @property
+    def geo_area_field_name(self):
+        return f"{self.prefix}-geo_area"
+
+    def get_countries_initial(self):
+        initial = {}
+
+        geo_area_type = self.initial.get(self.geo_area_field_name) or self.data.get(
+            self.geo_area_field_name,
+        )
+
+        if geo_area_type == GeoAreaType.COUNTRY.value:
+            field_name = FIELD_NAME_MAPPING[geo_area_type]
+            prefix = FORMSET_PREFIX_MAPPING[geo_area_type]
+            initial_countries = []
+            # if we just submitted the form, add the new data to initial
+            if self.formset_submitted or self.whole_form_submit:
+                new_data = unprefix_formset_data(prefix, self.data.copy())
+                for g in new_data:
+                    if g[field_name]:
+                        id = int(g[field_name])
+                        g[field_name] = GeographicalArea.objects.get(id=id)
+                initial_countries = new_data
+
+            initial[FORMSET_PREFIX_MAPPING[geo_area_type]] = initial_countries
+
+        return initial
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        kwargs.pop("initial")
-
-        self.fields["geo_area"].initial = self.data.get(f"{self.prefix}-geo_area")
 
         geographical_area_fields = {
             GeoAreaType.ERGA_OMNES: self.erga_omnes_instance,
@@ -1007,6 +1151,8 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
             ),
         }
 
+        self.fields["geo_area"].initial = self.data.get(f"{self.prefix}-geo_area")
+
         nested_forms_initial = {}
 
         if self.fields["geo_area"].initial:
@@ -1014,6 +1160,11 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
                 self.fields["geo_area"].initial
             ]
 
+        geo_area_initial_data = self.get_geo_area_initial()
+        countries_initial_data = self.get_countries_initial()
+        nested_forms_initial.update(geo_area_initial_data)
+        nested_forms_initial.update(countries_initial_data)
+        kwargs.pop("initial")
         self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
 
         self.helper = FormHelper(self)
@@ -1044,7 +1195,7 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
         }
 
         if geo_area_choice:
-            if not self.formset_submit():
+            if not self.formset_submitted:
                 if geo_area_choice == GeoAreaType.ERGA_OMNES:
                     cleaned_data["geo_area_list"] = [self.erga_omnes_instance]
 
@@ -1060,13 +1211,13 @@ class MeasureGeographicalAreaForm(BindNestedFormMixin, forms.Form):
                     ]
 
                 exclusions = cleaned_data.get(
-                    EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
+                    FORMSET_PREFIX_MAPPING[geo_area_choice],
                 )
                 if exclusions:
                     cleaned_data["geo_area_exclusions"] = [
                         exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
                         for exclusion in cleaned_data[
-                            EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
+                            FORMSET_PREFIX_MAPPING[geo_area_choice]
                         ]
                     ]
 
@@ -1167,7 +1318,7 @@ class MeasureCommodityAndDutiesForm(forms.Form):
 
 MeasureCommodityAndDutiesBaseFormSet = formset_factory(
     MeasureCommodityAndDutiesForm,
-    prefix="measure_commodities_duties_formset",
+    prefix=MEASURE_COMMODITIES_FORMSET_PREFIX,
     formset=FormSet,
     min_num=1,
     max_num=99,
