@@ -25,6 +25,7 @@ from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
 
+from common.forms import unprefix_formset_data
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
@@ -37,6 +38,7 @@ from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
+from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureActionPair
@@ -709,18 +711,31 @@ class MeasureUpdate(
             f"formset_initial_{self.kwargs.get('sid')}",
             [],
         )
-        formset = forms.MeasureUpdateFootnotesFormSet()
-        formset.initial = initial
-        formset.form_kwargs = {"path": self.request.path}
-        context["formset"] = formset
+        footnotes_formset = forms.MeasureUpdateFootnotesFormSet()
+        footnotes_formset.initial = initial
+        footnotes_formset.form_kwargs = {"path": self.request.path}
+        context["footnotes_formset"] = footnotes_formset
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
         context["footnotes"] = self.get_footnotes(context["measure"])
 
+        conditions_initial = []
+
         if self.request.POST:
-            conditions_formset = forms.MeasureConditionsFormSet(self.request.POST)
+            conditions_initial = unprefix_formset_data(
+                MEASURE_CONDITIONS_FORMSET_PREFIX,
+                self.request.POST.copy(),
+            )
+            conditions_formset = forms.MeasureConditionsFormSet(
+                self.request.POST,
+                initial=conditions_initial,
+                prefix="measure-conditions-formset",
+            )
         else:
-            conditions_formset = forms.MeasureConditionsFormSet()
+            conditions_formset = forms.MeasureConditionsFormSet(
+                initial=conditions_initial,
+                prefix="measure-conditions-formset",
+            )
         conditions = self.get_conditions(context["measure"])
         form_fields = conditions_formset.form.Meta.fields
         conditions_formset.initial = []
