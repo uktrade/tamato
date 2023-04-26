@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import xml.etree.ElementTree as etree
+from datetime import date
 from typing import Any
 from typing import Dict
 from typing import Mapping
@@ -11,6 +12,7 @@ from typing import Union
 
 from common.validators import UpdateType
 from importer.namespaces import Tag
+from importer.new_importer.importer import MessageInfo
 from importer.nursery import get_nursery
 
 logger = logging.getLogger(__name__)
@@ -22,6 +24,15 @@ class ParserError(Exception):
 
 class InvalidDataError(Exception):
     pass
+
+
+class NewElementParser:
+    record_code: str
+    subrecord_code: str
+    xml_object_tag: str
+
+    def __init__(self, message: Tag, message_info: MessageInfo):
+        pass
 
 
 class ElementParser:
@@ -363,6 +374,13 @@ class CompoundElement(ValueElementMixin, ElementParser):
         self.data = self.native_type([*parts, *([None] * missing)])
 
 
+class NewValidityMixin:
+    """Parse validity start and end dates."""
+
+    valid_between_lower: date
+    valid_between_upper: date
+
+
 class ValidityMixin:
     """Parse validity start and end dates."""
 
@@ -441,3 +459,47 @@ class Writable:
         }
 
         self.nursery.submit(dispatch_object)
+
+
+class NewWritable:
+    update_type: str
+
+    def commit_to_database(self):
+        kwargs = {
+            "update_type": UpdateType.CREATE,
+            "transaction": transaction,
+            "order_number": quota_order_number,
+            "geographical_area": resolve_geo_area(order_number["origin"]),
+            "valid_between": valid_between,
+        }
+
+    def create(self, data: Mapping[str, Any], transaction_id: int):
+        """Preps the given data as a create record and submits it to the nursery
+        for processing."""
+        data.update(update_type=UpdateType.CREATE)
+
+        dispatch_object = {
+            "data": data,
+            "tag": self.tag.name,
+            "transaction_id": transaction_id,
+        }
+
+    def update(self, data: Mapping[str, Any], transaction_id: int):
+        """Update a DB record with provided data."""
+        data.update(update_type=UpdateType.UPDATE.value)
+
+        dispatch_object = {
+            "data": data,
+            "tag": self.tag.name,
+            "transaction_id": transaction_id,
+        }
+
+    def delete(self, data: Mapping[str, Any], transaction_id: int):
+        """Delete a DB record with provided data."""
+        data.update(update_type=UpdateType.DELETE.value)
+
+        dispatch_object = {
+            "data": data,
+            "tag": self.tag.name,
+            "transaction_id": transaction_id,
+        }
