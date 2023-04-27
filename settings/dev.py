@@ -40,9 +40,12 @@ SESSION_COOKIE_AGE = 1209600
 
 CELERY_TASK_ALWAYS_EAGER = is_truthy(os.environ.get("CELERY_TASK_ALWAYS_EAGER"))
 
-# Set to True if you need to upload documents and you are not running
-# the ClamAV service locally.
+# Set to False if you need to upload documents and want to test virus check
+# with ClamAV service locally.
 SKIP_CLAM_AV_FILE_UPLOAD = is_truthy(os.environ.get("SKIP_CLAM_AV_FILE_UPLOAD", True))
 
 if SKIP_CLAM_AV_FILE_UPLOAD:
-    FILE_UPLOAD_HANDLERS = ()
+    FILE_UPLOAD_HANDLERS = (
+        "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
+        "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
+    )
