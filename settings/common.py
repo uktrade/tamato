@@ -675,4 +675,6 @@ CLAM_AV_DOMAIN = os.environ.get("CLAM_AV_DOMAIN")
 
 FILE_UPLOAD_HANDLERS = (
     "django_chunk_upload_handlers.clam_av.ClamAVFileUploadHandler",
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
 )  # Order is important
