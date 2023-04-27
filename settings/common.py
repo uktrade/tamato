@@ -455,7 +455,7 @@ CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
-        "schedule": crontab(hour=4, minute=10),
+        "schedule": crontab(hour=3, minute=5),
     },
 }
 
