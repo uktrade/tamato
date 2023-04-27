@@ -136,19 +136,6 @@ class EnvelopeQuerySet(QuerySet):
             packagedworkbaskets__processing_state=ProcessingState.CURRENTLY_PROCESSING,
         )
 
-    def all_latest(self):
-        return self.filter(
-            Q(
-                packagedworkbaskets__processing_state=ProcessingState.AWAITING_PROCESSING,
-            )
-            | Q(
-                packagedworkbaskets__processing_state=ProcessingState.CURRENTLY_PROCESSING,
-            )
-            | Q(
-                packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
-            ),
-        )
-
     def successfully_processed(self):
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
