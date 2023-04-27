@@ -42,6 +42,7 @@ from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
+from common.util import as_date
 from common.util import contained_date_range
 from common.util import date_ranges_overlap
 from common.util import get_latest_versions
@@ -143,6 +144,24 @@ class Commodity(BaseModel):
     suffix: str = field(compare=False, repr=True, init=False)
     indent: Optional[int] = field(compare=False, repr=True, init=False, default=None)
 
+    indent_history: List = field(compare=False, repr=False, default_factory=list)
+    """`indent_history` holds a commodity's entire indent history, allowing the
+    correct indent to be selected for a snapshot given the point in time from
+    its SnapshotMoment."""
+
+    def get_info_repr(self) -> str:
+        """Return an informational representation for the instance."""
+        return (
+            "Commodity("
+            f"pk='{self.obj.pk}', "
+            f"item_id='{self.item_id}', "
+            f"suffix='{self.suffix}', "
+            f"indent={self.indent}, "
+            f"valid_between={self.valid_between}, "
+            f"extent={self.extent}"
+            ")"
+        )
+
     def __post_init__(self) -> None:
         # Manually setup the fields based on the objects we have – done this way
         # to work around the immutability, but it's safe to do it here like this.
@@ -151,6 +170,23 @@ class Commodity(BaseModel):
         object.__setattr__(self, "item_id", self.obj.item_id)
         object.__setattr__(self, "suffix", self.obj.suffix)
         object.__setattr__(self, "indent", self.indent_obj and self.indent_obj.indent)
+
+    def get_indent_at(self, date: datetime.date) -> GoodsNomenclatureIndent:
+        """
+        Return the valid indent instance for the commodity on the given date.
+
+        Returns `None` if no indents are associated with the commodity or if no
+        indent was valid at the given date.
+        """
+
+        if not self.indent_history:
+            return None
+
+        for indent in reversed(self.indent_history):
+            if as_date(date) >= as_date(indent.validity_start):
+                return indent
+
+        return None
 
     @property
     def valid_between(self) -> TaricDateRange:
@@ -161,16 +197,14 @@ class Commodity(BaseModel):
     def extent(self) -> TaricDateRange:
         """Returns the date rate that this object accurately represents a valid
         commodity and its position in the tree."""
-        return TaricDateRange(
-            maybe_max(
-                self.obj.valid_between.lower,
-                self.indent_obj and self.indent_obj.valid_between.lower,
-            ),
-            maybe_min(
-                self.obj.valid_between.upper,
-                self.indent_obj and self.indent_obj.valid_between.upper,
-            ),
+
+        lower = maybe_max(
+            self.obj.valid_between.lower,
+            self.indent_obj and self.indent_obj.valid_between.lower,
         )
+        upper = self.obj.valid_between.upper
+
+        return TaricDateRange(lower, upper)
 
     @property
     def code(self) -> CommodityCode:
@@ -572,7 +606,12 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         indents = [[]]
 
         for commodity in self.commodities:
-            indent = commodity.indent
+            if self.moment.date:
+                indent_obj = commodity.get_indent_at(self.moment.date)
+                indent = (indent_obj and indent_obj.indent) or commodity.indent
+            else:
+                indent = commodity.indent
+
             if indent is None:
                 logger.warning(
                     "No indent found for %s: "
@@ -761,6 +800,16 @@ class CommodityCollection(CommodityTreeBase):
         transaction: Transaction,
         snapshot_date: Optional[date] = None,
     ) -> CommodityTreeSnapshot:
+        """
+        Returns a commodity tree snapshot as of `transaction`.
+
+        If `snapshot_date` is also provided, then the returned tree will only
+        include commodities whose `valid_between` date range includes
+        `snapshot_date`. If no `snapshot_date` is provided, then only those
+        commodities that are valid as of now will be included in the returned
+        results.
+        """
+
         if transaction is None:
             raise ValueError(
                 "SnapshotMoments require a transaction.",
@@ -1544,27 +1593,50 @@ class CommodityCollectionLoader:
 
             return qs
 
-        qs = _apply_filters(GoodsNomenclature.objects).filter(
+        goods_query = _apply_filters(GoodsNomenclature.objects).filter(
             item_id__startswith=self.prefix,
         )
 
-        sids = Subquery(qs.values("sid"))
+        goods_sids = Subquery(goods_query.values("sid"))
 
-        indent_query = (
+        indents_query = (
             _apply_filters(GoodsNomenclatureIndent.objects)
             .with_end_date()
-            .filter(indented_goods_nomenclature__sid__in=sids)
+            .filter(indented_goods_nomenclature__sid__in=goods_sids)
             .annotate(goods_sid=F("indented_goods_nomenclature__sid"))
-            .all()
         )
 
-        indents = {indent.goods_sid: indent for indent in indent_query}
+        goods_sid_to_indents: Dict[str, List] = {}
+        for indent in indents_query:
+            goods_sid = str(indent.goods_sid)
+            mapped_indents = goods_sid_to_indents.get(goods_sid, None)
+            if mapped_indents:
+                goods_sid_to_indents[goods_sid].append(indent)
+            else:
+                goods_sid_to_indents[goods_sid] = [indent]
 
-        commodities = [
-            Commodity(obj=obj, indent_obj=indents.get(obj.sid)) for obj in qs.all()
-        ]
+        commodities = []
+        for good in goods_query.all():
+            related_indents = goods_sid_to_indents.get(str(good.sid))
+            commodities.append(
+                Commodity(
+                    obj=good,
+                    indent_obj=self.get_most_recent_indent(related_indents),
+                    indent_history=related_indents,
+                ),
+            )
 
         return CommodityCollection(commodities=commodities)
+
+    def get_most_recent_indent(self, related_indents: List[GoodsNomenclatureIndent]):
+        """Returns the most recent indent by validity_start, or None if
+        `related_indents` is empty."""
+        if not related_indents:
+            return None
+        return sorted(
+            related_indents,
+            key=lambda indent: indent.validity_start,
+        )[-1]
 
 
 class CommodityChangeException(ValueError):
