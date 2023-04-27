@@ -4,6 +4,7 @@ from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from geo_areas import forms
+from geo_areas.validators import AreaCode
 
 pytestmark = pytest.mark.django_db
 
@@ -314,3 +315,72 @@ def test_geographical_membership_edit_form_invalid_end_date(
             "The end date must be the same as or after the area group's start date."
             in form.errors["__all__"]
         )
+
+
+@pytest.mark.parametrize(
+    ("area_code", "area_id"),
+    [
+        (AreaCode.COUNTRY, "TC"),
+        (AreaCode.GROUP, "1234"),
+        (AreaCode.REGION, "TR"),
+    ],
+)
+def test_geographical_area_create_form_valid_data(date_ranges, area_code, area_id):
+    """Tests that GeographicalAreaCreateForm is valid when required fields are
+    in data."""
+    form_data = {
+        "area_code": area_code,
+        "area_id": area_id,
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "description": "Test",
+    }
+    form = forms.GeographicalAreaCreateForm(data=form_data)
+    assert form.is_valid()
+
+
+def test_geographical_area_create_form_invalid_data():
+    """Tests that GeographicalAreaCreateForm is not valid when invalid data is
+    used."""
+    form_data = {
+        "area_code": "2",
+        "area_id": "abcd",
+        "start_date_0": "2",
+        "start_date_1": "2",
+        "start_date_2": "2",
+        "end_date_0": "1",
+        "end_date_1": "1",
+        "end_date_2": "1",
+        "description": "<test>",
+    }
+    expected_form_errors = {
+        "area_id": "Enter a geographical area ID in the correct format.",
+        "end_date": "The end date must be the same as or after the start date.",
+        "description": "Only symbols .,/()&£$@!+-% are allowed.",
+    }
+
+    form = forms.GeographicalAreaCreateForm(data=form_data)
+    assert not form.is_valid()
+    for field, message in expected_form_errors.items():
+        assert message in form.errors[field]
+
+
+def test_geographical_area_create_form_missing_data():
+    """Tests that GeographicalAreaCreateForm is not valid when required fields
+    are not in data."""
+    empty_data = {}
+    form = forms.GeographicalAreaCreateForm(data=empty_data)
+    assert not form.is_valid()
+
+    expected_form_errors = {
+        "area_code": "Select an area code from the dropdown.",
+        "area_id": "Enter a geographical area ID.",
+        "start_date": "Enter the day, month and year",
+        "description": "Enter a geographical area description.",
+    }
+    for field, message in expected_form_errors.items():
+        assert message in form.errors[field]
