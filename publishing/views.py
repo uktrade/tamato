@@ -204,11 +204,12 @@ class DownloadEnvelopeMixin:
         contents of `envelope.xml_file`."""
 
         file_content = envelope.xml_file.read()
-        file_name = f"DIT{envelope.envelope_id}.xml"
         response = HttpResponse(file_content)
         response["content-type"] = "text/xml"
         response["content-length"] = len(file_content)
-        response["content-disposition"] = f'attachment; filename="{file_name}"'
+        response[
+            "content-disposition"
+        ] = f'attachment; filename="{envelope.xml_file_name}"'
         return response
 
 
