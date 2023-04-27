@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Optional
 
 import boto3
-import botocore
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db.models import BooleanField
@@ -162,23 +161,6 @@ class EnvelopeId(CharField):
         del kwargs["max_length"]
         del kwargs["validators"]
         return name, path, args, kwargs
-
-
-def is_delete_marker(s3_object_version):
-    """Return True if an object version is a delete marker (i.e. has been
-    deleted), False otherwise."""
-    try:
-        # Use the more efficient head() rather than get().
-        s3_object_version.head()
-        return False
-    except botocore.exceptions.ClientError as e:
-        if "x-amz-delete-marker" in e.response["ResponseMetadata"]["HTTPHeaders"]:
-            return True
-        elif "404" == e.response["Error"]["Code"]:
-            # An older version of the key but not a DeleteMarker
-            return False
-        else:
-            return False
 
 
 class Envelope(TimestampedMixin):
