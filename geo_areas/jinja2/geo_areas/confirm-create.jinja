@@ -13,11 +13,9 @@
         }) }}
       {% endblock %}
       <h2 class="govuk-heading-m">Next steps</h2>
-      {#
       <p class="govuk-body">
-        You can now <a class="govuk-link" href={{ url("geo_area-ui-membership-create", kwargs={"sid": object.sid}) }} >edit memberships for this geographical area.</a>
+        You can now <a class="govuk-link" href={{ url("geo_area-ui-membership-create", kwargs={"sid": object.sid}) }} >add memberships for this geographical area.</a>
       </p>
-      #}
       <p class="govuk-body">To complete your task you must publish your change.</p>
       {{ govukButton({
         "text": "Go to your workbasket summary",

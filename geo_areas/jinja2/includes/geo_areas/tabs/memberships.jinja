@@ -1,6 +1,7 @@
 <div class="geo_areas__memberships govuk-grid-row">
   <div class="geo_areas__memberships__content govuk-grid-column-three-quarters">
     <h2 class="govuk-heading-l">Memberships</h2>
+    <p class="govuk-body"><a class="govuk-link" href="{{ url("geo_area-ui-membership-create", kwargs={"sid": object.sid}) }}">Create a new membership</a></p>
     {% if object.get_area_code_display() in ["Country", "Region"] %}
       <p class="govuk-body">This {{ object.get_area_code_display().lower() }} is a member of:</p>
     {% else %}
