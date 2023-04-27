@@ -338,6 +338,15 @@ Mocking s3 upload with minio
    SQLITE_S3_ENDPOINT_URL, and SQLITE_STORAGE_DIRECTORY), setting s3 endpoint url to 
    http://localhost:9003/
 
+Virus Scan and running locally
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We use a shared service accross the department for virus scanning to run locally set up the following:
+1. Follow set up `instructions <https://github.com/uktrade/dit-clamav-rest>`_ and run it
+2. set SKIP_CLAM_AV_FILE_UPLOAD to False and CLAM_USE_HTTP True
+3. add CLAM_AV_DOMAIN without http(s):// 
+4. set CLAM_AV_USERNAME,CLAM_AV_PASSWORD as the username and password found in the config.py in the dit-clamav-rest project
+
 How to contribute
 -----------------
 
