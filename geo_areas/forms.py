@@ -4,16 +4,20 @@ from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Accordion
 from crispy_forms_gds.layout import AccordionSection
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.db.models import TextChoices
+from django.forms import ValidationError
 
 from common.forms import BindNestedFormMixin
 from common.forms import CreateDescriptionForm
 from common.forms import DateInputFieldFixed
+from common.forms import FormSet
 from common.forms import GovukDateRangeField
 from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
@@ -159,6 +163,10 @@ class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
 
         return cleaned_data
 
+    class Meta:
+        model = GeographicalMembership
+        fields = ["valid_between"]
+
 
 class GeographicalMembershipAddForm(
     BindNestedFormMixin,
@@ -246,14 +254,14 @@ class GeographicalMembershipAddForm(
                 form=self,
                 field="new_membership_start_date",
                 start_date=start_date,
-                group_start_date=area_group.valid_between.lower,
+                container_start_date=area_group.valid_between.lower,
             )
             validate_dates(
                 form=self,
                 field="new_membership_end_date",
                 start_date=start_date,
                 end_date=end_date,
-                group_end_date=area_group.valid_between.upper,
+                container_end_date=area_group.valid_between.upper,
             )
 
         return cleaned_data
@@ -309,25 +317,25 @@ class GeographicalMembershipEditForm(BindNestedFormMixin, forms.Form):
                 form=self.fields["action"].nested_forms["END DATE"][0],
                 field="membership_end_date",
                 end_date=end_date,
-                group_end_date=membership.geo_group.valid_between.upper,
+                container_end_date=membership.geo_group.valid_between.upper,
             )
             validate_dates(
                 form=self,
                 field="",
                 end_date=end_date,
-                group_end_date=membership.geo_group.valid_between.upper,
+                container_end_date=membership.geo_group.valid_between.upper,
             )
             validate_dates(
                 form=self.fields["action"].nested_forms["END DATE"][0],
                 field="membership_end_date",
                 end_date=end_date,
-                group_start_date=membership.geo_group.valid_between.lower,
+                container_start_date=membership.geo_group.valid_between.lower,
             )
             validate_dates(
                 form=self,
                 field="",
                 end_date=end_date,
-                group_start_date=membership.geo_group.valid_between.lower,
+                container_start_date=membership.geo_group.valid_between.lower,
             )
 
         if membership and action == GeoMembershipAction.DELETE:
@@ -523,3 +531,252 @@ class GeographicalAreaEditCreateForm(GeographicalAreaCreateForm):
                 data_prevent_double_click="true",
             ),
         )
+
+
+class GeographicalMembershipGroupForm(ValidityPeriodForm):
+    geo_group = forms.ModelChoiceField(
+        label="Area group",
+        help_text="Select an area group to add this country or region to from the dropdown.",
+        queryset=None,  # populated in __init__
+    )
+
+    def __init__(self, *args, geo_area, **kwargs):
+        self.geo_area = geo_area
+        super().__init__(*args, **kwargs)
+
+        current_memberships = self.geo_area.groups.values_list("geo_group", flat=True)
+
+        self.fields["geo_group"].queryset = (
+            GeographicalArea.objects.filter(area_code=AreaCode.GROUP)
+            .exclude(pk__in=current_memberships)
+            .current()
+            .with_latest_description()
+            .as_at_today()
+            .order_by("description")
+        )
+        self.fields[
+            "geo_group"
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+
+        self.fields["end_date"].help_text = ""
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.form_tag = False
+
+        self.helper.layout = Layout(
+            Fieldset(
+                Div(
+                    Div(
+                        Field("geo_group"),
+                        css_class="tap-column govuk-!-width-one-half",
+                    ),
+                    Div(
+                        Field("start_date"),
+                        css_class="tap-column",
+                    ),
+                    Div(
+                        Field("end_date"),
+                        css_class="tap-column",
+                    ),
+                    css_class="tap-row",
+                ),
+                css_class="tap-inline",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        geo_group = cleaned_data.get("geo_group")
+        if geo_group:
+            start_date = cleaned_data["valid_between"].lower
+            end_date = cleaned_data["valid_between"].upper
+            validate_dates(
+                form=self,
+                field="start_date",
+                start_date=start_date,
+                container_start_date=geo_group.valid_between.lower,
+            )
+            validate_dates(
+                form=self,
+                field="start_date",
+                start_date=start_date,
+                container="country or region",
+                container_start_date=self.geo_area.valid_between.lower,
+            )
+            validate_dates(
+                form=self,
+                field="end_date",
+                end_date=end_date,
+                container_end_date=geo_group.valid_between.upper,
+            )
+            validate_dates(
+                form=self,
+                field="end_date",
+                end_date=end_date,
+                container="country or region",
+                container_end_date=self.geo_area.valid_between.upper,
+            )
+
+        return cleaned_data
+
+    class Meta:
+        model = GeographicalMembership
+        fields = ["valid_between", "geo_group"]
+
+
+class GeographicalMembershipMemberForm(ValidityPeriodForm):
+    member = forms.ModelChoiceField(
+        label="Country or region",
+        help_text="Select a country or region to add to this area group from the dropdown.",
+        queryset=None,  # populated in __init__
+    )
+
+    def __init__(self, *args, geo_area, **kwargs):
+        self.geo_area = geo_area
+        super().__init__(*args, **kwargs)
+
+        current_memberships = self.geo_area.memberships.all()
+
+        self.fields["member"].queryset = (
+            GeographicalArea.objects.exclude(area_code=AreaCode.GROUP)
+            .exclude(
+                pk__in=current_memberships,
+            )
+            .current()
+            .with_latest_description()
+            .as_at_today()
+            .order_by("description")
+        )
+        self.fields[
+            "member"
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+
+        self.fields["end_date"].help_text = ""
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.form_tag = False
+
+        self.helper.layout = Layout(
+            Fieldset(
+                Div(
+                    Div(
+                        Field("member"),
+                        css_class="tap-column govuk-!-width-one-half",
+                    ),
+                    Div(
+                        Field("start_date"),
+                        css_class="tap-column",
+                    ),
+                    Div(
+                        Field("end_date"),
+                        css_class="tap-column",
+                    ),
+                    css_class="tap-row",
+                ),
+                css_class="tap-inline",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        member = self.cleaned_data.get("member")
+        if member:
+            start_date = cleaned_data["valid_between"].lower
+            end_date = cleaned_data["valid_between"].upper
+            validate_dates(
+                form=self,
+                field="start_date",
+                start_date=start_date,
+                container_start_date=self.geo_area.valid_between.lower,
+            )
+            validate_dates(
+                form=self,
+                field="start_date",
+                start_date=start_date,
+                container="country or region",
+                container_start_date=member.valid_between.lower,
+            )
+            validate_dates(
+                form=self,
+                field="end_date",
+                end_date=end_date,
+                container_end_date=self.geo_area.valid_between.upper,
+            )
+            validate_dates(
+                form=self,
+                field="end_date",
+                end_date=end_date,
+                container="country or region",
+                container_end_date=member.valid_between.upper,
+            )
+
+        return cleaned_data
+
+    class Meta:
+        model = GeographicalMembership
+        fields = ["valid_between", "member"]
+
+
+class GeographicalMembershipBaseFormSet(FormSet):
+    extra = 0
+    min_num = 1
+    validate_min = True
+    validate_max = True
+
+    def __init__(self, *args, geo_area, **kwargs):
+        self.instance = kwargs.pop("instance", None)
+        self.geo_area = geo_area
+        super().__init__(*args, **kwargs)
+
+    def get_form_kwargs(self, index):
+        kwargs = super().get_form_kwargs(index)
+        kwargs["geo_area"] = self.geo_area
+        return kwargs
+
+
+class GeographicalMembershipGroupFormSet(GeographicalMembershipBaseFormSet):
+    prefix = "geo_membership-group-formset"
+    form = GeographicalMembershipGroupForm
+
+    def clean(self):
+        if any(self.errors):
+            return
+
+        cleaned_data = super().cleaned_data
+
+        geo_groups = [d["geo_group"] for d in cleaned_data if "geo_group" in d]
+        num_unique = len(set(geo_groups))
+        if len(geo_groups) != num_unique:
+            raise ValidationError(
+                "The same area group cannot be selected more than once.",
+            )
+        cleaned_data[0]["geo_groups"] = geo_groups
+
+        return cleaned_data
+
+
+class GeographicalMembershipMemberFormSet(GeographicalMembershipBaseFormSet):
+    prefix = "geo_membership-member-formset"
+    form = GeographicalMembershipMemberForm
+
+    def clean(self):
+        if any(self.errors):
+            return
+
+        cleaned_data = super().cleaned_data
+
+        members = [d["member"] for d in cleaned_data if "member" in d]
+        num_unique = len(set(members))
+        if len(members) != num_unique:
+            raise ValidationError(
+                "The same country or region cannot be selected more than once.",
+            )
+        cleaned_data[0]["members"] = members
+
+        return cleaned_data
