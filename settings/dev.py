@@ -45,4 +45,4 @@ CELERY_TASK_ALWAYS_EAGER = is_truthy(os.environ.get("CELERY_TASK_ALWAYS_EAGER"))
 SKIP_CLAM_AV_FILE_UPLOAD = is_truthy(os.environ.get("SKIP_CLAM_AV_FILE_UPLOAD", True))
 
 if SKIP_CLAM_AV_FILE_UPLOAD:
-    FILE_UPLOAD_HANDLERS = ("django.core.files.uploadhandler.MemoryFileUploadHandler",)
+    FILE_UPLOAD_HANDLERS = ()
