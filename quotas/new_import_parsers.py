@@ -2,39 +2,48 @@ from datetime import date
 
 from importer.namespaces import Tag
 from importer.new_parsers import NewElementParser
-from importer.parsers import BooleanElement
 from importer.parsers import ElementParser
-from importer.parsers import IntElement
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
-from importer.parsers import RangeLowerElement
-from importer.parsers import RangeUpperElement
 from importer.parsers import TextElement
 
 
 class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable):
+    value_mapping = {
+        "id": "order_number",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     xml_object_tag = "quota.order.number"
     record_code = "360"
     subrecord_code = "00"
 
-    sid: str
-    order_number: str
-    valid_between_lower: date
-    valid_between_upper: date
+    sid: str = None
+    order_number: str = None
+    valid_between_lower: date = None
+    valid_between_upper: date = None
 
 
 class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementParser):
+    value_mapping = {
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+        "quota_order_number_sid": "order_number__sid",
+        "geographical_area_id": "geographical_area__area_id",
+        "geographical_area_sid": "geographical_area__sid",
+    }
+
     xml_object_tag = "quota.order.number.origin"
     record_code = "360"
     subrecord_code = "10"
-    tag: str
 
-    sid: str
-    order_number__sid: str
-    geographical_area__area_id: str
-    valid_between_lower: date
-    valid_between_upper: date
-    geographical_area__sid: str
+    sid: str = None
+    order_number__sid: str = None
+    geographical_area__area_id: str = None
+    valid_between_lower: date = None
+    valid_between_upper: date = None
+    geographical_area__sid: str = None
 
 
 class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
@@ -42,37 +51,34 @@ class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
     record_code = "360"
     subrecord_code = "15"
 
-    origin__sid = TextElement(Tag("quota.order.number.origin.sid"))
-    excluded_geographical_area__sid = TextElement(
-        Tag("excluded.geographical.area.sid"),
-    )
+    origin__sid: str = None
+    excluded_geographical_area__sid: str = None
 
 
 class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
+    value_mapping = {
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     xml_object_tag = "quota.definition"
     record_code = "370"
     subrecord_code = "00"
 
-    sid = TextElement(Tag("quota.definition.sid"))
-    order_number__order_number = TextElement(Tag("quota.order.number.id"))
-    valid_between_lower: date
-    valid_between_upper: date
-    order_number__sid = TextElement(Tag("quota.order.number.sid"))
-    volume = TextElement(Tag("volume"))
-    initial_volume = TextElement(Tag("initial.volume"))
-    monetary_unit__code = TextElement(Tag("monetary.unit.code"))
-    measurement_unit__code = TextElement(Tag("measurement.unit.code"))
-    measurement_unit_qualifier__code = TextElement(
-        Tag("measurement.unit.qualifier.code"),
-    )
-    maximum_precision = TextElement(Tag("maximum.precision"))
-    quota_critical = BooleanElement(
-        Tag("critical.state"),
-        true_value="Y",
-        false_value="N",
-    )
-    quota_critical_threshold = TextElement(Tag("critical.threshold"))
-    description = TextElement(Tag("description"))
+    sid: str = None
+    order_number__order_number: str = None
+    valid_between_lower: date = None
+    valid_between_upper: date = None
+    order_number__sid: str = None
+    volume: int = None
+    initial_volume: str = None
+    monetary_unit__code: str = None
+    measurement_unit__code: str = None
+    measurement_unit_qualifier__code: str = None
+    maximum_precision: str = None
+    quota_critical: str = None
+    quota_critical_threshold: str = None
+    description: str = None
 
 
 class NewQuotaAssociationParser(NewWritable, NewElementParser):
@@ -80,35 +86,45 @@ class NewQuotaAssociationParser(NewWritable, NewElementParser):
     record_code = "370"
     subrecord_code = "05"
 
-    main_quota__sid = TextElement(Tag("main.quota.definition.sid"))
-    sub_quota__sid = TextElement(Tag("sub.quota.definition.sid"))
-    sub_quota_relation_type = TextElement(Tag("relation.type"))
-    coefficient = TextElement(Tag("coefficient"))
+    main_quota__sid: str = None
+    sub_quota__sid: str = None
+    sub_quota_relation_type: str = None
+    coefficient: str = None
 
 
 class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
+    value_mapping = {
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     xml_object_tag = "quota.blocking.period"
     record_code = "370"
     subrecord_code = "10"
 
-    sid = IntElement(Tag("quota.blocking.period.sid"))
-    quota_definition__sid = IntElement(Tag("quota.definition.sid"))
-    valid_between_lower = RangeLowerElement(Tag("blocking.start.date"))
-    valid_between_upper = RangeUpperElement(Tag("blocking.end.date"))
-    blocking_period_type = IntElement(Tag("blocking.period.type"))
-    description = TextElement(Tag("description"))
+    sid: str = None
+    quota_definition__sid: str = None
+    valid_between_lower: str = None
+    valid_between_upper: str = None
+    blocking_period_type: str = None
+    description: str = None
 
 
 class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, ElementParser):
+    value_mapping = {
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     xml_object_tag = "quota.suspension.period"
     record_code = "370"
     subrecord_code = "15"
 
-    sid = IntElement(Tag("quota.suspension.period.sid"))
-    quota_definition__sid = IntElement(Tag("quota.definition.sid"))
-    valid_between_lower = RangeLowerElement(Tag("suspension.start.date"))
-    valid_between_upper = RangeUpperElement(Tag("suspension.end.date"))
-    description = TextElement(Tag("description"))
+    sid: str = None
+    quota_definition__sid: str = None
+    valid_between_lower: str = None
+    valid_between_upper: str = None
+    description: str = None
 
 
 class NewQuotaEventParser(NewWritable, NewElementParser):
@@ -116,8 +132,8 @@ class NewQuotaEventParser(NewWritable, NewElementParser):
     record_code = "375"
     subrecord_code = "subrecord_code"
 
-    quota_definition__sid = TextElement(Tag("quota.definition.sid"))
-    occurrence_timestamp = TextElement(Tag("occurrence.timestamp"))
+    quota_definition__sid: str = None
+    occurrence_timestamp: str = None
 
     _additional_components = {
         # balance event

@@ -79,8 +79,23 @@ class NewImporter:
         self.print_import_file_stats(update_stats)
 
     def create_tmp_object(self, message_info: MessageInfo):
-        parser = self.get_parser(message_info.object_type)
-        return parser(message_info)
+        parser_cls = self.get_parser(message_info.object_type)
+        parser = parser_cls()
+
+        for data_item_key in message_info.data.keys():
+            mapped_data_item_key = data_item_key
+            if data_item_key in parser.value_mapping:
+                mapped_data_item_key = parser.value_mapping[data_item_key]
+
+            if hasattr(parser, mapped_data_item_key):
+                setattr(parser, mapped_data_item_key, message_info.data[data_item_key])
+            else:
+                raise Exception(
+                    f"{parser.xml_object_tag} {parser} does not have a {data_item_key} attribute, and "
+                    f"can't assign value {message_info.data[data_item_key]}",
+                )
+
+        return parser
 
     def get_parser(self, object_type: str):
         classes = self._get_parser_classes()
