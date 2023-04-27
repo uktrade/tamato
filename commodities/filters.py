@@ -9,6 +9,7 @@ from commodities.models.orm import GoodsNomenclature
 from common.filters import ActiveStateMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
+from common.validators import AlphanumericValidator
 from common.validators import NumericValidator
 
 
@@ -37,6 +38,12 @@ class CommodityFilter(ActiveStateMixin, TamatoFilter):
         lookup_expr="startswith",
         validators=[NumericValidator],
     )
+    descriptions__description = CharFilter(
+        label="Description",
+        widget=forms.TextInput(),
+        lookup_expr="icontains",
+        validators=[AlphanumericValidator],
+    )
     clear_url = reverse_lazy("commodity-ui-list")
 
     class Meta:
@@ -44,4 +51,4 @@ class CommodityFilter(ActiveStateMixin, TamatoFilter):
         form = CommodityFilterForm
 
         # Defines the order shown in the form.
-        fields = ["search", "item_id", "active_state"]
+        fields = ["search", "item_id", "active_state", "descriptions__description"]

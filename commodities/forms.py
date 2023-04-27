@@ -22,6 +22,7 @@ class CommodityFilterForm(forms.Form):
 
         self.helper.layout = Layout(
             Field.text("item_id", label_size=Size.SMALL),
+            Field.text("descriptions__description", label_size=Size.SMALL),
             Field.text("active_state", label_size=Size.SMALL),
             Button("submit", "Search and Filter", css_class="govuk-!-margin-top-6"),
             HTML(
