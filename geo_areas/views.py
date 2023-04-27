@@ -223,3 +223,54 @@ class GeoAreaEditUpdate(
     EditTaricView,
 ):
     """UI endpoint to edit geo area UPDATE instances."""
+
+
+class GeoAreaCreate(GeoAreaMixin, CreateTaricCreateView):
+    """UI endpoint for creating Geographical Area CREATE instances."""
+
+    template_name = "layouts/create.jinja"
+    form_class = forms.GeographicalAreaCreateForm
+
+    validate_business_rules = (
+        business_rules.GA1,
+        business_rules.GA7,
+    )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "Create a new geographical area"
+        return context
+
+    def get_result_object(self, form):
+        geo_area = super().get_result_object(form)
+        description = form.cleaned_data["geographical_area_description"]
+        description.described_geographicalarea = geo_area
+        description.update_type = UpdateType.CREATE
+        description.transaction = geo_area.transaction
+        description.save()
+
+        return geo_area
+
+
+class GeoAreaEditCreate(
+    GeoAreaMixin,
+    TrackedModelDetailMixin,
+    EditTaricView,
+):
+    """UI endpoint for editing Geographical Area CREATE instances."""
+
+    template_name = "layouts/create.jinja"
+    form_class = forms.GeographicalAreaEditCreateForm
+
+    validate_business_rules = (
+        business_rules.GA1,
+        business_rules.GA3,
+        business_rules.GA7,
+    )
+
+
+class GeoAreaConfirmCreate(
+    GeoAreaMixin,
+    TrackedModelDetailView,
+):
+    template_name = "geo_areas/confirm-create.jinja"
