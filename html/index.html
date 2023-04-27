@@ -133,6 +133,7 @@
 <li><a class="reference internal" href="#manually-trigger-the-upload-to-s3">Manually trigger the upload to s3</a></li>
 <li><a class="reference internal" href="#dump-transactions">Dump transactions</a></li>
 <li><a class="reference internal" href="#mocking-s3-upload-with-minio">Mocking s3 upload with minio</a></li>
+<li><a class="reference internal" href="#virus-scan-and-running-locally">Virus Scan and running locally</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#how-to-contribute">How to contribute</a></li>
@@ -413,6 +414,14 @@ this will be SQLITE_STORAGE_BUCKET_NAME, SQLITE_S3_ACCESS_KEY_ID, SQLITE_S3_SECR
 SQLITE_S3_ENDPOINT_URL, and SQLITE_STORAGE_DIRECTORY), setting s3 endpoint url to
 <a class="reference external" href="http://localhost:9003/">http://localhost:9003/</a></p></li>
 </ol>
+</section>
+<section id="virus-scan-and-running-locally">
+<h3>Virus Scan and running locally<a class="headerlink" href="#virus-scan-and-running-locally" title="Permalink to this headline">¶</a></h3>
+<p>We use a shared service accross the department for virus scanning to run locally set up the following:
+1. Follow set up <a class="reference external" href="https://github.com/uktrade/dit-clamav-rest">instructions</a> and run it
+2. set SKIP_CLAM_AV_FILE_UPLOAD to False and CLAM_USE_HTTP True
+3. add CLAM_AV_DOMAIN without http(s)://
+4. set CLAM_AV_USERNAME,CLAM_AV_PASSWORD as the username and password found in the config.py in the dit-clamav-rest project</p>
 </section>
 </section>
 <section id="how-to-contribute">
