@@ -14,6 +14,7 @@ from commodities.forms import CommodityImportForm
 from commodities.models import GoodsNomenclature
 from commodities.models.dc import get_chapter_collection
 from common.serializers import AutoCompleteSerializer
+from common.views import SortingMixin
 from common.views import TrackedModelDetailView
 from common.views import WithPaginationListView
 from workbaskets.models import WorkBasket
@@ -84,8 +85,24 @@ class CommodityList(CommodityMixin, WithPaginationListView):
         return context
 
 
-class CommodityDetail(CommodityMixin, TrackedModelDetailView):
+class CommodityDetail(CommodityMixin, TrackedModelDetailView, SortingMixin):
     template_name = "commodities/detail.jinja"
+    sort_by_fields = ["measure_type", "start_date", "geo_area"]
+    custom_sorting = {
+        "start_date": "valid_between",
+        "measure_type": "measure_type__sid",
+        "geo_area": "geographical_area__area_id",
+    }
+
+    @property
+    def measures(self):
+        ordering = self.get_ordering()
+        queryset = self.object.measures.as_at_today()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -99,5 +116,7 @@ class CommodityDetail(CommodityMixin, TrackedModelDetailView):
         snapshot = collection.get_snapshot(tx, snapshot_date)
         commodity = snapshot.get_commodity(self.object, self.object.suffix)
         context["parent"] = snapshot.get_parent(commodity)
+
+        context["measures"] = self.measures
 
         return context

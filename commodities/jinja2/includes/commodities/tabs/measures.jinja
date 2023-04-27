@@ -1,0 +1,53 @@
+{% from "components/sort_by.jinja" import sort_by %}
+
+{% set parent_code %}
+    {% if parent %}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("commodity-ui-detail", kwargs={"sid": parent.sid}) }}">{{ parent.code }}</a>
+    {% endif %}
+{% endset %}
+
+{% set table_rows = [] %}
+
+{% for object in measures %}
+
+  {% set object_link -%}
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('measure-ui-detail', kwargs={'sid': object.sid}) }}">{{ object.sid }}</a>
+  {%- endset %}
+
+  {% set geo_area_link -%}
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('geo_area-ui-detail', kwargs={'sid': object.geographical_area.sid}) }}">{{ object.geographical_area}} - {{ object.geographical_area.structure_description }}</a>
+  {%- endset %}
+
+  {{ table_rows.append([
+    {"text": object_link },
+    {"text": object.measure_type },
+    {"text": geo_area_link },
+    {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
+    {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
+  ]) or "" }}
+{% endfor %}
+
+{% set base_url = url('commodity-ui-detail', args=[object.sid]) %}
+
+{% set measure_type %}
+  {{ sort_by(request, "measure_type", "Measure type", base_url, anchor="#measures") }}
+{% endset %}
+
+{% set geo_area %}
+  {{ sort_by(request, "geo_area", "Geographical area", base_url, anchor="#measures") }}
+{% endset %}
+
+{% set start_date %}
+  {{ sort_by(request, "start_date", "Start date", base_url, anchor="#measures") }}
+{% endset %}
+
+{{ govukTable({
+  "head": [
+    {"text": "Measure SID" },
+    {"text": measure_type},
+    {"text": geo_area},
+    {"text": start_date},
+    {"text": "End date"},
+  ],
+  "rows": table_rows
+}) }}
