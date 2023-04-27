@@ -1,0 +1,47 @@
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{%- set table_rows = [] -%}
+{% for envelope in object_list %}
+
+  {%- set published_envelope_download_link -%}
+    {% if envelope.xml_file_exists %}
+      <a
+        class="govuk-link download-envelope"
+        href="{{ url('publishing:download-envelope-ui-download', kwargs={'pk': envelope.pk}) }}"
+        target="_blank"
+      >{{ envelope.envelope_id }}</a>
+    {% else %}
+      {{ envelope.envelope_id }}
+    {% endif %}
+  {%- endset -%}
+
+  {%- set envelope_file_history_link -%}
+    {{ envelope.get_versions()|length }}
+    (<a
+      class="govuk-link"
+      href="{{ url('publishing:envelope-history-ui-detail', kwargs={'envelope_id': envelope.envelope_id}) }}"
+    >view</a>)
+  {%- endset -%}
+
+  {{ table_rows.append([
+    {"html": published_envelope_download_link},
+    {"html": envelope_file_history_link},
+    {"text": envelope.packagedworkbaskets.last().workbasket.reason},
+    {"text": "{:%d\xa0%b\xa0%Y}".format(envelope.created_at)},
+  ]) or "" }}
+
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "Envelope"},
+    {"text": "Versions"},
+    {"text": "Description"},
+    {"text": "Date"},
+  ],
+  "rows": table_rows,
+  "classes": "envelopes"
+}) }}

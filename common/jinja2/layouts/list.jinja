@@ -6,7 +6,9 @@
 
 {% set create_url = create_url or "create" %}
 
-{% set page_title = "Find and edit " ~ object_list.model._meta.verbose_name_plural %}
+{% if not page_title %}
+  {% set page_title = "Find and edit " ~ object_list.model._meta.verbose_name_plural %}
+{% endif %}
 
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>

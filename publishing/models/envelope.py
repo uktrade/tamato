@@ -4,6 +4,7 @@ import tempfile
 from datetime import datetime
 from typing import Optional
 
+import boto3
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db.models import BooleanField
@@ -112,6 +113,16 @@ class EnvelopeQuerySet(QuerySet):
 
         return self.filter(envelope_id__regex=rf"{now:%y}\d{{4}}").order_by(
             "envelope_id",
+        )
+
+    def processed(self):
+        return self.filter(
+            Q(
+                packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+            )
+            | Q(
+                packagedworkbaskets__processing_state=ProcessingState.FAILED_PROCESSING,
+            ),
         )
 
     def unprocessed(self):
@@ -229,6 +240,43 @@ class Envelope(TimestampedMixin):
         self.xml_file.delete()
         self.deleted = True
 
+    def get_versions(self) -> EnvelopeQuerySet:
+        """Return a queryset of all processed Envelopes (all those that have
+        been accepted or rejected) that have the same envelope ID as this
+        envelope instance."""
+        envelope_qs = (
+            Envelope.objects.filter(envelope_id=self.envelope_id)
+            .non_deleted()
+            .processed()
+            .order_by("-pk")
+        )
+        return envelope_qs
+
+    @property
+    def xml_file_exists(self) -> bool:
+        """Returns True if an S3 object exists for this instance's `xml_file`
+        attribute, False otherwise."""
+        s3 = boto3.resource(
+            "s3",
+            aws_access_key_id=settings.S3_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY,
+            endpoint_url=settings.S3_ENDPOINT_URL,
+            region_name=settings.S3_REGION_NAME,
+        )
+        bucket = s3.Bucket(settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME)
+        objs = bucket.objects.filter(Prefix=self.xml_file.name, MaxKeys=1)
+        return len(list(objs)) > 0
+
+    @property
+    def xml_file_name(self):
+        return f"DIT{str(self.envelope_id)}.xml"
+
+    @property
+    def processing_state_description(self) -> str:
+        """Get the humanised description string of the associated packaged
+        workbasket's processing state."""
+        return self.packagedworkbaskets.last().get_processing_state_display()
+
     @atomic
     def upload_envelope(
         self,
@@ -241,8 +289,6 @@ class Envelope(TimestampedMixin):
         Side effects on success: Create Xml file and upload envelope XML to an
         S3 object.
         """
-
-        filename = f"DIT{str(self.envelope_id)}.xml"
 
         # transactions: will be serialized, then added to an envelope for upload.
         workbaskets = WorkBasket.objects.filter(pk=workbasket.pk)
@@ -301,10 +347,10 @@ class Envelope(TimestampedMixin):
 
                 envelope_file.seek(0, os.SEEK_SET)
 
-                self.xml_file.save(filename, content_file)
+                self.xml_file.save(self.xml_file_name, content_file)
 
                 logger.info("Workbasket saved to CDS S3 bucket")
-                logger.debug("Uploaded: %s", filename)
+                logger.debug("Uploaded: %s", self.xml_file_name)
 
     def __repr__(self):
         return f'<Envelope: envelope_id="{self.envelope_id}">'
