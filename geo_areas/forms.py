@@ -423,3 +423,103 @@ class GeographicalAreaEditForm(
                 data_prevent_double_click="true",
             ),
         )
+
+
+class GeographicalAreaCreateForm(ValidityPeriodForm):
+    description = forms.CharField(
+        label="Description",
+        help_text="The name of the country, area group or region.",
+        widget=forms.Textarea,
+        validators=[SymbolValidator],
+        error_messages={"required": "Enter a geographical area description."},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["area_code"].label = "Area code"
+        self.fields[
+            "area_code"
+        ].help_text = "Select if the new geographical area is a country, area group or region from the dropdown."
+        self.fields["area_code"].error_messages = {
+            "required": "Select an area code from the dropdown.",
+        }
+
+        self.fields["area_id"].label = "Area ID"
+        self.fields[
+            "area_id"
+        ].help_text = "For a country or region, the area ID is 2 upper-case letters, like AZ. For an area group, the area ID is 4 digits, like 1234."
+        self.fields["area_id"].error_messages = {
+            "required": "Enter a geographical area ID.",
+            "invalid": "Enter a geographical area ID in the correct format.",
+        }
+
+        self.fields[
+            "end_date"
+        ].help_text = (
+            "Leave empty if the geographical area is needed for an unlimited time."
+        )
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            "area_code",
+            Field(
+                "area_id",
+                css_class="govuk-input govuk-input--width-4",
+                maxlength="4",
+            ),
+            "start_date",
+            "end_date",
+            Field.textarea("description", label_size=Size.SMALL, rows=3),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        cleaned_data["geographical_area_description"] = GeographicalAreaDescription(
+            description=cleaned_data.get("description"),
+            validity_start=cleaned_data["valid_between"].lower,
+        )
+
+        return cleaned_data
+
+    class Meta:
+        model = GeographicalArea
+        fields = ["valid_between", "area_id", "area_code"]
+
+
+class GeographicalAreaEditCreateForm(GeographicalAreaCreateForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["description"].required = False
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            "area_code",
+            Field(
+                "area_id",
+                css_class="govuk-input govuk-input--width-4",
+                maxlength="4",
+            ),
+            "start_date",
+            "end_date",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
