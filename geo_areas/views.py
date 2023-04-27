@@ -1,5 +1,7 @@
 from typing import Type
 
+from django.shortcuts import redirect
+from django.urls import reverse
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -274,3 +276,87 @@ class GeoAreaConfirmCreate(
     TrackedModelDetailView,
 ):
     template_name = "geo_areas/confirm-create.jinja"
+
+
+class GeographicalMembershipCreate(
+    TrackedModelDetailMixin,
+    CreateTaricCreateView,
+):
+    template_name = "geo_areas/create-membership-formset.jinja"
+
+    @property
+    def instance(self):
+        return GeographicalArea.objects.current().get(sid=self.kwargs.get("sid"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        geo_area = self.instance
+        context.update(
+            {
+                "geo_area": geo_area,
+                "page_title": "Add memberships",
+            },
+        )
+        return context
+
+    def get_form(self):
+        if self.instance.is_group():
+            return super().get_form(forms.GeographicalMembershipMemberFormSet)
+        else:
+            return super().get_form(forms.GeographicalMembershipGroupFormSet)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["geo_area"] = self.instance
+        return kwargs
+
+    def create_memberships(self, form):
+        geo_area = self.instance
+
+        validity_periods = [
+            d["valid_between"] for d in form.cleaned_data if "valid_between" in d
+        ]
+        members = [d["member"] for d in form.cleaned_data if "member" in d]
+        geo_groups = [d["geo_group"] for d in form.cleaned_data if "geo_group" in d]
+
+        tx = WorkBasket.get_current_transaction(self.request)
+
+        if members:
+            for member, valid_between in zip(members, validity_periods):
+                membership = GeographicalMembership(
+                    geo_group=geo_area,
+                    member=member,
+                    valid_between=valid_between,
+                    transaction=tx,
+                    update_type=UpdateType.CREATE,
+                )
+                membership.save()
+
+        if geo_groups:
+            for geo_group, valid_between in zip(geo_groups, validity_periods):
+                membership = GeographicalMembership(
+                    geo_group=geo_group,
+                    member=geo_area,
+                    valid_between=valid_between,
+                    transaction=tx,
+                    update_type=UpdateType.CREATE,
+                )
+                membership.save()
+
+        return geo_area
+
+    def form_valid(self, form):
+        self.create_memberships(form)
+        return redirect(
+            reverse(
+                "geo_area-ui-membership-confirm-create",
+                kwargs={"sid": self.instance.sid},
+            ),
+        )
+
+
+class GeographicalMembershipConfirmCreate(
+    GeoAreaMixin,
+    TrackedModelDetailView,
+):
+    template_name = "geo_areas/confirm-create-membership.jinja"

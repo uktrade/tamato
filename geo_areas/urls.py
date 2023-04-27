@@ -12,6 +12,19 @@ detail = "<sid:sid>"
 description_detail = "<sid:described_geographicalarea__sid>/description/<sid:sid>"
 ui_patterns = get_ui_paths(views, detail, description=description_detail)
 
+ui_patterns += [
+    path(
+        "<sid:sid>/membership-create",
+        views.GeographicalMembershipCreate.as_view(),
+        name="geo_area-ui-membership-create",
+    ),
+    path(
+        "<sid:sid>/membership/confirm-create",
+        views.GeographicalMembershipConfirmCreate.as_view(),
+        name="geo_area-ui-membership-confirm-create",
+    ),
+]
+
 
 urlpatterns = [
     path("geographical-areas/", include(ui_patterns)),
