@@ -38,13 +38,13 @@
                 <a href="{{ request.path }}?status=" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if not request.GET.status %}selected-link{% endif %}">All</a>
             </li>
             <li>
-                <a href="{{ request.path }}?status=???" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == '???!!!' %}selected-link{% endif %}">Imported</a>
+                <a href="{{ request.path }}?status=IMPORTED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'IMPORTED' %}selected-link{% endif %}">Imported</a>
             </li>
             <li>
-                <a href="{{ request.path }}?status=???" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == '??!!!' %}selected-link{% endif %}">In review</a>
+                <a href="{{ request.path }}?status=REVIEW" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'REVIEW' %}selected-link{% endif %}">In review</a>
             </li>
             <li>
-                <a href="{{ request.path }}?status=???" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == '???!!!' %}selected-link{% endif %}">Completed</a>
+                <a href="{{ request.path }}?status=COMPLETED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'COMPLETED' %}selected-link{% endif %}">Completed</a>
             </li>
             </ul>
         </nav>
