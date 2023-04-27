@@ -37,3 +37,5 @@ USE_IMPORTER_CACHE = is_truthy(os.getenv("USE_IMPORTER_CACHE", False))
 S3_ACCESS_KEY_ID = "test_local_id"
 S3_SECRET_ACCESS_KEY = "test_local_key"
 S3_ENDPOINT_URL = "https://test-s3-url.local/"
+
+FILE_UPLOAD_HANDLERS = ("django.core.files.uploadhandler.MemoryFileUploadHandler",)

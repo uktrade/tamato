@@ -82,6 +82,7 @@ THIRD_PARTY_APPS = [
     "polymorphic",
     "rest_framework",
     "webpack_loader",
+    "django_chunk_upload_handlers",
 ]
 if SSO_ENABLED:
     THIRD_PARTY_APPS += [
@@ -664,3 +665,16 @@ if VCAP_APPLICATION.get("application_uris"):
     BASE_SERVICE_URL = "https://" + VCAP_APPLICATION["application_uris"][0]
 else:
     BASE_SERVICE_URL = os.environ.get("BASE_SERVICE_URL")
+
+
+# ClamAV
+CLAM_AV_USERNAME = os.environ.get("CLAM_AV_USERNAME")
+CLAM_AV_PASSWORD = os.environ.get("CLAM_AV_PASSWORD")
+CLAM_AV_DOMAIN = os.environ.get("CLAM_AV_DOMAIN")
+
+
+FILE_UPLOAD_HANDLERS = (
+    "django_chunk_upload_handlers.clam_av.ClamAVFileUploadHandler",
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
+)  # Order is important
