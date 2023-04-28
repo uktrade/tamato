@@ -1322,9 +1322,12 @@ def test_measure_formset_invalid_duplicate_certs(date_ranges, duty_sentence_pars
         )
 
 
-def test_measure_formset_conditions_field_queryset(
+def test_measure_formset_conditions_action_field_queryset(
     date_ranges,
 ):
+    """Tests measure actions select field for create & edit measure conditons
+    Create measure conditions should not return negative action codes While Edit
+    measure conditions should return all aciton codes."""
     (
         positive_action,
         negative_action,
@@ -1347,3 +1350,14 @@ def test_measure_formset_conditions_field_queryset(
     assert positive_action in form["action"].field.queryset
     assert single_action in form["action"].field.queryset
     assert negative_action not in form["action"].field.queryset
+
+    edit_form = forms.MeasureConditionsForm(
+        data={},
+        prefix=MEASURE_CONDITIONS_FORMSET_PREFIX,
+        instance=None,
+    )
+
+    assert edit_form
+    assert positive_action in edit_form["action"].field.queryset
+    assert single_action in edit_form["action"].field.queryset
+    assert negative_action in edit_form["action"].field.queryset

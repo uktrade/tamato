@@ -184,6 +184,8 @@ def validate_conditions_formset(cleaned_data):
 
     # for all unique condition codes the number of unique action codes will be equal
     # if the form is valid
+    print(num_unique_conditions)
+    print(num_unique_condition_action_codes)
     if num_unique_conditions != num_unique_condition_action_codes:
         errors_list.append(
             ValidationError(
@@ -199,6 +201,7 @@ def validate_conditions_formset(cleaned_data):
             ),
         )
     if errors_list:
+        print("rasing error")
         raise ValidationError(errors_list)
 
 
