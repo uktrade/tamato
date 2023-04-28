@@ -1,16 +1,13 @@
 from datetime import date
 
+from certificates.import_handlers import *
 from importer.new_parsers import NewElementParser
-from importer.parsers import ElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
-from importer.parsers import ValidityMixin
-from importer.parsers import ValidityStartMixin
-from importer.parsers import Writable
-from importer.taric import RecordParser
 
 
 class NewCertificateTypeParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = CertificateTypeHandler
     record_code = "110"
     subrecord_code = "00"
 
@@ -21,7 +18,8 @@ class NewCertificateTypeParser(NewValidityMixin, NewWritable, NewElementParser):
     valid_between_upper: date = None
 
 
-class CertificateTypeDescriptionParser(Writable, ElementParser):
+class NewCertificateTypeDescriptionParser(NewWritable, NewElementParser):
+    handler = CertificateTypeDescriptionHandler
     record_code = "110"
     subrecord_code = "05"
 
@@ -32,8 +30,8 @@ class CertificateTypeDescriptionParser(Writable, ElementParser):
     description: str = None
 
 
-@RecordParser.register_child("certificate")
-class CertificateParser(ValidityMixin, Writable, ElementParser):
+class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = CertificateHandler
     record_code = "205"
     subrecord_code = "00"
 
@@ -46,6 +44,7 @@ class CertificateParser(ValidityMixin, Writable, ElementParser):
 
 
 class NewCertificateDescriptionParser(NewWritable, NewElementParser):
+    handler = CertificateDescriptionHandler
     record_code = "205"
     subrecord_code = "10"
 
@@ -58,7 +57,8 @@ class NewCertificateDescriptionParser(NewWritable, NewElementParser):
     description: str = None
 
 
-class CertificateDescriptionPeriodParser(ValidityStartMixin, Writable, ElementParser):
+class NewCertificateDescriptionPeriodParser(NewWritable, NewElementParser):
+    handler = CertificateDescriptionPeriodHandler
     record_code = "205"
     subrecord_code = "05"
 

@@ -1,11 +1,14 @@
 from datetime import date
 
+from additional_codes.import_handlers import *
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
 
 
 class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = AdditionalCodeHandler
+
     record_code = "245"
     subrecord_code = "00"
 
@@ -19,6 +22,8 @@ class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
+    handler = AdditionalCodeDescriptionPeriodHandler
+
     record_code = "245"
     subrecord_code = "05"
 
@@ -32,6 +37,8 @@ class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
 
 
 class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
+    handler = AdditionalCodeDescriptionHandler
+
     record_code = "245"
     subrecord_code = "10"
 
@@ -46,6 +53,7 @@ class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = AdditionalCodeTypeHandler
     record_code = "120"
     subrecord_code = "00"
 
@@ -58,6 +66,7 @@ class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParse
 
 
 class NewAdditionalCodeTypeDescriptionParser(NewWritable, NewElementParser):
+    handler = AdditionalCodeTypeDescriptionHandler
     record_code = "120"
     subrecord_code = "05"
 
@@ -73,6 +82,8 @@ class NewFootnoteAssociationAdditionalCodeParser(
     NewWritable,
     NewElementParser,
 ):
+    # todo : workout why this does not have a handler
+    handler = None
     record_code = "245"
     subrecord_code = "15"
 

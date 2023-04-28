@@ -6,6 +6,7 @@ from importer.parsers import ElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
 from importer.parsers import TextElement
+from quotas.import_handlers import *
 
 
 class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable):
@@ -23,6 +24,9 @@ class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable)
     order_number: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
+
+    links = []
+    handler = QuotaOrderNumberHandler
 
 
 class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementParser):
@@ -45,6 +49,8 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
     valid_between_upper: date = None
     geographical_area__sid: str = None
 
+    handler = QuotaOrderNumberOriginHandler
+
 
 class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
     xml_object_tag = "quota.order.number.origin.exclusions"
@@ -54,12 +60,16 @@ class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
     origin__sid: str = None
     excluded_geographical_area__sid: str = None
 
+    handler = QuotaOrderNumberOriginExclusionHandler
+
 
 class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
     value_mapping = {
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
+
+    handler = QuotaDefinitionHandler
 
     xml_object_tag = "quota.definition"
     record_code = "370"
@@ -82,6 +92,8 @@ class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewQuotaAssociationParser(NewWritable, NewElementParser):
+    handler = QuotaAssociationHandler
+
     xml_object_tag = "quota.association"
     record_code = "370"
     subrecord_code = "05"
@@ -97,6 +109,8 @@ class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
+
+    handler = QuotaBlockingHandler
 
     xml_object_tag = "quota.blocking.period"
     record_code = "370"
@@ -116,6 +130,8 @@ class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, ElementParser):
         "validity_end_date": "valid_between_upper",
     }
 
+    handler = QuotaSuspensionHandler
+
     xml_object_tag = "quota.suspension.period"
     record_code = "370"
     subrecord_code = "15"
@@ -128,6 +144,8 @@ class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, ElementParser):
 
 
 class NewQuotaEventParser(NewWritable, NewElementParser):
+    handler = QuotaEventHandler
+
     xml_object_tag = r"quota.([a-z.]+).event"
     record_code = "375"
     subrecord_code = "subrecord_code"

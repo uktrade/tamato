@@ -1,11 +1,13 @@
 from datetime import date
 
+from footnotes.import_handlers import *
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
 
 
 class NewFootnoteTypeParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = FootnoteTypeHandler
     record_code = "100"
     subrecord_code = "00"
 
@@ -18,6 +20,8 @@ class NewFootnoteTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewFootnoteTypeDescriptionParser(NewWritable, NewElementParser):
+    handler = FootnoteTypeDescriptionHandler
+
     record_code = "100"
     subrecord_code = "05"
 
@@ -29,6 +33,8 @@ class NewFootnoteTypeDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = FootnoteHandler
+
     record_code = "200"
     subrecord_code = "00"
 
@@ -41,6 +47,8 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
+    handler = FootnoteDescriptionHandler
+
     record_code = "200"
     subrecord_code = "10"
 
@@ -54,6 +62,8 @@ class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser):
+    handler = FootnoteDescriptionPeriodHandler
+
     record_code = "200"
     subrecord_code = "05"
 
