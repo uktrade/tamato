@@ -417,3 +417,46 @@ def test_geo_area_edit_create_view(
     data_changes = {**date_post_data("end_date", date_ranges.normal.upper)}
     with raises_if(ValidationError, not True):
         use_edit_view(geo_area, data_changes)
+
+
+def test_geographical_membership_create_view(
+    valid_user_client,
+    session_workbasket,
+    date_ranges,
+):
+    """Tests that multiple geographical memberships can be created."""
+    country = factories.CountryFactory.create(valid_between=date_ranges.no_end)
+    area_groups = factories.GeoGroupFactory.create_batch(
+        2,
+        valid_between=date_ranges.no_end,
+    )
+
+    form_data = {
+        "geo_membership-group-formset-0-geo_group": area_groups[0].pk,
+        "geo_membership-group-formset-0-start_date_0": date_ranges.no_end.lower.day,
+        "geo_membership-group-formset-0-start_date_1": date_ranges.no_end.lower.month,
+        "geo_membership-group-formset-0-start_date_2": date_ranges.no_end.lower.year,
+        "geo_membership-group-formset-1-geo_group": area_groups[1].pk,
+        "geo_membership-group-formset-1-start_date_0": date_ranges.no_end.lower.day,
+        "geo_membership-group-formset-1-start_date_1": date_ranges.no_end.lower.month,
+        "geo_membership-group-formset-1-start_date_2": date_ranges.no_end.lower.year,
+    }
+
+    url = reverse("geo_area-ui-membership-create", kwargs={"sid": country.sid})
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    redirect_url = reverse(
+        "geo_area-ui-membership-confirm-create",
+        kwargs={"sid": country.sid},
+    )
+    assert response.url == redirect_url
+
+    memberships = GeographicalMembership.objects.filter(
+        transaction__workbasket=session_workbasket,
+    )
+    for i, membership in enumerate(memberships):
+        assert membership.update_type == UpdateType.CREATE
+        assert membership.member == country
+        assert membership.geo_group == area_groups[i]
+        assert membership.valid_between == date_ranges.no_end

@@ -384,3 +384,172 @@ def test_geographical_area_create_form_missing_data():
     }
     for field, message in expected_form_errors.items():
         assert message in form.errors[field]
+
+
+def test_geographical_membership_group_form_valid_selection(date_ranges):
+    """Tests that GeographicalMembershipGroupForm is valid when required fields
+    are in data."""
+    country = factories.CountryFactory.create(valid_between=date_ranges.no_end)
+    geo_group = factories.GeoGroupFactory.create(valid_between=date_ranges.no_end)
+
+    form_data = {
+        "geo_group": geo_group.pk,
+        "start_date_0": date_ranges.no_end.lower.day,
+        "start_date_1": date_ranges.no_end.lower.month,
+        "start_date_2": date_ranges.no_end.lower.year,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalMembershipGroupForm(data=form_data, geo_area=country)
+        assert form.is_valid()
+
+
+def test_geographical_membership_group_form_invalid_selection(date_ranges):
+    """Tests that GeographicalMembershipGroupForm is not valid when selection
+    field contains invalid data."""
+    country = factories.CountryFactory.create(valid_between=date_ranges.no_end)
+
+    form_data = {
+        "geo_group": "test",
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalMembershipGroupForm(data=form_data, geo_area=country)
+        assert not form.is_valid()
+        assert (
+            "Select a valid choice. That choice is not one of the available choices."
+            in form.errors["geo_group"]
+        )
+
+
+def test_geographical_membership_group_form_invalid_dates(date_ranges):
+    """Tests that GeographicalMembershipGroupForm is not valid when date fields
+    contain invalid data."""
+    country = factories.CountryFactory.create(valid_between=date_ranges.normal)
+    area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
+
+    form_data = {
+        "geo_group": area_group.pk,
+        "start_date_0": date_ranges.earlier.lower.day,
+        "start_date_1": date_ranges.earlier.lower.month,
+        "start_date_2": date_ranges.earlier.lower.year,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalMembershipGroupForm(data=form_data, geo_area=country)
+        assert not form.is_valid()
+        assert "start_date" and "end_date" in form.errors.keys()
+
+
+def test_geographical_membership_group_formset_same_selection(date_ranges):
+    """Tests that GeographicalMembershipGroupFormSet is not valid when a
+    geographical area has been selected more than once."""
+    country = factories.CountryFactory.create(valid_between=date_ranges.no_end)
+    area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.no_end)
+
+    form_data = {
+        "geo_membership-group-formset-0-geo_group": area_group.pk,
+        "geo_membership-group-formset-0-start_date_0": date_ranges.no_end.lower.day,
+        "geo_membership-group-formset-0-start_date_1": date_ranges.no_end.lower.month,
+        "geo_membership-group-formset-0-start_date_2": date_ranges.no_end.lower.year,
+        "geo_membership-group-formset-1-geo_group": area_group.pk,
+        "geo_membership-group-formset-1-start_date_0": date_ranges.no_end.lower.day,
+        "geo_membership-group-formset-1-start_date_1": date_ranges.no_end.lower.month,
+        "geo_membership-group-formset-1-start_date_2": date_ranges.no_end.lower.year,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        formset = forms.GeographicalMembershipGroupFormSet(
+            data=form_data,
+            geo_area=country,
+        )
+        assert not formset.is_valid()
+        assert (
+            "The same area group cannot be selected more than once."
+            in formset.non_form_errors()
+        )
+
+
+def test_geographical_membership_member_form_valid_selection(date_ranges):
+    """Tests that GeographicalMembershipMemberForm is valid when required fields
+    are in data."""
+    geo_group = factories.GeoGroupFactory.create(valid_between=date_ranges.no_end)
+    country = factories.CountryFactory.create(valid_between=date_ranges.no_end)
+
+    form_data = {
+        "member": country.pk,
+        "start_date_0": date_ranges.no_end.lower.day,
+        "start_date_1": date_ranges.no_end.lower.month,
+        "start_date_2": date_ranges.no_end.lower.year,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalMembershipMemberForm(
+            data=form_data,
+            geo_area=geo_group,
+        )
+        assert form.is_valid()
+
+
+def test_geographical_membership_member_form_invalid_selection(date_ranges):
+    """Tests that GeographicalMembershipMemberForm is not valid when selection
+    field contains invalid data."""
+    geo_group = factories.GeoGroupFactory.create(valid_between=date_ranges.no_end)
+
+    form_data = {
+        "member": "test",
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalMembershipMemberForm(
+            data=form_data,
+            geo_area=geo_group,
+        )
+        assert not form.is_valid()
+        assert (
+            "Select a valid choice. That choice is not one of the available choices."
+            in form.errors["member"]
+        )
+
+
+def test_geographical_membership_member_form_invalid_dates(date_ranges):
+    """Tests that GeographicalMembershipMemberForm is not valid when date fields
+    contain invalid data."""
+    country = factories.CountryFactory.create(valid_between=date_ranges.normal)
+    area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
+
+    form_data = {
+        "member": country.pk,
+        "start_date_0": date_ranges.earlier.lower.day,
+        "start_date_1": date_ranges.earlier.lower.month,
+        "start_date_2": date_ranges.earlier.lower.year,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.GeographicalMembershipMemberForm(
+            data=form_data,
+            geo_area=area_group,
+        )
+        assert not form.is_valid()
+        assert "start_date" and "end_date" in form.errors.keys()
+
+
+def test_geographical_membership_member_formset_same_selection(date_ranges):
+    """Tests that GeographicalMembershipMemberFormSet is not valid when a
+    geographical area has been selected more than once."""
+    country = factories.CountryFactory.create(valid_between=date_ranges.no_end)
+    area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.no_end)
+
+    form_data = {
+        "geo_membership-member-formset-0-member": country.pk,
+        "geo_membership-member-formset-0-start_date_0": date_ranges.no_end.lower.day,
+        "geo_membership-member-formset-0-start_date_1": date_ranges.no_end.lower.month,
+        "geo_membership-member-formset-0-start_date_2": date_ranges.no_end.lower.year,
+        "geo_membership-member-formset-1-member": country.pk,
+        "geo_membership-member-formset-1-start_date_0": date_ranges.no_end.lower.day,
+        "geo_membership-member-formset-1-start_date_1": date_ranges.no_end.lower.month,
+        "geo_membership-member-formset-1-start_date_2": date_ranges.no_end.lower.year,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        formset = forms.GeographicalMembershipMemberFormSet(
+            data=form_data,
+            geo_area=area_group,
+        )
+        assert not formset.is_valid()
+        assert (
+            "The same country or region cannot be selected more than once."
+            in formset.non_form_errors()
+        )
