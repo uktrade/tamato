@@ -1,0 +1,85 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{% set page_title = "Envelope history for " ~ xml_file_name %}
+
+
+{% block breadcrumb %}
+<div class="govuk-breadcrumbs">
+  <ol class="govuk-breadcrumbs__list">
+    <li class="govuk-breadcrumbs__list-item">
+      <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
+    </li>
+    <li class="govuk-breadcrumbs__list-item">
+      <a class="govuk-breadcrumbs__link" href="{{ url('publishing:envelope-list-ui-list') }}">Find processed envelopes</a>
+    </li>
+    <li class="govuk-breadcrumbs__list-item">
+      {{ page_title }}
+    </li>
+  </ol>
+</div>
+{% endblock %}
+
+
+{% block content %}
+
+{%- set table_rows = [] -%}
+{%- for envelope in object_list %}
+  {%- set size = "Unavailable" %}
+  {%- set status = envelope.processing_state_description %}
+
+  {%- set workbasket_link %}
+    {%- if envelope.packagedworkbaskets.all() and envelope.packagedworkbaskets.last().workbasket %}
+      <a
+        class="govuk-link"
+        href="{{ url('workbaskets:workbasket-ui-changes', kwargs={'pk': envelope.packagedworkbaskets.last().workbasket.id}) }}"
+      >{{ envelope.packagedworkbaskets.last().workbasket.id }}</a>
+    {%- else %}
+      Unavailable
+    {%- endif %}
+  {%- endset %}
+
+  {%- set date = "{:%d\xa0%b\xa0%Y, %H:%M}".format(envelope.created_at) %}
+  {%- set download_link = "Unavailable" %}
+
+  {%- if envelope.xml_file_exists %}
+    {%- set size = envelope.xml_file.size|filesizeformat(true) %}
+    {%- set download_link %}
+      <a
+        class="govuk-link"
+        href="{{ url('publishing:download-envelope-ui-download', kwargs={'pk': envelope.pk}) }}"
+        target="_blank"
+      >Download</a>
+    {% endset %}
+  {%- endif %}
+
+  {{ table_rows.append([
+      {"text": size},
+      {"text": status},
+      {"text": workbasket_link},
+      {"text": date},
+      {"html": download_link},
+  ]) or "" }}
+{%- endfor %}
+
+<h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+<div class="govuk-grid-row govuk-!-margin-bottom-6">
+  <div class="govuk-grid-column-full">
+
+    {{ govukTable({
+      "head": [
+        {"text": "File size"},
+        {"text": "Status"},
+        {"text": "Workbasket"},
+        {"text": "Date & time"},
+        {"text": "Action"},
+      ],
+      "rows": table_rows
+    }) }}
+
+  </div>
+</div>
+{% endblock %}

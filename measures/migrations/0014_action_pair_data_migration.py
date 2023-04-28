@@ -26,6 +26,17 @@ def generate_action_pairs(apps, schema_editor):
 
     MeasureAction = apps.get_model("measures", "MeasureAction")
     MeasureActionPair = apps.get_model("measures", "MeasureActionPair")
+
+    if not MeasureAction.objects.all():
+        # The Sqlite dump task, export_and_upload_sqlite, runs migrations before
+        # populating the database. Because no MeasureAction instances are
+        # available in the DB at this point, this data migration has nothing to
+        # do and would in fact fail. However, since MeasureActionPair is soley
+        # used to enable a UI provision in the Tamato application, instances of
+        # MeasureActionPair and its data migrations, are not required as part of
+        # the Sqlite export.
+        return
+
     for positive, negative in action_code_mappings:
         positive_action = MeasureAction.objects.get(code=positive)
         negative_action = MeasureAction.objects.get(code=negative)
