@@ -3,9 +3,12 @@ from datetime import date
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
+from measures.import_handlers import *
 
 
 class NewMeasureTypeSeriesParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = MeasureTypeSeriesHandler
+
     record_code = "140"
     subrecord_code = "00"
 
@@ -18,6 +21,8 @@ class NewMeasureTypeSeriesParser(NewValidityMixin, NewWritable, NewElementParser
 
 
 class NewMeasureTypeSeriesDescriptionParser(NewWritable, NewElementParser):
+    handler = MeasureTypeSeriesDescriptionHandler
+
     record_code = "140"
     subrecord_code = "05"
 
@@ -29,6 +34,8 @@ class NewMeasureTypeSeriesDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewMeasurementUnitParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = MeasurementUnitHandler
+
     record_code = "210"
     subrecord_code = "00"
 
@@ -40,6 +47,8 @@ class NewMeasurementUnitParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMeasurementUnitDescriptionParser(NewWritable, NewElementParser):
+    handler = MeasurementUnitDescriptionHandler
+
     record_code = "210"
     subrecord_code = "05"
 
@@ -55,6 +64,8 @@ class NewMeasurementUnitQualifierParser(
     NewWritable,
     NewElementParser,
 ):
+    handler = MeasurementUnitQualifierHandler
+
     record_code = "215"
     subrecord_code = "00"
 
@@ -66,6 +77,8 @@ class NewMeasurementUnitQualifierParser(
 
 
 class NewMeasurementUnitQualifierDescriptionParser(NewWritable, NewElementParser):
+    handler = MeasurementUnitQualifierDescriptionHandler
+
     record_code = "215"
     subrecord_code = "05"
 
@@ -77,6 +90,8 @@ class NewMeasurementUnitQualifierDescriptionParser(NewWritable, NewElementParser
 
 
 class NewMeasurementParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = MeasurementHandler
+
     record_code = "220"
     subrecord_code = "00"
 
@@ -89,6 +104,8 @@ class NewMeasurementParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMonetaryUnitParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = MonetaryUnitHandler
+
     record_code = "225"
     subrecord_code = "00"
 
@@ -100,6 +117,8 @@ class NewMonetaryUnitParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMonetaryUnitDescriptionParser(NewWritable, NewElementParser):
+    handler = MonetaryUnitDescriptionHandler
+
     record_code = "225"
     subrecord_code = "05"
 
@@ -111,6 +130,8 @@ class NewMonetaryUnitDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewDutyExpressionParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = DutyExpressionHandler
+
     record_code = "230"
     subrecord_code = "00"
 
@@ -125,6 +146,8 @@ class NewDutyExpressionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
+    handler = DutyExpressionDescriptionHandler
+
     record_code = "230"
     subrecord_code = "05"
 
@@ -136,6 +159,8 @@ class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewMeasureTypeParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = MeasureTypeHandler
+
     record_code = "235"
     subrecord_code = "00"
 
@@ -154,6 +179,8 @@ class NewMeasureTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMeasureTypeDescriptionParser(NewWritable, NewElementParser):
+    handler = MeasureTypeDescriptionHandler
+
     record_code = "235"
     subrecord_code = "05"
 
@@ -169,6 +196,8 @@ class NewAdditionalCodeTypeMeasureTypeParser(
     NewWritable,
     NewElementParser,
 ):
+    handler = AdditionalCodeTypeMeasureTypeHandler
+
     record_code = "240"
     subrecord_code = "00"
 
@@ -181,6 +210,8 @@ class NewAdditionalCodeTypeMeasureTypeParser(
 
 
 class NewMeasureConditionCodeParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = MeasureConditionCodeHandler
+
     record_code = "350"
     subrecord_code = "00"
 
@@ -192,6 +223,8 @@ class NewMeasureConditionCodeParser(NewValidityMixin, NewWritable, NewElementPar
 
 
 class NewMeasureConditionCodeDescriptionParser(NewWritable, NewElementParser):
+    handler = MeasureConditionCodeDescriptionHandler
+
     record_code = "350"
     subrecord_code = "05"
 
@@ -203,6 +236,8 @@ class NewMeasureConditionCodeDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewMeasureActionParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = MeasureActionHandler
+
     record_code = "355"
     subrecord_code = "00"
 
@@ -214,6 +249,8 @@ class NewMeasureActionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMeasureActionDescriptionParser(NewWritable, NewElementParser):
+    handler = MeasureActionDescriptionHandler
+
     record_code = "355"
     subrecord_code = "05"
 
@@ -225,6 +262,8 @@ class NewMeasureActionDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = MeasureHandler
+
     record_code = "430"
     subrecord_code = "00"
 
@@ -251,6 +290,8 @@ class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMeasureComponentParser(NewWritable, NewElementParser):
+    handler = MeasureComponentHandler
+
     record_code = "430"
     subrecord_code = "05"
 
@@ -265,6 +306,8 @@ class NewMeasureComponentParser(NewWritable, NewElementParser):
 
 
 class NewMeasureConditionParser(NewWritable, NewElementParser):
+    handler = MeasureConditionHandler
+
     record_code = "430"
     subrecord_code = "10"
 
@@ -284,6 +327,8 @@ class NewMeasureConditionParser(NewWritable, NewElementParser):
 
 
 class NewMeasureConditionComponentParser(NewWritable, NewElementParser):
+    handler = MeasureConditionComponentHandler
+
     record_code = "430"
     subrecord_code = "11"
 
@@ -298,6 +343,8 @@ class NewMeasureConditionComponentParser(NewWritable, NewElementParser):
 
 
 class NewMeasureExcludedGeographicalAreaParser(NewWritable, NewElementParser):
+    handler = MeasureExcludedGeographicalAreaHandler
+
     record_code = "430"
     subrecord_code = "15"
 
@@ -309,6 +356,8 @@ class NewMeasureExcludedGeographicalAreaParser(NewWritable, NewElementParser):
 
 
 class NewFootnoteAssociationMeasureParser(NewWritable, NewElementParser):
+    handler = FootnoteAssociationMeasureHandler
+
     record_code = "430"
     subrecord_code = "20"
 

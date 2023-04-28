@@ -1,7 +1,8 @@
+from typing import List
+
 from bs4 import BeautifulSoup
 
-from importer.new_parsers import MessageInfo
-from importer.new_parsers import NewElementParser
+from importer.new_parsers import TransactionParser
 
 
 class NewImporter:
@@ -11,8 +12,7 @@ class NewImporter:
 
     bs_taric3_file: BeautifulSoup
     raw_xml: str
-    objects = []
-    _parsers = {}
+    parsed_transactions: List[TransactionParser]
 
     def __init__(
         self,
@@ -25,6 +25,8 @@ class NewImporter:
         # dependencies=None,
         # record_group: Sequence[str] = None
     ):
+        self.parsed_transactions = []
+
         # Read xml into string
         with open(taric3_file, "r") as file:
             self.raw_xml = file.read()
@@ -32,88 +34,56 @@ class NewImporter:
         # load the taric3 file into memory, via beautiful soup
         self.bs_taric3_file = BeautifulSoup(self.raw_xml, "xml")
 
-        # tmp : report on file stats
-        self.report_taric3_stats()
+        # parse transactions
+        self.parse()
 
-        # iterate through and virtually create objects
-
-        # Validate each relationship
+        # validate, check dependencies and data
+        self.validate()
 
         # if all good, commit to workbasket
 
-    def message_info(self, message) -> MessageInfo:
-        return MessageInfo(message)
-
-    def print_import_file_stats(self, update_stats: dict):
+    def print_stats(self, update_stats: dict):
         for key in update_stats.keys():
             print(f"{key} : {update_stats[key]}")
 
-    def report_taric3_stats(self):
+    def parse(self):
         transactions = self.bs_taric3_file.find_all("env:transaction")
-        transaction_count = len(transactions)
+
+        for transaction in transactions:
+            self.parsed_transactions.append(TransactionParser(transaction))
+
+    def stats(self):
+        transaction_count = len(self.parsed_transactions)
         total_message_count = 0
         update_stats = {}
 
-        for transaction in transactions:
-            messages = transaction.find_all("env:app.message")
-            message_count = len(messages)
-            total_message_count += message_count
+        for transaction in self.parsed_transactions:
+            message_count = len(transaction.parsed_messages)
 
-            for message in messages:
-                message_info = self.message_info(message)
-                # add to stats
+            total_message_count += message_count
+            for taric_object in transaction.taric_objects:
                 key = (
-                    message_info.object_type.replace(".", "_")
+                    taric_object.xml_object_tag.replace(".", "_")
                     + "_"
-                    + message_info.update_type_name
+                    + taric_object.update_type_name
                 )
                 if key in update_stats.keys():
                     update_stats[key] += 1
                 else:
                     update_stats[key] = 1
 
-                self.objects.append(self.create_tmp_object(message_info))
-
         update_stats["transactions"] = transaction_count
         update_stats["messages"] = total_message_count
-        self.print_import_file_stats(update_stats)
 
-    def create_tmp_object(self, message_info: MessageInfo):
-        parser_cls = self.get_parser(message_info.object_type)
-        parser = parser_cls()
+        return update_stats
 
-        for data_item_key in message_info.data.keys():
-            mapped_data_item_key = data_item_key
-            if data_item_key in parser.value_mapping:
-                mapped_data_item_key = parser.value_mapping[data_item_key]
+    def validate(self):
+        """Iterate through transactions and each taric model within, and verify
+        progressively from the first transaction onwards, but not looking
+        forwards for related objects, only each transaction backwards."""
 
-            if hasattr(parser, mapped_data_item_key):
-                setattr(parser, mapped_data_item_key, message_info.data[data_item_key])
-            else:
-                raise Exception(
-                    f"{parser.xml_object_tag} {parser} does not have a {data_item_key} attribute, and "
-                    f"can't assign value {message_info.data[data_item_key]}",
-                )
-
-        return parser
-
-    def get_parser(self, object_type: str):
-        classes = self._get_parser_classes()
-
-        for cls in classes:
-            if cls.xml_object_tag == object_type:
-                return cls
-
-        raise Exception(f"No parser class matching {object_type}")
-
-    def _get_parser_classes(self):
-        return self._get_all_subclasses(NewElementParser)
-
-    def _get_all_subclasses(self, cls):
-        all_subclasses = []
-
-        for subclass in cls.__subclasses__():
-            all_subclasses.append(subclass)
-            all_subclasses.extend(self._get_all_subclasses(subclass))
-
-        return all_subclasses
+        for transaction in self.parsed_transactions:
+            for taric_object in transaction.taric_objects:
+                print(taric_object.xml_object_tag)
+                print(taric_object.child_links)
+                print(taric_object.parent_links)

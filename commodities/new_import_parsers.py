@@ -1,14 +1,14 @@
 from datetime import date
 
+from commodities.import_handlers import *
 from importer.new_parsers import NewElementParser
-from importer.parsers import ElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
-from importer.parsers import ValidityMixin
-from importer.parsers import Writable
 
 
 class NewGoodsNomenclatureParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = GoodsNomenclatureHandler
+
     record_code = "400"
     subrecord_code = "00"
 
@@ -23,6 +23,8 @@ class NewGoodsNomenclatureParser(NewValidityMixin, NewWritable, NewElementParser
 
 
 class NewGoodsNomenclatureOriginParser(NewWritable, NewElementParser):
+    handler = GoodsNomenclatureOriginHandler
+
     record_code = "400"
     subrecord_code = "35"
 
@@ -36,6 +38,8 @@ class NewGoodsNomenclatureOriginParser(NewWritable, NewElementParser):
 
 
 class NewGoodsNomenclatureSuccessorParser(NewWritable, NewElementParser):
+    handler = GoodsNomenclatureSuccessorHandler
+
     record_code = "400"
     subrecord_code = "40"
 
@@ -49,6 +53,8 @@ class NewGoodsNomenclatureSuccessorParser(NewWritable, NewElementParser):
 
 
 class NewGoodsNomenclatureDescriptionParser(NewWritable, NewElementParser):
+    handler = GoodsNomenclatureDescriptionHandler
+
     record_code = "400"
     subrecord_code = "15"
 
@@ -63,6 +69,8 @@ class NewGoodsNomenclatureDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewGoodsNomenclatureDescriptionPeriodParser(NewWritable, NewElementParser):
+    handler = GoodsNomenclatureDescriptionPeriodHandler
+
     record_code = "400"
     subrecord_code = "10"
 
@@ -76,6 +84,8 @@ class NewGoodsNomenclatureDescriptionPeriodParser(NewWritable, NewElementParser)
 
 
 class NewGoodsNomenclatureIndentParser(NewWritable, NewElementParser):
+    handler = GoodsNomenclatureIndentHandler
+
     record_code = "400"
     subrecord_code = "05"
 
@@ -89,11 +99,13 @@ class NewGoodsNomenclatureIndentParser(NewWritable, NewElementParser):
     indented_goods_nomenclature__suffix: str = None
 
 
-class FootnoteAssociationGoodsNomenclatureParser(
-    ValidityMixin,
-    Writable,
-    ElementParser,
+class NewFootnoteAssociationGoodsNomenclatureParser(
+    NewValidityMixin,
+    NewWritable,
+    NewElementParser,
 ):
+    handler = FootnoteAssociationGoodsNomenclatureHandler
+
     record_code = "400"
     subrecord_code = "20"
 

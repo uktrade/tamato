@@ -1,37 +1,39 @@
 from __future__ import annotations
 
+from typing import List
+
 import bs4
 from bs4 import NavigableString
 
 from common.validators import UpdateType
 
 
-class TransmissionParser:
+class TransactionParser:
     """
     A transmission contains multiple messages.
 
     Parsing a transmission will result in an ordered list of parsed messages
+    (taric objects we need to try and import)
     """
 
-    def __init__(self, transmission: bs4.Tag):
-        pass
+    def __init__(self, transaction: bs4.Tag):
+        self.parsed_messages: List[MessageParser] = []
+        self.taric_objects = []
+
+        self.messages_xml_tags = transaction.find_all("env:app.message")
+
+        for message_xml in self.messages_xml_tags:
+            self.parsed_messages.append(MessageParser(message_xml))
+
+        for message in self.parsed_messages:
+            self.taric_objects.append(message.taric_object)
 
 
 class MessageParser:
-    """A message contains updates to a single TARIC3 object."""
-
-    transaction_id: int
-    record_code: str
-    subrecord_code: str
-    sequence_number: int
-    update_type: int
-    update_type_name: str
-    object_type: str
-    message: bs4.Tag
-    data: dict
+    """A message contains create / update / delete to a single taric object."""
 
     def __init__(self, message: bs4.Tag):
-        # get transaction_id, record_code, subrecord_code, sequence.number, update.type and object type
+        self.data = {}
         self.message = message
         self.transaction_id = self.message.find("oub:transaction.id").value
         self.record_code = self.message.find("oub:record.code").value
@@ -39,9 +41,9 @@ class MessageParser:
         self.sequence_number = self.message.find("oub:record.sequence.number").value
         self.update_type = int(self.message.find("oub:update.type").text)
         self.object_type = ""
-        # get object type
         sibling = self.message.find("oub:update.type").next_sibling
 
+        # get object type
         while self.object_type == "":
             if sibling is None:
                 break
@@ -56,12 +58,20 @@ class MessageParser:
             if update_type.value == self.update_type:
                 self.update_type_name = update_type.name.lower()
 
-        self._populate_data_dict()
+        self._populate_data_dict(self.update_type, self.update_type_name)
+        self.taric_object = self._construct_taric_object()
 
-    def _populate_data_dict(self):
+    def _populate_data_dict(self, update_type, update_type_name):
         """Iterates through properties in the object tag and returns a
         dictionary of those properties."""
-        self.data = dict()
+
+        # also set update type and string representation
+
+        self.data = {
+            "update_type": update_type,
+            "update_type_name": update_type_name,
+        }
+
         for tag in self.message.find(self.object_type).children:
             if isinstance(tag, NavigableString):
                 continue
@@ -70,6 +80,25 @@ class MessageParser:
                 self.data[data_property_name] = tag.text
 
         return
+
+    def _construct_taric_object(self):
+        parser_cls = self.get_parser(self.object_type)
+        parser = parser_cls()
+
+        for data_item_key in self.data.keys():
+            mapped_data_item_key = data_item_key
+            if data_item_key in parser.value_mapping:
+                mapped_data_item_key = parser.value_mapping[data_item_key]
+
+            if hasattr(parser, mapped_data_item_key):
+                setattr(parser, mapped_data_item_key, self.data[data_item_key])
+            else:
+                raise Exception(
+                    f"{parser.xml_object_tag} {parser} does not have a {data_item_key} attribute, and "
+                    f"can't assign value {self.data[data_item_key]}",
+                )
+
+        return parser
 
     def _parse_tag_name(self, tag_name, object_type):
         parsed_tag_name = tag_name
@@ -82,10 +111,41 @@ class MessageParser:
 
         return parsed_tag_name
 
+    def get_parser(self, object_type: str):
+        # get all classes that can represent an imported taric object
+        classes = self._get_parser_classes()
+
+        # iterate through classes and find the one that matches the tag or error
+        for cls in classes:
+            if cls.xml_object_tag == object_type:
+                return cls
+
+        raise Exception(f"No parser class matching {object_type}")
+
+    def _get_parser_classes(self):
+        return self._get_all_subclasses(NewElementParser)
+
+    def _get_all_subclasses(self, cls):
+        all_subclasses = []
+
+        for subclass in cls.__subclasses__():
+            all_subclasses.append(subclass)
+            all_subclasses.extend(self._get_all_subclasses(subclass))
+
+        return all_subclasses
+
 
 class NewElementParser:
+    handler = None
+
     record_code: str
     subrecord_code: str
     xml_object_tag: str
+    update_type: int = None
+    update_type_name: str = None
 
     value_mapping = {}
+
+
+class TaricObjectLink:
+    pass
