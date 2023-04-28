@@ -1406,7 +1406,7 @@ class MeasureUpdateFootnotesForm(MeasureFootnotesForm):
     def __init__(self, *args, **kwargs):
         path = kwargs.pop("path")
         if "edit" in path:
-            self.path = path[:-1] + "-footnotes/"
+            self.path = path + "-footnotes/"
 
         super().__init__(*args, **kwargs)
 
