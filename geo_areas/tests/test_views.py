@@ -66,6 +66,7 @@ def test_geographical_area_detail_views(
     areas and don't return an error."""
     model_overrides = {
         "geo_areas.views.GeoAreaDescriptionCreate": GeographicalArea,
+        "geo_areas.views.GeographicalMembershipCreate": GeographicalArea,
     }
 
     assert_model_view_renders(view, url_pattern, valid_user_client, model_overrides)
