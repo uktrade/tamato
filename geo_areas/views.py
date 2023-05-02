@@ -230,7 +230,7 @@ class GeoAreaEditUpdate(
 class GeoAreaCreate(GeoAreaMixin, CreateTaricCreateView):
     """UI endpoint for creating Geographical Area CREATE instances."""
 
-    template_name = "layouts/create.jinja"
+    template_name = "geo_areas/create.jinja"
     form_class = forms.GeographicalAreaCreateForm
 
     validate_business_rules = (

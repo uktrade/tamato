@@ -19,6 +19,10 @@
   <p class="govuk-body">
     Create new geographical membership associations for  {{ geo_area|string }}.
   </p>
+  <p class="govuk-body">
+    Learn more about
+    <a class="govuk-link" href="https://data-services-help.trade.gov.uk/tariff-application-platform/data-structures/geographical-areas/">geographical area memberships</a>.
+  </p>
   {% set formset = form %}
   {{ crispy(formset.management_form) }}
 
