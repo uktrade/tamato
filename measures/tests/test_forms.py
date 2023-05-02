@@ -334,6 +334,8 @@ def test_measure_forms_geo_area_valid_data_countries_submit(erga_omnes):
         )
         assert form.is_valid()
         assert form.cleaned_data["geo_area_list"] == [geo_area1, geo_area2]
+        # specific country selection should have empty exclusions
+        assert not form.cleaned_data.get("geo_area_exclusions")
 
 
 def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
