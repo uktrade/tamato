@@ -2,7 +2,7 @@
 
 {% set table_rows = [] %}
 
-{% for object in measures %}
+{% for object in object_list %}
 
   {% set object_link -%}
     <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('measure-ui-detail', kwargs={'sid': object.sid}) }}">{{ object.sid }}</a>
@@ -17,31 +17,39 @@
     {"text": object.measure_type },
     {"text": geo_area_link },
     {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
-    {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
+    {"text": "{:%d %b %Y}".format(object.effective_end_date) if object.effective_end_date else "-"},
   ]) or "" }}
 {% endfor %}
 
-{% set base_url = url('commodity-ui-detail', args=[object.sid]) %}
+{% set base_url = url('commodity-ui-detail-measures', args=[commodity.sid]) %}
 
 {% set measure_type %}
-  {{ sort_by(request, "measure_type", "Measure type", base_url, anchor="#measures") }}
+  {{ sort_by(request, "measure_type", "Measure type", base_url) }}
 {% endset %}
 
 {% set geo_area %}
-  {{ sort_by(request, "geo_area", "Geographical area", base_url, anchor="#measures") }}
+  {{ sort_by(request, "geo_area", "Geographical area", base_url) }}
 {% endset %}
 
 {% set start_date %}
-  {{ sort_by(request, "start_date", "Start date", base_url, anchor="#measures") }}
+  {{ sort_by(request, "start_date", "Start date", base_url) }}
 {% endset %}
 
-{{ govukTable({
-  "head": [
-    {"text": "Measure SID" },
-    {"text": measure_type},
-    {"text": geo_area},
-    {"text": start_date},
-    {"text": "End date"},
-  ],
-  "rows": table_rows
-}) }}
+{% if paginator.count > 0 %}
+  {% include "includes/common/pagination-list-summary.jinja" %}
+{% endif %}
+{% if object_list %}
+  {{ govukTable({
+    "head": [
+      {"text": "Measure SID" },
+      {"text": measure_type},
+      {"text": geo_area},
+      {"text": start_date},
+      {"text": "End date"},
+    ],
+    "rows": table_rows
+  }) }}
+{% else %}
+  <p class="govuk-body">There are no measures for this commodity code.</p>
+{% endif %}
+{% include "includes/common/pagination.jinja" %}
