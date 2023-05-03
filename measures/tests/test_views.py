@@ -860,7 +860,6 @@ def test_measure_update_invalid_conditions_invalid_actions(
 ):
     # set up invalid action under the same condition code
     single_action = factories.MeasureActionFactory.create()
-
     measure_edit_conditions_data[
         f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code"
     ] = measure_edit_conditions_data[
@@ -870,7 +869,7 @@ def test_measure_update_invalid_conditions_invalid_actions(
         f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-required_certificate"
     ] = measure_edit_conditions_data[
         f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-required_certificate"
-    ]  # factories.CertificateFactory.create().pk
+    ]
     measure_edit_conditions_data[
         f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-action"
     ] = single_action.pk
@@ -894,8 +893,6 @@ def test_measure_update_invalid_conditions_invalid_actions(
         features="lxml",
     )
     a_tags = page.select("ul.govuk-list.govuk-error-summary__list a")
-
-    print(a_tags)
 
     assert a_tags[0].attrs["href"] == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-__all__"
     assert (
