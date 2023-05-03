@@ -221,7 +221,7 @@ def test_commodity_measures(valid_user_client, commodity, measures):
     assert not measure_sids.difference(set([m.sid for m in measures]))
 
 
-def test_commodity_measures_sorting_geo_area(valid_user_client, commodity):
+def test_commodity_measures_sorting_geo_area(valid_user_client, commodity, measures):
     url = reverse("commodity-ui-detail", kwargs={"sid": commodity.sid})
     response = valid_user_client.get(f"{url}?sort_by=geo_area&order=desc")
     assert response.status_code == 200
@@ -231,6 +231,7 @@ def test_commodity_measures_sorting_geo_area(valid_user_client, commodity):
         int(el.text)
         for el in soup.select("#measures .govuk-table tbody tr td:first-child")
     ]
+    measure_sids.reverse()
     assert measure_sids == [m.sid for m in measures]
 
     url = reverse("commodity-ui-detail", kwargs={"sid": commodity.sid})
