@@ -28,6 +28,7 @@ from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
 from geo_areas.validators import AreaCode
+from geo_areas.validators import area_id_validator
 from geo_areas.validators import validate_dates
 from quotas.models import QuotaOrderNumberOrigin
 from workbaskets.models import WorkBasket
@@ -430,6 +431,24 @@ class GeographicalAreaEditForm(
 
 
 class GeographicalAreaCreateForm(ValidityPeriodForm):
+    area_code = forms.ChoiceField(
+        label="Area code",
+        help_text="Select if the new geographical area is a country, area group or region from the dropdown.",
+        choices=AreaCode.choices,
+        error_messages={"required": "Select an area code from the dropdown."},
+    )
+
+    area_id = forms.CharField(
+        label="Area ID",
+        help_text="For a country or region, the area ID is 2 upper-case letters, like AZ. For an area group, the area ID is 4 digits, like 1234.",
+        widget=forms.TextInput,
+        validators=[area_id_validator],
+        error_messages={
+            "required": "Enter a geographical area ID.",
+            "invalid": "Enter a geographical area ID in the correct format.",
+        },
+    )
+
     description = forms.CharField(
         label="Description",
         help_text="The name of the country, area group or region.",
@@ -440,23 +459,6 @@ class GeographicalAreaCreateForm(ValidityPeriodForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.fields["area_code"].label = "Area code"
-        self.fields[
-            "area_code"
-        ].help_text = "Select if the new geographical area is a country, area group or region from the dropdown."
-        self.fields["area_code"].error_messages = {
-            "required": "Select an area code from the dropdown.",
-        }
-
-        self.fields["area_id"].label = "Area ID"
-        self.fields[
-            "area_id"
-        ].help_text = "For a country or region, the area ID is 2 upper-case letters, like AZ. For an area group, the area ID is 4 digits, like 1234."
-        self.fields["area_id"].error_messages = {
-            "required": "Enter a geographical area ID.",
-            "invalid": "Enter a geographical area ID in the correct format.",
-        }
 
         self.fields[
             "end_date"
