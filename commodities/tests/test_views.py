@@ -185,8 +185,8 @@ def test_goods_nomenclature(valid_user_client, date_ranges):
     assert future_good.pk in pks
 
 
-def test_commodity_measures(valid_user_client):
-    commodity = factories.GoodsNomenclatureFactory.create()
+@pytest.fixture
+def measures(commodity):
     geo_area1 = factories.GeographicalAreaFactory.create(area_id="AAA")
     geo_area2 = factories.GeographicalAreaFactory.create(area_id="BBB")
     geo_area3 = factories.GeographicalAreaFactory.create(area_id="CCC")
@@ -202,6 +202,10 @@ def test_commodity_measures(valid_user_client):
         goods_nomenclature=commodity,
         geographical_area=geo_area3,
     )
+    return [measure1, measure2, measure3]
+
+
+def test_commodity_measures(valid_user_client, commodity, measures):
     url = reverse("commodity-ui-detail", kwargs={"sid": commodity.sid})
     response = valid_user_client.get(url)
     assert response.status_code == 200
@@ -214,26 +218,10 @@ def test_commodity_measures(valid_user_client):
         int(el.text)
         for el in soup.select("#measures .govuk-table tbody tr td:first-child")
     }
-    assert not measure_sids.difference({measure1.sid, measure2.sid, measure3.sid})
+    assert not measure_sids.difference(set([m.sid for m in measures]))
 
 
-def test_commodity_measures_sorting_geo_area(valid_user_client):
-    commodity = factories.GoodsNomenclatureFactory.create()
-    geo_area1 = factories.GeographicalAreaFactory.create(area_id="AAA")
-    geo_area2 = factories.GeographicalAreaFactory.create(area_id="BBB")
-    geo_area3 = factories.GeographicalAreaFactory.create(area_id="CCC")
-    measure1 = factories.MeasureFactory.create(
-        goods_nomenclature=commodity,
-        geographical_area=geo_area1,
-    )
-    measure2 = factories.MeasureFactory.create(
-        goods_nomenclature=commodity,
-        geographical_area=geo_area2,
-    )
-    measure3 = factories.MeasureFactory.create(
-        goods_nomenclature=commodity,
-        geographical_area=geo_area3,
-    )
+def test_commodity_measures_sorting_geo_area(valid_user_client, commodity):
     url = reverse("commodity-ui-detail", kwargs={"sid": commodity.sid})
     response = valid_user_client.get(f"{url}?sort_by=geo_area&order=desc")
     assert response.status_code == 200
@@ -243,7 +231,7 @@ def test_commodity_measures_sorting_geo_area(valid_user_client):
         int(el.text)
         for el in soup.select("#measures .govuk-table tbody tr td:first-child")
     ]
-    assert measure_sids == [measure3.sid, measure2.sid, measure1.sid]
+    assert measure_sids == [m.sid for m in measures]
 
     url = reverse("commodity-ui-detail", kwargs={"sid": commodity.sid})
     response = valid_user_client.get(f"{url}?sort_by=geo_area&order=asc")
@@ -254,11 +242,14 @@ def test_commodity_measures_sorting_geo_area(valid_user_client):
         int(el.text)
         for el in soup.select("#measures .govuk-table tbody tr td:first-child")
     ]
-    assert measure_sids == [measure1.sid, measure2.sid, measure3.sid]
+    assert measure_sids == [m.sid for m in measures]
 
 
-def test_commodity_measures_sorting_start_date(valid_user_client, date_ranges):
-    commodity = factories.GoodsNomenclatureFactory.create()
+def test_commodity_measures_sorting_start_date(
+    valid_user_client,
+    date_ranges,
+    commodity,
+):
     measure1 = factories.MeasureFactory.create(
         goods_nomenclature=commodity,
         valid_between=date_ranges.starts_2_months_ago_no_end,
@@ -294,8 +285,11 @@ def test_commodity_measures_sorting_start_date(valid_user_client, date_ranges):
     assert measure_sids == [measure1.sid, measure2.sid, measure3.sid]
 
 
-def test_commodity_measures_sorting_measure_type(valid_user_client, date_ranges):
-    commodity = factories.GoodsNomenclatureFactory.create()
+def test_commodity_measures_sorting_measure_type(
+    valid_user_client,
+    date_ranges,
+    commodity,
+):
     type1 = factories.MeasureTypeFactory.create(sid="111")
     type2 = factories.MeasureTypeFactory.create(sid="222")
     type3 = factories.MeasureTypeFactory.create(sid="333")
