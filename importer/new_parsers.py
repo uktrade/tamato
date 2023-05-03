@@ -6,6 +6,7 @@ import bs4
 from bs4 import NavigableString
 
 from common.validators import UpdateType
+from importer.handlers import BaseHandler
 
 
 class TransactionParser:
@@ -35,10 +36,10 @@ class MessageParser:
     def __init__(self, message: bs4.Tag):
         self.data = {}
         self.message = message
-        self.transaction_id = self.message.find("oub:transaction.id").value
-        self.record_code = self.message.find("oub:record.code").value
-        self.subrecord_code = self.message.find("oub:subrecord.code").value
-        self.sequence_number = self.message.find("oub:record.sequence.number").value
+        self.transaction_id = self.message.find("oub:transaction.id").text
+        self.record_code = self.message.find("oub:record.code").text
+        self.subrecord_code = self.message.find("oub:subrecord.code").text
+        self.sequence_number = self.message.find("oub:record.sequence.number").text
         self.update_type = int(self.message.find("oub:update.type").text)
         self.object_type = ""
         sibling = self.message.find("oub:update.type").next_sibling
@@ -85,6 +86,21 @@ class MessageParser:
         parser_cls = self.get_parser(self.object_type)
         parser = parser_cls()
 
+        # standard data
+        parser.transaction_id = self.transaction_id
+        if parser.record_code != self.record_code:
+            raise Exception(
+                f"Record code mismatch : expected : {parser.record_code}, got : {self.record_code}",
+            )
+        if parser.subrecord_code != self.subrecord_code:
+            raise Exception(
+                f"Sub-record code mismatch : expected : {parser.subrecord_code}, got : {self.subrecord_code}",
+            )
+
+        parser.sequence_number = self.sequence_number
+        parser.object_type = self.object_type
+
+        # model specific data
         for data_item_key in self.data.keys():
             mapped_data_item_key = data_item_key
             if data_item_key in parser.value_mapping:
@@ -136,15 +152,28 @@ class MessageParser:
 
 
 class NewElementParser:
-    handler = None
+    handler: BaseHandler = None
 
+    transaction_id: str
     record_code: str
     subrecord_code: str
     xml_object_tag: str
     update_type: int = None
     update_type_name: str = None
-
+    links_valid: bool = None
     value_mapping = {}
+    model_links = None
+    issues = []
+
+    def links(self):
+        if self.model_links is None:
+            raise Exception(
+                f"No handler defined for {self.__class__.__name__}, is this correct?",
+            )
+
+        object_links = self.model_links
+
+        return object_links
 
 
 class TaricObjectLink:

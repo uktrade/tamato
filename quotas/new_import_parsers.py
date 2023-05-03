@@ -2,7 +2,6 @@ from datetime import date
 
 from importer.namespaces import Tag
 from importer.new_parsers import NewElementParser
-from importer.parsers import ElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
 from importer.parsers import TextElement
@@ -10,11 +9,15 @@ from quotas.import_handlers import *
 
 
 class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable):
+    handler = QuotaOrderNumberHandler
+
     value_mapping = {
         "id": "order_number",
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
+
+    model_links = []
 
     xml_object_tag = "quota.order.number"
     record_code = "360"
@@ -25,11 +28,10 @@ class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable)
     valid_between_lower: date = None
     valid_between_upper: date = None
 
-    links = []
-    handler = QuotaOrderNumberHandler
-
 
 class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = QuotaOrderNumberOriginHandler
+
     value_mapping = {
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
@@ -37,6 +39,24 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
         "geographical_area_id": "geographical_area__area_id",
         "geographical_area_sid": "geographical_area__sid",
     }
+
+    model_links = [
+        {
+            "model": models.QuotaOrderNumber,
+            "fields": {
+                "order_number__sid": "sid",
+            },
+            "xml_tag_name": "quota.order.number",
+        },
+        {
+            "model": GeographicalArea,
+            "fields": {
+                "geographical_area__area_id": "area_id",
+                "geographical_area__sid": "sid",
+            },
+            "xml_tag_name": "geographical.area",
+        },
+    ]
 
     xml_object_tag = "quota.order.number.origin"
     record_code = "360"
@@ -49,10 +69,10 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
     valid_between_upper: date = None
     geographical_area__sid: str = None
 
-    handler = QuotaOrderNumberOriginHandler
-
 
 class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
+    handler = QuotaOrderNumberOriginExclusionHandler
+
     xml_object_tag = "quota.order.number.origin.exclusions"
     record_code = "360"
     subrecord_code = "15"
@@ -60,16 +80,14 @@ class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
     origin__sid: str = None
     excluded_geographical_area__sid: str = None
 
-    handler = QuotaOrderNumberOriginExclusionHandler
-
 
 class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = QuotaDefinitionHandler
+
     value_mapping = {
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
-
-    handler = QuotaDefinitionHandler
 
     xml_object_tag = "quota.definition"
     record_code = "370"
@@ -124,7 +142,7 @@ class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
     description: str = None
 
 
-class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, ElementParser):
+class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, NewElementParser):
     value_mapping = {
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
