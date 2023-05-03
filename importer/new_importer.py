@@ -2,7 +2,53 @@ from typing import List
 
 from bs4 import BeautifulSoup
 
+from importer.new_parsers import NewElementParser
 from importer.new_parsers import TransactionParser
+
+
+class NewImportIssueReportItem:
+    """
+    Class for in memory representation if an issue detected on import, the
+    status may change during the process so this will not be committed until the
+    import process is complete or has been found to have errors.
+
+    params:
+        object_type: str,
+            String representation of the object type, as found in XML e.g. goods.nomenclature
+        related_object_type: str,
+            String representation of the related object type, as found in XML e.g. goods.nomenclature.description
+        related_object_identity_keys: dict,
+            Dictionary of identity names and values used to link the related object
+        related_cache_key: str,
+            The string expected to be used to cache the related object
+        description: str,
+            Description of the detected issue
+    """
+
+    def __init__(
+        self,
+        object_type: str,
+        related_object_type: str,
+        related_object_identity_keys: dict,
+        description: str,
+        issue_type: str = "ERROR",
+    ):
+        self.object_type = object_type
+        self.related_object_type = related_object_type
+        self.related_object_identity_keys = related_object_identity_keys
+        self.description = description
+        self.issue_type = issue_type
+
+    def __str__(self):
+        result = (
+            f"{self.issue_type}: {self.description}\n"
+            f"  {self.object_type} > {self.related_object_type}\n"
+            f"  link_data: {self.related_object_identity_keys}"
+        )
+        return result
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class NewImporter:
@@ -18,12 +64,7 @@ class NewImporter:
         self,
         taric3_file: str,
         # username: str,
-        # status: str,
-        # partition_scheme_setting: str,
-        # name: str,
-        # split_codes: bool = False,
-        # dependencies=None,
-        # record_group: Sequence[str] = None
+        # import_name: str,
     ):
         self.parsed_transactions = []
 
@@ -83,7 +124,94 @@ class NewImporter:
         forwards for related objects, only each transaction backwards."""
 
         for transaction in self.parsed_transactions:
+            for parsed_message in transaction.parsed_messages:
+                print(
+                    f"verifying links for {parsed_message.taric_object.xml_object_tag}",
+                )
+                links_valid = True
+
+                for link_data in parsed_message.taric_object.links() or []:
+                    print(link_data)
+                    if not self._verify_link(parsed_message.taric_object, link_data):
+                        links_valid = False
+
+                parsed_message.taric_object.links_valid = links_valid
+
+    def _verify_link(self, verifying_taric_object: NewElementParser, link_data: dict):
+        # verify either that the object exists on TAP or in current, previous transactions of current import
+        kwargs = {}
+        for field in link_data["fields"].keys():
+            kwargs[link_data["fields"][field]] = getattr(verifying_taric_object, field)
+
+        # check database
+        db_result = link_data["model"].objects.latest_approved().filter(**kwargs)
+        xml_result = []
+
+        for transaction in self.parsed_transactions:
             for taric_object in transaction.taric_objects:
-                print(taric_object.xml_object_tag)
-                print(taric_object.child_links)
-                print(taric_object.parent_links)
+                if (
+                    taric_object.transaction_id >= verifying_taric_object.transaction_id
+                ):  # too far through, just break
+                    break
+
+                match = False
+                if taric_object.xml_object_tag == link_data["xml_tag_name"]:
+                    # ok we have matched the type - now check property
+                    int_match = True
+                    for field in link_data["fields"].keys():
+                        if field != getattr(taric_object, link_data["fields"][field]):
+                            int_match = False
+
+                    if int_match:
+                        match = True
+                if match:
+                    xml_result.append(taric_object)
+
+        # verify that there is only one match, otherwise it's wrong
+        record_match_count = db_result.count() + len(xml_result)
+        if record_match_count == 1:
+            return True
+        elif record_match_count > 1:
+            self.create_issue_report_item(
+                verifying_taric_object,
+                link_data,
+                "Multiple matches for possible related taric object",
+            )
+
+            return False
+
+        self.create_issue_report_item(
+            verifying_taric_object,
+            link_data,
+            "No matches for possible related taric object",
+        )
+        return False
+
+    def create_issue_report_item(
+        self,
+        target_taric_object: NewElementParser,
+        link_data,
+        description,
+    ):
+        identity_keys = {}
+
+        for field in link_data["fields"].keys():
+            identity_keys[link_data["fields"][field]] = getattr(
+                target_taric_object,
+                field,
+            )
+
+        report_item = NewImportIssueReportItem(
+            target_taric_object.xml_object_tag,
+            link_data["xml_tag_name"],
+            identity_keys,
+            description,
+        )
+
+        target_taric_object.issues.append(report_item)
+
+    def issues(self):
+        for transaction in self.parsed_transactions:
+            for message in transaction.parsed_messages:
+                for issue in message.taric_object.issues:
+                    yield issue
