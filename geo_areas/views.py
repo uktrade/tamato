@@ -273,7 +273,7 @@ class GeoAreaConfirmCreate(
     template_name = "geo_areas/confirm-create.jinja"
 
 
-class GeographicalMembershipCreate(
+class GeographicalMembershipsCreate(
     TrackedModelDetailMixin,
     CreateTaricCreateView,
 ):
