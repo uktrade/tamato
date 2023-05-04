@@ -297,7 +297,7 @@ class GeographicalMembershipsCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["geo_area"] = self.instance
+        kwargs["form_kwargs"] = {"geo_area": self.instance}
         return kwargs
 
     def create_memberships(self, form):

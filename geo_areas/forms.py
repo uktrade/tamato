@@ -538,8 +538,8 @@ class GeographicalMembershipGroupForm(ValidityPeriodForm):
         queryset=None,  # populated in __init__
     )
 
-    def __init__(self, *args, geo_area, **kwargs):
-        self.geo_area = geo_area
+    def __init__(self, *args, **kwargs):
+        self.geo_area = kwargs.pop("geo_area", None)
         super().__init__(*args, **kwargs)
 
         current_memberships = self.geo_area.groups.values_list("geo_group", flat=True)
@@ -632,8 +632,8 @@ class GeographicalMembershipMemberForm(ValidityPeriodForm):
         queryset=None,  # populated in __init__
     )
 
-    def __init__(self, *args, geo_area, **kwargs):
-        self.geo_area = geo_area
+    def __init__(self, *args, **kwargs):
+        self.geo_area = kwargs.pop("geo_area", None)
         super().__init__(*args, **kwargs)
 
         current_memberships = self.geo_area.memberships.all()
@@ -727,15 +727,9 @@ class GeographicalMembershipBaseFormSet(FormSet):
     validate_min = True
     validate_max = True
 
-    def __init__(self, *args, geo_area, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop("instance", None)
-        self.geo_area = geo_area
         super().__init__(*args, **kwargs)
-
-    def get_form_kwargs(self, index):
-        kwargs = super().get_form_kwargs(index)
-        kwargs["geo_area"] = self.geo_area
-        return kwargs
 
 
 class GeographicalMembershipGroupFormSet(GeographicalMembershipBaseFormSet):

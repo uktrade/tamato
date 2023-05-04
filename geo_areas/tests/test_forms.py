@@ -457,7 +457,7 @@ def test_geographical_membership_group_formset_same_selection(date_ranges):
     with override_current_transaction(Transaction.objects.last()):
         formset = forms.GeographicalMembershipGroupFormSet(
             data=form_data,
-            geo_area=country,
+            form_kwargs={"geo_area": country},
         )
         assert not formset.is_valid()
         assert (
@@ -546,7 +546,7 @@ def test_geographical_membership_member_formset_same_selection(date_ranges):
     with override_current_transaction(Transaction.objects.last()):
         formset = forms.GeographicalMembershipMemberFormSet(
             data=form_data,
-            geo_area=area_group,
+            form_kwargs={"geo_area": area_group},
         )
         assert not formset.is_valid()
         assert (
