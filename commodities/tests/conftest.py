@@ -193,6 +193,11 @@ def normal_good(date_ranges, transaction_pool):
 
 
 @pytest.fixture
+def commodity():
+    return factories.GoodsNomenclatureFactory.create()
+
+
+@pytest.fixture
 def commodities(date_ranges, transaction_pool) -> dict[str, Commodity]:
     params = (
         ("9900.00.00.00", "80", 0, date_ranges.normal),
