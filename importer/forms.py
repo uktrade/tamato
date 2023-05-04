@@ -121,5 +121,3 @@ class UploadTaricForm(ImportForm):
         batch.imported()
         batch.save()
         return batch
-
-    # Check if the batch has errored chunks and give her an failed status
