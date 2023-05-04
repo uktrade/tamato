@@ -7,12 +7,12 @@
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 
-{% set page_title = "Work basket: " ~ workbasket.title %}
+{% set page_title = "Workbasket: " ~ workbasket.title %}
 
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
-      {"text": "Find and edit work baskets", "href": url("workbaskets:workbasket-ui-list")},
+      {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list")},
       {"text": page_title}
     ])
   }}

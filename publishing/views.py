@@ -7,15 +7,20 @@ from django.db.transaction import atomic
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic import DetailView
 from django.views.generic import ListView
+from django.views.generic.detail import BaseDetailView
 from django_fsm import TransitionNotAllowed
 
+from common.filters import TamatoFilter
 from common.util import get_mime_type
 from common.views import WithPaginationListMixin
+from common.views import WithPaginationListView
 from publishing.forms import LoadingReportForm
 from publishing.forms import PackagedWorkBasketCreateForm
+from publishing.models import Envelope
 from publishing.models import LoadingReport
 from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
@@ -193,25 +198,35 @@ class EnvelopeQueueView(
         return request.build_absolute_uri()
 
 
-class DownloadEnvelopeView(DetailView):
+class DownloadEnvelopeMixin:
+    def download_response(self, envelope):
+        """Returns a Respond object with associated payload containing the
+        contents of `envelope.xml_file`."""
+
+        file_content = envelope.xml_file.read()
+        response = HttpResponse(file_content)
+        response["content-type"] = "text/xml"
+        response["content-length"] = len(file_content)
+        response[
+            "content-disposition"
+        ] = f'attachment; filename="{envelope.xml_file_name}"'
+        return response
+
+
+class DownloadEnvelopeViewBase(DownloadEnvelopeMixin, DetailView):
     """View used to download an XML envelope."""
 
     model = PackagedWorkBasket
 
     def get(self, request, *args, **kwargs):
         packaged_workbasket = self.get_object()
-
-        envelope = packaged_workbasket.envelope
-        file_content = envelope.xml_file.read()
-        file_name = f"DIT{envelope.envelope_id}.xml"
-        response = HttpResponse(file_content)
-        response["content-type"] = "text/xml"
-        response["content-length"] = len(file_content)
-        response["content-disposition"] = f'attachment; filename="{file_name}"'
-        return response
+        return self.download_response(packaged_workbasket.envelope)
 
 
-class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeView):
+class DownloadQueuedEnvelopeView(
+    PermissionRequiredMixin,
+    DownloadEnvelopeViewBase,
+):
     permission_required = "publishing.consume_from_packaging_queue"
 
     def get(self, request, *args, **kwargs):
@@ -225,7 +240,7 @@ class DownloadQueuedEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeView):
         return super().get(request, *args, **kwargs)
 
 
-class DownloadAdminEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeView):
+class DownloadAdminEnvelopeView(PermissionRequiredMixin, DownloadEnvelopeViewBase):
     permission_required = "publishing.manage_packaging_queue"
 
     def get(self, request, *args, **kwargs):
@@ -428,3 +443,74 @@ class PackagedWorkbasketConfirmCreate(DetailView):
         return PackagedWorkBasket.objects.filter(
             id=self.kwargs.get("pk"),
         )
+
+
+class EnvelopeListFilter(TamatoFilter):
+    search_fields = ("envelope_id",)
+    clear_url = reverse_lazy("publishing:envelope-list-ui-list")
+
+    class Meta:
+        model = Envelope
+        fields = ["search"]
+
+
+class EnvelopeListView(
+    PermissionRequiredMixin,
+    WithPaginationListView,
+):
+    """UI view used to view processed (accepted / published and rejected)
+    envelopes."""
+
+    permission_required = "publishing.view_envelope"
+    template_name = "publishing/envelope_list.jinja"
+    filterset_class = EnvelopeListFilter
+    search_fields = [
+        "title",
+        "reason",
+    ]
+
+    def get_queryset(self):
+        return Envelope.objects.successfully_processed().reverse()
+
+
+class EnvelopeFileHistoryView(
+    PermissionRequiredMixin,
+    WithPaginationListMixin,
+    ListView,
+):
+    """UI view used to list the XML file history of a published envelope and its
+    previously rejected envelopes (if any)."""
+
+    permission_required = "publishing.view_envelope"
+    template_name = "publishing/envelope_file_history.jinja"
+
+    def get_published_envelope(self):
+        """Get the published envelope instance for the envelope ID (as given by
+        the `envelope_id` captured parameter)."""
+        return Envelope.objects.successfully_processed().get(
+            envelope_id=self.kwargs["envelope_id"],
+        )
+
+    def get_queryset(self):
+        return self.get_published_envelope().get_versions()
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data["xml_file_name"] = self.get_published_envelope().xml_file_name
+        return data
+
+
+class DownloadEnvelopeView(
+    DownloadEnvelopeMixin,
+    PermissionRequiredMixin,
+    BaseDetailView,
+):
+    """UI view to download a processed (succeeded or failed) envelope file."""
+
+    permission_required = "publishing.view_envelope"
+
+    def get_queryset(self):
+        return Envelope.objects.processed()
+
+    def get(self, request, *args, **kwargs):
+        return self.download_response(self.get_object())

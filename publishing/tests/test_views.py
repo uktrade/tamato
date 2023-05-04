@@ -1,4 +1,7 @@
+from unittest import mock
+
 import pytest
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.urls import reverse
 
@@ -231,3 +234,63 @@ def test_create_duplicate_awaiting_instances(valid_user_client, valid_user):
     response_url = reverse("publishing:packaged-workbasket-queue-ui-list")
     # Only compare the response URL up to the query string.
     assert response.url == response_url
+
+
+@mock.patch(
+    "publishing.models.envelope.Envelope.xml_file_exists",
+    return_value=True,
+)
+def test_find_processed_envelopes_list_view(
+    mock_xml_file_exists,
+    valid_user_client,
+    successful_envelope_factory,
+):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
+    envelope = successful_envelope_factory()
+
+    response = valid_user_client.get(
+        reverse("publishing:envelope-list-ui-list"),
+    )
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert "Find processed envelopes" in page.select("h1")[0].text
+    envelope_row = page.select("table.envelopes tbody tr")[0]
+    assert envelope.envelope_id in envelope_row.select("td")[0].text
+
+
+from publishing.models.envelope import EnvelopeQuerySet
+
+
+@mock.patch(
+    "publishing.models.envelope.Envelope.get_versions",
+    return_value=mock.MagicMock(spec=EnvelopeQuerySet),
+)
+@mock.patch(
+    "publishing.models.envelope.Envelope.xml_file_exists",
+    return_value=True,
+)
+def test_envelope_history_for_view(
+    mock_xml_file_exists,
+    mock_get_versions,
+    valid_user_client,
+    successful_envelope_factory,
+):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
+    envelope = successful_envelope_factory()
+
+    mock_get_versions.filter.return_value = mock_get_versions
+    mock_get_versions.all.return_value = [envelope]
+
+    response = valid_user_client.get(
+        reverse(
+            "publishing:envelope-history-ui-detail",
+            kwargs={"envelope_id": f"{envelope.envelope_id}"},
+        ),
+    )
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert f"Envelope history for {envelope.xml_file_name}" in page.select("h1")[0].text
