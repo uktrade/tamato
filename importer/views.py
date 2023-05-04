@@ -41,6 +41,7 @@ class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
 
 
 class TaricImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
+    # The correct list view for importer work
     """UI endpoint for viewing and filtering Taric Import Batches."""
 
     queryset = models.ImportBatch.objects.all().order_by("-created_at")

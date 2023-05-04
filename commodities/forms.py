@@ -32,6 +32,7 @@ class CommodityFilterForm(forms.Form):
 
 
 class CommodityImportForm(ImportForm):
+    # The correct form for importer work.
     taric_file = forms.FileField(
         required=True,
         help_text="",

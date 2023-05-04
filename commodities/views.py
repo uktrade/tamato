@@ -52,6 +52,7 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBasket):
+    # The correct view for importer work.
     template_name = "commodities/import.jinja"
     form_class = CommodityImportForm
     success_url = reverse_lazy("commodity-ui-import-success")
@@ -79,6 +80,7 @@ class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBask
 
 
 class CommodityImportSuccessView(TemplateView):
+    # The correct success view for importer work.
     template_name = "commodities/import-success.jinja"
 
     @property
