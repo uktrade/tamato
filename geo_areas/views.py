@@ -238,11 +238,6 @@ class GeoAreaCreate(GeoAreaMixin, CreateTaricCreateView):
         business_rules.GA7,
     )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page_title"] = "Create a new geographical area"
-        return context
-
     def get_result_object(self, form):
         geo_area = super().get_result_object(form)
         description = form.cleaned_data["geographical_area_description"]
@@ -291,12 +286,7 @@ class GeographicalMembershipCreate(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         geo_area = self.instance
-        context.update(
-            {
-                "geo_area": geo_area,
-                "page_title": "Add memberships",
-            },
-        )
+        context.update({"geo_area": geo_area})
         return context
 
     def get_form(self):

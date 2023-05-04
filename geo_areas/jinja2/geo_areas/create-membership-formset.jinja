@@ -3,6 +3,7 @@
 {% from "components/fieldset/macro.njk" import govukFieldset %}
 {% from "components/error-summary/macro.njk" import govukErrorSummary %}
 
+{% set page_title = "Add memberships" %}
 {% set area_code = " (" ~ geo_area.get_area_code_display() ~ ")" %}
 {% set geo_area_title = "Geographical area: " ~  geo_area.area_id ~ area_code %}
 
