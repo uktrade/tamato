@@ -24,6 +24,11 @@ urlpatterns = [
         name="commodity-ui-detail",
     ),
     path(
+        f"commodities/<sid>/hierarchy/",
+        views.Commodityhierarchy.as_view(),
+        name="commodity-ui-detail-hierarchy",
+    ),
+    path(
         f"commodities/<sid>/measures/",
         views.CommodityMeasuresList.as_view(),
         name="commodity-ui-detail-measures",

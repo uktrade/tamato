@@ -1,0 +1,8 @@
+.commodity-hierarchy {
+
+    details>details,
+    details>p {
+        padding-left: 10px;
+        border-left: 20px solid govuk-tint(govuk-colour("light-blue"), 60);
+    }
+}

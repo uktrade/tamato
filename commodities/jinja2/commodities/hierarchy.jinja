@@ -1,0 +1,40 @@
+{% extends "commodities/detail.jinja" %}
+
+{% block content_class %}commodity-hierarchy{% endblock %}
+
+{% block tab_content %}
+
+<h2 class="govuk-heading-l">Commodity hierarchy</h2>
+
+{% for comm in snapshot.commodities %}
+
+  {% if not loop.last %}
+
+    {% if loop.nextitem.indent > comm.indent %}
+    <details class="govuk-details" {% if comm in snapshot.ancestors[this_commodity] %}open=""{% endif %}>
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">
+        {{ comm.code }} - {{ comm.description }} ({{ comm.suffix }})
+      </span>
+    </summary>
+
+    <a class="govuk-link govuk-!-font-size-16" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">View commodity<span class="govuk-visually-hidden">{{ comm.code }}</span></a>
+
+    {% elif loop.nextitem.indent <= comm.indent %}
+    <p class="govuk-body {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}"><a class="govuk-link" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">{{ comm.code }}</a> - {{ comm.description }} ({{ comm.suffix }})</p>
+
+      {% if loop.nextitem.indent < comm.indent %}
+        {% for i in range(comm.indent - loop.nextitem.indent) %}
+          </details>
+        {% endfor %}
+      {% endif %}
+
+    {% endif %}
+
+  {% else %}
+    <p class="govuk-body {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">{{ comm.code }} - {{ comm.description }} ({{ comm.suffix }})</p>
+  {% endif %}
+
+{% endfor %}
+
+{% endblock %}
