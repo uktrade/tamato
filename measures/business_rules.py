@@ -345,6 +345,17 @@ class ME32(BusinessRule):
     """
 
     def compile_query(self, measure):
+        """
+        Create a query that can be applied in a `MeasureQuerySet.filter()`
+        expression to find Measure instances that match `measure` for the
+        purpose of ME32 checking.
+
+        For instance, matching `Measure`s will be of the same measure type, have
+        the same geographical area and the same reduction. Matching measures
+        will also be matched depending upon `measure`'s order_number, dead order
+        number and additional code.
+        """
+
         query = Q(
             measure_type__sid=measure.measure_type.sid,
             geographical_area__sid=measure.geographical_area.sid,
@@ -377,11 +388,11 @@ class ME32(BusinessRule):
         """
         from measures.snapshots import MeasureSnapshot
 
-        query = self.compile_query(measure)
+        matching_measures_query = self.compile_query(measure)
         clashing_measures = type(measure).objects.none()
         for snapshot in MeasureSnapshot.get_snapshots(measure, self.transaction):
             clashing_measures = clashing_measures.union(
-                snapshot.overlaps(measure).filter(query),
+                snapshot.overlaps(measure).filter(matching_measures_query),
                 all=True,
             )
 
