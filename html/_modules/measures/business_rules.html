@@ -473,7 +473,18 @@
 <span class="sd">    This rule is not applicable for Meursing additional codes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+<div class="viewcode-block" id="ME32.compile_query"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME32.compile_query">[docs]</a>    <span class="k">def</span> <span class="nf">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a query that can be applied in a `MeasureQuerySet.filter()`</span>
+<span class="sd">        expression to find Measure instances that match `measure` for the</span>
+<span class="sd">        purpose of ME32 checking.</span>
+
+<span class="sd">        For instance, matching `Measure`s will be of the same measure type, have</span>
+<span class="sd">        the same geographical area and the same reduction. Matching measures</span>
+<span class="sd">        will also be matched depending upon `measure`&#39;s order_number, dead order</span>
+<span class="sd">        number and additional code.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="n">query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span>
             <span class="n">measure_type__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">measure_type</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
             <span class="n">geographical_area__sid</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
@@ -493,7 +504,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">query</span> <span class="o">&amp;=</span> <span class="n">Q</span><span class="p">(</span><span class="n">additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dead_additional_code__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">query</span>
+        <span class="k">return</span> <span class="n">query</span></div>
 
 <div class="viewcode-block" id="ME32.clashing_measures"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME32.clashing_measures">[docs]</a>    <span class="k">def</span> <span class="nf">clashing_measures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">measure</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MeasuresQuerySet</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -506,11 +517,11 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">measures.snapshots</span> <span class="kn">import</span> <span class="n">MeasureSnapshot</span>
 
-        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_query</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
+        <span class="n">matching_measures_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_query</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span>
         <span class="n">clashing_measures</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">snapshot</span> <span class="ow">in</span> <span class="n">MeasureSnapshot</span><span class="o">.</span><span class="n">get_snapshots</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">):</span>
             <span class="n">clashing_measures</span> <span class="o">=</span> <span class="n">clashing_measures</span><span class="o">.</span><span class="n">union</span><span class="p">(</span>
-                <span class="n">snapshot</span><span class="o">.</span><span class="n">overlaps</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>
+                <span class="n">snapshot</span><span class="o">.</span><span class="n">overlaps</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">matching_measures_query</span><span class="p">),</span>
                 <span class="nb">all</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
 

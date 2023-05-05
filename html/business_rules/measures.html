@@ -846,6 +846,18 @@ commodity codes is an ancestor or equal to the other.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="measures.business_rules.ME32.compile_query">
+<span class="sig-name descname"><span class="pre">compile_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME32.compile_query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME32.compile_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a query that can be applied in a <cite>MeasureQuerySet.filter()</cite>
+expression to find Measure instances that match <cite>measure</cite> for the
+purpose of ME32 checking.</p>
+<p>For instance, matching <cite>Measure`s will be of the same measure type, have
+the same geographical area and the same reduction. Matching measures
+will also be matched depending upon `measure</cite>’s order_number, dead order
+number and additional code.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="measures.business_rules.ME32.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME32.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME32.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform business rule validation.</p>
