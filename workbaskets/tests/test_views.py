@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from django.urls import reverse
 from django.utils.timezone import localtime
 
+from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
 from common.models.utils import override_current_transaction
 from common.tests import factories
@@ -634,6 +635,116 @@ def test_violation_detail_page(valid_user_client, session_workbasket):
     # Attribute does not exist yet. This will fail when we eventually add it
     with pytest.raises(AttributeError):
         assert check.solution
+
+
+def test_violation_detail_page_superuser_override_last_violation(
+    superuser_client,
+    session_workbasket,
+):
+    """Override the last unsuccessful TrackedModelCheck on a
+    TransactionCheck."""
+
+    model_check = TrackedModelCheckFactory.create(
+        successful=False,
+        transaction_check__successful=False,
+    )
+    model_check.transaction_check.transaction.workbasket.save_to_session(
+        superuser_client.session,
+    )
+    superuser_client.session.save()
+
+    url = reverse(
+        "workbaskets:workbasket-ui-violation-detail",
+        kwargs={"wb_pk": session_workbasket.pk, "pk": model_check.pk},
+    )
+    response = superuser_client.post(url, data={"action": "delete"})
+
+    assert response.status_code == 302
+    redirect_url = reverse("workbaskets:workbasket-ui-violations")
+    assert redirect_url in response["Location"]
+
+    model_check.refresh_from_db()
+    assert model_check.successful
+    assert model_check.transaction_check.successful
+
+
+def test_violation_detail_page_superuser_override_one_of_two_violation(
+    superuser_client,
+    session_workbasket,
+):
+    """Override an unsuccessful TrackedModelCheck on a TransactionCheck that has
+    more TrackedModelCheck."""
+
+    model_check = TrackedModelCheckFactory.create(
+        successful=False,
+        transaction_check__successful=False,
+    )
+    model_check.transaction_check.transaction.workbasket.save_to_session(
+        superuser_client.session,
+    )
+    superuser_client.session.save()
+
+    TrackedModelCheckFactory.create(
+        successful=False,
+        transaction_check=model_check.transaction_check,
+    )
+
+    assert (
+        TrackedModelCheck.objects.filter(
+            successful=False,
+            transaction_check=model_check.transaction_check,
+        ).count()
+        == 2
+    )
+
+    url = reverse(
+        "workbaskets:workbasket-ui-violation-detail",
+        kwargs={"wb_pk": session_workbasket.pk, "pk": model_check.pk},
+    )
+    response = superuser_client.post(url, data={"action": "delete"})
+
+    assert response.status_code == 302
+    redirect_url = reverse("workbaskets:workbasket-ui-violations")
+    assert redirect_url in response["Location"]
+
+    assert (
+        TrackedModelCheck.objects.filter(
+            successful=False,
+            transaction_check=model_check.transaction_check,
+        ).count()
+        == 1
+    )
+    model_check.refresh_from_db()
+    assert model_check.successful == True
+    assert model_check.transaction_check.successful == False
+
+
+def test_violation_detail_page_non_superuser_override_violation(
+    valid_user_client,
+    session_workbasket,
+):
+    """Ensure a user without superuser status is unable to override a
+    TrackedModelCheck."""
+
+    model_check = TrackedModelCheckFactory.create(
+        successful=False,
+        transaction_check__successful=False,
+    )
+    model_check.transaction_check.transaction.workbasket.save_to_session(
+        valid_user_client.session,
+    )
+    valid_user_client.session.save()
+
+    url = reverse(
+        "workbaskets:workbasket-ui-violation-detail",
+        kwargs={"wb_pk": session_workbasket.pk, "pk": model_check.pk},
+    )
+    response = valid_user_client.post(url, data={"action": "delete"})
+
+    assert response.status_code == 302
+    model_check.refresh_from_db()
+    assert not model_check.successful
+    assert not model_check.transaction_check.successful
 
 
 @pytest.fixture
