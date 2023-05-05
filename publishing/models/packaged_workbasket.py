@@ -70,6 +70,21 @@ def pop_top_after(func):
     return inner
 
 
+def create_api_publishing_envelope_on_success(func):
+    """Decorator used to wrap processing_succeeded processing_state transition
+    functions in order to create the API Publishing envelope when they've
+    completed."""
+
+    def inner(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        # access self
+        if not PackagedWorkBasket.objects.currently_processing():
+            PackagedWorkBasket.create_api_publishing_envelope()
+        return result
+
+    return inner
+
+
 def create_envelope_on_completed_processing(func):
     """Decorator used to wrap processing_succeeded and processing_failed
     processing_state transition functions in order to create the next envelope
@@ -256,6 +271,15 @@ class PackagedWorkBasketQuerySet(QuerySet):
         )
         return top.first() if top else None
 
+    def get_api_unpublished(self):
+        unpublished = self.filter(
+            processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+            tap_api_envelope__isnull=True,
+            # Filters out older envelopes that do not have a tap_api_envelope
+            envelope__published_to_tariffs_api__isnull=True,
+        ).order_by("envelope__envelope_id")
+        return unpublished.first() if unpublished else None
+
 
 class PackagedWorkBasket(TimestampedMixin):
     """
@@ -298,6 +322,13 @@ class PackagedWorkBasket(TimestampedMixin):
     """
     envelope = ForeignKey(
         "publishing.Envelope",
+        null=True,
+        on_delete=SET_NULL,
+        editable=False,
+        related_name="packagedworkbaskets",
+    )
+    tap_api_envelope = ForeignKey(
+        "publishing.TAPApiEnvelope",
         null=True,
         on_delete=SET_NULL,
         editable=False,
@@ -390,6 +421,24 @@ class PackagedWorkBasket(TimestampedMixin):
                 "exists.",
             )
 
+    @classmethod
+    def create_api_publishing_envelope(cls):
+        """"""
+        unpublished = cls.objects.get_api_unpublished()
+        if unpublished:
+            from publishing import models as publishing_models
+
+            tap_api_envelope = publishing_models.TAPApiEnvelope.objects.create(
+                packaged_work_basket=unpublished,
+            )
+            unpublished.tap_api_envelope = tap_api_envelope
+            unpublished.save()
+        else:
+            logger.info(
+                "Attempted to create TAPApiEnvelope, but no unpublished, successfully "
+                "packaged workbasket exists.",
+            )
+
     # processing_state transition management.
 
     def begin_processing_condition_at_position_1(self):
@@ -437,6 +486,7 @@ class PackagedWorkBasket(TimestampedMixin):
         self.processing_started_at = datetime.now()
         self.save()
 
+    @create_api_publishing_envelope_on_success
     @create_envelope_on_completed_processing
     @save_after
     @transition(

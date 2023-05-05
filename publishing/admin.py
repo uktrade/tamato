@@ -7,6 +7,7 @@ from publishing.models import LoadingReport
 from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
 from publishing.models import ProcessingState
+from publishing.models import TAPApiEnvelope
 from workbaskets.models import WorkBasket
 
 
@@ -287,6 +288,39 @@ class LoadingReportAdmin(
         return self.workbasket_id_link(pwb.workbasket)
 
 
+class TAPApiEnvelopeAdmin(
+    PackagedWorkBasketAdminMixin,
+    WorkBasketAdminMixin,
+    admin.ModelAdmin,
+):
+    ordering = ["-pk"]
+    list_display = (
+        "id",
+        "publishing_state",
+        "staging_published",
+        "production_published",
+        "packaged_workbasket_id",
+        "workbasket_id",
+    )
+    list_filter = ("publishing_state",)
+
+    def packaged_workbasket_id(self, obj):
+        pwb = obj.packagedworkbaskets.last()
+        if not pwb:
+            return "Missing packaged workbasket!"
+        return self.packaged_workbasket_id_link(pwb)
+
+    def workbasket_id(self, obj):
+        pwb = obj.packagedworkbaskets.last()
+        if not pwb:
+            return "Missing packaged workbasket!"
+
+        if not pwb.workbasket:
+            return "Missing workbasket!"
+
+        return self.workbasket_id_link(pwb.workbasket)
+
+
 admin.site.register(Envelope, EnvelopeAdmin)
 
 admin.site.register(LoadingReport, LoadingReportAdmin)
@@ -294,3 +328,5 @@ admin.site.register(LoadingReport, LoadingReportAdmin)
 admin.site.register(OperationalStatus, OperationalStatusAdmin)
 
 admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
+
+admin.site.register(TAPApiEnvelope, TAPApiEnvelopeAdmin)

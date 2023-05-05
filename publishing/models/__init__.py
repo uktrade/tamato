@@ -13,6 +13,7 @@ from publishing.models.packaged_workbasket import (
 )
 from publishing.models.state import ProcessingState
 from publishing.models.state import QueueState
+from publishing.models.tap_api_envelope import TAPApiEnvelope
 
 __all__ = [
     "ProcessingState",
@@ -27,4 +28,5 @@ __all__ = [
     "EnvelopeNoTransactions",
     "LoadingReport",
     "OperationalStatus",
+    "TAPApiEnvelope",
 ]

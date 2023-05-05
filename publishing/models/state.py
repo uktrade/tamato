@@ -50,3 +50,48 @@ class ProcessingState(TextChoices):
             cls.SUCCESSFULLY_PROCESSED,
             cls.FAILED_PROCESSING,
         )
+
+
+class ApiPublishingState(TextChoices):
+    """Publishing states of TAPApiEnvelope instances."""
+
+    AWAITING_PUBLISHING = (
+        "AWAITING_PUBLISHING",
+        "Awaiting publishing",
+    )
+    """Queued up and awaiting publishing."""
+    CURRENTLY_PUBLISHING = (
+        "CURRENTLY_PUBLISHING",
+        "Currently publishing",
+    )
+    """Picked off the task queue and now currently being processed - now attempting
+    to publish to the channel islands API."""
+    SUCCESSFULLY_PUBLISHED = (
+        "SUCCESSFULLY_PUBLISHED",
+        "Successfully published",
+    )
+    """Publishing now completed with a successful outcome - envelope published
+    to staging and production API."""
+    FAILED_PUBLISHING_STAGING = (
+        "FAILED_PUBLISHING_STAGING",
+        "Failed publishing staging",
+    )
+    """Publishing now completed with a failure outcome - staging API failed publishing the
+    envelope."""
+    FAILED_PUBLISHING_PRODUCTION = (
+        "FAILED_PUBLISHING_PRODUCTION",
+        "Failed publishing production",
+    )
+    """Publishing now completed with a failure outcome - production API failed publishing the
+    envelope."""
+
+    @classmethod
+    def queued_states(cls):
+        """Returns all states that represent a queued  instance, including those
+        that are being processed."""
+        return (
+            cls.FAILED_PUBLISHING_PRODUCTION,
+            cls.FAILED_PUBLISHING_STAGING,
+            cls.AWAITING_PUBLISHING,
+            cls.CURRENTLY_PUBLISHING,
+        )
