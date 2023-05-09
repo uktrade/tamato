@@ -1,7 +1,17 @@
 {% extends "layouts/form.jinja" %}
-{% from "components/step-by-step-nav/macro.jinja" import step_by_step_nav %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% set page_title = "Import TARIC file" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+       {"text": "Home", "href": url("home")},
+    {"text": "EU Taric Import List", "href": url("eu_import_batch-ui-list")},
+    {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
 
 {% block content %}
   <div class="govuk-grid-row">

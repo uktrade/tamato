@@ -1,16 +1,19 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/step-by-step-nav/macro.jinja" import step_by_step_nav %}
-{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "components/panel/macro.njk" import govukPanel %}
 
 {% set page_title = "Import commodities" %}
 
-
 {% block breadcrumb %}
-  {{ breadcrumbs(request, [
-    {"text": "Import commodities", "href": url("commodity-ui-import")},
-    {"text": page_title}
-  ])}}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "EU Taric Import List", "href": url("eu_import_batch-ui-list")},
+      {"text": "Import commodities", "href": url("commodity-ui-import")},
+      {"text": page_title}
+    ]
+  }) }}
 {% endblock %}
 
 {% block content %}
@@ -21,7 +24,7 @@
         "text": "Workbasket " ~ saved_file_workbasket_id ~ " created",
         "classes": "govuk-!-margin-bottom-7"
       }) }}
-      <a class="govuk-link" href="{{ url('eu_import_batch-ui-list') }}">
+      <a class="govuk-link" href="{{ url('geo_area-ui-list') }}">
             Back to EU TARIC import list
           </a>
     </div>
