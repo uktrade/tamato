@@ -28,8 +28,8 @@ from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
 from geo_areas.validators import AreaCode
+from geo_areas.validators import DateValidationMixin
 from geo_areas.validators import area_id_validator
-from geo_areas.validators import validate_dates
 from quotas.models import QuotaOrderNumberOrigin
 from workbaskets.models import WorkBasket
 
@@ -167,6 +167,7 @@ class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
 
 class GeographicalMembershipAddForm(
     BindNestedFormMixin,
+    DateValidationMixin,
     GeographicalMembershipValidityPeriodForm,
 ):
     geo_group = forms.ModelChoiceField(
@@ -247,14 +248,12 @@ class GeographicalMembershipAddForm(
                     "new_membership_start_date",
                     "A start date is required.",
                 )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="new_membership_start_date",
                 start_date=start_date,
                 container_start_date=area_group.valid_between.lower,
             )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="new_membership_end_date",
                 start_date=start_date,
                 end_date=end_date,
@@ -268,7 +267,11 @@ class GeographicalMembershipAddForm(
         fields = ["geo_group", "member"]
 
 
-class GeographicalMembershipEditForm(BindNestedFormMixin, forms.Form):
+class GeographicalMembershipEditForm(
+    BindNestedFormMixin,
+    DateValidationMixin,
+    forms.Form,
+):
     membership = forms.ModelChoiceField(
         label="",
         queryset=None,  # populated in __init__
@@ -310,26 +313,12 @@ class GeographicalMembershipEditForm(BindNestedFormMixin, forms.Form):
         end_date = cleaned_data.get("membership_end_date")
 
         if membership and action == GeoMembershipAction.END_DATE:
-            validate_dates(
-                form=self.fields["action"].nested_forms["END DATE"][0],
-                field="membership_end_date",
-                end_date=end_date,
-                container_end_date=membership.geo_group.valid_between.upper,
-            )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="",
                 end_date=end_date,
                 container_end_date=membership.geo_group.valid_between.upper,
             )
-            validate_dates(
-                form=self.fields["action"].nested_forms["END DATE"][0],
-                field="membership_end_date",
-                end_date=end_date,
-                container_start_date=membership.geo_group.valid_between.lower,
-            )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="",
                 end_date=end_date,
                 container_start_date=membership.geo_group.valid_between.lower,
@@ -531,7 +520,7 @@ class GeographicalAreaEditCreateForm(GeographicalAreaCreateForm):
         )
 
 
-class GeographicalMembershipGroupForm(ValidityPeriodForm):
+class GeographicalMembershipGroupForm(DateValidationMixin, ValidityPeriodForm):
     geo_group = forms.ModelChoiceField(
         label="Area group",
         help_text="Select an area group to add this country or region to from the dropdown.",
@@ -591,27 +580,23 @@ class GeographicalMembershipGroupForm(ValidityPeriodForm):
         if geo_group:
             start_date = cleaned_data["valid_between"].lower
             end_date = cleaned_data["valid_between"].upper
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="start_date",
                 start_date=start_date,
                 container_start_date=geo_group.valid_between.lower,
             )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="start_date",
                 start_date=start_date,
                 container="country or region",
                 container_start_date=self.geo_area.valid_between.lower,
             )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="end_date",
                 end_date=end_date,
                 container_end_date=geo_group.valid_between.upper,
             )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="end_date",
                 end_date=end_date,
                 container="country or region",
@@ -625,7 +610,7 @@ class GeographicalMembershipGroupForm(ValidityPeriodForm):
         fields = ["valid_between", "geo_group"]
 
 
-class GeographicalMembershipMemberForm(ValidityPeriodForm):
+class GeographicalMembershipMemberForm(DateValidationMixin, ValidityPeriodForm):
     member = forms.ModelChoiceField(
         label="Country or region",
         help_text="Select a country or region to add to this area group from the dropdown.",
@@ -687,27 +672,23 @@ class GeographicalMembershipMemberForm(ValidityPeriodForm):
         if member:
             start_date = cleaned_data["valid_between"].lower
             end_date = cleaned_data["valid_between"].upper
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="start_date",
                 start_date=start_date,
                 container_start_date=self.geo_area.valid_between.lower,
             )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="start_date",
                 start_date=start_date,
                 container="country or region",
                 container_start_date=member.valid_between.lower,
             )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="end_date",
                 end_date=end_date,
                 container_end_date=self.geo_area.valid_between.upper,
             )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="end_date",
                 end_date=end_date,
                 container="country or region",
