@@ -3,11 +3,14 @@ from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from rest_framework.reverse import reverse
 
+from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import assert_read_only_model_view_returns_list
+from common.tests.util import date_post_data
 from common.tests.util import get_class_based_view_urls_matching_url
+from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.validators import UpdateType
@@ -63,6 +66,7 @@ def test_geographical_area_detail_views(
     areas and don't return an error."""
     model_overrides = {
         "geo_areas.views.GeoAreaDescriptionCreate": GeographicalArea,
+        "geo_areas.views.GeographicalMembershipsCreate": GeographicalArea,
     }
 
     assert_model_view_renders(view, url_pattern, valid_user_client, model_overrides)
@@ -365,3 +369,95 @@ def test_geo_area_update_view_membership_deletion(
     )
     for membership in workbasket:
         assert membership.update_type == UpdateType.DELETE
+
+
+def test_geo_area_create_view(valid_user_client, session_workbasket, date_ranges):
+    """Tests that a geographical area can be created."""
+    form_data = {
+        "area_code": AreaCode.COUNTRY,
+        "area_id": "TC",
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "description": "Test country",
+    }
+    expected_valid_between = date_ranges.normal
+
+    url = reverse("geo_area-ui-create")
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    with override_current_transaction(Transaction.objects.last()):
+        geo_area = GeographicalArea.objects.get(
+            transaction__workbasket=session_workbasket,
+        )
+        assert geo_area.update_type == UpdateType.CREATE
+        assert geo_area.area_code == form_data["area_code"]
+        assert geo_area.area_id == form_data["area_id"]
+        assert geo_area.valid_between == expected_valid_between
+        assert geo_area.get_description().description == form_data["description"]
+
+
+def test_geo_area_edit_create_view(
+    valid_user_client,
+    session_workbasket,
+    date_ranges,
+    use_edit_view,
+):
+    """Tests that geographical area CREATE instances can be edited."""
+    geo_area = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.REGION,
+        area_id="TR",
+        valid_between=date_ranges.no_end,
+        transaction=session_workbasket.new_transaction(),
+    )
+
+    data_changes = {**date_post_data("end_date", date_ranges.normal.upper)}
+    with raises_if(ValidationError, not True):
+        use_edit_view(geo_area, data_changes)
+
+
+def test_geographical_membership_create_view(
+    valid_user_client,
+    session_workbasket,
+    date_ranges,
+):
+    """Tests that multiple geographical memberships can be created."""
+    country = factories.CountryFactory.create(valid_between=date_ranges.no_end)
+    area_groups = factories.GeoGroupFactory.create_batch(
+        2,
+        valid_between=date_ranges.no_end,
+    )
+
+    form_data = {
+        "geo_membership-group-formset-0-geo_group": area_groups[0].pk,
+        "geo_membership-group-formset-0-start_date_0": date_ranges.no_end.lower.day,
+        "geo_membership-group-formset-0-start_date_1": date_ranges.no_end.lower.month,
+        "geo_membership-group-formset-0-start_date_2": date_ranges.no_end.lower.year,
+        "geo_membership-group-formset-1-geo_group": area_groups[1].pk,
+        "geo_membership-group-formset-1-start_date_0": date_ranges.no_end.lower.day,
+        "geo_membership-group-formset-1-start_date_1": date_ranges.no_end.lower.month,
+        "geo_membership-group-formset-1-start_date_2": date_ranges.no_end.lower.year,
+    }
+
+    url = reverse("geo_area-ui-membership-create", kwargs={"sid": country.sid})
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    redirect_url = reverse(
+        "geo_area-ui-membership-confirm-create",
+        kwargs={"sid": country.sid},
+    )
+    assert response.url == redirect_url
+
+    memberships = GeographicalMembership.objects.filter(
+        transaction__workbasket=session_workbasket,
+    )
+    for i, membership in enumerate(memberships):
+        assert membership.update_type == UpdateType.CREATE
+        assert membership.member == country
+        assert membership.geo_group == area_groups[i]
+        assert membership.valid_between == date_ranges.no_end
