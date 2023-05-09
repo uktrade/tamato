@@ -357,9 +357,10 @@ class GeographicalAreaEndDateForm(ValidityPeriodForm):
                     not origin.valid_between.upper
                     or origin.valid_between.upper < end_date
                 ):
-                    self.add_error(
-                        "end_date",
-                        "The end date must span the validity period of the quota order number origin that specifies this geographical area.",
+                    raise ValidationError(
+                        {
+                            "end_date": "The end date must span the validity period of the quota order number origin that specifies this geographical area.",
+                        },
                     )
         return super().clean()
 
