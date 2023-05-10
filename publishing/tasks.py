@@ -86,3 +86,14 @@ def schedule_create_xml_envelope_file(
         )
         packaged_work_basket.create_envelope_task_id = task.id
         packaged_work_basket.save()
+
+
+@app.task
+def publish_to_api(tap_envelope_id):
+    """"""
+    # TODO publish Envelope to staging then on success production
+    # TODO transition Envelope state on progress
+    from publishing.models import TAPApiEnvelope
+
+    api_envelope = TAPApiEnvelope.objects.get(pk=tap_envelope_id)
+    logger.info(f"Publishing to TAP api: {api_envelope}")
