@@ -164,10 +164,6 @@ class Commodityhierarchy(CommodityDetail):
         prefix = self.object.item_id[0:4]
         commodities_collection = CommodityCollectionLoader(prefix=prefix).load()
 
-        for commodity in commodities_collection.commodities:
-            if commodity.item_id == self.object.item_id:
-                pass
-
         tx = WorkBasket.get_current_transaction(self.request)
         snapshot = CommodityTreeSnapshot(
             commodities=commodities_collection.commodities,
