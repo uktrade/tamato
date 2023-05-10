@@ -557,21 +557,18 @@ class GeographicalMembershipGroupForm(DateValidationMixin, ValidityPeriodForm):
         self.helper.layout = Layout(
             Fieldset(
                 Div(
-                    Div(
-                        Field("geo_group"),
-                        css_class="tap-column govuk-!-width-one-half",
-                    ),
-                    Div(
-                        Field("start_date"),
-                        css_class="tap-column",
-                    ),
-                    Div(
-                        Field("end_date"),
-                        css_class="tap-column",
-                    ),
-                    css_class="tap-row",
+                    Field("geo_group"),
+                    css_class="govuk-grid-column-one-half error-align",
                 ),
-                css_class="tap-inline",
+                Div(
+                    Field("start_date"),
+                    css_class="govuk-grid-column-one-quarter error-align",
+                ),
+                Div(
+                    Field("end_date"),
+                    css_class="govuk-grid-column-one-quarter error-align",
+                ),
+                css_class="membership-inline",
             ),
         )
 
@@ -649,21 +646,18 @@ class GeographicalMembershipMemberForm(DateValidationMixin, ValidityPeriodForm):
         self.helper.layout = Layout(
             Fieldset(
                 Div(
-                    Div(
-                        Field("member"),
-                        css_class="tap-column govuk-!-width-one-half",
-                    ),
-                    Div(
-                        Field("start_date"),
-                        css_class="tap-column",
-                    ),
-                    Div(
-                        Field("end_date"),
-                        css_class="tap-column",
-                    ),
-                    css_class="tap-row",
+                    Field("member"),
+                    css_class="govuk-grid-column-one-half error-align",
                 ),
-                css_class="tap-inline",
+                Div(
+                    Field("start_date"),
+                    css_class="govuk-grid-column-one-quarter error-align",
+                ),
+                Div(
+                    Field("end_date"),
+                    css_class="govuk-grid-column-one-quarter error-align",
+                ),
+                css_class="membership-inline",
             ),
         )
 
