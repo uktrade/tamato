@@ -137,7 +137,7 @@ class CommodityMeasuresList(SortingMixin, WithPaginationListMixin, ListView):
         commodity = (
             GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
         )
-        queryset = commodity.measures.as_at_today()
+        queryset = commodity.measures.current()
         if ordering:
             if isinstance(ordering, str):
                 ordering = (ordering,)
