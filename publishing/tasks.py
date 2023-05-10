@@ -97,3 +97,12 @@ def publish_to_api(tap_envelope_id):
 
     api_envelope = TAPApiEnvelope.objects.get(pk=tap_envelope_id)
     logger.info(f"Publishing to TAP api: {api_envelope}")
+
+    # check envelope is next expected envelope
+    #   previous TAPApiEnvelope is in state SUCCESSFULLY_PUBLISHED
+    # Transition state to CURRENTLY_PUBLISHING
+    # publish to staging API
+    # Transition to FAILED_PUBLISHING_STAGING if failed
+    # publish to production API
+    # Transition to FAILED_PUBLISHING_PRODUCTION if failed
+    # Transition to SUCCESSFULLY_PUBLISHED if success
