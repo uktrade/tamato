@@ -13,6 +13,9 @@ from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
 from commodities.forms import CommodityImportForm
 from commodities.models import GoodsNomenclature
+from commodities.models.dc import CommodityCollectionLoader
+from commodities.models.dc import CommodityTreeSnapshot
+from commodities.models.dc import SnapshotMoment
 from commodities.models.dc import get_chapter_collection
 from common.serializers import AutoCompleteSerializer
 from common.views import SortingMixin
@@ -147,4 +150,29 @@ class CommodityMeasuresList(SortingMixin, WithPaginationListMixin, ListView):
             GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
         )
         context["selected_tab"] = "measures"
+        return context
+
+
+class Commodityhierarchy(CommodityDetail):
+    template_name = "commodities/hierarchy.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context["selected_tab"] = "hierarchy"
+
+        prefix = self.object.item_id[0:4]
+        commodities_collection = CommodityCollectionLoader(prefix=prefix).load()
+
+        tx = WorkBasket.get_current_transaction(self.request)
+        snapshot = CommodityTreeSnapshot(
+            commodities=commodities_collection.commodities,
+            moment=SnapshotMoment(transaction=tx),
+        )
+
+        context["snapshot"] = snapshot
+        context["this_commodity"] = list(
+            filter(lambda c: c.item_id == self.object.item_id, snapshot.commodities),
+        )[0]
+
         return context

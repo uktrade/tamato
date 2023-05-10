@@ -330,3 +330,9 @@ def test_commodity_measures_sorting_measure_type(
         int(el.text) for el in soup.select(".govuk-table tbody tr td:first-child")
     ]
     assert measure_sids == [measure1.sid, measure2.sid, measure3.sid]
+
+
+def test_commodity_hierarchy(valid_user_client, commodity):
+    url = reverse("commodity-ui-detail-hierarchy", kwargs={"sid": commodity.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200

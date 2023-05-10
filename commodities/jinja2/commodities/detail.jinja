@@ -30,6 +30,11 @@
       "selected": selected_tab == "measures",
     },
     {
+      "text": "Commodity hierarchy",
+      "href": url('commodity-ui-detail-hierarchy', args=[commodity.sid]),
+      "selected": selected_tab == "hierarchy",
+    },
+    {
       "text": "Version control",
       "href": url('commodity-ui-detail-version', args=[commodity.sid]),
       "selected": selected_tab == "version"
@@ -44,7 +49,7 @@
     </div>
   </div>
   {{ fake_tabs(links) }}
-  <div class="govuk-tabs__panel">
+  <div class="govuk-tabs__panel {% block content_class %}{% endblock %}">
     {% block tab_content %}
       {% include "includes/commodities/tabs/core_data.jinja" %}
     {% endblock %}
