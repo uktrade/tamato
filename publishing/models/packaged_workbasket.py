@@ -54,6 +54,25 @@ def save_after(func):
     return inner
 
 
+def refresh_after(func):
+    """
+    Decorator used to refresh the PackagedWorkBasket instance after a state
+    transition.
+
+    This ensures a transitioned instance is always reload, which is necessary
+    when another action may update the packaged workbasket for example when a
+    TAPApiEnvelope is created.
+    """
+
+    @atomic
+    def inner(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        self.refresh_from_db()
+        return result
+
+    return inner
+
+
 def pop_top_after(func):
     """
     Call pop_top() on an instance.
@@ -273,11 +292,14 @@ class PackagedWorkBasketQuerySet(QuerySet):
 
     def get_api_unpublished(self):
         unpublished = self.filter(
-            processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
-            tap_api_envelope__isnull=True,
-            # Filters out older envelopes that do not have a tap_api_envelope
-            envelope__published_to_tariffs_api__isnull=True,
+            Q(
+                processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+                tap_api_envelope__isnull=True,
+                # Filters out older envelopes that do not have a tap_api_envelope
+                envelope__published_to_tariffs_api__isnull=True,
+            ),
         ).order_by("envelope__envelope_id")
+        print(unpublished)
         return unpublished.first() if unpublished else None
 
 
@@ -486,6 +508,7 @@ class PackagedWorkBasket(TimestampedMixin):
         self.processing_started_at = datetime.now()
         self.save()
 
+    @refresh_after
     @create_api_publishing_envelope_on_success
     @create_envelope_on_completed_processing
     @save_after

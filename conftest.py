@@ -379,7 +379,7 @@ def queued_workbasket_factory():
     return factory_method
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def packaged_workbasket_factory(queued_workbasket_factory):
     """
     Factory fixture to create a packaged workbasket.
@@ -404,7 +404,7 @@ def packaged_workbasket_factory(queued_workbasket_factory):
     return factory_method
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def published_envelope_factory(packaged_workbasket_factory, envelope_storage):
     """
     Factory fixture to create an envelope and update the packaged_workbasket
@@ -437,7 +437,7 @@ def published_envelope_factory(packaged_workbasket_factory, envelope_storage):
     return factory_method
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def successful_envelope_factory(published_envelope_factory):
     """
     Factory fixture to create a successfully processed envelope and update the

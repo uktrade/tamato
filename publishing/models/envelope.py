@@ -115,10 +115,10 @@ class EnvelopeQuerySet(QuerySet):
             "envelope_id",
         )
 
-    def last_envelope_id(self):
+    def last_envelope_for_year(self, year=None):
         """"""
         return (
-            Envelope.objects.for_year()
+            Envelope.objects.for_year(year)
             .filter(
                 packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
             )
@@ -216,7 +216,7 @@ class Envelope(TimestampedMixin):
     @classmethod
     def next_envelope_id(cls):
         """Get packaged workbaskets where proc state SUCCESS."""
-        envelope = Envelope.objects.last_envelope_id()
+        envelope = Envelope.objects.last_envelope_for_year()
 
         if envelope is None:
             # First envelope of the year.

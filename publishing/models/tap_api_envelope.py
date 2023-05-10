@@ -8,8 +8,9 @@ from django.db.transaction import atomic
 from django_fsm import FSMField
 
 from common.models.mixins import TimestampedMixin
+from publishing.models import ApiPublishingState
+from publishing.models import Envelope
 from publishing.models import ProcessingState
-from publishing.models.state import ApiPublishingState
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,10 @@ class ApiEnvelopeInvalidWorkBasketStatus(Exception):
     pass
 
 
+class ApiEnvelopeAlreadyExists(Exception):
+    pass
+
+
 class TAPApiEnvelopeManager(Manager):
     @atomic
     def create(self, packaged_work_basket, **kwargs):
@@ -32,6 +37,7 @@ class TAPApiEnvelopeManager(Manager):
 
          :param packaged_work_basket: packaged workbasket to publish.
         @throws ApiEnvelopeInvalidWorkBasketStatus if packaged workbasket isn't Successfully processed
+        @throws ApiEnvelopeAlreadyExists if packaged workbasket already has a TAPApiEnvelope
         @throws ApiEnvelopeUnexpectedEnvelopeSequence if packaged workbasket isn't expected envelope id
         """
         if (
@@ -42,15 +48,37 @@ class TAPApiEnvelopeManager(Manager):
                 "Unable to create TAPApiEnvelope from PackagedWorkBasket instance "
                 f"PackagedWorkBasket status not successful, {packaged_work_basket.processing_state} status.",
             )
-        # TODO fix this is not working
-        # if packaged_work_basket.envelope.envelope_id != Envelope.objects.last_envelope_id():
-        #     raise ApiEnvelopeUnexpectedEnvelopeSequence(
-        #         "Unable to create TAPApiEnvelope from PackagedWorkBasket instance "
-        #         f"Envelope Id {packaged_work_basket.envelope.envelope_id} is not the next not expacted envelope",
-        #     )
+
+        if TAPApiEnvelope.objects.filter(
+            packagedworkbaskets__envelope__envelope_id=packaged_work_basket.envelope.envelope_id,
+        ).exists():
+            raise ApiEnvelopeAlreadyExists(
+                "Unable to create TAPApiEnvelope from PackagedWorkBasket instance "
+                f"PackagedWorkBasket already has a TAPApiEnvelope",
+            )
+
+        # will only create for the latest successful Id, if for any reason this process is out of sync
+        # we will not be able to automatically create these api envelopes as it would expect a different Id
+        if (
+            packaged_work_basket.envelope.envelope_id
+            != Envelope.objects.last_envelope_for_year().envelope_id
+        ):
+            # more complex and will catch envelopes that are created out of sequence but how do you create the first api envelope?
+            # year = packaged_work_basket.envelope.envelope_id[2:]
+            # if packaged_work_basket.envelope.envelope_id[:4] == "0001":
+            #     previous_id = Envelope.objects.for_year(year=year-1).last().envelope_id
+            # else:
+            #     previous_id = str(int(packaged_work_basket.envelope.envelope_id) - 1)
+            # if (not TAPApiEnvelope.objects.filter(
+            #     Q(packagedworkbaskets__envelope__envelope_id=previous_id)
+            #     ).exists() and
+            #     not Envelope.objects.filter(envelope_id=previous_id, published_to_tariffs_api__isnull=False).exists()):
+            raise ApiEnvelopeUnexpectedEnvelopeSequence(
+                "Unable to create TAPApiEnvelope from PackagedWorkBasket instance "
+                f"Envelope Id {packaged_work_basket.envelope.envelope_id} is not the next not expected envelope",
+            )
         envelope = super().create(**kwargs)
 
-        # TODO create celery task to publish envelope to APIs
         return envelope
 
 

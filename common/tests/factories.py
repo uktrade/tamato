@@ -24,6 +24,7 @@ from measures.validators import DutyExpressionId
 from measures.validators import ImportExportCode
 from measures.validators import MeasureTypeCombination
 from measures.validators import OrderNumberCaptureCode
+from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
 from workbaskets.validators import WorkflowStatus
 
@@ -1336,6 +1337,14 @@ class PublishedEnvelopeFactory(factory.django.DjangoModelFactory):
     packaged_work_basket = factory.SubFactory(QueuedPackagedWorkBasketFactory)
 
 
+class SuccessPackagedWorkBasketFactory(PackagedWorkBasketFactory):
+    """Creates a packaged workbasket instance with a published workbasket and in
+    a successfully processed state."""
+
+    workbasket = factory.SubFactory(PublishedWorkBasketFactory)
+    processing_state = ProcessingState.SUCCESSFULLY_PROCESSED
+
+
 class UploadedPackagedWorkBasketFactory(PackagedWorkBasketFactory):
     envelope = factory.SubFactory(PublishedEnvelopeFactory)
 
@@ -1343,3 +1352,13 @@ class UploadedPackagedWorkBasketFactory(PackagedWorkBasketFactory):
 class OperationalStatusFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "publishing.OperationalStatus"
+
+
+class TapApiEnvelopeFactory(factory.django.DjangoModelFactory):
+    """Creates a TAP Api Envelope instance with a successful packaged work
+    basket instance."""
+
+    class Meta:
+        model = "publishing.TapApiEnvelope"
+
+    packaged_work_basket = factory.SubFactory(SuccessPackagedWorkBasketFactory)

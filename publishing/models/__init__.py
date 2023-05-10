@@ -11,11 +11,13 @@ from publishing.models.packaged_workbasket import PackagedWorkBasketInvalidCheck
 from publishing.models.packaged_workbasket import (
     PackagedWorkBasketInvalidQueueOperation,
 )
+from publishing.models.state import ApiPublishingState
 from publishing.models.state import ProcessingState
 from publishing.models.state import QueueState
 from publishing.models.tap_api_envelope import TAPApiEnvelope
 
 __all__ = [
+    "ApiPublishingState",
     "ProcessingState",
     "QueueState",
     "PackagedWorkBasket",
