@@ -1,0 +1,25 @@
+{% set table_rows = [] %}
+
+{% for object in object_list %}
+  {%- set object_status -%}
+    <span class="status-badge">{{object.status}}</a>
+  {%- endset -%}
+  {{ table_rows.append([
+    {"text": object.name},
+    {"text": "{:%d %b %Y}".format(object.created_at)},
+    {"text": object.author.get_full_name() if object.author else "-"},
+    {"text": object_status},
+    {"text": "Placeholder Resume Link"},
+
+  ]) or "" }}
+{% endfor %}
+{{ govukTable({
+  "head": [
+    {"text": "Taric ID number"},
+    {"text": "Date added"},
+    {"text": "Uploaded by"},
+    {"text": "Status"},
+    {"text": ""},
+  ],
+  "rows": table_rows
+}) }}

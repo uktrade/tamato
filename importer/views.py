@@ -8,10 +8,11 @@ from common.views import WithPaginationListView
 from importer import forms
 from importer import models
 from importer.filters import ImportBatchFilter
+from importer.filters import TaricImportBatchFilter
 
 
 class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
-    """UI endpoint for viewing and filtering Import Batches."""
+    """UI endpoint for viewing and filtering General Import Batches."""
 
     queryset = (
         models.ImportBatch.objects.all()
@@ -37,6 +38,15 @@ class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
     )
     template_name = "importer/list.jinja"
     filterset_class = ImportBatchFilter
+
+
+class TaricImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
+    # The correct list view for importer work
+    """UI endpoint for viewing and filtering Taric Import Batches."""
+
+    queryset = models.ImportBatch.objects.all().order_by("-created_at")
+    template_name = "eu-importer/select-imports.jinja"
+    filterset_class = TaricImportBatchFilter
 
 
 class UploadTaricFileView(RequiresSuperuserMixin, FormView):

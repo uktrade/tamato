@@ -19,6 +19,7 @@ from common.tests.util import wrap_numbers_over_max_digits
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
+from importer.models import ImportBatchStatus
 from importer.models import ImporterChunkStatus
 from measures.validators import DutyExpressionId
 from measures.validators import ImportExportCode
@@ -1262,6 +1263,10 @@ class ImportBatchFactory(factory.django.DjangoModelFactory):
         model = "importer.ImportBatch"
 
     name = factory.sequence(str)
+    author = factory.SubFactory(UserFactory)
+    status = ImportBatchStatus.IMPORTED
+    split_job = False
+    created_at = factory.Faker("date_object")
 
 
 class ImporterXMLChunkFactory(factory.django.DjangoModelFactory):

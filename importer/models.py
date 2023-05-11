@@ -1,6 +1,9 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.db.models import QuerySet
+from django_fsm import FSMField
+from django_fsm import transition
 
 from common.models import TimestampedMixin
 
@@ -33,18 +36,44 @@ class ImporterQuerySet(QuerySet):
         return self.filter(chunks__status__in=running_statuses)
 
 
+class ImportBatchStatus(models.TextChoices):
+    # File has been successfully imported
+    UPLOADING = "UPLOADING", "Uploading"
+    # File has been successfully imported
+    IMPORTED = "IMPORTED", "Imported"
+    # Has changes that need reviewing
+    REVIEW = "REVIEW", "In Review"
+    #  Corresponiding workbasket has been published.
+    COMPLETED = "COMPLETED", "Completed"
+    # Not all chunks imported - requires assistance
+    FAILED = "FAILED", "Failed"
+
+
 class ImportBatch(TimestampedMixin):
     """
     A model to group chunks of TARIC XML data together.
 
-    Usually the chunks are stored in direct sequence together
-    however on occassion they are "split" by record code and chapter.
+    Usually the chunks are stored in direct sequence together however on
+    occassion they are "split" by record code and chapter.
 
-    Dependencies reflects other ImportBatch objects which this batch needs
-    to finish before it can be imported.
+    Dependencies reflects other ImportBatch objects which this batch needs to
+    finish before it can be imported.
     """
 
     name = models.CharField(max_length=32, unique=True)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        null=True,
+    )
+    status = FSMField(
+        default=ImportBatchStatus.UPLOADING,
+        choices=ImportBatchStatus.choices,
+        db_index=True,
+        protected=False,
+        editable=False,
+    )
     split_job = models.BooleanField(
         default=False,
     )  # XXX could be termed "seed file" instead?
@@ -57,6 +86,42 @@ class ImportBatch(TimestampedMixin):
     )
 
     objects = models.Manager.from_queryset(ImporterQuerySet)()
+
+    @transition(
+        field=status,
+        source=ImportBatchStatus.UPLOADING,
+        target=ImportBatchStatus.IMPORTED,
+        custom={"label": "Imported"},
+    )
+    def imported(self):
+        """Mark an Import Batch as uploaded."""
+
+    @transition(
+        field=status,
+        source=ImportBatchStatus.IMPORTED,
+        target=ImportBatchStatus.REVIEW,
+        custom={"label": "In Review"},
+    )
+    def in_review(self):
+        """Mark an Import Batch as in review."""
+
+    @transition(
+        field=status,
+        source=[ImportBatchStatus.IMPORTED, ImportBatchStatus.REVIEW],
+        target=ImportBatchStatus.COMPLETED,
+        custom={"label": "Completed"},
+    )
+    def complete(self):
+        """Mark an Import Batch as complete."""
+
+    @transition(
+        field=status,
+        source=ImportBatchStatus.UPLOADING,
+        target=ImportBatchStatus.FAILED,
+        custom={"label": "Failed"},
+    )
+    def failed(self):
+        """Mark an Import Batch as failed."""
 
     @property
     def ready_chunks(self):

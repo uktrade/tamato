@@ -64,6 +64,8 @@ class HomeView(FormView, View):
             return redirect(reverse("publishing:envelope-queue-ui-list"))
         elif form.cleaned_data["workbasket_action"] == "SEARCH":
             return redirect(reverse("search-page"))
+        elif form.cleaned_data["workbasket_action"] == "IMPORT":
+            return redirect(reverse("eu_import_batch-ui-list"))
 
 
 class SearchPageView(TemplateView):
