@@ -5,11 +5,14 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from commodities import forms
+from importer.models import ImportBatchStatus
+
+pytestmark = pytest.mark.django_db
 
 TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
 
 
-def test_import_form_valid_envelope_id():
+def test_import_form_valid_envelope_id(superuser):
     with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as upload_file:
         file_data = {
             "taric_file": SimpleUploadedFile(
@@ -21,6 +24,12 @@ def test_import_form_valid_envelope_id():
         form = forms.CommodityImportForm({}, file_data)
 
         assert form.is_valid()
+        batch = form.save(user=superuser, workbasket_id=None)
+
+        assert batch.name.find(file_data["taric_file"].name) != -1
+        assert batch.split_job == False
+        assert batch.author.id == superuser.id
+        assert batch.status == ImportBatchStatus.IMPORTED
 
 
 @pytest.mark.parametrize("file_name,", ("invalid_id", "dtd"))

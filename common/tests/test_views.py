@@ -23,6 +23,7 @@ def test_index_displays_workbasket_action_form(valid_user_client):
     assert "Package Workbaskets" in page.select("label")[2].text
     assert "Process envelopes" in page.select("label")[3].text
     assert "Search the tariff" in page.select("label")[4].text
+    assert "Import EU Taric files" in page.select("label")[5].text
 
 
 def test_index_displays_logout_buttons_correctly_SSO_off_logged_in(valid_user_client):

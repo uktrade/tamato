@@ -30,3 +30,19 @@ class ImportBatchFilter(TamatoFilter):
     class Meta:
         model = models.ImportBatch
         fields = []
+
+
+class TaricImportBatchFilter(TamatoFilter):
+    """FilterSet for Taric Import Batches."""
+
+    search_fields = (
+        "id",
+        "author",
+        "reason",
+        "title",
+    )
+    clear_url = reverse_lazy("eu_import_batch-ui-list")
+
+    class Meta:
+        model = models.ImportBatch
+        fields = ["search", "status"]

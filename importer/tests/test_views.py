@@ -76,3 +76,27 @@ def test_import_failure(file_name, error_msg, superuser_client):
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
     assert error_msg in soup.select(".govuk-error-message")[0].text
+
+
+def test_taric_import_list_view_renders(superuser_client):
+    factories.ImportBatchFactory.create_batch(5)
+    response = superuser_client.get(reverse("eu_import_batch-ui-list"))
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert page.find("h1", text="EU Taric import list")
+
+    assert page.find("nav", class_="workbasket-filters")
+    assert page.find("a", text="All")
+    assert page.find("a", text="Imported")
+    assert page.find("a", text="In review")
+    assert page.find("a", text="Completed")
+
+    assert page.find("a", href="/import/commodities/")
+
+    assert page.find("thead").find("th", text="Taric ID number")
+    assert page.find("thead").find("th", text="Date added")
+    assert page.find("thead").find("th", text="Uploaded by")
+    assert page.find("thead").find("th", text="Status")
+
+    assert len(page.find_all("tr", class_="govuk-table__row")) == 6
+    assert len(page.find_all("span", class_="status-badge")) == 5

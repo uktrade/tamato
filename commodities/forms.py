@@ -32,10 +32,11 @@ class CommodityFilterForm(forms.Form):
 
 
 class CommodityImportForm(ImportForm):
+    # The correct form for importer work.
     taric_file = forms.FileField(
         required=True,
         help_text="",
-        label="Select an XML file",
+        label="Upload a TARIC file",
     )
     xsd_file = settings.PATH_XSD_COMMODITIES_TARIC
 
@@ -47,7 +48,7 @@ class CommodityImportForm(ImportForm):
             "taric_file",
             Submit(
                 "submit",
-                "Continue",
+                "Upload",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),
@@ -60,7 +61,9 @@ class CommodityImportForm(ImportForm):
         current_time = now.strftime("%H%M%S")
         batch_name = f"{self.cleaned_data['taric_file'].name}_{current_time}"
         self.instance.name = batch_name
-        batch = super().save(commit)
+        batch = super().save(commit=False)
+        batch.author = user
+        batch.save()
 
         self.process_file(
             self.cleaned_data["taric_file"],
@@ -68,7 +71,8 @@ class CommodityImportForm(ImportForm):
             user,
             workbasket_id=workbasket_id,
         )
-
+        batch.imported()
+        batch.save()
         return batch
 
     class Meta(ImportForm.Meta):

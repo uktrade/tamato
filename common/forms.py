@@ -187,6 +187,8 @@ class HMRCCDSManagerActions(TextChoices):
 
 class CommonUserActions(TextChoices):
     SEARCH = "SEARCH", "Search the tariff"
+    IMPORT = "IMPORT", "Import EU Taric files"
+    # Change this to be dependent on permissions later
 
 
 class HomeForm(forms.Form):

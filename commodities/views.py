@@ -27,6 +27,7 @@ from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
 from measures.models import Measure
 from workbaskets.models import WorkBasket
+from workbaskets.session_store import SessionStore
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
@@ -57,6 +58,7 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBasket):
+    # The correct view for importer work.
     template_name = "commodities/import.jinja"
     form_class = CommodityImportForm
     success_url = reverse_lazy("commodity-ui-import-success")
@@ -65,13 +67,43 @@ class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBask
         "common.change_trackedmodel",
     ]
 
+    @property
+    def session_store(self):
+        return SessionStore(
+            self.request,
+            f"TARIC_FILE_UPLOAD_SESSION",
+        )
+
     def form_valid(self, form):
         form.save(user=self.request.user, workbasket_id=self.workbasket.id)
+        self.session_store.add_items(
+            {
+                "saved_file_name": form.cleaned_data["taric_file"].name,
+                "saved_file_workbasket_id": self.workbasket.id,
+            },
+        )
         return super().form_valid(form)
 
 
 class CommodityImportSuccessView(TemplateView):
+    # The correct success view for importer work.
     template_name = "commodities/import-success.jinja"
+
+    @property
+    def session_store(self):
+        return SessionStore(
+            self.request,
+            f"TARIC_FILE_UPLOAD_SESSION",
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["saved_file_name"] = self.session_store.data["saved_file_name"]
+        context["saved_file_workbasket_id"] = self.session_store.data[
+            "saved_file_workbasket_id"
+        ]
+
+        return context
 
 
 class CommodityMixin:
