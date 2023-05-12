@@ -459,7 +459,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "channel_island_api_publish": {
         "task": "publishing.tasks.publish_to_api",
-        "schedule": crontab(minute=3),
+        "schedule": crontab(minute="*/3"),
     },
 }
 
