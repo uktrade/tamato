@@ -290,7 +290,7 @@ class PackagedWorkBasketQuerySet(QuerySet):
         )
         return top.first() if top else None
 
-    def get_api_unpublished(self):
+    def get_first_unpublished_to_api(self):
         unpublished = self.filter(
             Q(
                 processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
@@ -445,7 +445,7 @@ class PackagedWorkBasket(TimestampedMixin):
     @classmethod
     def create_api_publishing_envelope(cls):
         """"""
-        unpublished = cls.objects.get_api_unpublished()
+        unpublished = cls.objects.get_first_unpublished_to_api()
         if unpublished:
             from publishing import models as publishing_models
 
