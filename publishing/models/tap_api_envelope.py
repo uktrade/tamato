@@ -2,7 +2,6 @@ import logging
 
 from django.db.models import DateTimeField
 from django.db.models import Manager
-from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.transaction import atomic
 from django_fsm import FSMField
@@ -83,22 +82,16 @@ class TAPApiEnvelopeManager(Manager):
 
 
 class ApiEnvelopeQuerySet(QuerySet):
-    def published(self):
+    def awaiting_publishing(self):
         return self.filter(
-            publishing_state=ApiPublishingState.SUCCESSFULLY_PUBLISHED,
+            publishing_state=ApiPublishingState.AWAITING_PUBLISHING,
         )
 
     def unpublished(self):
-        return self.filter(
-            Q(
-                publishing_state=ApiPublishingState.FAILED_PUBLISHING_STAGING,
-            )
-            | Q(
-                publishing_state=ApiPublishingState.FAILED_PUBLISHING_PRODUCTION,
-            )
-            | Q(
-                publishing_state=ApiPublishingState.AWAITING_PUBLISHING,
-            ),
+        return (
+            self.failed_publishing_staging()
+            | self.failed_publishing_production()
+            | self.awaiting_publishing()
         )
 
     def currently_publishing(self):
@@ -106,20 +99,23 @@ class ApiEnvelopeQuerySet(QuerySet):
             publishing_state=ApiPublishingState.CURRENTLY_PUBLISHING,
         )
 
-    def successfully_published(self):
+    def published(self):
         return self.filter(
             publishing_state=ApiPublishingState.SUCCESSFULLY_PUBLISHED,
         )
 
-    def failed_publishing(self):
+    def failed_publishing_staging(self):
         return self.filter(
-            Q(
-                publishing_state=ApiPublishingState.FAILED_PUBLISHING_STAGING,
-            )
-            | Q(
-                publishing_state=ApiPublishingState.FAILED_PUBLISHING_PRODUCTION,
-            ),
+            publishing_state=ApiPublishingState.FAILED_PUBLISHING_STAGING,
         )
+
+    def failed_publishing_production(self):
+        return self.filter(
+            publishing_state=ApiPublishingState.FAILED_PUBLISHING_PRODUCTION,
+        )
+
+    def failed_publishing(self):
+        return self.failed_publishing_staging() | self.failed_publishing_production()
 
 
 class TAPApiEnvelope(TimestampedMixin):
