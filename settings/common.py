@@ -452,6 +452,11 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 
+CHANNEL_ISLANDS_API_CRON = (
+    crontab(os.environ.get("CHANNEL_ISLANDS_API_CRON"))
+    if os.environ.get("CHANNEL_ISLANDS_API_CRON")
+    else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
+)
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
@@ -460,7 +465,7 @@ CELERY_BEAT_SCHEDULE = {
     "channel_island_api_publish": {
         "task": "publishing.tasks.publish_to_api",
         # every 2 hours between 8am and 6pm on weekdays
-        "schedule": crontab(hour="8-18/2", day_of_week="mon-fri"),
+        "schedule": CHANNEL_ISLANDS_API_CRON,
     },
 }
 
