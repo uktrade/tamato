@@ -296,6 +296,7 @@ class TAPApiEnvelopeAdmin(
     ordering = ["-pk"]
     list_display = (
         "id",
+        "envelope_id",
         "publishing_state",
         "staging_published",
         "production_published",
@@ -303,6 +304,12 @@ class TAPApiEnvelopeAdmin(
         "workbasket_id",
     )
     list_filter = ("publishing_state",)
+
+    def envelope_id(self, obj):
+        pwb = obj.packagedworkbaskets.last()
+        if not pwb:
+            return "Missing packaged workbasket!"
+        return pwb.envelope.envelope_id
 
     def packaged_workbasket_id(self, obj):
         pwb = obj.packagedworkbaskets.last()
