@@ -459,7 +459,8 @@ CELERY_BEAT_SCHEDULE = {
     },
     "channel_island_api_publish": {
         "task": "publishing.tasks.publish_to_api",
-        "schedule": crontab(minute="*/3"),
+        # every 2 hours between 8am and 6pm on weekdays
+        "schedule": crontab(hour="8-18/2", day_of_week="mon-fri"),
     },
 }
 

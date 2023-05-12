@@ -49,3 +49,9 @@ if SKIP_CLAM_AV_FILE_UPLOAD:
         "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
         "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
     )
+
+# overwrite scheduler
+CELERY_BEAT_SCHEDULE["channel_island_api_publish"] = {
+    "task": "publishing.tasks.publish_to_api",
+    "schedule": crontab(minute="*/5"),
+}
