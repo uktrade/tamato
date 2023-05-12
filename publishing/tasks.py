@@ -88,7 +88,7 @@ def schedule_create_xml_envelope_file(
         packaged_work_basket.save()
 
 
-@app.task
+@app.task(autoretry_for=(Exception,), retry_backoff=5, retry_kwargs={"max_retries": 5})
 def publish_to_api():
     """"""
     logger.info(f"starting publish to api")
