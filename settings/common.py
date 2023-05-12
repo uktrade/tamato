@@ -457,6 +457,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
         "schedule": crontab(hour=3, minute=5),
     },
+    "channel_island_api_publish": {
+        "task": "publishing.tasks.publish_to_api",
+        "schedule": crontab(minute=3),
+    },
 }
 
 SQLITE_EXCLUDED_APPS = [

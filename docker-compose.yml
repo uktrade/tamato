@@ -15,21 +15,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - inside
 
   cache-redis:
     image: redis
-    networks:
-      - inside
     ports:
       - "127.0.0.1:6379:6379"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"  
 
   celery-redis:
     image: redis
-    networks:
-      - inside
     ports:
       - "127.0.0.1:6378:6379"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
@@ -48,8 +42,21 @@ services:
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     depends_on:
       - celery-redis
-    networks:
-      - inside
+
+  celery-beat:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
+    volumes:
+      - ./:/app/
+    command: ["celery", "-A" , "common.celery" ,"beat", "-l", "info"]
+    env_file: 
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    depends_on:
+      - celery-redis
 
   s3:
     image: minio/minio
@@ -68,8 +75,6 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
-    networks:
-      - inside
 
   tamato:
     build: 
@@ -90,19 +95,10 @@ services:
       - .env
       - settings/envs/docker.env
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-    networks:
-      - inside
-      - outside
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     stdin_open: true
     tty: true  
 
-networks:
-  inside:
-    external: false
-    internal: true
-  outside:
-    name: data-tap-network
 volumes:
   tamato-data-volume: {}
   tamato-s3-volume: {}

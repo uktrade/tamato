@@ -148,12 +148,12 @@ class TAPApiEnvelope(TimestampedMixin):
         editable=False,
     )
 
-    staging_published = DateTimeField(
+    production_published = DateTimeField(
         null=True,
         blank=True,
         default=None,
     )
-    production_published = DateTimeField(
+    staging_published = DateTimeField(
         null=True,
         blank=True,
         default=None,

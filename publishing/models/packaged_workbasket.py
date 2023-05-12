@@ -299,7 +299,6 @@ class PackagedWorkBasketQuerySet(QuerySet):
                 envelope__published_to_tariffs_api__isnull=True,
             ),
         ).order_by("envelope__envelope_id")
-        print(unpublished)
         return unpublished.first() if unpublished else None
 
 

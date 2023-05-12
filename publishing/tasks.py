@@ -89,20 +89,23 @@ def schedule_create_xml_envelope_file(
 
 
 @app.task
-def publish_to_api(tap_envelope_id):
+def publish_to_api():
     """"""
+    logger.info(f"starting publish to api")
     # TODO publish Envelope to staging then on success production
     # TODO transition Envelope state on progress
     from publishing.models import TAPApiEnvelope
 
-    api_envelope = TAPApiEnvelope.objects.get(pk=tap_envelope_id)
-    logger.info(f"Publishing to TAP api: {api_envelope}")
+    envelope_to_publish = TAPApiEnvelope.objects.unpublished().order_by("pk")
 
-    # check envelope is next expected envelope
-    #   previous TAPApiEnvelope is in state SUCCESSFULLY_PUBLISHED
-    # Transition state to CURRENTLY_PUBLISHING
-    # publish to staging API
-    # Transition to FAILED_PUBLISHING_STAGING if failed
-    # publish to production API
-    # Transition to FAILED_PUBLISHING_PRODUCTION if failed
-    # Transition to SUCCESSFULLY_PUBLISHED if success
+    for envelope in envelope_to_publish:
+        logger.info(f"Publishing to TAP api: {envelope}")
+
+        # check envelope is next expected envelope
+        #   previous TAPApiEnvelope is in state SUCCESSFULLY_PUBLISHED
+        # Transition state to CURRENTLY_PUBLISHING
+        # publish to staging API
+        # Transition to FAILED_PUBLISHING_STAGING if failed
+        # publish to production API
+        # Transition to FAILED_PUBLISHING_PRODUCTION if failed
+        # Transition to SUCCESSFULLY_PUBLISHED if success
