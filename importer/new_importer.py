@@ -93,31 +93,6 @@ class NewImporter:
         for transaction in transactions:
             self.parsed_transactions.append(TransactionParser(transaction))
 
-    def stats(self):
-        transaction_count = len(self.parsed_transactions)
-        total_message_count = 0
-        update_stats = {}
-
-        for transaction in self.parsed_transactions:
-            message_count = len(transaction.parsed_messages)
-
-            total_message_count += message_count
-            for taric_object in transaction.taric_objects:
-                key = (
-                    taric_object.xml_object_tag.replace(".", "_")
-                    + "_"
-                    + taric_object.update_type_name
-                )
-                if key in update_stats.keys():
-                    update_stats[key] += 1
-                else:
-                    update_stats[key] = 1
-
-        update_stats["transactions"] = transaction_count
-        update_stats["messages"] = total_message_count
-
-        return update_stats
-
     def validate(self):
         """Iterate through transactions and each taric model within, and verify
         progressively from the first transaction onwards, but not looking
@@ -125,13 +100,9 @@ class NewImporter:
 
         for transaction in self.parsed_transactions:
             for parsed_message in transaction.parsed_messages:
-                print(
-                    f"verifying links for {parsed_message.taric_object.xml_object_tag}",
-                )
                 links_valid = True
 
                 for link_data in parsed_message.taric_object.links() or []:
-                    print(link_data)
                     if not self._verify_link(parsed_message.taric_object, link_data):
                         links_valid = False
 
@@ -149,17 +120,19 @@ class NewImporter:
 
         for transaction in self.parsed_transactions:
             for taric_object in transaction.taric_objects:
-                if (
-                    taric_object.transaction_id >= verifying_taric_object.transaction_id
-                ):  # too far through, just break
-                    break
+                # check transaction ID - only want to check ones that are less than current verifying object
+                if taric_object.transaction_id > verifying_taric_object.transaction_id:
+                    continue
 
                 match = False
                 if taric_object.xml_object_tag == link_data["xml_tag_name"]:
                     # ok we have matched the type - now check property
                     int_match = True
                     for field in link_data["fields"].keys():
-                        if field != getattr(taric_object, link_data["fields"][field]):
+                        if getattr(verifying_taric_object, field) != getattr(
+                            taric_object,
+                            link_data["fields"][field],
+                        ):
                             int_match = False
 
                     if int_match:
@@ -185,6 +158,7 @@ class NewImporter:
             link_data,
             "No matches for possible related taric object",
         )
+
         return False
 
     def create_issue_report_item(
@@ -211,7 +185,10 @@ class NewImporter:
         target_taric_object.issues.append(report_item)
 
     def issues(self):
+        issues = []
         for transaction in self.parsed_transactions:
             for message in transaction.parsed_messages:
                 for issue in message.taric_object.issues:
-                    yield issue
+                    issues.append(issue)
+
+        return issues

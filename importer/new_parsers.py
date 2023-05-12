@@ -151,9 +151,30 @@ class MessageParser:
         return all_subclasses
 
 
+class ModelLinkField:
+    def __init__(self, parser_field_name, object_field_name):
+        self.parser_field_name = parser_field_name
+        self.object_field_name = object_field_name
+
+
+class ModelLink:
+    def __init__(self, model, fields: List[ModelLinkField], xml_tag_name: str):
+        self.model = model
+        self.fields = fields
+        self.xml_tag_name = xml_tag_name
+
+
+# {
+#   "model": models.QuotaOrderNumber,
+#   "fields": {
+#       "order_number__sid": "sid",
+#    },
+#    "xml_tag_name": "quota.order.number",
+# },
+
+
 class NewElementParser:
     handler: BaseHandler = None
-
     transaction_id: str
     record_code: str
     subrecord_code: str
@@ -165,15 +186,16 @@ class NewElementParser:
     model_links = None
     issues = []
 
+    def __init__(self):
+        self.issues = []
+
     def links(self):
         if self.model_links is None:
             raise Exception(
                 f"No handler defined for {self.__class__.__name__}, is this correct?",
             )
 
-        object_links = self.model_links
-
-        return object_links
+        return self.model_links
 
 
 class TaricObjectLink:

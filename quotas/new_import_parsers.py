@@ -1,10 +1,10 @@
 from datetime import date
 
-from importer.namespaces import Tag
+from importer.new_parsers import ModelLink
+from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
-from importer.parsers import TextElement
 from quotas.import_handlers import *
 
 
@@ -40,23 +40,48 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
         "geographical_area_sid": "geographical_area__sid",
     }
 
-    model_links = [
-        {
-            "model": models.QuotaOrderNumber,
-            "fields": {
-                "order_number__sid": "sid",
-            },
-            "xml_tag_name": "quota.order.number",
-        },
-        {
-            "model": GeographicalArea,
-            "fields": {
-                "geographical_area__area_id": "area_id",
-                "geographical_area__sid": "sid",
-            },
-            "xml_tag_name": "geographical.area",
-        },
-    ]
+    # model_links = [
+    #     {
+    #         "model": models.QuotaOrderNumber,
+    #         "fields": {
+    #             "order_number__sid": "sid",
+    #         },
+    #         "xml_tag_name": "quota.order.number",
+    #     },
+    #     {
+    #         "model": GeographicalArea,
+    #         "fields": {
+    #             "geographical_area__area_id": "area_id",
+    #             "geographical_area__sid": "sid",
+    #         },
+    #         "xml_tag_name": "geographical.area",
+    #     },
+    # ]
+
+    model_links = []
+
+    # create dependency to quota order number
+    model_links.append(
+        ModelLink(
+            models.QuotaOrderNumber,
+            [
+                ModelLinkField("order_number__sid", "sid"),
+            ],
+            "quota.order.number",
+        ),
+    )
+
+    # create dependency to geographical area
+    model_links.append(
+        ModelLink(
+            GeographicalArea,
+            [
+                ModelLinkField("geographical_area__area_id", "area_id"),
+                ModelLinkField("geographical_area__sid", "sid"),
+            ],
+            "geographical.area",
+        ),
+    )
 
     xml_object_tag = "quota.order.number.origin"
     record_code = "360"
@@ -72,6 +97,30 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
 
 class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
     handler = QuotaOrderNumberOriginExclusionHandler
+
+    model_links = []
+
+    # create dependency to quota order number origin
+    model_links.append(
+        ModelLink(
+            models.QuotaOrderNumberOrigin,
+            [
+                ModelLinkField("origin__sid", "sid"),
+            ],
+            "quota.order.number.origin",
+        ),
+    )
+
+    # create dependency to geographical area
+    model_links.append(
+        ModelLink(
+            GeographicalArea,
+            [
+                ModelLinkField("excluded_geographical_area__sid", "sid"),
+            ],
+            "geographical.area",
+        ),
+    )
 
     xml_object_tag = "quota.order.number.origin.exclusions"
     record_code = "360"
@@ -171,32 +220,32 @@ class NewQuotaEventParser(NewWritable, NewElementParser):
     quota_definition__sid: str = None
     occurrence_timestamp: str = None
 
-    _additional_components = {
-        # balance event
-        TextElement(Tag("old.balance")): "old.balance",
-        TextElement(Tag("new.balance")): "new.balance",
-        TextElement(Tag("imported.amount")): "imported.amount",
-        TextElement(
-            Tag("last.import.date.in.allocation"),
-        ): "last.import.date.in.allocation",
-        # unblocking event
-        TextElement(Tag("unblocking.date")): "unblocking.date",
-        # critical event
-        TextElement(Tag("critical.state")): "critical.state",
-        TextElement(
-            Tag("critical.state.change.date"),
-        ): "critical.state.change.date",
-        # exhaustion event
-        TextElement(Tag("exhaustion.date")): "exhaustion.date",
-        # reopening event
-        TextElement(Tag("reopening.date")): "reopening.date",
-        # unsuspension event
-        TextElement(Tag("unsuspension.date")): "unsuspension.date",
-        # closed and transferred event
-        TextElement(Tag("transfer.date")): "transfer.date",
-        TextElement(Tag("quota.closed")): "quota.closed",
-        TextElement(Tag("transferred.amount")): "transferred.amount",
-        TextElement(
-            Tag("target.quota.definition.sid"),
-        ): "target.quota.definition.sid",
-    }
+    # _additional_components = {
+    #     # balance event
+    #     TextElement(Tag("old.balance")): "old.balance",
+    #     TextElement(Tag("new.balance")): "new.balance",
+    #     TextElement(Tag("imported.amount")): "imported.amount",
+    #     TextElement(
+    #         Tag("last.import.date.in.allocation"),
+    #     ): "last.import.date.in.allocation",
+    #     # unblocking event
+    #     TextElement(Tag("unblocking.date")): "unblocking.date",
+    #     # critical event
+    #     TextElement(Tag("critical.state")): "critical.state",
+    #     TextElement(
+    #         Tag("critical.state.change.date"),
+    #     ): "critical.state.change.date",
+    #     # exhaustion event
+    #     TextElement(Tag("exhaustion.date")): "exhaustion.date",
+    #     # reopening event
+    #     TextElement(Tag("reopening.date")): "reopening.date",
+    #     # unsuspension event
+    #     TextElement(Tag("unsuspension.date")): "unsuspension.date",
+    #     # closed and transferred event
+    #     TextElement(Tag("transfer.date")): "transfer.date",
+    #     TextElement(Tag("quota.closed")): "quota.closed",
+    #     TextElement(Tag("transferred.amount")): "transferred.amount",
+    #     TextElement(
+    #         Tag("target.quota.definition.sid"),
+    #     ): "target.quota.definition.sid",
+    # }
