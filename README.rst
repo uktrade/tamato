@@ -337,6 +337,12 @@ Mocking s3 upload with minio
    this will be SQLITE_STORAGE_BUCKET_NAME, SQLITE_S3_ACCESS_KEY_ID, SQLITE_S3_SECRET_ACCESS_KEY,
    SQLITE_S3_ENDPOINT_URL, and SQLITE_STORAGE_DIRECTORY), setting s3 endpoint url to 
    http://localhost:9003/
+6. Alternatively, export all environment variables temporarily to an environment such as Bash
+   (useful when running a local development instance of a Celery worker):
+
+   .. code:: sh
+
+    set -a && source .env && set +a
 
 Virus Scan and running locally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
