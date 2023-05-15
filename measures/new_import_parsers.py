@@ -1,5 +1,9 @@
 from datetime import date
 
+from certificates.models import CertificateType
+from footnotes.models import FootnoteType
+from importer.new_parsers import ModelLink
+from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
@@ -92,6 +96,23 @@ class NewMeasurementUnitQualifierDescriptionParser(NewWritable, NewElementParser
 class NewMeasurementParser(NewValidityMixin, NewWritable, NewElementParser):
     handler = MeasurementHandler
 
+    model_links = [
+        ModelLink(
+            models.MeasurementUnit,
+            [
+                ModelLinkField("measurement_unit__code", "code"),
+            ],
+            "measurement.unit",
+        ),
+        ModelLink(
+            models.MeasurementUnitQualifier,
+            [
+                ModelLinkField("measurement_unit_qualifier__code", "code"),
+            ],
+            "measurement.unit.qualifier",
+        ),
+    ]
+
     record_code = "220"
     subrecord_code = "00"
 
@@ -161,6 +182,16 @@ class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
 class NewMeasureTypeParser(NewValidityMixin, NewWritable, NewElementParser):
     handler = MeasureTypeHandler
 
+    model_links = [
+        ModelLink(
+            models.MeasureTypeSeries,
+            [
+                ModelLinkField("measure_type_series__sid", "sid"),
+            ],
+            "measure.type.series",
+        ),
+    ]
+
     record_code = "235"
     subrecord_code = "00"
 
@@ -197,6 +228,23 @@ class NewAdditionalCodeTypeMeasureTypeParser(
     NewElementParser,
 ):
     handler = AdditionalCodeTypeMeasureTypeHandler
+
+    model_links = [
+        ModelLink(
+            models.MeasureType,
+            [
+                ModelLinkField("measure_type__sid", "sid"),
+            ],
+            "measure.type",
+        ),
+        ModelLink(
+            AdditionalCodeType,
+            [
+                ModelLinkField("additional_code_type__sid", "sid"),
+            ],
+            "additional.code.type",
+        ),
+    ]
 
     record_code = "240"
     subrecord_code = "00"
@@ -264,6 +312,74 @@ class NewMeasureActionDescriptionParser(NewWritable, NewElementParser):
 class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
     handler = MeasureHandler
 
+    model_links = [
+        ModelLink(
+            models.MeasureType,
+            [
+                ModelLinkField("measure_type__sid", "sid"),
+            ],
+            "measure.type",
+        ),
+        ModelLink(
+            GeographicalArea,
+            [
+                ModelLinkField("geographical_area__area_id", "area_id"),
+                ModelLinkField("geographical_area__sid", "sid"),
+            ],
+            "geographical.area",
+        ),
+        ModelLink(
+            GoodsNomenclature,
+            [
+                ModelLinkField("goods_nomenclature__item_id", "item_id"),
+                ModelLinkField("goods_nomenclature__sid", "sid"),
+            ],
+            "goods.nomenclature",
+        ),
+        ModelLink(
+            AdditionalCodeType,
+            [
+                ModelLinkField("additional_code__type__sid", "sid"),
+            ],
+            "additional.code.type",
+        ),
+        ModelLink(
+            AdditionalCode,
+            [
+                ModelLinkField("additional_code__code", "code"),
+                ModelLinkField("additional_code__sid", "sid"),
+            ],
+            "additional.code",
+        ),
+        ModelLink(
+            QuotaOrderNumber,
+            [
+                ModelLinkField("order_number__order_number", "order_number"),
+            ],
+            "additional.code.type",
+            True,  # optional - can be blank
+        ),
+        ModelLink(
+            QuotaOrderNumber,
+            [
+                ModelLinkField("generating_regulation__role_type", "role_type"),
+                ModelLinkField("generating_regulation__regulation_id", "regulation_id"),
+            ],
+            "regulation",
+        ),
+        ModelLink(
+            QuotaOrderNumber,
+            [
+                ModelLinkField("terminating_regulation__role_type", "role_type"),
+                ModelLinkField(
+                    "terminating_regulation__regulation_id",
+                    "regulation_id",
+                ),
+            ],
+            "regulation",
+        ),
+    ]
+
     record_code = "430"
     subrecord_code = "00"
 
@@ -272,9 +388,12 @@ class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
     sid: str = None
     measure_type__sid: str = None
     geographical_area__area_id: str = None
+    geographical_area__sid: str = None
     goods_nomenclature__item_id: str = None
+    goods_nomenclature__sid: str = None
     additional_code__type__sid: str = None
     additional_code__code: str = None
+    additional_code__sid: str = None
     order_number__order_number: str = None
     reduction: str = None
     valid_between_lower: date = None
@@ -284,13 +403,51 @@ class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
     terminating_regulation__role_type: str = None
     terminating_regulation__regulation_id: str = None
     stopped: str = None
-    geographical_area__sid: str = None
-    goods_nomenclature__sid: str = None
-    additional_code__sid: str = None
 
 
 class NewMeasureComponentParser(NewWritable, NewElementParser):
     handler = MeasureComponentHandler
+
+    model_links = [
+        ModelLink(
+            models.Measure,
+            [
+                ModelLinkField("component_measure__sid", "sid"),
+            ],
+            "measure",
+        ),
+        ModelLink(
+            models.DutyExpression,
+            [
+                ModelLinkField("duty_expression__sid", "sid"),
+            ],
+            "duty.expression",
+        ),
+        ModelLink(
+            models.MonetaryUnit,
+            [
+                ModelLinkField("monetary_unit__code", "code"),
+            ],
+            "monetary.unit",
+        ),
+        ModelLink(
+            models.MeasurementUnit,
+            [
+                ModelLinkField("component_measurement__measurement_unit__code", "code"),
+            ],
+            "measurement.unit",
+        ),
+        ModelLink(
+            models.MeasurementUnitQualifier,
+            [
+                ModelLinkField(
+                    "component_measurement__measurement_unit_qualifier__code",
+                    "code",
+                ),
+            ],
+            "measurement.unit.qualifier",
+        ),
+    ]
 
     record_code = "430"
     subrecord_code = "05"
@@ -307,6 +464,68 @@ class NewMeasureComponentParser(NewWritable, NewElementParser):
 
 class NewMeasureConditionParser(NewWritable, NewElementParser):
     handler = MeasureConditionHandler
+
+    model_links = [
+        ModelLink(
+            models.Measure,
+            [
+                ModelLinkField("dependent_measure__sid", "sid"),
+            ],
+            "measure",
+        ),
+        ModelLink(
+            models.MeasureConditionCode,
+            [
+                ModelLinkField("condition_code__code", "code"),
+            ],
+            "measure.condition.code",
+        ),
+        ModelLink(
+            models.MonetaryUnit,
+            [
+                ModelLinkField("monetary_unit__code", "code"),
+            ],
+            "monetary.unit",
+        ),
+        ModelLink(
+            models.MeasurementUnit,
+            [
+                ModelLinkField("condition_measurement__measurement_unit__code", "code"),
+            ],
+            "measurement.unit",
+        ),
+        ModelLink(
+            models.MeasurementUnitQualifier,
+            [
+                ModelLinkField(
+                    "condition_measurement__measurement_unit_qualifier__code",
+                    "code",
+                ),
+            ],
+            "measurement.unit.qualifier",
+        ),
+        ModelLink(
+            models.MeasureAction,
+            [
+                ModelLinkField("action__code", "code"),
+            ],
+            "measure.action",
+        ),
+        ModelLink(
+            Certificate,
+            [
+                ModelLinkField("required_certificate__sid", "sid"),
+            ],
+            "certificate",
+        ),
+        ModelLink(
+            CertificateType,
+            [
+                ModelLinkField("required_certificate__certificate_type__sid", "sid"),
+            ],
+            "certificate.type",
+        ),
+    ]
 
     record_code = "430"
     subrecord_code = "10"
@@ -329,6 +548,47 @@ class NewMeasureConditionParser(NewWritable, NewElementParser):
 class NewMeasureConditionComponentParser(NewWritable, NewElementParser):
     handler = MeasureConditionComponentHandler
 
+    model_links = [
+        ModelLink(
+            models.MeasureCondition,
+            [
+                ModelLinkField("condition__sid", "sid"),
+            ],
+            "measure.condition",
+        ),
+        ModelLink(
+            models.DutyExpression,
+            [
+                ModelLinkField("duty_expression__sid", "sid"),
+            ],
+            "duty.expression",
+        ),
+        ModelLink(
+            models.MonetaryUnit,
+            [
+                ModelLinkField("monetary_unit__code", "code"),
+            ],
+            "monetary.unit",
+        ),
+        ModelLink(
+            models.MeasurementUnit,
+            [
+                ModelLinkField("component_measurement__measurement_unit__code", "code"),
+            ],
+            "measurement.unit",
+        ),
+        ModelLink(
+            models.MeasurementUnit,
+            [
+                ModelLinkField(
+                    "component_measurement__measurement_unit_qualifier__code",
+                    "code",
+                ),
+            ],
+            "measurement.unit.qualifier",
+        ),
+    ]
+
     record_code = "430"
     subrecord_code = "11"
 
@@ -345,6 +605,24 @@ class NewMeasureConditionComponentParser(NewWritable, NewElementParser):
 class NewMeasureExcludedGeographicalAreaParser(NewWritable, NewElementParser):
     handler = MeasureExcludedGeographicalAreaHandler
 
+    model_links = [
+        ModelLink(
+            models.Measure,
+            [
+                ModelLinkField("modified_measure__sid", "sid"),
+            ],
+            "measure",
+        ),
+        ModelLink(
+            GeographicalArea,
+            [
+                ModelLinkField("excluded_geographical_area__area_id", "area_id"),
+                ModelLinkField("excluded_geographical_area__sid", "sid"),
+            ],
+            "geographical.area",
+        ),
+    ]
+
     record_code = "430"
     subrecord_code = "15"
 
@@ -357,6 +635,33 @@ class NewMeasureExcludedGeographicalAreaParser(NewWritable, NewElementParser):
 
 class NewFootnoteAssociationMeasureParser(NewWritable, NewElementParser):
     handler = FootnoteAssociationMeasureHandler
+
+    model_links = [
+        ModelLink(
+            models.Measure,
+            [
+                ModelLinkField("modified_measure__sid", "sid"),
+            ],
+            "measure",
+        ),
+        ModelLink(
+            FootnoteType,
+            [
+                ModelLinkField(
+                    "associated_footnote__footnote_type__footnote_type_id",
+                    "footnote_type_id",
+                ),
+            ],
+            "footnote.type",
+        ),
+        ModelLink(
+            Footnote,
+            [
+                ModelLinkField("associated_footnote__footnote_id", "footnote_id"),
+            ],
+            "footnote",
+        ),
+    ]
 
     record_code = "430"
     subrecord_code = "20"

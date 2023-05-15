@@ -1,6 +1,8 @@
 from datetime import date
 
 from certificates.import_handlers import *
+from importer.new_parsers import ModelLink
+from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
@@ -32,6 +34,17 @@ class NewCertificateTypeDescriptionParser(NewWritable, NewElementParser):
 
 class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
     handler = CertificateHandler
+
+    model_links = [
+        ModelLink(
+            models.CertificateType,
+            [
+                ModelLinkField("certificate_type__sid", "sid"),
+            ],
+            "certificate.type",
+        ),
+    ]
+
     record_code = "205"
     subrecord_code = "00"
 
@@ -45,6 +58,24 @@ class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
 
 class NewCertificateDescriptionParser(NewWritable, NewElementParser):
     handler = CertificateDescriptionHandler
+
+    model_links = [
+        ModelLink(
+            models.CertificateType,
+            [
+                ModelLinkField("described_certificate__certificate_type__sid", "sid"),
+            ],
+            "certificate.type",
+        ),
+        ModelLink(
+            models.Certificate,
+            [
+                ModelLinkField("described_certificate__sid", "sid"),
+            ],
+            "certificate",
+        ),
+    ]
+
     record_code = "205"
     subrecord_code = "10"
 
@@ -59,6 +90,24 @@ class NewCertificateDescriptionParser(NewWritable, NewElementParser):
 
 class NewCertificateDescriptionPeriodParser(NewWritable, NewElementParser):
     handler = CertificateDescriptionPeriodHandler
+
+    model_links = [
+        ModelLink(
+            models.CertificateType,
+            [
+                ModelLinkField("described_certificate__certificate_type__sid", "sid"),
+            ],
+            "certificate.type",
+        ),
+        ModelLink(
+            models.Certificate,
+            [
+                ModelLinkField("described_certificate__sid", "sid"),
+            ],
+            "certificate",
+        ),
+    ]
+
     record_code = "205"
     subrecord_code = "05"
 

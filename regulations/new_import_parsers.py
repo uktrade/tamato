@@ -33,7 +33,6 @@ class NewRegulationGroupDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewBaseRegulationParser(NewValidityMixin, NewWritable, NewElementParser):
-    # todo : why no handler defined  ?
     handler = None
 
     record_code = "285"

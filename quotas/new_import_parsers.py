@@ -40,28 +40,7 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
         "geographical_area_sid": "geographical_area__sid",
     }
 
-    # model_links = [
-    #     {
-    #         "model": models.QuotaOrderNumber,
-    #         "fields": {
-    #             "order_number__sid": "sid",
-    #         },
-    #         "xml_tag_name": "quota.order.number",
-    #     },
-    #     {
-    #         "model": GeographicalArea,
-    #         "fields": {
-    #             "geographical_area__area_id": "area_id",
-    #             "geographical_area__sid": "sid",
-    #         },
-    #         "xml_tag_name": "geographical.area",
-    #     },
-    # ]
-
-    model_links = []
-
-    # create dependency to quota order number
-    model_links.append(
+    model_links = [
         ModelLink(
             models.QuotaOrderNumber,
             [
@@ -69,10 +48,6 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
             ],
             "quota.order.number",
         ),
-    )
-
-    # create dependency to geographical area
-    model_links.append(
         ModelLink(
             GeographicalArea,
             [
@@ -81,7 +56,7 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
             ],
             "geographical.area",
         ),
-    )
+    ]
 
     xml_object_tag = "quota.order.number.origin"
     record_code = "360"
@@ -98,10 +73,8 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
 class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
     handler = QuotaOrderNumberOriginExclusionHandler
 
-    model_links = []
-
-    # create dependency to quota order number origin
-    model_links.append(
+    model_links = [
+        # create dependency to quota order number origin
         ModelLink(
             models.QuotaOrderNumberOrigin,
             [
@@ -109,10 +82,7 @@ class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
             ],
             "quota.order.number.origin",
         ),
-    )
-
-    # create dependency to geographical area
-    model_links.append(
+        # create dependency to geographical area
         ModelLink(
             GeographicalArea,
             [
@@ -120,7 +90,7 @@ class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
             ],
             "geographical.area",
         ),
-    )
+    ]
 
     xml_object_tag = "quota.order.number.origin.exclusions"
     record_code = "360"
@@ -137,6 +107,43 @@ class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
+
+    model_links = [
+        # create dependency to quota order number
+        ModelLink(
+            models.QuotaOrderNumber,
+            [
+                ModelLinkField("order_number__order_number", "order_number"),
+                ModelLinkField("order_number__sid", "sid"),
+            ],
+            "quota.order.number",
+        ),
+        ModelLink(
+            MonetaryUnit,
+            [
+                ModelLinkField("monetary_unit__code", "code"),
+            ],
+            "monetary.unit",
+            True,  # optional
+        ),
+        # create optional dependency to MeasurementUnit
+        ModelLink(
+            MeasurementUnit,
+            [
+                ModelLinkField("measurement_unit__code", "code"),
+            ],
+            "measurement.unit",
+            True,  # optional
+        ),
+        ModelLink(
+            MeasurementUnitQualifier,
+            [
+                ModelLinkField("measurement_unit_qualifier__code", "code"),
+            ],
+            "measurement.unit.qualifier",
+            True,  # optional
+        ),
+    ]
 
     xml_object_tag = "quota.definition"
     record_code = "370"
@@ -161,6 +168,25 @@ class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
 class NewQuotaAssociationParser(NewWritable, NewElementParser):
     handler = QuotaAssociationHandler
 
+    model_links = [
+        # create dependency to QuotaDefinition (main quota)
+        ModelLink(
+            models.QuotaDefinition,
+            [
+                ModelLinkField("main_quota__sid", "sid"),
+            ],
+            "quota.definition",
+        ),
+        # create dependency to QuotaDefinition (sub quota)
+        ModelLink(
+            models.QuotaDefinition,
+            [
+                ModelLinkField("sub_quota__sid", "sid"),
+            ],
+            "quota.definition",
+        ),
+    ]
+
     xml_object_tag = "quota.association"
     record_code = "370"
     subrecord_code = "05"
@@ -171,13 +197,54 @@ class NewQuotaAssociationParser(NewWritable, NewElementParser):
     coefficient: str = None
 
 
-class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
+class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, NewElementParser):
+    handler = QuotaSuspensionHandler
+
     value_mapping = {
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
 
+    # create dependency to QuotaDefinition
+    model_links = [
+        ModelLink(
+            models.QuotaDefinition,
+            [
+                ModelLinkField("quota_definition__sid", "sid"),
+            ],
+            "quota.definition",
+        ),
+    ]
+
+    xml_object_tag = "quota.suspension.period"
+    record_code = "370"
+    subrecord_code = "15"
+
+    sid: str = None
+    quota_definition__sid: str = None
+    valid_between_lower: str = None
+    valid_between_upper: str = None
+    description: str = None
+
+
+class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
     handler = QuotaBlockingHandler
+
+    value_mapping = {
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
+    # create dependency to QuotaDefinition
+    model_links = [
+        ModelLink(
+            models.QuotaDefinition,
+            [
+                ModelLinkField("quota_definition__sid", "sid"),
+            ],
+            "quota.definition",
+        ),
+    ]
 
     xml_object_tag = "quota.blocking.period"
     record_code = "370"
@@ -191,27 +258,19 @@ class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
     description: str = None
 
 
-class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, NewElementParser):
-    value_mapping = {
-        "validity_start_date": "valid_between_lower",
-        "validity_end_date": "valid_between_upper",
-    }
-
-    handler = QuotaSuspensionHandler
-
-    xml_object_tag = "quota.suspension.period"
-    record_code = "370"
-    subrecord_code = "15"
-
-    sid: str = None
-    quota_definition__sid: str = None
-    valid_between_lower: str = None
-    valid_between_upper: str = None
-    description: str = None
-
-
 class NewQuotaEventParser(NewWritable, NewElementParser):
     handler = QuotaEventHandler
+
+    # create dependency to QuotaDefinition
+    model_links = [
+        ModelLink(
+            models.QuotaDefinition,
+            [
+                ModelLinkField("quota_definition__sid", "sid"),
+            ],
+            "quota.definition",
+        ),
+    ]
 
     xml_object_tag = r"quota.([a-z.]+).event"
     record_code = "375"
