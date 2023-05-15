@@ -1,6 +1,8 @@
 from datetime import date
 
 from geo_areas.import_handlers import *
+from importer.new_parsers import ModelLink
+from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
@@ -8,6 +10,16 @@ from importer.parsers import NewWritable
 
 class NewGeographicalAreaParser(NewValidityMixin, NewWritable, NewElementParser):
     handler = GeographicalAreaHandler
+
+    model_links = [
+        ModelLink(
+            models.GeographicalArea,
+            [
+                ModelLinkField("parent__sid", "sid"),
+            ],
+            "geographical.area",
+        ),
+    ]
 
     record_code = "250"
     subrecord_code = "00"
@@ -25,6 +37,17 @@ class NewGeographicalAreaParser(NewValidityMixin, NewWritable, NewElementParser)
 class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
     handler = GeographicalAreaDescriptionHandler
 
+    model_links = [
+        ModelLink(
+            models.GeographicalArea,
+            [
+                ModelLinkField("described_geographicalarea__sid", "sid"),
+                ModelLinkField("described_geographicalarea__area_id", "area_id"),
+            ],
+            "geographical.area",
+        ),
+    ]
+
     record_code = "250"
     subrecord_code = "10"
 
@@ -40,6 +63,17 @@ class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
 class NewGeographicalAreaDescriptionPeriodParser(NewWritable, NewElementParser):
     handler = GeographicalAreaDescriptionPeriodHandler
 
+    model_links = [
+        ModelLink(
+            models.GeographicalArea,
+            [
+                ModelLinkField("described_geographicalarea__sid", "sid"),
+                ModelLinkField("described_geographicalarea__area_id", "area_id"),
+            ],
+            "geographical.area",
+        ),
+    ]
+
     record_code = "250"
     subrecord_code = "05"
 
@@ -47,12 +81,29 @@ class NewGeographicalAreaDescriptionPeriodParser(NewWritable, NewElementParser):
 
     sid: str = None
     described_geographicalarea__sid: str = None
-    validity_start: str = None
     described_geographicalarea__area_id: str = None
+    validity_start: str = None
 
 
 class NewGeographicalMembershipParser(NewValidityMixin, NewWritable, NewElementParser):
     handler = GeographicalMembershipHandler
+
+    model_links = [
+        ModelLink(
+            models.GeographicalArea,
+            [
+                ModelLinkField("member__sid", "sid"),
+            ],
+            "geographical.area",
+        ),
+        ModelLink(
+            models.GeographicalArea,
+            [
+                ModelLinkField("geo_group__sid", "sid"),
+            ],
+            "geographical.area",
+        ),
+    ]
 
     record_code = "250"
     subrecord_code = "15"

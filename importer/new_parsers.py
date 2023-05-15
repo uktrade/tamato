@@ -158,10 +158,17 @@ class ModelLinkField:
 
 
 class ModelLink:
-    def __init__(self, model, fields: List[ModelLinkField], xml_tag_name: str):
+    def __init__(
+        self,
+        model,
+        fields: List[ModelLinkField],
+        xml_tag_name: str,
+        optional=False,
+    ):
         self.model = model
         self.fields = fields
         self.xml_tag_name = xml_tag_name
+        self.optional = optional
 
 
 # {

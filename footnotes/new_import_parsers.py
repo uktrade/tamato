@@ -1,6 +1,8 @@
 from datetime import date
 
 from footnotes.import_handlers import *
+from importer.new_parsers import ModelLink
+from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
@@ -22,6 +24,16 @@ class NewFootnoteTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 class NewFootnoteTypeDescriptionParser(NewWritable, NewElementParser):
     handler = FootnoteTypeDescriptionHandler
 
+    model_links = [
+        ModelLink(
+            models.FootnoteType,
+            [
+                ModelLinkField("footnote_type_id", "footnote_type_id"),
+            ],
+            "footnote.type",
+        ),
+    ]
+
     record_code = "100"
     subrecord_code = "05"
 
@@ -34,6 +46,16 @@ class NewFootnoteTypeDescriptionParser(NewWritable, NewElementParser):
 
 class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
     handler = FootnoteHandler
+
+    model_links = [
+        ModelLink(
+            models.FootnoteType,
+            [
+                ModelLinkField("footnote_type_id", "footnote_type_id"),
+            ],
+            "footnote.type",
+        ),
+    ]
 
     record_code = "200"
     subrecord_code = "00"
@@ -49,6 +71,26 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
 class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
     handler = FootnoteDescriptionHandler
 
+    model_links = [
+        ModelLink(
+            models.Footnote,
+            [
+                ModelLinkField("described_footnote__footnote_id", "footnote_id"),
+            ],
+            "footnote",
+        ),
+        ModelLink(
+            models.FootnoteType,
+            [
+                ModelLinkField(
+                    "described_footnote__footnote_type__footnote_type_id",
+                    "footnote_type_id",
+                ),
+            ],
+            "footnote.type",
+        ),
+    ]
+
     record_code = "200"
     subrecord_code = "10"
 
@@ -63,6 +105,26 @@ class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
 
 class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser):
     handler = FootnoteDescriptionPeriodHandler
+
+    model_links = [
+        ModelLink(
+            models.Footnote,
+            [
+                ModelLinkField("described_footnote__footnote_id", "footnote_id"),
+            ],
+            "footnote",
+        ),
+        ModelLink(
+            models.FootnoteType,
+            [
+                ModelLinkField(
+                    "described_footnote__footnote_type__footnote_type_id",
+                    "footnote_type_id",
+                ),
+            ],
+            "footnote.type",
+        ),
+    ]
 
     record_code = "200"
     subrecord_code = "05"
