@@ -406,13 +406,19 @@ to a file or output to stdout using a management command:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>minio<span class="w"> </span>server<span class="w"> </span>--quiet<span class="w"> </span>--address<span class="w"> </span><span class="m">0</span>.0.0.0:9003<span class="w"> </span>~/data
 </pre></div>
 </div>
-<ol class="arabic simple" start="4">
+<ol class="arabic" start="4">
 <li><p>Navigate to <a class="reference external" href="http://localhost:9003/">http://localhost:9003/</a> and login using root user and password credentials just
 created. Create a bucket and an access key via the console.</p></li>
 <li><p>Export environment variables for any storages you wish to dummy (e.g. for sqlite dump export
 this will be SQLITE_STORAGE_BUCKET_NAME, SQLITE_S3_ACCESS_KEY_ID, SQLITE_S3_SECRET_ACCESS_KEY,
 SQLITE_S3_ENDPOINT_URL, and SQLITE_STORAGE_DIRECTORY), setting s3 endpoint url to
 <a class="reference external" href="http://localhost:9003/">http://localhost:9003/</a></p></li>
+<li><p>Alternatively, export all environment variables temporarily to an environment such as Bash
+(useful when running a local development instance of a Celery worker):</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span><span class="w"> </span>-a<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>.env<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">set</span><span class="w"> </span>+a
+</pre></div>
+</div>
+</li>
 </ol>
 </section>
 <section id="virus-scan-and-running-locally">
