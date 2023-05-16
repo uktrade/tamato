@@ -259,6 +259,7 @@ class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewQuotaEventParser(NewWritable, NewElementParser):
+    # TODO: review all possible examples of quota events
     handler = QuotaEventHandler
 
     # create dependency to QuotaDefinition

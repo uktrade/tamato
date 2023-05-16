@@ -1,5 +1,6 @@
 from datetime import date
 
+import additional_codes.models
 from additional_codes.import_handlers import *
 from footnotes.models import Footnote
 from importer.new_parsers import ModelLink
@@ -10,7 +11,10 @@ from importer.parsers import NewWritable
 
 
 class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = AdditionalCodeTypeHandler
+    # handler = AdditionalCodeTypeHandler
+    model = additional_codes.models.AdditionalCodeType
+
+    model_links = []
 
     record_code = "120"
     subrecord_code = "00"
@@ -25,7 +29,11 @@ class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParse
 
 # This gets joined to AdditionalCodeType as description column
 class NewAdditionalCodeTypeDescriptionParser(NewWritable, NewElementParser):
-    handler = AdditionalCodeTypeDescriptionHandler
+    # handler = AdditionalCodeTypeDescriptionHandler
+    model = additional_codes.models.AdditionalCodeType
+
+    model_links = []
+
     record_code = "120"
     subrecord_code = "05"
 
@@ -37,7 +45,7 @@ class NewAdditionalCodeTypeDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = AdditionalCodeHandler
+    model = additional_codes.models.AdditionalCode
 
     # create dependency to QuotaDefinition
     model_links = [
@@ -64,16 +72,17 @@ class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
 
 # This gets joined to AdditionalCodeDescription
 class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
-    handler = AdditionalCodeDescriptionPeriodHandler
+    # handler = AdditionalCodeDescriptionPeriodHandler
+    model = additional_codes.models.AdditionalCodeDescription
 
     model_links = [
         ModelLink(
-            models.AdditionalCodeDescription,
+            models.AdditionalCode,
             [
                 ModelLinkField("described_additionalcode__sid", "sid"),
                 ModelLinkField("described_additionalcode__code", "code"),
             ],
-            "additional.code.description",
+            "additional.code",
         ),
         ModelLink(
             models.AdditionalCodeType,
@@ -97,7 +106,8 @@ class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
 
 
 class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
-    handler = AdditionalCodeDescriptionHandler
+    # handler = AdditionalCodeDescriptionHandler
+    model = additional_codes.models.AdditionalCodeDescription
 
     # create dependency to QuotaDefinition
     model_links = [
@@ -137,6 +147,7 @@ class NewFootnoteAssociationAdditionalCodeParser(
     NewElementParser,
 ):
     handler = None
+    model = additional_codes.models.FootnoteAssociationAdditionalCode
 
     model_links = [
         ModelLink(

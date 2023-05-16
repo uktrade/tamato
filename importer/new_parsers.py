@@ -6,7 +6,6 @@ import bs4
 from bs4 import NavigableString
 
 from common.validators import UpdateType
-from importer.handlers import BaseHandler
 
 
 class TransactionParser:
@@ -181,7 +180,6 @@ class ModelLink:
 
 
 class NewElementParser:
-    handler: BaseHandler = None
     transaction_id: str
     record_code: str
     subrecord_code: str
@@ -195,6 +193,9 @@ class NewElementParser:
 
     def __init__(self):
         self.issues = []
+
+    def model(self):
+        return self.model
 
     def links(self):
         if self.model_links is None:
