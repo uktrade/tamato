@@ -14,3 +14,15 @@
     padding-top: govuk-spacing(4);
   }
 }
+
+.membership-inline {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+
+  .error-align {
+    align-self: flex-end;
+    padding-left: 0;
+    padding-right: 10px;
+  }
+}
