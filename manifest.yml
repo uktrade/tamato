@@ -3,7 +3,6 @@ applications:
   - buildpacks:
       - nodejs_buildpack
       - python_buildpack
-      - https://github.com/cloudfoundry/apt-buildpack.git#v0.2.2
     processes:
     - type: web
       memory: 1G
