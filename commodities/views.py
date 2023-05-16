@@ -23,6 +23,7 @@ from common.views import TrackedModelDetailView
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
 from measures.models import Measure
+from measures.snapshots import MeasureSnapshot
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
@@ -121,10 +122,10 @@ class CommodityVersion(CommodityDetail):
         return context
 
 
-class CommodityMeasuresList(SortingMixin, WithPaginationListMixin, ListView):
+class CommodityMeasuresAsDefinedList(SortingMixin, WithPaginationListMixin, ListView):
     model = Measure
     paginate_by = 20
-    template_name = "commodities/measures.jinja"
+    template_name = "commodities/measures-defined.jinja"
     sort_by_fields = ["measure_type", "start_date", "geo_area"]
     custom_sorting = {
         "start_date": "valid_between",
@@ -149,11 +150,11 @@ class CommodityMeasuresList(SortingMixin, WithPaginationListMixin, ListView):
         context["commodity"] = (
             GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
         )
-        context["selected_tab"] = "measures"
+        context["selected_tab"] = "measures-defined"
         return context
 
 
-class Commodityhierarchy(CommodityDetail):
+class CommodityHierarchy(CommodityDetail):
     template_name = "commodities/hierarchy.jinja"
 
     def get_context_data(self, *args, **kwargs):
@@ -167,12 +168,60 @@ class Commodityhierarchy(CommodityDetail):
         tx = WorkBasket.get_current_transaction(self.request)
         snapshot = CommodityTreeSnapshot(
             commodities=commodities_collection.commodities,
-            moment=SnapshotMoment(transaction=tx),
+            moment=SnapshotMoment(transaction=tx, date=date.today()),
         )
 
         context["snapshot"] = snapshot
         context["this_commodity"] = list(
             filter(lambda c: c.item_id == self.object.item_id, snapshot.commodities),
         )[0]
+
+        return context
+
+
+class MeasuresOnDeclarableCommoditiesList(CommodityMeasuresAsDefinedList):
+    template_name = "commodities/measures-declarable.jinja"
+    sort_by_fields = ["measure_type", "start_date", "geo_area", "commodity"]
+    custom_sorting = {
+        "start_date": "valid_between",
+        "measure_type": "measure_type__sid",
+        "geo_area": "geographical_area__area_id",
+        "commodity": "goods_nomenclature__item_id",
+    }
+
+    def get_queryset(self):
+        ordering = self.get_ordering()
+        commodity = (
+            GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
+        )
+
+        prefix = commodity.item_id[0:2]
+        commodities_collection = CommodityCollectionLoader(prefix=prefix).load()
+
+        tx = WorkBasket.get_current_transaction(self.request)
+        moment = SnapshotMoment(transaction=tx, date=date.today())
+        tree = CommodityTreeSnapshot(
+            commodities=commodities_collection.commodities,
+            moment=moment,
+        )
+        this_commodity = list(
+            filter(lambda c: c.item_id == commodity.item_id, tree.commodities),
+        )[0]
+        measure_snapshot = MeasureSnapshot(moment, tree)
+        queryset = measure_snapshot.get_applicable_measures(this_commodity)
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+
+        return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["commodity"] = (
+            GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
+        )
+
+        context["selected_tab"] = "measures-declarable"
 
         return context
