@@ -360,7 +360,7 @@ class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
             True,  # optional - can be blank
         ),
         ModelLink(
-            QuotaOrderNumber,
+            Regulation,
             [
                 ModelLinkField("generating_regulation__role_type", "role_type"),
                 ModelLinkField("generating_regulation__regulation_id", "regulation_id"),
@@ -368,7 +368,7 @@ class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
             "regulation",
         ),
         ModelLink(
-            QuotaOrderNumber,
+            Regulation,
             [
                 ModelLinkField("terminating_regulation__role_type", "role_type"),
                 ModelLinkField(
@@ -578,7 +578,7 @@ class NewMeasureConditionComponentParser(NewWritable, NewElementParser):
             "measurement.unit",
         ),
         ModelLink(
-            models.MeasurementUnit,
+            models.MeasurementUnitQualifier,
             [
                 ModelLinkField(
                     "component_measurement__measurement_unit_qualifier__code",
