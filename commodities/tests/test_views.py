@@ -205,11 +205,19 @@ def measures(commodity):
     return [measure1, measure2, measure3]
 
 
-def test_commodity_measures(valid_user_client, commodity, measures):
-    url = reverse("commodity-ui-detail-measures", kwargs={"sid": commodity.sid})
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+    ],
+)
+def test_commodity_measures(url_name, valid_user_client, commodity, measures):
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
     response = valid_user_client.get(url)
-    assert response.status_code == 200
-
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     table_rows = soup.select(".govuk-table tbody tr")
     assert len(table_rows) == 3
@@ -220,8 +228,35 @@ def test_commodity_measures(valid_user_client, commodity, measures):
     assert not measure_sids.difference(set([m.sid for m in measures]))
 
 
-def test_commodity_measures_no_measures(valid_user_client, commodity):
-    url = reverse("commodity-ui-detail-measures", kwargs={"sid": commodity.sid})
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+        "commodity-ui-detail-hierarchy",
+    ],
+)
+def test_commodity_views_200(url_name, valid_user_client, commodity, measures):
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+    ],
+)
+def test_commodity_measures_no_measures(url_name, valid_user_client, commodity):
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
@@ -230,8 +265,23 @@ def test_commodity_measures_no_measures(valid_user_client, commodity):
     assert len(table_rows) == 0
 
 
-def test_commodity_measures_sorting_geo_area(valid_user_client, commodity, measures):
-    url = reverse("commodity-ui-detail-measures", kwargs={"sid": commodity.sid})
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+    ],
+)
+def test_commodity_measures_sorting_geo_area(
+    url_name,
+    valid_user_client,
+    commodity,
+    measures,
+):
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
     response = valid_user_client.get(f"{url}?sort_by=geo_area&order=desc")
     assert response.status_code == 200
 
@@ -242,7 +292,10 @@ def test_commodity_measures_sorting_geo_area(valid_user_client, commodity, measu
     measure_sids.reverse()
     assert measure_sids == [m.sid for m in measures]
 
-    url = reverse("commodity-ui-detail-measures", kwargs={"sid": commodity.sid})
+    url = reverse(
+        "commodity-ui-detail-measures-as-defined",
+        kwargs={"sid": commodity.sid},
+    )
     response = valid_user_client.get(f"{url}?sort_by=geo_area&order=asc")
     assert response.status_code == 200
 
@@ -253,7 +306,15 @@ def test_commodity_measures_sorting_geo_area(valid_user_client, commodity, measu
     assert measure_sids == [m.sid for m in measures]
 
 
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+    ],
+)
 def test_commodity_measures_sorting_start_date(
+    url_name,
     valid_user_client,
     date_ranges,
     commodity,
@@ -270,7 +331,10 @@ def test_commodity_measures_sorting_start_date(
         goods_nomenclature=commodity,
         valid_between=date_ranges.starts_delta_no_end,
     )
-    url = reverse("commodity-ui-detail-measures", kwargs={"sid": commodity.sid})
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
     response = valid_user_client.get(f"{url}?sort_by=start_date&order=desc")
     assert response.status_code == 200
 
@@ -280,7 +344,10 @@ def test_commodity_measures_sorting_start_date(
     ]
     assert measure_sids == [measure3.sid, measure2.sid, measure1.sid]
 
-    url = reverse("commodity-ui-detail-measures", kwargs={"sid": commodity.sid})
+    url = reverse(
+        "commodity-ui-detail-measures-as-defined",
+        kwargs={"sid": commodity.sid},
+    )
     response = valid_user_client.get(f"{url}?sort_by=start_date&order=asc")
     assert response.status_code == 200
 
@@ -291,7 +358,15 @@ def test_commodity_measures_sorting_start_date(
     assert measure_sids == [measure1.sid, measure2.sid, measure3.sid]
 
 
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+    ],
+)
 def test_commodity_measures_sorting_measure_type(
+    url_name,
     valid_user_client,
     date_ranges,
     commodity,
@@ -311,7 +386,10 @@ def test_commodity_measures_sorting_measure_type(
         goods_nomenclature=commodity,
         measure_type=type3,
     )
-    url = reverse("commodity-ui-detail-measures", kwargs={"sid": commodity.sid})
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
     response = valid_user_client.get(f"{url}?sort_by=measure_type&order=desc")
     assert response.status_code == 200
 
@@ -321,7 +399,10 @@ def test_commodity_measures_sorting_measure_type(
     ]
     assert measure_sids == [measure3.sid, measure2.sid, measure1.sid]
 
-    url = reverse("commodity-ui-detail-measures", kwargs={"sid": commodity.sid})
+    url = reverse(
+        "commodity-ui-detail-measures-as-defined",
+        kwargs={"sid": commodity.sid},
+    )
     response = valid_user_client.get(f"{url}?sort_by=measure_type&order=asc")
     assert response.status_code == 200
 
@@ -330,9 +411,3 @@ def test_commodity_measures_sorting_measure_type(
         int(el.text) for el in soup.select(".govuk-table tbody tr td:first-child")
     ]
     assert measure_sids == [measure1.sid, measure2.sid, measure3.sid]
-
-
-def test_commodity_hierarchy(valid_user_client, commodity):
-    url = reverse("commodity-ui-detail-hierarchy", kwargs={"sid": commodity.sid})
-    response = valid_user_client.get(url)
-    assert response.status_code == 200

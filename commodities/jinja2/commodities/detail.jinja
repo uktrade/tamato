@@ -26,8 +26,13 @@
     },
     {
       "text": "Measures as defined",
-      "href": url('commodity-ui-detail-measures', args=[commodity.sid]),
-      "selected": selected_tab == "measures",
+      "href": url('commodity-ui-detail-measures-as-defined', args=[commodity.sid]),
+      "selected": selected_tab == "measures-defined",
+    },
+    {
+      "text": "Measures on declarable commodities",
+      "href": url('commodity-ui-detail-measures-declarable', args=[commodity.sid]),
+      "selected": selected_tab == "measures-declarable",
     },
     {
       "text": "Commodity hierarchy",
