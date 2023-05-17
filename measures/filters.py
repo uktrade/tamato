@@ -88,7 +88,7 @@ class MeasureFilter(TamatoFilter):
 
     # measures on declarable commodities
     modc = BooleanFilter(
-        label="Include parent commodities",
+        label="Include inherited measures",
         help_text="Only applies if specific commodity code is selected",
         widget=forms.CheckboxInput(),
         field_name="goods_nomenclature",
