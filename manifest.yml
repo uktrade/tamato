@@ -3,6 +3,7 @@ applications:
   - buildpacks:
       - nodejs_buildpack
       - python_buildpack
+    memory: 6G
     processes:
     - type: web
       memory: 1G
