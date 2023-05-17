@@ -1,7 +1,6 @@
 ---
 applications:
   - buildpacks:
-      - https://github.com/cloudfoundry/apt-buildpack.git#v0.2.13
       - nodejs_buildpack
       - python_buildpack
     memory: 6G
