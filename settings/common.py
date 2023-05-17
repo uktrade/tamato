@@ -460,8 +460,10 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 CELERY_ROUTES = {
-    re.compile(r"(checks|workbaskets)\.tasks\..*"): {"queue": "rule-check"},
-    re.compile(r"(exporter|importer|notifications|publishing)\.tasks\..*"): {
+    re.compile(r"(checks)\.tasks\..*"): {"queue": "rule-check"},
+    re.compile(
+        r"(exporter|importer|notifications|publishing|workbaskets)\.tasks\..*",
+    ): {
         "queue": "standard",
     },
 }
