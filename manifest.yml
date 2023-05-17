@@ -8,5 +8,7 @@ applications:
       memory: 1G
     - type: worker
       memory: 4G
-    - type: worker
+      health_check_type: process
+    - type: rule-check-worker
       memory: 6G
+      health_check_type: process
