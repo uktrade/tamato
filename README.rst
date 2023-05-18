@@ -410,29 +410,3 @@ environment database with ``cf conduit tamato-dev-db -- psql``.
 
 .. |codecov| image:: https://codecov.io/gh/uktrade/tamato/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/uktrade/tamato
-
-Scaling Celery workers in GOV.UK PaaS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Then you need to login to the DIT GOV.UK PaaS:
-
-.. code:: sh
-
-    cf login --sso -s <space>
-
-Where ``<space>`` is one of ``tariffs-dev``, ``tariffs-staging``,
-``tariffs-training`` or ``tariffs-uat``.
-
-Once you are logged in, you can list the application hosted in the space and their resources with
-
-.. code:: sh
-
-    cf apps
-    cf scale <space>
-
-You may notice that the celery worker isn't running or running with the resources you'd like.
-You may get a message like ``There are no running instances of this process.`` In this case you should scale the worker with
-
-.. code:: sh
-
-    cf scale <space> --process <process_name> -i <number_of_instances> -m <memory> -d <disk>

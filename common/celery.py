@@ -17,6 +17,6 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
 
-# this *shouldn't* need to be applied directly but
-# automatically configured via ^^ config_from_object
+# this should be automactically configured via ^^ config_from_object
+# but it isn't so here it's configured here
 app.conf.task_routes = settings.CELERY_ROUTES
