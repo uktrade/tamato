@@ -471,7 +471,6 @@ CELERY_ROUTES = {
     },
 }
 
-
 SQLITE_EXCLUDED_APPS = [
     "checks",
 ]
