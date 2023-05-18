@@ -1,10 +1,12 @@
 import logging
+from datetime import datetime
 
 from django.db.models import DateTimeField
 from django.db.models import Manager
 from django.db.models import QuerySet
 from django.db.transaction import atomic
 from django_fsm import FSMField
+from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
 from publishing.models import ApiPublishingState
@@ -12,6 +14,22 @@ from publishing.models import Envelope
 from publishing.models import ProcessingState
 
 logger = logging.getLogger(__name__)
+
+
+# Decorators
+
+
+def save_after(func):
+    """Decorator used to save TAPApiEnvelope instances after a state
+    transition."""
+
+    @atomic
+    def inner(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        self.save()
+        return result
+
+    return inner
 
 
 # Exceptions
@@ -157,3 +175,74 @@ class TAPApiEnvelope(TimestampedMixin):
 
     def __repr__(self):
         return f'<TAPApiEnvelope: id="{self.pk}", publishing_state={self.publishing_state}>'
+
+    def previous_envelope(self) -> ApiEnvelopeQuerySet:
+        """Get the previous `TAPApiEnvelope` by order of `pk`."""
+        return TAPApiEnvelope.objects.filter(pk__lt=self.pk).order_by("-pk").first()
+
+    def can_publish(self) -> bool:
+        """Conditional check if the previous `TAPApiEnvelope` has been
+        `SUCCESSFULLY_PUBLISHED`."""
+        previous_envelope = self.previous_envelope()
+        if (
+            previous_envelope
+            and previous_envelope.publishing_state
+            == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+            or not previous_envelope
+        ):
+            return True
+        else:
+            return False
+
+    # publishing_state transition management
+
+    @save_after
+    @transition(
+        field=publishing_state,
+        source=ApiPublishingState.AWAITING_PUBLISHING,
+        target=ApiPublishingState.CURRENTLY_PUBLISHING,
+        custom={"label": "Begin publishing"},
+    )
+    def begin_publishing(self):
+        """Begin publishing a `TAPApiEnvelope` to the Tariff API."""
+
+    @save_after
+    @transition(
+        field=publishing_state,
+        source=[
+            ApiPublishingState.FAILED_PUBLISHING_STAGING,
+            ApiPublishingState.FAILED_PUBLISHING_PRODUCTION,
+            ApiPublishingState.CURRENTLY_PUBLISHING,
+        ],
+        target=ApiPublishingState.SUCCESSFULLY_PUBLISHED,
+        custom={"label": "Publishing succeeded"},
+    )
+    def publishing_succeeded(self):
+        """Publishing a `TAPApiEnvelope` to the Tariff API completed with a
+        successful outcome."""
+        self.production_published = datetime.now()
+
+    @save_after
+    @transition(
+        field=publishing_state,
+        source=ApiPublishingState.CURRENTLY_PUBLISHING,
+        target=ApiPublishingState.FAILED_PUBLISHING_STAGING,
+        custom={"label": "Publishing to staging failed"},
+    )
+    def publishing_staging_failed(self):
+        """Publishing a `TAPApiEnvelope` to the Tariff API staging environment
+        completed with a failed outcome."""
+
+    @save_after
+    @transition(
+        field=publishing_state,
+        source=[
+            ApiPublishingState.FAILED_PUBLISHING_STAGING,
+            ApiPublishingState.CURRENTLY_PUBLISHING,
+        ],
+        target=ApiPublishingState.FAILED_PUBLISHING_PRODUCTION,
+        custom={"label": "Publishing to production failed"},
+    )
+    def publishing_production_failed(self):
+        """Publishing a `TAPApiEnvelope` to the Tariff API production
+        environment completed with a failed outcome."""

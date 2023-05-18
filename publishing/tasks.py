@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from common.celery import app
 
@@ -91,21 +92,91 @@ def schedule_create_xml_envelope_file(
 @app.task
 def publish_to_api():
     """"""
-    logger.info(f"starting publish to api")
-    # TODO publish Envelope to staging then on success production
-    # TODO transition Envelope state on progress
+    from publishing.interface import get_tariff_api_interface
     from publishing.models import TAPApiEnvelope
+    from publishing.models.state import ApiPublishingState
 
-    envelope_to_publish = TAPApiEnvelope.objects.unpublished().order_by("pk")
+    logger.info("Starting Tariff API publishing task")
 
-    for envelope in envelope_to_publish:
-        logger.info(f"Publishing to TAP api: {envelope}")
+    interface = get_tariff_api_interface()
 
-        # check envelope is next expected envelope
-        #   previous TAPApiEnvelope is in state SUCCESSFULLY_PUBLISHED
-        # Transition state to CURRENTLY_PUBLISHING
-        # publish to staging API
-        # Transition to FAILED_PUBLISHING_STAGING if failed
-        # publish to production API
-        # Transition to FAILED_PUBLISHING_PRODUCTION if failed
-        # Transition to SUCCESSFULLY_PUBLISHED if success
+    def publish_to_staging() -> bool:
+        """
+        Publish envelope to Tariff API staging environment.
+
+        If successful, update `staging_published` on `TAPApiEnvelope` and return
+        `True`. Otheriwse transition to `FAILED_PUBLISHING_STAGING` and return
+        `False`.
+        """
+        logger.info(f"Publishing to staging: {envelope}")
+        if envelope.publishing_state == ApiPublishingState.AWAITING_PUBLISHING:
+            envelope.begin_publishing()
+        response = interface.post_envelope_staging(envelope=pwb_envelope)
+        if response.status_code == 200:
+            logger.info(f"Successfully published to staging: {envelope}")
+            envelope.staging_published = datetime.now()
+            envelope.save(update_fields=["staging_published"])
+            return True
+        else:
+            logger.info(
+                f"Failed publishing to staging: {envelope}. " f"{response.text}",
+            )
+            if envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING:
+                envelope.publishing_staging_failed()
+            return False
+
+    def publish_to_production() -> bool:
+        """
+        Publish envelope to Tariff API production environment.
+
+        If successful, update `published_to_tariffs_api` on `Envelope`,
+        transition `TAPApiEnvelope` to `SUCCESSFULLY_PUBLISHED` and return
+        `True`. Otherwise transition to `FAILED_PUBLISHING_PRODUCTION` and
+        return `False`.
+        """
+        logger.info(f"Publishing to production: {envelope}")
+        response = interface.post_envelope_production(envelope=pwb_envelope)
+        if response.status_code == 200:
+            logger.info(f"Successfully published to production: {envelope}")
+            pwb_envelope.published_to_tariffs_api = datetime.now()
+            pwb_envelope.save(update_fields=["published_to_tariffs_api"])
+            envelope.publishing_succeeded()
+            return True
+        else:
+            logger.info(
+                f"Failed publishing to production: {envelope}. " f"{response.text}",
+            )
+            if envelope.publishing_state in [
+                ApiPublishingState.CURRENTLY_PUBLISHING,
+                ApiPublishingState.FAILED_PUBLISHING_STAGING,
+            ]:
+                envelope.publishing_production_failed()
+            return False
+
+    envelopes_to_publish = TAPApiEnvelope.objects.unpublished().order_by("pk")
+    if not envelopes_to_publish:
+        logger.info("No envelopes to publish")
+        return
+
+    for envelope in envelopes_to_publish:
+        if not envelope.can_publish():
+            logger.info(
+                f"Failed publishling to Tariff API: {envelope}. "
+                f"The previous envelope is unpublished",
+            )
+            return
+
+        pwb_envelope = envelope.packagedworkbaskets.last().envelope
+
+        if envelope.publishing_state in [
+            ApiPublishingState.AWAITING_PUBLISHING,
+            ApiPublishingState.FAILED_PUBLISHING_STAGING,
+        ]:
+            if publish_to_staging() and publish_to_production():
+                continue
+            else:
+                return
+        elif publish_to_production():
+            continue
+        else:
+            return
