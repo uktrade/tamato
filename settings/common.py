@@ -405,6 +405,20 @@ HMRC_LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
     "loading-report/",
 )
 
+# Settings about retrying uploads if the bucket or endpoint cannot be contacted.
+# Names correspond to celery settings for retrying tasks:
+#   https://docs.celeryproject.org/en/master/userguide/tasks.html#automatic-retry-for-known-exceptions
+CHANNEL_ISLANDS_API_MAX_RETRIES = int(
+    os.environ.get("CHANNEL_ISLANDS_API_MAX_RETRIES", "3"),
+)
+CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX = int(
+    os.environ.get("CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX", "600"),
+)
+CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY = int(
+    os.environ.get("CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY", "8"),
+)
+
+
 # SQLite AWS settings
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
 SQLITE_S3_ACCESS_KEY_ID = os.environ.get(

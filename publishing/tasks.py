@@ -1,5 +1,7 @@
 import logging
 
+from django.conf import settings
+
 from common.celery import app
 
 logger = logging.getLogger(__name__)
@@ -88,7 +90,13 @@ def schedule_create_xml_envelope_file(
         packaged_work_basket.save()
 
 
-@app.task(autoretry_for=(Exception,), retry_backoff=5, retry_kwargs={"max_retries": 5})
+@app.task(
+    default_retry_delay=settings.CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY,
+    max_retries=settings.CHANNEL_ISLANDS_API_MAX_RETRIES,
+    retry_backoff=True,
+    retry_backoff_max=settings.CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX,
+    retry_jitter=True,
+)
 def publish_to_api():
     """"""
     logger.info(f"starting publish to api")
