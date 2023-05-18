@@ -26,10 +26,6 @@ class ApiEnvelopeInvalidWorkBasketStatus(Exception):
     pass
 
 
-class ApiEnvelopeAlreadyExists(Exception):
-    pass
-
-
 class TAPApiEnvelopeManager(Manager):
     @atomic
     def create(self, packaged_work_basket, **kwargs):
@@ -49,13 +45,6 @@ class TAPApiEnvelopeManager(Manager):
             raise ApiEnvelopeInvalidWorkBasketStatus(
                 "Unable to create TAPApiEnvelope from PackagedWorkBasket instance "
                 f"PackagedWorkBasket status not successful, {packaged_work_basket.processing_state} status.",
-            )
-
-        if TAPApiEnvelope.objects.filter(
-            packagedworkbaskets__envelope__envelope_id=packaged_work_basket.envelope.envelope_id,
-        ).exists():
-            raise ApiEnvelopeAlreadyExists(
-                "Unable to create TAPApiEnvelope from PackagedWorkBasket instance PackagedWorkBasket already has a TAPApiEnvelope",
             )
 
         previous_id = (
@@ -80,20 +69,17 @@ class TAPApiEnvelopeManager(Manager):
         not null Then select the max value for ther envelope_id field in the
         Envelope instance."""
 
-        if packaged_work_basket.envelope.envelope_id[:4] == "0001":
-            year = packaged_work_basket.envelope.envelope_id[2:]
-            expected_previous_id = (
-                Envelope.objects.for_year(year=year - 1).last().envelope_id
-            )
+        if packaged_work_basket.envelope.envelope_id[2:] == "0001":
+            year = int(packaged_work_basket.envelope.envelope_id[:2])
+            last_envelope = Envelope.objects.for_year(year=year - 1).last()
+            # uses None if first envelope (no previous ones)
+            expected_previous_id = last_envelope.envelope_id if last_envelope else None
         else:
             expected_previous_id = str(
                 int(packaged_work_basket.envelope.envelope_id) - 1,
             )
 
-        if (
-            previous_id
-            and packaged_work_basket.envelope.envelope_id != expected_previous_id
-        ):
+        if previous_id and previous_id != expected_previous_id:
             raise ApiEnvelopeUnexpectedEnvelopeSequence(
                 "Unable to create TAPApiEnvelope from PackagedWorkBasket instance "
                 f"Envelope Id {packaged_work_basket.envelope.envelope_id} is not the next not expected envelope",

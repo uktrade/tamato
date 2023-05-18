@@ -290,7 +290,10 @@ class PackagedWorkBasketQuerySet(QuerySet):
         )
         return top.first() if top else None
 
-    def get_first_unpublished_to_api(self):
+    def get_next_unpublished_to_api(self):
+        """Return the next packaged work basket (ordered by
+        envelope__envelope_id) that is successfully process and does not have a
+        published to api envelope."""
         unpublished = self.filter(
             Q(
                 processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
@@ -444,8 +447,10 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @classmethod
     def create_api_publishing_envelope(cls):
-        """"""
-        unpublished = cls.objects.get_first_unpublished_to_api()
+        """Class method for the packaged workbasket that will trigger the next
+        available packaged workbasket which is Successfully processed and does
+        not have a published API envelope."""
+        unpublished = cls.objects.get_next_unpublished_to_api()
         if unpublished:
             from publishing import models as publishing_models
 

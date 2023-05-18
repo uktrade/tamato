@@ -19,6 +19,7 @@ from publishing.models import PackagedWorkBasket
 from publishing.models import PackagedWorkBasketDuplication
 from publishing.models import PackagedWorkBasketInvalidCheckStatus
 from publishing.models import ProcessingState
+from publishing.models import TAPApiEnvelope
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -451,3 +452,81 @@ def test_next_envelope_id(envelope_storage):
     packaged_workbasket.begin_processing()
     packaged_workbasket.processing_succeeded()
     assert Envelope.next_envelope_id() == "230002"
+
+
+def test_create_api_publishing_envelope(envelope_storage, settings):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
+    wb = factories.PublishedWorkBasketFactory()
+    with factories.ApprovedTransactionFactory.create(workbasket=wb):
+        factories.FootnoteTypeFactory()
+        factories.AdditionalCodeFactory()
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        pwb = factories.SuccessPackagedWorkBasketFactory(
+            workbasket=wb,
+        )
+    with mock.patch(
+        "publishing.storages.EnvelopeStorage.save",
+        wraps=mock.MagicMock(side_effect=envelope_storage.save),
+    ) as mock_save:
+        envelope = factories.PublishedEnvelopeFactory(
+            packaged_work_basket=pwb,
+        )
+    pwb.envelope = envelope
+    pwb.save()
+
+    PackagedWorkBasket.create_api_publishing_envelope()
+
+    pwb.refresh_from_db()
+
+    assert pwb.tap_api_envelope
+
+
+def test_create_api_publishing_envelope_no_envelope_to_publish(
+    envelope_storage,
+    settings,
+):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
+    wb = factories.PublishedWorkBasketFactory()
+    with factories.ApprovedTransactionFactory.create(workbasket=wb):
+        factories.FootnoteTypeFactory()
+        factories.AdditionalCodeFactory()
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        pwb = factories.SuccessPackagedWorkBasketFactory(
+            workbasket=wb,
+        )
+    with mock.patch(
+        "publishing.storages.EnvelopeStorage.save",
+        wraps=mock.MagicMock(side_effect=envelope_storage.save),
+    ) as mock_save:
+        envelope = factories.APIPublishedEnvelope(
+            packaged_work_basket=pwb,
+        )
+    pwb.envelope = envelope
+    pwb.save()
+
+    PackagedWorkBasket.create_api_publishing_envelope()
+
+    pwb.refresh_from_db()
+
+    assert not pwb.tap_api_envelope
+
+
+def test_create_api_publishing_envelope_no_envelope_to_publish_2(
+    successful_envelope_factory,
+    settings,
+):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
+    successful_envelope_factory()
+
+    PackagedWorkBasket.create_api_publishing_envelope()
+
+    assert len(TAPApiEnvelope.objects.all()) == 1
