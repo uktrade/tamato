@@ -435,4 +435,4 @@ You may get a message like ``There are no running instances of this process.`` I
 
 .. code:: sh
 
-    cf scale <space> --process <process_name> -i <number_of_instances> -m <memory>
+    cf scale <space> --process <process_name> -i <number_of_instances> -m <memory> -d <disk>
