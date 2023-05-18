@@ -469,14 +469,10 @@ CELERY_ROUTES = {
     "workbaskets.tasks.transition": {
         "queue": "standard",
     },
-    re.compile(
-        r"(checks)\.tasks\..*",
-    ): {
+    re.compile(r"(checks)\.tasks\..*"): {
         "queue": "rule-check",
     },
-    re.compile(
-        r"(exporter|importer|notifications|publishing)\.tasks\..*",
-    ): {
+    re.compile(r"(exporter|importer|notifications|publishing)\.tasks\..*"): {
         "queue": "standard",
     },
 }
