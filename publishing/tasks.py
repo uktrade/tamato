@@ -168,14 +168,18 @@ def publish_to_api():
 
         pwb_envelope = envelope.packagedworkbaskets.last().envelope
 
+        # Envelopes with these states must be published to staging
+        # before being published to production
         if envelope.publishing_state in [
             ApiPublishingState.AWAITING_PUBLISHING,
             ApiPublishingState.FAILED_PUBLISHING_STAGING,
         ]:
             if publish_to_staging() and publish_to_production():
+                # continue to publish next envelope in sequence
                 continue
             else:
                 return
+        # Envelope has already been published to staging
         elif publish_to_production():
             continue
         else:
