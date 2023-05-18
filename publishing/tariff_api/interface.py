@@ -1,12 +1,10 @@
 from abc import ABC
 from abc import abstractmethod
 
-from django.conf import settings
-from django.utils.module_loading import import_string
 from requests import Response
 
-from publishing.client import TariffAPIClient
 from publishing.models import Envelope
+from publishing.tariff_api.client import TariffAPIClient
 
 
 class TariffAPIBase(ABC):
@@ -52,15 +50,3 @@ class TariffAPI(TariffAPIBase):
     def post_envelope_production(self, envelope: Envelope) -> Response:
         """Upload envelope to Tariff API production environment."""
         return self.client.post_envelope_production(envelope=envelope)
-
-
-def get_tariff_api_interface() -> TariffAPIBase:
-    """Get the Tariff API interface from the TARIFF_API_INTERFACE setting."""
-    if not settings.TARIFF_API_INTERFACE:
-        return TariffAPIStubbed()
-
-    interface_class = import_string(settings.TARIFF_API_INTERFACE)
-    if not issubclass(interface_class, TariffAPIBase):
-        raise ValueError("TARIFF_API_INTERFACE must inherit from TariffAPIBase")
-
-    return interface_class()

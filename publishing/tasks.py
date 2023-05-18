@@ -92,9 +92,9 @@ def schedule_create_xml_envelope_file(
 @app.task
 def publish_to_api():
     """"""
-    from publishing.interface import get_tariff_api_interface
     from publishing.models import TAPApiEnvelope
     from publishing.models.state import ApiPublishingState
+    from publishing.tariff_api import get_tariff_api_interface
 
     logger.info("Starting Tariff API publishing task")
 
