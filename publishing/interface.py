@@ -20,8 +20,7 @@ class TariffAPIBase(ABC):
 
 
 class TariffAPIStubbed(TariffAPIBase):
-    def post_envelope_staging(self, envelope: Envelope) -> Response:
-        """Upload envelope to Tariff API staging environment."""
+    def stubbed_post_response(self, envelope: Envelope) -> Response:
         response = Response()
 
         if not envelope:
@@ -31,18 +30,14 @@ class TariffAPIStubbed(TariffAPIBase):
             response.status_code = 200
             response.reason = "200 OK File uploaded"
         return response
+
+    def post_envelope_staging(self, envelope: Envelope) -> Response:
+        """Upload envelope to Tariff API staging environment."""
+        return self.stubbed_post_response(envelope=envelope)
 
     def post_envelope_production(self, envelope: Envelope) -> Response:
         """Upload envelope to Tariff API production environment."""
-        response = Response()
-
-        if not envelope:
-            response.reason = "400 No file uploaded"
-            response.status_code = 400
-        else:
-            response.status_code = 200
-            response.reason = "200 OK File uploaded"
-        return response
+        return self.stubbed_post_response(envelope=envelope)
 
 
 class TariffAPI(TariffAPIBase):
