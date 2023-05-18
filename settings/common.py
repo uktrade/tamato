@@ -431,6 +431,18 @@ AWS_DEFAULT_ACL = None
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_REGION_NAME = "eu-west-2"
 
+# Tariff API envelope publishing automation
+TARIFF_API_INTERFACE = os.environ.get(
+    "TARIFF_API_INTERFACE",
+    "publishing.interface.TariffAPIStubbed",
+)
+API_HOST_STAGING = os.environ.get("API_HOST_STAGING", "")
+API_HOST_PROD = os.environ.get("API_HOST_PROD", "")
+API_URL_PATH = os.environ.get("API_URL_PATH", "api/v1/taricfiles/")
+API_KEY_STAGING_POST = os.environ.get("API_KEY_STAGING_POST", "")
+API_KEY_PROD_POST = os.environ.get("API_KEY_PROD_POST", "")
+
+
 # Pickle could be used as a serializer here, as this always runs in a DMZ
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
