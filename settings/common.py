@@ -434,7 +434,7 @@ AWS_S3_REGION_NAME = "eu-west-2"
 # Tariff API envelope publishing automation
 TARIFF_API_INTERFACE = os.environ.get(
     "TARIFF_API_INTERFACE",
-    "publishing.interface.TariffAPIStubbed",
+    "publishing.tariff_api.interface.TariffAPI",
 )
 API_HOST_STAGING = os.environ.get("API_HOST_STAGING", "")
 API_HOST_PROD = os.environ.get("API_HOST_PROD", "")
