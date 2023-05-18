@@ -466,7 +466,11 @@ CELERY_ROUTES = {
     "workbaskets.tasks.check_workbasket": {
         "queue": "rule-check",
     },
-    re.compile(r"(checks)\.tasks\..*"): {"queue": "rule-check"},
+    re.compile(
+        r"(checks)\.tasks\..*",
+    ): {
+        "queue": "rule-check",
+    },
     "workbaskets.tasks.transition": {
         "queue": "standard",
     },
