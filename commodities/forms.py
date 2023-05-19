@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Button
@@ -13,6 +11,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from importer.forms import ImportForm
+from importer.management.commands.import_taric_file import import_taric_file
 
 
 class CommodityFilterForm(forms.Form):
@@ -56,24 +55,14 @@ class CommodityImportForm(ImportForm):
 
     @transaction.atomic
     def save(self, user: User, workbasket_id: str, commit=True):
-        # we don't ask the user to provide a name in the form so generate one here based on filename and timestamp
-        now = datetime.now()
-        current_time = now.strftime("%H%M%S")
-        batch_name = f"{self.cleaned_data['taric_file'].name}_{current_time}"
-        self.instance.name = batch_name
-        batch = super().save(commit=False)
-        batch.author = user
-        batch.save()
+        # To do - add code to Save the file to S3
 
-        self.process_file(
-            self.cleaned_data["taric_file"],
-            batch,
-            user,
+        # Kick off management command
+        import_taric_file(
+            taric_file=self.cleaned_data["taric_file"],
+            user=user,
             workbasket_id=workbasket_id,
         )
-        batch.imported()
-        batch.save()
-        return batch
 
     class Meta(ImportForm.Meta):
         exclude = ImportForm.Meta.fields
