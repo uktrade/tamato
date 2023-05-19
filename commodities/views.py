@@ -1,6 +1,8 @@
 from datetime import date
+from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.urls import reverse
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
@@ -12,6 +14,7 @@ from rest_framework import viewsets
 from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
 from commodities.forms import CommodityImportForm
+from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models import GoodsNomenclature
 from commodities.models.dc import CommodityCollectionLoader
 from commodities.models.dc import CommodityTreeSnapshot
@@ -23,7 +26,6 @@ from common.views import TrackedModelDetailView
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
 from measures.models import Measure
-from measures.snapshots import MeasureSnapshot
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
@@ -133,12 +135,15 @@ class CommodityMeasuresAsDefinedList(SortingMixin, WithPaginationListMixin, List
         "geo_area": "geographical_area__area_id",
     }
 
-    def get_queryset(self):
-        ordering = self.get_ordering()
-        commodity = (
+    @property
+    def commodity(self):
+        return (
             GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
         )
-        queryset = commodity.measures.current()
+
+    def get_queryset(self):
+        ordering = self.get_ordering()
+        queryset = self.commodity.measures.current()
         if ordering:
             if isinstance(ordering, str):
                 ordering = (ordering,)
@@ -147,10 +152,12 @@ class CommodityMeasuresAsDefinedList(SortingMixin, WithPaginationListMixin, List
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["commodity"] = (
-            GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
-        )
+        context["commodity"] = self.commodity
         context["selected_tab"] = "measures-defined"
+
+        url_params = urlencode({"goods_nomenclature": self.commodity.id})
+        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+        context["measures_url"] = measures_url
         return context
 
 
@@ -191,24 +198,13 @@ class MeasuresOnDeclarableCommoditiesList(CommodityMeasuresAsDefinedList):
 
     def get_queryset(self):
         ordering = self.get_ordering()
-        commodity = (
-            GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
-        )
-
-        prefix = commodity.item_id[0:2]
-        commodities_collection = CommodityCollectionLoader(prefix=prefix).load()
-
         tx = WorkBasket.get_current_transaction(self.request)
-        moment = SnapshotMoment(transaction=tx, date=date.today())
-        tree = CommodityTreeSnapshot(
-            commodities=commodities_collection.commodities,
-            moment=moment,
+        queryset = get_measures_on_declarable_commodities(
+            tx,
+            self.commodity.item_id,
+            date=date.today(),
         )
-        this_commodity = list(
-            filter(lambda c: c.item_id == commodity.item_id, tree.commodities),
-        )[0]
-        measure_snapshot = MeasureSnapshot(moment, tree)
-        queryset = measure_snapshot.get_applicable_measures(this_commodity)
+
         if ordering:
             if isinstance(ordering, str):
                 ordering = (ordering,)
@@ -218,10 +214,12 @@ class MeasuresOnDeclarableCommoditiesList(CommodityMeasuresAsDefinedList):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["commodity"] = (
-            GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
-        )
+        context["commodity"] = self.commodity
 
         context["selected_tab"] = "measures-declarable"
+
+        url_params = urlencode({"goods_nomenclature": self.commodity.id, "modc": True})
+        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+        context["measures_url"] = measures_url
 
         return context

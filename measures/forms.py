@@ -900,8 +900,15 @@ class MeasureFilterForm(forms.Form):
         self.helper.layout = Layout(
             Div(
                 Field.text("sid", field_width=Fluid.TWO_THIRDS),
+                css_class="govuk-grid-row quarters",
+            ),
+            Div(
                 "goods_nomenclature",
                 "goods_nomenclature__item_id",
+                "modc",
+                css_class="govuk-grid-row quarters",
+            ),
+            Div(
                 "additional_code",
                 "order_number",
                 "measure_type",
