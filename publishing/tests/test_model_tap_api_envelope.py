@@ -76,10 +76,14 @@ def test_create_tap_api_envelope_invalid_envelope_sequence(
 
     # check out of sequence still works over different years
     with freeze_time("2023-01-01"):
-        successful_envelope_factory()
+        envelope2 = successful_envelope_factory()
+
+    packaged_workbasket2 = PackagedWorkBasket.objects.get(
+        envelope=envelope2,
+    )
 
     with pytest.raises(ApiEnvelopeUnexpectedEnvelopeSequence):
-        factories.TapApiEnvelopeFactory(packaged_work_basket=packaged_workbasket)
+        factories.TapApiEnvelopeFactory(packaged_work_basket=packaged_workbasket2)
 
 
 def test_invalid_envelope_sequence_published_to_tariffs_api(envelope_storage, settings):
