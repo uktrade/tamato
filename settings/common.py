@@ -405,9 +405,9 @@ HMRC_LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
     "loading-report/",
 )
 
-# Settings about retrying uploads if the bucket or endpoint cannot be contacted.
+# Settings about retrying uploads if the api cannot be contacted.
 # Names correspond to celery settings for retrying tasks:
-#   https://docs.celeryproject.org/en/master/userguide/tasks.html#automatic-retry-for-known-exceptions
+#   https://docs.celeryq.dev/en/stable/userguide/tasks.html#automatic-retry-for-known-exceptions
 CHANNEL_ISLANDS_API_MAX_RETRIES = int(
     os.environ.get("CHANNEL_ISLANDS_API_MAX_RETRIES", "3"),
 )

@@ -485,10 +485,12 @@ def test_create_api_publishing_envelope(envelope_storage, settings):
     assert pwb.tap_api_envelope
 
 
-def test_create_api_publishing_envelope_no_envelope_to_publish(
+def test_create_api_envelope_no_envelope_to_publish_envelope_field(
     envelope_storage,
     settings,
 ):
+    """Test validates that it will not publish any workbaskets when the packaged
+    workbasket has an envelope with the published_to_tariffs_api field set."""
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
     wb = factories.PublishedWorkBasketFactory()
@@ -519,13 +521,17 @@ def test_create_api_publishing_envelope_no_envelope_to_publish(
     assert not pwb.tap_api_envelope
 
 
-def test_create_api_publishing_envelope_no_envelope_to_publish_2(
+def test_create_api_envelope_no_envelope_to_publish_TAPApiEnvelope(
     successful_envelope_factory,
     settings,
 ):
+    """Test validates that it will not publish any workbaskets when the packaged
+    workbasket has an associated TAPApiEnvelope."""
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
     successful_envelope_factory()
+
+    assert len(TAPApiEnvelope.objects.all()) == 1
 
     PackagedWorkBasket.create_api_publishing_envelope()
 

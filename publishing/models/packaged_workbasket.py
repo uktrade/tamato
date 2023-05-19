@@ -449,7 +449,7 @@ class PackagedWorkBasket(TimestampedMixin):
     def create_api_publishing_envelope(cls):
         """Class method for the packaged workbasket that will trigger the next
         available packaged workbasket which is Successfully processed and does
-        not have a published API envelope."""
+        not have a TAPApiEnvelope."""
         unpublished = cls.objects.get_next_unpublished_to_api()
         if unpublished:
             from publishing import models as publishing_models
