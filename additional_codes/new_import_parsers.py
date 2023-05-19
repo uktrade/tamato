@@ -11,9 +11,7 @@ from importer.parsers import NewWritable
 
 
 class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = AdditionalCodeTypeHandler
     model = additional_codes.models.AdditionalCodeType
-
     model_links = []
 
     record_code = "120"
@@ -29,8 +27,8 @@ class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParse
 
 # This gets joined to AdditionalCodeType as description column
 class NewAdditionalCodeTypeDescriptionParser(NewWritable, NewElementParser):
-    # handler = AdditionalCodeTypeDescriptionHandler
     model = additional_codes.models.AdditionalCodeType
+    append_to_parent = True
 
     model_links = []
 
@@ -70,10 +68,9 @@ class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
     valid_between_upper: str = None
 
 
-# This gets joined to AdditionalCodeDescription
 class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
-    # handler = AdditionalCodeDescriptionPeriodHandler
-    model = additional_codes.models.AdditionalCodeDescription
+    model = models.AdditionalCodeDescription
+    append_to_parent = True
 
     model_links = [
         ModelLink(
@@ -106,7 +103,6 @@ class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
 
 
 class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
-    # handler = AdditionalCodeDescriptionHandler
     model = additional_codes.models.AdditionalCodeDescription
 
     # create dependency to QuotaDefinition
@@ -146,7 +142,6 @@ class NewFootnoteAssociationAdditionalCodeParser(
     NewWritable,
     NewElementParser,
 ):
-    handler = None
     model = additional_codes.models.FootnoteAssociationAdditionalCode
 
     model_links = [

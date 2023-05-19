@@ -190,12 +190,10 @@ class NewElementParser:
     value_mapping = {}
     model_links = None
     issues = []
+    append_to_parent = False
 
     def __init__(self):
         self.issues = []
-
-    def model(self):
-        return self.model
 
     def links(self):
         if self.model_links is None:

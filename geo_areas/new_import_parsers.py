@@ -9,8 +9,8 @@ from importer.parsers import NewWritable
 
 
 class NewGeographicalAreaParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = GeographicalAreaHandler
-
+    # handler = GeographicalAreaHandler
+    model = models.GeographicalArea
     model_links = [
         ModelLink(
             models.GeographicalArea,
@@ -35,8 +35,8 @@ class NewGeographicalAreaParser(NewValidityMixin, NewWritable, NewElementParser)
 
 
 class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
-    handler = GeographicalAreaDescriptionHandler
-
+    # handler = GeographicalAreaDescriptionHandler
+    model = models.GeographicalAreaDescription
     model_links = [
         ModelLink(
             models.GeographicalArea,
@@ -61,7 +61,8 @@ class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewGeographicalAreaDescriptionPeriodParser(NewWritable, NewElementParser):
-    handler = GeographicalAreaDescriptionPeriodHandler
+    model = models.GeographicalAreaDescription
+    append_to_parent = True
 
     model_links = [
         ModelLink(
@@ -86,8 +87,8 @@ class NewGeographicalAreaDescriptionPeriodParser(NewWritable, NewElementParser):
 
 
 class NewGeographicalMembershipParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = GeographicalMembershipHandler
-
+    # handler = GeographicalMembershipHandler
+    model = models.GeographicalMembership
     model_links = [
         ModelLink(
             models.GeographicalArea,

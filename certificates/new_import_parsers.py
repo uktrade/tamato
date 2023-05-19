@@ -1,6 +1,9 @@
 from datetime import date
 
 from certificates.import_handlers import *
+from certificates.models import Certificate
+from certificates.models import CertificateDescription
+from certificates.models import CertificateType
 from importer.new_parsers import ModelLink
 from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
@@ -9,7 +12,8 @@ from importer.parsers import NewWritable
 
 
 class NewCertificateTypeParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = CertificateTypeHandler
+    # handler = CertificateTypeHandler
+    model = CertificateType
     record_code = "110"
     subrecord_code = "00"
 
@@ -21,7 +25,9 @@ class NewCertificateTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewCertificateTypeDescriptionParser(NewWritable, NewElementParser):
-    handler = CertificateTypeDescriptionHandler
+    # handler = CertificateTypeDescriptionHandler
+    model = CertificateType
+    append_to_parent = True
     record_code = "110"
     subrecord_code = "05"
 
@@ -33,8 +39,8 @@ class NewCertificateTypeDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = CertificateHandler
-
+    # handler = CertificateHandler
+    model = Certificate
     model_links = [
         ModelLink(
             models.CertificateType,
@@ -57,8 +63,8 @@ class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewCertificateDescriptionParser(NewWritable, NewElementParser):
-    handler = CertificateDescriptionHandler
-
+    # handler = CertificateDescriptionHandler
+    model = CertificateDescription
     model_links = [
         ModelLink(
             models.CertificateType,
@@ -89,7 +95,8 @@ class NewCertificateDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewCertificateDescriptionPeriodParser(NewWritable, NewElementParser):
-    handler = CertificateDescriptionPeriodHandler
+    model = CertificateDescription
+    append_to_parent = True
 
     model_links = [
         ModelLink(

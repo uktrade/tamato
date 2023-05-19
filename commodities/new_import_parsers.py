@@ -10,8 +10,8 @@ from importer.parsers import NewWritable
 
 
 class NewGoodsNomenclatureParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = GoodsNomenclatureHandler
-
+    # handler = GoodsNomenclatureHandler
+    model = models.GoodsNomenclature
     record_code = "400"
     subrecord_code = "00"
 
@@ -26,7 +26,8 @@ class NewGoodsNomenclatureParser(NewValidityMixin, NewWritable, NewElementParser
 
 
 class NewGoodsNomenclatureOriginParser(NewWritable, NewElementParser):
-    handler = GoodsNomenclatureOriginHandler
+    # handler = GoodsNomenclatureOriginHandler
+    model = models.GoodsNomenclatureOrigin
 
     model_links = [
         ModelLink(
@@ -61,7 +62,8 @@ class NewGoodsNomenclatureOriginParser(NewWritable, NewElementParser):
 
 
 class NewGoodsNomenclatureSuccessorParser(NewWritable, NewElementParser):
-    handler = GoodsNomenclatureSuccessorHandler
+    # handler = GoodsNomenclatureSuccessorHandler
+    model = models.GoodsNomenclatureSuccessor
 
     model_links = [
         ModelLink(
@@ -102,7 +104,8 @@ class NewGoodsNomenclatureSuccessorParser(NewWritable, NewElementParser):
 
 
 class NewGoodsNomenclatureDescriptionParser(NewWritable, NewElementParser):
-    handler = GoodsNomenclatureDescriptionHandler
+    # handler = GoodsNomenclatureDescriptionHandler
+    model = models.GoodsNomenclatureDescription
 
     model_links = [
         ModelLink(
@@ -130,7 +133,8 @@ class NewGoodsNomenclatureDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewGoodsNomenclatureDescriptionPeriodParser(NewWritable, NewElementParser):
-    handler = GoodsNomenclatureDescriptionPeriodHandler
+    model = models.GoodsNomenclatureDescription
+    append_to_parent = True
 
     model_links = [
         ModelLink(
@@ -157,7 +161,8 @@ class NewGoodsNomenclatureDescriptionPeriodParser(NewWritable, NewElementParser)
 
 
 class NewGoodsNomenclatureIndentParser(NewWritable, NewElementParser):
-    handler = GoodsNomenclatureIndentHandler
+    # handler = GoodsNomenclatureIndentHandler
+    model = models.GoodsNomenclatureIndent
 
     model_links = [
         ModelLink(
@@ -189,7 +194,8 @@ class NewFootnoteAssociationGoodsNomenclatureParser(
     NewWritable,
     NewElementParser,
 ):
-    handler = FootnoteAssociationGoodsNomenclatureHandler
+    # handler = FootnoteAssociationGoodsNomenclatureHandler
+    model = models.FootnoteAssociationGoodsNomenclature
 
     model_links = [
         ModelLink(
