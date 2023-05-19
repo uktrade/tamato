@@ -41,7 +41,27 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info"]
+    command: 
+      [
+        "celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "standard" 
+      ]
+    env_file: 
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    depends_on:
+      - celery-redis
+    networks:
+      - inside
+
+  rule-check-celery:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
+    volumes:
+      - ./:/app/
+    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "rule-check"]
     env_file: 
       - .env
       - settings/envs/docker.env
