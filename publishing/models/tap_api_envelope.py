@@ -3,6 +3,8 @@ from datetime import datetime
 
 from django.db.models import DateTimeField
 from django.db.models import Manager
+from django.db.models import Max
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.transaction import atomic
 from django_fsm import FSMField
@@ -11,6 +13,7 @@ from django_fsm import transition
 from common.models.mixins import TimestampedMixin
 from publishing.models import ApiPublishingState
 from publishing.models import Envelope
+from publishing.models import PackagedWorkBasket
 from publishing.models import ProcessingState
 
 logger = logging.getLogger(__name__)
@@ -41,10 +44,6 @@ class ApiEnvelopeInvalidWorkBasketStatus(Exception):
     pass
 
 
-class ApiEnvelopeAlreadyExists(Exception):
-    pass
-
-
 class TAPApiEnvelopeManager(Manager):
     @atomic
     def create(self, packaged_work_basket, **kwargs):
@@ -66,30 +65,39 @@ class TAPApiEnvelopeManager(Manager):
                 f"PackagedWorkBasket status not successful, {packaged_work_basket.processing_state} status.",
             )
 
-        if TAPApiEnvelope.objects.filter(
-            packagedworkbaskets__envelope__envelope_id=packaged_work_basket.envelope.envelope_id,
-        ).exists():
-            raise ApiEnvelopeAlreadyExists(
-                "Unable to create TAPApiEnvelope from PackagedWorkBasket instance "
-                f"PackagedWorkBasket already has a TAPApiEnvelope",
+        previous_id = (
+            PackagedWorkBasket.objects.select_related(
+                "envelope",
+                "tap_api_envelope",
+            )
+            .filter(
+                Q(
+                    envelope__id__isnull=False,
+                    envelope__published_to_tariffs_api__isnull=False,
+                )
+                | Q(tap_api_envelope__id__isnull=False),
+            )
+            .aggregate(
+                Max("envelope__envelope_id"),
+            )["envelope__envelope_id__max"]
+        )
+        """Join PackagedWorkBasket with Envelope and TAPApiEnvelope model
+        selecting objects Where an Envelope model exists and the
+        published_to_tariffs_api field is not null Or Where a TAPApiEnvelope is
+        not null Then select the max value for ther envelope_id field in the
+        Envelope instance."""
+
+        if packaged_work_basket.envelope.envelope_id[2:] == "0001":
+            year = int(packaged_work_basket.envelope.envelope_id[:2])
+            last_envelope = Envelope.objects.for_year(year=year - 1).last()
+            # uses None if first envelope (no previous ones)
+            expected_previous_id = last_envelope.envelope_id if last_envelope else None
+        else:
+            expected_previous_id = str(
+                int(packaged_work_basket.envelope.envelope_id) - 1,
             )
 
-        # will only create for the latest successful Id, if for any reason this process is out of sync
-        # we will not be able to automatically create these api envelopes as it would expect a different Id
-        if (
-            packaged_work_basket.envelope.envelope_id
-            != Envelope.objects.last_envelope_for_year().envelope_id
-        ):
-            # more complex and will catch envelopes that are created out of sequence but how do you create the first api envelope?
-            # year = packaged_work_basket.envelope.envelope_id[2:]
-            # if packaged_work_basket.envelope.envelope_id[:4] == "0001":
-            #     previous_id = Envelope.objects.for_year(year=year-1).last().envelope_id
-            # else:
-            #     previous_id = str(int(packaged_work_basket.envelope.envelope_id) - 1)
-            # if (not TAPApiEnvelope.objects.filter(
-            #     Q(packagedworkbaskets__envelope__envelope_id=previous_id)
-            #     ).exists() and
-            #     not Envelope.objects.filter(envelope_id=previous_id, published_to_tariffs_api__isnull=False).exists()):
+        if previous_id and previous_id != expected_previous_id:
             raise ApiEnvelopeUnexpectedEnvelopeSequence(
                 "Unable to create TAPApiEnvelope from PackagedWorkBasket instance "
                 f"Envelope Id {packaged_work_basket.envelope.envelope_id} is not the next not expected envelope",

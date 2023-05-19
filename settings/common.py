@@ -405,6 +405,20 @@ HMRC_LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
     "loading-report/",
 )
 
+# Settings about retrying uploads if the api cannot be contacted.
+# Names correspond to celery settings for retrying tasks:
+#   https://docs.celeryq.dev/en/stable/userguide/tasks.html#automatic-retry-for-known-exceptions
+CHANNEL_ISLANDS_API_MAX_RETRIES = int(
+    os.environ.get("CHANNEL_ISLANDS_API_MAX_RETRIES", "3"),
+)
+CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX = int(
+    os.environ.get("CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX", "600"),
+)
+CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY = int(
+    os.environ.get("CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY", "8"),
+)
+
+
 # SQLite AWS settings
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
 SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
@@ -464,6 +478,11 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 
+CHANNEL_ISLANDS_API_CRON = (
+    crontab(os.environ.get("CHANNEL_ISLANDS_API_CRON"))
+    if os.environ.get("CHANNEL_ISLANDS_API_CRON")
+    else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
+)
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
@@ -471,7 +490,8 @@ CELERY_BEAT_SCHEDULE = {
     },
     "channel_island_api_publish": {
         "task": "publishing.tasks.publish_to_api",
-        "schedule": crontab(minute="*/3"),
+        # every 2 hours between 8am and 6pm on weekdays
+        "schedule": CHANNEL_ISLANDS_API_CRON,
     },
 }
 

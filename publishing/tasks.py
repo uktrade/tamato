@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime
 
+from django.conf import settings
+
 from common.celery import app
 
 logger = logging.getLogger(__name__)
@@ -89,7 +91,13 @@ def schedule_create_xml_envelope_file(
         packaged_work_basket.save()
 
 
-@app.task
+@app.task(
+    default_retry_delay=settings.CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY,
+    max_retries=settings.CHANNEL_ISLANDS_API_MAX_RETRIES,
+    retry_backoff=True,
+    retry_backoff_max=settings.CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX,
+    retry_jitter=True,
+)
 def publish_to_api():
     """"""
     from publishing.models import TAPApiEnvelope
