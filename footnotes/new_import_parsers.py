@@ -9,7 +9,8 @@ from importer.parsers import NewWritable
 
 
 class NewFootnoteTypeParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = FootnoteTypeHandler
+    # handler = FootnoteTypeHandler
+    model = models.FootnoteType
     record_code = "100"
     subrecord_code = "00"
 
@@ -22,8 +23,8 @@ class NewFootnoteTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewFootnoteTypeDescriptionParser(NewWritable, NewElementParser):
-    handler = FootnoteTypeDescriptionHandler
-
+    # handler = FootnoteTypeDescriptionHandler
+    model = models.FootnoteType
     model_links = [
         ModelLink(
             models.FootnoteType,
@@ -45,8 +46,8 @@ class NewFootnoteTypeDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = FootnoteHandler
-
+    # handler = FootnoteHandler
+    model = models.Footnote
     model_links = [
         ModelLink(
             models.FootnoteType,
@@ -69,8 +70,8 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
-    handler = FootnoteDescriptionHandler
-
+    # handler = FootnoteDescriptionHandler
+    model = models.FootnoteDescription
     model_links = [
         ModelLink(
             models.Footnote,
@@ -104,7 +105,8 @@ class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser):
-    handler = FootnoteDescriptionPeriodHandler
+    model = models.FootnoteDescription
+    append_to_parent = True
 
     model_links = [
         ModelLink(

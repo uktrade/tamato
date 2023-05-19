@@ -3,7 +3,6 @@ import pytest
 from additional_codes.models import AdditionalCodeDescription
 from additional_codes.models import FootnoteAssociationAdditionalCode
 from additional_codes.new_import_parsers import *
-from certificates.models import CertificateDescription
 from certificates.new_import_parsers import *
 from commodities.models import FootnoteAssociationGoodsNomenclature
 from commodities.models import GoodsNomenclatureDescription
@@ -48,119 +47,178 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.parametrize(
-    ("handler_class", "model_class", "expected_xml_tag_name", "links_to"),
+    (
+        "handler_class",
+        "model_class",
+        "expected_xml_tag_name",
+        "links_to",
+        "should_append_to_parent",
+    ),
     (
         # Additional Codes
-        (NewAdditionalCodeTypeParser, AdditionalCodeType, "additional.code.type", []),
+        (
+            NewAdditionalCodeTypeParser,
+            AdditionalCodeType,
+            "additional.code.type",
+            [],
+            False,
+        ),
         (
             NewAdditionalCodeTypeDescriptionParser,
             AdditionalCodeType,
             "additional.code.type.description",
             [],
+            True,
         ),
         (
             NewAdditionalCodeParser,
             AdditionalCode,
             "additional.code",
             [AdditionalCodeType],
+            False,
         ),
         (
             NewAdditionalCodeDescriptionPeriodParser,
             AdditionalCodeDescription,
             "additional.code.description.period",
-            [AdditionalCodeDescription, AdditionalCodeType],
+            [AdditionalCode, AdditionalCodeType],
+            True,
         ),
         (
             NewAdditionalCodeDescriptionParser,
             AdditionalCodeDescription,
             "additional.code.description",
             [AdditionalCode, AdditionalCodeType],
+            False,
         ),
         (
             NewFootnoteAssociationAdditionalCodeParser,
             FootnoteAssociationAdditionalCode,
             "footnote.association.additional.code",
             [Footnote, AdditionalCodeType, AdditionalCode],
+            False,
         ),
         # Certificates
-        (NewCertificateTypeParser, CertificateType, "certificate.type", []),
+        (
+            NewCertificateTypeParser,
+            CertificateType,
+            "certificate.type",
+            [],
+            False,
+        ),
         (
             NewCertificateTypeDescriptionParser,
             CertificateType,
             "certificate.type.description",
             [],
+            True,
         ),
-        (NewCertificateParser, Certificate, "certificate", [CertificateType]),
+        (
+            NewCertificateParser,
+            Certificate,
+            "certificate",
+            [CertificateType],
+            False,
+        ),
         (
             NewCertificateDescriptionParser,
             CertificateDescription,
             "certificate.description",
             [CertificateType, Certificate],
+            False,
         ),
         (
             NewCertificateDescriptionPeriodParser,
             CertificateDescription,
             "certificate.description.period",
             [CertificateType, Certificate],
+            True,
         ),
         # Commodities
-        (NewGoodsNomenclatureParser, GoodsNomenclature, "goods.nomenclature", []),
+        (
+            NewGoodsNomenclatureParser,
+            GoodsNomenclature,
+            "goods.nomenclature",
+            [],
+            False,
+        ),
         (
             NewGoodsNomenclatureOriginParser,
             GoodsNomenclatureOrigin,
             "goods.nomenclature.origin",
             [GoodsNomenclature],
+            False,
         ),
         (
             NewGoodsNomenclatureSuccessorParser,
             GoodsNomenclatureSuccessor,
             "goods.nomenclature.successor",
             [GoodsNomenclature],
+            False,
         ),
         (
             NewGoodsNomenclatureDescriptionParser,
             GoodsNomenclatureDescription,
             "goods.nomenclature.description",
             [GoodsNomenclature],
+            False,
         ),
         (
             NewGoodsNomenclatureDescriptionPeriodParser,
             GoodsNomenclatureDescription,
             "goods.nomenclature.description.period",
             [GoodsNomenclature],
+            True,
         ),
         (
             NewGoodsNomenclatureIndentParser,
             GoodsNomenclatureIndent,
             "goods.nomenclature.indents",
             [GoodsNomenclature],
+            False,
         ),
         (
             NewFootnoteAssociationGoodsNomenclatureParser,
             FootnoteAssociationGoodsNomenclature,
             "footnote.association.goods.nomenclature",
             [GoodsNomenclature, FootnoteType, Footnote],
+            False,
         ),
         # Footnotes
-        (NewFootnoteTypeParser, FootnoteType, "footnote.type", []),
+        (
+            NewFootnoteTypeParser,
+            FootnoteType,
+            "footnote.type",
+            [],
+            False,
+        ),
         (
             NewFootnoteTypeDescriptionParser,
             FootnoteType,
             "footnote.type.description",
             [FootnoteType],
+            False,
         ),
-        (NewFootnoteParser, Footnote, "footnote", [FootnoteType]),
+        (
+            NewFootnoteParser,
+            Footnote,
+            "footnote",
+            [FootnoteType],
+            False,
+        ),
         (
             NewFootnoteDescriptionParser,
             FootnoteDescription,
             "footnote.description",
             [Footnote, FootnoteType],
+            False,
         ),
         (
             NewFootnoteDescriptionPeriodParser,
             FootnoteDescription,
             "footnote.description.period",
             [Footnote, FootnoteType],
+            True,
         ),
         # Geo Areas
         (
@@ -168,98 +226,155 @@ pytestmark = pytest.mark.django_db
             GeographicalArea,
             "geographical.area",
             [GeographicalArea],
+            False,
         ),
         (
             NewGeographicalAreaDescriptionParser,
             GeographicalAreaDescription,
             "geographical.area.description",
             [GeographicalArea],
+            False,
         ),
         (
             NewGeographicalAreaDescriptionPeriodParser,
             GeographicalAreaDescription,
             "geographical.area.description.period",
             [GeographicalArea],
+            True,
         ),
         (
             NewGeographicalMembershipParser,
             GeographicalMembership,
             "geographical.area.membership",
             [GeographicalArea],
+            False,
         ),
         # Measures
-        (NewMeasureTypeSeriesParser, MeasureTypeSeries, "measure.type.series", []),
+        (
+            NewMeasureTypeSeriesParser,
+            MeasureTypeSeries,
+            "measure.type.series",
+            [],
+            False,
+        ),
         (
             NewMeasureTypeSeriesDescriptionParser,
             MeasureTypeSeries,
             "measure.type.series.description",
             [],
+            True,
         ),
-        (NewMeasurementUnitParser, MeasurementUnit, "measurement.unit", []),
+        (
+            NewMeasurementUnitParser,
+            MeasurementUnit,
+            "measurement.unit",
+            [],
+            False,
+        ),
         (
             NewMeasurementUnitDescriptionParser,
             MeasurementUnit,
             "measurement.unit.description",
             [],
+            True,
         ),
         (
             NewMeasurementUnitQualifierParser,
             MeasurementUnitQualifier,
             "measurement.unit.qualifier",
             [],
+            False,
         ),
         (
             NewMeasurementUnitQualifierDescriptionParser,
             MeasurementUnitQualifier,
             "measurement.unit.qualifier.description",
             [],
+            True,
         ),
         (
             NewMeasurementParser,
             Measurement,
             "measurement",
             [MeasurementUnit, MeasurementUnitQualifier],
+            False,
         ),
-        (NewMonetaryUnitParser, MonetaryUnit, "monetary.unit", []),
+        (
+            NewMonetaryUnitParser,
+            MonetaryUnit,
+            "monetary.unit",
+            [],
+            False,
+        ),
         (
             NewMonetaryUnitDescriptionParser,
             MonetaryUnit,
             "monetary.unit.description",
             [],
+            True,
         ),
-        (NewDutyExpressionParser, DutyExpression, "duty.expression", []),
+        (
+            NewDutyExpressionParser,
+            DutyExpression,
+            "duty.expression",
+            [],
+            False,
+        ),
         (
             NewDutyExpressionDescriptionParser,
             DutyExpression,
             "duty.expression.description",
             [],
+            True,
         ),
-        (NewMeasureTypeParser, MeasureType, "measure.type", []),
-        (NewMeasureTypeDescriptionParser, MeasureType, "measure.type.description", []),
+        (
+            NewMeasureTypeParser,
+            MeasureType,
+            "measure.type",
+            [],
+            False,
+        ),
+        (
+            NewMeasureTypeDescriptionParser,
+            MeasureType,
+            "measure.type.description",
+            [],
+            True,
+        ),
         (
             NewAdditionalCodeTypeMeasureTypeParser,
             AdditionalCodeTypeMeasureType,
             "additional.code.type.measure.type",
             [MeasureType, AdditionalCodeType],
+            False,
         ),
         (
             NewMeasureConditionCodeParser,
             MeasureConditionCode,
             "measure.condition.code",
             [],
+            False,
         ),
         (
             NewMeasureConditionCodeDescriptionParser,
             MeasureConditionCode,
             "measure.condition.code.description",
             [],
+            True,
         ),
-        (NewMeasureActionParser, MeasureAction, "measure.action", []),
+        (
+            NewMeasureActionParser,
+            MeasureAction,
+            "measure.action",
+            [],
+            False,
+        ),
         (
             NewMeasureActionDescriptionParser,
             MeasureAction,
             "measure.action.description",
             [],
+            True,
         ),
         (
             NewMeasureParser,
@@ -274,6 +389,7 @@ pytestmark = pytest.mark.django_db
                 QuotaOrderNumber,
                 Regulation,
             ],
+            False,
         ),
         (
             NewMeasureComponentParser,
@@ -286,6 +402,7 @@ pytestmark = pytest.mark.django_db
                 MeasurementUnit,
                 MeasurementUnitQualifier,
             ],
+            False,
         ),
         (
             NewMeasureConditionParser,
@@ -301,6 +418,7 @@ pytestmark = pytest.mark.django_db
                 Certificate,
                 CertificateType,
             ],
+            False,
         ),
         (
             NewMeasureConditionComponentParser,
@@ -313,83 +431,146 @@ pytestmark = pytest.mark.django_db
                 MeasurementUnit,
                 MeasurementUnitQualifier,
             ],
+            False,
         ),
         (
             NewMeasureExcludedGeographicalAreaParser,
             MeasureExcludedGeographicalArea,
             "measure.excluded.geographical.area",
             [Measure, GeographicalArea],
+            False,
         ),
         (
             NewFootnoteAssociationMeasureParser,
             FootnoteAssociationMeasure,
             "footnote.association.measure",
             [Measure, FootnoteType, Footnote],
+            False,
         ),
         # Quotas
-        (NewQuotaOrderNumberParser, QuotaOrderNumber, "quota.order.number", []),
+        (
+            NewQuotaOrderNumberParser,
+            QuotaOrderNumber,
+            "quota.order.number",
+            [],
+            False,
+        ),
         (
             NewQuotaOrderNumberOriginParser,
             QuotaOrderNumberOrigin,
             "quota.order.number.origin",
             [QuotaOrderNumber, GeographicalArea],
+            False,
         ),
         (
             NewQuotaOrderNumberOriginExclusionParser,
             QuotaOrderNumberOriginExclusion,
             "quota.order.number.origin.exclusions",
             [QuotaOrderNumberOrigin, GeographicalArea],
+            False,
         ),
         (
             NewQuotaDefinitionParser,
             QuotaDefinition,
             "quota.definition",
             [QuotaOrderNumber, MonetaryUnit, MeasurementUnit, MeasurementUnitQualifier],
+            False,
         ),
         (
             NewQuotaAssociationParser,
             QuotaAssociation,
             "quota.association",
             [QuotaDefinition],
+            False,
         ),
         (
             NewQuotaSuspensionParser,
             QuotaSuspension,
             "quota.suspension.period",
             [QuotaDefinition],
+            False,
         ),
         (
             NewQuotaBlockingParser,
             QuotaBlocking,
             "quota.blocking.period",
             [QuotaDefinition],
+            False,
         ),
-        (NewQuotaEventParser, QuotaEvent, "quota.([a-z.]+).event", [QuotaDefinition]),
+        (
+            NewQuotaEventParser,
+            QuotaEvent,
+            "quota.([a-z.]+).event",
+            [QuotaDefinition],
+            False,
+        ),
         # Regulations
-        (NewRegulationGroupParser, Group, "regulation.group", []),
+        (
+            NewRegulationGroupParser,
+            Group,
+            "regulation.group",
+            [],
+            False,
+        ),
         (
             NewRegulationGroupDescriptionParser,
             Group,
             "regulation.group.description",
             [],
+            True,
         ),
-        (NewBaseRegulationParser, Regulation, "base.regulation", []),
-        (NewModificationRegulationParser, Amendment, "modification.regulation", []),
+        (
+            NewBaseRegulationParser,
+            Regulation,
+            "base.regulation",
+            [],
+            False,
+        ),
+        (
+            NewModificationRegulationParser,
+            Amendment,
+            "modification.regulation",
+            [],
+            False,
+        ),
         (
             NewFullTemporaryStopRegulationParser,
             Suspension,
             "full.temporary.stop.regulation",
             [],
+            False,
         ),
-        (NewFullTemporaryStopActionParser, Suspension, "fts.regulation.action", []),
-        (NewRegulationReplacementParser, Replacement, "regulation.replacement", []),
+        (
+            NewFullTemporaryStopActionParser,
+            Suspension,
+            "fts.regulation.action",
+            [],
+            False,
+        ),
+        (
+            NewRegulationReplacementParser,
+            Replacement,
+            "regulation.replacement",
+            [],
+            False,
+        ),
     ),
 )
-def test_xml_tag_name(handler_class, model_class, expected_xml_tag_name, links_to):
+def test_xml_tag_name(
+    handler_class,
+    model_class,
+    expected_xml_tag_name,
+    links_to,
+    should_append_to_parent,
+):
     # verify xml tag name
     assert handler_class.xml_object_tag == expected_xml_tag_name
 
+    if handler_class.model != model_class:
+        print(f"for {handler_class} model {handler_class.model} is not {model_class}")
+
     assert handler_class.model == model_class
+    assert should_append_to_parent == handler_class.append_to_parent
 
     # verify existence of link to other importer types
     if len(links_to):

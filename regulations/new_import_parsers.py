@@ -7,7 +7,8 @@ from regulations.import_handlers import *
 
 
 class NewRegulationGroupParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = RegulationGroupHandler
+    # handler = RegulationGroupHandler
+    model = models.Group
 
     record_code = "150"
     subrecord_code = "00"
@@ -20,7 +21,8 @@ class NewRegulationGroupParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewRegulationGroupDescriptionParser(NewWritable, NewElementParser):
-    handler = RegulationGroupDescriptionHandler
+    model = models.Group
+    append_to_parent = True
 
     record_code = "150"
     subrecord_code = "05"
@@ -33,7 +35,8 @@ class NewRegulationGroupDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewBaseRegulationParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = None
+    # handler = None
+    model = models.Regulation
 
     record_code = "285"
     subrecord_code = "00"
@@ -58,7 +61,8 @@ class NewBaseRegulationParser(NewValidityMixin, NewWritable, NewElementParser):
 
 class NewModificationRegulationParser(NewValidityMixin, NewWritable, NewElementParser):
     # todo : why no handler defined?
-    handler = None
+    # handler = None
+    model = models.Amendment
 
     record_code = "290"
     subrecord_code = "00"
@@ -87,8 +91,8 @@ class NewFullTemporaryStopRegulationParser(
     NewElementParser,
 ):
     # todo : why no handler defined?
-    handler = None
-
+    # handler = None
+    model = models.Suspension
     record_code = "300"
     subrecord_code = "00"
 
@@ -109,7 +113,8 @@ class NewFullTemporaryStopRegulationParser(
 
 class NewFullTemporaryStopActionParser(NewWritable, NewElementParser):
     # todo : why no handler defined?
-    handler = None
+    # handler = None
+    model = models.Suspension
 
     record_code = "305"
     subrecord_code = "00"
@@ -124,7 +129,8 @@ class NewFullTemporaryStopActionParser(NewWritable, NewElementParser):
 
 class NewRegulationReplacementParser(NewWritable, NewElementParser):
     # todo : why no handler defined?
-    handler = None
+    # handler = None
+    model = models.Replacement
 
     record_code = "305"
     subrecord_code = "00"

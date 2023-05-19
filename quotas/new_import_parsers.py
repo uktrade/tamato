@@ -9,8 +9,8 @@ from quotas.import_handlers import *
 
 
 class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable):
-    handler = QuotaOrderNumberHandler
-
+    # handler = QuotaOrderNumberHandler
+    model = models.QuotaOrderNumber
     value_mapping = {
         "id": "order_number",
         "validity_start_date": "valid_between_lower",
@@ -30,8 +30,8 @@ class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable)
 
 
 class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = QuotaOrderNumberOriginHandler
-
+    # handler = QuotaOrderNumberOriginHandler
+    model = models.QuotaOrderNumberOrigin
     value_mapping = {
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
@@ -71,8 +71,8 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
 
 
 class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
-    handler = QuotaOrderNumberOriginExclusionHandler
-
+    # handler = QuotaOrderNumberOriginExclusionHandler
+    model = models.QuotaOrderNumberOriginExclusion
     model_links = [
         # create dependency to quota order number origin
         ModelLink(
@@ -101,8 +101,8 @@ class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
 
 
 class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = QuotaDefinitionHandler
-
+    # handler = QuotaDefinitionHandler
+    model = models.QuotaDefinition
     value_mapping = {
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
@@ -166,8 +166,8 @@ class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewQuotaAssociationParser(NewWritable, NewElementParser):
-    handler = QuotaAssociationHandler
-
+    # handler = QuotaAssociationHandler
+    model = models.QuotaAssociation
     model_links = [
         # create dependency to QuotaDefinition (main quota)
         ModelLink(
@@ -198,7 +198,8 @@ class NewQuotaAssociationParser(NewWritable, NewElementParser):
 
 
 class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = QuotaSuspensionHandler
+    # handler = QuotaSuspensionHandler
+    model = models.QuotaSuspension
 
     value_mapping = {
         "validity_start_date": "valid_between_lower",
@@ -228,7 +229,8 @@ class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = QuotaBlockingHandler
+    # handler = QuotaBlockingHandler
+    model = models.QuotaBlocking
 
     value_mapping = {
         "validity_start_date": "valid_between_lower",
@@ -261,6 +263,7 @@ class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
 class NewQuotaEventParser(NewWritable, NewElementParser):
     # TODO: review all possible examples of quota events
     handler = QuotaEventHandler
+    model = models.QuotaEvent
 
     # create dependency to QuotaDefinition
     model_links = [

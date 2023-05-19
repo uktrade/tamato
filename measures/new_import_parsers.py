@@ -11,8 +11,8 @@ from measures.import_handlers import *
 
 
 class NewMeasureTypeSeriesParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = MeasureTypeSeriesHandler
-
+    # handler = MeasureTypeSeriesHandler
+    model = models.MeasureTypeSeries
     record_code = "140"
     subrecord_code = "00"
 
@@ -25,7 +25,8 @@ class NewMeasureTypeSeriesParser(NewValidityMixin, NewWritable, NewElementParser
 
 
 class NewMeasureTypeSeriesDescriptionParser(NewWritable, NewElementParser):
-    handler = MeasureTypeSeriesDescriptionHandler
+    model = models.MeasureTypeSeries
+    append_to_parent = True
 
     record_code = "140"
     subrecord_code = "05"
@@ -38,8 +39,8 @@ class NewMeasureTypeSeriesDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewMeasurementUnitParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = MeasurementUnitHandler
-
+    # handler = MeasurementUnitHandler
+    model = models.MeasurementUnit
     record_code = "210"
     subrecord_code = "00"
 
@@ -51,7 +52,8 @@ class NewMeasurementUnitParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMeasurementUnitDescriptionParser(NewWritable, NewElementParser):
-    handler = MeasurementUnitDescriptionHandler
+    model = models.MeasurementUnit
+    append_to_parent = True
 
     record_code = "210"
     subrecord_code = "05"
@@ -68,8 +70,8 @@ class NewMeasurementUnitQualifierParser(
     NewWritable,
     NewElementParser,
 ):
-    handler = MeasurementUnitQualifierHandler
-
+    # handler = MeasurementUnitQualifierHandler
+    model = models.MeasurementUnitQualifier
     record_code = "215"
     subrecord_code = "00"
 
@@ -81,7 +83,8 @@ class NewMeasurementUnitQualifierParser(
 
 
 class NewMeasurementUnitQualifierDescriptionParser(NewWritable, NewElementParser):
-    handler = MeasurementUnitQualifierDescriptionHandler
+    model = models.MeasurementUnitQualifier
+    append_to_parent = True
 
     record_code = "215"
     subrecord_code = "05"
@@ -94,8 +97,8 @@ class NewMeasurementUnitQualifierDescriptionParser(NewWritable, NewElementParser
 
 
 class NewMeasurementParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = MeasurementHandler
-
+    # handler = MeasurementHandler
+    model = models.Measurement
     model_links = [
         ModelLink(
             models.MeasurementUnit,
@@ -125,8 +128,8 @@ class NewMeasurementParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMonetaryUnitParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = MonetaryUnitHandler
-
+    # handler = MonetaryUnitHandler
+    model = models.MonetaryUnit
     record_code = "225"
     subrecord_code = "00"
 
@@ -138,7 +141,8 @@ class NewMonetaryUnitParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMonetaryUnitDescriptionParser(NewWritable, NewElementParser):
-    handler = MonetaryUnitDescriptionHandler
+    model = models.MonetaryUnit
+    append_to_parent = True
 
     record_code = "225"
     subrecord_code = "05"
@@ -151,8 +155,8 @@ class NewMonetaryUnitDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewDutyExpressionParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = DutyExpressionHandler
-
+    # handler = DutyExpressionHandler
+    model = models.DutyExpression
     record_code = "230"
     subrecord_code = "00"
 
@@ -167,7 +171,8 @@ class NewDutyExpressionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
-    handler = DutyExpressionDescriptionHandler
+    model = models.DutyExpression
+    append_to_parent = True
 
     record_code = "230"
     subrecord_code = "05"
@@ -180,8 +185,8 @@ class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewMeasureTypeParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = MeasureTypeHandler
-
+    # handler = MeasureTypeHandler
+    model = models.MeasureType
     model_links = [
         ModelLink(
             models.MeasureTypeSeries,
@@ -210,7 +215,8 @@ class NewMeasureTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMeasureTypeDescriptionParser(NewWritable, NewElementParser):
-    handler = MeasureTypeDescriptionHandler
+    model = models.MeasureType
+    append_to_parent = True
 
     record_code = "235"
     subrecord_code = "05"
@@ -227,8 +233,8 @@ class NewAdditionalCodeTypeMeasureTypeParser(
     NewWritable,
     NewElementParser,
 ):
-    handler = AdditionalCodeTypeMeasureTypeHandler
-
+    # handler = AdditionalCodeTypeMeasureTypeHandler
+    model = models.AdditionalCodeTypeMeasureType
     model_links = [
         ModelLink(
             models.MeasureType,
@@ -258,8 +264,8 @@ class NewAdditionalCodeTypeMeasureTypeParser(
 
 
 class NewMeasureConditionCodeParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = MeasureConditionCodeHandler
-
+    # handler = MeasureConditionCodeHandler
+    model = models.MeasureConditionCode
     record_code = "350"
     subrecord_code = "00"
 
@@ -271,7 +277,8 @@ class NewMeasureConditionCodeParser(NewValidityMixin, NewWritable, NewElementPar
 
 
 class NewMeasureConditionCodeDescriptionParser(NewWritable, NewElementParser):
-    handler = MeasureConditionCodeDescriptionHandler
+    model = models.MeasureConditionCode
+    append_to_parent = True
 
     record_code = "350"
     subrecord_code = "05"
@@ -284,8 +291,8 @@ class NewMeasureConditionCodeDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewMeasureActionParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = MeasureActionHandler
-
+    # handler = MeasureActionHandler
+    model = models.MeasureAction
     record_code = "355"
     subrecord_code = "00"
 
@@ -297,7 +304,8 @@ class NewMeasureActionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMeasureActionDescriptionParser(NewWritable, NewElementParser):
-    handler = MeasureActionDescriptionHandler
+    model = models.MeasureAction
+    append_to_parent = True
 
     record_code = "355"
     subrecord_code = "05"
@@ -310,8 +318,8 @@ class NewMeasureActionDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
-    handler = MeasureHandler
-
+    # handler = MeasureHandler
+    model = models.Measure
     model_links = [
         ModelLink(
             models.MeasureType,
@@ -406,8 +414,8 @@ class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMeasureComponentParser(NewWritable, NewElementParser):
-    handler = MeasureComponentHandler
-
+    # handler = MeasureComponentHandler
+    model = models.MeasureComponent
     model_links = [
         ModelLink(
             models.Measure,
@@ -463,8 +471,8 @@ class NewMeasureComponentParser(NewWritable, NewElementParser):
 
 
 class NewMeasureConditionParser(NewWritable, NewElementParser):
-    handler = MeasureConditionHandler
-
+    # handler = MeasureConditionHandler
+    model = models.MeasureCondition
     model_links = [
         ModelLink(
             models.Measure,
@@ -546,8 +554,8 @@ class NewMeasureConditionParser(NewWritable, NewElementParser):
 
 
 class NewMeasureConditionComponentParser(NewWritable, NewElementParser):
-    handler = MeasureConditionComponentHandler
-
+    # handler = MeasureConditionComponentHandler
+    model = models.MeasureConditionComponent
     model_links = [
         ModelLink(
             models.MeasureCondition,
@@ -603,8 +611,8 @@ class NewMeasureConditionComponentParser(NewWritable, NewElementParser):
 
 
 class NewMeasureExcludedGeographicalAreaParser(NewWritable, NewElementParser):
-    handler = MeasureExcludedGeographicalAreaHandler
-
+    # handler = MeasureExcludedGeographicalAreaHandler
+    model = models.MeasureExcludedGeographicalArea
     model_links = [
         ModelLink(
             models.Measure,
@@ -634,8 +642,8 @@ class NewMeasureExcludedGeographicalAreaParser(NewWritable, NewElementParser):
 
 
 class NewFootnoteAssociationMeasureParser(NewWritable, NewElementParser):
-    handler = FootnoteAssociationMeasureHandler
-
+    # handler = FootnoteAssociationMeasureHandler
+    model = models.FootnoteAssociationMeasure
     model_links = [
         ModelLink(
             models.Measure,
