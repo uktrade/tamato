@@ -366,7 +366,10 @@ server.</p>
 </pre></div>
 </div>
 <p>Open another terminal and start a Celery worker:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery<span class="w"> </span>-A<span class="w"> </span>common.celery<span class="w"> </span>worker<span class="w"> </span>--loglevel<span class="o">=</span>info
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>celery<span class="w"> </span>-A<span class="w"> </span>common.celery<span class="w"> </span>worker<span class="w"> </span>--loglevel<span class="o">=</span>info<span class="w"> </span>-Q<span class="w"> </span>standard,rule-check
+<span class="c1"># The celery worker can be run as two workers for each queue</span>
+celery<span class="w"> </span>-A<span class="w"> </span>common.celery<span class="w"> </span>worker<span class="w"> </span>--loglevel<span class="o">=</span>info<span class="w"> </span>-Q<span class="w"> </span>standard
+celery<span class="w"> </span>-A<span class="w"> </span>common.celery<span class="w"> </span>worker<span class="w"> </span>--loglevel<span class="o">=</span>info<span class="w"> </span>-Q<span class="w"> </span>rule-check
 </pre></div>
 </div>
 <p>To monitor celery workers or individual tasks run:</p>
