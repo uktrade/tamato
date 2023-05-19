@@ -1345,6 +1345,14 @@ class SuccessPackagedWorkBasketFactory(PackagedWorkBasketFactory):
     processing_state = ProcessingState.SUCCESSFULLY_PROCESSED
 
 
+class APIPublishedEnvelope(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "publishing.Envelope"
+
+    published_to_tariffs_api = date_ranges("now")
+    packaged_work_basket = factory.SubFactory(SuccessPackagedWorkBasketFactory)
+
+
 class UploadedPackagedWorkBasketFactory(PackagedWorkBasketFactory):
     envelope = factory.SubFactory(PublishedEnvelopeFactory)
 
