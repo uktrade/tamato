@@ -143,10 +143,7 @@ class CommodityMeasuresAsDefinedList(SortingMixin, WithPaginationListMixin, List
 
     def get_queryset(self):
         ordering = self.get_ordering()
-        commodity = (
-            GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
-        )
-        queryset = commodity.measures.current()
+        queryset = self.commodity.measures.current()
         if ordering:
             if isinstance(ordering, str):
                 ordering = (ordering,)
@@ -155,9 +152,7 @@ class CommodityMeasuresAsDefinedList(SortingMixin, WithPaginationListMixin, List
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["commodity"] = (
-            GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
-        )
+        context["commodity"] = self.commodity
         context["selected_tab"] = "measures-defined"
 
         url_params = urlencode({"goods_nomenclature": self.commodity.id})
