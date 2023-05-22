@@ -88,9 +88,7 @@ class QuotaUpdateForm(ValidityPeriodForm, forms.ModelForm):
             )
             self.fields[
                 "category"
-            ].help_text = (
-                "Safeguard quotas cannot have their category edited after creation"
-            )
+            ].help_text = "Once safeguard has been set and published as the quota category, this can’t be changed"
         else:
             self.fields["category"].choices = validators.QuotaCategoryEditing.choices
         self.fields["category"].initial = self.instance.category
