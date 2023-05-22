@@ -186,7 +186,10 @@ class TAPApiEnvelope(TimestampedMixin):
 
     def previous_envelope(self) -> ApiEnvelopeQuerySet:
         """Get the previous `TAPApiEnvelope` by order of `pk`."""
-        return TAPApiEnvelope.objects.filter(pk__lt=self.pk).order_by("-pk").first()
+        try:
+            return TAPApiEnvelope.objects.get(pk=self.pk - 1)
+        except TAPApiEnvelope.DoesNotExist:
+            return None
 
     def can_publish(self) -> bool:
         """Conditional check if the previous `TAPApiEnvelope` has been
