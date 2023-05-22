@@ -3,7 +3,15 @@
 
 {% block tab_content %}
 
-<h2 class="govuk-heading-l">Measures on declarable commodities</h2>
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-three-quarters">
+    <h2 class="govuk-heading-l">Measures on declarable commodities</h2>
+    <p class="govuk-body">Showing only currently active measures</p>
+  </div>
+  <div class="govuk-grid-column-one-quarter">
+    {% include "includes/commodities/actions.jinja" %}
+  </div>
+</div>
 
 {% set table_rows = [] %}
 
@@ -24,7 +32,7 @@
   {{ table_rows.append([
     {"text": object_link },
     {"text": comm_code_link },
-    {"text": object.measure_type },
+    {"text": object.measure_type ~ " - " ~ object.measure_type.description },
     {"text": geo_area_link },
     {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
     {"text": "{:%d %b %Y}".format(object.effective_end_date) if object.effective_end_date else "-"},

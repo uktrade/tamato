@@ -281,7 +281,10 @@ Open another terminal and start a Celery worker:
 
 .. code:: sh
 
-    celery -A common.celery worker --loglevel=info
+    celery -A common.celery worker --loglevel=info -Q standard,rule-check
+    # The celery worker can be run as two workers for each queue 
+    celery -A common.celery worker --loglevel=info -Q standard
+    celery -A common.celery worker --loglevel=info -Q rule-check
 
 To monitor celery workers or individual tasks run:
 
