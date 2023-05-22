@@ -1,12 +1,16 @@
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Accordion
+from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
+from crispy_forms_gds.layout import Submit
 from django import forms
 from django.urls import reverse_lazy
 
+from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from quotas import models
 
@@ -57,5 +61,42 @@ class QuotaDefinitionFilterForm(forms.Form):
             Button("submit", "Apply"),
             HTML(
                 f'<a class="govuk-button govuk-button--secondary" href="{clear_url}">Restore defaults</a>',
+            ),
+        )
+
+
+class QuotaUpdateForm(ValidityPeriodForm, forms.ModelForm):
+    class Meta:
+        model = models.QuotaOrderNumber
+        fields = [
+            "valid_between",
+            "category",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Accordion(
+                AccordionSection(
+                    "Validity period",
+                    "start_date",
+                    "end_date",
+                ),
+                AccordionSection(
+                    "Category",
+                    "category",
+                ),
+                css_class="govuk-!-width-two-thirds",
+            ),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
             ),
         )
