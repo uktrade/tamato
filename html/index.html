@@ -118,13 +118,17 @@
       <h1>On this page</h1>
       <ul>
 <li><a class="reference internal" href="#">Tariff Management Tool</a><ul>
-<li><a class="reference internal" href="#getting-started">Getting started</a></li>
-<li><a class="reference internal" href="#development-environment">Development environment</a><ul>
+<li><a class="reference internal" href="#development-environment-setup">Development environment setup</a><ul>
 <li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li><a class="reference internal" href="#database">Database</a></li>
 <li><a class="reference internal" href="#installing">Installing</a></li>
 <li><a class="reference internal" href="#running">Running</a></li>
 <li><a class="reference internal" href="#testing">Testing</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dockerisation">Dockerisation</a><ul>
+<li><a class="reference internal" href="#fully-dockerised-service">Fully dockerised service</a></li>
+<li><a class="reference internal" href="#hybrid-host-container-approach">Hybrid host + container approach</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#using-the-importer">Using the importer</a></li>
@@ -162,81 +166,8 @@
 <p>The Tariff Management Tool (TaMaTo) is a web application that enables Tariff Managers to
 browse and make changes to the UK Global Tariff, and submit these changes to HMRC.</p>
 <p>The tool is available at <a class="reference external" href="https://www.manage-trade-tariffs.trade.gov.uk/">https://www.manage-trade-tariffs.trade.gov.uk/</a></p>
-<section id="getting-started">
-<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<dl class="simple">
-<dt>Prerequisites:</dt><dd><ul class="simple">
-<li><p>A local instance of the tool can be run using <a class="reference external" href="https://www.docker.com/">Docker</a>.</p></li>
-<li><p>A database dump</p></li>
-</ul>
-</dd>
-</dl>
-<p>To get a database dump, please contact the <a class="reference external" href="mailto:stephen&#46;corder&#37;&#52;&#48;trade&#46;gov&#46;uk?subject=TaMaTo+database+dump+request">TAP team</a>.</p>
-<p>Download the codebase:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:uktrade/tamato
-$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tamato
-</pre></div>
-</div>
-<p>Build and Run for the first time:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>cp<span class="w"> </span>sample.env<span class="w"> </span>.env
-<span class="w">    </span><span class="c1"># Not used will be used for specific local docker stuff</span>
-<span class="w">    </span><span class="c1"># cp docker-compose.override.yml.example docker-compose.override.yml</span>
-
-<span class="c1"># to overwrite default db dump name pass in DUMP_FILE=db_dump.sql</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-first-use
-<span class="w">    </span><span class="c1"># take a tea break to import the db dump then</span>
-<span class="w">    </span><span class="c1"># enter super user details when prompted</span>
-<span class="w">    </span><span class="c1"># and visit localhost:8000/ when the containers are up</span>
-</pre></div>
-</div>
-<p>Run the tamato app every other time:</p>
-<blockquote>
-<div><div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>docker-build
-$<span class="w"> </span>make<span class="w"> </span>docker-up
-</pre></div>
-</div>
-</div></blockquote>
-<p>Go to <a class="reference external" href="http://localhost:8000/">http://localhost:8000/</a> in your web browser to view the app</p>
-<p>Import from a dump of the database:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># to overwrite default db dump name pass in DUMP_FILE=tamato_db.sql</span>
-<span class="c1"># this overwrites the default file set in the makefile variable</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-db-dump
-</pre></div>
-</div>
-<p>To get a database dump, please contact the <a class="reference external" href="mailto:stephen&#46;corder&#37;&#52;&#48;trade&#46;gov&#46;uk?subject=TaMaTo+database+dump+request">TAP team</a>.</p>
-<p>Sometimes docker gets clogged up and we need to clean it:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># cleans up images &amp; volumes</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-clean
-<span class="c1"># cleans up everything including the cache which can get filled up because of db dumps</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-deep-clean
-</pre></div>
-</div>
-<p>Run database migrations:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>docker-migrate
-</pre></div>
-</div>
-<p>Create a superuser, to enable logging in to the app:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>docker-superuser
-</pre></div>
-</div>
-<p>Run tests from within a docker container:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>docker-test
-$<span class="w"> </span>make<span class="w"> </span>docker-test-fast
-</pre></div>
-</div>
-<p>DOCKER_RUN=run –rm by default but can be set to exec if you have containers up and running
-General commands:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>docker-down<span class="w"> </span><span class="c1"># brings down containers</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-up-db<span class="w"> </span><span class="c1"># brings up db in the background</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-makemigrations<span class="w"> </span><span class="c1"># runs django makemigrations</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-checkmigrations<span class="w"> </span><span class="c1"># runs django checkmigrations</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-bash<span class="w"> </span><span class="c1"># bash shell in tamato container</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-django-shell<span class="w"> </span><span class="c1"># django shell in tamato container</span>
-</pre></div>
-</div>
-</section>
-<section id="development-environment">
-<h2>Development environment<a class="headerlink" href="#development-environment" title="Permalink to this headline">¶</a></h2>
+<section id="development-environment-setup">
+<h2>Development environment setup<a class="headerlink" href="#development-environment-setup" title="Permalink to this headline">¶</a></h2>
 <section id="prerequisites">
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
 <p>The following dependencies are required to run this app:</p>
@@ -322,6 +253,112 @@ To access the Django admin page, browse to <a class="reference external" href="h
 </pre></div>
 </div>
 <p>For more detailed information on running tests, see <a class="reference internal" href="testing.html"><span class="doc">Testing</span></a></p>
+</section>
+</section>
+<section id="dockerisation">
+<h2>Dockerisation<a class="headerlink" href="#dockerisation" title="Permalink to this headline">¶</a></h2>
+<section id="fully-dockerised-service">
+<h3>Fully dockerised service<a class="headerlink" href="#fully-dockerised-service" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt>Prerequisites:</dt><dd><ul class="simple">
+<li><p>A local instance of the tool can be run using <a class="reference external" href="https://www.docker.com/">Docker</a>.</p></li>
+<li><p>A database dump - contact the TAP team for a database snapshot.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Download the codebase:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:uktrade/tamato
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tamato
+</pre></div>
+</div>
+<p>Build and Run for the first time:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>cp<span class="w"> </span>sample.env<span class="w"> </span>.env
+<span class="w">    </span><span class="c1"># Not used will be used for specific local docker stuff</span>
+<span class="w">    </span><span class="c1"># cp docker-compose.override.yml.example docker-compose.override.yml</span>
+
+<span class="c1"># to overwrite default db dump name pass in DUMP_FILE=db_dump.sql</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-first-use
+<span class="w">    </span><span class="c1"># take a tea break to import the db dump then</span>
+<span class="w">    </span><span class="c1"># enter super user details when prompted</span>
+<span class="w">    </span><span class="c1"># and visit localhost:8000/ when the containers are up</span>
+</pre></div>
+</div>
+<p>Run the tamato app every other time:</p>
+<blockquote>
+<div><div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>docker-build
+$<span class="w"> </span>make<span class="w"> </span>docker-up
+</pre></div>
+</div>
+</div></blockquote>
+<p>Go to <a class="reference external" href="http://localhost:8000/">http://localhost:8000/</a> in your web browser to view the app</p>
+<p>Import from a dump of the database:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># to overwrite default db dump name pass in DUMP_FILE=tamato_db.sql</span>
+<span class="c1"># this overwrites the default file set in the makefile variable</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-db-dump
+</pre></div>
+</div>
+<p>Sometimes docker gets clogged up and we need to clean it:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># cleans up images &amp; volumes</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-clean
+<span class="c1"># cleans up everything including the cache which can get filled up because of db dumps</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-deep-clean
+</pre></div>
+</div>
+<p>Run database migrations:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>docker-migrate
+</pre></div>
+</div>
+<p>Create a superuser, to enable logging in to the app:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>docker-superuser
+</pre></div>
+</div>
+<p>Run tests from within a docker container:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>docker-test
+$<span class="w"> </span>make<span class="w"> </span>docker-test-fast
+</pre></div>
+</div>
+<p>DOCKER_RUN=run –rm by default but can be set to exec if you have containers up and running
+General commands:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>docker-down<span class="w"> </span><span class="c1"># brings down containers</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-up-db<span class="w"> </span><span class="c1"># brings up db in the background</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-makemigrations<span class="w"> </span><span class="c1"># runs django makemigrations</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-checkmigrations<span class="w"> </span><span class="c1"># runs django checkmigrations</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-bash<span class="w"> </span><span class="c1"># bash shell in tamato container</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-django-shell<span class="w"> </span><span class="c1"># django shell in tamato container</span>
+</pre></div>
+</div>
+</section>
+<section id="hybrid-host-container-approach">
+<h3>Hybrid host + container approach<a class="headerlink" href="#hybrid-host-container-approach" title="Permalink to this headline">¶</a></h3>
+<p>You may prefer a hybrid approach to running Tamato, say, executing the Redis
+service and Celery workers in containers and the remaining services in the host
+environment. To do so, create a <cite>docker-compose.override.yml</cite> file to allow
+loading environment settings that are specific to this configuration:</p>
+<div class="highlight-yml notranslate"><div class="highlight"><pre><span></span>version: &#39;3&#39;
+
+services:
+celery:
+    env_file:
+    - .env
+    - settings/envs/docker.env
+    - settings/envs/docker.override.env
+
+rule-check-celery:
+    env_file:
+    - .env
+    - settings/envs/docker.env
+    - settings/envs/docker.override.env
+</pre></div>
+</div>
+<p>Create a <cite>docker.override.env</cite> file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Point containerised services at the host environment hosted DB.</span>
+<span class="n">DATABASE_URL</span><span class="o">=</span><span class="n">postgres</span><span class="p">:</span><span class="o">//</span><span class="n">host</span><span class="o">.</span><span class="n">docker</span><span class="o">.</span><span class="n">internal</span><span class="p">:</span><span class="mi">5432</span><span class="o">/</span><span class="n">tamato</span>
+</pre></div>
+</div>
+<p>Now start dockerised instances of Redis and the Celery worker services:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>docker-compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>celery-redis<span class="w"> </span>celery<span class="w"> </span>rule-check-celery
+</pre></div>
+</div>
 </section>
 </section>
 <section id="using-the-importer">
