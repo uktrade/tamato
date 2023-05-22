@@ -130,6 +130,12 @@ FORMSET_PREFIX_MAPPING = {
     GeoAreaType.COUNTRY: COUNTRY_REGION_FORMSET_PREFIX,
 }
 
+EXCLUSIONS_FORMSET_PREFIX_MAPPING = {
+    GeoAreaType.ERGA_OMNES: ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
+    GeoAreaType.GROUP: GROUP_EXCLUSIONS_FORMSET_PREFIX,
+    GeoAreaType.COUNTRY: None,
+}
+
 FIELD_NAME_MAPPING = {
     GeoAreaType.ERGA_OMNES: "erga_omnes_exclusion",
     GeoAreaType.GROUP: "geo_group_exclusion",
@@ -941,8 +947,15 @@ class MeasureFilterForm(forms.Form):
         self.helper.layout = Layout(
             Div(
                 Field.text("sid", field_width=Fluid.TWO_THIRDS),
+                css_class="govuk-grid-row quarters",
+            ),
+            Div(
                 "goods_nomenclature",
                 "goods_nomenclature__item_id",
+                "modc",
+                css_class="govuk-grid-row quarters",
+            ),
+            Div(
                 "additional_code",
                 "order_number",
                 "measure_type",
@@ -1258,13 +1271,13 @@ class MeasureGeographicalAreaForm(
                     ]
 
                 exclusions = cleaned_data.get(
-                    FORMSET_PREFIX_MAPPING[geo_area_choice],
+                    EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
                 )
                 if exclusions:
                     cleaned_data["geo_area_exclusions"] = [
                         exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
                         for exclusion in cleaned_data[
-                            FORMSET_PREFIX_MAPPING[geo_area_choice]
+                            EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
                         ]
                     ]
 

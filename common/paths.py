@@ -10,22 +10,22 @@ logger = logging.getLogger(__name__)
 
 BULK_ACTIONS = {
     "List": "",
-    "Create": "create",
+    "Create": "create/",
 }
 """Map of view class name suffixes to URL path action names, used to handle
 class-level actions."""
 
 
 OBJECT_ACTIONS = {
-    "ConfirmCreate": "confirm-create",
+    "ConfirmCreate": "confirm-create/",
     "Detail": "",
-    "Update": "edit",
-    "ConfirmUpdate": "confirm-update",
-    "Delete": "delete",
-    "DescriptionCreate": "description-create",
+    "Update": "edit/",
+    "ConfirmUpdate": "confirm-update/",
+    "Delete": "delete/",
+    "DescriptionCreate": "description-create/",
     # Edits on taric objects that are in a WorkBasket with status=EDITING.
-    "EditCreate": "edit-create",
-    "EditUpdate": "edit-update",
+    "EditCreate": "edit-create/",
+    "EditUpdate": "edit-update/",
 }
 """Map of view class name suffixes to URL path action names, used to handle
 object-level actions."""
@@ -107,7 +107,7 @@ def get_ui_paths(
             view = getattr(views, classname)
             name = (
                 f"{app_name_singular}-ui-"
-                f"{pathname if pathname else class_suffix.lower()}"
+                f"{pathname[:-1] if pathname else class_suffix.lower()}"
             )
             url = detail_pattern + ("/" if detail_pattern else "") + pathname
 

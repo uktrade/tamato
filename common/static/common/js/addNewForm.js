@@ -10,15 +10,18 @@ const addNewForm = (event) => {
     let newForm = fieldset.cloneNode(true);
 
     newForm.innerHTML = newForm.innerHTML.replaceAll("-0-", "-" + numForms + "-");
-    newForm.querySelector(".autocomplete").removeAttribute("data-original-value");
+    if (newForm.querySelector(".autocomplete"))
+      newForm.querySelector(".autocomplete").removeAttribute("data-original-value");
 
     let formFields = newForm.querySelectorAll("input");
     for (let field of formFields.values()) {
       field.value = "";
     }
 
-    newForm.querySelector(".autocomplete__wrapper").remove();
-    autoCompleteElement(newForm.querySelector(".autocomplete"));
+    if (newForm.querySelector(".autocomplete__wrapper")) {
+      newForm.querySelector(".autocomplete__wrapper").remove();
+      autoCompleteElement(newForm.querySelector(".autocomplete"));
+    }
 
     let buttonGroup = document.querySelector(".govuk-button-group");
     formset.insertBefore(newForm, buttonGroup);

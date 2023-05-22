@@ -4,16 +4,21 @@ from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Accordion
 from crispy_forms_gds.layout import AccordionSection
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
+from django.forms import ValidationError
 
 from common.forms import BindNestedFormMixin
 from common.forms import CreateDescriptionForm
 from common.forms import DateInputFieldFixed
+from common.forms import FormSet
 from common.forms import GovukDateRangeField
 from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
@@ -24,7 +29,8 @@ from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
 from geo_areas.validators import AreaCode
-from geo_areas.validators import validate_dates
+from geo_areas.validators import DateValidationMixin
+from geo_areas.validators import area_id_validator
 from quotas.models import QuotaOrderNumberOrigin
 from workbaskets.models import WorkBasket
 
@@ -162,6 +168,7 @@ class GeographicalMembershipValidityPeriodForm(forms.ModelForm):
 
 class GeographicalMembershipAddForm(
     BindNestedFormMixin,
+    DateValidationMixin,
     GeographicalMembershipValidityPeriodForm,
 ):
     geo_group = forms.ModelChoiceField(
@@ -242,18 +249,16 @@ class GeographicalMembershipAddForm(
                     "new_membership_start_date",
                     "A start date is required.",
                 )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="new_membership_start_date",
                 start_date=start_date,
-                group_start_date=area_group.valid_between.lower,
+                container_start_date=area_group.valid_between.lower,
             )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="new_membership_end_date",
                 start_date=start_date,
                 end_date=end_date,
-                group_end_date=area_group.valid_between.upper,
+                container_end_date=area_group.valid_between.upper,
             )
 
         return cleaned_data
@@ -263,7 +268,11 @@ class GeographicalMembershipAddForm(
         fields = ["geo_group", "member"]
 
 
-class GeographicalMembershipEditForm(BindNestedFormMixin, forms.Form):
+class GeographicalMembershipEditForm(
+    BindNestedFormMixin,
+    DateValidationMixin,
+    forms.Form,
+):
     membership = forms.ModelChoiceField(
         label="",
         queryset=None,  # populated in __init__
@@ -305,29 +314,15 @@ class GeographicalMembershipEditForm(BindNestedFormMixin, forms.Form):
         end_date = cleaned_data.get("membership_end_date")
 
         if membership and action == GeoMembershipAction.END_DATE:
-            validate_dates(
-                form=self.fields["action"].nested_forms["END DATE"][0],
-                field="membership_end_date",
-                end_date=end_date,
-                group_end_date=membership.geo_group.valid_between.upper,
-            )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="",
                 end_date=end_date,
-                group_end_date=membership.geo_group.valid_between.upper,
+                container_end_date=membership.geo_group.valid_between.upper,
             )
-            validate_dates(
-                form=self.fields["action"].nested_forms["END DATE"][0],
-                field="membership_end_date",
-                end_date=end_date,
-                group_start_date=membership.geo_group.valid_between.lower,
-            )
-            validate_dates(
-                form=self,
+            self.validate_dates(
                 field="",
                 end_date=end_date,
-                group_start_date=membership.geo_group.valid_between.lower,
+                container_start_date=membership.geo_group.valid_between.lower,
             )
 
         if membership and action == GeoMembershipAction.DELETE:
@@ -363,9 +358,10 @@ class GeographicalAreaEndDateForm(ValidityPeriodForm):
                     not origin.valid_between.upper
                     or origin.valid_between.upper < end_date
                 ):
-                    self.add_error(
-                        "end_date",
-                        "The end date must span the validity period of the quota order number origin that specifies this geographical area.",
+                    raise ValidationError(
+                        {
+                            "end_date": "The end date must span the validity period of the quota order number origin that specifies this geographical area.",
+                        },
                     )
         return super().clean()
 
@@ -423,3 +419,333 @@ class GeographicalAreaEditForm(
                 data_prevent_double_click="true",
             ),
         )
+
+
+class GeographicalAreaCreateForm(ValidityPeriodForm):
+    area_code = forms.ChoiceField(
+        label="Area code",
+        help_text="Select if the new geographical area is a country, area group or region from the dropdown.",
+        choices=AreaCode.choices,
+        error_messages={"required": "Select an area code from the dropdown."},
+    )
+
+    area_id = forms.CharField(
+        label="Area ID",
+        help_text="For a country or region, the area ID is 2 upper-case letters, like AZ. For an area group, the area ID is 4 digits, like 1234.",
+        widget=forms.TextInput,
+        validators=[area_id_validator],
+        error_messages={
+            "required": "Enter a geographical area ID.",
+            "invalid": "Enter a geographical area ID in the correct format.",
+        },
+    )
+
+    description = forms.CharField(
+        label="Description",
+        help_text="The name of the country, area group or region.",
+        widget=forms.Textarea,
+        validators=[SymbolValidator],
+        error_messages={"required": "Enter a geographical area description."},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields[
+            "end_date"
+        ].help_text = (
+            "Leave empty if the geographical area is needed for an unlimited time."
+        )
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            "area_code",
+            Field(
+                "area_id",
+                css_class="govuk-input govuk-input--width-4",
+                maxlength="4",
+            ),
+            "start_date",
+            "end_date",
+            Field.textarea("description", label_size=Size.SMALL, rows=3),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        cleaned_data["geographical_area_description"] = GeographicalAreaDescription(
+            description=cleaned_data.get("description"),
+            validity_start=cleaned_data["valid_between"].lower,
+        )
+
+        return cleaned_data
+
+    class Meta:
+        model = GeographicalArea
+        fields = ["valid_between", "area_id", "area_code"]
+
+
+class GeographicalAreaEditCreateForm(GeographicalAreaCreateForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["description"].required = False
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            "area_code",
+            Field(
+                "area_id",
+                css_class="govuk-input govuk-input--width-4",
+                maxlength="4",
+            ),
+            "start_date",
+            "end_date",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
+class GeographicalMembershipGroupForm(DateValidationMixin, ValidityPeriodForm):
+    geo_group = forms.ModelChoiceField(
+        label="Area group",
+        help_text="Select an area group to add this country or region to from the dropdown.",
+        queryset=None,  # populated in __init__
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.geo_area = kwargs.pop("geo_area", None)
+        super().__init__(*args, **kwargs)
+
+        current_memberships = self.geo_area.groups.values_list("geo_group", flat=True)
+
+        self.fields["geo_group"].queryset = (
+            GeographicalArea.objects.filter(area_code=AreaCode.GROUP)
+            .exclude(pk__in=current_memberships)
+            .current()
+            .with_latest_description()
+            .as_at_today()
+            .order_by("description")
+        )
+        self.fields[
+            "geo_group"
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+
+        self.fields["end_date"].help_text = ""
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.form_tag = False
+
+        self.helper.layout = Layout(
+            Fieldset(
+                Div(
+                    Field("geo_group"),
+                    css_class="govuk-grid-column-one-half error-align",
+                ),
+                Div(
+                    Field("start_date"),
+                    css_class="govuk-grid-column-one-quarter error-align",
+                ),
+                Div(
+                    Field("end_date"),
+                    css_class="govuk-grid-column-one-quarter error-align",
+                ),
+                css_class="membership-inline",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        geo_group = cleaned_data.get("geo_group")
+        if geo_group:
+            start_date = cleaned_data["valid_between"].lower
+            end_date = cleaned_data["valid_between"].upper
+            self.validate_dates(
+                field="start_date",
+                start_date=start_date,
+                container_start_date=geo_group.valid_between.lower,
+            )
+            self.validate_dates(
+                field="start_date",
+                start_date=start_date,
+                container="country or region",
+                container_start_date=self.geo_area.valid_between.lower,
+            )
+            self.validate_dates(
+                field="end_date",
+                end_date=end_date,
+                container_end_date=geo_group.valid_between.upper,
+            )
+            self.validate_dates(
+                field="end_date",
+                end_date=end_date,
+                container="country or region",
+                container_end_date=self.geo_area.valid_between.upper,
+            )
+
+        return cleaned_data
+
+    class Meta:
+        model = GeographicalMembership
+        fields = ["valid_between", "geo_group"]
+
+
+class GeographicalMembershipMemberForm(DateValidationMixin, ValidityPeriodForm):
+    member = forms.ModelChoiceField(
+        label="Country or region",
+        help_text="Select a country or region to add to this area group from the dropdown.",
+        queryset=None,  # populated in __init__
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.geo_area = kwargs.pop("geo_area", None)
+        super().__init__(*args, **kwargs)
+
+        current_memberships = self.geo_area.memberships.all()
+
+        self.fields["member"].queryset = (
+            GeographicalArea.objects.exclude(area_code=AreaCode.GROUP)
+            .exclude(
+                pk__in=current_memberships,
+            )
+            .current()
+            .with_latest_description()
+            .as_at_today()
+            .order_by("description")
+        )
+        self.fields[
+            "member"
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+
+        self.fields["end_date"].help_text = ""
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.form_tag = False
+
+        self.helper.layout = Layout(
+            Fieldset(
+                Div(
+                    Field("member"),
+                    css_class="govuk-grid-column-one-half error-align",
+                ),
+                Div(
+                    Field("start_date"),
+                    css_class="govuk-grid-column-one-quarter error-align",
+                ),
+                Div(
+                    Field("end_date"),
+                    css_class="govuk-grid-column-one-quarter error-align",
+                ),
+                css_class="membership-inline",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        member = self.cleaned_data.get("member")
+        if member:
+            start_date = cleaned_data["valid_between"].lower
+            end_date = cleaned_data["valid_between"].upper
+            self.validate_dates(
+                field="start_date",
+                start_date=start_date,
+                container_start_date=self.geo_area.valid_between.lower,
+            )
+            self.validate_dates(
+                field="start_date",
+                start_date=start_date,
+                container="country or region",
+                container_start_date=member.valid_between.lower,
+            )
+            self.validate_dates(
+                field="end_date",
+                end_date=end_date,
+                container_end_date=self.geo_area.valid_between.upper,
+            )
+            self.validate_dates(
+                field="end_date",
+                end_date=end_date,
+                container="country or region",
+                container_end_date=member.valid_between.upper,
+            )
+
+        return cleaned_data
+
+    class Meta:
+        model = GeographicalMembership
+        fields = ["valid_between", "member"]
+
+
+class GeographicalMembershipBaseFormSet(FormSet):
+    extra = 0
+    min_num = 1
+    validate_min = True
+    validate_max = True
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop("instance", None)
+        super().__init__(*args, **kwargs)
+
+
+class GeographicalMembershipGroupFormSet(GeographicalMembershipBaseFormSet):
+    prefix = "geo_membership-group-formset"
+    form = GeographicalMembershipGroupForm
+
+    def clean(self):
+        if any(self.errors):
+            return
+
+        cleaned_data = super().cleaned_data
+
+        geo_groups = [d["geo_group"] for d in cleaned_data if "geo_group" in d]
+        num_unique = len(set(geo_groups))
+        if len(geo_groups) != num_unique:
+            raise ValidationError(
+                "The same area group cannot be selected more than once.",
+            )
+        cleaned_data[0]["geo_groups"] = geo_groups
+
+        return cleaned_data
+
+
+class GeographicalMembershipMemberFormSet(GeographicalMembershipBaseFormSet):
+    prefix = "geo_membership-member-formset"
+    form = GeographicalMembershipMemberForm
+
+    def clean(self):
+        if any(self.errors):
+            return
+
+        cleaned_data = super().cleaned_data
+
+        members = [d["member"] for d in cleaned_data if "member" in d]
+        num_unique = len(set(members))
+        if len(members) != num_unique:
+            raise ValidationError(
+                "The same country or region cannot be selected more than once.",
+            )
+        cleaned_data[0]["members"] = members
+
+        return cleaned_data

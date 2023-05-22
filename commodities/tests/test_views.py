@@ -183,3 +183,231 @@ def test_goods_nomenclature(valid_user_client, date_ranges):
     assert past_good.pk not in pks
     assert present_good.pk in pks
     assert future_good.pk in pks
+
+
+@pytest.fixture
+def measures(commodity):
+    geo_area1 = factories.GeographicalAreaFactory.create(area_id="AAA")
+    geo_area2 = factories.GeographicalAreaFactory.create(area_id="BBB")
+    geo_area3 = factories.GeographicalAreaFactory.create(area_id="CCC")
+    measure1 = factories.MeasureFactory.create(
+        goods_nomenclature=commodity,
+        geographical_area=geo_area1,
+    )
+    measure2 = factories.MeasureFactory.create(
+        goods_nomenclature=commodity,
+        geographical_area=geo_area2,
+    )
+    measure3 = factories.MeasureFactory.create(
+        goods_nomenclature=commodity,
+        geographical_area=geo_area3,
+    )
+    return [measure1, measure2, measure3]
+
+
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+    ],
+)
+def test_commodity_measures(url_name, valid_user_client, commodity, measures):
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    table_rows = soup.select(".govuk-table tbody tr")
+    assert len(table_rows) == 3
+
+    measure_sids = {
+        int(el.text) for el in soup.select(".govuk-table tbody tr td:first-child")
+    }
+    assert not measure_sids.difference(set([m.sid for m in measures]))
+
+
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+        "commodity-ui-detail-hierarchy",
+    ],
+)
+def test_commodity_views_200(url_name, valid_user_client, commodity, measures):
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+    ],
+)
+def test_commodity_measures_no_measures(url_name, valid_user_client, commodity):
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    table_rows = soup.select(".govuk-table tbody tr")
+    assert len(table_rows) == 0
+
+
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+    ],
+)
+def test_commodity_measures_sorting_geo_area(
+    url_name,
+    valid_user_client,
+    commodity,
+    measures,
+):
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(f"{url}?sort_by=geo_area&order=desc")
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    measure_sids = [
+        int(el.text) for el in soup.select(".govuk-table tbody tr td:first-child")
+    ]
+    measure_sids.reverse()
+    assert measure_sids == [m.sid for m in measures]
+
+    url = reverse(
+        "commodity-ui-detail-measures-as-defined",
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(f"{url}?sort_by=geo_area&order=asc")
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    measure_sids = [
+        int(el.text) for el in soup.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert measure_sids == [m.sid for m in measures]
+
+
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+    ],
+)
+def test_commodity_measures_sorting_start_date(
+    url_name,
+    valid_user_client,
+    date_ranges,
+    commodity,
+):
+    measure1 = factories.MeasureFactory.create(
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_2_months_ago_no_end,
+    )
+    measure2 = factories.MeasureFactory.create(
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_1_month_ago_no_end,
+    )
+    measure3 = factories.MeasureFactory.create(
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_delta_no_end,
+    )
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(f"{url}?sort_by=start_date&order=desc")
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    measure_sids = [
+        int(el.text) for el in soup.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert measure_sids == [measure3.sid, measure2.sid, measure1.sid]
+
+    url = reverse(
+        "commodity-ui-detail-measures-as-defined",
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(f"{url}?sort_by=start_date&order=asc")
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    measure_sids = [
+        int(el.text) for el in soup.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert measure_sids == [measure1.sid, measure2.sid, measure3.sid]
+
+
+@pytest.mark.parametrize(
+    "url_name",
+    [
+        "commodity-ui-detail-measures-as-defined",
+        "commodity-ui-detail-measures-declarable",
+    ],
+)
+def test_commodity_measures_sorting_measure_type(
+    url_name,
+    valid_user_client,
+    date_ranges,
+    commodity,
+):
+    type1 = factories.MeasureTypeFactory.create(sid="111")
+    type2 = factories.MeasureTypeFactory.create(sid="222")
+    type3 = factories.MeasureTypeFactory.create(sid="333")
+    measure1 = factories.MeasureFactory.create(
+        goods_nomenclature=commodity,
+        measure_type=type1,
+    )
+    measure2 = factories.MeasureFactory.create(
+        goods_nomenclature=commodity,
+        measure_type=type2,
+    )
+    measure3 = factories.MeasureFactory.create(
+        goods_nomenclature=commodity,
+        measure_type=type3,
+    )
+    url = reverse(
+        url_name,
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(f"{url}?sort_by=measure_type&order=desc")
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    measure_sids = [
+        int(el.text) for el in soup.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert measure_sids == [measure3.sid, measure2.sid, measure1.sid]
+
+    url = reverse(
+        "commodity-ui-detail-measures-as-defined",
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(f"{url}?sort_by=measure_type&order=asc")
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    measure_sids = [
+        int(el.text) for el in soup.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert measure_sids == [measure1.sid, measure2.sid, measure3.sid]

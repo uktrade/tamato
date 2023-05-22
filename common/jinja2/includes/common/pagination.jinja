@@ -6,7 +6,7 @@
       {% set page_count = 'more than ' ~ page_count %}
     {% endif %}
 
-    <nav class="pagination" role="navigation" aria-label="Pagination Navigation">
+    <nav class="pagination tamato-clearfix" role="navigation" aria-label="Pagination Navigation">
       <div class="govuk-body">
         Showing {{ page_obj|length }} of {{ objects_count }}
         {# Polymorphic TrackedModelsQuerySet instances don't have a valid `model`. #}

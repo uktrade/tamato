@@ -518,3 +518,31 @@ class WorkBasketViolationDetail(DetailView):
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(workbasket=self.workbasket, **kwargs)
+
+    def override_violation(self):
+        """
+        Override the `TrackedModelCheck` instance for this rules check
+        violation, setting its `successful` value to True.
+
+        If there are no other failing `TrackedModelCheck` instances on the
+        associated `TransactionCheck` instance, then also set its `successful`
+        value to True.
+        """
+
+        model_check = self.get_object()
+        model_check.successful = True
+        model_check.save()
+
+        transaction_check = model_check.transaction_check
+        # Only clear the associated transcation check if model_check
+        # was the last and only other failing model check.
+        other_model_checks = transaction_check.model_checks.filter(successful=False)
+        if not other_model_checks:
+            transaction_check.successful = True
+            transaction_check.save()
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action", None) == "delete" and request.user.is_superuser:
+            self.override_violation()
+
+        return redirect("workbaskets:workbasket-ui-violations")

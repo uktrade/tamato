@@ -459,6 +459,24 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+CELERY_ROUTES = {
+    "workbaskets.tasks.call_check_workbasket_sync": {
+        "queue": "rule-check",
+    },
+    "workbaskets.tasks.check_workbasket": {
+        "queue": "rule-check",
+    },
+    "workbaskets.tasks.transition": {
+        "queue": "standard",
+    },
+    re.compile(r"(checks)\.tasks\..*"): {
+        "queue": "rule-check",
+    },
+    re.compile(r"(exporter|importer|notifications|publishing)\.tasks\..*"): {
+        "queue": "standard",
+    },
+}
+
 SQLITE_EXCLUDED_APPS = [
     "checks",
 ]

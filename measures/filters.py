@@ -3,11 +3,13 @@ from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import CharField
 from django.db.models import Q
 from django.urls import reverse_lazy
+from django_filters import BooleanFilter
 from django_filters import CharFilter
 from django_filters import ChoiceFilter
 from django_filters import DateFilter
 
 from additional_codes.models import AdditionalCode
+from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models.orm import GoodsNomenclature
 from common.filters import AutoCompleteFilter
 from common.filters import TamatoFilter
@@ -23,6 +25,7 @@ from measures.models import Measure
 from measures.models import MeasureType
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
+from workbaskets.models import WorkBasket
 
 BEFORE_EXACT_AFTER_CHOICES = (
     ("exact", "is"),
@@ -81,6 +84,15 @@ class MeasureFilter(TamatoFilter):
             "display_class": GOV_UK_TWO_THIRDS,
             "min_length": 4,
         },
+    )
+
+    # measures on declarable commodities
+    modc = BooleanFilter(
+        label="Include inherited measures",
+        help_text="Only applies if a specific commodity code is entered",
+        widget=forms.CheckboxInput(),
+        field_name="goods_nomenclature",
+        method="commodity_modifier",
     )
 
     goods_nomenclature__item_id = CharFilter(
@@ -172,6 +184,22 @@ class MeasureFilter(TamatoFilter):
     clear_url = reverse_lazy("measure-ui-search")
 
     def date_modifier(self, queryset, name, value):
+        return queryset
+
+    def commodity_modifier(self, queryset, name, value):
+        if value:
+            if self.data["goods_nomenclature"]:
+                commodity = (
+                    GoodsNomenclature.objects.filter(id=self.data["goods_nomenclature"])
+                    .current()
+                    .first()
+                )
+
+                queryset = get_measures_on_declarable_commodities(
+                    WorkBasket.get_current_transaction(self.request),
+                    commodity.item_id,
+                )
+
         return queryset
 
     def filter_start_date(self, queryset, name, value):

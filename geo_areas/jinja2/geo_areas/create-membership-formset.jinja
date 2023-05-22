@@ -1,0 +1,67 @@
+{% extends 'layouts/form.jinja' %}
+
+{% from "components/fieldset/macro.njk" import govukFieldset %}
+{% from "components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% set page_title = "Add memberships" %}
+{% set area_code = " (" ~ geo_area.get_area_code_display() ~ ")" %}
+{% set geo_area_title = "Geographical area: " ~  geo_area.area_id ~ area_code %}
+
+{% block breadcrumb %}
+  {% if request.path != "/" %}
+    {{ breadcrumbs(request, [
+      {"text": geo_area_title, "href": url("geo_area-ui-detail", args=[geo_area.sid])},
+      {"text": page_title}
+    ]) }}
+  {% endif %}
+{% endblock %}
+
+{% block form %}
+  <p class="govuk-body">
+    Create new geographical membership associations for  {{ geo_area|string }}.
+  </p>
+  <p class="govuk-body">
+    Learn more about
+    <a class="govuk-link" href="https://data-services-help.trade.gov.uk/tariff-application-platform/data-structures/geographical-areas/">geographical area memberships</a>.
+  </p>
+  {% set formset = form %}
+  {{ crispy(formset.management_form) }}
+
+  {% if formset.non_form_errors() %}
+    {% set error_list = [] %}
+    {% for error in formset.non_form_errors() %}
+      {{ error_list.append({
+        "html": '<p class="govuk-error-message">' ~ error ~ '</p>',
+      }) or "" }}
+    {% endfor %}
+
+    {{ govukErrorSummary({
+      "titleText": "There is a problem",
+      "errorList": error_list
+    }) }}
+  {% endif %}
+
+  {% call django_form(action=url("geo_area-ui-membership-create", kwargs={"sid": geo_area.sid})) %}
+    {% for form in formset %}
+      {{ crispy(form) }}
+    {% endfor %}
+
+    {% if formset.data[formset.prefix ~ "-ADD"] %}
+      {{ crispy(formset.empty_form)|replace("__prefix__", formset.forms|length)|safe }}
+    {% endif %}
+
+    <div class="govuk-button-group">
+      {{ govukButton({"text": "Save"}) }}
+
+    {% if formset.total_form_count() + 1 < formset.max_num %}
+      {{ govukButton({
+        "text": "Add new",
+        "attributes": {"id": "add-new"},
+        "classes": "govuk-button--secondary",
+        "value": "1",
+        "name": formset.prefix ~ "-ADD",
+      }) }}
+    {% endif %}
+    </div>
+  {% endcall %}
+{% endblock %}
