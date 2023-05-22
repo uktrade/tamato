@@ -450,8 +450,8 @@ class MeasureConditionsFormMixin(forms.ModelForm):
             self.add_error(
                 None,
                 ValidationError(
-                    "If you action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’.",
-                ),  #
+                    "If the action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’.",
+                ),
             )
 
         price_errored = False
