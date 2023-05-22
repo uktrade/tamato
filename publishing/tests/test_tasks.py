@@ -121,11 +121,10 @@ def test_create_and_upload_envelope_fails_record_order(
         mock_save.assert_not_called()
 
 
-def test_publish_to_api_successfully_published(settings, successful_envelope_factory):
+def test_publish_to_api_successfully_published(successful_envelope_factory):
     """Test when an envelope has been successfully published to the Tariff API
     that its state and published fields are updated accordingly."""
 
-    settings.TARIFF_API_INTERFACE = "publishing.tariff_api.interface.TariffAPIStubbed"
     successful_envelope_factory()
 
     envelope = TAPApiEnvelope.objects.all()
@@ -148,13 +147,11 @@ def test_publish_to_api_successfully_published(settings, successful_envelope_fac
 
 
 def test_publish_to_api_failed_publishing_staging(
-    settings,
     successful_envelope_factory,
 ):
     """Test when an envelope fails publishing to Tariff API staging that its
     state and published fields are updated accordingly."""
 
-    settings.TARIFF_API_INTERFACE = "publishing.tariff_api.interface.TariffAPIStubbed"
     successful_envelope_factory()
 
     envelope = TAPApiEnvelope.objects.all()
@@ -185,13 +182,11 @@ def test_publish_to_api_failed_publishing_staging(
 
 
 def test_publish_to_api_failed_publishing_production(
-    settings,
     successful_envelope_factory,
 ):
     """Test when an envelope fails publishing to Tariff API production that its
     state and published fields are updated accordingly."""
 
-    settings.TARIFF_API_INTERFACE = "publishing.tariff_api.interface.TariffAPIStubbed"
     successful_envelope_factory()
 
     envelope = TAPApiEnvelope.objects.all()
@@ -224,13 +219,11 @@ def test_publish_to_api_failed_publishing_production(
 
 
 def test_publish_to_api_failed_publishing_staging_to_successfully_published(
-    settings,
     successful_envelope_factory,
 ):
     """Test that an envelope with state FAILED_PUBLISHING_STAGING can be
     published to the Tariff API."""
 
-    settings.TARIFF_API_INTERFACE = "publishing.tariff_api.interface.TariffAPIStubbed"
     successful_envelope_factory()
 
     envelope = TAPApiEnvelope.objects.all()
@@ -252,13 +245,11 @@ def test_publish_to_api_failed_publishing_staging_to_successfully_published(
 
 
 def test_publish_to_api_failed_publishing_production_to_successfully_published(
-    settings,
     successful_envelope_factory,
 ):
     """Test that an envelope with state FAILED_PUBLISHING_PRODUCTION can be
     published to the Tariff API."""
 
-    settings.TARIFF_API_INTERFACE = "publishing.tariff_api.interface.TariffAPIStubbed"
     successful_envelope_factory()
 
     envelope = TAPApiEnvelope.objects.all()
@@ -280,10 +271,9 @@ def test_publish_to_api_failed_publishing_production_to_successfully_published(
     assert pwb.envelope.published_to_tariffs_api
 
 
-def test_publish_to_api_published_in_sequence(settings, successful_envelope_factory):
+def test_publish_to_api_published_in_sequence(successful_envelope_factory):
     """Test that envelopes are published in sequence to the Tariff API."""
 
-    settings.TARIFF_API_INTERFACE = "publishing.tariff_api.interface.TariffAPIStubbed"
     successful_envelope_factory()
     successful_envelope_factory()
     successful_envelope_factory()
