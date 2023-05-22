@@ -522,6 +522,33 @@ def measure_edit_conditions_data(measure_form_data):
 
 
 @pytest.fixture
+def measure_edit_conditions_and_negative_action_data(measure_edit_conditions_data):
+    # set up second condition with negative action
+    negative_action = factories.MeasureActionFactory.create()
+    positive_action = MeasureAction.objects.get(
+        pk=measure_edit_conditions_data[
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action"
+        ],
+    )
+    factories.MeasureActionPairFactory(
+        positive_action=positive_action,
+        negative_action=negative_action,
+    )
+
+    edit_data = {k: v for k, v in measure_edit_conditions_data.items() if v is not None}
+    edit_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code"
+    ] = measure_edit_conditions_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code"
+    ]
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-action"] = negative_action.pk
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-TOTAL_FORMS"] = 2
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-INITIAL_FORMS"] = 2
+
+    return edit_data
+
+
+@pytest.fixture
 def measure_form(measure_form_data, session_with_workbasket, erga_omnes):
     with override_current_transaction(Transaction.objects.last()):
         return MeasureForm(

@@ -1251,7 +1251,7 @@ def measure_conditions_incorrect_order_data():
         (
             measure_conditions_different_actions_data,
             True,
-            "All conditions of the same condition code must have the same resulting action.",
+            "All conditions of the same condition code must have the same resulting action, except for the negative action code pair.",
         ),
         (
             measure_conditions_duplicate_price_data,

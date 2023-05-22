@@ -200,7 +200,7 @@ def validate_conditions_formset(cleaned_data):
     if num_unique_condition_negative_action_bool != num_unique_condition_action_codes:
         errors_list.append(
             ValidationError(
-                "All conditions of the same condition code must have the same resulting action.",
+                "All conditions of the same condition code must have the same resulting action, except for the negative action code pair.",
             ),
         )
 

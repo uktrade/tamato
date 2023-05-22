@@ -567,7 +567,12 @@ class MeasureConditionsBaseFormSet(FormSet):
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
             return
-        cleaned_data = super().cleaned_data
+
+        cleaned_data = []
+        for form in self.forms:
+            if self.can_delete and self._should_delete_form(form):
+                continue
+            cleaned_data += [form.cleaned_data]
 
         validate_conditions_formset(cleaned_data)
 
