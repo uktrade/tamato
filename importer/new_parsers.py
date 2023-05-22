@@ -82,7 +82,7 @@ class MessageParser:
         return
 
     def _construct_taric_object(self):
-        parser_cls = self.get_parser(self.object_type)
+        parser_cls = ParserHelper.get_parser_by_tag(self.object_type)
         parser = parser_cls()
 
         # standard data
@@ -126,29 +126,6 @@ class MessageParser:
 
         return parsed_tag_name
 
-    def get_parser(self, object_type: str):
-        # get all classes that can represent an imported taric object
-        classes = self._get_parser_classes()
-
-        # iterate through classes and find the one that matches the tag or error
-        for cls in classes:
-            if cls.xml_object_tag == object_type:
-                return cls
-
-        raise Exception(f"No parser class matching {object_type}")
-
-    def _get_parser_classes(self):
-        return self._get_all_subclasses(NewElementParser)
-
-    def _get_all_subclasses(self, cls):
-        all_subclasses = []
-
-        for subclass in cls.__subclasses__():
-            all_subclasses.append(subclass)
-            all_subclasses.extend(self._get_all_subclasses(subclass))
-
-        return all_subclasses
-
 
 class ModelLinkField:
     def __init__(self, parser_field_name, object_field_name):
@@ -170,15 +147,6 @@ class ModelLink:
         self.optional = optional
 
 
-# {
-#   "model": models.QuotaOrderNumber,
-#   "fields": {
-#       "order_number__sid": "sid",
-#    },
-#    "xml_tag_name": "quota.order.number",
-# },
-
-
 class NewElementParser:
     transaction_id: str
     record_code: str
@@ -190,7 +158,7 @@ class NewElementParser:
     value_mapping = {}
     model_links = None
     issues = []
-    append_to_parent = False
+    parent_handler = None
 
     def __init__(self):
         self.issues = []
@@ -206,3 +174,43 @@ class NewElementParser:
 
 class TaricObjectLink:
     pass
+
+
+class ParserHelper:
+    @staticmethod
+    def get_parser_by_model(model):
+        # get all classes that can represent an imported taric object
+        classes = ParserHelper.__parser_classes()
+
+        # iterate through classes and find the one that matches the tag or error
+        for cls in classes:
+            if cls.model == model and cls.append_to_parent == False:
+                return cls
+
+        raise Exception(f"No parser class matching {model}")
+
+    @staticmethod
+    def get_parser_by_tag(object_type: str):
+        # get all classes that can represent an imported taric object
+        classes = ParserHelper.__parser_classes()
+
+        # iterate through classes and find the one that matches the tag or error
+        for cls in classes:
+            if cls.xml_object_tag == object_type:
+                return cls
+
+        raise Exception(f"No parser class matching {object_type}")
+
+    @staticmethod
+    def __parser_classes():
+        return ParserHelper.__get_subclasses(NewElementParser)
+
+    @staticmethod
+    def __get_subclasses(cls):
+        all_subclasses = []
+
+        for subclass in cls.__subclasses__():
+            all_subclasses.append(subclass)
+            all_subclasses.extend(ParserHelper.__get_subclasses(subclass))
+
+        return all_subclasses

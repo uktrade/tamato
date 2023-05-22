@@ -8,8 +8,8 @@ from footnotes.models import FootnoteType
 from importer import nursery
 
 
-def test_nursery_gets_handler_with_tag(object_nursery, handler_class):
-    assert object_nursery.get_handler(handler_class.tag) is handler_class
+def test_nursery_gets_handler_with_tag(object_nursery, parser_class):
+    assert object_nursery.get_handler(parser_class.tag) is parser_class
 
 
 def test_nursery_throws_error_on_no_handler(object_nursery):
@@ -19,12 +19,12 @@ def test_nursery_throws_error_on_no_handler(object_nursery):
 
 @pytest.mark.django_db
 def test_nursery_clears_cache(
-    handler_class,
+    parser_class,
     object_nursery,
     date_ranges,
     unapproved_transaction,
 ):
-    handler = handler_class(
+    handler = parser_class(
         {
             "data": {
                 "sid": 1,
@@ -35,7 +35,7 @@ def test_nursery_clears_cache(
                     "upper": date_ranges.normal.upper,
                 },
             },
-            "tag": handler_class.tag,
+            "tag": parser_class.tag,
             "transaction_id": unapproved_transaction.pk,
         },
         object_nursery,
@@ -53,8 +53,8 @@ def test_nursery_clears_cache(
     assert TestModel1.objects.get().sid == 1
 
 
-def test_nursery_caches_object(object_nursery, handler_class):
-    handler = handler_class(
+def test_nursery_caches_object(object_nursery, parser_class):
+    handler = parser_class(
         {
             "data": {"sid": 1},
             "tag": "some unique tag",

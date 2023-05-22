@@ -9,7 +9,6 @@ from quotas.import_handlers import *
 
 
 class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable):
-    # handler = QuotaOrderNumberHandler
     model = models.QuotaOrderNumber
     value_mapping = {
         "id": "order_number",
@@ -30,7 +29,6 @@ class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable)
 
 
 class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = QuotaOrderNumberOriginHandler
     model = models.QuotaOrderNumberOrigin
     value_mapping = {
         "validity_start_date": "valid_between_lower",
@@ -71,7 +69,6 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
 
 
 class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
-    # handler = QuotaOrderNumberOriginExclusionHandler
     model = models.QuotaOrderNumberOriginExclusion
     model_links = [
         # create dependency to quota order number origin
@@ -101,7 +98,6 @@ class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
 
 
 class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = QuotaDefinitionHandler
     model = models.QuotaDefinition
     value_mapping = {
         "validity_start_date": "valid_between_lower",
@@ -166,7 +162,6 @@ class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewQuotaAssociationParser(NewWritable, NewElementParser):
-    # handler = QuotaAssociationHandler
     model = models.QuotaAssociation
     model_links = [
         # create dependency to QuotaDefinition (main quota)
@@ -198,7 +193,6 @@ class NewQuotaAssociationParser(NewWritable, NewElementParser):
 
 
 class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = QuotaSuspensionHandler
     model = models.QuotaSuspension
 
     value_mapping = {
@@ -229,7 +223,6 @@ class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = QuotaBlockingHandler
     model = models.QuotaBlocking
 
     value_mapping = {

@@ -15,6 +15,7 @@ from footnotes.new_import_parsers import *
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
 from geo_areas.new_import_parsers import *
+from importer.new_parsers import ParserHelper
 from measures.models import AdditionalCodeTypeMeasureType
 from measures.models import DutyExpression
 from measures.models import FootnoteAssociationMeasure
@@ -48,7 +49,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.mark.parametrize(
     (
-        "handler_class",
+        "parser_class",
         "model_class",
         "expected_xml_tag_name",
         "links_to",
@@ -556,27 +557,46 @@ pytestmark = pytest.mark.django_db
         ),
     ),
 )
-def test_xml_tag_name(
-    handler_class,
+def test_importer_generics(
+    parser_class,
     model_class,
     expected_xml_tag_name,
     links_to,
     should_append_to_parent,
 ):
     # verify xml tag name
-    assert handler_class.xml_object_tag == expected_xml_tag_name
+    assert parser_class.xml_object_tag == expected_xml_tag_name
 
-    if handler_class.model != model_class:
-        print(f"for {handler_class} model {handler_class.model} is not {model_class}")
+    if parser_class.model != model_class:
+        print(f"for {parser_class} model {parser_class.model} is not {model_class}")
 
-    assert handler_class.model == model_class
-    assert should_append_to_parent == handler_class.append_to_parent
+    assert parser_class.model == model_class
+    assert should_append_to_parent == parser_class.append_to_parent
+
+    # check that there is a direct link between parent model and child model when should_append_to_parent is True
+    # this link can be on the parent or the child
+    if should_append_to_parent:
+        child_to_parent_link = False
+        parent_to_child_link = False
+
+        # check child
+        for link in parser_class.model_links:
+            if link.model == parser_class.model:
+                child_to_parent_link = True
+
+        # check parent
+        parent_parser = ParserHelper.get_parser_by_model(parser_class.model)
+        for link in parent_parser.model_links:
+            if link.model == parser_class.model:
+                parent_to_child_link = True
+
+        assert child_to_parent_link or parent_to_child_link
 
     # verify existence of link to other importer types
     if len(links_to):
         for klass in links_to:
             link_exists = False
-            for link in handler_class.model_links:
+            for link in parser_class.model_links:
                 if link.model == klass:
                     link_exists = True
 
