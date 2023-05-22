@@ -13,6 +13,7 @@ from django.urls import reverse_lazy
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from quotas import models
+from quotas import validators
 
 
 class QuotaFilterForm(forms.Form):
@@ -73,8 +74,26 @@ class QuotaUpdateForm(ValidityPeriodForm, forms.ModelForm):
             "category",
         ]
 
+    category = forms.ChoiceField(
+        label="Category",
+        choices=[],  # set in __init__
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.instance.category == validators.QuotaCategory.SAFEGUARD:
+            self.fields["category"].widget = forms.Select(
+                attrs={"disabled": True},
+                choices=validators.QuotaCategory.choices,
+            )
+            self.fields[
+                "category"
+            ].help_text = (
+                "Safeguard quotas cannot have their category edited after creation"
+            )
+        else:
+            self.fields["category"].choices = validators.QuotaCategoryEditing.choices
+        self.fields["category"].initial = self.instance.category
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
