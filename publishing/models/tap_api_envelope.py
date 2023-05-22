@@ -254,3 +254,28 @@ class TAPApiEnvelope(TimestampedMixin):
     def publishing_production_failed(self):
         """Publishing a `TAPApiEnvelope` to the Tariff API production
         environment completed with a failed outcome."""
+
+    @atomic
+    def refresh_from_db(self, using=None, fields=None):
+        """Reload instance from database but avoid writing to
+        self.publishing_state directly in order to avoid the exception
+        'AttributeError: Direct publishing_state modification is not allowed.'
+        """
+        if fields is None:
+            refresh_state = True
+            fields = [f.name for f in self._meta.concrete_fields]
+        else:
+            refresh_state = "publishing_state" in fields
+
+        fields_without_state = [f for f in fields if f != "publishing_state"]
+
+        super().refresh_from_db(using=using, fields=fields_without_state)
+
+        if refresh_state:
+            new_state = (
+                type(self)
+                .objects.only("publishing_state")
+                .get(pk=self.pk)
+                .publishing_state
+            )
+            self._meta.get_field("publishing_state").set_state(self, new_state)
