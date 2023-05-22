@@ -27,17 +27,25 @@ class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParse
 
 # This gets joined to AdditionalCodeType as description column
 class NewAdditionalCodeTypeDescriptionParser(NewWritable, NewElementParser):
-    model = additional_codes.models.AdditionalCodeType
-    append_to_parent = True
+    model = models.AdditionalCodeType
+    parent_handler = NewAdditionalCodeTypeParser
 
-    model_links = []
+    model_links = [
+        ModelLink(
+            models.AdditionalCodeType,
+            [
+                ModelLinkField("additional_code_type_id", "sid"),
+            ],
+            "additional.code.type",
+        ),
+    ]
 
     record_code = "120"
     subrecord_code = "05"
 
     xml_object_tag = "additional.code.type.description"
 
-    sid: str = None
+    additional_code_type_id: str = None
     language_id: str = None
     description: str = None
 
@@ -66,40 +74,6 @@ class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
     code: str = None
     valid_between_lower: str = None
     valid_between_upper: str = None
-
-
-class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
-    model = models.AdditionalCodeDescription
-    append_to_parent = True
-
-    model_links = [
-        ModelLink(
-            models.AdditionalCode,
-            [
-                ModelLinkField("described_additionalcode__sid", "sid"),
-                ModelLinkField("described_additionalcode__code", "code"),
-            ],
-            "additional.code",
-        ),
-        ModelLink(
-            models.AdditionalCodeType,
-            [
-                ModelLinkField("described_additionalcode__type__sid", "sid"),
-            ],
-            "additional.code.type",
-        ),
-    ]
-
-    record_code = "245"
-    subrecord_code = "05"
-
-    xml_object_tag = "additional.code.description.period"
-
-    sid: str = None
-    described_additionalcode__sid: str = None
-    described_additionalcode__type__sid: str = None
-    described_additionalcode__code: str = None
-    validity_start: date = None
 
 
 class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
@@ -135,6 +109,40 @@ class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
     described_additionalcode__type__sid: str = None
     described_additionalcode__code: str = None
     description: str = None
+
+
+class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
+    model = models.AdditionalCodeDescription
+    append_to_parent = True
+    parent_handler = NewAdditionalCodeDescriptionParser
+    model_links = [
+        ModelLink(
+            models.AdditionalCode,
+            [
+                ModelLinkField("described_additionalcode__sid", "sid"),
+                ModelLinkField("described_additionalcode__code", "code"),
+            ],
+            "additional.code",
+        ),
+        ModelLink(
+            models.AdditionalCodeType,
+            [
+                ModelLinkField("described_additionalcode__type__sid", "sid"),
+            ],
+            "additional.code.type",
+        ),
+    ]
+
+    record_code = "245"
+    subrecord_code = "05"
+
+    xml_object_tag = "additional.code.description.period"
+
+    sid: str = None
+    described_additionalcode__sid: str = None
+    described_additionalcode__type__sid: str = None
+    described_additionalcode__code: str = None
+    validity_start: date = None
 
 
 class NewFootnoteAssociationAdditionalCodeParser(

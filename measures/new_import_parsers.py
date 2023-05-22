@@ -11,7 +11,6 @@ from measures.import_handlers import *
 
 
 class NewMeasureTypeSeriesParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = MeasureTypeSeriesHandler
     model = models.MeasureTypeSeries
     record_code = "140"
     subrecord_code = "00"
@@ -26,7 +25,7 @@ class NewMeasureTypeSeriesParser(NewValidityMixin, NewWritable, NewElementParser
 
 class NewMeasureTypeSeriesDescriptionParser(NewWritable, NewElementParser):
     model = models.MeasureTypeSeries
-    append_to_parent = True
+    parent_parser = NewMeasureTypeSeriesParser
 
     record_code = "140"
     subrecord_code = "05"
@@ -53,7 +52,7 @@ class NewMeasurementUnitParser(NewValidityMixin, NewWritable, NewElementParser):
 
 class NewMeasurementUnitDescriptionParser(NewWritable, NewElementParser):
     model = models.MeasurementUnit
-    append_to_parent = True
+    parent_parser = NewMeasurementUnitParser
 
     record_code = "210"
     subrecord_code = "05"
@@ -85,6 +84,7 @@ class NewMeasurementUnitQualifierParser(
 class NewMeasurementUnitQualifierDescriptionParser(NewWritable, NewElementParser):
     model = models.MeasurementUnitQualifier
     append_to_parent = True
+    parent_parser = NewMeas
 
     record_code = "215"
     subrecord_code = "05"

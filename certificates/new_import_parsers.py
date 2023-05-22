@@ -25,9 +25,9 @@ class NewCertificateTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewCertificateTypeDescriptionParser(NewWritable, NewElementParser):
-    # handler = CertificateTypeDescriptionHandler
     model = CertificateType
-    append_to_parent = True
+    parent_parser = NewCertificateTypeParser
+
     record_code = "110"
     subrecord_code = "05"
 
@@ -39,8 +39,8 @@ class NewCertificateTypeDescriptionParser(NewWritable, NewElementParser):
 
 
 class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = CertificateHandler
     model = Certificate
+
     model_links = [
         ModelLink(
             models.CertificateType,
@@ -63,7 +63,6 @@ class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewCertificateDescriptionParser(NewWritable, NewElementParser):
-    # handler = CertificateDescriptionHandler
     model = CertificateDescription
     model_links = [
         ModelLink(
@@ -96,7 +95,7 @@ class NewCertificateDescriptionParser(NewWritable, NewElementParser):
 
 class NewCertificateDescriptionPeriodParser(NewWritable, NewElementParser):
     model = CertificateDescription
-    append_to_parent = True
+    parent_parser = NewCertificateDescriptionParser
 
     model_links = [
         ModelLink(

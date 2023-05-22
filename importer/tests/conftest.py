@@ -62,7 +62,7 @@ def mock_list_serializer() -> Type[ListSerializer]:
 
 
 @pytest.fixture
-def handler_class(mock_serializer) -> Type[BaseHandler]:
+def parser_class(mock_serializer) -> Type[BaseHandler]:
     class TestHandler(BaseHandler):
         serializer_class = mock_serializer
         tag = "test_handler"
@@ -158,8 +158,8 @@ def handler_footnote_type_description_test_data(
 
 
 @pytest.fixture
-def prepped_handler(object_nursery, handler_class, handler_test_data) -> BaseHandler:
-    return handler_class(handler_test_data, object_nursery)
+def prepped_handler(object_nursery, parser_class, handler_test_data) -> BaseHandler:
+    return parser_class(handler_test_data, object_nursery)
 
 
 @pytest.fixture
