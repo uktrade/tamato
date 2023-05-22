@@ -1,7 +1,7 @@
 {% set origins %}
     <ul class="govuk-table-list">
-        {% for origin in object.origins.distinct().all() %}
-            <li>{{origin.area_id}} - {{origin.get_description().description}}</li>
+        {% for origin in object.quotaordernumberorigin_set.latest_approved().distinct('geographical_area') %}
+            <li>{{origin.geographical_area.area_id}} - {{origin.geographical_area.get_description().description}} </li>
         {% endfor %}
     </ul>
 {% endset %}
