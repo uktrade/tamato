@@ -819,7 +819,7 @@ def test_measure_update_invalid_conditions(
     assert a_tags[3].attrs["href"] == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-__all__"
     assert (
         a_tags[3].text
-        == "If you action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’."
+        == "If the action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’."
     )
 
 
