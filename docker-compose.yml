@@ -15,21 +15,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - inside
 
   cache-redis:
     image: redis
-    networks:
-      - inside
     ports:
       - "127.0.0.1:6379:6379"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"  
 
   celery-redis:
     image: redis
-    networks:
-      - inside
     ports:
       - "127.0.0.1:6378:6379"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
@@ -51,8 +45,6 @@ services:
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     depends_on:
       - celery-redis
-    networks:
-      - inside
 
   rule-check-celery:
     build:
@@ -68,8 +60,6 @@ services:
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     depends_on:
       - celery-redis
-    networks:
-      - inside
 
   s3:
     image: minio/minio
@@ -81,15 +71,12 @@ services:
     env_file: .env
     entrypoint: sh
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
-    # TODO improve set up of buckets currently only hmrc-packaging set up automatically 
     command: ['-c', 'mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"']
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
-    networks:
-      - inside
 
   tamato:
     build: 
@@ -110,19 +97,10 @@ services:
       - .env
       - settings/envs/docker.env
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-    networks:
-      - inside
-      - outside
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     stdin_open: true
     tty: true  
 
-networks:
-  inside:
-    external: false
-    internal: true
-  outside:
-    name: data-tap-network
 volumes:
   tamato-data-volume: {}
   tamato-s3-volume: {}
