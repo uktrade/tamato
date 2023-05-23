@@ -17,6 +17,7 @@ from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
+from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.forms import MeasureForm
 from measures.models import DutyExpression
 from measures.models import Measure
@@ -502,14 +503,47 @@ def measure_edit_conditions_data(measure_form_data):
     action = factories.MeasureActionFactory.create()
     edit_data = {k: v for k, v in measure_form_data.items() if v is not None}
     edit_data["update_type"] = 1
-    edit_data["measure-conditions-formset-TOTAL_FORMS"] = 1
-    edit_data["measure-conditions-formset-INITIAL_FORMS"] = 1
-    edit_data["measure-conditions-formset-MIN_NUM_FORMS"] = 0
-    edit_data["measure-conditions-formset-MAX_NUM_FORMS"] = 1000
-    edit_data["measure-conditions-formset-0-condition_code"] = condition_code.pk
-    edit_data["measure-conditions-formset-0-required_certificate"] = certificate.pk
-    edit_data["measure-conditions-formset-0-action"] = action.pk
-    edit_data["measure-conditions-formset-0-applicable_duty"] = "3.5% + 11 GBP / 100 kg"
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-TOTAL_FORMS"] = 1
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-INITIAL_FORMS"] = 1
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-MIN_NUM_FORMS"] = 0
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-MAX_NUM_FORMS"] = 1000
+    edit_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code"
+    ] = condition_code.pk
+    edit_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-required_certificate"
+    ] = certificate.pk
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action"] = action.pk
+    edit_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty"
+    ] = "3.5% + 11 GBP / 100 kg"
+
+    return edit_data
+
+
+@pytest.fixture
+def measure_edit_conditions_and_negative_action_data(measure_edit_conditions_data):
+    # set up second condition with negative action
+    negative_action = factories.MeasureActionFactory.create()
+    positive_action = MeasureAction.objects.get(
+        pk=measure_edit_conditions_data[
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action"
+        ],
+    )
+    factories.MeasureActionPairFactory(
+        positive_action=positive_action,
+        negative_action=negative_action,
+    )
+
+    edit_data = {k: v for k, v in measure_edit_conditions_data.items() if v is not None}
+    edit_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code"
+    ] = measure_edit_conditions_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code"
+    ]
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-action"] = negative_action.pk
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-TOTAL_FORMS"] = 2
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-INITIAL_FORMS"] = 2
 
     return edit_data
 

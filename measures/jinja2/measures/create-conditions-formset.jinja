@@ -1,5 +1,7 @@
 {% from "layouts/form.jinja" import errors with context %}
 
+{% from "components/error-summary/macro.njk" import govukErrorSummary %}
+
 {{ crispy(conditions_formset.management_form, no_form_tags) }}
     <p class="govuk-body">
         You can edit these conditions by selecting a new condition code and filling in the details.
@@ -7,6 +9,19 @@
         <br>
         Any changes you make will take effect when you press save.
     </p>
+    {% if conditions_formset.non_form_errors() %}
+        {% set error_list = [] %}
+        {% for error in conditions_formset.non_form_errors() %}
+            {{ error_list.append({
+                "html": '<p class="govuk-error-message">' ~ error ~ '</p>',
+            }) or "" }}
+        {% endfor %}
+
+        {{ govukErrorSummary({
+        "titleText": "There is a problem",
+        "errorList": error_list
+        }) }}
+    {% endif %}
     {% for form in conditions_formset %}
         {% if form.errors %}
             {{ errors(form) }}
