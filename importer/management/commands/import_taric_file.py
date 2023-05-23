@@ -2,6 +2,9 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import BaseCommand
 
 from importer.management.commands.chunk_taric import chunk_taric
@@ -13,7 +16,7 @@ from workbaskets.validators import WorkflowStatus
 
 
 def import_taric_file(
-    taric_file: str,
+    taric_file: InMemoryUploadedFile,
     user: User,
     workbasket_id=None,
     record_group=TARIC_RECORD_GROUPS["commodities"],
@@ -42,6 +45,9 @@ def import_taric_file(
         record_group=record_group,
         workbasket_id=workbasket_id,
     )
+    # Change the status to Imported once successful
+    batch.imported()
+    batch.save()
 
 
 class Command(BaseCommand):
@@ -54,9 +60,20 @@ class Command(BaseCommand):
             type=str,
         )
         parser.add_argument(
-            "-u",
-            "--user",
-            help="The user to use for the owner of the workbaskets created, and the author of the batch.",
+            "user_email",
+            help="The email of user to use as the owner of the workbaskets created, and the author of the batch.",
+            type=str,
+        )
+        parser.add_argument(
+            "-wid",
+            "--workbasket-id",
+            help="The id of the workbasket that the import will be uploaded into.",
+            type=str,
+        )
+        parser.add_argument(
+            "-r",
+            "--record_group",
+            help="The record group for the TARIC???",
             type=str,
         )
         parser.add_argument(
@@ -75,11 +92,34 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        user = self.validate_user(options["user_email"])
         import_taric_file(
-            taric_file=options["taric3_file"],
-            user=options["user"],
+            taric_file=options["taric_file"],
+            user=user,
             workbasket_id=options["workbasket_id"],
             record_group=options["record_group"],
             status=options["status"],
             partition_scheme_setting=options["partition_scheme"],
         )
+
+    def validate_user(self, user_email):
+        """Validation to check that the user_email corresponds to a user."""
+        # Will refactor function to add pre flight checks call to this later
+
+        try:
+            user = User.objects.get(email=user_email)
+        except ObjectDoesNotExist:
+            self.stdout.write(
+                self.style.ERROR(
+                    f"User email not found. Exiting.",
+                ),
+            )
+            exit(1)
+        except MultipleObjectsReturned:
+            self.stdout.write(
+                self.style.ERROR(
+                    f"Multiple users found. Exiting.",
+                ),
+            )
+            exit(1)
+        return user

@@ -100,22 +100,21 @@ class TestChunkTaricCommand(TestCommandBase):
                 pytest.raises(CommandError),
                 "Error: the following arguments are required: taric3_file, batch_name, author",
             ),
-            # This is also failing but I think it's due to the errors not having the author in but I'll test one at a time
-            # (
-            #     ["foo"],
-            #     pytest.raises(CommandError),
-            #     "Error: the following arguments are required: batch_name, author",
-            # ),
-            # (
-            #     ["foo", "bar"],
-            #     pytest.raises(CommandError),
-            #     "Error: the following arguments are required: batch_name, author",
-            # ),
-            # (
-            #     ["foo", "bar", valid_user],
-            #     pytest.raises(FileNotFoundError),
-            #     "No such file or directory",
-            # ),
+            (
+                ["foo"],
+                pytest.raises(CommandError),
+                "Error: the following arguments are required: batch_name, author",
+            ),
+            (
+                ["foo", "bar"],
+                pytest.raises(CommandError),
+                "Error: the following arguments are required: batch_name, author",
+            ),
+            (
+                ["foo", "bar", valid_user],
+                pytest.raises(FileNotFoundError),
+                "No such file or directory",
+            ),
         ],
     )
     def test_dry_run_args_errors(self, args, exception_type, error_msg, valid_user):

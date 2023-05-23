@@ -10,9 +10,9 @@ from importer.namespaces import TARIC_RECORD_GROUPS
 
 def setup_batch(
     batch_name: str,
+    author: User,
     split_on_code: bool,
     dependencies: List[str],
-    author: User,
 ) -> models.ImportBatch:
     """
     Sets up a batch import.
