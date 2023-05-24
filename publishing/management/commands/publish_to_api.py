@@ -1,0 +1,42 @@
+import sys
+
+from django.core.management import BaseCommand
+
+from publishing.models import TAPApiEnvelope
+from publishing.tasks import publish_to_api
+
+
+class Command(BaseCommand):
+    help = "Upload unpublished envelopes to the Tariff API."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-l",
+            "--list",
+            dest="list",
+            action="store_true",
+            help="List unpublished envelopes.",
+        )
+
+    def get_unpublished_envelopes(self):
+        unpublished = TAPApiEnvelope.objects.unpublished().order_by("pk")
+        if not unpublished:
+            sys.exit("No unpublished envelopes")
+        return unpublished
+
+    def list_unpublished_envelopes(self):
+        unpublished = self.get_unpublished_envelopes()
+
+        self.stdout.write(
+            f"{unpublished.count()} envelope(s) ready to be published in the following order:",
+        )
+        for i, envelope in enumerate(unpublished, start=1):
+            self.stdout.write(f"{i}: {envelope}")
+
+    def handle(self, *args, **options):
+        if options["list"]:
+            self.list_unpublished_envelopes()
+            return
+
+        if self.get_unpublished_envelopes():
+            publish_to_api.apply()
