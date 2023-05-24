@@ -1604,7 +1604,7 @@ class CommodityCollectionLoader:
             .with_end_date()
             .filter(indented_goods_nomenclature__sid__in=goods_sids)
             .annotate(goods_sid=F("indented_goods_nomenclature__sid"))
-            .order_by("transaction")
+            .order_by("transaction", "validity_start")
         )
 
         goods_sid_to_indents: Dict[str, List] = {}
