@@ -410,7 +410,12 @@ class MeasureConditionsFormMixin(forms.ModelForm):
             ),
         )
 
-    def conditions_clean(self, cleaned_data, measure_start_date):
+    def conditions_clean(
+        self,
+        cleaned_data,
+        measure_start_date,
+        is_negative_action_code=False,
+    ):
         """
         We get the reference_price from cleaned_data and the measure_start_date
         from the form's initial data.
@@ -421,16 +426,37 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         are dealing with a simple duty (i.e. only one component). We then update
         cleaned_data with key-value pairs created from this single, unsaved
         component.
+
+        Args:
+            cleaned_data the cleaned data submitted in the form,
+            measure_start_date the start date set for the measure,
+            is_negative_action_code is a boolean by default false and is used to
+            carry out different validation depending on the action code type
+        Returns:
+            returns cleaned_data
         """
         price = cleaned_data.get("reference_price")
         certificate = cleaned_data.get("required_certificate")
+        applicable_duty = cleaned_data.get("applicable_duty")
 
-        # Price or certificate must be present but no both
-        if (not price and not certificate) or (price and certificate):
+        # Price or certificate must be present but no both; if the action code is not negative
+        if (
+            not is_negative_action_code
+            and (not price and not certificate)
+            or (price and certificate)
+        ):
             self.add_error(
                 None,
                 ValidationError(
                     "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’.",
+                ),
+            )
+
+        if is_negative_action_code and (price or certificate or applicable_duty):
+            self.add_error(
+                None,
+                ValidationError(
+                    "If the action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’.",
                 ),
             )
 
@@ -470,6 +496,14 @@ class MeasureConditionsFormMixin(forms.ModelForm):
 
 
 class MeasureConditionsForm(MeasureConditionsFormMixin):
+    # override action queryset for edit form, gets all actions
+    action = forms.ModelChoiceField(
+        label="Action code",
+        queryset=models.MeasureAction.objects.latest_approved(),
+        empty_label="-- Please select an action code --",
+        error_messages={"required": "An action code is required."},
+    )
+
     def get_start_date(self, data):
         """Validates that the day, month, and year start_date fields are present
         in data and then returns the start_date datetime object."""
@@ -511,7 +545,15 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
         cleaned_data = super().clean()
         measure_start_date = self.get_start_date(self.data)
 
-        return self.conditions_clean(cleaned_data, measure_start_date)
+        # Check if the action code set for the form is
+        is_negative_action_code = models.MeasureActionPair.objects.filter(
+            negative_action=cleaned_data.get("action"),
+        ).exists()
+        return self.conditions_clean(
+            cleaned_data,
+            measure_start_date,
+            is_negative_action_code=is_negative_action_code,
+        )
 
 
 class MeasureConditionsBaseFormSet(FormSet):
@@ -531,7 +573,12 @@ class MeasureConditionsBaseFormSet(FormSet):
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
             return
-        cleaned_data = super().cleaned_data
+
+        cleaned_data = []
+        for form in self.forms:
+            if self.can_delete and self._should_delete_form(form):
+                continue
+            cleaned_data += [form.cleaned_data]
 
         validate_conditions_formset(cleaned_data)
 

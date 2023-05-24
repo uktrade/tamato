@@ -469,6 +469,9 @@ CELERY_ROUTES = {
     "workbaskets.tasks.transition": {
         "queue": "standard",
     },
+    "exporter.sqlite.tasks.*": {
+        "queue": "standard",
+    },
     re.compile(r"(checks)\.tasks\..*"): {
         "queue": "rule-check",
     },
