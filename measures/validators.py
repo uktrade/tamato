@@ -140,6 +140,8 @@ def validate_conditions_formset(cleaned_data):
     condition_duty_amounts = []
     # list of condition codes
     condition_codes = []
+    # list of condition code tuples containing conditions & True/False depending on if it's a positive negative action
+    condition_negative_action_bool = []
     # list of tuples of condition code and it's action code
     condition_action_tuple = []
     for condition in cleaned_data:
@@ -156,6 +158,17 @@ def validate_conditions_formset(cleaned_data):
             condition_certificates.append(
                 (condition["condition_code"], condition["required_certificate"]),
             )
+
+        condition_negative_action_bool.append(
+            (
+                condition["condition_code"],
+                not (
+                    bool(condition["reference_price"])
+                    | bool(condition["required_certificate"])
+                    | bool(condition["applicable_duty"])
+                ),
+            ),
+        )
         condition_action_tuple.append(
             (condition["condition_code"], condition["action"]),
         )
@@ -163,8 +176,8 @@ def validate_conditions_formset(cleaned_data):
 
     num_unique_certificates = len(set(condition_certificates))
     num_unique_duty_amounts = len(set(condition_duty_amounts))
-    num_unique_conditions = len(set(condition_codes))
     num_unique_condition_action_codes = len(set(condition_action_tuple))
+    num_unique_condition_negative_action_bool = len(set(condition_negative_action_bool))
     ordered_condition_codes = sorted(condition_codes)
 
     # for the number of certificates the number of unique certificate, condition code tuples
@@ -184,10 +197,10 @@ def validate_conditions_formset(cleaned_data):
 
     # for all unique condition codes the number of unique action codes will be equal
     # if the form is valid
-    if num_unique_conditions != num_unique_condition_action_codes:
+    if num_unique_condition_negative_action_bool != num_unique_condition_action_codes:
         errors_list.append(
             ValidationError(
-                "All conditions of the same condition code must have the same resulting action.",
+                "All conditions of the same condition code must have the same resulting action, except for the negative action code pair.",
             ),
         )
 
