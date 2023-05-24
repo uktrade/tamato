@@ -33,14 +33,6 @@ class QuotaCategory(models.IntegerChoices):
     SAFEGUARD = 3, "Safeguard"
 
 
-class QuotaCategoryEditing(models.IntegerChoices):
-    """Quota category cannot be changed to safeguard when editing."""
-
-    WTO = 0, "WTO"
-    AUTONOMOUS = 1, "Autonomous"
-    PREFERENTIAL = 2, "Preferential"
-
-
 class SubQuotaType(models.TextChoices):
     EQUIVALENT = "EQ", "Equivalent to main quota"
     NORMAL = "NM", "Normal (restrictive to main quota)"
