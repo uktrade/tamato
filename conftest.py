@@ -379,6 +379,48 @@ def queued_workbasket_factory():
     return factory_method
 
 
+@pytest.fixture
+def published_workbasket_factory():
+    def factory_method():
+        workbasket = factories.PublishedWorkBasketFactory()
+        with factories.ApprovedTransactionFactory.create(workbasket=workbasket):
+            factories.FootnoteTypeFactory()
+            factories.AdditionalCodeFactory()
+        return workbasket
+
+    return factory_method
+
+
+@pytest.fixture(scope="function")
+def successful_packaged_workbasket_factory(published_workbasket_factory):
+    """
+    Factory fixture to create a packaged workbasket in a successfully processed
+    state.
+
+    Note: can be used to create a packaged workbasket with envelope without triggering
+    create_api_publishing_envelope decorator (TAPApiEnvelope creation).
+
+    params:
+    workbasket defaults to published_workbasket_factory() which creates a
+    Workbasket in the state PUBLISHED with an approved transaction and tracked models
+    """
+
+    def factory_method(workbasket=None, **kwargs):
+        if not workbasket:
+            workbasket = published_workbasket_factory()
+        with patch(
+            "publishing.tasks.create_xml_envelope_file.apply_async",
+            return_value=MagicMock(id=factory.Faker("uuid4")),
+        ):
+            packaged_workbasket = factories.SuccessPackagedWorkBasketFactory(
+                workbasket=workbasket, **kwargs
+            )
+        packaged_workbasket.position = 1
+        return packaged_workbasket
+
+    return factory_method
+
+
 @pytest.fixture(scope="function")
 def packaged_workbasket_factory(queued_workbasket_factory):
     """
