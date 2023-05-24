@@ -73,12 +73,12 @@ def test_create_api_envelope_exits_no_packaged_workbaskets():
         call_command("create_api_envelope")
 
 
-def test_create_api_envelope_creates_specified_amount(
+def test_create_api_envelope_creates_specified_number(
     successful_packaged_workbasket_factory,
     published_envelope_factory,
 ):
-    """Test that create_api_envelope allows specifying the number of API
-    envelopes to create for available packaged workbaskets."""
+    """Test that create_api_envelope allows specifying the number of available
+    packaged workbaskets for which to create an API envelope."""
 
     pwb = successful_packaged_workbasket_factory()
     pwb2 = successful_packaged_workbasket_factory()

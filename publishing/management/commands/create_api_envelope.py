@@ -49,9 +49,9 @@ class Command(BaseCommand):
             return
 
         packaged_workbaskets = self.get_packaged_workbaskets()
-        creation_amount = options.get("number")
-        if creation_amount:
-            for pwb in itertools.islice(packaged_workbaskets, creation_amount[0]):
+        creation_count = options.get("number")
+        if creation_count:
+            for pwb in itertools.islice(packaged_workbaskets, creation_count[0]):
                 pwb.create_api_publishing_envelope()
         else:
             for pwb in packaged_workbaskets:
