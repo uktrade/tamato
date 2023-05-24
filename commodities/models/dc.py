@@ -491,32 +491,32 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         *commodities: Commodity,
         as_at: Optional[date] = NOT_PROVIDED,
     ) -> MeasuresQuerySet:
-        filter = Q()
+        goods_sid_query = Q()
         for commodity in commodities:
             if commodity not in self.commodities:
                 logger.warning(f"Commodity {commodity} not found in this snapshot.")
                 continue
 
-            filter |= Q(goods_nomenclature__sid=commodity.obj.sid)
+            goods_sid_query |= Q(goods_nomenclature__sid=commodity.obj.sid)
 
-        qs = Measure.objects.filter(filter)
+        measure_qs = Measure.objects.filter(goods_sid_query)
 
         if self.moment.clock_type.is_transaction_clock:
-            qs = qs.approved_up_to_transaction(self.moment.transaction)
+            measure_qs = measure_qs.approved_up_to_transaction(self.moment.transaction)
         else:
-            qs = qs.latest_approved()
+            measure_qs = measure_qs.latest_approved()
 
         if as_at is not None and as_at is not NOT_PROVIDED:
-            qs = qs.with_effective_valid_between().filter(
+            measure_qs = measure_qs.with_effective_valid_between().filter(
                 Q(db_effective_valid_between__contains=as_at)
                 | Q(valid_between__startswith__gte=as_at),
             )
         elif as_at is NOT_PROVIDED and self.moment.clock_type.is_calendar_clock:
-            qs = qs.with_effective_valid_between().filter(
+            measure_qs = measure_qs.with_effective_valid_between().filter(
                 db_effective_valid_between__contains=self.moment.date,
             )
 
-        return qs
+        return measure_qs
 
     def is_declarable(self, commodity: Commodity) -> bool:
         return (
