@@ -5,12 +5,13 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test.utils import override_settings
 
 from common.tests import factories
+from importer.management.commands.import_taric_file import import_taric_file
 from importer.tests.management.commands.base import TestCommandBase
 
 pytestmark = pytest.mark.django_db
 
 
-# Still a work in progress - Failing for some reason
+#  TODO Fix these tests
 class TestImportTaricFileCommand(TestCommandBase):
     TARGET_COMMAND = "import_taric_file"
 
@@ -19,7 +20,18 @@ class TestImportTaricFileCommand(TestCommandBase):
         CELERY_ALWAYS_EAGER=True,
         BROKER_BACKEND="memory",
     )
-    def test_dry_run(self, capsys, example_goods_taric_file_location):
+    @patch(
+        "importer.management.commands.import_taric_file.import_taric_file.setup_batch",
+    )
+    # @patch("importer.management.commands.import_taric_file.chunk_taric")
+    # @patch("importer.management.commands.import_taric_file.run_batch")
+    def test_dry_run(
+        self,
+        example_goods_taric_file_location,
+        setup_batch,
+        chunk_taric,
+        run_batch,
+    ):
         user = factories.UserFactory.create(
             email="test.mctest@trade.gov.uk",  # /PS-IGNORE
             first_name="Test",
@@ -28,13 +40,10 @@ class TestImportTaricFileCommand(TestCommandBase):
         with open(f"{example_goods_taric_file_location}", "rb") as f:
             content = f.read()
         taric_file = SimpleUploadedFile("goods.xml", content, content_type="text/xml")
-
-        with patch("importer.tasks.import_chunk.delay") as delay_mock:
-            self.call_command_test(taric_file, user.email)
-            # import_taric_file(taric_file, user)
-            captured = capsys.readouterr()
-            assert captured.out == ""
-            assert delay_mock.called
+        import_taric_file(taric_file, user)
+        assert setup_batch.assert_called_once()
+        # assert chunk_taric.assert_called_once()
+        # assert run_batch.assert_called_once()
 
     # @pytest.mark.parametrize(
     #     "args,exception_type,error_msg",

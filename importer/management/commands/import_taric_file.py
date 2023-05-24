@@ -2,8 +2,6 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import MultipleObjectsReturned
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import BaseCommand
 
@@ -60,10 +58,11 @@ class Command(BaseCommand):
             type=str,
         )
         parser.add_argument(
-            "user_email",
-            help="The email of user to use as the owner of the workbaskets created, and the author of the batch.",
-            type=str,
+            "user",
+            help="The user to use as the owner of the workbaskets created, and the author of the batch.",
+            type=User,
         )
+        # Arguments with flags are seen as optional
         parser.add_argument(
             "-wid",
             "--workbasket-id",
@@ -92,34 +91,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        user = self.validate_user(options["user_email"])
         import_taric_file(
             taric_file=options["taric_file"],
-            user=user,
+            user=options["user"],
             workbasket_id=options["workbasket_id"],
             record_group=options["record_group"],
             status=options["status"],
             partition_scheme_setting=options["partition_scheme"],
         )
-
-    def validate_user(self, user_email):
-        """Validation to check that the user_email corresponds to a user."""
-        # Will refactor function to add pre flight checks call to this later
-
-        try:
-            user = User.objects.get(email=user_email)
-        except ObjectDoesNotExist:
-            self.stdout.write(
-                self.style.ERROR(
-                    f"User email not found. Exiting.",
-                ),
-            )
-            exit(1)
-        except MultipleObjectsReturned:
-            self.stdout.write(
-                self.style.ERROR(
-                    f"Multiple users found. Exiting.",
-                ),
-            )
-            exit(1)
-        return user
