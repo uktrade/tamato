@@ -584,7 +584,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
         NOTE: This methods is invoked by __post_init__ and should not be called directly.
 
-        The commodity collection is sorted on code, suffix and indent.
+        The commodity collection is sorted on code and suffix.
         Note that since this is a commodity tree snapshot,
         multiple versions of the same commodity are not possible.
         """
