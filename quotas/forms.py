@@ -77,6 +77,7 @@ class QuotaUpdateForm(ValidityPeriodForm, forms.ModelForm):
     category = forms.ChoiceField(
         label="Category",
         choices=[],  # set in __init__
+        error_messages={"invalid_choice": "Please select a valid category"},
     )
 
     def __init__(self, *args, **kwargs):
