@@ -1,9 +1,15 @@
 {% set origins %}
     <ul class="govuk-table-list">
         {% for origin in object.quotaordernumberorigin_set.latest_approved().distinct('geographical_area') %}
-            <li>{{origin.geographical_area.area_id}} - {{origin.geographical_area.get_description().description}} </li>
+            <li><a href="{{ url('geo_area-ui-detail', args=[origin.geographical_area.sid]) }}" class="govuk-link">{{origin.geographical_area.area_id}} - {{origin.geographical_area.get_description().description}}</a></li>
         {% endfor %}
     </ul>
+{% endset %}
+{% set exclusions %}
+    {% for exclusion in object.geographical_exclusions %}
+        <a href="{{ url('geo_area-ui-detail', args=[exclusion.sid]) }}" class="govuk-link">{{ exclusion.area_id }} - {{ exclusion.get_description().description }}</a>
+        {% if not loop.last %}, {% endif %}
+    {% endfor %}
 {% endset %}
 
 <div class="quota__core-data govuk-grid-row">
@@ -23,7 +29,7 @@
             },
             {
                 "key": {"text": "Geographical area exclusions"},
-                "value": {"text": object.geographical_exclusion_descriptions|join(", ") if object.geographical_exclusion_descriptions else "-"},
+                "value": {"text": exclusions if object.geographical_exclusions else "-"},
                 "actions": {"items": []}
             },
             {
