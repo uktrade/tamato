@@ -1,6 +1,7 @@
 from datetime import date
 from urllib.parse import urlencode
 
+from django.db import transaction
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.views.generic.edit import FormMixin
@@ -243,13 +244,32 @@ class QuotaUpdateMixin(
     validate_business_rules = (
         business_rules.ON1,
         business_rules.ON2,
-        # uncomment when we add geo area editing
-        # business_rules.ON4,
+        business_rules.ON4,
         business_rules.ON9,
         business_rules.ON11,
         UniqueIdentifyingFields,
         UpdateValidity,
     )
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        object = super().get_result_object(form)
+
+        existing_origins = (
+            models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
+                object.transaction,
+            ).filter(
+                order_number__sid=object.sid,
+            )
+        )
+        for origin in existing_origins:
+            origin.new_version(
+                workbasket=WorkBasket.current(self.request),
+                transaction=object.transaction,
+                order_number=object,
+            )
+
+        return object
 
 
 class QuotaUpdate(
