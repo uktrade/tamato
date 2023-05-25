@@ -126,13 +126,17 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         verbose_name = "quota"
 
 
-class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
+class QuotaOrderNumberOrigin(GetTabURLMixin, TrackedModel, ValidityMixin):
     """The order number origin defines a quota as being available only to
     imports from a specific origin, usually a country or group of countries."""
 
     record_code = "360"
     subrecord_code = "10"
     identifying_fields = ("sid",)
+    url_pattern_name_prefix = "geo_area"
+    url_suffix = ""
+    url_relation_field = "geographical_area"
+
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
