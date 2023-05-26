@@ -161,6 +161,43 @@ def publish_to_api():
                 envelope.publishing_production_failed()
             return False
 
+    def has_been_published() -> bool:
+        """
+        Check if an envelope has been published to Tariff API and attempt to
+        publish it if not.
+
+        Return True if an envelope has been published. Otherwise return False.
+        """
+        if not envelope.staging_published:
+            response = interface.get_envelope_staging(
+                envelope_id=pwb_envelope.envelope_id,
+            )
+            if response.status_code == 200:
+                envelope.staging_published = datetime.now()
+                envelope.save(update_fields=["staging_published"])
+                return True if publish_to_production() else False
+            else:
+                return (
+                    True if publish_to_staging() and publish_to_production() else False
+                )
+        elif not envelope.production_published:
+            response = interface.get_envelope_production(
+                envelope_id=pwb_envelope.envelope_id,
+            )
+            if response.status_code == 200:
+                pwb_envelope.published_to_tariffs_api = datetime.now()
+                pwb_envelope.save(update_fields=["published_to_tariffs_api"])
+                envelope.publishing_succeeded()
+                return True
+            else:
+                return True if publish_to_production() else False
+        else:
+            pwb_envelope.published_to_tariffs_api = datetime.now()
+            pwb_envelope.save(update_fields=["published_to_tariffs_api"])
+            envelope.publishing_succeeded()
+            return True
+
+    # Process unpublished envelopes
     envelopes_to_publish = TAPApiEnvelope.objects.unpublished().order_by("pk")
     if not envelopes_to_publish:
         logger.info("No envelopes to publish")
@@ -176,7 +213,7 @@ def publish_to_api():
 
         pwb_envelope = envelope.packagedworkbaskets.last().envelope
 
-        # Envelopes with these states must be published to staging
+        # Envelopes in these states must be published to staging
         # before being published to production
         if envelope.publishing_state in [
             ApiPublishingState.AWAITING_PUBLISHING,
@@ -187,6 +224,11 @@ def publish_to_api():
                 continue
             else:
                 return
+        # Previous publishing task failed to transition publishing state
+        elif envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING:
+            if has_been_published():
+                continue
+            return
         # Envelope has already been published to staging
         elif publish_to_production():
             continue
