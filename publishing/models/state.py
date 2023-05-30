@@ -53,7 +53,7 @@ class ProcessingState(TextChoices):
 
 
 class ApiPublishingState(TextChoices):
-    """Publishing states of TAPApiEnvelope instances."""
+    """Publishing states of CrownDependenciesEnvelope instances."""
 
     AWAITING_PUBLISHING = (
         "AWAITING_PUBLISHING",
@@ -71,18 +71,12 @@ class ApiPublishingState(TextChoices):
         "Successfully published",
     )
     """Publishing now completed with a successful outcome - envelope published
-    to staging and production API."""
-    FAILED_PUBLISHING_STAGING = (
-        "FAILED_PUBLISHING_STAGING",
-        "Failed publishing staging",
+    to API."""
+    FAILED_PUBLISHING = (
+        "FAILED_PUBLISHING",
+        "Failed publishing",
     )
-    """Publishing now completed with a failure outcome - staging API failed publishing the
-    envelope."""
-    FAILED_PUBLISHING_PRODUCTION = (
-        "FAILED_PUBLISHING_PRODUCTION",
-        "Failed publishing production",
-    )
-    """Publishing now completed with a failure outcome - production API failed publishing the
+    """Publishing now completed with a failure outcome - API failed publishing the
     envelope."""
 
     @classmethod
@@ -90,8 +84,7 @@ class ApiPublishingState(TextChoices):
         """Returns all states that represent a queued  instance, including those
         that are being processed."""
         return (
-            cls.FAILED_PUBLISHING_PRODUCTION,
-            cls.FAILED_PUBLISHING_STAGING,
+            cls.FAILED_PUBLISHING,
             cls.AWAITING_PUBLISHING,
             cls.CURRENTLY_PUBLISHING,
         )

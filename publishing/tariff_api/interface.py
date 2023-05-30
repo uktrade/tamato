@@ -10,19 +10,11 @@ from publishing.tariff_api.client import TariffAPIClient
 
 class TariffAPIBase(ABC):
     @abstractmethod
-    def get_envelope_staging(self, envelope_id: EnvelopeId) -> Response:
+    def get_envelope(self, envelope_id: EnvelopeId) -> Response:
         raise NotImplementedError
 
     @abstractmethod
-    def get_envelope_production(self, envelope_id: EnvelopeId) -> Response:
-        raise NotImplementedError
-
-    @abstractmethod
-    def post_envelope_staging(self, envelope: Envelope) -> Response:
-        raise NotImplementedError
-
-    @abstractmethod
-    def post_envelope_production(self, envelope: Envelope) -> Response:
+    def post_envelope(self, envelope: Envelope) -> Response:
         raise NotImplementedError
 
 
@@ -50,20 +42,12 @@ class TariffAPIStubbed(TariffAPIBase):
             response.reason = "200 OK File uploaded"
         return response
 
-    def get_envelope_staging(self, envelope_id: EnvelopeId = None) -> Response:
-        """Get envelope from Tariff API staging environment."""
+    def get_envelope(self, envelope_id: EnvelopeId = None) -> Response:
+        """Get envelope from Tariff API."""
         return self.stubbed_get_response(envelope_id=envelope_id)
 
-    def get_envelope_production(self, envelope_id: EnvelopeId = None) -> Response:
-        """Get envelope from Tariff API production environment."""
-        return self.stubbed_get_response(envelope_id=envelope_id)
-
-    def post_envelope_staging(self, envelope: Envelope = None) -> Response:
-        """Upload envelope to Tariff API staging environment."""
-        return self.stubbed_post_response(envelope=envelope)
-
-    def post_envelope_production(self, envelope: Envelope = None) -> Response:
-        """Upload envelope to Tariff API production environment."""
+    def post_envelope(self, envelope: Envelope = None) -> Response:
+        """Upload envelope to Tariff API."""
         return self.stubbed_post_response(envelope=envelope)
 
 
@@ -72,18 +56,10 @@ class TariffAPI(TariffAPIBase):
         super().__init__()
         self.client = TariffAPIClient()
 
-    def get_envelope_staging(self, envelope_id: EnvelopeId) -> Response:
-        """Get envelope from Tariff API staging environment."""
-        return self.client.get_envelope_staging(envelope_id=envelope_id)
+    def get_envelope(self, envelope_id: EnvelopeId) -> Response:
+        """Get envelope from Tariff API."""
+        return self.client.get_envelope(envelope_id=envelope_id)
 
-    def get_envelope_production(self, envelope_id: EnvelopeId) -> Response:
-        """Get envelope from Tariff API production environment."""
-        return self.client.get_envelope_production(envelope_id=envelope_id)
-
-    def post_envelope_staging(self, envelope: Envelope) -> Response:
-        """Upload envelope to Tariff API staging environment."""
-        return self.client.post_envelope_staging(envelope=envelope)
-
-    def post_envelope_production(self, envelope: Envelope) -> Response:
-        """Upload envelope to Tariff API production environment."""
-        return self.client.post_envelope_production(envelope=envelope)
+    def post_envelope(self, envelope: Envelope) -> Response:
+        """Upload envelope to Tariff API."""
+        return self.client.post_envelope(envelope=envelope)

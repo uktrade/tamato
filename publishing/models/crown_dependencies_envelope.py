@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def save_after(func):
-    """Decorator used to save TAPApiEnvelope instances after a state
+    """Decorator used to save CrownDependenciesEnvelope instances after a state
     transition."""
 
     @atomic
@@ -44,16 +44,16 @@ class ApiEnvelopeInvalidWorkBasketStatus(Exception):
     pass
 
 
-class TAPApiEnvelopeManager(Manager):
+class CrownDependenciesEnvelopeManager(Manager):
     @atomic
-    def create(self, packaged_work_basket, **kwargs):
+    def create(self, packaged_work_basket: PackagedWorkBasket, **kwargs):
         """
         Create a new instance, from the packaged workbasket successfully
         processed.
 
          :param packaged_work_basket: packaged workbasket to publish.
         @throws ApiEnvelopeInvalidWorkBasketStatus if packaged workbasket isn't Successfully processed
-        @throws ApiEnvelopeAlreadyExists if packaged workbasket already has a TAPApiEnvelope
+        @throws ApiEnvelopeAlreadyExists if packaged workbasket already has a CrownDependenciesEnvelope
         @throws ApiEnvelopeUnexpectedEnvelopeSequence if packaged workbasket isn't expected envelope id
         """
         if (
@@ -61,7 +61,7 @@ class TAPApiEnvelopeManager(Manager):
             != ProcessingState.SUCCESSFULLY_PROCESSED
         ):
             raise ApiEnvelopeInvalidWorkBasketStatus(
-                "Unable to create TAPApiEnvelope from PackagedWorkBasket instance "
+                "Unable to create CrownDependenciesEnvelope from PackagedWorkBasket instance "
                 f"PackagedWorkBasket status not successful, {packaged_work_basket.processing_state} status.",
             )
 
@@ -81,11 +81,11 @@ class TAPApiEnvelopeManager(Manager):
                 Max("envelope__envelope_id"),
             )["envelope__envelope_id__max"]
         )
-        """Join PackagedWorkBasket with Envelope and TAPApiEnvelope model
-        selecting objects Where an Envelope model exists and the
-        published_to_tariffs_api field is not null Or Where a TAPApiEnvelope is
-        not null Then select the max value for ther envelope_id field in the
-        Envelope instance."""
+        """Join PackagedWorkBasket with Envelope and CrownDependenciesEnvelope
+        model selecting objects Where an Envelope model exists and the
+        published_to_tariffs_api field is not null Or Where a
+        CrownDependenciesEnvelope is not null Then select the max value for ther
+        envelope_id field in the Envelope instance."""
 
         if packaged_work_basket.envelope.envelope_id[2:] == "0001":
             year = int(packaged_work_basket.envelope.envelope_id[:2])
@@ -99,7 +99,7 @@ class TAPApiEnvelopeManager(Manager):
 
         if previous_id and previous_id != expected_previous_id:
             raise ApiEnvelopeUnexpectedEnvelopeSequence(
-                "Unable to create TAPApiEnvelope from PackagedWorkBasket instance "
+                "Unable to create CrownDependenciesEnvelope from PackagedWorkBasket instance "
                 f"Envelope Id {packaged_work_basket.envelope.envelope_id} is not the next not expected envelope",
             )
         envelope = super().create(**kwargs)
@@ -107,7 +107,7 @@ class TAPApiEnvelopeManager(Manager):
         return envelope
 
 
-class ApiEnvelopeQuerySet(QuerySet):
+class CrownDependenciesEnvelopeQuerySet(QuerySet):
     def awaiting_publishing(self):
         return self.filter(
             publishing_state=ApiPublishingState.AWAITING_PUBLISHING,
@@ -115,8 +115,7 @@ class ApiEnvelopeQuerySet(QuerySet):
 
     def unpublished(self):
         return (
-            self.failed_publishing_staging()
-            | self.failed_publishing_production()
+            self.failed_publishing()
             | self.awaiting_publishing()
             | self.currently_publishing()
         )
@@ -131,23 +130,15 @@ class ApiEnvelopeQuerySet(QuerySet):
             publishing_state=ApiPublishingState.SUCCESSFULLY_PUBLISHED,
         )
 
-    def failed_publishing_staging(self):
-        return self.filter(
-            publishing_state=ApiPublishingState.FAILED_PUBLISHING_STAGING,
-        )
-
-    def failed_publishing_production(self):
-        return self.filter(
-            publishing_state=ApiPublishingState.FAILED_PUBLISHING_PRODUCTION,
-        )
-
     def failed_publishing(self):
-        return self.failed_publishing_staging() | self.failed_publishing_production()
+        return self.filter(
+            publishing_state=ApiPublishingState.FAILED_PUBLISHING,
+        )
 
 
-class TAPApiEnvelope(TimestampedMixin):
+class CrownDependenciesEnvelope(TimestampedMixin):
     """
-    Represents an API packaged envelope.
+    Represents a crown dependencies envelope.
 
     This model contains the Envelope upload status to the Channel islands API and it's publishing times.
 
@@ -159,9 +150,11 @@ class TAPApiEnvelope(TimestampedMixin):
     class Meta:
         ordering = ("pk",)
 
-    objects: ApiEnvelopeQuerySet = TAPApiEnvelopeManager.from_queryset(
-        ApiEnvelopeQuerySet,
-    )()
+    objects: CrownDependenciesEnvelopeQuerySet = (
+        CrownDependenciesEnvelopeManager.from_queryset(
+            CrownDependenciesEnvelopeQuerySet,
+        )()
+    )
 
     publishing_state = FSMField(
         default=ApiPublishingState.AWAITING_PUBLISHING,
@@ -171,30 +164,25 @@ class TAPApiEnvelope(TimestampedMixin):
         editable=False,
     )
 
-    production_published = DateTimeField(
-        null=True,
-        blank=True,
-        default=None,
-    )
-    staging_published = DateTimeField(
+    published = DateTimeField(
         null=True,
         blank=True,
         default=None,
     )
 
     def __repr__(self):
-        return f'<TAPApiEnvelope: id="{self.pk}", publishing_state={self.publishing_state}>'
+        return f'<CrownDependenciesEnvelope: id="{self.pk}", publishing_state={self.publishing_state}>'
 
-    def previous_envelope(self) -> ApiEnvelopeQuerySet:
-        """Get the previous `TAPApiEnvelope` by order of `pk`."""
+    def previous_envelope(self) -> CrownDependenciesEnvelopeQuerySet:
+        """Get the previous `CrownDependenciesEnvelope` by order of `pk`."""
         try:
-            return TAPApiEnvelope.objects.get(pk=self.pk - 1)
-        except TAPApiEnvelope.DoesNotExist:
+            return CrownDependenciesEnvelope.objects.get(pk=self.pk - 1)
+        except CrownDependenciesEnvelope.DoesNotExist:
             return None
 
     def can_publish(self) -> bool:
-        """Conditional check if the previous `TAPApiEnvelope` has been
-        `SUCCESSFULLY_PUBLISHED`."""
+        """Conditional check if the previous `CrownDependenciesEnvelope` has
+        been `SUCCESSFULLY_PUBLISHED`."""
         previous_envelope = self.previous_envelope()
         if (
             previous_envelope
@@ -216,48 +204,33 @@ class TAPApiEnvelope(TimestampedMixin):
         custom={"label": "Begin publishing"},
     )
     def begin_publishing(self):
-        """Begin publishing a `TAPApiEnvelope` to the Tariff API."""
+        """Begin publishing a `CrownDependenciesEnvelope` to the Tariff API."""
 
     @save_after
     @transition(
         field=publishing_state,
         source=[
-            ApiPublishingState.FAILED_PUBLISHING_STAGING,
-            ApiPublishingState.FAILED_PUBLISHING_PRODUCTION,
+            ApiPublishingState.FAILED_PUBLISHING,
             ApiPublishingState.CURRENTLY_PUBLISHING,
         ],
         target=ApiPublishingState.SUCCESSFULLY_PUBLISHED,
         custom={"label": "Publishing succeeded"},
     )
     def publishing_succeeded(self):
-        """Publishing a `TAPApiEnvelope` to the Tariff API completed with a
-        successful outcome."""
-        self.production_published = datetime.now()
+        """Publishing a `CrownDependenciesEnvelope` to the Tariff API completed
+        with a successful outcome."""
+        self.published = datetime.now()
 
     @save_after
     @transition(
         field=publishing_state,
         source=ApiPublishingState.CURRENTLY_PUBLISHING,
-        target=ApiPublishingState.FAILED_PUBLISHING_STAGING,
-        custom={"label": "Publishing to staging failed"},
+        target=ApiPublishingState.FAILED_PUBLISHING,
+        custom={"label": "Publishing failed"},
     )
-    def publishing_staging_failed(self):
-        """Publishing a `TAPApiEnvelope` to the Tariff API staging environment
-        completed with a failed outcome."""
-
-    @save_after
-    @transition(
-        field=publishing_state,
-        source=[
-            ApiPublishingState.FAILED_PUBLISHING_STAGING,
-            ApiPublishingState.CURRENTLY_PUBLISHING,
-        ],
-        target=ApiPublishingState.FAILED_PUBLISHING_PRODUCTION,
-        custom={"label": "Publishing to production failed"},
-    )
-    def publishing_production_failed(self):
-        """Publishing a `TAPApiEnvelope` to the Tariff API production
-        environment completed with a failed outcome."""
+    def publishing_failed(self):
+        """Publishing a `CrownDependenciesEnvelope` to the Tariff API completed
+        with a failed outcome."""
 
     @atomic
     def refresh_from_db(self, using=None, fields=None):

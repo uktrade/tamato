@@ -61,7 +61,7 @@ def refresh_after(func):
 
     This ensures a transitioned instance is always reload, which is necessary
     when another action may update the packaged workbasket for example when a
-    TAPApiEnvelope is created.
+    CrownDependenciesEnvelope is created.
     """
 
     @atomic
@@ -352,7 +352,7 @@ class PackagedWorkBasket(TimestampedMixin):
         related_name="packagedworkbaskets",
     )
     tap_api_envelope = ForeignKey(
-        "publishing.TAPApiEnvelope",
+        "publishing.CrownDependenciesEnvelope",
         null=True,
         on_delete=SET_NULL,
         editable=False,
@@ -449,19 +449,21 @@ class PackagedWorkBasket(TimestampedMixin):
     def create_api_publishing_envelope(cls):
         """Class method for the packaged workbasket that will trigger the next
         available packaged workbasket which is Successfully processed and does
-        not have a TAPApiEnvelope."""
+        not have a CrownDependenciesEnvelope."""
         unpublished = cls.objects.get_next_unpublished_to_api()
         if unpublished:
             from publishing import models as publishing_models
 
-            tap_api_envelope = publishing_models.TAPApiEnvelope.objects.create(
-                packaged_work_basket=unpublished,
+            tap_api_envelope = (
+                publishing_models.CrownDependenciesEnvelope.objects.create(
+                    packaged_work_basket=unpublished,
+                )
             )
             unpublished.tap_api_envelope = tap_api_envelope
             unpublished.save()
         else:
             logger.info(
-                "Attempted to create TAPApiEnvelope, but no unpublished, successfully "
+                "Attempted to create CrownDependenciesEnvelope, but no unpublished, successfully "
                 "packaged workbasket exists.",
             )
 
