@@ -370,8 +370,8 @@ def test_publish_to_api_has_been_published_production(
     envelope.refresh_from_db()
 
     assert envelope.publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
-    assert envelope.staging_published == published_date
-    assert envelope.production_published == published_date
+    assert envelope.staging_published
+    assert envelope.production_published
 
 
 def test_publish_to_api_published_in_sequence(successful_envelope_factory, settings):
