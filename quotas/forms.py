@@ -67,6 +67,12 @@ class QuotaDefinitionFilterForm(forms.Form):
 
 
 class QuotaUpdateForm(ValidityPeriodForm, forms.ModelForm):
+    CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
+    SAFEGUARD_HELP_TEXT = (
+        "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
+    )
+    START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as this may cause issues with CDS downstream"
+
     class Meta:
         model = models.QuotaOrderNumber
         fields = [
@@ -75,7 +81,7 @@ class QuotaUpdateForm(ValidityPeriodForm, forms.ModelForm):
         ]
 
     category = forms.ChoiceField(
-        label="Category",
+        label="",
         choices=[],  # set in __init__
         error_messages={"invalid_choice": "Please select a valid category"},
     )
@@ -87,12 +93,13 @@ class QuotaUpdateForm(ValidityPeriodForm, forms.ModelForm):
                 attrs={"disabled": True},
                 choices=validators.QuotaCategory.choices,
             )
-            self.fields[
-                "category"
-            ].help_text = "Once safeguard has been set and published as the quota category, this can’t be changed"
+            self.fields["category"].help_text = self.SAFEGUARD_HELP_TEXT
         else:
             self.fields["category"].choices = validators.QuotaCategoryEditing.choices
+            self.fields["category"].help_text = self.CATEGORY_HELP_TEXT
+
         self.fields["category"].initial = self.instance.category
+        self.fields["start_date"].help_text = self.START_DATE_HELP_TEXT
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
