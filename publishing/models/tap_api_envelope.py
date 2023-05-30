@@ -118,6 +118,7 @@ class ApiEnvelopeQuerySet(QuerySet):
             self.failed_publishing_staging()
             | self.failed_publishing_production()
             | self.awaiting_publishing()
+            | self.currently_publishing()
         )
 
     def currently_publishing(self):

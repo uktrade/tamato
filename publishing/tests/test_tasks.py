@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from datetime import timezone
 from unittest import mock
 
 import pytest
@@ -227,8 +228,8 @@ def test_publish_to_api_failed_publishing_staging_to_successfully_published(
     successful_envelope_factory,
     settings,
 ):
-    """Test that an envelope with state FAILED_PUBLISHING_STAGING can be
-    published to the Tariff API."""
+    """Test that an envelope in state FAILED_PUBLISHING_STAGING can be published
+    to the Tariff API."""
 
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     successful_envelope_factory()
@@ -255,7 +256,7 @@ def test_publish_to_api_failed_publishing_production_to_successfully_published(
     successful_envelope_factory,
     settings,
 ):
-    """Test that an envelope with state FAILED_PUBLISHING_PRODUCTION can be
+    """Test that an envelope in state FAILED_PUBLISHING_PRODUCTION can be
     published to the Tariff API."""
 
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
@@ -278,6 +279,99 @@ def test_publish_to_api_failed_publishing_production_to_successfully_published(
     assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
     assert envelope[0].production_published
     assert pwb.envelope.published_to_tariffs_api
+
+
+def test_publish_to_api_currently_publishing_to_successfully_published(
+    successful_envelope_factory,
+    settings,
+):
+    """Test that an envelope in state CURRENTLY_PUBLISHING can be published to
+    the Tariff API."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    successful_envelope_factory()
+
+    envelope = TAPApiEnvelope.objects.all()
+    assert envelope.count() == 1
+
+    envelope[0].begin_publishing()
+    assert envelope[0].publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
+
+    publish_to_api()
+    envelope[0].refresh_from_db()
+
+    assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+    assert envelope[0].production_published
+
+
+def test_publish_to_api_has_been_published_staging(
+    successful_envelope_factory,
+    settings,
+):
+    """Test that an envelope that has already been published to staging but is
+    stuck in state CURRENTLY_PUBLISHING can be published to production and
+    updated accordingly."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    successful_envelope_factory()
+
+    envelope = TAPApiEnvelope.objects.first()
+
+    envelope.begin_publishing()
+    assert envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
+
+    published_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
+    envelope.staging_published = published_date
+    envelope.save(update_fields=["staging_published"])
+
+    response = Response()
+    response.status_code = 200
+    with mock.patch.object(
+        TariffAPIStubbed,
+        "get_envelope_staging",
+        return_value=response,
+    ):
+        publish_to_api()
+    envelope.refresh_from_db()
+
+    assert envelope.publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+    assert envelope.staging_published == published_date
+    assert envelope.production_published
+
+
+def test_publish_to_api_has_been_published_production(
+    successful_envelope_factory,
+    settings,
+):
+    """Test that an envelope that has already been published to production but
+    is stuck in state CURRENTLY_PUBLISHING can be updated accordingly."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    successful_envelope_factory()
+
+    envelope = TAPApiEnvelope.objects.first()
+
+    envelope.begin_publishing()
+    assert envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
+
+    published_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
+    envelope.staging_published = published_date
+    envelope.production_published = published_date
+    envelope.save(update_fields=["staging_published", "production_published"])
+
+    response = Response()
+    response.status_code = 200
+    with mock.patch.object(
+        TariffAPIStubbed,
+        "get_envelope_production",
+        return_value=response,
+    ):
+        publish_to_api()
+    envelope.refresh_from_db()
+
+    assert envelope.publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+    assert envelope.staging_published
+    assert envelope.production_published
 
 
 def test_publish_to_api_published_in_sequence(successful_envelope_factory, settings):
