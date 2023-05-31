@@ -1,4 +1,6 @@
+from django import forms
 from django.contrib import admin
+from django.contrib.admin.widgets import AdminTextInputWidget
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
@@ -288,11 +290,41 @@ class LoadingReportAdmin(
         return self.workbasket_id_link(pwb.workbasket)
 
 
+class CrownDependenciesEnvelopeAdminForm(forms.ModelForm):
+    class Meta:
+        model = CrownDependenciesEnvelope
+        fields = [
+            "published",
+            "terminate_publishing_task",
+        ]
+        readonly_fields = (
+            "publishing_task_id",
+            "publishing_task_status",
+        )
+
+    publishing_task_status = forms.CharField(
+        required=False,
+        widget=AdminTextInputWidget(),
+    )
+    terminate_publishing_task = forms.BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance:
+            self.fields["publishing_task_id"].disabled = True
+            self.fields["publishing_task_status"].disabled = True
+            self.fields[
+                "publishing_task_status"
+            ].initial = self.instance.publishing_task_status
+
+
 class CrownDependenciesEnvelopeAdmin(
     PackagedWorkBasketAdminMixin,
     WorkBasketAdminMixin,
     admin.ModelAdmin,
 ):
+    form = CrownDependenciesEnvelopeAdminForm
     ordering = ["-pk"]
     list_display = (
         "id",
@@ -303,6 +335,25 @@ class CrownDependenciesEnvelopeAdmin(
         "workbasket_id",
     )
     list_filter = ("publishing_state",)
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": ("published",),
+            },
+        ),
+        (
+            "Publishing task options",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "publishing_task_id",
+                    "publishing_task_status",
+                    "terminate_publishing_task",
+                ),
+            },
+        ),
+    )
 
     def envelope_id(self, obj):
         pwb = obj.packagedworkbaskets.last()
@@ -325,6 +376,15 @@ class CrownDependenciesEnvelopeAdmin(
             return "Missing workbasket!"
 
         return self.workbasket_id_link(pwb.workbasket)
+
+    def save_model(self, request, instance, form, change):
+        super().save_model(request, instance, form, change)
+
+        terminate_publishing_task = form.cleaned_data.get("terminate_publishing_task")
+        if terminate_publishing_task:
+            instance.terminate_publishing_task()
+
+        return instance
 
 
 admin.site.register(Envelope, EnvelopeAdmin)

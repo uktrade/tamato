@@ -140,6 +140,9 @@ def publish_to_api():
                 )
                 raise StopIteration
 
+            envelope.publishing_task_id = publish_to_api.request.id
+            envelope.save(update_fields=["publishing_task_id"])
+
             pwb_envelope = envelope.packagedworkbaskets.last().envelope
 
             if envelope.publishing_state in [
