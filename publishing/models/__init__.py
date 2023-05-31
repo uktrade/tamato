@@ -1,4 +1,5 @@
 """Models used by all apps in the project."""
+
 from publishing.models.crown_dependencies_envelope import CrownDependenciesEnvelope
 from publishing.models.envelope import Envelope
 from publishing.models.envelope import EnvelopeCurrentlyProccessing
