@@ -580,7 +580,11 @@ class FormSet(forms.BaseFormSet):
         self.initial = initial
 
         if initial:
-            num_initial = len(initial)
+            num_initial = (
+                len(initial)
+                if len(initial) == len(formset_initial.values())
+                else len(formset_initial.values())
+            )
         else:
             num_initial = len(formset_initial.values())
 

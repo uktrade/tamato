@@ -221,6 +221,9 @@ if DEBUG is False:
         {
             "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
         },
+        {
+            "NAME": "common.validators.PasswordPolicyValidator",
+        },
     ]
 
 if SSO_ENABLED:
@@ -459,6 +462,27 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+CELERY_ROUTES = {
+    "workbaskets.tasks.call_check_workbasket_sync": {
+        "queue": "rule-check",
+    },
+    "workbaskets.tasks.check_workbasket": {
+        "queue": "rule-check",
+    },
+    "workbaskets.tasks.transition": {
+        "queue": "standard",
+    },
+    "exporter.sqlite.tasks.*": {
+        "queue": "standard",
+    },
+    re.compile(r"(checks)\.tasks\..*"): {
+        "queue": "rule-check",
+    },
+    re.compile(r"(exporter|importer|notifications|publishing)\.tasks\..*"): {
+        "queue": "standard",
+    },
+}
+
 SQLITE_EXCLUDED_APPS = [
     "checks",
 ]
@@ -668,9 +692,9 @@ else:
 
 
 # ClamAV
-CLAM_AV_USERNAME = os.environ.get("CLAM_AV_USERNAME")
-CLAM_AV_PASSWORD = os.environ.get("CLAM_AV_PASSWORD")
-CLAM_AV_DOMAIN = os.environ.get("CLAM_AV_DOMAIN")
+CLAM_AV_USERNAME = os.environ.get("CLAM_AV_USERNAME", "")
+CLAM_AV_PASSWORD = os.environ.get("CLAM_AV_PASSWORD", "")
+CLAM_AV_DOMAIN = os.environ.get("CLAM_AV_DOMAIN", "")
 
 
 FILE_UPLOAD_HANDLERS = (

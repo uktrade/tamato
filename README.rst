@@ -8,103 +8,9 @@ browse and make changes to the UK Global Tariff, and submit these changes to HMR
 
 The tool is available at https://www.manage-trade-tariffs.trade.gov.uk/
 
-Getting started
----------------
 
-Prerequisites:
-    - A local instance of the tool can be run using `Docker <https://www.docker.com/>`__.
-    - A database dump
-
-To get a database dump, please contact the `TAP team`_.
-
-.. _`TAP team`: mailto:stephen.corder@trade.gov.uk?subject=TaMaTo+database+dump+request
-
-Download the codebase:
-
-.. code:: sh
-
-    $ git clone git@github.com:uktrade/tamato
-    $ cd tamato
-
-Build and Run for the first time:
-
-.. code:: sh
-
-    $ cp sample.env .env
-        # Not used will be used for specific local docker stuff
-        # cp docker-compose.override.yml.example docker-compose.override.yml
-
-    # to overwrite default db dump name pass in DUMP_FILE=db_dump.sql
-    $ make docker-first-use
-        # take a tea break to import the db dump then
-        # enter super user details when prompted 
-        # and visit localhost:8000/ when the containers are up
-
-Run the tamato app every other time:
-
- .. code:: sh
-
-    $ make docker-build
-    $ make docker-up
-
-Go to http://localhost:8000/ in your web browser to view the app
-
-Import from a dump of the database:
-
-.. code:: sh
-
-    # to overwrite default db dump name pass in DUMP_FILE=tamato_db.sql
-    # this overwrites the default file set in the makefile variable
-    $ make docker-db-dump
-
-To get a database dump, please contact the `TAP team`_.
-
-.. _`TAP team`: mailto:stephen.corder@trade.gov.uk?subject=TaMaTo+database+dump+request
-
-Sometimes docker gets clogged up and we need to clean it:
-
-.. code:: sh
-
-    # cleans up images & volumes
-    $ make docker-clean
-    # cleans up everything including the cache which can get filled up because of db dumps
-    $ make docker-deep-clean
-
-Run database migrations:
-
-.. code:: sh
-
-    $ make docker-migrate
-
-Create a superuser, to enable logging in to the app:
-
-.. code:: sh
-
-    $ make docker-superuser
-
-Run tests from within a docker container:
-
-.. code:: sh
-
-    $ make docker-test
-    $ make docker-test-fast
-
-DOCKER_RUN=run --rm by default but can be set to exec if you have containers up and running
-General commands:
-
-.. code:: sh
-
-    $ make docker-down # brings down containers
-    $ make docker-up-db # brings up db in the background
-    $ make docker-makemigrations # runs django makemigrations
-    $ make docker-checkmigrations # runs django checkmigrations
-    $ make docker-bash # bash shell in tamato container
-    $ make docker-django-shell # django shell in tamato container
-    
-
-
-Development environment
------------------------
+Development environment setup
+-----------------------------
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -224,6 +130,136 @@ To run tests use the following command:
 
 For more detailed information on running tests, see :doc:`testing`
 
+
+Dockerisation
+-------------
+
+Fully dockerised service
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Prerequisites:
+    - A local instance of the tool can be run using `Docker <https://www.docker.com/>`__.
+    - A database dump - contact the TAP team for a database snapshot.
+
+
+Download the codebase:
+
+.. code:: sh
+
+    $ git clone git@github.com:uktrade/tamato
+    $ cd tamato
+
+Build and Run for the first time:
+
+.. code:: sh
+
+    $ cp sample.env .env
+        # Not used will be used for specific local docker stuff
+        # cp docker-compose.override.yml.example docker-compose.override.yml
+
+    # to overwrite default db dump name pass in DUMP_FILE=db_dump.sql
+    $ make docker-first-use
+        # take a tea break to import the db dump then
+        # enter super user details when prompted 
+        # and visit localhost:8000/ when the containers are up
+
+Run the tamato app every other time:
+
+ .. code:: sh
+
+    $ make docker-build
+    $ make docker-up
+
+Go to http://localhost:8000/ in your web browser to view the app
+
+Import from a dump of the database:
+
+.. code:: sh
+
+    # to overwrite default db dump name pass in DUMP_FILE=tamato_db.sql
+    # this overwrites the default file set in the makefile variable
+    $ make docker-db-dump
+
+Sometimes docker gets clogged up and we need to clean it:
+
+.. code:: sh
+
+    # cleans up images & volumes
+    $ make docker-clean
+    # cleans up everything including the cache which can get filled up because of db dumps
+    $ make docker-deep-clean
+
+Run database migrations:
+
+.. code:: sh
+
+    $ make docker-migrate
+
+Create a superuser, to enable logging in to the app:
+
+.. code:: sh
+
+    $ make docker-superuser
+
+Run tests from within a docker container:
+
+.. code:: sh
+
+    $ make docker-test
+    $ make docker-test-fast
+
+DOCKER_RUN=run --rm by default but can be set to exec if you have containers up and running
+General commands:
+
+.. code:: sh
+
+    $ make docker-down # brings down containers
+    $ make docker-up-db # brings up db in the background
+    $ make docker-makemigrations # runs django makemigrations
+    $ make docker-checkmigrations # runs django checkmigrations
+    $ make docker-bash # bash shell in tamato container
+    $ make docker-django-shell # django shell in tamato container
+
+
+Hybrid host + container approach
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You may prefer a hybrid approach to running Tamato, say, executing the Redis
+service and Celery workers in containers and the remaining services in the host
+environment. To do so, create a `docker-compose.override.yml` file to allow
+loading environment settings that are specific to this configuration:
+
+.. code:: yml
+
+    version: '3'
+
+    services:
+    celery:
+        env_file: 
+        - .env
+        - settings/envs/docker.env
+        - settings/envs/docker.override.env
+
+    rule-check-celery:
+        env_file: 
+        - .env
+        - settings/envs/docker.env
+        - settings/envs/docker.override.env
+
+Create a `docker.override.env` file:
+
+.. code::
+
+    # Point containerised services at the host environment hosted DB.
+    DATABASE_URL=postgres://host.docker.internal:5432/tamato
+
+Now start dockerised instances of Redis and the Celery worker services:
+
+.. code:: sh
+
+    $ docker-compose up -d celery-redis celery rule-check-celery
+
+
 Using the importer
 ------------------
 
@@ -281,7 +317,10 @@ Open another terminal and start a Celery worker:
 
 .. code:: sh
 
-    celery -A common.celery worker --loglevel=info
+    celery -A common.celery worker --loglevel=info -Q standard,rule-check
+    # The celery worker can be run as two workers for each queue 
+    celery -A common.celery worker --loglevel=info -Q standard
+    celery -A common.celery worker --loglevel=info -Q rule-check
 
 To monitor celery workers or individual tasks run:
 
