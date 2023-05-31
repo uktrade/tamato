@@ -19,7 +19,9 @@ def test_send_emails(send_email_notification):
     enrolled_user = factories.NotifiedUserFactory.create()
     unenrolled_user = factories.NotifiedUserFactory.create(enrol_packaging=False)
     template_id = uuid4()
-    tasks.send_emails.apply(kwargs={"template_id": template_id})
+    tasks.send_emails.apply(
+        kwargs={"template_id": template_id, "email_type": "packaging"},
+    )
 
     send_email_notification.assert_called_once_with(
         email_address=enrolled_user.email,

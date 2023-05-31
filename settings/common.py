@@ -696,6 +696,8 @@ MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES = int(
 READY_FOR_CDS_TEMPLATE_ID = os.environ.get("READY_FOR_CDS_TEMPLATE_ID")
 CDS_ACCEPTED_TEMPLATE_ID = os.environ.get("CDS_ACCEPTED_TEMPLATE_ID")
 CDS_REJECTED_TEMPLATE_ID = os.environ.get("CDS_REJECTED_TEMPLATE_ID")
+API_PUBLISH_SUCCESS_TEMPLATE_ID = os.environ.get("API_PUBLISH_SUCCESS_TEMPLATE_ID")
+API_PUBLISH_FAILED_TEMPLATE_ID = os.environ.get("API_PUBLISH_FAILED_TEMPLATE_ID")
 
 # Base service URL - required when constructing an absolute TAP URL to a page
 # from a Celery task where no HTTP request object is available.

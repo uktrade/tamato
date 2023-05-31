@@ -27,6 +27,9 @@ from django_fsm import transition
 from common.models.mixins import TimestampedMixin
 from notifications.models import NotificationLog
 from notifications.tasks import send_emails
+from publishing.models.decorators import refresh_after
+from publishing.models.decorators import save_after
+from publishing.models.decorators import skip_notifications_if_disabled
 from publishing.models.state import ProcessingState
 from publishing.tasks import schedule_create_xml_envelope_file
 from workbaskets.validators import WorkflowStatus
@@ -34,43 +37,6 @@ from workbaskets.validators import WorkflowStatus
 logger = logging.getLogger(__name__)
 
 # Decorators
-
-
-def save_after(func):
-    """
-    Decorator used to save PackagedWorkBaskert instances after a state
-    transition.
-
-    This ensures a transitioned instance is always saved, which is necessary due
-    to the DB updates that occur as part of a transition.
-    """
-
-    @atomic
-    def inner(self, *args, **kwargs):
-        result = func(self, *args, **kwargs)
-        self.save()
-        return result
-
-    return inner
-
-
-def refresh_after(func):
-    """
-    Decorator used to refresh the PackagedWorkBasket instance after a state
-    transition.
-
-    This ensures a transitioned instance is always reload, which is necessary
-    when another action may update the packaged workbasket for example when a
-    TAPApiEnvelope is created.
-    """
-
-    @atomic
-    def inner(self, *args, **kwargs):
-        result = func(self, *args, **kwargs)
-        self.refresh_from_db()
-        return result
-
-    return inner
 
 
 def pop_top_after(func):
@@ -152,29 +118,6 @@ def create_envelope_on_new_top(func):
             PackagedWorkBasket.create_envelope_for_top()
 
         return result
-
-    return inner
-
-
-def skip_notifications_if_disabled(func):
-    """Decorator used to wrap notification issuing functions, ensuring
-    notifications are not sent when settings.ENABLE_PACKAGING_NOTIFICATIONS is
-    False."""
-
-    def inner(self, *args, **kwargs):
-        if not settings.ENABLE_PACKAGING_NOTIFICATIONS:
-            logger.info(
-                "Skipping ready for processing notifications - "
-                "settings.ENABLE_PACKAGING_NOTIFICATIONS="
-                f"{settings.ENABLE_PACKAGING_NOTIFICATIONS}",
-            )
-            return
-        logger.info(
-            "Sending ready for processing notifications - "
-            "settings.ENABLE_PACKAGING_NOTIFICATIONS="
-            f"{settings.ENABLE_PACKAGING_NOTIFICATIONS}",
-        )
-        return func(self, *args, **kwargs)
 
     return inner
 
@@ -628,6 +571,7 @@ class PackagedWorkBasket(TimestampedMixin):
         send_emails.delay(
             template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
             personalisation=personalisation,
+            email_type="packaging",
         )
 
     def notify_processing_completed(self, template_id):
@@ -652,6 +596,7 @@ class PackagedWorkBasket(TimestampedMixin):
         send_emails.delay(
             template_id=template_id,
             personalisation=personalisation,
+            email_type="packaging",
         )
 
     @skip_notifications_if_disabled

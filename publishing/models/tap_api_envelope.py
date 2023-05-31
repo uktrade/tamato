@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from django.conf import settings
 from django.db.models import DateTimeField
 from django.db.models import Manager
 from django.db.models import Max
@@ -11,28 +12,15 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
+from notifications.tasks import send_emails
 from publishing.models import ApiPublishingState
 from publishing.models import Envelope
 from publishing.models import PackagedWorkBasket
 from publishing.models import ProcessingState
+from publishing.models.decorators import save_after
+from publishing.models.decorators import skip_notifications_if_disabled
 
 logger = logging.getLogger(__name__)
-
-
-# Decorators
-
-
-def save_after(func):
-    """Decorator used to save TAPApiEnvelope instances after a state
-    transition."""
-
-    @atomic
-    def inner(self, *args, **kwargs):
-        result = func(self, *args, **kwargs)
-        self.save()
-        return result
-
-    return inner
 
 
 # Exceptions
@@ -233,6 +221,7 @@ class TAPApiEnvelope(TimestampedMixin):
         """Publishing a `TAPApiEnvelope` to the Tariff API completed with a
         successful outcome."""
         self.production_published = datetime.now()
+        self.notify_publishing_success()
 
     @save_after
     @transition(
@@ -258,6 +247,35 @@ class TAPApiEnvelope(TimestampedMixin):
     def publishing_production_failed(self):
         """Publishing a `TAPApiEnvelope` to the Tariff API production
         environment completed with a failed outcome."""
+        self.notify_publishing_failed()
+
+    @skip_notifications_if_disabled
+    def notify_publishing_success(self):
+        """Notify users that an envelope has successfully publishing to api."""
+
+        personalisation = {
+            "envelope_id": self.envelope.envelope_id,
+        }
+
+        send_emails.delay(
+            template_id=settings.API_PUBLISH_SUCCESS_TEMPLATE_ID,
+            personalisation=personalisation,
+            email_type="publishing",
+        )
+
+    @skip_notifications_if_disabled
+    def notify_publishing_failed(self):
+        """Notify users that an envelope has failed publishing to api."""
+
+        personalisation = {
+            "envelope_id": self.envelope.envelope_id,
+        }
+
+        send_emails.delay(
+            template_id=settings.API_PUBLISH_FAILED_TEMPLATE_ID,
+            personalisation=personalisation,
+            email_type="publishing",
+        )
 
     @atomic
     def refresh_from_db(self, using=None, fields=None):

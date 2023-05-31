@@ -88,6 +88,7 @@ def test_notify_ready_for_processing(send_emails, loading_report_storage):
     send_emails.assert_called_once_with(
         template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
         personalisation=personalisation,
+        email_type="packaging",
     )
 
 
@@ -114,6 +115,7 @@ def test_notify_processing_succeeded(send_emails, loading_report_storage):
     send_emails.assert_called_once_with(
         template_id=settings.CDS_ACCEPTED_TEMPLATE_ID,
         personalisation=personalisation,
+        email_type="packaging",
     )
 
 
@@ -139,6 +141,7 @@ def test_notify_processing_failed(send_emails, loading_report_storage):
     send_emails.assert_called_once_with(
         template_id=settings.CDS_REJECTED_TEMPLATE_ID,
         personalisation=personalisation,
+        email_type="packaging",
     )
 
 
