@@ -12,12 +12,15 @@ from importer.parsers import NewWritable
 
 
 class NewCertificateTypeParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = CertificateTypeHandler
     model = CertificateType
     record_code = "110"
     subrecord_code = "00"
 
     xml_object_tag = "certificate.type"
+
+    value_mapping = {
+        "certificate_type_code": "sid",
+    }
 
     sid: str = None
     valid_between_lower: date = None
@@ -28,13 +31,26 @@ class NewCertificateTypeDescriptionParser(NewWritable, NewElementParser):
     model = CertificateType
     parent_parser = NewCertificateTypeParser
 
+    model_links = [
+        ModelLink(
+            models.CertificateType,
+            [
+                ModelLinkField("sid", "sid"),
+            ],
+            "certificate.type",
+        ),
+    ]
+
+    value_mapping = {
+        "certificate_type_code": "sid",
+    }
+
     record_code = "110"
     subrecord_code = "05"
 
     xml_object_tag = "certificate.type.description"
 
     sid: str = None
-    language_id: str = None
     description: str = None
 
 
@@ -87,7 +103,6 @@ class NewCertificateDescriptionParser(NewWritable, NewElementParser):
     xml_object_tag = "certificate.description"
 
     sid: str = None
-    language_id: str = None
     described_certificate__certificate_type__sid: str = None
     described_certificate__sid: str = None
     description: str = None
@@ -112,7 +127,18 @@ class NewCertificateDescriptionPeriodParser(NewWritable, NewElementParser):
             ],
             "certificate",
         ),
+        ModelLink(
+            models.CertificateDescription,
+            [
+                ModelLinkField("certificate_description_period__sid", "sid"),
+            ],
+            "certificate.description",
+        ),
     ]
+
+    value_mapping = {
+        "certificate_description_period__sid": "sid",
+    }
 
     record_code = "205"
     subrecord_code = "05"

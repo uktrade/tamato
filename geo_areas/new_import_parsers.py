@@ -9,8 +9,8 @@ from importer.parsers import NewWritable
 
 
 class NewGeographicalAreaParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = GeographicalAreaHandler
     model = models.GeographicalArea
+
     model_links = [
         ModelLink(
             models.GeographicalArea,
@@ -35,8 +35,8 @@ class NewGeographicalAreaParser(NewValidityMixin, NewWritable, NewElementParser)
 
 
 class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
-    # handler = GeographicalAreaDescriptionHandler
     model = models.GeographicalAreaDescription
+
     model_links = [
         ModelLink(
             models.GeographicalArea,
@@ -54,7 +54,6 @@ class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
     xml_object_tag = "geographical.area.description"
 
     sid: str = None
-    language_id: str = None
     described_geographicalarea__sid: str = None
     described_geographicalarea__area_id: str = None
     description: str = None
@@ -62,7 +61,7 @@ class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
 
 class NewGeographicalAreaDescriptionPeriodParser(NewWritable, NewElementParser):
     model = models.GeographicalAreaDescription
-    append_to_parent = True
+    parent_parser = NewGeographicalAreaDescriptionParser
 
     model_links = [
         ModelLink(
@@ -73,7 +72,18 @@ class NewGeographicalAreaDescriptionPeriodParser(NewWritable, NewElementParser):
             ],
             "geographical.area",
         ),
+        ModelLink(
+            models.GeographicalAreaDescription,
+            [
+                ModelLinkField("geographical_area_description_period__sid", "sid"),
+            ],
+            "geographical.area.description",
+        ),
     ]
+
+    value_mapping = {
+        "geographical_area_description_period__sid": "sid",
+    }
 
     record_code = "250"
     subrecord_code = "05"
@@ -87,8 +97,8 @@ class NewGeographicalAreaDescriptionPeriodParser(NewWritable, NewElementParser):
 
 
 class NewGeographicalMembershipParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = GeographicalMembershipHandler
     model = models.GeographicalMembership
+
     model_links = [
         ModelLink(
             models.GeographicalArea,
