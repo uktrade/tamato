@@ -202,7 +202,6 @@ def test_publish_to_api_failed_publishing_to_successfully_published(
 
     assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
     assert envelope[0].published
-    # assert pwb.envelope.published_to_tariffs_api
 
 
 def test_publish_to_api_currently_publishing_to_successfully_published(
@@ -243,10 +242,6 @@ def test_publish_to_api_has_been_published(
     envelope.begin_publishing()
     assert envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
 
-    # published_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
-    # envelope.staging_published = published_date
-    # envelope.save(update_fields=["staging_published"])
-
     response = Response()
     response.status_code = 200
     with mock.patch.object(
@@ -258,7 +253,7 @@ def test_publish_to_api_has_been_published(
     envelope.refresh_from_db()
 
     assert envelope.publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
-    assert envelope.published  # == published_date
+    assert envelope.published
 
 
 def test_publish_to_api_published_in_sequence(successful_envelope_factory, settings):
