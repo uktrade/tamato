@@ -6,6 +6,7 @@ from django.contrib.humanize.templatetags.humanize import intcomma
 from django.urls import reverse
 
 from common import tariffs_api
+from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -16,6 +17,8 @@ from common.tests.util import view_urlpattern_ids
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from quotas import models
+from quotas import validators
 from quotas.views import QuotaList
 
 pytestmark = pytest.mark.django_db
@@ -555,3 +558,32 @@ def test_current_quota_order_number_returned(
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
+
+
+def test_quota_edit_origin_new_versions(valid_user_client):
+    quota = factories.QuotaOrderNumberFactory.create()
+    form_data = {
+        "category": validators.QuotaCategory.AUTONOMOUS.value,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2000,
+    }
+    valid_user_client.post(
+        reverse("quota-ui-edit", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    tx = Transaction.objects.last()
+
+    quota = models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).get(
+        sid=quota.sid,
+    )
+    origins = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
+        tx,
+    ).filter(
+        order_number=quota,
+    )
+
+    assert origins.exists()
+    assert origins.count() == 1
+    assert origins.first().version_group != quota.version_group
