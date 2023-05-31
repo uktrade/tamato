@@ -52,7 +52,7 @@ class MultipleEnvelopesGenerated(Exception):
 
 class EnvelopeManager(Manager):
     @atomic
-    def create(self, packaged_work_basket, **kwargs):
+    def create(self, packaged_work_basket: PackagedWorkBasket, **kwargs) -> "Envelope":
         """
         Create a new instance, from the packaged workbasket at the front of the
         queue.
@@ -84,14 +84,14 @@ class EnvelopeManager(Manager):
 
 
 class EnvelopeQuerySet(QuerySet):
-    def deleted(self):
+    def deleted(self) -> "EnvelopeQuerySet":
         """Filter in only those Envelope instances that have either a `deleted`
         attribute of `True` or no valid `xml_file` attribute (i.e. None)."""
         return self.filter(
             Q(deleted=True) | Q(xml_file=""),
         )
 
-    def non_deleted(self):
+    def non_deleted(self) -> "EnvelopeQuerySet":
         """Filter in only those Envelope instances that have both a `deleted`
         attribute of `False` and a valid `xml_file` attribute (i.e. not
         None)."""
@@ -99,7 +99,7 @@ class EnvelopeQuerySet(QuerySet):
             Q(deleted=False) & ~Q(xml_file=""),
         )
 
-    def for_year(self, year: Optional[int] = None):
+    def for_year(self, year: Optional[int] = None) -> "EnvelopeQuerySet":
         """
         Return all envelopes for a year, defaulting to this year.
 
@@ -115,7 +115,7 @@ class EnvelopeQuerySet(QuerySet):
             "envelope_id",
         )
 
-    def last_envelope_for_year(self, year=None):
+    def last_envelope_for_year(self, year=None) -> "Envelope":
         """"""
         return (
             Envelope.objects.for_year(year)
@@ -125,7 +125,7 @@ class EnvelopeQuerySet(QuerySet):
             .last()
         )
 
-    def processed(self):
+    def processed(self) -> "EnvelopeQuerySet":
         return self.filter(
             Q(
                 packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
@@ -135,22 +135,22 @@ class EnvelopeQuerySet(QuerySet):
             ),
         )
 
-    def unprocessed(self):
+    def unprocessed(self) -> "EnvelopeQuerySet":
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.AWAITING_PROCESSING,
         )
 
-    def currently_processing(self):
+    def currently_processing(self) -> "EnvelopeQuerySet":
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.CURRENTLY_PROCESSING,
         )
 
-    def successfully_processed(self):
+    def successfully_processed(self) -> "EnvelopeQuerySet":
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
         )
 
-    def failed_processing(self):
+    def failed_processing(self) -> "EnvelopeQuerySet":
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.FAILED_PROCESSING,
         )
@@ -214,7 +214,7 @@ class Envelope(TimestampedMixin):
     immediately deleted from the DB."""
 
     @classmethod
-    def next_envelope_id(cls):
+    def next_envelope_id(cls) -> str:
         """Get packaged workbaskets where proc state SUCCESS."""
         envelope = Envelope.objects.last_envelope_for_year()
 
@@ -272,7 +272,7 @@ class Envelope(TimestampedMixin):
         return len(list(objs)) > 0
 
     @property
-    def xml_file_name(self):
+    def xml_file_name(self) -> str:
         return f"DIT{str(self.envelope_id)}.xml"
 
     @property
@@ -284,7 +284,7 @@ class Envelope(TimestampedMixin):
     @atomic
     def upload_envelope(
         self,
-        workbasket,
+        workbasket: WorkBasket,
     ):
         """
         Upload Envelope data to the s3 bucket and return artifacts for the
@@ -356,5 +356,5 @@ class Envelope(TimestampedMixin):
                 logger.info("Workbasket saved to CDS S3 bucket")
                 logger.debug("Uploaded: %s", self.xml_file_name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<Envelope: envelope_id="{self.envelope_id}">'

@@ -1,4 +1,6 @@
 """Models used by all apps in the project."""
+
+from publishing.models.crown_dependencies_envelope import CrownDependenciesEnvelope
 from publishing.models.envelope import Envelope
 from publishing.models.envelope import EnvelopeCurrentlyProccessing
 from publishing.models.envelope import EnvelopeInvalidQueuePosition
@@ -14,7 +16,6 @@ from publishing.models.packaged_workbasket import (
 from publishing.models.state import ApiPublishingState
 from publishing.models.state import ProcessingState
 from publishing.models.state import QueueState
-from publishing.models.tap_api_envelope import TAPApiEnvelope
 
 __all__ = [
     "ApiPublishingState",
@@ -30,5 +31,5 @@ __all__ = [
     "EnvelopeNoTransactions",
     "LoadingReport",
     "OperationalStatus",
-    "TAPApiEnvelope",
+    "CrownDependenciesEnvelope",
 ]
