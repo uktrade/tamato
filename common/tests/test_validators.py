@@ -6,6 +6,7 @@ from common.validators import EnvelopeIdValidator
 from common.validators import NumberRangeValidator
 from common.validators import NumericSIDValidator
 from common.validators import NumericValidator
+from common.validators import PasswordPolicyValidator
 from common.validators import SymbolValidator
 
 
@@ -96,3 +97,22 @@ def test_symbol_validator(value, expected_valid):
 )
 def test_numeric_validator(value, expected_valid):
     check_validator(NumericValidator, value, expected_valid)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected_valid"),
+    [
+        ("123", False),
+        ("lower", False),
+        ("lower123", False),
+        ("lower123!", False),
+        ("Capital", False),
+        ("Capital123", False),
+        ("Capital!", False),
+        ("CAPITAL123!", False),
+        ("Capital123!", True),
+    ],
+)
+def test_password_policy_validator(value, expected_valid):
+    validator = PasswordPolicyValidator()
+    check_validator(validator.validate, value, expected_valid)
