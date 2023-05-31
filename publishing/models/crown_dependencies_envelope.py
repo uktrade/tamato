@@ -11,10 +11,10 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
-from publishing.models import ApiPublishingState
 from publishing.models import Envelope
 from publishing.models import PackagedWorkBasket
 from publishing.models import ProcessingState
+from publishing.models.state import ApiPublishingState
 
 logger = logging.getLogger(__name__)
 
