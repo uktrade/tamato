@@ -298,8 +298,8 @@ class PackagedWorkBasketQuerySet(QuerySet):
         unpublished = self.filter(
             Q(
                 processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
-                tap_api_envelope__isnull=True,
-                # Filters out older envelopes that do not have a tap_api_envelope
+                crown_dependencies_envelope__isnull=True,
+                # Filters out older envelopes that do not have a crown_dependencies_envelope
                 envelope__published_to_tariffs_api__isnull=True,
             ),
         ).order_by("envelope__envelope_id")
@@ -352,7 +352,7 @@ class PackagedWorkBasket(TimestampedMixin):
         editable=False,
         related_name="packagedworkbaskets",
     )
-    tap_api_envelope = ForeignKey(
+    crown_dependencies_envelope = ForeignKey(
         "publishing.CrownDependenciesEnvelope",
         null=True,
         on_delete=SET_NULL,
@@ -455,12 +455,12 @@ class PackagedWorkBasket(TimestampedMixin):
         if unpublished:
             from publishing import models as publishing_models
 
-            tap_api_envelope = (
+            crown_dependencies_envelope = (
                 publishing_models.CrownDependenciesEnvelope.objects.create(
                     packaged_work_basket=unpublished,
                 )
             )
-            unpublished.tap_api_envelope = tap_api_envelope
+            unpublished.crown_dependencies_envelope = crown_dependencies_envelope
             unpublished.save()
         else:
             logger.info(

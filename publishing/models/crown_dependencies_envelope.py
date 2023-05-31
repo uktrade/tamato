@@ -70,14 +70,14 @@ class CrownDependenciesEnvelopeManager(Manager):
         previous_id = (
             PackagedWorkBasket.objects.select_related(
                 "envelope",
-                "tap_api_envelope",
+                "crown_dependencies_envelope",
             )
             .filter(
                 Q(
                     envelope__id__isnull=False,
                     envelope__published_to_tariffs_api__isnull=False,
                 )
-                | Q(tap_api_envelope__id__isnull=False),
+                | Q(crown_dependencies_envelope__id__isnull=False),
             )
             .aggregate(
                 Max("envelope__envelope_id"),

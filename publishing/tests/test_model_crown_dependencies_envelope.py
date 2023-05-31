@@ -19,7 +19,7 @@ from publishing.models.crown_dependencies_envelope import (
 pytestmark = pytest.mark.django_db
 
 
-def test_create_tap_api_envelope(
+def test_create_crown_dependencies_envelope(
     successful_envelope_factory,
     settings,
 ):
@@ -35,9 +35,9 @@ def test_create_tap_api_envelope(
     packaged_work_basket = PackagedWorkBasket.objects.get(
         envelope=envelope,
     )
-    assert packaged_work_basket.tap_api_envelope
+    assert packaged_work_basket.crown_dependencies_envelope
     assert (
-        packaged_work_basket.tap_api_envelope.publishing_state
+        packaged_work_basket.crown_dependencies_envelope.publishing_state
         == ApiPublishingState.AWAITING_PUBLISHING
     )
 
@@ -49,12 +49,12 @@ def test_create_tap_api_envelope(
         envelope=envelope2,
     )
     assert (
-        packaged_work_basket.tap_api_envelope.publishing_state
+        packaged_work_basket.crown_dependencies_envelope.publishing_state
         == ApiPublishingState.AWAITING_PUBLISHING
     )
 
 
-def test_create_tap_api_envelope_invalid_status(packaged_workbasket_factory):
+def test_create_crown_dependencies_envelope_invalid_status(packaged_workbasket_factory):
     """Test that create tap envelope will not create for incorrect status."""
     with pytest.raises(ApiEnvelopeInvalidWorkBasketStatus):
         factories.CrownDependenciesEnvelopeFactory(
@@ -62,7 +62,7 @@ def test_create_tap_api_envelope_invalid_status(packaged_workbasket_factory):
         )
 
 
-def test_create_tap_api_envelope_invalid_envelope_sequence(
+def test_create_crown_dependencies_envelope_invalid_envelope_sequence(
     successful_envelope_factory,
     settings,
 ):

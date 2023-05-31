@@ -482,7 +482,7 @@ def test_create_api_publishing_envelope(envelope_storage, settings):
 
     pwb.refresh_from_db()
 
-    assert pwb.tap_api_envelope
+    assert pwb.crown_dependencies_envelope
 
 
 def test_create_api_envelope_no_envelope_to_publish_envelope_field(
@@ -518,7 +518,7 @@ def test_create_api_envelope_no_envelope_to_publish_envelope_field(
 
     pwb.refresh_from_db()
 
-    assert not pwb.tap_api_envelope
+    assert not pwb.crown_dependencies_envelope
 
 
 def test_create_api_envelope_no_envelope_to_publish_CrownDependenciesEnvelope(
