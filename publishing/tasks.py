@@ -125,41 +125,39 @@ def publish_to_api():
                     logger.info("No more envelopes to publish")
                     raise StopIteration
 
-                envelope = self.queryset[self.index]
+            envelope = self.queryset[self.index]
 
-                if not envelope.can_publish():
-                    logger.warn(
-                        f"Failed publishling to Tariff API: {envelope}. "
-                        f"The previous envelope is unpublished",
-                    )
+            if not envelope.can_publish():
+                logger.warn(
+                    f"Failed publishling to Tariff API: {envelope}. "
+                    f"The previous envelope is unpublished",
+                )
+                raise StopIteration
+
+            pwb_envelope = envelope.packagedworkbaskets.last().envelope
+
+            if envelope.publishing_state in [
+                ApiPublishingState.AWAITING_PUBLISHING,
+                ApiPublishingState.FAILED_PUBLISHING,
+            ]:
+                response = publish(envelope, pwb_envelope)
+                if not response:
                     raise StopIteration
-
-                pwb_envelope = envelope.packagedworkbaskets.last().envelope
-
-                if envelope.publishing_state in [
-                    ApiPublishingState.AWAITING_PUBLISHING,
-                    ApiPublishingState.FAILED_PUBLISHING,
-                ]:
+            # Check published status of envelopes in these states in case
+            # previous publishing task halted before transitioning state
+            elif envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING:
+                if not has_been_published(envelope, pwb_envelope):
                     response = publish(envelope, pwb_envelope)
                     if not response:
                         raise StopIteration
-                # Check published status of envelopes in these states in case
-                # previous publishing task halted before transitioning state
-                elif (
-                    envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
-                ):
-                    if not has_been_published(envelope, pwb_envelope):
-                        response = publish(envelope, pwb_envelope)
-                        if not response:
-                            raise StopIteration
-                    else:
-                        # has been published but stuck in currently publishing
-                        # transition and move on
-                        envelope.publishing_succeeded()
-                        response = True
+                else:
+                    # has been published but stuck in currently publishing
+                    # transition and move on
+                    envelope.publishing_succeeded()
+                    response = True
 
-                self.index += 1
-                return response
+            self.index += 1
+            return response
 
         def refresh_queryset(self):
             return self.initial_queryset.all()
