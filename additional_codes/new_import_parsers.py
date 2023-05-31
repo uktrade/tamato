@@ -14,39 +14,49 @@ class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParse
     model = additional_codes.models.AdditionalCodeType
     model_links = []
 
+    value_mapping = {
+        # "certificate_type_code": "certificate_type_sid",
+        "additional_code_type_id": "sid",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     record_code = "120"
     subrecord_code = "00"
 
     xml_object_tag = "additional.code.type"
 
-    sid: str = None
-    valid_between_lower: str = None
-    valid_between_upper: str = None
+    sid: int = None
+    valid_between_lower: date = None
+    valid_between_upper: date = None
     application_code: str = None
 
 
 # This gets joined to AdditionalCodeType as description column
 class NewAdditionalCodeTypeDescriptionParser(NewWritable, NewElementParser):
     model = models.AdditionalCodeType
-    parent_handler = NewAdditionalCodeTypeParser
+    parent_parser = NewAdditionalCodeTypeParser
 
     model_links = [
         ModelLink(
             models.AdditionalCodeType,
             [
-                ModelLinkField("additional_code_type_id", "sid"),
+                ModelLinkField("sid", "sid"),
             ],
             "additional.code.type",
         ),
     ]
+
+    value_mapping = {
+        "additional_code_type_id": "sid",
+    }
 
     record_code = "120"
     subrecord_code = "05"
 
     xml_object_tag = "additional.code.type.description"
 
-    additional_code_type_id: str = None
-    language_id: str = None
+    sid: int = None
     description: str = None
 
 
@@ -64,16 +74,24 @@ class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
         ),
     ]
 
+    value_mapping = {
+        "additional_code": "code",
+        "additional_code_sid": "sid",
+        "additional_code_type_id": "type__sid",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     record_code = "245"
     subrecord_code = "00"
 
     xml_object_tag = "additional.code"
 
-    sid: str = None
-    type__sid: str = None
+    sid: int = None
+    type__sid: int = None
     code: str = None
-    valid_between_lower: str = None
-    valid_between_upper: str = None
+    valid_between_lower: date = None
+    valid_between_upper: date = None
 
 
 class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
@@ -98,23 +116,30 @@ class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
         ),
     ]
 
+    value_mapping = {
+        "additional_code_description_period_sid": "sid",
+        "additional_code_sid": "described_additionalcode__sid",
+        "additional_code_type_id": "described_additionalcode__type__sid",
+        "additional_code": "described_additionalcode__code",
+    }
+
     record_code = "245"
     subrecord_code = "10"
 
     xml_object_tag = "additional.code.description"
 
-    sid: str = None
-    language_id: str = None
-    described_additionalcode__sid: str = None
-    described_additionalcode__type__sid: str = None
+    sid: int = None
+    # language_id: str = None
+    described_additionalcode__sid: int = None
+    described_additionalcode__type__sid: int = None
     described_additionalcode__code: str = None
     description: str = None
 
 
 class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
     model = models.AdditionalCodeDescription
-    append_to_parent = True
-    parent_handler = NewAdditionalCodeDescriptionParser
+    parent_parser = NewAdditionalCodeDescriptionParser
+
     model_links = [
         ModelLink(
             models.AdditionalCode,
@@ -131,16 +156,31 @@ class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
             ],
             "additional.code.type",
         ),
+        ModelLink(
+            models.AdditionalCodeDescription,
+            [
+                ModelLinkField("sid", "sid"),
+            ],
+            "additional.code.description",
+        ),
     ]
+
+    value_mapping = {
+        "additional_code_description_period_sid": "sid",
+        "additional_code_sid": "described_additionalcode__sid",
+        "additional_code_type_id": "described_additionalcode__type__sid",
+        "additional_code": "described_additionalcode__code",
+        "validity_start_date": "validity_start",
+    }
 
     record_code = "245"
     subrecord_code = "05"
 
     xml_object_tag = "additional.code.description.period"
 
-    sid: str = None
-    described_additionalcode__sid: str = None
-    described_additionalcode__type__sid: str = None
+    sid: int = None
+    described_additionalcode__sid: int = None
+    described_additionalcode__type__sid: int = None
     described_additionalcode__code: str = None
     validity_start: date = None
 
@@ -156,8 +196,11 @@ class NewFootnoteAssociationAdditionalCodeParser(
         ModelLink(
             Footnote,
             [
-                ModelLinkField("associated_footnote__footnote_type__sid", "sid"),
-                ModelLinkField("associated_footnote__footnote_id", "code"),
+                ModelLinkField(
+                    "associated_footnote__footnote_type__id",
+                    "footnote_type_id",
+                ),
+                ModelLinkField("associated_footnote__footnote_id", "footnote_id"),
             ],
             "footnote",
         ),
@@ -177,15 +220,25 @@ class NewFootnoteAssociationAdditionalCodeParser(
         ),
     ]
 
+    value_mapping = {
+        "additional_code_sid": "additional_code__sid",
+        "footnote_type_id": "associated_footnote__footnote_type__id",
+        "footnote_id": "associated_footnote__footnote_id",
+        "additional_code_type_id": "additional_code__type__sid",
+        "additional_code": "additional_code__code",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     record_code = "245"
     subrecord_code = "15"
 
     xml_object_tag = "footnote.association.additional.code"
 
-    additional_code__sid: str = None
-    associated_footnote__footnote_type__sid: str = None
+    additional_code__sid: int = None
+    associated_footnote__footnote_type__id: str = None
     associated_footnote__footnote_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    additional_code__type__sid: str = None
+    additional_code__type__sid: int = None
     additional_code__code: str = None

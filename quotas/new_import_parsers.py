@@ -10,6 +10,7 @@ from quotas.import_handlers import *
 
 class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable):
     model = models.QuotaOrderNumber
+
     value_mapping = {
         "id": "order_number",
         "validity_start_date": "valid_between_lower",
@@ -30,6 +31,7 @@ class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable)
 
 class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementParser):
     model = models.QuotaOrderNumberOrigin
+
     value_mapping = {
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
@@ -70,6 +72,7 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
 
 class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
     model = models.QuotaOrderNumberOriginExclusion
+
     model_links = [
         # create dependency to quota order number origin
         ModelLink(
@@ -255,7 +258,7 @@ class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
 
 class NewQuotaEventParser(NewWritable, NewElementParser):
     # TODO: review all possible examples of quota events
-    handler = QuotaEventHandler
+    # handler = QuotaEventHandler
     model = models.QuotaEvent
 
     # create dependency to QuotaDefinition

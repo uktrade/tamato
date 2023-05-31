@@ -15,7 +15,6 @@ from footnotes.new_import_parsers import *
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
 from geo_areas.new_import_parsers import *
-from importer.new_parsers import ParserHelper
 from measures.models import AdditionalCodeTypeMeasureType
 from measures.models import DutyExpression
 from measures.models import FootnoteAssociationMeasure
@@ -53,7 +52,7 @@ pytestmark = pytest.mark.django_db
         "model_class",
         "expected_xml_tag_name",
         "links_to",
-        "should_append_to_parent",
+        "child_to_other_parser",
     ),
     (
         # Additional Codes
@@ -562,7 +561,7 @@ def test_importer_generics(
     model_class,
     expected_xml_tag_name,
     links_to,
-    should_append_to_parent,
+    child_to_other_parser,
 ):
     # verify xml tag name
     assert parser_class.xml_object_tag == expected_xml_tag_name
@@ -570,27 +569,59 @@ def test_importer_generics(
     if parser_class.model != model_class:
         print(f"for {parser_class} model {parser_class.model} is not {model_class}")
 
+    # check we have the right model class for the parser
     assert parser_class.model == model_class
-    assert should_append_to_parent == parser_class.append_to_parent
+
+    # check that we parent parsers for all parsers that should append to a parent parser
+    assert child_to_other_parser == hasattr(parser_class, "parent_parser")
+
+    # check properties exist on target model
+    excluded_variable_names = [
+        "__annotations__",
+        "__doc__",
+        "__module__",
+        "issues",
+        "model",
+        "model_links",
+        "parent_parser",
+        "value_mapping",
+        "xml_object_tag",
+        "valid_between_lower",
+        "valid_between_upper",
+    ]
+
+    for variable_name in vars(parser_class).keys():
+        if variable_name not in excluded_variable_names:
+            # where a variable name contains '__' it defines a related object and its properties, we only need to check
+            # that the part preceding the '__' exists
+            variable_first_part = variable_name.split("__")[0]
+            assert hasattr(parser_class.model, variable_first_part)
 
     # check that there is a direct link between parent model and child model when should_append_to_parent is True
     # this link can be on the parent or the child
-    if should_append_to_parent:
+    if child_to_other_parser:
         child_to_parent_link = False
         parent_to_child_link = False
 
         # check child
-        for link in parser_class.model_links:
-            if link.model == parser_class.model:
-                child_to_parent_link = True
+        if parser_class.model_links:
+            for link in parser_class.model_links:
+                if link.model == parser_class.model:
+                    child_to_parent_link = True
 
         # check parent
-        parent_parser = ParserHelper.get_parser_by_model(parser_class.model)
-        for link in parent_parser.model_links:
-            if link.model == parser_class.model:
-                parent_to_child_link = True
+        parent_parser = parser_class.parent_parser
 
+        if parent_parser.model_links:
+            for link in parent_parser.model_links:
+                if link.model == parser_class.model:
+                    parent_to_child_link = True
+
+        # check that one exists
         assert child_to_parent_link or parent_to_child_link
+
+        # check both do not exist
+        assert child_to_parent_link is not parent_to_child_link
 
     # verify existence of link to other importer types
     if len(links_to):

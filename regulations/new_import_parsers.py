@@ -1,5 +1,7 @@
 from datetime import date
 
+from importer.new_parsers import ModelLink
+from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
@@ -23,13 +25,23 @@ class NewRegulationGroupDescriptionParser(NewWritable, NewElementParser):
     model = models.Group
     parent_parser = NewRegulationGroupParser
 
+    model_links = [
+        ModelLink(
+            models.Group,
+            [
+                ModelLinkField("group_id", "group_id"),
+            ],
+            "group",
+        ),
+    ]
+
     record_code = "150"
     subrecord_code = "05"
 
     xml_object_tag = "regulation.group.description"
 
     group_id: str = None
-    language_id: str = None
+    # language_id: str = None
     description: str = None
 
 

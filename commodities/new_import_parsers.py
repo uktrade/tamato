@@ -125,7 +125,7 @@ class NewGoodsNomenclatureDescriptionParser(NewWritable, NewElementParser):
     xml_object_tag = "goods.nomenclature.description"
 
     sid: str = None
-    language_id: str = None
+    # language_id: str = None
     described_goods_nomenclature__sid: str = None
     described_goods_nomenclature__item_id: str = None
     described_goods_nomenclature__suffix: str = None
@@ -134,7 +134,7 @@ class NewGoodsNomenclatureDescriptionParser(NewWritable, NewElementParser):
 
 class NewGoodsNomenclatureDescriptionPeriodParser(NewWritable, NewElementParser):
     model = models.GoodsNomenclatureDescription
-    append_to_parent = True
+    parent_parser = NewGoodsNomenclatureDescriptionParser
 
     model_links = [
         ModelLink(
@@ -146,7 +146,18 @@ class NewGoodsNomenclatureDescriptionPeriodParser(NewWritable, NewElementParser)
             ],
             "goods.nomenclature",
         ),
+        ModelLink(
+            models.GoodsNomenclatureDescription,
+            [
+                ModelLinkField("goods_nomenclature_description_period__sid", "sid"),
+            ],
+            "goods.nomenclature.description",
+        ),
     ]
+
+    value_mapping = {
+        "goods_nomenclature_description_period_sid": "sid",
+    }
 
     record_code = "400"
     subrecord_code = "10"
@@ -155,13 +166,12 @@ class NewGoodsNomenclatureDescriptionPeriodParser(NewWritable, NewElementParser)
 
     sid: str = None
     described_goods_nomenclature__sid: str = None
-    validity_start: date = None
     described_goods_nomenclature__item_id: str = None
     described_goods_nomenclature__suffix: str = None
+    validity_start: date = None
 
 
 class NewGoodsNomenclatureIndentParser(NewWritable, NewElementParser):
-    # handler = GoodsNomenclatureIndentHandler
     model = models.GoodsNomenclatureIndent
 
     model_links = [
@@ -194,7 +204,6 @@ class NewFootnoteAssociationGoodsNomenclatureParser(
     NewWritable,
     NewElementParser,
 ):
-    # handler = FootnoteAssociationGoodsNomenclatureHandler
     model = models.FootnoteAssociationGoodsNomenclature
 
     model_links = [

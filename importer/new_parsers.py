@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from datetime import date
+from datetime import datetime
 from typing import List
+from typing import get_type_hints
 
 import bs4
 from bs4 import NavigableString
 
+from common.util import TaricDateRange
 from common.validators import UpdateType
 
 
@@ -85,41 +89,18 @@ class MessageParser:
         parser_cls = ParserHelper.get_parser_by_tag(self.object_type)
         parser = parser_cls()
 
-        # standard data
-        parser.transaction_id = self.transaction_id
-        if parser.record_code != self.record_code:
-            raise Exception(
-                f"Record code mismatch : expected : {parser.record_code}, got : {self.record_code}",
-            )
-        if parser.subrecord_code != self.subrecord_code:
-            raise Exception(
-                f"Sub-record code mismatch : expected : {parser.subrecord_code}, got : {self.subrecord_code}",
-            )
-
-        parser.sequence_number = self.sequence_number
-        parser.object_type = self.object_type
-
-        # model specific data
-        for data_item_key in self.data.keys():
-            mapped_data_item_key = data_item_key
-            if data_item_key in parser.value_mapping:
-                mapped_data_item_key = parser.value_mapping[data_item_key]
-
-            if hasattr(parser, mapped_data_item_key):
-                setattr(parser, mapped_data_item_key, self.data[data_item_key])
-            else:
-                raise Exception(
-                    f"{parser.xml_object_tag} {parser} does not have a {data_item_key} attribute, and "
-                    f"can't assign value {self.data[data_item_key]}",
-                )
+        parser.populate(
+            self.transaction_id,
+            self.record_code,
+            self.subrecord_code,
+            self.sequence_number,
+            self.data,
+        )
 
         return parser
 
     def _parse_tag_name(self, tag_name, object_type):
         parsed_tag_name = tag_name
-
-        # some fields start with the full tag name e.g. quota.order.number.sid, this will be replaced with simply sid
-        parsed_tag_name = parsed_tag_name.replace(object_type + ".", "")
 
         # anything left will be full stop seperated, this needs to change to underscores
         parsed_tag_name = parsed_tag_name.replace(".", "_")
@@ -148,7 +129,7 @@ class ModelLink:
 
 
 class NewElementParser:
-    transaction_id: str
+    transaction_id: int
     record_code: str
     subrecord_code: str
     xml_object_tag: str
@@ -159,17 +140,100 @@ class NewElementParser:
     model_links = None
     issues = []
     parent_handler = None
+    excluded_fields = ["language_id"]
 
     def __init__(self):
         self.issues = []
+        self.sequence_number = None
 
     def links(self):
         if self.model_links is None:
             raise Exception(
-                f"No handler defined for {self.__class__.__name__}, is this correct?",
+                f"No parser defined for {self.__class__.__name__}, is this correct?",
             )
 
         return self.model_links
+
+    def populate(
+        self,
+        transaction_id: int,
+        record_code: str,
+        subrecord_code: str,
+        sequence_number: int,
+        data: dict,
+    ):
+        # standard data
+        self.transaction_id = transaction_id
+        if self.record_code != record_code:
+            raise Exception(
+                f"Record code mismatch : expected : {self.record_code}, got : {record_code}",
+            )
+        if self.subrecord_code != subrecord_code:
+            raise Exception(
+                f"Sub-record code mismatch : expected : {self.subrecord_code}, got : {subrecord_code}",
+            )
+
+        self.sequence_number = sequence_number
+
+        # model specific data
+        for data_item_key in data.keys():
+            # some fields like language_id need to be skipped - we only care about en
+            if data_item_key in self.excluded_fields:
+                continue
+
+            mapped_data_item_key = data_item_key
+            if data_item_key in self.value_mapping:
+                mapped_data_item_key = self.value_mapping[data_item_key]
+
+            if hasattr(self, mapped_data_item_key):
+                field_data_raw = data[data_item_key]
+
+                if mapped_data_item_key == "update_type":
+                    field_data_type = int
+                elif mapped_data_item_key == "update_type_name":
+                    field_data_type = str
+                else:
+                    field_data_type = get_type_hints(self)[mapped_data_item_key]
+
+                field_data_typed = None
+
+                # convert string objects to the correct types, based on parser class annotations
+
+                if field_data_type == str:
+                    field_data_typed = str(field_data_raw)
+                elif field_data_type == date:
+                    if field_data_raw is not None:
+                        field_data_typed = datetime.strptime(
+                            field_data_raw,
+                            "%Y-%m-%d",
+                        ).date()
+                elif field_data_type == int:
+                    field_data_typed = int(field_data_raw)
+                elif field_data_type == float:
+                    field_data_typed = float(field_data_raw)
+                else:
+                    raise Exception(
+                        f"data type {field_data_type} not handled, please fix",
+                    )
+
+                setattr(self, mapped_data_item_key, field_data_typed)
+            else:
+                raise Exception(
+                    f"{self.xml_object_tag} {self} does not have a {mapped_data_item_key} attribute, and "
+                    f"can't assign value {data[data_item_key]}",
+                )
+
+        if hasattr(self, "valid_between_lower") and hasattr(
+            self,
+            "valid_between_upper",
+        ):
+            if self.valid_between_upper:
+                self.valid_between = TaricDateRange(
+                    self.valid_between_lower,
+                    self.valid_between_upper,
+                )
+            else:
+                self.valid_between = TaricDateRange(self.valid_between_lower)
 
 
 class TaricObjectLink:

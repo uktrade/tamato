@@ -2,6 +2,7 @@ from typing import List
 
 from bs4 import BeautifulSoup
 
+from importer.new_parsers import ModelLink
 from importer.new_parsers import NewElementParser
 from importer.new_parsers import TransactionParser
 
@@ -108,14 +109,21 @@ class NewImporter:
 
                 parsed_message.taric_object.links_valid = links_valid
 
-    def _verify_link(self, verifying_taric_object: NewElementParser, link_data: dict):
+    def _verify_link(
+        self,
+        verifying_taric_object: NewElementParser,
+        link_data: ModelLink,
+    ):
         # verify either that the object exists on TAP or in current, previous transactions of current import
         kwargs = {}
-        for field in link_data["fields"].keys():
-            kwargs[link_data["fields"][field]] = getattr(verifying_taric_object, field)
+        for field in link_data.fields:
+            kwargs[field.object_field_name] = getattr(
+                verifying_taric_object,
+                field.parser_field_name,
+            )
 
         # check database
-        db_result = link_data["model"].objects.latest_approved().filter(**kwargs)
+        db_result = link_data.model.objects.latest_approved().filter(**kwargs)
         xml_result = []
 
         for transaction in self.parsed_transactions:
@@ -125,13 +133,16 @@ class NewImporter:
                     continue
 
                 match = False
-                if taric_object.xml_object_tag == link_data["xml_tag_name"]:
+                if taric_object.xml_object_tag == link_data.xml_tag_name:
                     # ok we have matched the type - now check property
                     int_match = True
-                    for field in link_data["fields"].keys():
-                        if getattr(verifying_taric_object, field) != getattr(
+                    for field in link_data.fields:
+                        if getattr(
+                            verifying_taric_object,
+                            field.parser_field_name,
+                        ) != getattr(
                             taric_object,
-                            link_data["fields"][field],
+                            field.object_field_name,
                         ):
                             int_match = False
 
@@ -169,15 +180,15 @@ class NewImporter:
     ):
         identity_keys = {}
 
-        for field in link_data["fields"].keys():
-            identity_keys[link_data["fields"][field]] = getattr(
+        for field in link_data.fields:
+            identity_keys[field.object_field_name] = getattr(
                 target_taric_object,
-                field,
+                field.parser_field_name,
             )
 
         report_item = NewImportIssueReportItem(
             target_taric_object.xml_object_tag,
-            link_data["xml_tag_name"],
+            link_data.xml_tag_name,
             identity_keys,
             description,
         )

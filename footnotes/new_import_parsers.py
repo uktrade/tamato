@@ -9,8 +9,15 @@ from importer.parsers import NewWritable
 
 
 class NewFootnoteTypeParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = FootnoteTypeHandler
     model = models.FootnoteType
+
+    model_links = []
+
+    value_mapping = {
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     record_code = "100"
     subrecord_code = "00"
 
@@ -23,7 +30,6 @@ class NewFootnoteTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewFootnoteTypeDescriptionParser(NewWritable, NewElementParser):
-    # handler = FootnoteTypeDescriptionHandler
     model = models.FootnoteType
     model_links = [
         ModelLink(
@@ -41,13 +47,13 @@ class NewFootnoteTypeDescriptionParser(NewWritable, NewElementParser):
     xml_object_tag = "footnote.type.description"
 
     footnote_type_id: str = None
-    language_id: str = None
+    # language_id: str = None
     description: str = None
 
 
 class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = FootnoteHandler
     model = models.Footnote
+
     model_links = [
         ModelLink(
             models.FootnoteType,
@@ -58,20 +64,25 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
         ),
     ]
 
+    value_mapping = {
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     record_code = "200"
     subrecord_code = "00"
 
     xml_object_tag = "footnote"
 
-    footnote_type__footnote_type_id: str = None
+    footnote_type_id: str = None
     footnote_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
 
 
 class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
-    # handler = FootnoteDescriptionHandler
     model = models.FootnoteDescription
+
     model_links = [
         ModelLink(
             models.Footnote,
@@ -98,7 +109,7 @@ class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
     xml_object_tag = "footnote.description"
 
     sid: str = None
-    language_id: str = None
+    # language_id: str = None
     described_footnote__footnote_type__footnote_type_id: str = None
     described_footnote__footnote_id: str = None
     description: str = None
@@ -106,7 +117,7 @@ class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
 
 class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser):
     model = models.FootnoteDescription
-    append_to_parent = True
+    parent_parser = NewFootnoteDescriptionParser
 
     model_links = [
         ModelLink(
@@ -126,7 +137,21 @@ class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser):
             ],
             "footnote.type",
         ),
+        ModelLink(
+            models.FootnoteDescription,
+            [
+                ModelLinkField(
+                    "footnote_description_period__sid",
+                    "sid",
+                ),
+            ],
+            "footnote.description",
+        ),
     ]
+
+    value_mapping = {
+        "footnote_description_period__sid": "sid",
+    }
 
     record_code = "200"
     subrecord_code = "05"

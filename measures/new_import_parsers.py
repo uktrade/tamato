@@ -27,13 +27,27 @@ class NewMeasureTypeSeriesDescriptionParser(NewWritable, NewElementParser):
     model = models.MeasureTypeSeries
     parent_parser = NewMeasureTypeSeriesParser
 
+    model_links = [
+        ModelLink(
+            models.MeasureTypeSeries,
+            [
+                ModelLinkField("measure_type_series__id", "sid"),
+            ],
+            "measure.type.series",
+        ),
+    ]
+
+    value_mapping = {
+        "measure_type_series__id": "sid",
+    }
+
     record_code = "140"
     subrecord_code = "05"
 
     xml_object_tag = "measure.type.series.description"
 
     sid: str = None
-    language_id: str = None
+    # language_id: str = None
     description: str = None
 
 
@@ -54,13 +68,27 @@ class NewMeasurementUnitDescriptionParser(NewWritable, NewElementParser):
     model = models.MeasurementUnit
     parent_parser = NewMeasurementUnitParser
 
+    model_links = [
+        ModelLink(
+            models.MeasurementUnit,
+            [
+                ModelLinkField("measurement_unit__code", "code"),
+            ],
+            "measurement.unit",
+        ),
+    ]
+
+    value_mapping = {
+        "measurement_unit__code": "code",
+    }
+
     record_code = "210"
     subrecord_code = "05"
 
     xml_object_tag = "measurement.unit.description"
 
     code: str = None
-    language_id: str = None
+    # language_id: str = None
     description: str = None
 
 
@@ -69,8 +97,12 @@ class NewMeasurementUnitQualifierParser(
     NewWritable,
     NewElementParser,
 ):
-    # handler = MeasurementUnitQualifierHandler
     model = models.MeasurementUnitQualifier
+
+    value_mapping = {
+        "measurement_unit_qualifier_code": "code",
+    }
+
     record_code = "215"
     subrecord_code = "00"
 
@@ -83,8 +115,21 @@ class NewMeasurementUnitQualifierParser(
 
 class NewMeasurementUnitQualifierDescriptionParser(NewWritable, NewElementParser):
     model = models.MeasurementUnitQualifier
-    append_to_parent = True
-    parent_parser = NewMeas
+    parent_parser = NewMeasurementUnitQualifierParser
+
+    model_links = [
+        ModelLink(
+            models.MeasurementUnitQualifier,
+            [
+                ModelLinkField("measurement_unit__code", "code"),
+            ],
+            "measurement.unit.qualifier",
+        ),
+    ]
+
+    value_mapping = {
+        "measurement_unit_qualifier_code": "code",
+    }
 
     record_code = "215"
     subrecord_code = "05"
@@ -92,13 +137,13 @@ class NewMeasurementUnitQualifierDescriptionParser(NewWritable, NewElementParser
     xml_object_tag = "measurement.unit.qualifier.description"
 
     code: str = None
-    language_id: str = None
+    # language_id: str = None
     description: str = None
 
 
 class NewMeasurementParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = MeasurementHandler
     model = models.Measurement
+
     model_links = [
         ModelLink(
             models.MeasurementUnit,
@@ -128,7 +173,6 @@ class NewMeasurementParser(NewValidityMixin, NewWritable, NewElementParser):
 
 
 class NewMonetaryUnitParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = MonetaryUnitHandler
     model = models.MonetaryUnit
     record_code = "225"
     subrecord_code = "00"
@@ -142,7 +186,21 @@ class NewMonetaryUnitParser(NewValidityMixin, NewWritable, NewElementParser):
 
 class NewMonetaryUnitDescriptionParser(NewWritable, NewElementParser):
     model = models.MonetaryUnit
-    append_to_parent = True
+    parent_parser = NewMonetaryUnitParser
+
+    model_links = [
+        ModelLink(
+            models.MonetaryUnit,
+            [
+                ModelLinkField("monetary_unit__code", "code"),
+            ],
+            "monetary.unit",
+        ),
+    ]
+
+    value_mapping = {
+        "monetary_unit_code": "code",
+    }
 
     record_code = "225"
     subrecord_code = "05"
@@ -150,13 +208,13 @@ class NewMonetaryUnitDescriptionParser(NewWritable, NewElementParser):
     xml_object_tag = "monetary.unit.description"
 
     code: str = None
-    language_id: str = None
+    # language_id: str = None
     description: str = None
 
 
 class NewDutyExpressionParser(NewValidityMixin, NewWritable, NewElementParser):
-    # handler = DutyExpressionHandler
     model = models.DutyExpression
+
     record_code = "230"
     subrecord_code = "00"
 
@@ -172,7 +230,21 @@ class NewDutyExpressionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
     model = models.DutyExpression
-    append_to_parent = True
+    parent_parser = NewDutyExpressionParser
+
+    model_links = [
+        ModelLink(
+            models.DutyExpression,
+            [
+                ModelLinkField("sid", "sid"),
+            ],
+            "duty.expression",
+        ),
+    ]
+
+    value_mapping = {
+        "duty_expression_id": "sid",
+    }
 
     record_code = "230"
     subrecord_code = "05"
@@ -180,7 +252,7 @@ class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
     xml_object_tag = "duty.expression.description"
 
     sid: str = None
-    language_id: str = None
+    # language_id: str = None
     description: str = None
 
 
@@ -216,7 +288,21 @@ class NewMeasureTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 
 class NewMeasureTypeDescriptionParser(NewWritable, NewElementParser):
     model = models.MeasureType
-    append_to_parent = True
+    parent_parser = NewMeasureTypeParser
+
+    model_links = [
+        ModelLink(
+            models.MeasureType,
+            [
+                ModelLinkField("measure_type__sid", "sid"),
+            ],
+            "measure.type",
+        ),
+    ]
+
+    value_mapping = {
+        "measure_type_id": "sid",
+    }
 
     record_code = "235"
     subrecord_code = "05"
@@ -224,7 +310,7 @@ class NewMeasureTypeDescriptionParser(NewWritable, NewElementParser):
     xml_object_tag = "measure.type.description"
 
     sid: str = None
-    language_id: str = None
+    # language_id: str = None
     description: str = None
 
 
@@ -278,7 +364,21 @@ class NewMeasureConditionCodeParser(NewValidityMixin, NewWritable, NewElementPar
 
 class NewMeasureConditionCodeDescriptionParser(NewWritable, NewElementParser):
     model = models.MeasureConditionCode
-    append_to_parent = True
+    parent_parser = NewMeasureConditionCodeParser
+
+    model_links = [
+        ModelLink(
+            models.MeasureConditionCode,
+            [
+                ModelLinkField("condition_code", "code"),
+            ],
+            "measure.condition.code",
+        ),
+    ]
+
+    value_mapping = {
+        "condition_code": "code",
+    }
 
     record_code = "350"
     subrecord_code = "05"
@@ -286,7 +386,7 @@ class NewMeasureConditionCodeDescriptionParser(NewWritable, NewElementParser):
     xml_object_tag = "measure.condition.code.description"
 
     code: str = None
-    language_id: str = None
+    # language_id: str = None
     description: str = None
 
 
@@ -305,15 +405,28 @@ class NewMeasureActionParser(NewValidityMixin, NewWritable, NewElementParser):
 
 class NewMeasureActionDescriptionParser(NewWritable, NewElementParser):
     model = models.MeasureAction
-    append_to_parent = True
+    parent_parser = NewMeasureActionParser
 
+    model_links = [
+        ModelLink(
+            models.MeasureAction,
+            [
+                ModelLinkField("action_code", "code"),
+            ],
+            "measure.action",
+        ),
+    ]
+
+    value_mapping = {
+        "action_code": "code",
+    }
     record_code = "355"
     subrecord_code = "05"
 
     xml_object_tag = "measure.action.description"
 
     code: str = None
-    language_id: str = None
+    # language_id: str = None
     description: str = None
 
 
