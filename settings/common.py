@@ -450,14 +450,9 @@ TARIFF_API_INTERFACE = os.environ.get(
     "TARIFF_API_INTERFACE",
     "publishing.tariff_api.interface.TariffAPI",
 )
-API_HOST_STAGING = os.environ.get("API_HOST_STAGING", "")
-API_HOST_PROD = os.environ.get("API_HOST_PROD", "")
+API_HOST = os.environ.get("API_HOST", "")
 API_URL_PATH = os.environ.get("API_URL_PATH", "api/v1/taricfiles/")
-API_KEY_STAGING_GET = os.environ.get("API_KEY_STAGING_GET", "")
-API_KEY_PROD_GET = os.environ.get("API_KEY_PROD_GET", "")
-API_KEY_STAGING_POST = os.environ.get("API_KEY_STAGING_POST", "")
-API_KEY_PROD_POST = os.environ.get("API_KEY_PROD_POST", "")
-
+API_KEY = os.environ.get("API_KEY", "")
 
 # Pickle could be used as a serializer here, as this always runs in a DMZ
 

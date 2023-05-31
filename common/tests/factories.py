@@ -1362,11 +1362,11 @@ class OperationalStatusFactory(factory.django.DjangoModelFactory):
         model = "publishing.OperationalStatus"
 
 
-class TapApiEnvelopeFactory(factory.django.DjangoModelFactory):
+class CrownDependenciesEnvelopeFactory(factory.django.DjangoModelFactory):
     """Creates a TAP Api Envelope instance with a successful packaged work
     basket instance."""
 
     class Meta:
-        model = "publishing.TapApiEnvelope"
+        model = "publishing.CrownDependenciesEnvelope"
 
     packaged_work_basket = factory.SubFactory(SuccessPackagedWorkBasketFactory)

@@ -2,12 +2,12 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from publishing.models import CrownDependenciesEnvelope
 from publishing.models import Envelope
 from publishing.models import LoadingReport
 from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
 from publishing.models import ProcessingState
-from publishing.models import TAPApiEnvelope
 from workbaskets.models import WorkBasket
 
 
@@ -288,7 +288,7 @@ class LoadingReportAdmin(
         return self.workbasket_id_link(pwb.workbasket)
 
 
-class TAPApiEnvelopeAdmin(
+class CrownDependenciesEnvelopeAdmin(
     PackagedWorkBasketAdminMixin,
     WorkBasketAdminMixin,
     admin.ModelAdmin,
@@ -298,8 +298,7 @@ class TAPApiEnvelopeAdmin(
         "id",
         "envelope_id",
         "publishing_state",
-        "staging_published",
-        "production_published",
+        "published",
         "packaged_workbasket_id",
         "workbasket_id",
     )
@@ -336,4 +335,4 @@ admin.site.register(OperationalStatus, OperationalStatusAdmin)
 
 admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
 
-admin.site.register(TAPApiEnvelope, TAPApiEnvelopeAdmin)
+admin.site.register(CrownDependenciesEnvelope, CrownDependenciesEnvelopeAdmin)

@@ -10,6 +10,7 @@ from django_fsm import TransitionNotAllowed
 from notifications_python_client import prepare_upload
 
 from common.tests import factories
+from publishing.models import CrownDependenciesEnvelope
 from publishing.models import Envelope
 from publishing.models import EnvelopeCurrentlyProccessing
 from publishing.models import EnvelopeInvalidQueuePosition
@@ -19,7 +20,6 @@ from publishing.models import PackagedWorkBasket
 from publishing.models import PackagedWorkBasketDuplication
 from publishing.models import PackagedWorkBasketInvalidCheckStatus
 from publishing.models import ProcessingState
-from publishing.models import TAPApiEnvelope
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -485,7 +485,7 @@ def test_create_api_publishing_envelope(envelope_storage, settings):
 
     pwb.refresh_from_db()
 
-    assert pwb.tap_api_envelope
+    assert pwb.crown_dependencies_envelope
 
 
 def test_create_api_envelope_no_envelope_to_publish_envelope_field(
@@ -521,21 +521,21 @@ def test_create_api_envelope_no_envelope_to_publish_envelope_field(
 
     pwb.refresh_from_db()
 
-    assert not pwb.tap_api_envelope
+    assert not pwb.crown_dependencies_envelope
 
 
-def test_create_api_envelope_no_envelope_to_publish_TAPApiEnvelope(
+def test_create_api_envelope_no_envelope_to_publish_CrownDependenciesEnvelope(
     successful_envelope_factory,
     settings,
 ):
     """Test validates that it will not publish any workbaskets when the packaged
-    workbasket has an associated TAPApiEnvelope."""
+    workbasket has an associated CrownDependenciesEnvelope."""
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
     successful_envelope_factory()
 
-    assert len(TAPApiEnvelope.objects.all()) == 1
+    assert len(CrownDependenciesEnvelope.objects.all()) == 1
 
     PackagedWorkBasket.create_api_publishing_envelope()
 
-    assert len(TAPApiEnvelope.objects.all()) == 1
+    assert len(CrownDependenciesEnvelope.objects.all()) == 1

@@ -9,13 +9,17 @@ from freezegun import freeze_time
 from common.tests import factories
 from publishing.models import ApiPublishingState
 from publishing.models import PackagedWorkBasket
-from publishing.models.tap_api_envelope import ApiEnvelopeInvalidWorkBasketStatus
-from publishing.models.tap_api_envelope import ApiEnvelopeUnexpectedEnvelopeSequence
+from publishing.models.crown_dependencies_envelope import (
+    ApiEnvelopeInvalidWorkBasketStatus,
+)
+from publishing.models.crown_dependencies_envelope import (
+    ApiEnvelopeUnexpectedEnvelopeSequence,
+)
 
 pytestmark = pytest.mark.django_db
 
 
-def test_create_tap_api_envelope(
+def test_create_crown_dependencies_envelope(
     successful_envelope_factory,
     settings,
 ):
@@ -31,9 +35,9 @@ def test_create_tap_api_envelope(
     packaged_work_basket = PackagedWorkBasket.objects.get(
         envelope=envelope,
     )
-    assert packaged_work_basket.tap_api_envelope
+    assert packaged_work_basket.crown_dependencies_envelope
     assert (
-        packaged_work_basket.tap_api_envelope.publishing_state
+        packaged_work_basket.crown_dependencies_envelope.publishing_state
         == ApiPublishingState.AWAITING_PUBLISHING
     )
 
@@ -45,20 +49,20 @@ def test_create_tap_api_envelope(
         envelope=envelope2,
     )
     assert (
-        packaged_work_basket.tap_api_envelope.publishing_state
+        packaged_work_basket.crown_dependencies_envelope.publishing_state
         == ApiPublishingState.AWAITING_PUBLISHING
     )
 
 
-def test_create_tap_api_envelope_invalid_status(packaged_workbasket_factory):
+def test_create_crown_dependencies_envelope_invalid_status(packaged_workbasket_factory):
     """Test that create tap envelope will not create for incorrect status."""
     with pytest.raises(ApiEnvelopeInvalidWorkBasketStatus):
-        factories.TapApiEnvelopeFactory(
+        factories.CrownDependenciesEnvelopeFactory(
             packaged_work_basket=packaged_workbasket_factory(),
         )
 
 
-def test_create_tap_api_envelope_invalid_envelope_sequence(
+def test_create_crown_dependencies_envelope_invalid_envelope_sequence(
     successful_envelope_factory,
     settings,
 ):
@@ -72,7 +76,9 @@ def test_create_tap_api_envelope_invalid_envelope_sequence(
     )
 
     with pytest.raises(ApiEnvelopeUnexpectedEnvelopeSequence):
-        factories.TapApiEnvelopeFactory(packaged_work_basket=packaged_workbasket)
+        factories.CrownDependenciesEnvelopeFactory(
+            packaged_work_basket=packaged_workbasket,
+        )
 
     # check out of sequence still works over different years
     with freeze_time("2023-01-01"):
@@ -83,7 +89,9 @@ def test_create_tap_api_envelope_invalid_envelope_sequence(
     )
 
     with pytest.raises(ApiEnvelopeUnexpectedEnvelopeSequence):
-        factories.TapApiEnvelopeFactory(packaged_work_basket=packaged_workbasket2)
+        factories.CrownDependenciesEnvelopeFactory(
+            packaged_work_basket=packaged_workbasket2,
+        )
 
 
 def test_invalid_envelope_sequence_published_to_tariffs_api(envelope_storage, settings):
@@ -116,4 +124,4 @@ def test_invalid_envelope_sequence_published_to_tariffs_api(envelope_storage, se
     pwb.save()
 
     with pytest.raises(ApiEnvelopeUnexpectedEnvelopeSequence):
-        factories.TapApiEnvelopeFactory(packaged_work_basket=pwb)
+        factories.CrownDependenciesEnvelopeFactory(packaged_work_basket=pwb)
