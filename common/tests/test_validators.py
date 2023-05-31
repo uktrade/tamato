@@ -109,6 +109,7 @@ def test_numeric_validator(value, expected_valid):
         ("Capital", False),
         ("Capital123", False),
         ("Capital!", False),
+        ("CAPITAL123!", False),
         ("Capital123!", True),
     ],
 )
