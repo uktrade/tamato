@@ -98,7 +98,13 @@ def schedule_create_xml_envelope_file(
     retry_jitter=True,
 )
 def publish_to_api():
-    """"""
+    """
+    Task which takes a list (queue) of envelopes ready to publish.
+
+    Iterates over publishing each item and will refresh the queryset to see if
+    any new items have been added to the queue ( envelopes in the
+    AWAITING_PUBLISHING state)
+    """
     from publishing.models import CrownDependenciesEnvelope
     from publishing.models import Envelope
     from publishing.models.state import ApiPublishingState
