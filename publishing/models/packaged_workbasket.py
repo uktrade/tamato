@@ -29,6 +29,7 @@ from notifications.models import NotificationLog
 from notifications.tasks import send_emails
 from publishing.models.state import ProcessingState
 from publishing.tasks import schedule_create_xml_envelope_file
+from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -194,7 +195,7 @@ class PackagedWorkBasketInvalidQueueOperation(Exception):
 
 class PackagedWorkBasketManager(Manager):
     @atomic
-    def create(self, workbasket, **kwargs):
+    def create(self, workbasket: WorkBasket, **kwargs):
         """Create a new instance, associating with workbasket."""
         if workbasket.status in WorkflowStatus.unchecked_statuses():
             raise PackagedWorkBasketInvalidCheckStatus(
@@ -290,7 +291,7 @@ class PackagedWorkBasketQuerySet(QuerySet):
         )
         return top.first() if top else None
 
-    def get_next_unpublished_to_api(self):
+    def get_next_unpublished_to_api(self) -> "PackagedWorkBasket":
         """Return the next packaged work basket (ordered by
         envelope__envelope_id) that is successfully process and does not have a
         published to api envelope."""
@@ -469,13 +470,13 @@ class PackagedWorkBasket(TimestampedMixin):
 
     # processing_state transition management.
 
-    def begin_processing_condition_at_position_1(self):
+    def begin_processing_condition_at_position_1(self) -> bool:
         """Django FSM condition: Instance must be at position 1 in order to
         complete the begin_processing transition to CURRENTLY_PROCESSING."""
 
         return self.position == 1
 
-    def begin_processing_condition_no_instances_currently_processing(self):
+    def begin_processing_condition_no_instances_currently_processing(self) -> bool:
         """Django FSM condition: No other instance is currently being processed
         in order to complete the begin_processing and transition this instance
         to CURRENTLY_PROCESSING."""
@@ -687,7 +688,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
-    def pop_top(self):
+    def pop_top(self) -> "PackagedWorkBasket":
         """
         Pop the top-most instance, shuffling all remaining queued instances
         (with `state` AWAITING_PROCESSING) up one position.
@@ -710,7 +711,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
-    def remove_from_queue(self):
+    def remove_from_queue(self) -> "PackagedWorkBasket":
         """
         Remove instance from the queue, shuffling all successive queued
         instances (with `state` AWAITING_PROCESSING) up one position.
@@ -737,7 +738,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
-    def promote_to_top_position(self):
+    def promote_to_top_position(self) -> "PackagedWorkBasket":
         """Promote the instance to the top position of the package processing
         queue so that it occupies position 1."""
 
@@ -757,7 +758,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
-    def promote_position(self):
+    def promote_position(self) -> "PackagedWorkBasket":
         """Promote the instance by one position up the package processing
         queue."""
 
@@ -777,7 +778,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
-    def demote_position(self):
+    def demote_position(self) -> "PackagedWorkBasket":
         """Demote the instance by one position down the package processing
         queue."""
 

@@ -46,7 +46,9 @@ class ApiEnvelopeInvalidWorkBasketStatus(Exception):
 
 class CrownDependenciesEnvelopeManager(Manager):
     @atomic
-    def create(self, packaged_work_basket: PackagedWorkBasket, **kwargs):
+    def create(
+        self, packaged_work_basket: PackagedWorkBasket, **kwargs
+    ) -> "CrownDependenciesEnvelope":
         """
         Create a new instance, from the packaged workbasket successfully
         processed.
@@ -108,29 +110,29 @@ class CrownDependenciesEnvelopeManager(Manager):
 
 
 class CrownDependenciesEnvelopeQuerySet(QuerySet):
-    def awaiting_publishing(self):
+    def awaiting_publishing(self) -> "CrownDependenciesEnvelopeQuerySet":
         return self.filter(
             publishing_state=ApiPublishingState.AWAITING_PUBLISHING,
         )
 
-    def unpublished(self):
+    def unpublished(self) -> "CrownDependenciesEnvelopeQuerySet":
         return (
             self.failed_publishing()
             | self.awaiting_publishing()
             | self.currently_publishing()
         )
 
-    def currently_publishing(self):
+    def currently_publishing(self) -> "CrownDependenciesEnvelopeQuerySet":
         return self.filter(
             publishing_state=ApiPublishingState.CURRENTLY_PUBLISHING,
         )
 
-    def published(self):
+    def published(self) -> "CrownDependenciesEnvelopeQuerySet":
         return self.filter(
             publishing_state=ApiPublishingState.SUCCESSFULLY_PUBLISHED,
         )
 
-    def failed_publishing(self):
+    def failed_publishing(self) -> "CrownDependenciesEnvelopeQuerySet":
         return self.filter(
             publishing_state=ApiPublishingState.FAILED_PUBLISHING,
         )
@@ -170,7 +172,7 @@ class CrownDependenciesEnvelope(TimestampedMixin):
         default=None,
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<CrownDependenciesEnvelope: id="{self.pk}", publishing_state={self.publishing_state}>'
 
     def previous_envelope(self) -> CrownDependenciesEnvelopeQuerySet:
