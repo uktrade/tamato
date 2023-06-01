@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from celery.result import AsyncResult
 from django.db.models import CharField
@@ -22,7 +23,7 @@ class CrownDependenciesPublishingTask(TimestampedMixin):
     )
 
     @property
-    def task_status(self):
+    def task_status(self) -> Optional[str]:
         """Return the status of the publishing task if it is available,
         otherwise return None."""
         if not self.task_id:
