@@ -10,8 +10,8 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
 
+from commodities.helpers import process_imported_taric_file
 from importer.forms import ImportForm
-from importer.management.commands.import_taric_file import import_taric_file
 
 
 class CommodityFilterForm(forms.Form):
@@ -31,7 +31,7 @@ class CommodityFilterForm(forms.Form):
 
 
 class CommodityImportForm(ImportForm):
-    # The correct form for importer work.
+    # The correct form for importer work - shows upload taric file field
     taric_file = forms.FileField(
         required=True,
         help_text="",
@@ -55,10 +55,8 @@ class CommodityImportForm(ImportForm):
 
     @transaction.atomic
     def save(self, user: User, workbasket_id: str, commit=True):
-        # To do - add code to Save the file to S3
-
-        # Kick off management command
-        import_taric_file(
+        # Kicks off the processing of the file
+        process_imported_taric_file(
             taric_file=self.cleaned_data["taric_file"],
             user=user,
             workbasket_id=workbasket_id,
