@@ -1,8 +1,6 @@
 import logging
 from datetime import datetime
 
-from celery.result import AsyncResult
-from django.db.models import CharField
 from django.db.models import DateTimeField
 from django.db.models import Manager
 from django.db.models import Max
@@ -174,57 +172,8 @@ class CrownDependenciesEnvelope(TimestampedMixin):
         default=None,
     )
 
-    publishing_task_id = CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-        unique=True,
-    )
-
     def __repr__(self) -> str:
         return f'<CrownDependenciesEnvelope: id="{self.pk}", publishing_state={self.publishing_state}>'
-
-    def terminate_publishing_task(self):
-        """Terminate the envelope's publishing task as identified by its
-        publishing_task_id."""
-        logger.info(
-            f"Attempting publishing task termination for envelope pk={self.pk}.",
-        )
-        if not self.publishing_task_id:
-            logger.info(
-                f"Unable to terminate publishing task for envelope "
-                f"pk={self.pk} - "
-                f"empty publishing_task_id.",
-            )
-            return
-
-        task_result = AsyncResult(self.publishing_task_id)
-        if not task_result:
-            logger.info(
-                f"Unable to terminate publishing task for envelope "
-                f"pk={self.pk}, "
-                f"publishing_task_id={self.publishing_task_id} - "
-                f"task result is unavailable.",
-            )
-            return
-
-        task_result.revoke()
-        self.publishing_task_id = None
-        self.save()
-        logger.info(
-            f"Terminated publishing task for envelope pk={self.pk}.",
-        )
-
-    @property
-    def publishing_task_status(self):
-        """Return the status of the envelope's publishing task if it is
-        available, otherwise return None."""
-        if not self.publishing_task_id:
-            return None
-        task_result = AsyncResult(self.publishing_task_id)
-        if not task_result:
-            return None
-        return task_result.status
 
     def previous_envelope(self) -> CrownDependenciesEnvelopeQuerySet:
         """Get the previous `CrownDependenciesEnvelope` by order of `pk`."""
