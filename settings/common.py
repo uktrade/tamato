@@ -450,11 +450,13 @@ TARIFF_API_INTERFACE = os.environ.get(
     "TARIFF_API_INTERFACE",
     "publishing.tariff_api.interface.TariffAPI",
 )
-API_HOST = os.environ.get("API_HOST", "")
-API_URL_PATH = os.environ.get("API_URL_PATH", "api/v1/taricfiles/")
-API_KEY = os.environ.get("API_KEY", "")
-
-# Pickle could be used as a serializer here, as this always runs in a DMZ
+CROWN_DEPENDENCIES_API_HOST = os.environ.get("CROWN_DEPENDENCIES_API_HOST", "")
+CROWN_DEPENDENCIES_API_URL_PATH = os.environ.get(
+    "CROWN_DEPENDENCIES_API_URL_PATH",
+    "api/v1/taricfiles/",
+)
+CROWN_DEPENDENCIES_GET_API_KEY = os.environ.get("CROWN_DEPENDENCIES_GET_API_KEY", "")
+CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get("CROWN_DEPENDENCIES_POST_API_KEY", "")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
 
