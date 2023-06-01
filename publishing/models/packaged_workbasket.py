@@ -292,9 +292,15 @@ class PackagedWorkBasketQuerySet(QuerySet):
         return top.first() if top else None
 
     def get_next_unpublished_to_api(self) -> "PackagedWorkBasket":
-        """Return the next packaged work basket (ordered by
-        envelope__envelope_id) that is successfully process and does not have a
-        published to api envelope."""
+        """Return the next successfully processed packaged workbasket (ordered
+        by envelope__envelope_id) that does not have a published envelope and
+        crown_dependencies_envelope."""
+        return self.get_unpublished_to_api().first()
+
+    def get_unpublished_to_api(self) -> "PackagedWorkBasket":
+        """Return all successfully processed packaged workbaskets (ordered by
+        envelope__envelope_id) that do not have a published envelope and
+        crown_dependencies_envelope."""
         unpublished = self.filter(
             Q(
                 processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
@@ -303,7 +309,7 @@ class PackagedWorkBasketQuerySet(QuerySet):
                 envelope__published_to_tariffs_api__isnull=True,
             ),
         ).order_by("envelope__envelope_id")
-        return unpublished.first() if unpublished else None
+        return unpublished
 
 
 class PackagedWorkBasket(TimestampedMixin):
