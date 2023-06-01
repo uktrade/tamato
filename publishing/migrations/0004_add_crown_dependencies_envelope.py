@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="TAPApiEnvelope",
+            name="CrownDependenciesEnvelope",
             fields=[
                 (
                     "id",
@@ -33,11 +33,7 @@ class Migration(migrations.Migration):
                             ("AWAITING_PUBLISHING", "Awaiting publishing"),
                             ("CURRENTLY_PUBLISHING", "Currently publishing"),
                             ("SUCCESSFULLY_PUBLISHED", "Successfully published"),
-                            ("FAILED_PUBLISHING_STAGING", "Failed publishing staging"),
-                            (
-                                "FAILED_PUBLISHING_PRODUCTION",
-                                "Failed publishing production",
-                            ),
+                            ("FAILED_PUBLISHING", "Failed publishing"),
                         ],
                         db_index=True,
                         default="AWAITING_PUBLISHING",
@@ -47,11 +43,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "staging_published",
-                    models.DateTimeField(blank=True, default=None, null=True),
-                ),
-                (
-                    "production_published",
+                    "published",
                     models.DateTimeField(blank=True, default=None, null=True),
                 ),
             ],
@@ -61,13 +53,13 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="packagedworkbasket",
-            name="tap_api_envelope",
+            name="crown_dependencies_envelope",
             field=models.ForeignKey(
                 editable=False,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
                 related_name="packagedworkbaskets",
-                to="publishing.tapapienvelope",
+                to="publishing.crowndependenciesenvelope",
             ),
         ),
     ]

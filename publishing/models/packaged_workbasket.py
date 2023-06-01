@@ -29,6 +29,7 @@ from notifications.models import NotificationLog
 from notifications.tasks import send_emails
 from publishing.models.state import ProcessingState
 from publishing.tasks import schedule_create_xml_envelope_file
+from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ def refresh_after(func):
 
     This ensures a transitioned instance is always reload, which is necessary
     when another action may update the packaged workbasket for example when a
-    TAPApiEnvelope is created.
+    CrownDependenciesEnvelope is created.
     """
 
     @atomic
@@ -194,7 +195,7 @@ class PackagedWorkBasketInvalidQueueOperation(Exception):
 
 class PackagedWorkBasketManager(Manager):
     @atomic
-    def create(self, workbasket, **kwargs):
+    def create(self, workbasket: WorkBasket, **kwargs):
         """Create a new instance, associating with workbasket."""
         if workbasket.status in WorkflowStatus.unchecked_statuses():
             raise PackagedWorkBasketInvalidCheckStatus(
@@ -290,21 +291,21 @@ class PackagedWorkBasketQuerySet(QuerySet):
         )
         return top.first() if top else None
 
-    def get_next_unpublished_to_api(self):
+    def get_next_unpublished_to_api(self) -> "PackagedWorkBasket":
         """Return the next successfully processed packaged workbasket (ordered
         by envelope__envelope_id) that does not have a published envelope and
         tap_api_envelope."""
         return self.get_unpublished_to_api().first()
 
-    def get_unpublished_to_api(self):
+    def get_unpublished_to_api(self) -> "PackagedWorkBasket":
         """Return all successfully processed packaged workbaskets (ordered by
         envelope__envelope_id) that do not have a published envelope and
         tap_api_envelope."""
         unpublished = self.filter(
             Q(
                 processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
-                tap_api_envelope__isnull=True,
-                # Filters out older envelopes that do not have a tap_api_envelope
+                crown_dependencies_envelope__isnull=True,
+                # Filters out older envelopes that do not have a crown_dependencies_envelope
                 envelope__published_to_tariffs_api__isnull=True,
             ),
         ).order_by("envelope__envelope_id")
@@ -357,8 +358,8 @@ class PackagedWorkBasket(TimestampedMixin):
         editable=False,
         related_name="packagedworkbaskets",
     )
-    tap_api_envelope = ForeignKey(
-        "publishing.TAPApiEnvelope",
+    crown_dependencies_envelope = ForeignKey(
+        "publishing.CrownDependenciesEnvelope",
         null=True,
         on_delete=SET_NULL,
         editable=False,
@@ -455,31 +456,33 @@ class PackagedWorkBasket(TimestampedMixin):
     def create_api_publishing_envelope(cls):
         """Class method for the packaged workbasket that will trigger the next
         available packaged workbasket which is Successfully processed and does
-        not have a TAPApiEnvelope."""
+        not have a CrownDependenciesEnvelope."""
         unpublished = cls.objects.get_next_unpublished_to_api()
         if unpublished:
             from publishing import models as publishing_models
 
-            tap_api_envelope = publishing_models.TAPApiEnvelope.objects.create(
-                packaged_work_basket=unpublished,
+            crown_dependencies_envelope = (
+                publishing_models.CrownDependenciesEnvelope.objects.create(
+                    packaged_work_basket=unpublished,
+                )
             )
-            unpublished.tap_api_envelope = tap_api_envelope
+            unpublished.crown_dependencies_envelope = crown_dependencies_envelope
             unpublished.save()
         else:
             logger.info(
-                "Attempted to create TAPApiEnvelope, but no unpublished, successfully "
+                "Attempted to create CrownDependenciesEnvelope, but no unpublished, successfully "
                 "packaged workbasket exists.",
             )
 
     # processing_state transition management.
 
-    def begin_processing_condition_at_position_1(self):
+    def begin_processing_condition_at_position_1(self) -> bool:
         """Django FSM condition: Instance must be at position 1 in order to
         complete the begin_processing transition to CURRENTLY_PROCESSING."""
 
         return self.position == 1
 
-    def begin_processing_condition_no_instances_currently_processing(self):
+    def begin_processing_condition_no_instances_currently_processing(self) -> bool:
         """Django FSM condition: No other instance is currently being processed
         in order to complete the begin_processing and transition this instance
         to CURRENTLY_PROCESSING."""
@@ -691,7 +694,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
-    def pop_top(self):
+    def pop_top(self) -> "PackagedWorkBasket":
         """
         Pop the top-most instance, shuffling all remaining queued instances
         (with `state` AWAITING_PROCESSING) up one position.
@@ -714,7 +717,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
-    def remove_from_queue(self):
+    def remove_from_queue(self) -> "PackagedWorkBasket":
         """
         Remove instance from the queue, shuffling all successive queued
         instances (with `state` AWAITING_PROCESSING) up one position.
@@ -741,7 +744,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
-    def promote_to_top_position(self):
+    def promote_to_top_position(self) -> "PackagedWorkBasket":
         """Promote the instance to the top position of the package processing
         queue so that it occupies position 1."""
 
@@ -761,7 +764,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
-    def promote_position(self):
+    def promote_position(self) -> "PackagedWorkBasket":
         """Promote the instance by one position up the package processing
         queue."""
 
@@ -781,7 +784,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
-    def demote_position(self):
+    def demote_position(self) -> "PackagedWorkBasket":
         """Demote the instance by one position down the package processing
         queue."""
 

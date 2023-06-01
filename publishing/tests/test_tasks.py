@@ -9,7 +9,8 @@ from requests import Response
 from common.tests import factories
 from common.tests.util import taric_xml_record_codes
 from common.tests.util import validate_taric_xml_record_order
-from publishing.models import TAPApiEnvelope
+from publishing.models import CrownDependenciesEnvelope
+from publishing.models import CrownDependenciesPublishingTask
 from publishing.models.state import ApiPublishingState
 from publishing.tariff_api.interface import TariffAPIStubbed
 from publishing.tasks import create_xml_envelope_file
@@ -128,49 +129,44 @@ def test_publish_to_api_successfully_published(successful_envelope_factory, sett
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     successful_envelope_factory()
 
-    envelope = TAPApiEnvelope.objects.all()
+    envelope = CrownDependenciesEnvelope.objects.all()
     assert envelope.count() == 1
     pwb = envelope[0].packagedworkbaskets.last()
 
     assert envelope[0].publishing_state == ApiPublishingState.AWAITING_PUBLISHING
-    assert not envelope[0].staging_published
-    assert not envelope[0].production_published
-    assert not pwb.envelope.published_to_tariffs_api
+    assert not envelope[0].published
 
     publish_to_api()
     pwb.envelope.refresh_from_db()
     envelope[0].refresh_from_db()
 
     assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
-    assert envelope[0].staging_published
-    assert envelope[0].production_published
-    assert pwb.envelope.published_to_tariffs_api
+    assert envelope[0].published
 
 
-def test_publish_to_api_failed_publishing_staging(
+def test_publish_to_api_failed_publishing(
     successful_envelope_factory,
     settings,
 ):
-    """Test when an envelope fails publishing to Tariff API staging that its
-    state and published fields are updated accordingly."""
+    """Test when an envelope fails publishing to Tariff API that its state and
+    published fields are updated accordingly."""
 
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     successful_envelope_factory()
 
-    envelope = TAPApiEnvelope.objects.all()
+    envelope = CrownDependenciesEnvelope.objects.all()
     assert envelope.count() == 1
     pwb = envelope[0].packagedworkbaskets.last()
 
     assert envelope[0].publishing_state == ApiPublishingState.AWAITING_PUBLISHING
-    assert not envelope[0].staging_published
-    assert not envelope[0].production_published
+    assert not envelope[0].published
     assert not pwb.envelope.published_to_tariffs_api
 
     response = Response()
     response.status_code = 400
     with mock.patch.object(
         TariffAPIStubbed,
-        "post_envelope_staging",
+        "post_envelope",
         return_value=response,
     ):
         publish_to_api()
@@ -178,106 +174,87 @@ def test_publish_to_api_failed_publishing_staging(
     pwb.envelope.refresh_from_db()
     envelope[0].refresh_from_db()
 
-    assert envelope[0].publishing_state == ApiPublishingState.FAILED_PUBLISHING_STAGING
-    assert not envelope[0].staging_published
-    assert not envelope[0].production_published
+    assert envelope[0].publishing_state == ApiPublishingState.FAILED_PUBLISHING
+    assert not envelope[0].published
     assert not pwb.envelope.published_to_tariffs_api
 
 
-def test_publish_to_api_failed_publishing_production(
+def test_publish_to_api_failed_publishing_to_successfully_published(
     successful_envelope_factory,
     settings,
 ):
-    """Test when an envelope fails publishing to Tariff API production that its
-    state and published fields are updated accordingly."""
+    """Test that an envelope in state FAILED_PUBLISHING can be published to the
+    Tariff API."""
 
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     successful_envelope_factory()
 
-    envelope = TAPApiEnvelope.objects.all()
+    envelope = CrownDependenciesEnvelope.objects.all()
     assert envelope.count() == 1
     pwb = envelope[0].packagedworkbaskets.last()
 
-    assert envelope[0].publishing_state == ApiPublishingState.AWAITING_PUBLISHING
-    assert not envelope[0].staging_published
-    assert not envelope[0].production_published
-    assert not pwb.envelope.published_to_tariffs_api
+    envelope[0].begin_publishing()
+    envelope[0].publishing_failed()
+    assert envelope[0].publishing_state == ApiPublishingState.FAILED_PUBLISHING
+
+    publish_to_api()
+    pwb.envelope.refresh_from_db()
+    envelope[0].refresh_from_db()
+
+    assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+    assert envelope[0].published
+
+
+def test_publish_to_api_currently_publishing_to_successfully_published(
+    successful_envelope_factory,
+    settings,
+):
+    """Test that an envelope in state CURRENTLY_PUBLISHING can be published to
+    the Tariff API."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    successful_envelope_factory()
+
+    envelope = CrownDependenciesEnvelope.objects.all()
+    assert envelope.count() == 1
+
+    envelope[0].begin_publishing()
+    assert envelope[0].publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
+
+    publish_to_api()
+    envelope[0].refresh_from_db()
+
+    assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+    assert envelope[0].published
+
+
+def test_publish_to_api_has_been_published(
+    successful_envelope_factory,
+    settings,
+):
+    """Test that an envelope that has already been published but is stuck in
+    state CURRENTLY_PUBLISHING can be updated accordingly."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    successful_envelope_factory()
+
+    envelope = CrownDependenciesEnvelope.objects.first()
+
+    envelope.begin_publishing()
+    assert envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
 
     response = Response()
-    response.status_code = 400
+    response.status_code = 200
     with mock.patch.object(
         TariffAPIStubbed,
-        "post_envelope_production",
+        "get_envelope",
         return_value=response,
     ):
         publish_to_api()
+    envelope.refresh_from_db()
 
-    pwb.envelope.refresh_from_db()
-    envelope[0].refresh_from_db()
-
-    assert (
-        envelope[0].publishing_state == ApiPublishingState.FAILED_PUBLISHING_PRODUCTION
-    )
-    assert envelope[0].staging_published
-    assert not envelope[0].production_published
-    assert not pwb.envelope.published_to_tariffs_api
-
-
-def test_publish_to_api_failed_publishing_staging_to_successfully_published(
-    successful_envelope_factory,
-    settings,
-):
-    """Test that an envelope with state FAILED_PUBLISHING_STAGING can be
-    published to the Tariff API."""
-
-    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
-    successful_envelope_factory()
-
-    envelope = TAPApiEnvelope.objects.all()
-    assert envelope.count() == 1
-    pwb = envelope[0].packagedworkbaskets.last()
-
-    envelope[0].begin_publishing()
-    envelope[0].publishing_staging_failed()
-    assert envelope[0].publishing_state == ApiPublishingState.FAILED_PUBLISHING_STAGING
-
-    publish_to_api()
-    pwb.envelope.refresh_from_db()
-    envelope[0].refresh_from_db()
-
-    assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
-    assert envelope[0].staging_published
-    assert envelope[0].production_published
-    assert pwb.envelope.published_to_tariffs_api
-
-
-def test_publish_to_api_failed_publishing_production_to_successfully_published(
-    successful_envelope_factory,
-    settings,
-):
-    """Test that an envelope with state FAILED_PUBLISHING_PRODUCTION can be
-    published to the Tariff API."""
-
-    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
-    successful_envelope_factory()
-
-    envelope = TAPApiEnvelope.objects.all()
-    assert envelope.count() == 1
-    pwb = envelope[0].packagedworkbaskets.last()
-
-    envelope[0].begin_publishing()
-    envelope[0].publishing_production_failed()
-    assert (
-        envelope[0].publishing_state == ApiPublishingState.FAILED_PUBLISHING_PRODUCTION
-    )
-
-    publish_to_api()
-    pwb.envelope.refresh_from_db()
-    envelope[0].refresh_from_db()
-
-    assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
-    assert envelope[0].production_published
-    assert pwb.envelope.published_to_tariffs_api
+    assert envelope.publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+    assert envelope.published
 
 
 def test_publish_to_api_published_in_sequence(successful_envelope_factory, settings):
@@ -288,7 +265,7 @@ def test_publish_to_api_published_in_sequence(successful_envelope_factory, setti
     successful_envelope_factory()
     successful_envelope_factory()
 
-    envelopes = TAPApiEnvelope.objects.order_by("pk")
+    envelopes = CrownDependenciesEnvelope.objects.order_by("pk")
     assert envelopes.count() == 3
 
     publish_to_api()
@@ -296,13 +273,21 @@ def test_publish_to_api_published_in_sequence(successful_envelope_factory, setti
     for envelope in envelopes:
         envelope.refresh_from_db()
 
-    assert (
-        envelopes[2].staging_published
-        > envelopes[1].staging_published
-        > envelopes[0].staging_published
-    )
-    assert (
-        envelopes[2].production_published
-        > envelopes[1].production_published
-        > envelopes[0].production_published
-    )
+    assert envelopes[2].published > envelopes[1].published > envelopes[0].published
+
+
+def test_publish_to_api_creates_crown_dependencies_publishing_task(
+    successful_envelope_factory,
+    settings,
+):
+    """Test that a CrownDependenciesPublishingTask instance is created."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    successful_envelope_factory()
+
+    publishing_tasks = CrownDependenciesPublishingTask.objects.all()
+    assert publishing_tasks.count() == 0
+
+    publish_to_api()
+
+    assert publishing_tasks.count() == 1
