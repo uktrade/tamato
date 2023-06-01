@@ -63,4 +63,6 @@ class CrownDependenciesPublishingTask(TimestampedMixin):
         )
 
     def __repr__(self) -> str:
-        return f'<PublishingTask: id="{self.pk}", task_id={self.task_id}>'
+        return (
+            f'<CrownDependenciesPublishingTask: id="{self.pk}", task_id={self.task_id}>'
+        )
