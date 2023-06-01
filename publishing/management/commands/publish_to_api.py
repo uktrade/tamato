@@ -2,7 +2,7 @@ import sys
 
 from django.core.management import BaseCommand
 
-from publishing.models import TAPApiEnvelope
+from publishing.models import CrownDependenciesEnvelope
 from publishing.tasks import publish_to_api
 
 
@@ -19,7 +19,7 @@ class Command(BaseCommand):
         )
 
     def get_unpublished_envelopes(self):
-        unpublished = TAPApiEnvelope.objects.unpublished().order_by("pk")
+        unpublished = CrownDependenciesEnvelope.objects.unpublished().order_by("pk")
         if not unpublished:
             sys.exit("No unpublished envelopes")
         return unpublished

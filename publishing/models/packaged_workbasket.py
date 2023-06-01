@@ -294,13 +294,13 @@ class PackagedWorkBasketQuerySet(QuerySet):
     def get_next_unpublished_to_api(self) -> "PackagedWorkBasket":
         """Return the next successfully processed packaged workbasket (ordered
         by envelope__envelope_id) that does not have a published envelope and
-        tap_api_envelope."""
+        crown_dependencies_envelope."""
         return self.get_unpublished_to_api().first()
 
     def get_unpublished_to_api(self) -> "PackagedWorkBasket":
         """Return all successfully processed packaged workbaskets (ordered by
         envelope__envelope_id) that do not have a published envelope and
-        tap_api_envelope."""
+        crown_dependencies_envelope."""
         unpublished = self.filter(
             Q(
                 processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,

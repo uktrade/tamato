@@ -7,7 +7,7 @@ from publishing.models import PackagedWorkBasket
 
 
 class Command(BaseCommand):
-    help = "Create TAPApiEnvelope for successfully-processed, packaged workbaskets that do not have a published envelope and API envelope."
+    help = "Create CrownDependenciesEnvelope for successfully-processed, packaged workbaskets that do not have a published envelope and API envelope."
 
     def add_arguments(self, parser):
         parser.add_argument(

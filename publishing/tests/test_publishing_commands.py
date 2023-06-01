@@ -4,8 +4,8 @@ import pytest
 from django.core.management import call_command
 
 from common.tests import factories
+from publishing.models import CrownDependenciesEnvelope
 from publishing.models import PackagedWorkBasket
-from publishing.models import TAPApiEnvelope
 
 pytestmark = pytest.mark.django_db
 
@@ -18,7 +18,7 @@ def test_publish_to_api_lists_unpublished_envelopes(
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     successful_envelope_factory()
     successful_envelope_factory()
-    envelopes = TAPApiEnvelope.objects.unpublished()
+    envelopes = CrownDependenciesEnvelope.objects.unpublished()
 
     out = StringIO()
     call_command("publish_to_api", "--list", stdout=out)
@@ -31,7 +31,7 @@ def test_publish_to_api_lists_unpublished_envelopes(
 def test_publish_to_api_exits_no_unpublished_envelopes():
     """Test that publish_to_api exists when there are no unpublished
     envelopes."""
-    assert TAPApiEnvelope.objects.unpublished().count() == 0
+    assert CrownDependenciesEnvelope.objects.unpublished().count() == 0
 
     with pytest.raises(SystemExit):
         call_command("publish_to_api")
@@ -43,11 +43,11 @@ def test_publish_to_api_publishes_envelopes(successful_envelope_factory, setting
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     successful_envelope_factory()
 
-    assert TAPApiEnvelope.objects.unpublished().count() == 1
+    assert CrownDependenciesEnvelope.objects.unpublished().count() == 1
 
     call_command("publish_to_api")
 
-    assert TAPApiEnvelope.objects.unpublished().count() == 0
+    assert CrownDependenciesEnvelope.objects.unpublished().count() == 0
 
 
 def test_create_api_envelope_lists_packaged_workbaskets():
@@ -66,7 +66,7 @@ def test_create_api_envelope_lists_packaged_workbaskets():
 
 def test_create_api_envelope_exits_no_packaged_workbaskets():
     """Test that create_api_envelope exits when there are no packaged
-    workbaskets for which to create API envelopes."""
+    workbaskets for which to create CrownDependenciesEnvelope."""
     assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 0
 
     with pytest.raises(SystemExit):
@@ -78,7 +78,7 @@ def test_create_api_envelope_creates_specified_number(
     published_envelope_factory,
 ):
     """Test that create_api_envelope allows specifying the number of available
-    packaged workbaskets for which to create an API envelope."""
+    packaged workbaskets for which to create a CrownDependenciesEnvelope."""
 
     pwb = successful_packaged_workbasket_factory()
     pwb2 = successful_packaged_workbasket_factory()
@@ -86,20 +86,20 @@ def test_create_api_envelope_creates_specified_number(
     published_envelope_factory(packaged_workbasket=pwb2)
 
     assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 2
-    assert TAPApiEnvelope.objects.count() == 0
+    assert CrownDependenciesEnvelope.objects.count() == 0
 
     call_command("create_api_envelope", "--number", "1")
 
     assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 1
-    assert TAPApiEnvelope.objects.count() == 1
+    assert CrownDependenciesEnvelope.objects.count() == 1
 
 
 def test_create_api_envelope_creates_all(
     successful_packaged_workbasket_factory,
     published_envelope_factory,
 ):
-    """Test that create_api_envelope creates API envelopes for all available
-    packaged workbaskets."""
+    """Test that create_api_envelope creates CrownDependenciesEnvelope for all
+    available packaged workbaskets."""
 
     pwb = successful_packaged_workbasket_factory()
     pwb2 = successful_packaged_workbasket_factory()
@@ -107,9 +107,9 @@ def test_create_api_envelope_creates_all(
     published_envelope_factory(packaged_workbasket=pwb2)
 
     assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 2
-    assert TAPApiEnvelope.objects.count() == 0
+    assert CrownDependenciesEnvelope.objects.count() == 0
 
     call_command("create_api_envelope")
 
     assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 0
-    assert TAPApiEnvelope.objects.count() == 2
+    assert CrownDependenciesEnvelope.objects.count() == 2

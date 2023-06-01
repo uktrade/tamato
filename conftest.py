@@ -398,7 +398,7 @@ def successful_packaged_workbasket_factory(published_workbasket_factory):
     state.
 
     Note: can be used to create a packaged workbasket with envelope without triggering
-    create_api_publishing_envelope decorator (TAPApiEnvelope creation).
+    create_api_publishing_envelope decorator (CrownDependenciesEnvelope creation).
 
     params:
     workbasket defaults to published_workbasket_factory() which creates a
