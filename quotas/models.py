@@ -108,14 +108,14 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
     @property
     def geographical_exclusions(self):
         origin_ids = list(
-            self.quotaordernumberorigin_set.latest_approved().values_list(
+            self.quotaordernumberorigin_set.current().values_list(
                 "pk",
                 flat=True,
             ),
         )
         exclusions = [
             e.excluded_geographical_area
-            for e in QuotaOrderNumberOriginExclusion.objects.latest_approved().filter(
+            for e in QuotaOrderNumberOriginExclusion.objects.current().filter(
                 origin_id__in=origin_ids,
             )
         ]
