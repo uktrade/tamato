@@ -106,11 +106,17 @@ def publish_to_api():
     AWAITING_PUBLISHING state)
     """
     from publishing.models import CrownDependenciesEnvelope
+    from publishing.models import CrownDependenciesPublishingTask
     from publishing.models import Envelope
     from publishing.models.state import ApiPublishingState
     from publishing.tariff_api import get_tariff_api_interface
 
     logger.info("Starting Tariff API publishing task")
+
+    task_id = publish_to_api.request.id
+    publishing_task = CrownDependenciesPublishingTask.objects.create(task_id=task_id)
+    publishing_task.save()
+
     interface = get_tariff_api_interface()
 
     class APIPublishingIterator:
