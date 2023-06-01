@@ -167,10 +167,21 @@ class QuotaOrderNumberOrigin(GetTabURLMixin, TrackedModel, ValidityMixin):
     def order_number_in_use(self, transaction):
         return self.order_number.in_use(transaction)
 
+    @property
+    def structure_description(self):
+        return (
+            f"{self.geographical_area.get_area_code_display()} - "
+            f"{self.geographical_area.structure_description} ({self.geographical_area.area_id})"
+        )
 
-class QuotaOrderNumberOriginExclusion(TrackedModel):
+
+class QuotaOrderNumberOriginExclusion(GetTabURLMixin, TrackedModel):
     """Origin exclusions specify countries (or groups of countries, or other
     origins) to exclude from the quota number origin."""
+
+    url_pattern_name_prefix = "geo_area"
+    url_suffix = ""
+    url_relation_field = "excluded_geographical_area"
 
     record_code = "360"
     subrecord_code = "15"
@@ -187,6 +198,13 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
         business_rules.ON14,
         UpdateValidity,
     )
+
+    @property
+    def structure_description(self):
+        return (
+            f"{self.excluded_geographical_area.get_area_code_display()} - "
+            f"{self.excluded_geographical_area.structure_description} ({self.excluded_geographical_area.area_id})"
+        )
 
 
 class QuotaDefinition(GetTabURLMixin, TrackedModel, ValidityMixin):
