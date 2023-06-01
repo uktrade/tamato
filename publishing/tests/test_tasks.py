@@ -10,6 +10,7 @@ from common.tests import factories
 from common.tests.util import taric_xml_record_codes
 from common.tests.util import validate_taric_xml_record_order
 from publishing.models import CrownDependenciesEnvelope
+from publishing.models import CrownDependenciesPublishingTask
 from publishing.models.state import ApiPublishingState
 from publishing.tariff_api.interface import TariffAPIStubbed
 from publishing.tasks import create_xml_envelope_file
@@ -273,3 +274,20 @@ def test_publish_to_api_published_in_sequence(successful_envelope_factory, setti
         envelope.refresh_from_db()
 
     assert envelopes[2].published > envelopes[1].published > envelopes[0].published
+
+
+def test_publish_to_api_creates_crown_dependencies_publishing_task(
+    successful_envelope_factory,
+    settings,
+):
+    """Test that a CrownDependenciesPublishingTask instance is created."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    successful_envelope_factory()
+
+    publishing_tasks = CrownDependenciesPublishingTask.objects.all()
+    assert publishing_tasks.count() == 0
+
+    publish_to_api()
+
+    assert publishing_tasks.count() == 1

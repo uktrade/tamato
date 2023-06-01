@@ -1,8 +1,10 @@
+from django import forms
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from publishing.models import CrownDependenciesEnvelope
+from publishing.models import CrownDependenciesPublishingTask
 from publishing.models import Envelope
 from publishing.models import LoadingReport
 from publishing.models import OperationalStatus
@@ -327,6 +329,69 @@ class CrownDependenciesEnvelopeAdmin(
         return self.workbasket_id_link(pwb.workbasket)
 
 
+class CrownDependenciesPublishingTaskAdminForm(forms.ModelForm):
+    class Meta:
+        model = CrownDependenciesPublishingTask
+        fields = [
+            "terminate_task",
+        ]
+        readonly_fields = (
+            "task_id",
+            "task_status",
+        )
+
+    task_status = forms.CharField(required=False)
+    terminate_task = forms.BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance:
+            self.fields["task_id"].disabled = True
+            self.fields["task_status"].disabled = True
+            self.fields["task_status"].initial = self.instance.task_status
+
+
+class CrownDependenciesPublishingTaskAdmin(admin.ModelAdmin):
+    ordering = ["-pk"]
+    list_display = (
+        "id",
+        "task_status",
+        "created_at",
+        "updated_at",
+    )
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": ("task_id", "task_status", "terminate_task"),
+            },
+        ),
+    )
+    form = CrownDependenciesPublishingTaskAdminForm
+
+    def task_status(self, obj):
+        task_status = obj.task_status
+        if not task_status:
+            return "UNAVAILABLE"
+        return task_status
+
+    def save_model(self, request, instance, form, change):
+        super().save_model(request, instance, form, change)
+
+        terminate_task = form.cleaned_data.get("terminate_task")
+        if terminate_task:
+            instance.terminate_task()
+
+        return instance
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 admin.site.register(Envelope, EnvelopeAdmin)
 
 admin.site.register(LoadingReport, LoadingReportAdmin)
@@ -336,3 +401,8 @@ admin.site.register(OperationalStatus, OperationalStatusAdmin)
 admin.site.register(PackagedWorkBasket, PackagedWorkBasketAdmin)
 
 admin.site.register(CrownDependenciesEnvelope, CrownDependenciesEnvelopeAdmin)
+
+admin.site.register(
+    CrownDependenciesPublishingTask,
+    CrownDependenciesPublishingTaskAdmin,
+)
