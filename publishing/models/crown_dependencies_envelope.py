@@ -224,33 +224,36 @@ class CrownDependenciesEnvelope(TimestampedMixin):
         with a failed outcome."""
         self.notify_publishing_failed()
 
+    def notify_publishing_completed(self, template_id: str):
+        """
+        Notify users that envelope publishing has completed (success or failure)
+        for this instance.
+
+        `template_id` should be the ID of the Notify email template of either
+        the successfully published or failed publishing email.
+        """
+
+        personalisation = {
+            "envelope_id": self.packagedworkbaskets.last().envelope.envelope_id,
+        }
+
+        send_emails.delay(
+            template_id=template_id,
+            personalisation=personalisation,
+            email_type="publishing",
+        )
+
     @skip_notifications_if_disabled
     def notify_publishing_success(self):
         """Notify users that an envelope has successfully publishing to api."""
 
-        personalisation = {
-            "envelope_id": self.envelope.envelope_id,
-        }
-
-        send_emails.delay(
-            template_id=settings.API_PUBLISH_SUCCESS_TEMPLATE_ID,
-            personalisation=personalisation,
-            email_type="publishing",
-        )
+        self.notify_publishing_completed(settings.API_PUBLISH_SUCCESS_TEMPLATE_ID)
 
     @skip_notifications_if_disabled
     def notify_publishing_failed(self):
         """Notify users that an envelope has failed publishing to api."""
 
-        personalisation = {
-            "envelope_id": self.envelope.envelope_id,
-        }
-
-        send_emails.delay(
-            template_id=settings.API_PUBLISH_FAILED_TEMPLATE_ID,
-            personalisation=personalisation,
-            email_type="publishing",
-        )
+        self.notify_publishing_completed(settings.API_PUBLISH_FAILED_TEMPLATE_ID)
 
     @atomic
     def refresh_from_db(self, using=None, fields=None):

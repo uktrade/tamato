@@ -22,14 +22,12 @@ def get_notifications_client():
 def send_emails(template_id: uuid4, personalisation: dict, email_type: str = None):
     """Task for emailing all users signed up to receive packaging updates and
     creating a log to record which users received which email template."""
-
     user_filters = {
         "packaging": Q(enrol_packaging=True),
-        "publishing": Q(enrol_publishing=True),
+        "publishing": Q(enrol_api_publishing=True),
     }
     # Will get all users by default
     users = NotifiedUser.objects.filter(user_filters.get(email_type, Q()))
-    print(users)
     if users.exists():
         notifications_client = get_notifications_client()
         recipients = ""

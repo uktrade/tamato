@@ -408,14 +408,14 @@ HMRC_LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
 # Settings about retrying uploads if the api cannot be contacted.
 # Names correspond to celery settings for retrying tasks:
 #   https://docs.celeryq.dev/en/stable/userguide/tasks.html#automatic-retry-for-known-exceptions
-CHANNEL_ISLANDS_API_MAX_RETRIES = int(
-    os.environ.get("CHANNEL_ISLANDS_API_MAX_RETRIES", "3"),
+CROWN_DEPENDENCIES_API_MAX_RETRIES = int(
+    os.environ.get("CROWN_DEPENDENCIES_API_MAX_RETRIES", "3"),
 )
-CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX = int(
-    os.environ.get("CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX", "600"),
+CROWN_DEPENDENCIES_API_RETRY_BACKOFF_MAX = int(
+    os.environ.get("CROWN_DEPENDENCIES_API_RETRY_BACKOFF_MAX", "600"),
 )
-CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY = int(
-    os.environ.get("CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY", "8"),
+CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY = int(
+    os.environ.get("CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY", "8"),
 )
 
 
@@ -475,9 +475,9 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 
-CHANNEL_ISLANDS_API_CRON = (
-    crontab(os.environ.get("CHANNEL_ISLANDS_API_CRON"))
-    if os.environ.get("CHANNEL_ISLANDS_API_CRON")
+CROWN_DEPENDENCIES_API_CRON = (
+    crontab(os.environ.get("CROWN_DEPENDENCIES_API_CRON"))
+    if os.environ.get("CROWN_DEPENDENCIES_API_CRON")
     else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
 )
 CELERY_BEAT_SCHEDULE = {
@@ -485,10 +485,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
         "schedule": crontab(hour=3, minute=5),
     },
-    "channel_island_api_publish": {
+    "crown_dependencies_api_publish": {
         "task": "publishing.tasks.publish_to_api",
         # every 2 hours between 8am and 6pm on weekdays
-        "schedule": CHANNEL_ISLANDS_API_CRON,
+        "schedule": CROWN_DEPENDENCIES_API_CRON,
     },
 }
 

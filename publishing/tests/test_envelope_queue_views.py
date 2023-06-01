@@ -139,15 +139,15 @@ def test_start_processing(valid_user_client, unpause_queue):
     assert "Download envelope" in process_envelope[0].text
 
 
-@pytest.mark.skip(
-    reason="TODO correctly implement file save",
-)
 def test_accept_envelope(
+    packaged_workbasket_factory,
+    published_envelope_factory,
     mocked_publishing_models_send_emails_delay,
     valid_user_client,
 ):
-    packaged_work_basket = factories.PackagedWorkBasketFactory(
-        envelope=factories.PublishedEnvelopeFactory(),
+    packaged_work_basket = packaged_workbasket_factory()
+    envelope = published_envelope_factory(
+        packaged_workbasket=packaged_work_basket,
     )
     packaged_work_basket.begin_processing()
 
@@ -176,26 +176,17 @@ def test_accept_envelope(
     )
 
 
-@pytest.mark.skip(
-    reason="TODO correctly implement file save & duplicate create_envelope_task_id_key",
-)
 def test_reject_envelope(
+    packaged_workbasket_factory,
+    published_envelope_factory,
     mocked_publishing_models_send_emails_delay,
     valid_user_client,
 ):
-    with patch(
-        "publishing.tasks.create_xml_envelope_file.apply_async",
-        return_value=MagicMock(id=factory.Faker("uuid4")),
-    ):
-        packaged_work_basket_1 = factories.PackagedWorkBasketFactory(
-            envelope=factories.PublishedEnvelopeFactory(),
-        )
-
-    with patch(
-        "publishing.tasks.create_xml_envelope_file.apply_async",
-        return_value=MagicMock(id=factory.Faker("uuid4")),
-    ):
-        packaged_work_basket_2 = factories.PackagedWorkBasketFactory()
+    packaged_work_basket_1 = packaged_workbasket_factory()
+    envelope = published_envelope_factory(
+        packaged_workbasket=packaged_work_basket_1,
+    )
+    packaged_work_basket_2 = packaged_workbasket_factory()
 
     # Demonstrate that packaged workbasket transitions correctly.
     assert packaged_work_basket_1.position == 1
