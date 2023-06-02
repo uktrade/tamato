@@ -106,10 +106,27 @@ def publish_to_api():
     AWAITING_PUBLISHING state)
     """
     from publishing.models import CrownDependenciesEnvelope
+    from publishing.models import CrownDependenciesPublishingOperationalStatus
     from publishing.models import CrownDependenciesPublishingTask
     from publishing.models import Envelope
     from publishing.models.state import ApiPublishingState
+    from publishing.models.state import CrownDependenciesPublishingState
     from publishing.tariff_api import get_tariff_api_interface
+
+    operational_status = (
+        CrownDependenciesPublishingOperationalStatus.objects.current_status()
+    )
+    if (
+        operational_status
+        and operational_status.publishing_state
+        == CrownDependenciesPublishingState.PAUSED
+    ):
+        logger.info(
+            f"Skipping publishing task - "
+            "publishing operational status="
+            f"{operational_status.publishing_state}",
+        )
+        return
 
     logger.info("Starting Tariff API publishing task")
 
