@@ -55,6 +55,7 @@ def handle_batch(taric_file, user):
 
 
 def process_imported_taric_file(
+    session_store,
     taric_file,
     user,
     workbasket_id=None,
@@ -63,6 +64,11 @@ def process_imported_taric_file(
     if placeholder_clamav_check():
         batch = handle_batch(taric_file, user)
 
+        session_store.add_items(
+            {
+                "saved_batch_status": batch.status,
+            },
+        )
         # To do - Send file to S3 bucket
     else:
         # There was a discussion about not outing a virus check fail in order to prevent brute force attacks?

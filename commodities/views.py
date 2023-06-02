@@ -75,7 +75,12 @@ class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBask
         )
 
     def form_valid(self, form):
-        form.save(user=self.request.user, workbasket_id=self.workbasket.id)
+        session_store = self.session_store
+        form.save(
+            session_store,
+            user=self.request.user,
+            workbasket_id=self.workbasket.id,
+        )
         # Add details to the session so that the success view can grab them later.
         self.session_store.add_items(
             {
@@ -103,6 +108,7 @@ class CommodityImportSuccessView(TemplateView):
         context["saved_file_workbasket_id"] = self.session_store.data[
             "saved_file_workbasket_id"
         ]
+        context["saved_batch_status"] = self.session_store.data["saved_batch_status"]
 
         return context
 

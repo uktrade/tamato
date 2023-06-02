@@ -54,9 +54,10 @@ class CommodityImportForm(ImportForm):
         )
 
     @transaction.atomic
-    def save(self, user: User, workbasket_id: str, commit=True):
+    def save(self, session_store, user: User, workbasket_id: str, commit=True):
         # Kicks off the processing of the file
         process_imported_taric_file(
+            session_store,
             taric_file=self.cleaned_data["taric_file"],
             user=user,
             workbasket_id=workbasket_id,

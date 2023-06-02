@@ -19,14 +19,28 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+
+    {% if saved_batch_status == "IMPORTED" %}
       {{ govukPanel({
         "titleText": "TARIC ID " ~ saved_file_name ~ " has been uploaded",
         "text": "Workbasket " ~ saved_file_workbasket_id ~ " created",
         "classes": "govuk-!-margin-bottom-7"
       }) }}
+
+    {% elif saved_batch_status == "UPLOADING" %}
+
+      {{ govukPanel({
+        "titleText": "TARIC ID " ~ saved_file_name ~ " is uploading.",
+        "text": "This might take a while.",
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
+
+    {% endif%}
       <a class="govuk-link" href="{{ url('geo_area-ui-list') }}">
             Back to EU TARIC import list
           </a>
     </div>
+
+
   </div>
 {% endblock %}
