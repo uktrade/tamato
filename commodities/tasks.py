@@ -35,4 +35,5 @@ def run_batch_task(
     batch.imported()
     batch.save()
 
+    # This doesn't seem to be happening!
     HttpResponseRedirect(reverse("commodity-ui-import-success"))
