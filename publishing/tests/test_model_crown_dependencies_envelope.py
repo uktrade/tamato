@@ -8,6 +8,7 @@ from freezegun import freeze_time
 
 from common.tests import factories
 from publishing.models import ApiPublishingState
+from publishing.models import CrownDependenciesEnvelope
 from publishing.models import PackagedWorkBasket
 from publishing.models.crown_dependencies_envelope import (
     ApiEnvelopeInvalidWorkBasketStatus,
@@ -125,3 +126,56 @@ def test_invalid_envelope_sequence_published_to_tariffs_api(envelope_storage, se
 
     with pytest.raises(ApiEnvelopeUnexpectedEnvelopeSequence):
         factories.CrownDependenciesEnvelopeFactory(packaged_work_basket=pwb)
+
+
+from django.conf import settings
+
+
+def test_notify_processing_succeeded(
+    mocked_publishing_models_send_emails_delay,
+    packaged_workbasket_factory,
+    successful_envelope_factory,
+):
+    pwb = packaged_workbasket_factory()
+
+    envelope = successful_envelope_factory(
+        packaged_workbasket=pwb,
+    )
+
+    cd_envelope = CrownDependenciesEnvelope.objects.all().first()
+
+    cd_envelope.notify_publishing_success()
+
+    personalisation = {
+        "envelope_id": pwb.envelope.envelope_id,
+    }
+    mocked_publishing_models_send_emails_delay.assert_called_with(
+        template_id=settings.API_PUBLISH_SUCCESS_TEMPLATE_ID,
+        personalisation=personalisation,
+        email_type="publishing",
+    )
+
+
+def test_notify_processing_failed(
+    mocked_publishing_models_send_emails_delay,
+    packaged_workbasket_factory,
+    successful_envelope_factory,
+):
+    pwb = packaged_workbasket_factory()
+
+    envelope = successful_envelope_factory(
+        packaged_workbasket=pwb,
+    )
+
+    cd_envelope = CrownDependenciesEnvelope.objects.all().first()
+
+    cd_envelope.notify_publishing_failed()
+
+    personalisation = {
+        "envelope_id": pwb.envelope.envelope_id,
+    }
+    mocked_publishing_models_send_emails_delay.assert_called_with(
+        template_id=settings.API_PUBLISH_FAILED_TEMPLATE_ID,
+        personalisation=personalisation,
+        email_type="publishing",
+    )

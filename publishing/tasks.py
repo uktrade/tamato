@@ -91,10 +91,10 @@ def schedule_create_xml_envelope_file(
 
 
 @app.task(
-    default_retry_delay=settings.CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY,
-    max_retries=settings.CHANNEL_ISLANDS_API_MAX_RETRIES,
+    default_retry_delay=settings.CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY,
+    max_retries=settings.CROWN_DEPENDENCIES_API_MAX_RETRIES,
     retry_backoff=True,
-    retry_backoff_max=settings.CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX,
+    retry_backoff_max=settings.CROWN_DEPENDENCIES_API_RETRY_BACKOFF_MAX,
     retry_jitter=True,
 )
 def publish_to_api():

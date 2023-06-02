@@ -408,14 +408,14 @@ HMRC_LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
 # Settings about retrying uploads if the api cannot be contacted.
 # Names correspond to celery settings for retrying tasks:
 #   https://docs.celeryq.dev/en/stable/userguide/tasks.html#automatic-retry-for-known-exceptions
-CHANNEL_ISLANDS_API_MAX_RETRIES = int(
-    os.environ.get("CHANNEL_ISLANDS_API_MAX_RETRIES", "3"),
+CROWN_DEPENDENCIES_API_MAX_RETRIES = int(
+    os.environ.get("CROWN_DEPENDENCIES_API_MAX_RETRIES", "3"),
 )
-CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX = int(
-    os.environ.get("CHANNEL_ISLANDS_API_RETRY_BACKOFF_MAX", "600"),
+CROWN_DEPENDENCIES_API_RETRY_BACKOFF_MAX = int(
+    os.environ.get("CROWN_DEPENDENCIES_API_RETRY_BACKOFF_MAX", "600"),
 )
-CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY = int(
-    os.environ.get("CHANNEL_ISLANDS_API_DEFAULT_RETRY_DELAY", "8"),
+CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY = int(
+    os.environ.get("CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY", "8"),
 )
 
 
@@ -450,11 +450,13 @@ TARIFF_API_INTERFACE = os.environ.get(
     "TARIFF_API_INTERFACE",
     "publishing.tariff_api.interface.TariffAPI",
 )
-API_HOST = os.environ.get("API_HOST", "")
-API_URL_PATH = os.environ.get("API_URL_PATH", "api/v1/taricfiles/")
-API_KEY = os.environ.get("API_KEY", "")
-
-# Pickle could be used as a serializer here, as this always runs in a DMZ
+CROWN_DEPENDENCIES_API_HOST = os.environ.get("CROWN_DEPENDENCIES_API_HOST", "")
+CROWN_DEPENDENCIES_API_URL_PATH = os.environ.get(
+    "CROWN_DEPENDENCIES_API_URL_PATH",
+    "api/v1/taricfiles/",
+)
+CROWN_DEPENDENCIES_GET_API_KEY = os.environ.get("CROWN_DEPENDENCIES_GET_API_KEY", "")
+CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get("CROWN_DEPENDENCIES_POST_API_KEY", "")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
 
@@ -475,9 +477,9 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 
-CHANNEL_ISLANDS_API_CRON = (
-    crontab(os.environ.get("CHANNEL_ISLANDS_API_CRON"))
-    if os.environ.get("CHANNEL_ISLANDS_API_CRON")
+CROWN_DEPENDENCIES_API_CRON = (
+    crontab(os.environ.get("CROWN_DEPENDENCIES_API_CRON"))
+    if os.environ.get("CROWN_DEPENDENCIES_API_CRON")
     else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
 )
 CELERY_BEAT_SCHEDULE = {
@@ -485,10 +487,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
         "schedule": crontab(hour=3, minute=5),
     },
-    "channel_island_api_publish": {
+    "crown_dependencies_api_publish": {
         "task": "publishing.tasks.publish_to_api",
         # every 2 hours between 8am and 6pm on weekdays
-        "schedule": CHANNEL_ISLANDS_API_CRON,
+        "schedule": CROWN_DEPENDENCIES_API_CRON,
     },
 }
 
@@ -691,6 +693,8 @@ MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES = int(
 READY_FOR_CDS_TEMPLATE_ID = os.environ.get("READY_FOR_CDS_TEMPLATE_ID")
 CDS_ACCEPTED_TEMPLATE_ID = os.environ.get("CDS_ACCEPTED_TEMPLATE_ID")
 CDS_REJECTED_TEMPLATE_ID = os.environ.get("CDS_REJECTED_TEMPLATE_ID")
+API_PUBLISH_SUCCESS_TEMPLATE_ID = os.environ.get("API_PUBLISH_SUCCESS_TEMPLATE_ID")
+API_PUBLISH_FAILED_TEMPLATE_ID = os.environ.get("API_PUBLISH_FAILED_TEMPLATE_ID")
 
 # Base service URL - required when constructing an absolute TAP URL to a page
 # from a Celery task where no HTTP request object is available.
