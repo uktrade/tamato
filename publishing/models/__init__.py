@@ -9,6 +9,9 @@ from publishing.models.envelope import EnvelopeCurrentlyProccessing
 from publishing.models.envelope import EnvelopeInvalidQueuePosition
 from publishing.models.envelope import EnvelopeNoTransactions
 from publishing.models.loading_report import LoadingReport
+from publishing.models.operational_status import (
+    CrownDependenciesPublishingOperationalStatus,
+)
 from publishing.models.operational_status import OperationalStatus
 from publishing.models.packaged_workbasket import PackagedWorkBasket
 from publishing.models.packaged_workbasket import PackagedWorkBasketDuplication
@@ -24,6 +27,7 @@ __all__ = [
     "ApiPublishingState",
     "ProcessingState",
     "QueueState",
+    "CrownDependenciesPublishingState",
     "PackagedWorkBasket",
     "PackagedWorkBasketDuplication",
     "PackagedWorkBasketInvalidCheckStatus",
@@ -36,4 +40,5 @@ __all__ = [
     "OperationalStatus",
     "CrownDependenciesEnvelope",
     "CrownDependenciesPublishingTask",
+    "CrownDependenciesPublishingOperationalStatus",
 ]

@@ -52,6 +52,11 @@ class ProcessingState(TextChoices):
         )
 
 
+class CrownDependenciesPublishingState(TextChoices):
+    PAUSED = ("PAUSED", "Envelope publishing is paused")
+    UNPAUSED = ("UNPAUSED", "Envelope publishing is unpaused and may proceed")
+
+
 class ApiPublishingState(TextChoices):
     """Publishing states of CrownDependenciesEnvelope instances."""
 
