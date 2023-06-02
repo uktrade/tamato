@@ -1377,3 +1377,12 @@ class CrownDependenciesPublishingTaskFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = "publishing.CrownDependenciesPublishingTask"
+
+
+class CrownDependenciesPublishingOperationalStatusFactory(
+    factory.django.DjangoModelFactory,
+):
+    """Creates a CrownDependenciesPublishingOperationalStatus instance."""
+
+    class Meta:
+        model = "publishing.CrownDependenciesPublishingOperationalStatus"
