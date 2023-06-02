@@ -3,14 +3,15 @@ from django.http import HttpResponseRedirect
 from rest_framework.reverse import reverse
 
 from common.celery import app
+from importer import models
 from importer.management.commands.run_import_batch import run_batch
 from workbaskets.validators import WorkflowStatus
 
 
 @app.task
 def run_batch_task(
-    batch,
-    user,
+    batch_pk,
+    username,
     record_group,
     workbasket_id=None,
     status=WorkflowStatus.EDITING,
@@ -19,11 +20,13 @@ def run_batch_task(
     """Wraps the run_batch function in a celery task and updates the batch's
     status once complete."""
 
+    batch = models.ImportBatch.objects.get(pk=batch_pk)
+
     run_batch(
-        batch=batch.name,
+        batch=batch,
         status=status,
         partition_scheme_setting=partition_scheme_setting,
-        username=user.username,
+        username=username,
         record_group=record_group,
         workbasket_id=workbasket_id,
     )
@@ -32,4 +35,4 @@ def run_batch_task(
     batch.imported()
     batch.save()
 
-    return HttpResponseRedirect(reverse("measure-ui-list"))
+    HttpResponseRedirect(reverse("commodity-ui-import-success"))

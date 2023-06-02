@@ -63,7 +63,7 @@ def process_imported_taric_file(
     if placeholder_clamav_check():
         batch = handle_batch(taric_file, user)
 
-        # Send file to S3 bucket
+        # To do - Send file to S3 bucket
     else:
         # There was a discussion about not outing a virus check fail in order to prevent brute force attacks?
         raise Exception(
@@ -76,9 +76,9 @@ def process_imported_taric_file(
         chunk_taric(taric_file, batch, record_group)
 
         # Kick off celery task to run_batch.
-        run_batch_task(
-            batch,
-            user,
+        run_batch_task.delay(
+            batch.pk,
+            user.username,
             record_group,
             workbasket_id,
         )

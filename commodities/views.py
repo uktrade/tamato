@@ -76,6 +76,7 @@ class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBask
 
     def form_valid(self, form):
         form.save(user=self.request.user, workbasket_id=self.workbasket.id)
+        # Add details to the session so that the success view can grab them later.
         self.session_store.add_items(
             {
                 "saved_file_name": form.cleaned_data["taric_file"].name,
