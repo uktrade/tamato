@@ -9,7 +9,13 @@
 
 {% set origins %}
     {% for origin in object.quotaordernumberorigin_set.current() %}
-        {% set geo_area_name -%}{{origin.geographical_area.area_id}} - {{origin.geographical_area.get_description().description}}{% endset %}
+        {% set geo_area_name -%}
+            {{ origin.geographical_area.area_id  ~ " - " ~ origin.geographical_area.get_description().description }}
+        {% endset %}
+        {% set geo_area_summary -%}
+            {{ geo_area_name }}
+            {% if origin.excluded_areas.all() %} (with exclusions){% endif %}
+        {% endset %}
         {% set origin_link -%}
             <a href="{{ url('geo_area-ui-detail', args=[origin.geographical_area.sid]) }}" class="govuk-link">{{ geo_area_name }}</a>
         {% endset %}
@@ -42,7 +48,7 @@
             }}
         {% endset %}
         {{ govukDetails({
-            "summaryText": geo_area_name,
+            "summaryText": geo_area_summary,
             "html": summary_list
             }) }}
     {% endfor %}
