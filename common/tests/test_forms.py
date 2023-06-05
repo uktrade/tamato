@@ -313,4 +313,4 @@ def test_unprefix_formset_data(data, exp):
     ],
 )
 def test_formset_add_or_delete(data, exp):
-    assert formset_add_or_delete(["measure-conditions-formset"], data) == exp
+    assert formset_add_or_delete(data) == exp
