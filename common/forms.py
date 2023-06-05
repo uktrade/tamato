@@ -794,3 +794,13 @@ def formset_add_or_delete(data):
     if len(formset_data) > 0:
         return True
     return False
+
+
+class FormSetSubmitMixin:
+    @property
+    def formset_submitted(self):
+        return formset_add_or_delete(self.data)
+
+    @property
+    def whole_form_submit(self):
+        return bool(self.data.get("submit"))

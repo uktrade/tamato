@@ -13,7 +13,6 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import TextChoices
 from django.urls import reverse
 
 from additional_codes.models import AdditionalCode
@@ -23,16 +22,22 @@ from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import DateInputFieldFixed
 from common.forms import FormSet
+from common.forms import FormSetSubmitMixin
 from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
-from common.forms import formset_add_or_delete
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
 from common.util import validity_range_contains_range
 from common.validators import SymbolValidator
 from common.validators import UpdateType
 from footnotes.models import Footnote
+from geo_areas.constants import *
+from geo_areas.forms import CountryRegionForm
+from geo_areas.forms import CountryRegionFormSet
+from geo_areas.forms import ErgaOmnesExclusionsFormSet
+from geo_areas.forms import GeoGroupExclusionsFormSet
+from geo_areas.forms import GeoGroupForm
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalMembership
 from geo_areas.validators import AreaCode
@@ -51,37 +56,9 @@ logger = logging.getLogger(__name__)
 
 MEASURE_CONDITIONS_FORMSET_PREFIX = "measure-conditions-formset"
 MEASURE_COMMODITIES_FORMSET_PREFIX = "measure_commodities_duties_formset"
-ERGA_OMNES_EXCLUSIONS_PREFIX = "erga_omnes_exclusions"
-ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX = (
-    f"{ERGA_OMNES_EXCLUSIONS_PREFIX}_formset"  # /PS-IGNORE
-)
-GROUP_EXCLUSIONS_PREFIX = "geo_group_exclusions"
-GROUP_EXCLUSIONS_FORMSET_PREFIX = f"{GROUP_EXCLUSIONS_PREFIX}_formset"
-
-GEO_GROUP_PREFIX = "geographical_area_group"
-GEO_GROUP_FORMSET_PREFIX = f"{GEO_GROUP_PREFIX}_formset"
-
-COUNTRY_REGION_PREFIX = "country_region"
-COUNTRY_REGION_FORMSET_PREFIX = f"{COUNTRY_REGION_PREFIX}_formset"
 
 
-class GeoAreaInitialDataMixin:
-    @property
-    def formset_submitted(self):
-        return formset_add_or_delete(
-            [
-                GROUP_EXCLUSIONS_FORMSET_PREFIX,
-                GEO_GROUP_FORMSET_PREFIX,
-                COUNTRY_REGION_FORMSET_PREFIX,
-                ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
-            ],
-            self.data,
-        )
-
-    @property
-    def whole_form_submit(self):
-        return bool(self.data.get("submit"))
-
+class MeasureGeoAreaInitialDataMixin(FormSetSubmitMixin):
     def get_geo_area_initial(self):
         initial = {}
         geo_area_type = self.initial.get(self.geo_area_field_name) or self.data.get(
@@ -111,186 +88,6 @@ class GeoAreaInitialDataMixin:
             initial[FORMSET_PREFIX_MAPPING[geo_area_type]] = initial_exclusions
 
         return initial
-
-
-class GeoAreaType(TextChoices):
-    ERGA_OMNES = "ERGA_OMNES", "All countries (erga omnes)"
-    GROUP = "GROUP", "A group of countries"
-    COUNTRY = "COUNTRY", "Specific countries or regions"
-
-
-SUBFORM_PREFIX_MAPPING = {
-    GeoAreaType.GROUP: GEO_GROUP_PREFIX,
-    GeoAreaType.COUNTRY: COUNTRY_REGION_FORMSET_PREFIX,
-}
-
-FORMSET_PREFIX_MAPPING = {
-    GeoAreaType.ERGA_OMNES: ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
-    GeoAreaType.GROUP: GROUP_EXCLUSIONS_FORMSET_PREFIX,
-    GeoAreaType.COUNTRY: COUNTRY_REGION_FORMSET_PREFIX,
-}
-
-EXCLUSIONS_FORMSET_PREFIX_MAPPING = {
-    GeoAreaType.ERGA_OMNES: ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
-    GeoAreaType.GROUP: GROUP_EXCLUSIONS_FORMSET_PREFIX,
-    GeoAreaType.COUNTRY: None,
-}
-
-FIELD_NAME_MAPPING = {
-    GeoAreaType.ERGA_OMNES: "erga_omnes_exclusion",
-    GeoAreaType.GROUP: "geo_group_exclusion",
-    GeoAreaType.COUNTRY: "geographical_area_country_or_region",
-}
-
-
-class GeoGroupForm(forms.Form):
-    prefix = GEO_GROUP_PREFIX
-
-    geographical_area_group = forms.ModelChoiceField(
-        label="",
-        queryset=None,  # populated in __init__
-        error_messages={"required": "A country group is required."},
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["geographical_area_group"].queryset = (
-            GeographicalArea.objects.current()
-            .with_latest_description()
-            .filter(area_code=AreaCode.GROUP)
-            .as_at_today()
-            .order_by("description")
-        )
-        # descriptions__description" should make this implicitly distinct()
-        self.fields[
-            "geographical_area_group"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
-
-        if self.initial.get("geo_area") == GeoAreaType.GROUP.value:
-            self.initial["geographical_area_group"] = self.initial["geographical_area"]
-
-
-class ErgaOmnesExclusionsForm(forms.Form):
-    prefix = ERGA_OMNES_EXCLUSIONS_PREFIX
-
-    erga_omnes_exclusion = forms.ModelChoiceField(
-        label="",
-        queryset=GeographicalArea.objects.all(),
-        help_text="Select a country to be excluded:",
-        required=False,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["erga_omnes_exclusion"].queryset = (
-            GeographicalArea.objects.current()
-            .with_latest_description()
-            .as_at_today()
-            .order_by("description")
-        )
-        self.fields[
-            "erga_omnes_exclusion"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
-
-
-class GeoGroupExclusionsForm(forms.Form):
-    prefix = GROUP_EXCLUSIONS_PREFIX
-
-    geo_group_exclusion = forms.ModelChoiceField(
-        label="",
-        queryset=GeographicalArea.objects.all(),
-        help_text="Select a country to be excluded:",
-        required=False,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["geo_group_exclusion"].queryset = (
-            GeographicalArea.objects.current()
-            .with_latest_description()
-            .as_at_today()
-            .order_by("description")
-        )
-        self.fields[
-            "geo_group_exclusion"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
-
-
-GeoGroupFormSet = formset_factory(
-    GeoGroupForm,
-    prefix=GEO_GROUP_FORMSET_PREFIX,
-    formset=FormSet,
-    min_num=1,
-    max_num=2,
-    extra=0,
-    validate_min=True,
-    validate_max=True,
-)
-
-ErgaOmnesExclusionsFormSet = formset_factory(
-    ErgaOmnesExclusionsForm,
-    prefix=ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
-    formset=FormSet,
-    min_num=0,
-    max_num=100,
-    extra=0,
-    validate_min=True,
-    validate_max=True,
-)
-
-GeoGroupExclusionsFormSet = formset_factory(
-    GeoGroupExclusionsForm,
-    prefix=GROUP_EXCLUSIONS_FORMSET_PREFIX,
-    formset=FormSet,
-    min_num=0,
-    max_num=100,
-    extra=0,
-    validate_min=True,
-    validate_max=True,
-)
-
-
-class CountryRegionForm(forms.Form):
-    prefix = COUNTRY_REGION_PREFIX
-
-    geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.exclude(
-            area_code=AreaCode.GROUP,
-            descriptions__description__isnull=True,
-        ),
-        error_messages={"required": "A country or region is required."},
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["geographical_area_country_or_region"].queryset = (
-            GeographicalArea.objects.current()
-            .with_latest_description()
-            .exclude(area_code=AreaCode.GROUP)
-            .as_at_today()
-            .order_by("description")
-        )
-
-        self.fields[
-            "geographical_area_country_or_region"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
-
-        if self.initial.get("geo_area") == GeoAreaType.COUNTRY.value:
-            self.initial["geographical_area_country_or_region"] = self.initial[
-                "geographical_area"
-            ]
-
-
-CountryRegionFormSet = formset_factory(
-    CountryRegionForm,
-    prefix=COUNTRY_REGION_FORMSET_PREFIX,
-    formset=FormSet,
-    min_num=1,
-    max_num=2,
-    extra=0,
-    validate_min=True,
-    validate_max=True,
-)
 
 
 class MeasureConditionComponentDuty(Field):
@@ -632,7 +429,7 @@ class MeasureConditionsWizardStepFormSet(MeasureConditionsBaseFormSet):
 
 
 class MeasureForm(
-    GeoAreaInitialDataMixin,
+    MeasureGeoAreaInitialDataMixin,
     ValidityPeriodForm,
     BindNestedFormMixin,
     forms.ModelForm,
@@ -1145,7 +942,7 @@ class MeasureQuotaOrderNumberForm(forms.Form):
 
 
 class MeasureGeographicalAreaForm(
-    GeoAreaInitialDataMixin,
+    MeasureGeoAreaInitialDataMixin,
     BindNestedFormMixin,
     forms.Form,
 ):
