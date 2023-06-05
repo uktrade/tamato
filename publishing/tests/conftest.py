@@ -14,6 +14,7 @@ import pytest
 
 from common.tests import factories
 from publishing.models import QueueState
+from publishing.models.state import CrownDependenciesPublishingState
 
 
 @pytest.fixture()
@@ -29,6 +30,22 @@ def unpause_queue():
     return factories.OperationalStatusFactory(
         created_by=None,
         queue_state=QueueState.UNPAUSED,
+    )
+
+
+@pytest.fixture()
+def pause_publishing():
+    return factories.CrownDependenciesPublishingOperationalStatusFactory(
+        created_by=None,
+        publishing_state=CrownDependenciesPublishingState.PAUSED,
+    )
+
+
+@pytest.fixture()
+def unpause_publishing():
+    return factories.CrownDependenciesPublishingOperationalStatusFactory(
+        created_by=None,
+        publishing_state=CrownDependenciesPublishingState.UNPAUSED,
     )
 
 

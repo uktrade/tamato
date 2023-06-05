@@ -6,6 +6,7 @@ from django.db.models import ForeignKey
 from django.db.models import Model
 from django.db.models import QuerySet
 
+from publishing.models.state import CrownDependenciesPublishingState
 from publishing.models.state import QueueState
 
 
@@ -84,6 +85,87 @@ class OperationalStatus(Model):
         """Returns True if the workbasket queue is paused, False otherwise."""
         current_status = cls.objects.current_status()
         if not current_status or current_status.queue_state == QueueState.PAUSED:
+            return True
+        else:
+            return False
+
+
+class CrownDependenciesPublishingOperationalStatus(Model):
+    """
+    Operational status of the Crown Dependencies envelope publishing task.
+
+    The publishing task may be: unpaused, which allows publishing of Crown
+    Dependencies envelopes; or paused, which blocks publishing until unpaused.
+    """
+
+    class Meta:
+        ordering = ["pk"]
+        verbose_name_plural = "crown dependencies publishing operational statuses"
+
+    objects = OperationalStatusQuerySet.as_manager()
+
+    created_at = DateTimeField(auto_now_add=True)
+    created_by = ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=PROTECT,
+        editable=False,
+        null=True,
+    )
+    publishing_state = CharField(
+        max_length=8,
+        default=CrownDependenciesPublishingState.PAUSED,
+        choices=CrownDependenciesPublishingState.choices,
+    )
+
+    @classmethod
+    def pause_publishing(
+        cls,
+        user: settings.AUTH_USER_MODEL,
+    ) -> "CrownDependenciesPublishingOperationalStatus":
+        """
+        Transition operational status of publishing into a paused state (if it
+        is not already paused) by creating a new
+        `CrownDependenciesPublishingOperationalStatus` and returning it to the
+        caller.
+
+        If publishing is already paused, then do nothing and return None.
+        """
+        if cls.is_publishing_paused():
+            return None
+        return CrownDependenciesPublishingOperationalStatus.objects.create(
+            publishing_state=CrownDependenciesPublishingState.PAUSED,
+            created_by=user,
+        )
+
+    @classmethod
+    def unpause_publishing(
+        cls,
+        user: settings.AUTH_USER_MODEL,
+    ) -> "CrownDependenciesPublishingOperationalStatus":
+        """
+        Transition operational status of publishing into an unpaused state (if
+        it is not already unpaused) by creating a new
+        `CrownDependenciesPublishingOperationalStatus` and returning it to the
+        caller.
+
+        If publishing is already unpaused, then do nothing and return None.
+        """
+        if not cls.is_publishing_paused():
+            return None
+        return CrownDependenciesPublishingOperationalStatus.objects.create(
+            publishing_state=CrownDependenciesPublishingState.UNPAUSED,
+            created_by=user,
+        )
+
+    @classmethod
+    def is_publishing_paused(cls) -> bool:
+        """Returns True if publishing is paused, False otherwise."""
+        current_status = cls.objects.current_status()
+        if (
+            not current_status
+            or current_status.publishing_state
+            == CrownDependenciesPublishingState.PAUSED
+        ):
             return True
         else:
             return False

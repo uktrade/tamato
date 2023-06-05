@@ -446,6 +446,9 @@ AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_REGION_NAME = "eu-west-2"
 
 # Tariff API envelope publishing automation
+ENABLE_CROWN_DEPENDENCIES_PUBLISHING = is_truthy(
+    os.environ.get("ENABLE_CROWN_DEPENDENCIES_PUBLISHING", "True"),
+)
 TARIFF_API_INTERFACE = os.environ.get(
     "TARIFF_API_INTERFACE",
     "publishing.tariff_api.interface.TariffAPI",
@@ -487,12 +490,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
         "schedule": crontab(hour=3, minute=5),
     },
-    "crown_dependencies_api_publish": {
+}
+if ENABLE_CROWN_DEPENDENCIES_PUBLISHING:
+    CELERY_BEAT_SCHEDULE["crown_dependencies_api_publish"] = {
         "task": "publishing.tasks.publish_to_api",
         # every 2 hours between 8am and 6pm on weekdays
         "schedule": CROWN_DEPENDENCIES_API_CRON,
-    },
-}
+    }
 
 SQLITE_EXCLUDED_APPS = [
     "checks",

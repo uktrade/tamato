@@ -10,6 +10,7 @@ from django_fsm import TransitionNotAllowed
 
 from common.tests import factories
 from publishing.models import CrownDependenciesEnvelope
+from publishing.models import CrownDependenciesPublishingOperationalStatus
 from publishing.models import Envelope
 from publishing.models import EnvelopeCurrentlyProccessing
 from publishing.models import EnvelopeInvalidQueuePosition
@@ -529,3 +530,24 @@ def test_create_api_envelope_no_envelope_to_publish_CrownDependenciesEnvelope(
     PackagedWorkBasket.create_api_publishing_envelope()
 
     assert len(CrownDependenciesEnvelope.objects.all()) == 1
+
+
+def test_crown_dependencies_publishing_pause_and_unpause(unpause_publishing):
+    """Test that Crown Dependencies publishing operational status can be paused
+    and unpaused."""
+    assert not CrownDependenciesPublishingOperationalStatus.is_publishing_paused()
+
+    paused = CrownDependenciesPublishingOperationalStatus.pause_publishing(user=None)
+    assert (
+        paused == CrownDependenciesPublishingOperationalStatus.objects.current_status()
+    )
+    assert CrownDependenciesPublishingOperationalStatus.is_publishing_paused()
+
+    unpaused = CrownDependenciesPublishingOperationalStatus.unpause_publishing(
+        user=None,
+    )
+    assert (
+        unpaused
+        == CrownDependenciesPublishingOperationalStatus.objects.current_status()
+    )
+    assert not CrownDependenciesPublishingOperationalStatus.is_publishing_paused()

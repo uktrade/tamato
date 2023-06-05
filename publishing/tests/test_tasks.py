@@ -291,3 +291,20 @@ def test_publish_to_api_creates_crown_dependencies_publishing_task(
     publish_to_api()
 
     assert publishing_tasks.count() == 1
+
+
+def test_publish_to_api_paused_publishing(
+    successful_envelope_factory,
+    settings,
+    pause_publishing,
+):
+    """Test that no envelopes can be published when publishing is paused."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    successful_envelope_factory()
+
+    assert CrownDependenciesEnvelope.objects.unpublished().count() == 1
+
+    publish_to_api()
+
+    assert CrownDependenciesEnvelope.objects.unpublished().count() == 1
