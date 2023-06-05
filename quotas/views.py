@@ -14,6 +14,7 @@ from common.business_rules import UpdateValidity
 from common.serializers import AutoCompleteSerializer
 from common.tariffs_api import get_quota_data
 from common.tariffs_api import get_quota_definitions_data
+from common.validators import UpdateType
 from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -23,6 +24,7 @@ from quotas import business_rules
 from quotas import forms
 from quotas import models
 from quotas import serializers
+from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
 from quotas.forms import QuotaDefinitionFilterForm
@@ -255,6 +257,11 @@ class QuotaUpdateMixin(
     def get_result_object(self, form):
         object = super().get_result_object(form)
 
+        excluded_geo_areas = [
+            item["exclusion"]
+            for item in form.cleaned_data[QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX]
+        ]
+
         existing_origins = (
             models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
                 object.transaction,
@@ -262,7 +269,70 @@ class QuotaUpdateMixin(
                 order_number__sid=object.sid,
             )
         )
-        for origin in existing_origins:
+
+        existing_origins_ids = [e.pk for e in existing_origins]
+
+        existing_exclusions = (
+            models.QuotaOrderNumberOriginExclusion.objects.approved_up_to_transaction(
+                object.transaction,
+            ).filter(
+                origin__id__in=existing_origins_ids,
+            )
+        )
+        geo_area = form.cleaned_data["geographical_area"]
+        edited_origin = form.cleaned_data["existing_origin"]
+
+        new_origin = edited_origin.new_version(
+            workbasket=WorkBasket.current(self.request),
+            transaction=object.transaction,
+            order_number=object,
+            geographical_area=geo_area,
+            valid_between=form.cleaned_data["origin_valid_between"],
+        )
+
+        # update existing origins
+        end_index = None
+        for i, (old_exclusion, new_exclusion) in enumerate(
+            zip(existing_exclusions, excluded_geo_areas),
+        ):
+            old_exclusion.new_version(
+                workbasket=WorkBasket.current(self.request),
+                transaction=object.transaction,
+                origin=new_origin,
+                excluded_geographical_area=new_exclusion,
+            )
+            end_index = i
+        end_index += 1
+
+        # TODO: pull inidividual countries out of groups and add each as an exclusion
+
+        # if we have more existing exclusions, go through and update the remaining ones
+        if len(existing_exclusions) > len(excluded_geo_areas):
+            for exclusion in list(existing_exclusions)[end_index:]:
+                exclusion.new_version(
+                    workbasket=WorkBasket.current(self.request),
+                    transaction=object.transaction,
+                    origin=new_origin,
+                    excluded_geographical_area=new_exclusion,
+                    update_type=UpdateType.DELETE,
+                )
+        # if we have more new exclusions, create the remaining ones
+        elif len(excluded_geo_areas) > len(existing_exclusions):
+            for exclusion in excluded_geo_areas[end_index:]:
+                new_exclusion = models.QuotaOrderNumberOriginExclusion(
+                    transaction=object.transaction,
+                    origin=new_origin,
+                    excluded_geographical_area=exclusion,
+                    update_type=UpdateType.CREATE,
+                )
+                new_exclusion.save()
+
+        other_existing_origins = existing_origins.exclude(
+            sid__in=[new_origin.sid, edited_origin.sid],
+        )
+
+        # this will be needed even if origins have not been edited in the form
+        for origin in other_existing_origins:
             origin.new_version(
                 workbasket=WorkBasket.current(self.request),
                 transaction=object.transaction,
