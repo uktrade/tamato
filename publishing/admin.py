@@ -423,7 +423,7 @@ class CrownDependenciesPublishingOperationalStatusAdmin(admin.ModelAdmin):
                 request,
                 f"Operational status of publishing is already in state: {state}",
             )
-            return
+            return None
 
         new_status.save()
         messages.set_level(request, messages.SUCCESS)
@@ -431,7 +431,7 @@ class CrownDependenciesPublishingOperationalStatusAdmin(admin.ModelAdmin):
             request,
             f"Operational status of publishing is now in state: {state}",
         )
-        return
+        return new_status
 
     def has_change_permission(self, request, obj=None):
         return False
