@@ -30,13 +30,12 @@ class Migration(migrations.Migration):
                     "publishing_state",
                     django_fsm.FSMField(
                         choices=[
-                            ("AWAITING_PUBLISHING", "Awaiting publishing"),
                             ("CURRENTLY_PUBLISHING", "Currently publishing"),
                             ("SUCCESSFULLY_PUBLISHED", "Successfully published"),
                             ("FAILED_PUBLISHING", "Failed publishing"),
                         ],
                         db_index=True,
-                        default="AWAITING_PUBLISHING",
+                        default="CURRENTLY_PUBLISHING",
                         editable=False,
                         max_length=50,
                         protected=True,

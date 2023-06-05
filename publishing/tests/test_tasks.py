@@ -133,7 +133,7 @@ def test_publish_to_api_successfully_published(successful_envelope_factory, sett
     assert envelope.count() == 1
     pwb = envelope[0].packagedworkbaskets.last()
 
-    assert envelope[0].publishing_state == ApiPublishingState.AWAITING_PUBLISHING
+    assert envelope[0].publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
     assert not envelope[0].published
 
     publish_to_api()
@@ -158,7 +158,7 @@ def test_publish_to_api_failed_publishing(
     assert envelope.count() == 1
     pwb = envelope[0].packagedworkbaskets.last()
 
-    assert envelope[0].publishing_state == ApiPublishingState.AWAITING_PUBLISHING
+    assert envelope[0].publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
     assert not envelope[0].published
     assert not pwb.envelope.published_to_tariffs_api
 

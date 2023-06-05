@@ -60,17 +60,12 @@ class CrownDependenciesPublishingState(TextChoices):
 class ApiPublishingState(TextChoices):
     """Publishing states of CrownDependenciesEnvelope instances."""
 
-    AWAITING_PUBLISHING = (
-        "AWAITING_PUBLISHING",
-        "Awaiting publishing",
-    )
-    """Queued up and awaiting publishing."""
     CURRENTLY_PUBLISHING = (
         "CURRENTLY_PUBLISHING",
         "Currently publishing",
     )
     """Picked off the task queue and now currently being processed - now attempting
-    to publish to the channel islands API."""
+    to publish to the crown dependencies API."""
     SUCCESSFULLY_PUBLISHED = (
         "SUCCESSFULLY_PUBLISHED",
         "Successfully published",
@@ -83,13 +78,3 @@ class ApiPublishingState(TextChoices):
     )
     """Publishing now completed with a failure outcome - API failed publishing the
     envelope."""
-
-    @classmethod
-    def queued_states(cls):
-        """Returns all states that represent a queued  instance, including those
-        that are being processed."""
-        return (
-            cls.FAILED_PUBLISHING,
-            cls.AWAITING_PUBLISHING,
-            cls.CURRENTLY_PUBLISHING,
-        )

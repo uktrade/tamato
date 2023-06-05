@@ -27,7 +27,7 @@ from django_fsm import transition
 from common.models.mixins import TimestampedMixin
 from notifications.models import NotificationLog
 from notifications.tasks import send_emails
-from publishing.models.decorators import refresh_after
+from publishing import models as publishing_models
 from publishing.models.decorators import save_after
 from publishing.models.decorators import skip_notifications_if_disabled
 from publishing.models.state import ProcessingState
@@ -51,21 +51,6 @@ def pop_top_after(func):
     def inner(self, *args, **kwargs):
         result = func(self, *args, **kwargs)
         self.pop_top()
-        return result
-
-    return inner
-
-
-def create_api_publishing_envelope_on_success(func):
-    """Decorator used to wrap processing_succeeded processing_state transition
-    functions in order to create the API Publishing envelope when they've
-    completed."""
-
-    def inner(self, *args, **kwargs):
-        result = func(self, *args, **kwargs)
-        # access self
-        if not PackagedWorkBasket.objects.currently_processing():
-            PackagedWorkBasket.create_api_publishing_envelope()
         return result
 
     return inner
@@ -240,7 +225,7 @@ class PackagedWorkBasketQuerySet(QuerySet):
         crown_dependencies_envelope."""
         return self.get_unpublished_to_api().first()
 
-    def get_unpublished_to_api(self) -> "PackagedWorkBasket":
+    def get_unpublished_to_api(self) -> "PackagedWorkBasketQuerySet":
         """Return all successfully processed packaged workbaskets (ordered by
         envelope__envelope_id) that do not have a published envelope and
         crown_dependencies_envelope."""
@@ -253,6 +238,30 @@ class PackagedWorkBasketQuerySet(QuerySet):
             ),
         ).order_by("envelope__envelope_id")
         return unpublished
+
+    def last_unpublished_envelope_id(self) -> "publishing_models.EnvelopeId":
+        """Join PackagedWorkBasket with Envelope and CrownDependenciesEnvelope
+        model selecting objects Where an Envelope model exists and the
+        published_to_tariffs_api field is not null Or Where a
+        CrownDependenciesEnvelope is not null Then select the max value for ther
+        envelope_id field in the Envelope instance."""
+
+        return (
+            self.select_related(
+                "envelope",
+                "crown_dependencies_envelope",
+            )
+            .filter(
+                Q(
+                    envelope__id__isnull=False,
+                    envelope__published_to_tariffs_api__isnull=False,
+                )
+                | Q(crown_dependencies_envelope__id__isnull=False),
+            )
+            .aggregate(
+                Max("envelope__envelope_id"),
+            )["envelope__envelope_id__max"]
+        )
 
 
 class PackagedWorkBasket(TimestampedMixin):
@@ -395,27 +404,44 @@ class PackagedWorkBasket(TimestampedMixin):
                 "exists.",
             )
 
-    @classmethod
-    def create_api_publishing_envelope(cls):
-        """Class method for the packaged workbasket that will trigger the next
-        available packaged workbasket which is Successfully processed and does
-        not have a CrownDependenciesEnvelope."""
-        unpublished = cls.objects.get_next_unpublished_to_api()
-        if unpublished:
-            from publishing import models as publishing_models
+    def create_crown_dependencies_envelope(
+        self,
+    ) -> "publishing_models.CrownDependenciesEnvelope":
+        """Method for the packaged workbasket that will create a
+        CrownDependenciesEnvelope and link it to the packaged workbasket."""
+        crown_dependencies_envelope = (
+            publishing_models.CrownDependenciesEnvelope.objects.create(
+                packaged_work_basket=self,
+            )
+        )
 
-            crown_dependencies_envelope = (
-                publishing_models.CrownDependenciesEnvelope.objects.create(
-                    packaged_work_basket=unpublished,
-                )
-            )
-            unpublished.crown_dependencies_envelope = crown_dependencies_envelope
-            unpublished.save()
+        return crown_dependencies_envelope
+
+    def can_publish_to_crown_dependencies(self) -> bool:
+        """
+        checks if previous envelope in sequence has been published to the API.
+
+        This check will check if the previous packaged workbasket has a
+        CrownDependenciesEnvelope OR has published_to_tariffs_api set in the
+        Envelope model. Will return True if the previous_id comes back as None
+        (this means the envelope is the first to be published to the API)
+        """
+
+        previous_id = PackagedWorkBasket.objects.last_unpublished_envelope_id()
+        if self.envelope.envelope_id[2:] == "0001":
+            year = int(self.envelope.envelope_id[:2])
+            last_envelope = publishing_models.Envelope.objects.for_year(
+                year=year - 1,
+            ).last()
+            # uses None if first envelope (no previous ones)
+            expected_previous_id = last_envelope.envelope_id if last_envelope else None
         else:
-            logger.info(
-                "Attempted to create CrownDependenciesEnvelope, but no unpublished, successfully "
-                "packaged workbasket exists.",
+            expected_previous_id = str(
+                int(self.envelope.envelope_id) - 1,
             )
+        if previous_id and previous_id != expected_previous_id:
+            return False
+        return True
 
     # processing_state transition management.
 
@@ -464,8 +490,6 @@ class PackagedWorkBasket(TimestampedMixin):
         self.processing_started_at = datetime.now()
         self.save()
 
-    @refresh_after
-    @create_api_publishing_envelope_on_success
     @create_envelope_on_completed_processing
     @save_after
     @transition(

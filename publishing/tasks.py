@@ -90,6 +90,32 @@ def schedule_create_xml_envelope_file(
         packaged_work_basket.save()
 
 
+LOCK_EXPIRE = 60 * 10  # Lock expires in 10 minutes
+API_TASK_LOCK = "crown_dependencies_lock"
+
+# from contextlib import contextmanager
+# from django.core.cache import cache
+# from hashlib import md5
+# from djangofeeds.models import Feed
+
+# @contextmanager
+# def memcache_lock(lock_id, oid):
+#     timeout_at = time.monotonic() + LOCK_EXPIRE - 3
+#     # cache.add fails if the key already exists
+#     status = cache.add(lock_id, oid, LOCK_EXPIRE)
+#     try:
+#         yield status
+#     finally:
+#         # memcache delete is very slow, but we have to use it to take
+#         # advantage of using add() for atomic locking
+#         if time.monotonic() < timeout_at and status:
+#             # don't release the lock if we exceeded the timeout
+#             # to lessen the chance of releasing an expired lock
+#             # owned by someone else
+#             # also don't release the lock if we didn't acquire it
+#             cache.delete(lock_id)
+
+
 @app.task(
     default_retry_delay=settings.CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY,
     max_retries=settings.CROWN_DEPENDENCIES_API_MAX_RETRIES,
@@ -102,14 +128,13 @@ def publish_to_api():
     Task which takes a list (queue) of envelopes ready to publish.
 
     Iterates over publishing each item and will refresh the queryset to see if
-    any new items have been added to the queue ( envelopes in the
-    AWAITING_PUBLISHING state)
+    any new items have been added to the queue
     """
     from publishing.models import CrownDependenciesEnvelope
     from publishing.models import CrownDependenciesPublishingOperationalStatus
     from publishing.models import CrownDependenciesPublishingTask
-    from publishing.models import Envelope
-    from publishing.models.state import ApiPublishingState
+    from publishing.models import PackagedWorkBasket
+    from publishing.models.envelope import EnvelopeId
     from publishing.models.state import CrownDependenciesPublishingState
     from publishing.tariff_api import get_tariff_api_interface
 
@@ -130,117 +155,116 @@ def publish_to_api():
 
     logger.info("Starting Tariff API publishing task")
 
-    task_id = publish_to_api.request.id
-    publishing_task = CrownDependenciesPublishingTask.objects.create(task_id=task_id)
-    publishing_task.save()
-
     interface = get_tariff_api_interface()
 
-    class APIPublishingIterator:
-        def __init__(self, queryset) -> None:
-            self.initial_queryset = queryset
-            self.queryset = queryset.all()
-            self.index = 0
-
-        def __iter__(self):
-            return self
-
-        def __next__(self) -> bool:
-            if self.index >= len(self.queryset):
-                self.queryset = self.refresh_queryset()
-                self.index = 0
-                if not self.queryset:
-                    logger.info("No more envelopes to publish")
-                    raise StopIteration
-
-            envelope = self.queryset[self.index]
-
-            if not envelope.can_publish():
-                logger.warn(
-                    f"Failed publishling to Tariff API: {envelope}. "
-                    f"The previous envelope is unpublished",
-                )
-                raise StopIteration
-
-            pwb_envelope = envelope.packagedworkbaskets.last().envelope
-
-            if envelope.publishing_state in [
-                ApiPublishingState.AWAITING_PUBLISHING,
-                ApiPublishingState.FAILED_PUBLISHING,
-            ]:
-                response = publish(envelope, pwb_envelope)
-                if not response:
-                    raise StopIteration
-            # Check published status of envelopes in these states in case
-            # previous publishing task halted before transitioning state
-            elif envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING:
-                if not has_been_published(envelope, pwb_envelope):
-                    response = publish(envelope, pwb_envelope)
-                    if not response:
-                        raise StopIteration
-                else:
-                    # has been published but stuck in currently publishing
-                    # transition and move on
-                    envelope.publishing_succeeded()
-                    response = True
-
-            self.index += 1
-            return response
-
-        def refresh_queryset(self):
-            return self.initial_queryset.all()
-
-    def publish(envelope: CrownDependenciesEnvelope, pwb_envelope: Envelope) -> bool:
+    def publish(packaged_workbasket: PackagedWorkBasket) -> object:
         """
         Publish envelope to Tariff API.
 
-        If successful, update `published_to_tariffs_api` on `Envelope`,
-        transition `CrownDependenciesEnvelope` to `SUCCESSFULLY_PUBLISHED` and
-        return `True`. Otherwise transition to `FAILED_PUBLISHING` and return
-        `False`.
+        If successful, transition `CrownDependenciesEnvelope` to `SUCCESSFULLY_PUBLISHED`.
+        else, transition `CrownDependenciesEnvelope` to `FAILED_PUBLISHING`.
+        @returns: response
         """
-        logger.info(f"Publishing: {envelope}")
-        if envelope.publishing_state == ApiPublishingState.AWAITING_PUBLISHING:
-            envelope.begin_publishing()
-        response = interface.post_envelope(envelope=pwb_envelope)
+        interface = get_tariff_api_interface()
+        logger.info(f"Publishing: {packaged_workbasket.crown_dependencies_envelope}")
+
+        response = interface.post_envelope(envelope=packaged_workbasket.envelope)
         if response.status_code == 200:
-            logger.info(f"Successfully published: {envelope}")
-            envelope.publishing_succeeded()
-            return True
+            logger.info(
+                f"Successfully published: {packaged_workbasket.crown_dependencies_envelope}",
+            )
+            packaged_workbasket.crown_dependencies_envelope.publishing_succeeded()
         else:
             logger.warn(
-                f"Failed publishing: {envelope} - {response.text}",
+                f"Failed publishing: {packaged_workbasket.crown_dependencies_envelope} - {response.text}",
             )
-            if envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING:
-                envelope.publishing_failed()
-            return False
+            # send notification and updates state
+            packaged_workbasket.crown_dependencies_envelope.publishing_failed()
+        return response
 
     def has_been_published(
         envelope: CrownDependenciesEnvelope,
-        pwb_envelope: Envelope,
+        envelope_id: EnvelopeId,
     ) -> bool:
         """
-        Check if an envelope has been published to Tariff API and attempt to
-        publish it if not.
+        Check if an envelope has been published to Tariff API.
 
         Return True if an envelope has been published. Otherwise return False.
         """
         if not envelope.published:
             response = interface.get_envelope(
-                envelope_id=pwb_envelope.envelope_id,
+                envelope_id=envelope_id,
             )
             if response.status_code != 200:
                 return False
 
         return True
 
-    # Process unpublished envelopes
-    envelopes_to_publish = CrownDependenciesEnvelope.objects.unpublished().order_by(
-        "pk",
+    # Get any unpublished crown dependency envelopes (can happen if a previous pubishing task failed)
+    # State is ApiPublishingState.CURRENTLY_PUBLISHING or ApiPublishingState.FAILED_PUBLISHING,
+    incomplete_envelopes = CrownDependenciesEnvelope.objects.unpublished()
+    unpublished_packaged_workbaskets = (
+        PackagedWorkBasket.objects.get_unpublished_to_api()
     )
 
-    api_iterator = APIPublishingIterator(envelopes_to_publish)
+    # Only create a record for tasks which publish something
+    if incomplete_envelopes or unpublished_packaged_workbaskets:
+        task_id = publish_to_api.request.id
+        publishing_task = CrownDependenciesPublishingTask.objects.create(
+            task_id=task_id,
+        )
+        # publishing_task.save()
+    else:
+        return
 
-    for result in api_iterator:
-        # loop through and process
-        continue
+    if incomplete_envelopes:
+        if len(incomplete_envelopes) > 1:
+            logger.error(
+                "Multiple CrownDependenciesEnvelope's in state CURRENTLY_PUBLISHING."
+                "This is unexpected and requires remediation, pausing queue.",
+            )
+            # TODO update detail and pause queue
+            CrownDependenciesPublishingOperationalStatus.pause_publishing(user=None)
+            return
+        publishing_envelope = incomplete_envelopes.first()
+        packaged_workbasket = publishing_envelope.packagedworkbaskets.last()
+        if has_been_published(
+            publishing_envelope,
+            packaged_workbasket.envelope.envelope_id,
+        ):
+            # it's been published but the object is not in the correct state
+            logger.info(
+                f"Envelope: {packaged_workbasket.envelope.envelope_id}, already published."
+                "Updating status.",
+            )
+            publishing_envelope.publishing_succeeded()
+        else:
+            response = publish(packaged_workbasket)
+            if response.status_code != 200:
+                # update error details
+                # stop processsing!!!
+                return
+
+    # Process unpublished packaged workbaskets
+    for unpublished in unpublished_packaged_workbaskets:
+        # checks if expected sequence
+        if not unpublished.can_publish_to_crown_dependencies():
+            logger.error(
+                "Cannot publish PackagedWorkBasket instance to tariff API "
+                f"Envelope Id {unpublished.envelope.envelope_id} is not the next not expected envelope."
+                "Pausing Queue.",
+            )
+            # TODO update task with error detail, pause and EXIT (paused because the next run will also fail)
+            CrownDependenciesPublishingOperationalStatus.pause_publishing(user=None)
+            return
+
+        unpublished.create_crown_dependencies_envelope()
+
+        # publish to api
+        response = publish(unpublished)
+        if response.status_code != 200:
+            # update error details
+            # stop processsing!!!
+            return
+    else:
+        logger.info("No envelopes to publish")
