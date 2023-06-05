@@ -9,8 +9,8 @@ from requests import Response
 from common.tests import factories
 from common.tests.util import taric_xml_record_codes
 from common.tests.util import validate_taric_xml_record_order
-from publishing.models import CrownDependenciesEnvelope
 from publishing.models import CrownDependenciesPublishingTask
+from publishing.models import PackagedWorkBasket
 from publishing.models.state import ApiPublishingState
 from publishing.tariff_api.interface import TariffAPIStubbed
 from publishing.tasks import create_xml_envelope_file
@@ -129,19 +129,21 @@ def test_publish_to_api_successfully_published(successful_envelope_factory, sett
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     successful_envelope_factory()
 
-    envelope = CrownDependenciesEnvelope.objects.all()
-    assert envelope.count() == 1
-    pwb = envelope[0].packagedworkbaskets.last()
+    pwbs = PackagedWorkBasket.objects.get_unpublished_to_api()
+    assert pwbs.count() == 1
+    pwb = pwbs.last()
 
-    assert envelope[0].publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
-    assert not envelope[0].published
+    assert not pwb.crown_dependencies_envelope
 
     publish_to_api()
-    pwb.envelope.refresh_from_db()
-    envelope[0].refresh_from_db()
+    pwb.refresh_from_db()
 
-    assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
-    assert envelope[0].published
+    assert pwb.crown_dependencies_envelope
+    assert (
+        pwb.crown_dependencies_envelope.publishing_state
+        == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+    )
+    assert pwb.crown_dependencies_envelope.published
 
 
 def test_publish_to_api_failed_publishing(
@@ -153,13 +155,7 @@ def test_publish_to_api_failed_publishing(
 
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     successful_envelope_factory()
-
-    envelope = CrownDependenciesEnvelope.objects.all()
-    assert envelope.count() == 1
-    pwb = envelope[0].packagedworkbaskets.last()
-
-    assert envelope[0].publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
-    assert not envelope[0].published
+    pwb = PackagedWorkBasket.objects.get_unpublished_to_api().last()
     assert not pwb.envelope.published_to_tariffs_api
 
     response = Response()
@@ -171,11 +167,14 @@ def test_publish_to_api_failed_publishing(
     ):
         publish_to_api()
 
-    pwb.envelope.refresh_from_db()
-    envelope[0].refresh_from_db()
+    pwb.refresh_from_db()
 
-    assert envelope[0].publishing_state == ApiPublishingState.FAILED_PUBLISHING
-    assert not envelope[0].published
+    assert pwb.crown_dependencies_envelope
+    assert (
+        pwb.crown_dependencies_envelope.publishing_state
+        == ApiPublishingState.FAILED_PUBLISHING
+    )
+    assert not pwb.crown_dependencies_envelope.published
     assert not pwb.envelope.published_to_tariffs_api
 
 
@@ -187,22 +186,27 @@ def test_publish_to_api_failed_publishing_to_successfully_published(
     Tariff API."""
 
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
     successful_envelope_factory()
+    pwb = PackagedWorkBasket.objects.get_unpublished_to_api().last()
+    crown_dependencies_envelope = factories.CrownDependenciesEnvelopeFactory(
+        packaged_work_basket=pwb,
+    )
 
-    envelope = CrownDependenciesEnvelope.objects.all()
-    assert envelope.count() == 1
-    pwb = envelope[0].packagedworkbaskets.last()
-
-    envelope[0].begin_publishing()
-    envelope[0].publishing_failed()
-    assert envelope[0].publishing_state == ApiPublishingState.FAILED_PUBLISHING
+    crown_dependencies_envelope.publishing_failed()
+    assert (
+        crown_dependencies_envelope.publishing_state
+        == ApiPublishingState.FAILED_PUBLISHING
+    )
 
     publish_to_api()
-    pwb.envelope.refresh_from_db()
-    envelope[0].refresh_from_db()
+    crown_dependencies_envelope.refresh_from_db()
 
-    assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
-    assert envelope[0].published
+    assert (
+        crown_dependencies_envelope.publishing_state
+        == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+    )
+    assert crown_dependencies_envelope.published
 
 
 def test_publish_to_api_currently_publishing_to_successfully_published(
@@ -213,19 +217,21 @@ def test_publish_to_api_currently_publishing_to_successfully_published(
     the Tariff API."""
 
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
     successful_envelope_factory()
-
-    envelope = CrownDependenciesEnvelope.objects.all()
-    assert envelope.count() == 1
-
-    envelope[0].begin_publishing()
-    assert envelope[0].publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
+    pwb = PackagedWorkBasket.objects.get_unpublished_to_api().last()
+    crown_dependencies_envelope = factories.CrownDependenciesEnvelopeFactory(
+        packaged_work_basket=pwb,
+    )
 
     publish_to_api()
-    envelope[0].refresh_from_db()
+    crown_dependencies_envelope.refresh_from_db()
 
-    assert envelope[0].publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
-    assert envelope[0].published
+    assert (
+        crown_dependencies_envelope.publishing_state
+        == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+    )
+    assert crown_dependencies_envelope.published
 
 
 def test_publish_to_api_has_been_published(
@@ -236,12 +242,12 @@ def test_publish_to_api_has_been_published(
     state CURRENTLY_PUBLISHING can be updated accordingly."""
 
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
     successful_envelope_factory()
-
-    envelope = CrownDependenciesEnvelope.objects.first()
-
-    envelope.begin_publishing()
-    assert envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
+    pwb = PackagedWorkBasket.objects.get_unpublished_to_api().last()
+    crown_dependencies_envelope = factories.CrownDependenciesEnvelopeFactory(
+        packaged_work_basket=pwb,
+    )
 
     response = Response()
     response.status_code = 200
@@ -251,10 +257,13 @@ def test_publish_to_api_has_been_published(
         return_value=response,
     ):
         publish_to_api()
-    envelope.refresh_from_db()
+    crown_dependencies_envelope.refresh_from_db()
 
-    assert envelope.publishing_state == ApiPublishingState.SUCCESSFULLY_PUBLISHED
-    assert envelope.published
+    assert (
+        crown_dependencies_envelope.publishing_state
+        == ApiPublishingState.SUCCESSFULLY_PUBLISHED
+    )
+    assert crown_dependencies_envelope.published
 
 
 def test_publish_to_api_published_in_sequence(successful_envelope_factory, settings):
@@ -265,15 +274,19 @@ def test_publish_to_api_published_in_sequence(successful_envelope_factory, setti
     successful_envelope_factory()
     successful_envelope_factory()
 
-    envelopes = CrownDependenciesEnvelope.objects.order_by("pk")
-    assert envelopes.count() == 3
+    pwbs = list(PackagedWorkBasket.objects.get_unpublished_to_api())
+    assert len(pwbs) == 3
 
     publish_to_api()
 
-    for envelope in envelopes:
-        envelope.refresh_from_db()
+    for pwb in pwbs:
+        pwb.refresh_from_db()
 
-    assert envelopes[2].published > envelopes[1].published > envelopes[0].published
+    assert (
+        pwbs[2].crown_dependencies_envelope.published
+        > pwbs[1].crown_dependencies_envelope.published
+        > pwbs[0].crown_dependencies_envelope.published
+    )
 
 
 def test_publish_to_api_creates_crown_dependencies_publishing_task(
@@ -303,8 +316,8 @@ def test_publish_to_api_paused_publishing(
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     successful_envelope_factory()
 
-    assert CrownDependenciesEnvelope.objects.unpublished().count() == 1
+    assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 1
 
     publish_to_api()
 
-    assert CrownDependenciesEnvelope.objects.unpublished().count() == 1
+    assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 1
