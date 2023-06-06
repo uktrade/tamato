@@ -76,9 +76,11 @@ class BindNestedFormMixin:
                 field.bind_nested_forms(all_forms)
 
             elif isinstance(field, FormSetField):
+                bound_forms = []
                 for form_class in field.nested_forms:
                     bound_form = self.get_bound_form(form_class, *args, **kwargs)
-                field.bind_nested_forms(bound_form)
+                    bound_forms.append(bound_form)
+                field.bind_nested_forms(bound_forms)
 
     def formset_submit(self):
         nested_formset_submit = [
