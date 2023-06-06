@@ -39,8 +39,7 @@ from geo_areas.forms import ErgaOmnesExclusionsFormSet
 from geo_areas.forms import GeoGroupExclusionsFormSet
 from geo_areas.forms import GeoGroupForm
 from geo_areas.models import GeographicalArea
-from geo_areas.models import GeographicalMembership
-from geo_areas.validators import AreaCode
+from geo_areas.utils import get_all_members_of_geo_groups
 from measures import models
 from measures.constants import MeasureEditSteps
 from measures.models import MeasureExcludedGeographicalArea
@@ -596,25 +595,8 @@ class MeasureForm(
 
         if self.cleaned_data.get("exclusions"):
             exclusions = self.cleaned_data.get("exclusions")
-            valid_memberships = GeographicalMembership.objects.as_at(
-                instance.valid_between.lower,
-            )
 
-            # pull individual countries out of groups and add to the list
-            all_exclusions = []
-            for exclusion in exclusions:
-                if exclusion.area_code == AreaCode.GROUP:
-                    measure_origins = set(
-                        m.member
-                        for m in valid_memberships.filter(
-                            geo_group=instance.geographical_area,
-                        )
-                    )
-                    for membership in valid_memberships.filter(geo_group=exclusion):
-                        if membership.member.sid in [m.sid for m in measure_origins]:
-                            all_exclusions.append(membership.member)
-                else:
-                    all_exclusions.append(exclusion)
+            all_exclusions = get_all_members_of_geo_groups(instance, exclusions)
 
             for geo_area in all_exclusions:
                 existing_exclusion = (
