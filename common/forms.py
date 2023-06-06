@@ -38,8 +38,7 @@ class BindNestedFormMixin:
     in order to instantiate and validate nested forms.
     """
 
-    def get_nested_forms(self, form_class, args, kwargs):
-        nested_forms = []
+    def get_bound_form(self, form_class, *args, **kwargs):
         if issubclass(form_class, FormSet):
             formset_kwargs = kwargs.copy()
             if "initial" in formset_kwargs:
@@ -57,8 +56,7 @@ class BindNestedFormMixin:
             )
         else:
             bound_form = form_class(*args, **kwargs)
-        nested_forms.append(bound_form)
-        return nested_forms
+        return bound_form
 
     def bind_nested_forms(self, *args, **kwargs):
         if kwargs.get("instance"):
@@ -71,14 +69,16 @@ class BindNestedFormMixin:
                     nested_forms = []
 
                     for form_class in form_list:
-                        nested_forms = self.get_nested_forms(form_class, args, kwargs)
+                        nested_forms.append(
+                            self.get_bound_form(form_class, *args, **kwargs),
+                        )
                     all_forms[choice] = nested_forms
                 field.bind_nested_forms(all_forms)
 
             elif isinstance(field, FormSetField):
                 for form_class in field.nested_forms:
-                    nested_forms = self.get_nested_forms(form_class, args, kwargs)
-                field.bind_nested_forms(nested_forms)
+                    bound_form = self.get_bound_form(form_class, *args, **kwargs)
+                field.bind_nested_forms(bound_form)
 
     def formset_submit(self):
         nested_formset_submit = [
