@@ -221,6 +221,9 @@ if DEBUG is False:
         {
             "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
         },
+        {
+            "NAME": "common.validators.PasswordPolicyValidator",
+        },
     ]
 
 if SSO_ENABLED:
