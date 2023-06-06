@@ -1,6 +1,9 @@
 import logging
+import time
+from contextlib import contextmanager
 
 from django.conf import settings
+from django.core.cache import cache
 
 from common.celery import app
 
@@ -90,6 +93,17 @@ def schedule_create_xml_envelope_file(
         packaged_work_basket.save()
 
 
+@contextmanager
+def publish_to_api_lock(lock_id):
+    timeout_at = time.monotonic() + settings.CROWN_DEPENDENCIES_API_TASK_LOCK - 3
+    status = cache.add(lock_id, "True", settings.CROWN_DEPENDENCIES_API_TASK_LOCK)
+    try:
+        yield status
+    finally:
+        if time.monotonic() < timeout_at and status:
+            cache.delete(lock_id)
+
+
 @app.task(
     default_retry_delay=settings.CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY,
     max_retries=settings.CROWN_DEPENDENCIES_API_MAX_RETRIES,
@@ -113,134 +127,150 @@ def publish_to_api():
     from publishing.models.state import CrownDependenciesPublishingState
     from publishing.tariff_api import get_tariff_api_interface
 
-    operational_status = (
-        CrownDependenciesPublishingOperationalStatus.objects.current_status()
-    )
-    if (
-        operational_status
-        and operational_status.publishing_state
-        == CrownDependenciesPublishingState.PAUSED
-    ):
-        logger.info(
-            f"Skipping publishing task - "
-            "publishing operational status="
-            f"{operational_status.publishing_state}",
+    lock_id = f"{publish_to_api.name}-lock"
+    with publish_to_api_lock(lock_id) as acquired:
+        if not acquired:
+            logger.info(
+                "Skipping publishing task - task locked",
+            )
+            return
+
+        operational_status = (
+            CrownDependenciesPublishingOperationalStatus.objects.current_status()
         )
-        return
+        if (
+            operational_status
+            and operational_status.publishing_state
+            == CrownDependenciesPublishingState.PAUSED
+        ):
+            logger.info(
+                f"Skipping publishing task - "
+                "publishing operational status="
+                f"{operational_status.publishing_state}",
+            )
+            return
 
-    logger.info("Starting Tariff API publishing task")
+        logger.info("Starting Tariff API publishing task")
 
-    task_id = publish_to_api.request.id
-    publishing_task = CrownDependenciesPublishingTask.objects.create(task_id=task_id)
-    publishing_task.save()
+        task_id = publish_to_api.request.id
+        publishing_task = CrownDependenciesPublishingTask.objects.create(
+            task_id=task_id,
+        )
+        publishing_task.save()
 
-    interface = get_tariff_api_interface()
+        interface = get_tariff_api_interface()
 
-    class APIPublishingIterator:
-        def __init__(self, queryset) -> None:
-            self.initial_queryset = queryset
-            self.queryset = queryset.all()
-            self.index = 0
-
-        def __iter__(self):
-            return self
-
-        def __next__(self) -> bool:
-            if self.index >= len(self.queryset):
-                self.queryset = self.refresh_queryset()
+        class APIPublishingIterator:
+            def __init__(self, queryset) -> None:
+                self.initial_queryset = queryset
+                self.queryset = queryset.all()
                 self.index = 0
-                if not self.queryset:
-                    logger.info("No more envelopes to publish")
+
+            def __iter__(self):
+                return self
+
+            def __next__(self) -> bool:
+                if self.index >= len(self.queryset):
+                    self.queryset = self.refresh_queryset()
+                    self.index = 0
+                    if not self.queryset:
+                        logger.info("No more envelopes to publish")
+                        raise StopIteration
+
+                envelope = self.queryset[self.index]
+
+                if not envelope.can_publish():
+                    logger.warn(
+                        f"Failed publishling to Tariff API: {envelope}. "
+                        f"The previous envelope is unpublished",
+                    )
                     raise StopIteration
 
-            envelope = self.queryset[self.index]
+                pwb_envelope = envelope.packagedworkbaskets.last().envelope
 
-            if not envelope.can_publish():
-                logger.warn(
-                    f"Failed publishling to Tariff API: {envelope}. "
-                    f"The previous envelope is unpublished",
-                )
-                raise StopIteration
-
-            pwb_envelope = envelope.packagedworkbaskets.last().envelope
-
-            if envelope.publishing_state in [
-                ApiPublishingState.AWAITING_PUBLISHING,
-                ApiPublishingState.FAILED_PUBLISHING,
-            ]:
-                response = publish(envelope, pwb_envelope)
-                if not response:
-                    raise StopIteration
-            # Check published status of envelopes in these states in case
-            # previous publishing task halted before transitioning state
-            elif envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING:
-                if not has_been_published(envelope, pwb_envelope):
+                if envelope.publishing_state in [
+                    ApiPublishingState.AWAITING_PUBLISHING,
+                    ApiPublishingState.FAILED_PUBLISHING,
+                ]:
                     response = publish(envelope, pwb_envelope)
                     if not response:
                         raise StopIteration
-                else:
-                    # has been published but stuck in currently publishing
-                    # transition and move on
-                    envelope.publishing_succeeded()
-                    response = True
+                # Check published status of envelopes in these states in case
+                # previous publishing task halted before transitioning state
+                elif (
+                    envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING
+                ):
+                    if not has_been_published(envelope, pwb_envelope):
+                        response = publish(envelope, pwb_envelope)
+                        if not response:
+                            raise StopIteration
+                    else:
+                        # has been published but stuck in currently publishing
+                        # transition and move on
+                        envelope.publishing_succeeded()
+                        response = True
 
-            self.index += 1
-            return response
+                self.index += 1
+                return response
 
-        def refresh_queryset(self):
-            return self.initial_queryset.all()
+            def refresh_queryset(self):
+                return self.initial_queryset.all()
 
-    def publish(envelope: CrownDependenciesEnvelope, pwb_envelope: Envelope) -> bool:
-        """
-        Publish envelope to Tariff API.
+        def publish(
+            envelope: CrownDependenciesEnvelope,
+            pwb_envelope: Envelope,
+        ) -> bool:
+            """
+            Publish envelope to Tariff API.
 
-        If successful, update `published_to_tariffs_api` on `Envelope`,
-        transition `CrownDependenciesEnvelope` to `SUCCESSFULLY_PUBLISHED` and
-        return `True`. Otherwise transition to `FAILED_PUBLISHING` and return
-        `False`.
-        """
-        logger.info(f"Publishing: {envelope}")
-        if envelope.publishing_state == ApiPublishingState.AWAITING_PUBLISHING:
-            envelope.begin_publishing()
-        response = interface.post_envelope(envelope=pwb_envelope)
-        if response.status_code == 200:
-            logger.info(f"Successfully published: {envelope}")
-            envelope.publishing_succeeded()
-            return True
-        else:
-            logger.warn(
-                f"Failed publishing: {envelope} - {response.text}",
-            )
-            if envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING:
-                envelope.publishing_failed()
-            return False
-
-    def has_been_published(
-        envelope: CrownDependenciesEnvelope,
-        pwb_envelope: Envelope,
-    ) -> bool:
-        """
-        Check if an envelope has been published to Tariff API and attempt to
-        publish it if not.
-
-        Return True if an envelope has been published. Otherwise return False.
-        """
-        if not envelope.published:
-            response = interface.get_envelope(
-                envelope_id=pwb_envelope.envelope_id,
-            )
-            if response.status_code != 200:
+            If successful, update `published_to_tariffs_api` on `Envelope`,
+            transition `CrownDependenciesEnvelope` to `SUCCESSFULLY_PUBLISHED`
+            and return `True`. Otherwise transition to `FAILED_PUBLISHING` and
+            return `False`.
+            """
+            logger.info(f"Publishing: {envelope}")
+            if envelope.publishing_state == ApiPublishingState.AWAITING_PUBLISHING:
+                envelope.begin_publishing()
+            response = interface.post_envelope(envelope=pwb_envelope)
+            if response.status_code == 200:
+                logger.info(f"Successfully published: {envelope}")
+                envelope.publishing_succeeded()
+                return True
+            else:
+                logger.warn(
+                    f"Failed publishing: {envelope} - {response.text}",
+                )
+                if envelope.publishing_state == ApiPublishingState.CURRENTLY_PUBLISHING:
+                    envelope.publishing_failed()
                 return False
 
-        return True
+        def has_been_published(
+            envelope: CrownDependenciesEnvelope,
+            pwb_envelope: Envelope,
+        ) -> bool:
+            """
+            Check if an envelope has been published to Tariff API and attempt to
+            publish it if not.
 
-    # Process unpublished envelopes
-    envelopes_to_publish = CrownDependenciesEnvelope.objects.unpublished().order_by(
-        "pk",
-    )
+            Return True if an envelope has been published. Otherwise return
+            False.
+            """
+            if not envelope.published:
+                response = interface.get_envelope(
+                    envelope_id=pwb_envelope.envelope_id,
+                )
+                if response.status_code != 200:
+                    return False
 
-    api_iterator = APIPublishingIterator(envelopes_to_publish)
+            return True
 
-    for result in api_iterator:
-        # loop through and process
-        continue
+        # Process unpublished envelopes
+        envelopes_to_publish = CrownDependenciesEnvelope.objects.unpublished().order_by(
+            "pk",
+        )
+
+        api_iterator = APIPublishingIterator(envelopes_to_publish)
+
+        for result in api_iterator:
+            # loop through and process
+            continue
