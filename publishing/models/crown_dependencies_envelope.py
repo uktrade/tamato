@@ -21,8 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 # Exceptions
-class ApiEnvelopeUnexpectedEnvelopeSequence(Exception):
-    pass
 
 
 class ApiEnvelopeInvalidWorkBasketStatus(Exception):
@@ -38,10 +36,8 @@ class CrownDependenciesEnvelopeManager(Manager):
         Create a new instance, from the packaged workbasket successfully
         processed.
 
-         :param packaged_work_basket: packaged workbasket to publish.
+        :param packaged_work_basket: packaged workbasket to publish.
         @throws ApiEnvelopeInvalidWorkBasketStatus if packaged workbasket isn't Successfully processed
-        @throws ApiEnvelopeAlreadyExists if packaged workbasket already has a CrownDependenciesEnvelope
-        @throws ApiEnvelopeUnexpectedEnvelopeSequence if packaged workbasket isn't expected envelope id
         """
         if (
             packaged_work_basket.processing_state

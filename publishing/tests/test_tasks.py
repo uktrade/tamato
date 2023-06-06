@@ -153,6 +153,8 @@ def test_publish_to_api_failed_publishing(
     """Test when an envelope fails publishing to Tariff API that its state and
     published fields are updated accordingly."""
 
+    from publishing.tasks import CrownDependenciesException
+
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
     successful_envelope_factory()
     pwb = PackagedWorkBasket.objects.get_unpublished_to_api().last()
@@ -165,7 +167,8 @@ def test_publish_to_api_failed_publishing(
         "post_envelope",
         return_value=response,
     ):
-        publish_to_api()
+        with pytest.raises(CrownDependenciesException):
+            publish_to_api()
 
     pwb.refresh_from_db()
 

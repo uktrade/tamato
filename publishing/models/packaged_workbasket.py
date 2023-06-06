@@ -417,7 +417,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
         return crown_dependencies_envelope
 
-    def can_publish_to_crown_dependencies(self) -> bool:
+    def next_expected_to_api(self) -> bool:
         """
         checks if previous envelope in sequence has been published to the API.
 
