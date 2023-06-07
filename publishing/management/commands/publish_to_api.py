@@ -19,21 +19,29 @@ class Command(BaseCommand):
             help="List unpublished envelopes.",
         )
 
-    def get_incomplete_envelope(self) -> CrownDependenciesEnvelope:
+    def get_incomplete_envelopes(self):
         incomplete = CrownDependenciesEnvelope.objects.unpublished()
         if not incomplete:
             sys.exit("No incomplete envelopes")
-        return incomplete.first()
+        return incomplete
 
-    def get_unpublished_envelopes(self) -> PackagedWorkBasket:
+    def get_unpublished_envelopes(self):
         unpublished = PackagedWorkBasket.objects.get_unpublished_to_api()
         if not unpublished:
             sys.exit("No unpublished envelopes")
         return unpublished
 
     def list_unpublished_envelopes(self):
+        incomplete = self.get_incomplete_envelopes()
         unpublished = self.get_unpublished_envelopes()
-
+        if incomplete:
+            self.stdout.write(
+                f"{incomplete.count()} envelope(s) not completed publishing:",
+            )
+            for i, crowndependencies in enumerate(incomplete, start=1):
+                self.stdout.write(
+                    f"{i}: {crowndependencies.packagedworkbaskets.last().envelope}",
+                )
         self.stdout.write(
             f"{unpublished.count()} envelope(s) ready to be published in the following order:",
         )
@@ -45,5 +53,5 @@ class Command(BaseCommand):
             self.list_unpublished_envelopes()
             return
 
-        if self.get_unpublished_envelopes() or self.get_incomplete_envelope():
+        if self.get_unpublished_envelopes() or self.get_incomplete_envelopes():
             publish_to_api.apply()
