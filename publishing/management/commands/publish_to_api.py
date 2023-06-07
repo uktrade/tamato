@@ -27,7 +27,6 @@ class Command(BaseCommand):
 
     def get_unpublished_envelopes(self) -> PackagedWorkBasket:
         unpublished = PackagedWorkBasket.objects.get_unpublished_to_api()
-
         if not unpublished:
             sys.exit("No unpublished envelopes")
         return unpublished
