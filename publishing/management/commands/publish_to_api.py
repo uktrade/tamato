@@ -2,6 +2,7 @@ import sys
 
 from django.core.management import BaseCommand
 
+from publishing.models import CrownDependenciesEnvelope
 from publishing.models import PackagedWorkBasket
 from publishing.tasks import publish_to_api
 
@@ -18,15 +19,29 @@ class Command(BaseCommand):
             help="List unpublished envelopes.",
         )
 
-    def get_unpublished_envelopes(self) -> PackagedWorkBasket:
+    def get_incomplete_envelopes(self):
+        incomplete = CrownDependenciesEnvelope.objects.unpublished()
+        if not incomplete:
+            return None
+        return incomplete
+
+    def get_unpublished_envelopes(self):
         unpublished = PackagedWorkBasket.objects.get_unpublished_to_api()
         if not unpublished:
-            sys.exit("No unpublished envelopes")
+            return None
         return unpublished
 
     def list_unpublished_envelopes(self):
+        incomplete = self.get_incomplete_envelopes()
         unpublished = self.get_unpublished_envelopes()
-
+        if incomplete:
+            self.stdout.write(
+                f"{incomplete.count()} envelope(s) not completed publishing:",
+            )
+            for i, crowndependencies in enumerate(incomplete, start=1):
+                self.stdout.write(
+                    f"{i}: {crowndependencies.packagedworkbaskets.last().envelope}",
+                )
         self.stdout.write(
             f"{unpublished.count()} envelope(s) ready to be published in the following order:",
         )
@@ -38,5 +53,7 @@ class Command(BaseCommand):
             self.list_unpublished_envelopes()
             return
 
-        if self.get_unpublished_envelopes():
+        if self.get_unpublished_envelopes() or self.get_incomplete_envelopes():
             publish_to_api.apply()
+        else:
+            sys.exit("No unpublished envelopes")

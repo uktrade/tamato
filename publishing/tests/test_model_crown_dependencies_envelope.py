@@ -39,13 +39,6 @@ def test_notify_processing_succeeded(
 ):
     pwb = packaged_workbasket_factory()
 
-    # envelope = successful_envelope_factory(
-    #     packaged_workbasket=pwb,
-    # )
-    # pwb.refresh_from_db()
-    # factories.CrownDependenciesEnvelopeFactory(
-    #     packaged_work_basket=pwb
-    # )
     crown_dependencies_envelope_factory(packaged_workbasket=pwb)
 
     cd_envelope = CrownDependenciesEnvelope.objects.all().first()
@@ -69,14 +62,6 @@ def test_notify_processing_failed(
     crown_dependencies_envelope_factory,
 ):
     pwb = packaged_workbasket_factory()
-
-    # envelope = successful_envelope_factory(
-    #     packaged_workbasket=pwb,
-    # )
-    # pwb.refresh_from_db()
-    # factories.CrownDependenciesEnvelopeFactory(
-    #     packaged_work_basket=pwb
-    # )
 
     crown_dependencies_envelope_factory(packaged_workbasket=pwb)
 

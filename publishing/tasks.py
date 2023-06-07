@@ -149,7 +149,6 @@ def publish_to_api():
         else, transition `CrownDependenciesEnvelope` to `FAILED_PUBLISHING`.
         @returns: response
         """
-        interface = get_tariff_api_interface()
         logger.info(f"Publishing: {packaged_workbasket.crown_dependencies_envelope}")
 
         try:
