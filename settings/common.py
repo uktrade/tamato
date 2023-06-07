@@ -480,6 +480,9 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 
+# Lock expires in 10 minutes
+CROWN_DEPENDENCIES_API_TASK_LOCK = 60 * 10
+
 CROWN_DEPENDENCIES_API_CRON = (
     crontab(os.environ.get("CROWN_DEPENDENCIES_API_CRON"))
     if os.environ.get("CROWN_DEPENDENCIES_API_CRON")
