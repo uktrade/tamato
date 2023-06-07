@@ -2,6 +2,7 @@ import sys
 
 from django.core.management import BaseCommand
 
+from publishing.models import CrownDependenciesEnvelope
 from publishing.models import PackagedWorkBasket
 from publishing.tasks import publish_to_api
 
@@ -18,8 +19,15 @@ class Command(BaseCommand):
             help="List unpublished envelopes.",
         )
 
+    def get_incomplete_envelope(self) -> CrownDependenciesEnvelope:
+        incomplete = CrownDependenciesEnvelope.objects.unpublished()
+        if not incomplete:
+            sys.exit("No incomplete envelopes")
+        return incomplete.first()
+
     def get_unpublished_envelopes(self) -> PackagedWorkBasket:
         unpublished = PackagedWorkBasket.objects.get_unpublished_to_api()
+
         if not unpublished:
             sys.exit("No unpublished envelopes")
         return unpublished
@@ -38,5 +46,5 @@ class Command(BaseCommand):
             self.list_unpublished_envelopes()
             return
 
-        if self.get_unpublished_envelopes():
+        if self.get_unpublished_envelopes() or self.get_incomplete_envelope():
             publish_to_api.apply()
