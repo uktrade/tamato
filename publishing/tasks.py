@@ -94,15 +94,14 @@ def schedule_create_xml_envelope_file(
         packaged_work_basket.save()
 
 
-
 @contextmanager
 def publish_to_api_lock(lock_id):
-  """
-  Lock the Crown Dependencies publishing task.
-  
-  Lock will be removed once the task has returned or
-  until the lock expires, whichever happens first.
-  """
+    """
+    Lock the Crown Dependencies publishing task.
+
+    Lock will be removed once the task has returned or until the lock expires,
+    whichever happens first.
+    """
     # Lock expires in 10 minutes
     timeout_at = time.monotonic() + settings.CROWN_DEPENDENCIES_API_TASK_LOCK - 3
     status = cache.add(lock_id, "True", settings.CROWN_DEPENDENCIES_API_TASK_LOCK)
@@ -251,7 +250,9 @@ def publish_to_api():
                 else:
                     publishing_task.error = response.text
                     publishing_task.save()
-                    raise CrownDependenciesException("Unexpected response from Tariff API.")
+                    raise CrownDependenciesException(
+                        "Unexpected response from Tariff API.",
+                    )
             else:
                 # Published but state not updated
                 has_been_published = True
@@ -268,7 +269,9 @@ def publish_to_api():
                 if response.status_code != 200:
                     publishing_task.error = response.text
                     publishing_task.save()
-                    raise CrownDependenciesException("Unexpected response from Tariff API.")
+                    raise CrownDependenciesException(
+                        "Unexpected response from Tariff API.",
+                    )
 
         # Process unpublished packaged workbaskets
         for unpublished in unpublished_packaged_workbaskets:
