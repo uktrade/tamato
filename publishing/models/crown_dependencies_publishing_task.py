@@ -22,6 +22,12 @@ class CrownDependenciesPublishingTask(TimestampedMixin):
         unique=True,
     )
 
+    error = CharField(
+        max_length=500,
+        null=True,
+        blank=True,
+    )
+
     @property
     def task_status(self) -> Optional[str]:
         """Return the status of the publishing task if it is available,

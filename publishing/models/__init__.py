@@ -6,6 +6,7 @@ from publishing.models.crown_dependencies_publishing_task import (
 )
 from publishing.models.envelope import Envelope
 from publishing.models.envelope import EnvelopeCurrentlyProccessing
+from publishing.models.envelope import EnvelopeId
 from publishing.models.envelope import EnvelopeInvalidQueuePosition
 from publishing.models.envelope import EnvelopeNoTransactions
 from publishing.models.loading_report import LoadingReport
@@ -34,6 +35,7 @@ __all__ = [
     "PackagedWorkBasketInvalidCheckStatus",
     "PackagedWorkBasketInvalidQueueOperation",
     "Envelope",
+    "EnvelopeId",
     "EnvelopeCurrentlyProccessing",
     "EnvelopeInvalidQueuePosition",
     "EnvelopeNoTransactions",

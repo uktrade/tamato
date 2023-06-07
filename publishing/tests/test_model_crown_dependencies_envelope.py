@@ -1,27 +1,15 @@
-from unittest import mock
-from unittest.mock import MagicMock
-from unittest.mock import patch
-
-import factory
 import pytest
-from freezegun import freeze_time
+from django.conf import settings
 
-from common.tests import factories
 from publishing.models import ApiPublishingState
 from publishing.models import CrownDependenciesEnvelope
-from publishing.models import PackagedWorkBasket
-from publishing.models.crown_dependencies_envelope import (
-    ApiEnvelopeInvalidWorkBasketStatus,
-)
-from publishing.models.crown_dependencies_envelope import (
-    ApiEnvelopeUnexpectedEnvelopeSequence,
-)
 
 pytestmark = pytest.mark.django_db
 
 
 def test_create_crown_dependencies_envelope(
-    successful_envelope_factory,
+    packaged_workbasket_factory,
+    crown_dependencies_envelope_factory,
     settings,
 ):
     """Test TAP api Envelope instance is created on successful envelope
@@ -30,117 +18,35 @@ def test_create_crown_dependencies_envelope(
     # unit testing envelope not notification integration
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
-    with freeze_time("2022-01-01"):
-        envelope = successful_envelope_factory()
+    packaged_work_basket = packaged_workbasket_factory()
 
-    packaged_work_basket = PackagedWorkBasket.objects.get(
-        envelope=envelope,
+    crown_dependencies_envelope_factory(
+        packaged_workbasket=packaged_work_basket,
     )
-    assert packaged_work_basket.crown_dependencies_envelope
+
+    packaged_work_basket.refresh_from_db()
     assert (
         packaged_work_basket.crown_dependencies_envelope.publishing_state
-        == ApiPublishingState.AWAITING_PUBLISHING
+        == ApiPublishingState.CURRENTLY_PUBLISHING
     )
-
-    # Creates successfully on new year
-    with freeze_time("2023-01-01"):
-        envelope2 = successful_envelope_factory()
-
-    packaged_work_basket = PackagedWorkBasket.objects.get(
-        envelope=envelope2,
-    )
-    assert (
-        packaged_work_basket.crown_dependencies_envelope.publishing_state
-        == ApiPublishingState.AWAITING_PUBLISHING
-    )
-
-
-def test_create_crown_dependencies_envelope_invalid_status(packaged_workbasket_factory):
-    """Test that create tap envelope will not create for incorrect status."""
-    with pytest.raises(ApiEnvelopeInvalidWorkBasketStatus):
-        factories.CrownDependenciesEnvelopeFactory(
-            packaged_work_basket=packaged_workbasket_factory(),
-        )
-
-
-def test_create_crown_dependencies_envelope_invalid_envelope_sequence(
-    successful_envelope_factory,
-    settings,
-):
-    """Test that create tap envelope will not create out of sequence."""
-    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
-
-    with freeze_time("2022-01-01"):
-        envelope = successful_envelope_factory()
-    packaged_workbasket = PackagedWorkBasket.objects.get(
-        envelope=envelope,
-    )
-
-    with pytest.raises(ApiEnvelopeUnexpectedEnvelopeSequence):
-        factories.CrownDependenciesEnvelopeFactory(
-            packaged_work_basket=packaged_workbasket,
-        )
-
-    # check out of sequence still works over different years
-    with freeze_time("2023-01-01"):
-        envelope2 = successful_envelope_factory()
-
-    packaged_workbasket2 = PackagedWorkBasket.objects.get(
-        envelope=envelope2,
-    )
-
-    with pytest.raises(ApiEnvelopeUnexpectedEnvelopeSequence):
-        factories.CrownDependenciesEnvelopeFactory(
-            packaged_work_basket=packaged_workbasket2,
-        )
-
-
-def test_invalid_envelope_sequence_published_to_tariffs_api(envelope_storage, settings):
-    """
-    Test that create tap envelope will not create out of sequence.
-
-    When the previous envelope has field published_to_tariffs_api set
-    """
-    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
-
-    wb = factories.PublishedWorkBasketFactory()
-    with factories.ApprovedTransactionFactory.create(workbasket=wb):
-        factories.FootnoteTypeFactory()
-        factories.AdditionalCodeFactory()
-    with patch(
-        "publishing.tasks.create_xml_envelope_file.apply_async",
-        return_value=MagicMock(id=factory.Faker("uuid4")),
-    ):
-        pwb = factories.SuccessPackagedWorkBasketFactory(
-            workbasket=wb,
-        )
-    with mock.patch(
-        "publishing.storages.EnvelopeStorage.save",
-        wraps=mock.MagicMock(side_effect=envelope_storage.save),
-    ) as mock_save:
-        envelope = factories.APIPublishedEnvelope(
-            packaged_work_basket=pwb,
-        )
-    pwb.envelope = envelope
-    pwb.save()
-
-    with pytest.raises(ApiEnvelopeUnexpectedEnvelopeSequence):
-        factories.CrownDependenciesEnvelopeFactory(packaged_work_basket=pwb)
-
-
-from django.conf import settings
 
 
 def test_notify_processing_succeeded(
     mocked_publishing_models_send_emails_delay,
     packaged_workbasket_factory,
     successful_envelope_factory,
+    crown_dependencies_envelope_factory,
 ):
     pwb = packaged_workbasket_factory()
 
-    envelope = successful_envelope_factory(
-        packaged_workbasket=pwb,
-    )
+    # envelope = successful_envelope_factory(
+    #     packaged_workbasket=pwb,
+    # )
+    # pwb.refresh_from_db()
+    # factories.CrownDependenciesEnvelopeFactory(
+    #     packaged_work_basket=pwb
+    # )
+    crown_dependencies_envelope_factory(packaged_workbasket=pwb)
 
     cd_envelope = CrownDependenciesEnvelope.objects.all().first()
 
@@ -160,12 +66,19 @@ def test_notify_processing_failed(
     mocked_publishing_models_send_emails_delay,
     packaged_workbasket_factory,
     successful_envelope_factory,
+    crown_dependencies_envelope_factory,
 ):
     pwb = packaged_workbasket_factory()
 
-    envelope = successful_envelope_factory(
-        packaged_workbasket=pwb,
-    )
+    # envelope = successful_envelope_factory(
+    #     packaged_workbasket=pwb,
+    # )
+    # pwb.refresh_from_db()
+    # factories.CrownDependenciesEnvelopeFactory(
+    #     packaged_work_basket=pwb
+    # )
+
+    crown_dependencies_envelope_factory(packaged_workbasket=pwb)
 
     cd_envelope = CrownDependenciesEnvelope.objects.all().first()
 

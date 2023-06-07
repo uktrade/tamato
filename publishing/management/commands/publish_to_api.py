@@ -2,7 +2,7 @@ import sys
 
 from django.core.management import BaseCommand
 
-from publishing.models import CrownDependenciesEnvelope
+from publishing.models import PackagedWorkBasket
 from publishing.tasks import publish_to_api
 
 
@@ -18,8 +18,8 @@ class Command(BaseCommand):
             help="List unpublished envelopes.",
         )
 
-    def get_unpublished_envelopes(self):
-        unpublished = CrownDependenciesEnvelope.objects.unpublished().order_by("pk")
+    def get_unpublished_envelopes(self) -> PackagedWorkBasket:
+        unpublished = PackagedWorkBasket.objects.get_unpublished_to_api()
         if not unpublished:
             sys.exit("No unpublished envelopes")
         return unpublished
@@ -30,8 +30,8 @@ class Command(BaseCommand):
         self.stdout.write(
             f"{unpublished.count()} envelope(s) ready to be published in the following order:",
         )
-        for i, envelope in enumerate(unpublished, start=1):
-            self.stdout.write(f"{i}: {envelope}")
+        for i, packaged_work_basket in enumerate(unpublished, start=1):
+            self.stdout.write(f"{i}: {packaged_work_basket.envelope}")
 
     def handle(self, *args, **options):
         if options["list"]:

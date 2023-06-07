@@ -367,7 +367,7 @@ class CrownDependenciesPublishingTaskAdmin(admin.ModelAdmin):
         (
             None,
             {
-                "fields": ("task_id", "task_status", "terminate_task"),
+                "fields": ("task_id", "task_status", "error", "terminate_task"),
             },
         ),
     )

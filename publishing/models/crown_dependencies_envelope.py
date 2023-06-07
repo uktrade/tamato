@@ -4,8 +4,6 @@ from datetime import datetime
 from django.conf import settings
 from django.db.models import DateTimeField
 from django.db.models import Manager
-from django.db.models import Max
-from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.transaction import atomic
 from django_fsm import FSMField
@@ -15,7 +13,6 @@ from common.models.mixins import TimestampedMixin
 from notifications.tasks import send_emails
 from publishing.models.decorators import save_after
 from publishing.models.decorators import skip_notifications_if_disabled
-from publishing.models.envelope import Envelope
 from publishing.models.packaged_workbasket import PackagedWorkBasket
 from publishing.models.state import ApiPublishingState
 from publishing.models.state import ProcessingState
@@ -24,8 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 # Exceptions
-class ApiEnvelopeUnexpectedEnvelopeSequence(Exception):
-    pass
 
 
 class ApiEnvelopeInvalidWorkBasketStatus(Exception):
@@ -41,10 +36,8 @@ class CrownDependenciesEnvelopeManager(Manager):
         Create a new instance, from the packaged workbasket successfully
         processed.
 
-         :param packaged_work_basket: packaged workbasket to publish.
+        :param packaged_work_basket: packaged workbasket to publish.
         @throws ApiEnvelopeInvalidWorkBasketStatus if packaged workbasket isn't Successfully processed
-        @throws ApiEnvelopeAlreadyExists if packaged workbasket already has a CrownDependenciesEnvelope
-        @throws ApiEnvelopeUnexpectedEnvelopeSequence if packaged workbasket isn't expected envelope id
         """
         if (
             packaged_work_basket.processing_state
@@ -55,60 +48,16 @@ class CrownDependenciesEnvelopeManager(Manager):
                 f"PackagedWorkBasket status not successful, {packaged_work_basket.processing_state} status.",
             )
 
-        previous_id = (
-            PackagedWorkBasket.objects.select_related(
-                "envelope",
-                "crown_dependencies_envelope",
-            )
-            .filter(
-                Q(
-                    envelope__id__isnull=False,
-                    envelope__published_to_tariffs_api__isnull=False,
-                )
-                | Q(crown_dependencies_envelope__id__isnull=False),
-            )
-            .aggregate(
-                Max("envelope__envelope_id"),
-            )["envelope__envelope_id__max"]
-        )
-        """Join PackagedWorkBasket with Envelope and CrownDependenciesEnvelope
-        model selecting objects Where an Envelope model exists and the
-        published_to_tariffs_api field is not null Or Where a
-        CrownDependenciesEnvelope is not null Then select the max value for ther
-        envelope_id field in the Envelope instance."""
-
-        if packaged_work_basket.envelope.envelope_id[2:] == "0001":
-            year = int(packaged_work_basket.envelope.envelope_id[:2])
-            last_envelope = Envelope.objects.for_year(year=year - 1).last()
-            # uses None if first envelope (no previous ones)
-            expected_previous_id = last_envelope.envelope_id if last_envelope else None
-        else:
-            expected_previous_id = str(
-                int(packaged_work_basket.envelope.envelope_id) - 1,
-            )
-
-        if previous_id and previous_id != expected_previous_id:
-            raise ApiEnvelopeUnexpectedEnvelopeSequence(
-                "Unable to create CrownDependenciesEnvelope from PackagedWorkBasket instance "
-                f"Envelope Id {packaged_work_basket.envelope.envelope_id} is not the next not expected envelope",
-            )
         envelope = super().create(**kwargs)
 
+        packaged_work_basket.crown_dependencies_envelope = envelope
+        packaged_work_basket.save()
         return envelope
 
 
 class CrownDependenciesEnvelopeQuerySet(QuerySet):
-    def awaiting_publishing(self) -> "CrownDependenciesEnvelopeQuerySet":
-        return self.filter(
-            publishing_state=ApiPublishingState.AWAITING_PUBLISHING,
-        )
-
     def unpublished(self) -> "CrownDependenciesEnvelopeQuerySet":
-        return (
-            self.failed_publishing()
-            | self.awaiting_publishing()
-            | self.currently_publishing()
-        )
+        return self.failed_publishing() | self.currently_publishing()
 
     def currently_publishing(self) -> "CrownDependenciesEnvelopeQuerySet":
         return self.filter(
@@ -147,7 +96,7 @@ class CrownDependenciesEnvelope(TimestampedMixin):
     )
 
     publishing_state = FSMField(
-        default=ApiPublishingState.AWAITING_PUBLISHING,
+        default=ApiPublishingState.CURRENTLY_PUBLISHING,
         choices=ApiPublishingState.choices,
         db_index=True,
         protected=True,
@@ -185,16 +134,6 @@ class CrownDependenciesEnvelope(TimestampedMixin):
             return False
 
     # publishing_state transition management
-
-    @save_after
-    @transition(
-        field=publishing_state,
-        source=ApiPublishingState.AWAITING_PUBLISHING,
-        target=ApiPublishingState.CURRENTLY_PUBLISHING,
-        custom={"label": "Begin publishing"},
-    )
-    def begin_publishing(self):
-        """Begin publishing a `CrownDependenciesEnvelope` to the Tariff API."""
 
     @save_after
     @transition(
