@@ -404,19 +404,6 @@ class PackagedWorkBasket(TimestampedMixin):
                 "exists.",
             )
 
-    def create_crown_dependencies_envelope(
-        self,
-    ) -> "publishing_models.CrownDependenciesEnvelope":
-        """Method for the packaged workbasket that will create a
-        CrownDependenciesEnvelope and link it to the packaged workbasket."""
-        crown_dependencies_envelope = (
-            publishing_models.CrownDependenciesEnvelope.objects.create(
-                packaged_work_basket=self,
-            )
-        )
-
-        return crown_dependencies_envelope
-
     def next_expected_to_api(self) -> bool:
         """
         checks if previous envelope in sequence has been published to the API.
