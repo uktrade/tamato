@@ -61,4 +61,4 @@ def test_get_all_members(date_ranges):
     with override_current_transaction(origin.transaction):
         all_geo_areas = get_all_members_of_geo_groups(origin, [country4, area_group2])
 
-        assert not all_geo_areas.difference({country1, country2, country4})
+        assert not set(all_geo_areas).difference({country1, country2, country4})
