@@ -22,13 +22,13 @@ class Command(BaseCommand):
     def get_incomplete_envelopes(self):
         incomplete = CrownDependenciesEnvelope.objects.unpublished()
         if not incomplete:
-            sys.exit("No incomplete envelopes")
+            return None
         return incomplete
 
     def get_unpublished_envelopes(self):
         unpublished = PackagedWorkBasket.objects.get_unpublished_to_api()
         if not unpublished:
-            sys.exit("No unpublished envelopes")
+            return None
         return unpublished
 
     def list_unpublished_envelopes(self):
@@ -55,3 +55,5 @@ class Command(BaseCommand):
 
         if self.get_unpublished_envelopes() or self.get_incomplete_envelopes():
             publish_to_api.apply()
+        else:
+            sys.exit("No unpublished envelopes")
