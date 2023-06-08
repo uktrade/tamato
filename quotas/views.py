@@ -254,11 +254,6 @@ class QuotaUpdateMixin(
         UpdateValidity,
     )
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["tx"] = WorkBasket.get_current_transaction(self.request)
-        return kwargs
-
     @transaction.atomic
     def get_result_object(self, form):
         object = super().get_result_object(form)

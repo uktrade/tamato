@@ -162,13 +162,12 @@ class QuotaUpdateForm(
     @property
     def origin(self):
         return (
-            self.instance.quotaordernumberorigin_set.approved_up_to_transaction(self.tx)
+            self.instance.quotaordernumberorigin_set.current()
             .filter(order_number=self.instance)
             .first()
         )
 
     def __init__(self, *args, **kwargs):
-        self.tx = kwargs.pop("tx")
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.set_initial_data(*args, **kwargs)

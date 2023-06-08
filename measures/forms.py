@@ -576,10 +576,12 @@ class MeasureForm(
             cleaned_data["geographical_area"] = geographical_area_fields[
                 geo_area_choice
             ]
-            exclusions = cleaned_data.get(FORMSET_PREFIX_MAPPING[geo_area_choice])
+            exclusions = cleaned_data.get(
+                constants.FORMSET_PREFIX_MAPPING[geo_area_choice],
+            )
             if exclusions:
                 cleaned_data["exclusions"] = [
-                    exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
+                    exclusion[constants.FIELD_NAME_MAPPING[geo_area_choice]]
                     for exclusion in exclusions
                 ]
 
