@@ -24,9 +24,19 @@ urlpatterns = [
         name="commodity-ui-detail",
     ),
     path(
-        f"commodities/<sid>/measures/",
-        views.CommodityMeasuresList.as_view(),
-        name="commodity-ui-detail-measures",
+        f"commodities/<sid>/hierarchy/",
+        views.CommodityHierarchy.as_view(),
+        name="commodity-ui-detail-hierarchy",
+    ),
+    path(
+        f"commodities/<sid>/measures-on-declarable-commodities/",
+        views.MeasuresOnDeclarableCommoditiesList.as_view(),
+        name="commodity-ui-detail-measures-declarable",
+    ),
+    path(
+        f"commodities/<sid>/measures-as-defined/",
+        views.CommodityMeasuresAsDefinedList.as_view(),
+        name="commodity-ui-detail-measures-as-defined",
     ),
     path(
         f"commodities/<sid>/version/",

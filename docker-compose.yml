@@ -35,7 +35,25 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info"]
+    command: 
+      [
+        "celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "standard" 
+      ]
+    env_file: 
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    depends_on:
+      - celery-redis
+
+  rule-check-celery:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
+    volumes:
+      - ./:/app/
+    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "rule-check"]
     env_file: 
       - .env
       - settings/envs/docker.env
@@ -68,7 +86,6 @@ services:
     env_file: .env
     entrypoint: sh
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
-    # TODO improve set up of buckets currently only hmrc-packaging set up automatically 
     command: ['-c', 'mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"']
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]

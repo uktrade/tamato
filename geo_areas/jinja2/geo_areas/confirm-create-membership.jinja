@@ -1,0 +1,11 @@
+{% extends "common/confirm_create.jinja" %}
+
+{% set page_title = "Add memberships" %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": "Membership associations for " ~ object._meta.verbose_name|title ~ " " ~ object|string ~ " have been created",
+    "text": "These new membership associations have been added to your workbasket",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}

@@ -1,6 +1,8 @@
 from datetime import date
+from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.urls import reverse
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView
@@ -12,7 +14,11 @@ from rest_framework import viewsets
 from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
 from commodities.forms import CommodityImportForm
+from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models import GoodsNomenclature
+from commodities.models.dc import CommodityCollectionLoader
+from commodities.models.dc import CommodityTreeSnapshot
+from commodities.models.dc import SnapshotMoment
 from commodities.models.dc import get_chapter_collection
 from common.serializers import AutoCompleteSerializer
 from common.views import SortingMixin
@@ -118,10 +124,10 @@ class CommodityVersion(CommodityDetail):
         return context
 
 
-class CommodityMeasuresList(SortingMixin, WithPaginationListMixin, ListView):
+class CommodityMeasuresAsDefinedList(SortingMixin, WithPaginationListMixin, ListView):
     model = Measure
     paginate_by = 20
-    template_name = "commodities/measures.jinja"
+    template_name = "commodities/measures-defined.jinja"
     sort_by_fields = ["measure_type", "start_date", "geo_area"]
     custom_sorting = {
         "start_date": "valid_between",
@@ -129,12 +135,15 @@ class CommodityMeasuresList(SortingMixin, WithPaginationListMixin, ListView):
         "geo_area": "geographical_area__area_id",
     }
 
-    def get_queryset(self):
-        ordering = self.get_ordering()
-        commodity = (
+    @property
+    def commodity(self):
+        return (
             GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
         )
-        queryset = commodity.measures.as_at_today()
+
+    def get_queryset(self):
+        ordering = self.get_ordering()
+        queryset = self.commodity.measures.current()
         if ordering:
             if isinstance(ordering, str):
                 ordering = (ordering,)
@@ -143,8 +152,74 @@ class CommodityMeasuresList(SortingMixin, WithPaginationListMixin, ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["commodity"] = (
-            GoodsNomenclature.objects.filter(sid=self.kwargs["sid"]).current().first()
+        context["commodity"] = self.commodity
+        context["selected_tab"] = "measures-defined"
+
+        url_params = urlencode({"goods_nomenclature": self.commodity.id})
+        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+        context["measures_url"] = measures_url
+        return context
+
+
+class CommodityHierarchy(CommodityDetail):
+    template_name = "commodities/hierarchy.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context["selected_tab"] = "hierarchy"
+
+        prefix = self.object.item_id[0:4]
+        commodities_collection = CommodityCollectionLoader(prefix=prefix).load()
+
+        tx = WorkBasket.get_current_transaction(self.request)
+        snapshot = CommodityTreeSnapshot(
+            commodities=commodities_collection.commodities,
+            moment=SnapshotMoment(transaction=tx, date=date.today()),
         )
-        context["selected_tab"] = "measures"
+
+        context["snapshot"] = snapshot
+        context["this_commodity"] = list(
+            filter(lambda c: c.item_id == self.object.item_id, snapshot.commodities),
+        )[0]
+
+        return context
+
+
+class MeasuresOnDeclarableCommoditiesList(CommodityMeasuresAsDefinedList):
+    template_name = "commodities/measures-declarable.jinja"
+    sort_by_fields = ["measure_type", "start_date", "geo_area", "commodity"]
+    custom_sorting = {
+        "start_date": "valid_between",
+        "measure_type": "measure_type__sid",
+        "geo_area": "geographical_area__area_id",
+        "commodity": "goods_nomenclature__item_id",
+    }
+
+    def get_queryset(self):
+        ordering = self.get_ordering()
+        tx = WorkBasket.get_current_transaction(self.request)
+        queryset = get_measures_on_declarable_commodities(
+            tx,
+            self.commodity.item_id,
+            date=date.today(),
+        )
+
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+
+        return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["commodity"] = self.commodity
+
+        context["selected_tab"] = "measures-declarable"
+
+        url_params = urlencode({"goods_nomenclature": self.commodity.id, "modc": True})
+        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+        context["measures_url"] = measures_url
+
         return context

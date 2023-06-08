@@ -1,4 +1,16 @@
+{% extends "commodities/detail.jinja" %}
 {% from "components/sort_by.jinja" import sort_by %}
+
+{% block tab_content %}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-three-quarters">
+    <h2 class="govuk-heading-l">Measures as defined</h2>
+  </div>
+  <div class="govuk-grid-column-one-quarter">
+    {% include "includes/commodities/actions.jinja" %}
+  </div>
+</div>
 
 {% set table_rows = [] %}
 
@@ -14,14 +26,14 @@
 
   {{ table_rows.append([
     {"text": object_link },
-    {"text": object.measure_type },
+    {"text": object.measure_type ~ " - " ~ object.measure_type.description },
     {"text": geo_area_link },
     {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
     {"text": "{:%d %b %Y}".format(object.effective_end_date) if object.effective_end_date else "-"},
   ]) or "" }}
 {% endfor %}
 
-{% set base_url = url('commodity-ui-detail-measures', args=[commodity.sid]) %}
+{% set base_url = url('commodity-ui-detail-measures-as-defined', args=[commodity.sid]) %}
 
 {% set measure_type %}
   {{ sort_by(request, "measure_type", "Measure type", base_url) }}
@@ -38,6 +50,7 @@
 {% if paginator.count > 0 %}
   {% include "includes/common/pagination-list-summary.jinja" %}
 {% endif %}
+
 {% if object_list %}
   {{ govukTable({
     "head": [
@@ -53,3 +66,4 @@
   <p class="govuk-body">There are no measures for this commodity code.</p>
 {% endif %}
 {% include "includes/common/pagination.jinja" %}
+{% endblock %}

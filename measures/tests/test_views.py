@@ -28,6 +28,7 @@ from common.views import TrackedModelDetailMixin
 from measures.business_rules import ME70
 from measures.constants import START
 from measures.constants import MeasureEditSteps
+from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureCondition
@@ -583,17 +584,19 @@ def test_measure_update_create_conditions(
 
     assert (
         condition.condition_code.pk
-        == measure_edit_conditions_data["measure-conditions-formset-0-condition_code"]
+        == measure_edit_conditions_data[
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code"
+        ]
     )
     assert (
         condition.required_certificate.pk
         == measure_edit_conditions_data[
-            "measure-conditions-formset-0-required_certificate"
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-required_certificate"
         ]
     )
     assert (
         condition.action.pk
-        == measure_edit_conditions_data["measure-conditions-formset-0-action"]
+        == measure_edit_conditions_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action"]
     )
     assert condition.update_type == UpdateType.CREATE
 
@@ -632,11 +635,13 @@ def test_measure_update_edit_conditions(
     )
     previous_condition = measure_with_condition.conditions.last()
     measure_edit_conditions_data[
-        "measure-conditions-formset-0-required_certificate"
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-required_certificate"
     ] = ""
-    measure_edit_conditions_data["measure-conditions-formset-0-reference_price"] = "3%"
     measure_edit_conditions_data[
-        "measure-conditions-formset-0-applicable_duty"
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price"
+    ] = "3%"
+    measure_edit_conditions_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty"
     ] = "10 GBP / 100 kg"
     client.post(url, data=measure_edit_conditions_data)
     tx = Transaction.objects.last()
@@ -717,20 +722,27 @@ def test_measure_update_remove_conditions(
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
-    measure_edit_conditions_data["measure-conditions-formset-0-DELETE"] = 1
+
+    measure_edit_conditions_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-DELETE"] = 1
     response = client.post(url, data=measure_edit_conditions_data)
 
     assert response.status_code == 200
 
-    measure_edit_conditions_data["measure-conditions-formset-TOTAL_FORMS"] = 0
-    measure_edit_conditions_data["measure-conditions-formset-INITIAL_FORMS"] = 0
-    measure_edit_conditions_data["measure-conditions-formset-0-condition_code"] = ""
+    measure_edit_conditions_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-TOTAL_FORMS"] = 0
     measure_edit_conditions_data[
-        "measure-conditions-formset-0-required_certificate"
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-INITIAL_FORMS"
+    ] = 0
+    measure_edit_conditions_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code"
     ] = ""
-    measure_edit_conditions_data["measure-conditions-formset-0-action"] = ""
-    measure_edit_conditions_data["measure-conditions-formset-0-applicable_duty"] = ""
-    del measure_edit_conditions_data["measure-conditions-formset-0-DELETE"]
+    measure_edit_conditions_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-required_certificate"
+    ] = ""
+    measure_edit_conditions_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action"] = ""
+    measure_edit_conditions_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty"
+    ] = ""
+    del measure_edit_conditions_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-DELETE"]
     transaction_count = Transaction.objects.count()
     response = client.post(url, data=measure_edit_conditions_data)
 
@@ -749,23 +761,32 @@ def test_measure_update_remove_conditions(
 def test_measure_update_invalid_conditions(
     client,
     valid_user,
-    measure_edit_conditions_data,
+    measure_edit_conditions_and_negative_action_data,
     duty_sentence_parser,
     erga_omnes,
 ):
-    """Tests that html contains appropriate form validation errors after posting
-    to measure edit endpoint with compound reference_price and an invalid
-    applicable_duty string."""
-    measure_edit_conditions_data[
-        "measure-conditions-formset-0-reference_price"
+    """
+    Tests that html contains appropriate form validation errors after posting to
+    measure edit endpoint with compound reference_price and an invalid
+    applicable_duty string.
+
+    Also tests form validation on negative action code's checking that
+    reference_price, required_certificate & applicable_duty must be empty
+    """
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price"
     ] = "3.5% + 11 GBP / 100 kg"
-    measure_edit_conditions_data[
-        "measure-conditions-formset-0-applicable_duty"
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty"
     ] = "invalid"
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-reference_price"
+    ] = "3.5%"
+
     measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     client.force_login(valid_user)
-    response = client.post(url, data=measure_edit_conditions_data)
+    response = client.post(url, data=measure_edit_conditions_and_negative_action_data)
 
     assert response.status_code == 200
 
@@ -775,18 +796,79 @@ def test_measure_update_invalid_conditions(
     )
     a_tags = page.select("ul.govuk-list.govuk-error-summary__list a")
 
-    assert a_tags[0].attrs["href"] == "#measure-conditions-formset-0-applicable_duty"
+    assert (
+        a_tags[0].attrs["href"]
+        == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty"
+    )
     assert a_tags[0].text == "Enter a valid duty sentence."
 
-    assert a_tags[1].attrs["href"] == "#measure-conditions-formset-0-__all__"
+    assert a_tags[1].attrs["href"] == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-__all__"
     assert (
         a_tags[1].text
         == "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’."
     )
-    assert a_tags[2].attrs["href"] == "#measure-conditions-formset-0-reference_price"
+    assert (
+        a_tags[2].attrs["href"]
+        == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price"
+    )
     assert (
         a_tags[2].text
         == "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
+    )
+
+    assert a_tags[3].attrs["href"] == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-__all__"
+    assert (
+        a_tags[3].text
+        == "If the action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’."
+    )
+
+
+def test_measure_update_invalid_conditions_invalid_actions(
+    client,
+    valid_user,
+    measure_edit_conditions_and_negative_action_data,
+    duty_sentence_parser,
+    erga_omnes,
+):
+    # set up invalid action under the same condition code
+    single_action = factories.MeasureActionFactory.create()
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-2-condition_code"
+    ] = measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code"
+    ]
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-2-reference_price"
+    ] = "3.5%"
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-2-action"
+    ] = single_action.pk
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-2-applicable_duty"
+    ] = "3.5% + 11 GBP / 100 kg"
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-TOTAL_FORMS"
+    ] = 3
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-INITIAL_FORMS"
+    ] = 3
+
+    measure = Measure.objects.first()
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    client.force_login(valid_user)
+    response = client.post(url, data=measure_edit_conditions_and_negative_action_data)
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        features="lxml",
+    )
+    p_tags = page.select("ul.govuk-list.govuk-error-summary__list p")
+
+    assert (
+        p_tags[0].text
+        == "All conditions of the same condition code must have the same resulting action, except for the negative action code pair."
     )
 
 

@@ -12,7 +12,7 @@ coverage[toml]==5.4
 crispy-forms-gds @ git+https://github.com/uktrade/crispy-forms-gds.git@b50168d0e23ffacbdd30e7819ec8f9a08e055c8e
 defusedxml==0.7.*
 dj-database-url==0.5.0
-django==3.2.18
+django==3.2.19
 django-chunk-upload-handlers==0.0.13 
 django-crispy-forms==1.12.0
 django-dotenv==1.4.2
@@ -51,6 +51,7 @@ notifications-python-client==6.4.1
 openpyxl==3.0.7
 parsec==3.8
 psycopg2-binary==2.9.*
+py_w3c==0.3.1
 pygments>=2.8
 pytest==7.1.2
 pytest-asyncio==0.20.3

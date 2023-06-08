@@ -26,8 +26,18 @@
     },
     {
       "text": "Measures as defined",
-      "href": url('commodity-ui-detail-measures', args=[commodity.sid]),
-      "selected": selected_tab == "measures",
+      "href": url('commodity-ui-detail-measures-as-defined', args=[commodity.sid]),
+      "selected": selected_tab == "measures-defined",
+    },
+    {
+      "text": "Measures on declarable commodities",
+      "href": url('commodity-ui-detail-measures-declarable', args=[commodity.sid]),
+      "selected": selected_tab == "measures-declarable",
+    },
+    {
+      "text": "Commodity hierarchy",
+      "href": url('commodity-ui-detail-hierarchy', args=[commodity.sid]),
+      "selected": selected_tab == "hierarchy",
     },
     {
       "text": "Version control",
@@ -44,7 +54,7 @@
     </div>
   </div>
   {{ fake_tabs(links) }}
-  <div class="govuk-tabs__panel">
+  <div class="govuk-tabs__panel {% block content_class %}{% endblock %}">
     {% block tab_content %}
       {% include "includes/commodities/tabs/core_data.jinja" %}
     {% endblock %}

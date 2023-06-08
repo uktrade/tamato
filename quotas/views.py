@@ -1,6 +1,7 @@
 from datetime import date
 from urllib.parse import urlencode
 
+from django.db import transaction
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.views.generic.edit import FormMixin
@@ -8,6 +9,8 @@ from django.views.generic.list import ListView
 from rest_framework import permissions
 from rest_framework import viewsets
 
+from common.business_rules import UniqueIdentifyingFields
+from common.business_rules import UpdateValidity
 from common.serializers import AutoCompleteSerializer
 from common.tariffs_api import get_quota_data
 from common.tariffs_api import get_quota_definitions_data
@@ -23,11 +26,14 @@ from quotas import serializers
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
 from quotas.forms import QuotaDefinitionFilterForm
+from quotas.forms import QuotaUpdateForm
 from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.generic import EditTaricView
 
 
 class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
@@ -85,7 +91,7 @@ class QuotaEventViewset(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class QuotaMixin:
+class QuotaOrderNumberMixin:
     model = models.QuotaOrderNumber
 
     def get_queryset(self):
@@ -93,14 +99,14 @@ class QuotaMixin:
         return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
 
 
-class QuotaList(QuotaMixin, TamatoListView):
+class QuotaList(QuotaOrderNumberMixin, TamatoListView):
     """Returns a list of QuotaOrderNumber objects."""
 
     template_name = "quotas/list.jinja"
     filterset_class = QuotaFilter
 
 
-class QuotaDetail(QuotaMixin, TrackedModelDetailView, SortingMixin):
+class QuotaDetail(QuotaOrderNumberMixin, TrackedModelDetailView, SortingMixin):
     template_name = "quotas/detail.jinja"
     sort_by_fields = ["goods_nomenclature"]
 
@@ -217,8 +223,68 @@ class QuotaDefinitionList(FormMixin, SortingMixin, ListView):
         )
 
 
-class QuotaDelete(QuotaMixin, TrackedModelDetailMixin, CreateTaricDeleteView):
+class QuotaDelete(
+    QuotaOrderNumberMixin,
+    TrackedModelDetailMixin,
+    CreateTaricDeleteView,
+):
     form_class = forms.QuotaDeleteForm
     success_path = "list"
 
     validate_business_rules = (business_rules.ON11,)
+
+
+class QuotaUpdateMixin(
+    QuotaOrderNumberMixin,
+    TrackedModelDetailMixin,
+):
+    form_class = QuotaUpdateForm
+    permission_required = ["common.change_trackedmodel"]
+
+    validate_business_rules = (
+        business_rules.ON1,
+        business_rules.ON2,
+        business_rules.ON4,
+        business_rules.ON9,
+        business_rules.ON11,
+        UniqueIdentifyingFields,
+        UpdateValidity,
+    )
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        object = super().get_result_object(form)
+
+        existing_origins = (
+            models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
+                object.transaction,
+            ).filter(
+                order_number__sid=object.sid,
+            )
+        )
+        for origin in existing_origins:
+            origin.new_version(
+                workbasket=WorkBasket.current(self.request),
+                transaction=object.transaction,
+                order_number=object,
+            )
+
+        return object
+
+
+class QuotaUpdate(
+    QuotaUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class QuotaEditUpdate(
+    QuotaUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaConfirmUpdate(QuotaOrderNumberMixin, TrackedModelDetailView):
+    template_name = "common/confirm_update.jinja"

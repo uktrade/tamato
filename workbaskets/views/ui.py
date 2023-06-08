@@ -529,7 +529,7 @@ class WorkBasketViolationDetail(DetailView):
         value to True.
         """
 
-        model_check = TrackedModelCheck.objects.get(pk=self.kwargs["pk"])
+        model_check = self.get_object()
         model_check.successful = True
         model_check.save()
 
@@ -545,6 +545,4 @@ class WorkBasketViolationDetail(DetailView):
         if request.POST.get("action", None) == "delete" and request.user.is_superuser:
             self.override_violation()
 
-        return redirect(
-            "workbaskets:workbasket-ui-violations",
-        )
+        return redirect("workbaskets:workbasket-ui-violations")

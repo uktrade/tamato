@@ -1,14 +1,19 @@
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Accordion
+from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
+from crispy_forms_gds.layout import Submit
 from django import forms
 from django.urls import reverse_lazy
 
+from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from quotas import models
+from quotas import validators
 
 
 class QuotaFilterForm(forms.Form):
@@ -57,5 +62,66 @@ class QuotaDefinitionFilterForm(forms.Form):
             Button("submit", "Apply"),
             HTML(
                 f'<a class="govuk-button govuk-button--secondary" href="{clear_url}">Restore defaults</a>',
+            ),
+        )
+
+
+class QuotaUpdateForm(ValidityPeriodForm, forms.ModelForm):
+    CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
+    SAFEGUARD_HELP_TEXT = (
+        "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
+    )
+    START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as this may cause issues with CDS downstream"
+
+    class Meta:
+        model = models.QuotaOrderNumber
+        fields = [
+            "valid_between",
+            "category",
+        ]
+
+    category = forms.ChoiceField(
+        label="",
+        choices=[],  # set in __init__
+        error_messages={"invalid_choice": "Please select a valid category"},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.category == validators.QuotaCategory.SAFEGUARD:
+            self.fields["category"].widget = forms.Select(
+                attrs={"disabled": True},
+                choices=validators.QuotaCategory.choices,
+            )
+            self.fields["category"].help_text = self.SAFEGUARD_HELP_TEXT
+        else:
+            self.fields["category"].choices = validators.QuotaCategoryEditing.choices
+            self.fields["category"].help_text = self.CATEGORY_HELP_TEXT
+
+        self.fields["category"].initial = self.instance.category
+        self.fields["start_date"].help_text = self.START_DATE_HELP_TEXT
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Accordion(
+                AccordionSection(
+                    "Validity period",
+                    "start_date",
+                    "end_date",
+                ),
+                AccordionSection(
+                    "Category",
+                    "category",
+                ),
+                css_class="govuk-!-width-two-thirds",
+            ),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
             ),
         )
