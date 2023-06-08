@@ -69,6 +69,7 @@ def test_notify_ready_for_processing(
     packaged_workbasket_factory,
     published_envelope_factory,
     mocked_publishing_models_send_emails_delay,
+    settings,
 ):
     packaged_wb = packaged_workbasket_factory()
     envelope = published_envelope_factory(packaged_workbasket=packaged_wb)

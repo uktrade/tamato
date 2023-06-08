@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 
 
 @patch("notifications.tasks.NotificationsAPIClient.send_email_notification")
-def test_send_emails_cds(send_email_notification):
+def test_send_emails_cds(send_email_notification, settings):
     """Tests that email notifications are only sent to users subscribed to
     packaging emails and that a log is created with this user's email and
     template id."""
@@ -53,7 +53,7 @@ def test_send_emails_cds(send_email_notification):
 
 
 @patch("notifications.tasks.NotificationsAPIClient.send_email_notification")
-def test_send_emails_api(send_email_notification):
+def test_send_emails_api(send_email_notification, settings):
     """Tests that email notifications are only sent to users subscribed to
     packaging emails and that a log is created with this user's email and
     template id."""
