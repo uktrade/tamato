@@ -282,7 +282,10 @@ def publish_to_api():
                 pause_queue_and_log_error(publishing_task, message)
                 return
 
-            unpublished.create_crown_dependencies_envelope()
+            CrownDependenciesEnvelope.objects.create(
+                packaged_work_basket=unpublished,
+            )
+            unpublished.refresh_from_db()
 
             # publish to api
             response = publish(unpublished)
