@@ -80,19 +80,16 @@ class QuotaDefinitionFilterForm(forms.Form):
 class QuotaOriginExclusionsForm(forms.Form):
     exclusion = forms.ModelChoiceField(
         label="",
-        queryset=GeographicalArea.objects.all(),  # modified in __init__
+        queryset=GeographicalArea.objects.current()
+        .with_latest_description()
+        .as_at_today()
+        .order_by("description"),
         help_text="Select a country to be excluded:",
         required=False,
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["exclusion"].queryset = (
-            GeographicalArea.objects.current()
-            .with_latest_description()
-            .as_at_today()
-            .order_by("description")
-        )
         self.fields[
             "exclusion"
         ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
