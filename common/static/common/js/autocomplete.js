@@ -4,6 +4,21 @@ const template = (result) => result && result.label
 
 let aborter = null;
 
+const newLine  = /\n/g;
+const removeNewLine = (str) => str.replace(newLine, "")
+
+const cleanResults = (results) => {
+  /*
+  Results which contain new line characters are considered as a new query when
+  selected, causing results to be repopulated unnecessarily. To prevent this,
+  we can remove new line characters from results since they're unimportant here.
+  */
+  for(let i = 0, len = results.length; i < len; i++) {
+    results[i].label = removeNewLine(results[i].label);
+  }
+  return results
+}
+
 
 const autoCompleteElement = (element, includeNameAttr=true) => {
   const hiddenInput = element.querySelector("input[type=hidden]");
@@ -22,11 +37,11 @@ const autoCompleteElement = (element, includeNameAttr=true) => {
       const signal = aborter.signal
       fetch(`${source_url}?${searchParams}`, {signal})
         .then(response => response.json())
-        .then(data => populateResults(data.results))
+        .then(data => populateResults(cleanResults(data.results)))
         .catch(err => console.log(err));
     },
     minLength: element.dataset.minLength ? element.dataset.minLength : 0,
-    defaultValue: element.dataset.originalValue,
+    defaultValue: removeNewLine(element.dataset.originalValue),
     name: "",
     templates: {
       inputValue: template,
