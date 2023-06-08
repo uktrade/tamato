@@ -270,8 +270,6 @@ class QuotaUpdateMixin(
             for item in form.cleaned_data[QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX]
         ]
 
-        print("form_exclusions", form_exclusions)
-
         existing_origins = (
             models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
                 object.transaction,
@@ -289,8 +287,6 @@ class QuotaUpdateMixin(
         )
 
         all_new_exclusions = get_all_members_of_geo_groups(new_origin, form_exclusions)
-
-        print("all_new_exclusions", all_new_exclusions)
 
         for geo_area in all_new_exclusions:
             existing_exclusion = (
