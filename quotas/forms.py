@@ -201,8 +201,8 @@ class QuotaUpdateForm(
         initial_exclusions = []
         if hasattr(self, "instance"):
             initial_exclusions = [
-                {field_name: exclusion}
-                for exclusion in self.origin.quotaordernumberoriginexclusion_set.current().all()
+                {field_name: exclusion.excluded_geographical_area}
+                for exclusion in self.origin.quotaordernumberoriginexclusion_set.current()
             ]
         # if we just submitted the form, add the new data to initial
         if self.formset_submitted or self.whole_form_submit:
