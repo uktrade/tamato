@@ -659,7 +659,6 @@ def test_quota_edit_origin_new_versions(valid_user_client):
 
 def test_quota_edit_origin_exclusions(
     valid_user_client,
-    date_ranges,
     approved_transaction,
     geo_group1,
     geo_group2,
@@ -718,3 +717,64 @@ def test_quota_edit_origin_exclusions(
     assert country1 in origins.first().excluded_areas.all()
     assert country2 in origins.first().excluded_areas.all()
     assert country3 not in origins.first().excluded_areas.all()
+
+
+def test_quota_edit_origin_exclusions_remove(
+    valid_user_client,
+    approved_transaction,
+    geo_group1,
+    country1,
+):
+    """Checks that exclusions are removed from a quota origin."""
+
+    origin = factories.QuotaOrderNumberOriginFactory.create(
+        transaction=approved_transaction,
+        geographical_area=geo_group1,
+    )
+    factories.QuotaOrderNumberOriginExclusionFactory.create(
+        transaction=approved_transaction,
+        excluded_geographical_area=country1,
+        origin=origin,
+    )
+    quota = models.QuotaOrderNumber.objects.last()
+
+    form_data = {
+        "category": validators.QuotaCategory.AUTONOMOUS.value,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2000,
+        "existing_origin": origin.id,
+        "origin_start_date_0": 1,
+        "origin_start_date_1": 1,
+        "origin_start_date_2": 2000,
+        "geographical_area": geo_group1.id,
+        "quota-origin-exclusions-formset-__prefix__-exclusion": "",
+        "submit": "Save",
+    }
+
+    response = valid_user_client.post(
+        reverse("quota-ui-edit", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 302
+
+    tx = Transaction.objects.last()
+
+    updated_quota = models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).get(
+        sid=quota.sid,
+    )
+    updated_origins = (
+        updated_quota.quotaordernumberorigin_set.approved_up_to_transaction(tx)
+    )
+
+    assert (
+        updated_origins.first()
+        .quotaordernumberoriginexclusion_set.approved_up_to_transaction(tx)
+        .count()
+        == 0
+    )
+
+    assert country1 not in updated_origins.first().quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+        tx,
+    )

@@ -158,9 +158,14 @@ class QuotaUpdateForm(
 
     @property
     def origin(self):
-        return self.instance.quotaordernumberorigin_set.current().first()
+        return (
+            self.instance.quotaordernumberorigin_set.approved_up_to_transaction(self.tx)
+            .filter(order_number=self.instance)
+            .first()
+        )
 
     def __init__(self, *args, **kwargs):
+        self.tx = kwargs.pop("tx")
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.set_initial_data(*args, **kwargs)
@@ -195,7 +200,7 @@ class QuotaUpdateForm(
         if hasattr(self, "instance"):
             initial_exclusions = [
                 {field_name: exclusion}
-                for exclusion in self.origin.excluded_areas.all()
+                for exclusion in self.origin.quotaordernumberoriginexclusion_set.current().all()
             ]
         # if we just submitted the form, add the new data to initial
         if self.formset_submitted or self.whole_form_submit:

@@ -254,6 +254,11 @@ class QuotaUpdateMixin(
         UpdateValidity,
     )
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["tx"] = WorkBasket.get_current_transaction(self.request)
+        return kwargs
+
     @transaction.atomic
     def get_result_object(self, form):
         object = super().get_result_object(form)
@@ -299,7 +304,7 @@ class QuotaUpdateMixin(
             if existing_exclusion:
                 existing_exclusion.new_version(
                     workbasket=WorkBasket.current(self.request),
-                    transaction=new_origin.transaction,
+                    transaction=object.transaction,
                     origin=new_origin,
                 )
             else:
@@ -307,7 +312,7 @@ class QuotaUpdateMixin(
                     origin=new_origin,
                     excluded_geographical_area=geo_area,
                     update_type=UpdateType.CREATE,
-                    transaction=new_origin.transaction,
+                    transaction=object.transaction,
                 )
 
         removed_excluded_areas = {
@@ -326,7 +331,7 @@ class QuotaUpdateMixin(
             removed.new_version(
                 update_type=UpdateType.DELETE,
                 workbasket=WorkBasket.current(self.request),
-                transaction=new_origin.transaction,
+                transaction=object.transaction,
                 origin=new_origin,
             )
 
