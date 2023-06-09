@@ -1,6 +1,7 @@
 import accessibleAutocomplete from 'accessible-autocomplete'
 
-const template = (result) => result && result.label
+// Only a new result has a label, else result is the original result's label
+const template = (result) => typeof result == "object" ? result.label : result
 
 let aborter = null;
 
@@ -46,10 +47,11 @@ const autoCompleteElement = (element, includeNameAttr=true) => {
     templates: {
       inputValue: template,
       suggestion: template
-    },
+    },±
     onConfirm: value => {
       const autocomplete = document.querySelector(`#${hiddenInput.id}_autocomplete`);
-      if (value) {
+      if (value && typeof value == "object") {
+        // value is new
         hiddenInput.value = value.value;
       } else if (!autocomplete.value) {
         hiddenInput.value = "";
