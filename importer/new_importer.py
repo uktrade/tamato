@@ -1,10 +1,14 @@
 from typing import List
 
 from bs4 import BeautifulSoup
+from django.contrib.auth.models import User
 
+from common.models import Transaction
+from importer.new_parsers import MessageParser
 from importer.new_parsers import ModelLink
 from importer.new_parsers import NewElementParser
 from importer.new_parsers import TransactionParser
+from workbaskets.models import WorkBasket
 
 
 class NewImportIssueReportItem:
@@ -64,9 +68,20 @@ class NewImporter:
     def __init__(
         self,
         taric3_file: str,
-        # username: str,
-        # import_name: str,
+        import_title: str = None,
+        author_username: str = None,
+        workbasket: WorkBasket = None,
     ):
+        if not workbasket:
+            if not import_title:
+                raise Exception(
+                    "Import title is required when no workbasket is provided",
+                )
+            elif not author_username:
+                raise Exception(
+                    "Author username is required when no workbasket is provided",
+                )
+
         self.parsed_transactions = []
 
         # Read xml into string
@@ -76,17 +91,62 @@ class NewImporter:
         # load the taric3 file into memory, via beautiful soup
         self.bs_taric3_file = BeautifulSoup(self.raw_xml, "xml")
 
+        # if all good, commit to workbasket
+        if workbasket is None:
+            author = User.objects.get(username=author_username)
+            self.workbasket = WorkBasket(title=import_title, author=author)
+        else:
+            self.workbasket = workbasket
+
         # parse transactions
         self.parse()
 
         # validate, check dependencies and data
         self.validate()
 
-        # if all good, commit to workbasket
+        if self.can_save():
+            self.commit_data()
+
+    def commit_data(self):
+        transaction_order = 1
+        for transaction in self.parsed_transactions:
+            # create transaction
+            transaction = Transaction.objects.create(
+                workbasket=self.workbasket,
+                order=transaction_order,
+            )
+            for message in transaction.parsed_messages:
+                self.create_tap_object_from_message(message, transaction)
+
+    def create_or_append_to_tap_object_from_message(
+        self,
+        message: MessageParser,
+        transaction: Transaction,
+    ):
+        if hasattr(message.taric_object, "parent_parser"):
+            # Find parent object and append data to that model
+            pass
+        else:
+            # Create object and append data
+            pass
 
     def print_stats(self, update_stats: dict):
         for key in update_stats.keys():
             print(f"{key} : {update_stats[key]}")
+
+    @property
+    def status(self):
+        if len(self.issues("ERROR")) > 0:
+            return "FAILED"
+        elif len(self.issues("WARNING")) > 0:
+            return "COMPLETED_WITH_WARNINGS"
+        else:
+            return "COMPLETED"
+
+    def can_save(self):
+        if self.status != "FAILED":
+            return True
+        return False
 
     def parse(self):
         transactions = self.bs_taric3_file.find_all("env:transaction")
@@ -195,11 +255,15 @@ class NewImporter:
 
         target_taric_object.issues.append(report_item)
 
-    def issues(self):
+    def issues(self, filter_by_issue_type: str = None):
         issues = []
         for transaction in self.parsed_transactions:
             for message in transaction.parsed_messages:
                 for issue in message.taric_object.issues:
-                    issues.append(issue)
+                    if filter_by_issue_type:
+                        if issue.issue_type == filter_by_issue_type:
+                            issues.append(issue)
+                    else:
+                        issues.append(issue)
 
         return issues

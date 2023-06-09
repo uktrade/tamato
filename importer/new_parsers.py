@@ -145,6 +145,8 @@ class NewElementParser:
     def __init__(self):
         self.issues = []
         self.sequence_number = None
+        self.model = None
+        self.model_instance = None
 
     def links(self):
         if self.model_links is None:
@@ -234,6 +236,27 @@ class NewElementParser:
                 )
             else:
                 self.valid_between = TaricDateRange(self.valid_between_lower)
+
+    def to_tap_model(self):
+        excluded_variable_names = [
+            "__annotations__",
+            "__doc__",
+            "__module__",
+            "issues",
+            "model",
+            "model_links",
+            "parent_parser",
+            "value_mapping",
+            "xml_object_tag",
+            "valid_between_lower",
+            "valid_between_upper",
+        ]
+
+        for variable_name in vars(self).keys():
+            if variable_name not in excluded_variable_names:
+                variable_first_part = variable_name.split("__")[0]
+                if hasattr(self.model, variable_first_part):
+                    pass
 
 
 class TaricObjectLink:
