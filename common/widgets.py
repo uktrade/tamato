@@ -22,3 +22,16 @@ class RadioNestedWidget(RadioSelect):
 
     def bind_nested_forms(self, forms):
         self.nested_forms = forms
+
+
+class FormSetFieldWidget(widgets.Widget):
+    template_name = "common/widgets/formset_field.html"
+    input_type = ""
+
+    def bind_nested_forms(self, forms):
+        self.nested_forms = forms
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["widget"]["nested_forms"] = self.nested_forms
+        return context

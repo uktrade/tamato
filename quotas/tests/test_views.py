@@ -17,11 +17,79 @@ from common.tests.util import view_urlpattern_ids
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from geo_areas.validators import AreaCode
 from quotas import models
 from quotas import validators
 from quotas.views import QuotaList
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def country1(date_ranges):
+    return factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.COUNTRY,
+        valid_between=date_ranges.no_end,
+    )
+
+
+@pytest.fixture
+def country2(date_ranges):
+    return factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.COUNTRY,
+        valid_between=date_ranges.no_end,
+    )
+
+
+@pytest.fixture
+def country3(date_ranges):
+    return factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.COUNTRY,
+        valid_between=date_ranges.no_end,
+    )
+
+
+@pytest.fixture
+def geo_group1(country1, country2, country3, date_ranges):
+    geo_group1 = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        valid_between=date_ranges.no_end,
+    )
+    factories.GeographicalMembershipFactory.create(
+        geo_group=geo_group1,
+        member=country1,
+        valid_between=date_ranges.no_end,
+    )
+    factories.GeographicalMembershipFactory.create(
+        geo_group=geo_group1,
+        member=country2,
+        valid_between=date_ranges.no_end,
+    )
+    factories.GeographicalMembershipFactory.create(
+        geo_group=geo_group1,
+        member=country3,
+        valid_between=date_ranges.no_end,
+    )
+    return geo_group1
+
+
+@pytest.fixture
+def geo_group2(date_ranges, country1, country2):
+    geo_group2 = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        valid_between=date_ranges.no_end,
+    )
+    factories.GeographicalMembershipFactory.create(
+        geo_group=geo_group2,
+        member=country1,
+        valid_between=date_ranges.no_end,
+    )
+    factories.GeographicalMembershipFactory.create(
+        geo_group=geo_group2,
+        member=country2,
+        valid_between=date_ranges.no_end,
+    )
+    return geo_group2
 
 
 @pytest.mark.parametrize(
@@ -587,3 +655,126 @@ def test_quota_edit_origin_new_versions(valid_user_client):
     assert origins.exists()
     assert origins.count() == 1
     assert origins.first().version_group != quota.version_group
+
+
+def test_quota_edit_origin_exclusions(
+    valid_user_client,
+    approved_transaction,
+    geo_group1,
+    geo_group2,
+    country1,
+    country2,
+    country3,
+):
+    """Checks that members of geo groups are added individually as
+    exclusions."""
+    quota = factories.QuotaOrderNumberFactory.create(transaction=approved_transaction)
+
+    origin = models.QuotaOrderNumberOrigin.objects.last()
+
+    form_data = {
+        "category": validators.QuotaCategory.AUTONOMOUS.value,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2000,
+        "existing_origin": origin.id,
+        "origin_start_date_0": 1,
+        "origin_start_date_1": 1,
+        "origin_start_date_2": 2000,
+        "geographical_area": geo_group1.id,
+        "quota-origin-exclusions-formset-__prefix__-exclusion": geo_group2.id,
+        "submit": "Save",
+    }
+
+    response = valid_user_client.post(
+        reverse("quota-ui-edit", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 302
+
+    tx = Transaction.objects.last()
+
+    quota = models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).get(
+        sid=quota.sid,
+    )
+    origins = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
+        tx,
+    ).filter(
+        order_number=quota,
+    )
+
+    # geo_group1 contains country1, country2, country3
+    # geo_group2 contains country1, country2
+
+    # we're excluding geo_group2 from geo_group1
+    # geo_group2 has 2 members
+    # so we should have 2 exclusions
+    assert origins.first().excluded_areas.all().count() == 2
+
+    # if we exclude geo_group2
+    # we exclude country1 and country2
+    assert country1 in origins.first().excluded_areas.all()
+    assert country2 in origins.first().excluded_areas.all()
+    assert country3 not in origins.first().excluded_areas.all()
+
+
+def test_quota_edit_origin_exclusions_remove(
+    valid_user_client,
+    approved_transaction,
+    geo_group1,
+    country1,
+):
+    """Checks that exclusions are removed from a quota origin."""
+
+    origin = factories.QuotaOrderNumberOriginFactory.create(
+        transaction=approved_transaction,
+        geographical_area=geo_group1,
+    )
+    factories.QuotaOrderNumberOriginExclusionFactory.create(
+        transaction=approved_transaction,
+        excluded_geographical_area=country1,
+        origin=origin,
+    )
+    quota = models.QuotaOrderNumber.objects.last()
+
+    form_data = {
+        "category": validators.QuotaCategory.AUTONOMOUS.value,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2000,
+        "existing_origin": origin.id,
+        "origin_start_date_0": 1,
+        "origin_start_date_1": 1,
+        "origin_start_date_2": 2000,
+        "geographical_area": geo_group1.id,
+        "quota-origin-exclusions-formset-__prefix__-exclusion": "",
+        "submit": "Save",
+    }
+
+    response = valid_user_client.post(
+        reverse("quota-ui-edit", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 302
+
+    tx = Transaction.objects.last()
+
+    updated_quota = models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).get(
+        sid=quota.sid,
+    )
+    updated_origins = (
+        updated_quota.quotaordernumberorigin_set.approved_up_to_transaction(tx)
+    )
+
+    assert (
+        updated_origins.first()
+        .quotaordernumberoriginexclusion_set.approved_up_to_transaction(tx)
+        .count()
+        == 0
+    )
+
+    assert country1 not in updated_origins.first().quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+        tx,
+    )
