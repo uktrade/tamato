@@ -47,7 +47,7 @@ const autoCompleteElement = (element, includeNameAttr=true) => {
     templates: {
       inputValue: template,
       suggestion: template
-    },±
+    },
     onConfirm: value => {
       const autocomplete = document.querySelector(`#${hiddenInput.id}_autocomplete`);
       if (value && typeof value == "object") {
