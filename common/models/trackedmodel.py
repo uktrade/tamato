@@ -647,16 +647,10 @@ class TrackedModel(PolymorphicModel):
                 elif self.update_type == UpdateType.UPDATE:
                     action += "-update"
 
-            if action == "detail":
-                url = reverse(
-                    f"{self.get_url_pattern_name_prefix()}-ui-{action}",
-                    kwargs=kwargs,
-                )
-            else:
-                url = reverse(
-                    f"{self.slugify_model_name()}-ui-{action}",
-                    kwargs=kwargs,
-                )
+            url = reverse(
+                f"{self.get_url_pattern_name_prefix()}-ui-{action}",
+                kwargs=kwargs,
+            )
             return f"{url}{self.url_suffix}"
         except NoReverseMatch:
             return None
@@ -673,9 +667,5 @@ class TrackedModel(PolymorphicModel):
         """
         prefix = getattr(cls, "url_pattern_name_prefix", None)
         if not prefix:
-            prefix = cls.slugify_model_name()
+            prefix = cls._meta.verbose_name.replace(" ", "_")
         return prefix
-
-    @classmethod
-    def slugify_model_name(cls):
-        return cls._meta.verbose_name.replace(" ", "_")
