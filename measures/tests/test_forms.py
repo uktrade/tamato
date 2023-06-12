@@ -9,6 +9,7 @@ from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
+from geo_areas import constants
 from geo_areas.validators import AreaCode
 from measures import forms
 from measures.forms import MEASURE_COMMODITIES_FORMSET_PREFIX
@@ -161,7 +162,7 @@ def test_measure_forms_quota_order_number_valid_data(quota_order_number):
 
 def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES,
     }
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
@@ -178,7 +179,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions(erga_omnes):
     geo_area2 = factories.GeographicalAreaFactory.create()
     formset_prefix = "erga_omnes_exclusions_formset"
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES,
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": geo_area2.pk,
         "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": "",
@@ -207,7 +208,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_delete(erga_omn
     FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES,
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-0-DELETE": "1",
         "submit": "submit",
@@ -230,7 +231,7 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions(erga_omnes):
     geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
         f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
         "submit": "submit",
@@ -256,7 +257,7 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions_delete(erga_omne
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
         "geographical_area_group-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
         "geo_group_exclusions_formset-0-DELETE": "1",
@@ -281,7 +282,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_add(erga_omnes)
     FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
-        "geo_area": forms.GeoAreaType.ERGA_OMNES,
+        "geo_area": constants.GeoAreaType.ERGA_OMNES,
         "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-ADD": "1",
         "submit": "submit",
@@ -298,7 +299,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_add(erga_omnes)
 def test_measure_forms_geo_area_valid_data_geo_group(erga_omnes):
     geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
         f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": geo_group.pk,
         "submit": "submit",
     }
@@ -317,7 +318,7 @@ def test_measure_forms_geo_area_valid_data_countries_submit(erga_omnes):
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_area2 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.COUNTRY,
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
         "submit": "submit",
@@ -344,7 +345,7 @@ def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_area2 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.COUNTRY,
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
         "country_region_formset-DELETE": "on",
@@ -369,7 +370,7 @@ def test_measure_forms_geo_area_valid_data_countries_add(erga_omnes):
     FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.COUNTRY,
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-ADD": "1",
         "submit": "submit",
@@ -387,7 +388,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group_missing_field(erga_omnes)
     """Test that GeoGroupForm raises a field required error when null value is
     passed to geographical_area_group field."""
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
         "geographical_area-geographical_area_group": None,
         "submit": "submit",
     }
@@ -406,7 +407,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes
     whose area_code is not AreaCode.GROUP."""
     geo_area1 = factories.GeographicalAreaFactory.create(area_code=AreaCode.REGION)
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
         "geographical_area-geographical_area_group": geo_area1.pk,
         "submit": "submit",
     }
@@ -428,7 +429,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes
     [
         (
             {
-                f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
+                f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.COUNTRY,
                 "country_region_formset-0-geographical_area_country_or_region": "",
                 "submit": "submit",
             },
