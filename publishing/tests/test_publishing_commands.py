@@ -27,6 +27,19 @@ def test_publish_to_api_lists_unpublished_envelopes(
         assert str(packaged_work_basket.envelope) in output
 
 
+def test_publish_to_api_lists_no_envelopes(
+    settings,
+):
+    """Test that publish_to_api lists unpublished envelopes."""
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
+    out = StringIO()
+    call_command("publish_to_api", "--list", stdout=out)
+    output = out.getvalue()
+
+    assert not output
+
+
 def test_publish_to_api_exits_no_unpublished_envelopes():
     """Test that publish_to_api exists when there are no unpublished
     envelopes."""

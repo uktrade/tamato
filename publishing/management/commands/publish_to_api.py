@@ -42,11 +42,12 @@ class Command(BaseCommand):
                 self.stdout.write(
                     f"{i}: {crowndependencies.packagedworkbaskets.last().envelope}",
                 )
-        self.stdout.write(
-            f"{unpublished.count()} envelope(s) ready to be published in the following order:",
-        )
-        for i, packaged_work_basket in enumerate(unpublished, start=1):
-            self.stdout.write(f"{i}: {packaged_work_basket.envelope}")
+        if unpublished:
+            self.stdout.write(
+                f"{unpublished.count()} envelope(s) ready to be published in the following order:",
+            )
+            for i, packaged_work_basket in enumerate(unpublished, start=1):
+                self.stdout.write(f"{i}: {packaged_work_basket.envelope}")
 
     def handle(self, *args, **options):
         if options["list"]:

@@ -115,23 +115,9 @@ class CrownDependenciesEnvelope(TimestampedMixin):
     def previous_envelope(self) -> CrownDependenciesEnvelopeQuerySet:
         """Get the previous `CrownDependenciesEnvelope` by order of `pk`."""
         try:
-            return CrownDependenciesEnvelope.objects.get(pk=self.pk - 1)
+            return CrownDependenciesEnvelope.objects.filter(pk__lt=self.pk).last()
         except CrownDependenciesEnvelope.DoesNotExist:
             return None
-
-    def can_publish(self) -> bool:
-        """Conditional check if the previous `CrownDependenciesEnvelope` has
-        been `SUCCESSFULLY_PUBLISHED`."""
-        previous_envelope = self.previous_envelope()
-        if (
-            previous_envelope
-            and previous_envelope.publishing_state
-            == ApiPublishingState.SUCCESSFULLY_PUBLISHED
-            or not previous_envelope
-        ):
-            return True
-        else:
-            return False
 
     # publishing_state transition management
 
