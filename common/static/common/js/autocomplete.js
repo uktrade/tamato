@@ -42,7 +42,7 @@ const autoCompleteElement = (element, includeNameAttr=true) => {
         .catch(err => console.log(err));
     },
     minLength: element.dataset.minLength ? element.dataset.minLength : 0,
-    defaultValue: removeNewLine(element.dataset.originalValue),
+    defaultValue: element.dataset.originalValue && removeNewLine(element.dataset.originalValue),
     name: "",
     templates: {
       inputValue: template,
