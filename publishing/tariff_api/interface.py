@@ -19,6 +19,12 @@ class TariffAPIBase(ABC):
 
 
 class TariffAPIStubbed(TariffAPIBase):
+    """
+    Tariff API stubbed interface.
+
+    Provides tariff api behaviour without calling the external serivce.
+    """
+
     def stubbed_get_response(self, envelope_id: EnvelopeId = None) -> Response:
         response = Response()
         if not envelope_id:
