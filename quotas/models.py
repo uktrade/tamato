@@ -1,8 +1,12 @@
 from decimal import Decimal
+from typing import Optional
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.urls import NoReverseMatch
+from django.urls import reverse
 
+from common import validators
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.fields import ShortDescription
@@ -11,9 +15,11 @@ from common.models import TrackedModel
 from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
 from common.models.utils import GetTabURLMixin
+from common.validators import UpdateType
 from quotas import business_rules
 from quotas import querysets
 from quotas import validators
+from workbaskets.validators import WorkflowStatus
 
 
 class QuotaOrderNumber(TrackedModel, ValidityMixin):
@@ -133,9 +139,9 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     record_code = "360"
     subrecord_code = "10"
     identifying_fields = ("sid",)
-    url_pattern_name_prefix = "geo_area"
+    url_pattern_name_prefix = "quota"
     url_suffix = ""
-    url_relation_field = "geographical_area"
+    url_relation_field = "order_number"
 
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
@@ -173,6 +179,49 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
             f"{self.geographical_area.get_area_code_display()} - "
             f"{self.geographical_area.structure_description} ({self.geographical_area.area_id})"
         )
+
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """
+        Generate a URL to a representation of the model in the webapp.
+
+        Callers should handle the case where no URL is returned.
+
+        :param action str: The view type to generate a URL for (default
+            "detail"), eg: "list" or "edit"
+        :rtype Optional[str]: The generated URL
+        """
+        kwargs = {}
+        if action not in ["list", "create"]:
+            kwargs = self.get_identifying_fields()
+        try:
+            if (
+                action == "edit"
+                and self.transaction.workbasket.status == WorkflowStatus.EDITING
+            ):
+                # Edits in WorkBaskets that are in EDITING state get real
+                # changes via DB updates, not newly created UPDATE instances.
+                if self.update_type == UpdateType.CREATE:
+                    action += "-create"
+                elif self.update_type == UpdateType.UPDATE:
+                    action += "-update"
+
+            if action == "detail":
+                url = reverse(
+                    f"{self.get_url_pattern_name_prefix()}-ui-{action}",
+                    kwargs={"sid": getattr(self, self.url_relation_field).sid},
+                )
+            else:
+                url = reverse(
+                    f"{self.slugify_model_name()}-ui-{action}",
+                    kwargs=kwargs,
+                )
+            return f"{url}{self.url_suffix}"
+        except NoReverseMatch:
+            return None
+
+    @classmethod
+    def slugify_model_name(cls):
+        return cls._meta.verbose_name.replace(" ", "_")
 
 
 class QuotaOrderNumberOriginExclusion(GetTabURLMixin, TrackedModel):
