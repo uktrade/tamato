@@ -28,8 +28,6 @@ from quotas import serializers
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
-from quotas.forms import QuotaDefinitionFilterForm
-from quotas.forms import QuotaUpdateForm
 from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
@@ -168,7 +166,7 @@ class QuotaDefinitionList(FormMixin, SortingMixin, ListView):
     template_name = "quotas/definitions.jinja"
     model = models.QuotaDefinition
     sort_by_fields = ["sid", "valid_between"]
-    form_class = QuotaDefinitionFilterForm
+    form_class = forms.QuotaDefinitionFilterForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -241,7 +239,7 @@ class QuotaUpdateMixin(
     QuotaOrderNumberMixin,
     TrackedModelDetailMixin,
 ):
-    form_class = QuotaUpdateForm
+    form_class = forms.QuotaUpdateForm
     permission_required = ["common.change_trackedmodel"]
 
     validate_business_rules = (
@@ -281,7 +279,10 @@ class QuotaUpdateMixin(
             valid_between=form.cleaned_data["origin_valid_between"],
         )
 
-        all_new_exclusions = get_all_members_of_geo_groups(new_origin, form_exclusions)
+        all_new_exclusions = get_all_members_of_geo_groups(
+            new_origin.valid_between,
+            form_exclusions,
+        )
 
         for geo_area in all_new_exclusions:
             existing_exclusion = (
@@ -357,3 +358,111 @@ class QuotaEditUpdate(
 
 class QuotaConfirmUpdate(QuotaOrderNumberMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
+
+
+class QuotaOrderNumberOriginMixin:
+    model = models.QuotaOrderNumberOrigin
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(tx)
+
+
+class QuotaOrderNumberOriginUpdateMixin(
+    QuotaOrderNumberOriginMixin,
+    TrackedModelDetailMixin,
+):
+    form_class = forms.QuotaOrderNumberOriginUpdateForm
+    permission_required = ["common.change_trackedmodel"]
+    template_name = "quota-origins/edit.jinja"
+
+    validate_business_rules = (
+        business_rules.ON5,
+        business_rules.ON6,
+        business_rules.ON7,
+        business_rules.ON10,
+        business_rules.ON12,
+        UniqueIdentifyingFields,
+        UpdateValidity,
+    )
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        object = super().get_result_object(form)
+
+        geo_area = form.cleaned_data["geographical_area"]
+        form_exclusions = [
+            item["exclusion"]
+            for item in form.cleaned_data[QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX]
+        ]
+
+        all_new_exclusions = get_all_members_of_geo_groups(
+            object.valid_between,
+            form_exclusions,
+        )
+
+        for geo_area in all_new_exclusions:
+            existing_exclusion = (
+                object.quotaordernumberoriginexclusion_set.filter(
+                    excluded_geographical_area=geo_area,
+                )
+                .current()
+                .first()
+            )
+
+            if existing_exclusion:
+                existing_exclusion.new_version(
+                    workbasket=WorkBasket.current(self.request),
+                    transaction=object.transaction,
+                    origin=object,
+                )
+            else:
+                models.QuotaOrderNumberOriginExclusion.objects.create(
+                    origin=object,
+                    excluded_geographical_area=geo_area,
+                    update_type=UpdateType.CREATE,
+                    transaction=object.transaction,
+                )
+
+        removed_excluded_areas = {
+            e.excluded_geographical_area
+            for e in object.quotaordernumberoriginexclusion_set.current()
+        }.difference(set(form_exclusions))
+
+        removed_exclusions = [
+            object.quotaordernumberoriginexclusion_set.current().get(
+                excluded_geographical_area__id=e.id,
+            )
+            for e in removed_excluded_areas
+        ]
+
+        for removed in removed_exclusions:
+            removed.new_version(
+                update_type=UpdateType.DELETE,
+                workbasket=WorkBasket.current(self.request),
+                transaction=object.transaction,
+                origin=object,
+            )
+
+        return object
+
+
+class QuotaOrderNumberOriginUpdate(
+    QuotaOrderNumberOriginUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class QuotaOrderNumberOriginEditUpdate(
+    QuotaOrderNumberOriginUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaOrderNumberOriginConfirmUpdate(
+    QuotaOrderNumberOriginMixin,
+    TrackedModelDetailView,
+):
+    template_name = "quota-origins/confirm-update.jinja"

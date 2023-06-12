@@ -126,7 +126,7 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
         verbose_name = "quota"
 
 
-class QuotaOrderNumberOrigin(GetTabURLMixin, TrackedModel, ValidityMixin):
+class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     """The order number origin defines a quota as being available only to
     imports from a specific origin, usually a country or group of countries."""
 

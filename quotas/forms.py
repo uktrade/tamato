@@ -9,6 +9,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 
 from common.forms import BindNestedFormMixin
@@ -247,14 +248,23 @@ class QuotaUpdateForm(
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
 
+        origins_html = render_to_string(
+            "includes/quotas/quota-edit-origins.jinja",
+            {
+                "object": self.instance,
+            },
+        )
+
         if len(self.instance.quotaordernumberorigin_set.current()) > 1:
             origin_fields = [
-                HTML.warning(
-                    "Editing of quota order numbers with multiple origins is not supported at this time",
+                "Quota origins",
+                Div(
+                    HTML(origins_html),
                 ),
             ]
         else:
             origin_fields = [
+                "Quota origin",
                 Div(
                     "existing_origin",
                     Div(
@@ -286,7 +296,7 @@ class QuotaUpdateForm(
                         "Category",
                         "category",
                     ),
-                    AccordionSection("Quota origin", *origin_fields),
+                    AccordionSection(*origin_fields),
                     css_class="govuk-grid-column-two-thirds",
                 ),
                 css_class="govuk-grid-row",
@@ -298,3 +308,97 @@ class QuotaUpdateForm(
                 data_prevent_double_click="true",
             ),
         )
+
+
+class QuotaOrderNumberOriginUpdateForm(
+    FormSetSubmitMixin,
+    ValidityPeriodForm,
+    BindNestedFormMixin,
+    forms.ModelForm,
+):
+    class Meta:
+        model = models.QuotaOrderNumberOrigin
+        fields = [
+            "valid_between",
+            "geographical_area",
+        ]
+
+    geographical_area = forms.ModelChoiceField(
+        label="Geographical area",
+        help_text="Add a geographical area",
+        queryset=GeographicalArea.objects.all(),
+    )
+
+    exclusions = FormSetField(
+        label="Geographical area exclusions",
+        nested_forms=[QuotaOriginExclusionsFormSet],
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.set_initial_data(*args, **kwargs)
+        self.init_layout()
+
+    def set_initial_data(self, *args, **kwargs):
+        nested_forms_initial = {**self.initial}
+        nested_forms_initial.update(self.get_geo_area_initial())
+        kwargs.pop("initial")
+        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
+
+    def get_geo_area_initial(self):
+        field_name = "exclusion"
+        initial = {}
+        initial_exclusions = []
+        if hasattr(self, "instance"):
+            initial_exclusions = [
+                {field_name: exclusion.excluded_geographical_area}
+                for exclusion in self.instance.quotaordernumberoriginexclusion_set.current()
+            ]
+        # if we just submitted the form, add the new data to initial
+        if self.formset_submitted or self.whole_form_submit:
+            new_data = unprefix_formset_data(
+                QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX,
+                self.data.copy(),
+            )
+            for g in new_data:
+                if g[field_name]:
+                    id = int(g[field_name])
+                    g[field_name] = GeographicalArea.objects.get(id=id)
+            initial_exclusions = new_data
+
+        initial[QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX] = initial_exclusions
+
+        return initial
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Div(
+                "start_date",
+                "end_date",
+                "geographical_area",
+                "exclusions",
+            ),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def init_fields(self):
+        self.fields["geographical_area"].queryset = (
+            GeographicalArea.objects.current()
+            .with_latest_description()
+            .as_at_today()
+            .order_by("description")
+        )
+        self.fields[
+            "geographical_area"
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"

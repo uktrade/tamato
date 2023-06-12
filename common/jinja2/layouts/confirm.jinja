@@ -24,8 +24,10 @@
         "classes": "govuk-button--secondary"
       }) }}
       <ul class="govuk-list govuk-list-spaced">
+        {% block actions %}
         <li><a class="govuk-link" href="{{ object.get_url() }}">View {{ object._meta.verbose_name }} {{ object|string }}</a></li>
         <li><a href="{{ object.get_url("list") }}">Find and edit {{ object._meta.verbose_name_plural }}</a></li>
+        {% endblock %}
         {% include "includes/common/main-menu-link.jinja" %}
       </ul>
     </div>
