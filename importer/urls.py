@@ -16,7 +16,7 @@ urlpatterns = [
     # new comm code importer url
     path(
         "eu-importer/",
-        views.TaricImportBatchList.as_view(),
+        views.TaricImportList.as_view(),
         name="eu_import_batch-ui-list",
     ),
 ]

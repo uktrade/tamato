@@ -32,7 +32,7 @@ class ImportBatchFilter(TamatoFilter):
         fields = []
 
 
-class TaricImportBatchFilter(TamatoFilter):
+class TaricImportFilter(TamatoFilter):
     """FilterSet for Taric Import Batches."""
 
     search_fields = (
