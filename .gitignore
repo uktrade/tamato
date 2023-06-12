@@ -61,6 +61,7 @@ allure-results/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+settings/dev_override.py
 
 # Flask stuff:
 instance/
@@ -104,6 +105,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
 .venv
 env/
 venv/
