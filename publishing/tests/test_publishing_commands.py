@@ -30,7 +30,7 @@ def test_publish_to_api_lists_unpublished_envelopes(
 def test_publish_to_api_lists_no_envelopes(
     settings,
 ):
-    """Test that publish_to_api lists unpublished envelopes."""
+    """Test that publish_to_api lists no envelopes when none exist."""
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
     out = StringIO()
