@@ -9,6 +9,7 @@ class NotifiedUser(models.Model):
 
     email = models.EmailField()
     enrol_packaging = models.BooleanField(default=True)
+    enrol_api_publishing = models.BooleanField(default=False)
 
     def __str__(self):
         return self.email

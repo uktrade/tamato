@@ -9,4 +9,5 @@ class NotifiedUserAdminForm(forms.ModelForm):
         fields = [
             "email",
             "enrol_packaging",
+            "enrol_api_publishing",
         ]

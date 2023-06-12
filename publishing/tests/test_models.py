@@ -7,9 +7,9 @@ import freezegun
 import pytest
 from django.conf import settings
 from django_fsm import TransitionNotAllowed
-from notifications_python_client import prepare_upload
 
 from common.tests import factories
+from publishing.models import CrownDependenciesPublishingOperationalStatus
 from publishing.models import Envelope
 from publishing.models import EnvelopeCurrentlyProccessing
 from publishing.models import EnvelopeInvalidQueuePosition
@@ -65,102 +65,97 @@ def test_create_from_invalid_status():
         factories.PackagedWorkBasketFactory(workbasket=editing_workbasket)
 
 
-@pytest.mark.skip(reason="TODO correctly mock S3 and/or Notify")
-@patch("notifications.tasks.send_emails.delay")
-def test_notify_ready_for_processing(send_emails, loading_report_storage):
-    with patch(
-        "exporter.storages.HMRCStorage.save",
-        wraps=MagicMock(side_effect=loading_report_storage.save),
-    ):
-        packaged_wb = factories.PackagedWorkBasketFactory.create(
-            envelope=factories.PublishedEnvelopeFactory.create(),
-            loading_report__file=factory.django.FileField(filename="the_file.dat"),
-        )
+def test_notify_ready_for_processing(
+    packaged_workbasket_factory,
+    published_envelope_factory,
+    mocked_publishing_models_send_emails_delay,
+    settings,
+):
+    packaged_wb = packaged_workbasket_factory()
+    envelope = published_envelope_factory(packaged_workbasket=packaged_wb)
     packaged_wb.notify_ready_for_processing()
     personalisation = {
         "envelope_id": packaged_wb.envelope.envelope_id,
+        "description": packaged_wb.description,
+        "download_url": settings.BASE_SERVICE_URL + "/publishing/envelope-queue/",
         "theme": packaged_wb.theme,
         "eif": "Immediately",
+        "embargo": str(packaged_wb.embargo),
         "jira_url": packaged_wb.jira_url,
     }
-
-    send_emails.assert_called_once_with(
+    mocked_publishing_models_send_emails_delay.assert_called_once_with(
         template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
         personalisation=personalisation,
+        email_type="packaging",
     )
 
 
-@pytest.mark.skip(reason="TODO correctly mock S3 and/or Notify")
-@patch("notifications.tasks.send_emails.delay")
-def test_notify_processing_succeeded(send_emails, loading_report_storage):
-    with patch(
-        "exporter.storages.HMRCStorage.save",
-        wraps=MagicMock(side_effect=loading_report_storage.save),
-    ):
-        packaged_wb = factories.PackagedWorkBasketFactory.create(
-            envelope=factories.PublishedEnvelopeFactory.create(),
-            loading_report__file=factory.django.FileField(filename="the_file.html"),
-        )
+def test_notify_processing_succeeded(
+    mocked_publishing_models_send_emails_delay,
+    packaged_workbasket_factory,
+    published_envelope_factory,
+):
+    packaged_wb = packaged_workbasket_factory(
+        loading_report__comments="comment",
+    )
+
+    envelope = published_envelope_factory(packaged_workbasket=packaged_wb)
 
     packaged_wb.notify_processing_succeeded()
-    f = packaged_wb.loading_report.file.open("rb")
+
     personalisation = {
         "envelope_id": packaged_wb.envelope.envelope_id,
         "transaction_count": packaged_wb.workbasket.transactions.count(),
-        "link_to_file": prepare_upload(f),
+        "loading_report_message": "Loading report: No loading report was provided.",
+        "comments": "comment",
     }
-
-    send_emails.assert_called_once_with(
+    mocked_publishing_models_send_emails_delay.assert_called_once_with(
         template_id=settings.CDS_ACCEPTED_TEMPLATE_ID,
         personalisation=personalisation,
+        email_type="packaging",
     )
 
 
-@pytest.mark.skip(reason="TODO correctly mock S3 and/or Notify")
-@patch("notifications.tasks.send_emails.delay")
-def test_notify_processing_failed(send_emails, loading_report_storage):
-    with patch(
-        "exporter.storages.HMRCStorage.save",
-        wraps=MagicMock(side_effect=loading_report_storage.save),
-    ):
-        packaged_wb = factories.PackagedWorkBasketFactory.create(
-            envelope=factories.PublishedEnvelopeFactory.create(),
-            loading_report__file=factory.django.FileField(filename="the_file.html"),
-        )
+def test_notify_processing_failed(
+    mocked_publishing_models_send_emails_delay,
+    packaged_workbasket_factory,
+    published_envelope_factory,
+):
+    packaged_wb = packaged_workbasket_factory(
+        loading_report__comments="comment",
+    )
+
+    envelope = published_envelope_factory(packaged_workbasket=packaged_wb)
 
     packaged_wb.notify_processing_failed()
-    f = packaged_wb.loading_report.file.open("rb")
+
     personalisation = {
         "envelope_id": packaged_wb.envelope.envelope_id,
-        "link_to_file": prepare_upload(f),
+        "transaction_count": packaged_wb.workbasket.transactions.count(),
+        "loading_report_message": "Loading report: No loading report was provided.",
+        "comments": "comment",
     }
 
-    send_emails.assert_called_once_with(
+    mocked_publishing_models_send_emails_delay.assert_called_once_with(
         template_id=settings.CDS_REJECTED_TEMPLATE_ID,
         personalisation=personalisation,
+        email_type="packaging",
     )
 
 
-@pytest.mark.skip(
-    reason="TODO correctly implement file save",
-)
 def test_success_processing_transition(
+    packaged_workbasket_factory,
+    published_envelope_factory,
     envelope_storage,
     mocked_publishing_models_send_emails_delay,
     settings,
 ):
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
-    packaged_workbasket = factories.QueuedPackagedWorkBasketFactory()
-    with mock.patch(
-        "publishing.storages.EnvelopeStorage.save",
-        wraps=mock.MagicMock(side_effect=envelope_storage.save),
-    ) as mock_save:
-        envelope = factories.PublishedEnvelopeFactory(
-            packaged_work_basket=packaged_workbasket,
-        )
-        mock_save.assert_called_once()
-    packaged_workbasket.envelope = envelope
-    envelope.save()
+    packaged_workbasket = packaged_workbasket_factory()
+
+    envelope = published_envelope_factory(
+        packaged_workbasket=packaged_workbasket,
+    )
 
     packaged_work_basket = PackagedWorkBasket.objects.get(position=1)
     assert packaged_work_basket.position == 1
@@ -451,3 +446,24 @@ def test_next_envelope_id(envelope_storage):
     packaged_workbasket.begin_processing()
     packaged_workbasket.processing_succeeded()
     assert Envelope.next_envelope_id() == "230002"
+
+
+def test_crown_dependencies_publishing_pause_and_unpause(unpause_publishing):
+    """Test that Crown Dependencies publishing operational status can be paused
+    and unpaused."""
+    assert not CrownDependenciesPublishingOperationalStatus.is_publishing_paused()
+
+    paused = CrownDependenciesPublishingOperationalStatus.pause_publishing(user=None)
+    assert (
+        paused == CrownDependenciesPublishingOperationalStatus.objects.current_status()
+    )
+    assert CrownDependenciesPublishingOperationalStatus.is_publishing_paused()
+
+    unpaused = CrownDependenciesPublishingOperationalStatus.unpause_publishing(
+        user=None,
+    )
+    assert (
+        unpaused
+        == CrownDependenciesPublishingOperationalStatus.objects.current_status()
+    )
+    assert not CrownDependenciesPublishingOperationalStatus.is_publishing_paused()
