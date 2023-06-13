@@ -739,7 +739,7 @@ class QuotaOrderNumberFactory(TrackedModelMixin, ValidityFactoryMixin):
     order_number = string_sequence(6, characters=string.digits)
     mechanism = 0
     category = 1
-    valid_between = date_ranges("normal")
+    valid_between = date_ranges("big_no_end")
 
     origin = factory.RelatedFactory(
         "common.tests.factories.QuotaOrderNumberOriginFactory",
