@@ -1297,6 +1297,7 @@ class MeasureReviewForm(forms.Form):
             commodities_data=self.commodities_data,
             conditions_data=self.conditions_data,
         )
+        return super().clean()
 
 
 MeasureDeleteForm = delete_form_for(models.Measure)
