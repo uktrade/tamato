@@ -391,7 +391,7 @@ class MeasureConditionsFormSet(MeasureConditionsBaseFormSet):
 class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
     # override methods that use form kwargs
     def __init__(self, *args, **kwargs):
-        self.measure_start_date = kwargs.pop("measure_start_date")
+        self.measure_start_date = kwargs.pop("measure_start_date", None)
         self.measure_type = kwargs.pop("measure_type", None)
         super().__init__(*args, **kwargs)
 
