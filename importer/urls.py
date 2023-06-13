@@ -18,7 +18,7 @@ general_importer_urlpatterns = [
 commodity_importer_urlpatterns = [
     path(
         "commodity-importer/",
-        views.TaricImportList.as_view(),
+        views.CommodityImportListView.as_view(),
         name="commodity_importer-ui-list",
     ),
     path(

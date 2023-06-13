@@ -2,7 +2,6 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count
 from django.db.models import Q
 from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 from django.views.generic import TemplateView
 
@@ -12,9 +11,6 @@ from importer import forms
 from importer import models
 from importer.filters import ImportBatchFilter
 from importer.filters import TaricImportFilter
-from workbaskets.session_store import SessionStore
-from workbaskets.views.decorators import require_current_workbasket
-from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
@@ -57,13 +53,12 @@ class UploadTaricFileView(RequiresSuperuserMixin, FormView):
         return super().form_valid(form)
 
 
-@method_decorator(require_current_workbasket, name="dispatch")
 class CommodityImportView(
     PermissionRequiredMixin,
     FormView,
-    WithCurrentWorkBasket,
 ):
-    # The correct view for importer work - shows import file form page
+    """Commodity code import view."""
+
     template_name = "commodities/import.jinja"
     form_class = forms.CommodityImportForm
     success_url = reverse_lazy("commodity_importer-ui-success")
@@ -72,53 +67,29 @@ class CommodityImportView(
         "common.change_trackedmodel",
     ]
 
-    @property
-    def session_store(self):
-        return SessionStore(
-            self.request,
-            f"TARIC_FILE_UPLOAD_SESSION",
-        )
-
     def form_valid(self, form):
-        session_store = self.session_store
-        form.save(
-            session_store,
-            user=self.request.user,
-            workbasket_id=self.workbasket.id,
-        )
-        # Add details to the session so that the success view can grab them later.
-        self.session_store.add_items(
-            {
-                "saved_file_name": form.cleaned_data["taric_file"].name,
-                "saved_file_workbasket_id": self.workbasket.id,
-            },
-        )
+        form.save(user=self.request.user)
         return super().form_valid(form)
 
 
 class CommodityImportSuccessView(TemplateView):
-    # The correct success view for importer work.
-    template_name = "commodities/import-success.jinja"
+    """Commodity code import success view."""
 
-    @property
-    def session_store(self):
-        return SessionStore(
-            self.request,
-            f"TARIC_FILE_UPLOAD_SESSION",
-        )
+    template_name = "commodities/import-success.jinja"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["saved_file_name"] = self.session_store.data["saved_file_name"]
-        context["saved_file_workbasket_id"] = self.session_store.data[
-            "saved_file_workbasket_id"
-        ]
-        context["saved_batch_status"] = self.session_store.data["saved_batch_status"]
+        context["saved_file_name"] = "TODO"
+        context["saved_file_workbasket_id"] = "TODO"
+        context["saved_batch_status"] = "TODO"
 
         return context
 
 
-class TaricImportList(PermissionRequiredMixin, WithPaginationListView):
+class CommodityImportListView(
+    PermissionRequiredMixin,
+    WithPaginationListView,
+):
     """UI endpoint for viewing and filtering TARIC file imports."""
 
     permission_required = [
