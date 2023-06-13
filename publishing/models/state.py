@@ -50,3 +50,31 @@ class ProcessingState(TextChoices):
             cls.SUCCESSFULLY_PROCESSED,
             cls.FAILED_PROCESSING,
         )
+
+
+class CrownDependenciesPublishingState(TextChoices):
+    PAUSED = ("PAUSED", "Envelope publishing is paused")
+    UNPAUSED = ("UNPAUSED", "Envelope publishing is unpaused and may proceed")
+
+
+class ApiPublishingState(TextChoices):
+    """Publishing states of CrownDependenciesEnvelope instances."""
+
+    CURRENTLY_PUBLISHING = (
+        "CURRENTLY_PUBLISHING",
+        "Currently publishing",
+    )
+    """Picked off the task queue and now currently being processed - now attempting
+    to publish to the crown dependencies API."""
+    SUCCESSFULLY_PUBLISHED = (
+        "SUCCESSFULLY_PUBLISHED",
+        "Successfully published",
+    )
+    """Publishing now completed with a successful outcome - envelope published
+    to API."""
+    FAILED_PUBLISHING = (
+        "FAILED_PUBLISHING",
+        "Failed publishing",
+    )
+    """Publishing now completed with a failure outcome - API failed publishing the
+    envelope."""

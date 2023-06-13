@@ -1,0 +1,58 @@
+{% load crispy_forms_tags crispy_forms_gds crispy_forms_utils %}
+
+{% if widget.nested_forms %}
+<div class="govuk-form-group" id="{{ widget.attrs.id }}">
+
+	{% for nested_form in widget.nested_forms %}
+    <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">{{nested_form.legend}}</legend>
+
+		{% with nested_form.management_form as form %}
+			{% if form_show_errors %}
+				{% if form.non_field_errors %}
+				<div class="alert alert-block alert-danger">
+					{% if form_error_title %}<h4 class="alert-heading">{{ form_error_title }}</h4>{% endif %}
+					<ul>
+						{{ form.non_field_errors|unordered_list }}
+					</ul>
+				</div>
+				{% endif %}
+			{% endif %}
+
+			{% for field in form %}
+				{% include "gds/field.html" %}
+			{% endfor %}
+		{% endwith %}
+
+		{% if nested_form.is_formset %}
+			{% if nested_form.initial|length == nested_form.max_num %}
+				<p class="govuk-hint">You can only select up to {{ nested_form.max_num }} at this time.</p>
+			{% endif %}
+
+			{% for form in nested_form %}
+				{% for field in form %}
+					{% include "gds/field.html" %}
+					{% include "common/widgets/formset_delete_button.html" with prefix=form.prefix %}
+				{% endfor %}
+			{% endfor %}
+
+			{% if nested_form.initial|length < nested_form.max_num %}
+				{% for field in nested_form.empty_form %}
+					{% include "gds/field.html" %}
+				{% endfor %}
+
+				{% include "common/widgets/formset_add_button.html" with prefix=nested_form.prefix %}
+
+			{% endif %}
+
+		{% else %}
+			{% with nested_form as form %}
+				{% for field in form %}
+					{% include "gds/field.html" with field=field %}
+				{% endfor %}
+			{% endwith %}
+		{% endif %}
+
+
+	{% endfor %}
+</div>
+{% endif %}

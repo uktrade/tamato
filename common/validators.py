@@ -85,3 +85,22 @@ SymbolValidator = RegexValidator(
     r"^[0-9A-Za-z\s.',()&£$%@!/\+-]*$",
     ValidationError("Only symbols .,/()&£$@!+-% are allowed."),
 )
+
+
+class PasswordPolicyValidator:
+    """Validate whether the password contains at least 1 capital letter, 1
+    lowercase letter, 1 number and a special character."""
+
+    HELP_TEXT = "Your password must contain at least 1 capital letter, 1 lowercase letter, 1 number and a special character."
+
+    def validate(self, password, user=None):
+        if (
+            password.isalnum()
+            or not any(c.isdigit() for c in password)
+            or not any(c.isupper() for c in password)
+            or not any(c.islower() for c in password)
+        ):
+            raise ValidationError(self.HELP_TEXT, code="password_missing_characters")
+
+    def get_help_text(self):
+        return self.HELP_TEXT

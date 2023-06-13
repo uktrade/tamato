@@ -31,7 +31,9 @@ const addNewForm = (event) => {
 
     let dutiesInput = newForm.querySelector("input.duties");
     let copyButton = newForm.querySelector("button.tap-copy-down");
-    setupClickHandler(dutiesInput, copyButton);
+    if (dutiesInput && copyButton) {
+      setupClickHandler(dutiesInput, copyButton);
+    }
 
     let totalForms = document.querySelector('[id$="-TOTAL_FORMS"]');
     let numTotalForms = Number(totalForms.value);

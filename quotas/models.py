@@ -105,17 +105,38 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
 
         return sorted(descriptions)
 
+    @property
+    def geographical_exclusions(self):
+        origin_ids = list(
+            self.quotaordernumberorigin_set.current().values_list(
+                "pk",
+                flat=True,
+            ),
+        )
+        exclusions = [
+            e.excluded_geographical_area
+            for e in QuotaOrderNumberOriginExclusion.objects.current().filter(
+                origin_id__in=origin_ids,
+            )
+        ]
+
+        return exclusions
+
     class Meta:
         verbose_name = "quota"
 
 
-class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
+class QuotaOrderNumberOrigin(GetTabURLMixin, TrackedModel, ValidityMixin):
     """The order number origin defines a quota as being available only to
     imports from a specific origin, usually a country or group of countries."""
 
     record_code = "360"
     subrecord_code = "10"
     identifying_fields = ("sid",)
+    url_pattern_name_prefix = "geo_area"
+    url_suffix = ""
+    url_relation_field = "geographical_area"
+
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
@@ -146,10 +167,21 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     def order_number_in_use(self, transaction):
         return self.order_number.in_use(transaction)
 
+    @property
+    def structure_description(self):
+        return (
+            f"{self.geographical_area.get_area_code_display()} - "
+            f"{self.geographical_area.structure_description} ({self.geographical_area.area_id})"
+        )
 
-class QuotaOrderNumberOriginExclusion(TrackedModel):
+
+class QuotaOrderNumberOriginExclusion(GetTabURLMixin, TrackedModel):
     """Origin exclusions specify countries (or groups of countries, or other
     origins) to exclude from the quota number origin."""
+
+    url_pattern_name_prefix = "geo_area"
+    url_suffix = ""
+    url_relation_field = "excluded_geographical_area"
 
     record_code = "360"
     subrecord_code = "15"
@@ -166,6 +198,13 @@ class QuotaOrderNumberOriginExclusion(TrackedModel):
         business_rules.ON14,
         UpdateValidity,
     )
+
+    @property
+    def structure_description(self):
+        return (
+            f"{self.excluded_geographical_area.get_area_code_display()} - "
+            f"{self.excluded_geographical_area.structure_description} ({self.excluded_geographical_area.area_id})"
+        )
 
 
 class QuotaDefinition(GetTabURLMixin, TrackedModel, ValidityMixin):

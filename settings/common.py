@@ -221,6 +221,9 @@ if DEBUG is False:
         {
             "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
         },
+        {
+            "NAME": "common.validators.PasswordPolicyValidator",
+        },
     ]
 
 if SSO_ENABLED:
@@ -405,6 +408,20 @@ HMRC_LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
     "loading-report/",
 )
 
+# Settings about retrying uploads if the api cannot be contacted.
+# Names correspond to celery settings for retrying tasks:
+#   https://docs.celeryq.dev/en/stable/userguide/tasks.html#automatic-retry-for-known-exceptions
+CROWN_DEPENDENCIES_API_MAX_RETRIES = int(
+    os.environ.get("CROWN_DEPENDENCIES_API_MAX_RETRIES", "3"),
+)
+CROWN_DEPENDENCIES_API_RETRY_BACKOFF_MAX = int(
+    os.environ.get("CROWN_DEPENDENCIES_API_RETRY_BACKOFF_MAX", "600"),
+)
+CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY = int(
+    os.environ.get("CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY", "8"),
+)
+
+
 # SQLite AWS settings
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
 SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
@@ -431,7 +448,21 @@ AWS_DEFAULT_ACL = None
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_REGION_NAME = "eu-west-2"
 
-# Pickle could be used as a serializer here, as this always runs in a DMZ
+# Tariff API envelope publishing automation
+ENABLE_CROWN_DEPENDENCIES_PUBLISHING = is_truthy(
+    os.environ.get("ENABLE_CROWN_DEPENDENCIES_PUBLISHING", "True"),
+)
+TARIFF_API_INTERFACE = os.environ.get(
+    "TARIFF_API_INTERFACE",
+    "publishing.tariff_api.interface.TariffAPI",
+)
+CROWN_DEPENDENCIES_API_HOST = os.environ.get("CROWN_DEPENDENCIES_API_HOST", "")
+CROWN_DEPENDENCIES_API_URL_PATH = os.environ.get(
+    "CROWN_DEPENDENCIES_API_URL_PATH",
+    "api/v1/taricfiles/",
+)
+CROWN_DEPENDENCIES_GET_API_KEY = os.environ.get("CROWN_DEPENDENCIES_GET_API_KEY", "")
+CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get("CROWN_DEPENDENCIES_POST_API_KEY", "")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
 
@@ -452,12 +483,26 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 
+# Lock expires in 10 minutes
+CROWN_DEPENDENCIES_API_TASK_LOCK = 60 * 10
+
+CROWN_DEPENDENCIES_API_CRON = (
+    crontab(os.environ.get("CROWN_DEPENDENCIES_API_CRON"))
+    if os.environ.get("CROWN_DEPENDENCIES_API_CRON")
+    else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
+)
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
         "schedule": crontab(hour=3, minute=5),
     },
 }
+if ENABLE_CROWN_DEPENDENCIES_PUBLISHING:
+    CELERY_BEAT_SCHEDULE["crown_dependencies_api_publish"] = {
+        "task": "publishing.tasks.publish_to_api",
+        # every 2 hours between 8am and 6pm on weekdays
+        "schedule": CROWN_DEPENDENCIES_API_CRON,
+    }
 
 CELERY_ROUTES = {
     "workbaskets.tasks.call_check_workbasket_sync": {
@@ -679,6 +724,8 @@ MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES = int(
 READY_FOR_CDS_TEMPLATE_ID = os.environ.get("READY_FOR_CDS_TEMPLATE_ID")
 CDS_ACCEPTED_TEMPLATE_ID = os.environ.get("CDS_ACCEPTED_TEMPLATE_ID")
 CDS_REJECTED_TEMPLATE_ID = os.environ.get("CDS_REJECTED_TEMPLATE_ID")
+API_PUBLISH_SUCCESS_TEMPLATE_ID = os.environ.get("API_PUBLISH_SUCCESS_TEMPLATE_ID")
+API_PUBLISH_FAILED_TEMPLATE_ID = os.environ.get("API_PUBLISH_FAILED_TEMPLATE_ID")
 
 # Base service URL - required when constructing an absolute TAP URL to a page
 # from a Celery task where no HTTP request object is available.
