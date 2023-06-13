@@ -12,14 +12,26 @@ class NotifiedUserAdmin(admin.ModelAdmin):
     list_display = (
         "email",
         "enrol_packaging",
+        "enrol_api_publishing",
     )
-    actions = ["set_enrol_packaging", "unset_enrol_packaging"]
+    actions = [
+        "set_enrol_packaging",
+        "unset_enrol_packaging",
+        "set_enrol_api_publishing",
+        "unset_enrol_api_publishing",
+    ]
 
     def set_enrol_packaging(self, request, queryset):
         queryset.update(enrol_packaging=True)
 
     def unset_enrol_packaging(self, request, queryset):
         queryset.update(enrol_packaging=False)
+
+    def set_enrol_api_publishing(self, request, queryset):
+        queryset.update(enrol_api_publishing=True)
+
+    def unset_enrol_api_publishing(self, request, queryset):
+        queryset.update(enrol_api_publishing=False)
 
 
 class NotificationLogAdmin(admin.ModelAdmin):

@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from celery import shared_task
 from django.conf import settings
+from django.db.models.query_utils import Q
 from django.db.transaction import atomic
 from notifications_python_client.notifications import NotificationsAPIClient
 
@@ -18,11 +19,15 @@ def get_notifications_client():
 
 @shared_task
 @atomic
-def send_emails(template_id: uuid4, personalisation: dict):
+def send_emails(template_id: uuid4, personalisation: dict, email_type: str = None):
     """Task for emailing all users signed up to receive packaging updates and
     creating a log to record which users received which email template."""
-    users = NotifiedUser.objects.filter(enrol_packaging=True)
-
+    user_filters = {
+        "packaging": Q(enrol_packaging=True),
+        "publishing": Q(enrol_api_publishing=True),
+    }
+    # Will get all users by default
+    users = NotifiedUser.objects.filter(user_filters.get(email_type, Q()))
     if users.exists():
         notifications_client = get_notifications_client()
         recipients = ""

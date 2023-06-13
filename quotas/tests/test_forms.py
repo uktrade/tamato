@@ -2,6 +2,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from quotas import forms
 from quotas import validators
@@ -21,9 +22,10 @@ def test_update_quota_form_safeguard_invalid():
         "start_date_1": 1,
         "start_date_2": 2000,
     }
-    form = forms.QuotaUpdateForm(data=data, instance=quota)
-    assert not form.is_valid()
-    assert "Please select a valid category" in form.errors["category"]
+    with override_current_transaction(quota.transaction):
+        form = forms.QuotaUpdateForm(data=data, instance=quota, initial={})
+        assert not form.is_valid()
+        assert "Please select a valid category" in form.errors["category"]
 
 
 def test_update_quota_form_safeguard_disabled(valid_user_client):

@@ -1,8 +1,24 @@
 import accessibleAutocomplete from 'accessible-autocomplete'
 
-const template = (result) => result && result.label
+// Only a new result has a label, else result is the original result's label
+const template = (result) => typeof result == "object" ? result.label : result
 
 let aborter = null;
+
+const newLine  = /\n/g;
+const removeNewLine = (str) => str.replace(newLine, "")
+
+const cleanResults = (results) => {
+  /*
+  Results which contain new line characters are considered as a new query when
+  selected, causing results to be repopulated unnecessarily. To prevent this,
+  we can remove new line characters from results since they're unimportant here.
+  */
+  for(let i = 0, len = results.length; i < len; i++) {
+    results[i].label = removeNewLine(results[i].label);
+  }
+  return results
+}
 
 
 const autoCompleteElement = (element, includeNameAttr=true) => {
@@ -22,11 +38,11 @@ const autoCompleteElement = (element, includeNameAttr=true) => {
       const signal = aborter.signal
       fetch(`${source_url}?${searchParams}`, {signal})
         .then(response => response.json())
-        .then(data => populateResults(data.results))
+        .then(data => populateResults(cleanResults(data.results)))
         .catch(err => console.log(err));
     },
     minLength: element.dataset.minLength ? element.dataset.minLength : 0,
-    defaultValue: element.dataset.originalValue,
+    defaultValue: element.dataset.originalValue && removeNewLine(element.dataset.originalValue),
     name: "",
     templates: {
       inputValue: template,
@@ -34,7 +50,8 @@ const autoCompleteElement = (element, includeNameAttr=true) => {
     },
     onConfirm: value => {
       const autocomplete = document.querySelector(`#${hiddenInput.id}_autocomplete`);
-      if (value) {
+      if (value && typeof value == "object") {
+        // value is new
         hiddenInput.value = value.value;
       } else if (!autocomplete.value) {
         hiddenInput.value = "";
