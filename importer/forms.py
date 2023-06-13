@@ -10,7 +10,6 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from sentry_sdk import capture_exception
 
-from commodities.helpers import process_imported_taric_file
 from common.util import get_mime_type
 from common.util import parse_xml
 from importer import models
@@ -20,7 +19,10 @@ from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.validators import WorkflowStatus
 
 
-class ImportForm(forms.ModelForm):
+class ImportFormMixin:
+    """Mixin for importer forms, providing common taric_file clean and
+    processing support."""
+
     def process_file(
         self,
         file,
@@ -72,12 +74,15 @@ class ImportForm(forms.ModelForm):
         data.seek(0)
         return data
 
+
+class UploadTaricForm(ImportFormMixin, forms.ModelForm):
+    """Generic TARIC file import form, used to import TARIC files containing any
+    type of entity - Additional Codes, Certificates, Footnotes, etc."""
+
     class Meta:
         model = models.ImportBatch
         fields = ["name", "split_job", "dependencies"]
 
-
-class UploadTaricForm(ImportForm):
     status = forms.ChoiceField(choices=WorkflowStatus.choices, required=True)
     taric_file = forms.FileField(required=True)
     commodities = forms.BooleanField(
@@ -124,11 +129,12 @@ class UploadTaricForm(ImportForm):
         return batch
 
 
-class CommodityImportForm(ImportForm):
-    # The correct form for importer work - shows upload taric file field
+class CommodityImportForm(ImportFormMixin, forms.Form):
+    """TARIC commodity code file importer form, used to import GoodsNomenclature
+    entities only."""
+
     taric_file = forms.FileField(
         required=True,
-        help_text="",
         label="Upload a TARIC file",
     )
     xsd_file = settings.PATH_XSD_COMMODITIES_TARIC
@@ -148,14 +154,15 @@ class CommodityImportForm(ImportForm):
         )
 
     @transaction.atomic
-    def save(self, session_store, user: User, workbasket_id: str, commit=True):
-        # Kicks off the processing of the file
-        process_imported_taric_file(
-            session_store,
-            taric_file=self.cleaned_data["taric_file"],
-            user=user,
-            workbasket_id=workbasket_id,
-        )
+    def save(self, user: User):
+        batch = models.ImportBatch(author=user)
+        batch.save()
 
-    class Meta(ImportForm.Meta):
-        exclude = ImportForm.Meta.fields
+        self.process_file(
+            self.files["taric_file"],
+            batch,
+            user,
+        )
+        batch.imported()
+        batch.save()
+        return batch
