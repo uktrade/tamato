@@ -43,14 +43,4 @@ urlpatterns = [
         views.CommodityVersion.as_view(),
         name="commodity-ui-detail-version",
     ),
-    path(
-        "import/commodities/",
-        views.CommodityImportView.as_view(),
-        name="commodity-ui-import",
-    ),
-    path(
-        "import/commodities/success/",
-        views.CommodityImportSuccessView.as_view(),
-        name="commodity-ui-import-success",
-    ),
 ]

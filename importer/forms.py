@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from sentry_sdk import capture_exception
 
+from commodities.helpers import process_imported_taric_file
 from common.util import get_mime_type
 from common.util import parse_xml
 from importer import models
@@ -121,3 +122,40 @@ class UploadTaricForm(ImportForm):
         batch.imported()
         batch.save()
         return batch
+
+
+class CommodityImportForm(ImportForm):
+    # The correct form for importer work - shows upload taric file field
+    taric_file = forms.FileField(
+        required=True,
+        help_text="",
+        label="Upload a TARIC file",
+    )
+    xsd_file = settings.PATH_XSD_COMMODITIES_TARIC
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            "taric_file",
+            Submit(
+                "submit",
+                "Upload",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    @transaction.atomic
+    def save(self, session_store, user: User, workbasket_id: str, commit=True):
+        # Kicks off the processing of the file
+        process_imported_taric_file(
+            session_store,
+            taric_file=self.cleaned_data["taric_file"],
+            user=user,
+            workbasket_id=workbasket_id,
+        )
+
+    class Meta(ImportForm.Meta):
+        exclude = ImportForm.Meta.fields

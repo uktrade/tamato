@@ -41,7 +41,7 @@ class TaricImportFilter(TamatoFilter):
         "reason",
         "title",
     )
-    clear_url = reverse_lazy("eu_import_batch-ui-list")
+    clear_url = reverse_lazy("commodity_importer-ui-list")
 
     class Meta:
         model = models.ImportBatch

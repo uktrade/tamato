@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from commodities import forms
+from importer import forms
 from importer.models import ImportBatchStatus
 
 pytestmark = pytest.mark.django_db
