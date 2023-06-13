@@ -694,9 +694,7 @@ def test_quota_edit_origin_exclusions(
 
     tx = Transaction.objects.last()
 
-    origin = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
-        tx,
-    ).get(
+    origin = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(tx).get(
         sid=origin.sid,
     )
 
