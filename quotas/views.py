@@ -256,13 +256,6 @@ class QuotaUpdateMixin(
     def get_result_object(self, form):
         object = super().get_result_object(form)
 
-        geo_area = form.cleaned_data["geographical_area"]
-        edited_origin = form.cleaned_data["existing_origin"]
-        form_exclusions = [
-            item["exclusion"]
-            for item in form.cleaned_data[QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX]
-        ]
-
         existing_origins = (
             models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
                 object.transaction,
@@ -271,68 +264,8 @@ class QuotaUpdateMixin(
             )
         )
 
-        new_origin = edited_origin.new_version(
-            workbasket=WorkBasket.current(self.request),
-            transaction=object.transaction,
-            order_number=object,
-            geographical_area=geo_area,
-            valid_between=form.cleaned_data["origin_valid_between"],
-        )
-
-        all_new_exclusions = get_all_members_of_geo_groups(
-            new_origin.valid_between,
-            form_exclusions,
-        )
-
-        for geo_area in all_new_exclusions:
-            existing_exclusion = (
-                new_origin.quotaordernumberoriginexclusion_set.filter(
-                    excluded_geographical_area=geo_area,
-                )
-                .current()
-                .first()
-            )
-
-            if existing_exclusion:
-                existing_exclusion.new_version(
-                    workbasket=WorkBasket.current(self.request),
-                    transaction=object.transaction,
-                    origin=new_origin,
-                )
-            else:
-                models.QuotaOrderNumberOriginExclusion.objects.create(
-                    origin=new_origin,
-                    excluded_geographical_area=geo_area,
-                    update_type=UpdateType.CREATE,
-                    transaction=object.transaction,
-                )
-
-        removed_excluded_areas = {
-            e.excluded_geographical_area
-            for e in new_origin.quotaordernumberoriginexclusion_set.current()
-        }.difference(set(form_exclusions))
-
-        removed_exclusions = [
-            new_origin.quotaordernumberoriginexclusion_set.current().get(
-                excluded_geographical_area__id=e.id,
-            )
-            for e in removed_excluded_areas
-        ]
-
-        for removed in removed_exclusions:
-            removed.new_version(
-                update_type=UpdateType.DELETE,
-                workbasket=WorkBasket.current(self.request),
-                transaction=object.transaction,
-                origin=new_origin,
-            )
-
-        other_existing_origins = existing_origins.exclude(
-            sid__in=[new_origin.sid, edited_origin.sid],
-        )
-
         # this will be needed even if origins have not been edited in the form
-        for origin in other_existing_origins:
+        for origin in existing_origins:
             origin.new_version(
                 workbasket=WorkBasket.current(self.request),
                 transaction=object.transaction,
