@@ -2,7 +2,7 @@ from django.urls import path
 
 from importer import views
 
-urlpatterns = [
+general_importer_urlpatterns = [
     path(
         "importer/",
         views.ImportBatchList.as_view(),
@@ -13,10 +13,32 @@ urlpatterns = [
         views.UploadTaricFileView.as_view(),
         name="import_batch-ui-create",
     ),
-    # new comm code importer url
+]
+
+commodity_importer_urlpatterns = [
     path(
-        "eu-importer/",
-        views.TaricImportBatchList.as_view(),
-        name="eu_import_batch-ui-list",
+        "commodity-importer/",
+        views.CommodityImportListView.as_view(),
+        name="commodity_importer-ui-list",
+    ),
+    path(
+        "commodity-importer/create/",
+        # TODO
+        # Rename
+        views.CommodityImportCreateView.as_view(),
+        # views.TaricImportCreateView.as_view(),
+        name="commodity_importer-ui-create",
+        # was commodity-ui-import
+    ),
+    path(
+        "commodity-importer/create/<pk>/success/",
+        # TODO
+        # Rename
+        views.CommodityImportCreateSuccessView.as_view(),
+        # views.TaricImportSuccessView.as_view(),
+        name="commodity_importer-ui-create-success",
+        # was commodity-ui-import-success
     ),
 ]
+
+urlpatterns = general_importer_urlpatterns + commodity_importer_urlpatterns

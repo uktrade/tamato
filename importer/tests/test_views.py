@@ -80,7 +80,7 @@ def test_import_failure(file_name, error_msg, superuser_client):
 
 def test_taric_import_list_view_renders(superuser_client):
     factories.ImportBatchFactory.create_batch(5)
-    response = superuser_client.get(reverse("eu_import_batch-ui-list"))
+    response = superuser_client.get(reverse("commodity_importer-ui-list"))
     assert response.status_code == 200
     page = BeautifulSoup(str(response.content), "html.parser")
     assert page.find("h1", text="EU Taric import list")

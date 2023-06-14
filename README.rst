@@ -119,6 +119,10 @@ Then run the app:
 Then you can browse to http://localhost:8000/ to view the app.
 To access the Django admin page, browse to http://localhost:8000/admin/.
 
+In order to define or override developer-specific Django settings in a local
+developement environment, then you may wish to create a
+`settings/dev_override.py` file.
+
 Testing
 ~~~~~~~
 

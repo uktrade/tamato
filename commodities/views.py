@@ -1,19 +1,13 @@
 from datetime import date
 from urllib.parse import urlencode
 
-from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.urls import reverse
-from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
-from django.views.generic import FormView
 from django.views.generic import ListView
-from django.views.generic import TemplateView
 from rest_framework import permissions
 from rest_framework import viewsets
 
 from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
-from commodities.forms import CommodityImportForm
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models import GoodsNomenclature
 from commodities.models.dc import CommodityCollectionLoader
@@ -27,9 +21,6 @@ from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
 from measures.models import Measure
 from workbaskets.models import WorkBasket
-from workbaskets.session_store import SessionStore
-from workbaskets.views.decorators import require_current_workbasket
-from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
@@ -54,56 +45,6 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
             .as_at_and_beyond(date.today())
             .filter(suffix=80)
         )
-
-
-@method_decorator(require_current_workbasket, name="dispatch")
-class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBasket):
-    # The correct view for importer work.
-    template_name = "commodities/import.jinja"
-    form_class = CommodityImportForm
-    success_url = reverse_lazy("commodity-ui-import-success")
-    permission_required = [
-        "common.add_trackedmodel",
-        "common.change_trackedmodel",
-    ]
-
-    @property
-    def session_store(self):
-        return SessionStore(
-            self.request,
-            f"TARIC_FILE_UPLOAD_SESSION",
-        )
-
-    def form_valid(self, form):
-        form.save(user=self.request.user, workbasket_id=self.workbasket.id)
-        self.session_store.add_items(
-            {
-                "saved_file_name": form.cleaned_data["taric_file"].name,
-                "saved_file_workbasket_id": self.workbasket.id,
-            },
-        )
-        return super().form_valid(form)
-
-
-class CommodityImportSuccessView(TemplateView):
-    # The correct success view for importer work.
-    template_name = "commodities/import-success.jinja"
-
-    @property
-    def session_store(self):
-        return SessionStore(
-            self.request,
-            f"TARIC_FILE_UPLOAD_SESSION",
-        )
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context["saved_file_name"] = self.session_store.data["saved_file_name"]
-        context["saved_file_workbasket_id"] = self.session_store.data[
-            "saved_file_workbasket_id"
-        ]
-
-        return context
 
 
 class CommodityMixin:

@@ -15,20 +15,23 @@ from importer.tests.management.commands.base import TestCommandBase
 pytestmark = pytest.mark.django_db
 
 
-def test_setup_batch_no_split_no_dependencies():
-    batch = chunk_taric.setup_batch("test_batch", False, [])
+def test_setup_batch_no_split_no_dependencies(valid_user):
+    batch = chunk_taric.setup_batch("test_batch", False, [], valid_user)
     assert isinstance(batch, ImportBatch)
     assert batch.split_job is False
     assert ImporterXMLChunk.objects.filter(batch_id=batch.pk).count() == 0
     assert BatchDependencies.objects.filter(dependent_batch_id=batch.pk).count() == 0
 
 
-def test_setup_batch_no_split_with_dependencies_creates_dependencies_records():
-    batch = chunk_taric.setup_batch("test_batch", False, [])
+def test_setup_batch_no_split_with_dependencies_creates_dependencies_records(
+    valid_user,
+):
+    batch = chunk_taric.setup_batch("test_batch", False, [], valid_user)
     batch_with_deps = chunk_taric.setup_batch(
         "test_batch_with_deps",
         False,
         ["test_batch"],
+        valid_user,
     )
     assert isinstance(batch_with_deps, ImportBatch)
     assert batch.split_job is False
@@ -41,8 +44,8 @@ def test_setup_batch_no_split_with_dependencies_creates_dependencies_records():
     assert BatchDependencies.objects.filter(depends_on_id=batch.pk).count() == 1
 
 
-def test_setup_batch_with_split_no_dependencies():
-    batch = chunk_taric.setup_batch("test_batch", True, [])
+def test_setup_batch_with_split_no_dependencies(valid_user):
+    batch = chunk_taric.setup_batch("test_batch", True, [], valid_user)
     assert isinstance(batch, ImportBatch)
     assert batch.split_job is True
     assert ImporterXMLChunk.objects.filter(batch_id=batch.pk).count() == 0
@@ -52,11 +55,12 @@ def test_setup_batch_with_split_no_dependencies():
 class TestChunkTaricCommand(TestCommandBase):
     TARGET_COMMAND = "chunk_taric"
 
-    def test_dry_run(self, capsys, example_goods_taric_file_location):
+    def test_dry_run(self, capsys, example_goods_taric_file_location, valid_user):
         initial_chunk_count = ImporterXMLChunk.objects.count()
         self.call_command_test(
-            f"{example_goods_taric_file_location}",
-            "test_name",
+            taric3_file=f"{example_goods_taric_file_location}",
+            batch_name="test_name",
+            author=valid_user,
         )
 
         # TODO : Currently the command does not output anything
@@ -94,21 +98,26 @@ class TestChunkTaricCommand(TestCommandBase):
             (
                 [],
                 pytest.raises(CommandError),
-                "Error: the following arguments are required: taric3_file, name",
+                "Error: the following arguments are required: taric3_file, batch_name, author",
             ),
             (
                 ["foo"],
                 pytest.raises(CommandError),
-                "Error: the following arguments are required: name",
+                "Error: the following arguments are required: batch_name, author",
             ),
             (
                 ["foo", "bar"],
+                pytest.raises(CommandError),
+                "Error: the following arguments are required: batch_name, author",
+            ),
+            (
+                ["foo", "bar", valid_user],
                 pytest.raises(FileNotFoundError),
                 "No such file or directory",
             ),
         ],
     )
-    def test_dry_run_args_errors(self, args, exception_type, error_msg):
+    def test_dry_run_args_errors(self, args, exception_type, error_msg, valid_user):
         with exception_type as ex:
             self.call_command_test(*args)
 

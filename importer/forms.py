@@ -12,14 +12,17 @@ from sentry_sdk import capture_exception
 
 from common.util import get_mime_type
 from common.util import parse_xml
-from importer import models
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
+from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.validators import WorkflowStatus
 
 
-class ImportForm(forms.ModelForm):
+class ImportFormMixin:
+    """Mixin for importer forms, providing common taric_file clean and
+    processing support."""
+
     def process_file(
         self,
         file,
@@ -41,15 +44,16 @@ class ImportForm(forms.ModelForm):
         )
 
     def clean_taric_file(self):
-        data = self.cleaned_data["taric_file"]
+        """Perform validation checks against the uploaded file."""
+        uploaded_taric_file = self.cleaned_data["taric_file"]
         generic_error_message = "The selected file could not be uploaded - try again"
 
-        mime_type = get_mime_type(data)
+        mime_type = get_mime_type(uploaded_taric_file)
         if mime_type not in ["text/xml", "application/xml"]:
             raise ValidationError("The selected file must be XML")
 
         try:
-            xml_file = parse_xml(data)
+            xml_file = parse_xml(uploaded_taric_file)
         except (lxml.etree.XMLSyntaxError, DTDForbidden) as e:
             if settings.SENTRY_ENABLED:
                 capture_exception(e)
@@ -68,15 +72,21 @@ class ImportForm(forms.ModelForm):
         # read() in an InMemoryUploadedFile returns an empty string the second time it is called
         # calling seek(0) again fixes this
         # https://code.djangoproject.com/ticket/7812
-        data.seek(0)
-        return data
+        uploaded_taric_file.seek(0)
+        return uploaded_taric_file
+
+
+class UploadTaricForm(ImportFormMixin, forms.ModelForm):
+    """
+    Generic TARIC file import form, used to import TARIC files containing any.
+
+    type of entity - Additional Codes, Certificates, Footnotes, etc.
+    """
 
     class Meta:
-        model = models.ImportBatch
+        model = ImportBatch
         fields = ["name", "split_job", "dependencies"]
 
-
-class UploadTaricForm(ImportForm):
     status = forms.ChoiceField(choices=WorkflowStatus.choices, required=True)
     taric_file = forms.FileField(required=True)
     commodities = forms.BooleanField(
@@ -117,6 +127,89 @@ class UploadTaricForm(ImportForm):
             user,
             record_group=record_group,
             status=self.data["status"],
+        )
+        batch.imported()
+        batch.save()
+        return batch
+
+
+class CommodityImportForm(ImportFormMixin, forms.Form):
+    """Form used to create new instances of ImportBatch via upload of a
+    commodity code file."""
+
+    taric_file = forms.FileField(
+        required=True,
+        label="Upload a TARIC file",
+    )
+    xsd_file = settings.PATH_XSD_COMMODITIES_TARIC
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            "taric_file",
+            Submit(
+                "submit",
+                "Upload",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.errors:
+            return cleaned_data
+
+        # Derive ImportBatch.name from the uploaded filename - if a file has
+        # been submitted.
+        taric_file = (
+            self.request.FILES["taric_file"]
+            if "taric_file" in self.request.FILES
+            else None
+        )
+        if taric_file:
+            cleaned_data["name"] = taric_file.name
+
+        return cleaned_data
+
+    def clean_taric_file(self):
+        uploaded_taric_file = super().clean_taric_file()
+        # Because none of BatchImport's model fields are taken directly from the
+        # form, we can't use a ModelForm and therefore can't rely upon the
+        # BatchImport.name model field constraint. So do that validation here.
+        if ImportBatch.objects.filter(name=uploaded_taric_file.name):
+            raise ValidationError(
+                f"The uploaded file's name must be unique - "
+                f"{uploaded_taric_file.name} was previously uploaded.",
+            )
+        return uploaded_taric_file
+
+    @transaction.atomic
+    def save(self, workbasket):
+        """
+        Save an instance of ImportBatch using the form data and related, derived
+        values.
+
+        NOTE: because this save() method initiates import batch processing -
+        which results in a background task being started - it doesn't currently
+        make sense to use commit=False. process_file() should be moved into the
+        view if this (common) behaviour becomes required.
+        """
+        batch = ImportBatch(
+            author=self.request.user,
+            name=self.cleaned_data["name"],
+        )
+        batch.save()
+
+        self.process_file(
+            self.files["taric_file"],
+            batch,
+            self.request.user,
+            workbasket_id=workbasket.id,
         )
         batch.imported()
         batch.save()

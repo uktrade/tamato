@@ -71,13 +71,11 @@ class ImportBatch(TimestampedMixin):
         default=ImportBatchStatus.UPLOADING,
         choices=ImportBatchStatus.choices,
         db_index=True,
-        protected=False,
         editable=False,
     )
     split_job = models.BooleanField(
         default=False,
-    )  # XXX could be termed "seed file" instead?
-
+    )
     dependencies = models.ManyToManyField(
         "self",
         through="BatchDependencies",
