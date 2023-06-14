@@ -10,15 +10,17 @@ from workbaskets.validators import WorkflowStatus
 
 
 def run_batch(
-    batch: models.ImportBatch,
+    batch: str,
     status: str,
     partition_scheme_setting: str,
     username: str,
     workbasket_id: str = None,
     record_group: Sequence[str] = None,
 ):
+    import_batch = models.ImportBatch.objects.get(name=batch)
+
     find_and_run_next_batch_chunks(
-        batch,
+        import_batch,
         workbasket_id,
         status,
         partition_scheme_setting,
