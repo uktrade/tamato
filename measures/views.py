@@ -621,18 +621,33 @@ class MeasureCreateWizard(
         if step == self.COMMODITIES:
             min_commodity_count = self.get_cleaned_data_for_step(
                 self.MEASURE_DETAILS,
-            ).get(
-                "min_commodity_count",
-            )
+            ).get("min_commodity_count")
             kwargs.update({"min_commodity_count": min_commodity_count})
 
         if step == self.COMMODITIES or step == self.CONDITIONS:
+            measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
             # duty sentence validation requires the measure start date so pass it to form kwargs here
-            valid_between = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(
-                "valid_between",
-            )
+            valid_between = measure_details.get("valid_between")
+            measure_type = measure_details.get("measure_type")
             # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
-            kwargs["form_kwargs"] = {"measure_start_date": valid_between.lower}
+            kwargs["form_kwargs"] = {
+                "measure_start_date": valid_between.lower,
+                "measure_type": measure_type,
+            }
+
+        if step == self.SUMMARY:
+            measure_type = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(
+                "measure_type",
+            )
+            kwargs.update(
+                {
+                    "measure_type": measure_type,
+                    "commodities_data": self.get_cleaned_data_for_step(
+                        self.COMMODITIES,
+                    ),
+                    "conditions_data": self.get_cleaned_data_for_step(self.CONDITIONS),
+                },
+            )
 
         return kwargs
 
