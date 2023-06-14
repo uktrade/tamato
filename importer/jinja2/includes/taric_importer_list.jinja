@@ -9,10 +9,24 @@
     <a class="govuk-link" href="#">Resume</a>
   {%- endset -%}
 
+  {%- set author -%}
+    {% if object.author %}
+      {% if object.author.get_full_name() %}
+        {{ object.author.get_full_name() }}
+      {% elif object.author.email %}
+        {{ object.author.email }}
+      {% else %}
+        {{ object.author.username }}
+      {% endif %}
+    {% else %}
+      -
+    {% endif %}
+  {%- endset -%}
+
   {{ table_rows.append([
     {"text": object.name},
     {"text": "{:%d %b %Y}".format(object.created_at)},
-    {"text": object.author.get_full_name() if object.author else "-"},
+    {"text": author},
     {"text": object_status},
     {"html": object_link},
   ]) or "" }}

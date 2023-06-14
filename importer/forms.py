@@ -76,8 +76,11 @@ class ImportFormMixin:
 
 
 class UploadTaricForm(ImportFormMixin, forms.ModelForm):
-    """Generic TARIC file import form, used to import TARIC files containing any
-    type of entity - Additional Codes, Certificates, Footnotes, etc."""
+    """
+    Generic TARIC file import form, used to import TARIC files containing any.
+
+    type of entity - Additional Codes, Certificates, Footnotes, etc.
+    """
 
     class Meta:
         model = models.ImportBatch
@@ -130,8 +133,8 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
 
 
 class CommodityImportForm(ImportFormMixin, forms.Form):
-    """TARIC commodity code file importer form, used to import GoodsNomenclature
-    entities only."""
+    """Form used to create new instances of ImportBatch via upload of a
+    commodity code file."""
 
     taric_file = forms.FileField(
         required=True,
@@ -140,6 +143,7 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
     xsd_file = settings.PATH_XSD_COMMODITIES_TARIC
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
@@ -153,15 +157,46 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
             ),
         )
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.errors:
+            return cleaned_data
+
+        # Derive ImportBatch.name from the uploaded filename - if a file has
+        # been submitted.
+        taric_file = (
+            self.request.FILES["taric_file"]
+            if "taric_file" in self.request.FILES
+            else None
+        )
+        if taric_file:
+            cleaned_data["name"] = taric_file.name
+
+        return cleaned_data
+
     @transaction.atomic
-    def save(self, user: User):
-        batch = models.ImportBatch(author=user)
+    def save(self, workbasket):
+        """
+        Save an instance of ImportBatch using the form data and related, derived
+        values.
+
+        NOTE: because this save() method initiates import batch processing -
+        which results in a background task being started - it doesn't currently
+        make sense to use commit=False. process_file() should be moved into the
+        view if this (common) behaviour becomes required.
+        """
+        batch = models.ImportBatch(
+            author=self.request.user,
+            name=self.cleaned_data["name"],
+        )
         batch.save()
 
         self.process_file(
             self.files["taric_file"],
             batch,
-            user,
+            self.request.user,
+            workbasket_id=workbasket.id,
         )
         batch.imported()
         batch.save()

@@ -25,18 +25,18 @@ commodity_importer_urlpatterns = [
         "commodity-importer/create/",
         # TODO
         # Rename
-        views.CommodityImportView.as_view(),
+        views.CommodityImportCreateView.as_view(),
         # views.TaricImportCreateView.as_view(),
         name="commodity_importer-ui-create",
         # was commodity-ui-import
     ),
     path(
-        "commodity-importer/success/",
+        "commodity-importer/create/<pk>/success/",
         # TODO
         # Rename
-        views.CommodityImportSuccessView.as_view(),
+        views.CommodityImportCreateSuccessView.as_view(),
         # views.TaricImportSuccessView.as_view(),
-        name="commodity_importer-ui-success",
+        name="commodity_importer-ui-create-success",
         # was commodity-ui-import-success
     ),
 ]
