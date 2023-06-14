@@ -113,7 +113,7 @@
             ("Condition code", item.condition_code),
             ("Required certificate or amount", requirement(item)),
             ("Action", item.action.description),
-            ("Applicable duties", item.duty_sentence if item.duty_sentence else "-"),
+            ("Applicable duties", item.applicable_duty if item.applicable_duty else "-"),
           ]) }}
         {% endif %}
       {% endfor %}

@@ -215,6 +215,26 @@ def validate_conditions_formset(cleaned_data):
         raise ValidationError(errors_list)
 
 
+def validate_components_applicability(measure_type, commodities_data, conditions_data):
+    """Validate measure component and measure condition component applicability
+    for measure type according to business rule ME40."""
+
+    has_measure_components = any(data["duties"] for data in commodities_data)
+    has_condition_components = any(data["applicable_duty"] for data in conditions_data)
+
+    if measure_type.components_mandatory and not (
+        has_measure_components or has_condition_components
+    ):
+        raise ValidationError(
+            f"You must specify at least one duty on either a commodity or a condition for measure type {measure_type}",
+        )
+
+    if has_measure_components and has_condition_components:
+        raise ValidationError(
+            "A duty cannot be specified on both commodities and conditions",
+        )
+
+
 validate_reduction_indicator = NumberRangeValidator(1, 9)
 
 validate_component_sequence_number = NumberRangeValidator(1, 999)
