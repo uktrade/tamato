@@ -400,12 +400,18 @@ def test_workbasket_measures_review(valid_user_client):
     assert table_measure_sids == measure_sids
     assert set(measure_sids).difference(non_workbasket_measures_sids)
 
+    # 3rd column is commodity
+    table_commodity_links = {e.a for e in soup.select("table tr td:nth-child(3)")}
+    for link in table_commodity_links:
+        assert link["class"][0] == "govuk-link" and "/commodities/" in link["href"]
+
     # 5th column is start date
     table_start_dates = {e.text for e in soup.select("table tr td:nth-child(5)")}
     measure_start_dates = {
         f"{m.valid_between.lower:%d %b %Y}" for m in workbasket_measures
     }
     assert not measure_start_dates.difference(table_start_dates)
+
     # 6th column is end date
     table_end_dates = {e.text for e in soup.select("table tr td:nth-child(6)")}
     measure_end_dates = {
