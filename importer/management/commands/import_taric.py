@@ -1,5 +1,8 @@
 from typing import Sequence
 
+from django.contrib.auth.models import User
+from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 
 from importer.management.commands.chunk_taric import chunk_taric
@@ -20,8 +23,10 @@ def import_taric(
     dependencies=None,
     record_group: Sequence[str] = None,
 ):
+    user = validate_user(username)
     batch = setup_batch(
         batch_name=name,
+        author=user,
         dependencies=dependencies,
         split_on_code=split_codes,
     )
@@ -35,6 +40,27 @@ def import_taric(
         username,
         record_group=record_group,
     )
+
+
+def validate_user(self, username):
+    """Validation to check that the user_email corresponds to a user."""
+    try:
+        user = User.objects.get(username=username)
+    except ObjectDoesNotExist:
+        self.stdout.write(
+            self.style.ERROR(
+                f"Username not found. Exiting.",
+            ),
+        )
+        exit(1)
+    except MultipleObjectsReturned:
+        self.stdout.write(
+            self.style.ERROR(
+                f"Multiple users found. Exiting.",
+            ),
+        )
+        exit(1)
+    return user
 
 
 class Command(BaseCommand):

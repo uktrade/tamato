@@ -1,5 +1,6 @@
 from typing import List
 
+from django.contrib.auth.models import User
 from django.core.management import BaseCommand
 
 from importer import models
@@ -9,6 +10,7 @@ from importer.namespaces import TARIC_RECORD_GROUPS
 
 def setup_batch(
     batch_name: str,
+    author: User,
     split_on_code: bool,
     dependencies: List[str],
 ) -> models.ImportBatch:
@@ -21,11 +23,16 @@ def setup_batch(
       batch_name: (str) The name to be stored against the import
       split_on_code: (bool) Indicate of the import should be split on record code
       dependencies: (list(str)) A list of batch names that need to be imported before this batch can import.
+      author: (User) The user that to be listed as the creator of the file.
 
     Returns:
       ImportBatch instance, The created ImportBatch object.
     """
-    batch = models.ImportBatch.objects.create(name=batch_name, split_job=split_on_code)
+    batch = models.ImportBatch.objects.create(
+        name=batch_name,
+        author=author,
+        split_job=split_on_code,
+    )
 
     for dependency in dependencies or []:
         models.BatchDependencies.objects.create(
@@ -45,13 +52,16 @@ class Command(BaseCommand):
             help="The TARIC3 file to be parsed.",
             type=str,
         )
-
         parser.add_argument(
-            "name",
+            "batch_name",
             help="The name of the batch, the Envelope ID is recommended.",
             type=str,
         )
-
+        parser.add_argument(
+            "author",
+            help="The user that will be the author of the batch.",
+            type=User,
+        )
         parser.add_argument(
             "-s",
             "--split-codes",
@@ -75,7 +85,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         batch = setup_batch(
-            options["name"],
+            options["batch_name"],
+            options["author"],
             options["split_codes"],
             options["dependencies"],
         )
