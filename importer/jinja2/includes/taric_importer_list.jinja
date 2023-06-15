@@ -6,7 +6,10 @@
   {%- endset -%}
 
   {%- set object_link -%}
-    <a class="govuk-link" href="#">Resume</a>
+    <a
+      class="govuk-link"
+      href="{{ url('commodity_importer-ui-detail-url-resolver', kwargs={'pk': object.pk}) }}"
+    >Resume</a>
   {%- endset -%}
 
   {%- set author -%}
