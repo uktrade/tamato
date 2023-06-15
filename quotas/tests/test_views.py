@@ -665,29 +665,28 @@ def test_quota_edit_origin_exclusions(
     country1,
     country2,
     country3,
+    date_ranges,
 ):
     """Checks that members of geo groups are added individually as
     exclusions."""
-    quota = factories.QuotaOrderNumberFactory.create(transaction=approved_transaction)
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
 
     origin = models.QuotaOrderNumberOrigin.objects.last()
 
     form_data = {
-        "category": validators.QuotaCategory.AUTONOMOUS.value,
-        "start_date_0": 1,
-        "start_date_1": 1,
-        "start_date_2": 2000,
-        "existing_origin": origin.id,
-        "origin_start_date_0": 1,
-        "origin_start_date_1": 1,
-        "origin_start_date_2": 2000,
+        "start_date_0": origin.valid_between.lower.day,
+        "start_date_1": origin.valid_between.lower.month,
+        "start_date_2": origin.valid_between.lower.year,
         "geographical_area": geo_group1.id,
         "quota-origin-exclusions-formset-__prefix__-exclusion": geo_group2.id,
         "submit": "Save",
     }
 
     response = valid_user_client.post(
-        reverse("quota-ui-edit", kwargs={"sid": quota.sid}),
+        reverse("quota_order_number_origin-ui-edit", kwargs={"sid": origin.sid}),
         form_data,
     )
 
@@ -695,13 +694,8 @@ def test_quota_edit_origin_exclusions(
 
     tx = Transaction.objects.last()
 
-    quota = models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).get(
-        sid=quota.sid,
-    )
-    origins = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
-        tx,
-    ).filter(
-        order_number=quota,
+    origin = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(tx).get(
+        sid=origin.sid,
     )
 
     # geo_group1 contains country1, country2, country3
@@ -710,13 +704,13 @@ def test_quota_edit_origin_exclusions(
     # we're excluding geo_group2 from geo_group1
     # geo_group2 has 2 members
     # so we should have 2 exclusions
-    assert origins.first().excluded_areas.all().count() == 2
+    assert origin.excluded_areas.all().count() == 2
 
     # if we exclude geo_group2
     # we exclude country1 and country2
-    assert country1 in origins.first().excluded_areas.all()
-    assert country2 in origins.first().excluded_areas.all()
-    assert country3 not in origins.first().excluded_areas.all()
+    assert country1 in origin.excluded_areas.all()
+    assert country2 in origin.excluded_areas.all()
+    assert country3 not in origin.excluded_areas.all()
 
 
 def test_quota_edit_origin_exclusions_remove(
@@ -724,12 +718,14 @@ def test_quota_edit_origin_exclusions_remove(
     approved_transaction,
     geo_group1,
     country1,
+    date_ranges,
 ):
     """Checks that exclusions are removed from a quota origin."""
 
     origin = factories.QuotaOrderNumberOriginFactory.create(
         transaction=approved_transaction,
         geographical_area=geo_group1,
+        valid_between=date_ranges.normal,
     )
     factories.QuotaOrderNumberOriginExclusionFactory.create(
         transaction=approved_transaction,
@@ -739,21 +735,16 @@ def test_quota_edit_origin_exclusions_remove(
     quota = models.QuotaOrderNumber.objects.last()
 
     form_data = {
-        "category": validators.QuotaCategory.AUTONOMOUS.value,
-        "start_date_0": 1,
-        "start_date_1": 1,
-        "start_date_2": 2000,
-        "existing_origin": origin.id,
-        "origin_start_date_0": 1,
-        "origin_start_date_1": 1,
-        "origin_start_date_2": 2000,
+        "start_date_0": origin.valid_between.lower.day,
+        "start_date_1": origin.valid_between.lower.month,
+        "start_date_2": origin.valid_between.lower.year,
         "geographical_area": geo_group1.id,
         "quota-origin-exclusions-formset-__prefix__-exclusion": "",
         "submit": "Save",
     }
 
     response = valid_user_client.post(
-        reverse("quota-ui-edit", kwargs={"sid": quota.sid}),
+        reverse("quota_order_number_origin-ui-edit", kwargs={"sid": origin.sid}),
         form_data,
     )
 
@@ -764,17 +755,20 @@ def test_quota_edit_origin_exclusions_remove(
     updated_quota = models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).get(
         sid=quota.sid,
     )
-    updated_origins = (
+    updated_origin = (
         updated_quota.quotaordernumberorigin_set.approved_up_to_transaction(tx)
-    )
+    ).first()
 
     assert (
-        updated_origins.first()
-        .quotaordernumberoriginexclusion_set.approved_up_to_transaction(tx)
-        .count()
+        updated_origin.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+            tx,
+        ).count()
         == 0
     )
 
-    assert country1 not in updated_origins.first().quotaordernumberoriginexclusion_set.approved_up_to_transaction(
-        tx,
+    assert (
+        country1
+        not in updated_origin.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+            tx,
+        )
     )

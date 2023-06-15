@@ -9,14 +9,13 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 
 from common.forms import BindNestedFormMixin
-from common.forms import DateInputFieldFixed
 from common.forms import FormSet
 from common.forms import FormSetField
 from common.forms import FormSetSubmitMixin
-from common.forms import GovukDateRangeField
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
@@ -111,9 +110,7 @@ QuotaOriginExclusionsFormSet = formset_factory(
 
 
 class QuotaUpdateForm(
-    FormSetSubmitMixin,
     ValidityPeriodForm,
-    BindNestedFormMixin,
     forms.ModelForm,
 ):
     CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
@@ -135,12 +132,83 @@ class QuotaUpdateForm(
         error_messages={"invalid_choice": "Please select a valid category"},
     )
 
-    origin_start_date = DateInputFieldFixed(label="Start date")
-    origin_end_date = DateInputFieldFixed(
-        label="End date",
-        required=False,
-    )
-    origin_valid_between = GovukDateRangeField(required=False)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.set_initial_data(*args, **kwargs)
+        self.init_layout()
+
+    def set_initial_data(self, *args, **kwargs):
+        self.fields["category"].initial = self.instance.category
+
+    def init_fields(self):
+        if self.instance.category == validators.QuotaCategory.SAFEGUARD:
+            self.fields["category"].widget = forms.Select(
+                attrs={"disabled": True},
+                choices=validators.QuotaCategory.choices,
+            )
+            self.fields["category"].help_text = self.SAFEGUARD_HELP_TEXT
+        else:
+            self.fields["category"].choices = validators.QuotaCategoryEditing.choices
+            self.fields["category"].help_text = self.CATEGORY_HELP_TEXT
+
+        self.fields["start_date"].help_text = self.START_DATE_HELP_TEXT
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        origins_html = render_to_string(
+            "includes/quotas/quota-edit-origins.jinja",
+            {
+                "object": self.instance,
+            },
+        )
+
+        self.helper.layout = Layout(
+            Div(
+                Accordion(
+                    AccordionSection(
+                        "Validity period",
+                        "start_date",
+                        "end_date",
+                    ),
+                    AccordionSection(
+                        "Category",
+                        "category",
+                    ),
+                    AccordionSection(
+                        "Quota origins",
+                        Div(
+                            HTML(origins_html),
+                        ),
+                    ),
+                    css_class="govuk-grid-column-two-thirds",
+                ),
+                css_class="govuk-grid-row",
+            ),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
+class QuotaOrderNumberOriginUpdateForm(
+    FormSetSubmitMixin,
+    ValidityPeriodForm,
+    BindNestedFormMixin,
+    forms.ModelForm,
+):
+    class Meta:
+        model = models.QuotaOrderNumberOrigin
+        fields = [
+            "valid_between",
+            "geographical_area",
+        ]
 
     geographical_area = forms.ModelChoiceField(
         label="Geographical area",
@@ -154,43 +222,14 @@ class QuotaUpdateForm(
         required=False,
     )
 
-    existing_origin = forms.ModelChoiceField(
-        queryset=models.QuotaOrderNumberOrigin.objects.all(),
-        widget=forms.HiddenInput(),
-    )
-
-    @property
-    def origin(self):
-        return (
-            self.instance.quotaordernumberorigin_set.current()
-            .filter(order_number=self.instance)
-            .first()
-        )
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.set_initial_data(*args, **kwargs)
         self.init_layout()
 
-    def clean(self):
-        cleaned_data = super().clean()
-        self.clean_validity_period(
-            cleaned_data,
-            valid_between_field_name="origin_valid_between",
-            start_date_field_name="origin_start_date",
-            end_date_field_name="origin_end_date",
-        )
-        return cleaned_data
-
     def set_initial_data(self, *args, **kwargs):
-        self.fields["category"].initial = self.instance.category
-        self.fields["existing_origin"].initial = self.origin
-        self.fields["origin_start_date"].initial = self.origin.valid_between.lower
-        self.fields["origin_end_date"].initial = self.origin.valid_between.upper
-        self.fields["geographical_area"].initial = self.origin.geographical_area
         nested_forms_initial = {**self.initial}
-        nested_forms_initial["geographical_area"] = self.origin.geographical_area
         nested_forms_initial.update(self.get_geo_area_initial())
         kwargs.pop("initial")
         self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
@@ -202,7 +241,7 @@ class QuotaUpdateForm(
         if hasattr(self, "instance"):
             initial_exclusions = [
                 {field_name: exclusion.excluded_geographical_area}
-                for exclusion in self.origin.quotaordernumberoriginexclusion_set.current()
+                for exclusion in self.instance.quotaordernumberoriginexclusion_set.current()
             ]
         # if we just submitted the form, add the new data to initial
         if self.formset_submitted or self.whole_form_submit:
@@ -220,18 +259,28 @@ class QuotaUpdateForm(
 
         return initial
 
-    def init_fields(self):
-        if self.instance.category == validators.QuotaCategory.SAFEGUARD:
-            self.fields["category"].widget = forms.Select(
-                attrs={"disabled": True},
-                choices=validators.QuotaCategory.choices,
-            )
-            self.fields["category"].help_text = self.SAFEGUARD_HELP_TEXT
-        else:
-            self.fields["category"].choices = validators.QuotaCategoryEditing.choices
-            self.fields["category"].help_text = self.CATEGORY_HELP_TEXT
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
 
-        self.fields["start_date"].help_text = self.START_DATE_HELP_TEXT
+        self.helper.layout = Layout(
+            Div(
+                "start_date",
+                "end_date",
+                "geographical_area",
+                "exclusions",
+                css_class="govuk-!-width-two-thirds",
+            ),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def init_fields(self):
         self.fields["geographical_area"].queryset = (
             GeographicalArea.objects.current()
             .with_latest_description()
@@ -241,60 +290,3 @@ class QuotaUpdateForm(
         self.fields[
             "geographical_area"
         ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
-
-    def init_layout(self):
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
-
-        if len(self.instance.quotaordernumberorigin_set.current()) > 1:
-            origin_fields = [
-                HTML.warning(
-                    "Editing of quota order numbers with multiple origins is not supported at this time",
-                ),
-            ]
-        else:
-            origin_fields = [
-                Div(
-                    "existing_origin",
-                    Div(
-                        "origin_start_date",
-                        "origin_end_date",
-                        css_class="govuk-grid-column-one-half",
-                    ),
-                    Div(
-                        "geographical_area",
-                        css_class="govuk-grid-column-one-half",
-                    ),
-                    Div(
-                        "exclusions",
-                        css_class="govuk-grid-column-full",
-                    ),
-                    css_class="govuk-grid-row",
-                ),
-            ]
-
-        self.helper.layout = Layout(
-            Div(
-                Accordion(
-                    AccordionSection(
-                        "Validity period",
-                        "start_date",
-                        "end_date",
-                    ),
-                    AccordionSection(
-                        "Category",
-                        "category",
-                    ),
-                    AccordionSection("Quota origin", *origin_fields),
-                    css_class="govuk-grid-column-two-thirds",
-                ),
-                css_class="govuk-grid-row",
-            ),
-            Submit(
-                "submit",
-                "Save",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
-            ),
-        )
