@@ -14,7 +14,7 @@
   {{ table_rows.append([
     {"html": measure_link},
     {"text": measure.measure_type.sid ~ " - " ~ measure.measure_type.description},
-    {"text": measure.goods_nomenclature.item_id|wordwrap(2)|replace("\n", " ") if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
+    {"text": create_link(url("commodity-ui-detail", kwargs={"sid": measure.goods_nomenclature.sid}), measure.goods_nomenclature.item_id) if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
     {"text": measure.duty_sentence if measure.duty_sentence else '-'},
     {"text": "{:%d %b %Y}".format(measure.valid_between.lower) },
     {"text": "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else "-" },

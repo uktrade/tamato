@@ -1,4 +1,5 @@
 {%- extends "includes/common/tabs/core_data.jinja" -%}
+{% from "macros/create_link.jinja" import create_link %}
 
 {% set geographical_exclusions %}
 {% if object.exclusions.current() %}
@@ -28,7 +29,7 @@
         },
         {
             "key": {"text": "Commodity code"},
-            "value": {"text": object.goods_nomenclature.item_id if object.goods_nomenclature else "-"},
+            "value": {"text": create_link(url("commodity-ui-detail", kwargs={"sid": object.goods_nomenclature.sid}), object.goods_nomenclature.item_id) if object.goods_nomenclature else "-"},
             "actions": {"items": []}
         },
         {

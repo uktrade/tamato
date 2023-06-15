@@ -9,6 +9,7 @@ from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
+from common.validators import ApplicabilityCode
 from geo_areas import constants
 from geo_areas.validators import AreaCode
 from measures import forms
@@ -593,6 +594,25 @@ def test_measure_forms_commodity_and_duties_form_invalid(
     assert error_message in form.errors["commodity"]
 
 
+def test_measure_forms_commodity_and_duties_form_duties_not_permitted():
+    """Test that form is invalid when a duty is specified on a commodity but not
+    permitted for measure type."""
+    measure_type = factories.MeasureTypeFactory.create(
+        measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+    )
+    form = forms.MeasureCommodityAndDutiesForm(
+        data={"duties": "123%"},
+        prefix="",
+        measure_type=measure_type,
+    )
+
+    assert not form.is_valid()
+    assert (
+        f"Duties cannot be added to a commodity for measure type {measure_type}"
+        in form.errors["duties"]
+    )
+
+
 @pytest.mark.parametrize(
     "data",
     [
@@ -901,6 +921,25 @@ def test_measure_forms_conditions_wizard_applicable_duty(
 
     if not is_valid:
         assert "Enter a valid duty sentence." in form.errors["applicable_duty"]
+
+
+def test_measure_forms_conditions_wizard_applicable_duty_not_permitted():
+    """Test that form is invalid when a duty is specified on a condition but not
+    permitted for measure type."""
+    measure_type = factories.MeasureTypeFactory.create(
+        measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+    )
+    form = forms.MeasureConditionsWizardStepForm(
+        data={"applicable_duty": "123%"},
+        prefix="",
+        measure_type=measure_type,
+    )
+
+    assert not form.is_valid()
+    assert (
+        f"Duties cannot be added to a condition for measure type {measure_type}"
+        in form.errors["applicable_duty"]
+    )
 
 
 def test_measure_forms_conditions_clears_unneeded_certificate(date_ranges):
@@ -1364,3 +1403,53 @@ def test_measure_formset_conditions_action_field_queryset(
     assert positive_action in edit_form["action"].field.queryset
     assert single_action in edit_form["action"].field.queryset
     assert negative_action in edit_form["action"].field.queryset
+
+
+@pytest.mark.parametrize(
+    "commodities_data, conditions_data, expected_valid",
+    [
+        ([{"duties": "123%"}], [{"applicable_duty": ""}], True),
+        ([{"duties": ""}], [{"applicable_duty": "321%"}], True),
+        ([{"duties": ""}], [{"applicable_duty": ""}], False),
+    ],
+)
+def test_measure_review_form_validates_components_applicability_mandatory(
+    commodities_data,
+    conditions_data,
+    expected_valid,
+):
+    """Test that form validates at least one duty is specified on either a
+    commodity or a condition where component is mandatory for measure type."""
+    measure_type = factories.MeasureTypeFactory.create(
+        measure_component_applicability_code=ApplicabilityCode.MANDATORY,
+    )
+    form = forms.MeasureReviewForm(
+        data={},
+        measure_type=measure_type,
+        commodities_data=commodities_data,
+        conditions_data=conditions_data,
+    )
+    assert form.is_valid() == expected_valid
+    if not expected_valid:
+        assert (
+            f"You must specify at least one duty on either a commodity or a condition for measure type {measure_type}"
+            in form.errors["__all__"]
+        )
+
+
+def test_measure_review_form_validates_components_applicability_exclusivity(
+    measure_type,
+):
+    """Test that the form is invalid when a duty has been specified on both a
+    commodity and a condition."""
+    form = forms.MeasureReviewForm(
+        data={},
+        measure_type=measure_type,
+        commodities_data=[{"duties": "123%"}],
+        conditions_data=[{"applicable_duty": "321%"}],
+    )
+    assert not form.is_valid()
+    assert (
+        "A duty cannot be specified on both commodities and conditions"
+        in form.errors["__all__"]
+    )

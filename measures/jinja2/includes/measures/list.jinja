@@ -57,7 +57,7 @@
                 {"html": checkbox},
                 {"html": measure_link},
                 {"text": measure.measure_type.sid ~ " - " ~ measure.measure_type.description},
-                {"text": measure.goods_nomenclature.item_id|wordwrap(2)|replace("\n", " ") if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
+                {"text": create_link(url("commodity-ui-detail", kwargs={"sid": measure.goods_nomenclature.sid}), measure.goods_nomenclature.item_id) if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
                 {"text": "{:%d %b %Y}".format(measure.effective_valid_between.lower) if measure.effective_valid_between.lower else '-' },
                 {"text": "{:%d %b %Y}".format(measure.effective_valid_between.upper) if measure.effective_valid_between.upper else '-' },
                 {"text": measure.duty_sentence if measure.duty_sentence else '-'},

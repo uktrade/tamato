@@ -45,6 +45,7 @@ from measures.constants import MeasureEditSteps
 from measures.models import MeasureExcludedGeographicalArea
 from measures.parsers import DutySentenceParser
 from measures.util import diff_components
+from measures.validators import validate_components_applicability
 from measures.validators import validate_conditions_formset
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
@@ -390,7 +391,8 @@ class MeasureConditionsFormSet(MeasureConditionsBaseFormSet):
 class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
     # override methods that use form kwargs
     def __init__(self, *args, **kwargs):
-        self.measure_start_date = kwargs.pop("measure_start_date")
+        self.measure_start_date = kwargs.pop("measure_start_date", None)
+        self.measure_type = kwargs.pop("measure_type", None)
         super().__init__(*args, **kwargs)
 
     def clean_applicable_duty(self):
@@ -402,6 +404,15 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         string.
         """
         applicable_duty = self.cleaned_data["applicable_duty"]
+
+        if (
+            applicable_duty
+            and self.measure_type
+            and self.measure_type.components_not_permitted
+        ):
+            raise ValidationError(
+                f"Duties cannot be added to a condition for measure type {self.measure_type}",
+            )
 
         if applicable_duty and self.measure_start_date is not None:
             try:
@@ -1126,7 +1137,8 @@ class MeasureCommodityAndDutiesForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         # remove measure_start_date from kwargs here because superclass will not be expecting it
-        self.measure_start_date = kwargs.pop("measure_start_date")
+        self.measure_start_date = kwargs.pop("measure_start_date", None)
+        self.measure_type = kwargs.pop("measure_type", None)
         super().__init__(*args, **kwargs)
 
         delete_button = (
@@ -1162,6 +1174,12 @@ class MeasureCommodityAndDutiesForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         duties = cleaned_data.get("duties", "")
+        if duties and self.measure_type and self.measure_type.components_not_permitted:
+            raise ValidationError(
+                {
+                    "duties": f"Duties cannot be added to a commodity for measure type {self.measure_type}",
+                },
+            )
         try:
             validate_duties(duties, self.measure_start_date)
         except ValidationError as e:
@@ -1270,7 +1288,19 @@ class MeasureUpdateFootnotesFormSet(FormSet):
 
 
 class MeasureReviewForm(forms.Form):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.measure_type = kwargs.pop("measure_type", None)
+        self.commodities_data = kwargs.pop("commodities_data", None)
+        self.conditions_data = kwargs.pop("conditions_data", None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        validate_components_applicability(
+            measure_type=self.measure_type,
+            commodities_data=self.commodities_data,
+            conditions_data=self.conditions_data,
+        )
+        return super().clean()
 
 
 MeasureDeleteForm = delete_form_for(models.Measure)

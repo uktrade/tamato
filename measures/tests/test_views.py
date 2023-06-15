@@ -22,6 +22,7 @@ from common.tests.util import raises_if
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.util import TaricDateRange
+from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -939,12 +940,15 @@ def test_measure_form_wizard_start(valid_user_client):
 def test_measure_form_wizard_finish(
     mock_duty_sentence_parser,
     valid_user_client,
-    measure_type,
     regulation,
     quota_order_number,
     duty_sentence_parser,
     erga_omnes,
 ):
+    measure_type = factories.MeasureTypeFactory.create(
+        measure_component_applicability_code=ApplicabilityCode.PERMITTED,
+        valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
+    )
     commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
 
     mock_duty_sentence_parser.return_value = duty_sentence_parser
@@ -1340,7 +1344,9 @@ def test_measure_create_wizard_get_form_kwargs(
     form_kwargs = wizard.get_form_kwargs(step)
 
     assert "measure_start_date" in form_kwargs["form_kwargs"]
+    assert "measure_type" in form_kwargs["form_kwargs"]
     assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
+    assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
 
 
 def test_measure_form_creates_exclusions(
