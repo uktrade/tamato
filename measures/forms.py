@@ -614,7 +614,10 @@ class MeasureForm(
         if self.cleaned_data.get("exclusions"):
             exclusions = self.cleaned_data.get("exclusions")
 
-            all_exclusions = get_all_members_of_geo_groups(instance, exclusions)
+            all_exclusions = get_all_members_of_geo_groups(
+                instance.valid_between,
+                exclusions,
+            )
 
             for geo_area in all_exclusions:
                 existing_exclusion = (

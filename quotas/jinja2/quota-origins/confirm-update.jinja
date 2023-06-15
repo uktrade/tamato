@@ -1,0 +1,20 @@
+{% extends "common/confirm_update.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Edit quota order number origin details" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+      {"text": object.order_number._meta.verbose_name|capitalize ~ ": " ~ object.order_number|string, "href": object.order_number.get_url()},
+      {"text": "Edit quota details", "href": object.order_number.get_url("edit")},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+
+{% block actions %}
+<li><a class="govuk-link" href="{{ object.order_number.get_url() }}">View this origin's quota order number</a></li>
+<li><a href="{{ object.order_number.get_url('list') }}">Find and edit quotas</a></li>
+{% endblock %}

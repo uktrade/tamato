@@ -49,5 +49,20 @@ urlpatterns = [
         views.QuotaDefinitionList.as_view(),
         name="quota-definitions",
     ),
+    path(
+        f"quota_order_number_origins/<sid>/edit/",
+        views.QuotaOrderNumberOriginUpdate.as_view(),
+        name="quota_order_number_origin-ui-edit",
+    ),
+    path(
+        f"quota_order_number_origins/<sid>/edit/",
+        views.QuotaOrderNumberOriginUpdate.as_view(),
+        name="quota_order_number_origin-ui-edit-update",
+    ),
+    path(
+        f"quota_order_number_origins/<sid>/confirm-update/",
+        views.QuotaOrderNumberOriginConfirmUpdate.as_view(),
+        name="quota_order_number_origin-ui-confirm-update",
+    ),
     path("api/", include(api_router.urls)),
 ]

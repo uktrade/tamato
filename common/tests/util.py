@@ -650,6 +650,7 @@ class Dates:
             relativedelta(years=+1, months=+2),
         ),
         "big": (relativedelta(years=-2), relativedelta(years=+2, days=+1)),
+        "big_no_end": (relativedelta(years=-2), None),
         "adjacent": (relativedelta(days=+1), relativedelta(months=+1)),
         "adjacent_earlier": (relativedelta(months=-1), relativedelta(days=-1)),
         "adjacent_later": (relativedelta(months=+1, days=+1), relativedelta(months=+2)),
