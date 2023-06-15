@@ -17,6 +17,11 @@ general_importer_urlpatterns = [
 
 commodity_importer_urlpatterns = [
     path(
+        "commodity-importer/<pk>/detail/",
+        views.CommodityImportDetailURLResolverView.as_view(),
+        name="commodity_importer-ui-detail-url-resolver",
+    ),
+    path(
         "commodity-importer/",
         views.CommodityImportListView.as_view(),
         name="commodity_importer-ui-list",
