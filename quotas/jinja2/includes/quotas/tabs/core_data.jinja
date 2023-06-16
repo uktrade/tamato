@@ -1,56 +1,8 @@
-{% from "components/details/macro.njk" import govukDetails %}
-
-{% set exclusions %}
-    {% for exclusion in object.geographical_exclusions %}
-        <a href="{{ url('geo_area-ui-detail', args=[exclusion.sid]) }}" class="govuk-link">{{ exclusion.area_id }} - {{ exclusion.get_description().description }}</a>
-        {% if not loop.last %}, {% endif %}
-    {% endfor %}
-{% endset %}
+{% from "quota-origins/macros/origin_display.jinja" import origin_display %}
 
 {% set origins %}
     {% for origin in object.quotaordernumberorigin_set.current() %}
-        {% set geo_area_name -%}
-            {{ origin.geographical_area.area_id  ~ " - " ~ origin.geographical_area.get_description().description }}
-        {% endset %}
-        {% set geo_area_summary -%}
-            {{ geo_area_name }}
-            {% if object.geographical_exclusions %} (with exclusions){% endif %}
-        {% endset %}
-        {% set origin_link -%}
-            <a href="{{ url('geo_area-ui-detail', args=[origin.geographical_area.sid]) }}" class="govuk-link">{{ geo_area_name }}</a>
-        {% endset %}
-        {% set end_date -%}
-        {{"{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "—"}}
-        {% endset %}
-        {% set validity -%}
-        {{"{:%d %b %Y}".format(object.valid_between.lower) ~ " " ~ end_date }}
-        {% endset %}
-        {% set summary_list %}
-            {{ govukSummaryList({
-                "rows": [
-                    {
-                        "key": {"text": "Geographical area"},
-                        "value": {"text": origin_link},
-                        "actions": {"items": []},
-                    },
-                    {
-                        "key": {"text": "Geographical area exclusions"},
-                        "value": {"text": exclusions if object.geographical_exclusions else "-"},
-                        "actions": {"items": []},
-                    },
-                    {
-                        "key": {"text": "Validity"},
-                        "value": {"text": validity},
-                        "actions": {"items": []},
-                    },
-                ]
-            })
-            }}
-        {% endset %}
-        {{ govukDetails({
-            "summaryText": geo_area_summary,
-            "html": summary_list
-            }) }}
+        {{ origin_display(origin) }}
     {% endfor %}
 {% endset %}
 
