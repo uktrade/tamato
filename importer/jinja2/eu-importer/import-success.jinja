@@ -1,5 +1,6 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
 {% from "components/panel/macro.njk" import govukPanel %}
 
 
@@ -26,9 +27,16 @@
         "classes": "govuk-!-margin-bottom-7"
       }) }}
 
-    <a class="govuk-link" href="{{ url('commodity_importer-ui-list') }}">
-      Back to TARIC import list
-    </a>
+    <div class="govuk-button-group">
+      {{ govukButton({
+        "text": "Review changes",
+        "href": url("commodity_importer-ui-changes", kwargs={"pk": object.pk}),
+      }) }}
+
+      <a class="govuk-link" href="{{ url('commodity_importer-ui-list') }}">
+        Back to TARIC import list
+      </a>
+    </div>
 
   </div>
 </div>

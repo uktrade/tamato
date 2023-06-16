@@ -44,6 +44,11 @@ commodity_importer_urlpatterns = [
         name="commodity_importer-ui-create-success",
         # was commodity-ui-import-success
     ),
+    path(
+        "commodity-importer/<pk>/changes",
+        views.CommodityImportChangesView.as_view(),
+        name="commodity_importer-ui-changes",
+    ),
 ]
 
 urlpatterns = general_importer_urlpatterns + commodity_importer_urlpatterns

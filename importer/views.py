@@ -96,10 +96,9 @@ class CommodityImportDetailURLResolverView(RedirectView):
                     "pk": str(import_batch.pk),
                 },
             },
-            # TODO: Anthoni's & Dale's view.
             models.ImportBatchStatus.REVIEW: {
-                "path_name": "commodity_importer-ui-list",
-                "kwargs": {},
+                "path_name": "commodity_importer-ui-changes",
+                "kwargs": str(import_batch.pk),
             },
             # TODO: which workbasket view? workbasket:workbasket-ui-changes (pk=import.workbasket.pk)?
             models.ImportBatchStatus.COMPLETED: {
@@ -162,3 +161,96 @@ class CommodityImportCreateSuccessView(DetailView):
 
     template_name = "eu-importer/import-success.jinja"
     model = models.ImportBatch
+
+
+class CommodityImportChangesView(DetailView):
+    """Commodity code import changes view."""
+
+    template_name = "eu-importer/import-changes.jinja"
+    model = models.ImportBatch
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        workbasket = WorkBasket.objects.filter(reason__contains=self.object.name).last()
+        tracked_models = workbasket.tracked_models
+        import_changes = []
+        for obj in tracked_models:
+            obj_data = {
+                "update_type": obj.update_type_str,
+                "object": obj._meta.verbose_name.title(),
+            }
+            # Goods nomenclature
+            if hasattr(obj, "item_id"):
+                obj_data.update(
+                    {
+                        "goods_nomenclature": obj.item_id,
+                        "suffix": obj.suffix,
+                        "validity_start": obj.valid_between.lower,
+                        "validity_end": obj.valid_between.upper
+                        if obj.valid_between.upper
+                        else "-",
+                        "comments": f"Description: {obj.structure_description}",
+                    },
+                )
+                import_changes.append(obj_data)
+                continue
+
+            # Goods nomenclature indent
+            elif hasattr(obj, "indented_goods_nomenclature"):
+                obj_data.update(
+                    {
+                        "goods_nomenclature": obj.indented_goods_nomenclature,
+                        "suffix": obj.indented_goods_nomenclature.suffix,
+                        "validity_start": obj.validity_start,
+                        "validity_end": "-",
+                        "comments": f"Indent: {obj.indent}",
+                    },
+                )
+                import_changes.append(obj_data)
+                continue
+
+            # Goods nomenclature description
+            elif hasattr(obj, "described_goods_nomenclature"):
+                obj_data.update(
+                    {
+                        "goods_nomenclature": obj.described_goods_nomenclature,
+                        "suffix": obj.described_goods_nomenclature.suffix,
+                        "validity_start": obj.validity_start,
+                        "validity_end": "-",
+                        "comments": f"Description: {obj.description}",
+                    },
+                )
+                import_changes.append(obj_data)
+                continue
+
+            # Goods nomenclature origin
+            elif hasattr(obj, "new_goods_nomenclature"):
+                obj_data.update(
+                    {
+                        "goods_nomenclature": obj.new_goods_nomenclature,
+                        "suffix": obj.new_goods_nomenclature.suffix,
+                        "validity_start": "-",
+                        "validity_end": "-",
+                        "comments": obj.__str__(),
+                    },
+                )
+                import_changes.append(obj_data)
+                continue
+
+            # Goods nomenclature successor
+            elif hasattr(obj, "absorbed_into_goods_nomenclature"):
+                obj_data.update(
+                    {
+                        "goods_nomenclature": obj.absorbed_into_goods_nomenclature,
+                        "suffix": obj.absorbed_into_goods_nomenclature.suffix,
+                        "validity_start": "-",
+                        "validity_end": "-",
+                        "comments": obj.__str__(),
+                    },
+                )
+                import_changes.append(obj_data)
+                continue
+
+        context["import_changes"] = import_changes
+        return context
