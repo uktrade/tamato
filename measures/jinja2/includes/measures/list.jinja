@@ -49,7 +49,7 @@
               <a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a>
             {%- endset %}
             {% set footnotes %}
-              {% for footnote in measure.footnoteassociationmeasure_set.all() %}
+              {% for footnote in measure.footnoteassociationmeasure_set.current() %}
                   {{ create_link(footnote.get_url(), footnote|string) }}{{ ", " if not loop.last else "" }}
               {% endfor %}
             {% endset %}
