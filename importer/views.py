@@ -175,6 +175,8 @@ class CommodityImportChangesView(DetailView):
         workbasket = WorkBasket.objects.filter(reason__contains=self.object.name).last()
         tracked_models = workbasket.tracked_models
         import_changes = []
+
+        # Each tracked model represents an import change
         for obj in tracked_models:
             obj_data = {
                 "update_type": obj.update_type_str,
@@ -193,8 +195,6 @@ class CommodityImportChangesView(DetailView):
                         "comments": f"Description: {obj.structure_description}",
                     },
                 )
-                import_changes.append(obj_data)
-                continue
 
             # Goods nomenclature indent
             elif hasattr(obj, "indented_goods_nomenclature"):
@@ -207,8 +207,6 @@ class CommodityImportChangesView(DetailView):
                         "comments": f"Indent: {obj.indent}",
                     },
                 )
-                import_changes.append(obj_data)
-                continue
 
             # Goods nomenclature description
             elif hasattr(obj, "described_goods_nomenclature"):
@@ -221,8 +219,6 @@ class CommodityImportChangesView(DetailView):
                         "comments": f"Description: {obj.description}",
                     },
                 )
-                import_changes.append(obj_data)
-                continue
 
             # Goods nomenclature origin
             elif hasattr(obj, "new_goods_nomenclature"):
@@ -235,8 +231,6 @@ class CommodityImportChangesView(DetailView):
                         "comments": obj.__str__(),
                     },
                 )
-                import_changes.append(obj_data)
-                continue
 
             # Goods nomenclature successor
             elif hasattr(obj, "absorbed_into_goods_nomenclature"):
@@ -249,8 +243,8 @@ class CommodityImportChangesView(DetailView):
                         "comments": obj.__str__(),
                     },
                 )
-                import_changes.append(obj_data)
-                continue
+
+            import_changes.append(obj_data)
 
         context["import_changes"] = import_changes
         return context
