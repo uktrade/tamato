@@ -1,6 +1,7 @@
 
 {% extends "layouts/form.jinja" %}
 {% from 'macros/create_link.jinja' import create_link %}
+{% from 'macros/footnotes_display.jinja' import footnotes_display %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 {% from "components/table/macro.njk" import govukTable %}
 
@@ -46,11 +47,6 @@
                 {% set measure_link -%}
                   <a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a>
                 {%- endset %}
-                {% set footnotes %}
-                  {% for footnote in measure.footnoteassociationmeasure_set.current() %}
-                      {{ create_link(footnote.get_url(), footnote|string) }}{{ ", " if not loop.last else "" }}
-                  {% endfor %}
-                {% endset %}
                 {{ table_rows.append([
                   {"html": measure_link},
                   {"text": measure.measure_type.sid ~ " - " ~ measure.measure_type.description},
@@ -61,7 +57,7 @@
                   {"html": create_link(url("additional_code-ui-detail", kwargs={"sid": measure.additional_code.sid}), measure.additional_code.type.sid ~ measure.additional_code.code) if measure.additional_code else '-'},
                   {"html": create_link(url("geo_area-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
                   {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
-                  {"text": footnotes if measure.footnoteassociationmeasure_set.current() else '-'},
+                  {"text": footnotes_display(measure.footnoteassociationmeasure_set.current())},
                 ]) or "" }}
             {% endfor %}
             {{ govukTable({
