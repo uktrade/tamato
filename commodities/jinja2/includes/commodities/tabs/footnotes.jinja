@@ -1,0 +1,29 @@
+{% extends "commodities/detail.jinja" %}
+{% from 'macros/create_link.jinja' import create_link %}
+
+{% block content_class %}footnotes{% endblock %}
+
+{% block tab_content %}
+
+<h2 class="govuk-heading-l">Footnotes</h2>
+
+{% if object.footnote_associations.current() %}
+  {% set table_rows = [] %}
+  {% for association in object.footnote_associations.current() %}
+    {{ table_rows.append([
+        {"text": create_link(association.associated_footnote.get_url(), association.associated_footnote|string) },
+        {"text": association.associated_footnote.descriptions.first().description },
+      ]) or "" }}
+  {% endfor %}
+    {{ govukTable({
+    "head": [
+        {"text": "SID"},
+        {"text": "Description"},
+    ],
+    "rows": table_rows
+    }) }}
+{% else %}
+    <p class="govuk-body">This commodity code has no footnotes.</p>
+{% endif %}
+
+{% endblock %}
