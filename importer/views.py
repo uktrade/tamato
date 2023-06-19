@@ -187,7 +187,7 @@ class CommodityImportChangesView(DetailView):
                 "update_type": obj.update_type_str,
                 "object": obj._meta.verbose_name.title(),
             }
-            if isinstance(obj, GoodsNomenclature):
+            if type(obj) == GoodsNomenclature:
                 obj_data.update(
                     {
                         "goods_nomenclature": obj.item_id,
@@ -199,7 +199,7 @@ class CommodityImportChangesView(DetailView):
                         "comments": f"Description: {obj.structure_description}",
                     },
                 )
-            elif isinstance(obj, GoodsNomenclatureIndent):
+            elif type(obj) == GoodsNomenclatureIndent:
                 obj_data.update(
                     {
                         "goods_nomenclature": obj.indented_goods_nomenclature,
@@ -209,7 +209,7 @@ class CommodityImportChangesView(DetailView):
                         "comments": f"Indent: {obj.indent}",
                     },
                 )
-            elif isinstance(obj, GoodsNomenclatureDescription):
+            elif type(obj) == GoodsNomenclatureDescription:
                 obj_data.update(
                     {
                         "goods_nomenclature": obj.described_goods_nomenclature,
@@ -219,7 +219,7 @@ class CommodityImportChangesView(DetailView):
                         "comments": f"Description: {obj.description}",
                     },
                 )
-            elif isinstance(obj, GoodsNomenclatureOrigin):
+            elif type(obj) == GoodsNomenclatureOrigin:
                 obj_data.update(
                     {
                         "goods_nomenclature": obj.new_goods_nomenclature,
@@ -229,7 +229,7 @@ class CommodityImportChangesView(DetailView):
                         "comments": obj.__str__(),
                     },
                 )
-            elif isinstance(obj, GoodsNomenclatureSuccessor):
+            elif type(obj) == GoodsNomenclatureSuccessor:
                 obj_data.update(
                     {
                         "goods_nomenclature": obj.absorbed_into_goods_nomenclature,
