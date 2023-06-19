@@ -158,8 +158,13 @@ def test_commodities_detail_views(
 ):
     """Verify that commodity detail views are under the url commodities/ and
     don't return an error."""
-
-    assert_model_view_renders(view, url_pattern, valid_user_client)
+    override_models = {"commodities.views.CommodityAddFootnote": GoodsNomenclature}
+    assert_model_view_renders(
+        view,
+        url_pattern,
+        valid_user_client,
+        override_models=override_models,
+    )
 
 
 def test_goods_nomenclature(valid_user_client, date_ranges):
