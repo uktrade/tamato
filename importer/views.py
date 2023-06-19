@@ -10,6 +10,11 @@ from django.views.generic import DetailView
 from django.views.generic import FormView
 from django.views.generic.base import RedirectView
 
+from commodities.models import GoodsNomenclature
+from commodities.models import GoodsNomenclatureDescription
+from commodities.models import GoodsNomenclatureIndent
+from commodities.models import GoodsNomenclatureOrigin
+from commodities.models import GoodsNomenclatureSuccessor
 from common.views import RequiresSuperuserMixin
 from common.views import WithPaginationListView
 from importer import forms
@@ -182,8 +187,7 @@ class CommodityImportChangesView(DetailView):
                 "update_type": obj.update_type_str,
                 "object": obj._meta.verbose_name.title(),
             }
-            # Goods nomenclature
-            if hasattr(obj, "item_id"):
+            if isinstance(obj, GoodsNomenclature):
                 obj_data.update(
                     {
                         "goods_nomenclature": obj.item_id,
@@ -195,9 +199,7 @@ class CommodityImportChangesView(DetailView):
                         "comments": f"Description: {obj.structure_description}",
                     },
                 )
-
-            # Goods nomenclature indent
-            elif hasattr(obj, "indented_goods_nomenclature"):
+            elif isinstance(obj, GoodsNomenclatureIndent):
                 obj_data.update(
                     {
                         "goods_nomenclature": obj.indented_goods_nomenclature,
@@ -207,9 +209,7 @@ class CommodityImportChangesView(DetailView):
                         "comments": f"Indent: {obj.indent}",
                     },
                 )
-
-            # Goods nomenclature description
-            elif hasattr(obj, "described_goods_nomenclature"):
+            elif isinstance(obj, GoodsNomenclatureDescription):
                 obj_data.update(
                     {
                         "goods_nomenclature": obj.described_goods_nomenclature,
@@ -219,9 +219,7 @@ class CommodityImportChangesView(DetailView):
                         "comments": f"Description: {obj.description}",
                     },
                 )
-
-            # Goods nomenclature origin
-            elif hasattr(obj, "new_goods_nomenclature"):
+            elif isinstance(obj, GoodsNomenclatureOrigin):
                 obj_data.update(
                     {
                         "goods_nomenclature": obj.new_goods_nomenclature,
@@ -231,9 +229,7 @@ class CommodityImportChangesView(DetailView):
                         "comments": obj.__str__(),
                     },
                 )
-
-            # Goods nomenclature successor
-            elif hasattr(obj, "absorbed_into_goods_nomenclature"):
+            elif isinstance(obj, GoodsNomenclatureSuccessor):
                 obj_data.update(
                     {
                         "goods_nomenclature": obj.absorbed_into_goods_nomenclature,
