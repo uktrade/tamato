@@ -2,3 +2,11 @@
 
 {% set page_title = "Add a new footnote" %}
 
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit commodities", "href": url("commodity-ui-list")},
+      {"text": commodity._meta.verbose_name|capitalize ~ ": " ~ commodity|string, "href": commodity.get_url()},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
