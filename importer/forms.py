@@ -19,6 +19,7 @@ from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
+from workbaskets.validators import tops_jira_number_validator
 
 
 class ImportFormMixin:
@@ -149,6 +150,7 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
     )
     workbasket_title = forms.CharField(
         max_length=255,
+        validators=[tops_jira_number_validator],
         strip=True,
         label="Tops/Jira number",
         help_text=(
