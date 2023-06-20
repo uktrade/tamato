@@ -96,7 +96,7 @@ class CommodityImportDetailURLResolverView(RedirectView):
                     "pk": str(import_batch.pk),
                 },
             },
-            # TODO: Anthoni's & Dale's view.
+            # TODO: workbasket:workbasket-ui-goods-changes (pk=import.workbasket.pk)?
             models.ImportBatchStatus.REVIEW: {
                 "path_name": "commodity_importer-ui-list",
                 "kwargs": {},
