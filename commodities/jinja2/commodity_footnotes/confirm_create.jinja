@@ -24,6 +24,6 @@
 
 {% block actions %}
 <li><a class="govuk-link" href="{{ url('commodity-ui-add-footnote', args=[object.goods_nomenclature.sid]) }}">Add another footnote to this commodity code</a></li>
-<li><a class="govuk-link" href="{{ object.goods_nomenclature.get_url() }}">View this footnote association's commodity code</a></li>
+<li><a class="govuk-link" href="{{ url('commodity-ui-detail-footnotes') }}">View this footnote association's commodity code</a></li>
 <li><a href="{{ url('commodity-ui-list') }}">Find and edit commodities</a></li>
 {% endblock %}

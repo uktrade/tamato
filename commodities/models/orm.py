@@ -349,7 +349,7 @@ class FootnoteAssociationGoodsNomenclature(GetTabURLMixin, TrackedModel, Validit
     subrecord_code = "20"
 
     url_pattern_name_prefix = "commodity"
-    url_suffix = "#footnotes"
+    url_suffix = "footnotes/"
     url_relation_field = "goods_nomenclature"
 
     goods_nomenclature = models.ForeignKey(
