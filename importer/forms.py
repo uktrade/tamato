@@ -1,6 +1,7 @@
 import lxml
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Layout
+from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from defusedxml.common import DTDForbidden
 from django import forms
@@ -16,6 +17,7 @@ from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
 from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
+from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 
@@ -138,8 +140,24 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
     commodity code file."""
 
     taric_file = forms.FileField(
-        required=True,
         label="Upload a TARIC file",
+        help_text=(
+            "Valid TARIC files contain XML and usually have a .xml file name "
+            "extension. They contain goods nomenclure items and related "
+            "items."
+        ),
+    )
+    workbasket_title = forms.CharField(
+        max_length=255,
+        strip=True,
+        label="Tops/Jira number",
+        help_text=(
+            "Your Tops/Jira number is needed to associate your import's "
+            "workbasket with your Jira ticket. You can find this number at the "
+            "end of the web address for your Jira ticket. Your workbasket will "
+            "be given a unique number that may be different to your Tops/Jira "
+            "number. "
+        ),
     )
     xsd_file = settings.PATH_XSD_COMMODITIES_TARIC
 
@@ -148,8 +166,11 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             "taric_file",
+            "workbasket_title",
             Submit(
                 "submit",
                 "Upload",
@@ -188,8 +209,14 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
             )
         return uploaded_taric_file
 
+    def clean_workbasket_title(self):
+        workbasket_title = self.cleaned_data["workbasket_title"]
+        if WorkBasket.objects.filter(title=workbasket_title):
+            raise ValidationError("WorkBasket title already exists.")
+        return workbasket_title
+
     @transaction.atomic
-    def save(self, workbasket):
+    def save(self):
         """
         Save an instance of ImportBatch using the form data and related, derived
         values.
@@ -199,9 +226,16 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
         make sense to use commit=False. process_file() should be moved into the
         view if this (common) behaviour becomes required.
         """
+        workbasket = WorkBasket.objects.create(
+            title=self.cleaned_data["workbasket_title"],
+            author=self.request.user,
+        )
+        workbasket.save()
+
         batch = ImportBatch(
             author=self.request.user,
             name=self.cleaned_data["name"],
+            workbasket=workbasket,
         )
         batch.save()
 
@@ -209,8 +243,7 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
             self.files["taric_file"],
             batch,
             self.request.user,
-            workbasket_id=workbasket.id,
+            workbasket_id=batch.workbasket.id,
         )
-        batch.imported()
-        batch.save()
+
         return batch

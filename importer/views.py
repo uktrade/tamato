@@ -1,5 +1,3 @@
-import uuid
-
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count
 from django.db.models import Q
@@ -16,7 +14,6 @@ from importer import forms
 from importer import models
 from importer.filters import ImportBatchFilter
 from importer.filters import TaricImportFilter
-from workbaskets.models import WorkBasket
 
 
 class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
@@ -128,8 +125,13 @@ class CommodityImportCreateView(
         "common.add_trackedmodel",
         "common.change_trackedmodel",
     ]
-    success_url = reverse_lazy("commodity_importer-ui-success")
     template_name = "eu-importer/import.jinja"
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "commodity_importer-ui-success",
+            kwargs={"pk": self.object.pk},
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -137,17 +139,7 @@ class CommodityImportCreateView(
         return kwargs
 
     def form_valid(self, form):
-        unique_id = str(uuid.uuid4())
-        workbasket = WorkBasket.objects.create(
-            title=f"Commodity codes import - {unique_id}",
-            author=self.request.user,
-        )
-        self.object = form.save(workbasket)
-        workbasket.reason = (
-            f"Imported from file {self.object.name} - "
-            f"pending review and completion."
-        )
-        workbasket.save()
+        self.object = form.save()
 
         return redirect(
             reverse(

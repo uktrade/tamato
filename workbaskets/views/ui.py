@@ -104,6 +104,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
             WorkBasket.objects.exclude(status=WorkflowStatus.PUBLISHED)
             .exclude(status=WorkflowStatus.ARCHIVED)
             .exclude(status=WorkflowStatus.QUEUED)
+            .exclude_importing()
             .order_by("-updated_at")
         )
 
@@ -192,7 +193,8 @@ def download_envelope(request):
     """
     Creates s3 resource using AWS environment variables.
 
-    Tries to get filename from most recent s3 upload. If no upload exists, returns 404.
+    Tries to get filename from most recent s3 upload. If no upload exists,
+    returns 404.
 
     Generates presigned url from s3 client using bucket and file names.
 
@@ -528,7 +530,6 @@ class WorkBasketViolationDetail(DetailView):
         associated `TransactionCheck` instance, then also set its `successful`
         value to True.
         """
-
         model_check = self.get_object()
         model_check.successful = True
         model_check.save()
