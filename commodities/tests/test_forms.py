@@ -5,8 +5,10 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from commodities import forms
+from common.tests import factories
 
 TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
+pytestmark = pytest.mark.django_db
 
 
 def test_import_form_valid_envelope_id():
@@ -78,4 +80,17 @@ def test_import_form_long_definition_description():
         }
         form = forms.CommodityImportForm({}, file_data)
 
+    assert form.is_valid()
+
+
+def test_commodity_footnote_form():
+    commodity = factories.GoodsNomenclatureFactory.create()
+    footnote = factories.FootnoteFactory.create()
+    data = {
+        "goods_nomenclature": commodity.id,
+        "associated_footnote": footnote.id,
+        "start_date": commodity.valid_between.lower,
+        "end_date": "",
+    }
+    form = forms.CommodityFootnoteForm(data=data)
     assert form.is_valid()

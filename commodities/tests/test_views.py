@@ -416,3 +416,36 @@ def test_commodity_measures_sorting_measure_type(
         int(el.text) for el in soup.select(".govuk-table tbody tr td:first-child")
     ]
     assert measure_sids == [measure1.sid, measure2.sid, measure3.sid]
+
+
+def test_add_commodity_footnote(valid_user_client, date_ranges):
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.big_no_end,
+    )
+    footnote = factories.FootnoteFactory.create()
+    url = reverse("commodity-ui-add-footnote", kwargs={"sid": commodity.sid})
+    data = {
+        "goods_nomenclature": commodity.id,
+        "associated_footnote": footnote.id,
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date": "",
+    }
+
+    # sanity check
+    assert commodity.footnote_associations.count() == 0
+
+    response = valid_user_client.post(url, data)
+
+    assert response.status_code == 302
+    assert commodity.footnote_associations.count() == 1
+
+    new_association = commodity.footnote_associations.first()
+
+    assert response.url == reverse(
+        "commodity-ui-add-footnote-confirm",
+        kwargs={"pk": new_association.pk},
+    )
+    assert new_association.associated_footnote == footnote
+    assert new_association.goods_nomenclature == commodity
