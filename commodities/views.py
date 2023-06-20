@@ -277,9 +277,6 @@ class CommodityAddFootnote(TrackedModelDetailMixin, CreateTaricCreateView):
         kwargs["goods_nomenclature"] = self.commodity
         return kwargs
 
-    def form_valid(self, form):
-        return super().form_valid(form)
-
 
 class CommodityAddFootnoteConfirm(CommodityFootnoteMixin, TrackedModelDetailView):
     template_name = "commodity_footnotes/confirm_create.jinja"
