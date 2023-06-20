@@ -82,6 +82,11 @@ class ImportBatch(TimestampedMixin):
         symmetrical=False,
         blank=True,
     )
+    workbasket = models.OneToOneField(
+        "workbaskets.WorkBasket",
+        on_delete=models.SET_NULL,
+        null=True,
+    )
 
     objects = models.Manager.from_queryset(ImporterQuerySet)()
 

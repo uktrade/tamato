@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Subquery
 from django_fsm import FSMField
@@ -248,6 +249,16 @@ class WorkBasketQueryset(QuerySet):
             status=WorkflowStatus.EDITING,
         )
 
+    def exclude_importing(self):
+        """Filter in only those workbaskets that do not have an actively
+        importing associated ImportBatch instance."""
+        from importer.models import ImportBatchStatus
+
+        return self.exclude(
+            Q(importbatch__status=ImportBatchStatus.UPLOADING)
+            | Q(importbatch__status=ImportBatchStatus.FAILED),
+        )
+
 
 class WorkBasket(TimestampedMixin):
     """
@@ -400,7 +411,6 @@ class WorkBasket(TimestampedMixin):
 
         (This will normally mean a move from DRAFT to REVISION).
         """
-
         self.approver_id = user
 
         # Move transactions from the DRAFT partition into the REVISION partition.
@@ -415,7 +425,6 @@ class WorkBasket(TimestampedMixin):
     )
     def queue(self, user: int, scheme_name: str):
         """Add workbasket to packaging queue."""
-
         self.full_clean()
 
         if not self.transactions.exists():
@@ -497,7 +506,6 @@ class WorkBasket(TimestampedMixin):
     @classmethod
     def current(cls, request):
         """Get the current workbasket in the session."""
-
         if "workbasket" in request.session:
             workbasket = cls.load_from_session(request.session)
 
