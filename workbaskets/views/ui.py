@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import ProtectedError
+from django.db.models import Q
 from django.db.transaction import atomic
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -25,6 +26,11 @@ from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
 from checks.models import TrackedModelCheck
+from commodities.models import GoodsNomenclature
+from commodities.models import GoodsNomenclatureDescription
+from commodities.models import GoodsNomenclatureIndent
+from commodities.models import GoodsNomenclatureOrigin
+from commodities.models import GoodsNomenclatureSuccessor
 from common.filters import TamatoFilter
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
@@ -192,7 +198,8 @@ def download_envelope(request):
     """
     Creates s3 resource using AWS environment variables.
 
-    Tries to get filename from most recent s3 upload. If no upload exists, returns 404.
+    Tries to get filename from most recent s3 upload. If no upload exists,
+    returns 404.
 
     Generates presigned url from s3 client using bucket and file names.
 
@@ -243,6 +250,95 @@ class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
     template_name = "workbaskets/review-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
     filterset_class = MeasureFilter
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class WorkbasketReviewGoodsView(TamatoListView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = WorkBasket
+    template_name = "workbaskets/review-goods.jinja"
+    paginate_by = 10
+
+    def get_queryset(self):
+        tracked_models = self.workbasket.tracked_models
+        goods_changes = tracked_models.filter(
+            Q(instance_of=GoodsNomenclature)
+            | Q(instance_of=GoodsNomenclatureDescription)
+            | Q(instance_of=GoodsNomenclatureIndent)
+            | Q(instance_of=GoodsNomenclatureOrigin)
+            | Q(instance_of=GoodsNomenclatureSuccessor),
+        )
+        return goods_changes
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        goods_changes = []
+        paginator = context["paginator"]
+        page = paginator.get_page(self.request.GET.get("page", 1))
+        for obj in page.object_list:
+            obj_data = {
+                "update_type": obj.update_type_str,
+                "object": obj._meta.verbose_name.title(),
+            }
+            if type(obj) == GoodsNomenclature:
+                obj_data.update(
+                    {
+                        "goods_nomenclature": obj.item_id,
+                        "suffix": obj.suffix,
+                        "validity_start": obj.valid_between.lower,
+                        "validity_end": obj.valid_between.upper
+                        if obj.valid_between.upper
+                        else "-",
+                        "comments": f"Description: {obj.structure_description}",
+                    },
+                )
+            elif type(obj) == GoodsNomenclatureIndent:
+                obj_data.update(
+                    {
+                        "goods_nomenclature": obj.indented_goods_nomenclature,
+                        "suffix": obj.indented_goods_nomenclature.suffix,
+                        "validity_start": obj.validity_start,
+                        "validity_end": "-",
+                        "comments": f"Indent: {obj.indent}",
+                    },
+                )
+            elif type(obj) == GoodsNomenclatureDescription:
+                obj_data.update(
+                    {
+                        "goods_nomenclature": obj.described_goods_nomenclature,
+                        "suffix": obj.described_goods_nomenclature.suffix,
+                        "validity_start": obj.validity_start,
+                        "validity_end": "-",
+                        "comments": f"Description: {obj.description}",
+                    },
+                )
+            elif type(obj) == GoodsNomenclatureOrigin:
+                obj_data.update(
+                    {
+                        "goods_nomenclature": obj.new_goods_nomenclature,
+                        "suffix": obj.new_goods_nomenclature.suffix,
+                        "validity_start": "-",
+                        "validity_end": "-",
+                        "comments": obj.__str__(),
+                    },
+                )
+            elif type(obj) == GoodsNomenclatureSuccessor:
+                obj_data.update(
+                    {
+                        "goods_nomenclature": obj.absorbed_into_goods_nomenclature,
+                        "suffix": obj.absorbed_into_goods_nomenclature.suffix,
+                        "validity_start": "-",
+                        "validity_end": "-",
+                        "comments": obj.__str__(),
+                    },
+                )
+
+            goods_changes.append(obj_data)
+
+        context["goods_changes"] = goods_changes
+        return context
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
@@ -528,7 +624,6 @@ class WorkBasketViolationDetail(DetailView):
         associated `TransactionCheck` instance, then also set its `successful`
         value to True.
         """
-
         model_check = self.get_object()
         model_check.successful = True
         model_check.save()
