@@ -30,7 +30,7 @@
     <div class="govuk-button-group">
       {{ govukButton({
         "text": "Review changes",
-        "href": url("commodity_importer-ui-changes", kwargs={"pk": object.pk}),
+        "href": url("commodity_importer-ui-list"),
       }) }}
 
       <a class="govuk-link" href="{{ url('commodity_importer-ui-list') }}">

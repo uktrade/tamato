@@ -10,11 +10,6 @@ from django.views.generic import DetailView
 from django.views.generic import FormView
 from django.views.generic.base import RedirectView
 
-from commodities.models import GoodsNomenclature
-from commodities.models import GoodsNomenclatureDescription
-from commodities.models import GoodsNomenclatureIndent
-from commodities.models import GoodsNomenclatureOrigin
-from commodities.models import GoodsNomenclatureSuccessor
 from common.views import RequiresSuperuserMixin
 from common.views import WithPaginationListView
 from importer import forms
@@ -101,9 +96,10 @@ class CommodityImportDetailURLResolverView(RedirectView):
                     "pk": str(import_batch.pk),
                 },
             },
+            # TODO: workbasket:workbasket-ui-goods-changes (pk=import.workbasket.pk)?
             models.ImportBatchStatus.REVIEW: {
-                "path_name": "commodity_importer-ui-changes",
-                "kwargs": str(import_batch.pk),
+                "path_name": "commodity_importer-ui-list",
+                "kwargs": {},
             },
             # TODO: which workbasket view? workbasket:workbasket-ui-changes (pk=import.workbasket.pk)?
             models.ImportBatchStatus.COMPLETED: {
@@ -166,81 +162,3 @@ class CommodityImportCreateSuccessView(DetailView):
 
     template_name = "eu-importer/import-success.jinja"
     model = models.ImportBatch
-
-
-class CommodityImportChangesView(DetailView):
-    """Commodity code import changes view."""
-
-    template_name = "eu-importer/import-changes.jinja"
-    model = models.ImportBatch
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-
-        workbasket = WorkBasket.objects.filter(reason__contains=self.object.name).last()
-        tracked_models = workbasket.tracked_models
-        import_changes = []
-
-        # Each tracked model represents an import change
-        for obj in tracked_models:
-            obj_data = {
-                "update_type": obj.update_type_str,
-                "object": obj._meta.verbose_name.title(),
-            }
-            if type(obj) == GoodsNomenclature:
-                obj_data.update(
-                    {
-                        "goods_nomenclature": obj.item_id,
-                        "suffix": obj.suffix,
-                        "validity_start": obj.valid_between.lower,
-                        "validity_end": obj.valid_between.upper
-                        if obj.valid_between.upper
-                        else "-",
-                        "comments": f"Description: {obj.structure_description}",
-                    },
-                )
-            elif type(obj) == GoodsNomenclatureIndent:
-                obj_data.update(
-                    {
-                        "goods_nomenclature": obj.indented_goods_nomenclature,
-                        "suffix": obj.indented_goods_nomenclature.suffix,
-                        "validity_start": obj.validity_start,
-                        "validity_end": "-",
-                        "comments": f"Indent: {obj.indent}",
-                    },
-                )
-            elif type(obj) == GoodsNomenclatureDescription:
-                obj_data.update(
-                    {
-                        "goods_nomenclature": obj.described_goods_nomenclature,
-                        "suffix": obj.described_goods_nomenclature.suffix,
-                        "validity_start": obj.validity_start,
-                        "validity_end": "-",
-                        "comments": f"Description: {obj.description}",
-                    },
-                )
-            elif type(obj) == GoodsNomenclatureOrigin:
-                obj_data.update(
-                    {
-                        "goods_nomenclature": obj.new_goods_nomenclature,
-                        "suffix": obj.new_goods_nomenclature.suffix,
-                        "validity_start": "-",
-                        "validity_end": "-",
-                        "comments": obj.__str__(),
-                    },
-                )
-            elif type(obj) == GoodsNomenclatureSuccessor:
-                obj_data.update(
-                    {
-                        "goods_nomenclature": obj.absorbed_into_goods_nomenclature,
-                        "suffix": obj.absorbed_into_goods_nomenclature.suffix,
-                        "validity_start": "-",
-                        "validity_end": "-",
-                        "comments": obj.__str__(),
-                    },
-                )
-
-            import_changes.append(obj_data)
-
-        context["import_changes"] = import_changes
-        return context
