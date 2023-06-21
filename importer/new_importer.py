@@ -95,6 +95,7 @@ class NewImporter:
         if workbasket is None:
             author = User.objects.get(username=author_username)
             self.workbasket = WorkBasket(title=import_title, author=author)
+            self.workbasket.save()
         else:
             self.workbasket = workbasket
 
@@ -105,18 +106,26 @@ class NewImporter:
         self.validate()
 
         if self.can_save():
+            self.populate_parent_attributes()
             self.commit_data()
+
+    def populate_parent_attributes(self):
+        pass
 
     def commit_data(self):
         transaction_order = 1
         for transaction in self.parsed_transactions:
             # create transaction
-            transaction = Transaction.objects.create(
+            transaction_inst = Transaction.objects.create(
                 workbasket=self.workbasket,
                 order=transaction_order,
             )
+
             for message in transaction.parsed_messages:
-                self.create_tap_object_from_message(message, transaction)
+                self.create_or_append_to_tap_object_from_message(
+                    message,
+                    transaction_inst,
+                )
 
     def create_or_append_to_tap_object_from_message(
         self,
@@ -125,10 +134,36 @@ class NewImporter:
     ):
         if hasattr(message.taric_object, "parent_parser"):
             # Find parent object and append data to that model
-            pass
+
+            # first search in change set (current or earlier transactions)
+            self.find_object_in_import(transaction)
+
+            # if no match, update TAP data
         else:
             # Create object and append data
             pass
+
+    def find_object_in_import(
+        self,
+        current_transaction,
+        identity_fields: dict,
+        object_type,
+    ):
+        match = None
+
+        for transaction in self.parsed_transactions:
+            for message in transaction.parsed_messages:
+                if message.object_type == object_type:
+                    # check keys
+                    key_match = True
+                    for key in identity_fields.keys():
+                        if getattr(message.taric_object, key) != identity_fields[key]:
+                            key_match = False
+
+                    if key_match:
+                        return message.taric_object
+
+        return match
 
     def print_stats(self, update_stats: dict):
         for key in update_stats.keys():

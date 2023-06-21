@@ -138,6 +138,7 @@ class NewElementParser:
     links_valid: bool = None
     value_mapping = {}
     model_links = None
+    parent_parser = None
     issues = []
     parent_handler = None
     excluded_fields = ["language_id"]
@@ -155,6 +156,25 @@ class NewElementParser:
             )
 
         return self.model_links
+
+    def identity_fields_for_parent(self):
+        # guard clauses
+        if self.parent_parser is None:
+            raise Exception(f"Model {self.__class__.__name__} has no parent parser")
+
+        if self.model_links is None:
+            raise Exception(
+                f"Model {self.__class__.__name__} appears to have a parent parser but no model links",
+            )
+
+        for model_link in self.model_links:
+            # match link to target model for parser - then we can extract the key fields we need to match for the object
+            if model_link.model == self.model:
+                key_fields = {}
+                for model_link_field in model_link.fields:
+                    key_fields
+
+                return key_fields
 
     def populate(
         self,

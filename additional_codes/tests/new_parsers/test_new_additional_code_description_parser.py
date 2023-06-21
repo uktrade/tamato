@@ -52,10 +52,14 @@ class TestNewAdditionalCodeDescriptionParser:
         assert target.described_additionalcode__code == "123"
         assert target.description == "some description"
 
-    def test_import(self):
+    def test_import(self, superuser):
         file_to_import = "./importer_examples/additional_code_description_CREATE.xml"
 
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            import_title="Importing stuff",
+            author_username=superuser.username,
+        )
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
@@ -88,9 +92,13 @@ class TestNewAdditionalCodeDescriptionParser:
             # check for issues
             assert len(message.taric_object.issues) == 0
 
-    def test_import_invalid_additional_code(self):
+    def test_import_invalid_additional_code(self, superuser):
         file_to_import = "./importer_examples/additional_code_description_invalid_additional_code_CREATE.xml"
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            import_title="Importing stuff",
+            author_username=superuser.username,
+        )
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
@@ -115,7 +123,7 @@ class TestNewAdditionalCodeDescriptionParser:
         assert target_taric_object.described_additionalcode__code == "111"
         assert target_taric_object.description == "some description"
 
-        assert len(target_taric_object) == 2
+        assert len(target_taric_object.issues) == 2
 
         issue_1 = target_taric_object.issues[0]
         issue_2 = target_taric_object.issues[1]
