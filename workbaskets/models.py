@@ -11,7 +11,6 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Subquery
 from django_fsm import FSMField
@@ -249,15 +248,18 @@ class WorkBasketQueryset(QuerySet):
             status=WorkflowStatus.EDITING,
         )
 
-    def exclude_importing(self):
-        """Filter in only those workbaskets that do not have an actively
-        importing associated ImportBatch instance."""
+    def exclude_importing_imports(self):
+        """Exclude workbaskets that currently have a related import status of
+        IMPORTING."""
         from importer.models import ImportBatchStatus
 
-        return self.exclude(
-            Q(importbatch__status=ImportBatchStatus.UPLOADING)
-            | Q(importbatch__status=ImportBatchStatus.FAILED),
-        )
+        return self.exclude(importbatch__status=ImportBatchStatus.IMPORTING)
+
+    def exclude_failed_imports(self):
+        """Exclude workbaskets that have a related import status of FAILED."""
+        from importer.models import ImportBatchStatus
+
+        return self.exclude(importbatch__status=ImportBatchStatus.FAILED)
 
 
 class WorkBasket(TimestampedMixin):

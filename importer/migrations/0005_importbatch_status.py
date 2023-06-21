@@ -15,14 +15,12 @@ class Migration(migrations.Migration):
             name="status",
             field=django_fsm.FSMField(
                 choices=[
-                    ("UPLOADING", "Uploading"),
-                    ("IMPORTED", "Imported"),
-                    ("REVIEW", "In Review"),
-                    ("COMPLETED", "Completed"),
+                    ("IMPORTING", "Importing"),
+                    ("SUCCEEDED", "Succeeded"),
                     ("FAILED", "Failed"),
                 ],
                 db_index=True,
-                default="UPLOADING",
+                default="IMPORTING",
                 editable=False,
                 max_length=50,
             ),

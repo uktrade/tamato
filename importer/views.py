@@ -80,26 +80,14 @@ class CommodityImportDetailURLResolverView(RedirectView):
         import_batch = models.ImportBatch.objects.get(pk=kwargs["pk"])
 
         status_to_location_map = {
-            models.ImportBatchStatus.UPLOADING: {
+            models.ImportBatchStatus.IMPORTING: {
                 "path_name": "commodity_importer-ui-create-success",
                 "kwargs": {
                     "pk": str(import_batch.pk),
                 },
-            },
-            # TODO: is the IMPORTED status required or should a successful import transition directly to REVIEW?
-            models.ImportBatchStatus.IMPORTED: {
-                "path_name": "commodity_importer-ui-create-success",
-                "kwargs": {
-                    "pk": str(import_batch.pk),
-                },
-            },
-            # TODO: workbasket:workbasket-ui-goods-changes (pk=import.workbasket.pk)?
-            models.ImportBatchStatus.REVIEW: {
-                "path_name": "commodity_importer-ui-list",
-                "kwargs": {},
             },
             # TODO: which workbasket view? workbasket:workbasket-ui-changes (pk=import.workbasket.pk)?
-            models.ImportBatchStatus.COMPLETED: {
+            models.ImportBatchStatus.SUCCEEDED: {
                 "path_name": "commodity_importer-ui-list",
                 "kwargs": {},
             },

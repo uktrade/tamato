@@ -110,7 +110,8 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
             WorkBasket.objects.exclude(status=WorkflowStatus.PUBLISHED)
             .exclude(status=WorkflowStatus.ARCHIVED)
             .exclude(status=WorkflowStatus.QUEUED)
-            .exclude_importing()
+            .exclude_importing_imports()
+            .exclude_failed_imports()
             .order_by("-updated_at")
         )
 
