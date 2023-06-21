@@ -1,5 +1,6 @@
 """Business rules for measures."""
 from datetime import date
+from datetime import timedelta
 from typing import Mapping
 from typing import Optional
 
@@ -1231,30 +1232,42 @@ class ME66(ExclusionMembership):
 
 
 class ME67(BusinessRule):
-    """The membership period of the excluded geographical area must span the
-    valid period of the measure."""
+    """
+    The membership period of the excluded geographical area must span the valid
+    period of the measure.
+
+    interpretation:
+    When a measure has a geo-area exclusion, the valid between date range of the measure is used to check the existence
+    of the excluded geo area in the geo group the measure is linked to (a member of the geo area group), if the members
+    validity date range does not match or extend beyond the measures valid between date range then the change is
+    considered invalid and a violation should be raised.
+    """
 
     def validate(self, exclusion):
-        GeographicalMembership = type(
-            exclusion.excluded_geographical_area,
-        ).memberships.through
+        measure = exclusion.modified_measure
 
-        geo_group = exclusion.modified_measure.geographical_area
-        excluded = exclusion.excluded_geographical_area
+        geo_area = measure.geographical_area
+        members = geo_area.members.approved_up_to_transaction(
+            self.transaction,
+        )
 
-        if (
-            not GeographicalMembership.objects.approved_up_to_transaction(
-                self.transaction,
+        matching_members_to_exclusion_period = members.filter(
+            Q(
+                member__area_id=exclusion.excluded_geographical_area.area_id,
+                valid_between__startswith__lte=measure.valid_between.lower,
             )
-            .as_at(
-                exclusion.modified_measure.effective_valid_between,
-            )
-            .filter(
-                geo_group__version_group=geo_group.version_group,
-                member__version_group=excluded.version_group,
-            )
-            .exists()
-        ):
+            & (
+                # because of the way that dates are queried, we need to add one day to the upper
+                # for the correct behaviour
+                Q(
+                    valid_between__endswith__gte=measure.valid_between.upper
+                    + timedelta(days=1),
+                )
+                | Q(valid_between__endswith=None)
+            ),
+        )
+
+        if not matching_members_to_exclusion_period.exists():
             raise self.violation(exclusion)
 
 
