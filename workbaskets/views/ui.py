@@ -116,20 +116,40 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
 
     def post(self, request, *args, **kwargs):
         workbasket_pk = request.POST.get("workbasket")
-        if workbasket_pk:
-            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
+        workbasket_tab = request.POST.get("workbasket-tab")
 
-            if workbasket:
-                if workbasket.status == WorkflowStatus.ERRORED:
-                    workbasket.restore()
-                    workbasket.save()
+        workbasket_tab_map = {
+            "view-summary": {
+                "path_name": "workbaskets:current-workbasket",
+            },
+            "add-edit-items": {
+                "path_name": "workbaskets:edit-workbasket",
+            },
+            "view-violations": {
+                "path_name": "workbaskets:workbasket-ui-violations",
+            },
+            "review-measures": {
+                "path_name": "workbaskets:review-workbasket",
+            },
+            "review-goods": {
+                "path_name": "workbaskets:workbasket-ui-review-goods",
+            },
+        }
 
-                workbasket.save_to_session(request.session)
-                redirect_url = reverse(
-                    "workbaskets:current-workbasket",
-                )
+        workbasket = WorkBasket.objects.get(pk=workbasket_pk) if workbasket_pk else None
 
-                return redirect(redirect_url)
+        if workbasket:
+            if workbasket.status == WorkflowStatus.ERRORED:
+                workbasket.restore()
+                workbasket.save()
+
+            workbasket.save_to_session(request.session)
+
+            if workbasket_tab:
+                view = workbasket_tab_map[workbasket_tab]
+                return redirect(reverse(view["path_name"]))
+            else:
+                return redirect(reverse("workbaskets:current-workbasket"))
 
         return redirect(reverse("workbaskets:workbasket-ui-list"))
 
