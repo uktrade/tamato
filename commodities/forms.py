@@ -108,7 +108,6 @@ class CommodityFootnoteForm(ValidityPeriodForm, forms.ModelForm):
         self.fields[
             "end_date"
         ].help_text = "Leave empty if the footnote is needed for an unlimited time"
-        self.fields["goods_nomenclature"].initial = self.goods_nomenclature
 
     def init_layout(self):
         self.helper = FormHelper(self)
@@ -128,7 +127,6 @@ class CommodityFootnoteForm(ValidityPeriodForm, forms.ModelForm):
         )
 
     def __init__(self, *args, **kwargs):
-        self.goods_nomenclature = kwargs.pop("goods_nomenclature")
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.init_layout()
