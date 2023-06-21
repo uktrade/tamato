@@ -98,20 +98,18 @@ class CommodityImportDetailURLResolverView(RedirectView):
                 "path_name": "commodity_importer-ui-list",
                 "kwargs": {},
             },
-            # TODO: which workbasket view? workbasket:workbasket-ui-changes (pk=import.workbasket.pk)?
-            models.ImportBatchStatus.COMPLETED: {
-                "path_name": "commodity_importer-ui-list",
-                "kwargs": {},
-            },
             # TODO: will there be a view for failed imports?
             models.ImportBatchStatus.FAILED: {
                 "path_name": "commodity_importer-ui-list",
                 "kwargs": {},
             },
         }
-
-        location = status_to_location_map[import_batch.status]
-        return reverse(location["path_name"], kwargs=location["kwargs"])
+        if import_batch.status == models.ImportBatchStatus.COMPLETED:
+            import_batch.workbasket.save_to_session(self.request.session)
+            return reverse("workbaskets:workbasket-ui-review-goods")
+        else:
+            location = status_to_location_map[import_batch.status]
+            return reverse(location["path_name"], kwargs=location["kwargs"])
 
 
 class CommodityImportCreateView(
