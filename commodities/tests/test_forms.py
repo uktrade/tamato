@@ -89,7 +89,9 @@ def test_commodity_footnote_form():
     data = {
         "goods_nomenclature": commodity.id,
         "associated_footnote": footnote.id,
-        "start_date": commodity.valid_between.lower,
+        "start_date_0": commodity.valid_between.lower.day,
+        "start_date_1": commodity.valid_between.lower.month,
+        "start_date_2": commodity.valid_between.lower.year,
         "end_date": "",
     }
     form = forms.CommodityFootnoteForm(data=data)
