@@ -245,6 +245,36 @@ def test_select_workbasket_with_errored_status(valid_user_client):
 
 
 @pytest.mark.parametrize(
+    "workbasket_tab, expected_url",
+    [
+        ("view-summary", "workbaskets:current-workbasket"),
+        ("add-edit-items", "workbaskets:edit-workbasket"),
+        ("view-violations", "workbaskets:workbasket-ui-violations"),
+        ("review-measures", "workbaskets:review-workbasket"),
+        ("review-goods", "workbaskets:workbasket-ui-review-goods"),
+        ("", "workbaskets:current-workbasket"),
+    ],
+)
+def test_select_workbasket_redirects_to_tab(
+    valid_user_client,
+    workbasket_tab,
+    expected_url,
+):
+    """Test that SelectWorkbasketView redirects to a specific tab on the
+    selected workbasket if a tab has been provided."""
+    workbasket = factories.WorkBasketFactory.create()
+    response = valid_user_client.post(
+        reverse("workbaskets:workbasket-ui-list"),
+        {
+            "workbasket": workbasket.id,
+            "workbasket-tab": workbasket_tab,
+        },
+    )
+    assert response.status_code == 302
+    assert response.url == reverse(expected_url)
+
+
+@pytest.mark.parametrize(
     "form_action, url_name",
     [
         ("remove-selected", "workbaskets:workbasket-ui-delete-changes"),

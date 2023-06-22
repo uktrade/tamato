@@ -6,7 +6,6 @@ from django.urls import reverse
 from django.urls import reverse_lazy
 from django.views.generic import DetailView
 from django.views.generic import FormView
-from django.views.generic.base import RedirectView
 
 from common.views import RequiresSuperuserMixin
 from common.views import WithPaginationListView
@@ -69,49 +68,6 @@ class CommodityImportListView(
     queryset = models.ImportBatch.objects.order_by("-created_at")
     template_name = "eu-importer/select-imports.jinja"
     filterset_class = TaricImportFilter
-
-
-class CommodityImportDetailURLResolverView(RedirectView):
-    """URL resolver view used to redirect to the appropriate 'detail' view for
-    an ImportBatch instance at run-time."""
-
-    def get_redirect_url(self, *args, **kwargs):
-        # Fetch the import_batch to get the related workbasket.
-        import_batch = models.ImportBatch.objects.get(pk=kwargs["pk"])
-
-        status_to_location_map = {
-            models.ImportBatchStatus.UPLOADING: {
-                "path_name": "commodity_importer-ui-create-success",
-                "kwargs": {
-                    "pk": str(import_batch.pk),
-                },
-            },
-            # TODO: is the IMPORTED status required or should a successful import transition directly to REVIEW?
-            models.ImportBatchStatus.IMPORTED: {
-                "path_name": "commodity_importer-ui-create-success",
-                "kwargs": {
-                    "pk": str(import_batch.pk),
-                },
-            },
-            # TODO: workbasket:workbasket-ui-goods-changes (pk=import.workbasket.pk)?
-            models.ImportBatchStatus.REVIEW: {
-                "path_name": "commodity_importer-ui-list",
-                "kwargs": {},
-            },
-            # TODO: which workbasket view? workbasket:workbasket-ui-changes (pk=import.workbasket.pk)?
-            models.ImportBatchStatus.COMPLETED: {
-                "path_name": "commodity_importer-ui-list",
-                "kwargs": {},
-            },
-            # TODO: will there be a view for failed imports?
-            models.ImportBatchStatus.FAILED: {
-                "path_name": "commodity_importer-ui-list",
-                "kwargs": {},
-            },
-        }
-
-        location = status_to_location_map[import_batch.status]
-        return reverse(location["path_name"], kwargs=location["kwargs"])
 
 
 class CommodityImportCreateView(
