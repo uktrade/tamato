@@ -449,3 +449,56 @@ def test_add_commodity_footnote(valid_user_client, date_ranges):
     )
     assert new_association.associated_footnote == footnote
     assert new_association.goods_nomenclature == commodity
+
+
+def test_add_commodity_footnote_NIG22_failure(valid_user_client, date_ranges):
+    """
+    Tests failure of NIG22:
+
+    The period of the association with a footnote must be within the validity
+    period of the nomenclature.
+    """
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    footnote_type = factories.FootnoteTypeFactory.create(application_code=2)
+    footnote = factories.FootnoteFactory.create(footnote_type=footnote_type)
+    url = reverse("commodity-ui-add-footnote", kwargs={"sid": commodity.sid})
+    data = {
+        "goods_nomenclature": commodity.id,
+        "associated_footnote": footnote.id,
+        "start_date_0": date_ranges.later.lower.day,
+        "start_date_1": date_ranges.later.lower.month,
+        "start_date_2": date_ranges.later.lower.year,
+        "end_date": "",
+    }
+
+    response = valid_user_client.post(url, data)
+
+    assert response.status_code == 200
+
+    assert (
+        "The period of the association with a footnote must be within the validity period of the nomenclature."
+        in response.content.decode(response.charset)
+    )
+
+
+def test_add_commodity_footnote_form_page(valid_user_client, date_ranges):
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.big_no_end,
+    )
+    url = reverse("commodity-ui-add-footnote", kwargs={"sid": commodity.sid})
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    breadcrumbs_text = [
+        el.text.strip().replace("\n", "")
+        for el in soup.select(".govuk-breadcrumbs__list-item")
+    ]
+    assert f"Commodity code: {commodity.item_id}" in breadcrumbs_text
