@@ -5,6 +5,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from commodities import forms
+from common.models.transactions import Transaction
 from common.tests import factories
 
 TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
@@ -94,5 +95,6 @@ def test_commodity_footnote_form():
         "start_date_2": commodity.valid_between.lower.year,
         "end_date": "",
     }
-    form = forms.CommodityFootnoteForm(data=data)
+    tx = Transaction.objects.last()
+    form = forms.CommodityFootnoteForm(data=data, tx=tx)
     assert form.is_valid()
