@@ -286,6 +286,11 @@ class CommodityAddFootnote(CreateTaricCreateView):
         initial["goods_nomenclature"] = self.commodity
         return initial
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["tx"] = self.get_transaction()
+        return kwargs
+
     @transaction.atomic
     def form_valid(self, form):
         self.object = self.get_result_object(form)

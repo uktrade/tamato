@@ -11,10 +11,10 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.forms import widgets
 
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
-from common.fields import AutoCompleteField
 from common.forms import ValidityPeriodForm
 from footnotes.models import Footnote
 from importer.forms import ImportForm
@@ -94,7 +94,7 @@ class CommodityFootnoteForm(ValidityPeriodForm, forms.ModelForm):
         widget=forms.HiddenInput(),
     )
 
-    associated_footnote = AutoCompleteField(
+    associated_footnote = forms.ModelChoiceField(
         label="Footnote",
         help_text=(
             "Search for a footnote by typing in the footnote's number or a keyword. "
@@ -102,12 +102,28 @@ class CommodityFootnoteForm(ValidityPeriodForm, forms.ModelForm):
         ),
         queryset=Footnote.objects.all(),
         error_messages={"required": "Select a footnote for this commodity code"},
+        widget=widgets.Select(
+            attrs={
+                "class": "autocomplete-progressive-enhancement",
+                "id": "associated-footnote-select",
+            },
+        ),
     )
 
     def init_fields(self):
         self.fields[
             "end_date"
         ].help_text = "Leave empty if the footnote is needed for an unlimited time"
+        self.fields[
+            "associated_footnote"
+        ].queryset = Footnote.objects.approved_up_to_transaction(self.tx).filter(
+            footnote_type__application_code__in=[1, 2],
+        )
+        self.fields[
+            "associated_footnote"
+        ].label_from_instance = (
+            lambda obj: f"{obj.structure_code} - {obj.structure_description}"
+        )
 
     def init_layout(self):
         self.helper = FormHelper(self)
@@ -127,6 +143,7 @@ class CommodityFootnoteForm(ValidityPeriodForm, forms.ModelForm):
         )
 
     def __init__(self, *args, **kwargs):
+        self.tx = kwargs.pop("tx")
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.init_layout()
