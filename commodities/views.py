@@ -275,12 +275,6 @@ class CommodityAddFootnote(CreateTaricCreateView):
             kwargs={"pk": self.object.pk},
         )
 
-    def get_queryset(self):
-        tx = self.get_transaction()
-        return FootnoteAssociationGoodsNomenclature.objects.filter(
-            goods_nomenclature__sid=self.kwargs["sid"],
-        ).approved_up_to_transaction(tx)
-
     def get_initial(self):
         initial = super().get_initial()
         initial["goods_nomenclature"] = self.commodity
