@@ -2,14 +2,13 @@ from datetime import date
 from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db import transaction
 from django.urls import reverse
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.views.generic import FormView
 from django.views.generic import ListView
 from django.views.generic import TemplateView
-from django.views.generic.edit import FormMixin
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -25,7 +24,6 @@ from commodities.models.dc import CommodityTreeSnapshot
 from commodities.models.dc import SnapshotMoment
 from commodities.models.dc import get_chapter_collection
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
-from common.business_rules import BusinessRuleViolation
 from common.serializers import AutoCompleteSerializer
 from common.views import SortingMixin
 from common.views import TrackedModelDetailView
@@ -264,7 +262,7 @@ class CommodityAddFootnote(CreateTaricCreateView):
     )
     model = FootnoteAssociationGoodsNomenclature
 
-    @property
+    @cached_property
     def commodity(self):
         return GoodsNomenclature.objects.current().get(sid=self.kwargs["sid"])
 
@@ -284,21 +282,6 @@ class CommodityAddFootnote(CreateTaricCreateView):
         kwargs = super().get_form_kwargs()
         kwargs["tx"] = self.get_transaction()
         return kwargs
-
-    @transaction.atomic
-    def form_valid(self, form):
-        self.object = self.get_result_object(form)
-        tx = self.object.transaction
-
-        for rule in self.validate_business_rules:
-            try:
-                with transaction.atomic():
-                    rule(tx).validate(self.object)
-            except BusinessRuleViolation as v:
-                form.add_error(None, v.args[0])
-                return self.form_invalid(form)
-
-        return FormMixin.form_valid(self, form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
