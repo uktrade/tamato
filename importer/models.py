@@ -37,16 +37,15 @@ class ImporterQuerySet(QuerySet):
 
 
 class ImportBatchStatus(models.TextChoices):
-    # File has been successfully imported
-    UPLOADING = "UPLOADING", "Uploading"
-    # File has been successfully imported
-    IMPORTED = "IMPORTED", "Imported"
-    # Has changes that need reviewing
-    REVIEW = "REVIEW", "In Review"
-    #  Corresponiding workbasket has been published.
-    COMPLETED = "COMPLETED", "Completed"
-    # Not all chunks imported - requires assistance
+    IMPORTING = "IMPORTING", "Importing"
+    """The import process has not yet completed - possibly it is still queued,
+    or envelope file parsing is ongoing, or something else."""
+    SUCCEEDED = "SUCCEEDED", "Succeeded"
+    """The import process successfully completed with a correctly parsed
+    envelope."""
     FAILED = "FAILED", "Failed"
+    """The import process completed / terminated but finished in some error
+    state."""
 
 
 class ImportBatch(TimestampedMixin):
@@ -68,7 +67,7 @@ class ImportBatch(TimestampedMixin):
         null=True,
     )
     status = FSMField(
-        default=ImportBatchStatus.UPLOADING,
+        default=ImportBatchStatus.IMPORTING,
         choices=ImportBatchStatus.choices,
         db_index=True,
         editable=False,
@@ -92,39 +91,21 @@ class ImportBatch(TimestampedMixin):
 
     @transition(
         field=status,
-        source=ImportBatchStatus.UPLOADING,
-        target=ImportBatchStatus.IMPORTED,
-        custom={"label": "Imported"},
+        source=ImportBatchStatus.IMPORTING,
+        target=ImportBatchStatus.SUCCEEDED,
+        custom={"label": "Succeeded"},
     )
-    def imported(self):
-        """Mark an Import Batch as uploaded."""
+    def succeeded(self):
+        """The import process completed and was successful."""
 
     @transition(
         field=status,
-        source=ImportBatchStatus.IMPORTED,
-        target=ImportBatchStatus.REVIEW,
-        custom={"label": "In Review"},
-    )
-    def in_review(self):
-        """Mark an Import Batch as in review."""
-
-    @transition(
-        field=status,
-        source=[ImportBatchStatus.IMPORTED, ImportBatchStatus.REVIEW],
-        target=ImportBatchStatus.COMPLETED,
-        custom={"label": "Completed"},
-    )
-    def complete(self):
-        """Mark an Import Batch as complete."""
-
-    @transition(
-        field=status,
-        source=ImportBatchStatus.UPLOADING,
+        source=ImportBatchStatus.IMPORTING,
         target=ImportBatchStatus.FAILED,
         custom={"label": "Failed"},
     )
     def failed(self):
-        """Mark an Import Batch as failed."""
+        """The import process completed with an error condition."""
 
     @property
     def ready_chunks(self):

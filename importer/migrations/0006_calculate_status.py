@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         ImportBatch = apps.get_model("importer", "ImportBatch")
         import_batch_qs = (
             ImportBatch.objects.filter(
-                status="UPLOADING",
+                status="IMPORTING",
             )
             .annotate(
                 total_chunks_count=Count("chunks"),
@@ -43,8 +43,8 @@ class Migration(migrations.Migration):
 
         for ib in import_batch_qs:
             if ib.total_chunks_count and not ib.not_done_chunks_count:
-                # All chunks have completed.
-                ib.status = "COMPLETED"
+                # All chunks have completed successfully.
+                ib.status = "SUCCEEDED"
                 ib.save()
             elif ib.errored_chunks_count:
                 # At leave one chunk has errored.
@@ -63,8 +63,8 @@ class Migration(migrations.Migration):
         )
         # Revert all ImportBatch instances with ImporterXMLChunk related
         # instances to the previous migration's default value,
-        # ImportBatchStatus.UPLOADING.
-        import_batch_qs.update(status="UPLOADING")
+        # ImportBatchStatus.IMPORTING.
+        import_batch_qs.update(status="IMPORTING")
 
     operations = [
         migrations.RunPython(

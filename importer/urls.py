@@ -17,32 +17,19 @@ general_importer_urlpatterns = [
 
 commodity_importer_urlpatterns = [
     path(
-        "commodity-importer/<pk>/detail/",
-        views.CommodityImportDetailURLResolverView.as_view(),
-        name="commodity_importer-ui-detail-url-resolver",
-    ),
-    path(
         "commodity-importer/",
         views.CommodityImportListView.as_view(),
         name="commodity_importer-ui-list",
     ),
     path(
         "commodity-importer/create/",
-        # TODO
-        # Rename
         views.CommodityImportCreateView.as_view(),
-        # views.TaricImportCreateView.as_view(),
         name="commodity_importer-ui-create",
-        # was commodity-ui-import
     ),
     path(
         "commodity-importer/create/<pk>/success/",
-        # TODO
-        # Rename
         views.CommodityImportCreateSuccessView.as_view(),
-        # views.TaricImportSuccessView.as_view(),
         name="commodity_importer-ui-create-success",
-        # was commodity-ui-import-success
     ),
 ]
 

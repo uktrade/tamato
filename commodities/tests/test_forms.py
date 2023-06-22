@@ -29,7 +29,7 @@ def test_import_form_valid_envelope_id(superuser):
         assert batch.name.find(file_data["taric_file"].name) != -1
         assert batch.split_job == False
         assert batch.author.id == superuser.id
-        assert batch.status == ImportBatchStatus.IMPORTED
+        assert batch.status == ImportBatchStatus.SUCCEEDED
 
 
 @pytest.mark.parametrize("file_name,", ("invalid_id", "dtd"))
