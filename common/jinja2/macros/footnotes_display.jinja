@@ -1,0 +1,9 @@
+{% from 'macros/create_link.jinja' import create_link %}
+
+{% macro footnotes_display(footnotes) -%}
+{% if footnotes %}
+  {% for association in footnotes %}
+      {{ create_link(association.associated_footnote.get_url(), association.associated_footnote|string) }}{{ ", " if not loop.last else "" }}
+  {% endfor %}
+{% else %}-{% endif %}
+{% endmacro %}
