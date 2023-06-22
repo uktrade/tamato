@@ -6,10 +6,16 @@
   {%- endset -%}
 
   {%- set object_link -%}
-    <a
-      class="govuk-link"
-      href="{{ url('commodity_importer-ui-detail-url-resolver', kwargs={'pk': object.pk}) }}"
-    >Resume</a>
+    {% if object.status == "SUCCEEDED" and object.workbasket and object.workbasket.status == "EDITING" %}
+      <form action="{{ url("workbaskets:workbasket-ui-list") }}" method="post">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <input type="hidden" name="workbasket" value="{{ object.workbasket.pk }}">
+        <input type="hidden" name="workbasket-tab" value="review-goods">
+        <input type="submit" class="button-link" name="submit" value="Edit/View workbasket">
+      </form>
+    {%- else -%}
+      <span></span>
+    {%- endif -%}
   {%- endset -%}
 
   {%- set author -%}
