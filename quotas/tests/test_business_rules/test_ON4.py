@@ -6,6 +6,8 @@ from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.util import TaricDateRange
 from quotas import business_rules
+from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaOrderNumberOrigin
 
 pytestmark = pytest.mark.django_db
 
@@ -35,12 +37,18 @@ def test_ON4_pass_after_update(
     approved_transaction,
     unapproved_transaction,
 ):
+    """The previous version of ON4 would fail at this point, since it would only
+    look at origins for the current object (linked via tracked model id) but the
+    updated version passes, since it looks at the version history for origins,
+    not just the latest version of the model."""
     # Create the initial order number
     order_number = factories.QuotaOrderNumberFactory.create(
         valid_between=date_ranges.normal,
         transaction=approved_transaction,
-        origin=None,
     )
+
+    assert QuotaOrderNumber.objects.all().count() == 1
+    assert QuotaOrderNumberOrigin.objects.all().count() == 1
 
     # Update the order number
     workbasket = factories.WorkBasketFactory.create()
