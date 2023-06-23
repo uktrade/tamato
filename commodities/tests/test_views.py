@@ -502,3 +502,44 @@ def test_add_commodity_footnote_form_page(valid_user_client, date_ranges):
         for el in soup.select(".govuk-breadcrumbs__list-item")
     ]
     assert f"Commodity code: {commodity.item_id}" in breadcrumbs_text
+
+
+def test_commodity_footnotes_page_200(valid_user_client):
+    commodity = factories.GoodsNomenclatureFactory.create()
+    url = reverse("commodity-ui-detail-footnotes", kwargs={"sid": commodity.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+def test_commodity_footnotes_page(valid_user_client):
+    commodity = factories.GoodsNomenclatureFactory.create()
+    footnote1 = factories.FootnoteFactory.create()
+    footnote2 = factories.FootnoteFactory.create()
+    association1 = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+        associated_footnote=footnote1,
+        goods_nomenclature=commodity,
+    )
+    association2 = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+        associated_footnote=footnote2,
+        goods_nomenclature=commodity,
+    )
+    url = reverse("commodity-ui-detail-footnotes", kwargs={"sid": commodity.sid})
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    footnotes = soup.select(".govuk-table__body .govuk-table__row")
+    assert len(footnotes) == commodity.footnote_associations.count()
+
+    first_footnote_description = (
+        footnotes[0].select(".govuk-table__cell:nth-child(2)")[0].text.strip()
+    )
+    assert (
+        first_footnote_description
+        == commodity.footnote_associations.first()
+        .associated_footnote.descriptions.first()
+        .description
+    )
