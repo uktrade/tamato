@@ -40,7 +40,7 @@ def test_commodities_hierarchy_html(mock_request):
     mock_snapshot["commodities"] = mock_commodities
     mock_snapshot["ancestors"] = mock_ancestors
     page = render_to_string(
-        "commodities/hierarchy.jinja",
+        "includes/commodities/tabs/hierarchy.jinja",
         {
             "snapshot": mock_snapshot,
             "commodity": mock_commodity,
@@ -63,7 +63,7 @@ def test_commodities_hierarchy_html_single_commodity(mock_request):
     mock_snapshot["commodities"] = mock_commodities
     mock_snapshot["ancestors"] = mock_ancestors
     page = render_to_string(
-        "commodities/hierarchy.jinja",
+        "includes/commodities/tabs/hierarchy.jinja",
         {
             "snapshot": mock_snapshot,
             "commodity": mock_commodity,

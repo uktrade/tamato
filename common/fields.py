@@ -11,9 +11,9 @@ from django.urls import reverse_lazy
 from psycopg2.extras import DateRange
 
 from common import validators
-from common.forms import AutocompleteWidget
 from common.util import TaricDateRange
 from common.util import TaricDateTimeRange
+from common.widgets import AutocompleteWidget
 
 
 def get_next_by_max(field):

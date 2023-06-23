@@ -120,10 +120,12 @@ class GetTabURLMixin:
     url_suffix = "#"
     url_relation_field = ""
 
-    def get_url(self) -> str:
+    def get_url(self, action: str = "detail") -> str:
         """Generate a URL to a representation of the model in the webapp."""
-        url = reverse(
-            f"{self.get_url_pattern_name_prefix()}-ui-detail",
-            kwargs={"sid": getattr(self, self.url_relation_field).sid},
-        )
-        return f"{url}{self.url_suffix}"
+        if action == "detail":
+            url = reverse(
+                f"{self.get_url_pattern_name_prefix()}-ui-detail",
+                kwargs={"sid": getattr(self, self.url_relation_field).sid},
+            )
+            return f"{url}{self.url_suffix}"
+        return super().get_url(action)
