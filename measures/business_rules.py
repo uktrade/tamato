@@ -1,6 +1,5 @@
 """Business rules for measures."""
 from datetime import date
-from datetime import timedelta
 from typing import Mapping
 from typing import Optional
 
@@ -1257,11 +1256,14 @@ class ME67(BusinessRule):
                 valid_between__startswith__lte=measure.valid_between.lower,
             )
             & (
-                # because of the way that dates are queried, we need to add one day to the upper
-                # for the correct behaviour
+                # Because the top of the date range is open - comparisons performed with less-than don't include
+                # the top value
+                # e.g. if a date range is 1/1/2020 to 31/1/2020, in the database the upper will be stored as 1/2/2020
+                # which means we must use gt rather than gte here. See the tests for ME67 for clarity - they all work
+                # correctly and the queried dates are all exactly within the ranges, no days space so we can be
+                # confident this rule is behaving as expected.
                 Q(
-                    valid_between__endswith__gte=measure.valid_between.upper
-                    + timedelta(days=1),
+                    valid_between__endswith__gt=measure.valid_between.upper,
                 )
                 | Q(valid_between__endswith=None)
             ),
