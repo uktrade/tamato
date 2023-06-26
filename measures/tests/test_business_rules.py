@@ -1667,6 +1667,23 @@ def test_ME66():
         business_rules.ME66(exclusion.transaction).validate(exclusion)
 
 
+def test_ME67(spanning_dates):
+    """The membership period of the excluded geographical area must span the
+    validity period of the measure."""
+    membership_period, measure_period, fully_spans = spanning_dates
+
+    membership = factories.GeographicalMembershipFactory.create(
+        valid_between=membership_period,
+    )
+    exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
+        excluded_geographical_area=membership.member,
+        modified_measure__geographical_area=membership.geo_group,
+        modified_measure__valid_between=measure_period,
+    )
+    with raises_if(BusinessRuleViolation, not fully_spans):
+        business_rules.ME67(exclusion.transaction).validate(exclusion)
+
+
 def test_ME68():
     """The same geographical area can only be excluded once by the same
     measure."""
