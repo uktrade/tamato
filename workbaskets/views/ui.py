@@ -18,6 +18,7 @@ from django.urls import reverse
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
+from django.views.generic import UpdateView
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.base import TemplateView
 from django.views.generic.base import View
@@ -96,6 +97,29 @@ class WorkBasketCreate(PermissionRequiredMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         return kwargs
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class WorkBasketUpdate(PermissionRequiredMixin, UpdateView):
+    """UI endpoint for editing a workbasket's title and description."""
+
+    permission_required = "workbaskets.add_workbasket"
+    template_name = "workbaskets/edit-details.jinja"
+    form_class = forms.WorkbasketUpdateForm
+
+    def get_object(self):
+        return WorkBasket.current(self.request)
+
+    def get_success_url(self):
+        return reverse(
+            "workbaskets:workbasket-ui-confirm-update",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class WorkBasketConfirmUpdate(DetailView):
+    template_name = "workbaskets/confirm_update.jinja"
+    model = WorkBasket
 
 
 class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
