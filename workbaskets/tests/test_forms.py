@@ -4,6 +4,7 @@ from common.tests import factories
 from workbaskets.forms import SelectableObjectField
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.forms import WorkbasketCreateForm
+from workbaskets.validators import tops_jira_number_validator
 
 pytestmark = pytest.mark.django_db
 
@@ -27,10 +28,7 @@ def test_workbasket_create_form_invalid_data():
 
     form = WorkbasketCreateForm(data={"title": "abc", "reason": "test"})
     assert not form.is_valid()
-    assert (
-        "Your TOPS/Jira number must only include numbers. You do not need to add ‘TOPS’ or ‘Jira’ in front of the number."
-        in form.errors["title"]
-    )
+    assert tops_jira_number_validator.message in form.errors["title"]
 
     factories.WorkBasketFactory(title="123321")
     form = WorkbasketCreateForm(data={"title": "123321", "reason": "test"})
