@@ -60,6 +60,12 @@ class WorkbasketCreateForm(forms.ModelForm):
         fields = ("title", "reason")
 
 
+class WorkbasketUpdateForm(WorkbasketCreateForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout[2].value = "Save"
+
+
 class SelectableObjectField(forms.BooleanField):
     """Associates an object instance with a BooleanField."""
 
