@@ -93,16 +93,13 @@ class WorkBasketCreate(PermissionRequiredMixin, CreateView):
         return kwargs
 
 
-@method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketUpdate(PermissionRequiredMixin, UpdateView):
     """UI endpoint for updating a workbasket's title and description."""
 
     permission_required = "workbaskets.add_workbasket"
     template_name = "workbaskets/edit-details.jinja"
     form_class = forms.WorkbasketUpdateForm
-
-    def get_object(self):
-        return WorkBasket.current(self.request)
+    model = WorkBasket
 
     def get_success_url(self):
         return reverse(

@@ -22,7 +22,7 @@ ui_patterns = [
         name="workbasket-ui-create",
     ),
     path(
-        "current/edit-details/",
+        f"<pk>/edit-details/",
         ui_views.WorkBasketUpdate.as_view(),
         name="workbasket-ui-update",
     ),

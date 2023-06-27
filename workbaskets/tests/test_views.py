@@ -87,7 +87,14 @@ def test_workbasket_update_view_updates_workbasket_title_and_description(
 ):
     """Test that a workbasket's title and description can be updated."""
 
-    url = reverse("workbaskets:workbasket-ui-update")
+    session = valid_user_client.session
+    session["workbasket"] = {"id": session_workbasket.pk}
+    session.save()
+
+    url = reverse(
+        "workbaskets:workbasket-ui-update",
+        kwargs={"pk": session_workbasket.pk},
+    )
     new_title = "123321"
     new_description = "Newly updated test description"
     form_data = {

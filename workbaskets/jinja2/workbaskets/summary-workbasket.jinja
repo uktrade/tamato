@@ -8,7 +8,7 @@
   Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Summary
 {% endset %}
 
-{% set change_workbasket_details_link = url("workbaskets:workbasket-ui-update") %}
+{% set change_workbasket_details_link = url("workbaskets:workbasket-ui-update", kwargs={"pk": workbasket.pk}) %}
 
 {% set run_business_rules_form_icon %}
 <form
