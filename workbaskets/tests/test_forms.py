@@ -4,38 +4,9 @@ from common.tests import factories
 from workbaskets.forms import SelectableObjectField
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.forms import WorkbasketCreateForm
+from workbaskets.validators import tops_jira_number_validator
 
 pytestmark = pytest.mark.django_db
-
-
-def test_workbasket_form_validation():
-    form = WorkbasketCreateForm(
-        {
-            "title": "some title",
-            "reason": "",
-        },
-    )
-    assert not form.is_valid()
-    assert "title" in form.errors
-    assert "reason" in form.errors
-
-    form = WorkbasketCreateForm(
-        {
-            "title": "",
-            "reason": "some reason",
-        },
-    )
-    assert not form.is_valid()
-    assert "title" in form.errors
-
-    form = WorkbasketCreateForm(
-        {
-            "title": "some title",
-            "reason": "some reason",
-        },
-    )
-    assert not form.is_valid()
-    assert "title" in form.errors
 
 
 def test_workbasket_create_form_valid_data():
@@ -49,11 +20,20 @@ def test_workbasket_create_form_valid_data():
 def test_workbasket_create_form_invalid_data():
     """Test that WorkbasketCreateForm is not valid when required fields not in
     data."""
-    form = WorkbasketCreateForm(data={})
 
+    form = WorkbasketCreateForm(data={})
     assert not form.is_valid()
     assert "This field is required." in form.errors["title"]
     assert "This field is required." in form.errors["reason"]
+
+    form = WorkbasketCreateForm(data={"title": "abc", "reason": "test"})
+    assert not form.is_valid()
+    assert tops_jira_number_validator.message in form.errors["title"]
+
+    factories.WorkBasketFactory(title="123321")
+    form = WorkbasketCreateForm(data={"title": "123321", "reason": "test"})
+    assert not form.is_valid()
+    assert "Workbasket with this Title already exists." in form.errors["title"]
 
 
 def test_selectable_objects_form():
