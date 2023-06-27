@@ -109,6 +109,8 @@ class ImportBatch(TimestampedMixin):
 
     @property
     def ready_chunks(self):
+        """Return a QuerySet of chunks that have neither a status of DONE
+        or ERRORED - i.e. they have a status of WAITING or RUNNING."""
         return self.chunks.exclude(
             Q(status=ImporterChunkStatus.DONE) | Q(status=ImporterChunkStatus.ERRORED),
         ).defer("chunk_text")
