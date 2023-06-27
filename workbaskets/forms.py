@@ -63,7 +63,20 @@ class WorkbasketCreateForm(forms.ModelForm):
 class WorkbasketUpdateForm(WorkbasketCreateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper.layout[2].value = "Save"
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "title",
+            Field.textarea("reason", rows=5),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
 
 
 class SelectableObjectField(forms.BooleanField):
