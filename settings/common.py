@@ -376,8 +376,12 @@ if VCAP_SERVICES.get("aws-s3-bucket"):
     S3_REGION_NAME = app_bucket_creds["aws_region"]
     S3_ACCESS_KEY_ID = app_bucket_creds["aws_access_key_id"]
     S3_SECRET_ACCESS_KEY = app_bucket_creds["aws_secret_access_key"]
-    HMRC_PACKAGING_STORAGE_BUCKET_NAME = app_bucket_creds["bucket_name"]
-    # IMPORTER_STORAGE_BUCKET_NAME
+
+    for bucket in VCAP_SERVICES["aws-s3-bucket"]:
+        if "packaging" in bucket["name"]:
+            HMRC_PACKAGING_STORAGE_BUCKET_NAME = bucket["credentials"]["bucket_name"]
+        if "importer" in bucket["name"]:
+            IMPORTER_STORAGE_BUCKET_NAME = bucket["credentials"]["bucket_name"]
 else:
     S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
     S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
