@@ -4,6 +4,7 @@ const imagePath = (name) => images(name, true)
 require.context('govuk-frontend/govuk/assets');
 import showHideCheckboxes from './showHideCheckboxes';
 import { initAutocomplete } from './autocomplete';
+import { initAutocompleteProgressiveEnhancement } from './autocompleteProgressiveEnhancement';
 import { initAddNewEnhancement } from './addNewForm';
 import { initCopyToNextDuties } from './copyDuties';
 import initStepNav from './step-by-step-nav';
@@ -21,3 +22,4 @@ initStepNav();
 initAll();
 initCheckboxes();
 initConditionalMeasureConditions();
+initAutocompleteProgressiveEnhancement();

@@ -1,6 +1,24 @@
 {% extends "commodities/detail.jinja" %}
 {% from "components/sort_by.jinja" import sort_by %}
 
+{% set extra_tabs_links = [
+    {
+      "text": "Measures as defined",
+      "href": url('commodity-ui-detail-measures-as-defined', args=[commodity.sid]),
+      "selected": False,
+    },
+    {
+      "text": "Measures on declarable commodities",
+      "href": url('commodity-ui-detail-measures-declarable', args=[commodity.sid]),
+      "selected": True,
+    },
+  ]
+%}
+
+{% block extra_tabs %}
+{{ fake_tabs(extra_tabs_links) }}
+{% endblock %}
+
 {% block tab_content %}
 
 <div class="govuk-grid-row">
@@ -9,7 +27,7 @@
     <p class="govuk-body">Showing only currently active measures</p>
   </div>
   <div class="govuk-grid-column-one-quarter">
-    {% include "includes/commodities/actions.jinja" %}
+    {% include "includes/commodities/measures_actions.jinja" %}
   </div>
 </div>
 

@@ -1254,20 +1254,30 @@ class ME67(BusinessRule):
             Q(
                 member__area_id=exclusion.excluded_geographical_area.area_id,
                 valid_between__startswith__lte=measure.valid_between.lower,
-            )
-            & (
-                # Because the top of the date range is open - comparisons performed with less-than don't include
-                # the top value
-                # e.g. if a date range is 1/1/2020 to 31/1/2020, in the database the upper will be stored as 1/2/2020
-                # which means we must use gt rather than gte here. See the tests for ME67 for clarity - they all work
-                # correctly and the queried dates are all exactly within the ranges, no days space so we can be
-                # confident this rule is behaving as expected.
-                Q(
-                    valid_between__endswith__gt=measure.valid_between.upper,
-                )
-                | Q(valid_between__endswith=None)
             ),
         )
+        if measure.valid_between.upper is None:
+            matching_members_to_exclusion_period = (
+                matching_members_to_exclusion_period.filter(
+                    valid_between__endswith__isnull=True,
+                )
+            )
+        else:
+            # Because the top of the date range is open - comparisons performed with less-than don't include
+            # the top value
+            # e.g. if a date range is 1/1/2020 to 31/1/2020, in the database the upper will be stored as 1/2/2020
+            # which means we must use gt rather than gte here. See the tests for ME67 for clarity - they all work
+            # correctly and the queried dates are all exactly within the ranges, no days space so we can be
+            # confident this rule is behaving as expected.
+            matching_members_to_exclusion_period = (
+                matching_members_to_exclusion_period.filter(
+                    Q(valid_between__endswith__isnull=True)
+                    | Q(
+                        valid_between__endswith__isnull=False,
+                        valid_between__endswith__gt=measure.valid_between.upper,
+                    ),
+                )
+            )
 
         if not matching_members_to_exclusion_period.exists():
             raise self.violation(exclusion)

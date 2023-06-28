@@ -1,0 +1,39 @@
+{% extends "commodities/detail.jinja" %}
+{% from 'macros/create_link.jinja' import create_link %}
+
+{% block content_class %}footnotes{% endblock %}
+
+{% block tab_content %}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-three-quarters">
+    <h2 class="govuk-heading-l">Footnotes</h2>
+  </div>
+  <div class="govuk-grid-column-one-quarter">
+      {% include "includes/commodities/actions.jinja" %}
+  </div>
+</div>
+{% if object.footnote_associations.current() %}
+  {% set table_rows = [] %}
+  {% for association in object.footnote_associations.current().order_by("valid_between") %}
+    {{ table_rows.append([
+        {"text": create_link(association.associated_footnote.get_url(), association.associated_footnote|string) },
+        {"text": association.associated_footnote.descriptions.first().description },
+        {"text": "{:%d %b %Y}".format(association.valid_between.lower) },
+        {"text": "{:%d %b %Y}".format(association.valid_between.upper) if association.valid_between.upper else "—" },
+      ]) or "" }}
+  {% endfor %}
+    {{ govukTable({
+    "head": [
+        {"text": "SID"},
+        {"text": "Description", "classes": "govuk-!-width-two-thirds"},
+        {"text": "Start date"},
+        {"text": "End date"},
+    ],
+    "rows": table_rows
+    }) }}
+{% else %}
+    <p class="govuk-body">This commodity code has no footnotes.</p>
+{% endif %}
+
+{% endblock %}
