@@ -1,5 +1,6 @@
 import pytest
 
+from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from geo_areas.utils import get_all_members_of_geo_groups
@@ -36,7 +37,7 @@ def test_get_all_members(date_ranges):
     factories.GeographicalMembershipFactory.create(
         geo_group=area_group,
         member=country3,
-        valid_between=date_ranges.no_end,
+        valid_between=date_ranges.starts_2_months_ago_to_1_month_ago,
     )
     area_group2 = factories.GeographicalAreaFactory.create(
         area_code=AreaCode.GROUP,
@@ -53,15 +54,10 @@ def test_get_all_members(date_ranges):
         valid_between=date_ranges.no_end,
     )
 
-    origin = factories.QuotaOrderNumberOriginFactory.create(
-        geographical_area=area_group,
-        valid_between=date_ranges.no_end,
-    )
-
-    with override_current_transaction(origin.transaction):
+    with override_current_transaction(Transaction.objects.last()):
         all_geo_areas = get_all_members_of_geo_groups(
-            origin.valid_between,
-            [country4, area_group2],
+            date_ranges.no_end,
+            [area_group, area_group2, country4],
         )
-
-        assert not set(all_geo_areas).difference({country1, country2, country4})
+        assert len(all_geo_areas) == 3
+        assert not all_geo_areas.difference({country1, country2, country4})
