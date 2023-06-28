@@ -7,6 +7,7 @@ def get_all_members_of_geo_groups(validity, geo_areas):
     all_members = set()
     for geo_area in geo_areas:
         if geo_area.area_code == AreaCode.GROUP:
+            # Generate a set of valid members to add to all_members
             all_members.update(
                 {
                     membership.member
