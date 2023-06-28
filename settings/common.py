@@ -378,7 +378,8 @@ if VCAP_SERVICES.get("aws-s3-bucket"):
     S3_SECRET_ACCESS_KEY = app_bucket_creds["aws_secret_access_key"]
 
     for bucket in VCAP_SERVICES["aws-s3-bucket"]:
-        if "packaging" in bucket["name"]:
+        # name is set by us when we are setting up the s3 service
+        if "hmrc-packaging" in bucket["name"]:
             HMRC_PACKAGING_STORAGE_BUCKET_NAME = bucket["credentials"]["bucket_name"]
         if "importer" in bucket["name"]:
             IMPORTER_STORAGE_BUCKET_NAME = bucket["credentials"]["bucket_name"]

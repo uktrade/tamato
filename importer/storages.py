@@ -11,7 +11,6 @@ class CommodityImporterStorage(S3Boto3Storage):
 
         return dict(
             super().get_default_settings(),
-            # TODO update name
             bucket_name=settings.IMPORTER_STORAGE_BUCKET_NAME,
             access_key=settings.S3_ACCESS_KEY_ID,
             secret_key=settings.S3_SECRET_ACCESS_KEY,
