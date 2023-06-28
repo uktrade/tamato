@@ -30,12 +30,14 @@ def import_chunk(
     process, whether it is currently running, errored or done. Once complete it
     is also responsible for finding and setting up the next chunk tasks.
     """
+
     partition_scheme = get_partition_scheme(partition_scheme_setting)
     chunk = models.ImporterXMLChunk.objects.get(pk=chunk_pk)
+    batch = chunk.batch
 
     logger.info(
         "RUNNING CHUNK Batch: %s Record code: %s Chapter heading: %s Chunk number: %d",
-        chunk.batch.name,
+        batch.name,
         chunk.record_code,
         chunk.chapter,
         chunk.chunk_number,
@@ -54,12 +56,31 @@ def import_chunk(
             record_group=record_group,
         )
     except Exception as e:
+        # A single errored chunk puts its parent ImportBatch instance into an
+        # errored state.
+        batch.failed()
+        batch.save()
+
         chunk.status = models.ImporterChunkStatus.ERRORED
         chunk.save()
         raise e
 
     chunk.status = models.ImporterChunkStatus.DONE
     chunk.save()
+
+    batch_errored_chunks = batch.chunks.filter(
+        status=models.ImporterChunkStatus.ERRORED,
+    )
+    if not batch.ready_chunks.exists():
+        if not batch_errored_chunks:
+            # This was batch's last chunk requiring processing and it has no
+            # chunks with status ERRORED, so transition batch to SUCCEEDED.
+            batch.succeeded()
+        else:
+            # This was batch's last chunk requiring processing and it did have
+            # chunks with status ERRORED, so transition batch to ERRORED.
+            batch.errored()
+        batch.save()
 
     find_and_run_next_batch_chunks(
         chunk.batch,
@@ -91,6 +112,7 @@ def setup_chunk_task(
 
     # Call get_partition_scheme before invoking celery so that it can raise ImproperlyConfigured if
     # partition_scheme_setting is invalid.
+
     get_partition_scheme(partition_scheme_setting)
 
     if batch.ready_chunks.filter(
@@ -134,30 +156,38 @@ def find_and_run_next_batch_chunks(
 
     If the batch is a split batch then this is more complicated.
 
-    Split batches require the system to find all the current record codes
-    that have run (or never existed) within a batch, build a dependency tree
-    to then figure out which record codes therefore are now "unblocked" and can
-    start running. Unblocked in this case meaning all the record codes the chunk
-    may be dependent on have run.
+    Split batches require the system to find all the current record codes that
+    have run (or never existed) within a batch, build a dependency tree to then
+    figure out which record codes therefore are now "unblocked" and can start
+    running. Unblocked in this case meaning all the record codes the chunk may
+    be dependent on have run.
 
     Record codes for split jobs are run in chunk order excluding two cases:
 
     1) Commodity codes can be split and run by chapter heading as well.
+
     2) Measures from split files are assumed to be able to run completely
-       asynchronously and so all chunks are setup as tasks once unblocked.
+    asynchronously and so all chunks are setup as tasks once unblocked.
     """
+
     if batch.dependencies.still_running().exists():
+        # batch is waiting for BatchImport dependencies to complete before it
+        # can be processed.
         return
 
-    if not batch.ready_chunks.exists():  # The job is finished in this case.
-        logger.info("finished")
+    if not batch.ready_chunks.exists():
+        # There are no WAITING or RUNNING chunks, so batch is finished.
+        logger.info(f"BatchImport {batch.pk} finished.")
+
         if (
             batch.chunks.exclude(status=models.ImporterChunkStatus.DONE)
             .defer("chunk_text")
             .exists()
         ):
+            # The completed chunks must therefore have a status of ERRORED.
             logger.info("Batch %s errored", batch)
             return
+
         for dependent_batch in models.ImportBatch.objects.depends_on(
             batch,
         ).dependencies_finished():
