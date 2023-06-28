@@ -1,3 +1,5 @@
+from logging import getLogger
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
@@ -6,6 +8,10 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models import TimestampedMixin
+from workbaskets.util import clear_workbasket
+from workbaskets.validators import WorkflowStatus
+
+logger = getLogger(__name__)
 
 
 class ImporterChunkStatus(models.IntegerChoices):
@@ -97,6 +103,19 @@ class ImportBatch(TimestampedMixin):
     )
     def succeeded(self):
         """The import process completed and was successful."""
+        logger.info(f"Transitioning status of import pk={self.pk} to SUCCEEDED.")
+
+        if (
+            not self.workbasket.tracked_models.exists()
+            and self.workbasket.status == WorkflowStatus.EDITING
+        ):
+            # Successful imports with an empty workbasket are archived.
+            logger.info(
+                f"Archiving empty workbasket pk={self.workbasket.pk} "
+                f"associated with SUCCEEDED import pk={self.pk}.",
+            )
+            self.workbasket.archive()
+            self.workbasket.save()
 
     @transition(
         field=status,
@@ -106,9 +125,27 @@ class ImportBatch(TimestampedMixin):
     )
     def failed(self):
         """The import process completed with an error condition."""
+        logger.info(f"Transitioning status of import pk={self.pk} to FAILED.")
+
+        if self.workbasket.tracked_models.exists():
+            logger.info(
+                f"Clearing workbasket pk={self.workbasket.pk} contents "
+                f"associated with FAILED import pk={self.pk}.",
+            )
+            clear_workbasket(self.workbasket)
+
+        if self.workbasket.status == WorkflowStatus.EDITING:
+            logger.info(
+                f"Archiving workbasket pk={self.workbasket.pk} "
+                f"associated with FAILED import pk={self.pk}.",
+            )
+            self.workbasket.archive()
+            self.workbasket.save()
 
     @property
     def ready_chunks(self):
+        """Return a QuerySet of chunks that have neither a status of DONE
+        or ERRORED - i.e. they have a status of WAITING or RUNNING."""
         return self.chunks.exclude(
             Q(status=ImporterChunkStatus.DONE) | Q(status=ImporterChunkStatus.ERRORED),
         ).defer("chunk_text")
