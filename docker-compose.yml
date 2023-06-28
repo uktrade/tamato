@@ -86,7 +86,7 @@ services:
     env_file: .env
     entrypoint: sh
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
-    command: ['-c', 'mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"']
+    command: ['-c', 'mkdir -p /data/importer && mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"']
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s

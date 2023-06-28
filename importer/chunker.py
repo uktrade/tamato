@@ -1,3 +1,4 @@
+import os
 import xml.etree.ElementTree as ET
 from logging import getLogger
 from tempfile import TemporaryFile
@@ -165,9 +166,10 @@ def rewrite_comm_codes(batch: models.ImportBatch, envelope_id: str, record_code=
     Take the given commodity code data and rewrite it in the correct order
     required by the hierarchical tree.
 
-    Commodity codes in seed files often are given out of order which breaks the hierarchical
-    tree representing them. This function takes all transactions with the relevant record_code
-    (400), sorts them and rewrites them in the expected order.
+    Commodity codes in seed files often are given out of order which breaks the
+    hierarchical tree representing them. This function takes all transactions
+    with the relevant record_code (400), sorts them and rewrites them in the
+    expected order.
 
     N.B. This happens entirely within memory.
     """
@@ -219,12 +221,12 @@ def write_transaction_to_chunk(
     """
     Write a given transaction to the relevant chunk.
 
-    Finds the chunk to write to. If the batch is a split_job the chunk is based on record code
-    and possibly chapter heading (for commodities and measures). If the batch is not a split
-    job it simply uses the current or next chunk.
+    Finds the chunk to write to. If the batch is a split_job the chunk is based
+    on record code and possibly chapter heading (for commodities and measures).
+    If the batch is not a split job it simply uses the current or next chunk.
 
-    If a chunk reaches the given size limit it is written to the database and a new chunk
-    started.
+    If a chunk reaches the given size limit it is written to the database and a
+    new chunk started.
     """
     chapter_heading = None
 
@@ -274,11 +276,12 @@ def filter_transaction_records(
     Filters the records in a transaction based on record codes in the record
     group.
 
-    Record identifiers are concatenated record_code and subrecord_code child element values.
+    Record identifiers are concatenated record_code and subrecord_code child
+    element values.
 
-    Returns the a copy of the transaction element with non-matching records removed.
-    Returns the untouched transaction if record_group is none.
-    Returns None if there are no matching records in the transaction.
+    Returns the a copy of the transaction element with non-matching records
+    removed. Returns the untouched transaction if record_group is none. Returns
+    None if there are no matching records in the transaction.
     """
     if record_group is None:
         return elem
@@ -336,6 +339,9 @@ def chunk_taric(
     order.
     """
     chunks_in_progress = {}
+
+    # set file position to start of stream
+    taric3_file.seek(0, os.SEEK_SET)
     xmlparser = ET.iterparse(taric3_file, ["start", "end"])
 
     element_counter = 0

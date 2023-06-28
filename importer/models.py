@@ -2,10 +2,12 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.db.models import QuerySet
+from django_chunk_upload_handlers.clam_av import validate_virus_check_result
 from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models import TimestampedMixin
+from importer.storages import CommodityImporterStorage
 
 
 class ImporterChunkStatus(models.IntegerChoices):
@@ -85,6 +87,11 @@ class ImportBatch(TimestampedMixin):
         "workbaskets.WorkBasket",
         on_delete=models.SET_NULL,
         null=True,
+    )
+    taric_file = models.FileField(
+        storage=CommodityImporterStorage,
+        default="",
+        validators=[validate_virus_check_result],
     )
 
     objects = models.Manager.from_queryset(ImporterQuerySet)()
