@@ -18,6 +18,7 @@ class Migration(migrations.Migration):
             name="taric_file",
             field=models.FileField(
                 default="",
+                blank=True,
                 storage=importer.storages.CommodityImporterStorage,
                 upload_to="",
                 validators=[

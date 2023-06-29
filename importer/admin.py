@@ -24,12 +24,12 @@ class ImportBatchAdmin(
 
     def workbasket_id(self, obj):
         if not obj.workbasket:
-            return "Missing workbasket!"
+            return "No associated workbasket."
         return self.workbasket_id_link(obj.workbasket)
 
     def workbasket_title(self, obj):
         if not obj.workbasket:
-            return "Missing workbasket!"
+            return "No associated workbasket."
         return obj.workbasket.title
 
     def download_taric_envelope(self, obj):

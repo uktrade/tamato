@@ -79,7 +79,7 @@ def import_chunk(
         else:
             # This was batch's last chunk requiring processing and it did have
             # chunks with status ERRORED, so transition batch to ERRORED.
-            batch.errored()
+            batch.failed()
         batch.save()
 
     find_and_run_next_batch_chunks(

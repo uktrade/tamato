@@ -67,7 +67,7 @@ class ImportBatch(TimestampedMixin):
     finish before it can be imported.
     """
 
-    name = models.CharField(max_length=32, unique=True)
+    name = models.CharField(max_length=100, unique=True)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -97,6 +97,7 @@ class ImportBatch(TimestampedMixin):
     taric_file = models.FileField(
         storage=CommodityImporterStorage,
         default="",
+        blank=True,
         validators=[validate_virus_check_result],
     )
 

@@ -116,8 +116,8 @@ class CommodityImportCreateSuccessView(DetailView):
 class DownloadAdminTaricView(RequiresSuperuserMixin, DetailView):
     model = models.ImportBatch
 
-    def download_response(self, import_batch):
-        """Returns a Respond object with associated payload containing the
+    def download_response(self, import_batch: models.ImportBatch) -> HttpResponse:
+        """Returns a response object with associated payload containing the
         contents of `import_batch.taric_file`."""
 
         file_content = import_batch.taric_file.read()
@@ -129,6 +129,6 @@ class DownloadAdminTaricView(RequiresSuperuserMixin, DetailView):
         ] = f'attachment; filename="{import_batch.taric_file.name}"'
         return response
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs) -> HttpResponse:
         import_batch = self.get_object()
         return self.download_response(import_batch)

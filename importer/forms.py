@@ -135,8 +135,6 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
             record_group=record_group,
             status=self.data["status"],
         )
-        batch.imported()
-        batch.save()
         return batch
 
 
