@@ -104,3 +104,21 @@ def test_quota_definition_get_url():
         definition.get_url()
         == f"{reverse('quota-ui-detail', kwargs={'sid': order_number.sid})}#definition-details"
     )
+
+
+def test_quota_order_number_autocomplete_label(date_ranges):
+    """Tests that quota order number autocomplete label displays order number
+    with validity period."""
+    order_number = factories.QuotaOrderNumberFactory.create(
+        order_number="123456",
+        valid_between=date_ranges.earlier,
+    )
+    order_number2 = factories.QuotaOrderNumberFactory.create(
+        order_number="123456",
+        valid_between=date_ranges.no_end,
+    )
+    assert (
+        order_number.autocomplete_label
+        == f"{order_number} ({order_number.valid_between.lower} - {order_number.valid_between.upper})"
+    )
+    assert order_number.autocomplete_label != order_number2.autocomplete_label
