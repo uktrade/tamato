@@ -1,3 +1,5 @@
+import os
+
 import lxml
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Layout
@@ -8,6 +10,8 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 from sentry_sdk import capture_exception
 
@@ -28,7 +32,7 @@ class ImportFormMixin:
 
     def process_file(
         self,
-        file,
+        file: InMemoryUploadedFile,
         batch,
         user,
         record_group=TARIC_RECORD_GROUPS["commodities"],
@@ -131,8 +135,6 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
             record_group=record_group,
             status=self.data["status"],
         )
-        batch.imported()
-        batch.save()
         return batch
 
 
@@ -238,6 +240,12 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
             author=self.request.user,
             name=self.cleaned_data["name"],
             workbasket=workbasket,
+        )
+        # ensure at the start of the file stream
+        self.files["taric_file"].seek(0, os.SEEK_SET)
+        batch.taric_file.save(
+            self.files["taric_file"].name,
+            ContentFile(self.files["taric_file"].read()),
         )
         batch.save()
 

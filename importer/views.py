@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.urls import reverse_lazy
@@ -110,3 +111,24 @@ class CommodityImportCreateSuccessView(DetailView):
 
     template_name = "eu-importer/import-success.jinja"
     model = models.ImportBatch
+
+
+class DownloadAdminTaricView(RequiresSuperuserMixin, DetailView):
+    model = models.ImportBatch
+
+    def download_response(self, import_batch: models.ImportBatch) -> HttpResponse:
+        """Returns a response object with associated payload containing the
+        contents of `import_batch.taric_file`."""
+
+        file_content = import_batch.taric_file.read()
+        response = HttpResponse(file_content)
+        response["content-type"] = "text/xml"
+        response["content-length"] = len(file_content)
+        response[
+            "content-disposition"
+        ] = f'attachment; filename="{import_batch.taric_file.name}"'
+        return response
+
+    def get(self, request, *args, **kwargs) -> HttpResponse:
+        import_batch = self.get_object()
+        return self.download_response(import_batch)

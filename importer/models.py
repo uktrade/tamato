@@ -4,10 +4,12 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.db.models import QuerySet
+from django_chunk_upload_handlers.clam_av import validate_virus_check_result
 from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models import TimestampedMixin
+from importer.storages import CommodityImporterStorage
 from workbaskets.util import clear_workbasket
 from workbaskets.validators import WorkflowStatus
 
@@ -65,7 +67,7 @@ class ImportBatch(TimestampedMixin):
     finish before it can be imported.
     """
 
-    name = models.CharField(max_length=32, unique=True)
+    name = models.CharField(max_length=100, unique=True)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -91,6 +93,12 @@ class ImportBatch(TimestampedMixin):
         "workbaskets.WorkBasket",
         on_delete=models.SET_NULL,
         null=True,
+    )
+    taric_file = models.FileField(
+        storage=CommodityImporterStorage,
+        default="",
+        blank=True,
+        validators=[validate_virus_check_result],
     )
 
     objects = models.Manager.from_queryset(ImporterQuerySet)()
@@ -144,8 +152,11 @@ class ImportBatch(TimestampedMixin):
 
     @property
     def ready_chunks(self):
-        """Return a QuerySet of chunks that have neither a status of DONE
-        or ERRORED - i.e. they have a status of WAITING or RUNNING."""
+        """
+        Return a QuerySet of chunks that have neither a status of DONE.
+
+        or ERRORED - i.e. they have a status of WAITING or RUNNING.
+        """
         return self.chunks.exclude(
             Q(status=ImporterChunkStatus.DONE) | Q(status=ImporterChunkStatus.ERRORED),
         ).defer("chunk_text")
