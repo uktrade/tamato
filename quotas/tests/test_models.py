@@ -2,6 +2,7 @@ import pytest
 from django.db import IntegrityError
 from django.urls import reverse
 
+from common.serializers import AutoCompleteSerializer
 from common.tests import factories
 from common.tests.util import raises_if
 
@@ -122,3 +123,7 @@ def test_quota_order_number_autocomplete_label(date_ranges):
         == f"{order_number} ({order_number.valid_between.lower} - {order_number.valid_between.upper})"
     )
     assert order_number.autocomplete_label != order_number2.autocomplete_label
+
+    autocomplete = AutoCompleteSerializer()
+    autocomplete_label = autocomplete.to_representation(order_number).get("label")
+    assert order_number.autocomplete_label == autocomplete_label
