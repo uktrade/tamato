@@ -45,4 +45,4 @@ class TaricImportFilter(TamatoFilter):
 
     class Meta:
         model = models.ImportBatch
-        fields = ["search", "status"]
+        fields = ["search", "status", "workbasket__status"]

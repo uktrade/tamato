@@ -10,6 +10,7 @@ from django.test import Client
 from django.urls import reverse
 
 from common.tests import factories
+from importer.models import ImportBatchStatus
 
 TEST_FILES_PATH = path.join(Path(__file__).parents[2], "commodities/tests/test_files")
 
@@ -85,12 +86,6 @@ def test_taric_import_list_view_renders(superuser_client):
     page = BeautifulSoup(str(response.content), "html.parser")
     assert page.find("h1", text="EU Taric import list")
 
-    assert page.find("nav", class_="workbasket-filters")
-    assert page.find("a", text="All")
-    assert page.find("a", text="Imported")
-    assert page.find("a", text="In review")
-    assert page.find("a", text="Completed")
-
     assert page.find("a", href="/import/commodities/")
 
     assert page.find("thead").find("th", text="Taric ID number")
@@ -100,3 +95,101 @@ def test_taric_import_list_view_renders(superuser_client):
 
     assert len(page.find_all("tr", class_="govuk-table__row")) == 6
     assert len(page.find_all("span", class_="status-badge")) == 5
+
+
+def test_import_list_filters_return_correct_imports(superuser_client):
+    # Create imports that don't rely on WB statuses.
+    importing_import = factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.IMPORTING,
+    )
+    failed_import = factories.ImportBatchFactory.create(status=ImportBatchStatus.FAILED)
+
+    # Create workbaskets for complex imports
+    editing_workbasket = factories.WorkBasketFactory.create()
+    published_workbasket = factories.PublishedWorkBasketFactory.create()
+    archived_workbasket = factories.ArchivedWorkBasketFactory.create()
+
+    # create complex imports that rely on wb statuses
+    completed_import = factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=editing_workbasket.id,
+    )
+    published_import = factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=published_workbasket.id,
+    )
+    empty_import = factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=archived_workbasket.id,
+    )
+
+    response = superuser_client.get(reverse("commodity_importer-ui-list"))
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+
+    # Assert filters are rendered
+    assert page.find("nav", class_="workbasket-filters")
+    filter_links = []
+    expected_filter_links = [
+        "/commodity-importer/?status=",
+        "/commodity-importer/?status=IMPORTING",
+        "/commodity-importer/?status=SUCCEEDED",
+        "/commodity-importer/?status=FAILED",
+    ]
+    for link in page.find_all(class_="govuk-link--no-visited-state"):
+        filter_links.append(link.get("href"))
+
+    assert filter_links == expected_filter_links
+
+    #  Assert correct imports are shown under filters
+    url = reverse("commodity_importer-ui-list")
+
+    # Importing filter
+    response = superuser_client.get(f"{url}?status=IMPORTING")
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert len(page.find_all("tr", class_="govuk-table__row")) == 2
+    assert len(page.find_all(class_="status-badge")) == 1
+    assert page.find(class_="status-badge", text="IMPORTING")
+
+    # Errored filter
+    response = superuser_client.get(f"{url}?status=FAILED")
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert len(page.find_all("tr", class_="govuk-table__row")) == 2
+    assert len(page.find_all(class_="status-badge")) == 1
+    assert page.find(class_="status-badge", text="FAILED")
+
+    # Completed filter
+    response = superuser_client.get(
+        f"{url}?status=SUCCEEDED&workbasket__status=EDITING",
+    )
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert len(page.find_all("tr", class_="govuk-table__row")) == 2
+    assert len(page.find_all(class_="status-badge")) == 1
+    assert page.find(class_="status-badge", text="SUCCEEDED")
+    assert page.find("tbody").find("td", text=completed_import.name)
+
+    # Published filter
+    response = superuser_client.get(
+        f"{url}?status=SUCCEEDED&workbasket__status=PUBLISHED",
+    )
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert len(page.find_all("tr", class_="govuk-table__row")) == 2
+    assert len(page.find_all(class_="status-badge")) == 1
+    assert page.find(class_="status-badge", text="SUCCEEDED")
+    assert page.find("tbody").find("td", text=published_import.name)
+
+    # Empty filter
+    response = superuser_client.get(
+        f"{url}?status=SUCCEEDED&workbasket__status=ARCHIVED",
+    )
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert len(page.find_all("tr", class_="govuk-table__row")) == 2
+    assert len(page.find_all(class_="status-badge")) == 1
+    assert page.find(class_="status-badge", text="SUCCEEDED")
+    assert page.find("tbody").find("td", text=empty_import.name)
