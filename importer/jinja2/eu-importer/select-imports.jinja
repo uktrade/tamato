@@ -39,37 +39,37 @@
       <li>
         <a
           href="{{ request.path }}?status="
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if not request.GET.status %}selected-link{% endif %}"
+          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'all' %}selected-link{% endif %}"
         >All</a>
       </li>
       <li>
         <a
           href="{{ request.path }}?status=IMPORTING"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'IMPORTING' %}selected-link{% endif %}"
+          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'importing' %}selected-link{% endif %}"
         >Importing</a>
       </li>
       <li>
         <a
           href="{{ request.path }}?status=SUCCEEDED&workbasket__status=EDITING"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'SUCCEEDED' and request.GET.workbasket__status == 'EDITING' %}selected-link{% endif %}"
+          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'completed' %}selected-link{% endif %}"
         >Completed</a>
       </li>
       <li>
         <a
           href="{{ request.path }}?status=SUCCEEDED&workbasket__status=PUBLISHED"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'SUCCEEDED' and request.GET.workbasket__status == 'PUBLISHED' %}selected-link{% endif %}"
+          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'published' %}selected-link{% endif %}"
         >Published</a>
       </li>
       <li>
         <a
           href="{{ request.path }}?status=SUCCEEDED&workbasket__status=ARCHIVED"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'SUCCEEDED' and request.GET.workbasket__status == 'ARCHIVED' %}selected-link{% endif %}"
+          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'empty' %}selected-link{% endif %}"
         >Empty</a>
       </li>
       <li>
         <a
           href="{{ request.path }}?status=FAILED"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'FAILED' %}selected-link{% endif %}"
+          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'errored' %}selected-link{% endif %}"
         >Errored</a>
       </li>
     </ul>
