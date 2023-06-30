@@ -42,7 +42,7 @@ model_taric_record_count = dict(
         "MeasureType": 2,
         "Measure": 1,
         "MeasurementUnitQualifier": 2,
-        "MeasurementUnit": 2,
+        "MeasurementUnit": 2,  # correct, has dependent
         "Measurement": 1,
         "MonetaryUnit": 2,
         "QuotaAssociation": 1,
@@ -117,6 +117,17 @@ def validate_envelope(envelope_file, workbaskets, skip_declaration=False):
             raise
 
 
+def get_expected_model_taric_record_count(tracked_model):
+    expected_count = model_taric_record_count[tracked_model.__class__.__name__]
+
+    # add clause for possible exclusion of Measurement, based on no measurement qualifier
+    if tracked_model.__class__.__name__ == "Measurement":
+        if not tracked_model.measurement_unit_qualifier:
+            expected_count = 0
+
+    return expected_count
+
+
 def validate_taric_xml_record_order(xml, workbaskets):
     """
     Raise AssertionError if:
@@ -136,9 +147,9 @@ def validate_taric_xml_record_order(xml, workbaskets):
             workbasket_transaction_count += 1
             for tracked_model in tracked_models:
                 # dictionary that maps the tracked model class to taric record count
-                expected_record_count += model_taric_record_count[
-                    tracked_model.__class__.__name__
-                ]
+                expected_record_count += get_expected_model_taric_record_count(
+                    tracked_model,
+                )
 
     envelope_record_count = 0
     envelope_transaction_count = 0
