@@ -290,3 +290,37 @@ class QuotaOrderNumberOriginUpdateForm(
         self.fields[
             "geographical_area"
         ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+
+
+class QuotaDefinitionUpdateForm(
+    ValidityPeriodForm,
+    forms.ModelForm,
+):
+    class Meta:
+        model = models.QuotaDefinition
+        fields = [
+            "valid_between",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_layout()
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Div(
+                "start_date",
+                "end_date",
+                css_class="govuk-!-width-two-thirds",
+            ),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )

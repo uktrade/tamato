@@ -43,6 +43,10 @@
   }) }}
   {% endset %}
 
+  {% set actions_html -%}
+    <a href="{{ url('quota_definition-ui-edit', args=[object.sid])}}" class="govuk-link">Edit</a>
+  {% endset %}
+
   {{ table_rows.append([
     {"text": object_details },
     {"text": quota_data[object.sid].status if quota_data[object.sid] else "-" },
@@ -52,6 +56,7 @@
     {"text": intcomma(object.volume) },
     {"text": intcomma(quota_data[object.sid].balance) if quota_data[object.sid] else "-" },
     {"text": object.measurement_unit.abbreviation|title},
+    {"text": actions_html },
   ]) or "" }}
 {% endfor %}
 
@@ -73,6 +78,7 @@
     {"text": "Volume"},
     {"text": "Balance"},
     {"text": "Measurement unit"},
+    {"text": "Actions"},
   ],
   "rows": table_rows
 }) }}

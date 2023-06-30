@@ -399,3 +399,55 @@ class QuotaOrderNumberOriginConfirmUpdate(
     TrackedModelDetailView,
 ):
     template_name = "quota-origins/confirm-update.jinja"
+
+
+class QuotaDefinitionMixin:
+    model = models.QuotaDefinition
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return models.QuotaDefinition.objects.approved_up_to_transaction(tx)
+
+
+class QuotaDefinitionUpdateMixin(
+    QuotaDefinitionMixin,
+    TrackedModelDetailMixin,
+):
+    form_class = forms.QuotaDefinitionUpdateForm
+    permission_required = ["common.change_trackedmodel"]
+    template_name = "quota-definitions/edit.jinja"
+
+    validate_business_rules = (
+        business_rules.QD7,
+        business_rules.QD8,
+        business_rules.QD10,
+        business_rules.QD11,
+        UniqueIdentifyingFields,
+        UpdateValidity,
+    )
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        object = super().get_result_object(form)
+        return object
+
+
+class QuotaDefinitionUpdate(
+    QuotaDefinitionUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class QuotaDefinitionEditUpdate(
+    QuotaDefinitionUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaDefinitionConfirmUpdate(
+    QuotaDefinitionMixin,
+    TrackedModelDetailView,
+):
+    template_name = "quota-definitions/confirm-update.jinja"

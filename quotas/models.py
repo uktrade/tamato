@@ -256,7 +256,7 @@ class QuotaOrderNumberOriginExclusion(GetTabURLMixin, TrackedModel):
         )
 
 
-class QuotaDefinition(GetTabURLMixin, TrackedModel, ValidityMixin):
+class QuotaDefinition(TrackedModel, ValidityMixin):
     """
     Defines the validity period and quantity for which a quota is applicable.
     This model also represents sub-quotas, via a parent-child recursive relation
@@ -363,6 +363,51 @@ class QuotaDefinition(GetTabURLMixin, TrackedModel, ValidityMixin):
 
     def __str__(self):
         return str(self.sid)
+
+    # TODO: refactor this method as it's the same as in QuotaOrderNumberOrigin
+
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """
+        Generate a URL to a representation of the model in the webapp.
+
+        Callers should handle the case where no URL is returned.
+
+        :param action str: The view type to generate a URL for (default
+            "detail"), eg: "list" or "edit"
+        :rtype Optional[str]: The generated URL
+        """
+        kwargs = {}
+        if action not in ["list", "create"]:
+            kwargs = self.get_identifying_fields()
+        try:
+            if (
+                action == "edit"
+                and self.transaction.workbasket.status == WorkflowStatus.EDITING
+            ):
+                # Edits in WorkBaskets that are in EDITING state get real
+                # changes via DB updates, not newly created UPDATE instances.
+                if self.update_type == UpdateType.CREATE:
+                    action += "-create"
+                elif self.update_type == UpdateType.UPDATE:
+                    action += "-update"
+
+            if action == "detail":
+                url = reverse(
+                    f"{self.get_url_pattern_name_prefix()}-ui-{action}",
+                    kwargs={"sid": getattr(self, self.url_relation_field).sid},
+                )
+            else:
+                url = reverse(
+                    f"{self.slugify_model_name()}-ui-{action}",
+                    kwargs=kwargs,
+                )
+            return f"{url}{self.url_suffix}"
+        except NoReverseMatch:
+            return None
+
+    @classmethod
+    def slugify_model_name(cls):
+        return cls._meta.verbose_name.replace(" ", "_")
 
 
 class QuotaAssociation(TrackedModel):
