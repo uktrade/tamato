@@ -36,7 +36,7 @@ def setup_batch(
 
     for dependency in dependencies or []:
         models.BatchDependencies.objects.create(
-            depends_on=models.ImportBatch.objects.get(name=dependency),
+            depends_on=models.ImportBatch.objects.get(pk=dependency),
             dependent_batch=batch,
         )
 
@@ -71,7 +71,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "-d",
             "--dependencies",
-            help="List of batches that need to finish before the current batch can run",
+            help="List of batches ids(pk) that need to finish before the current batch can run",
             action="append",
         )
         parser.add_argument(

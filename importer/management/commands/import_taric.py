@@ -34,7 +34,7 @@ def import_taric(
         batch = chunk_taric(seed_file, batch, record_group=record_group)
 
     run_batch(
-        batch.name,
+        batch.pk,
         status,
         partition_scheme_setting,
         username,

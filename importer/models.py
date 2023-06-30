@@ -67,7 +67,7 @@ class ImportBatch(TimestampedMixin):
     finish before it can be imported.
     """
 
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -162,7 +162,7 @@ class ImportBatch(TimestampedMixin):
         ).defer("chunk_text")
 
     def __str__(self):
-        return f"Batch {self.name}"
+        return f"Batch pk:{self.pk}, name:{self.name}"
 
 
 class ImporterXMLChunk(TimestampedMixin):

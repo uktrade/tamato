@@ -13,8 +13,8 @@ class TestImportTaricCommand(TestCommandBase):
     TARGET_COMMAND = "run_import_batch"
 
     def test_dry_run(self, capsys):
-        ImportBatch.objects.create(name="55", split_job=False)
-        self.call_command_test("55")
+        batch = ImportBatch.objects.create(name="55", split_job=False)
+        self.call_command_test(batch.pk)
         captured = capsys.readouterr()
         assert captured.out == ""
 
@@ -27,7 +27,7 @@ class TestImportTaricCommand(TestCommandBase):
                 "Error: the following arguments are required: batch",
             ),
             (
-                ["55"],
+                [1],
                 pytest.raises(ImportBatch.DoesNotExist),
                 "ImportBatch matching query does not exist.",
             ),
@@ -44,7 +44,9 @@ class TestImportTaricCommand(TestCommandBase):
 
         out = capsys.readouterr().out
 
-        assert "batch                 The batch Id to be imported" in out
+        print(out)
+
+        assert "batch_id              The batch Id(pk) to be imported" in out
         assert (
             "-s {EDITING,QUEUED,PUBLISHED}, --status {EDITING,QUEUED,PUBLISHED}" in out
         )

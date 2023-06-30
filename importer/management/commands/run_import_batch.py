@@ -10,14 +10,14 @@ from workbaskets.validators import WorkflowStatus
 
 
 def run_batch(
-    batch: str,
+    batch_id: int,
     status: str,
     partition_scheme_setting: str,
     username: str,
     workbasket_id: str = None,
     record_group: Sequence[str] = None,
 ):
-    import_batch = models.ImportBatch.objects.get(name=batch)
+    import_batch = models.ImportBatch.objects.get(pk=batch_id)
 
     find_and_run_next_batch_chunks(
         import_batch,
@@ -34,8 +34,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "batch",
-            help="The batch Id to be imported",
+            "batch_id",
+            help="The batch Id(pk) to be imported",
             type=str,
         )
         parser.add_argument(
@@ -73,7 +73,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         run_batch(
-            batch=options["batch"],
+            batch_id=options["batch_id"],
             status=options["status"],
             partition_scheme_setting=options["partition_scheme"],
             username=options["username"],

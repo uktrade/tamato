@@ -36,7 +36,7 @@ def import_taric_file(
     # Run commands to process the file
     chunk_taric(taric_file, batch, record_group=record_group)
     run_batch(
-        batch=batch.name,
+        batch_id=batch.pk,
         status=status,
         partition_scheme_setting=partition_scheme_setting,
         username=user.username,
