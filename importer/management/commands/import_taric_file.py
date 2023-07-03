@@ -2,13 +2,12 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import MultipleObjectsReturned
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 
 from importer.management.commands.chunk_taric import chunk_taric
 from importer.management.commands.chunk_taric import setup_batch
 from importer.management.commands.run_import_batch import run_batch
+from importer.management.util import ImporterCommandMixin
 from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.validators import WorkflowStatus
@@ -48,7 +47,7 @@ def import_taric_file(
     )
 
 
-class Command(BaseCommand):
+class Command(ImporterCommandMixin, BaseCommand):
     help = "Import data from an EU TARIC XML file into Tamato"
 
     def add_arguments(self, parser):
@@ -91,7 +90,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        user = self.validate_user(options["author"])
+        user = self.get_user(options["author"])
         import_taric_file(
             taric_file=options["taric_file"],
             user=user,
@@ -100,24 +99,3 @@ class Command(BaseCommand):
             status=options["status"],
             partition_scheme_setting=options["partition_scheme"],
         )
-
-    def validate_user(self, username):
-        """Validation to check that the username (email) corresponds to a
-        user."""
-        try:
-            user = User.objects.get(email=username)
-        except ObjectDoesNotExist:
-            self.stdout.write(
-                self.style.ERROR(
-                    f'User with email "{username}" not found. Exiting.',
-                ),
-            )
-            exit(1)
-        except MultipleObjectsReturned:
-            self.stdout.write(
-                self.style.ERROR(
-                    f'Multiple users found with email "{username}". Exiting.',
-                ),
-            )
-            exit(1)
-        return user

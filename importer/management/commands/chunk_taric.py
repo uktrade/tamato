@@ -1,12 +1,11 @@
 from typing import List
 
 from django.contrib.auth.models import User
-from django.core.exceptions import MultipleObjectsReturned
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 
 from importer import models
 from importer.chunker import chunk_taric
+from importer.management.util import ImporterCommandMixin
 from importer.namespaces import TARIC_RECORD_GROUPS
 
 
@@ -46,7 +45,7 @@ def setup_batch(
     return batch
 
 
-class Command(BaseCommand):
+class Command(ImporterCommandMixin, BaseCommand):
     help = "Chunk data from a TARIC XML file into chunks for import"
 
     def add_arguments(self, parser):
@@ -88,7 +87,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        user = self.validate_user(options["author"])
+        user = self.get_user(options["author"])
 
         batch = setup_batch(
             batch_name=options["batch_name"],
@@ -102,24 +101,3 @@ class Command(BaseCommand):
                 batch=batch,
                 record_group=options["commodities"],
             )
-
-    def validate_user(self, username):
-        """Validation to check that the username (email) corresponds to a
-        user."""
-        try:
-            user = User.objects.get(email=username)
-        except ObjectDoesNotExist:
-            self.stdout.write(
-                self.style.ERROR(
-                    f'User with email "{username}" not found. Exiting.',
-                ),
-            )
-            exit(1)
-        except MultipleObjectsReturned:
-            self.stdout.write(
-                self.style.ERROR(
-                    f'Multiple users found with email "{username}". Exiting.',
-                ),
-            )
-            exit(1)
-        return user
