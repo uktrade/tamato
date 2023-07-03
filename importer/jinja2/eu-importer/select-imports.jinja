@@ -2,9 +2,44 @@
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "macros/inline_filter_links.jinja" import inline_filter_links %}
 
 {% set page_title = "EU Taric import list" %}
 {% set list_include = "includes/taric_importer_list.jinja" %}
+
+{% set filter_links_list = [
+    {
+      "text": "All",
+      "href": "?status=",
+      "selected": selected_link == "all",
+    },
+    {
+      "text": "Importing",
+      "href": "?status=IMPORTING",
+      "selected": selected_link == "importing"
+    },
+    {
+      "text": "Completed",
+      "href": "?status=SUCCEEDED&workbasket__status=EDITING",
+      "selected": selected_link == "completed"
+    },
+    {
+      "text": "Published",
+      "href": "?status=SUCCEEDED&workbasket__status=PUBLISHED",
+      "selected": selected_link == "published"
+    },
+    {
+      "text": "Empty",
+      "href": "?status=SUCCEEDED&workbasket__status=Archived",
+      "selected": selected_link == "empty"
+    },
+    {
+      "text": "Errored",
+      "href": "?status=FAILED",
+      "selected": selected_link == "errored"
+    },
+  ]
+%}
 
 
 {% block breadcrumb %}
@@ -35,44 +70,7 @@
 
   <nav class="workbasket-filters">
     <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
-    <ul class="govuk-list">
-      <li>
-        <a
-          href="{{ request.path }}?status="
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'all' %}selected-link{% endif %}"
-        >All</a>
-      </li>
-      <li>
-        <a
-          href="{{ request.path }}?status=IMPORTING"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'importing' %}selected-link{% endif %}"
-        >Importing</a>
-      </li>
-      <li>
-        <a
-          href="{{ request.path }}?status=SUCCEEDED&workbasket__status=EDITING"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'completed' %}selected-link{% endif %}"
-        >Completed</a>
-      </li>
-      <li>
-        <a
-          href="{{ request.path }}?status=SUCCEEDED&workbasket__status=PUBLISHED"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'published' %}selected-link{% endif %}"
-        >Published</a>
-      </li>
-      <li>
-        <a
-          href="{{ request.path }}?status=SUCCEEDED&workbasket__status=ARCHIVED"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'empty' %}selected-link{% endif %}"
-        >Empty</a>
-      </li>
-      <li>
-        <a
-          href="{{ request.path }}?status=FAILED"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if selected_link == 'errored' %}selected-link{% endif %}"
-        >Errored</a>
-      </li>
-    </ul>
+      {{ inline_filter_links(filter_links_list) }}
   </nav>
     
   <hr class="govuk-section-break govuk-section-break--visible">
