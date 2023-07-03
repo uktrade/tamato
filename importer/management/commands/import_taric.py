@@ -1,3 +1,4 @@
+from typing import List
 from typing import Sequence
 
 from django.contrib.auth.models import User
@@ -20,13 +21,13 @@ def import_taric(
     partition_scheme_setting: str,
     name: str,
     split_codes: bool = False,
-    dependencies=None,
+    dependency_ids: List[int] = [],
     record_group: Sequence[str] = None,
 ):
     batch = setup_batch(
         batch_name=name,
         author=author,
-        dependencies=dependencies,
+        dependency_ids=dependency_ids,
         split_on_code=split_codes,
     )
     with open(taric3_file, "rb") as seed_file:
@@ -83,7 +84,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "-d",
             "--dependencies",
-            help="List of batches that need to finish before the current batch can run",
+            help="List of batch IDs(pk) that need to finish before the current batch can run",
+            type=int,
             action="append",
         )
         parser.add_argument(
@@ -105,7 +107,7 @@ class Command(BaseCommand):
             partition_scheme_setting=options["partition_scheme"],
             name=options["name"],
             split_codes=options["split_codes"],
-            dependencies=options["dependencies"],
+            dependency_ids=options["dependencies"],
             record_group=record_group,
         )
 

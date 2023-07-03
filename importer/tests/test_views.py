@@ -163,12 +163,12 @@ def test_taric_import_list_filters_render(superuser_client):
     assert page.find("nav", class_="workbasket-filters")
     filter_links = []
     expected_filter_links = [
-        "/commodity-importer/?status=",
-        "/commodity-importer/?status=IMPORTING",
-        "/commodity-importer/?status=SUCCEEDED&workbasket__status=EDITING",
-        "/commodity-importer/?status=SUCCEEDED&workbasket__status=PUBLISHED",
-        "/commodity-importer/?status=SUCCEEDED&workbasket__status=ARCHIVED",
-        "/commodity-importer/?status=FAILED",
+        "?status=",
+        "?status=IMPORTING",
+        "?status=SUCCEEDED&workbasket__status=EDITING",
+        "?status=SUCCEEDED&workbasket__status=PUBLISHED",
+        "?status=SUCCEEDED&workbasket__status=ARCHIVED",
+        "?status=FAILED",
     ]
     for link in page.find_all(class_="govuk-link--no-visited-state"):
         filter_links.append(link.get("href"))

@@ -30,7 +30,7 @@ def import_taric_file(
     batch = setup_batch(
         batch_name=f"{taric_file}_{current_time}",
         author=user,
-        dependencies=[],
+        dependency_ids=[],
         split_on_code=False,
     )
 

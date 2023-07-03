@@ -82,5 +82,6 @@ class TestImportTaricCommand(TestCommandBase):
         assert "Partition to place transactions in approved" in out
         assert "-s, --split-codes     Split the file based on record codes" in out
         assert "-d DEPENDENCIES, --dependencies DEPENDENCIES" in out
-        assert "List of batches that need to finish before the current" in out
+        assert "List of batch IDs(pk) that need to finish before the" in out
+        assert " current batch can run" in out
         assert "-c, --commodities     Only import commodities" in out

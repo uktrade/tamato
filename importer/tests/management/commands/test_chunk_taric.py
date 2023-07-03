@@ -31,7 +31,7 @@ def test_setup_batch_no_split_with_dependencies_creates_dependencies_records(
         "test_batch_with_deps",
         valid_user,
         False,
-        ["test_batch"],
+        [1],
     )
     assert isinstance(batch_with_deps, ImportBatch)
     assert batch.split_job is False
@@ -145,7 +145,7 @@ class TestChunkTaricCommand(TestCommandBase):
         assert "Split the file based on record codes" in out
 
         assert "-d DEPENDENCIES, --dependencies DEPENDENCIES" in out
-        assert "List of batches that need to finish before the current" in out
-        assert " batch can run" in out
+        assert "List of batches ids(pk) that need to finish before the" in out
+        assert " current batch can run" in out
 
         assert "-C, --commodities     Only import commodities" in out

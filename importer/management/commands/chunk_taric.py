@@ -14,7 +14,7 @@ def setup_batch(
     batch_name: str,
     author: User,
     split_on_code: bool,
-    dependency_ids: List[str],
+    dependency_ids: List[int],
 ) -> models.ImportBatch:
     """
     Sets up a batch import.
@@ -24,7 +24,7 @@ def setup_batch(
     Args:
       batch_name: (str) The name to be stored against the import
       split_on_code: (bool) Indicate if the import should be split on record code
-      dependency_ids: (list(str)) A list of batch ids(pks) that need to be imported before this batch can import.
+      dependency_ids: (list(int)) A list of batch ids(pks) that need to be imported before this batch can import.
       author: (User) The user to be listed as the creator of the file.
 
     Returns:
@@ -75,6 +75,7 @@ class Command(BaseCommand):
             "-d",
             "--dependencies",
             help="List of batches ids(pk) that need to finish before the current batch can run",
+            type=int,
             action="append",
         )
         parser.add_argument(
@@ -93,7 +94,7 @@ class Command(BaseCommand):
             batch_name=options["batch_name"],
             author=user,
             split_on_code=options["split_codes"],
-            dependencies=options["dependencies"],
+            dependency_ids=options["dependencies"],
         )
         with open(options["taric3_file"], "rb") as taric3_file:
             chunk_taric(
