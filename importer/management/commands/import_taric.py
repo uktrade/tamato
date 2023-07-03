@@ -15,7 +15,7 @@ from workbaskets.validators import WorkflowStatus
 
 def import_taric(
     taric3_file: str,
-    username: str,
+    author: User,
     status: str,
     partition_scheme_setting: str,
     name: str,
@@ -23,10 +23,9 @@ def import_taric(
     dependencies=None,
     record_group: Sequence[str] = None,
 ):
-    user = validate_user(username)
     batch = setup_batch(
         batch_name=name,
-        author=user,
+        author=author,
         dependencies=dependencies,
         split_on_code=split_codes,
     )
@@ -37,30 +36,9 @@ def import_taric(
         batch.name,
         status,
         partition_scheme_setting,
-        username,
+        author.username,
         record_group=record_group,
     )
-
-
-def validate_user(self, username):
-    """Validation to check that the user_email corresponds to a user."""
-    try:
-        user = User.objects.get(username=username)
-    except ObjectDoesNotExist:
-        self.stdout.write(
-            self.style.ERROR(
-                f"Username not found. Exiting.",
-            ),
-        )
-        exit(1)
-    except MultipleObjectsReturned:
-        self.stdout.write(
-            self.style.ERROR(
-                f"Multiple users found. Exiting.",
-            ),
-        )
-        exit(1)
-    return user
 
 
 class Command(BaseCommand):
@@ -78,9 +56,8 @@ class Command(BaseCommand):
             type=str,
         )
         parser.add_argument(
-            "-u",
-            "--username",
-            help="The username to use for the owner of the workbaskets created.",
+            "author",
+            help="The email of the user that will be the author of the batch.",
             type=str,
         )
         parser.add_argument(
@@ -117,12 +94,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        user = self.validate_user(options["author"])
         record_group = (
             TARIC_RECORD_GROUPS["commodities"] if options["commodities"] else None
         )
         import_taric(
             taric3_file=options["taric3_file"],
-            username=options["username"],
+            author=user,
             status=options["status"],
             partition_scheme_setting=options["partition_scheme"],
             name=options["name"],
@@ -130,3 +108,24 @@ class Command(BaseCommand):
             dependencies=options["dependencies"],
             record_group=record_group,
         )
+
+    def validate_user(self, username):
+        """Validation to check that the username (email) corresponds to a
+        user."""
+        try:
+            user = User.objects.get(email=username)
+        except ObjectDoesNotExist:
+            self.stdout.write(
+                self.style.ERROR(
+                    f'User with email "{username}" not found. Exiting.',
+                ),
+            )
+            exit(1)
+        except MultipleObjectsReturned:
+            self.stdout.write(
+                self.style.ERROR(
+                    f'Multiple users found with email "{username}". Exiting.',
+                ),
+            )
+            exit(1)
+        return user
