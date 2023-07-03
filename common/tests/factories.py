@@ -1265,7 +1265,6 @@ class ImportBatchFactory(factory.django.DjangoModelFactory):
 
     name = factory.sequence(str)
     author = factory.SubFactory(UserFactory)
-    # status = ImportBatchStatus.SUCCEEDED
     status = ImportBatchStatus.IMPORTING
     split_job = False
     created_at = factory.Faker("date_object")
