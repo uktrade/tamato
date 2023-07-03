@@ -2,7 +2,8 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 
 from importer.management.commands.chunk_taric import chunk_taric
@@ -14,7 +15,7 @@ from workbaskets.validators import WorkflowStatus
 
 
 def import_taric_file(
-    taric_file: InMemoryUploadedFile,
+    taric_file: str,
     user: User,
     workbasket_id=None,
     record_group=TARIC_RECORD_GROUPS["commodities"],
@@ -27,14 +28,16 @@ def import_taric_file(
 
     # Create batch for import
     batch = setup_batch(
-        batch_name=f"{taric_file.name}_{current_time}",
+        batch_name=f"{taric_file}_{current_time}",
         author=user,
         dependencies=[],
         split_on_code=False,
     )
 
     # Run commands to process the file
-    chunk_taric(taric_file, batch, record_group=record_group)
+    with open(taric_file, "rb") as taric_file:
+        batch = chunk_taric(taric_file, batch, record_group=record_group)
+
     run_batch(
         batch=batch.name,
         status=status,
@@ -43,9 +46,6 @@ def import_taric_file(
         record_group=record_group,
         workbasket_id=workbasket_id,
     )
-    # Change the status to Imported once successful
-    batch.imported()
-    batch.save()
 
 
 class Command(BaseCommand):
@@ -58,9 +58,9 @@ class Command(BaseCommand):
             type=str,
         )
         parser.add_argument(
-            "user",
-            help="The user to use as the owner of the workbaskets created, and the author of the batch.",
-            type=User,
+            "author",
+            help="The email of the user that will be the author of the batch.",
+            type=str,
         )
         # Arguments with flags are seen as optional
         parser.add_argument(
@@ -72,7 +72,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "-r",
             "--record_group",
-            help="The record group for the TARIC???",
+            help="A Taric record group which can be used to trigger specific importer behaviour, e.g. for handling commodity code changes",
             type=str,
         )
         parser.add_argument(
@@ -91,11 +91,33 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        user = self.validate_user(options["author"])
         import_taric_file(
             taric_file=options["taric_file"],
-            user=options["user"],
+            user=user,
             workbasket_id=options["workbasket_id"],
             record_group=options["record_group"],
             status=options["status"],
             partition_scheme_setting=options["partition_scheme"],
         )
+
+    def validate_user(self, username):
+        """Validation to check that the username (email) corresponds to a
+        user."""
+        try:
+            user = User.objects.get(email=username)
+        except ObjectDoesNotExist:
+            self.stdout.write(
+                self.style.ERROR(
+                    f'User with email "{username}" not found. Exiting.',
+                ),
+            )
+            exit(1)
+        except MultipleObjectsReturned:
+            self.stdout.write(
+                self.style.ERROR(
+                    f'Multiple users found with email "{username}". Exiting.',
+                ),
+            )
+            exit(1)
+        return user
