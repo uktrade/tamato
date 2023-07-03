@@ -42,7 +42,7 @@ class ImportFormMixin:
     ):
         chunk_taric(file, batch, record_group=record_group)
         run_batch(
-            batch=batch.name,
+            batch_id=batch.pk,
             status=status,
             partition_scheme_setting=partition_scheme_setting,
             username=user.username,
@@ -200,18 +200,6 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
             cleaned_data["name"] = taric_file.name
 
         return cleaned_data
-
-    def clean_taric_file(self):
-        uploaded_taric_file = super().clean_taric_file()
-        # Because none of BatchImport's model fields are taken directly from the
-        # form, we can't use a ModelForm and therefore can't rely upon the
-        # BatchImport.name model field constraint. So do that validation here.
-        if ImportBatch.objects.filter(name=uploaded_taric_file.name):
-            raise ValidationError(
-                f"The uploaded file's name must be unique - "
-                f"{uploaded_taric_file.name} was previously uploaded.",
-            )
-        return uploaded_taric_file
 
     def clean_workbasket_title(self):
         workbasket_title = self.cleaned_data["workbasket_title"]
