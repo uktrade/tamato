@@ -14,6 +14,8 @@ from importer import forms
 from importer import models
 from importer.filters import ImportBatchFilter
 from importer.filters import TaricImportFilter
+from importer.models import ImportBatchStatus
+from workbaskets.validators import WorkflowStatus
 
 
 class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
@@ -69,6 +71,36 @@ class CommodityImportListView(
     queryset = models.ImportBatch.objects.order_by("-created_at")
     template_name = "eu-importer/select-imports.jinja"
     filterset_class = TaricImportFilter
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        import_status = self.request.GET.get("status")
+        workbasket_status = self.request.GET.get("workbasket__status")
+
+        context["selected_link"] = "all"
+
+        if (
+            import_status == ImportBatchStatus.SUCCEEDED
+            and workbasket_status == WorkflowStatus.EDITING
+        ):
+            context["selected_link"] = "completed"
+        elif (
+            import_status == ImportBatchStatus.SUCCEEDED
+            and workbasket_status == WorkflowStatus.PUBLISHED
+        ):
+            context["selected_link"] = "published"
+        elif (
+            import_status == ImportBatchStatus.SUCCEEDED
+            and workbasket_status == WorkflowStatus.ARCHIVED
+        ):
+            context["selected_link"] = "empty"
+        elif import_status == ImportBatchStatus.IMPORTING and workbasket_status == None:
+            context["selected_link"] = "importing"
+        elif import_status == ImportBatchStatus.FAILED and workbasket_status == None:
+            context["selected_link"] = "errored"
+
+        return context
 
 
 class CommodityImportCreateView(

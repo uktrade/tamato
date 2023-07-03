@@ -54,6 +54,7 @@ from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
 from common.validators import UpdateType
+from importer.models import ImportBatchStatus
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
 from workbaskets.models import WorkBasket
@@ -1460,3 +1461,48 @@ def quotas_json():
 def mock_aioresponse():
     with aioresponses() as m:
         yield m
+
+
+@pytest.fixture
+def importing_import_batch():
+    editing_workbasket = factories.WorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.IMPORTING,
+        workbasket_id=editing_workbasket.id,
+    )
+
+
+@pytest.fixture
+def failed_import_batch():
+    editing_workbasket = factories.WorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.FAILED,
+        workbasket_id=editing_workbasket.id,
+    )
+
+
+@pytest.fixture
+def completed_import_batch():
+    editing_workbasket = factories.WorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=editing_workbasket.id,
+    )
+
+
+@pytest.fixture
+def published_import_batch():
+    published_workbasket = factories.PublishedWorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=published_workbasket.id,
+    )
+
+
+@pytest.fixture
+def empty_import_batch():
+    archived_workbasket = factories.ArchivedWorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=archived_workbasket.id,
+    )
