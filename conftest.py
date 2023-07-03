@@ -54,6 +54,7 @@ from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
 from common.validators import UpdateType
+from importer.models import ImportBatchStatus
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
 from workbaskets.models import WorkBasket
@@ -171,9 +172,9 @@ def assert_spanning_enforced(spanning_dates, update_type):
 
     This is useful in implementing tests for business rules of the form:
 
-        When a "contained object" is used in a "container object" the validity
-        period of the "container object" must span the validity period of the
-        "contained object".
+    When a "contained object" is used in a "container object" the validity
+    period of the "container object" must span the validity period of the
+    "contained object".
     """
 
     def check(
@@ -967,8 +968,8 @@ def envelope_storage(s3, s3_bucket_names):
         bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
     )
     assert storage.endpoint_url is settings.S3_ENDPOINT_URL
-    assert storage.access_key is settings.S3_ACCESS_KEY_ID
-    assert storage.secret_key is settings.S3_SECRET_ACCESS_KEY
+    assert storage.access_key is settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID
+    assert storage.secret_key is settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY
     assert storage.bucket_name in s3_bucket_names()
     return storage
 
@@ -1315,11 +1316,12 @@ def unordered_transactions():
     Fixture that creates some transactions, where one is a draft.
 
     The draft transaction has approved transactions on either side, this allows
-    testing of save_draft and it's callers to verify the transactions are getting
-    sorted.
+    testing of save_draft and it's callers to verify the transactions are
+    getting sorted.
 
-    UnorderedTransactionData is returned, so the user can set the new_transaction partition to DRAFT
-    and while also using an existing_transaction.
+    UnorderedTransactionData is returned, so the user can set the
+    new_transaction partition to DRAFT and while also using an
+    existing_transaction.
     """
     from common.tests.factories import ApprovedTransactionFactory
     from common.tests.factories import FootnoteFactory
@@ -1459,3 +1461,48 @@ def quotas_json():
 def mock_aioresponse():
     with aioresponses() as m:
         yield m
+
+
+@pytest.fixture
+def importing_import_batch():
+    editing_workbasket = factories.WorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.IMPORTING,
+        workbasket_id=editing_workbasket.id,
+    )
+
+
+@pytest.fixture
+def failed_import_batch():
+    editing_workbasket = factories.WorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.FAILED,
+        workbasket_id=editing_workbasket.id,
+    )
+
+
+@pytest.fixture
+def completed_import_batch():
+    editing_workbasket = factories.WorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=editing_workbasket.id,
+    )
+
+
+@pytest.fixture
+def published_import_batch():
+    published_workbasket = factories.PublishedWorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=published_workbasket.id,
+    )
+
+
+@pytest.fixture
+def empty_import_batch():
+    archived_workbasket = factories.ArchivedWorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=archived_workbasket.id,
+    )

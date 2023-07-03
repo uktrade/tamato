@@ -2,9 +2,44 @@
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "macros/inline_filter_links.jinja" import inline_filter_links %}
 
 {% set page_title = "EU Taric import list" %}
 {% set list_include = "includes/taric_importer_list.jinja" %}
+
+{% set filter_links_list = [
+    {
+      "text": "All",
+      "href": "?status=",
+      "selected": selected_link == "all",
+    },
+    {
+      "text": "Importing",
+      "href": "?status=IMPORTING",
+      "selected": selected_link == "importing"
+    },
+    {
+      "text": "Completed",
+      "href": "?status=SUCCEEDED&workbasket__status=EDITING",
+      "selected": selected_link == "completed"
+    },
+    {
+      "text": "Published",
+      "href": "?status=SUCCEEDED&workbasket__status=PUBLISHED",
+      "selected": selected_link == "published"
+    },
+    {
+      "text": "Empty",
+      "href": "?status=SUCCEEDED&workbasket__status=ARCHIVED",
+      "selected": selected_link == "empty"
+    },
+    {
+      "text": "Errored",
+      "href": "?status=FAILED",
+      "selected": selected_link == "errored"
+    },
+  ]
+%}
 
 
 {% block breadcrumb %}
@@ -33,35 +68,7 @@
 
   <nav class="workbasket-filters">
     <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
-    <ul class="govuk-list">
-      <li>TODO: TP2000-920</li>
-      <!--
-      <li>
-        <a
-          href="{{ request.path }}?status="
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if not request.GET.status %}selected-link{% endif %}"
-        >All</a>
-      </li>
-      <li>
-        <a
-          href="{{ request.path }}?status="
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'IMPORTED' %}selected-link{% endif %}"
-        >Imported</a>
-      </li>
-      <li>
-        <a
-          href="{{ request.path }}?status=REVIEW"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'REVIEW' %}selected-link{% endif %}"
-        >In review</a>
-      </li>
-      <li>
-        <a
-          href="{{ request.path }}?status=COMPLETED"
-          class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'COMPLETED' %}selected-link{% endif %}"
-        >Completed</a>
-      </li>
-      -->
-    </ul>
+      {{ inline_filter_links(filter_links_list) }}
   </nav>
     
   <hr class="govuk-section-break govuk-section-break--visible">

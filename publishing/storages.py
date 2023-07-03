@@ -12,10 +12,10 @@ class EnvelopeStorage(S3Boto3Storage):
         return dict(
             super().get_default_settings(),
             bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
-            access_key=settings.S3_ACCESS_KEY_ID,
-            secret_key=settings.S3_SECRET_ACCESS_KEY,
+            access_key=settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID,
+            secret_key=settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY,
             endpoint_url=settings.S3_ENDPOINT_URL,
-            region_name=settings.S3_REGION_NAME,
+            region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
             default_acl="private",
         )
 
@@ -46,10 +46,10 @@ class LoadingReportStorage(S3Boto3Storage):
         return dict(
             super().get_default_settings(),
             bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
-            access_key=settings.S3_ACCESS_KEY_ID,
-            secret_key=settings.S3_SECRET_ACCESS_KEY,
+            access_key=settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID,
+            secret_key=settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY,
             endpoint_url=settings.S3_ENDPOINT_URL,
-            region_name=settings.S3_REGION_NAME,
+            region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
             default_acl="private",
         )
 

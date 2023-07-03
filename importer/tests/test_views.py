@@ -153,3 +153,75 @@ def test_commodity_importer_import_new_failure(file_name, error_msg, valid_user_
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
     assert error_msg in soup.select(".govuk-error-message")[0].text
+
+
+def test_taric_import_list_filters_render(superuser_client):
+    response = superuser_client.get(reverse("commodity_importer-ui-list"))
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert page.find("nav", class_="workbasket-filters")
+    filter_links = []
+    expected_filter_links = [
+        "/commodity-importer/?status=",
+        "/commodity-importer/?status=IMPORTING",
+        "/commodity-importer/?status=SUCCEEDED&workbasket__status=EDITING",
+        "/commodity-importer/?status=SUCCEEDED&workbasket__status=PUBLISHED",
+        "/commodity-importer/?status=SUCCEEDED&workbasket__status=ARCHIVED",
+        "/commodity-importer/?status=FAILED",
+    ]
+    for link in page.find_all(class_="govuk-link--no-visited-state"):
+        filter_links.append(link.get("href"))
+
+    assert filter_links == expected_filter_links
+
+
+@pytest.mark.parametrize(
+    "import_batch,filter_url,expected_status_text",
+    [
+        (
+            "importing_import_batch",
+            "IMPORTING",
+            "IMPORTING",
+        ),
+        (
+            "failed_import_batch",
+            "FAILED",
+            "FAILED",
+        ),
+        (
+            "completed_import_batch",
+            "SUCCEEDED&workbasket__status=EDITING",
+            "SUCCEEDED",
+        ),
+        (
+            "published_import_batch",
+            "SUCCEEDED&workbasket__status=PUBLISHED",
+            "SUCCEEDED",
+        ),
+        (
+            "empty_import_batch",
+            "SUCCEEDED&workbasket__status=ARCHIVED",
+            "SUCCEEDED",
+        ),
+    ],
+)
+def test_import_list_filters_return_correct_imports(
+    superuser_client,
+    import_batch,
+    request,
+    filter_url,
+    expected_status_text,
+):
+    import_batch = request.getfixturevalue(import_batch)
+
+    url = reverse("commodity_importer-ui-list")
+    response = superuser_client.get(f"{url}?status={filter_url}")
+
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
+
+    assert len(page.find_all("tr", class_="govuk-table__row")) == 2
+    assert len(page.find_all(class_="status-badge")) == 1
+    assert page.find(class_="status-badge", text=expected_status_text)
+    assert page.find("tbody").find("td", text=import_batch.name)

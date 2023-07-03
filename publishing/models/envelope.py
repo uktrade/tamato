@@ -262,10 +262,10 @@ class Envelope(TimestampedMixin):
         attribute, False otherwise."""
         s3 = boto3.resource(
             "s3",
-            aws_access_key_id=settings.S3_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY,
+            aws_access_key_id=settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY,
             endpoint_url=settings.S3_ENDPOINT_URL,
-            region_name=settings.S3_REGION_NAME,
+            region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
         )
         bucket = s3.Bucket(settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME)
         objs = bucket.objects.filter(Prefix=self.xml_file.name, MaxKeys=1)
