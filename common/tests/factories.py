@@ -104,6 +104,7 @@ class UserFactory(factory.django.DjangoModelFactory):
         model = "auth.User"
 
     username = factory.sequence(lambda n: f"{factory.Faker('name')}{n}")
+    email = factory.Faker("email")
 
 
 class UserGroupFactory(factory.django.DjangoModelFactory):
@@ -1264,9 +1265,11 @@ class ImportBatchFactory(factory.django.DjangoModelFactory):
 
     name = factory.sequence(str)
     author = factory.SubFactory(UserFactory)
-    status = ImportBatchStatus.SUCCEEDED
+    # status = ImportBatchStatus.SUCCEEDED
+    status = ImportBatchStatus.IMPORTING
     split_job = False
     created_at = factory.Faker("date_object")
+    workbasket = factory.SubFactory(WorkBasketFactory)
 
 
 class ImporterXMLChunkFactory(factory.django.DjangoModelFactory):
