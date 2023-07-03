@@ -12,7 +12,7 @@ def setup_batch(
     batch_name: str,
     author: User,
     split_on_code: bool,
-    dependencies: List[str],
+    dependency_ids: List[str],
 ) -> models.ImportBatch:
     """
     Sets up a batch import.
@@ -22,7 +22,7 @@ def setup_batch(
     Args:
       batch_name: (str) The name to be stored against the import
       split_on_code: (bool) Indicate of the import should be split on record code
-      dependencies: (list(str)) A list of batch names that need to be imported before this batch can import.
+      dependency_ids: (list(str)) A list of batch ids(pks) that need to be imported before this batch can import.
       author: (User) The user that to be listed as the creator of the file.
 
     Returns:
@@ -34,9 +34,9 @@ def setup_batch(
         split_job=split_on_code,
     )
 
-    for dependency in dependencies or []:
+    for dependency_id in dependency_ids or []:
         models.BatchDependencies.objects.create(
-            depends_on=models.ImportBatch.objects.get(pk=dependency),
+            depends_on=models.ImportBatch.objects.get(pk=dependency_id),
             dependent_batch=batch,
         )
 

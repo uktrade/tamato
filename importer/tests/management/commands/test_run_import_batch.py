@@ -44,8 +44,6 @@ class TestImportTaricCommand(TestCommandBase):
 
         out = capsys.readouterr().out
 
-        print(out)
-
         assert "batch_id              The batch Id(pk) to be imported" in out
         assert (
             "-s {EDITING,QUEUED,PUBLISHED}, --status {EDITING,QUEUED,PUBLISHED}" in out
