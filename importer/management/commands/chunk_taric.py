@@ -1,6 +1,8 @@
 from typing import List
 
 from django.contrib.auth.models import User
+from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 
 from importer import models
@@ -21,13 +23,14 @@ def setup_batch(
 
     Args:
       batch_name: (str) The name to be stored against the import
-      split_on_code: (bool) Indicate of the import should be split on record code
+      split_on_code: (bool) Indicate if the import should be split on record code
       dependencies: (list(str)) A list of batch names that need to be imported before this batch can import.
-      author: (User) The user that to be listed as the creator of the file.
+      author: (User) The user to be listed as the creator of the file.
 
     Returns:
       ImportBatch instance, The created ImportBatch object.
     """
+
     batch = models.ImportBatch.objects.create(
         name=batch_name,
         author=author,
@@ -54,13 +57,13 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "batch_name",
-            help="The name of the batch, the Envelope ID is recommended.",
+            help="The name of the batch (Envelope ID is recommended).",
             type=str,
         )
         parser.add_argument(
             "author",
-            help="The user that will be the author of the batch.",
-            type=User,
+            help="The email of the user that will be the author of the batch.",
+            type=str,
         )
         parser.add_argument(
             "-s",
@@ -84,11 +87,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        user = self.validate_user(options["author"])
+
         batch = setup_batch(
-            options["batch_name"],
-            options["author"],
-            options["split_codes"],
-            options["dependencies"],
+            batch_name=options["batch_name"],
+            author=user,
+            split_on_code=options["split_codes"],
+            dependencies=options["dependencies"],
         )
         with open(options["taric3_file"], "rb") as taric3_file:
             chunk_taric(
@@ -96,3 +101,24 @@ class Command(BaseCommand):
                 batch=batch,
                 record_group=options["commodities"],
             )
+
+    def validate_user(self, username):
+        """Validation to check that the username (email) corresponds to a
+        user."""
+        try:
+            user = User.objects.get(email=username)
+        except ObjectDoesNotExist:
+            self.stdout.write(
+                self.style.ERROR(
+                    f'User with email "{username}" not found. Exiting.',
+                ),
+            )
+            exit(1)
+        except MultipleObjectsReturned:
+            self.stdout.write(
+                self.style.ERROR(
+                    f'Multiple users found with email "{username}". Exiting.',
+                ),
+            )
+            exit(1)
+        return user
