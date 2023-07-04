@@ -1372,7 +1372,12 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME67.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME67.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
-        <span class="n">measure</span> <span class="o">=</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span>
+        <span class="kn">from</span> <span class="nn">measures.models</span> <span class="kn">import</span> <span class="n">Measure</span>
+
+        <span class="c1"># Need to get latest version of measure</span>
+        <span class="n">measure</span> <span class="o">=</span> <span class="n">Measure</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">sid</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">geo_area</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span>
         <span class="n">members</span> <span class="o">=</span> <span class="n">geo_area</span><span class="o">.</span><span class="n">members</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
