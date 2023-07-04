@@ -158,8 +158,8 @@ def test_ME67_multiple_member_periods():
 
     business_rules.ME67(exclusion_1_pass.transaction).validate(exclusion_1_pass)
     business_rules.ME67(exclusion_2_pass.transaction).validate(exclusion_2_pass)
-    business_rules.ME67(exclusion_2_pass.transaction).validate(exclusion_3_pass)
-    business_rules.ME67(exclusion_2_pass.transaction).validate(exclusion_4_pass)
+    business_rules.ME67(exclusion_3_pass.transaction).validate(exclusion_3_pass)
+    business_rules.ME67(exclusion_4_pass.transaction).validate(exclusion_4_pass)
 
     with pytest.raises(BusinessRuleViolation) as e:
         business_rules.ME67(exclusion_1_fail.transaction).validate(exclusion_1_fail)
