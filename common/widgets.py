@@ -1,4 +1,6 @@
 from django.forms import widgets
+from django.template import loader
+from django.utils.safestring import mark_safe
 
 
 class RadioSelect(widgets.ChoiceWidget):
@@ -35,3 +37,30 @@ class FormSetFieldWidget(widgets.Widget):
         context = super().get_context(name, value, attrs)
         context["widget"]["nested_forms"] = self.nested_forms
         return context
+
+
+class AutocompleteWidget(widgets.Widget):
+    template_name = "components/autocomplete.jinja"
+
+    def get_context(self, name, value, attrs=None):
+        if attrs is None:
+            attrs = {}
+        display_string = ""
+        if value:
+            display_string = value.structure_code
+            if value.structure_description:
+                display_string = f"{display_string} - {value.structure_description}"
+
+        return {
+            "widget": {
+                "name": name,
+                "value": value.pk if value else None,
+                "display_value": display_string,
+                **self.attrs,
+            },
+        }
+
+    def render(self, name, value, attrs=None, renderer=None):
+        context = self.get_context(name, value, attrs)
+        template = loader.get_template(self.template_name).render(context)
+        return mark_safe(template)

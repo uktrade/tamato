@@ -24,6 +24,11 @@ urlpatterns = [
         name="commodity-ui-detail",
     ),
     path(
+        f"commodities/<sid>/footnotes/",
+        views.CommodityDetailFootnotes.as_view(),
+        name="commodity-ui-detail-footnotes",
+    ),
+    path(
         f"commodities/<sid>/hierarchy/",
         views.CommodityHierarchy.as_view(),
         name="commodity-ui-detail-hierarchy",
@@ -42,5 +47,15 @@ urlpatterns = [
         f"commodities/<sid>/version/",
         views.CommodityVersion.as_view(),
         name="commodity-ui-detail-version",
+    ),
+    path(
+        f"commodities/<sid>/add-footnote/",
+        views.CommodityAddFootnote.as_view(),
+        name="commodity-ui-add-footnote",
+    ),
+    path(
+        f"commodity-footnotes/<pk>/confirm-create/",
+        views.CommodityAddFootnoteConfirm.as_view(),
+        name="commodity-ui-add-footnote-confirm",
     ),
 ]

@@ -18,9 +18,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.forms.renderers import get_default_renderer
 from django.forms.utils import ErrorList
-from django.forms.widgets import Widget
-from django.template import loader
-from django.utils.safestring import mark_safe
 
 from common.util import TaricDateRange
 from common.util import get_model_indefinite_article
@@ -306,33 +303,6 @@ class DescriptionHelpBox(Div):
     template = "components/description_help.jinja"
 
 
-class AutocompleteWidget(Widget):
-    template_name = "components/autocomplete.jinja"
-
-    def get_context(self, name, value, attrs=None):
-        if attrs is None:
-            attrs = {}
-        display_string = ""
-        if value:
-            display_string = value.structure_code
-            if value.structure_description:
-                display_string = f"{display_string} - {value.structure_description}"
-
-        return {
-            "widget": {
-                "name": name,
-                "value": value.pk if value else None,
-                "display_value": display_string,
-                **self.attrs,
-            },
-        }
-
-    def render(self, name, value, attrs=None, renderer=None):
-        context = self.get_context(name, value, attrs)
-        template = loader.get_template(self.template_name).render(context)
-        return mark_safe(template)
-
-
 class DateInputFieldFixed(DateInputField):
     def compress(self, data_list):
         day, month, year = data_list or [None, None, None]
@@ -543,11 +513,11 @@ class FormSet(forms.BaseFormSet):
     """
     Adds the ability to add another form to the formset on submit.
 
-    If the form POST data contains an "ADD" field with the value "1", the formset
-    will be redisplayed with a new empty form appended.
+    If the form POST data contains an "ADD" field with the value "1", the
+    formset will be redisplayed with a new empty form appended.
 
-    Deleting a subform will also redisplay the formset, with the order of the forms
-    preserved.
+    Deleting a subform will also redisplay the formset, with the order of the
+    forms preserved.
     """
 
     extra = 0

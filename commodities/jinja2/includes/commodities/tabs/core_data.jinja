@@ -4,8 +4,8 @@
     {% endif %}
 {% endset %}
 
-<div class="quota__core-data">
-    <div class="quota__core-data__content">
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
         <h2 class="govuk-heading-l">Details</h2>
         {{ govukSummaryList({
             "rows": [
@@ -61,5 +61,8 @@
             },
             ]
         })}}
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+        {% include "includes/commodities/actions.jinja" %}
     </div>
 </div>

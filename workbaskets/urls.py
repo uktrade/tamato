@@ -22,6 +22,11 @@ ui_patterns = [
         name="workbasket-ui-create",
     ),
     path(
+        f"<pk>/edit-details/",
+        ui_views.WorkBasketUpdate.as_view(),
+        name="workbasket-ui-update",
+    ),
+    path(
         "list-all/",
         ui_views.WorkBasketList.as_view(),
         name="workbasket-ui-list-all",
@@ -65,6 +70,11 @@ ui_patterns = [
         f"<pk>/confirm-create/",
         ui_views.WorkBasketConfirmCreate.as_view(),
         name="workbasket-ui-confirm-create",
+    ),
+    path(
+        f"<pk>/confirm-update/",
+        ui_views.WorkBasketConfirmUpdate.as_view(),
+        name="workbasket-ui-confirm-update",
     ),
     path(
         f"current/delete-changes-done/",
