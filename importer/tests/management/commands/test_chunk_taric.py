@@ -31,7 +31,7 @@ def test_setup_batch_no_split_with_dependencies_creates_dependencies_records(
         "test_batch_with_deps",
         valid_user,
         False,
-        [1],
+        [batch.pk],
     )
     assert isinstance(batch_with_deps, ImportBatch)
     assert batch.split_job is False
