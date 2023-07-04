@@ -14,7 +14,7 @@ from importer import models
 from importer.namespaces import make_schema_dataclass
 from importer.namespaces import nsmap
 from importer.namespaces import xsd_schema_paths
-from importer.utils import dependency_tree
+from importer.utils import build_dependency_tree
 
 MAX_FILE_SIZE = 1024 * 1024 * 50  # Will keep chunks roughly close to 50MB
 Tags = make_schema_dataclass(xsd_schema_paths)
@@ -233,6 +233,7 @@ def write_transaction_to_chunk(
     if batch.split_job:
         record_code = get_record_code(transaction)
 
+        dependency_tree = build_dependency_tree()
         if record_code not in dependency_tree:
             return
 
