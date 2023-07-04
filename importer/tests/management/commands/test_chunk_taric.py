@@ -16,7 +16,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_setup_batch_no_split_no_dependencies(valid_user):
-    batch = chunk_taric.setup_batch("test_batch", False, [], valid_user)
+    batch = chunk_taric.setup_batch("test_batch", valid_user, False, [])
     assert isinstance(batch, ImportBatch)
     assert batch.split_job is False
     assert ImporterXMLChunk.objects.filter(batch_id=batch.pk).count() == 0
@@ -26,12 +26,12 @@ def test_setup_batch_no_split_no_dependencies(valid_user):
 def test_setup_batch_no_split_with_dependencies_creates_dependencies_records(
     valid_user,
 ):
-    batch = chunk_taric.setup_batch("test_batch", False, [], valid_user)
+    batch = chunk_taric.setup_batch("test_batch", valid_user, False, [])
     batch_with_deps = chunk_taric.setup_batch(
         "test_batch_with_deps",
-        False,
-        ["test_batch"],
         valid_user,
+        False,
+        [1],
     )
     assert isinstance(batch_with_deps, ImportBatch)
     assert batch.split_job is False
@@ -45,7 +45,7 @@ def test_setup_batch_no_split_with_dependencies_creates_dependencies_records(
 
 
 def test_setup_batch_with_split_no_dependencies(valid_user):
-    batch = chunk_taric.setup_batch("test_batch", True, [], valid_user)
+    batch = chunk_taric.setup_batch("test_batch", valid_user, True, [])
     assert isinstance(batch, ImportBatch)
     assert batch.split_job is True
     assert ImporterXMLChunk.objects.filter(batch_id=batch.pk).count() == 0
@@ -58,9 +58,9 @@ class TestChunkTaricCommand(TestCommandBase):
     def test_dry_run(self, capsys, example_goods_taric_file_location, valid_user):
         initial_chunk_count = ImporterXMLChunk.objects.count()
         self.call_command_test(
-            taric3_file=f"{example_goods_taric_file_location}",
-            batch_name="test_name",
-            author=valid_user,
+            f"{example_goods_taric_file_location}",
+            "test_name",
+            valid_user.email,
         )
 
         # TODO : Currently the command does not output anything
@@ -108,16 +108,17 @@ class TestChunkTaricCommand(TestCommandBase):
             (
                 ["foo", "bar"],
                 pytest.raises(CommandError),
-                "Error: the following arguments are required: batch_name, author",
+                "Error: the following arguments are required: author",
             ),
             (
-                ["foo", "bar", valid_user],
+                ["foo", "bar", "author"],
                 pytest.raises(FileNotFoundError),
                 "No such file or directory",
             ),
         ],
     )
     def test_dry_run_args_errors(self, args, exception_type, error_msg, valid_user):
+        args = [valid_user.email if i == "author" else i for i in args]
         with exception_type as ex:
             self.call_command_test(*args)
 
@@ -136,13 +137,15 @@ class TestChunkTaricCommand(TestCommandBase):
         assert "The TARIC3 file to be parsed." in out
 
         assert "name" in out
-        assert "The name of the batch, the Envelope ID is recommended." in out
+        assert "The name of the batch (Envelope ID is recommended)." in out
+
+        assert "author" in out
 
         assert "-s, --split-codes" in out
         assert "Split the file based on record codes" in out
 
         assert "-d DEPENDENCIES, --dependencies DEPENDENCIES" in out
-        assert "List of batches that need to finish before the current" in out
-        assert " batch can run" in out
+        assert "List of batches ids(pk) that need to finish before the" in out
+        assert " current batch can run" in out
 
         assert "-C, --commodities     Only import commodities" in out

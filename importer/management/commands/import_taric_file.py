@@ -2,19 +2,19 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import BaseCommand
 
 from importer.management.commands.chunk_taric import chunk_taric
 from importer.management.commands.chunk_taric import setup_batch
 from importer.management.commands.run_import_batch import run_batch
+from importer.management.util import ImporterCommandMixin
 from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.validators import WorkflowStatus
 
 
 def import_taric_file(
-    taric_file: InMemoryUploadedFile,
+    taric_file: str,
     user: User,
     workbasket_id=None,
     record_group=TARIC_RECORD_GROUPS["commodities"],
@@ -27,14 +27,16 @@ def import_taric_file(
 
     # Create batch for import
     batch = setup_batch(
-        batch_name=f"{taric_file.name}_{current_time}",
+        batch_name=f"{taric_file}_{current_time}",
         author=user,
-        dependencies=[],
+        dependency_ids=[],
         split_on_code=False,
     )
 
     # Run commands to process the file
-    chunk_taric(taric_file, batch, record_group=record_group)
+    with open(taric_file, "rb") as taric_file:
+        batch = chunk_taric(taric_file, batch, record_group=record_group)
+
     run_batch(
         batch_id=batch.pk,
         status=status,
@@ -43,12 +45,9 @@ def import_taric_file(
         record_group=record_group,
         workbasket_id=workbasket_id,
     )
-    # Change the status to Imported once successful
-    batch.imported()
-    batch.save()
 
 
-class Command(BaseCommand):
+class Command(ImporterCommandMixin, BaseCommand):
     help = "Import data from an EU TARIC XML file into Tamato"
 
     def add_arguments(self, parser):
@@ -58,9 +57,9 @@ class Command(BaseCommand):
             type=str,
         )
         parser.add_argument(
-            "user",
-            help="The user to use as the owner of the workbaskets created, and the author of the batch.",
-            type=User,
+            "author",
+            help="The email of the user that will be the author of the batch.",
+            type=str,
         )
         # Arguments with flags are seen as optional
         parser.add_argument(
@@ -72,7 +71,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "-r",
             "--record_group",
-            help="The record group for the TARIC???",
+            help="A Taric record group which can be used to trigger specific importer behaviour, e.g. for handling commodity code changes",
             type=str,
         )
         parser.add_argument(
@@ -91,9 +90,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        user = self.get_user(options["author"])
         import_taric_file(
             taric_file=options["taric_file"],
-            user=options["user"],
+            user=user,
             workbasket_id=options["workbasket_id"],
             record_group=options["record_group"],
             status=options["status"],
