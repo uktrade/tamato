@@ -158,8 +158,8 @@ def test_ME67_multiple_member_periods():
 
     business_rules.ME67(exclusion_1_pass.transaction).validate(exclusion_1_pass)
     business_rules.ME67(exclusion_2_pass.transaction).validate(exclusion_2_pass)
-    business_rules.ME67(exclusion_2_pass.transaction).validate(exclusion_3_pass)
-    business_rules.ME67(exclusion_2_pass.transaction).validate(exclusion_4_pass)
+    business_rules.ME67(exclusion_3_pass.transaction).validate(exclusion_3_pass)
+    business_rules.ME67(exclusion_4_pass.transaction).validate(exclusion_4_pass)
 
     with pytest.raises(BusinessRuleViolation) as e:
         business_rules.ME67(exclusion_1_fail.transaction).validate(exclusion_1_fail)
@@ -224,11 +224,52 @@ def test_ME67_with_end_dates_in_range():
     )
 
 
-#  business_rules.ME67(exclusion_1_pass.transaction).validate(exclusion_1_pass)
-#
-#
-#  with pytest.raises(BusinessRuleViolation) as e:
-#      business_rules.ME67(exclusion_1_fail.transaction).validate(exclusion_1_fail)
-#      assert str(e) == "<ExceptionInfo for raises contextmanager>"
-#
-#
+def test_ME67_gets_latest_version_of_measure():
+    """
+    When checking against exclusions, the rule check historically looked at the
+    old version of the measure.
+
+    This text verifies the fix correctly queries the latest version of the
+    measure, where the measure may also be updated in the same workbasket
+    """
+
+    # setup, create measure with origin as geo group
+    approved_transaction = factories.ApprovedTransactionFactory.create()
+
+    validity = TaricDateRange(date(2021, 1, 1), date(2022, 1, 1))
+    validity2 = TaricDateRange(date(2021, 6, 1), date(2022, 1, 1))
+    geo_group = factories.GeoGroupFactory.create(
+        valid_between=validity,
+        transaction=approved_transaction,
+    )
+    geo_member = factories.GeographicalMembershipFactory.create(
+        geo_group=geo_group,
+        valid_between=validity2,
+        transaction=approved_transaction,
+    )
+
+    # Create measure in history
+    original_measure = factories.MeasureFactory.create(
+        transaction=approved_transaction,
+        geographical_area=geo_group,
+        valid_between=validity,
+    )
+
+    draft_transaction = factories.UnapprovedTransactionFactory.create()
+
+    # Update measure in draft workbasket with new start date
+    original_measure.new_version(
+        workbasket=draft_transaction.workbasket,
+        transaction=draft_transaction,
+        valid_between=validity2,
+    )
+    measure_exclusion = factories.MeasureExcludedGeographicalAreaFactory(
+        transaction=draft_transaction,
+        modified_measure=original_measure,
+        excluded_geographical_area=geo_member.member,
+    )
+
+    # ME67 should not throw an exception in this case, as it will use the measures draft date in the check
+    business_rules.ME67(measure_exclusion.transaction).validate(
+        measure_exclusion,
+    )

@@ -1243,7 +1243,12 @@ class ME67(BusinessRule):
     """
 
     def validate(self, exclusion):
-        measure = exclusion.modified_measure
+        from measures.models import Measure
+
+        # Need to get latest version of measure
+        measure = Measure.objects.approved_up_to_transaction(self.transaction).get(
+            sid=exclusion.modified_measure.sid,
+        )
 
         geo_area = measure.geographical_area
         members = geo_area.members.approved_up_to_transaction(
