@@ -67,7 +67,7 @@ class GeoAreaCreateDescriptionMixin:
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["described_object"] = GeographicalArea.objects.get(
+        context["described_object"] = GeographicalArea.objects.current().get(
             sid=(self.kwargs.get("sid")),
         )
         return context
@@ -113,7 +113,7 @@ class GeoAreaDescriptionCreate(
 ):
     def get_initial(self):
         initial = super().get_initial()
-        initial["described_geographicalarea"] = GeographicalArea.objects.get(
+        initial["described_geographicalarea"] = GeographicalArea.objects.current().get(
             sid=(self.kwargs.get("sid")),
         )
         return initial
