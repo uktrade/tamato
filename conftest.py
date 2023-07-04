@@ -987,6 +987,20 @@ def loading_report_storage(s3):
     )
 
 
+@pytest.fixture
+def importer_storage(s3):
+    """Patch CommodityImporterStorage with moto so that nothing is really
+    uploaded to s3."""
+    from importer.storages import CommodityImporterStorage
+
+    storage = make_storage_mock(
+        s3,
+        CommodityImporterStorage,
+        bucket_name=settings.IMPORTER_STORAGE_BUCKET_NAME,
+    )
+    return storage
+
+
 @pytest.fixture(
     params=(
         (make_duplicate_record, True),

@@ -101,7 +101,7 @@ def test_upload_taric_form_save(run_batch, chunk_taric, superuser):
         chunk_taric.assert_called_once()
 
 
-def test_commodity_import_form_valid_envelope(superuser):
+def test_commodity_import_form_valid_envelope(superuser, importer_storage):
     """Test that form is valid when given valid xml file."""
     mock_request = MagicMock()
 
@@ -124,10 +124,14 @@ def test_commodity_import_form_valid_envelope(superuser):
     form = forms.CommodityImportForm(data, file_data, request=mock_request)
     assert form.is_valid()
 
-    batch = form.save()
-    assert batch.name.find(file_data["taric_file"].name) != -1
-    assert batch.split_job == False
-    assert batch.author.id == superuser.id
+    with patch(
+        "importer.storages.CommodityImporterStorage.save",
+        wraps=MagicMock(side_effect=importer_storage.save),
+    ):
+        batch = form.save()
+        assert batch.name.find(file_data["taric_file"].name) != -1
+        assert batch.split_job == False
+        assert batch.author.id == superuser.id
 
 
 @pytest.mark.parametrize("file_name,", ("invalid_id", "dtd"))
