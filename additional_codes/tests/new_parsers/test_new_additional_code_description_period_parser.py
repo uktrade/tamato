@@ -53,12 +53,16 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         assert target.described_additionalcode__type__sid == 123
         assert target.described_additionalcode__code == "123"
 
-    def test_import(self):
+    def test_import(self, superuser):
         file_to_import = (
             "./importer_examples/additional_code_description_period_CREATE.xml"
         )
 
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            "Importing stuff",
+            superuser.username,
+        )
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
@@ -91,10 +95,14 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
             # check for issues
             assert len(message.taric_object.issues) == 0
 
-    def test_import_no_description(self):
+    def test_import_no_description(self, superuser):
         file_to_import = "./importer_examples/additional_code_description_period_without_description_CREATE.xml"
 
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            "Importing stuff",
+            superuser.username,
+        )
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1

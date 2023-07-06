@@ -63,12 +63,16 @@ class TestNewAdditionalCodeTypeParser:
         assert target.additional_code__code == "666"
         assert target.additional_code__type__sid == "777"
 
-    def test_import(self):
+    def test_import(self, superuser):
         file_to_import = (
             "./importer_examples/footnote_association_additional_code_CREATE.xml"
         )
 
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            "Importing stuff",
+            superuser.username,
+        )
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
@@ -101,10 +105,15 @@ class TestNewAdditionalCodeTypeParser:
         for message in importer.parsed_transactions[0].parsed_messages:
             assert len(message.taric_object.issues) == 0
 
-    def test_import_invalid_footnote(self):
+    def test_import_invalid_footnote(self, superuser):
         file_to_import = "./importer_examples/footnote_association_additional_code_invalid_footnote_CREATE.xml"
 
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            "Importing stuff",
+            superuser.username,
+        )
+
         target_message = importer.parsed_transactions[0].parsed_messages[2]
         target_taric_object = target_message.taric_object
 

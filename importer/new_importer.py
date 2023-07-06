@@ -132,11 +132,15 @@ class NewImporter:
         message: MessageParser,
         transaction: Transaction,
     ):
-        if hasattr(message.taric_object, "parent_parser"):
+        if message.taric_object.parent_parser is not None:
             # Find parent object and append data to that model
 
             # first search in change set (current or earlier transactions)
-            self.find_object_in_import(transaction)
+            self.find_object_in_import(
+                transaction,
+                message.taric_object.identity_fields_for_parent(),
+                message.object_type,
+            )
 
             # if no match, update TAP data
         else:

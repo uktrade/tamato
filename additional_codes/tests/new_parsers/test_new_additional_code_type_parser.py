@@ -52,10 +52,14 @@ class TestNewAdditionalCodeTypeParser:
         assert target.valid_between_upper == date(2024, 1, 22)
         assert target.application_code == "123"
 
-    def test_import(self):
+    def test_import(self, superuser):
         file_to_import = "./importer_examples/additional_code_type_CREATE.xml"
 
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            "Importing stuff",
+            superuser.username,
+        )
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1

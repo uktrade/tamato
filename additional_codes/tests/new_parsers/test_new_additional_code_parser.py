@@ -54,10 +54,14 @@ class TestNewAdditionalCodeParser:
         assert target.valid_between_lower == date(2023, 1, 22)
         assert target.valid_between_upper == date(2024, 1, 22)
 
-    def test_import_success(self):
+    def test_import_success(self, superuser):
         file_to_import = "./importer_examples/additional_code_CREATE.xml"
 
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            "Importing stuff",
+            superuser.username,
+        )
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
@@ -91,10 +95,14 @@ class TestNewAdditionalCodeParser:
         for message in importer.parsed_transactions[0].parsed_messages:
             assert len(message.taric_object.issues) == 0
 
-    def test_import_invalid_type(self):
+    def test_import_invalid_type(self, superuser):
         file_to_import = "./importer_examples/additional_code_invalid_type_CREATE.xml"
 
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            "Importing stuff",
+            superuser.username,
+        )
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1

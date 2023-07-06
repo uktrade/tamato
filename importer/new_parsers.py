@@ -169,7 +169,7 @@ class NewElementParser:
 
         for model_link in self.model_links:
             # match link to target model for parser - then we can extract the key fields we need to match for the object
-            if model_link.model == self.model:
+            if model_link.model == self.__class__.model:
                 key_fields = {}
                 for model_link_field in model_link.fields:
                     key_fields

@@ -43,12 +43,16 @@ class TestNewAdditionalCodeTypeDescriptionParser:
         assert target.sid == 123  # converts "additional.code.type.id" to sid
         assert target.description == "some description"
 
-    def test_import(self):
+    def test_import(self, superuser):
         file_to_import = (
             "./importer_examples/additional_code_type_description_CREATE.xml"
         )
 
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            "Importing stuff",
+            superuser.username,
+        )
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
@@ -79,10 +83,14 @@ class TestNewAdditionalCodeTypeDescriptionParser:
         for message in importer.parsed_transactions[0].parsed_messages:
             assert len(message.taric_object.issues) == 0
 
-    def test_import_invalid_type(self):
+    def test_import_invalid_type(self, superuser):
         file_to_import = "./importer_examples/additional_code_type_description_without_type_CREATE.xml"
 
-        importer = new_importer.NewImporter(file_to_import)
+        importer = new_importer.NewImporter(
+            file_to_import,
+            "Importing stuff",
+            superuser.username,
+        )
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
