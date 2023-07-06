@@ -8,8 +8,6 @@
   Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Summary
 {% endset %}
 
-{% set change_workbasket_details_link = url("workbaskets:workbasket-ui-update", kwargs={"pk": workbasket.pk}) %}
-
 {% set run_business_rules_form_icon %}
 <form
     method="post"
@@ -61,6 +59,23 @@
   </h2>
 {% endmacro %}
 
+{% macro live_rule_check(context) %}
+<div class="govuk-button-group">
+  <h2 class="govuk-heading-s">
+    Live status : 
+    {% if context == 'in-progress' %}
+      rule check in progress.
+      {{ terminate_rule_check_form }}
+    {% elif context == 'no-checks'%}
+      no rule check performed yet.
+      {{ run_business_rules_form }}
+    {% elif context == 'empty'%}
+      no objects in workbasket.
+    {% endif %}
+  </h2>
+</div>
+{% endmacro %}
+
 {% set terminate_rule_check_form %}
   <form
     method="post"
@@ -78,50 +93,36 @@
   </form>
 {% endset %}
 
-{% if rule_check_in_progress %}
-  {% set live_rule_check_status %}
-    Rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket.
-    {{ rule_check_progress }}.
-    Come back later or refresh to see results.
-  {% endset %}
-  {% set rule_check_button = terminate_rule_check_form %}
-  {% set rule_check_block %}{% endset %}
-
-{% elif workbasket.tracked_model_checks.exists() and not workbasket.unchecked_or_errored_transactions.exists() %}
-  {% set live_rule_check_status = "Passed rule check" %}
-  {% set rule_check_button = run_business_rules_form %}
-  {% set rule_check_block %}
+{% set rule_check_block %}
+  {% if rule_check_in_progress %}
+    {{ live_rule_check('in-progress') }}
+    <p class="govuk-body govuk-!-font-weight-bold">
+      Checking {{ workbasket.tracked_models.count() }} objects in basket.
+      {{rule_check_progress}}.
+      Come back later or refresh to see results.
+    </p>
+  {% elif workbasket.tracked_model_check_errors.exists() %}
+    <div class="govuk-error-summary" aria-labelledby="summary-title" role="alert" data-module="govuk-error-summary">
+      {{ rule_check_result_content() }} 
+      <a href="{{ url('workbaskets:workbasket-ui-violations') }}" class="govuk-button govuk-button--primary">View violations</a>
+    </div>
+  {% elif workbasket.tracked_model_checks.exists() and 
+    not workbasket.unchecked_or_errored_transactions.exists() %}
     <div class="govuk-notification-banner govuk-notification-banner--success"   
       aria-labelledby="summary-title" role="region" data-module="govuk-notification-banner">
       <div class="govuk-notification-banner__content">
-        {{ rule_check_result_content() }}
+        {{ rule_check_result_content() }} 
         <a href="{{ url('publishing:packaged-workbasket-queue-ui-create')}}" class="govuk-button govuk-button--primary">
           Send to packaging queue
         </a>
       </div>
     </div>
-  {% endset %}
-
-{% elif workbasket.tracked_model_check_errors.exists() and not rule_check_in_progress %}
-  {% set live_rule_check_status = "Failed rule check" %}
-  {% set rule_check_button = run_business_rules_form %}
-  {% set rule_check_block %}
-    <div class="govuk-error-summary" aria-labelledby="summary-title" role="alert" data-module="govuk-error-summary">
-      {{ rule_check_result_content() }}
-      <a href="{{ url('workbaskets:workbasket-ui-violations') }}" class="govuk-button govuk-button--primary">View violations</a>
-    </div>
-  {% endset %}
-
-{% elif workbasket.tracked_models.exists() %}
-  {% set live_rule_check_status = "No rule check performed yet" %}
-  {% set rule_check_button = run_business_rules_form %}
-  {% set rule_check_block %}{% endset %}
-
-{% else %}
-  {% set live_rule_check_status = "No objects in workbasket" %}
-  {% set rule_check_button %}{% endset %}
-  {% set rule_check_block %}{% endset %}
-{% endif %}
+  {% elif workbasket.tracked_models.exists() %}    
+    {{ live_rule_check('no-checks') }}    
+  {% else %}
+    {{ live_rule_check('empty') }}    
+  {% endif %}
+{% endset %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -133,54 +134,14 @@
   }}
 {% endblock %}
 
+
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
     {{ page_title }}
   </h1>
-
   {{ navigation(request, "summary") }}
 
   {{ rule_check_block }}
-
-  <dl class="govuk-summary-list">
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        TOPS/Jira number
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ workbasket.title }}
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href={{ change_workbasket_details_link }}>
-          Change<span class="govuk-visually-hidden">TOPS/Jira number</span>
-        </a>
-      </dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        Description
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ workbasket.reason }}
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href={{ change_workbasket_details_link }}>
-          Change<span class="govuk-visually-hidden">description</span>
-        </a>
-      </dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        Live status
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ live_rule_check_status }}
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        {{ rule_check_button }}
-      </dd>
-    </div>
-  </dl>
 
   {% include "includes/workbaskets/workbasket-selectable-items.jinja" %}
 {% endblock %}

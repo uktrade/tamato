@@ -9,8 +9,6 @@ from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
-from common.validators import ApplicabilityCode
-from geo_areas import constants
 from geo_areas.validators import AreaCode
 from measures import forms
 from measures.forms import MEASURE_COMMODITIES_FORMSET_PREFIX
@@ -163,7 +161,7 @@ def test_measure_forms_quota_order_number_valid_data(quota_order_number):
 
 def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
     }
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
@@ -180,7 +178,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions(erga_omnes):
     geo_area2 = factories.GeographicalAreaFactory.create()
     formset_prefix = "erga_omnes_exclusions_formset"
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": geo_area2.pk,
         "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": "",
@@ -209,7 +207,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_delete(erga_omn
     FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.ERGA_OMNES,
         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-0-DELETE": "1",
         "submit": "submit",
@@ -232,7 +230,7 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions(erga_omnes):
     geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
         "submit": "submit",
@@ -258,7 +256,7 @@ def test_measure_forms_geo_area_valid_data_geo_group_exclusions_delete(erga_omne
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         "geographical_area_group-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
         "geo_group_exclusions_formset-0-DELETE": "1",
@@ -283,7 +281,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_add(erga_omnes)
     FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
-        "geo_area": constants.GeoAreaType.ERGA_OMNES,
+        "geo_area": forms.GeoAreaType.ERGA_OMNES,
         "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": geo_area1.pk,
         "erga_omnes_exclusions_formset-ADD": "1",
         "submit": "submit",
@@ -300,7 +298,7 @@ def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions_add(erga_omnes)
 def test_measure_forms_geo_area_valid_data_geo_group(erga_omnes):
     geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": geo_group.pk,
         "submit": "submit",
     }
@@ -319,7 +317,7 @@ def test_measure_forms_geo_area_valid_data_countries_submit(erga_omnes):
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_area2 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.COUNTRY,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
         "submit": "submit",
@@ -346,7 +344,7 @@ def test_measure_forms_geo_area_valid_data_countries_delete(erga_omnes):
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_area2 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.COUNTRY,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-1-geographical_area_country_or_region": geo_area2.pk,
         "country_region_formset-DELETE": "on",
@@ -371,7 +369,7 @@ def test_measure_forms_geo_area_valid_data_countries_add(erga_omnes):
     FormSet.is_valid()."""
     geo_area1 = factories.GeographicalAreaFactory.create()
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.COUNTRY,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
         "country_region_formset-0-geographical_area_country_or_region": geo_area1.pk,
         "country_region_formset-ADD": "1",
         "submit": "submit",
@@ -389,7 +387,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group_missing_field(erga_omnes)
     """Test that GeoGroupForm raises a field required error when null value is
     passed to geographical_area_group field."""
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         "geographical_area-geographical_area_group": None,
         "submit": "submit",
     }
@@ -408,7 +406,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes
     whose area_code is not AreaCode.GROUP."""
     geo_area1 = factories.GeographicalAreaFactory.create(area_code=AreaCode.REGION)
     data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.GROUP,
         "geographical_area-geographical_area_group": geo_area1.pk,
         "submit": "submit",
     }
@@ -430,7 +428,7 @@ def test_measure_forms_geo_area_invalid_data_geo_group_invalid_choice(erga_omnes
     [
         (
             {
-                f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.COUNTRY,
+                f"{GEO_AREA_FORM_PREFIX}-geo_area": forms.GeoAreaType.COUNTRY,
                 "country_region_formset-0-geographical_area_country_or_region": "",
                 "submit": "submit",
             },
@@ -592,25 +590,6 @@ def test_measure_forms_commodity_and_duties_form_invalid(
     )
     assert not form.is_valid()
     assert error_message in form.errors["commodity"]
-
-
-def test_measure_forms_commodity_and_duties_form_duties_not_permitted():
-    """Test that form is invalid when a duty is specified on a commodity but not
-    permitted for measure type."""
-    measure_type = factories.MeasureTypeFactory.create(
-        measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
-    )
-    form = forms.MeasureCommodityAndDutiesForm(
-        data={"duties": "123%"},
-        prefix="",
-        measure_type=measure_type,
-    )
-
-    assert not form.is_valid()
-    assert (
-        f"Duties cannot be added to a commodity for measure type {measure_type}"
-        in form.errors["duties"]
-    )
 
 
 @pytest.mark.parametrize(
@@ -921,25 +900,6 @@ def test_measure_forms_conditions_wizard_applicable_duty(
 
     if not is_valid:
         assert "Enter a valid duty sentence." in form.errors["applicable_duty"]
-
-
-def test_measure_forms_conditions_wizard_applicable_duty_not_permitted():
-    """Test that form is invalid when a duty is specified on a condition but not
-    permitted for measure type."""
-    measure_type = factories.MeasureTypeFactory.create(
-        measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
-    )
-    form = forms.MeasureConditionsWizardStepForm(
-        data={"applicable_duty": "123%"},
-        prefix="",
-        measure_type=measure_type,
-    )
-
-    assert not form.is_valid()
-    assert (
-        f"Duties cannot be added to a condition for measure type {measure_type}"
-        in form.errors["applicable_duty"]
-    )
 
 
 def test_measure_forms_conditions_clears_unneeded_certificate(date_ranges):
@@ -1293,7 +1253,7 @@ def measure_conditions_incorrect_order_data():
         (
             measure_conditions_different_actions_data,
             True,
-            "All conditions of the same condition code must have the same resulting action, except for the negative action code pair.",
+            "All conditions of the same condition code must have the same resulting action.",
         ),
         (
             measure_conditions_duplicate_price_data,
@@ -1364,12 +1324,9 @@ def test_measure_formset_invalid_duplicate_certs(date_ranges, duty_sentence_pars
         )
 
 
-def test_measure_formset_conditions_action_field_queryset(
+def test_measure_formset_conditions_field_queryset(
     date_ranges,
 ):
-    """Tests measure actions select field for create & edit measure conditons
-    Create measure conditions should not return negative action codes While Edit
-    measure conditions should return all aciton codes."""
     (
         positive_action,
         negative_action,
@@ -1392,64 +1349,3 @@ def test_measure_formset_conditions_action_field_queryset(
     assert positive_action in form["action"].field.queryset
     assert single_action in form["action"].field.queryset
     assert negative_action not in form["action"].field.queryset
-
-    edit_form = forms.MeasureConditionsForm(
-        data={},
-        prefix=MEASURE_CONDITIONS_FORMSET_PREFIX,
-        instance=None,
-    )
-
-    assert edit_form
-    assert positive_action in edit_form["action"].field.queryset
-    assert single_action in edit_form["action"].field.queryset
-    assert negative_action in edit_form["action"].field.queryset
-
-
-@pytest.mark.parametrize(
-    "commodities_data, conditions_data, expected_valid",
-    [
-        ([{"duties": "123%"}], [{"applicable_duty": ""}], True),
-        ([{"duties": ""}], [{"applicable_duty": "321%"}], True),
-        ([{"duties": ""}], [{"applicable_duty": ""}], False),
-    ],
-)
-def test_measure_review_form_validates_components_applicability_mandatory(
-    commodities_data,
-    conditions_data,
-    expected_valid,
-):
-    """Test that form validates at least one duty is specified on either a
-    commodity or a condition where component is mandatory for measure type."""
-    measure_type = factories.MeasureTypeFactory.create(
-        measure_component_applicability_code=ApplicabilityCode.MANDATORY,
-    )
-    form = forms.MeasureReviewForm(
-        data={},
-        measure_type=measure_type,
-        commodities_data=commodities_data,
-        conditions_data=conditions_data,
-    )
-    assert form.is_valid() == expected_valid
-    if not expected_valid:
-        assert (
-            f"You must specify at least one duty on either a commodity or a condition for measure type {measure_type}"
-            in form.errors["__all__"]
-        )
-
-
-def test_measure_review_form_validates_components_applicability_exclusivity(
-    measure_type,
-):
-    """Test that the form is invalid when a duty has been specified on both a
-    commodity and a condition."""
-    form = forms.MeasureReviewForm(
-        data={},
-        measure_type=measure_type,
-        commodities_data=[{"duties": "123%"}],
-        conditions_data=[{"applicable_duty": "321%"}],
-    )
-    assert not form.is_valid()
-    assert (
-        "A duty cannot be specified on both commodities and conditions"
-        in form.errors["__all__"]
-    )

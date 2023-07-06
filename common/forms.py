@@ -16,16 +16,17 @@ from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
+from django.forms import TypedChoiceField
+from django.forms import formsets
 from django.forms.renderers import get_default_renderer
 from django.forms.utils import ErrorList
+from django.forms.widgets import Widget
+from django.template import loader
+from django.utils.safestring import mark_safe
 
 from common.util import TaricDateRange
 from common.util import get_model_indefinite_article
-from common.widgets import FormSetFieldWidget
 from common.widgets import RadioNestedWidget
-
-MESSAGE_FORM_MIXIN = "This field requires the form to use BindNestedFormMixin"
-MESSAGE_BIND_FORMS = "Nested forms must be instantiated with bind_nested_forms in the subclass's __init__"
 
 
 class BindNestedFormMixin:
@@ -34,26 +35,6 @@ class BindNestedFormMixin:
 
     in order to instantiate and validate nested forms.
     """
-
-    def get_bound_form(self, form_class, *args, **kwargs):
-        if issubclass(form_class, FormSet):
-            formset_kwargs = kwargs.copy()
-            if "initial" in formset_kwargs:
-                formset_kwargs.pop("initial")
-            formset_initial = None
-            if kwargs.get("initial"):
-                formset_initial = kwargs.get("initial").get(
-                    form_class.prefix,
-                )
-
-            bound_form = form_class(
-                *args,
-                **formset_kwargs,
-                initial=formset_initial,
-            )
-        else:
-            bound_form = form_class(*args, **kwargs)
-        return bound_form
 
     def bind_nested_forms(self, *args, **kwargs):
         if kwargs.get("instance"):
@@ -66,62 +47,61 @@ class BindNestedFormMixin:
                     nested_forms = []
 
                     for form_class in form_list:
-                        nested_forms.append(
-                            self.get_bound_form(form_class, *args, **kwargs),
-                        )
+                        if issubclass(form_class, FormSet):
+                            formset_kwargs = kwargs.copy()
+                            if "initial" in formset_kwargs:
+                                formset_kwargs.pop("initial")
+                            formset_initial = None
+                            if kwargs.get("initial"):
+                                formset_initial = kwargs.get("initial").get(
+                                    form_class.prefix,
+                                )
+
+                            bound_form = form_class(
+                                *args,
+                                **formset_kwargs,
+                                initial=formset_initial,
+                            )
+                        else:
+                            bound_form = form_class(*args, **kwargs)
+                        nested_forms.append(bound_form)
                     all_forms[choice] = nested_forms
                 field.bind_nested_forms(all_forms)
-
-            elif isinstance(field, FormSetField):
-                bound_forms = []
-                for form_class in field.nested_forms:
-                    bound_form = self.get_bound_form(form_class, *args, **kwargs)
-                    bound_forms.append(bound_form)
-                field.bind_nested_forms(bound_forms)
 
     def formset_submit(self):
         nested_formset_submit = [
             field.nested_formset_submit
             for field in self.fields.values()
-            if isinstance(field, RadioNested) or isinstance(field, FormSetField)
+            if isinstance(field, RadioNested)
         ]
         return any(nested_formset_submit)
 
     def is_valid(self):
         return super().is_valid() and not self.formset_submit()
 
-    @staticmethod
-    def clean_form(form, cleaned_data):
-        if form.is_valid():
-            data = form.cleaned_data
-            if isinstance(form, FormSet):
-                # cleaned_data from a formset is a list
-                data = {form.prefix: form.cleaned_data}
-            cleaned_data.update(data)
-
     def clean(self):
         super().clean()
         cleaned_data = self.cleaned_data.copy()
 
-        for field_name in self.cleaned_data.keys():
+        for field_name in self.cleaned_data.keys():  # /PS-IGNORE
             field = self.fields[field_name]
-            if isinstance(field, RadioNested):
+            if isinstance(field, RadioNested):  # /PS-IGNORE
                 all_forms = [
                     form
                     for form_list in field.nested_forms.values()
                     for form in form_list
                 ]
                 for form in all_forms:
-                    self.clean_form(form, cleaned_data)
-
-            elif isinstance(field, FormSetField):
-                for form in field.nested_forms:
-                    self.clean_form(form, cleaned_data)
-
+                    if form.is_valid():
+                        data = form.cleaned_data
+                        if isinstance(form, FormSet):
+                            # cleaned_data from a formset is a list
+                            data = {form.prefix: form.cleaned_data}
+                        cleaned_data.update(data)
         return cleaned_data
 
 
-class RadioNested(forms.TypedChoiceField):
+class RadioNested(TypedChoiceField):
     """
     Radio buttons with a dictionary of nested forms that are displayed when the
     option is selected. Multiple or zero forms or formsets can be nested under
@@ -146,6 +126,8 @@ class RadioNested(forms.TypedChoiceField):
         self.bind_nested_forms(*args, **kwargs)
     """
 
+    MESSAGE_FORM_MIXIN = "This field requires the form to use BindNestedFormMixin"
+    MESSAGE_BIND_FORMS = "Nested forms must be instantiated with bind_nested_forms in the subclass's __init__"
     widget = RadioNestedWidget
 
     def __init__(self, nested_forms=None, *args, **kwargs):
@@ -167,7 +149,7 @@ class RadioNested(forms.TypedChoiceField):
                 assert isinstance(form, forms.Form) or isinstance(
                     form,
                     FormSet,
-                ), MESSAGE_BIND_FORMS
+                ), self.MESSAGE_BIND_FORMS
                 if not form.is_valid():
                     if isinstance(form, FormSet):
                         if form.formset_action is not None:
@@ -186,51 +168,7 @@ class RadioNested(forms.TypedChoiceField):
         self.nested_formset_submit = any(nested_formset_submit)
 
     def get_bound_field(self, form, field_name):
-        assert isinstance(form, BindNestedFormMixin), MESSAGE_FORM_MIXIN
-        return super().get_bound_field(form, field_name)
-
-
-class FormSetField(forms.Field):
-    widget = FormSetFieldWidget
-    template_name = "django/forms/field.html"
-
-    def __init__(self, nested_forms=None, *args, **kwargs):
-        self.nested_forms = nested_forms
-        self.nested_formset_submit = False
-        super().__init__(*args, **kwargs)
-        self.widget.nested_forms = nested_forms
-
-    def bind_nested_forms(self, forms):
-        self.nested_forms = forms
-        self.widget.bind_nested_forms(forms)
-
-    def validate(self, value):
-        super().validate(value)
-        nested_formset_submit = []
-        for form in self.nested_forms:
-            assert isinstance(form, forms.Form) or isinstance(
-                form,
-                FormSet,
-            ), MESSAGE_BIND_FORMS
-            if not form.is_valid():
-                if isinstance(form, FormSet):
-                    if form.formset_action is not None:
-                        nested_formset_submit.append(True)
-                    for errors in form.errors:
-                        for e in errors.values():
-                            if e:
-                                raise ValidationError(e)
-                    for e in form.non_form_errors():
-                        if e:
-                            raise ValidationError(e)
-                else:
-                    for e in form.errors.values():
-                        raise ValidationError(e)
-
-        self.nested_formset_submit = any(nested_formset_submit)
-
-    def get_bound_field(self, form, field_name):
-        assert isinstance(form, BindNestedFormMixin), MESSAGE_FORM_MIXIN
+        assert isinstance(form, BindNestedFormMixin), self.MESSAGE_FORM_MIXIN
         return super().get_bound_field(form, field_name)
 
 
@@ -299,6 +237,33 @@ class HomeForm(forms.Form):
 
 class DescriptionHelpBox(Div):
     template = "components/description_help.jinja"
+
+
+class AutocompleteWidget(Widget):
+    template_name = "components/autocomplete.jinja"
+
+    def get_context(self, name, value, attrs=None):
+        if attrs is None:
+            attrs = {}
+        display_string = ""
+        if value:
+            display_string = value.structure_code
+            if value.structure_description:
+                display_string = f"{display_string} - {value.structure_description}"
+
+        return {
+            "widget": {
+                "name": name,
+                "value": value.pk if value else None,
+                "display_value": display_string,
+                **self.attrs,
+            },
+        }
+
+    def render(self, name, value, attrs=None, renderer=None):
+        context = self.get_context(name, value, attrs)
+        template = loader.get_template(self.template_name).render(context)
+        return mark_safe(template)
 
 
 class DateInputFieldFixed(DateInputField):
@@ -414,40 +379,36 @@ class ValidityPeriodForm(forms.ModelForm):
             if self.instance.valid_between.upper:
                 self.fields["end_date"].initial = self.instance.valid_between.upper
 
-    def clean_validity_period(
-        self,
-        cleaned_data,
-        valid_between_field_name="valid_between",
-        start_date_field_name="start_date",
-        end_date_field_name="end_date",
-    ):
-        start_date = cleaned_data.pop(start_date_field_name, None)
-        end_date = cleaned_data.pop(end_date_field_name, None)
+    def clean(self):
+        cleaned_data = super().clean()
+
+        start_date = cleaned_data.pop("start_date", None)
+        end_date = cleaned_data.pop("end_date", None)
 
         # Data may not be present, e.g. if the user skips ahead in the sidebar
-        valid_between = self.initial.get(valid_between_field_name)
+        valid_between = self.initial.get("valid_between")
         if end_date and start_date and end_date < start_date:
             if valid_between:
                 if start_date != valid_between.lower:
                     self.add_error(
-                        start_date_field_name,
+                        "start_date",
                         "The start date must be the same as or before the end date.",
                     )
-                if end_date != self.initial[valid_between_field_name].upper:
+                if end_date != self.initial["valid_between"].upper:
                     self.add_error(
-                        end_date_field_name,
+                        "end_date",
                         "The end date must be the same as or after the start date.",
                     )
             else:
                 self.add_error(
-                    end_date_field_name,
+                    "end_date",
                     "The end date must be the same as or after the start date.",
                 )
-        cleaned_data[valid_between_field_name] = TaricDateRange(start_date, end_date)
+        cleaned_data["valid_between"] = TaricDateRange(start_date, end_date)
 
         if start_date:
             day, month, year = (start_date.day, start_date.month, start_date.year)
-            self.fields[start_date_field_name].initial = date(
+            self.fields["start_date"].initial = date(
                 day=int(day),
                 month=int(month),
                 year=int(year),
@@ -455,15 +416,12 @@ class ValidityPeriodForm(forms.ModelForm):
 
         if end_date:
             day, month, year = (end_date.day, end_date.month, end_date.year)
-            self.fields[end_date_field_name].initial = date(
+            self.fields["end_date"].initial = date(
                 day=int(day),
                 month=int(month),
                 year=int(year),
             )
 
-    def clean(self):
-        cleaned_data = super().clean()
-        self.clean_validity_period(cleaned_data)
         return cleaned_data
 
 
@@ -622,11 +580,7 @@ class FormSet(forms.BaseFormSet):
         self.initial = initial
 
         if initial:
-            num_initial = (
-                len(initial)
-                if len(initial) == len(formset_initial.values())
-                else len(formset_initial.values())
-            )
+            num_initial = len(initial)
         else:
             num_initial = len(formset_initial.values())
 
@@ -683,14 +637,14 @@ def formset_factory(
     to the formset's attrs.
     """
     if min_num is None:
-        min_num = forms.formsets.DEFAULT_MIN_NUM
+        min_num = formsets.DEFAULT_MIN_NUM
     if max_num is None:
-        max_num = forms.formsets.DEFAULT_MAX_NUM
+        max_num = formsets.DEFAULT_MAX_NUM
     # absolute_max is a hard limit on forms instantiated, to prevent
     # memory-exhaustion attacks. Default to max_num + DEFAULT_MAX_NUM
     # (which is 2 * DEFAULT_MAX_NUM if max_num is None in the first place).
     if absolute_max is None:
-        absolute_max = max_num + forms.formsets.DEFAULT_MAX_NUM
+        absolute_max = max_num + formsets.DEFAULT_MAX_NUM
     if max_num > absolute_max:
         raise ValueError("'absolute_max' must be greater or equal to 'max_num'.")
     attrs = {
@@ -756,23 +710,14 @@ def unprefix_formset_data(prefix, data):
     return output
 
 
-def formset_add_or_delete(data):
+def formset_add_or_delete(prefixes, data):
     """Find any {prefix}-ADD or {prefix}-DELETE in submitted data and return the
     result as a boolean."""
     formset_data = {}
     for k, v in data.items():
-        if k.endswith("-ADD") or k.endswith("-DELETE"):
-            formset_data[k] = v
+        for prefix in prefixes:
+            if k.endswith("-ADD") or k.endswith("-DELETE"):
+                formset_data[k] = v
     if len(formset_data) > 0:
         return True
     return False
-
-
-class FormSetSubmitMixin:
-    @property
-    def formset_submitted(self):
-        return formset_add_or_delete(self.data)
-
-    @property
-    def whole_form_submit(self):
-        return bool(self.data.get("submit"))

@@ -491,32 +491,32 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         *commodities: Commodity,
         as_at: Optional[date] = NOT_PROVIDED,
     ) -> MeasuresQuerySet:
-        goods_sid_query = Q()
+        filter = Q()
         for commodity in commodities:
             if commodity not in self.commodities:
                 logger.warning(f"Commodity {commodity} not found in this snapshot.")
                 continue
 
-            goods_sid_query |= Q(goods_nomenclature__sid=commodity.obj.sid)
+            filter |= Q(goods_nomenclature__sid=commodity.obj.sid)
 
-        measure_qs = Measure.objects.filter(goods_sid_query)
+        qs = Measure.objects.filter(filter)
 
         if self.moment.clock_type.is_transaction_clock:
-            measure_qs = measure_qs.approved_up_to_transaction(self.moment.transaction)
+            qs = qs.approved_up_to_transaction(self.moment.transaction)
         else:
-            measure_qs = measure_qs.latest_approved()
+            qs = qs.latest_approved()
 
         if as_at is not None and as_at is not NOT_PROVIDED:
-            measure_qs = measure_qs.with_effective_valid_between().filter(
+            qs = qs.with_effective_valid_between().filter(
                 Q(db_effective_valid_between__contains=as_at)
                 | Q(valid_between__startswith__gte=as_at),
             )
         elif as_at is NOT_PROVIDED and self.moment.clock_type.is_calendar_clock:
-            measure_qs = measure_qs.with_effective_valid_between().filter(
+            qs = qs.with_effective_valid_between().filter(
                 db_effective_valid_between__contains=self.moment.date,
             )
 
-        return measure_qs
+        return qs
 
     def is_declarable(self, commodity: Commodity) -> bool:
         return (
@@ -584,7 +584,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
 
         NOTE: This methods is invoked by __post_init__ and should not be called directly.
 
-        The commodity collection is sorted on code and suffix.
+        The commodity collection is sorted on code, suffix and indent.
         Note that since this is a commodity tree snapshot,
         multiple versions of the same commodity are not possible.
         """
@@ -1604,7 +1604,7 @@ class CommodityCollectionLoader:
             .with_end_date()
             .filter(indented_goods_nomenclature__sid__in=goods_sids)
             .annotate(goods_sid=F("indented_goods_nomenclature__sid"))
-            .order_by("transaction", "validity_start")
+            .order_by("transaction")
         )
 
         goods_sid_to_indents: Dict[str, List] = {}

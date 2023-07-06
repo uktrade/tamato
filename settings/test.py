@@ -1,7 +1,6 @@
 from settings.common import *
 
 ENV = "test"
-BASE_SERVICE_URL = "http://localhost"
 
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
@@ -37,10 +36,6 @@ USE_IMPORTER_CACHE = is_truthy(os.getenv("USE_IMPORTER_CACHE", False))
 
 S3_ACCESS_KEY_ID = "test_local_id"
 S3_SECRET_ACCESS_KEY = "test_local_key"
-S3_ENDPOINT_URL = "https://test-s3-url/"
-
-NOTIFICATIONS_API_KEY = "test-key"
-
-TARIFF_API_INTERFACE = "publishing.tariff_api.interface.TariffAPIStubbed"
+S3_ENDPOINT_URL = "https://test-s3-url.local/"
 
 FILE_UPLOAD_HANDLERS = ("django.core.files.uploadhandler.MemoryFileUploadHandler",)
