@@ -313,8 +313,30 @@ class GoodsReporter:
         )
 
     def _iter_records(self) -> Generator[Tuple[str, str, ET.Element], None, None]:
-        """Generator returning an iterator over the records of the goods
-        file."""
+        """
+        Generator yielding each record in the parsed goods file, along with the
+        ID of its containing transaction and ID of its containing message, as a
+        tuple.
+
+        For instance, a tuple of ("123456", "1", <ET.Element>) would be yielded
+        on the first iteration of the following XML content:
+
+        .. code-block:: python
+
+            <?xml version="1.0" encoding="UTF-8"?>
+            <env:envelope xmlns="urn:..." xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" id="23800">
+                <env:transaction id="12345678">
+                    <env:app.message id="1">
+                        <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                            <oub:record>
+                                ...
+                            </oub:record>
+                        </oub:transmission>
+                    </env:app.message>
+                </env:transaction>
+                ...
+            </env:envelope>
+        """
         tree = ET.parse(self.goods_file)
         root = tree.getroot()
 
