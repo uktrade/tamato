@@ -181,6 +181,7 @@ class GoodsReport:
 
     def save_xlsx(self, filepath: str) -> None:
         """Save report to an Excel file in xlsx file format."""
+        # TODO: is filepath better replaced with a writable file object?
         # TODO: generate and save to Excel file format.
         print("TODO: implement Excel file creation.")
 
@@ -190,6 +191,7 @@ class GoodsReport:
 
     def save_markdown(self, filepath: str) -> None:
         """Save report in markdown format to a file located at filepath."""
+        # TODO: is filepath better replaced with a writable file object?
         self.markdown()
         # TODO: save to file.
         print("TODO: implement markdown file creation.")
