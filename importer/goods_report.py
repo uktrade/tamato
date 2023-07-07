@@ -3,6 +3,7 @@ import os
 from dataclasses import dataclass
 from typing import Generator
 from typing import List
+from typing import TextIO
 from xml.etree import ElementTree as ET
 
 from common.validators import UpdateType
@@ -101,8 +102,9 @@ class GoodsReportLine:
         # "original_message_id",
         # "original_transaction_id",
     )
+    """Column names used within generated reports."""
 
-    def __init__(self, record_element: ET.Element):
+    def __init__(self, record_element: ET.Element) -> None:
         self.record_element = record_element
 
         # Report columns.
@@ -111,13 +113,16 @@ class GoodsReportLine:
         self.goods_nomenclature_item_id = self._get_goods_nomenclature_item_id()
 
     def as_list(self) -> List[str]:
+        """Return a report line as a list of report columns."""
         return [
             self.update_type,
             self.record_name,
             self.goods_nomenclature_item_id,
         ]
 
-    def as_str(self, separator=", "):
+    def as_str(self, separator: str = ", ") -> str:
+        """Return a report line as a string concatenation of report columns,
+        each separated by `separator`."""
         return f"{separator}".join(self.as_list())
 
     def _get_update_type(self) -> str:
@@ -129,8 +134,10 @@ class GoodsReportLine:
         try:
             return UpdateType(int(update_type_id)).name
         except:
-            pass
-        return "Unknown"
+            logger.info(
+                f"Malformed update type information encountered, " f"{update_type_id}",
+            )
+            return "Unknown"
 
     def _get_record_name(self) -> str:
         """Get the human-readable name of record being updated."""
@@ -162,28 +169,36 @@ class GoodsReportLine:
 
 class GoodsReport:
     """
-    NOTE:
-    - If caching results on S3, then should function names indicate the results
-      may not be freshly generated?
+    Represents a report providing information about goods-related entities.
+
+    A report can be externalised to a variety of formats via this class's
+    methods.
     """
 
     report_lines: List[GoodsReportLine] = []
     """List of ReportLines representing reported records in the order that they
     appear within the TARIC3 XML file."""
 
-    def save_xlsx(self, filepath):
+    def save_xlsx(self, filepath: str) -> None:
         """Save report to an Excel file in xlsx file format."""
-        # TODO
+        # TODO: generate and save to Excel file format.
+        print("TODO: implement Excel file creation.")
 
     def markdown(self) -> str:
         """Return report in markdown format."""
-        # TODO
+        # TODO: generate and return markdown text content.
 
-    def save_markdown(self, filepath):
+    def save_markdown(self, filepath: str) -> None:
         """Save report in markdown format to a file located at filepath."""
-        # TODO
+        self.markdown()
+        # TODO: save to file.
+        print("TODO: implement markdown file creation.")
 
-    def plaintext(self, separator=", ", include_column_names=False) -> str:
+    def plaintext(
+        self,
+        separator: str = ", ",
+        include_column_names: bool = False,
+    ) -> str:
         """Return a plain-text representation of the report."""
         str_repr = ""
         if include_column_names:
@@ -196,7 +211,7 @@ class GoodsReport:
 class GoodsReporter:
     """Parses and builds a goods report for a TARIC3 XML file."""
 
-    def __init__(self, goods_file):
+    def __init__(self, goods_file: TextIO) -> None:
         self.goods_file = goods_file
 
     def create_report(self) -> GoodsReport:
