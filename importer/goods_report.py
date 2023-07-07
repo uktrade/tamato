@@ -112,6 +112,12 @@ class GoodsReportLine:
         self.record_name = self._get_record_name()
         self.goods_nomenclature_item_id = self._get_goods_nomenclature_item_id()
 
+    @classmethod
+    def stringified_column_names(cls, separator: str = ", "):
+        """Return a concatenated, string representaiton of report column names
+        separated by `separator."""
+        return f"{separator}".join(cls.COLUMN_NAMES)
+
     def as_list(self) -> List[str]:
         """Return a report line as a list of report columns."""
         return [
@@ -204,7 +210,7 @@ class GoodsReport:
         """Return a plain-text representation of the report."""
         str_repr = ""
         if include_column_names:
-            str_repr += f"{separator}".join(GoodsReportLine.COLUMN_NAMES) + "\n"
+            str_repr += GoodsReportLine.stringified_column_names() + "\n"
         for line in self.report_lines:
             str_repr += f"{line.as_str(separator)}\n"
         return str_repr
