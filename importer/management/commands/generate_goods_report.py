@@ -1,5 +1,7 @@
+import os
 from typing import Any
 from typing import Optional
+from typing import TextIO
 
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
@@ -45,36 +47,79 @@ class Command(BaseCommand):
             default="text",
         )
 
-    def handle(self, *args: Any, **options: Any) -> Optional[str]:
+        parser.add_argument(
+            "--output-directory",
+            help=(
+                "Specify the directory location of the output file (if a "
+                "file-type output format has been specified). The current "
+                "directory is used by default."
+            ),
+            type=str,
+        )
+
+    def get_output_base_filename(self, **options: Any) -> str:
+        """Return the base output filename without any leading path or file
+        extension."""
+        if options.get("import_batch_id"):
+            import_batch = ImportBatch.objects.get(
+                pk=options.get("import_batch_id"),
+            )
+            return os.path.splitext(import_batch.taric_file.name)[0]
+        else:
+            taric_filepath = options["taric_filepath"]
+            return os.path.splitext(os.path.basename(taric_filepath))[0]
+
+    def get_output_directory(self, **options: Any) -> str:
+        """Return the file output directory, including trailing slash (/)."""
+        directory = options.get("output_directory")
+        if not directory:
+            directory = os.getcwd()
+        if directory[-1] != "/":
+            directory += "/"
+        return directory
+
+    def get_taric_file(self, **options: Any) -> TextIO:
+        """Get the taric file from which the report is generated."""
         if options.get("import_batch_id"):
             import_batch = ImportBatch.objects.get(
                 pk=int(options["import_batch_id"]),
-            ).taric_file
-            taric_file = import_batch.taric_file
-            self.stdout.write(
-                f"Generating report for {repr(import_batch)}...",
             )
+            return import_batch.taric_file
         else:
-            taric_file = open(options["taric_filepath"], "r")
-            self.stdout.write(
-                f"Generating report for {taric_file.name}...",
-            )
+            return open(options["taric_filepath"], "r")
 
+    def validate_taric_file_source(self, **options: Any):
+        """
+        Validate that this management command has been correctly pointed toward
+        a taric file.
+
+        Raises Exception if no valid source file has been provided.
+        """
+        # There should always be a valid source taric file because
+        # --import-batch-id and --taric-filepath are grouped together in a
+        # required, XOR group.
+        if "import_batch_id" not in options or "taric_filepath" not in options:
+            raise Exception("Invalid source input file.")
+
+    def handle(self, *args: Any, **options: Any) -> Optional[str]:
+        self.validate_taric_file_source(**options)
+        taric_file = self.get_taric_file(**options)
         reporter = GoodsReporter(taric_file)
         goods_report = reporter.create_report()
 
-        # print("*** goods_report.report_lines")
         output_format = options.get("output_format")
         if output_format == "text":
             self.stdout.write(
                 goods_report.plaintext(separator=", ", include_column_names=True),
             )
-        elif output_format == "md":
-            self.stdout.write("TODO")
-        elif output_format == "xlsx":
-            self.stdout.write("TODO")
+        else:
+            directory = self.get_output_directory(**options)
+            filename = self.get_output_base_filename(**options)
+            filepath = f"{directory}{filename}.md"
+            if output_format == "xlsx":
+                goods_report.save_xlsx(filepath)
+            else:
+                goods_report.save_markdown(filepath)
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"Generated report file {taric_file.name}.xlsx.",
-                ),
+                self.style.SUCCESS(f"Generated report file {filepath}."),
             )
