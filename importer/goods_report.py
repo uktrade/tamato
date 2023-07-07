@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Generator
 from typing import List
 from typing import TextIO
+from typing import Tuple
 from xml.etree import ElementTree as ET
 
 from common.validators import UpdateType
@@ -94,26 +95,36 @@ class GoodsReportLine:
         "update_type",
         "whats_being_updated",
         "goods_nomenclature_code",
+        "suffix",
+        "validity_start_date",
+        "validity_end_date",
         # TODO:
-        # "suffix",
-        # "validity_start_date",
-        # "validity_end_date",
         # "comments",
-        # "original_message_id",
-        # "original_transaction_id",
+        "containing_transaction_id",
+        "containing_message_id",
     )
     """Column names used within generated reports."""
 
-    def __init__(self, record_element: ET.Element) -> None:
+    def __init__(
+        self,
+        containing_transaction_id: str,
+        containing_message_id: str,
+        record_element: ET.Element,
+    ) -> None:
         self.record_element = record_element
 
         # Report columns.
         self.update_type = self._get_update_type()
         self.record_name = self._get_record_name()
         self.goods_nomenclature_item_id = self._get_goods_nomenclature_item_id()
+        self.suffix = self._get_suffix()
+        self.validity_start_date = self._get_validity_start_date()
+        self.validity_end_date = self._get_validity_end_date()
+        self.containing_transaction_id = containing_transaction_id
+        self.containing_message_id = containing_message_id
 
     @classmethod
-    def stringified_column_names(cls, separator: str = ", "):
+    def stringified_column_names(cls, separator: str = ", ") -> str:
         """Return a concatenated, string representaiton of report column names
         separated by `separator."""
         return f"{separator}".join(cls.COLUMN_NAMES)
@@ -124,6 +135,11 @@ class GoodsReportLine:
             self.update_type,
             self.record_name,
             self.goods_nomenclature_item_id,
+            self.suffix,
+            self.validity_start_date,
+            self.validity_end_date,
+            self.containing_transaction_id,
+            self.containing_message_id,
         ]
 
     def as_str(self, separator: str = ", ") -> str:
@@ -165,6 +181,30 @@ class GoodsReportLine:
         """Get the item id of the associated goods nomenclature instance."""
         return self.record_element.findtext(
             ".//oub:goods.nomenclature.item.id",
+            default="",
+            namespaces=TARIC3_NAMESPACES,
+        ).strip()
+
+    def _get_suffix(self) -> str:
+        """Get the suffix code of the related goods nomenclature instance."""
+        return self.record_element.findtext(
+            ".//oub:productline.suffix",
+            default="",
+            namespaces=TARIC3_NAMESPACES,
+        ).strip()
+
+    def _get_validity_start_date(self) -> str:
+        """Get the validity start date of the record instance."""
+        return self.record_element.findtext(
+            ".//oub:validity.start.date",
+            default="",
+            namespaces=TARIC3_NAMESPACES,
+        ).strip()
+
+    def _get_validity_end_date(self) -> str:
+        """Get the validity end date of the record instance."""
+        return self.record_element.findtext(
+            ".//oub:validity.end.date",
             default="",
             namespaces=TARIC3_NAMESPACES,
         ).strip()
@@ -233,10 +273,15 @@ class GoodsReporter:
         goods_report = GoodsReport()
         record_count = 0
 
-        for record_element in self._iter_records():
+        for transaction_id, message_id, record_element in self._iter_records():
             record_count += 1
+
             if self._is_reportable(record_element):
-                report_line = GoodsReportLine(record_element)
+                report_line = GoodsReportLine(
+                    transaction_id,
+                    message_id,
+                    record_element,
+                )
                 goods_report.report_lines.append(report_line)
 
         logger.debug(
@@ -267,7 +312,7 @@ class GoodsReporter:
             in RECORD_CODE_TO_RECORD_INFO_MAP.keys()
         )
 
-    def _iter_records(self) -> Generator[ET.Element, None, None]:
+    def _iter_records(self) -> Generator[Tuple[str, str, ET.Element], None, None]:
         """Generator returning an iterator over the records of the goods
         file."""
         tree = ET.parse(self.goods_file)
@@ -277,8 +322,16 @@ class GoodsReporter:
             "./env:transaction",
             namespaces=TARIC3_NAMESPACES,
         ):
-            for record in transaction.iterfind(
-                "./env:app.message/oub:transmission/oub:record",
+            transaction_id = transaction.attrib.get("id", "")
+
+            for message in transaction.iterfind(
+                "./env:app.message",
                 namespaces=TARIC3_NAMESPACES,
             ):
-                yield record
+                message_id = message.attrib.get("id", "")
+
+                for record in message.iterfind(
+                    "./oub:transmission/oub:record",
+                    namespaces=TARIC3_NAMESPACES,
+                ):
+                    yield transaction_id, message_id, record
