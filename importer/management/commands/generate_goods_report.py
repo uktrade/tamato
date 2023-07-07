@@ -57,38 +57,38 @@ class Command(BaseCommand):
             type=str,
         )
 
-    def get_output_base_filename(self, **options: Any) -> str:
+    def get_output_base_filename(self) -> str:
         """Return the base output filename without any leading path or file
         extension."""
-        if options.get("import_batch_id"):
+        if self.options.get("import_batch_id"):
             import_batch = ImportBatch.objects.get(
-                pk=options.get("import_batch_id"),
+                pk=self.options.get("import_batch_id"),
             )
             return os.path.splitext(import_batch.taric_file.name)[0]
         else:
-            taric_filepath = options["taric_filepath"]
+            taric_filepath = self.options["taric_filepath"]
             return os.path.splitext(os.path.basename(taric_filepath))[0]
 
-    def get_output_directory(self, **options: Any) -> str:
+    def get_output_directory(self) -> str:
         """Return the file output directory, including trailing slash (/)."""
-        directory = options.get("output_directory")
+        directory = self.options.get("output_directory")
         if not directory:
             directory = os.getcwd()
         if directory[-1] != "/":
             directory += "/"
         return directory
 
-    def get_taric_file(self, **options: Any) -> TextIO:
+    def get_taric_file(self) -> TextIO:
         """Get the taric file from which the report is generated."""
-        if options.get("import_batch_id"):
+        if self.options.get("import_batch_id"):
             import_batch = ImportBatch.objects.get(
-                pk=int(options["import_batch_id"]),
+                pk=int(self.options["import_batch_id"]),
             )
             return import_batch.taric_file
         else:
-            return open(options["taric_filepath"], "r")
+            return open(self.options["taric_filepath"], "r")
 
-    def validate_taric_file_source(self, **options: Any):
+    def validate_taric_file_source(self) -> None:
         """
         Validate that this management command has been correctly pointed toward
         a taric file.
@@ -98,28 +98,34 @@ class Command(BaseCommand):
         # There should always be a valid source taric file because
         # --import-batch-id and --taric-filepath are grouped together in a
         # required, XOR group.
-        if "import_batch_id" not in options or "taric_filepath" not in options:
+        if (
+            "import_batch_id" not in self.options
+            or "taric_filepath" not in self.options
+        ):
             raise Exception("Invalid source input file.")
 
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
-        self.validate_taric_file_source(**options)
-        taric_file = self.get_taric_file(**options)
+        self.options = options
+
+        self.validate_taric_file_source()
+        taric_file = self.get_taric_file()
         reporter = GoodsReporter(taric_file)
         goods_report = reporter.create_report()
 
-        output_format = options.get("output_format")
+        output_format = self.options.get("output_format")
         if output_format == "text":
             self.stdout.write(
                 goods_report.plaintext(separator=", ", include_column_names=True),
             )
         else:
-            directory = self.get_output_directory(**options)
-            filename = self.get_output_base_filename(**options)
-            filepath = f"{directory}{filename}.md"
+            directory = self.get_output_directory()
+            filename = self.get_output_base_filename()
             if output_format == "xlsx":
+                filepath = f"{directory}{filename}.xlsx"
                 goods_report.save_xlsx(filepath)
             else:
+                filepath = f"{directory}{filename}.md"
                 goods_report.save_markdown(filepath)
             self.stdout.write(
-                self.style.SUCCESS(f"Generated report file {filepath}."),
+                self.style.SUCCESS(f"Generated report file {filepath}"),
             )
