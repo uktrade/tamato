@@ -2,12 +2,16 @@ import csv
 import logging
 import os
 from dataclasses import dataclass
+from io import BytesIO
 from io import StringIO
 from typing import Generator
 from typing import List
 from typing import TextIO
 from typing import Tuple
 from xml.etree import ElementTree as ET
+
+from openpyxl import Workbook
+from openpyxl.styles import Font
 
 from common.validators import UpdateType
 
@@ -237,7 +241,7 @@ class GoodsReport:
     def csv(
         self,
         delimiter: str = ",",
-        include_column_names: bool = False,
+        include_column_names: bool = True,
     ) -> str:
         """Return a csv string representation of the report."""
         str_repr = ""
@@ -247,16 +251,35 @@ class GoodsReport:
             str_repr += f"{line.as_csv(delimiter)}"
         return str_repr
 
-    def markdown(self) -> str:
-        """Return report in markdown format."""
+    def markdown(
+        self,
+        include_column_names: bool = True,
+    ) -> str:
+        """Return a markdown string representation of the format."""
         # TODO: generate and return markdown text content.
         return "TODO: implement markdown output."
 
-    def xlsx_file(self, filepath: str) -> None:
-        """Save report to an Excel file in xlsx file format."""
-        # TODO: is filepath better replaced with a writable file object?
-        # TODO: generate and save to Excel file format.
-        print("TODO: implement Excel file creation.")
+    def xlsx_file(
+        self,
+        xlsx_io: BytesIO,
+        include_column_names: bool = True,
+    ) -> None:
+        """Write report contents to a BytesIO object, xlsx_io, in Excel (xlsx)
+        file format."""
+
+        workbook = Workbook()
+        sheet = workbook.active
+
+        if include_column_names:
+            column_names = GoodsReportLine.COLUMN_NAMES
+            sheet.append(column_names)
+            for cell in sheet[1]:
+                cell.font = Font(bold=True)
+
+        for line in self.report_lines:
+            sheet.append(line.as_list())
+
+        workbook.save(xlsx_io.name)
 
 
 class GoodsReporter:
