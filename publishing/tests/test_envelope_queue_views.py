@@ -5,6 +5,7 @@ from unittest.mock import patch
 import factory
 import pytest
 from bs4 import BeautifulSoup
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
@@ -244,6 +245,8 @@ def test_complete_envelope_processing_view_creates_loading_reports(
 ):
     """Test that multiple loading reports can be associated with a packaged
     workbasket when processing an envelope."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
     packaged_workbasket = packaged_workbasket_factory()
     published_envelope_factory(
