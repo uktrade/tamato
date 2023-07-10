@@ -1,9 +1,11 @@
+from os import path
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import factory
 import pytest
 from bs4 import BeautifulSoup
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
 from common.tests import factories
@@ -11,6 +13,8 @@ from publishing.models import PackagedWorkBasket
 from publishing.models import ProcessingState
 
 pytestmark = pytest.mark.django_db
+
+TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
 
 
 def test_empty_queue(valid_user_client):
@@ -180,7 +184,7 @@ def test_reject_envelope(
     packaged_workbasket_factory,
     published_envelope_factory,
     mocked_publishing_models_send_emails_delay,
-    valid_user_client,
+    superuser_client,
 ):
     packaged_work_basket_1 = packaged_workbasket_factory()
     envelope = published_envelope_factory(
@@ -205,7 +209,7 @@ def test_reject_envelope(
         "publishing:reject-envelope-ui-detail",
         kwargs={"pk": packaged_work_basket_1.pk},
     )
-    response = valid_user_client.get(reject_view_url)
+    response = superuser_client.get(reject_view_url)
     page = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",
@@ -215,7 +219,7 @@ def test_reject_envelope(
 
     # Submit the form and test the queued packaged workbaskets have transitioned
     # correctly.
-    response = valid_user_client.post(
+    response = superuser_client.post(
         reject_view_url,
         {"report_file": "", "comments": "Test comments."},
     )
@@ -229,4 +233,70 @@ def test_reject_envelope(
     assert packaged_work_basket_2.position == 1
     assert (
         packaged_work_basket_2.processing_state == ProcessingState.AWAITING_PROCESSING
+    )
+
+
+def test_complete_envelope_processing_view_creates_loading_reports(
+    valid_user_client,
+    packaged_workbasket_factory,
+    published_envelope_factory,
+    loading_report_storage,
+):
+    """Test that multiple loading reports can be associated with a packaged
+    workbasket when processing an envelope."""
+
+    packaged_workbasket = packaged_workbasket_factory()
+    published_envelope_factory(
+        packaged_workbasket=packaged_workbasket,
+    )
+    packaged_workbasket.begin_processing()
+
+    with open(f"{TEST_FILES_PATH}/valid_loading_report.html", "rb") as upload_file:
+        content = upload_file.read()
+
+    report1 = SimpleUploadedFile(
+        "valid_loading_report.html",
+        content,
+        content_type="text/html",
+    )
+    report2 = SimpleUploadedFile(
+        "valid_loading_report2.html",
+        content,
+        content_type="text/html",
+    )
+
+    form_data = {
+        "files": [report1, report2],
+        "comments": "Test comment",
+    }
+
+    accept_view_url = reverse(
+        "publishing:accept-envelope-ui-detail",
+        kwargs={"pk": packaged_workbasket.pk},
+    )
+    redirect_url = reverse(
+        "publishing:accept-envelope-confirm-ui-detail",
+        kwargs={"pk": packaged_workbasket.pk},
+    )
+
+    with patch(
+        "publishing.storages.LoadingReportStorage.save",
+        wraps=MagicMock(side_effect=loading_report_storage.save),
+    ):
+        response = valid_user_client.post(
+            accept_view_url,
+            form_data,
+        )
+    assert response.status_code == 302
+    assert response.url == redirect_url
+
+    packaged_workbasket.refresh_from_db()
+
+    loading_reports = packaged_workbasket.loadingreports.all()
+    assert len(loading_reports) == 2
+    assert loading_reports[0].file_name == report1.name
+    assert loading_reports[1].file_name == report2.name
+    assert (
+        loading_reports[0].comments
+        and loading_reports[1].comments == form_data["comments"]
     )
