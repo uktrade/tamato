@@ -41,8 +41,7 @@ def test_add_packaged_workbasket_to_loading_report(migrator):
     # Ensure that packaged workbasket has been added to loading report
     packaged_workbasket = PackagedWorkBasket.objects.last()
     loading_report = LoadingReport.objects.last()
-    assert packaged_workbasket and loading_report
-    assert loading_report.packaged_workbasket == "f"
+    assert loading_report.packaged_workbasket == packaged_workbasket
     assert packaged_workbasket.loadingreports.last() == loading_report
 
     migrator.reset()
