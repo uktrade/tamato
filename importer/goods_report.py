@@ -1,6 +1,8 @@
+import csv
 import logging
 import os
 from dataclasses import dataclass
+from io import StringIO
 from typing import Generator
 from typing import List
 from typing import TextIO
@@ -124,10 +126,10 @@ class GoodsReportLine:
         self.containing_message_id = containing_message_id
 
     @classmethod
-    def stringified_column_names(cls, separator: str = ", ") -> str:
-        """Return a concatenated, string representaiton of report column names
-        separated by `separator."""
-        return f"{separator}".join(cls.COLUMN_NAMES)
+    def csv_column_names(cls, delimiter: str = ",") -> str:
+        """Return a csv (concatenated, string) representaiton of report column
+        names delimited by `delimiter`."""
+        return cls._csv_line(cls.COLUMN_NAMES)
 
     def as_list(self) -> List[str]:
         """Return a report line as a list of report columns."""
@@ -142,10 +144,17 @@ class GoodsReportLine:
             self.containing_message_id,
         ]
 
-    def as_str(self, separator: str = ", ") -> str:
+    def as_csv(self, delimiter: str = ",") -> str:
         """Return a report line as a string concatenation of report columns,
-        each separated by `separator`."""
-        return f"{separator}".join(self.as_list())
+        each delimited by `delimiter`."""
+        return self._csv_line(self.as_list())
+
+    @classmethod
+    def _csv_line(cls, line: List, delimiter=",") -> str:
+        string_io = StringIO()
+        writer = csv.writer(string_io, delimiter=delimiter)
+        writer.writerow(line)
+        return string_io.getvalue()
 
     def _get_update_type(self) -> str:
         """Get the TARIC update type - one of UPDATE, DELETE and CREATE."""
@@ -210,7 +219,7 @@ class GoodsReportLine:
         ).strip()
 
     def __str__(self) -> str:
-        return self.as_str()
+        return self.as_csv()
 
 
 class GoodsReport:
@@ -225,35 +234,29 @@ class GoodsReport:
     """List of ReportLines representing reported records in the order that they
     appear within the TARIC3 XML file."""
 
-    def save_xlsx(self, filepath: str) -> None:
-        """Save report to an Excel file in xlsx file format."""
-        # TODO: is filepath better replaced with a writable file object?
-        # TODO: generate and save to Excel file format.
-        print("TODO: implement Excel file creation.")
+    def csv(
+        self,
+        delimiter: str = ",",
+        include_column_names: bool = False,
+    ) -> str:
+        """Return a csv string representation of the report."""
+        str_repr = ""
+        if include_column_names:
+            str_repr += GoodsReportLine.csv_column_names()
+        for line in self.report_lines:
+            str_repr += f"{line.as_csv(delimiter)}"
+        return str_repr
 
     def markdown(self) -> str:
         """Return report in markdown format."""
         # TODO: generate and return markdown text content.
+        return "TODO: implement markdown output."
 
-    def save_markdown(self, filepath: str) -> None:
-        """Save report in markdown format to a file located at filepath."""
+    def xlsx_file(self, filepath: str) -> None:
+        """Save report to an Excel file in xlsx file format."""
         # TODO: is filepath better replaced with a writable file object?
-        self.markdown()
-        # TODO: save to file.
-        print("TODO: implement markdown file creation.")
-
-    def plaintext(
-        self,
-        separator: str = ", ",
-        include_column_names: bool = False,
-    ) -> str:
-        """Return a plain-text representation of the report."""
-        str_repr = ""
-        if include_column_names:
-            str_repr += GoodsReportLine.stringified_column_names() + "\n"
-        for line in self.report_lines:
-            str_repr += f"{line.as_str(separator)}\n"
-        return str_repr
+        # TODO: generate and save to Excel file format.
+        print("TODO: implement Excel file creation.")
 
 
 class GoodsReporter:
