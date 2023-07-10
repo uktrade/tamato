@@ -39,12 +39,18 @@ class Command(BaseCommand):
         parser.add_argument(
             "--output-format",
             help=(
-                "Specify the format of the generated report. Default behaviour "
-                "is to output a plain text version of the report to stdout."
+                "Specify the format of the generated report. "
+                "Default behaviour is to output a csv (Excel dialect) version "
+                "of the report to stdout. "
+                "Specifying md outputs a markdown formatted version of the "
+                "report to stdout. "
+                "Specifying xlsx-file saves an Excel formatted version of the "
+                "report to file, using a filename derived from the TARIC3 input "
+                "filename."
             ),
             nargs="?",
-            choices=("xlsx", "md", "text"),
-            default="text",
+            choices=("csv", "md", "xlsx-file"),
+            default="csv",
         )
 
         parser.add_argument(
@@ -113,19 +119,17 @@ class Command(BaseCommand):
         goods_report = reporter.create_report()
 
         output_format = self.options.get("output_format")
-        if output_format == "text":
+        if output_format == "csv":
             self.stdout.write(
-                goods_report.plaintext(separator=", ", include_column_names=True),
+                goods_report.csv(delimiter=",", include_column_names=True),
             )
+        elif output_format == "md":
+            self.stdout.write(goods_report.markdown())
         else:
             directory = self.get_output_directory()
             filename = self.get_output_base_filename()
-            if output_format == "xlsx":
-                filepath = f"{directory}{filename}.xlsx"
-                goods_report.save_xlsx(filepath)
-            else:
-                filepath = f"{directory}{filename}.md"
-                goods_report.save_markdown(filepath)
+            filepath = f"{directory}{filename}.xlsx"
+            goods_report.xlsx_file(filepath)
             self.stdout.write(
                 self.style.SUCCESS(f"Generated report file {filepath}"),
             )
