@@ -281,7 +281,7 @@ class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
 
     @atomic
     def form_valid(self, form):
-        """Create a LoadingReport instance, associated it wth the
+        """Create a LoadingReport instance, associated it with the
         PackagedWorkBasket and transition that PackagedWorkBasket instance to
         the next, completed processing state (either succeeded or failed)."""
 
@@ -289,11 +289,21 @@ class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
             pk=self.kwargs["pk"],
         )
 
-        self.object = form.save()
-        packaged_work_basket.loading_report = self.object
-        packaged_work_basket.save()
-        self.transition_packaged_work_basket(packaged_work_basket)
+        files = form.cleaned_data["files"]
+        if files:
+            for file in files:
+                LoadingReport.objects.create(
+                    file=file,
+                    file_name=file.name,
+                    comments=form.cleaned_data["comments"],
+                    packaged_workbasket=packaged_work_basket,
+                )
+        else:
+            self.object = form.save()
+            self.object.packaged_workbasket = packaged_work_basket
+            self.object.save()
 
+        self.transition_packaged_work_basket(packaged_work_basket)
         return redirect(self.get_success_url())
 
     def transition_packaged_work_basket(self, packaged_work_basket):
