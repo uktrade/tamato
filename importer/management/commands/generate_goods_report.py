@@ -70,10 +70,17 @@ class Command(BaseCommand):
             import_batch = ImportBatch.objects.get(
                 pk=self.options.get("import_batch_id"),
             )
-            return os.path.splitext(import_batch.taric_file.name)[0]
+            # Make filename safe.
+            filename = "".join(
+                [
+                    c
+                    for c in import_batch.name
+                    if c.isalpha() or c.isdigit() or c in " ."
+                ],
+            ).strip()
         else:
-            taric_filepath = self.options["taric_filepath"]
-            return os.path.splitext(os.path.basename(taric_filepath))[0]
+            filename = os.path.basename(self.options["taric_filepath"])
+        return os.path.splitext(filename)[0]
 
     def get_output_directory(self) -> str:
         """Return the file output directory, including trailing slash (/)."""
@@ -120,16 +127,15 @@ class Command(BaseCommand):
 
         output_format = self.options.get("output_format")
         if output_format == "csv":
-            self.stdout.write(
-                goods_report.csv(delimiter=",", include_column_names=True),
-            )
+            self.stdout.write(goods_report.csv(delimiter=","))
         elif output_format == "md":
             self.stdout.write(goods_report.markdown())
         else:
             directory = self.get_output_directory()
             filename = self.get_output_base_filename()
             filepath = f"{directory}{filename}.xlsx"
-            goods_report.xlsx_file(filepath)
+            with open(filepath, "w+") as report_file:
+                goods_report.xlsx_file(report_file)
             self.stdout.write(
                 self.style.SUCCESS(f"Generated report file {filepath}"),
             )
