@@ -1,3 +1,6 @@
+from os import path
+from tempfile import NamedTemporaryFile
+
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count
 from django.db.models import Q
@@ -14,6 +17,7 @@ from importer import forms
 from importer import models
 from importer.filters import ImportBatchFilter
 from importer.filters import TaricImportFilter
+from importer.goods_report import GoodsReporter
 from importer.models import ImportBatchStatus
 from workbaskets.validators import WorkflowStatus
 
@@ -160,6 +164,45 @@ class DownloadAdminTaricView(RequiresSuperuserMixin, DetailView):
             "content-disposition"
         ] = f'attachment; filename="{import_batch.taric_file.name}"'
         return response
+
+    def get(self, request, *args, **kwargs) -> HttpResponse:
+        import_batch = self.get_object()
+        return self.download_response(import_batch)
+
+
+class DownloadGoodsReportMixin:
+    def download_response(self, import_batch: models.ImportBatch) -> HttpResponse:
+        """Returns a response object with associated payload containing the
+        contents of a generated goods report in Excel format."""
+
+        taric_file = path.splitext(import_batch.name)[0]
+        report_name = f"comm_code_changes_in_{taric_file}.xlsx"
+
+        with NamedTemporaryFile(suffix=".xlsx") as tmp:
+            reporter = GoodsReporter(import_batch.taric_file)
+            goods_report = reporter.create_report()
+            goods_report.xlsx_file(tmp)
+            file_content = tmp.read()
+
+        response = HttpResponse(file_content)
+        response[
+            "content-type"
+        ] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        response["content-length"] = len(file_content)
+        response["content-disposition"] = f'attachment; filename="{report_name}"'
+        return response
+
+
+class DownloadGoodsReportView(
+    DownloadGoodsReportMixin,
+    PermissionRequiredMixin,
+    DetailView,
+):
+    """View used to download an import report of goods changes in Excel
+    format."""
+
+    permission_required = "common.add_trackedmodel"
+    model = models.ImportBatch
 
     def get(self, request, *args, **kwargs) -> HttpResponse:
         import_batch = self.get_object()
