@@ -80,6 +80,24 @@ class LoadingReportForm(ModelForm):
 
         return files
 
+    def save(self, packaged_workbasket: PackagedWorkBasket):
+        """Use form data to create LoadingReport instance(s) associated with the
+        packaged workbasket."""
+        files = self.cleaned_data["files"]
+        if files:
+            for file in files:
+                LoadingReport.objects.create(
+                    file=file,
+                    file_name=file.name,
+                    comments=self.cleaned_data["comments"],
+                    packaged_workbasket=packaged_workbasket,
+                )
+        else:
+            LoadingReport.objects.create(
+                comments=self.cleaned_data["comments"],
+                packaged_workbasket=packaged_workbasket,
+            )
+
 
 class PackagedWorkBasketCreateForm(forms.ModelForm):
     class Meta:
