@@ -401,6 +401,8 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
                     f"{self.slugify_model_name()}-ui-{action}",
                     kwargs=kwargs,
                 )
+            if action not in ["detail", "list"]:
+                return url
             return f"{url}{self.url_suffix}"
         except NoReverseMatch:
             return None

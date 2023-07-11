@@ -772,3 +772,43 @@ def test_quota_edit_origin_exclusions_remove(
             tx,
         )
     )
+
+
+def test_update_quota_definition_page_200(valid_user_client):
+    quota_definition = factories.QuotaDefinitionFactory.create()
+    url = reverse("quota_definition-ui-edit", kwargs={"sid": quota_definition.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+def test_update_quota_definition(valid_user_client, date_ranges):
+    quota_definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.big_no_end,
+    )
+    url = reverse("quota_definition-ui-edit", kwargs={"sid": quota_definition.sid})
+
+    data = {
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+    }
+
+    response = valid_user_client.post(url, data)
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "quota_definition-ui-confirm-update",
+        kwargs={"sid": quota_definition.sid},
+    )
+
+    tx = Transaction.objects.last()
+
+    updated_definition = models.QuotaDefinition.objects.approved_up_to_transaction(
+        tx,
+    ).get(
+        sid=quota_definition.sid,
+    )
+
+    assert updated_definition.valid_between == date_ranges.normal
