@@ -164,6 +164,12 @@ class ImportBatch(TimestampedMixin):
     def __str__(self):
         return f"Batch pk:{self.pk}, name:{self.name}"
 
+    def __repr__(self) -> str:
+        return (
+            f"ImportBatch(pk={self.pk}, name={self.name}, "
+            f"author={self.author}, status={self.status})"
+        )
+
 
 class ImporterXMLChunk(TimestampedMixin):
     """A chunk of TARIC XML."""
