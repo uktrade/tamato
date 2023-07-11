@@ -39,6 +39,7 @@ from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
+from importer.models import ImportBatch
 from measures.filters import MeasureFilter
 from measures.models import Measure
 from workbaskets import forms
@@ -381,6 +382,11 @@ class WorkbasketReviewGoodsView(TamatoListView):
             goods_changes.append(obj_data)
 
         context["goods_changes"] = goods_changes
+
+        # Used to provide downloadable Excel report of goods changes from an import
+        import_batch = ImportBatch.objects.filter(workbasket=self.workbasket).last()
+        context["import_batch_pk"] = import_batch.pk if import_batch else None
+
         return context
 
 
