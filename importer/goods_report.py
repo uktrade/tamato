@@ -234,9 +234,12 @@ class GoodsReport:
     methods.
     """
 
-    report_lines: List[GoodsReportLine] = []
+    report_lines: List[GoodsReportLine]
     """List of ReportLines representing reported records in the order that they
     appear within the TARIC3 XML file."""
+
+    def __init__(self) -> None:
+        self.report_lines = []
 
     def csv(
         self,
