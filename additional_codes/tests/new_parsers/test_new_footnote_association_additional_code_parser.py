@@ -56,12 +56,12 @@ class TestNewAdditionalCodeTypeParser:
         assert (
             target.additional_code__sid == 111
         )  # converts "additional.code.type.id" to sid
-        assert target.associated_footnote__footnote_type__sid == "444"
+        assert target.associated_footnote__footnote_type__id == "444"
         assert target.associated_footnote__footnote_id == "555"
         assert target.valid_between_lower == date(2023, 1, 22)
         assert target.valid_between_upper == date(2024, 1, 22)
         assert target.additional_code__code == "666"
-        assert target.additional_code__type__sid == "777"
+        assert target.additional_code__type__sid == 777
 
     def test_import(self, superuser):
         file_to_import = (

@@ -206,6 +206,21 @@ class NewImporter:
                     if not self._verify_link(parsed_message.taric_object, link_data):
                         links_valid = False
 
+                missing_child_attributes = (
+                    parsed_message.taric_object.missing_child_attributes()
+                )
+
+                for attribute in missing_child_attributes:
+                    # raise report issue
+                    report_item = NewImportIssueReportItem(
+                        parsed_message.taric_object.xml_object_tag,
+                        attribute.child_object,
+                        attribute["identity_fields"],
+                        "Description pending",
+                    )
+
+                    target_taric_object.issues.append(report_item)
+
                 parsed_message.taric_object.links_valid = links_valid
 
     def _verify_link(

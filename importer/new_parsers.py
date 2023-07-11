@@ -129,10 +129,10 @@ class ModelLink:
 
 
 class NewElementParser:
-    transaction_id: int
-    record_code: str
-    subrecord_code: str
-    xml_object_tag: str
+    transaction_id: int = None
+    record_code: str = None
+    subrecord_code: str = None
+    xml_object_tag: str = None
     update_type: int = None
     update_type_name: str = None
     links_valid: bool = None
@@ -142,12 +142,12 @@ class NewElementParser:
     issues = []
     parent_handler = None
     excluded_fields = ["language_id"]
+    model = None
 
     def __init__(self):
         self.issues = []
         self.sequence_number = None
         self.model = None
-        self.model_instance = None
 
     def links(self):
         if self.model_links is None:
@@ -157,24 +157,77 @@ class NewElementParser:
 
         return self.model_links
 
-    def identity_fields_for_parent(self):
-        # guard clauses
-        if self.parent_parser is None:
-            raise Exception(f"Model {self.__class__.__name__} has no parent parser")
+    def missing_child_attributes(self):
+        """
+        When a parent object that has children for example a description that
+        also contains description period properties is not fully populated, for
+        example the period is not present in the import, and the description is
+        being created (not updated) there is no way to populate the period.
 
-        if self.model_links is None:
+        This method is designed to highlight this issue
+        """
+
+        # check if the object has children, if not - return false
+        child_parsers = ParserHelper.get_child_parsers(self)
+        if len(child_parsers) == 0:
+            return None
+
+        # if it does, get the fields that should be populated by a child relationship and return true, and add a import
+        # issue to the object.
+        result = {}
+
+        for child_parser in child_parsers:
+            result[str(child_parser.__name__)] = []
+            field_sets = child_parser.identity_fields_for_parent()
+            for field_set_key in field_sets.keys():
+                for field in field_sets[field_set_key]:
+                    if not hasattr(self, field):
+                        # Guard clause
+                        raise Exception(
+                            f"Field referenced by child {child_parser.__name__} : {field} "
+                            f"does not exist on parent {self.__class__.__name__}",
+                        )
+
+                    # Include attribute in response if empty
+                    if getattr(self, field) is None:
+                        result[str(child_parser.__name__)].append(field)
+
+        return result
+
+    @classmethod
+    def identity_fields_for_parent(cls, include_optional=False):
+        # guard clauses
+        if cls.parent_parser is None:
+            raise Exception(f"Model {cls.__name__} has no parent parser")
+
+        if cls.model_links is None or cls.model_links == []:
             raise Exception(
-                f"Model {self.__class__.__name__} appears to have a parent parser but no model links",
+                f"Model {cls.__name__} appears to have a parent parser but no model links",
             )
 
-        for model_link in self.model_links:
-            # match link to target model for parser - then we can extract the key fields we need to match for the object
-            if model_link.model == self.__class__.model:
-                key_fields = {}
-                for model_link_field in model_link.fields:
-                    key_fields
+        matched_parent_class = False
+        for link in cls.model_links:
+            if link.model == cls.parent_parser.model:
+                matched_parent_class = True
+        if not matched_parent_class:
+            raise Exception(
+                f"Model {cls.__name__} appears to not have a model links to the parent model",
+            )
 
-                return key_fields
+        key_fields = {}
+        for model_link in cls.model_links:
+            # match link to target model for parser - then we can extract the key fields we need to match for the object
+            key_fields[cls.__name__] = []
+            if model_link.model == cls.model:
+                for model_link_field in model_link.fields:
+                    if not model_link.optional or (
+                        model_link.optional and include_optional
+                    ):
+                        key_fields[cls.__name__].append(
+                            model_link_field.object_field_name,
+                        )
+
+        return key_fields
 
     def populate(
         self,
@@ -235,13 +288,13 @@ class NewElementParser:
                     field_data_typed = float(field_data_raw)
                 else:
                     raise Exception(
-                        f"data type {field_data_type} not handled, please fix",
+                        f"data type {field_data_type.__name__} not handled, does the handler have the correct data type?",
                     )
 
                 setattr(self, mapped_data_item_key, field_data_typed)
             else:
                 raise Exception(
-                    f"{self.xml_object_tag} {self} does not have a {mapped_data_item_key} attribute, and "
+                    f"{self.xml_object_tag} {self.__class__.__name__} does not have a {mapped_data_item_key} attribute, and "
                     f"can't assign value {data[data_item_key]}",
                 )
 
@@ -272,11 +325,21 @@ class NewElementParser:
             "valid_between_upper",
         ]
 
+        model_attributes = {}
+
         for variable_name in vars(self).keys():
             if variable_name not in excluded_variable_names:
                 variable_first_part = variable_name.split("__")[0]
                 if hasattr(self.model, variable_first_part):
-                    pass
+                    model_attributes[variable_first_part] = getattr(self, variable_name)
+                else:
+                    raise Exception(
+                        f"Error creating model {self.model.__name__}, model does not have an attribute {variable_first_part}",
+                    )
+
+        new_model = self.model(**model_attributes)
+
+        return new_model
 
 
 class TaricObjectLink:
@@ -287,19 +350,32 @@ class ParserHelper:
     @staticmethod
     def get_parser_by_model(model):
         # get all classes that can represent an imported taric object
-        classes = ParserHelper.__parser_classes()
+        classes = ParserHelper.get_parser_classes()
 
         # iterate through classes and find the one that matches the tag or error
         for cls in classes:
-            if cls.model == model and cls.append_to_parent == False:
+            if cls.model == model and cls.parent_parser is None:
                 return cls
 
-        raise Exception(f"No parser class matching {model}")
+        raise Exception(f"No parser class found for parsing {model.__name__}")
+
+    @staticmethod
+    def get_child_parsers(parser: NewElementParser):
+        result = []
+
+        parser_classes = ParserHelper.get_parser_classes()
+        for parser_class in parser_classes:
+            if parser_class.parent_parser and parser_class.parent_parser == type(
+                parser,
+            ):
+                result.append(parser_class)
+
+        return result
 
     @staticmethod
     def get_parser_by_tag(object_type: str):
         # get all classes that can represent an imported taric object
-        classes = ParserHelper.__parser_classes()
+        classes = ParserHelper.get_parser_classes()
 
         # iterate through classes and find the one that matches the tag or error
         for cls in classes:
@@ -309,15 +385,15 @@ class ParserHelper:
         raise Exception(f"No parser class matching {object_type}")
 
     @staticmethod
-    def __parser_classes():
-        return ParserHelper.__get_subclasses(NewElementParser)
+    def get_parser_classes():
+        return ParserHelper.subclasses_for(NewElementParser)
 
     @staticmethod
-    def __get_subclasses(cls):
+    def subclasses_for(cls):
         all_subclasses = []
 
         for subclass in cls.__subclasses__():
             all_subclasses.append(subclass)
-            all_subclasses.extend(ParserHelper.__get_subclasses(subclass))
+            all_subclasses.extend(ParserHelper.subclasses_for(subclass))
 
         return all_subclasses

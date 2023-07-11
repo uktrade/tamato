@@ -20,7 +20,11 @@ class NewCertificateTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 
     value_mapping = {
         "certificate_type_code": "sid",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
     }
+
+    model_links = []
 
     sid: str = None
     valid_between_lower: date = None
@@ -67,6 +71,13 @@ class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
         ),
     ]
 
+    value_mapping = {
+        "certificate_code": "sid",
+        "certificate_type_code": "certificate_type__sid",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     record_code = "205"
     subrecord_code = "00"
 
@@ -101,6 +112,12 @@ class NewCertificateDescriptionParser(NewWritable, NewElementParser):
     subrecord_code = "10"
 
     xml_object_tag = "certificate.description"
+
+    value_mapping = {
+        "certificate_description_period_sid": "sid",
+        "certificate_type_code": "described_certificate__certificate_type__sid",
+        "certificate_code": "described_certificate__sid",
+    }
 
     sid: str = None
     described_certificate__certificate_type__sid: str = None
