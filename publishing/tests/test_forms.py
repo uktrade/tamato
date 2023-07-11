@@ -45,11 +45,6 @@ def test_loading_report_form_multiple_reports():
     mock_request = MagicMock()
     mock_request.FILES = loading_reports
 
-    form_data = {
-        "files": [report1, report2],
-        "comments": "Test comment",
-    }
-
     form = LoadingReportForm(form_data, request=mock_request)
     assert form.is_valid()
 
