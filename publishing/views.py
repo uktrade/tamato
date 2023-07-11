@@ -289,7 +289,7 @@ class CompleteEnvelopeProcessingView(PermissionRequiredMixin, CreateView):
             pk=self.kwargs["pk"],
         )
 
-        form.save(packaged_workbasket=packaged_work_basket)
+        loading_reports = form.save(packaged_workbasket=packaged_work_basket)
 
         self.transition_packaged_work_basket(packaged_work_basket)
         return redirect(self.get_success_url())

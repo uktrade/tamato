@@ -1,3 +1,5 @@
+from typing import List
+
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Div
@@ -80,23 +82,28 @@ class LoadingReportForm(ModelForm):
 
         return files
 
-    def save(self, packaged_workbasket: PackagedWorkBasket):
+    def save(self, packaged_workbasket: PackagedWorkBasket) -> List[LoadingReport]:
         """Use form data to create LoadingReport instance(s) associated with the
         packaged workbasket."""
         files = self.cleaned_data["files"]
-        if files:
-            for file in files:
-                LoadingReport.objects.create(
-                    file=file,
-                    file_name=file.name,
-                    comments=self.cleaned_data["comments"],
-                    packaged_workbasket=packaged_workbasket,
-                )
-        else:
-            LoadingReport.objects.create(
+        if not files:
+            loading_report = LoadingReport.objects.create(
                 comments=self.cleaned_data["comments"],
                 packaged_workbasket=packaged_workbasket,
             )
+            return [loading_report]
+
+        instances = [
+            LoadingReport(
+                file=file,
+                file_name=file.name,
+                comments=self.cleaned_data["comments"],
+                packaged_workbasket=packaged_workbasket,
+            )
+            for file in files
+        ]
+        loading_reports = LoadingReport.objects.bulk_create(instances)
+        return loading_reports
 
 
 class PackagedWorkBasketCreateForm(forms.ModelForm):
