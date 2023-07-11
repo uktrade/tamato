@@ -32,11 +32,13 @@
 
     {% if goods_changes %}
 
-      {{ govukButton({
-        "text": "Download as Excel",
-        "href": "TODO",
-        "classes": "govuk-button--secondary",
-      }) }}
+      {% if import_batch_pk %}
+        {{ govukButton({
+          "text": "Download as Excel",
+          "href": url("goods-report-ui-download", kwargs={"pk": import_batch_pk}),
+          "classes": "govuk-button--secondary",
+        }) }}
+      {% endif %}
 
       {% set table_rows = [] %}
       {% for obj in goods_changes %}

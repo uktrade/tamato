@@ -131,7 +131,7 @@ class GoodsReportLine:
 
     @classmethod
     def csv_column_names(cls, delimiter: str = ",") -> str:
-        """Return a csv (concatenated, string) representaiton of report column
+        """Return a csv (concatenated, string) representation of report column
         names delimited by `delimiter`."""
         return cls._csv_line(cls.COLUMN_NAMES)
 
@@ -234,9 +234,12 @@ class GoodsReport:
     methods.
     """
 
-    report_lines: List[GoodsReportLine] = []
+    report_lines: List[GoodsReportLine]
     """List of ReportLines representing reported records in the order that they
     appear within the TARIC3 XML file."""
+
+    def __init__(self) -> None:
+        self.report_lines = []
 
     def csv(
         self,

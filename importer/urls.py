@@ -36,6 +36,11 @@ commodity_importer_urlpatterns = [
         views.DownloadAdminTaricView.as_view(),
         name="admin-taric-ui-download",
     ),
+    path(
+        "download-goods-report/<pk>/",
+        views.DownloadGoodsReportView.as_view(),
+        name="goods-report-ui-download",
+    ),
 ]
 
 urlpatterns = general_importer_urlpatterns + commodity_importer_urlpatterns
