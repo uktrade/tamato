@@ -197,7 +197,7 @@ class QuotaUpdateForm(
         )
 
 
-class QuotaOrderNumberOriginUpdateForm(
+class QuotaOrderNumberOriginForm(
     FormSetSubmitMixin,
     ValidityPeriodForm,
     BindNestedFormMixin,
@@ -229,35 +229,8 @@ class QuotaOrderNumberOriginUpdateForm(
         self.init_layout()
 
     def set_initial_data(self, *args, **kwargs):
-        nested_forms_initial = {**self.initial}
-        nested_forms_initial.update(self.get_geo_area_initial())
-        kwargs.pop("initial")
-        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
-
-    def get_geo_area_initial(self):
-        field_name = "exclusion"
-        initial = {}
-        initial_exclusions = []
-        if hasattr(self, "instance"):
-            initial_exclusions = [
-                {field_name: exclusion.excluded_geographical_area}
-                for exclusion in self.instance.quotaordernumberoriginexclusion_set.current()
-            ]
-        # if we just submitted the form, add the new data to initial
-        if self.formset_submitted or self.whole_form_submit:
-            new_data = unprefix_formset_data(
-                QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX,
-                self.data.copy(),
-            )
-            for g in new_data:
-                if g[field_name]:
-                    id = int(g[field_name])
-                    g[field_name] = GeographicalArea.objects.get(id=id)
-            initial_exclusions = new_data
-
-        initial[QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX] = initial_exclusions
-
-        return initial
+        kwargs.pop("instance")
+        self.bind_nested_forms(*args, **kwargs)
 
     def init_layout(self):
         self.helper = FormHelper(self)
@@ -290,3 +263,38 @@ class QuotaOrderNumberOriginUpdateForm(
         self.fields[
             "geographical_area"
         ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+
+
+class QuotaOrderNumberOriginUpdateForm(
+    QuotaOrderNumberOriginForm,
+):
+    def set_initial_data(self, *args, **kwargs):
+        nested_forms_initial = {**self.initial}
+        nested_forms_initial.update(self.get_geo_area_initial())
+        kwargs.pop("initial")
+        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
+
+    def get_geo_area_initial(self):
+        field_name = "exclusion"
+        initial = {}
+        initial_exclusions = []
+        if hasattr(self, "instance"):
+            initial_exclusions = [
+                {field_name: exclusion.excluded_geographical_area}
+                for exclusion in self.instance.quotaordernumberoriginexclusion_set.current()
+            ]
+        # if we just submitted the form, add the new data to initial
+        if self.formset_submitted or self.whole_form_submit:
+            new_data = unprefix_formset_data(
+                QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX,
+                self.data.copy(),
+            )
+            for g in new_data:
+                if g[field_name]:
+                    id = int(g[field_name])
+                    g[field_name] = GeographicalArea.objects.get(id=id)
+            initial_exclusions = new_data
+
+        initial[QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX] = initial_exclusions
+
+        return initial

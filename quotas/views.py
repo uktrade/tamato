@@ -32,6 +32,7 @@ from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
 from workbaskets.models import WorkBasket
+from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
 from workbaskets.views.generic import EditTaricView
@@ -385,6 +386,26 @@ class QuotaOrderNumberOriginUpdate(
     CreateTaricUpdateView,
 ):
     pass
+
+
+class QuotaOrderNumberOriginCreate(
+    QuotaOrderNumberOriginUpdateMixin,
+    CreateTaricCreateView,
+):
+    form_class = forms.QuotaOrderNumberOriginForm
+    template_name = "quota-origins/create.jinja"
+
+    def form_valid(self, form):
+        quota = models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
+        form.instance.order_number = quota
+        return super().form_valid(form)
+
+
+class QuotaOrderNumberOriginConfirmCreate(
+    QuotaOrderNumberOriginMixin,
+    TrackedModelDetailView,
+):
+    template_name = "quota-origins/confirm-create.jinja"
 
 
 class QuotaOrderNumberOriginEditUpdate(

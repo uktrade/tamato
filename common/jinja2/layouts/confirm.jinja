@@ -18,6 +18,7 @@
       {% block panel %}{% endblock%}
       <h2 class="govuk-heading-m">Next steps</h2>
       <p class="govuk-body">To complete your task you must publish your change. </p>
+      <div>{% block main_button %}{% endblock%}</div>
       {{ govukButton({
         "text": "Go to your workbasket summary",
         "href": url("workbaskets:current-workbasket"),
