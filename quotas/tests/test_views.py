@@ -812,3 +812,28 @@ def test_update_quota_definition(valid_user_client, date_ranges):
     )
 
     assert updated_definition.valid_between == date_ranges.normal
+
+
+def test_delete_quota_definition_page_200(valid_user_client):
+    quota_definition = factories.QuotaDefinitionFactory.create()
+    url = reverse("quota_definition-ui-delete", kwargs={"sid": quota_definition.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+def test_delete_quota_definition(valid_user_client, date_ranges):
+    quota_definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.big_no_end,
+    )
+    url = reverse("quota_definition-ui-delete", kwargs={"sid": quota_definition.sid})
+
+    response = valid_user_client.post(url, {"submit": "Delete"})
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "quota_definition-ui-confirm-delete",
+        kwargs={"sid": quota_definition.order_number.sid},
+    )
+
+    tx = Transaction.objects.last()
+
+    assert tx.workbasket.tracked_models.first().update_type == UpdateType.DELETE
