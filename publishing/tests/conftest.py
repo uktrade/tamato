@@ -155,6 +155,7 @@ def successful_envelope_factory(published_envelope_factory):
             packaged_workbasket.pk
             == PackagedWorkBasket.objects.currently_processing().pk
         )
+        factories.LoadingReportFactory.create(packaged_workbasket=packaged_workbasket)
         packaged_workbasket.processing_succeeded()
         packaged_workbasket.save()
         assert packaged_workbasket.position == 0

@@ -1,3 +1,5 @@
+from typing import List
+
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Div
@@ -9,9 +11,12 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.conf import settings
 from django.forms import ModelForm
+from django_chunk_upload_handlers.clam_av import validate_virus_check_result
 
 from common.forms import DateInputFieldFixed
 from common.forms import DescriptionHelpBox
+from common.forms import MultipleFileField
+from common.util import get_mime_type
 from publishing.models import LoadingReport
 from publishing.models import PackagedWorkBasket
 
@@ -19,7 +24,9 @@ from publishing.models import PackagedWorkBasket
 class LoadingReportForm(ModelForm):
     class Meta:
         model = LoadingReport
-        fields = ("file", "file_name", "comments")
+        fields = ("comments",)
+
+    files = MultipleFileField()
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request")
@@ -29,7 +36,7 @@ class LoadingReportForm(ModelForm):
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            Field("file"),
+            Field("files", css_class="govuk-file-upload"),
             Field.textarea("comments", rows=5),
             HTML.warning("Upon submission, DBT and HMRC will be notified."),
             Submit(
@@ -40,31 +47,63 @@ class LoadingReportForm(ModelForm):
             ),
         )
 
-        self.fields["file"].label = "Loading report file"
+        self.fields["files"].label = "Loading report files"
         self.fields["comments"].label = "Comments"
 
-    def clean(self):
-        cleaned_data = super().clean()
+    def clean_files(self):
+        files = self.request.FILES.getlist("files", None)
+        url_path = self.request.path.rsplit("/")[-3]
 
-        if self.errors:
-            return cleaned_data
+        if not files and url_path == "reject" and not self.request.user.is_superuser:
+            raise forms.ValidationError("Select a loading report")
 
-        file = self.request.FILES["file"] if "file" in self.request.FILES else None
-
-        if file:
-            cleaned_data["file_name"] = file.name
-
-        if (
-            file
-            and file.size
-            > settings.MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES * 1024 * 1024
-        ):
+        if files and len(files) > 10:
             raise forms.ValidationError(
-                f"Report file exceeds {settings.MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES} "
-                f"megabytes maximum file size.",
+                "You can only select up to 10 loading report files",
             )
 
-        return cleaned_data
+        for file in files:
+            validate_virus_check_result(file)
+
+            mime_type = get_mime_type(file)
+            if mime_type not in ["text/html", "application/html"]:
+                raise forms.ValidationError(
+                    "The selected loading report files must be HTML",
+                )
+
+            if (
+                file.size
+                > settings.MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES * 1024 * 1024
+            ):
+                raise forms.ValidationError(
+                    f"Report file exceeds {settings.MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES} "
+                    f"megabytes maximum file size.",
+                )
+
+        return files
+
+    def save(self, packaged_workbasket: PackagedWorkBasket) -> List[LoadingReport]:
+        """Use form data to create LoadingReport instance(s) associated with the
+        packaged workbasket."""
+        files = self.cleaned_data["files"]
+        if not files:
+            loading_report = LoadingReport.objects.create(
+                comments=self.cleaned_data["comments"],
+                packaged_workbasket=packaged_workbasket,
+            )
+            return [loading_report]
+
+        instances = [
+            LoadingReport(
+                file=file,
+                file_name=file.name,
+                comments=self.cleaned_data["comments"],
+                packaged_workbasket=packaged_workbasket,
+            )
+            for file in files
+        ]
+        loading_reports = LoadingReport.objects.bulk_create(instances)
+        return loading_reports
 
 
 class PackagedWorkBasketCreateForm(forms.ModelForm):
