@@ -52,7 +52,6 @@ class Command(BaseCommand):
             choices=("csv", "md", "xlsx-file"),
             default="csv",
         )
-
         parser.add_argument(
             "--output-directory",
             help=(
@@ -129,7 +128,7 @@ class Command(BaseCommand):
         if output_format == "csv":
             self.stdout.write(goods_report.csv(delimiter=","))
         elif output_format == "md":
-            self.stdout.write(goods_report.markdown())
+            self.stdout.write(goods_report.markdown_table())
         else:
             directory = self.get_output_directory()
             filename = self.get_output_base_filename()
