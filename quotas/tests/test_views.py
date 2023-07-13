@@ -842,9 +842,9 @@ def test_quota_create_origin_outwith_quota_period(
 
     a_tags = soup.select("ul.govuk-list.govuk-error-summary__list a")
 
-    assert (
-        a_tags[0].text
-        == """The validity period of the geographical area must span the validity period of the quota order number origin."""
+    assert a_tags[0].text == (
+        "The validity period of the geographical area must span the validity "
+        "period of the quota order number origin."
     )
 
 
@@ -885,7 +885,7 @@ def test_quota_create_origin_no_overlapping_origins(
 
     a_tags = soup.select("ul.govuk-list.govuk-error-summary__list a")
 
-    assert (
-        a_tags[0].text
-        == """There may be no overlap in time of two quota order number origins with the same quota order number SID and geographical area id."""
+    assert a_tags[0].text == (
+        "There may be no overlap in time of two quota order number origins with "
+        "the same quota order number SID and geographical area id."
     )
