@@ -802,9 +802,7 @@ def test_quota_create_origin(
     assert response.status_code == 302
 
     tx = Transaction.objects.last()
-    origin = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
-        tx,
-    ).get(
+    origin = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(tx).get(
         sid=response.url.split("/")[2],
     )
 
