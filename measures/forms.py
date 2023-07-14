@@ -684,6 +684,19 @@ class MeasureForm(
         self.request.session.pop(f"formset_initial_{sid}", None)
         self.request.session.pop(f"instance_footnotes_{sid}", None)
 
+        removed_associations = (
+            instance.footnoteassociationmeasure_set.current().exclude(
+                associated_footnote__pk__in=footnote_pks,
+            )
+        )
+        for association in removed_associations:
+            association.new_version(
+                workbasket=WorkBasket.current(self.request),
+                transaction=instance.transaction,
+                footnoted_measure=instance,
+                update_type=UpdateType.DELETE,
+            )
+
         for pk in footnote_pks:
             footnote = (
                 Footnote.objects.filter(pk=pk)
