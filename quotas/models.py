@@ -364,8 +364,6 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     def __str__(self):
         return str(self.sid)
 
-    # TODO: refactor this method as it's the same as in QuotaOrderNumberOrigin
-
     def get_url(self, action: str = "detail") -> Optional[str]:
         """
         Generate a URL to a representation of the model in the webapp.
