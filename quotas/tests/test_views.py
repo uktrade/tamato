@@ -816,7 +816,7 @@ def test_quota_create_origin_outwith_quota_period(
     date_ranges,
 ):
     """Checks that for a quota that you cannot create a quota origin that lies
-    outside the."""
+    outside the quota order numbers validity period."""
     quota = factories.QuotaOrderNumberFactory.create(
         valid_between=date_ranges.no_end,
         transaction=approved_transaction,

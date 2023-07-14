@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from django.db import transaction
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
 from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 from rest_framework import permissions
@@ -393,12 +394,24 @@ class QuotaOrderNumberOriginCreate(
     CreateTaricCreateView,
 ):
     form_class = forms.QuotaOrderNumberOriginForm
-    template_name = "quota-origins/create.jinja"
+    template_name = "layouts/create.jinja"
 
     def form_valid(self, form):
         quota = models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
         form.instance.order_number = quota
         return super().form_valid(form)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context["page_title"] = "Create a new quota origin"
+        context["page_label"] = mark_safe(
+            """Find out more about <a class="govuk-link" 
+        href="https://data-services-help.trade.gov.uk/tariff-application-platform/tariff-policy/origin-quotas/">
+        quota origins</a>.""",
+        )
+
+        return context
 
 
 class QuotaOrderNumberOriginConfirmCreate(
