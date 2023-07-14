@@ -135,6 +135,39 @@ class GoodsReportLine:
         names delimited by `delimiter`."""
         return cls._csv_line(cls.COLUMN_NAMES)
 
+    @classmethod
+    def markdown_header(cls, align: str = "left") -> str:
+        """
+        Return a Markdown table header of report column names, with row text
+        aligned according to `align`.
+
+        Each column is delimited by a pipe (|), and delimiter row matches column
+        width to improve readability of raw string output.
+        """
+        if align == "center":
+            alignment = ":", ":"
+        elif align == "right":
+            alignment = "", "-:"
+        else:
+            alignment = ":-", ""
+        column_names = ""
+        delimiter_row = ""
+        for column in cls.COLUMN_NAMES:
+            col_width = len(column)
+            if column == "whats_being_updated":
+                # Double column width to accomodate longest possible cell value
+                column_names += "|" + column + (" " * col_width) + "  "
+                delimiter_row += (
+                    "|" + alignment[0] + ("-" * (col_width * 2)) + alignment[1]
+                )
+            else:
+                # Column width is sufficient
+                column_names += "|" + column + "  "
+                delimiter_row += "|" + alignment[0] + ("-" * col_width) + alignment[1]
+        column_names += "|\n"
+        delimiter_row += "|\n"
+        return column_names + delimiter_row
+
     def as_list(self) -> List[str]:
         """Return a report line as a list of report columns."""
         return [
@@ -151,7 +184,11 @@ class GoodsReportLine:
     def as_csv(self, delimiter: str = ",") -> str:
         """Return a report line as a string concatenation of report columns,
         each delimited by `delimiter`."""
-        return self._csv_line(self.as_list())
+        return self._csv_line(self.as_list(), delimiter)
+
+    def as_markdown_row(self) -> str:
+        """Return a report line as a Markdown table row."""
+        return self._markdown_row(self.as_list())
 
     @classmethod
     def _csv_line(cls, line: List, delimiter=",") -> str:
@@ -159,6 +196,28 @@ class GoodsReportLine:
         writer = csv.writer(string_io, delimiter=delimiter)
         writer.writerow(line)
         return string_io.getvalue()
+
+    @classmethod
+    def _markdown_row(cls, line: List) -> str:
+        """
+        Each row and cell within is delimited by a pipe (|).
+
+        And table cells are padded (" ") to match column width to improve
+        readability of raw string output.
+        """
+        # Column name padding not calculable using len()
+        column_padding = 2
+        table_row = ""
+        for i, cell in enumerate(line):
+            if i == 1:
+                # Double padding to match doubled column width of "whats_being_updated"
+                padding = " " * (
+                    (len(cls.COLUMN_NAMES[i]) * 2) - len(cell) + column_padding
+                )
+            else:
+                padding = " " * (len(cls.COLUMN_NAMES[i]) - len(cell) + column_padding)
+            table_row += "|" + cell + padding
+        return table_row + "|\n"
 
     def _get_update_type(self) -> str:
         """Get the TARIC update type - one of UPDATE, DELETE and CREATE."""
@@ -254,13 +313,17 @@ class GoodsReport:
             str_repr += f"{line.as_csv(delimiter)}"
         return str_repr
 
-    def markdown(
+    def markdown_table(
         self,
-        include_column_names: bool = True,
+        align: str = "left",
     ) -> str:
-        """Return a markdown string representation of the format."""
-        # TODO: generate and return markdown text content.
-        return "TODO: implement markdown output."
+        """Return a Markdown table representation of the report, with row text
+        aligned according to `align`."""
+        markdown_table = ""
+        markdown_table += GoodsReportLine.markdown_header(align=align)
+        for line in self.report_lines:
+            markdown_table += f"{line.as_markdown_row()}"
+        return markdown_table
 
     def xlsx_file(
         self,
