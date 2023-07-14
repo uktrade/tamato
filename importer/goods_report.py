@@ -205,13 +205,17 @@ class GoodsReportLine:
         And table cells are padded (" ") to match column width to improve
         readability of raw string output.
         """
+        # Column name padding not calculable using len()
+        column_padding = 2
         table_row = ""
         for i, cell in enumerate(line):
             if i == 1:
                 # Double padding to match doubled column width of "whats_being_updated"
-                padding = " " * ((len(cls.COLUMN_NAMES[i]) * 2) - len(cell) + 2)
+                padding = " " * (
+                    (len(cls.COLUMN_NAMES[i]) * 2) - len(cell) + column_padding
+                )
             else:
-                padding = " " * (len(cls.COLUMN_NAMES[i]) - len(cell) + 2)
+                padding = " " * (len(cls.COLUMN_NAMES[i]) - len(cell) + column_padding)
             table_row += "|" + cell + padding
         return table_row + "|\n"
 
