@@ -504,6 +504,48 @@ def test_quota_definitions_list_current_measures(
     assert num_measures == 4
 
 
+def test_quota_definitions_list_edit_delete(
+    valid_user_client,
+    date_ranges,
+    mock_quota_api_no_data,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.big_no_end,
+    )
+    definition1 = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.earlier,
+    )
+    definition2 = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+    definition3 = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.later,
+    )
+
+    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    actions = [item.text for item in soup.select("table tbody tr td:last-child")]
+    sids = {
+        item.text.strip()
+        for item in soup.select("table tbody tr td:nth-child(1) summary span")
+    }
+    start_dates = {item.text for item in soup.select("table tbody tr td:nth-child(3)")}
+    definitions = {definition1, definition2, definition3}
+
+    assert start_dates == {f"{d.valid_between.lower:%d %b %Y}" for d in definitions}
+    assert sids == {str(d.sid) for d in definitions}
+    assert "Edit" in actions[0]
+    assert "Edit" in actions[1]
+    assert "Edit" in actions[2]
+    assert "Delete" in actions[2]
+
+
 def test_quota_detail_blocking_periods_tab(
     valid_user_client,
     date_ranges,
@@ -837,3 +879,16 @@ def test_delete_quota_definition(valid_user_client, date_ranges):
     tx = Transaction.objects.last()
 
     assert tx.workbasket.tracked_models.first().update_type == UpdateType.DELETE
+
+    confirm_response = valid_user_client.get(response.url)
+
+    soup = BeautifulSoup(
+        confirm_response.content.decode(response.charset),
+        "html.parser",
+    )
+    h1 = soup.select("h1")[0]
+
+    assert (
+        h1.text.strip()
+        == f"Quota definition period {quota_definition.sid} has been deleted"
+    )
