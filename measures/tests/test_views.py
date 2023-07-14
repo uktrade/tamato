@@ -553,6 +553,41 @@ def test_measure_update_updates_footnote_association(measure_form, client, valid
     assert new_assoc.version_group == assoc.version_group
 
 
+def test_measure_update_removes_footnote_association(valid_user_client, measure_form):
+    """Test that when editing a measure to remove a footnote, the
+    MeasureFootnoteAssociation, linking the measure and footnote, is updated to
+    reflect this deletion."""
+    measure = measure_form.instance
+    footnote1 = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    ).associated_footnote
+    footnote2 = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    ).associated_footnote
+
+    with override_current_transaction(Transaction.objects.last()):
+        assert measure.footnoteassociationmeasure_set.current().count() == 2
+
+    form_data = {k: v for k, v in measure_form.data.items() if v is not None}
+    session = valid_user_client.session
+    # Remove footnote2 from session to remove on form
+    session.update({f"instance_footnotes_{measure.sid}": [footnote1.pk]})
+    session.save()
+
+    url = reverse("measure-ui-edit", kwargs={"sid": measure.sid})
+    response = valid_user_client.post(url, data=form_data)
+    assert response.status_code == 302
+
+    with override_current_transaction(Transaction.objects.last()):
+        assert measure.footnoteassociationmeasure_set.current().count() == 1
+
+    removed_association = FootnoteAssociationMeasure.objects.filter(
+        footnoted_measure__sid=measure.sid,
+        associated_footnote=footnote2,
+    ).last()
+    assert removed_association.update_type == UpdateType.DELETE
+
+
 def test_measure_update_create_conditions(
     valid_user_client,
     measure_edit_conditions_data,
