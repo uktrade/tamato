@@ -540,7 +540,7 @@ class MeasureForm(
                 models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
                     tx,
                 ).filter(
-                    footnoted_measure=self.instance,
+                    footnoted_measure__sid=self.instance.sid,
                 )
             )
             self.request.session[f"instance_footnotes_{self.instance.sid}"] = [
