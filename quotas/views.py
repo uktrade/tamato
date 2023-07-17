@@ -1,6 +1,7 @@
 from datetime import date
 from urllib.parse import urlencode
 
+from django.contrib import messages
 from django.db import transaction
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -11,6 +12,7 @@ from rest_framework import viewsets
 
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
+from common.forms import delete_form_for
 from common.serializers import AutoCompleteSerializer
 from common.tariffs_api import get_quota_data
 from common.tariffs_api import get_quota_definitions_data
@@ -399,3 +401,83 @@ class QuotaOrderNumberOriginConfirmUpdate(
     TrackedModelDetailView,
 ):
     template_name = "quota-origins/confirm-update.jinja"
+
+
+class QuotaDefinitionMixin:
+    model = models.QuotaDefinition
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return models.QuotaDefinition.objects.approved_up_to_transaction(tx)
+
+
+class QuotaDefinitionUpdateMixin(
+    QuotaDefinitionMixin,
+    TrackedModelDetailMixin,
+):
+    form_class = forms.QuotaDefinitionUpdateForm
+    permission_required = ["common.change_trackedmodel"]
+    template_name = "quota-definitions/edit.jinja"
+
+    validate_business_rules = (
+        business_rules.QD7,
+        business_rules.QD8,
+        business_rules.QD10,
+        business_rules.QD11,
+        UniqueIdentifyingFields,
+        UpdateValidity,
+    )
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        object = super().get_result_object(form)
+        return object
+
+
+class QuotaDefinitionUpdate(
+    QuotaDefinitionUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class QuotaDefinitionDelete(
+    QuotaDefinitionUpdateMixin,
+    CreateTaricDeleteView,
+):
+    form_class = delete_form_for(models.QuotaDefinition)
+    template_name = "quota-definitions/delete.jinja"
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Quota definition period {self.object.sid} has been deleted",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "quota_definition-ui-confirm-delete",
+            kwargs={"sid": self.object.order_number.sid},
+        )
+
+
+class QuotaDefinitionEditUpdate(
+    QuotaDefinitionUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaDefinitionConfirmUpdate(
+    QuotaDefinitionMixin,
+    TrackedModelDetailView,
+):
+    template_name = "quota-definitions/confirm-update.jinja"
+
+
+class QuotaDefinitionConfirmDelete(
+    QuotaOrderNumberMixin,
+    TrackedModelDetailView,
+):
+    template_name = "quota-definitions/confirm-delete.jinja"
