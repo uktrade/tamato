@@ -892,3 +892,118 @@ def test_delete_quota_definition(valid_user_client, date_ranges):
         h1.text.strip()
         == f"Quota definition period {quota_definition.sid} has been deleted"
     )
+
+
+def test_quota_create_origin(
+    valid_user_client,
+    approved_transaction,
+    geo_group1,
+    date_ranges,
+):
+    """Checks that a quota origin is created for a geo area."""
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    form_data = {
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "geographical_area": geo_group1.id,
+        "submit": "Save",
+    }
+
+    response = valid_user_client.post(
+        reverse("quota_order_number_origin-ui-create", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 302
+
+    tx = Transaction.objects.last()
+    origin = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(tx).get(
+        sid=response.url.split("/")[2],
+    )
+
+    assert origin.geographical_area == geo_group1
+
+
+def test_quota_create_origin_outwith_quota_period(
+    valid_user_client,
+    approved_transaction,
+    geo_group1,
+    date_ranges,
+):
+    """Checks that for a quota that you cannot create a quota origin that lies
+    outside the quota order numbers validity period."""
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    form_data = {
+        "start_date_0": date_ranges.earlier.lower.day,
+        "start_date_1": date_ranges.earlier.lower.month,
+        "start_date_2": date_ranges.earlier.lower.year,
+        "geographical_area": geo_group1.id,
+        "submit": "Save",
+    }
+
+    response = valid_user_client.post(
+        reverse("quota_order_number_origin-ui-create", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(response.charset), "lxml")
+
+    a_tags = soup.select("ul.govuk-list.govuk-error-summary__list a")
+
+    assert a_tags[0].text == (
+        "The validity period of the geographical area must span the validity "
+        "period of the quota order number origin."
+    )
+
+
+def test_quota_create_origin_no_overlapping_origins(
+    valid_user_client,
+    approved_transaction,
+    geo_group1,
+    date_ranges,
+):
+    """Checks that for a quota and geo area, that you cannot create a quota
+    origin that overlaps in time with the same geo area."""
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    factories.QuotaOrderNumberOriginFactory.create(
+        geographical_area=geo_group1,
+        valid_between=date_ranges.no_end,
+        order_number=quota,
+    )
+
+    form_data = {
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "geographical_area": geo_group1.id,
+        "submit": "Save",
+    }
+
+    response = valid_user_client.post(
+        reverse("quota_order_number_origin-ui-create", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(response.charset), "lxml")
+
+    a_tags = soup.select("ul.govuk-list.govuk-error-summary__list a")
+
+    assert a_tags[0].text == (
+        "There may be no overlap in time of two quota order number origins with "
+        "the same quota order number SID and geographical area id."
+    )
