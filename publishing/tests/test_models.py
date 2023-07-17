@@ -95,8 +95,9 @@ def test_notify_processing_succeeded(
     packaged_workbasket_factory,
     published_envelope_factory,
 ):
-    packaged_wb = packaged_workbasket_factory(
-        loading_report__comments="comment",
+    packaged_wb = packaged_workbasket_factory()
+    loading_report = factories.LoadingReportFactory.create(
+        packaged_workbasket=packaged_wb,
     )
 
     envelope = published_envelope_factory(packaged_workbasket=packaged_wb)
@@ -106,8 +107,8 @@ def test_notify_processing_succeeded(
     personalisation = {
         "envelope_id": packaged_wb.envelope.envelope_id,
         "transaction_count": packaged_wb.workbasket.transactions.count(),
-        "loading_report_message": "Loading report: No loading report was provided.",
-        "comments": "comment",
+        "loading_report_message": f"Loading report(s): {loading_report.file_name}",
+        "comments": packaged_wb.loadingreports.first().comments,
     }
     mocked_publishing_models_send_emails_delay.assert_called_once_with(
         template_id=settings.CDS_ACCEPTED_TEMPLATE_ID,
@@ -121,8 +122,12 @@ def test_notify_processing_failed(
     packaged_workbasket_factory,
     published_envelope_factory,
 ):
-    packaged_wb = packaged_workbasket_factory(
-        loading_report__comments="comment",
+    packaged_wb = packaged_workbasket_factory()
+    loading_report1 = factories.LoadingReportFactory.create(
+        packaged_workbasket=packaged_wb,
+    )
+    loading_report2 = factories.LoadingReportFactory.create(
+        packaged_workbasket=packaged_wb,
     )
 
     envelope = published_envelope_factory(packaged_workbasket=packaged_wb)
@@ -132,8 +137,8 @@ def test_notify_processing_failed(
     personalisation = {
         "envelope_id": packaged_wb.envelope.envelope_id,
         "transaction_count": packaged_wb.workbasket.transactions.count(),
-        "loading_report_message": "Loading report: No loading report was provided.",
-        "comments": "comment",
+        "loading_report_message": f"Loading report(s): {loading_report1.file_name}, {loading_report2.file_name}",
+        "comments": packaged_wb.loadingreports.first().comments,
     }
 
     mocked_publishing_models_send_emails_delay.assert_called_once_with(

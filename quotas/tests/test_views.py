@@ -504,6 +504,48 @@ def test_quota_definitions_list_current_measures(
     assert num_measures == 4
 
 
+def test_quota_definitions_list_edit_delete(
+    valid_user_client,
+    date_ranges,
+    mock_quota_api_no_data,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.big_no_end,
+    )
+    definition1 = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.earlier,
+    )
+    definition2 = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+    definition3 = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.later,
+    )
+
+    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    actions = [item.text for item in soup.select("table tbody tr td:last-child")]
+    sids = {
+        item.text.strip()
+        for item in soup.select("table tbody tr td:nth-child(1) summary span")
+    }
+    start_dates = {item.text for item in soup.select("table tbody tr td:nth-child(3)")}
+    definitions = {definition1, definition2, definition3}
+
+    assert start_dates == {f"{d.valid_between.lower:%d %b %Y}" for d in definitions}
+    assert sids == {str(d.sid) for d in definitions}
+    assert "Edit" in actions[0]
+    assert "Edit" in actions[1]
+    assert "Edit" in actions[2]
+    assert "Delete" in actions[2]
+
+
 def test_quota_detail_blocking_periods_tab(
     valid_user_client,
     date_ranges,
@@ -771,6 +813,84 @@ def test_quota_edit_origin_exclusions_remove(
         not in updated_origin.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
             tx,
         )
+    )
+
+
+def test_update_quota_definition_page_200(valid_user_client):
+    quota_definition = factories.QuotaDefinitionFactory.create()
+    url = reverse("quota_definition-ui-edit", kwargs={"sid": quota_definition.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+def test_update_quota_definition(valid_user_client, date_ranges):
+    quota_definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.big_no_end,
+    )
+    url = reverse("quota_definition-ui-edit", kwargs={"sid": quota_definition.sid})
+
+    data = {
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+    }
+
+    response = valid_user_client.post(url, data)
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "quota_definition-ui-confirm-update",
+        kwargs={"sid": quota_definition.sid},
+    )
+
+    tx = Transaction.objects.last()
+
+    updated_definition = models.QuotaDefinition.objects.approved_up_to_transaction(
+        tx,
+    ).get(
+        sid=quota_definition.sid,
+    )
+
+    assert updated_definition.valid_between == date_ranges.normal
+
+
+def test_delete_quota_definition_page_200(valid_user_client):
+    quota_definition = factories.QuotaDefinitionFactory.create()
+    url = reverse("quota_definition-ui-delete", kwargs={"sid": quota_definition.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+def test_delete_quota_definition(valid_user_client, date_ranges):
+    quota_definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.big_no_end,
+    )
+    url = reverse("quota_definition-ui-delete", kwargs={"sid": quota_definition.sid})
+
+    response = valid_user_client.post(url, {"submit": "Delete"})
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "quota_definition-ui-confirm-delete",
+        kwargs={"sid": quota_definition.order_number.sid},
+    )
+
+    tx = Transaction.objects.last()
+
+    assert tx.workbasket.tracked_models.first().update_type == UpdateType.DELETE
+
+    confirm_response = valid_user_client.get(response.url)
+
+    soup = BeautifulSoup(
+        confirm_response.content.decode(response.charset),
+        "html.parser",
+    )
+    h1 = soup.select("h1")[0]
+
+    assert (
+        h1.text.strip()
+        == f"Quota definition period {quota_definition.sid} has been deleted"
     )
 
 

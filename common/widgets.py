@@ -1,3 +1,4 @@
+from django.forms import FileInput
 from django.forms import widgets
 from django.template import loader
 from django.utils.safestring import mark_safe
@@ -64,3 +65,9 @@ class AutocompleteWidget(widgets.Widget):
         context = self.get_context(name, value, attrs)
         template = loader.get_template(self.template_name).render(context)
         return mark_safe(template)
+
+
+class MultipleFileInput(FileInput):
+    """Enable multiple files to be selected using FileInput widget."""
+
+    allow_multiple_selected = True

@@ -264,7 +264,7 @@ class LoadingReportAdmin(
         )
 
     def accepted_or_rejected(self, obj):
-        pwb = obj.packagedworkbaskets.last()
+        pwb = obj.packaged_workbasket
         if not pwb:
             return "Missing packaged workbasket!"
 
@@ -277,13 +277,13 @@ class LoadingReportAdmin(
         return f"Unexpected state"
 
     def packaged_workbasket_id(self, obj):
-        pwb = obj.packagedworkbaskets.last()
+        pwb = obj.packaged_workbasket
         if not pwb:
             return "Missing packaged workbasket!"
         return self.packaged_workbasket_id_link(pwb)
 
     def workbasket_id(self, obj):
-        pwb = obj.packagedworkbaskets.last()
+        pwb = obj.packaged_workbasket
         if not pwb:
             return "Missing packaged workbasket!"
 

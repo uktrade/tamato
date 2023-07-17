@@ -1,5 +1,7 @@
+from django.db.models import PROTECT
 from django.db.models import CharField
 from django.db.models import FileField
+from django.db.models import ForeignKey
 from django.db.models import QuerySet
 from django.db.models import TextField
 from django_chunk_upload_handlers.clam_av import validate_virus_check_result
@@ -15,7 +17,7 @@ class LoadingReportQuerySet(QuerySet):
         related `PackagedWorkBasket` instance has a `processing_state` attribute
         value of SUCCESSFULLY_PROCESSED."""
         return self.filter(
-            packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+            packaged_workbasket__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
         )
 
     def rejected(self):
@@ -23,7 +25,7 @@ class LoadingReportQuerySet(QuerySet):
         related `PackagedWorkBasket` instance has a `processing_state` attribute
         value of FAILED_PROCESSING."""
         return self.filter(
-            packagedworkbaskets__processing_state=ProcessingState.FAILED_PROCESSING,
+            packaged_workbasket__processing_state=ProcessingState.FAILED_PROCESSING,
         )
 
 
@@ -52,3 +54,11 @@ class LoadingReport(TimestampedMixin):
     )
     """Optional comments provided by HMRC staff when either accepting or
     rejecting an envelope file."""
+    packaged_workbasket = ForeignKey(
+        "publishing.PackagedWorkBasket",
+        null=True,
+        on_delete=PROTECT,
+        editable=False,
+        related_name="loadingreports",
+    )
+    """The packaged workbasket associated with the loading report."""
