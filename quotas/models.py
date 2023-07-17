@@ -87,7 +87,7 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
 
     @property
     def autocomplete_label(self):
-        return str(self)
+        return f"{self} ({self.valid_between.lower} - {self.valid_between.upper})"
 
     @property
     def is_origin_quota(self):

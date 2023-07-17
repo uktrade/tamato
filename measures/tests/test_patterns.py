@@ -3,6 +3,7 @@ from typing import Dict
 
 import pytest
 
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import Dates
 from common.util import TaricDateRange
@@ -205,9 +206,10 @@ def test_excludes_area_groups(
     measure_data["geographical_area"] = membership.geo_group
     measure_data["exclusions"] = [membership.geo_group]
 
-    measure = measure_creation_pattern.create(**measure_data)
-    exclusion = measure.exclusions.get()
-    assert exclusion.excluded_geographical_area == membership.member
+    with override_current_transaction(membership.transaction):
+        measure = measure_creation_pattern.create(**measure_data)
+        exclusion = measure.exclusions.get()
+        assert exclusion.excluded_geographical_area == membership.member
 
 
 def test_associates_footnotes(
@@ -521,17 +523,18 @@ def test_create_measure_excluded_geographical_areas_assertion(measure_creation_p
         member=new_country_2,
     )
     measure = factories.MeasureFactory.create(geographical_area=measure_group)
-    generator = measure_creation_pattern.create_measure_excluded_geographical_areas(
-        measure=measure,
-        exclusion=excluded_group,
-    )
-    exclusion = [gen for gen in generator][0]
+    with override_current_transaction(measure.transaction):
+        generator = measure_creation_pattern.create_measure_excluded_geographical_areas(
+            measure=measure,
+            exclusion=excluded_group,
+        )
+        exclusion = [gen for gen in generator][0]
 
-    assert exclusion.modified_measure == measure
+        assert exclusion.modified_measure == measure
 
-    # sanity check assumptions about result of calling new_version /PS-IGNORE
-    assert country_2.sid == new_country_2.sid
-    assert country_2.pk != new_country_2.pk
+        # sanity check assumptions about result of calling new_version /PS-IGNORE
+        assert country_2.sid == new_country_2.sid
+        assert country_2.pk != new_country_2.pk
 
-    assert exclusion.excluded_geographical_area.sid == country_2.sid
-    assert exclusion.excluded_geographical_area.pk == new_country_2.pk
+        assert exclusion.excluded_geographical_area.sid == country_2.sid
+        assert exclusion.excluded_geographical_area.pk == new_country_2.pk

@@ -81,6 +81,44 @@ def test_workbasket_create_without_permission(client):
     assert response.status_code == 403
 
 
+def test_workbasket_update_view_updates_workbasket_title_and_description(
+    valid_user_client,
+    session_workbasket,
+):
+    """Test that a workbasket's title and description can be updated."""
+
+    session = valid_user_client.session
+    session["workbasket"] = {"id": session_workbasket.pk}
+    session.save()
+
+    url = reverse(
+        "workbaskets:workbasket-ui-update",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    new_title = "123321"
+    new_description = "Newly updated test description"
+    form_data = {
+        "title": new_title,
+        "reason": new_description,
+    }
+    assert not session_workbasket.title == new_title
+    assert not session_workbasket.reason == new_description
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "workbaskets:workbasket-ui-confirm-update",
+        kwargs={"pk": session_workbasket.pk},
+    )
+
+    session_workbasket.refresh_from_db()
+    assert session_workbasket.title == new_title
+    assert session_workbasket.reason == new_description
+
+
 def test_download(
     queued_workbasket,
     client,

@@ -68,12 +68,20 @@ class ON4(BusinessRule):
     """The referenced geographical area must exist."""
 
     def validate(self, order_number):
-        if (
-            order_number.origins.approved_up_to_transaction(
-                order_number.transaction,
-            ).count()
-            == 0
-        ):
+        # get all versions of order_number
+        order_number_versions = order_number.get_versions()
+        origin_exists = False
+        for order_number_version in order_number_versions:
+            if (
+                order_number_version.origins.approved_up_to_transaction(
+                    order_number.transaction,
+                ).count()
+                > 0
+            ):
+                origin_exists = True
+                break
+
+        if not origin_exists:
             raise self.violation(order_number)
 
 

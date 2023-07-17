@@ -146,6 +146,10 @@ def test_all_tracked_models_validate_envelope(queued_workbasket):
     factories.MeasurementUnitQualifierFactory(transaction=approved_transaction)
     factories.MeasurementUnitFactory(transaction=approved_transaction)
     factories.MeasurementFactory(transaction=approved_transaction)
+    factories.MeasurementFactory(
+        transaction=approved_transaction,
+        measurement_unit_qualifier=None,
+    )
 
     factories.QuotaAssociationFactory(transaction=approved_transaction)
     factories.QuotaBlockingFactory(transaction=approved_transaction)

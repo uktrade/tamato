@@ -60,6 +60,25 @@ class WorkbasketCreateForm(forms.ModelForm):
         fields = ("title", "reason")
 
 
+class WorkbasketUpdateForm(WorkbasketCreateForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "title",
+            Field.textarea("reason", rows=5),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
 class SelectableObjectField(forms.BooleanField):
     """Associates an object instance with a BooleanField."""
 
