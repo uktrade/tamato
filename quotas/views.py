@@ -1,9 +1,11 @@
 from datetime import date
 from urllib.parse import urlencode
 
+from django.contrib import messages
 from django.db import transaction
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
 from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 from rest_framework import permissions
@@ -11,6 +13,7 @@ from rest_framework import viewsets
 
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
+from common.forms import delete_form_for
 from common.serializers import AutoCompleteSerializer
 from common.tariffs_api import get_quota_data
 from common.tariffs_api import get_quota_definitions_data
@@ -32,6 +35,7 @@ from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
 from workbaskets.models import WorkBasket
+from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
 from workbaskets.views.generic import EditTaricView
@@ -387,6 +391,38 @@ class QuotaOrderNumberOriginUpdate(
     pass
 
 
+class QuotaOrderNumberOriginCreate(
+    QuotaOrderNumberOriginUpdateMixin,
+    CreateTaricCreateView,
+):
+    form_class = forms.QuotaOrderNumberOriginForm
+    template_name = "layouts/create.jinja"
+
+    def form_valid(self, form):
+        quota = models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
+        form.instance.order_number = quota
+        return super().form_valid(form)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context["page_title"] = "Create a new quota origin"
+        context["page_label"] = mark_safe(
+            """Find out more about <a class="govuk-link" 
+        href="https://data-services-help.trade.gov.uk/tariff-application-platform/tariff-policy/origin-quotas/">
+        quota origins</a>.""",
+        )
+
+        return context
+
+
+class QuotaOrderNumberOriginConfirmCreate(
+    QuotaOrderNumberOriginMixin,
+    TrackedModelDetailView,
+):
+    template_name = "quota-origins/confirm-create.jinja"
+
+
 class QuotaOrderNumberOriginEditUpdate(
     QuotaOrderNumberOriginUpdateMixin,
     EditTaricView,
@@ -399,3 +435,83 @@ class QuotaOrderNumberOriginConfirmUpdate(
     TrackedModelDetailView,
 ):
     template_name = "quota-origins/confirm-update.jinja"
+
+
+class QuotaDefinitionMixin:
+    model = models.QuotaDefinition
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return models.QuotaDefinition.objects.approved_up_to_transaction(tx)
+
+
+class QuotaDefinitionUpdateMixin(
+    QuotaDefinitionMixin,
+    TrackedModelDetailMixin,
+):
+    form_class = forms.QuotaDefinitionUpdateForm
+    permission_required = ["common.change_trackedmodel"]
+    template_name = "quota-definitions/edit.jinja"
+
+    validate_business_rules = (
+        business_rules.QD7,
+        business_rules.QD8,
+        business_rules.QD10,
+        business_rules.QD11,
+        UniqueIdentifyingFields,
+        UpdateValidity,
+    )
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        object = super().get_result_object(form)
+        return object
+
+
+class QuotaDefinitionUpdate(
+    QuotaDefinitionUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class QuotaDefinitionDelete(
+    QuotaDefinitionUpdateMixin,
+    CreateTaricDeleteView,
+):
+    form_class = delete_form_for(models.QuotaDefinition)
+    template_name = "quota-definitions/delete.jinja"
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Quota definition period {self.object.sid} has been deleted",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "quota_definition-ui-confirm-delete",
+            kwargs={"sid": self.object.order_number.sid},
+        )
+
+
+class QuotaDefinitionEditUpdate(
+    QuotaDefinitionUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaDefinitionConfirmUpdate(
+    QuotaDefinitionMixin,
+    TrackedModelDetailView,
+):
+    template_name = "quota-definitions/confirm-update.jinja"
+
+
+class QuotaDefinitionConfirmDelete(
+    QuotaOrderNumberMixin,
+    TrackedModelDetailView,
+):
+    template_name = "quota-definitions/confirm-delete.jinja"

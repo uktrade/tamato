@@ -96,9 +96,17 @@ class ValidityQuerySet(QuerySet):
         """
         return self.as_at(date.today())
 
-    def as_at_and_beyond(self, date) -> QuerySet:
+    def as_at_today_and_beyond(self) -> QuerySet:
         """Return the instances of the model that are respresented at the
         current date as well as any future instances."""
+        return self.filter(
+            Q(valid_between__contains=date.today())
+            | Q(valid_between__startswith__gt=date.today()),
+        )
+
+    def as_at_and_beyond(self, date) -> QuerySet:
+        """Return the instances of the model that are respresented at the given
+        date as well as any future instances."""
         return self.filter(
             Q(valid_between__contains=date) | Q(valid_between__startswith__gt=date),
         )

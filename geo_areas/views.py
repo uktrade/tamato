@@ -2,6 +2,7 @@ from typing import Type
 
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -230,7 +231,7 @@ class GeoAreaEditUpdate(
 class GeoAreaCreate(GeoAreaMixin, CreateTaricCreateView):
     """UI endpoint for creating Geographical Area CREATE instances."""
 
-    template_name = "geo_areas/create.jinja"
+    template_name = "layouts/create.jinja"
     form_class = forms.GeographicalAreaCreateForm
 
     validate_business_rules = (
@@ -247,6 +248,18 @@ class GeoAreaCreate(GeoAreaMixin, CreateTaricCreateView):
         description.save()
 
         return geo_area
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context["page_title"] = "Create a new geographical area"
+        context["page_label"] = mark_safe(
+            """Find out more about <a class="govuk-link" 
+        https://data-services-help.trade.gov.uk/tariff-application-platform/data-structures/geographical-areas/">
+        geographical areas</a>.""",
+        )
+
+        return context
 
 
 class GeoAreaEditCreate(
