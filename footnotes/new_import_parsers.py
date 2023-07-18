@@ -4,6 +4,7 @@ from footnotes.import_handlers import *
 from importer.new_parsers import ModelLink
 from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
+from importer.parsers import NewChildPeriod
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
 
@@ -115,7 +116,7 @@ class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
     description: str = None
 
 
-class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser):
+class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser, NewChildPeriod):
     model = models.FootnoteDescription
     parent_parser = NewFootnoteDescriptionParser
 

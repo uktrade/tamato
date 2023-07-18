@@ -6,6 +6,7 @@ from footnotes.models import Footnote
 from importer.new_parsers import ModelLink
 from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
+from importer.parsers import NewChildPeriod
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
 
@@ -25,6 +26,8 @@ class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParse
     subrecord_code = "00"
 
     xml_object_tag = "additional.code.type"
+
+    identity_fields = ["sid"]
 
     sid: int = None
     valid_between_lower: date = None
@@ -56,11 +59,13 @@ class NewAdditionalCodeTypeDescriptionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "additional.code.type.description"
 
+    identity_fields = ["sid"]
+
     sid: int = None
     description: str = None
 
 
-class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
+class NewAdditionalCodeParser(NewWritable, NewElementParser):
     model = additional_codes.models.AdditionalCode
 
     # create dependency to QuotaDefinition
@@ -68,7 +73,7 @@ class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
         ModelLink(
             models.AdditionalCodeType,
             [
-                ModelLinkField("type__sid", "sid"),
+                ModelLinkField("type_id", "sid"),
             ],
             "additional.code.type",
         ),
@@ -77,7 +82,7 @@ class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
     value_mapping = {
         "additional_code": "code",
         "additional_code_sid": "sid",
-        "additional_code_type_id": "type__sid",
+        "additional_code_type_id": "type_id",
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
@@ -87,8 +92,10 @@ class NewAdditionalCodeParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "additional.code"
 
+    identity_fields = ["sid"]
+
     sid: int = None
-    type__sid: int = None
+    type_id: int = None
     code: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -121,6 +128,7 @@ class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
         "additional_code_sid": "described_additionalcode__sid",
         "additional_code_type_id": "described_additionalcode__type__sid",
         "additional_code": "described_additionalcode__code",
+        "validity_start_date": "validity_start",
     }
 
     record_code = "245"
@@ -128,15 +136,22 @@ class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "additional.code.description"
 
+    identity_fields = ["sid"]
+
     sid: int = None
     # language_id: str = None
     described_additionalcode__sid: int = None
     described_additionalcode__type__sid: int = None
     described_additionalcode__code: str = None
     description: str = None
+    validity_start: date = None
 
 
-class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
+class NewAdditionalCodeDescriptionPeriodParser(
+    NewWritable,
+    NewElementParser,
+    NewChildPeriod,
+):
     model = models.AdditionalCodeDescription
     parent_parser = NewAdditionalCodeDescriptionParser
 
@@ -177,6 +192,8 @@ class NewAdditionalCodeDescriptionPeriodParser(NewWritable, NewElementParser):
     subrecord_code = "05"
 
     xml_object_tag = "additional.code.description.period"
+
+    identity_fields = ["sid"]
 
     sid: int = None
     described_additionalcode__sid: int = None
@@ -234,6 +251,8 @@ class NewFootnoteAssociationAdditionalCodeParser(
     subrecord_code = "15"
 
     xml_object_tag = "footnote.association.additional.code"
+
+    identity_fields = []
 
     additional_code__sid: int = None
     associated_footnote__footnote_type__id: str = None

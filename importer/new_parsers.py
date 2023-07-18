@@ -8,6 +8,7 @@ from typing import get_type_hints
 import bs4
 from bs4 import NavigableString
 
+from common.models import Transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
 
@@ -129,6 +130,37 @@ class ModelLink:
 
 
 class NewElementParser:
+    """
+    This object represents a TARIC3 parsed model, this is the object that does a
+    lot of the work, connecting the TARIC3 data and makes ORM models. There are
+    a few key concepts worth documenting below.
+
+    value_mapping :
+        This dictionary (that may change to an array of models at some point) has key : value pairs that are used to
+        map TARIC3 is values from the XML to a subclass of this model and at the same time, change the name of the
+        field if needed. Values that don't need mapping to a new name just import with that name (but replacing full
+        stops with underscores)
+
+        the value mapping allows at processing time, for values to be renamed in preparation to
+        represent the ORM fields. The structure is:
+
+        {
+            taric3_xml_field_name: parser_field_name
+        }
+
+        Where the left side (key) is the name of the field in XML, and the right side (value) is the
+        destination field on the parser.
+
+        Additional Note:
+        Some values represent a foreign key, for example : additional_code__sid
+
+        note the double underscore - like filtering in django ORM, this represents a relationship
+
+        If a field name has double underscore, firstly the property e.g. 'additional_code' must exist on the destination
+        model in the django ORM, it will be checked. and secondly, the field after the first double underscore must
+        exist on the related model, if not it will not import.
+    """
+
     transaction_id: int = None
     record_code: str = None
     subrecord_code: str = None
@@ -143,19 +175,39 @@ class NewElementParser:
     parent_handler = None
     excluded_fields = ["language_id"]
     model = None
+    identity_fields = []
 
     def __init__(self):
         self.issues = []
         self.sequence_number = None
         self.model = None
 
-    def links(self):
+    def links(self) -> list[ModelLink]:
         if self.model_links is None:
             raise Exception(
                 f"No parser defined for {self.__class__.__name__}, is this correct?",
             )
 
         return self.model_links
+
+    def model_query_parameters(self):
+        query_args = {}
+        for identity_field in self.identity_fields:
+            query_arg_value = getattr(self, identity_field)
+
+            if query_arg_value is None or query_arg_value == "":
+                raise Exception(
+                    f"No value for identity field {query_arg_value} for object : {self.__class__.__name__}",
+                )
+
+            query_args[identity_field] = query_arg_value
+
+        if len(query_args.keys()) == 0:
+            raise Exception(
+                f"No arguments present for object : {self.__class__.__name__}",
+            )
+
+        return query_args
 
     def missing_child_attributes(self):
         """
@@ -177,7 +229,6 @@ class NewElementParser:
         result = {}
 
         for child_parser in child_parsers:
-            result[str(child_parser.__name__)] = []
             field_sets = child_parser.identity_fields_for_parent()
             for field_set_key in field_sets.keys():
                 for field in field_sets[field_set_key]:
@@ -190,7 +241,10 @@ class NewElementParser:
 
                     # Include attribute in response if empty
                     if getattr(self, field) is None:
-                        result[str(child_parser.__name__)].append(field)
+                        if str(child_parser.__name__) in result.keys():
+                            result[str(child_parser.__name__)].append(field)
+                        else:
+                            result[str(child_parser.__name__)] = [field]
 
         return result
 
@@ -310,7 +364,43 @@ class NewElementParser:
             else:
                 self.valid_between = TaricDateRange(self.valid_between_lower)
 
-    def to_tap_model(self):
+    def get_linked_model(self, field_name, value, transaction: Transaction):
+        # at this point, the model should be added to the database, even only
+
+        # get related model
+        linked_model = None
+        object_field_name = None
+        for link in self.links():
+            for field in link.fields:
+                # match
+                if field.parser_field_name == field_name:
+                    if linked_model is None:
+                        linked_model = link.model
+                        object_field_name = field.object_field_name
+                    else:
+                        raise Exception(
+                            f"Linked model for {self.__class__.__name__} matched multiple times, "
+                            f"first {linked_model.__name__} then {link.model.__name__}",
+                        )
+
+        if not linked_model:
+            raise Exception(
+                f"no match for {field_name} in linked models for {self.__class__.__name__}",
+            )
+
+        # query up to current transaction for matching model and catch in variable
+        kwargs = {
+            object_field_name: value,
+        }
+
+        model = linked_model.objects.approved_up_to_transaction(transaction).get(
+            **kwargs
+        )
+
+        # return model
+        return model
+
+    def model_attributes(self, transaction: Transaction):
         excluded_variable_names = [
             "__annotations__",
             "__doc__",
@@ -323,23 +413,57 @@ class NewElementParser:
             "xml_object_tag",
             "valid_between_lower",
             "valid_between_upper",
+            "sequence_number",
+            "update_type_name",
+            "links_valid",
+            "transaction_id",
         ]
 
         model_attributes = {}
 
         for variable_name in vars(self).keys():
             if variable_name not in excluded_variable_names:
-                variable_first_part = variable_name.split("__")[0]
-                if hasattr(self.model, variable_first_part):
-                    model_attributes[variable_first_part] = getattr(self, variable_name)
+                tmp_variable_name = variable_name
+                if "__" in variable_name:
+                    tmp_variable_name = variable_name.split("__")[0]
+
+                    if hasattr(self.__class__.model, tmp_variable_name):
+                        # get related model id  - the model should already exist
+                        linked_model = self.get_linked_model(
+                            variable_name,
+                            getattr(self, variable_name),
+                            transaction,
+                        )
+                        model_attributes[tmp_variable_name] = linked_model
+                    else:
+                        raise Exception(
+                            f"Error creating model {self.__class__.model.__name__}, model does not have an attribute {tmp_variable_name}",
+                        )
                 else:
-                    raise Exception(
-                        f"Error creating model {self.model.__name__}, model does not have an attribute {variable_first_part}",
-                    )
+                    if hasattr(self.__class__.model, tmp_variable_name):
+                        model_attributes[tmp_variable_name] = getattr(
+                            self,
+                            variable_name,
+                        )
+                    else:
+                        raise Exception(
+                            f"Error creating model {self.__class__.model.__name__}, model does not have an attribute {tmp_variable_name}",
+                        )
 
-        new_model = self.model(**model_attributes)
+        return model_attributes
 
-        return new_model
+    def can_save_to_model(self):
+        # This method checks that the parser represents an object that can be saved to a TAP model, and not a child
+        # object that simply holds attributes.
+        # This is determined by the lack of a parent_parser, if a parent parser is present that means the model will be
+        # appended to a parent and should not be saved directly
+        if self.parent_parser:
+            return False
+
+        return True
+
+    def is_child_object(self):
+        return not self.can_save_to_model()
 
 
 class TaricObjectLink:

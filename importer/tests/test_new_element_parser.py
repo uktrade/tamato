@@ -1,8 +1,11 @@
+from typing import List
+
 import pytest
 
 from additional_codes.new_import_parsers import *
 from certificates.new_import_parsers import *
 from commodities.new_import_parsers import *
+from common.tests import factories
 from common.util import TaricDateRange
 from footnotes.new_import_parsers import *
 from geo_areas.new_import_parsers import *
@@ -513,10 +516,10 @@ class TestNewElementParser:
             valid_between = None
             valid_between_lower: date = None
             valid_between_upper: date = None
+            model = MadeUpModel
 
             def __init__(self):
                 super().__init__()
-                self.model = MadeUpModel
 
         parser = TestParentElementParser()
 
@@ -530,9 +533,11 @@ class TestNewElementParser:
             },
         )
 
-        target = parser.to_tap_model()
+        transaction = factories.ApprovedTransactionFactory.create()
 
-        assert target.valid_between == TaricDateRange(date(2023, 1, 1))
+        target = parser.model_attributes(transaction)
+
+        assert target["valid_between"] == TaricDateRange(date(2023, 1, 1))
 
     def test_to_tap_model_invalid_peoperty(self):
         class MadeUpModel:
@@ -553,10 +558,10 @@ class TestNewElementParser:
             valid_between_lower: date = None
             valid_between_upper: date = None
             invalid_property: str = None
+            model = MadeUpModel
 
             def __init__(self):
                 super().__init__()
-                self.model = MadeUpModel
 
         parser = TestParentElementParser()
 
@@ -571,11 +576,74 @@ class TestNewElementParser:
             },
         )
 
+        transaction = factories.ApprovedTransactionFactory.create()
+
         e = None
         with pytest.raises(Exception) as e:
-            parser.to_tap_model()
+            parser.model_attributes(transaction)
 
         assert (
             "Error creating model MadeUpModel, model does not have an attribute invalid_property"
             in str(e)
         )
+
+    def test_model_attributes_returns_expected(self, mocker):
+        add_code_type = factories.AdditionalCodeTypeFactory.create(sid="A")
+
+        class MadeUpModel:
+            sequence_number: int = None
+            transaction_id: int = None
+            valid_between: TaricDateRange = None
+            field_1: str = None
+            another_field: int = None
+            related_model: List[str] = None
+            additional_code_type = AdditionalCodeType
+
+            def __init__(self, **kwargs):
+                for key, value in kwargs.items():
+                    setattr(self, key, value)
+
+        class TestParentElementParser(NewElementParser):
+            xml_object_tag = "test.parent.element"
+
+            record_code = "900"
+            subrecord_code = "100"
+            field_1: str = None
+            another_field: str = None
+            model = MadeUpModel
+            additional_code_type__sid: str = None
+
+            model_links = [
+                ModelLink(
+                    additional_codes.models.AdditionalCodeType,
+                    [
+                        ModelLinkField("additional_code_type__sid", "sid"),
+                    ],
+                    "additional.code.type",
+                ),
+            ]
+
+            def __init__(self):
+                super().__init__()
+
+        appr_transaction = factories.ApprovedTransactionFactory.create()
+
+        parser = TestParentElementParser()
+        parser.populate(
+            1,
+            "900",
+            "100",
+            1,
+            {
+                "field_1": "aaa",
+                "another_field": "123",
+                "additional_code_type__sid": "A",
+            },
+        )
+
+        # child_parser
+        target = parser.model_attributes(appr_transaction)
+        assert "field_1" in target.keys()
+        assert "another_field" in target.keys()
+        assert "additional_code_type" in target.keys()
+        assert len(target.keys()) == 3

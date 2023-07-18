@@ -367,8 +367,8 @@ class CompoundElement(ValueElementMixin, ElementParser):
 class NewValidityMixin:
     """Parse validity start and end dates."""
 
-    valid_between_lower: date
-    valid_between_upper: date
+    valid_between_lower: date = None
+    valid_between_upper: date = None
 
 
 class ValidityMixin:
@@ -400,6 +400,12 @@ class ValidityStartMixin:
     """Parse validity start date."""
 
     validity_start = TextElement(Tag("validity.start.date"))
+
+
+class NewValidityStartMixin:
+    """Parse validity start date."""
+
+    validity_start: date = None
 
 
 class Writable:
@@ -461,4 +467,12 @@ class NewWritable:
             "order_number": quota_order_number,
             "geographical_area": resolve_geo_area(order_number["origin"]),
             "valid_between": valid_between,
+        }
+
+
+class NewChildPeriod:
+    def parent_attributes(self):
+        return {
+            "sid": self.sid,
+            "validity_start": self.validity_start,
         }

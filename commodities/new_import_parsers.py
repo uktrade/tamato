@@ -5,6 +5,7 @@ from footnotes.models import FootnoteType
 from importer.new_parsers import ModelLink
 from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
+from importer.parsers import NewChildPeriod
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
 
@@ -16,6 +17,8 @@ class NewGoodsNomenclatureParser(NewValidityMixin, NewWritable, NewElementParser
     subrecord_code = "00"
 
     xml_object_tag = "goods.nomenclature"
+
+    identity_fields = ["sid"]
 
     sid: str = None
     item_id: str = None
@@ -132,7 +135,11 @@ class NewGoodsNomenclatureDescriptionParser(NewWritable, NewElementParser):
     description: str = None
 
 
-class NewGoodsNomenclatureDescriptionPeriodParser(NewWritable, NewElementParser):
+class NewGoodsNomenclatureDescriptionPeriodParser(
+    NewWritable,
+    NewElementParser,
+    NewChildPeriod,
+):
     model = models.GoodsNomenclatureDescription
     parent_parser = NewGoodsNomenclatureDescriptionParser
 

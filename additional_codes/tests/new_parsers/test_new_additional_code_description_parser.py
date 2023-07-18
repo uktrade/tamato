@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 
 from additional_codes.new_import_parsers import NewAdditionalCodeDescriptionParser
@@ -63,9 +65,9 @@ class TestNewAdditionalCodeDescriptionParser:
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
-        assert len(importer.parsed_transactions[0].parsed_messages) == 3
+        assert len(importer.parsed_transactions[0].parsed_messages) == 4
 
-        target_message = importer.parsed_transactions[0].parsed_messages[2]
+        target_message = importer.parsed_transactions[0].parsed_messages[3]
         assert (
             target_message.record_code == NewAdditionalCodeDescriptionParser.record_code
         )
@@ -82,11 +84,13 @@ class TestNewAdditionalCodeDescriptionParser:
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
+        assert type(target_taric_object) == NewAdditionalCodeDescriptionParser
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type__sid == 12
-        assert target_taric_object.described_additionalcode__code == "111"
+        assert target_taric_object.described_additionalcode__type__sid == 7
+        assert target_taric_object.described_additionalcode__code == "2"
         assert target_taric_object.description == "some description"
+        assert target_taric_object.validity_start == date(2021, 1, 1)
 
         for message in importer.parsed_transactions[0].parsed_messages:
             # check for issues

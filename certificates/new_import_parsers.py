@@ -7,6 +7,7 @@ from certificates.models import CertificateType
 from importer.new_parsers import ModelLink
 from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
+from importer.parsers import NewChildPeriod
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
 
@@ -25,6 +26,8 @@ class NewCertificateTypeParser(NewValidityMixin, NewWritable, NewElementParser):
     }
 
     model_links = []
+
+    identity_fields = ["sid"]
 
     sid: str = None
     valid_between_lower: date = None
@@ -53,6 +56,8 @@ class NewCertificateTypeDescriptionParser(NewWritable, NewElementParser):
     subrecord_code = "05"
 
     xml_object_tag = "certificate.type.description"
+
+    identity_fields = ["sid"]
 
     sid: str = None
     description: str = None
@@ -83,8 +88,10 @@ class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "certificate"
 
-    certificate_type__sid: str = None
+    identity_fields = ["sid"]
+
     sid: str = None
+    certificate_type__sid: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
 
@@ -119,13 +126,19 @@ class NewCertificateDescriptionParser(NewWritable, NewElementParser):
         "certificate_code": "described_certificate__sid",
     }
 
+    identity_fields = ["sid"]
+
     sid: str = None
     described_certificate__certificate_type__sid: str = None
     described_certificate__sid: str = None
     description: str = None
 
 
-class NewCertificateDescriptionPeriodParser(NewWritable, NewElementParser):
+class NewCertificateDescriptionPeriodParser(
+    NewWritable,
+    NewElementParser,
+    NewChildPeriod,
+):
     model = CertificateDescription
     parent_parser = NewCertificateDescriptionParser
 
@@ -161,6 +174,8 @@ class NewCertificateDescriptionPeriodParser(NewWritable, NewElementParser):
     subrecord_code = "05"
 
     xml_object_tag = "certificate.description.period"
+
+    identity_fields = ["sid"]
 
     sid: str = None
     described_certificate__certificate_type__sid: str = None

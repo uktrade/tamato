@@ -2,6 +2,7 @@ from typing import List
 
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
+from django.db import transaction
 
 from common.models import Transaction
 from importer.new_parsers import MessageParser
@@ -109,9 +110,26 @@ class NewImporter:
             self.populate_parent_attributes()
             self.commit_data()
 
-    def populate_parent_attributes(self):
-        pass
+    def find_parent_for_parser_object(self, taric_object: NewElementParser):
+        if not taric_object.is_child_object():
+            raise Exception(f"Only call this method on child objects")
 
+        for parsed_transaction in self.parsed_transactions:
+            for message in parsed_transaction.parsed_messages:
+                if message.taric_object.is_child_object():
+                    message.taric_object
+
+    def populate_parent_attributes(self):
+        # need to copy all child attributes to parent objects within the import only
+        for parsed_transaction in self.parsed_transactions:
+            for message in parsed_transaction.parsed_messages:
+                if message.taric_object.is_child_object():
+                    parent = self.find_parent_for_parser_object(message.taric_object)
+                    attributes = message.taric_object.parent_attributes()
+                    for attribute_key in attributes.keys():
+                        setattr(parent, attribute_key, attributes[attribute_key])
+
+    @transaction.atomic
     def commit_data(self):
         transaction_order = 1
         for transaction in self.parsed_transactions:
@@ -122,30 +140,44 @@ class NewImporter:
             )
 
             for message in transaction.parsed_messages:
-                self.create_or_append_to_tap_object_from_message(
-                    message,
-                    transaction_inst,
-                )
+                if message.taric_object.can_save_to_model():
+                    self.create_or_append_to_tap_object_from_message(
+                        message,
+                        transaction_inst,
+                    )
 
     def create_or_append_to_tap_object_from_message(
         self,
         message: MessageParser,
         transaction: Transaction,
     ):
-        if message.taric_object.parent_parser is not None:
-            # Find parent object and append data to that model
-
-            # first search in change set (current or earlier transactions)
-            self.find_object_in_import(
-                transaction,
-                message.taric_object.identity_fields_for_parent(),
-                message.object_type,
+        if message.update_type == 1:  # Update
+            # find model based on identity key
+            model_instance = message.taric_object.model.latest_approved().get(
+                **message.taric_object.model_query_parameters()
             )
 
-            # if no match, update TAP data
-        else:
-            # Create object and append data
-            pass
+            # update model with all attributes from model
+            model_instance.new_version(
+                transaction=transaction,
+                **message.taric_object.model_attributes(transaction),
+            )
+        elif message.update_type == 2:  # Delete
+            model_instance = message.taric_object.model.latest_approved().get(
+                **message.taric_object.model_query_parameters()
+            )
+
+            # mark the model as deleted
+            model_instance.new_version(
+                transaction=transaction,
+                update_type=message.taric_object.update_type,
+            )
+
+        elif message.update_type == 3:  # Create
+            message.taric_object.__class__.model.objects.create(
+                transaction=transaction,
+                **message.taric_object.model_attributes(transaction),
+            )
 
     def find_object_in_import(
         self,
@@ -210,16 +242,17 @@ class NewImporter:
                     parsed_message.taric_object.missing_child_attributes()
                 )
 
-                for attribute in missing_child_attributes:
-                    # raise report issue
-                    report_item = NewImportIssueReportItem(
-                        parsed_message.taric_object.xml_object_tag,
-                        attribute.child_object,
-                        attribute["identity_fields"],
-                        "Description pending",
-                    )
+                if missing_child_attributes:
+                    for attribute in missing_child_attributes:
+                        # raise report issue
+                        report_item = NewImportIssueReportItem(
+                            parsed_message.taric_object.xml_object_tag,
+                            attribute,
+                            missing_child_attributes[attribute],
+                            "Description pending",
+                        )
 
-                    target_taric_object.issues.append(report_item)
+                        parsed_message.taric_object.issues.append(report_item)
 
                 parsed_message.taric_object.links_valid = links_valid
 
