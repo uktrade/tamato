@@ -569,12 +569,17 @@ def test_measure_update_removes_footnote_association(valid_user_client, measure_
         assert measure.footnoteassociationmeasure_set.current().count() == 2
 
     form_data = {k: v for k, v in measure_form.data.items() if v is not None}
+
+    # Form stores data of footnotes on a measure in the session
+    url = reverse("measure-ui-edit", kwargs={"sid": measure.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    # Remove footnote2 from session to indicate its removal on form
     session = valid_user_client.session
-    # Remove footnote2 from session to remove on form
-    session.update({f"instance_footnotes_{measure.sid}": [footnote1.pk]})
+    session[f"instance_footnotes_{measure.sid}"].remove(footnote2.pk)
     session.save()
 
-    url = reverse("measure-ui-edit", kwargs={"sid": measure.sid})
     response = valid_user_client.post(url, data=form_data)
     assert response.status_code == 302
 
