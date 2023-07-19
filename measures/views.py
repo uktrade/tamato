@@ -573,15 +573,16 @@ class MeasureCreateWizard(
 
                     measures_data.append(measure_data)
 
+        parser = DutySentenceParser.get(
+            measure_start_date,
+            component_output=MeasureConditionComponent,
+        )
+
         created_measures = []
 
         for measure_data in measures_data:
             # creates measure in DB
             measure = measure_creation_pattern.create(**measure_data)
-            parser = DutySentenceParser.get(
-                measure.valid_between.lower,
-                component_output=MeasureConditionComponent,
-            )
             self.create_measure_conditions(
                 data,
                 measure,
