@@ -14,6 +14,7 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from parsec import ParseError
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -1180,10 +1181,6 @@ class MeasureCommodityAndDutiesForm(forms.Form):
                     "duties": f"Duties cannot be added to a commodity for measure type {self.measure_type}",
                 },
             )
-        try:
-            validate_duties(duties, self.measure_start_date)
-        except ValidationError as e:
-            self.add_error("duties", e)
 
         return cleaned_data
 
@@ -1203,6 +1200,7 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
 class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
     def __init__(self, *args, **kwargs):
         min_commodity_count = kwargs.pop("min_commodity_count", 2)
+        self.measure_start_date = kwargs.pop("measure_start_date", None)
         default_extra = 2
         self.extra = min_commodity_count - default_extra
         super().__init__(*args, **kwargs)
@@ -1214,6 +1212,23 @@ class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
                 e.message = "Select one or more commodity codes"
 
         return self._non_form_errors
+
+    def clean(self):
+        if any(self.errors):
+            return
+
+        cleaned_data = super().cleaned_data
+        duties = {data["duties"] for data in cleaned_data if "duties" in data}
+        duty_sentence_parser = DutySentenceParser.get(
+            self.measure_start_date,
+        )
+        for duty in duties:
+            try:
+                duty_sentence_parser.parse(duty)
+            except ParseError:
+                raise ValidationError(f'"{duty}" is an invalid duty sentence')
+
+        return cleaned_data
 
 
 class MeasureFootnotesForm(forms.Form):
