@@ -283,6 +283,7 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
         "run-business-rules": "workbaskets:current-workbasket",
         "terminate-rule-check": "workbaskets:current-workbasket",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
+        "remove-all": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
     }
@@ -362,6 +363,10 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
             return reverse(
                 self.action_success_url_names[form_action],
             )
+        elif form_action == "remove-all":
+            return reverse(
+                self.action_success_url_names[form_action],
+            )
         elif form_action in ("page-prev", "page-next"):
             return self._append_url_page_param(
                 reverse(
@@ -437,8 +442,8 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
             f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
         )
         store.clear()
-        select_all = self.request.POST.get("select-all-pages")
-        if select_all:
+        form_action = self.request.POST.get("form-action")
+        if form_action == "remove-all":
             object_list = {obj.id: True for obj in self.workbasket.tracked_models}
             store.add_items(object_list)
         else:
