@@ -608,6 +608,28 @@ class MeasureCreateWizard(
 
         return render(self.request, "measures/confirm-create-multiple.jinja", context)
 
+    def get_all_cleaned_data(self):
+        all_cleaned_data = {}
+        for form_key in self.get_form_list():
+            cleaned_data = self.get_cleaned_data_for_step(form_key)
+            if isinstance(cleaned_data, (tuple, list)):
+                all_cleaned_data.update(
+                    {
+                        f"formset-{form_key}": cleaned_data,
+                    },
+                )
+            else:
+                all_cleaned_data.update(cleaned_data)
+        return all_cleaned_data
+
+    def get_cleaned_data_for_step(self, step):
+        self.cleaned_data = getattr(self, "cleaned_data", {})
+        if step in self.cleaned_data:
+            return self.cleaned_data[step]
+
+        self.cleaned_data[step] = super().get_cleaned_data_for_step(step)
+        return self.cleaned_data[step]
+
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
         context["step_metadata"] = self.step_metadata
