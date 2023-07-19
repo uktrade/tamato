@@ -279,6 +279,7 @@ class DutySentenceParser:
             .exclude(
                 measurement_unit_qualifier__abbreviation__exact="",
             )
+            .select_related("measurement_unit", "measurement_unit_qualifier")
         )
 
         return DutySentenceParser(
