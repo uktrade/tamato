@@ -619,25 +619,40 @@ class MeasureCreateWizard(
     def get_form_kwargs(self, step):
         kwargs = {}
         if step == self.COMMODITIES:
-            min_commodity_count = self.get_cleaned_data_for_step(
-                self.MEASURE_DETAILS,
-            ).get("min_commodity_count")
-            kwargs.update({"min_commodity_count": min_commodity_count})
-
-        if step == self.COMMODITIES or step == self.CONDITIONS:
+            measure_start_date = None
+            measure_type = None
+            min_commodity_count = 0
             measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
-            # duty sentence validation requires the measure start date so pass it to form kwargs here
-            valid_between = measure_details.get("valid_between")
-            measure_type = measure_details.get("measure_type")
-            # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
+            if measure_details:
+                measure_start_date = measure_details.get("valid_between").lower
+                measure_type = measure_type = measure_details.get("measure_type")
+                min_commodity_count = measure_details.get("min_commodity_count")
+            kwargs.update(
+                {
+                    "min_commodity_count": min_commodity_count,
+                    "measure_start_date": measure_start_date,
+                },
+            )
             kwargs["form_kwargs"] = {
-                "measure_start_date": valid_between.lower,
+                "measure_type": measure_type,
+            }
+
+        if step == self.CONDITIONS:
+            measure_start_date = None
+            measure_type = None
+            measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
+            if measure_details:
+                measure_start_date = measure_details.get("valid_between").lower
+                measure_type = measure_details.get("measure_type")
+            kwargs["form_kwargs"] = {
+                "measure_start_date": measure_start_date,
                 "measure_type": measure_type,
             }
 
         if step == self.SUMMARY:
-            measure_type = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(
-                "measure_type",
+            measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
+            measure_type = (
+                measure_details.get("measure_type") if measure_details else None
             )
             kwargs.update(
                 {
