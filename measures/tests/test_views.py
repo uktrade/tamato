@@ -1343,10 +1343,44 @@ def test_measure_create_wizard_get_form_kwargs(
     wizard.form_list = OrderedDict(wizard.form_list)
     form_kwargs = wizard.get_form_kwargs(step)
 
-    assert "measure_start_date" in form_kwargs["form_kwargs"]
-    assert "measure_type" in form_kwargs["form_kwargs"]
-    assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
-    assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+    if step == "commodities":
+        assert "measure_start_date" in form_kwargs
+        assert "min_commodity_count" in form_kwargs
+        assert "measure_type" in form_kwargs["form_kwargs"]
+        assert form_kwargs["measure_start_date"] == date(2021, 4, 2)
+        assert form_kwargs["min_commodity_count"] == 2
+        assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+    else:
+        # conditions
+        assert "measure_start_date" in form_kwargs["form_kwargs"]
+        assert "measure_type" in form_kwargs["form_kwargs"]
+        assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
+        assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+
+
+def test_measure_create_wizard_get_cleaned_data_for_step(session_request, measure_type):
+    details_data = {
+        "measure_create_wizard-current_step": "measure_details",
+        "measure_details-measure_type": [measure_type.pk],
+        "measure_details-start_date_0": [2],
+        "measure_details-start_date_1": [4],
+        "measure_details-start_date_2": [2021],
+        "measure_details-min_commodity_count": [2],
+    }
+    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+    storage.set_step_data("measure_details", details_data)
+    storage._set_current_step("measure_details")
+    wizard = MeasureCreateWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"measure_details": {}},
+        instance_dict={"measure_details": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    cleaned_data = wizard.get_cleaned_data_for_step("measure_details")
+    assert cleaned_data["measure_type"] == measure_type
+    assert cleaned_data["min_commodity_count"] == 2
+    assert cleaned_data["valid_between"] == TaricDateRange(date(2021, 4, 2), None, "[)")
 
 
 def test_measure_form_creates_exclusions(

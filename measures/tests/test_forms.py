@@ -547,26 +547,6 @@ def test_measure_forms_additional_code_invalid_data():
 
 
 @pytest.mark.parametrize(
-    "duties,is_valid",
-    [("33 GBP/100kg", True), ("some invalid duty expression", False)],
-)
-def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_ranges):
-    commodity = factories.GoodsNomenclatureFactory.create()
-    data = {
-        "duties": duties,
-        "commodity": commodity,
-    }
-    form = forms.MeasureCommodityAndDutiesForm(
-        data,
-        prefix="",
-        measure_start_date=date_ranges.normal,
-    )
-    assert form.is_valid() == is_valid
-    if not form.is_valid():
-        assert "Enter a valid duty sentence." in form.errors["duties"]
-
-
-@pytest.mark.parametrize(
     "commodity, error_message",
     [
         (
@@ -576,7 +556,7 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
         ("", "Select a commodity code"),
     ],
 )
-def test_measure_forms_commodity_and_duties_form_invalid(
+def test_measure_forms_commodity_and_duties_form_invalid_selection(
     commodity,
     error_message,
     duty_sentence_parser,
@@ -649,9 +629,35 @@ def test_measure_forms_commodity_and_duties_formset_valid_data(
         data=data,
         initial=unprefix_formset_data(MEASURE_COMMODITIES_FORMSET_PREFIX, data),
         min_commodity_count=2,
-        form_kwargs={"measure_start_date": date_ranges.normal.lower},
+        measure_start_date=date_ranges.normal.lower,
     )
     assert formset.is_valid()
+
+
+def test_measure_forms_commodity_and_duties_formset_invalid_data(
+    date_ranges,
+    duty_sentence_parser,
+):
+    commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
+    invalid_duty_sentence = "abc123"
+    data = {
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity1.pk,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": invalid_duty_sentence,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-commodity": commodity2.pk,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-duties": "40 GBP/100kg",
+        "submit": "submit",
+    }
+    formset = forms.MeasureCommodityAndDutiesFormSet(
+        data=data,
+        initial=unprefix_formset_data(MEASURE_COMMODITIES_FORMSET_PREFIX, data),
+        min_commodity_count=2,
+        measure_start_date=date_ranges.normal.lower,
+    )
+    assert not formset.is_valid()
+    assert (
+        f'"{invalid_duty_sentence}" is an invalid duty sentence'
+        in formset.non_form_errors()
+    )
 
 
 def test_measure_forms_conditions_form_valid_data(date_ranges):
