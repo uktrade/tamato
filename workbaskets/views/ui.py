@@ -7,6 +7,7 @@ from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db.models import ProtectedError
 from django.db.transaction import atomic
@@ -314,8 +315,13 @@ class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
 
         # Get actual values from the ImportBatch instance if one is associated
         # with the workbasket.
-        if self.workbasket.importbatch:
-            reporter = GoodsReporter(self.workbasket.importbatch.taric_file)
+        try:
+            import_batch = self.workbasket.importbatch
+        except ObjectDoesNotExist:
+            import_batch = None
+
+        if import_batch and import_batch.taric_file:
+            reporter = GoodsReporter(import_batch.taric_file)
             goods_report = reporter.create_report()
 
             context["report_lines"] = goods_report.report_lines
@@ -330,7 +336,7 @@ class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
                 ]
                 for line in goods_report.report_lines
             ]
-            context["import_batch_pk"] = self.workbasket.importbatch.pk
+            context["import_batch_pk"] = import_batch.pk
 
         return context
 
