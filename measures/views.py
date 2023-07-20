@@ -509,10 +509,25 @@ class MeasureCreateWizard(
                 action_pair = MeasureActionPair.objects.filter(
                     positive_action__code=condition_data.get("action").code,
                 ).first()
+
+                negative_action = None
+
+                if action_pair:
+                    negative_action = action_pair.negative_action
+                elif (
+                    measure.measure_type
+                    in measure_creation_pattern.autonomous_tariff_suspension_use_measure_types
+                    and condition_data.get("action").code == "01"
+                ):
+                    """If measure type is an automatic suspension and an action
+                    code 01 is selected then the negative action of code 07
+                    (measure not applicable)is used."""
+                    negative_action = measure_creation_pattern.measure_not_applicable
+
                 # if the next condition code is different create the negative action for the current condition
                 # only create a negative action if the action has a negative pair
                 if (
-                    action_pair
+                    negative_action
                     and data["formset-conditions"][index]["condition_code"]
                     != next_condition_code
                 ):
@@ -523,7 +538,7 @@ class MeasureCreateWizard(
                             "duty_amount": None,
                             "required_certificate": None,
                             # corresponding negative action to the postive one.
-                            "action": action_pair.negative_action,
+                            "action": negative_action,
                             "DELETE": False,
                         },
                         component_sequence_number,
