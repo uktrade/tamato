@@ -92,7 +92,7 @@ def test_commodity_import_list_view_renders(superuser_client):
     assert page.find("thead").find("th", text="Taric ID number")
     assert page.find("thead").find("th", text="Date added")
     assert page.find("thead").find("th", text="Uploaded by")
-    assert page.find("thead").find("th", text="Status")
+    assert page.find("thead").find("th", text="Importer status")
 
     assert len(page.find_all("tr", class_="govuk-table__row")) == 3
     assert len(page.find_all("span", class_="status-badge")) == 2
