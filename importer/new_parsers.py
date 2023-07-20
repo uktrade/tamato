@@ -230,21 +230,36 @@ class NewElementParser:
 
         for child_parser in child_parsers:
             field_sets = child_parser.identity_fields_for_parent()
-            for field_set_key in field_sets.keys():
-                for field in field_sets[field_set_key]:
-                    if not hasattr(self, field):
-                        # Guard clause
-                        raise Exception(
-                            f"Field referenced by child {child_parser.__name__} : {field} "
-                            f"does not exist on parent {self.__class__.__name__}",
-                        )
+            for child_field in field_sets.keys():
+                parent_field = field_sets[child_field]
 
-                    # Include attribute in response if empty
-                    if getattr(self, field) is None:
-                        if str(child_parser.__name__) in result.keys():
-                            result[str(child_parser.__name__)].append(field)
-                        else:
-                            result[str(child_parser.__name__)] = [field]
+                if not hasattr(self, parent_field):
+                    # Guard clause
+                    raise Exception(
+                        f"Field referenced by child {child_parser.__name__} : {child_field} "
+                        f"does not exist on parent {self.__class__.__name__} : {parent_field}",
+                    )
+
+                # Include attribute in response if empty
+                if getattr(self, parent_field) is None:
+                    if str(child_parser.__name__) in result.keys():
+                        result[str(child_parser.__name__)].append(child_field)
+                    else:
+                        result[str(child_parser.__name__)] = [child_field]
+
+        return result
+
+    def get_identity_fields_and_values_for_parent(self):
+        """We want to create an array of values to be used to query the parent,
+        using the child values."""
+        result = {}
+
+        fields = self.identity_fields_for_parent()
+
+        for field in fields:
+            # the key is the field name of the child object, the value is the parent field name
+
+            result[fields[field]] = getattr(self, field)
 
         return result
 
@@ -271,15 +286,14 @@ class NewElementParser:
         key_fields = {}
         for model_link in cls.model_links:
             # match link to target model for parser - then we can extract the key fields we need to match for the object
-            key_fields[cls.__name__] = []
             if model_link.model == cls.model:
                 for model_link_field in model_link.fields:
                     if not model_link.optional or (
                         model_link.optional and include_optional
                     ):
-                        key_fields[cls.__name__].append(
-                            model_link_field.object_field_name,
-                        )
+                        key_fields[
+                            model_link_field.parser_field_name
+                        ] = model_link_field.object_field_name
 
         return key_fields
 

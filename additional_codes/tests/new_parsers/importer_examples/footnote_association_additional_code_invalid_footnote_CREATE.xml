@@ -12,8 +12,8 @@
                     <oub:record.sequence.number>1</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:additional.code.type>
-                        <oub:additional.code.type.id>12</oub:additional.code.type.id>
-                        <oub:application.code>111</oub:application.code>
+                        <oub:additional.code.type.id>7</oub:additional.code.type.id>
+                        <oub:application.code>4</oub:application.code>
                         <oub:validity.start.date>2021-01-01</oub:validity.start.date>
                         <oub:validity.end.date>2021-12-31</oub:validity.end.date>
                     </oub:additional.code.type>
@@ -31,8 +31,8 @@
                     <oub:update.type>3</oub:update.type>
                     <oub:additional.code>
                         <oub:additional.code.sid>1</oub:additional.code.sid>
-                        <oub:additional.code.type.id>12</oub:additional.code.type.id>
-                        <oub:additional.code>111</oub:additional.code>
+                        <oub:additional.code.type.id>7</oub:additional.code.type.id>
+                        <oub:additional.code>4</oub:additional.code>
                         <oub:validity.start.date>2021-01-01</oub:validity.start.date>
                     </oub:additional.code>
                 </oub:record>
@@ -53,8 +53,8 @@
                         <oub:footnote.id>9</oub:footnote.id>
                         <oub:validity.start.date>2021-01-01</oub:validity.start.date>
                         <oub:validity.end.date>2021-01-01</oub:validity.end.date>
-                        <oub:additional.code.type.id>12</oub:additional.code.type.id>
-                        <oub:additional.code>111</oub:additional.code>
+                        <oub:additional.code.type.id>7</oub:additional.code.type.id>
+                        <oub:additional.code>4</oub:additional.code>
                     </oub:footnote.association.additional.code>
                 </oub:record>
             </oub:transmission>
@@ -72,7 +72,7 @@
                         <oub:footnote.type.id>7</oub:footnote.type.id>
                         <oub:validity.start.date>2021-01-01</oub:validity.start.date>
                         <oub:validity.end.date>2021-01-01</oub:validity.end.date>
-                        <oub:application.code>111</oub:application.code>
+                        <oub:application.code>4</oub:application.code>
                     </oub:footnote.type>
                 </oub:record>
             </oub:transmission>

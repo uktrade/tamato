@@ -1,3 +1,4 @@
+import os
 from datetime import date
 
 import pytest
@@ -6,6 +7,12 @@ from additional_codes.new_import_parsers import NewAdditionalCodeTypeParser
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
+
+
+def get_test_xml_file(file_name):
+    path_to_current_file = os.path.realpath(__file__)
+    current_directory = os.path.split(path_to_current_file)[0]
+    return os.path.join(current_directory, "importer_examples", file_name)
 
 
 class TestNewAdditionalCodeTypeParser:
@@ -53,7 +60,7 @@ class TestNewAdditionalCodeTypeParser:
         assert target.application_code == "123"
 
     def test_import(self, superuser):
-        file_to_import = "./importer_examples/additional_code_type_CREATE.xml"
+        file_to_import = get_test_xml_file("additional_code_type_CREATE.xml")
 
         importer = new_importer.NewImporter(
             file_to_import,
@@ -74,7 +81,7 @@ class TestNewAdditionalCodeTypeParser:
 
         # check properties
         target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == 12
+        assert target_taric_object.sid == 5
         assert target_taric_object.valid_between_lower == date(2021, 1, 1)
         assert target_taric_object.valid_between_upper == date(2021, 12, 31)
         assert target_taric_object.application_code == "111"

@@ -110,6 +110,8 @@ class NewImporter:
             self.populate_parent_attributes()
             self.commit_data()
 
+        return
+
     def find_parent_for_parser_object(self, taric_object: NewElementParser):
         if not taric_object.is_child_object():
             raise Exception(f"Only call this method on child objects")
@@ -117,7 +119,31 @@ class NewImporter:
         for parsed_transaction in self.parsed_transactions:
             for message in parsed_transaction.parsed_messages:
                 if message.taric_object.is_child_object():
-                    message.taric_object
+                    parent = self.find_parent_object_matching_fields(
+                        message.taric_object.model,
+                        taric_object.get_identity_fields_and_values_for_parent(),
+                    )
+
+                    if parent:
+                        return parent
+
+        raise Exception(f"No parent matched for {taric_object.__class__.__name__}")
+
+    def find_parent_object_matching_fields(self, model, fields: dict):
+        for parsed_transaction in self.parsed_transactions:
+            for message in parsed_transaction.parsed_messages:
+                taric_object = message.taric_object
+                if not taric_object.is_child_object() and taric_object.model == model:
+                    match = True
+
+                    for field in fields:
+                        if getattr(taric_object, field) != fields[field]:
+                            match = False
+
+                    if match:
+                        return taric_object
+
+        raise Exception(f"No match for {model.__name__} using : {fields}")
 
     def populate_parent_attributes(self):
         # need to copy all child attributes to parent objects within the import only
@@ -125,7 +151,9 @@ class NewImporter:
             for message in parsed_transaction.parsed_messages:
                 if message.taric_object.is_child_object():
                     parent = self.find_parent_for_parser_object(message.taric_object)
-                    attributes = message.taric_object.parent_attributes()
+                    attributes = message.taric_object.model_attributes(
+                        self.workbasket.transactions.last(),
+                    )
                     for attribute_key in attributes.keys():
                         setattr(parent, attribute_key, attributes[attribute_key])
 
@@ -141,12 +169,14 @@ class NewImporter:
 
             for message in transaction.parsed_messages:
                 if message.taric_object.can_save_to_model():
-                    self.create_or_append_to_tap_object_from_message(
+                    self.commit_changes_from_message(
                         message,
                         transaction_inst,
                     )
 
-    def create_or_append_to_tap_object_from_message(
+            transaction_order += 1
+
+    def commit_changes_from_message(
         self,
         message: MessageParser,
         transaction: Transaction,
@@ -162,6 +192,7 @@ class NewImporter:
                 transaction=transaction,
                 **message.taric_object.model_attributes(transaction),
             )
+
         elif message.update_type == 2:  # Delete
             model_instance = message.taric_object.model.latest_approved().get(
                 **message.taric_object.model_query_parameters()

@@ -95,7 +95,7 @@ class TestNewElementParser:
         assert len(ParserHelper.get_child_parsers(target)) == 1
         #
         assert target.missing_child_attributes() == {
-            "TestChildElementParser": ["field_1"],
+            "TestChildElementParser": ["parent_field_1"],
         }
 
     def test_missing_child_attributes_errors_when_attribute_not_present_on_parent(self):

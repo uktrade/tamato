@@ -1,3 +1,4 @@
+import os
 from datetime import date
 
 import pytest
@@ -6,6 +7,12 @@ from additional_codes.new_import_parsers import NewAdditionalCodeDescriptionPeri
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
+
+
+def get_test_xml_file(file_name):
+    path_to_current_file = os.path.realpath(__file__)
+    current_directory = os.path.split(path_to_current_file)[0]
+    return os.path.join(current_directory, "importer_examples", file_name)
 
 
 class TestNewAdditionalCodeDescriptionPeriodParser:
@@ -54,8 +61,8 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         assert target.described_additionalcode__code == "123"
 
     def test_import(self, superuser):
-        file_to_import = (
-            "./importer_examples/additional_code_description_period_CREATE.xml"
+        file_to_import = get_test_xml_file(
+            "additional_code_description_period_CREATE.xml",
         )
 
         importer = new_importer.NewImporter(
@@ -87,8 +94,8 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type__sid == 12
-        assert target_taric_object.described_additionalcode__code == "111"
+        assert target_taric_object.described_additionalcode__type__sid == 4
+        assert target_taric_object.described_additionalcode__code == "3"
         assert target_taric_object.validity_start == date(2021, 1, 1)
 
         for message in importer.parsed_transactions[0].parsed_messages:
@@ -96,7 +103,9 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
             assert len(message.taric_object.issues) == 0
 
     def test_import_no_description(self, superuser):
-        file_to_import = "./importer_examples/additional_code_description_period_without_description_CREATE.xml"
+        file_to_import = get_test_xml_file(
+            "additional_code_description_period_without_description_CREATE.xml",
+        )
 
         importer = new_importer.NewImporter(
             file_to_import,
@@ -127,8 +136,8 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type__sid == 12
-        assert target_taric_object.described_additionalcode__code == "111"
+        assert target_taric_object.described_additionalcode__type__sid == 5
+        assert target_taric_object.described_additionalcode__code == "3"
         assert target_taric_object.validity_start == date(2021, 1, 1)
 
         assert len(target_taric_object.issues) == 1

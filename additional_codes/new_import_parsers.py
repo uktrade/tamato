@@ -73,7 +73,7 @@ class NewAdditionalCodeParser(NewWritable, NewElementParser):
         ModelLink(
             models.AdditionalCodeType,
             [
-                ModelLinkField("type_id", "sid"),
+                ModelLinkField("type__sid", "sid"),
             ],
             "additional.code.type",
         ),
@@ -82,7 +82,7 @@ class NewAdditionalCodeParser(NewWritable, NewElementParser):
     value_mapping = {
         "additional_code": "code",
         "additional_code_sid": "sid",
-        "additional_code_type_id": "type_id",
+        "additional_code_type_id": "type__sid",
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
@@ -95,7 +95,7 @@ class NewAdditionalCodeParser(NewWritable, NewElementParser):
     identity_fields = ["sid"]
 
     sid: int = None
-    type_id: int = None
+    type__sid: int = None
     code: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -214,7 +214,7 @@ class NewFootnoteAssociationAdditionalCodeParser(
             Footnote,
             [
                 ModelLinkField(
-                    "associated_footnote__footnote_type__id",
+                    "associated_footnote__footnote_type__footnote_type_id",
                     "footnote_type_id",
                 ),
                 ModelLinkField("associated_footnote__footnote_id", "footnote_id"),
@@ -232,6 +232,7 @@ class NewFootnoteAssociationAdditionalCodeParser(
             models.AdditionalCode,
             [
                 ModelLinkField("additional_code__code", "code"),
+                ModelLinkField("additional_code__sid", "sid"),
             ],
             "additional.code",
         ),
@@ -239,7 +240,7 @@ class NewFootnoteAssociationAdditionalCodeParser(
 
     value_mapping = {
         "additional_code_sid": "additional_code__sid",
-        "footnote_type_id": "associated_footnote__footnote_type__id",
+        "footnote_type_id": "associated_footnote__footnote_type__footnote_type_id",
         "footnote_id": "associated_footnote__footnote_id",
         "additional_code_type_id": "additional_code__type__sid",
         "additional_code": "additional_code__code",
@@ -255,7 +256,7 @@ class NewFootnoteAssociationAdditionalCodeParser(
     identity_fields = []
 
     additional_code__sid: int = None
-    associated_footnote__footnote_type__id: str = None
+    associated_footnote__footnote_type__footnote_type_id: str = None
     associated_footnote__footnote_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None

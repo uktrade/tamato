@@ -1,9 +1,17 @@
+import os
+
 import pytest
 
 from additional_codes.new_import_parsers import NewAdditionalCodeTypeDescriptionParser
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
+
+
+def get_test_xml_file(file_name):
+    path_to_current_file = os.path.realpath(__file__)
+    current_directory = os.path.split(path_to_current_file)[0]
+    return os.path.join(current_directory, "importer_examples", file_name)
 
 
 class TestNewAdditionalCodeTypeDescriptionParser:
@@ -44,8 +52,8 @@ class TestNewAdditionalCodeTypeDescriptionParser:
         assert target.description == "some description"
 
     def test_import(self, superuser):
-        file_to_import = (
-            "./importer_examples/additional_code_type_description_CREATE.xml"
+        file_to_import = get_test_xml_file(
+            "additional_code_type_description_CREATE.xml",
         )
 
         importer = new_importer.NewImporter(
@@ -76,7 +84,7 @@ class TestNewAdditionalCodeTypeDescriptionParser:
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == 12
+        assert target_taric_object.sid == 1
         assert target_taric_object.description == "some description"
 
         # check for issues
@@ -84,7 +92,9 @@ class TestNewAdditionalCodeTypeDescriptionParser:
             assert len(message.taric_object.issues) == 0
 
     def test_import_invalid_type(self, superuser):
-        file_to_import = "./importer_examples/additional_code_type_description_without_type_CREATE.xml"
+        file_to_import = get_test_xml_file(
+            "additional_code_type_description_without_type_CREATE.xml",
+        )
 
         importer = new_importer.NewImporter(
             file_to_import,

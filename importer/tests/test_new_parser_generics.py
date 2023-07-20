@@ -573,7 +573,10 @@ def test_importer_generics(
     assert parser_class.model == model_class
 
     # check that we parent parsers for all parsers that should append to a parent parser
-    assert child_to_other_parser == hasattr(parser_class, "parent_parser")
+    if child_to_other_parser:
+        assert parser_class.parent_parser != None
+    else:
+        assert parser_class.parent_parser == None
 
     # check properties exist on target model
     excluded_variable_names = [
@@ -588,6 +591,8 @@ def test_importer_generics(
         "xml_object_tag",
         "valid_between_lower",
         "valid_between_upper",
+        "record_code",
+        "identity_fields",
     ]
 
     for variable_name in vars(parser_class).keys():
@@ -595,7 +600,11 @@ def test_importer_generics(
             # where a variable name contains '__' it defines a related object and its properties, we only need to check
             # that the part preceding the '__' exists
             variable_first_part = variable_name.split("__")[0]
-            assert hasattr(parser_class.model, variable_first_part)
+            assert hasattr(parser_class.model, variable_first_part), (
+                f"(Testing {parser_class.__name__})"
+                f"for {parser_class.model.__name__} no "
+                f"property named {variable_first_part} found."
+            )
 
     # check that there is a direct link between parent model and child model when should_append_to_parent is True
     # this link can be on the parent or the child

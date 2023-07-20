@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 # note : need to import these objects to make them available to the parser
@@ -5,6 +7,12 @@ from certificates.new_import_parsers import NewCertificateTypeDescriptionParser
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
+
+
+def get_test_xml_file(file_name):
+    path_to_current_file = os.path.realpath(__file__)
+    current_directory = os.path.split(path_to_current_file)[0]
+    return os.path.join(current_directory, "importer_examples", file_name)
 
 
 class TestNewCertificateTypeDescriptionParser:
@@ -47,7 +55,7 @@ class TestNewCertificateTypeDescriptionParser:
         assert target.description == "Some description"
 
     def test_import(self, superuser):
-        file_to_import = "./importer_examples/certificate_type_description_CREATE.xml"
+        file_to_import = get_test_xml_file("certificate_type_description_CREATE.xml")
 
         importer = new_importer.NewImporter(
             file_to_import,

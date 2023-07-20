@@ -1,3 +1,4 @@
+import os
 from datetime import date
 
 import pytest
@@ -7,6 +8,12 @@ from additional_codes.new_import_parsers import NewAdditionalCodeTypeParser
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
+
+
+def get_test_xml_file(file_name):
+    path_to_current_file = os.path.realpath(__file__)
+    current_directory = os.path.split(path_to_current_file)[0]
+    return os.path.join(current_directory, "importer_examples", file_name)
 
 
 class TestNewAdditionalCodeParser:
@@ -55,7 +62,7 @@ class TestNewAdditionalCodeParser:
         assert target.valid_between_upper == date(2024, 1, 22)
 
     def test_import_success(self, superuser):
-        file_to_import = "./importer_examples/additional_code_CREATE.xml"
+        file_to_import = get_test_xml_file("additional_code_CREATE.xml")
 
         importer = new_importer.NewImporter(
             file_to_import,
@@ -88,15 +95,15 @@ class TestNewAdditionalCodeParser:
         assert taric_object.sid == 1
         assert taric_object.valid_between_lower == date(2021, 1, 1)
         assert taric_object.valid_between_upper is None
-        assert taric_object.type__sid == 12
-        assert taric_object.code == "111"
+        assert taric_object.type__sid == 5
+        assert taric_object.code == "3"
 
         # check for issues
         for message in importer.parsed_transactions[0].parsed_messages:
             assert len(message.taric_object.issues) == 0
 
     def test_import_invalid_type(self, superuser):
-        file_to_import = "./importer_examples/additional_code_invalid_type_CREATE.xml"
+        file_to_import = get_test_xml_file("additional_code_invalid_type_CREATE.xml")
 
         importer = new_importer.NewImporter(
             file_to_import,

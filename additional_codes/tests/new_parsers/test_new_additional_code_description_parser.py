@@ -1,11 +1,21 @@
+import os
 from datetime import date
 
 import pytest
 
+from additional_codes.models import AdditionalCode
+from additional_codes.models import AdditionalCodeDescription
+from additional_codes.models import AdditionalCodeType
 from additional_codes.new_import_parsers import NewAdditionalCodeDescriptionParser
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
+
+
+def get_test_xml_file(file_name):
+    path_to_current_file = os.path.realpath(__file__)
+    current_directory = os.path.split(path_to_current_file)[0]
+    return os.path.join(current_directory, "importer_examples", file_name)
 
 
 class TestNewAdditionalCodeDescriptionParser:
@@ -55,7 +65,7 @@ class TestNewAdditionalCodeDescriptionParser:
         assert target.description == "some description"
 
     def test_import(self, superuser):
-        file_to_import = "./importer_examples/additional_code_description_CREATE.xml"
+        file_to_import = get_test_xml_file("additional_code_description_CREATE.xml")
 
         importer = new_importer.NewImporter(
             file_to_import,
@@ -84,20 +94,28 @@ class TestNewAdditionalCodeDescriptionParser:
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
-        assert type(target_taric_object) == NewAdditionalCodeDescriptionParser
-        assert target_taric_object.sid == 5
-        assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type__sid == 7
-        assert target_taric_object.described_additionalcode__code == "2"
-        assert target_taric_object.description == "some description"
-        assert target_taric_object.validity_start == date(2021, 1, 1)
 
         for message in importer.parsed_transactions[0].parsed_messages:
             # check for issues
             assert len(message.taric_object.issues) == 0
 
+        assert AdditionalCode.objects.all().count() == 1
+        assert AdditionalCodeType.objects.all().count() == 1
+        assert AdditionalCodeDescription.objects.all().count() == 1
+
+        assert importer.can_save()
+        assert type(target_taric_object) == NewAdditionalCodeDescriptionParser
+        assert target_taric_object.sid == 5
+        assert target_taric_object.described_additionalcode__sid == 1
+        assert target_taric_object.described_additionalcode__type__sid == 9
+        assert target_taric_object.described_additionalcode__code == "2"
+        assert target_taric_object.description == "some description"
+        assert target_taric_object.validity_start == date(2021, 1, 1)
+
     def test_import_invalid_additional_code(self, superuser):
-        file_to_import = "./importer_examples/additional_code_description_invalid_additional_code_CREATE.xml"
+        file_to_import = get_test_xml_file(
+            "additional_code_description_invalid_additional_code_CREATE.xml",
+        )
         importer = new_importer.NewImporter(
             file_to_import,
             import_title="Importing stuff",
