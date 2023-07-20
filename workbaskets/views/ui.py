@@ -173,12 +173,16 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
         deletion."""
 
         store = self._session_store(self.workbasket)
-        return self.workbasket.tracked_models.filter(pk__in=store.data.keys())
+        pks = [
+            forms.SelectableObjectsForm.object_id_from_field_name(k)
+            for k in store.data.keys()
+        ]
+        return self.workbasket.tracked_models.filter(pk__in=pks)
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
             # The user has cancelled out of the deletion process.
-            return redirect("home")
+            return redirect("workbaskets:current-workbasket")
 
         # By reverse ordering on record_code + subrecord_code we're able to
         # delete child entities first, avoiding protected foreign key
@@ -441,17 +445,16 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
             self.request,
             f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
         )
-        store.clear()
         form_action = self.request.POST.get("form-action")
+        store.remove_items(form.cleaned_data)
         if form_action == "remove-all":
-            object_list = {obj.id: True for obj in self.workbasket.tracked_models}
+            object_list = {
+                self.form_class.field_name_for_object(obj): True
+                for obj in self.workbasket.tracked_models
+            }
             store.add_items(object_list)
         else:
-            to_add = {
-                key: value
-                for key, value in form.cleaned_data_no_prefix.items()
-                if value
-            }
+            to_add = {key: value for key, value in form.cleaned_data.items() if value}
             store.add_items(to_add)
         return super().form_valid(form)
 
