@@ -513,7 +513,7 @@ def test_workbasket_measures_review_conditions(valid_user_client):
     assert "27" in condition_text
 
 
-@patch("workbaskets.tasks.call_check_workbasket_sync.delay")
+@patch("workbaskets.tasks.call_check_workbasket_sync.apply_async")
 def test_run_business_rules(check_workbasket, valid_user_client, session_workbasket):
     """Test that a GET request to the run-business-rules endpoint returns a 302,
     redirecting to the review workbasket page, runs the `check_workbasket` task,
@@ -551,7 +551,10 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
 
     session_workbasket.refresh_from_db()
 
-    check_workbasket.assert_called_once_with(session_workbasket.pk)
+    check_workbasket.assert_called_once_with(
+        (session_workbasket.pk,),
+        countdown=1,
+    )
     assert session_workbasket.rule_check_task_id
     assert not session_workbasket.tracked_model_checks.exists()
 
