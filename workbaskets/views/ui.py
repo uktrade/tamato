@@ -18,11 +18,9 @@ from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
 from django.views.generic import UpdateView
-from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.base import TemplateView
-from django.views.generic.base import View
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import FormMixin
+from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 
 from checks.models import TrackedModelCheck
@@ -277,7 +275,7 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
+class CurrentWorkBasket(FormView):
     template_name = "workbaskets/summary-workbasket.jinja"
     form_class = forms.SelectableObjectsForm
 
@@ -298,7 +296,7 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
 
     @property
     def paginator(self):
-        return Paginator(self.workbasket.tracked_models, per_page=10)
+        return Paginator(self.workbasket.tracked_models, per_page=50)
 
     @property
     def latest_upload(self):
