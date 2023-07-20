@@ -852,6 +852,10 @@ class MeasureUpdate(
         return obj
 
 
+class MeasureEditUpdate(MeasureUpdate):
+    pass
+
+
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):
     template_name = "common/confirm_update.jinja"
 
