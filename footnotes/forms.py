@@ -120,7 +120,6 @@ class FootnoteCreateBaseForm(ValidityPeriodForm):
         form's save() method (with its commit param set either to True or
         False).
         """
-        print(f"*** next_sid() - self.request = {self.request}")
         workbasket = WorkBasket.current(self.request)
         tx = None
         if workbasket:

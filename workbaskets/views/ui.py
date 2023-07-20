@@ -7,9 +7,9 @@ from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db.models import ProtectedError
-from django.db.models import Q
 from django.db.transaction import atomic
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -27,11 +27,6 @@ from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
 from checks.models import TrackedModelCheck
-from commodities.models import GoodsNomenclature
-from commodities.models import GoodsNomenclatureDescription
-from commodities.models import GoodsNomenclatureIndent
-from commodities.models import GoodsNomenclatureOrigin
-from commodities.models import GoodsNomenclatureSuccessor
 from common.filters import TamatoFilter
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
@@ -39,7 +34,8 @@ from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
-from importer.models import ImportBatch
+from importer.goods_report import GoodsReporter
+from importer.goods_report import GoodsReportLine
 from measures.filters import MeasureFilter
 from measures.models import Measure
 from workbaskets import forms
@@ -48,6 +44,7 @@ from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
+from workbaskets.views.mixins import WithCurrentWorkBasket
 
 logger = logging.getLogger(__name__)
 
@@ -297,95 +294,48 @@ class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class WorkbasketReviewGoodsView(TamatoListView):
+class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
     """UI endpoint for reviewing goods changes in a workbasket."""
 
-    model = WorkBasket
     template_name = "workbaskets/review-goods.jinja"
-    paginate_by = 10
-
-    def get_queryset(self):
-        tracked_models = self.workbasket.tracked_models
-        goods_changes = tracked_models.filter(
-            Q(instance_of=GoodsNomenclature)
-            | Q(instance_of=GoodsNomenclatureDescription)
-            | Q(instance_of=GoodsNomenclatureIndent)
-            | Q(instance_of=GoodsNomenclatureOrigin)
-            | Q(instance_of=GoodsNomenclatureSuccessor),
-        )
-        return goods_changes
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
-        goods_changes = []
-        paginator = context["paginator"]
-        page = paginator.get_page(self.request.GET.get("page", 1))
-        for obj in page.object_list:
-            obj_data = {
-                "update_type": obj.update_type_str,
-                "object": obj._meta.verbose_name.title(),
-            }
-            if type(obj) == GoodsNomenclature:
-                obj_data.update(
-                    {
-                        "goods_nomenclature": obj.item_id,
-                        "suffix": obj.suffix,
-                        "validity_start": obj.valid_between.lower,
-                        "validity_end": obj.valid_between.upper
-                        if obj.valid_between.upper
-                        else "-",
-                        "comments": f"Description: {obj.structure_description}",
-                    },
-                )
-            elif type(obj) == GoodsNomenclatureIndent:
-                obj_data.update(
-                    {
-                        "goods_nomenclature": obj.indented_goods_nomenclature,
-                        "suffix": obj.indented_goods_nomenclature.suffix,
-                        "validity_start": obj.validity_start,
-                        "validity_end": "-",
-                        "comments": f"Indent: {obj.indent}",
-                    },
-                )
-            elif type(obj) == GoodsNomenclatureDescription:
-                obj_data.update(
-                    {
-                        "goods_nomenclature": obj.described_goods_nomenclature,
-                        "suffix": obj.described_goods_nomenclature.suffix,
-                        "validity_start": obj.validity_start,
-                        "validity_end": "-",
-                        "comments": f"Description: {obj.description}",
-                    },
-                )
-            elif type(obj) == GoodsNomenclatureOrigin:
-                obj_data.update(
-                    {
-                        "goods_nomenclature": obj.new_goods_nomenclature,
-                        "suffix": obj.new_goods_nomenclature.suffix,
-                        "validity_start": "-",
-                        "validity_end": "-",
-                        "comments": obj.__str__(),
-                    },
-                )
-            elif type(obj) == GoodsNomenclatureSuccessor:
-                obj_data.update(
-                    {
-                        "goods_nomenclature": obj.absorbed_into_goods_nomenclature,
-                        "suffix": obj.absorbed_into_goods_nomenclature.suffix,
-                        "validity_start": "-",
-                        "validity_end": "-",
-                        "comments": obj.__str__(),
-                    },
-                )
+        # Default values should there be no ImportBatch instance associated with
+        # the workbasket.
+        context["column_headings"] = [
+            description
+            for description in GoodsReportLine.COLUMN_DESCRIPTIONS
+            if description != "Containing transaction ID"
+            and description != "Containing message ID"
+        ]
+        context["report_lines"] = []
+        context["import_batch_pk"] = None
 
-            goods_changes.append(obj_data)
+        # Get actual values from the ImportBatch instance if one is associated
+        # with the workbasket.
+        try:
+            import_batch = self.workbasket.importbatch
+        except ObjectDoesNotExist:
+            import_batch = None
 
-        context["goods_changes"] = goods_changes
+        if import_batch and import_batch.taric_file:
+            reporter = GoodsReporter(import_batch.taric_file)
+            goods_report = reporter.create_report()
 
-        # Used to provide downloadable Excel report of goods changes from an import
-        import_batch = ImportBatch.objects.filter(workbasket=self.workbasket).last()
-        context["import_batch_pk"] = import_batch.pk if import_batch else None
+            context["report_lines"] = [
+                [
+                    line.update_type.title(),
+                    line.record_name.title(),
+                    line.goods_nomenclature_item_id,
+                    line.suffix,
+                    line.validity_start_date,
+                    line.validity_end_date,
+                ]
+                for line in goods_report.report_lines
+            ]
+            context["import_batch_pk"] = import_batch.pk
 
         return context
 
@@ -469,7 +419,10 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
         newly created task's ID on the workbasket."""
         workbasket = self.workbasket
         workbasket.delete_checks()
-        task = call_check_workbasket_sync.delay(workbasket.pk)
+        task = call_check_workbasket_sync.apply_async(
+            (workbasket.pk,),
+            countdown=1,
+        )
         logger.info(
             f"Started rule check against workbasket.id={workbasket.pk} "
             f"on task.id={task.id}",

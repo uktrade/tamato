@@ -97,19 +97,23 @@ instances."""
 class GoodsReportLine:
     """Report lines for specific types of record."""
 
-    COLUMN_NAMES = (
-        "update_type",
-        "whats_being_updated",
-        "goods_nomenclature_code",
-        "suffix",
-        "validity_start_date",
-        "validity_end_date",
+    COLUMNS = {
+        "update_type": "Update type",
+        "whats_being_updated": "What's being updated",
+        "goods_nomenclature_code": "Goods nomenclature code",
+        "suffix": "Suffix",
+        "validity_start_date": "Validity start date",
+        "validity_end_date": "Validity end date",
         # TODO:
         # "comments",
-        "containing_transaction_id",
-        "containing_message_id",
-    )
+        "containing_transaction_id": "Containing transaction ID",
+        "containing_message_id": "Containing message ID",
+    }
+    """Column name and description dict."""
+    COLUMN_NAMES = list(COLUMNS.keys())
     """Column names used within generated reports."""
+    COLUMN_DESCRIPTIONS = list(COLUMNS.values())
+    """Column descriptions (humanised) used within generated reports."""
 
     def __init__(
         self,
@@ -259,8 +263,17 @@ class GoodsReportLine:
 
     def _get_suffix(self) -> str:
         """Get the suffix code of the related goods nomenclature instance."""
-        return self.record_element.findtext(
+        suffix = self.record_element.findtext(
             ".//oub:productline.suffix",
+            default="",
+            namespaces=TARIC3_NAMESPACES,
+        ).strip()
+        if suffix:
+            return suffix
+        # Second attempt to find productline.suffix as the commonly occurring
+        # "producline" typo (missing 't') in EU-generated TARIC files.
+        return self.record_element.findtext(
+            ".//oub:producline.suffix",
             default="",
             namespaces=TARIC3_NAMESPACES,
         ).strip()

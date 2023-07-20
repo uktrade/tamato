@@ -27,10 +27,8 @@
     <div class="govuk-grid-column-full">
 
     <p class="govuk-body" style="display:inline-block">
-      {{ paginator.count }} goods change{{ paginator.count|pluralize }} available to review.
-    </p>
-
-    {% if goods_changes %}
+      {{ report_lines|length if report_lines else 0 }} goods
+      change{{ report_lines|pluralize }} available to review.
 
       {% if import_batch_pk %}
         {{ govukButton({
@@ -39,37 +37,30 @@
           "classes": "govuk-button--secondary",
         }) }}
       {% endif %}
+    </p>
 
-      {% set table_rows = [] %}
-      {% for obj in goods_changes %}
-        {{ table_rows.append([
-          {"text": obj["update_type"]},
-          {"text": obj["object"]},
-          {"text": obj["goods_nomenclature"]},
-          {"text": obj["suffix"]},
-          {"text": obj["validity_start"]},
-          {"text": obj["validity_end"]},
-          {"text": obj["comments"]},
-        ]) or "" }}
+    {% if report_lines %}
+      {% set headings = [] %}
+      {% for heading in column_headings %}
+        {{ headings.append({"text": heading}) or "" }}
       {% endfor %}
-          
+
+      {% set rows = [] %}
+      {% for row in report_lines %}
+        {% set cells = [] %}
+        {% for cell in row %}
+          {{ cells.append({"text": cell}) or "" }}
+        {% endfor %}
+        {{ rows.append(cells) or "" }}
+      {% endfor %}
+
       {{ govukTable({
-        "head": [
-          {"text": "Update type"},
-          {"text": "What's being updated"},
-          {"text": "Goods nomenclature code"},
-          {"text": "Suffix"},
-          {"text": "Validity start date"},
-          {"text": "Validity end date"},
-          {"text": "Comments"},
-        ],
-        "rows": table_rows
+        "head": headings,
+        "rows": rows,
       }) }}
     {% endif %}
     
     {% set items_name = "goods changes" %}
-    {% include "includes/common/pagination.jinja" %}
-
   </div>
 </div>
 {% endblock %}

@@ -48,6 +48,37 @@ def test_geo_area_description_delete_form(use_delete_form):
         )
 
 
+def test_geographical_area_description_create(valid_user_client, date_ranges):
+    """Tests that a geographical area description can be created."""
+
+    geo_area = factories.GeographicalAreaFactory.create(
+        valid_between=date_ranges.earlier,
+    )
+    current_geo_area = geo_area.new_version(
+        geo_area.transaction.workbasket,
+        valid_between=date_ranges.normal,
+    )
+
+    form_data = {
+        "described_geographicalarea": current_geo_area.pk,
+        "validity_start_0": date_ranges.future.lower.day,
+        "validity_start_1": date_ranges.future.lower.month,
+        "validity_start_2": date_ranges.future.lower.year,
+        "description": "New test description",
+    }
+    url = reverse(
+        "geo_area-ui-description-create",
+        kwargs={"sid": current_geo_area.sid},
+    )
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    with override_current_transaction(Transaction.objects.last()):
+        new_desciption = current_geo_area.get_description()
+        assert new_desciption.description == form_data["description"]
+        assert new_desciption.validity_start == date_ranges.future.lower
+
+
 @pytest.mark.parametrize(
     ("view", "url_pattern"),
     get_class_based_view_urls_matching_url(

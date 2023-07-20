@@ -22,6 +22,7 @@ from django.forms.utils import ErrorList
 from common.util import TaricDateRange
 from common.util import get_model_indefinite_article
 from common.widgets import FormSetFieldWidget
+from common.widgets import MultipleFileInput
 from common.widgets import RadioNestedWidget
 
 MESSAGE_FORM_MIXIN = "This field requires the form to use BindNestedFormMixin"
@@ -778,3 +779,20 @@ class FormSetSubmitMixin:
     @property
     def whole_form_submit(self):
         return bool(self.data.get("submit"))
+
+
+class MultipleFileField(forms.FileField):
+    """FileField that allows multiple files to be selected."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        cleaned_data = super().clean
+        files = []
+        if isinstance(data, (list, tuple)):
+            files = [cleaned_data(file, initial) for file in data]
+        else:
+            files = cleaned_data(data, initial)
+        return files
