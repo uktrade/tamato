@@ -419,7 +419,10 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
         newly created task's ID on the workbasket."""
         workbasket = self.workbasket
         workbasket.delete_checks()
-        task = call_check_workbasket_sync.delay(workbasket.pk)
+        task = call_check_workbasket_sync.apply_async(
+            (workbasket.pk,),
+            countdown=1,
+        )
         logger.info(
             f"Started rule check against workbasket.id={workbasket.pk} "
             f"on task.id={task.id}",

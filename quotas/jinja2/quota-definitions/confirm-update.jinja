@@ -1,13 +1,13 @@
 {% extends "common/confirm_update.jinja" %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
-{% set page_title = "Edit quota order number origin details" %}
+{% set page_title = "Edit quota definition details" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
       {"text": "Find and edit quotas", "href": url("quota-ui-list")},
       {"text": object.order_number._meta.verbose_name|capitalize ~ ": " ~ object.order_number|string, "href": object.order_number.get_url()},
-      {"text": "Edit quota details", "href": object.order_number.get_url("edit")},
+      {"text": "Quota ID: " ~ object.order_number.order_number ~ " - Data", "href": url("quota-definitions", args=[object.order_number.sid])},
       {"text": page_title}
     ])
   }}
@@ -15,13 +15,13 @@
 
 {% block main_button %}
 {{ govukButton({
-  "text": "Return to editing quota",
-  "href": object.order_number.get_url('edit'),
+  "text": "View other definition periods for this quota order number",
+  "href": url('quota-definitions', kwargs={'sid': object.order_number.sid}),
   "classes": "govuk-button--primary"
 }) }}
 {% endblock%}
 
 {% block actions %}
-<li><a class="govuk-link" href="{{ object.order_number.get_url() }}">View this origin's quota order number</a></li>
+<li><a class="govuk-link" href="{{ object.order_number.get_url() }}">View this definition's quota order number</a></li>
 <li><a href="{{ object.order_number.get_url('list') }}">Find and edit quotas</a></li>
 {% endblock %}

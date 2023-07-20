@@ -331,15 +331,6 @@ class PackagedWorkBasket(TimestampedMixin):
     )
     """The date and time at which processing_state transitioned to
     CURRENTLY_PROCESSING."""
-    loading_report = ForeignKey(
-        "publishing.LoadingReport",
-        null=True,
-        on_delete=PROTECT,
-        editable=False,
-        related_name="packagedworkbaskets",
-    )
-    """The report file associated with an attempt (either successful or failed)
-    to process / load the associated workbasket's envelope file."""
     theme = CharField(
         max_length=255,
     )
@@ -603,14 +594,19 @@ class PackagedWorkBasket(TimestampedMixin):
         the successfully processed email or failed processing.
         """
         loading_report_message = "Loading report: No loading report was provided."
-        if self.loading_report.file:
-            loading_report_message = f"Loading report: {self.loading_report.file_name}"
+        loading_reports = self.loadingreports.exclude(file_name="").values_list(
+            "file_name",
+            flat=True,
+        )
+        if loading_reports:
+            file_names = ", ".join(loading_reports)
+            loading_report_message = f"Loading report(s): {file_names}"
 
         personalisation = {
             "envelope_id": self.envelope.envelope_id,
             "transaction_count": self.workbasket.transactions.count(),
             "loading_report_message": loading_report_message,
-            "comments": self.loading_report.comments,
+            "comments": self.loadingreports.first().comments,
         }
 
         send_emails.delay(

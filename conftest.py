@@ -916,12 +916,15 @@ def s3_object_exists(s3):
 def make_storage_mock(s3, storage_class, **override_settings):
     storage = storage_class(**override_settings)
     storage._connections.connection = type(storage.connection)(client=s3)
-    s3.create_bucket(
-        Bucket=storage.bucket_name,
-        CreateBucketConfiguration={
-            "LocationConstraint": settings.AWS_S3_REGION_NAME,
-        },
-    )
+    try:
+        s3.create_bucket(
+            Bucket=storage.bucket_name,
+            CreateBucketConfiguration={
+                "LocationConstraint": settings.AWS_S3_REGION_NAME,
+            },
+        )
+    except s3.exceptions.BucketAlreadyExists:
+        return storage
 
     return storage
 
