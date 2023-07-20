@@ -1415,7 +1415,7 @@ def test_measure_form_wizard_create_measures_with_tariff_suspension_action(
 
     # Create measures returns a list of created measures
     measure_data = wizard.create_measures(form_data)
-    measures = Measure.objects.filter(goods_nomenclature__in=[commodity1])
+    measures = Measure.objects.filter(goods_nomenclature=commodity1)
 
     """
     Verify that the expected measures were created.
