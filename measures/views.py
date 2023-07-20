@@ -609,6 +609,15 @@ class MeasureCreateWizard(
         return render(self.request, "measures/confirm-create-multiple.jinja", context)
 
     def get_all_cleaned_data(self):
+        """
+        Returns a merged dictionary of all step cleaned_data. If a step contains
+        a `FormSet`, the key will be prefixed with 'formset-' and contain a list
+        of the formset cleaned_data dictionaries, as expected in
+        `create_measures()`.
+
+        Note: This patched version of `super().get_all_cleaned_data()` takes advantage of retrieving previously-saved
+        cleaned_data by summary page to avoid revalidating forms unnecessarily.
+        """
         all_cleaned_data = {}
         for form_key in self.get_form_list():
             cleaned_data = self.get_cleaned_data_for_step(form_key)
@@ -623,6 +632,13 @@ class MeasureCreateWizard(
         return all_cleaned_data
 
     def get_cleaned_data_for_step(self, step):
+        """
+        Returns cleaned data for a given `step`.
+
+        Note: This patched version of `super().get_cleaned_data_for_step` temporarily saves the cleaned_data
+        to provide quick retrieval should another call for it be made in the same request (as happens in
+        `get_form_kwargs()` and qtemplate for summary page) to avoid revalidating forms unnecessarily.
+        """
         self.cleaned_data = getattr(self, "cleaned_data", {})
         if step in self.cleaned_data:
             return self.cleaned_data[step]
