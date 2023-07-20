@@ -666,12 +666,14 @@ class MeasureCreateWizard(
                 measure_start_date = measure_details.get("valid_between").lower
                 measure_type = measure_type = measure_details.get("measure_type")
                 min_commodity_count = measure_details.get("min_commodity_count")
+            # Kwargs expected by formset
             kwargs.update(
                 {
                     "min_commodity_count": min_commodity_count,
                     "measure_start_date": measure_start_date,
                 },
             )
+            # Kwargs expected by forms in formset
             kwargs["form_kwargs"] = {
                 "measure_type": measure_type,
             }
