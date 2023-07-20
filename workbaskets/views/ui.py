@@ -324,7 +324,6 @@ class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
             reporter = GoodsReporter(import_batch.taric_file)
             goods_report = reporter.create_report()
 
-            context["report_lines"] = goods_report.report_lines
             context["report_lines"] = [
                 [
                     line.update_type.title(),
