@@ -299,7 +299,7 @@ def test_review_workbasket_redirects(
         status=WorkflowStatus.EDITING,
     )
     with workbasket.new_transaction() as tx:
-        factories.FootnoteTypeFactory.create_batch(30, transaction=tx)
+        factories.FootnoteTypeFactory.create_batch(150, transaction=tx)
     url = reverse("workbaskets:current-workbasket")
     data = {"form-action": form_action}
     response = valid_user_client.post(f"{url}?page=2", data)
