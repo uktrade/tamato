@@ -1,5 +1,6 @@
 import datetime
 import logging
+from itertools import groupby
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -1174,6 +1175,9 @@ class MeasureCommodityAndDutiesForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        # Associate duties with their form so that the
+        # formset may later add form errors for invalid duties
+        cleaned_data["form_prefix"] = int(self.prefix.rsplit("-", 1)[1])
         duties = cleaned_data.get("duties", "")
         if duties and self.measure_type and self.measure_type.components_not_permitted:
             raise ValidationError(
@@ -1218,15 +1222,22 @@ class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
             return
 
         cleaned_data = super().cleaned_data
-        duties = {data["duties"] for data in cleaned_data if "duties" in data}
+        data = tuple((data["duties"], data["form_prefix"]) for data in cleaned_data)
+        # Filter tuples(duty, form) for unique duties to avoid parsing the same duty more than once
+        duties = [next(group) for duty, group in groupby(data, key=lambda x: x[0])]
+
         duty_sentence_parser = DutySentenceParser.get(
             self.measure_start_date,
         )
-        for duty in duties:
+        for duty, form in duties:
             try:
                 duty_sentence_parser.parse(duty)
-            except ParseError:
-                raise ValidationError(f'"{duty}" is an invalid duty sentence')
+            except ParseError as error:
+                error_index = int(error.loc().split(":", 1)[1])
+                self.forms[form].add_error(
+                    "duties",
+                    f'"{duty[error_index:]}" is an invalid duty expression',
+                )
 
         return cleaned_data
 

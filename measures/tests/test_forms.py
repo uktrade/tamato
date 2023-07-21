@@ -639,7 +639,8 @@ def test_measure_forms_commodity_and_duties_formset_invalid_data(
     duty_sentence_parser,
 ):
     commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
-    invalid_duty_sentence = "abc123"
+    invalid_duty_sentence = "1% + 2GBP / m1"
+    invalid_expression = " / m1"
     data = {
         f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity1.pk,
         f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": invalid_duty_sentence,
@@ -655,8 +656,8 @@ def test_measure_forms_commodity_and_duties_formset_invalid_data(
     )
     assert not formset.is_valid()
     assert (
-        f'"{invalid_duty_sentence}" is an invalid duty sentence'
-        in formset.non_form_errors()
+        f'"{invalid_expression}" is an invalid duty expression'
+        in formset.forms[0].errors["duties"]
     )
 
 
