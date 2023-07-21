@@ -553,6 +553,46 @@ def test_measure_update_updates_footnote_association(measure_form, client, valid
     assert new_assoc.version_group == assoc.version_group
 
 
+def test_measure_update_removes_footnote_association(valid_user_client, measure_form):
+    """Test that when editing a measure to remove a footnote, the
+    MeasureFootnoteAssociation, linking the measure and footnote, is updated to
+    reflect this deletion."""
+    measure = measure_form.instance
+    footnote1 = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    ).associated_footnote
+    footnote2 = factories.FootnoteAssociationMeasureFactory.create(
+        footnoted_measure=measure,
+    ).associated_footnote
+
+    with override_current_transaction(Transaction.objects.last()):
+        assert measure.footnoteassociationmeasure_set.current().count() == 2
+
+    form_data = {k: v for k, v in measure_form.data.items() if v is not None}
+
+    # Form stores data of footnotes on a measure in the session
+    url = reverse("measure-ui-edit", kwargs={"sid": measure.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    # Remove footnote2 from session to indicate its removal on form
+    session = valid_user_client.session
+    session[f"instance_footnotes_{measure.sid}"].remove(footnote2.pk)
+    session.save()
+
+    response = valid_user_client.post(url, data=form_data)
+    assert response.status_code == 302
+
+    with override_current_transaction(Transaction.objects.last()):
+        assert measure.footnoteassociationmeasure_set.current().count() == 1
+
+    removed_association = FootnoteAssociationMeasure.objects.filter(
+        footnoted_measure__sid=measure.sid,
+        associated_footnote=footnote2,
+    ).last()
+    assert removed_association.update_type == UpdateType.DELETE
+
+
 def test_measure_update_create_conditions(
     valid_user_client,
     measure_edit_conditions_data,
@@ -1087,7 +1127,7 @@ def test_measure_form_wizard_create_measures(
         positive_action=action2,
         negative_action=action2_pair,
     )
-    # action with no pair
+    # action with no pair and action code 1 (will not create with pair if not measure type 112)
     action3 = factories.MeasureActionFactory.create(code="01")
 
     form_data = {
@@ -1299,6 +1339,121 @@ def test_measure_form_wizard_create_measures(
         (measure_data[3].pk, None, None),
         (measure_data[3].pk, Decimal("8.800"), None),
         (measure_data[3].pk, Decimal("1.700"), "EUR"),
+    }
+
+    sids = measures.values_list("sid")
+    conditions = MeasureCondition.objects.filter(
+        dependent_measure__sid__in=sids,
+    ).exclude(components__isnull=True)
+
+    # Check that condition components are created with same transaction as their components, to avoid an ActionRequiresDuty rule violation
+    # https://uktrade.atlassian.net/browse/TP2000-344
+    assert set(conditions.values_list("transaction")) == set(
+        conditions.values_list("components__transaction"),
+    )
+
+
+@unittest.mock.patch("workbaskets.models.WorkBasket.current")
+def test_measure_form_wizard_create_measures_with_tariff_suspension_action(
+    mock_workbasket,
+    mock_request,
+    duty_sentence_parser,
+    date_ranges,
+    measurements,
+    monetary_units,
+    regulation,
+    commodity1,
+):
+    """
+    Specificly for testing that a negative action code 7 is created for action
+    code 01 when the measure type is 112 tariff suspension.
+
+    Pass data to the MeasureWizard and verify that the created Measures contain
+    the expected data.
+
+    This test will skip form validation so it will not catch data errors that
+    are caught at form level.
+    """
+    mock_workbasket.return_value = factories.WorkBasketFactory.create()
+
+    geo_area1 = factories.GeographicalAreaFactory.create()
+
+    condition_code1 = factories.MeasureConditionCodeFactory.create()
+
+    # create postive & negative action pairs
+    action1 = factories.MeasureActionFactory.create(code="01")
+    action1_negative = factories.MeasureActionFactory.create(code="07")
+    measure_type = factories.MeasureTypeFactory(
+        description="Autonomous tariff suspension",
+        valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
+    )
+    form_data = {
+        "measure_type": measure_type,
+        "generating_regulation": regulation,
+        "geo_area_list": [geo_area1],
+        "order_number": None,
+        "valid_between": date_ranges.normal,
+        "formset-commodities": [
+            {"commodity": commodity1, "duties": "33 GBP/100kg", "DELETE": False},
+        ],
+        "additional_code": None,
+        "formset-conditions": [
+            {
+                "condition_code": condition_code1,
+                "duty_amount": 4.000,
+                "condition_measurement": measurements[("DTN", None)],
+                "monetary_unit": monetary_units["GBP"],
+                "required_certificate": None,
+                "action": action1,
+                "DELETE": False,
+            },
+        ],
+        "formset-footnotes": [],
+    }
+
+    wizard = MeasureCreateWizard(request=mock_request)
+
+    # Create measures returns a list of created measures
+    measure_data = wizard.create_measures(form_data)
+    measures = Measure.objects.filter(goods_nomenclature=commodity1)
+
+    """
+    Verify that the expected measures were created.
+    """
+    assert len(measure_data) == 1
+
+    # Each created measure contains the supplied condition codes where DELETE=False
+    # Each component should have a 1 based 'component_sequence_number' that iterates for each condition in
+    # a measure.
+    assert set(
+        measures.values_list(
+            "pk",
+            "conditions__component_sequence_number",
+            "conditions__condition_code",
+            "conditions__duty_amount",
+            "conditions__condition_measurement",
+            "conditions__monetary_unit",
+            "conditions__action",
+        ),
+    ) == {
+        (
+            measure_data[0].pk,
+            1,
+            condition_code1.pk,
+            Decimal("4.000"),
+            measurements[("DTN", None)].pk,
+            monetary_units["GBP"].pk,
+            action1.pk,
+        ),
+        (
+            measure_data[0].pk,
+            2,
+            condition_code1.pk,
+            None,
+            None,
+            None,
+            action1_negative.pk,
+        ),
     }
 
     sids = measures.values_list("sid")

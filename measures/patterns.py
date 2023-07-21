@@ -96,6 +96,14 @@ class MeasureCreationPattern:
         return set(MeasureType.objects.filter(description__contains="authorised use"))
 
     @cached_property
+    def autonomous_tariff_suspension_use_measure_types(self):
+        return set(
+            MeasureType.objects.filter(
+                description__contains="Autonomous tariff suspension",
+            ),
+        )
+
+    @cached_property
     def presentation_of_certificate(self) -> MeasureConditionCode:
         return MeasureConditionCode.objects.get(code="B")
 
