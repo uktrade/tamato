@@ -139,6 +139,11 @@ def test_commodity_import_form_valid_envelope(
         assert batch.name.find(file_data["taric_file"].name) != -1
         assert batch.split_job == False
         assert batch.author.id == superuser.id
+        assert batch.workbasket.title == data["workbasket_title"]
+        assert (
+            batch.workbasket.reason
+            == f'TARIC {file_data["taric_file"].name[:-4]} commodity code changes'
+        )
 
         run_batch.assert_called_once()
         chunk_taric.assert_called_once()

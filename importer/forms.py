@@ -218,8 +218,11 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
         make sense to use commit=False. process_file() should be moved into the
         view if this (common) behaviour becomes required.
         """
+        file_name = os.path.splitext(self.cleaned_data["name"])[0]
+        description = f"TARIC {file_name} commodity code changes"
         workbasket = WorkBasket.objects.create(
             title=self.cleaned_data["workbasket_title"],
+            reason=description,
             author=self.request.user,
         )
         workbasket.save()
