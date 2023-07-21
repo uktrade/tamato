@@ -102,7 +102,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Showing {number} most recent ImportBatch instances",
+                f"Showing a maximum of {number} most recent ImportBatch instances",
             ),
         )
         self.stdout.write(tabulate(rows, headers=headers))
