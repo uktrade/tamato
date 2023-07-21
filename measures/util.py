@@ -49,7 +49,7 @@ def diff_components(
     """
     from measures.parsers import DutySentenceParser
 
-    parser = DutySentenceParser.get(
+    parser = DutySentenceParser.create(
         start_date,
         component_output=component_output,
     )

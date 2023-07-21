@@ -260,7 +260,7 @@ class DutySentenceParser:
         return self.sentence_parser.parse_strict(s)
 
     @classmethod
-    def get(
+    def create(
         cls,
         forward_time: date,
         component_output: Type[TrackedModel] = MeasureComponent,

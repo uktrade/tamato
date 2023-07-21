@@ -274,7 +274,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                 )
 
         if price and not price_errored:
-            parser = DutySentenceParser.get(measure_start_date)
+            parser = DutySentenceParser.create(measure_start_date)
             components = parser.parse(price)
             if len(components) > 1:
                 self.add_error(
@@ -1226,7 +1226,7 @@ class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
         # Filter tuples(duty, form) for unique duties to avoid parsing the same duty more than once
         duties = [next(group) for duty, group in groupby(data, key=lambda x: x[0])]
 
-        duty_sentence_parser = DutySentenceParser.get(
+        duty_sentence_parser = DutySentenceParser.create(
             self.measure_start_date,
         )
         for duty, form in duties:

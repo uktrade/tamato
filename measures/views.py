@@ -573,7 +573,7 @@ class MeasureCreateWizard(
 
                     measures_data.append(measure_data)
 
-        parser = DutySentenceParser.get(
+        parser = DutySentenceParser.create(
             measure_start_date,
             component_output=MeasureConditionComponent,
         )
@@ -880,7 +880,7 @@ class MeasureUpdate(
                 workbasket=workbasket,
                 base_date=obj.valid_between.lower,
             )
-            parser = DutySentenceParser.get(
+            parser = DutySentenceParser.create(
                 obj.valid_between.lower,
                 component_output=MeasureConditionComponent,
             )
