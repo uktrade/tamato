@@ -587,7 +587,6 @@ def test_measure_forms_commodity_and_duties_form_duties_not_permitted():
     )
 
     assert not form.is_valid()
-    print(form.errors)
     assert (
         f"Duties cannot be added to a commodity for measure type {measure_type}"
         in form.errors["duties"]
