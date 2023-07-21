@@ -563,11 +563,11 @@ def test_measure_forms_commodity_and_duties_form_invalid_selection(
     date_ranges,
 ):
     data = {
-        "commodity": commodity,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity,
     }
     form = forms.MeasureCommodityAndDutiesForm(
         data,
-        prefix="",
+        prefix=f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0",
         measure_start_date=date_ranges.normal,
     )
     assert not form.is_valid()
@@ -581,12 +581,13 @@ def test_measure_forms_commodity_and_duties_form_duties_not_permitted():
         measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
     )
     form = forms.MeasureCommodityAndDutiesForm(
-        data={"duties": "123%"},
-        prefix="",
+        data={f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": "123%"},
+        prefix=f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0",
         measure_type=measure_type,
     )
 
     assert not form.is_valid()
+    print(form.errors)
     assert (
         f"Duties cannot be added to a commodity for measure type {measure_type}"
         in form.errors["duties"]
