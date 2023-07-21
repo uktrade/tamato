@@ -32,7 +32,7 @@ def test_importer_inspect(importing_import_batch):
 
     def get_value_from_line_name(output_lines, line_name):
         """
-        The commands output lines are generally of the form:
+        The importer command's output lines are generally of the form:
 
         code-block::
             Name:     value
