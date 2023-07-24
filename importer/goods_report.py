@@ -362,7 +362,8 @@ class GoodsReport:
 
 
 class GoodsReporter:
-    """Parses and builds a goods report for a TARIC3 XML file."""
+    """Parses a TARIC3 XML file in order to then build a goods report (an
+    instance of `GoodsReport`)."""
 
     def __init__(self, goods_file: TextIO) -> None:
         self.goods_file = goods_file
