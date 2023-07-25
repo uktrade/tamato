@@ -6,7 +6,6 @@ from django.core.management import call_command
 from importer.management.commands import chunk_taric  # noqa
 from importer.management.commands import filter_taric  # noqa
 from importer.management.commands import import_taric  # noqa
-from importer.management.commands import import_taric_file  # noqa
 from importer.management.commands import renumber_taric  # noqa
 from importer.management.commands import renumber_transactions  # noqa
 from importer.management.commands import run_import_batch  # noqa
