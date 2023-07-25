@@ -505,6 +505,8 @@ def test_measure_form_save_called_on_measure_update(
     """Until work is done to make `TrackedModel` call new_version in save() we
     need to check that MeasureUpdate view explicitly calls
     MeasureForm.save(commit=False)"""
+    save.return_value = measure_form.instance
+
     post_data = measure_form.data
     post_data = {k: v for k, v in post_data.items() if v is not None}
     post_data["update_type"] = UpdateType.UPDATE
@@ -967,6 +969,72 @@ def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
 
     assert area_1.sid in area_sids
     assert area_2.sid in area_sids
+
+
+def test_measure_edit_update_view(valid_user_client, erga_omnes):
+    """Test that a measure UPDATE instance can be edited."""
+    measure = factories.MeasureFactory.create(
+        update_type=UpdateType.UPDATE,
+        transaction=factories.UnapprovedTransactionFactory(),
+    )
+    geo_area = factories.GeoGroupFactory.create()
+
+    url = reverse("measure-ui-edit-update", kwargs={"sid": measure.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    data = model_to_dict(measure)
+    data = {k: v for k, v in data.items() if v is not None}
+    start_date = data["valid_between"].lower
+    data.update(
+        {
+            "start_date_0": start_date.day,
+            "start_date_1": start_date.month,
+            "start_date_2": start_date.year,
+            "geo_area": "GROUP",
+            "geographical_area_group-geographical_area_group": geo_area.pk,
+            "submit": "submit",
+        },
+    )
+    response = valid_user_client.post(url, data=data)
+    assert response.status_code == 302
+
+    measure.refresh_from_db()
+    assert measure.update_type == UpdateType.UPDATE
+    assert measure.geographical_area == geo_area
+
+
+def test_measure_edit_create_view(valid_user_client, erga_omnes):
+    """Test that a measure CREATE instance can be edited."""
+    measure = factories.MeasureFactory.create(
+        update_type=UpdateType.CREATE,
+        transaction=factories.UnapprovedTransactionFactory(),
+    )
+    geo_area = factories.CountryFactory.create()
+
+    url = reverse("measure-ui-edit-create", kwargs={"sid": measure.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    data = model_to_dict(measure)
+    data = {k: v for k, v in data.items() if v is not None}
+    start_date = data["valid_between"].lower
+    data.update(
+        {
+            "start_date_0": start_date.day,
+            "start_date_1": start_date.month,
+            "start_date_2": start_date.year,
+            "geo_area": "COUNTRY",
+            "country_region-geographical_area_country_or_region": geo_area.pk,
+            "submit": "submit",
+        },
+    )
+    response = valid_user_client.post(url, data=data)
+    assert response.status_code == 302
+
+    measure.refresh_from_db()
+    assert measure.update_type == UpdateType.CREATE
+    assert measure.geographical_area == geo_area
 
 
 @pytest.mark.django_db
