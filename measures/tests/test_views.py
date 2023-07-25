@@ -999,12 +999,12 @@ def test_measure_edit_update_view(valid_user_client, erga_omnes):
     response = valid_user_client.post(url, data=data)
     assert response.status_code == 302
 
-    measure.refresh_from_db()
-    assert measure.update_type == UpdateType.UPDATE
-    assert measure.geographical_area == geo_area
+    updated_measure = Measure.objects.filter(sid=measure.sid).last()
+    assert updated_measure.update_type == UpdateType.UPDATE
+    assert updated_measure.geographical_area == geo_area
 
 
-def test_measure_edit_create_view(valid_user_client, erga_omnes):
+def test_measure_edit_create_view(valid_user_client, duty_sentence_parser, erga_omnes):
     """Test that a measure CREATE instance can be edited."""
     measure = factories.MeasureFactory.create(
         update_type=UpdateType.CREATE,
@@ -1018,12 +1018,14 @@ def test_measure_edit_create_view(valid_user_client, erga_omnes):
 
     data = model_to_dict(measure)
     data = {k: v for k, v in data.items() if v is not None}
+    new_duty = "1.000% + 2.000 GBP"
     start_date = data["valid_between"].lower
     data.update(
         {
             "start_date_0": start_date.day,
             "start_date_1": start_date.month,
             "start_date_2": start_date.year,
+            "duty_sentence": new_duty,
             "geo_area": "COUNTRY",
             "country_region-geographical_area_country_or_region": geo_area.pk,
             "submit": "submit",
@@ -1032,9 +1034,9 @@ def test_measure_edit_create_view(valid_user_client, erga_omnes):
     response = valid_user_client.post(url, data=data)
     assert response.status_code == 302
 
-    measure.refresh_from_db()
-    assert measure.update_type == UpdateType.CREATE
-    assert measure.geographical_area == geo_area
+    updated_measure = Measure.objects.filter(sid=measure.sid).last()
+    assert updated_measure.update_type == UpdateType.UPDATE
+    assert updated_measure.duty_sentence == new_duty
 
 
 @pytest.mark.django_db
