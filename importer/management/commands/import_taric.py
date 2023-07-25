@@ -30,7 +30,7 @@ def import_taric(
         split_on_code=split_codes,
     )
     with open(taric3_file, "rb") as seed_file:
-        batch = chunk_taric(seed_file, batch, record_group=record_group)
+        chunk_taric(seed_file, batch, record_group=record_group)
 
     run_batch(
         batch.pk,
