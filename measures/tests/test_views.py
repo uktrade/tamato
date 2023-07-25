@@ -1003,8 +1003,7 @@ def test_measure_edit_update_view(valid_user_client, erga_omnes):
     assert updated_measure.update_type == UpdateType.UPDATE
     assert updated_measure.geographical_area == geo_area
 
-
-def test_measure_edit_create_view(valid_user_client, duty_sentence_parser, erga_omnes):
+def test_measure_edit_create_view(valid_user_client, erga_omnes):
     """Test that a measure CREATE instance can be edited."""
     measure = factories.MeasureFactory.create(
         update_type=UpdateType.CREATE,
