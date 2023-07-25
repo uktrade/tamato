@@ -50,10 +50,25 @@ services:
     build:
       context: .
       args:
-        - "ENV=${ENV:-prod}"
+        - "ENV=${ENV:-prod}"      
     volumes:
       - ./:/app/
     command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "rule-check"]
+    env_file: 
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    depends_on:
+      - celery-redis
+
+  importer-celery:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
+    volumes:
+      - ./:/app/
+    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "importer", "--concurrency", "1"]
     env_file: 
       - .env
       - settings/envs/docker.env
@@ -98,7 +113,7 @@ services:
       context: .
       args:
         - "ENV=${ENV:-prod}"
-    image: tamato
+    image: tamato  
     volumes:
       - "${DOCKER_WEB_VOLUME:-./:/app/}"
     ports:

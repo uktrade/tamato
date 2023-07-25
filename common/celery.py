@@ -20,3 +20,9 @@ app.autodiscover_tasks()
 # this should be automactically configured via ^^ config_from_object
 # but it isn't so here it's configured here
 app.conf.task_routes = settings.CELERY_ROUTES
+
+# turn on late ack so messages are only consumed from the broker on success
+app.conf.update(
+    task_acks_late=True,
+    broker_transport_options={"confirm_publish": True},
+)
