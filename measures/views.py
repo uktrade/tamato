@@ -54,7 +54,6 @@ from workbaskets.session_store import SessionStore
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
-from workbaskets.views.generic import EditTaricView
 
 
 class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -751,6 +750,7 @@ class MeasureCreateWizard(
 class MeasureUpdateMixin(
     MeasureMixin,
     TrackedModelDetailMixin,
+    CreateTaricUpdateView,
 ):
     form_class = forms.MeasureForm
     permission_required = "common.change_trackedmodel"
