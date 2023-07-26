@@ -69,7 +69,7 @@ class MeasureCreationPattern:
     ) -> None:
         self.workbasket = workbasket
         self.defaults = defaults
-        self.duty_sentence_parser = duty_sentence_parser or DutySentenceParser.get(
+        self.duty_sentence_parser = duty_sentence_parser or DutySentenceParser.create(
             base_date,
         )
         self.condition_sentence_parser = (
