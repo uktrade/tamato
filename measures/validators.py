@@ -110,7 +110,7 @@ def validate_duties(duties, measure_start_date):
     """Validate duty sentence by parsing it."""
     from measures.parsers import DutySentenceParser
 
-    duty_sentence_parser = DutySentenceParser.get(
+    duty_sentence_parser = DutySentenceParser.create(
         measure_start_date,
     )
 

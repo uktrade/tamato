@@ -19,11 +19,9 @@ from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
 from django.views.generic import UpdateView
-from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.base import TemplateView
-from django.views.generic.base import View
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import FormMixin
+from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 
 from checks.models import TrackedModelCheck
@@ -199,12 +197,16 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
         deletion."""
 
         store = self._session_store(self.workbasket)
-        return self.workbasket.tracked_models.filter(pk__in=store.data.keys())
+        pks = [
+            forms.SelectableObjectsForm.object_id_from_field_name(k)
+            for k in store.data.keys()
+        ]
+        return self.workbasket.tracked_models.filter(pk__in=pks)
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
             # The user has cancelled out of the deletion process.
-            return redirect("home")
+            return redirect("workbaskets:current-workbasket")
 
         # By reverse ordering on record_code + subrecord_code we're able to
         # delete child entities first, avoiding protected foreign key
@@ -347,7 +349,7 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
+class CurrentWorkBasket(FormView):
     template_name = "workbaskets/summary-workbasket.jinja"
     form_class = forms.SelectableObjectsForm
 
@@ -357,6 +359,7 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
         "run-business-rules": "workbaskets:current-workbasket",
         "terminate-rule-check": "workbaskets:current-workbasket",
         "remove-selected": "workbaskets:workbasket-ui-delete-changes",
+        "remove-all": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
     }
@@ -367,7 +370,7 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
 
     @property
     def paginator(self):
-        return Paginator(self.workbasket.tracked_models, per_page=10)
+        return Paginator(self.workbasket.tracked_models, per_page=50)
 
     @property
     def latest_upload(self):
@@ -433,6 +436,10 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
         if form_action == "remove-selected":
+            return reverse(
+                self.action_success_url_names[form_action],
+            )
+        elif form_action == "remove-all":
             return reverse(
                 self.action_success_url_names[form_action],
             )
@@ -510,17 +517,16 @@ class CurrentWorkBasket(TemplateResponseMixin, FormMixin, View):
             self.request,
             f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
         )
-        store.clear()
-        select_all = self.request.POST.get("select-all-pages")
-        if select_all:
-            object_list = {obj.id: True for obj in self.workbasket.tracked_models}
+        form_action = self.request.POST.get("form-action")
+        store.remove_items(form.cleaned_data)
+        if form_action == "remove-all":
+            object_list = {
+                self.form_class.field_name_for_object(obj): True
+                for obj in self.workbasket.tracked_models
+            }
             store.add_items(object_list)
         else:
-            to_add = {
-                key: value
-                for key, value in form.cleaned_data_no_prefix.items()
-                if value
-            }
+            to_add = {key: value for key, value in form.cleaned_data.items() if value}
             store.add_items(to_add)
         return super().form_valid(form)
 
