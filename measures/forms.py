@@ -1199,6 +1199,18 @@ class MeasureCommodityAndDutiesForm(forms.Form):
                 },
             )
 
+        commodity = cleaned_data.get("commodity", "")
+        measure_explosion_level = (
+            self.measure_type.measure_explosion_level if self.measure_type else None
+        )
+        if measure_explosion_level and not commodity.item_id.endswith(
+            "0" * (10 - measure_explosion_level),
+        ):
+            self.add_error(
+                "commodity",
+                f"Commodity must sit at {measure_explosion_level} digit level or higher for measure type {self.measure_type}",
+            )
+
         return cleaned_data
 
 
