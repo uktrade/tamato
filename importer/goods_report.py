@@ -12,6 +12,7 @@ from xml.etree import ElementTree as ET
 
 from openpyxl import Workbook
 from openpyxl.styles import Font
+from tabulate import tabulate
 
 from common.validators import UpdateType
 
@@ -104,8 +105,7 @@ class GoodsReportLine:
         "suffix": "Suffix",
         "validity_start_date": "Validity start date",
         "validity_end_date": "Validity end date",
-        # TODO:
-        # "comments",
+        "comments": "Comments",
         "containing_transaction_id": "Containing transaction ID",
         "containing_message_id": "Containing message ID",
     }
@@ -130,6 +130,7 @@ class GoodsReportLine:
         self.suffix = self._get_suffix()
         self.validity_start_date = self._get_validity_start_date()
         self.validity_end_date = self._get_validity_end_date()
+        self.comments = self._get_comments()
         self.containing_transaction_id = containing_transaction_id
         self.containing_message_id = containing_message_id
 
@@ -138,39 +139,6 @@ class GoodsReportLine:
         """Return a csv (concatenated, string) representation of report column
         names delimited by `delimiter`."""
         return cls._csv_line(cls.COLUMN_NAMES)
-
-    @classmethod
-    def markdown_header(cls, align: str = "left") -> str:
-        """
-        Return a Markdown table header of report column names, with row text
-        aligned according to `align`.
-
-        Each column is delimited by a pipe (|), and delimiter row matches column
-        width to improve readability of raw string output.
-        """
-        if align == "center":
-            alignment = ":", ":"
-        elif align == "right":
-            alignment = "", "-:"
-        else:
-            alignment = ":-", ""
-        column_names = ""
-        delimiter_row = ""
-        for column in cls.COLUMN_NAMES:
-            col_width = len(column)
-            if column == "whats_being_updated":
-                # Double column width to accomodate longest possible cell value
-                column_names += "|" + column + (" " * col_width) + "  "
-                delimiter_row += (
-                    "|" + alignment[0] + ("-" * (col_width * 2)) + alignment[1]
-                )
-            else:
-                # Column width is sufficient
-                column_names += "|" + column + "  "
-                delimiter_row += "|" + alignment[0] + ("-" * col_width) + alignment[1]
-        column_names += "|\n"
-        delimiter_row += "|\n"
-        return column_names + delimiter_row
 
     def as_list(self) -> List[str]:
         """Return a report line as a list of report columns."""
@@ -181,6 +149,7 @@ class GoodsReportLine:
             self.suffix,
             self.validity_start_date,
             self.validity_end_date,
+            self.comments,
             self.containing_transaction_id,
             self.containing_message_id,
         ]
@@ -190,38 +159,12 @@ class GoodsReportLine:
         each delimited by `delimiter`."""
         return self._csv_line(self.as_list(), delimiter)
 
-    def as_markdown_row(self) -> str:
-        """Return a report line as a Markdown table row."""
-        return self._markdown_row(self.as_list())
-
     @classmethod
     def _csv_line(cls, line: List, delimiter=",") -> str:
         string_io = StringIO()
         writer = csv.writer(string_io, delimiter=delimiter)
         writer.writerow(line)
         return string_io.getvalue()
-
-    @classmethod
-    def _markdown_row(cls, line: List) -> str:
-        """
-        Each row and cell within is delimited by a pipe (|).
-
-        And table cells are padded (" ") to match column width to improve
-        readability of raw string output.
-        """
-        # Column name padding not calculable using len()
-        column_padding = 2
-        table_row = ""
-        for i, cell in enumerate(line):
-            if i == 1:
-                # Double padding to match doubled column width of "whats_being_updated"
-                padding = " " * (
-                    (len(cls.COLUMN_NAMES[i]) * 2) - len(cell) + column_padding
-                )
-            else:
-                padding = " " * (len(cls.COLUMN_NAMES[i]) - len(cell) + column_padding)
-            table_row += "|" + cell + padding
-        return table_row + "|\n"
 
     def _get_update_type(self) -> str:
         """Get the TARIC update type - one of UPDATE, DELETE and CREATE."""
@@ -294,6 +237,61 @@ class GoodsReportLine:
             namespaces=TARIC3_NAMESPACES,
         ).strip()
 
+    def _get_comments(self) -> str:
+        """Get supplementary information of the record instance not displayable
+        in other columns of the goods report."""
+        description = self._get_description()
+        if description:
+            return f"New description: {description}"
+
+        indents = self._get_indents()
+        if indents:
+            return f"Number of indents: {indents}"
+
+        commodity = self._get_goods_nomenclature_item_id()
+        if commodity:
+            absorbed_commodity = self._get_absorbed_goods_nomenclature()
+            if absorbed_commodity:
+                return f"{commodity} is being absorbed into {absorbed_commodity}"
+
+            derived_commodity = self._get_derived_goods_nomenclature()
+            if derived_commodity:
+                return f"{derived_commodity} as origin to {commodity}"
+
+        return ""
+
+    def _get_absorbed_goods_nomenclature(self) -> str:
+        """Get the item id of the absorbed goods nomenclature instance."""
+        return self.record_element.findtext(
+            ".//oub:absorbed.goods.nomenclature.item.id",
+            default="",
+            namespaces=TARIC3_NAMESPACES,
+        ).strip()
+
+    def _get_derived_goods_nomenclature(self) -> str:
+        """Get the item id of the derived goods nomenclature instance."""
+        return self.record_element.findtext(
+            ".//oub:derived.goods.nomenclature.item.id",
+            default="",
+            namespaces=TARIC3_NAMESPACES,
+        ).strip()
+
+    def _get_description(self) -> str:
+        """Get the description of the record instance."""
+        return self.record_element.findtext(
+            ".//oub:description",
+            default="",
+            namespaces=TARIC3_NAMESPACES,
+        ).strip()
+
+    def _get_indents(self) -> str:
+        """Get the indent number of the record instance."""
+        return self.record_element.findtext(
+            ".//oub:number.indents",
+            default="",
+            namespaces=TARIC3_NAMESPACES,
+        ).strip()
+
     def __str__(self) -> str:
         return self.as_csv()
 
@@ -326,18 +324,6 @@ class GoodsReport:
             str_repr += f"{line.as_csv(delimiter)}"
         return str_repr
 
-    def markdown_table(
-        self,
-        align: str = "left",
-    ) -> str:
-        """Return a Markdown table representation of the report, with row text
-        aligned according to `align`."""
-        markdown_table = ""
-        markdown_table += GoodsReportLine.markdown_header(align=align)
-        for line in self.report_lines:
-            markdown_table += f"{line.as_markdown_row()}"
-        return markdown_table
-
     def xlsx_file(
         self,
         xlsx_io: BytesIO,
@@ -359,6 +345,14 @@ class GoodsReport:
             sheet.append(line.as_list())
 
         workbook.save(xlsx_io.name)
+
+    def markdown(self) -> str:
+        """Return a Markdown table representation of the report."""
+        columns = GoodsReportLine.COLUMN_NAMES
+        rows = []
+        for line in self.report_lines:
+            rows.append(str(line).split(","))
+        return tabulate(rows, columns, tablefmt="pipe")
 
 
 class GoodsReporter:
