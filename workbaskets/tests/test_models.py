@@ -386,8 +386,8 @@ def test_workbasket_rule_check_progress():
 
 
 def test_workbasket_purge_transactions():
-    """Test that purging empty transaction from a workbasket only removes empty
-    transactions, leaving non-empty ones intact.."""
+    """Test that attempts to purge empty transactions from a workbasket only
+    removes those that are empty, leaving non-empty ones intact."""
 
     workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
     transactions = TransactionFactory.create_batch(2, workbasket=workbasket)
