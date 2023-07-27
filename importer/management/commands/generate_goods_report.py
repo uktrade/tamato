@@ -128,7 +128,7 @@ class Command(BaseCommand):
         if output_format == "csv":
             self.stdout.write(goods_report.csv(delimiter=","))
         elif output_format == "md":
-            self.stdout.write(goods_report.markdown_table())
+            self.stdout.write(goods_report.markdown())
         else:
             directory = self.get_output_directory()
             filename = self.get_output_base_filename()
