@@ -338,6 +338,7 @@ class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
                     line.suffix,
                     line.validity_start_date,
                     line.validity_end_date,
+                    line.comments,
                 ]
                 for line in goods_report.report_lines
             ]
