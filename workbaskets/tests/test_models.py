@@ -24,6 +24,7 @@ from workbaskets.models import SEED_FIRST
 from workbaskets.models import SEED_ONLY
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.models import TransactionPartitionScheme
+from workbaskets.models import TransactionPurgeException
 from workbaskets.models import UserTransactionPartitionScheme
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
@@ -382,3 +383,40 @@ def test_workbasket_rule_check_progress():
     num_completed, total = workbasket.rule_check_progress()
     assert num_completed == 1
     assert total == len(transactions)
+
+
+def test_workbasket_purge_transactions():
+    """Test that purging empty transaction from a workbasket only removes empty
+    transactions, leaving non-empty ones intact.."""
+
+    workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    transactions = TransactionFactory.create_batch(2, workbasket=workbasket)
+    model = factories.TestModel1Factory.create(transaction=transactions[0])
+
+    assert workbasket.transactions.count() == 2
+
+    delete_count = workbasket.purge_empty_transactions()
+
+    assert delete_count == 1
+    assert workbasket.transactions.count() == 1
+    assert model.transaction.pk == workbasket.transactions.get().pk
+
+
+@pytest.mark.parametrize(
+    "workbasket_status,",
+    (*WorkflowStatus.non_editing_statuses(),),
+)
+def test_invalid_workbasket_purge_transactions(workbasket_status):
+    """Test that efforts to purge empty transactions from non-EDITING
+    workbaskets fails."""
+
+    workbasket = factories.WorkBasketFactory.create(status=workbasket_status)
+    transactions = TransactionFactory.create_batch(2, workbasket=workbasket)
+    factories.TestModel1Factory.create(transaction=transactions[0])
+
+    assert workbasket.transactions.count() == 2
+
+    with pytest.raises(TransactionPurgeException):
+        workbasket.purge_empty_transactions()
+
+    assert workbasket.transactions.count() == 2
