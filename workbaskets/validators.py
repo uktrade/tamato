@@ -27,6 +27,15 @@ class WorkflowStatus(models.TextChoices):
         )
 
     @classmethod
+    def non_editing_statuses(cls):
+        return (
+            cls.ARCHIVED,
+            cls.QUEUED,
+            cls.PUBLISHED,
+            cls.ERRORED,
+        )
+
+    @classmethod
     def unchecked_statuses(cls):
         """
         A successful transition out of EDITING may only occur when all business
