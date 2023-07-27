@@ -331,13 +331,15 @@ def chunk_taric(
     taric3_file: InMemoryUploadedFile,
     batch: models.ImportBatch,
     record_group: Sequence[str] = None,
-) -> models.ImportBatch:
+) -> int:
     """
     Parses a TARIC3 XML stream and breaks it into a batch of chunks.
 
     All chunks are written to the database. If the batch is intended to be split
     on record code then the commodity codes are also sorted into the correct
     order.
+
+    Returns the number of chunks created and associated with `batch`.
     """
     chunks_in_progress = {}
 
@@ -365,10 +367,12 @@ def chunk_taric(
         if element_counter % 100000 == 0:
             logger.info("%d transactions done", element_counter)
 
+    chunk_count = len(chunks_in_progress)
+
     for key, chunk in chunks_in_progress.items():
         close_chunk(chunk, batch, key)
 
     if batch.split_job:
         rewrite_comm_codes(batch, envelope_id)
 
-    return batch
+    return chunk_count

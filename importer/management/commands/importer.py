@@ -163,4 +163,8 @@ class Command(BaseCommand):
     def _workbasket_format(self, workbasket: WorkBasket) -> str:
         if not workbasket:
             return "None"
-        return f"pk={workbasket.pk}, status={workbasket.status}"
+        return (
+            f"pk={workbasket.pk}, "
+            f"status={workbasket.status}, "
+            f"tracked_models.count={workbasket.tracked_models.count()}"
+        )
