@@ -35,6 +35,7 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
+from measures.validators import MeasureExplosionLevel
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
@@ -999,12 +1000,13 @@ def test_measure_edit_update_view(valid_user_client, erga_omnes):
     response = valid_user_client.post(url, data=data)
     assert response.status_code == 302
 
-    measure.refresh_from_db()
-    assert measure.update_type == UpdateType.UPDATE
-    assert measure.geographical_area == geo_area
+    with override_current_transaction(Transaction.objects.last()):
+        updated_measure = Measure.objects.current().get(sid=measure.sid)
+        assert updated_measure.update_type == UpdateType.UPDATE
+        assert updated_measure.geographical_area == geo_area
 
 
-def test_measure_edit_create_view(valid_user_client, erga_omnes):
+def test_measure_edit_create_view(valid_user_client, duty_sentence_parser, erga_omnes):
     """Test that a measure CREATE instance can be edited."""
     measure = factories.MeasureFactory.create(
         update_type=UpdateType.CREATE,
@@ -1018,12 +1020,14 @@ def test_measure_edit_create_view(valid_user_client, erga_omnes):
 
     data = model_to_dict(measure)
     data = {k: v for k, v in data.items() if v is not None}
+    new_duty = "1.000% + 2.000 GBP"
     start_date = data["valid_between"].lower
     data.update(
         {
             "start_date_0": start_date.day,
             "start_date_1": start_date.month,
             "start_date_2": start_date.year,
+            "duty_sentence": new_duty,
             "geo_area": "COUNTRY",
             "country_region-geographical_area_country_or_region": geo_area.pk,
             "submit": "submit",
@@ -1032,9 +1036,10 @@ def test_measure_edit_create_view(valid_user_client, erga_omnes):
     response = valid_user_client.post(url, data=data)
     assert response.status_code == 302
 
-    measure.refresh_from_db()
-    assert measure.update_type == UpdateType.CREATE
-    assert measure.geographical_area == geo_area
+    with override_current_transaction(Transaction.objects.last()):
+        updated_measure = Measure.objects.current().get(sid=measure.sid)
+        assert updated_measure.update_type == UpdateType.UPDATE
+        assert updated_measure.duty_sentence == new_duty
 
 
 @pytest.mark.django_db
@@ -1054,6 +1059,7 @@ def test_measure_form_wizard_finish(
     erga_omnes,
 ):
     measure_type = factories.MeasureTypeFactory.create(
+        measure_explosion_level=MeasureExplosionLevel.TARIC,
         measure_component_applicability_code=ApplicabilityCode.PERMITTED,
         valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
     )
