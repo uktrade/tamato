@@ -55,7 +55,7 @@
           {{ table_rows.append([
             {
               "text": "No active checks.",
-              "colspan": 3,
+              "colspan": 4,
             }
           ]) or "" }}
         {% endif %}
@@ -63,7 +63,7 @@
           {{ table_rows.append([
             {
               "text": "Business rule check details are currently unavailable.",
-              "colspan": 3,
+              "colspan": 4,
             }
           ]) or "" }}
       {% endif %}
@@ -99,10 +99,15 @@
           {"text": "Environment variable"},
         ],
         [
-          {"text": "UPDATED_TIME"},
-          {"text": "{:%d %b %Y, %H:%M}".format(UPDATED_TIME|localtime)},
-          {"text": "Estimated deploy time"},
-        ]
+          {"text": "APP_UPDATED_TIME"},
+          {"text": "{:%d %b %Y, %H:%M}".format(APP_UPDATED_TIME|localtime)},
+          {"text": "Estimated application deploy time"},
+        ],
+        [
+          {"text": "LAST_TRANSACTION_TIME"},
+          {"text": "{:%d %b %Y, %H:%M}".format(LAST_TRANSACTION_TIME|localtime)},
+          {"text": "Time that a transaction was last updated"},
+        ],
       ] %}
 
       {{ govukTable({
