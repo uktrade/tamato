@@ -747,7 +747,7 @@ class MeasureCreateWizard(
         )
 
 
-class MeasureUpdateMixin(
+class MeasureUpdateBase(
     MeasureMixin,
     TrackedModelDetailMixin,
     CreateTaricUpdateView,
@@ -924,15 +924,15 @@ class MeasureUpdateMixin(
         return obj
 
 
-class MeasureUpdate(MeasureUpdateMixin):
+class MeasureUpdate(MeasureUpdateBase):
     """UI endpoint for creating Measure UPDATE instances."""
 
 
-class MeasureEditUpdate(MeasureUpdateMixin):
+class MeasureEditUpdate(MeasureUpdateBase):
     """UI endpoint for editing Measure UPDATE instances."""
 
 
-class MeasureEditCreate(MeasureUpdateMixin):
+class MeasureEditCreate(MeasureUpdateBase):
     """UI endpoint for editing Measure CREATE instances."""
 
 
