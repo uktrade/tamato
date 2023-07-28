@@ -999,9 +999,10 @@ def test_measure_edit_update_view(valid_user_client, erga_omnes):
     response = valid_user_client.post(url, data=data)
     assert response.status_code == 302
 
-    updated_measure = Measure.objects.filter(sid=measure.sid).last()
-    assert updated_measure.update_type == UpdateType.UPDATE
-    assert updated_measure.geographical_area == geo_area
+    with override_current_transaction(Transaction.objects.last()):
+        updated_measure = Measure.objects.current().get(sid=measure.sid)
+        assert updated_measure.update_type == UpdateType.UPDATE
+        assert updated_measure.geographical_area == geo_area
 
 
 def test_measure_edit_create_view(valid_user_client, duty_sentence_parser, erga_omnes):
@@ -1034,9 +1035,10 @@ def test_measure_edit_create_view(valid_user_client, duty_sentence_parser, erga_
     response = valid_user_client.post(url, data=data)
     assert response.status_code == 302
 
-    updated_measure = Measure.objects.filter(sid=measure.sid).last()
-    assert updated_measure.update_type == UpdateType.UPDATE
-    assert updated_measure.duty_sentence == new_duty
+    with override_current_transaction(Transaction.objects.last()):
+        updated_measure = Measure.objects.current().get(sid=measure.sid)
+        assert updated_measure.update_type == UpdateType.UPDATE
+        assert updated_measure.duty_sentence == new_duty
 
 
 @pytest.mark.django_db
