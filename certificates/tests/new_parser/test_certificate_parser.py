@@ -82,7 +82,7 @@ class TestNewCertificateParser:
         # check properties for additional code
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == "123"
-        assert target_taric_object.certificate_type__sid == "333"
+        assert target_taric_object.certificate_type__sid == "A"
         assert target_taric_object.valid_between_lower == date(2021, 1, 1)
         assert target_taric_object.valid_between_upper == date(2021, 12, 31)
 

@@ -160,14 +160,17 @@ class NewCertificateDescriptionPeriodParser(
         ModelLink(
             models.CertificateDescription,
             [
-                ModelLinkField("certificate_description_period__sid", "sid"),
+                ModelLinkField("sid", "sid"),
             ],
             "certificate.description",
         ),
     ]
 
     value_mapping = {
-        "certificate_description_period__sid": "sid",
+        "certificate_description_period_sid": "sid",
+        "certificate_type_code": "described_certificate__certificate_type__sid",
+        "certificate_code": "described_certificate__sid",
+        "validity_start_date": "validity_start",
     }
 
     record_code = "205"

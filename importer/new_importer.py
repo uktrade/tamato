@@ -8,7 +8,9 @@ from common.models import Transaction
 from importer.new_parsers import MessageParser
 from importer.new_parsers import ModelLink
 from importer.new_parsers import NewElementParser
+from importer.new_parsers import ParserHelper
 from importer.new_parsers import TransactionParser
+from taric.models import Envelope
 from workbaskets.models import WorkBasket
 
 
@@ -118,14 +120,15 @@ class NewImporter:
 
         for parsed_transaction in self.parsed_transactions:
             for message in parsed_transaction.parsed_messages:
-                if message.taric_object.is_child_object():
-                    parent = self.find_parent_object_matching_fields(
-                        message.taric_object.model,
-                        taric_object.get_identity_fields_and_values_for_parent(),
-                    )
+                if message.taric_object.model == taric_object.model:
+                    if not message.taric_object.is_child_object():
+                        parent = self.find_parent_object_matching_fields(
+                            taric_object.__class__.model,
+                            taric_object.get_identity_fields_and_values_for_parent(),
+                        )
 
-                    if parent:
-                        return parent
+                        if parent:
+                            return parent
 
         raise Exception(f"No parent matched for {taric_object.__class__.__name__}")
 
@@ -133,11 +136,17 @@ class NewImporter:
         for parsed_transaction in self.parsed_transactions:
             for message in parsed_transaction.parsed_messages:
                 taric_object = message.taric_object
-                if not taric_object.is_child_object() and taric_object.model == model:
+                if (
+                    not taric_object.is_child_object()
+                    and taric_object.__class__.model == model
+                ):
                     match = True
 
                     for field in fields:
-                        if getattr(taric_object, field) != fields[field]:
+                        if (
+                            hasattr(taric_object, field)
+                            and getattr(taric_object, field) != fields[field]
+                        ):
                             match = False
 
                     if match:
@@ -153,16 +162,20 @@ class NewImporter:
                     parent = self.find_parent_for_parser_object(message.taric_object)
                     attributes = message.taric_object.model_attributes(
                         self.workbasket.transactions.last(),
+                        False,
                     )
                     for attribute_key in attributes.keys():
                         setattr(parent, attribute_key, attributes[attribute_key])
 
     @transaction.atomic
     def commit_data(self):
+        envelope = Envelope.new_envelope()
+
         transaction_order = 1
         for transaction in self.parsed_transactions:
             # create transaction
             transaction_inst = Transaction.objects.create(
+                composite_key=f"{envelope.envelope_id}{transaction_order}",
                 workbasket=self.workbasket,
                 order=transaction_order,
             )
@@ -256,36 +269,77 @@ class NewImporter:
         for transaction in transactions:
             self.parsed_transactions.append(TransactionParser(transaction))
 
+    def find_child_objects(
+        self,
+        child_parser_class,
+        parent: NewElementParser,
+        last_transaction: TransactionParser,
+    ):
+        result = []
+
+        processed_last_transaction = False
+        for parsed_transaction in self.parsed_transactions:
+            if processed_last_transaction:
+                break
+
+            for parsed_message in parsed_transaction.parsed_messages:
+                if isinstance(parsed_message.taric_object, child_parser_class):
+                    # check identity fields
+                    if parsed_message.taric_object.is_child_for(parent):
+                        result.append(parsed_message.taric_object)
+
+            if transaction == last_transaction:
+                processed_last_transaction = True
+
+        return result
+
     def validate(self):
-        """Iterate through transactions and each taric model within, and verify
+        """
+        Iterate through transactions and each taric model within, and verify
         progressively from the first transaction onwards, but not looking
-        forwards for related objects, only each transaction backwards."""
+        forwards for related objects, only each transaction backwards.0.
+
+        This method should raise import issues with missing data where the child
+        object is not present
+        """
 
         for transaction in self.parsed_transactions:
             for parsed_message in transaction.parsed_messages:
-                links_valid = True
+                if not parsed_message.taric_object.is_child_object():
+                    # get the child models
+                    child_parser_classes = ParserHelper.get_child_parsers(
+                        parsed_message.taric_object,
+                    )
 
-                for link_data in parsed_message.taric_object.links() or []:
-                    if not self._verify_link(parsed_message.taric_object, link_data):
-                        links_valid = False
+                    if len(child_parser_classes) == 0:
+                        # all good! - nothing to check
+                        continue
 
-                missing_child_attributes = (
-                    parsed_message.taric_object.missing_child_attributes()
-                )
-
-                if missing_child_attributes:
-                    for attribute in missing_child_attributes:
-                        # raise report issue
-                        report_item = NewImportIssueReportItem(
-                            parsed_message.taric_object.xml_object_tag,
-                            attribute,
-                            missing_child_attributes[attribute],
-                            "Description pending",
+                    # verify if a child of these types, linked to the current object exist in previous / current
+                    # transactions
+                    child_matches = {}
+                    for child_parser_class in child_parser_classes:
+                        object_matches = self.find_child_objects(
+                            child_parser_class,
+                            parsed_message.taric_object,
+                            transaction,
                         )
+                        for object_match in object_matches:
+                            if object_match.__class__.__name__ in child_matches.keys():
+                                child_matches[object_match.__class__.__name__] += 1
+                            else:
+                                child_matches[object_match.__class__.__name__] = 1
 
-                        parsed_message.taric_object.issues.append(report_item)
+                    for child_parser_class in child_parser_classes:
+                        if child_parser_class.__name__ not in child_matches.keys():
+                            report_item = NewImportIssueReportItem(
+                                parsed_message.taric_object.xml_object_tag,
+                                child_parser_class.xml_object_tag,
+                                {},
+                                f"Missing expected child object {child_parser_class.__name__}",
+                            )
 
-                parsed_message.taric_object.links_valid = links_valid
+                            parsed_message.taric_object.issues.append(report_item)
 
     def _verify_link(
         self,

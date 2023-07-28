@@ -3,9 +3,8 @@ from datetime import date
 
 import pytest
 
-from additional_codes.new_import_parsers import (
-    NewFootnoteAssociationAdditionalCodeParser,
-)
+from additional_codes.new_import_parsers import *
+from footnotes.new_import_parsers import *
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
@@ -83,9 +82,9 @@ class TestNewAdditionalCodeTypeParser:
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
-        assert len(importer.parsed_transactions[0].parsed_messages) == 5
+        assert len(importer.parsed_transactions[0].parsed_messages) == 6
 
-        target_message = importer.parsed_transactions[0].parsed_messages[4]
+        target_message = importer.parsed_transactions[0].parsed_messages[5]
         assert (
             target_message.record_code
             == NewFootnoteAssociationAdditionalCodeParser.record_code

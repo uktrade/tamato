@@ -9,7 +9,7 @@ from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
 
 
-class NewFootnoteTypeParser(NewValidityMixin, NewWritable, NewElementParser):
+class NewFootnoteTypeParser(NewWritable, NewElementParser):
     model = models.FootnoteType
 
     model_links = []
@@ -25,13 +25,15 @@ class NewFootnoteTypeParser(NewValidityMixin, NewWritable, NewElementParser):
     xml_object_tag = "footnote.type"
 
     footnote_type_id: str = None
-    valid_between_lower: str = None
-    valid_between_upper: str = None
+    valid_between_lower: date = None
+    valid_between_upper: date = None
     application_code: str = None
 
 
 class NewFootnoteTypeDescriptionParser(NewWritable, NewElementParser):
     model = models.FootnoteType
+    parent_parser = NewFootnoteTypeParser
+
     model_links = [
         ModelLink(
             models.FootnoteType,
@@ -59,7 +61,7 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
         ModelLink(
             models.FootnoteType,
             [
-                ModelLinkField("footnote_type_id", "footnote_type_id"),
+                ModelLinkField("footnote_type__id", "footnote_type_id"),
             ],
             "footnote.type",
         ),
@@ -68,6 +70,7 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
     value_mapping = {
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
+        "footnote_type_id": "footnote_type__id",
     }
 
     record_code = "200"
@@ -75,7 +78,7 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "footnote"
 
-    footnote_type_id: str = None
+    footnote_type__id: str = None
     footnote_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None

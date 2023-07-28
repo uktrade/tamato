@@ -1,8 +1,12 @@
 import os
+from datetime import date
 
 import pytest
 
+from certificates.models import CertificateDescription
+
 # note : need to import these objects to make them available to the parser
+from certificates.new_import_parsers import NewCertificateDescriptionPeriodParser
 from certificates.new_import_parsers import NewCertificateTypeDescriptionParser
 from importer import new_importer
 
@@ -15,7 +19,7 @@ def get_test_xml_file(file_name):
     return os.path.join(current_directory, "importer_examples", file_name)
 
 
-class TestNewCertificateTypeDescriptionParser:
+class TestNewCertificateTypeDescriptionPeriodParser:
     """
     Example XML:
 
@@ -55,7 +59,7 @@ class TestNewCertificateTypeDescriptionParser:
         assert target.description == "Some description"
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file("certificate_type_description_CREATE.xml")
+        file_to_import = get_test_xml_file("certificate_description_period_CREATE.xml")
 
         importer = new_importer.NewImporter(
             file_to_import,
@@ -65,24 +69,34 @@ class TestNewCertificateTypeDescriptionParser:
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
-        assert len(importer.parsed_transactions[0].parsed_messages) == 2
+        assert len(importer.parsed_transactions[0].parsed_messages) == 5
 
-        target_message = importer.parsed_transactions[0].parsed_messages[1]
+        # this is the description period
+        target_message = importer.parsed_transactions[0].parsed_messages[3]
 
         assert (
             target_message.record_code
-            == NewCertificateTypeDescriptionParser.record_code
+            == NewCertificateDescriptionPeriodParser.record_code
         )
         assert (
             target_message.subrecord_code
-            == NewCertificateTypeDescriptionParser.subrecord_code
+            == NewCertificateDescriptionPeriodParser.subrecord_code
         )
-        assert type(target_message.taric_object) == NewCertificateTypeDescriptionParser
+        assert (
+            type(target_message.taric_object) == NewCertificateDescriptionPeriodParser
+        )
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == "A"
-        assert target_taric_object.description == "some description"
+        assert target_taric_object.sid == "9"
+        assert target_taric_object.described_certificate__certificate_type__sid == "A"
+        assert target_taric_object.described_certificate__sid == "123"
+        assert target_taric_object.validity_start == date(2021, 12, 31)
+
+        # check properties get mapped onto parent
+        target = CertificateDescription.objects.all().last()
+        assert target.validity_start == target_taric_object.validity_start
+        assert target.sid == int(target_taric_object.sid)
 
         for message in importer.parsed_transactions[0].parsed_messages:
             # check for issues

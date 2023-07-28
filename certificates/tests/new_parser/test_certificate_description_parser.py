@@ -72,9 +72,9 @@ class TestNewCertificateDescriptionParser:
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
-        assert len(importer.parsed_transactions[0].parsed_messages) == 4
+        assert len(importer.parsed_transactions[0].parsed_messages) == 5
 
-        target_message = importer.parsed_transactions[0].parsed_messages[3]
+        target_message = importer.parsed_transactions[0].parsed_messages[4]
 
         assert target_message.record_code == NewCertificateDescriptionParser.record_code
         assert (
@@ -85,11 +85,14 @@ class TestNewCertificateDescriptionParser:
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == "999"
-        assert target_taric_object.described_certificate__certificate_type__sid == "777"
+        assert target_taric_object.sid == "8"
+        assert target_taric_object.described_certificate__certificate_type__sid == "A"
         assert target_taric_object.described_certificate__sid == "123"
         assert target_taric_object.description == "This is a description"
 
         for message in importer.parsed_transactions[0].parsed_messages:
             # check for issues
-            assert len(message.taric_object.issues) == 0
+            errors = ""
+            for issue in message.taric_object.issues:
+                errors += f"{issue}"
+            assert len(message.taric_object.issues) == 0, errors

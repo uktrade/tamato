@@ -59,10 +59,10 @@
                     <oub:record.sequence.number>4</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:certificate.description.period>
-                        <oub:certificate.description.period.sid>8</oub:certificate.description.period.sid>
-                        <oub:certificate.type.code>A</oub:certificate.type.code>
+                        <oub:certificate.description.period.sid>9</oub:certificate.description.period.sid>
                         <oub:certificate.code>123</oub:certificate.code>
-                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:certificate.type.code>A</oub:certificate.type.code>
+                        <oub:validity.start.date>2021-12-31</oub:validity.start.date>
                     </oub:certificate.description.period>
 				</oub:record>
 			</oub:transmission>
@@ -77,7 +77,7 @@
                     <oub:update.type>3</oub:update.type>
                     <oub:certificate.description>
                         <oub:certificate.type.code>A</oub:certificate.type.code>
-                        <oub:certificate.description.period.sid>8</oub:certificate.description.period.sid>
+                        <oub:certificate.description.period.sid>9</oub:certificate.description.period.sid>
                         <oub:language.id>EN</oub:language.id>
                         <oub:certificate.code>123</oub:certificate.code>
                         <oub:description>This is a description</oub:description>
@@ -85,6 +85,5 @@
 				</oub:record>
 			</oub:transmission>
 		</env:app.message>
-
     </env:transaction>
 </env:envelope>

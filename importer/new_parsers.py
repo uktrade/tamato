@@ -185,7 +185,7 @@ class NewElementParser:
     def links(self) -> list[ModelLink]:
         if self.model_links is None:
             raise Exception(
-                f"No parser defined for {self.__class__.__name__}, is this correct?",
+                f"No model defined for {self.__class__.__name__}, is this correct?",
             )
 
         return self.model_links
@@ -249,6 +249,23 @@ class NewElementParser:
 
         return result
 
+    def is_child_for(self, potential_parent):
+        identity_fields = self.get_identity_fields_and_values_for_parent()
+
+        # guard clause
+        if len(identity_fields.keys()) == 0:
+            raise Exception("No parent identity fields presented")
+
+        match = True
+        for identity_field in identity_fields.keys():
+            if (
+                getattr(potential_parent, identity_field)
+                != identity_fields[identity_field]
+            ):
+                match = False
+
+        return match
+
     def get_identity_fields_and_values_for_parent(self):
         """We want to create an array of values to be used to query the parent,
         using the child values."""
@@ -309,11 +326,11 @@ class NewElementParser:
         self.transaction_id = transaction_id
         if self.record_code != record_code:
             raise Exception(
-                f"Record code mismatch : expected : {self.record_code}, got : {record_code}",
+                f"Record code mismatch : expected : {self.record_code}, got : {record_code} - data: {data}",
             )
         if self.subrecord_code != subrecord_code:
             raise Exception(
-                f"Sub-record code mismatch : expected : {self.subrecord_code}, got : {subrecord_code}",
+                f"Sub-record code mismatch : expected : {self.subrecord_code}, got : {subrecord_code} - data: {data}",
             )
 
         self.sequence_number = sequence_number
@@ -378,43 +395,26 @@ class NewElementParser:
             else:
                 self.valid_between = TaricDateRange(self.valid_between_lower)
 
-    def get_linked_model(self, field_name, value, transaction: Transaction):
-        # at this point, the model should be added to the database, even only
-
-        # get related model
-        linked_model = None
-        object_field_name = None
-        for link in self.links():
-            for field in link.fields:
-                # match
-                if field.parser_field_name == field_name:
-                    if linked_model is None:
-                        linked_model = link.model
-                        object_field_name = field.object_field_name
-                    else:
-                        raise Exception(
-                            f"Linked model for {self.__class__.__name__} matched multiple times, "
-                            f"first {linked_model.__name__} then {link.model.__name__}",
-                        )
-
-        if not linked_model:
-            raise Exception(
-                f"no match for {field_name} in linked models for {self.__class__.__name__}",
-            )
-
-        # query up to current transaction for matching model and catch in variable
-        kwargs = {
-            object_field_name: value,
-        }
-
-        model = linked_model.objects.approved_up_to_transaction(transaction).get(
-            **kwargs
+    def get_linked_model(
+        self,
+        fields_and_values: dict,
+        related_model,
+        transaction: Transaction,
+    ):
+        models = related_model.objects.approved_up_to_transaction(transaction).filter(
+            **fields_and_values
         )
 
-        # return model
-        return model
+        if models.count() == 1:
+            return models.first()
+        elif models.count() > 1:
+            raise Exception(
+                "multiple models matched query, please check data and query",
+            )
+        else:
+            return None
 
-    def model_attributes(self, transaction: Transaction):
+    def model_attributes(self, transaction: Transaction, raise_error_if_no_match=True):
         excluded_variable_names = [
             "__annotations__",
             "__doc__",
@@ -433,36 +433,63 @@ class NewElementParser:
             "transaction_id",
         ]
 
+        additional_excluded_variable_names = []
+
         model_attributes = {}
 
-        for variable_name in vars(self).keys():
-            if variable_name not in excluded_variable_names:
-                tmp_variable_name = variable_name
-                if "__" in variable_name:
-                    tmp_variable_name = variable_name.split("__")[0]
+        # resolve links to other models
 
-                    if hasattr(self.__class__.model, tmp_variable_name):
-                        # get related model id  - the model should already exist
-                        linked_model = self.get_linked_model(
-                            variable_name,
-                            getattr(self, variable_name),
-                            transaction,
-                        )
-                        model_attributes[tmp_variable_name] = linked_model
-                    else:
-                        raise Exception(
-                            f"Error creating model {self.__class__.model.__name__}, model does not have an attribute {tmp_variable_name}",
-                        )
-                else:
-                    if hasattr(self.__class__.model, tmp_variable_name):
-                        model_attributes[tmp_variable_name] = getattr(
-                            self,
-                            variable_name,
-                        )
-                    else:
-                        raise Exception(
-                            f"Error creating model {self.__class__.model.__name__}, model does not have an attribute {tmp_variable_name}",
-                        )
+        for link in self.model_links:
+            # check all fields link to the same property / linked model
+            property_list = []
+            for field in link.fields:
+                additional_excluded_variable_names.append(field.parser_field_name)
+                property_list.append(field.parser_field_name.split("__")[0])
+
+            property_list = list(dict.fromkeys(property_list))
+
+            if len(property_list) > 1:
+                raise Exception(
+                    f"multiple properties for link : {self.__class__.__name__} : {property_list}",
+                )
+            elif len(property_list) == 0:
+                raise Exception(f"no properties for link : {self.__class__.__name__}")
+
+            fields_and_values = {}
+            for field in link.fields:
+                fields_and_values[field.object_field_name] = getattr(
+                    self,
+                    field.parser_field_name,
+                )
+
+            linked_model = self.get_linked_model(
+                fields_and_values,
+                link.model,
+                transaction,
+            )
+
+            if linked_model:
+                # There are cases where this will not return a value, which is fine when the linked
+                # model is also in the same transaction
+                model_attributes[property_list[0]] = linked_model
+            elif raise_error_if_no_match:
+                raise Exception(
+                    f"No linked model matching query, {link.model}, {fields_and_values}",
+                )
+
+        for model_field in vars(self).keys():
+            if (
+                model_field
+                in excluded_variable_names + additional_excluded_variable_names
+            ):
+                continue
+
+            if hasattr(self.__class__.model, model_field):
+                model_attributes[model_field] = getattr(self, model_field)
+            else:
+                raise Exception(
+                    f"Error creating model {self.__class__.model.__name__}, model does not have an attribute {model_field}",
+                )
 
         return model_attributes
 

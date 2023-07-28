@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from importer.new_importer import NewImporter
@@ -5,9 +7,15 @@ from importer.new_importer import NewImporter
 pytestmark = pytest.mark.django_db
 
 
+def get_test_xml_file(file_name):
+    path_to_current_file = os.path.realpath(__file__)
+    current_directory = os.path.split(path_to_current_file)[0]
+    return os.path.join(current_directory, "test_files", file_name)
+
+
 class TestNewImporter:
     def test_basic_import_additional_code_new_workbasket(self, superuser):
-        file_to_import = "./test_files/additional_code_CREATE.xml"
+        file_to_import = get_test_xml_file("additional_code_CREATE.xml")
 
         importer = NewImporter(file_to_import, "import title", superuser.username)
 

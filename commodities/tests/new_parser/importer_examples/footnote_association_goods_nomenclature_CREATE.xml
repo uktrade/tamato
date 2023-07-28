@@ -1,22 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<env:envelope id="000001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
-              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
-    <env:transaction id="1">
+<env:envelope id="000001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+	<env:transaction id="1">
         <env:app.message id="1">
-            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
-                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
                 <oub:record>
                     <oub:transaction.id>1</oub:transaction.id>
-                    <oub:record.code>120</oub:record.code>
+                    <oub:record.code>400</oub:record.code>
                     <oub:subrecord.code>00</oub:subrecord.code>
                     <oub:record.sequence.number>1</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
-                    <oub:additional.code.type>
-                        <oub:additional.code.type.id>4</oub:additional.code.type.id>
-                        <oub:application.code>1</oub:application.code>
-                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
-                        <oub:validity.end.date>2021-12-31</oub:validity.end.date>
-                    </oub:additional.code.type>
+                    <oub:goods.nomenclature>
+                        <oub:goods.nomenclature.sid>1</oub:goods.nomenclature.sid>
+                        <oub:goods.nomenclature.item.id>0100000000</oub:goods.nomenclature.item.id>
+                        <oub:productline.suffix>10</oub:productline.suffix>
+                        <oub:validity.start.date>2022-01-01</oub:validity.start.date>
+                        <oub:statistical.indicator>0</oub:statistical.indicator>
+                    </oub:goods.nomenclature>
                 </oub:record>
             </oub:transmission>
         </env:app.message>
@@ -25,27 +24,9 @@
                               xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
                 <oub:record>
                     <oub:transaction.id>1</oub:transaction.id>
-                    <oub:record.code>245</oub:record.code>
-                    <oub:subrecord.code>00</oub:subrecord.code>
-                    <oub:record.sequence.number>2</oub:record.sequence.number>
-                    <oub:update.type>3</oub:update.type>
-                    <oub:additional.code>
-                        <oub:additional.code.sid>1</oub:additional.code.sid>
-                        <oub:additional.code.type.id>4</oub:additional.code.type.id>
-                        <oub:additional.code>7</oub:additional.code>
-                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
-                    </oub:additional.code>
-                </oub:record>
-            </oub:transmission>
-        </env:app.message>
-        <env:app.message id="3">
-            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
-                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
-                <oub:record>
-                    <oub:transaction.id>1</oub:transaction.id>
                     <oub:record.code>100</oub:record.code>
                     <oub:subrecord.code>05</oub:subrecord.code>
-                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:footnote.type.description>
                         <oub:footnote.type.id>3</oub:footnote.type.id>
@@ -55,14 +36,14 @@
                 </oub:record>
             </oub:transmission>
         </env:app.message>
-        <env:app.message id="4">
+        <env:app.message id="3">
             <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
                               xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
                 <oub:record>
                     <oub:transaction.id>1</oub:transaction.id>
                     <oub:record.code>100</oub:record.code>
                     <oub:subrecord.code>00</oub:subrecord.code>
-                    <oub:record.sequence.number>4</oub:record.sequence.number>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:footnote.type>
                         <oub:footnote.type.id>3</oub:footnote.type.id>
@@ -73,14 +54,14 @@
                 </oub:record>
             </oub:transmission>
         </env:app.message>
-        <env:app.message id="5">
+        <env:app.message id="4">
             <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
                               xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
                 <oub:record>
                     <oub:transaction.id>1</oub:transaction.id>
                     <oub:record.code>200</oub:record.code>
                     <oub:subrecord.code>00</oub:subrecord.code>
-                    <oub:record.sequence.number>5</oub:record.sequence.number>
+                    <oub:record.sequence.number>4</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:footnote>
                         <oub:footnote.type.id>3</oub:footnote.type.id>
@@ -91,24 +72,25 @@
                 </oub:record>
             </oub:transmission>
         </env:app.message>
-        <env:app.message id="6">
-            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
-                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+    </env:transaction>
+    <env:transaction id="1">
+        <env:app.message id="1">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
                 <oub:record>
                     <oub:transaction.id>1</oub:transaction.id>
-                    <oub:record.code>245</oub:record.code>
-                    <oub:subrecord.code>15</oub:subrecord.code>
-                    <oub:record.sequence.number>6</oub:record.sequence.number>z
+                    <oub:record.code>400</oub:record.code>
+                    <oub:subrecord.code>20</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
-                    <oub:footnote.association.additional.code>
-                        <oub:additional.code.sid>1</oub:additional.code.sid>
-                        <oub:footnote.type.id>3</oub:footnote.type.id>
+                    <oub:footnote.association.goods.nomenclature>
+                        <oub:goods.nomenclature.sid>1</oub:goods.nomenclature.sid>
+                        <oub:goods.nomenclature.item.id>0100000000</oub:goods.nomenclature.item.id>
+                        <oub:productline.suffix>10</oub:productline.suffix>
+                        <oub:validity.start.date>2022-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2023-01-01</oub:validity.end.date>
+                        <oub:footnote.type>3</oub:footnote.type>
                         <oub:footnote.id>9</oub:footnote.id>
-                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
-                        <oub:validity.end.date>2021-01-01</oub:validity.end.date>
-                        <oub:additional.code.type.id>4</oub:additional.code.type.id>
-                        <oub:additional.code>7</oub:additional.code>
-                    </oub:footnote.association.additional.code>
+                    </oub:footnote.association.goods.nomenclature>
                 </oub:record>
             </oub:transmission>
         </env:app.message>

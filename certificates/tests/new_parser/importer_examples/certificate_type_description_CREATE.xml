@@ -10,7 +10,7 @@
                     <oub:record.sequence.number>1</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:certificate.type>
-                        <oub:certificate.type.code>333</oub:certificate.type.code>
+                        <oub:certificate.type.code>A</oub:certificate.type.code>
                         <oub:validity.start.date>2021-01-01</oub:validity.start.date>
                         <oub:validity.end.date>2021-12-31</oub:validity.end.date>
                     </oub:certificate.type>
@@ -26,7 +26,7 @@
                     <oub:record.sequence.number>1</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:certificate.type.description>
-                        <oub:certificate.type.code>333</oub:certificate.type.code>
+                        <oub:certificate.type.code>A</oub:certificate.type.code>
                         <oub:language.id>EN</oub:language.id>
                         <oub:description>some description</oub:description>
                     </oub:certificate.type.description>

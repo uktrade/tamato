@@ -11,7 +11,7 @@
                     <oub:update.type>3</oub:update.type>
                     <oub:additional.code.type>
                         <oub:additional.code.type.id>9</oub:additional.code.type.id>
-                        <oub:application.code>11</oub:application.code>
+                        <oub:application.code>7</oub:application.code>
                         <oub:validity.start.date>2021-01-01</oub:validity.start.date>
                         <oub:validity.end.date>2021-12-31</oub:validity.end.date>
                     </oub:additional.code.type>
