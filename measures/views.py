@@ -747,15 +747,17 @@ class MeasureCreateWizard(
         )
 
 
-class MeasureUpdate(
+class MeasureUpdateBase(
     MeasureMixin,
     TrackedModelDetailMixin,
     CreateTaricUpdateView,
 ):
     form_class = forms.MeasureForm
     permission_required = "common.change_trackedmodel"
-    template_name = "measures/edit.jinja"
     queryset = Measure.objects.all()
+
+    def get_template_names(self):
+        return "measures/edit.jinja"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -918,13 +920,20 @@ class MeasureUpdate(
         obj = super().get_result_object(form)
         form.instance = obj
         self.create_conditions(obj)
-        form.save(commit=False)
-
+        obj = form.save(commit=False)
         return obj
 
 
-class MeasureEditUpdate(MeasureUpdate):
-    pass
+class MeasureUpdate(MeasureUpdateBase):
+    """UI endpoint for creating Measure UPDATE instances."""
+
+
+class MeasureEditUpdate(MeasureUpdateBase):
+    """UI endpoint for editing Measure UPDATE instances."""
+
+
+class MeasureEditCreate(MeasureUpdateBase):
+    """UI endpoint for editing Measure CREATE instances."""
 
 
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):

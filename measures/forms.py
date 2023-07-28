@@ -613,6 +613,11 @@ class MeasureForm(
 
         sid = instance.sid
 
+        geo_area = self.cleaned_data.get("geographical_area")
+        if geo_area and geo_area != instance.geographical_area:
+            instance.geographical_area = geo_area
+            instance.save(update_fields=["geographical_area"])
+
         if self.cleaned_data.get("exclusions"):
             exclusions = self.cleaned_data.get("exclusions")
 
