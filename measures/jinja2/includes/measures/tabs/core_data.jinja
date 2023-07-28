@@ -4,7 +4,7 @@
 {% set geographical_exclusions %}
 {% if object.exclusions.current() %}
 	{% for exclusion in object.exclusions.current() %}
-		{{ exclusion.excluded_geographical_area.get_description().description }}{{ ", " if not loop.last else "" }}
+		{{ create_link(url("geo_area-ui-detail", kwargs={"sid": exclusion.excluded_geographical_area.sid}), exclusion.excluded_geographical_area.get_description().description)}}{{ ", " if not loop.last}}
 	{% endfor %}
 {% else %}-{% endif %}
 {% endset %}
@@ -24,7 +24,7 @@
         },
         {
             "key": {"text": "Measure generating regulation"},
-            "value": {"text": object.generating_regulation.regulation_id if object.generating_regulation else "-" },
+            "value": {"text": create_link(url("regulation-ui-detail", kwargs={"role_type": object.generating_regulation.role_type,"regulation_id": object.generating_regulation.regulation_id}), object.generating_regulation.regulation_id ~ " - " ~ object.generating_regulation.information_text ) if object.generating_regulation else "-"},
             "actions": {"items": []}
         },
         {
@@ -44,22 +44,22 @@
         },
         {
             "key": {"text": "Additional code"},
-            "value": {"text":  object.additional_code.type.sid ~ object.additional_code.code if object.additional_code else '-'},
+            "value": {"text": create_link(url("additional_code-ui-detail", kwargs={"sid": object.additional_code.sid}), object.additional_code.sid) if object.additional_code else "-"},
             "actions": {"items": []}
         },
         {
             "key": {"text": "Geographical area"},
-            "value": {"text":  object.geographical_area.area_id ~ " - " ~ object.geographical_area.get_description().description if object.geographical_area else '-'},
+            "value": {"text": create_link(url("geo_area-ui-detail", kwargs={"sid": object.geographical_area.sid}), object.geographical_area.get_description().description) if object.geographical_area else "-"},
             "actions": {"items": []}
         },
         {
             "key": {"text": "Geographical area exclusions"},
-            "value": {"text":  geographical_exclusions },
+            "value": {"text": geographical_exclusions if object.exclusions.current() else "-"},
             "actions": {"items": []}
         },
         {
             "key": {"text": "Quota order number"},
-            "value": {"text":  object.order_number if object.order_number else '-'},
+            "value": {"text": create_link(url("quota-ui-detail", kwargs={"sid": object.order_number.sid}), object.order_number) if object.order_number else "-"},
             "actions": {"items": []}
         },
         {

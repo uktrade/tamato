@@ -413,6 +413,49 @@ def test_measure_detail_version_control(valid_user_client):
     assert activity_dates == expected_dates
 
 
+def test_measure_detail_core_data_tab_template(valid_user_client):
+    """Tests that the details core tab request returns a 200, and renders the
+    rows and links the summary table correctly for a measure with multiple
+    geographic exclusions."""
+    measure = factories.MeasureFactory(
+        with_additional_code=True,
+        with_order_number=True,
+    )
+    exclusion_1 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        modified_measure=measure,
+    )
+    exclusion_2 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        modified_measure=measure,
+    )
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#core-data"
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    # Check the right amount of rows render
+    num_rows = len(page.find_all("div", class_="govuk-summary-list__row"))
+    assert num_rows == 13
+
+    summary_list = page.find("dl", "govuk-summary-list")
+    summary_links = summary_list.find_all("a")
+
+    # Check that the links appear as expected in the right order
+    expected_links = [
+        f"/regulations/{measure.generating_regulation.role_type}/{measure.generating_regulation.regulation_id}/",
+        f"/commodities/{measure.goods_nomenclature.sid}/",
+        f"/additional_codes/{measure.additional_code.sid}/",
+        f"/geographical-areas/{measure.geographical_area.sid}/",
+        f"/geographical-areas/{exclusion_1.excluded_geographical_area.sid}/",
+        f"/geographical-areas/{exclusion_2.excluded_geographical_area.sid}/",
+        f"/quotas/{measure.order_number.sid}/",
+    ]
+    for index, link in enumerate(summary_links):
+        assert expected_links[index] == link["href"]
+
+
 @pytest.mark.parametrize(
     ("view", "url_pattern"),
     get_class_based_view_urls_matching_url(
