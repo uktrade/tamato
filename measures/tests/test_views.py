@@ -505,6 +505,8 @@ def test_measure_form_save_called_on_measure_update(
     """Until work is done to make `TrackedModel` call new_version in save() we
     need to check that MeasureUpdate view explicitly calls
     MeasureForm.save(commit=False)"""
+    save.return_value = measure_form.instance
+
     post_data = measure_form.data
     post_data = {k: v for k, v in post_data.items() if v is not None}
     post_data["update_type"] = UpdateType.UPDATE
@@ -969,6 +971,72 @@ def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
     assert area_2.sid in area_sids
 
 
+def test_measure_edit_update_view(valid_user_client, erga_omnes):
+    """Test that a measure UPDATE instance can be edited."""
+    measure = factories.MeasureFactory.create(
+        update_type=UpdateType.UPDATE,
+        transaction=factories.UnapprovedTransactionFactory(),
+    )
+    geo_area = factories.GeoGroupFactory.create()
+
+    url = reverse("measure-ui-edit-update", kwargs={"sid": measure.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    data = model_to_dict(measure)
+    data = {k: v for k, v in data.items() if v is not None}
+    start_date = data["valid_between"].lower
+    data.update(
+        {
+            "start_date_0": start_date.day,
+            "start_date_1": start_date.month,
+            "start_date_2": start_date.year,
+            "geo_area": "GROUP",
+            "geographical_area_group-geographical_area_group": geo_area.pk,
+            "submit": "submit",
+        },
+    )
+    response = valid_user_client.post(url, data=data)
+    assert response.status_code == 302
+
+    measure.refresh_from_db()
+    assert measure.update_type == UpdateType.UPDATE
+    assert measure.geographical_area == geo_area
+
+
+def test_measure_edit_create_view(valid_user_client, erga_omnes):
+    """Test that a measure CREATE instance can be edited."""
+    measure = factories.MeasureFactory.create(
+        update_type=UpdateType.CREATE,
+        transaction=factories.UnapprovedTransactionFactory(),
+    )
+    geo_area = factories.CountryFactory.create()
+
+    url = reverse("measure-ui-edit-create", kwargs={"sid": measure.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    data = model_to_dict(measure)
+    data = {k: v for k, v in data.items() if v is not None}
+    start_date = data["valid_between"].lower
+    data.update(
+        {
+            "start_date_0": start_date.day,
+            "start_date_1": start_date.month,
+            "start_date_2": start_date.year,
+            "geo_area": "COUNTRY",
+            "country_region-geographical_area_country_or_region": geo_area.pk,
+            "submit": "submit",
+        },
+    )
+    response = valid_user_client.post(url, data=data)
+    assert response.status_code == 302
+
+    measure.refresh_from_db()
+    assert measure.update_type == UpdateType.CREATE
+    assert measure.geographical_area == geo_area
+
+
 @pytest.mark.django_db
 def test_measure_form_wizard_start(valid_user_client):
     url = reverse("measure-ui-create", kwargs={"step": "start"})
@@ -1127,7 +1195,7 @@ def test_measure_form_wizard_create_measures(
         positive_action=action2,
         negative_action=action2_pair,
     )
-    # action with no pair
+    # action with no pair and action code 1 (will not create with pair if not measure type 112)
     action3 = factories.MeasureActionFactory.create(code="01")
 
     form_data = {
@@ -1353,6 +1421,121 @@ def test_measure_form_wizard_create_measures(
     )
 
 
+@unittest.mock.patch("workbaskets.models.WorkBasket.current")
+def test_measure_form_wizard_create_measures_with_tariff_suspension_action(
+    mock_workbasket,
+    mock_request,
+    duty_sentence_parser,
+    date_ranges,
+    measurements,
+    monetary_units,
+    regulation,
+    commodity1,
+):
+    """
+    Specificly for testing that a negative action code 7 is created for action
+    code 01 when the measure type is 112 tariff suspension.
+
+    Pass data to the MeasureWizard and verify that the created Measures contain
+    the expected data.
+
+    This test will skip form validation so it will not catch data errors that
+    are caught at form level.
+    """
+    mock_workbasket.return_value = factories.WorkBasketFactory.create()
+
+    geo_area1 = factories.GeographicalAreaFactory.create()
+
+    condition_code1 = factories.MeasureConditionCodeFactory.create()
+
+    # create postive & negative action pairs
+    action1 = factories.MeasureActionFactory.create(code="01")
+    action1_negative = factories.MeasureActionFactory.create(code="07")
+    measure_type = factories.MeasureTypeFactory(
+        description="Autonomous tariff suspension",
+        valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
+    )
+    form_data = {
+        "measure_type": measure_type,
+        "generating_regulation": regulation,
+        "geo_area_list": [geo_area1],
+        "order_number": None,
+        "valid_between": date_ranges.normal,
+        "formset-commodities": [
+            {"commodity": commodity1, "duties": "33 GBP/100kg", "DELETE": False},
+        ],
+        "additional_code": None,
+        "formset-conditions": [
+            {
+                "condition_code": condition_code1,
+                "duty_amount": 4.000,
+                "condition_measurement": measurements[("DTN", None)],
+                "monetary_unit": monetary_units["GBP"],
+                "required_certificate": None,
+                "action": action1,
+                "DELETE": False,
+            },
+        ],
+        "formset-footnotes": [],
+    }
+
+    wizard = MeasureCreateWizard(request=mock_request)
+
+    # Create measures returns a list of created measures
+    measure_data = wizard.create_measures(form_data)
+    measures = Measure.objects.filter(goods_nomenclature=commodity1)
+
+    """
+    Verify that the expected measures were created.
+    """
+    assert len(measure_data) == 1
+
+    # Each created measure contains the supplied condition codes where DELETE=False
+    # Each component should have a 1 based 'component_sequence_number' that iterates for each condition in
+    # a measure.
+    assert set(
+        measures.values_list(
+            "pk",
+            "conditions__component_sequence_number",
+            "conditions__condition_code",
+            "conditions__duty_amount",
+            "conditions__condition_measurement",
+            "conditions__monetary_unit",
+            "conditions__action",
+        ),
+    ) == {
+        (
+            measure_data[0].pk,
+            1,
+            condition_code1.pk,
+            Decimal("4.000"),
+            measurements[("DTN", None)].pk,
+            monetary_units["GBP"].pk,
+            action1.pk,
+        ),
+        (
+            measure_data[0].pk,
+            2,
+            condition_code1.pk,
+            None,
+            None,
+            None,
+            action1_negative.pk,
+        ),
+    }
+
+    sids = measures.values_list("sid")
+    conditions = MeasureCondition.objects.filter(
+        dependent_measure__sid__in=sids,
+    ).exclude(components__isnull=True)
+
+    # Check that condition components are created with same transaction as their components, to avoid an ActionRequiresDuty rule violation
+    # https://uktrade.atlassian.net/browse/TP2000-344
+    assert set(conditions.values_list("transaction")) == set(
+        conditions.values_list("components__transaction"),
+    )
+
+
 @pytest.mark.parametrize("step", ["commodities", "conditions"])
 def test_measure_create_wizard_get_form_kwargs(
     step,
@@ -1383,10 +1566,44 @@ def test_measure_create_wizard_get_form_kwargs(
     wizard.form_list = OrderedDict(wizard.form_list)
     form_kwargs = wizard.get_form_kwargs(step)
 
-    assert "measure_start_date" in form_kwargs["form_kwargs"]
-    assert "measure_type" in form_kwargs["form_kwargs"]
-    assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
-    assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+    if step == "commodities":
+        assert "measure_start_date" in form_kwargs
+        assert "min_commodity_count" in form_kwargs
+        assert "measure_type" in form_kwargs["form_kwargs"]
+        assert form_kwargs["measure_start_date"] == date(2021, 4, 2)
+        assert form_kwargs["min_commodity_count"] == 2
+        assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+    else:
+        # conditions
+        assert "measure_start_date" in form_kwargs["form_kwargs"]
+        assert "measure_type" in form_kwargs["form_kwargs"]
+        assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
+        assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+
+
+def test_measure_create_wizard_get_cleaned_data_for_step(session_request, measure_type):
+    details_data = {
+        "measure_create_wizard-current_step": "measure_details",
+        "measure_details-measure_type": [measure_type.pk],
+        "measure_details-start_date_0": [2],
+        "measure_details-start_date_1": [4],
+        "measure_details-start_date_2": [2021],
+        "measure_details-min_commodity_count": [2],
+    }
+    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+    storage.set_step_data("measure_details", details_data)
+    storage._set_current_step("measure_details")
+    wizard = MeasureCreateWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"measure_details": {}},
+        instance_dict={"measure_details": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    cleaned_data = wizard.get_cleaned_data_for_step("measure_details")
+    assert cleaned_data["measure_type"] == measure_type
+    assert cleaned_data["min_commodity_count"] == 2
+    assert cleaned_data["valid_between"] == TaricDateRange(date(2021, 4, 2), None, "[)")
 
 
 def test_measure_form_creates_exclusions(

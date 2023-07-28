@@ -1,5 +1,6 @@
 import datetime
 import logging
+from itertools import groupby
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -13,8 +14,8 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import TextChoices
 from django.urls import reverse
+from parsec import ParseError
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -23,24 +24,30 @@ from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import DateInputFieldFixed
 from common.forms import FormSet
+from common.forms import FormSetSubmitMixin
 from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
-from common.forms import formset_add_or_delete
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
 from common.util import validity_range_contains_range
 from common.validators import SymbolValidator
 from common.validators import UpdateType
 from footnotes.models import Footnote
+from geo_areas import constants
+from geo_areas.forms import CountryRegionForm
+from geo_areas.forms import CountryRegionFormSet
+from geo_areas.forms import ErgaOmnesExclusionsFormSet
+from geo_areas.forms import GeoGroupExclusionsFormSet
+from geo_areas.forms import GeoGroupForm
 from geo_areas.models import GeographicalArea
-from geo_areas.models import GeographicalMembership
-from geo_areas.validators import AreaCode
+from geo_areas.utils import get_all_members_of_geo_groups
 from measures import models
 from measures.constants import MeasureEditSteps
 from measures.models import MeasureExcludedGeographicalArea
 from measures.parsers import DutySentenceParser
 from measures.util import diff_components
+from measures.validators import validate_components_applicability
 from measures.validators import validate_conditions_formset
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
@@ -51,48 +58,20 @@ logger = logging.getLogger(__name__)
 
 MEASURE_CONDITIONS_FORMSET_PREFIX = "measure-conditions-formset"
 MEASURE_COMMODITIES_FORMSET_PREFIX = "measure_commodities_duties_formset"
-ERGA_OMNES_EXCLUSIONS_PREFIX = "erga_omnes_exclusions"
-ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX = (
-    f"{ERGA_OMNES_EXCLUSIONS_PREFIX}_formset"  # /PS-IGNORE
-)
-GROUP_EXCLUSIONS_PREFIX = "geo_group_exclusions"
-GROUP_EXCLUSIONS_FORMSET_PREFIX = f"{GROUP_EXCLUSIONS_PREFIX}_formset"
-
-GEO_GROUP_PREFIX = "geographical_area_group"
-GEO_GROUP_FORMSET_PREFIX = f"{GEO_GROUP_PREFIX}_formset"
-
-COUNTRY_REGION_PREFIX = "country_region"
-COUNTRY_REGION_FORMSET_PREFIX = f"{COUNTRY_REGION_PREFIX}_formset"
 
 
-class GeoAreaInitialDataMixin:
-    @property
-    def formset_submitted(self):
-        return formset_add_or_delete(
-            [
-                GROUP_EXCLUSIONS_FORMSET_PREFIX,
-                GEO_GROUP_FORMSET_PREFIX,
-                COUNTRY_REGION_FORMSET_PREFIX,
-                ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
-            ],
-            self.data,
-        )
-
-    @property
-    def whole_form_submit(self):
-        return bool(self.data.get("submit"))
-
+class MeasureGeoAreaInitialDataMixin(FormSetSubmitMixin):
     def get_geo_area_initial(self):
         initial = {}
         geo_area_type = self.initial.get(self.geo_area_field_name) or self.data.get(
             self.geo_area_field_name,
         )
         if geo_area_type in [
-            GeoAreaType.GROUP.value,
-            GeoAreaType.ERGA_OMNES.value,
+            constants.GeoAreaType.GROUP.value,
+            constants.GeoAreaType.ERGA_OMNES.value,
         ]:
-            field_name = FIELD_NAME_MAPPING[geo_area_type]
-            prefix = FORMSET_PREFIX_MAPPING[geo_area_type]
+            field_name = constants.FIELD_NAME_MAPPING[geo_area_type]
+            prefix = constants.FORMSET_PREFIX_MAPPING[geo_area_type]
             initial_exclusions = []
             if hasattr(self, "instance"):
                 initial_exclusions = [
@@ -108,189 +87,11 @@ class GeoAreaInitialDataMixin:
                         g[field_name] = GeographicalArea.objects.get(id=id)
                 initial_exclusions = new_data
 
-            initial[FORMSET_PREFIX_MAPPING[geo_area_type]] = initial_exclusions
+            initial[
+                constants.FORMSET_PREFIX_MAPPING[geo_area_type]
+            ] = initial_exclusions
 
         return initial
-
-
-class GeoAreaType(TextChoices):
-    ERGA_OMNES = "ERGA_OMNES", "All countries (erga omnes)"
-    GROUP = "GROUP", "A group of countries"
-    COUNTRY = "COUNTRY", "Specific countries or regions"
-
-
-SUBFORM_PREFIX_MAPPING = {
-    GeoAreaType.GROUP: GEO_GROUP_PREFIX,
-    GeoAreaType.COUNTRY: COUNTRY_REGION_FORMSET_PREFIX,
-}
-
-FORMSET_PREFIX_MAPPING = {
-    GeoAreaType.ERGA_OMNES: ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
-    GeoAreaType.GROUP: GROUP_EXCLUSIONS_FORMSET_PREFIX,
-    GeoAreaType.COUNTRY: COUNTRY_REGION_FORMSET_PREFIX,
-}
-
-EXCLUSIONS_FORMSET_PREFIX_MAPPING = {
-    GeoAreaType.ERGA_OMNES: ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
-    GeoAreaType.GROUP: GROUP_EXCLUSIONS_FORMSET_PREFIX,
-    GeoAreaType.COUNTRY: None,
-}
-
-FIELD_NAME_MAPPING = {
-    GeoAreaType.ERGA_OMNES: "erga_omnes_exclusion",
-    GeoAreaType.GROUP: "geo_group_exclusion",
-    GeoAreaType.COUNTRY: "geographical_area_country_or_region",
-}
-
-
-class GeoGroupForm(forms.Form):
-    prefix = GEO_GROUP_PREFIX
-
-    geographical_area_group = forms.ModelChoiceField(
-        label="",
-        queryset=None,  # populated in __init__
-        error_messages={"required": "A country group is required."},
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["geographical_area_group"].queryset = (
-            GeographicalArea.objects.current()
-            .with_latest_description()
-            .filter(area_code=AreaCode.GROUP)
-            .as_at_today()
-            .order_by("description")
-        )
-        # descriptions__description" should make this implicitly distinct()
-        self.fields[
-            "geographical_area_group"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
-
-        if self.initial.get("geo_area") == GeoAreaType.GROUP.value:
-            self.initial["geographical_area_group"] = self.initial["geographical_area"]
-
-
-class ErgaOmnesExclusionsForm(forms.Form):
-    prefix = ERGA_OMNES_EXCLUSIONS_PREFIX
-
-    erga_omnes_exclusion = forms.ModelChoiceField(
-        label="",
-        queryset=GeographicalArea.objects.all(),
-        help_text="Select a country to be excluded:",
-        required=False,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["erga_omnes_exclusion"].queryset = (
-            GeographicalArea.objects.current()
-            .with_latest_description()
-            .as_at_today()
-            .order_by("description")
-        )
-        self.fields[
-            "erga_omnes_exclusion"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
-
-
-class GeoGroupExclusionsForm(forms.Form):
-    prefix = GROUP_EXCLUSIONS_PREFIX
-
-    geo_group_exclusion = forms.ModelChoiceField(
-        label="",
-        queryset=GeographicalArea.objects.all(),
-        help_text="Select a country to be excluded:",
-        required=False,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["geo_group_exclusion"].queryset = (
-            GeographicalArea.objects.current()
-            .with_latest_description()
-            .as_at_today()
-            .order_by("description")
-        )
-        self.fields[
-            "geo_group_exclusion"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
-
-
-GeoGroupFormSet = formset_factory(
-    GeoGroupForm,
-    prefix=GEO_GROUP_FORMSET_PREFIX,
-    formset=FormSet,
-    min_num=1,
-    max_num=2,
-    extra=0,
-    validate_min=True,
-    validate_max=True,
-)
-
-ErgaOmnesExclusionsFormSet = formset_factory(
-    ErgaOmnesExclusionsForm,
-    prefix=ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
-    formset=FormSet,
-    min_num=0,
-    max_num=100,
-    extra=0,
-    validate_min=True,
-    validate_max=True,
-)
-
-GeoGroupExclusionsFormSet = formset_factory(
-    GeoGroupExclusionsForm,
-    prefix=GROUP_EXCLUSIONS_FORMSET_PREFIX,
-    formset=FormSet,
-    min_num=0,
-    max_num=100,
-    extra=0,
-    validate_min=True,
-    validate_max=True,
-)
-
-
-class CountryRegionForm(forms.Form):
-    prefix = COUNTRY_REGION_PREFIX
-
-    geographical_area_country_or_region = forms.ModelChoiceField(
-        queryset=GeographicalArea.objects.exclude(
-            area_code=AreaCode.GROUP,
-            descriptions__description__isnull=True,
-        ),
-        error_messages={"required": "A country or region is required."},
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["geographical_area_country_or_region"].queryset = (
-            GeographicalArea.objects.current()
-            .with_latest_description()
-            .exclude(area_code=AreaCode.GROUP)
-            .as_at_today()
-            .order_by("description")
-        )
-
-        self.fields[
-            "geographical_area_country_or_region"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
-
-        if self.initial.get("geo_area") == GeoAreaType.COUNTRY.value:
-            self.initial["geographical_area_country_or_region"] = self.initial[
-                "geographical_area"
-            ]
-
-
-CountryRegionFormSet = formset_factory(
-    CountryRegionForm,
-    prefix=COUNTRY_REGION_FORMSET_PREFIX,
-    formset=FormSet,
-    min_num=1,
-    max_num=2,
-    extra=0,
-    validate_min=True,
-    validate_max=True,
-)
 
 
 class MeasureConditionComponentDuty(Field):
@@ -410,7 +211,12 @@ class MeasureConditionsFormMixin(forms.ModelForm):
             ),
         )
 
-    def conditions_clean(self, cleaned_data, measure_start_date):
+    def conditions_clean(
+        self,
+        cleaned_data,
+        measure_start_date,
+        is_negative_action_code=False,
+    ):
         """
         We get the reference_price from cleaned_data and the measure_start_date
         from the form's initial data.
@@ -421,16 +227,37 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         are dealing with a simple duty (i.e. only one component). We then update
         cleaned_data with key-value pairs created from this single, unsaved
         component.
+
+        Args:
+            cleaned_data the cleaned data submitted in the form,
+            measure_start_date the start date set for the measure,
+            is_negative_action_code is a boolean by default false and is used to
+            carry out different validation depending on the action code type
+        Returns:
+            returns cleaned_data
         """
         price = cleaned_data.get("reference_price")
         certificate = cleaned_data.get("required_certificate")
+        applicable_duty = cleaned_data.get("applicable_duty")
 
-        # Price or certificate must be present but no both
-        if (not price and not certificate) or (price and certificate):
+        # Price or certificate must be present but no both; if the action code is not negative
+        if (
+            not is_negative_action_code
+            and (not price and not certificate)
+            or (price and certificate)
+        ):
             self.add_error(
                 None,
                 ValidationError(
                     "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’.",
+                ),
+            )
+
+        if is_negative_action_code and (price or certificate or applicable_duty):
+            self.add_error(
+                None,
+                ValidationError(
+                    "If the action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’.",
                 ),
             )
 
@@ -447,7 +274,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                 )
 
         if price and not price_errored:
-            parser = DutySentenceParser.get(measure_start_date)
+            parser = DutySentenceParser.create(measure_start_date)
             components = parser.parse(price)
             if len(components) > 1:
                 self.add_error(
@@ -470,6 +297,14 @@ class MeasureConditionsFormMixin(forms.ModelForm):
 
 
 class MeasureConditionsForm(MeasureConditionsFormMixin):
+    # override action queryset for edit form, gets all actions
+    action = forms.ModelChoiceField(
+        label="Action code",
+        queryset=models.MeasureAction.objects.latest_approved(),
+        empty_label="-- Please select an action code --",
+        error_messages={"required": "An action code is required."},
+    )
+
     def get_start_date(self, data):
         """Validates that the day, month, and year start_date fields are present
         in data and then returns the start_date datetime object."""
@@ -511,7 +346,15 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
         cleaned_data = super().clean()
         measure_start_date = self.get_start_date(self.data)
 
-        return self.conditions_clean(cleaned_data, measure_start_date)
+        # Check if the action code set for the form is
+        is_negative_action_code = models.MeasureActionPair.objects.filter(
+            negative_action=cleaned_data.get("action"),
+        ).exists()
+        return self.conditions_clean(
+            cleaned_data,
+            measure_start_date,
+            is_negative_action_code=is_negative_action_code,
+        )
 
 
 class MeasureConditionsBaseFormSet(FormSet):
@@ -531,7 +374,12 @@ class MeasureConditionsBaseFormSet(FormSet):
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
             return
-        cleaned_data = super().cleaned_data
+
+        cleaned_data = []
+        for form in self.forms:
+            if self.can_delete and self._should_delete_form(form):
+                continue
+            cleaned_data += [form.cleaned_data]
 
         validate_conditions_formset(cleaned_data)
 
@@ -545,7 +393,8 @@ class MeasureConditionsFormSet(MeasureConditionsBaseFormSet):
 class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
     # override methods that use form kwargs
     def __init__(self, *args, **kwargs):
-        self.measure_start_date = kwargs.pop("measure_start_date")
+        self.measure_start_date = kwargs.pop("measure_start_date", None)
+        self.measure_type = kwargs.pop("measure_type", None)
         super().__init__(*args, **kwargs)
 
     def clean_applicable_duty(self):
@@ -557,6 +406,15 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         string.
         """
         applicable_duty = self.cleaned_data["applicable_duty"]
+
+        if (
+            applicable_duty
+            and self.measure_type
+            and self.measure_type.components_not_permitted
+        ):
+            raise ValidationError(
+                f"Duties cannot be added to a condition for measure type {self.measure_type}",
+            )
 
         if applicable_duty and self.measure_start_date is not None:
             try:
@@ -585,7 +443,7 @@ class MeasureConditionsWizardStepFormSet(MeasureConditionsBaseFormSet):
 
 
 class MeasureForm(
-    GeoAreaInitialDataMixin,
+    MeasureGeoAreaInitialDataMixin,
     ValidityPeriodForm,
     BindNestedFormMixin,
     forms.ModelForm,
@@ -644,11 +502,14 @@ class MeasureForm(
     )
     geo_area = RadioNested(
         label="Geographical area",
-        choices=GeoAreaType.choices,
+        choices=constants.GeoAreaType.choices,
         nested_forms={
-            GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
-            GeoAreaType.GROUP.value: [GeoGroupForm, GeoGroupExclusionsFormSet],
-            GeoAreaType.COUNTRY.value: [CountryRegionForm],
+            constants.GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
+            constants.GeoAreaType.GROUP.value: [
+                GeoGroupForm,
+                GeoGroupExclusionsFormSet,
+            ],
+            constants.GeoAreaType.COUNTRY.value: [CountryRegionForm],
         },
         error_messages={"required": "A Geographical area must be selected"},
     )
@@ -665,13 +526,13 @@ class MeasureForm(
         ] = self.instance.duty_sentence
 
         if self.instance.geographical_area.is_all_countries():
-            self.initial["geo_area"] = GeoAreaType.ERGA_OMNES.value
+            self.initial["geo_area"] = constants.GeoAreaType.ERGA_OMNES.value
 
         elif self.instance.geographical_area.is_group():
-            self.initial["geo_area"] = GeoAreaType.GROUP.value
+            self.initial["geo_area"] = constants.GeoAreaType.GROUP.value
 
         else:
-            self.initial["geo_area"] = GeoAreaType.COUNTRY.value
+            self.initial["geo_area"] = constants.GeoAreaType.COUNTRY.value
 
         # If no footnote keys are stored in the session for a measure,
         # store all the pks of a measure's footnotes on the session, using the measure sid as key
@@ -716,9 +577,9 @@ class MeasureForm(
         )
 
         geographical_area_fields = {
-            GeoAreaType.ERGA_OMNES: erga_omnes_instance,
-            GeoAreaType.GROUP: cleaned_data.get("geographical_area_group"),
-            GeoAreaType.COUNTRY: cleaned_data.get(
+            constants.GeoAreaType.ERGA_OMNES: erga_omnes_instance,
+            constants.GeoAreaType.GROUP: cleaned_data.get("geographical_area_group"),
+            constants.GeoAreaType.COUNTRY: cleaned_data.get(
                 "geographical_area_country_or_region",
             ),
         }
@@ -728,10 +589,12 @@ class MeasureForm(
             cleaned_data["geographical_area"] = geographical_area_fields[
                 geo_area_choice
             ]
-            exclusions = cleaned_data.get(FORMSET_PREFIX_MAPPING[geo_area_choice])
+            exclusions = cleaned_data.get(
+                constants.FORMSET_PREFIX_MAPPING[geo_area_choice],
+            )
             if exclusions:
                 cleaned_data["exclusions"] = [
-                    exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
+                    exclusion[constants.FIELD_NAME_MAPPING[geo_area_choice]]
                     for exclusion in exclusions
                 ]
 
@@ -750,27 +613,18 @@ class MeasureForm(
 
         sid = instance.sid
 
+        geo_area = self.cleaned_data.get("geographical_area")
+        if geo_area and geo_area != instance.geographical_area:
+            instance.geographical_area = geo_area
+            instance.save(update_fields=["geographical_area"])
+
         if self.cleaned_data.get("exclusions"):
             exclusions = self.cleaned_data.get("exclusions")
-            valid_memberships = GeographicalMembership.objects.as_at(
-                instance.valid_between.lower,
-            )
 
-            # pull individual countries out of groups and add to the list
-            all_exclusions = []
-            for exclusion in exclusions:
-                if exclusion.area_code == AreaCode.GROUP:
-                    measure_origins = set(
-                        m.member
-                        for m in valid_memberships.filter(
-                            geo_group=instance.geographical_area,
-                        )
-                    )
-                    for membership in valid_memberships.filter(geo_group=exclusion):
-                        if membership.member.sid in [m.sid for m in measure_origins]:
-                            all_exclusions.append(membership.member)
-                else:
-                    all_exclusions.append(exclusion)
+            all_exclusions = get_all_members_of_geo_groups(
+                instance.valid_between,
+                exclusions,
+            )
 
             for geo_area in all_exclusions:
                 existing_exclusion = (
@@ -913,8 +767,15 @@ class MeasureFilterForm(forms.Form):
         self.helper.layout = Layout(
             Div(
                 Field.text("sid", field_width=Fluid.TWO_THIRDS),
+                css_class="govuk-grid-row quarters",
+            ),
+            Div(
                 "goods_nomenclature",
                 "goods_nomenclature__item_id",
+                "modc",
+                css_class="govuk-grid-row quarters",
+            ),
+            Div(
                 "additional_code",
                 "order_number",
                 "measure_type",
@@ -1104,7 +965,7 @@ class MeasureQuotaOrderNumberForm(forms.Form):
 
 
 class MeasureGeographicalAreaForm(
-    GeoAreaInitialDataMixin,
+    MeasureGeoAreaInitialDataMixin,
     BindNestedFormMixin,
     forms.Form,
 ):
@@ -1122,11 +983,14 @@ class MeasureGeographicalAreaForm(
             "This can be a specific country or a group of countries, and exclusions can be specified. "
             "The measure will only apply to imports from or exports to the selected area."
         ),
-        choices=GeoAreaType.choices,
+        choices=constants.GeoAreaType.choices,
         nested_forms={
-            GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
-            GeoAreaType.GROUP.value: [GeoGroupForm, GeoGroupExclusionsFormSet],
-            GeoAreaType.COUNTRY.value: [CountryRegionFormSet],
+            constants.GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
+            constants.GeoAreaType.GROUP.value: [
+                GeoGroupForm,
+                GeoGroupExclusionsFormSet,
+            ],
+            constants.GeoAreaType.COUNTRY.value: [CountryRegionFormSet],
         },
         error_messages={"required": "A Geographical area must be selected"},
     )
@@ -1142,9 +1006,9 @@ class MeasureGeographicalAreaForm(
             self.geo_area_field_name,
         )
 
-        if geo_area_type == GeoAreaType.COUNTRY.value:
-            field_name = FIELD_NAME_MAPPING[geo_area_type]
-            prefix = FORMSET_PREFIX_MAPPING[geo_area_type]
+        if geo_area_type == constants.GeoAreaType.COUNTRY.value:
+            field_name = constants.FIELD_NAME_MAPPING[geo_area_type]
+            prefix = constants.FORMSET_PREFIX_MAPPING[geo_area_type]
             initial_countries = []
             # if we just submitted the form, add the new data to initial
             if self.formset_submitted or self.whole_form_submit:
@@ -1155,7 +1019,7 @@ class MeasureGeographicalAreaForm(
                         g[field_name] = GeographicalArea.objects.get(id=id)
                 initial_countries = new_data
 
-            initial[FORMSET_PREFIX_MAPPING[geo_area_type]] = initial_countries
+            initial[constants.FORMSET_PREFIX_MAPPING[geo_area_type]] = initial_countries
 
         return initial
 
@@ -1163,9 +1027,11 @@ class MeasureGeographicalAreaForm(
         super().__init__(*args, **kwargs)
 
         geographical_area_fields = {
-            GeoAreaType.ERGA_OMNES: self.erga_omnes_instance,
-            GeoAreaType.GROUP: self.data.get(f"{self.prefix}-geographical_area_group"),
-            GeoAreaType.COUNTRY: self.data.get(
+            constants.GeoAreaType.ERGA_OMNES: self.erga_omnes_instance,
+            constants.GeoAreaType.GROUP: self.data.get(
+                f"{self.prefix}-geographical_area_group",
+            ),
+            constants.GeoAreaType.COUNTRY: self.data.get(
                 f"{self.prefix}-geographical_area_country_or_region",
             ),
         }
@@ -1209,34 +1075,34 @@ class MeasureGeographicalAreaForm(
         geo_area_choice = self.cleaned_data.get("geo_area")
 
         geographical_area_fields = {
-            GeoAreaType.GROUP: "geographical_area_group",
-            GeoAreaType.COUNTRY: "geographical_area_country_or_region",
+            constants.GeoAreaType.GROUP: "geographical_area_group",
+            constants.GeoAreaType.COUNTRY: "geographical_area_country_or_region",
         }
 
         if geo_area_choice:
             if not self.formset_submitted:
-                if geo_area_choice == GeoAreaType.ERGA_OMNES:
+                if geo_area_choice == constants.GeoAreaType.ERGA_OMNES:
                     cleaned_data["geo_area_list"] = [self.erga_omnes_instance]
 
-                elif geo_area_choice == GeoAreaType.GROUP:
-                    data_key = SUBFORM_PREFIX_MAPPING[geo_area_choice]
+                elif geo_area_choice == constants.GeoAreaType.GROUP:
+                    data_key = constants.SUBFORM_PREFIX_MAPPING[geo_area_choice]
                     cleaned_data["geo_area_list"] = [cleaned_data[data_key]]
 
-                elif geo_area_choice == GeoAreaType.COUNTRY:
+                elif geo_area_choice == constants.GeoAreaType.COUNTRY:
                     field_name = geographical_area_fields[geo_area_choice]
-                    data_key = SUBFORM_PREFIX_MAPPING[geo_area_choice]
+                    data_key = constants.SUBFORM_PREFIX_MAPPING[geo_area_choice]
                     cleaned_data["geo_area_list"] = [
                         geo_area[field_name] for geo_area in cleaned_data[data_key]
                     ]
 
                 exclusions = cleaned_data.get(
-                    EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
+                    constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
                 )
                 if exclusions:
                     cleaned_data["geo_area_exclusions"] = [
-                        exclusion[FIELD_NAME_MAPPING[geo_area_choice]]
+                        exclusion[constants.FIELD_NAME_MAPPING[geo_area_choice]]
                         for exclusion in cleaned_data[
-                            EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
+                            constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
                         ]
                     ]
 
@@ -1291,7 +1157,8 @@ class MeasureCommodityAndDutiesForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         # remove measure_start_date from kwargs here because superclass will not be expecting it
-        self.measure_start_date = kwargs.pop("measure_start_date")
+        self.measure_start_date = kwargs.pop("measure_start_date", None)
+        self.measure_type = kwargs.pop("measure_type", None)
         super().__init__(*args, **kwargs)
 
         delete_button = (
@@ -1326,11 +1193,16 @@ class MeasureCommodityAndDutiesForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        # Associate duties with their form so that the
+        # formset may later add form errors for invalid duties
+        cleaned_data["form_prefix"] = int(self.prefix.rsplit("-", 1)[1])
         duties = cleaned_data.get("duties", "")
-        try:
-            validate_duties(duties, self.measure_start_date)
-        except ValidationError as e:
-            self.add_error("duties", e)
+        if duties and self.measure_type and self.measure_type.components_not_permitted:
+            raise ValidationError(
+                {
+                    "duties": f"Duties cannot be added to a commodity for measure type {self.measure_type}",
+                },
+            )
 
         return cleaned_data
 
@@ -1350,6 +1222,7 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
 class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
     def __init__(self, *args, **kwargs):
         min_commodity_count = kwargs.pop("min_commodity_count", 2)
+        self.measure_start_date = kwargs.pop("measure_start_date", None)
         default_extra = 2
         self.extra = min_commodity_count - default_extra
         super().__init__(*args, **kwargs)
@@ -1361,6 +1234,30 @@ class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
                 e.message = "Select one or more commodity codes"
 
         return self._non_form_errors
+
+    def clean(self):
+        if any(self.errors):
+            return
+
+        cleaned_data = super().cleaned_data
+        data = tuple((data["duties"], data["form_prefix"]) for data in cleaned_data)
+        # Filter tuples(duty, form) for unique duties to avoid parsing the same duty more than once
+        duties = [next(group) for duty, group in groupby(data, key=lambda x: x[0])]
+
+        duty_sentence_parser = DutySentenceParser.create(
+            self.measure_start_date,
+        )
+        for duty, form in duties:
+            try:
+                duty_sentence_parser.parse(duty)
+            except ParseError as error:
+                error_index = int(error.loc().split(":", 1)[1])
+                self.forms[form].add_error(
+                    "duties",
+                    f'"{duty[error_index:]}" is an invalid duty expression',
+                )
+
+        return cleaned_data
 
 
 class MeasureFootnotesForm(forms.Form):
@@ -1435,7 +1332,19 @@ class MeasureUpdateFootnotesFormSet(FormSet):
 
 
 class MeasureReviewForm(forms.Form):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.measure_type = kwargs.pop("measure_type", None)
+        self.commodities_data = kwargs.pop("commodities_data", None)
+        self.conditions_data = kwargs.pop("conditions_data", None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        validate_components_applicability(
+            measure_type=self.measure_type,
+            commodities_data=self.commodities_data,
+            conditions_data=self.conditions_data,
+        )
+        return super().clean()
 
 
 MeasureDeleteForm = delete_form_for(models.Measure)

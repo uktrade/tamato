@@ -14,7 +14,7 @@ class CheckBoxes {
         // get names for checkboxes
         const checkboxes = document.querySelectorAll(this.CHEKCKBOXES);
         checkboxes.forEach(checkbox => {
-            this.state[checkbox.name] = 0;
+            this.state[checkbox.name] = checkbox.checked ? 1 : 0;
         })
 
         if (this.page === "measures") {
@@ -48,17 +48,13 @@ class CheckBoxes {
         const checkedState = event.target.checked;
         for (let checkbox of document.querySelectorAll('[' + checkboxSelector + ']')) {
             checkbox.checked = checkedState;
-            this.state[checkbox.name] = checkedState;
+            this.state[checkbox.name] = checkedState ? 1 : 0;
         }
         this.updateSession();
     }
 
     toggleCheckbox(event) {
-        if (event.target.checked) {
-            this.state[event.target.name] = 1;
-        } else {
-            this.state[event.target.name] = 0;
-        }
+        this.state[event.target.name] = event.target.checked ? 1 : 0;
         this.updateSession();
     }
 

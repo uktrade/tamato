@@ -54,6 +54,7 @@ from workbaskets.session_store import SessionStore
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.generic import EditTaricView
 
 
 class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -509,10 +510,25 @@ class MeasureCreateWizard(
                 action_pair = MeasureActionPair.objects.filter(
                     positive_action__code=condition_data.get("action").code,
                 ).first()
+
+                negative_action = None
+
+                if action_pair:
+                    negative_action = action_pair.negative_action
+                elif (
+                    measure.measure_type
+                    in measure_creation_pattern.autonomous_tariff_suspension_use_measure_types
+                    and condition_data.get("action").code == "01"
+                ):
+                    """If measure type is an automatic suspension and an action
+                    code 01 is selected then the negative action of code 07
+                    (measure not applicable)is used."""
+                    negative_action = measure_creation_pattern.measure_not_applicable
+
                 # if the next condition code is different create the negative action for the current condition
                 # only create a negative action if the action has a negative pair
                 if (
-                    action_pair
+                    negative_action
                     and data["formset-conditions"][index]["condition_code"]
                     != next_condition_code
                 ):
@@ -523,7 +539,7 @@ class MeasureCreateWizard(
                             "duty_amount": None,
                             "required_certificate": None,
                             # corresponding negative action to the postive one.
-                            "action": action_pair.negative_action,
+                            "action": negative_action,
                             "DELETE": False,
                         },
                         component_sequence_number,
@@ -573,15 +589,16 @@ class MeasureCreateWizard(
 
                     measures_data.append(measure_data)
 
+        parser = DutySentenceParser.create(
+            measure_start_date,
+            component_output=MeasureConditionComponent,
+        )
+
         created_measures = []
 
         for measure_data in measures_data:
             # creates measure in DB
             measure = measure_creation_pattern.create(**measure_data)
-            parser = DutySentenceParser.get(
-                measure.valid_between.lower,
-                component_output=MeasureConditionComponent,
-            )
             self.create_measure_conditions(
                 data,
                 measure,
@@ -607,6 +624,44 @@ class MeasureCreateWizard(
 
         return render(self.request, "measures/confirm-create-multiple.jinja", context)
 
+    def get_all_cleaned_data(self):
+        """
+        Returns a merged dictionary of all step cleaned_data. If a step contains
+        a `FormSet`, the key will be prefixed with 'formset-' and contain a list
+        of the formset cleaned_data dictionaries, as expected in
+        `create_measures()`.
+
+        Note: This patched version of `super().get_all_cleaned_data()` takes advantage of retrieving previously-saved
+        cleaned_data by summary page to avoid revalidating forms unnecessarily.
+        """
+        all_cleaned_data = {}
+        for form_key in self.get_form_list():
+            cleaned_data = self.get_cleaned_data_for_step(form_key)
+            if isinstance(cleaned_data, (tuple, list)):
+                all_cleaned_data.update(
+                    {
+                        f"formset-{form_key}": cleaned_data,
+                    },
+                )
+            else:
+                all_cleaned_data.update(cleaned_data)
+        return all_cleaned_data
+
+    def get_cleaned_data_for_step(self, step):
+        """
+        Returns cleaned data for a given `step`.
+
+        Note: This patched version of `super().get_cleaned_data_for_step` temporarily saves the cleaned_data
+        to provide quick retrieval should another call for it be made in the same request (as happens in
+        `get_form_kwargs()` and qtemplate for summary page) to avoid revalidating forms unnecessarily.
+        """
+        self.cleaned_data = getattr(self, "cleaned_data", {})
+        if step in self.cleaned_data:
+            return self.cleaned_data[step]
+
+        self.cleaned_data[step] = super().get_cleaned_data_for_step(step)
+        return self.cleaned_data[step]
+
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
         context["step_metadata"] = self.step_metadata
@@ -619,25 +674,42 @@ class MeasureCreateWizard(
     def get_form_kwargs(self, step):
         kwargs = {}
         if step == self.COMMODITIES:
-            min_commodity_count = self.get_cleaned_data_for_step(
-                self.MEASURE_DETAILS,
-            ).get("min_commodity_count")
-            kwargs.update({"min_commodity_count": min_commodity_count})
-
-        if step == self.COMMODITIES or step == self.CONDITIONS:
+            measure_start_date = None
+            measure_type = None
+            min_commodity_count = 0
             measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
-            # duty sentence validation requires the measure start date so pass it to form kwargs here
-            valid_between = measure_details.get("valid_between")
-            measure_type = measure_details.get("measure_type")
-            # commodities/duties step is a formset which expects form_kwargs to pass kwargs to its child forms
+            if measure_details:
+                measure_start_date = measure_details.get("valid_between").lower
+                measure_type = measure_type = measure_details.get("measure_type")
+                min_commodity_count = measure_details.get("min_commodity_count")
+            # Kwargs expected by formset
+            kwargs.update(
+                {
+                    "min_commodity_count": min_commodity_count,
+                    "measure_start_date": measure_start_date,
+                },
+            )
+            # Kwargs expected by forms in formset
             kwargs["form_kwargs"] = {
-                "measure_start_date": valid_between.lower,
+                "measure_type": measure_type,
+            }
+
+        if step == self.CONDITIONS:
+            measure_start_date = None
+            measure_type = None
+            measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
+            if measure_details:
+                measure_start_date = measure_details.get("valid_between").lower
+                measure_type = measure_details.get("measure_type")
+            kwargs["form_kwargs"] = {
+                "measure_start_date": measure_start_date,
                 "measure_type": measure_type,
             }
 
         if step == self.SUMMARY:
-            measure_type = self.get_cleaned_data_for_step(self.MEASURE_DETAILS).get(
-                "measure_type",
+            measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
+            measure_type = (
+                measure_details.get("measure_type") if measure_details else None
             )
             kwargs.update(
                 {
@@ -676,15 +748,16 @@ class MeasureCreateWizard(
         )
 
 
-class MeasureUpdate(
+class MeasureUpdateMixin(
     MeasureMixin,
     TrackedModelDetailMixin,
-    CreateTaricUpdateView,
 ):
     form_class = forms.MeasureForm
     permission_required = "common.change_trackedmodel"
-    template_name = "measures/edit.jinja"
     queryset = Measure.objects.all()
+
+    def get_template_names(self):
+        return "measures/edit.jinja"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -824,7 +897,7 @@ class MeasureUpdate(
                 workbasket=workbasket,
                 base_date=obj.valid_between.lower,
             )
-            parser = DutySentenceParser.get(
+            parser = DutySentenceParser.create(
                 obj.valid_between.lower,
                 component_output=MeasureConditionComponent,
             )
@@ -843,17 +916,34 @@ class MeasureUpdate(
                     workbasket,
                 )
 
+
+class MeasureUpdate(MeasureUpdateMixin, CreateTaricUpdateView):
+    """UI endpoint for creating Measure UPDATE instances."""
+
     def get_result_object(self, form):
         obj = super().get_result_object(form)
         form.instance = obj
         self.create_conditions(obj)
-        form.save(commit=False)
-
+        obj = form.save(commit=False)
         return obj
 
 
-class MeasureEditUpdate(MeasureUpdate):
-    pass
+class MeasureEditUpdate(MeasureUpdateMixin, EditTaricView):
+    """UI endpoint for editing Measure UPDATE instances."""
+
+    def get_result_object(self, form):
+        obj = form.save()
+        self.create_conditions(obj)
+        return obj
+
+
+class MeasureEditCreate(MeasureUpdateMixin, EditTaricView):
+    """UI endpoint for editing Measure CREATE instances."""
+
+    def get_result_object(self, form):
+        obj = form.save()
+        self.create_conditions(obj)
+        return obj
 
 
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):

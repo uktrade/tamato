@@ -69,7 +69,7 @@ class MeasureCreationPattern:
     ) -> None:
         self.workbasket = workbasket
         self.defaults = defaults
-        self.duty_sentence_parser = duty_sentence_parser or DutySentenceParser.get(
+        self.duty_sentence_parser = duty_sentence_parser or DutySentenceParser.create(
             base_date,
         )
         self.condition_sentence_parser = (
@@ -94,6 +94,14 @@ class MeasureCreationPattern:
     @cached_property
     def authorised_use_measure_types(self):
         return set(MeasureType.objects.filter(description__contains="authorised use"))
+
+    @cached_property
+    def autonomous_tariff_suspension_use_measure_types(self):
+        return set(
+            MeasureType.objects.filter(
+                description__contains="Autonomous tariff suspension",
+            ),
+        )
 
     @cached_property
     def presentation_of_certificate(self) -> MeasureConditionCode:
