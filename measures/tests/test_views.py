@@ -35,6 +35,7 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
+from measures.validators import MeasureExplosionLevel
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
@@ -1058,6 +1059,7 @@ def test_measure_form_wizard_finish(
     erga_omnes,
 ):
     measure_type = factories.MeasureTypeFactory.create(
+        measure_explosion_level=MeasureExplosionLevel.TARIC,
         measure_component_applicability_code=ApplicabilityCode.PERMITTED,
         valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
     )
