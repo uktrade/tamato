@@ -54,7 +54,6 @@ from workbaskets.session_store import SessionStore
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
-from workbaskets.views.generic import EditTaricView
 
 
 class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -748,9 +747,10 @@ class MeasureCreateWizard(
         )
 
 
-class MeasureUpdateMixin(
+class MeasureUpdateBase(
     MeasureMixin,
     TrackedModelDetailMixin,
+    CreateTaricUpdateView,
 ):
     form_class = forms.MeasureForm
     permission_required = "common.change_trackedmodel"
@@ -916,10 +916,6 @@ class MeasureUpdateMixin(
                     workbasket,
                 )
 
-
-class MeasureUpdate(MeasureUpdateMixin, CreateTaricUpdateView):
-    """UI endpoint for creating Measure UPDATE instances."""
-
     def get_result_object(self, form):
         obj = super().get_result_object(form)
         form.instance = obj
@@ -928,22 +924,16 @@ class MeasureUpdate(MeasureUpdateMixin, CreateTaricUpdateView):
         return obj
 
 
-class MeasureEditUpdate(MeasureUpdateMixin, EditTaricView):
+class MeasureUpdate(MeasureUpdateBase):
+    """UI endpoint for creating Measure UPDATE instances."""
+
+
+class MeasureEditUpdate(MeasureUpdateBase):
     """UI endpoint for editing Measure UPDATE instances."""
 
-    def get_result_object(self, form):
-        obj = form.save()
-        self.create_conditions(obj)
-        return obj
 
-
-class MeasureEditCreate(MeasureUpdateMixin, EditTaricView):
+class MeasureEditCreate(MeasureUpdateBase):
     """UI endpoint for editing Measure CREATE instances."""
-
-    def get_result_object(self, form):
-        obj = form.save()
-        self.create_conditions(obj)
-        return obj
 
 
 class MeasureConfirmUpdate(MeasureMixin, TrackedModelDetailView):
