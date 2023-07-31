@@ -249,7 +249,7 @@ def test_goods_report_line_get_validity_end_date():
     assert report_line.validity_end_date == end_date
 
 
-def test_goods_report_line_get_absorbed_goods_nomenclature():
+def test_goods_report_line_get_absorbed_goods_nomenclature_comment():
     """Test that `GoodsReportLine` returns details of the absorbed goods
     nomenclature as displayed in comments column."""
     ns_oub = TARIC3_NAMESPACES["oub"]
@@ -276,7 +276,7 @@ def test_goods_report_line_get_absorbed_goods_nomenclature():
     )
 
 
-def test_goods_report_line_get_derived_goods_nomenclature():
+def test_goods_report_line_get_derived_goods_nomenclature_comment():
     """Test that `GoodsReportLine` returns details of the derived goods
     nomenclature as displayed in comments column."""
     ns_oub = TARIC3_NAMESPACES["oub"]
@@ -300,7 +300,7 @@ def test_goods_report_line_get_derived_goods_nomenclature():
     assert report_line.comments == f"{derived_commodity} as origin to {commodity}"
 
 
-def test_goods_report_line_get_description():
+def test_goods_report_line_get_description_comment():
     """Test that `GoodsReportLine` returns details of the description as
     displayed in comments column."""
     ns_oub = TARIC3_NAMESPACES["oub"]
@@ -322,7 +322,7 @@ def test_goods_report_line_get_description():
     assert report_line.comments == f"New description: {description}"
 
 
-def test_goods_report_line_get_indents():
+def test_goods_report_line_get_indents_comment():
     """Test that `GoodsReportLine` returns details of the indent number as
     displayed in comments column."""
     ns_oub = TARIC3_NAMESPACES["oub"]
