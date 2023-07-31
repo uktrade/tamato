@@ -4,6 +4,7 @@ from typing import Optional
 from typing import TextIO
 
 from django.core.management import BaseCommand
+from django.core.management.base import CommandError
 from django.core.management.base import CommandParser
 
 from importer.goods_report import GoodsReporter
@@ -93,9 +94,14 @@ class Command(BaseCommand):
     def get_taric_file(self) -> TextIO:
         """Get the taric file from which the report is generated."""
         if self.options.get("import_batch_id"):
-            import_batch = ImportBatch.objects.get(
-                pk=int(self.options["import_batch_id"]),
-            )
+            try:
+                import_batch = ImportBatch.objects.get(
+                    pk=int(self.options["import_batch_id"]),
+                )
+            except ImportBatch.DoesNotExist:
+                raise CommandError(
+                    f'No ImportBatch instance found with pk={self.options["import_batch_id"]}',
+                )
             return import_batch.taric_file
         else:
             return open(self.options["taric_filepath"], "r")

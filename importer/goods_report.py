@@ -192,9 +192,12 @@ class GoodsReportLine:
             default="",
             namespaces=TARIC3_NAMESPACES,
         ).strip()
-        return RECORD_CODE_TO_RECORD_INFO_MAP.get(
-            f"{record_code_match}{subrecord_code_match}",
-        ).name
+        if not record_code_match or not subrecord_code_match:
+            return ""
+        else:
+            return RECORD_CODE_TO_RECORD_INFO_MAP.get(
+                f"{record_code_match}{subrecord_code_match}",
+            ).name
 
     def _get_goods_nomenclature_item_id(self) -> str:
         """Get the item id of the associated goods nomenclature instance."""
