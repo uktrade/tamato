@@ -2,3 +2,4 @@ web: gunicorn wsgi --bind 0.0.0.0:$PORT --timeout 1000 --worker-class=gevent --w
 worker: celery -A common.celery worker -O fair -l info -Q standard
 beat: celery -A common.celery beat
 rule-check-worker: celery -A common.celery worker -O fair -l info -Q rule-check
+importer-worker: celery -A common.celery worker -O fair -l info -Q importer
