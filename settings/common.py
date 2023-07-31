@@ -545,7 +545,10 @@ CELERY_ROUTES = {
     re.compile(r"(checks)\.tasks\..*"): {
         "queue": "rule-check",
     },
-    re.compile(r"(exporter|importer|notifications|publishing)\.tasks\..*"): {
+    re.compile(r"(importer)\.tasks\..*"): {
+        "queue": "importer",
+    },
+    re.compile(r"(exporter|notifications|publishing)\.tasks\..*"): {
         "queue": "standard",
     },
 }
