@@ -35,6 +35,7 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
+from measures.validators import MeasureExplosionLevel
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
@@ -505,6 +506,8 @@ def test_measure_form_save_called_on_measure_update(
     """Until work is done to make `TrackedModel` call new_version in save() we
     need to check that MeasureUpdate view explicitly calls
     MeasureForm.save(commit=False)"""
+    save.return_value = measure_form.instance
+
     post_data = measure_form.data
     post_data = {k: v for k, v in post_data.items() if v is not None}
     post_data["update_type"] = UpdateType.UPDATE
@@ -969,6 +972,76 @@ def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
     assert area_2.sid in area_sids
 
 
+def test_measure_edit_update_view(valid_user_client, erga_omnes):
+    """Test that a measure UPDATE instance can be edited."""
+    measure = factories.MeasureFactory.create(
+        update_type=UpdateType.UPDATE,
+        transaction=factories.UnapprovedTransactionFactory(),
+    )
+    geo_area = factories.GeoGroupFactory.create()
+
+    url = reverse("measure-ui-edit-update", kwargs={"sid": measure.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    data = model_to_dict(measure)
+    data = {k: v for k, v in data.items() if v is not None}
+    start_date = data["valid_between"].lower
+    data.update(
+        {
+            "start_date_0": start_date.day,
+            "start_date_1": start_date.month,
+            "start_date_2": start_date.year,
+            "geo_area": "GROUP",
+            "geographical_area_group-geographical_area_group": geo_area.pk,
+            "submit": "submit",
+        },
+    )
+    response = valid_user_client.post(url, data=data)
+    assert response.status_code == 302
+
+    with override_current_transaction(Transaction.objects.last()):
+        updated_measure = Measure.objects.current().get(sid=measure.sid)
+        assert updated_measure.update_type == UpdateType.UPDATE
+        assert updated_measure.geographical_area == geo_area
+
+
+def test_measure_edit_create_view(valid_user_client, duty_sentence_parser, erga_omnes):
+    """Test that a measure CREATE instance can be edited."""
+    measure = factories.MeasureFactory.create(
+        update_type=UpdateType.CREATE,
+        transaction=factories.UnapprovedTransactionFactory(),
+    )
+    geo_area = factories.CountryFactory.create()
+
+    url = reverse("measure-ui-edit-create", kwargs={"sid": measure.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    data = model_to_dict(measure)
+    data = {k: v for k, v in data.items() if v is not None}
+    new_duty = "1.000% + 2.000 GBP"
+    start_date = data["valid_between"].lower
+    data.update(
+        {
+            "start_date_0": start_date.day,
+            "start_date_1": start_date.month,
+            "start_date_2": start_date.year,
+            "duty_sentence": new_duty,
+            "geo_area": "COUNTRY",
+            "country_region-geographical_area_country_or_region": geo_area.pk,
+            "submit": "submit",
+        },
+    )
+    response = valid_user_client.post(url, data=data)
+    assert response.status_code == 302
+
+    with override_current_transaction(Transaction.objects.last()):
+        updated_measure = Measure.objects.current().get(sid=measure.sid)
+        assert updated_measure.update_type == UpdateType.UPDATE
+        assert updated_measure.duty_sentence == new_duty
+
+
 @pytest.mark.django_db
 def test_measure_form_wizard_start(valid_user_client):
     url = reverse("measure-ui-create", kwargs={"step": "start"})
@@ -986,6 +1059,7 @@ def test_measure_form_wizard_finish(
     erga_omnes,
 ):
     measure_type = factories.MeasureTypeFactory.create(
+        measure_explosion_level=MeasureExplosionLevel.TARIC,
         measure_component_applicability_code=ApplicabilityCode.PERMITTED,
         valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
     )
@@ -1498,10 +1572,44 @@ def test_measure_create_wizard_get_form_kwargs(
     wizard.form_list = OrderedDict(wizard.form_list)
     form_kwargs = wizard.get_form_kwargs(step)
 
-    assert "measure_start_date" in form_kwargs["form_kwargs"]
-    assert "measure_type" in form_kwargs["form_kwargs"]
-    assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
-    assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+    if step == "commodities":
+        assert "measure_start_date" in form_kwargs
+        assert "min_commodity_count" in form_kwargs
+        assert "measure_type" in form_kwargs["form_kwargs"]
+        assert form_kwargs["measure_start_date"] == date(2021, 4, 2)
+        assert form_kwargs["min_commodity_count"] == 2
+        assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+    else:
+        # conditions
+        assert "measure_start_date" in form_kwargs["form_kwargs"]
+        assert "measure_type" in form_kwargs["form_kwargs"]
+        assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
+        assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+
+
+def test_measure_create_wizard_get_cleaned_data_for_step(session_request, measure_type):
+    details_data = {
+        "measure_create_wizard-current_step": "measure_details",
+        "measure_details-measure_type": [measure_type.pk],
+        "measure_details-start_date_0": [2],
+        "measure_details-start_date_1": [4],
+        "measure_details-start_date_2": [2021],
+        "measure_details-min_commodity_count": [2],
+    }
+    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+    storage.set_step_data("measure_details", details_data)
+    storage._set_current_step("measure_details")
+    wizard = MeasureCreateWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"measure_details": {}},
+        instance_dict={"measure_details": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    cleaned_data = wizard.get_cleaned_data_for_step("measure_details")
+    assert cleaned_data["measure_type"] == measure_type
+    assert cleaned_data["min_commodity_count"] == 2
+    assert cleaned_data["valid_between"] == TaricDateRange(date(2021, 4, 2), None, "[)")
 
 
 def test_measure_form_creates_exclusions(

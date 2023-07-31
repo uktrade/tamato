@@ -40,15 +40,30 @@ class ImportFormMixin:
         partition_scheme_setting=settings.TRANSACTION_SCHEMA,
         workbasket_id=None,
     ):
-        chunk_taric(file, batch, record_group=record_group)
-        run_batch(
-            batch_id=batch.pk,
-            status=status,
-            partition_scheme_setting=partition_scheme_setting,
-            username=user.username,
-            record_group=record_group,
-            workbasket_id=workbasket_id,
-        )
+        """
+        Split the uploaded file into chunks, associate with `batch`, and
+        schedule parser execution against `batch` conditional upon chunks having
+        been created.
+
+        The function returns the number of chunks created by the chunker.
+
+        Note that a zero chunk count can result, for instance, when an imported
+        file contains no entities of interest, as can happen when a TGB file
+        contains only non-400 record code elements. A value of 0 (zero) is
+        returned by this function in such cases.
+        """
+
+        chunk_count = chunk_taric(file, batch, record_group=record_group)
+        if chunk_count:
+            run_batch(
+                batch_id=batch.pk,
+                status=status,
+                partition_scheme_setting=partition_scheme_setting,
+                username=user.username,
+                record_group=record_group,
+                workbasket_id=workbasket_id,
+            )
+        return chunk_count
 
     def clean_taric_file(self):
         """Perform validation checks against the uploaded file."""
@@ -240,11 +255,16 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
         )
         batch.save()
 
-        self.process_file(
+        chunk_count = self.process_file(
             self.files["taric_file"],
             batch,
             self.request.user,
             workbasket_id=batch.workbasket.id,
         )
+        if not chunk_count:
+            # No chunks to process so the import is considered done and
+            # succeeded.
+            batch.succeeded()
+            batch.save()
 
         return batch

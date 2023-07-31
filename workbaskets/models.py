@@ -262,6 +262,11 @@ class WorkBasketQueryset(QuerySet):
         return self.exclude(importbatch__status=ImportBatchStatus.FAILED)
 
 
+class TransactionPurgeException(Exception):
+    """Raised under invalid conditions when purging transactions from a
+    WorkBasket."""
+
+
 class WorkBasket(TimestampedMixin):
     """
     A WorkBasket groups tariff edits which will be applied at the same time.
@@ -546,6 +551,22 @@ class WorkBasket(TimestampedMixin):
 
         # Get Transaction model via transactions.model to avoid circular import.
         return self.transactions.model.objects.create(workbasket=self, **kwargs)
+
+    def purge_empty_transactions(self) -> int:
+        """
+        Delete any empty transactions associated with the workbasket. A
+        workbasket must have a `status` of EDITING and will otherwise raise a
+        TransactionPurgeException.
+
+        Returns the number of transactions deleted.
+        """
+        if self.status != WorkflowStatus.EDITING:
+            raise TransactionPurgeException(
+                "Transactions may only be purged from WorkBaskets with a "
+                "`status` value of `WorkflowStatus.EDITING`.",
+            )
+        count, _ = self.transactions.filter(tracked_models__isnull=True).delete()
+        return count
 
     @property
     def current_transaction(self) -> Transaction:

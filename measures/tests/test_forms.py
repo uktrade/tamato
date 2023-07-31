@@ -20,6 +20,7 @@ from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
 from measures.forms import MeasureStartDateForm
 from measures.models import Measure
+from measures.validators import MeasureExplosionLevel
 
 pytestmark = pytest.mark.django_db
 
@@ -547,26 +548,6 @@ def test_measure_forms_additional_code_invalid_data():
 
 
 @pytest.mark.parametrize(
-    "duties,is_valid",
-    [("33 GBP/100kg", True), ("some invalid duty expression", False)],
-)
-def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_ranges):
-    commodity = factories.GoodsNomenclatureFactory.create()
-    data = {
-        "duties": duties,
-        "commodity": commodity,
-    }
-    form = forms.MeasureCommodityAndDutiesForm(
-        data,
-        prefix="",
-        measure_start_date=date_ranges.normal,
-    )
-    assert form.is_valid() == is_valid
-    if not form.is_valid():
-        assert "Enter a valid duty sentence." in form.errors["duties"]
-
-
-@pytest.mark.parametrize(
     "commodity, error_message",
     [
         (
@@ -576,18 +557,18 @@ def test_measure_forms_duties_form(duties, is_valid, duty_sentence_parser, date_
         ("", "Select a commodity code"),
     ],
 )
-def test_measure_forms_commodity_and_duties_form_invalid(
+def test_measure_forms_commodity_and_duties_form_invalid_selection(
     commodity,
     error_message,
     duty_sentence_parser,
     date_ranges,
 ):
     data = {
-        "commodity": commodity,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity,
     }
     form = forms.MeasureCommodityAndDutiesForm(
         data,
-        prefix="",
+        prefix=f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0",
         measure_start_date=date_ranges.normal,
     )
     assert not form.is_valid()
@@ -598,11 +579,12 @@ def test_measure_forms_commodity_and_duties_form_duties_not_permitted():
     """Test that form is invalid when a duty is specified on a commodity but not
     permitted for measure type."""
     measure_type = factories.MeasureTypeFactory.create(
+        measure_explosion_level=MeasureExplosionLevel.TARIC,
         measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
     )
     form = forms.MeasureCommodityAndDutiesForm(
-        data={"duties": "123%"},
-        prefix="",
+        data={f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": "123%"},
+        prefix=f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0",
         measure_type=measure_type,
     )
 
@@ -611,6 +593,38 @@ def test_measure_forms_commodity_and_duties_form_duties_not_permitted():
         f"Duties cannot be added to a commodity for measure type {measure_type}"
         in form.errors["duties"]
     )
+
+
+@pytest.mark.parametrize(
+    "item_id, is_valid",
+    [
+        ("1234567891", False),
+        ("1234567890", False),
+        ("1234567800", True),
+    ],
+)
+def test_measure_forms_commodity_and_duties_form_measure_explosion_level(
+    item_id,
+    is_valid,
+):
+    """Test that form is invalid when a commodity at 8 digit level or higher is
+    selected for an export measure type (measure_explosion_level=8)"""
+    commodity = factories.SimpleGoodsNomenclatureFactory.create(item_id=item_id)
+    export_measure_type = factories.MeasureTypeFactory.create(
+        measure_explosion_level=MeasureExplosionLevel.COMBINED_NOMENCLATURE,
+    )
+    error_message = f"Commodity must sit at {export_measure_type.measure_explosion_level} digit level or higher for measure type {export_measure_type}"
+    data = {
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity.pk,
+    }
+    form = forms.MeasureCommodityAndDutiesForm(
+        data,
+        prefix=f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0",
+        measure_type=export_measure_type,
+    )
+    assert form.is_valid() == is_valid
+    if not is_valid:
+        assert error_message in form.errors["commodity"]
 
 
 @pytest.mark.parametrize(
@@ -649,9 +663,36 @@ def test_measure_forms_commodity_and_duties_formset_valid_data(
         data=data,
         initial=unprefix_formset_data(MEASURE_COMMODITIES_FORMSET_PREFIX, data),
         min_commodity_count=2,
-        form_kwargs={"measure_start_date": date_ranges.normal.lower},
+        measure_start_date=date_ranges.normal.lower,
     )
     assert formset.is_valid()
+
+
+def test_measure_forms_commodity_and_duties_formset_invalid_data(
+    date_ranges,
+    duty_sentence_parser,
+):
+    commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
+    invalid_duty_sentence = "1% + 2GBP / m1"
+    invalid_expression = " / m1"
+    data = {
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity1.pk,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": invalid_duty_sentence,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-commodity": commodity2.pk,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-duties": "40 GBP/100kg",
+        "submit": "submit",
+    }
+    formset = forms.MeasureCommodityAndDutiesFormSet(
+        data=data,
+        initial=unprefix_formset_data(MEASURE_COMMODITIES_FORMSET_PREFIX, data),
+        min_commodity_count=2,
+        measure_start_date=date_ranges.normal.lower,
+    )
+    assert not formset.is_valid()
+    assert (
+        f'"{invalid_expression}" is an invalid duty expression'
+        in formset.forms[0].errors["duties"]
+    )
 
 
 def test_measure_forms_conditions_form_valid_data(date_ranges):
