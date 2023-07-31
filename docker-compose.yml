@@ -50,7 +50,7 @@ services:
     build:
       context: .
       args:
-        - "ENV=${ENV:-prod}"      
+        - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
     command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "rule-check"]
@@ -113,7 +113,7 @@ services:
       context: .
       args:
         - "ENV=${ENV:-prod}"
-    image: tamato  
+    image: tamato
     volumes:
       - "${DOCKER_WEB_VOLUME:-./:/app/}"
     ports:
