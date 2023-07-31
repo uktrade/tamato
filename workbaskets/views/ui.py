@@ -224,6 +224,10 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
                 # UI component(s) design in the backlog for this: TP-1148.
                 pass
 
+        # Removing TrackedModel instances from the workbasket may result in
+        # empty Transaction instances, so remove those from the workbasket too.
+        self.workbasket.purge_empty_transactions()
+
         session_store = self._session_store(self.workbasket)
         session_store.clear()
 
