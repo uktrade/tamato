@@ -52,6 +52,11 @@ ui_patterns = [
         name="review-workbasket",
     ),
     path(
+        f"current/review-goods/",
+        ui_views.WorkbasketReviewGoodsView.as_view(),
+        name="workbasket-ui-review-goods",
+    ),
+    path(
         f"current/violations/",
         ui_views.WorkBasketViolations.as_view(),
         name="workbasket-ui-violations",

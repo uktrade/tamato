@@ -1,0 +1,38 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/panel/macro.njk" import govukPanel %}
+
+
+{% set page_title = "Import commodities" %}
+
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "EU Taric Import List", "href": url("commodity_importer-ui-list")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        "titleText": "TARIC ID " ~ object.name ~ " has been uploaded",
+        "text": "You can view " ~ object.name ~ " import progress from the import list.",
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
+
+    <div class="govuk-button-group">
+      <a class="govuk-link" href="{{ url('commodity_importer-ui-list') }}">
+        Back to TARIC import list
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

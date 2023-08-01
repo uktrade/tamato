@@ -58,14 +58,4 @@ urlpatterns = [
         views.CommodityAddFootnoteConfirm.as_view(),
         name="commodity-ui-add-footnote-confirm",
     ),
-    path(
-        "import/commodities/",
-        views.CommodityImportView.as_view(),
-        name="commodity-ui-import",
-    ),
-    path(
-        "import/commodities/success/",
-        views.CommodityImportSuccessView.as_view(),
-        name="commodity-ui-import-success",
-    ),
 ]

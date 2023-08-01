@@ -248,6 +248,24 @@ class WorkBasketQueryset(QuerySet):
             status=WorkflowStatus.EDITING,
         )
 
+    def exclude_importing_imports(self):
+        """Exclude workbaskets that currently have a related import status of
+        IMPORTING."""
+        from importer.models import ImportBatchStatus
+
+        return self.exclude(importbatch__status=ImportBatchStatus.IMPORTING)
+
+    def exclude_failed_imports(self):
+        """Exclude workbaskets that have a related import status of FAILED."""
+        from importer.models import ImportBatchStatus
+
+        return self.exclude(importbatch__status=ImportBatchStatus.FAILED)
+
+
+class TransactionPurgeException(Exception):
+    """Raised under invalid conditions when purging transactions from a
+    WorkBasket."""
+
 
 class WorkBasket(TimestampedMixin):
     """
@@ -400,7 +418,6 @@ class WorkBasket(TimestampedMixin):
 
         (This will normally mean a move from DRAFT to REVISION).
         """
-
         self.approver_id = user
 
         # Move transactions from the DRAFT partition into the REVISION partition.
@@ -415,7 +432,6 @@ class WorkBasket(TimestampedMixin):
     )
     def queue(self, user: int, scheme_name: str):
         """Add workbasket to packaging queue."""
-
         self.full_clean()
 
         if not self.transactions.exists():
@@ -497,7 +513,6 @@ class WorkBasket(TimestampedMixin):
     @classmethod
     def current(cls, request):
         """Get the current workbasket in the session."""
-
         if "workbasket" in request.session:
             workbasket = cls.load_from_session(request.session)
 
@@ -536,6 +551,22 @@ class WorkBasket(TimestampedMixin):
 
         # Get Transaction model via transactions.model to avoid circular import.
         return self.transactions.model.objects.create(workbasket=self, **kwargs)
+
+    def purge_empty_transactions(self) -> int:
+        """
+        Delete any empty transactions associated with the workbasket. A
+        workbasket must have a `status` of EDITING and will otherwise raise a
+        TransactionPurgeException.
+
+        Returns the number of transactions deleted.
+        """
+        if self.status != WorkflowStatus.EDITING:
+            raise TransactionPurgeException(
+                "Transactions may only be purged from WorkBaskets with a "
+                "`status` value of `WorkflowStatus.EDITING`.",
+            )
+        count, _ = self.transactions.filter(tracked_models__isnull=True).delete()
+        return count
 
     @property
     def current_transaction(self) -> Transaction:

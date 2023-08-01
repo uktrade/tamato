@@ -13,6 +13,9 @@
         <li class="{% if active_link == 'review' %}active{% endif %}">
             <a href="{{ url('workbaskets:review-workbasket') }}" class="govuk-link">Review measures ({{request.session.workbasket.measure_count}})</a>
         </li>
+        <li class="{% if active_link == 'review-goods' %}active{% endif %}">
+            <a href="{{ url('workbaskets:workbasket-ui-review-goods') }}" class="govuk-link">Review goods</a>
+        </li>
     </ul>
 </nav>
 {% endmacro %}

@@ -7,6 +7,7 @@ from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db.models import ProtectedError
 from django.db.transaction import atomic
@@ -31,6 +32,8 @@ from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
+from importer.goods_report import GoodsReporter
+from importer.goods_report import GoodsReportLine
 from measures.filters import MeasureFilter
 from measures.models import Measure
 from workbaskets import forms
@@ -39,6 +42,7 @@ from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
+from workbaskets.views.mixins import WithCurrentWorkBasket
 
 logger = logging.getLogger(__name__)
 
@@ -123,25 +127,47 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
             WorkBasket.objects.exclude(status=WorkflowStatus.PUBLISHED)
             .exclude(status=WorkflowStatus.ARCHIVED)
             .exclude(status=WorkflowStatus.QUEUED)
+            .exclude_importing_imports()
+            .exclude_failed_imports()
             .order_by("-updated_at")
         )
 
     def post(self, request, *args, **kwargs):
         workbasket_pk = request.POST.get("workbasket")
-        if workbasket_pk:
-            workbasket = WorkBasket.objects.get(pk=workbasket_pk)
+        workbasket_tab = request.POST.get("workbasket-tab")
 
-            if workbasket:
-                if workbasket.status == WorkflowStatus.ERRORED:
-                    workbasket.restore()
-                    workbasket.save()
+        workbasket_tab_map = {
+            "view-summary": {
+                "path_name": "workbaskets:current-workbasket",
+            },
+            "add-edit-items": {
+                "path_name": "workbaskets:edit-workbasket",
+            },
+            "view-violations": {
+                "path_name": "workbaskets:workbasket-ui-violations",
+            },
+            "review-measures": {
+                "path_name": "workbaskets:review-workbasket",
+            },
+            "review-goods": {
+                "path_name": "workbaskets:workbasket-ui-review-goods",
+            },
+        }
 
-                workbasket.save_to_session(request.session)
-                redirect_url = reverse(
-                    "workbaskets:current-workbasket",
-                )
+        workbasket = WorkBasket.objects.get(pk=workbasket_pk) if workbasket_pk else None
 
-                return redirect(redirect_url)
+        if workbasket:
+            if workbasket.status == WorkflowStatus.ERRORED:
+                workbasket.restore()
+                workbasket.save()
+
+            workbasket.save_to_session(request.session)
+
+            if workbasket_tab:
+                view = workbasket_tab_map[workbasket_tab]
+                return redirect(reverse(view["path_name"]))
+            else:
+                return redirect(reverse("workbaskets:current-workbasket"))
 
         return redirect(reverse("workbaskets:workbasket-ui-list"))
 
@@ -198,6 +224,10 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
                 # UI component(s) design in the backlog for this: TP-1148.
                 pass
 
+        # Removing TrackedModel instances from the workbasket may result in
+        # empty Transaction instances, so remove those from the workbasket too.
+        self.workbasket.purge_empty_transactions()
+
         session_store = self._session_store(self.workbasket)
         session_store.clear()
 
@@ -215,7 +245,8 @@ def download_envelope(request):
     """
     Creates s3 resource using AWS environment variables.
 
-    Tries to get filename from most recent s3 upload. If no upload exists, returns 404.
+    Tries to get filename from most recent s3 upload. If no upload exists,
+    returns 404.
 
     Generates presigned url from s3 client using bucket and file names.
 
@@ -266,6 +297,54 @@ class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
     template_name = "workbaskets/review-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
     filterset_class = MeasureFilter
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        # Default values should there be no ImportBatch instance associated with
+        # the workbasket.
+        context["column_headings"] = [
+            description
+            for description in GoodsReportLine.COLUMN_DESCRIPTIONS
+            if description != "Containing transaction ID"
+            and description != "Containing message ID"
+        ]
+        context["report_lines"] = []
+        context["import_batch_pk"] = None
+
+        # Get actual values from the ImportBatch instance if one is associated
+        # with the workbasket.
+        try:
+            import_batch = self.workbasket.importbatch
+        except ObjectDoesNotExist:
+            import_batch = None
+
+        if import_batch and import_batch.taric_file:
+            reporter = GoodsReporter(import_batch.taric_file)
+            goods_report = reporter.create_report()
+
+            context["report_lines"] = [
+                [
+                    line.update_type.title(),
+                    line.record_name.title(),
+                    line.goods_nomenclature_item_id,
+                    line.suffix,
+                    line.validity_start_date,
+                    line.validity_end_date,
+                    line.comments,
+                ]
+                for line in goods_report.report_lines
+            ]
+            context["import_batch_pk"] = import_batch.pk
+
+        return context
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
@@ -558,7 +637,6 @@ class WorkBasketViolationDetail(DetailView):
         associated `TransactionCheck` instance, then also set its `successful`
         value to True.
         """
-
         model_check = self.get_object()
         model_check.successful = True
         model_check.save()

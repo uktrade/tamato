@@ -1,14 +1,9 @@
 from datetime import date
 from urllib.parse import urlencode
 
-from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.urls import reverse
-from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.views.generic import FormView
 from django.views.generic import ListView
-from django.views.generic import TemplateView
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -16,7 +11,6 @@ from commodities import business_rules
 from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
 from commodities.forms import CommodityFootnoteForm
-from commodities.forms import CommodityImportForm
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models import GoodsNomenclature
 from commodities.models.dc import CommodityCollectionLoader
@@ -31,9 +25,7 @@ from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
 from measures.models import Measure
 from workbaskets.models import WorkBasket
-from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricCreateView
-from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
@@ -58,25 +50,6 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
             .as_at_and_beyond(date.today())
             .filter(suffix=80)
         )
-
-
-@method_decorator(require_current_workbasket, name="dispatch")
-class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBasket):
-    template_name = "commodities/import.jinja"
-    form_class = CommodityImportForm
-    success_url = reverse_lazy("commodity-ui-import-success")
-    permission_required = [
-        "common.add_trackedmodel",
-        "common.change_trackedmodel",
-    ]
-
-    def form_valid(self, form):
-        form.save(user=self.request.user, workbasket_id=self.workbasket.id)
-        return super().form_valid(form)
-
-
-class CommodityImportSuccessView(TemplateView):
-    template_name = "commodities/import-success.jinja"
 
 
 class CommodityMixin:
