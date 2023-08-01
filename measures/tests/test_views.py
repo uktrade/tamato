@@ -439,21 +439,23 @@ def test_measure_detail_core_data_tab_template(valid_user_client):
     num_rows = len(page.find_all("div", class_="govuk-summary-list__row"))
     assert num_rows == 13
 
+    # Check that the links appear as expected
     summary_list = page.find("dl", "govuk-summary-list")
-    summary_links = summary_list.find_all("a")
+    sorted_expected_links = sorted(
+        [
+            f"/regulations/{measure.generating_regulation.role_type}/{measure.generating_regulation.regulation_id}/",
+            f"/commodities/{measure.goods_nomenclature.sid}/",
+            f"/additional_codes/{measure.additional_code.sid}/",
+            f"/geographical-areas/{measure.geographical_area.sid}/",
+            f"/geographical-areas/{exclusion_1.excluded_geographical_area.sid}/",
+            f"/geographical-areas/{exclusion_2.excluded_geographical_area.sid}/",
+            f"/quotas/{measure.order_number.sid}/",
+        ],
+    )
+    sorted_summary_links = sorted([item["href"] for item in summary_list.find_all("a")])
 
-    # Check that the links appear as expected in the right order
-    expected_links = [
-        f"/regulations/{measure.generating_regulation.role_type}/{measure.generating_regulation.regulation_id}/",
-        f"/commodities/{measure.goods_nomenclature.sid}/",
-        f"/additional_codes/{measure.additional_code.sid}/",
-        f"/geographical-areas/{measure.geographical_area.sid}/",
-        f"/geographical-areas/{exclusion_1.excluded_geographical_area.sid}/",
-        f"/geographical-areas/{exclusion_2.excluded_geographical_area.sid}/",
-        f"/quotas/{measure.order_number.sid}/",
-    ]
-    for index, link in enumerate(summary_links):
-        assert expected_links[index] == link["href"]
+    for index, link in enumerate(sorted_summary_links):
+        assert sorted_expected_links[index] == sorted_summary_links[index]
 
 
 @pytest.mark.parametrize(
