@@ -281,16 +281,16 @@ def test_geographical_membership_edit_form_invalid_end_date(
     invalid_end_date_1 = {
         "membership": membership.pk,
         "action": forms.GeoMembershipAction.END_DATE,
-        "membership_end_date_0": area_group.valid_between.upper.day + 1,
-        "membership_end_date_1": area_group.valid_between.upper.month + 1,
-        "membership_end_date_2": area_group.valid_between.upper.year + 1,
+        "membership_end_date_0": date_ranges.later.upper.day,
+        "membership_end_date_1": date_ranges.later.upper.month,
+        "membership_end_date_2": date_ranges.later.upper.year,
     }
     invalid_end_date_2 = {
         "membership": membership.pk,
         "action": forms.GeoMembershipAction.END_DATE,
-        "membership_end_date_0": area_group.valid_between.lower.day - 1,
-        "membership_end_date_1": area_group.valid_between.lower.month - 1,
-        "membership_end_date_2": area_group.valid_between.lower.year - 1,
+        "membership_end_date_0": date_ranges.earlier.lower.day,
+        "membership_end_date_1": date_ranges.earlier.lower.month,
+        "membership_end_date_2": date_ranges.earlier.lower.year,
     }
 
     with override_current_transaction(Transaction.objects.last()):
