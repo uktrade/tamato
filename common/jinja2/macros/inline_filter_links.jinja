@@ -1,0 +1,14 @@
+{% macro inline_filter_links(filter_links_list) -%}
+  <ul class="govuk-list">
+    {% for filter_link in filter_links_list %}
+      <li>
+        <a
+            href="{{filter_link.href}}"
+            class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if filter_link.selected %}selected-link{% endif %}"
+        >{{filter_link.text}}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{%- endmacro %}
+

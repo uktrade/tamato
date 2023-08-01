@@ -1,0 +1,53 @@
+{% set table_rows = [] %}
+
+{% for object in object_list %}
+  {%- set object_status -%}
+    <span class="status-badge">{{object.status}}</a>
+  {%- endset -%}
+
+  {%- set object_link -%}
+    {% if object.status == "SUCCEEDED" and object.workbasket and object.workbasket.status == "EDITING" %}
+      <form action="{{ url("workbaskets:workbasket-ui-list") }}" method="post">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <input type="hidden" name="workbasket" value="{{ object.workbasket.pk }}">
+        <input type="hidden" name="workbasket-tab" value="review-goods">
+        <input type="submit" class="button-link" name="submit" value="Edit/View workbasket">
+      </form>
+    {%- else -%}
+      <span></span>
+    {%- endif -%}
+  {%- endset -%}
+
+  {%- set author -%}
+    {% if object.author %}
+      {% if object.author.get_full_name() %}
+        {{ object.author.get_full_name() }}
+      {% elif object.author.email %}
+        {{ object.author.email }}
+      {% else %}
+        {{ object.author.username }}
+      {% endif %}
+    {% else %}
+      -
+    {% endif %}
+  {%- endset -%}
+
+  {{ table_rows.append([
+    {"text": object.name},
+    {"text": "{:%d %b %Y}".format(object.created_at)},
+    {"text": author},
+    {"text": object_status},
+    {"html": object_link},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "Taric ID number"},
+    {"text": "Date added"},
+    {"text": "Uploaded by"},
+    {"text": "Importer status"},
+    {"text": ""},
+  ],
+  "rows": table_rows
+}) }}

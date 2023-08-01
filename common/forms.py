@@ -250,6 +250,8 @@ class HMRCCDSManagerActions(TextChoices):
 
 class CommonUserActions(TextChoices):
     SEARCH = "SEARCH", "Search the tariff"
+    IMPORT = "IMPORT", "Import EU Taric files"
+    # Change this to be dependent on permissions later
 
 
 class HomeForm(forms.Form):
@@ -512,11 +514,11 @@ class FormSet(forms.BaseFormSet):
     """
     Adds the ability to add another form to the formset on submit.
 
-    If the form POST data contains an "ADD" field with the value "1", the formset
-    will be redisplayed with a new empty form appended.
+    If the form POST data contains an "ADD" field with the value "1", the
+    formset will be redisplayed with a new empty form appended.
 
-    Deleting a subform will also redisplay the formset, with the order of the forms
-    preserved.
+    Deleting a subform will also redisplay the formset, with the order of the
+    forms preserved.
     """
 
     extra = 0

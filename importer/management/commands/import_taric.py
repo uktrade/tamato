@@ -1,10 +1,13 @@
+from typing import List
 from typing import Sequence
 
+from django.contrib.auth.models import User
 from django.core.management import BaseCommand
 
 from importer.management.commands.chunk_taric import chunk_taric
 from importer.management.commands.chunk_taric import setup_batch
 from importer.management.commands.run_import_batch import run_batch
+from importer.management.util import ImporterCommandMixin
 from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.validators import WorkflowStatus
@@ -12,32 +15,33 @@ from workbaskets.validators import WorkflowStatus
 
 def import_taric(
     taric3_file: str,
-    username: str,
+    author: User,
     status: str,
     partition_scheme_setting: str,
     name: str,
     split_codes: bool = False,
-    dependencies=None,
+    dependency_ids: List[int] = [],
     record_group: Sequence[str] = None,
 ):
     batch = setup_batch(
         batch_name=name,
-        dependencies=dependencies,
+        author=author,
+        dependency_ids=dependency_ids,
         split_on_code=split_codes,
     )
     with open(taric3_file, "rb") as seed_file:
-        batch = chunk_taric(seed_file, batch, record_group=record_group)
+        chunk_taric(seed_file, batch, record_group=record_group)
 
     run_batch(
-        batch.name,
+        batch.pk,
         status,
         partition_scheme_setting,
-        username,
+        author.username,
         record_group=record_group,
     )
 
 
-class Command(BaseCommand):
+class Command(ImporterCommandMixin, BaseCommand):
     help = "Import data from a TARIC XML file into TaMaTo"
 
     def add_arguments(self, parser):
@@ -52,9 +56,8 @@ class Command(BaseCommand):
             type=str,
         )
         parser.add_argument(
-            "-u",
-            "--username",
-            help="The username to use for the owner of the workbaskets created.",
+            "author",
+            help="The email of the user that will be the author of the batch.",
             type=str,
         )
         parser.add_argument(
@@ -80,7 +83,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "-d",
             "--dependencies",
-            help="List of batches that need to finish before the current batch can run",
+            help="List of batch IDs(pk) that need to finish before the current batch can run",
+            type=int,
             action="append",
         )
         parser.add_argument(
@@ -91,16 +95,17 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        user = self.get_user(options["author"])
         record_group = (
             TARIC_RECORD_GROUPS["commodities"] if options["commodities"] else None
         )
         import_taric(
             taric3_file=options["taric3_file"],
-            username=options["username"],
+            author=user,
             status=options["status"],
             partition_scheme_setting=options["partition_scheme"],
             name=options["name"],
             split_codes=options["split_codes"],
-            dependencies=options["dependencies"],
+            dependency_ids=options["dependencies"],
             record_group=record_group,
         )

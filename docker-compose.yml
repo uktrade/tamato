@@ -61,6 +61,21 @@ services:
     depends_on:
       - celery-redis
 
+  importer-celery:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
+    volumes:
+      - ./:/app/
+    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "importer", "--concurrency", "1"]
+    env_file: 
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    depends_on:
+      - celery-redis
+
   celery-beat:
     build:
       context: .
@@ -86,7 +101,7 @@ services:
     env_file: .env
     entrypoint: sh
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
-    command: ['-c', 'mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"']
+    command: ['-c', 'mkdir -p /data/importer && mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"']
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
