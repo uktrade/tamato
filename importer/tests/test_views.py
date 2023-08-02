@@ -10,6 +10,8 @@ from django.urls import reverse
 
 from common.tests import factories
 from importer.models import ImportBatch
+from importer.models import ImportBatchStatus
+from workbaskets.validators import WorkflowStatus
 
 TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
 
@@ -96,6 +98,54 @@ def test_commodity_import_list_view_renders(superuser_client):
 
     assert len(page.find_all("tr", class_="govuk-table__row")) == 3
     assert len(page.find_all("span", class_="status-badge")) == 2
+
+
+@pytest.mark.parametrize(
+    "import_batch_factory,goods_status_class",
+    [
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.IMPORTING,
+            ),
+            "empty",
+        ),
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.SUCCEEDED,
+            ),
+            "editable_goods",
+        ),
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.SUCCEEDED,
+                taric_file="TGB.xml",
+                workbasket__status=WorkflowStatus.ARCHIVED,
+            ),
+            "no_goods",
+        ),
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.FAILED,
+            ),
+            "empty",
+        ),
+    ],
+)
+def test_commodity_import_list_view_goods_status(
+    superuser_client,
+    import_batch_factory,
+    goods_status_class,
+):
+    """Test that ImportBatch instances in differing states render their 'goods
+    status' column correctly on the commodity import list view."""
+
+    import_batch_factory()
+
+    response = superuser_client.get(reverse("commodity_importer-ui-list"))
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    assert len(page.select(f"td.goods-status.{goods_status_class}")) == 1
 
 
 def test_commodity_importer_import_new_returns_200(valid_user_client):
