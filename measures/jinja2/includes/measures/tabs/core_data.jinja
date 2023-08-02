@@ -2,11 +2,9 @@
 {% from "macros/create_link.jinja" import create_link %}
 
 {% set geographical_exclusions %}
-{% if object.exclusions.current() %}
 	{% for exclusion in object.exclusions.current() %}
 		{{ create_link(url("geo_area-ui-detail", kwargs={"sid": exclusion.excluded_geographical_area.sid}), exclusion.excluded_geographical_area.get_description().description)}}{{ ", " if not loop.last}}
 	{% endfor %}
-{% else %}-{% endif %}
 {% endset %}
 
 {% block data %}
