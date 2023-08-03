@@ -277,6 +277,13 @@ class FootnoteAssociationGoodsNomenclatureUpdate(
     form_class = CommodityFootnoteEditForm
     template_name = "commodity_footnotes/edit.jinja"
 
+    validate_business_rules = (
+        business_rules.NIG18,
+        business_rules.NIG22,
+        business_rules.NIG23,
+        business_rules.NIG24,
+    )
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["tx"] = self.workbasket.new_transaction()
