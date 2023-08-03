@@ -766,26 +766,30 @@ class MeasureFilterForm(forms.Form):
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             Div(
-                Field.text("sid", field_width=Fluid.TWO_THIRDS),
-                css_class="govuk-grid-row quarters",
-            ),
-            Div(
-                "goods_nomenclature",
-                "goods_nomenclature__item_id",
-                "modc",
-                css_class="govuk-grid-row quarters",
-            ),
-            Div(
-                "additional_code",
-                "order_number",
-                "measure_type",
-                "regulation",
-                "geographical_area",
-                "footnote",
-                css_class="govuk-grid-row quarters",
+                Div(
+                    "goods_nomenclature",
+                    Field.text("sid", field_width=Fluid.TWO_THIRDS),
+                    "regulation",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    "goods_nomenclature__item_id",
+                    "additional_code",
+                    "measure_type",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    "order_number",
+                    "certificates",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                css_class="govuk-grid-row govuk-!-margin-top-6",
             ),
             HTML(
                 '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+            ),
+            HTML(
+                '<p class="govuk-body">Time period</p>',
             ),
             Div(
                 Div(
@@ -804,10 +808,7 @@ class MeasureFilterForm(forms.Form):
                     "end_date",
                     css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
                 ),
-                css_class="govuk-grid-row govuk-!-margin-top-6",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+                css_class="govuk-grid-row govuk-!-padding-top-6 filter-layout__filters",
             ),
             Button("submit", "Search and Filter", css_class="govuk-!-margin-top-6"),
             HTML(

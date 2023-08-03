@@ -26,6 +26,7 @@ from measures.models import MeasureType
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
+from certificates.models import Certificate
 
 BEFORE_EXACT_AFTER_CHOICES = (
     ("exact", "is"),
@@ -179,6 +180,15 @@ class MeasureFilter(TamatoFilter):
     end_date = GovUKDateFilter(
         label="",
         method="filter_end_date",
+    )
+
+    certificates = AutoCompleteFilter(
+        label="Certificates",
+        field_name="certificates",
+        queryset=Certificate.objects.all(),
+        attrs={
+            "display_class": GOV_UK_TWO_THIRDS
+        }
     )
 
     clear_url = reverse_lazy("measure-ui-search")
