@@ -15,6 +15,15 @@ class NumericSIDConverter(IntConverter):
 
 
 class TaricDateRangeConverter:
+    """
+    Converts a TaricDateRange object to a string in the format:
+
+    YYYY-MM-DD--YYYY-MM-DD
+    or:
+    YYYY-MM-DD--
+    if the end date is None
+    """
+
     regex = r"[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}--([0-9]{4}-[0-9]{1,2}-[0-9]{1,2})*"
 
     def to_python(self, value):
