@@ -491,7 +491,7 @@ def test_commodity_footnotes_page(valid_user_client):
     )
     assert (
         first_footnote_description
-        == commodity.footnote_associations.order_by("valid_between")
+        == commodity.footnote_associations.order_by("pk")
         .first()
         .associated_footnote.descriptions.first()
         .description
