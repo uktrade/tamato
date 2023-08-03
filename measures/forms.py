@@ -789,6 +789,12 @@ class MeasureFilterForm(forms.Form):
                 '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
             ),
             HTML(
+                '<p class="govuk-body">Filters</p>',
+            ),
+            HTML(
+                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+            ),
+            HTML(
                 '<p class="govuk-body">Time period</p>',
             ),
             Div(

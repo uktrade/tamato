@@ -97,7 +97,7 @@ class MeasureFilter(TamatoFilter):
     )
 
     goods_nomenclature__item_id = CharFilter(
-        label="Commodity code starts with",
+        label="Commodity code starting with",
         widget=forms.TextInput(
             attrs={
                 "class": GOV_UK_TWO_THIRDS,
