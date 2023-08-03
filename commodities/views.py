@@ -275,6 +275,7 @@ class FootnoteAssociationGoodsNomenclatureUpdate(
     CreateTaricUpdateView,
 ):
     form_class = CommodityFootnoteEditForm
+    template_name = "commodity_footnotes/edit.jinja"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
