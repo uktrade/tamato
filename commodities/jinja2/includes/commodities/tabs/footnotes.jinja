@@ -13,7 +13,7 @@
       {% include "includes/commodities/actions.jinja" %}
   </div>
 </div>
-{% if object.footnote_associations.current() %}
+{% if object.footnote_associations.current().order_by("pk") %}
   {% set table_rows = [] %}
   {% for association in object.footnote_associations.current().order_by("valid_between") %}
     {% set edit_link %}
