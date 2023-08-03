@@ -18,17 +18,6 @@ repos:
     hooks:
       - id: isort
         args: [--force-single-line-imports]
-  - repo: https://github.com/myint/docformatter.git
-    rev: v1.6.0
-    hooks:
-      - id: docformatter
-        args:
-          [
-            "--in-place",
-            "--wrap-summaries=80",
-            "--wrap-descriptions=80",
-            "--pre-summary-newline",
-          ]
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
