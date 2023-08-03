@@ -62,6 +62,7 @@
                 {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
                 {"text": footnotes_display(measure.footnoteassociationmeasure_set.current())},
                 {"text": conditions_list(measure) if measure.conditions.latest_approved() else "-", "classes": "govuk-!-width-one-quarter"},
+                {"text": create_link(url("regulation-ui-detail", kwargs={"role_type": measure.generating_regulation.role_type,"regulation_id": measure.generating_regulation.regulation_id}), measure.generating_regulation.regulation_id) if measure.generating_regulation.regulation_id else '-'},
               ]) or "" }} 
           {% endfor %}
         {{ govukTable({
@@ -78,6 +79,7 @@
             {"text": "Quota"},
             {"text": "Footnote"},
             {"text": "Conditions"},
+            {"text": "Regulation"},
           ],
           "rows": table_rows,
           "classes": "govuk-table-m"
