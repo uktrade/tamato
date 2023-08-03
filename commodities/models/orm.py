@@ -25,7 +25,6 @@ from common.models.mixins.description import DescriptionQueryset
 from common.models.mixins.validity import ValidityMixin
 from common.models.mixins.validity import ValidityStartMixin
 from common.models.transactions import Transaction
-from common.models.utils import GetTabURLMixin
 from footnotes.validators import ApplicationCode
 from measures import business_rules as measures_business_rules
 
@@ -344,13 +343,9 @@ class GoodsNomenclatureSuccessor(TrackedModel):
         )
 
 
-class FootnoteAssociationGoodsNomenclature(GetTabURLMixin, TrackedModel, ValidityMixin):
+class FootnoteAssociationGoodsNomenclature(TrackedModel, ValidityMixin):
     record_code = "400"
     subrecord_code = "20"
-
-    url_pattern_name_prefix = "commodity"
-    url_suffix = "footnotes/"
-    url_relation_field = "goods_nomenclature"
 
     goods_nomenclature = models.ForeignKey(
         GoodsNomenclature,
@@ -363,6 +358,7 @@ class FootnoteAssociationGoodsNomenclature(GetTabURLMixin, TrackedModel, Validit
     )
 
     identifying_fields = (
+        "valid_between",
         "goods_nomenclature__sid",
         "associated_footnote__footnote_id",
         "associated_footnote__footnote_type__footnote_type_id",

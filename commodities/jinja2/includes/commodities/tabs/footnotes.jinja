@@ -16,19 +16,26 @@
 {% if object.footnote_associations.current() %}
   {% set table_rows = [] %}
   {% for association in object.footnote_associations.current().order_by("valid_between") %}
+    {% set edit_link %}
+      {% if association.get_url('edit') %}
+        <a href="{{ association.get_url('edit') }}" class="govuk-link">Edit</a>
+      {% endif %}
+    {% endset %}
     {{ table_rows.append([
         {"text": create_link(association.associated_footnote.get_url(), association.associated_footnote|string) },
         {"text": association.associated_footnote.descriptions.first().description },
         {"text": "{:%d %b %Y}".format(association.valid_between.lower) },
         {"text": "{:%d %b %Y}".format(association.valid_between.upper) if association.valid_between.upper else "—" },
+        {"text": edit_link },
       ]) or "" }}
   {% endfor %}
     {{ govukTable({
     "head": [
-        {"text": "SID"},
+        {"text": "Footnote SID"},
         {"text": "Description", "classes": "govuk-!-width-two-thirds"},
         {"text": "Start date"},
         {"text": "End date"},
+        {"text": "Actions"},
     ],
     "rows": table_rows
     }) }}
