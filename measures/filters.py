@@ -9,8 +9,10 @@ from django_filters import ChoiceFilter
 from django_filters import DateFilter
 
 from additional_codes.models import AdditionalCode
+from certificates.models import Certificate
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models.orm import GoodsNomenclature
+from common.filters import ActiveStateMixin
 from common.filters import AutoCompleteFilter
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
@@ -26,7 +28,6 @@ from measures.models import MeasureType
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
-from certificates.models import Certificate
 
 BEFORE_EXACT_AFTER_CHOICES = (
     ("exact", "is"),
@@ -48,7 +49,7 @@ class MeasureTypeFilterBackend(TamatoFilterBackend):
     )  # XXX order is significant
 
 
-class MeasureFilter(TamatoFilter):
+class MeasureFilter(TamatoFilter, ActiveStateMixin):
     def __init__(self, *args, **kwargs):
         if kwargs["data"]:
             kwargs["data"]._mutable = True
@@ -87,11 +88,28 @@ class MeasureFilter(TamatoFilter):
         },
     )
 
+    # Active measures only
+    # See TODO #263
+    # is_active = BooleanFilter(
+    #     label="WIP - Show active measures only",
+    #     widget=forms.CheckboxInput,
+    #     method="filter_active_state"
+    # )
+
+    # measures in current workbasket
+    # workbaskets - limbo state for when tarriff managers are making changes to tarriffs. Stored in session --> have a look at workbasket view summary. Have a look at get form quargs, may pass as var here.
+    # current_workbasket = BooleanFilter(
+    #     label="WIP - Only include measures in this current workbasket",
+    #     widget=forms.CheckboxInput,
+    #     field_name="",
+    #     method="",
+    # )
+
     # measures on declarable commodities
+    # TODO: Invalidate if no code entered
     modc = BooleanFilter(
-        label="Include inherited measures",
-        help_text="Only applies if a specific commodity code is entered",
-        widget=forms.CheckboxInput(),
+        label="Include inherited measures for specific commodity code",
+        widget=forms.CheckboxInput,
         field_name="goods_nomenclature",
         method="commodity_modifier",
     )
@@ -187,8 +205,8 @@ class MeasureFilter(TamatoFilter):
         field_name="certificates",
         queryset=Certificate.objects.all(),
         attrs={
-            "display_class": GOV_UK_TWO_THIRDS
-        }
+            "display_class": GOV_UK_TWO_THIRDS,
+        },
     )
 
     clear_url = reverse_lazy("measure-ui-search")
@@ -242,10 +260,18 @@ class MeasureFilter(TamatoFilter):
             )
         return queryset
 
+    # TODO: copy/re-write the filter_active_state fn() from common/filters.py (don't need terminated)
+    # using ActiveStateMixin doesn't filter by date, double check this works on bespoke version.
+
+    # def filter_active_state(self, queryset):
+    #     # filter the query set to those which are currently active
+
+    #     active_status_filter = Q
+
     class Meta:
         model = Measure
 
         form = MeasureFilterForm
 
         # Defines the order shown in the form.
-        fields = ["search", "sid"]
+        fields = ["search", "sid", "active_state"]

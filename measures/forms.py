@@ -369,7 +369,6 @@ class MeasureConditionsBaseFormSet(FormSet):
         Validates formset using validate_conditions_formset which will raise a
         ValidationError if the formset contains errors.
         """
-
         # cleaned_data is only set if forms are all valid
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
@@ -789,7 +788,24 @@ class MeasureFilterForm(forms.Form):
                 '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
             ),
             HTML(
-                '<p class="govuk-body">Filters</p>',
+                '<h3 class="govuk-body">Filters</h3>',
+            ),
+            Div(
+                Div(
+                    "modc",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                # TODO: Replace below with bespoke is_active filter.
+                Div(
+                    "active_state",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                # TODO: Current workbasket filter
+                # Div(
+                #     "current_workbasket",
+                #     css_class="govuk-grid-column-one-third",
+                # ),
+                css_class="govuk-grid-row govuk-!-margin-top-6",
             ),
             HTML(
                 '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
