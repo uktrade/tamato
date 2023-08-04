@@ -2,9 +2,11 @@ from typing import List
 
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
+from django.db import IntegrityError
 from django.db import transaction
 
 from common.models import Transaction
+from importer.new_importer_issue import NewImportIssueReportItem
 from importer.new_parsers import MessageParser
 from importer.new_parsers import ModelLink
 from importer.new_parsers import NewElementParser
@@ -12,51 +14,6 @@ from importer.new_parsers import ParserHelper
 from importer.new_parsers import TransactionParser
 from taric.models import Envelope
 from workbaskets.models import WorkBasket
-
-
-class NewImportIssueReportItem:
-    """
-    Class for in memory representation if an issue detected on import, the
-    status may change during the process so this will not be committed until the
-    import process is complete or has been found to have errors.
-
-    params:
-        object_type: str,
-            String representation of the object type, as found in XML e.g. goods.nomenclature
-        related_object_type: str,
-            String representation of the related object type, as found in XML e.g. goods.nomenclature.description
-        related_object_identity_keys: dict,
-            Dictionary of identity names and values used to link the related object
-        related_cache_key: str,
-            The string expected to be used to cache the related object
-        description: str,
-            Description of the detected issue
-    """
-
-    def __init__(
-        self,
-        object_type: str,
-        related_object_type: str,
-        related_object_identity_keys: dict,
-        description: str,
-        issue_type: str = "ERROR",
-    ):
-        self.object_type = object_type
-        self.related_object_type = related_object_type
-        self.related_object_identity_keys = related_object_identity_keys
-        self.description = description
-        self.issue_type = issue_type
-
-    def __str__(self):
-        result = (
-            f"{self.issue_type}: {self.description}\n"
-            f"  {self.object_type} > {self.related_object_type}\n"
-            f"  link_data: {self.related_object_identity_keys}"
-        )
-        return result
-
-    def __repr__(self):
-        return self.__str__()
 
 
 class NewImporter:
@@ -107,6 +64,8 @@ class NewImporter:
 
         # validate, check dependencies and data
         self.validate()
+
+        # reorder models within a transaction to process the children
 
         if self.can_save():
             self.populate_parent_attributes()
@@ -172,7 +131,7 @@ class NewImporter:
         envelope = Envelope.new_envelope()
 
         transaction_order = 1
-        for transaction in self.parsed_transactions:
+        for parsed_transaction in self.parsed_transactions:
             # create transaction
             transaction_inst = Transaction.objects.create(
                 composite_key=f"{envelope.envelope_id}{transaction_order}",
@@ -180,7 +139,7 @@ class NewImporter:
                 order=transaction_order,
             )
 
-            for message in transaction.parsed_messages:
+            for message in parsed_transaction.parsed_messages:
                 if message.taric_object.can_save_to_model():
                     self.commit_changes_from_message(
                         message,
@@ -189,39 +148,52 @@ class NewImporter:
 
             transaction_order += 1
 
+        if len(self.issues("ERROR")) > 0:
+            transaction.set_rollback(True)
+
     def commit_changes_from_message(
         self,
         message: MessageParser,
         transaction: Transaction,
     ):
-        if message.update_type == 1:  # Update
-            # find model based on identity key
-            model_instance = message.taric_object.model.latest_approved().get(
-                **message.taric_object.model_query_parameters()
+        try:
+            if message.update_type == 1:  # Update
+                # find model based on identity key
+                model_instance = message.taric_object.model.latest_approved().get(
+                    **message.taric_object.model_query_parameters()
+                )
+
+                # update model with all attributes from model
+                model_instance.new_version(
+                    transaction=transaction,
+                    **message.taric_object.model_attributes(transaction),
+                )
+
+            elif message.update_type == 2:  # Delete
+                model_instance = message.taric_object.model.latest_approved().get(
+                    **message.taric_object.model_query_parameters()
+                )
+
+                # mark the model as deleted
+                model_instance.new_version(
+                    transaction=transaction,
+                    update_type=message.taric_object.update_type,
+                )
+
+            elif message.update_type == 3:  # Create
+                message.taric_object.__class__.model.objects.create(
+                    transaction=transaction,
+                    **message.taric_object.model_attributes(transaction),
+                )
+        except IntegrityError:
+            report_item = NewImportIssueReportItem(
+                message.taric_object.xml_object_tag,
+                "None",
+                {},
+                f"Database Integrity error, review related issues to determine what went wrong",
             )
 
-            # update model with all attributes from model
-            model_instance.new_version(
-                transaction=transaction,
-                **message.taric_object.model_attributes(transaction),
-            )
-
-        elif message.update_type == 2:  # Delete
-            model_instance = message.taric_object.model.latest_approved().get(
-                **message.taric_object.model_query_parameters()
-            )
-
-            # mark the model as deleted
-            model_instance.new_version(
-                transaction=transaction,
-                update_type=message.taric_object.update_type,
-            )
-
-        elif message.update_type == 3:  # Create
-            message.taric_object.__class__.model.objects.create(
-                transaction=transaction,
-                **message.taric_object.model_attributes(transaction),
-            )
+            message.taric_object.issues.append(report_item)
 
     def find_object_in_import(
         self,
@@ -293,6 +265,36 @@ class NewImporter:
 
         return result
 
+    def find_parent(
+        self,
+        child_parser: NewElementParser,
+        up_to_transaction: TransactionParser,
+    ):
+        # will return the last matching parent up to the provided transaction
+        parent = None
+
+        matched_transaction = None
+        for transaction in self.parsed_transactions:
+            # skip once matched transaction is processed
+            if matched_transaction:
+                continue
+
+            for parsed_message in transaction.parsed_messages:
+                potential_parent = parsed_message.taric_object
+                # matching model and not child?
+                if (
+                    not potential_parent.is_child_object()
+                    and potential_parent.model == child_parser.model
+                ):
+                    # check key fields
+                    if child_parser.is_child_for(potential_parent):
+                        parent = potential_parent
+
+            if transaction == up_to_transaction:
+                matched_transaction = transaction
+
+        return parent
+
     def validate(self):
         """
         Iterate through transactions and each taric model within, and verify
@@ -305,7 +307,22 @@ class NewImporter:
 
         for transaction in self.parsed_transactions:
             for parsed_message in transaction.parsed_messages:
-                if not parsed_message.taric_object.is_child_object():
+                if parsed_message.taric_object.is_child_object():
+                    parent_parser_class = ParserHelper.get_parser_by_model(
+                        parsed_message.taric_object.__class__.model,
+                    )
+                    parent = self.find_parent(parsed_message.taric_object, transaction)
+
+                    if parent is None:
+                        report_item = NewImportIssueReportItem(
+                            parsed_message.taric_object.xml_object_tag,
+                            parent_parser_class.xml_object_tag,
+                            parsed_message.taric_object.get_identity_fields_and_values_for_parent(),
+                            f"Missing expected parent object {parent_parser_class.__name__}",
+                        )
+
+                        parsed_message.taric_object.issues.append(report_item)
+                else:
                     # get the child models
                     child_parser_classes = ParserHelper.get_child_parsers(
                         parsed_message.taric_object,

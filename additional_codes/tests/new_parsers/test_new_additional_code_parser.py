@@ -1,21 +1,16 @@
-import os
 from datetime import date
 
 import pytest
 
 from additional_codes.new_import_parsers import NewAdditionalCodeParser
 from additional_codes.new_import_parsers import NewAdditionalCodeTypeParser
+from common.tests.util import get_test_xml_file
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
 
 
-def get_test_xml_file(file_name):
-    path_to_current_file = os.path.realpath(__file__)
-    current_directory = os.path.split(path_to_current_file)[0]
-    return os.path.join(current_directory, "importer_examples", file_name)
-
-
+@pytest.mark.new_importer
 class TestNewAdditionalCodeParser:
     """
     Example XML:
@@ -35,6 +30,8 @@ class TestNewAdditionalCodeParser:
         </xs:element>
     """
 
+    target_parser_class = NewAdditionalCodeParser
+
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
             "additional_code_sid": 123,
@@ -44,7 +41,7 @@ class TestNewAdditionalCodeParser:
             "validity_end_date": "2024-01-22",
         }
 
-        target = NewAdditionalCodeParser()
+        target = self.target_parser_class()
 
         target.populate(
             1,  # transaction id
@@ -62,7 +59,7 @@ class TestNewAdditionalCodeParser:
         assert target.valid_between_upper == date(2024, 1, 22)
 
     def test_import_success(self, superuser):
-        file_to_import = get_test_xml_file("additional_code_CREATE.xml")
+        file_to_import = get_test_xml_file("additional_code_CREATE.xml", __file__)
 
         importer = new_importer.NewImporter(
             file_to_import,
@@ -72,23 +69,13 @@ class TestNewAdditionalCodeParser:
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
-        assert len(importer.parsed_transactions[0].parsed_messages) == 2
-
-        # adding additional code type
-        target_message = importer.parsed_transactions[0].parsed_messages[0]
-        assert target_message.record_code == NewAdditionalCodeTypeParser.record_code
-        assert (
-            target_message.subrecord_code == NewAdditionalCodeTypeParser.subrecord_code
-        )
-        assert type(target_message.taric_object) == NewAdditionalCodeTypeParser
+        assert len(importer.parsed_transactions[0].parsed_messages) == 3
 
         # adding additional code
         target_message = importer.parsed_transactions[0].parsed_messages[1]
-        assert target_message.record_code == NewAdditionalCodeParser.record_code
-        assert (
-            target_message.subrecord_code == NewAdditionalCodeTypeParser.subrecord_code
-        )
-        assert type(target_message.taric_object) == NewAdditionalCodeParser
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
 
         # check properties for additional code
         taric_object = target_message.taric_object
@@ -99,11 +86,13 @@ class TestNewAdditionalCodeParser:
         assert taric_object.code == "3"
 
         # check for issues
-        for message in importer.parsed_transactions[0].parsed_messages:
-            assert len(message.taric_object.issues) == 0
+        assert len(importer.issues()) == 0
 
     def test_import_invalid_type(self, superuser):
-        file_to_import = get_test_xml_file("additional_code_invalid_type_CREATE.xml")
+        file_to_import = get_test_xml_file(
+            "additional_code_invalid_type_CREATE.xml",
+            __file__,
+        )
 
         importer = new_importer.NewImporter(
             file_to_import,
@@ -137,7 +126,4 @@ class TestNewAdditionalCodeParser:
         assert taric_object.code == "111"
 
         # check for issues
-        assert (
-            len(importer.parsed_transactions[0].parsed_messages[0].taric_object.issues)
-            == 1
-        )
+        assert len(importer.issues()) == 2

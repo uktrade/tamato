@@ -35,5 +35,21 @@
 				</oub:record>
 			</oub:transmission>
 		</env:app.message>
+        <env:app.message id="3">
+			<oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+				<oub:record>
+					<oub:transaction.id>1</oub:transaction.id>
+					<oub:record.code>120</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:additional.code.type.description>
+                        <oub:additional.code.type.id>5</oub:additional.code.type.id>
+                        <oub:language.id>zz</oub:language.id>
+                        <oub:description>some description</oub:description>
+                    </oub:additional.code.type.description>
+				</oub:record>
+			</oub:transmission>
+		</env:app.message>
     </env:transaction>
 </env:envelope>

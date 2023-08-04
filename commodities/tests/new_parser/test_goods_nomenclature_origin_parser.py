@@ -1,21 +1,15 @@
-import os
-
 import pytest
 
 # note : need to import these objects to make them available to the parser
 from commodities.models import GoodsNomenclatureOrigin
 from commodities.new_import_parsers import NewGoodsNomenclatureOriginParser
+from common.tests.util import get_test_xml_file
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
 
 
-def get_test_xml_file(file_name):
-    path_to_current_file = os.path.realpath(__file__)
-    current_directory = os.path.split(path_to_current_file)[0]
-    return os.path.join(current_directory, "importer_examples", file_name)
-
-
+@pytest.mark.new_importer
 class TestNewGoodsNomenclatureOriginParser:
     """
     Example XML:
@@ -35,6 +29,8 @@ class TestNewGoodsNomenclatureOriginParser:
         </xs:element>
     """
 
+    target_parser_class = NewGoodsNomenclatureOriginParser
+
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
             "goods_nomenclature_sid": "555",
@@ -44,7 +40,7 @@ class TestNewGoodsNomenclatureOriginParser:
             "derived_goods_nomenclature_item_id": "0101000000",
         }
 
-        target = NewGoodsNomenclatureOriginParser()
+        target = self.target_parser_class()
 
         target.populate(
             1,  # transaction id
@@ -66,7 +62,10 @@ class TestNewGoodsNomenclatureOriginParser:
         )  # converts "certificate_code" to sid
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file("goods_nomenclature_origin_CREATE.xml")
+        file_to_import = get_test_xml_file(
+            "goods_nomenclature_origin_CREATE.xml",
+            __file__,
+        )
 
         importer = new_importer.NewImporter(
             file_to_import,
@@ -80,14 +79,9 @@ class TestNewGoodsNomenclatureOriginParser:
 
         target_message = importer.parsed_transactions[0].parsed_messages[3]
 
-        assert (
-            target_message.record_code == NewGoodsNomenclatureOriginParser.record_code
-        )
-        assert (
-            target_message.subrecord_code
-            == NewGoodsNomenclatureOriginParser.subrecord_code
-        )
-        assert type(target_message.taric_object) == NewGoodsNomenclatureOriginParser
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
 
         # check properties for additional code
         target = target_message.taric_object

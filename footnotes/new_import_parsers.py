@@ -61,7 +61,7 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
         ModelLink(
             models.FootnoteType,
             [
-                ModelLinkField("footnote_type__id", "footnote_type_id"),
+                ModelLinkField("footnote_type__footnote_type_id", "footnote_type_id"),
             ],
             "footnote.type",
         ),
@@ -70,7 +70,7 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
     value_mapping = {
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
-        "footnote_type_id": "footnote_type__id",
+        "footnote_type_id": "footnote_type__footnote_type_id",
     }
 
     record_code = "200"
@@ -78,7 +78,7 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "footnote"
 
-    footnote_type__id: str = None
+    footnote_type__footnote_type_id: str = None
     footnote_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -92,27 +92,27 @@ class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
             models.Footnote,
             [
                 ModelLinkField("described_footnote__footnote_id", "footnote_id"),
+                ModelLinkField(
+                    "described_footnote__footnote_type__footnote_type_id",
+                    "footnote_type__footnote_type_id",
+                ),
             ],
             "footnote",
         ),
-        ModelLink(
-            models.FootnoteType,
-            [
-                ModelLinkField(
-                    "described_footnote__footnote_type__footnote_type_id",
-                    "footnote_type_id",
-                ),
-            ],
-            "footnote.type",
-        ),
     ]
+
+    value_mapping = {
+        "footnote_description_period_sid": "sid",
+        "footnote_type_id": "described_footnote__footnote_type__footnote_type_id",
+        "footnote_id": "described_footnote__footnote_id",
+    }
 
     record_code = "200"
     subrecord_code = "10"
 
     xml_object_tag = "footnote.description"
 
-    sid: str = None
+    sid: int = None
     # language_id: str = None
     described_footnote__footnote_type__footnote_type_id: str = None
     described_footnote__footnote_id: str = None
@@ -128,33 +128,27 @@ class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser, NewChild
             models.Footnote,
             [
                 ModelLinkField("described_footnote__footnote_id", "footnote_id"),
+                ModelLinkField(
+                    "described_footnote__footnote_type__footnote_type_id",
+                    "footnote_type__footnote_type_id",
+                ),
             ],
             "footnote",
         ),
         ModelLink(
-            models.FootnoteType,
-            [
-                ModelLinkField(
-                    "described_footnote__footnote_type__footnote_type_id",
-                    "footnote_type_id",
-                ),
-            ],
-            "footnote.type",
-        ),
-        ModelLink(
             models.FootnoteDescription,
             [
-                ModelLinkField(
-                    "footnote_description_period__sid",
-                    "sid",
-                ),
+                ModelLinkField("sid", "sid"),
             ],
             "footnote.description",
         ),
     ]
 
     value_mapping = {
-        "footnote_description_period__sid": "sid",
+        "footnote_description_period_sid": "sid",
+        "footnote_type_id": "described_footnote__footnote_type__footnote_type_id",
+        "footnote_id": "described_footnote__footnote_id",
+        "validity_start_date": "validity_start",
     }
 
     record_code = "200"
@@ -162,7 +156,7 @@ class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser, NewChild
 
     xml_object_tag = "footnote.description.period"
 
-    sid: str = None
+    sid: int = None
     described_footnote__footnote_type__footnote_type_id: str = None
     described_footnote__footnote_id: str = None
     validity_start: date = None

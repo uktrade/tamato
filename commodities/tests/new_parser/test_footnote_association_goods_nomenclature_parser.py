@@ -1,4 +1,3 @@
-import os
 from datetime import date
 
 import pytest
@@ -6,19 +5,15 @@ import pytest
 # note : need to import these objects to make them available to the parser
 from commodities.models import FootnoteAssociationGoodsNomenclature
 from commodities.models import GoodsNomenclature
-from commodities.new_import_parsers import NewFootnoteAssociationGoodsNomenclatureParser
-from commodities.new_import_parsers import NewGoodsNomenclatureDescriptionParser
+from commodities.new_import_parsers import *
+from common.tests.util import get_test_xml_file
+from footnotes.new_import_parsers import *
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
 
 
-def get_test_xml_file(file_name):
-    path_to_current_file = os.path.realpath(__file__)
-    current_directory = os.path.split(path_to_current_file)[0]
-    return os.path.join(current_directory, "importer_examples", file_name)
-
-
+@pytest.mark.new_importer
 class TestNewFootnoteAssociationGoodsNomenclatureParser:
     """
     Example XML:
@@ -40,6 +35,8 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
         </xs:element>
     """
 
+    target_parser_class = NewFootnoteAssociationGoodsNomenclatureParser
+
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
             "goods_nomenclature_sid": "8",
@@ -51,7 +48,7 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
             "productline_suffix": "10",
         }
 
-        target = NewFootnoteAssociationGoodsNomenclatureParser()
+        target = self.target_parser_class()
 
         target.populate(
             1,  # transaction id
@@ -72,6 +69,7 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
             "footnote_association_goods_nomenclature_CREATE.xml",
+            __file__,
         )
 
         importer = new_importer.NewImporter(
@@ -87,18 +85,9 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
 
         target_message = importer.parsed_transactions[1].parsed_messages[0]
 
-        assert (
-            target_message.record_code
-            == NewFootnoteAssociationGoodsNomenclatureParser.record_code
-        )
-        assert (
-            target_message.subrecord_code
-            == NewFootnoteAssociationGoodsNomenclatureParser.subrecord_code
-        )
-        assert (
-            type(target_message.taric_object)
-            == NewFootnoteAssociationGoodsNomenclatureParser
-        )
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
 
         # check properties for additional code
         target = target_message.taric_object
@@ -119,6 +108,7 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
     def test_import_failure_no_footnote(self, superuser):
         file_to_import = get_test_xml_file(
             "footnote_association_goods_nomenclature_no_footnote_CREATE.xml",
+            __file__,
         )
 
         importer = new_importer.NewImporter(
@@ -135,40 +125,15 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
 
         target_message = importer.parsed_transactions[1].parsed_messages[0]
 
-        assert (
-            target_message.record_code
-            == NewGoodsNomenclatureDescriptionParser.record_code
-        )
-        assert (
-            target_message.subrecord_code
-            == NewGoodsNomenclatureDescriptionParser.subrecord_code
-        )
-        assert (
-            type(target_message.taric_object) == NewGoodsNomenclatureDescriptionParser
-        )
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
 
-        # check properties for additional code
-        target = target_message.taric_object
-
-        assert target.sid == 9  # converts "certificate_code" to sid
-        assert target.described_goods_nomenclature__sid == 7
-        assert target.described_goods_nomenclature__item_id == "0102000000"
-        assert target.description == "Some Description"
-        assert (
-            target.described_goods_nomenclature__suffix == 10
-        )  # converts "certificate_code" to sid
-
-        # assert GoodsNomenclature.objects.all().count() == 1
-        assert (
-            len(importer.parsed_transactions[1].parsed_messages[0].taric_object.issues)
-            == 1
-        )
-        assert len(importer.issues()) == 1
-        assert (
-            "Missing expected child object NewGoodsNomenclatureDescriptionPeriodParser"
-            in str(importer.issues()[0])
+        assert len(importer.issues()) == 2
+        assert "ERROR: Missing expected linked object NewFootnoteParser\n" in str(
+            importer.issues()[0],
         )
         assert (
-            "goods.nomenclature.description > goods.nomenclature.description.period"
-            in str(importer.issues()[0])
+            "ERROR: Database Integrity error, review related issues to determine what went wrong\n"
+            in str(importer.issues()[1])
         )

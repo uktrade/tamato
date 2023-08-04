@@ -1,7 +1,6 @@
 from datetime import date
 
 from commodities.import_handlers import *
-from footnotes.models import FootnoteType
 from importer.new_parsers import ModelLink
 from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
@@ -265,19 +264,13 @@ class NewFootnoteAssociationGoodsNomenclatureParser(
             "goods.nomenclature",
         ),
         ModelLink(
-            FootnoteType,
-            [
-                ModelLinkField(
-                    "associated_footnote__footnote_type__footnote_type_id",
-                    "footnote_type_id",
-                ),
-            ],
-            "footnote.type",
-        ),
-        ModelLink(
             Footnote,
             [
                 ModelLinkField("associated_footnote__footnote_id", "footnote_id"),
+                ModelLinkField(
+                    "associated_footnote__footnote_type__footnote_type_id",
+                    "footnote_type__footnote_type_id",
+                ),
             ],
             "footnote",
         ),

@@ -11,6 +11,7 @@ from bs4 import NavigableString
 from common.models import Transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from importer.new_importer_issue import NewImportIssueReportItem
 
 
 class TransactionParser:
@@ -250,6 +251,12 @@ class NewElementParser:
         return result
 
     def is_child_for(self, potential_parent):
+        if (
+            potential_parent.is_child_object()
+            or potential_parent.__class__.model != self.__class__.model
+        ):
+            return False
+
         identity_fields = self.get_identity_fields_and_values_for_parent()
 
         # guard clause
@@ -281,7 +288,7 @@ class NewElementParser:
         return result
 
     @classmethod
-    def identity_fields_for_parent(cls, include_optional=False):
+    def identity_fields_for_parent(cls, include_optional=False) -> dict:
         # guard clauses
         if cls.parent_parser is None:
             raise Exception(f"Model {cls.__name__} has no parent parser")
@@ -448,6 +455,8 @@ class NewElementParser:
 
             property_list = list(dict.fromkeys(property_list))
 
+            # if an exception raises from the two checks below, it indicates that there is an issue with the parser
+            # in some way, these circumstances should not occur if the parsers are good and well formed .
             if len(property_list) > 1:
                 raise Exception(
                     f"multiple properties for link : {self.__class__.__name__} : {property_list}",
@@ -471,11 +480,17 @@ class NewElementParser:
             if linked_model:
                 # There are cases where this will not return a value, which is fine when the linked
                 # model is also in the same transaction
+
                 model_attributes[property_list[0]] = linked_model
             elif raise_error_if_no_match:
-                raise Exception(
-                    f"No linked model matching query, {link.model}, {fields_and_values}",
+                report_item = NewImportIssueReportItem(
+                    self.xml_object_tag,
+                    ParserHelper.get_parser_by_model(link.model).xml_object_tag,
+                    fields_and_values,
+                    f"Missing expected linked object {ParserHelper.get_parser_by_model(link.model).__name__}",
                 )
+
+                self.issues.append(report_item)
 
         for model_field in vars(self).keys():
             if (

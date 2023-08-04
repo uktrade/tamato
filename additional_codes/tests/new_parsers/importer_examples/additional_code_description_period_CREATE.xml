@@ -18,13 +18,29 @@
 				</oub:record>
 			</oub:transmission>
 		</env:app.message>
-		<env:app.message id="2">
+        <env:app.message id="2">
+			<oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+				<oub:record>
+					<oub:transaction.id>1</oub:transaction.id>
+					<oub:record.code>120</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:additional.code.type.description>
+                        <oub:additional.code.type.id>4</oub:additional.code.type.id>
+                        <oub:language.id>zz</oub:language.id>
+                        <oub:description>some description</oub:description>
+                    </oub:additional.code.type.description>
+				</oub:record>
+			</oub:transmission>
+		</env:app.message>
+		<env:app.message id="3">
 			<oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
 				<oub:record>
 					<oub:transaction.id>1</oub:transaction.id>
 					<oub:record.code>245</oub:record.code>
                     <oub:subrecord.code>00</oub:subrecord.code>
-                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:additional.code>
                         <oub:additional.code.sid>1</oub:additional.code.sid>
@@ -35,13 +51,13 @@
 				</oub:record>
 			</oub:transmission>
 		</env:app.message>
-        <env:app.message id="3">
+        <env:app.message id="4">
 			<oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
 				<oub:record>
 					<oub:transaction.id>1</oub:transaction.id>
 					<oub:record.code>245</oub:record.code>
                     <oub:subrecord.code>05</oub:subrecord.code>
-                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:record.sequence.number>4</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:additional.code.description.period>
                         <oub:additional.code.description.period.sid>5</oub:additional.code.description.period.sid>
@@ -53,13 +69,13 @@
 				</oub:record>
 			</oub:transmission>
 		</env:app.message>
-        <env:app.message id="4">
+        <env:app.message id="5">
 			<oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
 				<oub:record>
 					<oub:transaction.id>1</oub:transaction.id>
 					<oub:record.code>245</oub:record.code>
                     <oub:subrecord.code>10</oub:subrecord.code>
-                    <oub:record.sequence.number>4</oub:record.sequence.number>
+                    <oub:record.sequence.number>5</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:additional.code.description>
                         <oub:additional.code.description.period.sid>5</oub:additional.code.description.period.sid>

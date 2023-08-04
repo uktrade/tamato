@@ -1,20 +1,14 @@
-import os
-
 import pytest
 
 # note : need to import these objects to make them available to the parser
 from certificates.new_import_parsers import NewCertificateDescriptionParser
+from common.tests.util import get_test_xml_file
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
 
 
-def get_test_xml_file(file_name):
-    path_to_current_file = os.path.realpath(__file__)
-    current_directory = os.path.split(path_to_current_file)[0]
-    return os.path.join(current_directory, "importer_examples", file_name)
-
-
+@pytest.mark.new_importer
 class TestNewCertificateDescriptionParser:
     """
     Example XML:
@@ -34,6 +28,8 @@ class TestNewCertificateDescriptionParser:
         </xs:element>
     """
 
+    target_parser_class = NewCertificateDescriptionParser
+
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
             "certificate_description_period_sid": "555",
@@ -43,7 +39,7 @@ class TestNewCertificateDescriptionParser:
             "description": "this is a description",
         }
 
-        target = NewCertificateDescriptionParser()
+        target = self.target_parser_class()
 
         target.populate(
             1,  # transaction id
@@ -62,7 +58,10 @@ class TestNewCertificateDescriptionParser:
         assert target.description == "this is a description"
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file("certificate_description_CREATE.xml")
+        file_to_import = get_test_xml_file(
+            "certificate_description_CREATE.xml",
+            __file__,
+        )
 
         importer = new_importer.NewImporter(
             file_to_import,
@@ -75,13 +74,9 @@ class TestNewCertificateDescriptionParser:
         assert len(importer.parsed_transactions[0].parsed_messages) == 5
 
         target_message = importer.parsed_transactions[0].parsed_messages[4]
-
-        assert target_message.record_code == NewCertificateDescriptionParser.record_code
-        assert (
-            target_message.subrecord_code
-            == NewCertificateDescriptionParser.subrecord_code
-        )
-        assert type(target_message.taric_object) == NewCertificateDescriptionParser
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
@@ -90,9 +85,4 @@ class TestNewCertificateDescriptionParser:
         assert target_taric_object.described_certificate__sid == "123"
         assert target_taric_object.description == "This is a description"
 
-        for message in importer.parsed_transactions[0].parsed_messages:
-            # check for issues
-            errors = ""
-            for issue in message.taric_object.issues:
-                errors += f"{issue}"
-            assert len(message.taric_object.issues) == 0, errors
+        assert len(importer.issues()) == 0

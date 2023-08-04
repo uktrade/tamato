@@ -1,20 +1,15 @@
-import os
 from datetime import date
 
 import pytest
 
 from additional_codes.new_import_parsers import NewAdditionalCodeDescriptionPeriodParser
+from common.tests.util import get_test_xml_file
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
 
 
-def get_test_xml_file(file_name):
-    path_to_current_file = os.path.realpath(__file__)
-    current_directory = os.path.split(path_to_current_file)[0]
-    return os.path.join(current_directory, "importer_examples", file_name)
-
-
+@pytest.mark.new_importer
 class TestNewAdditionalCodeDescriptionPeriodParser:
     """
     Example XML:
@@ -34,6 +29,8 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         </xs:element>
     """
 
+    target_parser_class = NewAdditionalCodeDescriptionPeriodParser
+
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
             "additional_code_description_period_sid": "123",
@@ -43,7 +40,7 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
             "validity_start_date": "2023-01-22",
         }
 
-        target = NewAdditionalCodeDescriptionPeriodParser()
+        target = self.target_parser_class()
 
         target.populate(
             1,  # transaction id
@@ -63,6 +60,7 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
             "additional_code_description_period_CREATE.xml",
+            __file__,
         )
 
         importer = new_importer.NewImporter(
@@ -73,22 +71,13 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
-        assert len(importer.parsed_transactions[0].parsed_messages) == 4
+        assert len(importer.parsed_transactions[0].parsed_messages) == 5
 
-        target_message = importer.parsed_transactions[0].parsed_messages[2]
+        target_message = importer.parsed_transactions[0].parsed_messages[3]
 
-        assert (
-            target_message.record_code
-            == NewAdditionalCodeDescriptionPeriodParser.record_code
-        )
-        assert (
-            target_message.subrecord_code
-            == NewAdditionalCodeDescriptionPeriodParser.subrecord_code
-        )
-        assert (
-            type(target_message.taric_object)
-            == NewAdditionalCodeDescriptionPeriodParser
-        )
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
@@ -105,6 +94,7 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
     def test_import_no_description(self, superuser):
         file_to_import = get_test_xml_file(
             "additional_code_description_period_without_description_CREATE.xml",
+            __file__,
         )
 
         importer = new_importer.NewImporter(
@@ -140,11 +130,18 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         assert target_taric_object.described_additionalcode__code == "3"
         assert target_taric_object.validity_start == date(2021, 1, 1)
 
-        assert len(target_taric_object.issues) == 1
+        assert len(importer.issues()) == 2
+
         assert (
-            str(target_taric_object.issues[0])
-            == "ERROR: No matches for possible related taric object\n"
-            "  additional.code.description.period > "
-            "additional.code.description\n"
+            str(importer.issues()[0])
+            == "ERROR: Missing expected child object NewAdditionalCodeTypeDescriptionParser\n  "
+            "additional.code.type > additional.code.type.description\n  "
+            "link_data: {}"
+        )
+
+        assert (
+            str(importer.issues()[1])
+            == "ERROR: Missing expected parent object NewAdditionalCodeDescriptionParser\n"
+            "  additional.code.description.period > additional.code.description\n"
             "  link_data: {'sid': 5}"
         )

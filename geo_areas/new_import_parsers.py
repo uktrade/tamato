@@ -22,17 +22,26 @@ class NewGeographicalAreaParser(NewValidityMixin, NewWritable, NewElementParser)
         ),
     ]
 
+    value_mapping = {
+        "geographical_area_sid": "sid",
+        "geographical_area_id": "area_id",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+        "geographical_code": "area_code",
+        "parent_geographical_area_group_sid": "parent__sid",
+    }
+
     record_code = "250"
     subrecord_code = "00"
 
     xml_object_tag = "geographical.area"
 
-    sid: str = None
+    sid: int = None
     area_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
     area_code: str = None
-    parent__sid: str = None
+    parent__sid: int = None
 
 
 class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
@@ -49,13 +58,19 @@ class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
         ),
     ]
 
+    value_mapping = {
+        "geographical_area_description_period_sid": "sid",
+        "geographical_area_sid": "described_geographicalarea__sid",
+        "geographical_area_id": "described_geographicalarea__area_id",
+    }
+
     record_code = "250"
     subrecord_code = "10"
 
     xml_object_tag = "geographical.area.description"
 
-    sid: str = None
-    described_geographicalarea__sid: str = None
+    sid: int = None
+    described_geographicalarea__sid: int = None
     described_geographicalarea__area_id: str = None
     description: str = None
 
@@ -80,14 +95,17 @@ class NewGeographicalAreaDescriptionPeriodParser(
         ModelLink(
             models.GeographicalAreaDescription,
             [
-                ModelLinkField("geographical_area_description_period__sid", "sid"),
+                ModelLinkField("sid", "sid"),
             ],
             "geographical.area.description",
         ),
     ]
 
     value_mapping = {
-        "geographical_area_description_period__sid": "sid",
+        "geographical_area_description_period_sid": "sid",
+        "geographical_area_sid": "described_geographicalarea__sid",
+        "geographical_area_id": "described_geographicalarea__area_id",
+        "validity_start_date": "validity_start",
     }
 
     record_code = "250"
@@ -95,10 +113,10 @@ class NewGeographicalAreaDescriptionPeriodParser(
 
     xml_object_tag = "geographical.area.description.period"
 
-    sid: str = None
-    described_geographicalarea__sid: str = None
+    sid: int = None
+    described_geographicalarea__sid: int = None
     described_geographicalarea__area_id: str = None
-    validity_start: str = None
+    validity_start: date = None
 
 
 class NewGeographicalMembershipParser(NewValidityMixin, NewWritable, NewElementParser):
@@ -126,7 +144,7 @@ class NewGeographicalMembershipParser(NewValidityMixin, NewWritable, NewElementP
 
     xml_object_tag = "geographical.area.membership"
 
-    member__sid: str = None
-    geo_group__sid: str = None
+    member__sid: int = None
+    geo_group__sid: int = None
     valid_between_lower: date = None
     valid_between_upper: date = None

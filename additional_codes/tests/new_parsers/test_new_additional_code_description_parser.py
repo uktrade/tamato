@@ -1,4 +1,3 @@
-import os
 from datetime import date
 
 import pytest
@@ -7,17 +6,13 @@ from additional_codes.models import AdditionalCode
 from additional_codes.models import AdditionalCodeDescription
 from additional_codes.models import AdditionalCodeType
 from additional_codes.new_import_parsers import NewAdditionalCodeDescriptionParser
+from common.tests.util import get_test_xml_file
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
 
 
-def get_test_xml_file(file_name):
-    path_to_current_file = os.path.realpath(__file__)
-    current_directory = os.path.split(path_to_current_file)[0]
-    return os.path.join(current_directory, "importer_examples", file_name)
-
-
+@pytest.mark.new_importer
 class TestNewAdditionalCodeDescriptionParser:
     """
     Example XML:
@@ -38,6 +33,8 @@ class TestNewAdditionalCodeDescriptionParser:
         </xs:element>
     """
 
+    target_parser_class = NewAdditionalCodeDescriptionParser
+
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
             "additional_code_description_period_sid": "123",
@@ -47,7 +44,7 @@ class TestNewAdditionalCodeDescriptionParser:
             "description": "some description",
         }
 
-        target = NewAdditionalCodeDescriptionParser()
+        target = self.target_parser_class()
 
         target.populate(
             1,  # transaction id
@@ -60,12 +57,15 @@ class TestNewAdditionalCodeDescriptionParser:
         # verify all properties
         assert target.sid == 123  # converts "additional.code.type.id" to sid
         assert target.described_additionalcode__sid == 123
-        assert target.described_additionalcode__type__sid == 123
+        assert target.described_additionalcode__type_sid == 123
         assert target.described_additionalcode__code == "123"
         assert target.description == "some description"
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file("additional_code_description_CREATE.xml")
+        file_to_import = get_test_xml_file(
+            "additional_code_description_CREATE.xml",
+            __file__,
+        )
 
         importer = new_importer.NewImporter(
             file_to_import,
@@ -75,22 +75,13 @@ class TestNewAdditionalCodeDescriptionParser:
 
         # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
-        assert len(importer.parsed_transactions[0].parsed_messages) == 4
+        assert len(importer.parsed_transactions[0].parsed_messages) == 5
 
-        target_message = importer.parsed_transactions[0].parsed_messages[3]
-        assert (
-            target_message.record_code == NewAdditionalCodeDescriptionParser.record_code
-        )
-        assert (
-            target_message.subrecord_code
-            == NewAdditionalCodeDescriptionParser.subrecord_code
-        )
-        assert (
-            type(
-                target_message.taric_object,
-            )
-            == NewAdditionalCodeDescriptionParser
-        )
+        target_message = importer.parsed_transactions[0].parsed_messages[4]
+
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
@@ -107,14 +98,17 @@ class TestNewAdditionalCodeDescriptionParser:
         assert type(target_taric_object) == NewAdditionalCodeDescriptionParser
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type__sid == 9
+        assert target_taric_object.described_additionalcode__type_sid == 9
         assert target_taric_object.described_additionalcode__code == "2"
         assert target_taric_object.description == "some description"
         assert target_taric_object.validity_start == date(2021, 1, 1)
 
+        assert len(importer.issues()) == 0
+
     def test_import_invalid_additional_code(self, superuser):
         file_to_import = get_test_xml_file(
             "additional_code_description_invalid_additional_code_CREATE.xml",
+            __file__,
         )
         importer = new_importer.NewImporter(
             file_to_import,
@@ -141,22 +135,17 @@ class TestNewAdditionalCodeDescriptionParser:
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type__sid == 12
+        assert target_taric_object.described_additionalcode__type_sid == 12
         assert target_taric_object.described_additionalcode__code == "111"
         assert target_taric_object.description == "some description"
 
-        assert len(target_taric_object.issues) == 2
+        assert len(importer.issues()) == 1
 
         issue_1 = target_taric_object.issues[0]
-        issue_2 = target_taric_object.issues[1]
 
         assert (
-            str(issue_1) == "ERROR: No matches for possible related taric object\n"
-            "  additional.code.description > additional.code\n"
-            "  link_data: {'sid': 1, 'code': '111'}"
-        )
-        assert (
-            str(issue_2) == "ERROR: No matches for possible related taric object\n"
-            "  additional.code.description > additional.code.type\n"
-            "  link_data: {'sid': 12}"
+            str(issue_1)
+            == "ERROR: Missing expected child object NewAdditionalCodeDescriptionPeriodParser\n"
+            "  additional.code.description > additional.code.description.period\n"
+            "  link_data: {}"
         )

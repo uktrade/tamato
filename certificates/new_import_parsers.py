@@ -180,7 +180,7 @@ class NewCertificateDescriptionPeriodParser(
 
     identity_fields = ["sid"]
 
-    sid: str = None
+    sid: int = None
     described_certificate__certificate_type__sid: str = None
     described_certificate__sid: str = None
     validity_start: date = None

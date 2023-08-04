@@ -1,38 +1,43 @@
 import pytest
 
 # note : need to import these objects to make them available to the parser
-from certificates.new_import_parsers import NewCertificateTypeDescriptionParser
 from common.tests.util import get_test_xml_file
+from footnotes.models import FootnoteDescription
+from geo_areas.new_import_parsers import NewGeographicalAreaDescriptionParser
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewCertificateTypeDescriptionParser:
+class TestNewGeographicalAreaDescriptionParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="certificate.type.description" substitutionGroup="abstract.record">
+        <xs:element name="geographical.area.description" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="certificate.type.code" type="CertificateTypeCode"/>
+                    <xs:element name="geographical.area.description.period.sid" type="SID"/>
                     <xs:element name="language.id" type="LanguageId"/>
+                    <xs:element name="geographical.area.sid" type="SID"/>
+                    <xs:element name="geographical.area.id" type="GeographicalAreaId"/>
                     <xs:element name="description" type="ShortDescription" minOccurs="0"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>
     """
 
-    target_parser_class = NewCertificateTypeDescriptionParser
+    target_parser_class = NewGeographicalAreaDescriptionParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "certificate_type_code": "123",
-            "language_id": "EN",
-            "description": "Some description",
+            "geographical_area_description_period_sid": "8",
+            "language_id": "zz",
+            "geographical_area_sid": "7",
+            "geographical_area_id": "6",
+            "description": "Some Description",
         }
 
         target = self.target_parser_class()
@@ -46,13 +51,14 @@ class TestNewCertificateTypeDescriptionParser:
         )
 
         # verify all properties
-        assert target.sid == "123"  # converts "certificate_type_code" to sid
-        # assert target.language_id == 'EN'
-        assert target.description == "Some description"
+        assert target.sid == 8
+        assert target.described_geographicalarea__sid == 7
+        assert target.described_geographicalarea__area_id == "6"
+        assert target.description == "Some Description"
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
-            "certificate_type_description_CREATE.xml",
+            "geographical_area_description_CREATE.xml",
             __file__,
         )
 
@@ -63,19 +69,21 @@ class TestNewCertificateTypeDescriptionParser:
         )
 
         # check there is one AdditionalCodeType imported
-        assert len(importer.parsed_transactions) == 1
-        assert len(importer.parsed_transactions[0].parsed_messages) == 2
+        assert len(importer.parsed_transactions) == 2
 
-        target_message = importer.parsed_transactions[0].parsed_messages[1]
+        target_message = importer.parsed_transactions[1].parsed_messages[0]
         assert target_message.record_code == self.target_parser_class.record_code
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
 
         # check properties for additional code
-        target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == "A"
-        assert target_taric_object.description == "some description"
+        target = target_message.taric_object
 
-        for message in importer.parsed_transactions[0].parsed_messages:
-            # check for issues
-            assert len(message.taric_object.issues) == 0
+        assert target.sid == 7
+        assert target.described_footnote__footnote_type__footnote_type_id == "3"
+        assert target.described_footnote__footnote_id == "9"
+        assert target.description == "Some Description"
+
+        assert len(importer.issues()) == 0
+
+        assert FootnoteDescription.objects.all().count() == 1

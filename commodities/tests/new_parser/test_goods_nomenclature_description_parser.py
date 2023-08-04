@@ -1,22 +1,16 @@
-import os
-
 import pytest
 
 # note : need to import these objects to make them available to the parser
 from commodities.models import GoodsNomenclature
 from commodities.models import GoodsNomenclatureDescription
 from commodities.new_import_parsers import NewGoodsNomenclatureDescriptionParser
+from common.tests.util import get_test_xml_file
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
 
 
-def get_test_xml_file(file_name):
-    path_to_current_file = os.path.realpath(__file__)
-    current_directory = os.path.split(path_to_current_file)[0]
-    return os.path.join(current_directory, "importer_examples", file_name)
-
-
+@pytest.mark.new_importer
 class TestNewGoodsNomenclatureDescriptionParser:
     """
     Example XML:
@@ -37,6 +31,8 @@ class TestNewGoodsNomenclatureDescriptionParser:
         </xs:element>
     """
 
+    target_parser_class = NewGoodsNomenclatureDescriptionParser
+
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
             "goods_nomenclature_description_period_sid": "7",
@@ -47,7 +43,7 @@ class TestNewGoodsNomenclatureDescriptionParser:
             "description": "Some Description",
         }
 
-        target = NewGoodsNomenclatureDescriptionParser()
+        target = self.target_parser_class()
 
         target.populate(
             1,  # transaction id
@@ -67,6 +63,7 @@ class TestNewGoodsNomenclatureDescriptionParser:
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
             "goods_nomenclature_description_with_period_CREATE.xml",
+            __file__,
         )
 
         importer = new_importer.NewImporter(
@@ -81,17 +78,9 @@ class TestNewGoodsNomenclatureDescriptionParser:
 
         target_message = importer.parsed_transactions[1].parsed_messages[0]
 
-        assert (
-            target_message.record_code
-            == NewGoodsNomenclatureDescriptionParser.record_code
-        )
-        assert (
-            target_message.subrecord_code
-            == NewGoodsNomenclatureDescriptionParser.subrecord_code
-        )
-        assert (
-            type(target_message.taric_object) == NewGoodsNomenclatureDescriptionParser
-        )
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
 
         # check properties for additional code
         target = target_message.taric_object
@@ -112,6 +101,7 @@ class TestNewGoodsNomenclatureDescriptionParser:
     def test_import_failure_no_period(self, superuser):
         file_to_import = get_test_xml_file(
             "goods_nomenclature_description_no_period_CREATE.xml",
+            __file__,
         )
 
         importer = new_importer.NewImporter(
@@ -128,17 +118,9 @@ class TestNewGoodsNomenclatureDescriptionParser:
 
         target_message = importer.parsed_transactions[1].parsed_messages[0]
 
-        assert (
-            target_message.record_code
-            == NewGoodsNomenclatureDescriptionParser.record_code
-        )
-        assert (
-            target_message.subrecord_code
-            == NewGoodsNomenclatureDescriptionParser.subrecord_code
-        )
-        assert (
-            type(target_message.taric_object) == NewGoodsNomenclatureDescriptionParser
-        )
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
 
         # check properties for additional code
         target = target_message.taric_object
@@ -156,6 +138,7 @@ class TestNewGoodsNomenclatureDescriptionParser:
             len(importer.parsed_transactions[1].parsed_messages[0].taric_object.issues)
             == 1
         )
+
         assert len(importer.issues()) == 1
         assert (
             "Missing expected child object NewGoodsNomenclatureDescriptionPeriodParser"

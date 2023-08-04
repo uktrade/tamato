@@ -1,6 +1,7 @@
 import contextlib
 import importlib
 import json
+import os
 from datetime import date
 from datetime import datetime
 from functools import lru_cache
@@ -914,3 +915,9 @@ def wrap_numbers_over_max_digits(number: int, max_digits):
 
     # For negative numbers one digit is reserved for the sign.
     return number % -(10 ** (max_digits - 1))
+
+
+def get_test_xml_file(file_name, from_file):
+    path_to_current_file = os.path.realpath(from_file)
+    current_directory = os.path.split(path_to_current_file)[0]
+    return os.path.join(current_directory, "importer_examples", file_name)
