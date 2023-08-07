@@ -5,7 +5,7 @@ import pytest
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
 from footnotes.models import FootnoteDescription
-from geo_areas.new_import_parsers import NewGeographicalMembershipParser
+from geo_areas.new_import_parsers import *
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
@@ -79,10 +79,10 @@ class TestNewGeographicalMembershipParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.sid == 7
-        assert target.described_footnote__footnote_type__footnote_type_id == "3"
-        assert target.described_footnote__footnote_id == "9"
-        assert target.description == "Some Description"
+        assert target.member__sid == 9
+        assert target.geo_group__sid == 8
+        assert target.valid_between_lower == date(2021, 1, 1)
+        assert target.valid_between_upper == date(2022, 1, 1)
 
         assert len(importer.issues()) == 0
 

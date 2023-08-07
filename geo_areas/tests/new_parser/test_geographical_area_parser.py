@@ -4,7 +4,7 @@ import pytest
 
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
-from footnotes.models import FootnoteDescription
+from geo_areas.models import GeographicalArea
 from geo_areas.new_import_parsers import NewGeographicalAreaParser
 from importer import new_importer
 
@@ -78,9 +78,9 @@ class TestNewGeographicalAreaParser:
         )
 
         # check there is one AdditionalCodeType imported
-        assert len(importer.parsed_transactions) == 2
+        assert len(importer.parsed_transactions) == 1
 
-        target_message = importer.parsed_transactions[1].parsed_messages[0]
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
         assert target_message.record_code == self.target_parser_class.record_code
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
@@ -88,11 +88,13 @@ class TestNewGeographicalAreaParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.sid == 7
-        assert target.described_footnote__footnote_type__footnote_type_id == "3"
-        assert target.described_footnote__footnote_id == "9"
-        assert target.description == "Some Description"
+        assert target.sid == 8
+        assert target.area_id == "AB01"
+        assert target.valid_between_lower == date(2021, 1, 1)
+        assert target.valid_between_upper == date(2022, 1, 1)
+        assert target.area_code == 1
+        assert target.parent__sid is None
 
         assert len(importer.issues()) == 0
 
-        assert FootnoteDescription.objects.all().count() == 1
+        assert GeographicalArea.objects.all().count() == 1

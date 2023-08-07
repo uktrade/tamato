@@ -482,7 +482,7 @@ class NewElementParser:
                 # model is also in the same transaction
 
                 model_attributes[property_list[0]] = linked_model
-            elif raise_error_if_no_match:
+            elif raise_error_if_no_match and not link.optional:
                 report_item = NewImportIssueReportItem(
                     self.xml_object_tag,
                     ParserHelper.get_parser_by_model(link.model).xml_object_tag,

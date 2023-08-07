@@ -1,7 +1,7 @@
 import pytest
 
 # note : need to import these objects to make them available to the parser
-from certificates.new_import_parsers import NewCertificateDescriptionParser
+from certificates.new_import_parsers import *
 from common.tests.util import get_test_xml_file
 from importer import new_importer
 
@@ -32,7 +32,7 @@ class TestNewCertificateDescriptionParser:
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "certificate_description_period_sid": "555",
+            "certificate_description_period_sid": 555,
             "language_id": "EN",  # gets ignored, but will come in from import
             "certificate_type_code": "666",
             "certificate_code": "777",
@@ -50,10 +50,8 @@ class TestNewCertificateDescriptionParser:
         )
 
         # verify all properties
-        assert target.sid == "555"  # converts "certificate_code" to sid
-        assert (
-            target.described_certificate__certificate_type__sid == "666"
-        )  # converts "certificate_code" to sid
+        assert target.sid == 555
+        assert target.described_certificate__certificate_type__sid == "666"
         assert target.described_certificate__sid == "777"
         assert target.description == "this is a description"
 
@@ -80,7 +78,7 @@ class TestNewCertificateDescriptionParser:
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == "8"
+        assert target_taric_object.sid == 8
         assert target_taric_object.described_certificate__certificate_type__sid == "A"
         assert target_taric_object.described_certificate__sid == "123"
         assert target_taric_object.description == "This is a description"

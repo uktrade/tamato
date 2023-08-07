@@ -19,6 +19,7 @@ class NewGeographicalAreaParser(NewValidityMixin, NewWritable, NewElementParser)
                 ModelLinkField("parent__sid", "sid"),
             ],
             "geographical.area",
+            True,
         ),
     ]
 
@@ -40,7 +41,7 @@ class NewGeographicalAreaParser(NewValidityMixin, NewWritable, NewElementParser)
     area_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    area_code: str = None
+    area_code: int = None
     parent__sid: int = None
 
 
@@ -139,10 +140,17 @@ class NewGeographicalMembershipParser(NewValidityMixin, NewWritable, NewElementP
         ),
     ]
 
+    value_mapping = {
+        "geographical_area_sid": "member__sid",
+        "geographical_area_group_sid": "geo_group__sid",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     record_code = "250"
     subrecord_code = "15"
 
-    xml_object_tag = "geographical.area.membership"
+    xml_object_tag = "geographical.membership"
 
     member__sid: int = None
     geo_group__sid: int = None

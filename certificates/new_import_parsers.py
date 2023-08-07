@@ -90,7 +90,7 @@ class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
 
     identity_fields = ["sid"]
 
-    sid: str = None
+    sid: int = None
     certificate_type__sid: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -128,7 +128,7 @@ class NewCertificateDescriptionParser(NewWritable, NewElementParser):
 
     identity_fields = ["sid"]
 
-    sid: str = None
+    sid: int = None
     described_certificate__certificate_type__sid: str = None
     described_certificate__sid: str = None
     description: str = None

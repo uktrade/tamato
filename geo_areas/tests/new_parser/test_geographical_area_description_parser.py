@@ -2,8 +2,8 @@ import pytest
 
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
-from footnotes.models import FootnoteDescription
-from geo_areas.new_import_parsers import NewGeographicalAreaDescriptionParser
+from geo_areas.models import GeographicalAreaDescription
+from geo_areas.new_import_parsers import *
 from importer import new_importer
 
 pytestmark = pytest.mark.django_db
@@ -79,11 +79,11 @@ class TestNewGeographicalAreaDescriptionParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.sid == 7
-        assert target.described_footnote__footnote_type__footnote_type_id == "3"
-        assert target.described_footnote__footnote_id == "9"
+        assert target.sid == 3
+        assert target.described_geographicalarea__sid == 8
+        assert target.described_geographicalarea__area_id == "AB01"
         assert target.description == "Some Description"
 
         assert len(importer.issues()) == 0
 
-        assert FootnoteDescription.objects.all().count() == 1
+        assert GeographicalAreaDescription.objects.all().count() == 1
