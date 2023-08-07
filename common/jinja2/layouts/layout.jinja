@@ -21,7 +21,10 @@
 
 {% set workbasket_html %}
   {% if request.session.workbasket %}
-    <a href="{{ url('workbaskets:current-workbasket') }}" class="govuk-header__link workbasket-link">Workbasket  {{ request.session.workbasket.id }} {{ workbasket_svg }}</a>
+    <a
+      href="{{ url('workbaskets:current-workbasket') }}"
+      class="govuk-header__link workbasket-link"
+    >Workbasket  {{ request.session.workbasket.id }} {{ workbasket_svg }}</a>
   {% endif %}
 {% endset %}
 

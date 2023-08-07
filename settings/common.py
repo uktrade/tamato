@@ -148,6 +148,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "common.models.utils.ValidateSessionWorkBasketMiddleware",
     "common.models.utils.TransactionMiddleware",
     "csp.middleware.CSPMiddleware",
 ]
