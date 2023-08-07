@@ -124,10 +124,7 @@ class CommodityImportListView(
         elif (
             import_batch.status == ImportBatchStatus.SUCCEEDED
             and import_batch.taric_file
-            and (
-                not workbasket
-                or (workbasket and workbasket.status == WorkflowStatus.ARCHIVED)
-            )
+            and (not workbasket or workbasket.status == WorkflowStatus.ARCHIVED)
         ):
             # ImportBatch instances without a `taric_file` object are legacy
             # instances and are not considered to have "no_goods" status.
