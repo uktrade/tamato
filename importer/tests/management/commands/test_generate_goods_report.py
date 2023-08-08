@@ -1,4 +1,6 @@
+import os
 from os import path
+from unittest.mock import mock_open
 from unittest.mock import patch
 
 import pytest
@@ -51,10 +53,6 @@ def test_generate_goods_report_required_arguments(args, exception_type, error_ms
             "md",
             "importer.goods_report.GoodsReport.markdown",
         ),
-        (
-            "xlsx-file",
-            "importer.goods_report.GoodsReport.xlsx_file",
-        ),
     ],
 )
 def test_generate_goods_report_output_format(output_format, mock_output):
@@ -69,3 +67,30 @@ def test_generate_goods_report_output_format(output_format, mock_output):
             output_format,
         )
         mock.assert_called_once()
+
+
+def test_generate_goods_report_output_xlsx_file():
+    """Test that `generate_goods_report` command generates a report in the xlsx-
+    file output format."""
+
+    def mock_xlsx_open(filename, mode):
+        if os.path.basename(filename) == "goods.xlsx":
+            return mock_open().return_value
+        return open(filename, mode)
+
+    with patch(
+        "importer.goods_report.GoodsReport.xlsx_file",
+        return_value="",
+    ) as mocked_xlsx_file:
+        with patch(
+            "importer.management.commands.generate_goods_report.open",
+            mock_xlsx_open,
+        ):
+            call_command(
+                "generate_goods_report",
+                "--taric-filepath",
+                f"{TEST_FILES_PATH}/goods.xml",
+                "--output-format",
+                "xlsx-file",
+            )
+            mocked_xlsx_file.assert_called_once()
