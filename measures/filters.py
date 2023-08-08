@@ -289,11 +289,20 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
             # print('b'*80, len(res), res)
 
             # THIS TIMES OUT
-            # res = []
-            # # print('C'*80, len(res))
+            filter_query = Q(end_date__gt=current_date) | Q(end_date__isnull=True)
+            queryset = (
+                queryset.with_effective_valid_between()
+                .annotate(end_date=EndDate("db_effective_valid_between"))
+                .filter(filter_query)
+            )
+            # # # # print('C'*80, len(res))
             # for measure in queryset:
             #     if measure.effective_valid_between.upper_inf:
-            #         res.append(measure)
+            #         #  or measure.effective_valid_between.upper > current_date
+            #         print('*'*80, measure)
+            #         filter_query.append(measure)
+
+            return queryset.filter(filter_query)
 
             # THIS RETURNS NO RESULTS
             # filter_query = Q(end_date__gt=current_date) | Q(end_date__isnull=True)
@@ -316,12 +325,15 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
             # active_status_filter = Q(valid_between__fully_lt=current_date)
 
             # return queryset.filter(active_status_filter)
-            res = []
-            while len(res) < 10:
-                for measure in queryset:
-                    if measure.effective_end_date > current_date:
-                        res.append(measure)
-            return res
+
+            # for measure in queryset:
+
+            #     print('*'*80, type(measure.effective_valid_between), f'{measure.effective_valid_between}')
+
+            # if (measure.effective_end_date is None
+            #         or measure.effective_end_date > current_date):
+            #     res.append(measure)
+            # return res
 
         else:
             print("D" * 80, "Value is Not True")
