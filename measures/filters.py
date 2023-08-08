@@ -21,7 +21,6 @@ from common.filters import TamatoFilterBackend
 from common.forms import DateInputFieldFixed
 from common.util import EndDate
 from common.util import StartDate
-from common.util import TaricDateRange
 from common.validators import NumericValidator
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -267,78 +266,21 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
     # using ActiveStateMixin doesn't filter by date, double check this works on bespoke version.
 
     def active_measure(self, queryset, name, value):
-        # value = True when selected, name is 'is_active'
-        # AIM:
-        # filter the query set to those which are currently active
-        # criteria:
-        # Start date = Today or previous to today
-        # End date = Today or after today
-        current_date = date.today()  # <-- date time object
-        current_date_range = TaricDateRange(
-            None,
-            date.today(),
-        )  # <-- TaricDateRange is 2 x datetimes and an empty array that can hold bounds(?). TDR has a upper_is_greater() - could we use this?
-        if value == True:
-            # print('a'*80, current_date_range)
-            # THIS RETURNS NO RESULTS TO THE PAGE BUT SOME IN RES?
-            # filter_query_dates = Q(start_date__lt=current_date) & Q(end_date__gt=current_date)
-            # res = queryset.annotate(
-            #     start_date=StartDate("valid_between"),
-            #     end_date=EndDate("valid_between")
-            # ).filter(filter_query_dates)
-            # print('b'*80, len(res), res)
+        current_date = date.today()
 
-            # THIS TIMES OUT
-            filter_query = Q(end_date__gt=current_date) | Q(end_date__isnull=True)
+        if value is True:
+            filter_query = Q(end_date__gt=current_date) | Q(end_date__isnull=True) & Q(
+                start_date__lt=current_date,
+            )
             queryset = (
                 queryset.with_effective_valid_between()
+                .annotate(start_date=StartDate("db_effective_valid_between"))
                 .annotate(end_date=EndDate("db_effective_valid_between"))
                 .filter(filter_query)
             )
-            # # # # print('C'*80, len(res))
-            # for measure in queryset:
-            #     if measure.effective_valid_between.upper_inf:
-            #         #  or measure.effective_valid_between.upper > current_date
-            #         print('*'*80, measure)
-            #         filter_query.append(measure)
-
-            return queryset.filter(filter_query)
-
-            # THIS RETURNS NO RESULTS
-            # filter_query = Q(end_date__gt=current_date) | Q(end_date__isnull=True)
-            # res = (queryset.with_effective_valid_between()
-            #     .annotate(end_date=EndDate("db_effective_valid_between"))
-            #     .filter(filter_query))
-
-            # THIS RETURNS MEASURES WITH AN END DATE IN THE PAST. WHY?
-            # active_status_filter = Q(valid_between__upper_inf=True) | Q(valid_between__contains=current_date_range,)
-            # res = queryset.filter(active_status_filter)
-
-            # THIS IS THE OTHER PART OF ActiveStateMixin AND RETURNS MORE RECENT RESULTS, BUT ALSO EXPIRED RESULTS
-            # active_status_filter = Q()
-            # current_date = TaricDateRange(date.today(), date.today())
-            # if value == ["active"]:
-            #     active_status_filter = Q(valid_between__upper_inf=True) | Q(
-            #         valid_between__contains=current_date,
-            #     )
-            # if value == ["terminated"]:
-            # active_status_filter = Q(valid_between__fully_lt=current_date)
-
-            # return queryset.filter(active_status_filter)
-
-            # for measure in queryset:
-
-            #     print('*'*80, type(measure.effective_valid_between), f'{measure.effective_valid_between}')
-
-            # if (measure.effective_end_date is None
-            #         or measure.effective_end_date > current_date):
-            #     res.append(measure)
-            # return res
+            return queryset
 
         else:
-            print("D" * 80, "Value is Not True")
-            print("E" * 80, type(queryset))
-
             return queryset
 
     class Meta:
