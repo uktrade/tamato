@@ -800,6 +800,10 @@ class MeasureFilterForm(forms.Form):
                     "active_state",
                     css_class="govuk-grid-column-one-third",
                 ),
+                Div(
+                    "is_active",
+                    css_class="govuk-grid-column-one-third",
+                ),
                 # TODO: Current workbasket filter
                 # Div(
                 #     "current_workbasket",

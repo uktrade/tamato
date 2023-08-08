@@ -1,3 +1,5 @@
+from datetime import date
+
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import CharField
@@ -19,6 +21,7 @@ from common.filters import TamatoFilterBackend
 from common.forms import DateInputFieldFixed
 from common.util import EndDate
 from common.util import StartDate
+from common.util import TaricDateRange
 from common.validators import NumericValidator
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -90,11 +93,11 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
 
     # Active measures only
     # See TODO #263
-    # is_active = BooleanFilter(
-    #     label="WIP - Show active measures only",
-    #     widget=forms.CheckboxInput,
-    #     method="filter_active_state"
-    # )
+    is_active = BooleanFilter(
+        label="WIP - Show active measures only",
+        widget=forms.CheckboxInput,
+        method="active_measure",
+    )
 
     # measures in current workbasket
     # workbaskets - limbo state for when tarriff managers are making changes to tarriffs. Stored in session --> have a look at workbasket view summary. Have a look at get form quargs, may pass as var here.
@@ -263,10 +266,68 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
     # TODO: copy/re-write the filter_active_state fn() from common/filters.py (don't need terminated)
     # using ActiveStateMixin doesn't filter by date, double check this works on bespoke version.
 
-    # def filter_active_state(self, queryset):
-    #     # filter the query set to those which are currently active
+    def active_measure(self, queryset, name, value):
+        # value = True when selected, name is 'is_active'
+        # AIM:
+        # filter the query set to those which are currently active
+        # criteria:
+        # Start date = Today or previous to today
+        # End date = Today or after today
+        current_date = date.today()  # <-- date time object
+        current_date_range = TaricDateRange(
+            None,
+            date.today(),
+        )  # <-- TaricDateRange is 2 x datetimes and an empty array that can hold bounds(?). TDR has a upper_is_greater() - could we use this?
+        if value == True:
+            # print('a'*80, current_date_range)
+            # THIS RETURNS NO RESULTS TO THE PAGE BUT SOME IN RES?
+            # filter_query_dates = Q(start_date__lt=current_date) & Q(end_date__gt=current_date)
+            # res = queryset.annotate(
+            #     start_date=StartDate("valid_between"),
+            #     end_date=EndDate("valid_between")
+            # ).filter(filter_query_dates)
+            # print('b'*80, len(res), res)
 
-    #     active_status_filter = Q
+            # THIS TIMES OUT
+            # res = []
+            # # print('C'*80, len(res))
+            # for measure in queryset:
+            #     if measure.effective_valid_between.upper_inf:
+            #         res.append(measure)
+
+            # THIS RETURNS NO RESULTS
+            # filter_query = Q(end_date__gt=current_date) | Q(end_date__isnull=True)
+            # res = (queryset.with_effective_valid_between()
+            #     .annotate(end_date=EndDate("db_effective_valid_between"))
+            #     .filter(filter_query))
+
+            # THIS RETURNS MEASURES WITH AN END DATE IN THE PAST. WHY?
+            # active_status_filter = Q(valid_between__upper_inf=True) | Q(valid_between__contains=current_date_range,)
+            # res = queryset.filter(active_status_filter)
+
+            # THIS IS THE OTHER PART OF ActiveStateMixin AND RETURNS MORE RECENT RESULTS, BUT ALSO EXPIRED RESULTS
+            # active_status_filter = Q()
+            # current_date = TaricDateRange(date.today(), date.today())
+            # if value == ["active"]:
+            #     active_status_filter = Q(valid_between__upper_inf=True) | Q(
+            #         valid_between__contains=current_date,
+            #     )
+            # if value == ["terminated"]:
+            # active_status_filter = Q(valid_between__fully_lt=current_date)
+
+            # return queryset.filter(active_status_filter)
+            res = []
+            while len(res) < 10:
+                for measure in queryset:
+                    if measure.effective_end_date > current_date:
+                        res.append(measure)
+            return res
+
+        else:
+            print("D" * 80, "Value is Not True")
+            print("E" * 80, type(queryset))
+
+            return queryset
 
     class Meta:
         model = Measure
