@@ -96,6 +96,7 @@ def test_upload_taric_form_save(run_batch, chunk_taric, superuser):
 
         assert batch.name == "test_upload"
         assert batch.split_job == False
+        assert batch.workbasket
 
         run_batch.assert_called_once()
         chunk_taric.assert_called_once()

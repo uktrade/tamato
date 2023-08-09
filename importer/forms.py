@@ -133,12 +133,20 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
         )
 
     @transaction.atomic
-    def save(self, user: User, commit=True):
+    def save(self, user: User):
+        workbasket = WorkBasket.objects.create(
+            title=f"Data Import {self.cleaned_data['name']}",
+            author=user,
+            approver=user,
+            status=self.cleaned_data["status"],
+        )
+
         batch = super().save(commit=False)
         batch.author = user
+        batch.workbasket = workbasket
         batch.save()
 
-        if self.data.get("commodities") is not None:
+        if self.cleaned_data.get("commodities"):
             record_group = TARIC_RECORD_GROUPS["commodities"]
         else:
             record_group = None
@@ -148,8 +156,10 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
             batch,
             user,
             record_group=record_group,
-            status=self.data["status"],
+            status=self.cleaned_data["status"],
+            workbasket_id=workbasket.id,
         )
+
         return batch
 
 
