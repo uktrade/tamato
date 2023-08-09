@@ -72,7 +72,9 @@ class CommodityImportListView(
         "common.add_trackedmodel",
         "common.change_trackedmodel",
     ]
-    queryset = models.ImportBatch.objects.order_by("-created_at")
+    queryset = models.ImportBatch.objects.order_by("-created_at").filter(
+        goods_import=True,
+    )
     template_name = "eu-importer/select-imports.jinja"
     filterset_class = TaricImportFilter
 
