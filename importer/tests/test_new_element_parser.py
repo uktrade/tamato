@@ -17,6 +17,7 @@ from regulations.new_import_parsers import *
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.new_importer
 class TestNewElementParser:
     def test_init_defaults(self):
         target = NewElementParser
@@ -62,6 +63,8 @@ class TestNewElementParser:
     def test_missing_child_attributes_returns_dict_when_has_children(self):
         # setup parent
         class MadeUpModel:
+            model_links = []
+
             def __init__(self):
                 self.x = "z"
 
@@ -518,6 +521,8 @@ class TestNewElementParser:
             valid_between_upper: date = None
             model = MadeUpModel
 
+            model_links = []
+
             def __init__(self):
                 super().__init__()
 
@@ -559,6 +564,8 @@ class TestNewElementParser:
             valid_between_upper: date = None
             invalid_property: str = None
             model = MadeUpModel
+
+            model_links = []
 
             def __init__(self):
                 super().__init__()

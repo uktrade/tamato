@@ -17,10 +17,18 @@ class NewMeasureTypeSeriesParser(NewValidityMixin, NewWritable, NewElementParser
 
     xml_object_tag = "measure.type.series"
 
+    model_links = []
+
+    value_mapping = {
+        "measure_type_series_id": "sid",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     sid: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    measure_type_combination: str = None
+    measure_type_combination: int = None
 
 
 class NewMeasureTypeSeriesDescriptionParser(NewWritable, NewElementParser):
@@ -30,15 +38,13 @@ class NewMeasureTypeSeriesDescriptionParser(NewWritable, NewElementParser):
     model_links = [
         ModelLink(
             models.MeasureTypeSeries,
-            [
-                ModelLinkField("measure_type_series__id", "sid"),
-            ],
+            [ModelLinkField("sid", "sid")],
             "measure.type.series",
         ),
     ]
 
     value_mapping = {
-        "measure_type_series__id": "sid",
+        "measure_type_series_id": "sid",
     }
 
     record_code = "140"

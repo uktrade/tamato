@@ -60,13 +60,8 @@ class TestNewGeographicalAreaParser:
         assert target.area_id == "9"
         assert target.valid_between_lower == date(2021, 1, 1)
         assert target.valid_between_upper == date(2022, 1, 1)
-        assert target.area_code == "5"
+        assert target.area_code == 5
         assert target.parent__sid == 7
-
-        assert target.sid == 8
-        assert target.described_footnote__footnote_type__footnote_type_id == "7"
-        assert target.described_footnote__footnote_id == "6"
-        assert target.description == "Some Description"
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file("geographical_area_CREATE.xml", __file__)

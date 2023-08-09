@@ -13,6 +13,7 @@ def get_test_xml_file(file_name):
     return os.path.join(current_directory, "test_files", file_name)
 
 
+@pytest.mark.new_importer
 class TestNewImporter:
     def test_basic_import_additional_code_new_workbasket(self, superuser):
         file_to_import = get_test_xml_file("additional_code_CREATE.xml")

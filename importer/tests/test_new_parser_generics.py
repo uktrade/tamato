@@ -46,6 +46,7 @@ from regulations.new_import_parsers import *
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.new_importer
 @pytest.mark.parametrize(
     (
         "parser_class",
@@ -81,7 +82,7 @@ pytestmark = pytest.mark.django_db
             NewAdditionalCodeDescriptionPeriodParser,
             AdditionalCodeDescription,
             "additional.code.description.period",
-            [AdditionalCode, AdditionalCodeType],
+            [AdditionalCode],
             True,
         ),
         (
@@ -574,9 +575,9 @@ def test_importer_generics(
 
     # check that we parent parsers for all parsers that should append to a parent parser
     if child_to_other_parser:
-        assert parser_class.parent_parser != None
+        assert parser_class.parent_parser is not None
     else:
-        assert parser_class.parent_parser == None
+        assert parser_class.parent_parser is None
 
     # check properties exist on target model
     excluded_variable_names = [

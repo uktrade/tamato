@@ -1,43 +1,42 @@
-from datetime import date
-
 import pytest
 
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
-from geo_areas.models import GeographicalMembership
+from geo_areas.models import GeographicalAreaDescription
 from geo_areas.new_import_parsers import *
 from importer import new_importer
+from measures.new_import_parsers import NewMeasureTypeSeriesParser
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewGeographicalMembershipParser:
+class TestNewMeasureTypeSeriesParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="geographical.area.membership" substitutionGroup="abstract.record">
+        <xs:element name="measure.type.series" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="geographical.area.sid" type="SID"/>
-                    <xs:element name="geographical.area.group.sid" type="SID"/>
+                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
                     <xs:element name="validity.start.date" type="Date"/>
                     <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
+                    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>
     """
 
-    target_parser_class = NewGeographicalMembershipParser
+    target_parser_class = NewMeasureTypeSeriesParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "geographical_area_sid": "8",
-            "geographical_area_group_sid": "7",
-            "validity_start_date": "2021-01-01",
-            "validity_end_date": "2022-01-01",
+            "measure.type.series.id": "A",
+            "validity.start.date": "2021-01-01",
+            "validity.end.date": "2022-01-01",
+            "measure.type.combination": "6",
         }
 
         target = self.target_parser_class()
@@ -51,14 +50,14 @@ class TestNewGeographicalMembershipParser:
         )
 
         # verify all properties
-        assert target.member__sid == 8
-        assert target.geo_group__sid == 7
+        assert target.sid == 8
         assert target.valid_between_lower == date(2021, 1, 1)
         assert target.valid_between_upper == date(2022, 1, 1)
+        assert target.measure_type_combination == 6
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
-            "geographical_membership_CREATE.xml",
+            "measure_series_CREATE.xml",
             __file__,
         )
 
@@ -79,11 +78,11 @@ class TestNewGeographicalMembershipParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.member__sid == 9
-        assert target.geo_group__sid == 8
-        assert target.valid_between_lower == date(2021, 1, 1)
-        assert target.valid_between_upper == date(2022, 1, 1)
+        assert target.sid == 3
+        assert target.described_geographicalarea__sid == 8
+        assert target.described_geographicalarea__area_id == "AB01"
+        assert target.description == "Some Description"
 
         assert len(importer.issues()) == 0
 
-        assert GeographicalMembership.objects.all().count() == 1
+        assert GeographicalAreaDescription.objects.all().count() == 1

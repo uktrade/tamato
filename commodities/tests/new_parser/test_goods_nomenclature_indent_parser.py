@@ -92,12 +92,8 @@ class TestNewGoodsNomenclatureIndentParser:
         assert target.indented_goods_nomenclature__sid == 1
         assert target.validity_start == date(2021, 1, 1)
         assert target.indent == 1
-        assert (
-            target.indented_goods_nomenclature__item_id == "0100000000"
-        )  # converts "certificate_code" to sid
-        assert (
-            target.indented_goods_nomenclature__suffix == 10
-        )  # converts "certificate_code" to sid
+        assert target.indented_goods_nomenclature__item_id == "0100000000"
+        assert target.indented_goods_nomenclature__suffix == 10
 
         assert GoodsNomenclatureIndent.objects.all().count() == 1
 
