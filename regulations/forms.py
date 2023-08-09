@@ -112,6 +112,134 @@ class RegulationFormBase(ValidityPeriodForm):
             SafeString(public_identifier_details_content),
         )
 
+    def _get_regulation_id(self, published_at, sequence_number, regulation_usage):
+        """
+        Return the instance's `regulation_id` if non-draft, else generate
+        `regulation_id` using form data.
+
+        A regulation_id is composed, by position, of the following elements:
+        [0]   - Regulation usage key (e.g. "C" for "C: Draft regulation").
+        [1-2] - Last two digits from published_at (publication date),
+                e.g. 21 for year 2021.
+        [3-6] - Sequence number, left padded with zeros eg. 0002.
+        [7]   - Part value, allows same regulation to be entered into the
+                system several times, each instance referencing a specific
+                part of a regulation by adding a unique trailing value.
+        """
+        regulation_id = self.instance.regulation_id if hasattr(self, "instance") else ""
+        if regulation_id and not regulation_id.startswith("C"):
+            return regulation_id
+
+        partial_regulation_id = self._make_partial_regulation_id(
+            published_at,
+            sequence_number,
+            regulation_usage,
+        )
+        if not regulation_id[:-1] == partial_regulation_id:
+            try:
+                part_value = self._get_next_part_value(partial_regulation_id)
+            except IndexError:
+                raise ValidationError(
+                    "Exceeded maximum number of parts for this regulation.",
+                )
+            regulation_id = f"{partial_regulation_id}{part_value}"
+
+        # Sanity check against the UK flavour of Regulation ID.
+        assert re.match(UK_ID, regulation_id)
+
+        return regulation_id
+
+    def _make_partial_regulation_id(
+        self,
+        published_at,
+        sequence_number,
+        regulation_usage,
+    ):
+        """
+        Make a partial regulation_id using bound form data.
+
+        The result will not include the single digit at the last position of a
+        valid regulation_id, which is only applied when the regulation instance
+        is saved (the part number provides a uniqueness element among
+        potentially more than 10 + 26 partial regulation_ids).
+        """
+        publication_year = str(published_at.year)[-2:]
+        sequence_number = f"{sequence_number:0>4}"
+        return f"{regulation_usage}{publication_year}{sequence_number}"
+
+    def _get_next_part_value(self, partial_regulation_id):
+        """Get the next available part value that can be appended to a partial
+        regulation_id (see
+        RegulationCreateForm._make_partial_regulation_id())."""
+        tx = WorkBasket.get_current_transaction(self.request)
+        last_matching_regulation = (
+            Regulation.objects.filter(
+                regulation_id__startswith=partial_regulation_id,
+                role_type=FIXED_ROLE_TYPE,
+            )
+            .approved_up_to_transaction(tx)
+            .order_by("-regulation_id")
+            .first()
+        )
+        if last_matching_regulation:
+            highest_part_value = last_matching_regulation.regulation_id[-1]
+            alphanum = string.digits + string.ascii_uppercase
+            return alphanum[int(highest_part_value, 36) + 1]
+        return 0
+
+    def _validate_approved_status(
+        self,
+        approved,
+        regulation_usage,
+        public_identifier,
+        url,
+        information_text,
+    ):
+        """Validate that the value of `approved` corresponds to
+        `regulation_usage` and where `approved=True` that required fields are in
+        form data."""
+        if approved and not regulation_usage == RegulationUsage.DRAFT_REGULATION:
+            if not public_identifier:
+                self.add_error("public_identifier", "Enter a public identifier")
+            if not url:
+                self.add_error("url", "Enter a URL")
+            if not information_text:
+                self.add_error("information_text", "Enter a title")
+        if approved and regulation_usage == RegulationUsage.DRAFT_REGULATION:
+            self.add_error(
+                "approved",
+                'Regulation status "Approved" may not be applied when regulation usage is "C: Draft regulation"',
+            )
+        if not approved and not regulation_usage == RegulationUsage.DRAFT_REGULATION:
+            self.add_error(
+                "approved",
+                'Regulation status "Not approved" may only be applied when Regulation usage is "C: Draft regulation"',
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.errors:
+            return cleaned_data
+
+        cleaned_data["regulation_id"] = self._get_regulation_id(
+            cleaned_data["published_at"],
+            cleaned_data["sequence_number"],
+            cleaned_data["regulation_usage"],
+        )
+
+        self._validate_approved_status(
+            cleaned_data["approved"],
+            cleaned_data["regulation_usage"]
+            if cleaned_data["regulation_usage"]
+            else self.instance.regulation_id[0],
+            cleaned_data["public_identifier"],
+            cleaned_data["url"],
+            cleaned_data["information_text"],
+        )
+
+        return cleaned_data
+
 
 class RegulationCreateForm(RegulationFormBase):
     def __init__(self, *args, **kwargs):
@@ -154,88 +282,6 @@ class RegulationCreateForm(RegulationFormBase):
                 data_prevent_double_click="true",
             ),
         )
-
-    def _make_partial_regulation_id(
-        self,
-        published_at,
-        sequence_number,
-        regulation_usage,
-    ):
-        """
-        Make a partial regulation_id using bound form data.
-
-        The result will not include the single digit at the last position of a
-        valid regulation_id, which is only applied when the regulation instance
-        is saved (the part number provides a uniqueness element among
-        potentially more than 10 + 26 partial regulation_ids).
-        """
-        publication_year = str(published_at.year)[-2:]
-        sequence_number = f"{sequence_number:0>4}"
-        return f"{regulation_usage}{publication_year}{sequence_number}"
-
-    def _get_next_part_value(self, partial_regulation_id):
-        """Get the next available part value that can be appended to a partial
-        regulation_id (see
-        RegulationCreateForm._make_partial_regulation_id())."""
-        tx = WorkBasket.get_current_transaction(self.request)
-        last_matching_regulation = (
-            Regulation.objects.filter(
-                regulation_id__startswith=partial_regulation_id,
-                role_type=FIXED_ROLE_TYPE,
-            )
-            .approved_up_to_transaction(tx)
-            .order_by("-regulation_id")
-            .first()
-        )
-        if last_matching_regulation:
-            highest_part_value = last_matching_regulation.regulation_id[-1]
-            alphanum = string.digits + string.ascii_uppercase
-            return alphanum[int(highest_part_value, 36) + 1]
-        return 0
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        if self.errors:
-            return cleaned_data
-
-        # Using input from this form, regulation_id is composed, by position,
-        # of the following elements:
-        #   [0]   - RegulationUsage key (e.g. "C" for "C: Draft regulation").
-        #   [1-2] - last two digits from published_at (publication date),
-        #           e.g. 21 for year 2021.
-        #   [3-6] - sequence number, left padded with zeros eg. 0002.
-        #   [7]   - Part value, allows same regulation to be entered into the
-        #           system several times, each instance referencing a specific
-        #           part of a regulation by adding a unique trailing value.
-        partial_regulation_id = self._make_partial_regulation_id(
-            cleaned_data["published_at"],
-            cleaned_data["sequence_number"],
-            cleaned_data["regulation_usage"],
-        )
-        try:
-            part_value = self._get_next_part_value(partial_regulation_id)
-        except IndexError:
-            raise ValidationError(
-                "Exceeded maximum number of parts for this regulation.",
-            )
-
-        cleaned_data["regulation_id"] = f"{partial_regulation_id}{part_value}"
-
-        # Sanity check against the UK flavour of Regulation ID.
-        assert re.match(UK_ID, cleaned_data["regulation_id"])
-
-        if (
-            not cleaned_data["approved"]
-            and cleaned_data["regulation_usage"] != RegulationUsage.DRAFT_REGULATION
-        ):
-            self.add_error(
-                "approved",
-                'Regulation status "Not approved" may only be applied '
-                'when Regulation usage is "C: Draft regulation"',
-            )
-
-        return cleaned_data
 
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -319,25 +365,6 @@ class RegulationEditForm(RegulationFormBase):
                 data_prevent_double_click="true",
             ),
         )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        cleaned_data["regulation_id"] = self.instance.regulation_id
-
-        if self.errors:
-            return cleaned_data
-
-        if (
-            not cleaned_data["approved"]
-            and self.instance.regulation_id[0] != RegulationUsage.DRAFT_REGULATION
-        ):
-            self.add_error(
-                "approved",
-                'Regulation status "Not approved" may only be applied '
-                'when Regulation usage is "C: Draft regulation"',
-            )
-
-        return cleaned_data
 
 
 RegulationDeleteForm = delete_form_for(Regulation)
