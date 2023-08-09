@@ -792,23 +792,13 @@ class MeasureFilterForm(forms.Form):
             ),
             Div(
                 Div(
+                    Field.radios("measure_filters_modifier", inline=True),
+                    css_class="govuk-grid-column-full form-group-margin-bottom-2",
+                ),
+                Div(
                     "modc",
-                    css_class="govuk-grid-column-one-third",
+                    css_class="govuk-grid-column-full form-group-margin-bottom-2",
                 ),
-                # TODO: Replace below with bespoke is_active filter.
-                Div(
-                    "active_state",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                Div(
-                    "is_active",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                # TODO: Current workbasket filter
-                # Div(
-                #     "current_workbasket",
-                #     css_class="govuk-grid-column-one-third",
-                # ),
                 css_class="govuk-grid-row govuk-!-margin-top-6",
             ),
             HTML(

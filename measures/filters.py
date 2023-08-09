@@ -37,6 +37,12 @@ BEFORE_EXACT_AFTER_CHOICES = (
     ("after", "after"),
 )
 
+ACTIVE_CURRENT_CHOICES = (
+    # ("inherited", "Include inherited measures for specific commodity code"),
+    ("active", "Show active measures only"),
+    ("current", "Only include measures in this current workbasket"),
+)
+
 GOV_UK_TWO_THIRDS = "govuk-!-width-two-thirds"
 
 
@@ -90,21 +96,16 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
         },
     )
 
-    # Active measures only
-    # See TODO #263
-    is_active = BooleanFilter(
-        label="WIP - Show active measures only",
-        widget=forms.CheckboxInput,
-        method="active_measure",
-    )
+    # is_active = BooleanFilter(
+    #     label="Show active measures only",
+    #     widget=forms.CheckboxInput,
+    #     method="active_measure",
+    # )
 
-    # measures in current workbasket
-    # workbaskets - limbo state for when tarriff managers are making changes to tarriffs. Stored in session --> have a look at workbasket view summary. Have a look at get form quargs, may pass as var here.
     # current_workbasket = BooleanFilter(
     #     label="WIP - Only include measures in this current workbasket",
     #     widget=forms.CheckboxInput,
-    #     field_name="",
-    #     method="",
+    #     method="measures_in_workbasket",
     # )
 
     # measures on declarable commodities
@@ -179,6 +180,14 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
     start_date = GovUKDateFilter(
         label="",
         method="filter_start_date",
+    )
+
+    measure_filters_modifier = ChoiceFilter(
+        label="",
+        widget=forms.RadioSelect,
+        method="measures_filter",
+        empty_label=None,
+        choices=ACTIVE_CURRENT_CHOICES,
     )
 
     start_date_modifier = ChoiceFilter(
@@ -262,26 +271,70 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
             )
         return queryset
 
-    # TODO: copy/re-write the filter_active_state fn() from common/filters.py (don't need terminated)
-    # using ActiveStateMixin doesn't filter by date, double check this works on bespoke version.
+    # measures in current workbasket
+    # workbaskets - limbo state for when tarriff managers are making changes to tarriffs. Stored in session --> have a look at workbasket view summary (/workbaskets/current/). Have a look at get form quargs, may pass as var here.
+    def measures_filter(self, queryset, name, value):
+        if value:
+            modifier = self.data["measure_filters_modifier"]
+            # if modifier == "inherited":
+            #     commodity = (
+            #         GoodsNomenclature.objects.filter(id=self.data["goods_nomenclature"])
+            #         .current()
+            #         .first()
+            #     )
 
-    def active_measure(self, queryset, name, value):
-        current_date = date.today()
+            #     queryset = get_measures_on_declarable_commodities(
+            #         WorkBasket.get_current_transaction(self.request),
+            #         commodity.item_id,
+            #     )
+            #     return queryset
+            if modifier == "active":
+                current_date = date.today()
 
-        if value is True:
-            filter_query = Q(end_date__gt=current_date) | Q(end_date__isnull=True) & Q(
-                start_date__lt=current_date,
-            )
-            queryset = (
-                queryset.with_effective_valid_between()
-                .annotate(start_date=StartDate("db_effective_valid_between"))
-                .annotate(end_date=EndDate("db_effective_valid_between"))
-                .filter(filter_query)
-            )
-            return queryset
+                filter_query = Q(end_date__gt=current_date) | Q(
+                    end_date__isnull=True,
+                ) & Q(
+                    start_date__lt=current_date,
+                )
+                queryset = (
+                    queryset.with_effective_valid_between()
+                    .annotate(start_date=StartDate("valid_between"))
+                    .annotate(end_date=EndDate("db_effective_valid_between"))
+                    .filter(filter_query)
+                )
+                # return queryset
+            if modifier == "current":
+                queryset = WorkBasket.get_current_transaction(
+                    self.request,
+                ).workbasket.measures
 
-        else:
-            return queryset
+                # return queryset
+        return queryset
+
+    # def measures_in_workbasket(self, queryset, name, value):
+    #     if value is True:
+    #         # This is a MeasurseQuerySet --> array of Measures
+    #         queryset = WorkBasket.get_current_transaction(self.request).workbasket.measures
+
+    #         # print('*'*80,f'{name=}', f'{measures_in_workbasket=}', f'{queryset=}')
+    #         # queryset = queryset.filter(measures_in_workbasket)
+    #         return queryset
+    #     else:
+    #         return queryset
+
+    # def active_measure(self, queryset, name, value):
+    #     current_date = date.today()
+
+    #     filter_query = Q(end_date__gt=current_date) | Q(end_date__isnull=True) & Q(
+    #         start_date__lt=current_date,
+    #     )
+    #     queryset = (
+    #         queryset.with_effective_valid_between()
+    #         .annotate(start_date=StartDate("valid_between"))
+    #         .annotate(end_date=EndDate("db_effective_valid_between"))
+    #         .filter(filter_query)
+    #     )
+    #     return queryset
 
     class Meta:
         model = Measure
