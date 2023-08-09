@@ -48,9 +48,45 @@ class RegulationFormBase(ValidityPeriodForm):
 
     PUBLISHED_AT_HELP_TEXT = (
         "The date that the source for this regulation was published. For a "
-        "Statutory Instrument (S.I.) or other peice of UK legislation, "
+        "Statutory Instrument (S.I.) or other piece of UK legislation, "
         "this should be the “made date” as found in the introductory note "
         "of the legislative text."
+    )
+
+    regulation_usage = ChoiceField(
+        choices=RegulationUsage.choices,
+        error_messages={"required": "Select a regulation usage"},
+    )
+    regulation_group = ModelChoiceField(
+        queryset=Group.objects.all().order_by("group_id"),
+        empty_label="Select a regulation group",
+        help_text=(
+            "If the wrong regulation group is selected, a trader's declaration "
+            "may be rejected."
+        ),
+        error_messages={"required": "Select a regulation group"},
+    )
+    published_at = DateInputFieldFixed(
+        label="Published date",
+        help_text=PUBLISHED_AT_HELP_TEXT,
+    )
+    sequence_number = IntegerField(
+        min_value=1,
+        max_value=9999,
+        help_text=("The sequence number published by the source of this regulation."),
+        error_messages={"required": "Enter the sequence number"},
+    )
+    approved = TypedChoiceField(
+        choices=(
+            (True, "Approved"),
+            (False, "Not approved (draft)"),
+        ),
+        coerce=lambda val: val == "True",
+        label="Status of the legislation",
+        help_text=(
+            "An unapproved status means none of the measures that link to "
+            "this regulation will be active at the border."
+        ),
     )
 
     def __init__(self, *args, **kwargs):
@@ -78,39 +114,6 @@ class RegulationFormBase(ValidityPeriodForm):
 
 
 class RegulationCreateForm(RegulationFormBase):
-    regulation_usage = ChoiceField(
-        choices=RegulationUsage.choices,
-    )
-    regulation_group = ModelChoiceField(
-        queryset=Group.objects.all().order_by("group_id"),
-        empty_label="Select a regulation group",
-        help_text=(
-            "If the wrong regulation group is selected, a trader's declaration "
-            "may be rejected."
-        ),
-    )
-    published_at = DateInputFieldFixed(
-        label="Published date",
-        help_text=RegulationFormBase.PUBLISHED_AT_HELP_TEXT,
-    )
-    sequence_number = IntegerField(
-        min_value=1,
-        max_value=9999,
-        help_text=("The sequence number published by the source of this regulation."),
-    )
-    approved = TypedChoiceField(
-        choices=(
-            (True, "Approved"),
-            (False, "Not approved (draft)"),
-        ),
-        coerce=lambda val: val == "True",
-        label="Status of the legislation",
-        help_text=(
-            "An unapproved status means none of the measures that link to "
-            "this regulation will be active at the border."
-        ),
-    )
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
@@ -246,36 +249,32 @@ class RegulationCreateForm(RegulationFormBase):
 
 
 class RegulationEditForm(RegulationFormBase):
-    regulation_group = ModelChoiceField(
-        queryset=Group.objects.all().order_by("group_id"),
-        empty_label="Select a regulation group",
-        help_text=(
-            "If the wrong regulation group is selected, a trader's declaration "
-            "may be rejected."
-        ),
-    )
-    published_at = DateInputFieldFixed(
-        label="Published date",
-        help_text="You can't edit this",
-        disabled=True,
-    )
-    approved = TypedChoiceField(
-        choices=(
-            (True, "Approved"),
-            (False, "Not approved (draft)"),
-        ),
-        coerce=lambda val: val == "True",
-        label="Status of the legislation",
-        help_text=(
-            "An unapproved status means none of the measures that link to "
-            "this regulation will be active at the border."
-        ),
-    )
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        regulation_usage = self.instance.regulation_id[0]
+        self.fields["regulation_usage"].initial = (
+            RegulationUsage(regulation_usage)
+            if regulation_usage in RegulationUsage
+            else None
+        )
+        self.fields["sequence_number"].initial = self.instance.regulation_id[3:7]
+
+        if not self.instance.is_draft_regulation:
+            uneditable_fields = {
+                "regulation_usage": "regulation usage",
+                "sequence_number": "sequence number",
+                "published_at": "published date",
+            }
+            for field, name in uneditable_fields.items():
+                help_text = f"You can't edit the {name} for an approved regulation"
+                self.fields[field].disabled = True
+                self.fields[field].required = False
+                self.fields[field].help_text = help_text
+
         self.helper.layout = Layout(
             Fieldset(
+                "regulation_usage",
                 "public_identifier",
                 self._load_details_from_template(
                     "Help with public identifiers",
@@ -295,10 +294,23 @@ class RegulationEditForm(RegulationFormBase):
                 "end_date",
                 "published_at",
                 HTML.details(
-                    "Help with Published date",
+                    "Help with published date",
                     RegulationFormBase.PUBLISHED_AT_HELP_TEXT,
                 ),
+                Field(
+                    "sequence_number",
+                    css_class="govuk-input govuk-input--width-4",
+                ),
+                self._load_details_from_template(
+                    "Help with sequence number",
+                    "regulations/help_sequence_number.jinja",
+                ),
                 "approved",
+                HTML.details(
+                    "Help with status of the legislation",
+                    "An unapproved status means none of the measures that link to "
+                    "this regulation will be active at the border.",
+                ),
             ),
             Submit(
                 "submit",
