@@ -9,6 +9,7 @@ from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
 from workbaskets import models
 from workbaskets import validators
+from workbaskets.util import serialize_uploaded_data
 
 
 class WorkbasketCreateForm(forms.ModelForm):
@@ -150,3 +151,27 @@ class SelectableObjectsForm(forms.Form):
             SelectableObjectsForm.object_id_from_field_name(key): value
             for key, value in self.cleaned_data.items()
         }
+
+
+class WorkbasketCompareForm(forms.Form):
+    data = forms.CharField(widget=forms.Textarea(), validators=[SymbolValidator])
+
+    def clean(self):
+        serialized = serialize_uploaded_data(self.cleaned_data["data"])
+        return {"data": serialized, "raw_data": self.cleaned_data["data"]}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Field.textarea("data", rows=10),
+            Submit(
+                "submit",
+                "Compare",
+                data_module="govuk-button--secondary",
+                data_prevent_double_click="true",
+            ),
+        )

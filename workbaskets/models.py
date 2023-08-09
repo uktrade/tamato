@@ -19,6 +19,7 @@ from django_fsm import transition
 from checks.models import TrackedModelCheck
 from checks.models import TransactionCheck
 from common.models.mixins import TimestampedMixin
+from common.models.mixins.validity import ValidityMixin
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
@@ -26,6 +27,7 @@ from common.models.transactions import TransactionPartition
 from common.models.transactions import TransactionQueryset
 from measures.models import Measure
 from measures.querysets import MeasuresQuerySet
+from workbaskets.util import serialize_uploaded_data
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -625,3 +627,36 @@ class WorkBasket(TimestampedMixin):
     class Meta:
         verbose_name = "workbasket"
         verbose_name_plural = "workbaskets"
+
+
+class DataUpload(models.Model):
+    raw_data = models.TextField()
+    workbasket = models.ForeignKey(
+        WorkBasket,
+        on_delete=models.CASCADE,
+        editable=False,
+        null=True,
+    )
+
+    @property
+    def serialized(self):
+        return serialize_uploaded_data(self.raw_data)
+
+
+class DataRow(ValidityMixin, models.Model):
+    data_upload = models.ForeignKey(
+        DataUpload,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name="rows",
+    )
+    commodity = models.ForeignKey(
+        "commodities.GoodsNomenclature",
+        on_delete=models.PROTECT,
+        null=True,
+    )
+    duty_sentence = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
