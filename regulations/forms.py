@@ -366,5 +366,25 @@ class RegulationEditForm(RegulationFormBase):
             ),
         )
 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if instance.regulation_id == self.cleaned_data["regulation_id"]:
+            instance.save()
+            return instance
+
+        workbasket = instance.transaction.workbasket
+        regulation = instance.new_version(
+            regulation_id=self.cleaned_data["regulation_id"],
+            workbasket=workbasket,
+        )
+
+        for measure in self.instance.measure_set.current():
+            measure.new_version(
+                generating_regulation=regulation,
+                workbasket=workbasket,
+            )
+
+        return regulation
+
 
 RegulationDeleteForm = delete_form_for(Regulation)

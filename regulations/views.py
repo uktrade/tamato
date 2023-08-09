@@ -112,12 +112,32 @@ class RegulationUpdateMixin(
         business_rules.ROIMB47,
     )
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
 
 class RegulationUpdate(
     RegulationUpdateMixin,
     CreateTaricUpdateView,
 ):
     """UI to create regulation UPDATE instances."""
+
+    def get_result_object(self, form):
+        if form.instance.regulation_id == form.cleaned_data["regulation_id"]:
+            return super().get_result_object(form)
+
+        form.changed_data.append("regulation_id")
+        obj = super().get_result_object(form)
+
+        for measure in form.instance.measure_set.current():
+            measure.new_version(
+                generating_regulation=obj,
+                workbasket=obj.transaction.workbasket,
+            )
+
+        return obj
 
 
 class RegulationEditUpdate(
