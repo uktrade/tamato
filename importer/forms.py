@@ -109,21 +109,47 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
         model = ImportBatch
         fields = ["name", "split_job", "dependencies"]
 
-    status = forms.ChoiceField(choices=WorkflowStatus.choices, required=True)
-    taric_file = forms.FileField(required=True)
-    commodities = forms.BooleanField(
-        label="Commodities Only",
-        required=False,
-        initial=False,
+    status = forms.ChoiceField(
+        choices=WorkflowStatus.choices,
+        # choices=WorkflowStatus.unchecked_statuses(),
+        initial=WorkflowStatus.EDITING,
+        required=True,
+        help_text="Status of workbasket created by the import.",
+    )
+    taric_file = forms.FileField(
+        required=True,
+        help_text="TARIC3 XML file containing non-goods entities.",
     )
     xsd_file = settings.PATH_XSD_TARIC
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["name"].help_text = (
+            "Import name also used to name the workbasket created by and "
+            "associated with the import."
+        )
+        self.fields["split_job"].help_text = (
+            "Very large imports, such as an initial EU seed file import, may "
+            "require splitting. You almost certainly won't require this."
+        )
+        self.fields["dependencies"].help_text = (
+            "If other, active imports must complete before this import is "
+            "started, then they should be set as depenedencies. You probably "
+            "don't require this unless you are importing many TARIC files at "
+            "once."
+        )
+
         self.helper = FormHelper()
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
 
         self.helper.layout = Layout(
-            *self.fields,
+            "name",
+            "split_job",
+            "dependencies",
+            "status",
+            "taric_file",
             Submit(
                 "submit",
                 "Upload",
@@ -135,6 +161,7 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
     @transaction.atomic
     def save(self, user: User, commit=True):
         batch = super().save(commit=False)
+        batch.goods_import = False
         batch.author = user
         batch.save()
 
@@ -245,6 +272,7 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
         batch = ImportBatch(
             author=self.request.user,
             name=self.cleaned_data["name"],
+            goods_import=True,
             workbasket=workbasket,
         )
         # ensure at the start of the file stream
