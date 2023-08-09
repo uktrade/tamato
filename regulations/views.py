@@ -117,6 +117,25 @@ class RegulationUpdateMixin(
         kwargs["request"] = self.request
         return kwargs
 
+    def form_violates(self, form):
+        """
+        Overrides to provide transaction of the most recently- updated
+        associated measure if one exists, else transaction of the updated
+        regulation.
+
+        Note that updates to associated measures take place after the regulation
+        has been updated and wouldn't be contained in the transaction of the
+        regulation, meaning business rule ROIMB8 couldn't take them into
+        account.
+        """
+        measure = self.object.measure_set.select_related("transaction").last()
+        transaction = measure.transaction if measure else self.object.transaction
+
+        return super().form_violates(
+            form,
+            transaction=transaction,
+        )
+
 
 class RegulationUpdate(
     RegulationUpdateMixin,
