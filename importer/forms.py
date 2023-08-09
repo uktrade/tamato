@@ -110,9 +110,8 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
         fields = ["name", "split_job", "dependencies"]
 
     status = forms.ChoiceField(
-        choices=WorkflowStatus.choices,
-        # choices=WorkflowStatus.unchecked_statuses(),
-        initial=WorkflowStatus.EDITING,
+        choices=[(c.value, c.label) for c in WorkflowStatus.unchecked_statuses()],
+        initial=WorkflowStatus.EDITING.value,
         required=True,
         help_text="Status of workbasket created by the import.",
     )
