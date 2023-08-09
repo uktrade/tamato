@@ -58,50 +58,7 @@ class RegulationDetail(RegulationMixin, TrackedModelDetailView):
     template_name = "regulations/detail.jinja"
 
 
-class RegulationCreateMixin:
-    template_name = "regulations/create.jinja"
-    form_class = RegulationCreateForm
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        # Make the request available to the form allowing transaction management
-        # from there.
-        kwargs["request"] = self.request
-        return kwargs
-
-
-class RegulationCreate(
-    RegulationCreateMixin,
-    CreateTaricCreateView,
-):
-    """UI to create new regulation CREATE instances."""
-
-
-class RegulationEditCreate(
-    RegulationCreateMixin,
-    RegulationMixin,
-    TrackedModelDetailMixin,
-    EditTaricView,
-):
-    """UI to edit regulation CREATE instances."""
-
-    template_name = "regulations/create.jinja"
-    form_class = RegulationEditForm
-
-
-class RegulationConfirmCreate(TrackedModelDetailView):
-    template_name = "common/confirm_create.jinja"
-    model = Regulation
-
-    def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return Regulation.objects.approved_up_to_transaction(tx)
-
-
-class RegulationUpdateMixin(
-    RegulationMixin,
-    TrackedModelDetailMixin,
-):
+class RegulationCreateAndUpdateMixin(RegulationMixin, TrackedModelDetailMixin):
     template_name = "regulations/edit.jinja"
     form_class = RegulationEditForm
     validate_business_rules = (
@@ -137,8 +94,34 @@ class RegulationUpdateMixin(
         )
 
 
+class RegulationCreate(
+    RegulationCreateAndUpdateMixin,
+    CreateTaricCreateView,
+):
+    """UI to create new regulation CREATE instances."""
+
+    template_name = "regulations/create.jinja"
+    form_class = RegulationCreateForm
+
+
+class RegulationEditCreate(
+    RegulationCreateAndUpdateMixin,
+    EditTaricView,
+):
+    """UI to edit regulation CREATE instances."""
+
+
+class RegulationConfirmCreate(TrackedModelDetailView):
+    template_name = "common/confirm_create.jinja"
+    model = Regulation
+
+    def get_queryset(self):
+        tx = WorkBasket.get_current_transaction(self.request)
+        return Regulation.objects.approved_up_to_transaction(tx)
+
+
 class RegulationUpdate(
-    RegulationUpdateMixin,
+    RegulationCreateAndUpdateMixin,
     CreateTaricUpdateView,
 ):
     """UI to create regulation UPDATE instances."""
@@ -160,7 +143,7 @@ class RegulationUpdate(
 
 
 class RegulationEditUpdate(
-    RegulationUpdateMixin,
+    RegulationCreateAndUpdateMixin,
     EditTaricView,
 ):
     """UI to edit regulation UPDATE instances."""
