@@ -1481,45 +1481,50 @@ def mock_aioresponse():
 
 
 @pytest.fixture
-def importing_import_batch():
+def importing_goods_import_batch():
     editing_workbasket = factories.WorkBasketFactory.create()
     return factories.ImportBatchFactory.create(
+        goods_import=True,
         status=ImportBatchStatus.IMPORTING,
         workbasket_id=editing_workbasket.id,
     )
 
 
 @pytest.fixture
-def failed_import_batch():
+def failed_goods_import_batch():
     editing_workbasket = factories.WorkBasketFactory.create()
     return factories.ImportBatchFactory.create(
+        goods_import=True,
         status=ImportBatchStatus.FAILED,
         workbasket_id=editing_workbasket.id,
     )
 
 
 @pytest.fixture
-def completed_import_batch():
+def completed_goods_import_batch():
     editing_workbasket = factories.WorkBasketFactory.create()
     return factories.ImportBatchFactory.create(
+        goods_import=True,
         status=ImportBatchStatus.SUCCEEDED,
         workbasket_id=editing_workbasket.id,
     )
 
 
 @pytest.fixture
-def published_import_batch():
+def published_goods_import_batch():
     published_workbasket = factories.PublishedWorkBasketFactory.create()
     return factories.ImportBatchFactory.create(
+        goods_import=True,
         status=ImportBatchStatus.SUCCEEDED,
         workbasket_id=published_workbasket.id,
     )
 
 
 @pytest.fixture
-def empty_import_batch():
+def empty_goods_import_batch():
     archived_workbasket = factories.ArchivedWorkBasketFactory.create()
     return factories.ImportBatchFactory.create(
+        goods_import=True,
         status=ImportBatchStatus.SUCCEEDED,
         workbasket_id=archived_workbasket.id,
     )
