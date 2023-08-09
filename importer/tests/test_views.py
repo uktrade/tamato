@@ -230,27 +230,27 @@ def test_taric_import_list_filters_render(superuser_client):
     "import_batch,filter_url,expected_status_text",
     [
         (
-            "importing_import_batch",
+            "importing_goods_import_batch",
             "IMPORTING",
             "IMPORTING",
         ),
         (
-            "failed_import_batch",
+            "failed_goods_import_batch",
             "FAILED",
             "FAILED",
         ),
         (
-            "completed_import_batch",
+            "completed_goods_import_batch",
             "SUCCEEDED&workbasket__status=EDITING",
             "SUCCEEDED",
         ),
         (
-            "published_import_batch",
+            "published_goods_import_batch",
             "SUCCEEDED&workbasket__status=PUBLISHED",
             "SUCCEEDED",
         ),
         (
-            "empty_import_batch",
+            "empty_goods_import_batch",
             "SUCCEEDED&workbasket__status=ARCHIVED",
             "SUCCEEDED",
         ),
