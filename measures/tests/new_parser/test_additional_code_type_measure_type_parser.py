@@ -2,7 +2,6 @@ import pytest
 
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
-from geo_areas.models import GeographicalAreaDescription
 from geo_areas.new_import_parsers import *
 from importer import new_importer
 from measures.new_import_parsers import NewMeasureTypeSeriesParser
@@ -33,10 +32,10 @@ class TestNewMeasureTypeSeriesParser:
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure.type.series.id": "A",
-            "validity.start.date": "2021-01-01",
-            "validity.end.date": "2022-01-01",
-            "measure.type.combination": "6",
+            "measure_type_series_id": "A",
+            "validity_start_date": "2021-01-01",
+            "validity_end_date": "2022-01-01",
+            "measure_type_combination": "6",
         }
 
         target = self.target_parser_class()
@@ -50,7 +49,7 @@ class TestNewMeasureTypeSeriesParser:
         )
 
         # verify all properties
-        assert target.sid == 8
+        assert target.sid == "A"
         assert target.valid_between_lower == date(2021, 1, 1)
         assert target.valid_between_upper == date(2022, 1, 1)
         assert target.measure_type_combination == 6
@@ -68,9 +67,9 @@ class TestNewMeasureTypeSeriesParser:
         )
 
         # check there is one AdditionalCodeType imported
-        assert len(importer.parsed_transactions) == 2
+        assert len(importer.parsed_transactions) == 1
 
-        target_message = importer.parsed_transactions[1].parsed_messages[0]
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
         assert target_message.record_code == self.target_parser_class.record_code
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
@@ -78,11 +77,11 @@ class TestNewMeasureTypeSeriesParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.sid == 3
-        assert target.described_geographicalarea__sid == 8
-        assert target.described_geographicalarea__area_id == "AB01"
-        assert target.description == "Some Description"
+        assert target.sid == "A"
+        assert target.valid_between_lower == date(2021, 1, 1)
+        assert target.valid_between_upper == date(2022, 1, 1)
+        assert target.measure_type_combination == 6
 
         assert len(importer.issues()) == 0
 
-        assert GeographicalAreaDescription.objects.all().count() == 1
+        assert MeasureTypeSereise.objects.all().count() == 1

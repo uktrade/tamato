@@ -89,7 +89,7 @@ pytestmark = pytest.mark.django_db
             NewAdditionalCodeDescriptionParser,
             AdditionalCodeDescription,
             "additional.code.description",
-            [AdditionalCode, AdditionalCodeType],
+            [AdditionalCode],
             False,
         ),
         (
@@ -182,7 +182,7 @@ pytestmark = pytest.mark.django_db
             NewFootnoteAssociationGoodsNomenclatureParser,
             FootnoteAssociationGoodsNomenclature,
             "footnote.association.goods.nomenclature",
-            [GoodsNomenclature, FootnoteType, Footnote],
+            [GoodsNomenclature, Footnote],
             False,
         ),
         # Footnotes
@@ -198,7 +198,7 @@ pytestmark = pytest.mark.django_db
             FootnoteType,
             "footnote.type.description",
             [FootnoteType],
-            False,
+            True,
         ),
         (
             NewFootnoteParser,
@@ -211,14 +211,14 @@ pytestmark = pytest.mark.django_db
             NewFootnoteDescriptionParser,
             FootnoteDescription,
             "footnote.description",
-            [Footnote, FootnoteType],
+            [Footnote],
             False,
         ),
         (
             NewFootnoteDescriptionPeriodParser,
             FootnoteDescription,
             "footnote.description.period",
-            [Footnote, FootnoteType],
+            [Footnote],
             True,
         ),
         # Geo Areas
@@ -246,7 +246,7 @@ pytestmark = pytest.mark.django_db
         (
             NewGeographicalMembershipParser,
             GeographicalMembership,
-            "geographical.area.membership",
+            "geographical.membership",
             [GeographicalArea],
             False,
         ),
