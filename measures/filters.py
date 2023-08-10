@@ -14,7 +14,6 @@ from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models.orm import GoodsNomenclature
-from common.filters import ActiveStateMixin
 from common.filters import AutoCompleteFilter
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
@@ -37,8 +36,8 @@ BEFORE_EXACT_AFTER_CHOICES = (
     ("after", "after"),
 )
 
+
 ACTIVE_CURRENT_CHOICES = (
-    # ("inherited", "Include inherited measures for specific commodity code"),
     ("active", "Show active measures only"),
     ("current", "Only include measures in this current workbasket"),
 )
@@ -57,7 +56,7 @@ class MeasureTypeFilterBackend(TamatoFilterBackend):
     )  # XXX order is significant
 
 
-class MeasureFilter(TamatoFilter, ActiveStateMixin):
+class MeasureFilter(TamatoFilter):
     def __init__(self, *args, **kwargs):
         if kwargs["data"]:
             kwargs["data"]._mutable = True
@@ -65,6 +64,10 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
                 kwargs["data"]["start_date_modifier"] = "exact"
             if "end_date_modifier" not in kwargs["data"]:
                 kwargs["data"]["end_date_modifier"] = "exact"
+            if "active_measures" not in kwargs["data"]:
+                kwargs["data"]["active_measures"] = False
+            if "current_workbasket" not in kwargs["data"]:
+                kwargs["data"]["current_workbasket"] = False
             kwargs["data"]._mutable = False
         super(MeasureFilter, self).__init__(*args, **kwargs)
 
@@ -96,16 +99,16 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
         },
     )
 
-    # is_active = BooleanFilter(
+    # active_measures = BooleanFilter(
     #     label="Show active measures only",
     #     widget=forms.CheckboxInput,
-    #     method="active_measure",
+    #     method="active_measures_workbasket_filter",
     # )
 
     # current_workbasket = BooleanFilter(
     #     label="WIP - Only include measures in this current workbasket",
     #     widget=forms.CheckboxInput,
-    #     method="measures_in_workbasket",
+    #     method="active_measures_workbasket_filter",
     # )
 
     # measures on declarable commodities
@@ -115,6 +118,14 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
         widget=forms.CheckboxInput,
         field_name="goods_nomenclature",
         method="commodity_modifier",
+    )
+
+    measure_filters_modifier = ChoiceFilter(
+        label="",
+        widget=forms.RadioSelect,
+        method="measures_filter",
+        empty_label=None,
+        choices=ACTIVE_CURRENT_CHOICES,
     )
 
     goods_nomenclature__item_id = CharFilter(
@@ -180,14 +191,6 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
     start_date = GovUKDateFilter(
         label="",
         method="filter_start_date",
-    )
-
-    measure_filters_modifier = ChoiceFilter(
-        label="",
-        widget=forms.RadioSelect,
-        method="measures_filter",
-        empty_label=None,
-        choices=ACTIVE_CURRENT_CHOICES,
     )
 
     start_date_modifier = ChoiceFilter(
@@ -271,23 +274,9 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
             )
         return queryset
 
-    # measures in current workbasket
-    # workbaskets - limbo state for when tarriff managers are making changes to tarriffs. Stored in session --> have a look at workbasket view summary (/workbaskets/current/). Have a look at get form quargs, may pass as var here.
     def measures_filter(self, queryset, name, value):
         if value:
             modifier = self.data["measure_filters_modifier"]
-            # if modifier == "inherited":
-            #     commodity = (
-            #         GoodsNomenclature.objects.filter(id=self.data["goods_nomenclature"])
-            #         .current()
-            #         .first()
-            #     )
-
-            #     queryset = get_measures_on_declarable_commodities(
-            #         WorkBasket.get_current_transaction(self.request),
-            #         commodity.item_id,
-            #     )
-            #     return queryset
             if modifier == "active":
                 current_date = date.today()
 
@@ -299,7 +288,7 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
                 queryset = (
                     queryset.with_effective_valid_between()
                     .annotate(start_date=StartDate("valid_between"))
-                    .annotate(end_date=EndDate("db_effective_valid_between"))
+                    .annotate(end_date=EndDate("valid_between"))
                     .filter(filter_query)
                 )
                 # return queryset
@@ -311,35 +300,10 @@ class MeasureFilter(TamatoFilter, ActiveStateMixin):
                 # return queryset
         return queryset
 
-    # def measures_in_workbasket(self, queryset, name, value):
-    #     if value is True:
-    #         # This is a MeasurseQuerySet --> array of Measures
-    #         queryset = WorkBasket.get_current_transaction(self.request).workbasket.measures
-
-    #         # print('*'*80,f'{name=}', f'{measures_in_workbasket=}', f'{queryset=}')
-    #         # queryset = queryset.filter(measures_in_workbasket)
-    #         return queryset
-    #     else:
-    #         return queryset
-
-    # def active_measure(self, queryset, name, value):
-    #     current_date = date.today()
-
-    #     filter_query = Q(end_date__gt=current_date) | Q(end_date__isnull=True) & Q(
-    #         start_date__lt=current_date,
-    #     )
-    #     queryset = (
-    #         queryset.with_effective_valid_between()
-    #         .annotate(start_date=StartDate("valid_between"))
-    #         .annotate(end_date=EndDate("db_effective_valid_between"))
-    #         .filter(filter_query)
-    #     )
-    #     return queryset
-
     class Meta:
         model = Measure
 
         form = MeasureFilterForm
 
         # Defines the order shown in the form.
-        fields = ["search", "sid", "active_state"]
+        fields = ["search", "sid"]

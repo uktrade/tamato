@@ -797,6 +797,8 @@ class MeasureFilterForm(forms.Form):
                 ),
                 Div(
                     "modc",
+                    "active_measures",
+                    "current_workbasket",
                     css_class="govuk-grid-column-full form-group-margin-bottom-2",
                 ),
                 css_class="govuk-grid-row govuk-!-margin-top-6",
@@ -826,9 +828,19 @@ class MeasureFilterForm(forms.Form):
                 ),
                 css_class="govuk-grid-row govuk-!-padding-top-6 filter-layout__filters",
             ),
-            Button("submit", "Search and Filter", css_class="govuk-!-margin-top-6"),
-            HTML(
-                f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+            Div(
+                Div(
+                    Button(
+                        "submit",
+                        "Search and Filter",
+                        css_class="govuk-!-margin-top-6",
+                    ),
+                    HTML(
+                        f'<a class="govuk-link govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                    ),
+                    css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                ),
+                css_class="govuk-grid-row govuk-!-padding-top-6",
             ),
         )
 
