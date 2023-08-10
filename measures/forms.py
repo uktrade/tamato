@@ -766,81 +766,95 @@ class MeasureFilterForm(forms.Form):
         self.helper.layout = Layout(
             Div(
                 Div(
-                    "goods_nomenclature",
-                    Field.text("sid", field_width=Fluid.TWO_THIRDS),
-                    "regulation",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                Div(
-                    "goods_nomenclature__item_id",
-                    "additional_code",
-                    "measure_type",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                Div(
-                    "order_number",
-                    "certificates",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                css_class="govuk-grid-row govuk-!-margin-top-6",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            HTML(
-                '<h3 class="govuk-body">Filters</h3>',
-            ),
-            Div(
-                Div(
-                    Field.radios("measure_filters_modifier", inline=True),
-                    css_class="govuk-grid-column-full form-group-margin-bottom-2",
-                ),
-                Div(
-                    "modc",
-                    "active_measures",
-                    "current_workbasket",
-                    css_class="govuk-grid-column-full form-group-margin-bottom-2",
-                ),
-                css_class="govuk-grid-row govuk-!-margin-top-6",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            HTML(
-                '<p class="govuk-body">Time period</p>',
-            ),
-            Div(
-                Div(
-                    Field.radios(
-                        "start_date_modifier",
-                        inline=True,
+                    HTML(
+                        '<h2 class="govuk-heading-m govuk-!-margin-top-3 govuk-accordion__section-heading"><span class="govuk-body govuk-accordion__section-button" id="accordion-default-heading-1">Search and filter</span></h2>',
                     ),
-                    "start_date",
-                    css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
+                    css_class="govuk-accordion__section-header",
                 ),
                 Div(
-                    Field.radios(
-                        "end_date_modifier",
-                        inline=True,
-                    ),
-                    "end_date",
-                    css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
-                ),
-                css_class="govuk-grid-row govuk-!-padding-top-6 filter-layout__filters",
-            ),
-            Div(
-                Div(
-                    Button(
-                        "submit",
-                        "Search and Filter",
-                        css_class="govuk-!-margin-top-6",
+                    Div(
+                        Div(
+                            "goods_nomenclature",
+                            Field.text("sid", field_width=Fluid.TWO_THIRDS),
+                            "regulation",
+                            css_class="govuk-grid-column-one-third",
+                        ),
+                        Div(
+                            "goods_nomenclature__item_id",
+                            "additional_code",
+                            "measure_type",
+                            css_class="govuk-grid-column-one-third",
+                        ),
+                        Div(
+                            "order_number",
+                            "certificates",
+                            css_class="govuk-grid-column-one-third",
+                        ),
+                        css_class="govuk-grid-row govuk-!-margin-top-6",
                     ),
                     HTML(
-                        f'<a class="govuk-link govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                        '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
                     ),
-                    css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                    HTML(
+                        '<h3 class="govuk-body">Filters</h3>',
+                    ),
+                    Div(
+                        Div(
+                            Field.radios("measure_filters_modifier", inline=True),
+                            css_class="govuk-grid-column-full form-group-margin-bottom-2",
+                        ),
+                        Div(
+                            "modc",
+                            "active_measures",
+                            "current_workbasket",
+                            css_class="govuk-grid-column-full form-group-margin-bottom-2",
+                        ),
+                        css_class="govuk-grid-row govuk-!-margin-top-6",
+                    ),
+                    HTML(
+                        '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+                    ),
+                    HTML(
+                        '<p class="govuk-body">Time period</p>',
+                    ),
+                    Div(
+                        Div(
+                            Field.radios(
+                                "start_date_modifier",
+                                inline=True,
+                            ),
+                            "start_date",
+                            css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
+                        ),
+                        Div(
+                            Field.radios(
+                                "end_date_modifier",
+                                inline=True,
+                            ),
+                            "end_date",
+                            css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
+                        ),
+                        css_class="govuk-grid-row govuk-!-padding-top-6 filter-layout__filters",
+                    ),
+                    Div(
+                        Div(
+                            Button(
+                                "submit",
+                                "Search and Filter",
+                                css_class="govuk-!-margin-top-6",
+                            ),
+                            HTML(
+                                f'<a class="govuk-link govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                            ),
+                            css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                        ),
+                        css_class="govuk-grid-row govuk-!-padding-top-6",
+                    ),
+                    css_class="govuk-accordion__section-content",
+                    css_id="accordion-default-content-1",
                 ),
-                css_class="govuk-grid-row govuk-!-padding-top-6",
+                css_class="govuk-accordion govuk-!-margin-bottom-5",
+                css_id="accordion-default",
             ),
         )
 
