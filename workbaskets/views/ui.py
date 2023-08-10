@@ -730,13 +730,14 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
     @property
     def matching_measures(self):
         measures = []
-        for row in self.data_upload.rows.all():
-            matches = self.workbasket_measures.filter(
-                valid_between=row.valid_between,
-                goods_nomenclature=row.commodity,
-            )
-            measures += matches
-            # TODO: match duty sentence
+        if self.data_upload:
+            for row in self.data_upload.rows.all():
+                matches = self.workbasket_measures.filter(
+                    valid_between=row.valid_between,
+                    goods_nomenclature=row.commodity,
+                )
+                measures += matches
+                # TODO: match duty sentence
 
         return measures
 

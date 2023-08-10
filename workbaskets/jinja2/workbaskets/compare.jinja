@@ -35,67 +35,73 @@
     {{ crispy(form) }}
   {% endcall %}
 
-  <h2 class="govuk-heading-l">Previously uploaded data</h2>
+  {% if data_upload %}
+    <h2 class="govuk-heading-l">Previously uploaded data</h2>
 
-  {% set table_rows = [] %}
-  {% for row in data_upload.serialized %}
-    {{ table_rows.append([
-      {"text": row.commodity},
-      {"text": row.duty },
-      {"text": "{:%d %b %Y}".format(row.valid_between.lower) },
-      {"text": "{:%d %b %Y}".format(row.valid_between.upper) if row.valid_between.upper else "—" },
-    ]) or "" }}
-  {% endfor %}
+    {% set table_rows = [] %}
+    {% for row in data_upload.serialized %}
+      {{ table_rows.append([
+        {"text": row.commodity},
+        {"text": row.duty },
+        {"text": "{:%d %b %Y}".format(row.valid_between.lower) },
+        {"text": "{:%d %b %Y}".format(row.valid_between.upper) if row.valid_between.upper else "—" },
+      ]) or "" }}
+    {% endfor %}
 
-  {{ govukTable({
-    "head": [
-      {"text": "Commodity code"},
-      {"text": "Duties"},
-      {"text": "Start date"},
-      {"text": "End date"},
-    ],
-    "rows": table_rows,
-    "classes": "govuk-table-m"
-  }) }}
+    {{ govukTable({
+      "head": [
+        {"text": "Commodity code"},
+        {"text": "Duties"},
+        {"text": "Start date"},
+        {"text": "End date"},
+      ],
+      "rows": table_rows,
+      "classes": "govuk-table-m"
+    }) }}
 
-  <h2 class="govuk-heading-l">{{ matching_measures|length }} matching measures found</h2>
+  {% endif %}
 
-  {% set table_rows = [] %}
-  {% for measure in matching_measures %}
-    {% set measure_link -%}
-      <a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a>
-    {%- endset %}
-    {{ table_rows.append([
-      {"html": measure_link},
-      {"text": measure.measure_type.sid ~ " - " ~ measure.measure_type.description},
-      {"text": create_link(url("commodity-ui-detail", kwargs={"sid": measure.goods_nomenclature.sid}), measure.goods_nomenclature.item_id) if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
-      {"text": measure.duty_sentence if measure.duty_sentence else '-'},
-      {"text": "{:%d %b %Y}".format(measure.valid_between.lower) },
-      {"text": "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else "-" },
-      {"html": create_link(url("additional_code-ui-detail", kwargs={"sid": measure.additional_code.sid}), measure.additional_code.type.sid ~ measure.additional_code.code) if measure.additional_code else '-'},
-      {"html": create_link(url("geo_area-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
-      {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
-      {"text": footnotes_display(measure.footnoteassociationmeasure_set.current())},
-      {"text": conditions_list(measure) if measure.conditions.current() else "-"},
-    ]) or "" }}
-  {% endfor %}
+  {% if matching_measures %}
+    <h2 class="govuk-heading-l">{{ matching_measures|length }} matching measures found</h2>
 
-  {{ govukTable({
-    "head": [
-      {"text": "Measure SID"},
-      {"text": "Measure type"},
-      {"text": "Commodity code"},
-      {"text": "Duties"},
-      {"text": "Start date"},
-      {"text": "End date"},
-      {"text": "Additional code"},
-      {"text": "Geographical area"},
-      {"text": "Quota"},
-      {"text": "Footnote"},
-      {"text": "Conditions"},
-    ],
-    "rows": table_rows,
-    "classes": "govuk-table-m"
-  }) }}
+    {% set table_rows = [] %}
+    {% for measure in matching_measures %}
+      {% set measure_link -%}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a>
+      {%- endset %}
+      {{ table_rows.append([
+        {"html": measure_link},
+        {"text": measure.measure_type.sid ~ " - " ~ measure.measure_type.description},
+        {"text": create_link(url("commodity-ui-detail", kwargs={"sid": measure.goods_nomenclature.sid}), measure.goods_nomenclature.item_id) if measure.goods_nomenclature else '-', "classes": "govuk-!-width-one-eighth"},
+        {"text": measure.duty_sentence if measure.duty_sentence else '-'},
+        {"text": "{:%d %b %Y}".format(measure.valid_between.lower) },
+        {"text": "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else "-" },
+        {"html": create_link(url("additional_code-ui-detail", kwargs={"sid": measure.additional_code.sid}), measure.additional_code.type.sid ~ measure.additional_code.code) if measure.additional_code else '-'},
+        {"html": create_link(url("geo_area-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
+        {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
+        {"text": footnotes_display(measure.footnoteassociationmeasure_set.current())},
+        {"text": conditions_list(measure) if measure.conditions.current() else "-"},
+      ]) or "" }}
+    {% endfor %}
+
+    {{ govukTable({
+      "head": [
+        {"text": "Measure SID"},
+        {"text": "Measure type"},
+        {"text": "Commodity code"},
+        {"text": "Duties"},
+        {"text": "Start date"},
+        {"text": "End date"},
+        {"text": "Additional code"},
+        {"text": "Geographical area"},
+        {"text": "Quota"},
+        {"text": "Footnote"},
+        {"text": "Conditions"},
+      ],
+      "rows": table_rows,
+      "classes": "govuk-table-m"
+    }) }}
+
+  {% endif %}
 
 {% endblock %}
