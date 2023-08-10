@@ -23,9 +23,14 @@ def test_importer_list():
         assert str(import_batch.pk) in output
 
 
-def test_importer_inspect(importing_import_batch):
+def test_importer_inspect(importing_goods_import_batch):
     out = StringIO()
-    call_command("importer", "inspect", f"{importing_import_batch.pk}", stdout=out)
+    call_command(
+        "importer",
+        "inspect",
+        f"{importing_goods_import_batch.pk}",
+        stdout=out,
+    )
     output_lines = out.getvalue().splitlines()
 
     assert "ImportBatch details" in output_lines[0]
@@ -44,11 +49,11 @@ def test_importer_inspect(importing_import_batch):
         tokens = re.split("\W+", matched_line)
         return tokens[1] if tokens and len(tokens) > 1 else None
 
-    assert str(importing_import_batch.pk) == get_value_from_line_name(
+    assert str(importing_goods_import_batch.pk) == get_value_from_line_name(
         output_lines,
         "PK",
     )
-    assert importing_import_batch.status == get_value_from_line_name(
+    assert importing_goods_import_batch.status == get_value_from_line_name(
         output_lines,
         "Status",
     )

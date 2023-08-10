@@ -15,6 +15,11 @@
 {% endblock %}
 
 {% block content %}
-  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-      {{ crispy(form, context={"csrf_token": csrf_token, "request": request}) }}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+    {{ crispy(form, context={"csrf_token": csrf_token, "request": request}) }}
+  </div>
+</div>
 {% endblock %}
