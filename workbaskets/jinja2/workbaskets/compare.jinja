@@ -62,7 +62,7 @@
   {% endif %}
 
   {% if matching_measures %}
-    <h2 class="govuk-heading-l">{{ matching_measures|length }} matching measures found</h2>
+    <h2 class="govuk-heading-l">{{ matching_measures|length }} matching measure{{ matching_measures|pluralize }} found</h2>
 
     {% set table_rows = [] %}
     {% for measure in matching_measures %}
