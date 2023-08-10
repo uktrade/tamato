@@ -730,6 +730,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
     @property
     def matching_measures(self):
         measures = []
+        duty_matches = []
         if self.data_upload:
             for row in self.data_upload.rows.all():
                 matches = self.workbasket_measures.filter(
@@ -737,9 +738,15 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
                     goods_nomenclature=row.commodity,
                 )
                 measures += matches
-                # TODO: match duty sentence
+            for row in self.data_upload.rows.all():
+                matches = [
+                    measure
+                    for measure in measures
+                    if measure.duty_sentence == row.duty_sentence
+                ]
+                duty_matches += matches
 
-        return measures
+        return duty_matches
 
     def get_context_data(self, *args, **kwargs):
         return super().get_context_data(
