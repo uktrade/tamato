@@ -95,6 +95,7 @@ def test_upload_taric_form_save(run_batch, chunk_taric, superuser):
         batch = form.save(user=superuser)
 
         assert batch.name == "test_upload"
+        assert batch.goods_import == False
         assert batch.split_job == False
         assert batch.workbasket
 
@@ -138,6 +139,7 @@ def test_commodity_import_form_valid_envelope(
     ):
         batch = form.save()
         assert batch.name.find(file_data["taric_file"].name) != -1
+        assert batch.goods_import == True
         assert batch.split_job == False
         assert batch.author.id == superuser.id
         assert batch.workbasket.title == data["workbasket_title"]
