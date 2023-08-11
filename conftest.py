@@ -358,11 +358,11 @@ def published_footnote_type(queued_workbasket):
 @pytest.fixture
 @given("there is a current workbasket")
 def session_workbasket(client, new_workbasket) -> WorkBasket:
-    # FIXME - this doesn't actually update the session object! See session
-    # referencing, updating and saving on the session_empty_workbasket()
-    # fixture function.
-    new_workbasket.save_to_session(client.session)
-    client.session.save()
+    # Get a reference to the actual session object rather than a descriptor on
+    # the client.
+    session = client.session
+    new_workbasket.save_to_session(session)
+    session.save()
     return new_workbasket
 
 
