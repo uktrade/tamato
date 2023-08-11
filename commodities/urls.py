@@ -89,4 +89,9 @@ urlpatterns = [
         views.FootnoteAssociationGoodsNomenclatureUpdate.as_view(),
         name="footnote_association_goods_nomenclature-ui-edit-create",
     ),
+    path(
+        f"{footnote_association_pattern}/confirm-update/",
+        views.FootnoteAssociationGoodsNomenclatureConfirmUpdate.as_view(),
+        name="footnote_association_goods_nomenclature-ui-confirm-update",
+    ),
 ]
