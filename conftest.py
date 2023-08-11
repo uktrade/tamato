@@ -473,7 +473,10 @@ def use_create_form(valid_user_api_client: APIClient):
     use_update_form
     """
 
-    def use(Model: Type[TrackedModel], new_data: Callable[Dict[str, str]]):
+    def use(
+        Model: Type[TrackedModel],
+        new_data: Callable[[Dict[str, str]], Dict[str, str]],
+    ):
         """
         :param Model: Model class to test
         :param new_data function to populate form initial data.
