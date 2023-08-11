@@ -364,10 +364,11 @@ def session_workbasket(client, new_workbasket) -> WorkBasket:
 
 
 @pytest.fixture
-def empty_session_workbasket(client) -> WorkBasket:
+def session_empty_workbasket(client) -> WorkBasket:
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
+    workbasket.save_to_session(client.session)
     client.session.save()
     return workbasket
 

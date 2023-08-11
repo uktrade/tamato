@@ -1027,7 +1027,7 @@ def test_workbasket_changes_view_without_permission(client, session_workbasket):
 def test_successfully_delete_workbasket(
     valid_user_client,
     valid_user,
-    empty_session_workbasket,
+    session_empty_workbasket,
 ):
     """Test that deleting an empty workbasket by a user having the necessary
     `workbasket.can_delete` permssion."""
@@ -1035,7 +1035,7 @@ def test_successfully_delete_workbasket(
     valid_user.user_permissions.add(
         Permission.objects.get(codename="delete_workbasket"),
     )
-    workbasket_pk = empty_session_workbasket.pk
+    workbasket_pk = session_empty_workbasket.pk
     delete_url = reverse(
         "workbaskets:workbasket-ui-delete",
         kwargs={"pk": workbasket_pk},
@@ -1068,12 +1068,12 @@ def test_successfully_delete_workbasket(
 
 def test_delete_workbasket_missing_user_permission(
     valid_user_client,
-    empty_session_workbasket,
+    session_empty_workbasket,
 ):
     """Test that attempts to access the delete workbasket view and delete a
     workbasket fails for a user without the necessary permissions."""
 
-    workbasket_pk = empty_session_workbasket.pk
+    workbasket_pk = session_empty_workbasket.pk
     url = reverse(
         "workbaskets:workbasket-ui-delete",
         kwargs={"pk": workbasket_pk},
@@ -1123,13 +1123,38 @@ def test_delete_nonempty_workbasket(
     assert models.WorkBasket.objects.filter(pk=workbasket_pk)
 
 
-def test_application_access_after_workbasket_delete():
+def test_application_access_after_workbasket_delete(
+    valid_user_client,
+    session_empty_workbasket,
+):
     """
-    Test that after deleting a user's 'current' workbasket, the user is still.
-
+    Test that after deleting a user's 'current' workbasket, the user is still
     able to access the application via a valid view - that is, a view unrelated
-    to the deleted workbasket. This is to ensure the user's session is left in a
-    valid state after deleting their workbasket - i.e. this test is not
-    concerned with 404 'not found'-type errors that could result after a delete
-    action.
+    to the deleted workbasket, which would obviously fail with a not found
+    error. This is to ensure the user's session is left in a valid state after
+    deleting their current workbasket - i.e. this test is concerned with
+    ensuring application avoids 500-series errors under the above conditions.
     """
+
+    workbasket_pk = session_empty_workbasket.pk
+    url = reverse("workbaskets:workbasket-ui-list")
+
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(response.content, "html.parser")
+    # A workbasket link should be available in the header nav bar before
+    # session workbasket deletion.
+    assert response.status_code == 200
+
+    assert (
+        f"Workbasket {workbasket_pk}"
+        in page.select("header nav a.workbasket-link")[0].text
+    )
+
+    session_empty_workbasket.delete()
+
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(response.content, "html.parser")
+    # No workbasket link should exist in the header nav bar after session
+    # workbasket deletion.
+    assert response.status_code == 200
+    assert not page.select("header nav a.workbasket-link")
