@@ -179,9 +179,13 @@ class QuotaDefinitionList(FormMixin, SortingMixin, ListView):
         return kwargs
 
     def get_queryset(self):
-        queryset = models.QuotaDefinition.objects.filter(
-            order_number__sid=self.quota.sid,
-        ).current()
+        queryset = (
+            models.QuotaDefinition.objects.filter(
+                order_number__sid=self.quota.sid,
+            )
+            .current()
+            .order_by("pk")
+        )
 
         ordering = self.get_ordering()
         if ordering:
