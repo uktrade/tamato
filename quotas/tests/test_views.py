@@ -546,6 +546,44 @@ def test_quota_definitions_list_edit_delete(
     assert "Delete" in actions[2]
 
 
+def test_quota_definitions_list_sort_by_start_date(
+    valid_user_client,
+    date_ranges,
+):
+    """Test that quota definitions list can be sorted by start date in ascending
+    or descending order."""
+    quota_order_number = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.big_no_end,
+    )
+    definition1 = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+    definition2 = factories.QuotaDefinitionFactory.create(
+        order_number=quota_order_number,
+        valid_between=date_ranges.later,
+    )
+    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+
+    response = valid_user_client.get(f"{url}?sort_by=valid_between&order=asc")
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    definition_sids = [
+        int(row.text)
+        for row in page.select(".govuk-table tbody tr td:first-child details summary")
+    ]
+    assert definition_sids == [definition1.sid, definition2.sid]
+
+    response = valid_user_client.get(f"{url}?sort_by=valid_between&order=desc")
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    definition_sids = [
+        int(row.text)
+        for row in page.select(".govuk-table tbody tr td:first-child details summary")
+    ]
+    assert definition_sids == [definition2.sid, definition1.sid]
+
+
 def test_quota_detail_blocking_periods_tab(
     valid_user_client,
     date_ranges,
