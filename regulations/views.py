@@ -4,6 +4,7 @@ from rest_framework import viewsets
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
+from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -130,16 +131,32 @@ class RegulationUpdate(
         if form.instance.regulation_id == form.cleaned_data["regulation_id"]:
             return super().get_result_object(form)
 
-        form.changed_data.append("regulation_id")
-        obj = super().get_result_object(form)
+        model_fields = [f.name for f in self.model._meta.get_fields()]
+        form_changed_data = [f for f in form.changed_data if f in model_fields]
+        # Regulation_id is not a field on the form and so needs to be added to form.changed_data
+        form_changed_data.append("regulation_id")
+        changed_data = {name: form.cleaned_data[name] for name in form_changed_data}
+
+        new_regulation = form.instance.copy(
+            transaction=self.workbasket.new_transaction(),
+            **changed_data,
+        )
 
         for measure in form.instance.measure_set.current():
             measure.new_version(
-                generating_regulation=obj,
-                workbasket=obj.transaction.workbasket,
+                generating_regulation=new_regulation,
+                terminating_regulation=new_regulation
+                if measure.terminating_regulation == form.instance
+                else measure.terminating_regulation,
+                workbasket=self.workbasket,
             )
 
-        return obj
+        old_regulation = form.instance.new_version(
+            update_type=UpdateType.DELETE,
+            workbasket=self.workbasket,
+        )
+
+        return new_regulation
 
 
 class RegulationEditUpdate(

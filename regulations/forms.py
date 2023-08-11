@@ -19,6 +19,7 @@ from django.utils.safestring import SafeString
 from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
+from common.validators import UpdateType
 from regulations.models import Group
 from regulations.models import Regulation
 from regulations.validators import UK_ID
@@ -307,12 +308,12 @@ class RegulationEditForm(RegulationFormBase):
         self.fields["sequence_number"].initial = self.instance.regulation_id[3:7]
 
         if not self.instance.is_draft_regulation:
-            uneditable_fields = {
+            non_editable_fields = {
                 "regulation_usage": "regulation usage",
                 "sequence_number": "sequence number",
                 "published_at": "published date",
             }
-            for field, name in uneditable_fields.items():
+            for field, name in non_editable_fields.items():
                 help_text = f"You can't edit the {name} for an approved regulation"
                 self.fields[field].disabled = True
                 self.fields[field].required = False
@@ -368,23 +369,34 @@ class RegulationEditForm(RegulationFormBase):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
+
         if instance.regulation_id == self.cleaned_data["regulation_id"]:
             instance.save()
             return instance
 
         workbasket = instance.transaction.workbasket
-        regulation = instance.new_version(
+        new_regulation = instance.copy(
             regulation_id=self.cleaned_data["regulation_id"],
-            workbasket=workbasket,
+            transaction=workbasket.new_transaction(),
         )
 
         for measure in self.instance.measure_set.current():
             measure.new_version(
-                generating_regulation=regulation,
+                generating_regulation=new_regulation,
+                terminating_regulation=new_regulation
+                if measure.terminating_regulation.regulation_id
+                == instance.regulation_id
+                else measure.terminating_regulation,
                 workbasket=workbasket,
             )
 
-        return regulation
+        old_regulation = Regulation.objects.get(regulation_id=instance.regulation_id)
+        old_regulation.new_version(
+            update_type=UpdateType.DELETE,
+            workbasket=workbasket,
+        )
+
+        return new_regulation
 
 
 RegulationDeleteForm = delete_form_for(Regulation)
