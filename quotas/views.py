@@ -179,13 +179,21 @@ class QuotaDefinitionList(FormMixin, SortingMixin, ListView):
         return kwargs
 
     def get_queryset(self):
-        return (
+        queryset = (
             models.QuotaDefinition.objects.filter(
                 order_number__sid=self.quota.sid,
             )
             .current()
             .order_by("pk")
         )
+
+        ordering = self.get_ordering()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+
+        return queryset
 
     @property
     def blocking_periods(self):
