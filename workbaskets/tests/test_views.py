@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import pytest
 from bs4 import BeautifulSoup
+from django.contrib.auth.models import Permission
 from django.urls import reverse
 from django.utils.timezone import localtime
 
@@ -1020,3 +1021,57 @@ def test_workbasket_changes_view_without_permission(client, session_workbasket):
     response = client.get(url)
 
     assert response.status_code == 403
+
+
+def test_successfully_delete_workbasket(
+    valid_user_client,
+    valid_user,
+    empty_session_workbasket,
+):
+    """Test that deleting an empty workbasket by a user having the necessary
+    `workbasket.can_delete` permssion."""
+
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="delete_workbasket"),
+    )
+    workbasket_pk = empty_session_workbasket.pk
+    url = reverse(
+        "workbaskets:workbasket-ui-delete",
+        kwargs={"pk": workbasket_pk},
+    )
+    response = valid_user_client.post(url, {})
+
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "workbaskets:workbasket-ui-delete-done",
+        kwargs={"deleted_pk": workbasket_pk},
+    )
+
+
+def test_delete_workbasket_valid_permissions_view_access():
+    """Test that attempts to delete a workbasket by a user without the necessary
+    permissions fails."""
+
+
+def test_delete_workbasket_invalid_permissions_view_access(
+    valid_user_client,
+    session_workbasket,
+):
+    """Test that attempts to delete a workbasket by a user without the necessary
+    permissions fails."""
+
+
+def test_delete_nonempty_workbasket():
+    """Test that attempts to delete a non-empty workbasket fails."""
+
+
+def test_application_access_after_workbasket_delete():
+    """
+    Test that after deleting a user's 'current' workbasket, the user is still.
+
+    able to access the application via a valid view - that is, a view unrelated
+    to the deleted workbasket. This is to ensure the user's session is left in a
+    valid state after deleting their workbasket - i.e. this test is not
+    concerned with 404 'not found'-type errors that could result after a delete
+    action.
+    """
