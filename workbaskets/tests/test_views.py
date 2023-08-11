@@ -1,3 +1,4 @@
+import re
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -1089,8 +1090,37 @@ def test_delete_workbasket_missing_user_permission(
     assert models.WorkBasket.objects.filter(pk=workbasket_pk)
 
 
-def test_delete_nonempty_workbasket():
+def test_delete_nonempty_workbasket(
+    valid_user_client,
+    valid_user,
+    session_workbasket,
+):
     """Test that attempts to delete a non-empty workbasket fails."""
+
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="delete_workbasket"),
+    )
+    workbasket_pk = session_workbasket.pk
+    workbasket_object_count = session_workbasket.tracked_models.count()
+    delete_url = reverse(
+        "workbaskets:workbasket-ui-delete",
+        kwargs={"pk": workbasket_pk},
+    )
+    assert workbasket_object_count
+
+    # POST the delete form.
+    response = valid_user_client.post(delete_url, {})
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content, "html.parser")
+    error_list = page.select("ul.govuk-list.govuk-error-summary__list")[0]
+    assert error_list.find(
+        text=re.compile(
+            f"Workbasket {workbasket_pk} contains {workbasket_object_count} "
+            f"item\(s\), but must be empty",
+        ),
+    )
+    assert models.WorkBasket.objects.filter(pk=workbasket_pk)
 
 
 def test_application_access_after_workbasket_delete():
