@@ -1,0 +1,36 @@
+{% extends "common/confirm_create.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Add a commodity code footnote" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit commodities", "href": url("commodity-ui-list")},
+      {"text": object.goods_nomenclature._meta.verbose_name|capitalize ~ ": " ~ object.goods_nomenclature|string, "href": object.goods_nomenclature.get_url()},
+      {"text": "Add a footnote", "href": url("commodity-ui-add-footnote", args=[object.goods_nomenclature.sid])},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": "Footnote association " ~ object|string ~ " has been updated",
+    "text": "This footnote association has been updated in your workbasket",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block main_button %}
+  {{ govukButton({
+    "text": "Back to commodity",
+    "href": url('commodity-ui-detail-footnotes', args=[object.goods_nomenclature.sid]),
+    "classes": "govuk-button--primary"
+  }) }}
+{% endblock%}
+
+{% block actions %}
+<li><a class="govuk-link" href="{{ url('commodity-ui-add-footnote', args=[object.goods_nomenclature.sid]) }}">Add another footnote</a></li>
+<li><a href="{{ url('commodity-ui-list') }}">Find and edit commodities</a></li>
+{% endblock %}

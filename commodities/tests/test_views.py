@@ -486,13 +486,12 @@ def test_commodity_footnotes_page(valid_user_client):
     footnotes = soup.select(".govuk-table__body .govuk-table__row")
     assert len(footnotes) == commodity.footnote_associations.count()
 
-    first_footnote_description = (
-        footnotes[0].select(".govuk-table__cell:nth-child(2)")[0].text.strip()
-    )
-    assert (
-        first_footnote_description
-        == commodity.footnote_associations.order_by("valid_between")
-        .first()
-        .associated_footnote.descriptions.first()
-        .description
-    )
+    page_footnote_descriptions = {
+        element.select(".govuk-table__cell:nth-child(2)")[0].text.strip()
+        for element in footnotes
+    }
+    footnote_descriptions = {
+        footnote_association.associated_footnote.descriptions.first().description
+        for footnote_association in commodity.footnote_associations.all()
+    }
+    assert not footnote_descriptions.difference(page_footnote_descriptions)
