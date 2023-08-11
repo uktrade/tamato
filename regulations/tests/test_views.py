@@ -147,13 +147,14 @@ def test_regulation_api_list_view(valid_user_client, date_ranges):
     )
 
 
-def test_regulation_update_view_updates_associated_measures(valid_user_client):
-    """Test that an update to a regulation's `regulation_id` also updates its
-    associated measures."""
+def test_regulation_update_view_new_regulation_id(date_ranges, valid_user_client):
+    """Test that an update to a regulation's `regulation_id` creates a new
+    regulation, updates associated measures, and deletes old one."""
     regulation = factories.UIDraftRegulationFactory.create()
     associated_measures = factories.MeasureFactory.create_batch(
-        3,
+        2,
         generating_regulation=regulation,
+        valid_between=date_ranges.normal,
     )
 
     form_data = {
@@ -168,6 +169,10 @@ def test_regulation_update_view_updates_associated_measures(valid_user_client):
         "sequence_number": "1234",
         "approved": regulation.approved,
     }
+    regulation_usage = form_data["regulation_usage"][0]
+    publication_year = str(form_data["published_at_2"])[-2:]
+    sequence_number = f"{form_data['sequence_number']:0>4}"
+    new_regulation_id = f"{regulation_usage}{publication_year}{sequence_number}0"
 
     url = reverse(
         "regulation-ui-edit",
@@ -179,16 +184,11 @@ def test_regulation_update_view_updates_associated_measures(valid_user_client):
     response = valid_user_client.post(url, form_data)
     assert response.status_code == 302
 
-    new_regulation = Regulation.objects.last()
-    assert new_regulation.update_type == UpdateType.UPDATE
-
-    regulation_usage = form_data["regulation_usage"][0]
-    publication_year = str(form_data["published_at_2"])[-2:]
-    sequence_number = f"{form_data['sequence_number']:0>4}"
-    assert (
-        new_regulation.regulation_id
-        == f"{regulation_usage}{publication_year}{sequence_number}0"
-    )
+    new_regulation = Regulation.objects.get(regulation_id=new_regulation_id)
+    assert new_regulation.update_type == UpdateType.CREATE
 
     measure_sids = [measure.sid for measure in associated_measures]
     assert new_regulation.measure_set.filter(sid__in=measure_sids).exists()
+    assert new_regulation.terminated_measures.filter(sid__in=measure_sids).exists()
+
+    assert regulation.get_versions().last().update_type == UpdateType.DELETE
