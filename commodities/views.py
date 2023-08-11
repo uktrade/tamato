@@ -276,6 +276,7 @@ class FootnoteAssociationGoodsNomenclatureUpdate(
 ):
     form_class = CommodityFootnoteEditForm
     template_name = "commodity_footnotes/edit.jinja"
+    success_path = "confirm-update"
 
     validate_business_rules = (
         business_rules.NIG18,
