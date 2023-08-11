@@ -1,0 +1,10 @@
+{% extends "common/edit.jinja" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit commodities", "href": url("commodity-ui-list")},
+      {"text": object.goods_nomenclature._meta.verbose_name|capitalize ~ ": " ~ object.goods_nomenclature|string ~ " footnotes", "href": url("commodity-ui-detail-footnotes", args=[object.goods_nomenclature.sid])},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}

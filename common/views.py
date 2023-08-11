@@ -278,15 +278,16 @@ class BusinessRulesMixin:
 
     validate_business_rules: Tuple[Type[BusinessRule], ...] = tuple()
 
-    def form_violates(self, form) -> bool:
+    def form_violates(self, form, transaction=None) -> bool:
         """
         If any of the specified business rules are violated, reshow the form
         with the violations as form errors.
 
         :param form: The submitted form
+        :param transaction: The transaction containing the version of the object to be validated. Defaults to `self.object.transaction`
         """
         violations = False
-        transaction = self.object.transaction
+        transaction = transaction or self.object.transaction
 
         for rule in self.validate_business_rules:
             try:
