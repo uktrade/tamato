@@ -308,7 +308,7 @@ class RegulationFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "regulations.Regulation"
 
-    regulation_id = factory.Sequence(lambda n: f"R{Dates().now:%y}{n:04d}0")
+    regulation_id = factory.Sequence(lambda n: f"R{Dates().now:%y}{n+1:04d}0")
     approved = True
     role_type = 1
     community_code = 1
@@ -351,6 +351,13 @@ class UIRegulationFactory(BaseRegulationFactory):
     """
 
     published_at = date_ranges("now")
+
+
+class UIDraftRegulationFactory(UIRegulationFactory):
+    """Draft regulation factory used by our UI form tests."""
+
+    regulation_id = factory.Sequence(lambda n: f"C{Dates().now:%y}{n+1:04d}0")
+    approved = False
 
 
 class AmendmentFactory(TrackedModelMixin):
