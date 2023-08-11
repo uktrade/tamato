@@ -849,6 +849,7 @@ class MeasureFilterForm(forms.Form):
                             css_class="govuk-grid-row govuk-!-padding-top-6",
                         ),
                     ),
+                    css_class="govuk-grid-row govuk-!-padding-top-6",
                 ),
             ),
         )
