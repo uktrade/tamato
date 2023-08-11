@@ -1035,30 +1035,58 @@ def test_successfully_delete_workbasket(
         Permission.objects.get(codename="delete_workbasket"),
     )
     workbasket_pk = empty_session_workbasket.pk
-    url = reverse(
+    delete_url = reverse(
         "workbaskets:workbasket-ui-delete",
         kwargs={"pk": workbasket_pk},
     )
-    response = valid_user_client.post(url, {})
 
+    # GET the form view.
+    response = valid_user_client.get(delete_url)
+    page = BeautifulSoup(response.content, "html.parser")
+    assert response.status_code == 200
+    assert f"Delete workbasket {workbasket_pk}" in page.select("main h1")[0].text
+
+    # POST the delete form.
+    response = valid_user_client.post(delete_url, {})
     assert response.status_code == 302
     assert response.url == reverse(
         "workbaskets:workbasket-ui-delete-done",
         kwargs={"deleted_pk": workbasket_pk},
     )
+    assert not models.WorkBasket.objects.filter(pk=workbasket_pk)
+
+    # GET the deletion done page for the URL provided by the redirect response.
+    response = valid_user_client.get(response.url)
+    page = BeautifulSoup(response.content, "html.parser")
+    assert response.status_code == 200
+    assert (
+        f"Workbasket {workbasket_pk} has been deleted"
+        in page.select(".govuk-panel h1")[0].text
+    )
 
 
-def test_delete_workbasket_valid_permissions_view_access():
-    """Test that attempts to delete a workbasket by a user without the necessary
-    permissions fails."""
-
-
-def test_delete_workbasket_invalid_permissions_view_access(
+def test_delete_workbasket_missing_user_permission(
     valid_user_client,
-    session_workbasket,
+    empty_session_workbasket,
 ):
-    """Test that attempts to delete a workbasket by a user without the necessary
-    permissions fails."""
+    """Test that attempts to access the delete workbasket view and delete a
+    workbasket fails for a user without the necessary permissions."""
+
+    workbasket_pk = empty_session_workbasket.pk
+    url = reverse(
+        "workbaskets:workbasket-ui-delete",
+        kwargs={"pk": workbasket_pk},
+    )
+
+    # Get the form view.
+    get_response = valid_user_client.get(url)
+    assert get_response.status_code == 403
+    assert models.WorkBasket.objects.filter(pk=workbasket_pk)
+
+    # POST the delete form.
+    response = valid_user_client.post(url, {})
+    assert response.status_code == 403
+    assert models.WorkBasket.objects.filter(pk=workbasket_pk)
 
 
 def test_delete_nonempty_workbasket():
