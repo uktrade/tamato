@@ -64,10 +64,7 @@ class MeasureFilter(TamatoFilter):
                 kwargs["data"]["start_date_modifier"] = "exact"
             if "end_date_modifier" not in kwargs["data"]:
                 kwargs["data"]["end_date_modifier"] = "exact"
-            if "active_measures" not in kwargs["data"]:
-                kwargs["data"]["active_measures"] = False
-            if "current_workbasket" not in kwargs["data"]:
-                kwargs["data"]["current_workbasket"] = False
+
             kwargs["data"]._mutable = False
         super(MeasureFilter, self).__init__(*args, **kwargs)
 
