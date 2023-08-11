@@ -357,10 +357,19 @@ def published_footnote_type(queued_workbasket):
 
 @pytest.fixture
 @given("there is a current workbasket")
-def session_workbasket(client, new_workbasket):
+def session_workbasket(client, new_workbasket) -> WorkBasket:
     new_workbasket.save_to_session(client.session)
     client.session.save()
     return new_workbasket
+
+
+@pytest.fixture
+def empty_session_workbasket(client) -> WorkBasket:
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    client.session.save()
+    return workbasket
 
 
 @pytest.fixture
