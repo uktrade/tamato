@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
@@ -83,6 +84,65 @@ def test_regulation_list_view(
     """Verify that regulation list view is under the url regulations/ and
     doesn't return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
+
+
+@pytest.mark.parametrize(
+    ("regulation_factory", "search_filter", "value", "expected_results"),
+    [
+        (
+            lambda: factories.UIRegulationFactory.create(
+                regulation_group__group_id="PRF",
+            ),
+            "regulation_group",
+            "PRF",
+            1,
+        ),
+        (
+            lambda: factories.UIDraftRegulationFactory.create(),
+            "regulation_usage",
+            "C",
+            1,
+        ),
+        (lambda: factories.UIRegulationFactory.create(), "approved", True, 1),
+        (
+            lambda: factories.UIRegulationFactory.create(
+                regulation_group__group_id="MLA",
+            ),
+            "regulation_group",
+            "FTA",
+            0,
+        ),
+        (
+            lambda: factories.UIDraftRegulationFactory.create(),
+            "regulation_usage",
+            "X",
+            0,
+        ),
+        (lambda: factories.UIRegulationFactory.create(), "approved", False, 0),
+    ],
+)
+def test_regulations_list_view_search_filters(
+    regulation_factory,
+    search_filter,
+    value,
+    expected_results,
+    valid_user_client,
+):
+    """Test that regulation list view filters search results according to search
+    filter value."""
+    regulation = regulation_factory()
+
+    view_url = reverse("regulation-ui-list")
+    url = f"{view_url}?{search_filter}={value}"
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    search_results = page.select("table > tbody > tr")
+    assert len(search_results) == expected_results
+    if search_results:
+        assert search_results[0].td.text == regulation.regulation_id
 
 
 @pytest.mark.parametrize(
