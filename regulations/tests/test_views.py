@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -15,6 +16,8 @@ from common.tests.util import view_urlpattern_ids
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from regulations.models import Regulation
+from regulations.validators import RegulationUsage
 from regulations.views import RegulationList
 
 pytestmark = pytest.mark.django_db
@@ -142,3 +145,50 @@ def test_regulation_api_list_view(valid_user_client, date_ranges):
         expected_results,
         valid_user_client,
     )
+
+
+def test_regulation_update_view_new_regulation_id(date_ranges, valid_user_client):
+    """Test that an update to a regulation's `regulation_id` creates a new
+    regulation, updates associated measures, and deletes old one."""
+    regulation = factories.UIDraftRegulationFactory.create()
+    associated_measures = factories.MeasureFactory.create_batch(
+        2,
+        generating_regulation=regulation,
+        valid_between=date_ranges.normal,
+    )
+
+    form_data = {
+        "regulation_usage": RegulationUsage.DRAFT_REGULATION,
+        "regulation_group": regulation.regulation_group.pk,
+        "start_date_0": regulation.valid_between.lower.day,
+        "start_date_1": regulation.valid_between.lower.month,
+        "start_date_2": regulation.valid_between.lower.year,
+        "published_at_0": regulation.published_at.day,
+        "published_at_1": regulation.published_at.month,
+        "published_at_2": regulation.published_at.year + 1,
+        "sequence_number": "1234",
+        "approved": regulation.approved,
+    }
+    regulation_usage = form_data["regulation_usage"][0]
+    publication_year = str(form_data["published_at_2"])[-2:]
+    sequence_number = f"{form_data['sequence_number']:0>4}"
+    new_regulation_id = f"{regulation_usage}{publication_year}{sequence_number}0"
+
+    url = reverse(
+        "regulation-ui-edit",
+        kwargs={
+            "role_type": regulation.role_type,
+            "regulation_id": regulation.regulation_id,
+        },
+    )
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    new_regulation = Regulation.objects.get(regulation_id=new_regulation_id)
+    assert new_regulation.update_type == UpdateType.CREATE
+
+    measure_sids = [measure.sid for measure in associated_measures]
+    assert new_regulation.measure_set.filter(sid__in=measure_sids).exists()
+    assert new_regulation.terminated_measures.filter(sid__in=measure_sids).exists()
+
+    assert regulation.get_versions().last().update_type == UpdateType.DELETE

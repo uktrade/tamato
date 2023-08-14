@@ -97,3 +97,7 @@ class CommodityFootnoteForm(ValidityPeriodForm, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.init_layout()
+
+
+class CommodityFootnoteEditForm(CommodityFootnoteForm):
+    pass

@@ -155,8 +155,8 @@ def get_checkable_data(model: TrackedModel, ignore=frozenset()):
     Returns a dict representing the model's data ignoring any automatically set
     fields and fields with names passed to `ignore`.
 
-    The returned data will contain the identifying fields for any linked
-    models rather than internal PKs.
+    The returned data will contain the identifying fields for any linked models
+    rather than internal PKs.
 
     For example:
 
@@ -427,7 +427,11 @@ def assert_model_view_renders(
     # Models can be overridden using the override_models parameter.
     bits = url_pattern[0]
     params = get_fields_dict(instance, bits[0][1])
-    url = bits[0][0] % params
+    converters = url_pattern[3]
+    converted_params = {
+        key: converters[key].to_url(value) for key, value in params.items()
+    }
+    url = bits[0][0] % converted_params
 
     assert len(url) > 1, "No matching URLs were found."
 
@@ -779,7 +783,6 @@ def only_applicable_after(cutoff):
 
     :param cutoff: A date string, or datetime object before which the test should fail.
     """
-
     cutoff = parse_date(cutoff)
 
     def decorator(fn):

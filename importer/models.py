@@ -74,6 +74,11 @@ class ImportBatch(TimestampedMixin):
         editable=False,
         null=True,
     )
+    goods_import = models.BooleanField(
+        default=False,
+    )
+    """Indicates if this is intended to be a goods-only import and presented in
+    the UI as such."""
     status = FSMField(
         default=ImportBatchStatus.IMPORTING,
         choices=ImportBatchStatus.choices,
@@ -89,11 +94,14 @@ class ImportBatch(TimestampedMixin):
         symmetrical=False,
         blank=True,
     )
+    """Relationship to other imports that must be completed before this import
+    is processed."""
     workbasket = models.OneToOneField(
         "workbaskets.WorkBasket",
         on_delete=models.SET_NULL,
         null=True,
     )
+    """The workbasket in which the parser creates its imported entities."""
     taric_file = models.FileField(
         storage=CommodityImporterStorage,
         default="",

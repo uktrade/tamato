@@ -10,6 +10,7 @@ from rest_framework import viewsets
 from commodities import business_rules
 from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
+from commodities.forms import CommodityFootnoteEditForm
 from commodities.forms import CommodityFootnoteForm
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models import GoodsNomenclature
@@ -26,6 +27,7 @@ from common.views import WithPaginationListView
 from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricUpdateView
 
 
 class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
@@ -59,7 +61,7 @@ class CommodityMixin:
         return GoodsNomenclature.objects.current()
 
 
-class CommodityFootnoteMixin:
+class FootnoteAssociationMixin:
     model = FootnoteAssociationGoodsNomenclature
 
     def get_queryset(self):
@@ -262,6 +264,35 @@ class CommodityAddFootnote(CreateTaricCreateView):
         return context
 
 
-class CommodityAddFootnoteConfirm(CommodityFootnoteMixin, TrackedModelDetailView):
+class CommodityAddFootnoteConfirm(FootnoteAssociationMixin, TrackedModelDetailView):
     template_name = "commodity_footnotes/confirm_create.jinja"
     required_url_kwargs = ("pk",)
+
+
+class FootnoteAssociationGoodsNomenclatureUpdate(
+    FootnoteAssociationMixin,
+    TrackedModelDetailView,
+    CreateTaricUpdateView,
+):
+    form_class = CommodityFootnoteEditForm
+    template_name = "commodity_footnotes/edit.jinja"
+    success_path = "confirm-update"
+
+    validate_business_rules = (
+        business_rules.NIG18,
+        business_rules.NIG22,
+        business_rules.NIG23,
+        business_rules.NIG24,
+    )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["tx"] = self.workbasket.new_transaction()
+        return kwargs
+
+
+class FootnoteAssociationGoodsNomenclatureConfirmUpdate(
+    FootnoteAssociationMixin,
+    TrackedModelDetailView,
+):
+    template_name = "commodity_footnotes/confirm_update.jinja"

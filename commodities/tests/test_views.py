@@ -5,6 +5,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
+from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
 from commodities.views import CommodityList
 from common.models.transactions import Transaction
@@ -486,13 +487,39 @@ def test_commodity_footnotes_page(valid_user_client):
     footnotes = soup.select(".govuk-table__body .govuk-table__row")
     assert len(footnotes) == commodity.footnote_associations.count()
 
-    first_footnote_description = (
-        footnotes[0].select(".govuk-table__cell:nth-child(2)")[0].text.strip()
+    page_footnote_descriptions = {
+        element.select(".govuk-table__cell:nth-child(2)")[0].text.strip()
+        for element in footnotes
+    }
+    footnote_descriptions = {
+        footnote_association.associated_footnote.descriptions.first().description
+        for footnote_association in commodity.footnote_associations.all()
+    }
+    assert not footnote_descriptions.difference(page_footnote_descriptions)
+
+
+def test_commodity_footnote_update_success(valid_user_client, date_ranges):
+    commodity = factories.GoodsNomenclatureFactory.create()
+    footnote1 = factories.FootnoteFactory.create()
+    association1 = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+        associated_footnote=footnote1,
+        goods_nomenclature=commodity,
     )
-    assert (
-        first_footnote_description
-        == commodity.footnote_associations.order_by("valid_between")
-        .first()
-        .associated_footnote.descriptions.first()
-        .description
+    url = association1.get_url("edit")
+    data = {
+        "goods_nomenclature": commodity.id,
+        "associated_footnote": footnote1.id,
+        "start_date_0": date_ranges.later.lower.day,
+        "start_date_1": date_ranges.later.lower.month,
+        "start_date_2": date_ranges.later.lower.year,
+        "end_date": "",
+    }
+    response = valid_user_client.post(url, data)
+    tx = Transaction.objects.last()
+    updated_association = (
+        FootnoteAssociationGoodsNomenclature.objects.approved_up_to_transaction(
+            tx,
+        ).first()
     )
+    assert response.status_code == 302
+    assert response.url == updated_association.get_url("confirm-update")

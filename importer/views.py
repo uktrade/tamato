@@ -72,7 +72,9 @@ class CommodityImportListView(
         "common.add_trackedmodel",
         "common.change_trackedmodel",
     ]
-    queryset = models.ImportBatch.objects.order_by("-created_at")
+    queryset = models.ImportBatch.objects.filter(
+        goods_import=True,
+    ).order_by("-created_at")
     template_name = "eu-importer/select-imports.jinja"
     filterset_class = TaricImportFilter
 
@@ -104,7 +106,34 @@ class CommodityImportListView(
         elif import_status == ImportBatchStatus.FAILED and workbasket_status == None:
             context["selected_link"] = "errored"
 
+        context["goods_status"] = self.goods_status
+
         return context
+
+    @classmethod
+    def goods_status(cls, import_batch: ImportBatchFilter) -> str:
+        """Returns the goods status of an ImportBatch instance, used to
+        determine rendered output of the goods status column in this list view's
+        template."""
+        workbasket = import_batch.workbasket
+
+        if (
+            import_batch.status == ImportBatchStatus.SUCCEEDED
+            and workbasket
+            and workbasket.status == WorkflowStatus.EDITING
+        ):
+            return "editable_goods"
+        elif (
+            import_batch.status == ImportBatchStatus.SUCCEEDED
+            and import_batch.taric_file
+            and (not workbasket or workbasket.status == WorkflowStatus.ARCHIVED)
+        ):
+            # ImportBatch instances without a `taric_file` object are legacy
+            # instances and are not considered to have "no_goods" status.
+            return "no_goods"
+        else:
+            # All other statuses are considered empty.
+            return "empty"
 
 
 class CommodityImportCreateView(
