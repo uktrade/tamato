@@ -59,13 +59,12 @@ class MeasureTypeFilterBackend(TamatoFilterBackend):
 class MeasureFilter(TamatoFilter):
     def __init__(self, *args, **kwargs):
         if kwargs["data"]:
-            kwargs["data"]._mutable = True
-            if "start_date_modifier" not in kwargs["data"]:
-                kwargs["data"]["start_date_modifier"] = "exact"
-            if "end_date_modifier" not in kwargs["data"]:
-                kwargs["data"]["end_date_modifier"] = "exact"
+            data = kwargs["data"].copy()
+            if "start_date_modifier" not in data:
+                data["start_date_modifier"] = "exact"
+            if "end_date_modifier" not in data:
+                data["end_date_modifier"] = "exact"
 
-            kwargs["data"]._mutable = False
         super(MeasureFilter, self).__init__(*args, **kwargs)
 
     sid = CharFilter(
@@ -97,7 +96,6 @@ class MeasureFilter(TamatoFilter):
     )
 
     # measures on declarable commodities in goods_nomenclature
-    # TODO: Invalidate if no code entered
     modc = BooleanFilter(
         label="Include inherited measures for specific commodity code",
         widget=forms.CheckboxInput,
@@ -276,13 +274,11 @@ class MeasureFilter(TamatoFilter):
                     .annotate(end_date=EndDate("valid_between"))
                     .filter(filter_query)
                 )
-                # return queryset
             if modifier == "current":
                 queryset = WorkBasket.get_current_transaction(
                     self.request,
                 ).workbasket.measures
 
-                # return queryset
         return queryset
 
     class Meta:
