@@ -96,19 +96,7 @@ class MeasureFilter(TamatoFilter):
         },
     )
 
-    # active_measures = BooleanFilter(
-    #     label="Show active measures only",
-    #     widget=forms.CheckboxInput,
-    #     method="active_measures_workbasket_filter",
-    # )
-
-    # current_workbasket = BooleanFilter(
-    #     label="WIP - Only include measures in this current workbasket",
-    #     widget=forms.CheckboxInput,
-    #     method="active_measures_workbasket_filter",
-    # )
-
-    # measures on declarable commodities
+    # measures on declarable commodities in goods_nomenclature
     # TODO: Invalidate if no code entered
     modc = BooleanFilter(
         label="Include inherited measures for specific commodity code",
