@@ -57,7 +57,9 @@ def test_ON10_not_effective_valid_between():
     valid_between = TaricDateRange(date(2020, 1, 1), date(2022, 1, 1))
 
     measure = factories.MeasureWithQuotaFactory.create(
-        order_number__origin__valid_between=TaricDateRange(date(2021, 1, 1), date(2021, 1, 31)),
+        order_number__origin__valid_between=TaricDateRange(
+            date(2021, 1, 1), date(2021, 1, 31)
+        ),
         valid_between=valid_between,
         transaction=unapproved_transaction,
     )
@@ -76,12 +78,16 @@ def test_ON10_not_effective_valid_between():
 def test_ON10_is_effective_valid_between():
     unapproved_transaction = factories.UnapprovedTransactionFactory.create()
 
-    regulation = factories.RegulationFactory.create(effective_end_date=date(2021, 1, 31))
+    regulation = factories.RegulationFactory.create(
+        effective_end_date=date(2021, 1, 31)
+    )
 
     valid_between = TaricDateRange(date(2020, 1, 1), None)
 
     measure = factories.MeasureWithQuotaFactory.create(
-        order_number__origin__valid_between=TaricDateRange(date(2020, 1, 1), date(2021, 1, 31)),
+        order_number__origin__valid_between=TaricDateRange(
+            date(2020, 1, 1), date(2021, 1, 31)
+        ),
         valid_between=valid_between,
         generating_regulation=regulation,
         transaction=unapproved_transaction,
@@ -96,6 +102,3 @@ def test_ON10_is_effective_valid_between():
     business_rules.ON10(origin.transaction).validate(origin)
 
     assert unapproved_transaction.workbasket.tracked_model_check_errors.count() == 0
-
-
-
