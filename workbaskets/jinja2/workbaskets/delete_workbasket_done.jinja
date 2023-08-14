@@ -29,10 +29,14 @@
     }) }}
 
     {{ govukButton({
-      "text": "Go to the home page",
-      "href": url("home"),
+      "text": "Go to workbasket list",
+      "href": url("workbaskets:workbasket-ui-list"),
       "classes": "govuk-button--secondary"
     }) }}
+
+    <ul class="govuk-list govuk-list-spaced">
+      <li><a class="govuk-link" href="{{ url('home') }}">Return to home page</a></li>
+    </ul>
   </div>
 </div>
 {% endblock %}
