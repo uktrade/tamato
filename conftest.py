@@ -358,8 +358,7 @@ def published_footnote_type(queued_workbasket):
 @pytest.fixture
 @given("there is a current workbasket")
 def session_workbasket(client, new_workbasket) -> WorkBasket:
-    # Get a reference to the actual session object rather than a descriptor on
-    # the client.
+    # Get the real session object, not descriptor.
     session = client.session
     new_workbasket.save_to_session(session)
     session.save()
@@ -371,8 +370,7 @@ def session_empty_workbasket(valid_user_client) -> WorkBasket:
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    # Get a reference to the actual session object rather than a descriptor on
-    # the client.
+    # Get the real session object, not descriptor.
     session = valid_user_client.session
     workbasket.save_to_session(session)
     session.save()
