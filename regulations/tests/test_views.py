@@ -87,7 +87,7 @@ def test_regulation_list_view(
 
 
 @pytest.mark.parametrize(
-    ("regulation_factory", "search_filter", "value", "expected_results"),
+    ("regulation_factory", "search_filter", "value", "expected_result"),
     [
         (
             lambda: factories.UIRegulationFactory.create(
@@ -121,15 +121,17 @@ def test_regulation_list_view(
         (lambda: factories.UIRegulationFactory.create(), "approved", False, 0),
     ],
 )
-def test_regulations_list_view_search_filters(
+def test_regulation_list_view_search_filters(
     regulation_factory,
     search_filter,
     value,
-    expected_results,
+    expected_result,
     valid_user_client,
 ):
     """Test that regulation list view filters search results according to search
     filter value."""
+    factories.RegulationGroupFactory.create(group_id="PRF")
+    factories.RegulationGroupFactory.create(group_id="MLA")
     regulation = regulation_factory()
 
     view_url = reverse("regulation-ui-list")
@@ -140,7 +142,7 @@ def test_regulations_list_view_search_filters(
 
     page = BeautifulSoup(str(response.content), "html.parser")
     search_results = page.select("table > tbody > tr")
-    assert len(search_results) == expected_results
+    assert len(search_results) == expected_result
     if search_results:
         assert search_results[0].td.text == regulation.regulation_id
 
