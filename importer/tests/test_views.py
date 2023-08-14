@@ -81,7 +81,10 @@ def test_import_failure(file_name, error_msg, superuser_client):
 
 
 def test_commodity_import_list_view_renders(superuser_client):
-    factories.ImportBatchFactory.create_batch(2)
+    factories.ImportBatchFactory.create_batch(
+        2,
+        goods_import=True,
+    )
 
     response = superuser_client.get(reverse("commodity_importer-ui-list"))
     assert response.status_code == 200
@@ -106,18 +109,21 @@ def test_commodity_import_list_view_renders(superuser_client):
         (
             lambda: factories.ImportBatchFactory.create(
                 status=ImportBatchStatus.IMPORTING,
+                goods_import=True,
             ),
             "empty",
         ),
         (
             lambda: factories.ImportBatchFactory.create(
                 status=ImportBatchStatus.SUCCEEDED,
+                goods_import=True,
             ),
             "editable_goods",
         ),
         (
             lambda: factories.ImportBatchFactory.create(
                 status=ImportBatchStatus.SUCCEEDED,
+                goods_import=True,
                 taric_file="TGB.xml",
                 workbasket__status=WorkflowStatus.ARCHIVED,
             ),
@@ -126,6 +132,7 @@ def test_commodity_import_list_view_renders(superuser_client):
         (
             lambda: factories.ImportBatchFactory.create(
                 status=ImportBatchStatus.FAILED,
+                goods_import=True,
             ),
             "empty",
         ),
@@ -230,27 +237,27 @@ def test_taric_import_list_filters_render(superuser_client):
     "import_batch,filter_url,expected_status_text",
     [
         (
-            "importing_import_batch",
+            "importing_goods_import_batch",
             "IMPORTING",
             "IMPORTING",
         ),
         (
-            "failed_import_batch",
+            "failed_goods_import_batch",
             "FAILED",
             "FAILED",
         ),
         (
-            "completed_import_batch",
+            "completed_goods_import_batch",
             "SUCCEEDED&workbasket__status=EDITING",
             "SUCCEEDED",
         ),
         (
-            "published_import_batch",
+            "published_goods_import_batch",
             "SUCCEEDED&workbasket__status=PUBLISHED",
             "SUCCEEDED",
         ),
         (
-            "empty_import_batch",
+            "empty_goods_import_batch",
             "SUCCEEDED&workbasket__status=ARCHIVED",
             "SUCCEEDED",
         ),
