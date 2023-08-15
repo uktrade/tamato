@@ -317,7 +317,7 @@ class FootnoteAssociationGoodsNomenclatureDelete(
     def form_valid(self, form):
         messages.success(
             self.request,
-            f"Footnote association {self.object.associated_footnote.footnote_id}{self.object.associated_footnote.footnote_type.footnote_type_id} for commodity code {self.object.goods_nomenclature.item_id} has been deleted",
+            f"Footnote association {self.object.associated_footnote.footnote_type.footnote_type_id}{self.object.associated_footnote.footnote_id} for commodity code {self.object.goods_nomenclature.item_id} has been deleted",
         )
         return super().form_valid(form)
 

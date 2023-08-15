@@ -557,5 +557,5 @@ def test_footnote_association_delete(valid_user_client):
 
     assert (
         h1.text.strip()
-        == f"Footnote association {footnote1.footnote_id}{footnote1.footnote_type.footnote_type_id} for commodity code {commodity.item_id} has been deleted",
+        == f"Footnote association {footnote1.footnote_type.footnote_type_id}{footnote1.footnote_id} for commodity code {commodity.item_id} has been deleted",
     )
