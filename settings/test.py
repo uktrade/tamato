@@ -48,5 +48,5 @@ TARIFF_API_INTERFACE = "publishing.tariff_api.interface.TariffAPIStubbed"
 FILE_UPLOAD_HANDLERS = ("django.core.files.uploadhandler.MemoryFileUploadHandler",)
 
 NOTIFICATIONS_API_INTERFACE = (
-    "notifications.notifications_api.interface.NotificationsAPIStubbed"
+    "notifications.notifications_api.interface.NotificationAPIStubbed"
 )

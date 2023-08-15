@@ -1,4 +1,5 @@
 import base64
+import json
 import uuid
 from abc import ABC
 from abc import abstractmethod
@@ -41,13 +42,22 @@ class NotificationAPIStubbed(NotificationAPIBase):
         response = Response()
 
         if not email_address:
-            response.reason = "404 Taric file does not exist"
+            response._content = bytes(json.dumps(
+                "[{'error': 'ValidationError', 'message': 'email_address Not a valid email address'}]" 
+            ), "utf-8")
+            response.headers["Content-Type"] = "application/json"
             response.status_code = 400
         elif not template_id:
-            response.reason = "400 Template Id required"
-            response.status_code = 404
+            response._content = bytes(json.dumps(
+                "[{'error': 'ValidationError', 'message': 'template_id is not a valid UUID'}]"
+            ), "utf-8")
+            response.headers["Content-Type"] = "application/json"
+            response.status_code = 400
         elif not personalisation:
-            response.reason = "400 Bad request [invalid seq]"
+            response._content = bytes(json.dumps(
+                "[{'error': 'BadRequestError', 'message': 'Missing personalisation: stub'}]" 
+            ), "utf-8")
+            response.headers["Content-Type"] = "application/json"
             response.status_code = 400
         else:
             response.status_code = 200

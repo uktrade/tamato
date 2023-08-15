@@ -1317,6 +1317,11 @@ class NotificationLogFactory(factory.django.DjangoModelFactory):
     template_id = string_sequence(length=10)
     recipients = factory.Faker("text", max_nb_chars=24)
 
+class SucceededImportBatchFactory(ImportBatchFactory):
+        
+    status=ImportBatchStatus.SUCCEEDED
+    goods_import=True
+    taric_file="goods.xml"
 
 class GoodsReportNotificationFactory(factory.django.DjangoModelFactory):
     """This is a factory for a goods report notification, requires an import
@@ -1327,8 +1332,7 @@ class GoodsReportNotificationFactory(factory.django.DjangoModelFactory):
 
     template_id = string_sequence(length=10)
     email_type = GOODS_REPORT
-    # attachment_object = ImportBatchFactory()
-
+    attachment_object = factory.SubFactory(SucceededImportBatchFactory)
 
 class PackagingNotificationFactory(factory.django.DjangoModelFactory):
     """This is a factory for a goods report notification, requires an import

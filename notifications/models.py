@@ -1,5 +1,4 @@
 import logging
-import sys
 from tempfile import NamedTemporaryFile
 from uuid import uuid4
 
@@ -10,7 +9,6 @@ from django.db.transaction import atomic
 
 from common.models.mixins import TimestampedMixin
 from importer.goods_report import GoodsReporter
-from importer.models import ImportBatch
 from notifications.notification_type import GOODS_REPORT
 from notifications.notification_type import NOTIFICATION_CHOICES
 from notifications.notification_type import NotificationType
@@ -73,7 +71,7 @@ class NotificationManager(models.Manager):
         self,
         template_id: str,
         email_type: NotificationType,
-        attachment_id: int = None,
+        attachment_object: GenericForeignKey = None,
         personalisation: dict = {},
         **kwargs,
     ) -> "Notification":
@@ -88,11 +86,7 @@ class NotificationManager(models.Manager):
         :param attachment_id: optional attachment id for the object to send as an attachment
         :param personalisation: personalised data to display in the email
         """
-        attachment_object = None
-
-        if email_type == GOODS_REPORT:
-            import_batch = ImportBatch.objects.get(id=attachment_id)
-            attachment_object = import_batch
+        users = NotifiedUser.objects.filter(email_type.query)
         notification = super().create(
             template_id=template_id,
             personalisation=personalisation,
@@ -100,7 +94,6 @@ class NotificationManager(models.Manager):
             **kwargs,
         )
 
-        users = NotifiedUser.objects.filter(email_type.query)
         notification.notified_users.add(*users)
 
         notification.save()
@@ -162,8 +155,12 @@ class Notification(TimestampedMixin):
     def send(self):
         if self.attachment_object:
             # if file attachment then the object should have a generate_attachment function
-            # self.personalisation["link_to_file"] = self.attachment_object.generate_attachment()
-
+            # attachment = self.attachment_object.generate_attachment()
+            # self.personalisation["link_to_file"] = self.client.prepare_upload(
+            #         attachment,
+            #         retention_period="4 weeks",
+            #     )
+            
             with NamedTemporaryFile(suffix=".xlsx") as tmp:
                 reporter = GoodsReporter(self.attachment_object.taric_file)
                 goods_report = reporter.create_report()
@@ -183,16 +180,14 @@ class Notification(TimestampedMixin):
                         template_id=self.template_id,
                         personalisation=self.personalisation,
                     )
-                    print(response)
                     recipients += f"{user.email} \n"
                     NotificationLog.objects.create(
                         response_id=response["id"],
                         recipients=recipients,
                         notification=self,
                     )
-                except:
-                    exc_type, exc_value, exc_traceback = sys.exc_info()
-                    print(exc_value)
+                except Exception as e:
+                    print(type(e))
                     logger.error(
                         f"Failed to send email notification to {user.email}.",
                     )

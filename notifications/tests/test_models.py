@@ -15,13 +15,8 @@ def goods_report_notification():
     factories.NotifiedUserFactory(
         email="no_goods_report@email.co.uk",  # PS-IGNORE
     )
-    import_batch = factories.ImportBatchFactory.create(
-        status=ImportBatchStatus.SUCCEEDED,
-        goods_import=True,
-        taric_file="goods.xml",
-    )
 
-    return factories.GoodsReportNotificationFactory(attachment_id=import_batch.id)
+    return factories.GoodsReportNotificationFactory()
 
 
 def packaging_notification():
@@ -70,8 +65,7 @@ def publishing_notification():
     ),
 )
 def test_create_notification(notification_and_user_factory, user_type):
-    """Test that the submit-for-packaging button is disabled when a notification
-    has not been sent for a commodity code import (goods)"""
+    """Test that the creating a notification correctly assigns users."""
 
     expected_present_email = f"{user_type}@email.co.uk"  # PS-IGNORE
     expected_not_present_email = f"no_{user_type}@email.co.uk"  # PS-IGNORE

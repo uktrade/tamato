@@ -14,6 +14,7 @@ from common.tests.factories import GeographicalAreaFactory
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.factories import MeasureFactory
 from exporter.tasks import upload_workbaskets
+from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from measures.models import Measure
 from workbaskets import models
@@ -656,13 +657,8 @@ def successful_business_rules_setup(session_workbasket, valid_user_client):
 
 
 def import_batch_with_notification():
-    import_batch = factories.ImportBatchFactory.create(
-        status=ImportBatchStatus.SUCCEEDED,
-        goods_import=True,
-        taric_file="goods.xml",
-    )
-    factories.GoodsReportNotificationFactory(attachment_id=import_batch.id)
-    return import_batch
+    notification = factories.GoodsReportNotificationFactory()
+    return notification.import_batch
 
 
 @pytest.mark.parametrize(
@@ -711,7 +707,8 @@ def test_submit_for_packaging_disabled(
 
     if import_batch:
         import_batch.workbasket_id = session_workbasket.id
-        import_batch.save()
+        if isinstance(import_batch,ImportBatch):
+            import_batch.save()
 
     response = valid_user_client.get(
         reverse("workbaskets:current-workbasket"),
@@ -1169,9 +1166,11 @@ from xml.etree.ElementTree import ElementTree
         "no_import",
     ),
 )
-@patch("xml.etree.ElementTree.parse")
+#@patch("xml.etree.ElementTree.parse")
+@patch("storages.backends.s3boto3.S3Boto3Storage.url", return_value="test_goods.xml")
 def test_review_goods_notification_button(
-    mock_et_parse,
+    #mock_et_parse,
+    mock_file_path,
     successful_business_rules_setup,
     importer_storage,
     valid_user_client,
@@ -1182,13 +1181,14 @@ def test_review_goods_notification_button(
     """Test that the submit-for-packaging button is disabled when a notification
     has not been sent for a commodity code import (goods)"""
 
-    mock_tree = ElementTree()
-    mock_et_parse.return_value = mock_tree
+    # mock_tree = ElementTree()
+    # mock_et_parse.return_value = mock_tree
     import_batch = import_batch_factory()
 
     if import_batch:
         import_batch.workbasket_id = session_workbasket.id
-        import_batch.save()
+        if isinstance(import_batch,ImportBatch):
+            import_batch.save()
 
     # with patch(
     #     "importer.storages.CommodityImporterStorage.read",
