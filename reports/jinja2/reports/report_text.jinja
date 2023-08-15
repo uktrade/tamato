@@ -14,11 +14,16 @@
     </h1>
     <span class="govuk-caption-xl govuk-!-margin-bottom-9">Text</span>
     <h2 class="govuk-body">
-    {{ report.description|safe }}
+        {{ report.description|safe }}
     </h2>
     <div>
         <p class="govuk-body">
-            {{ report.text() }}
+            Data:
+            <ul>
+                {% for row in report.data() %}
+                    <li>x: {{ row['x'] }}, y: {{ row['y'] }}</li>
+                {% endfor %}
+            </ul>
         </p>
     </div>
 {% endblock %}
