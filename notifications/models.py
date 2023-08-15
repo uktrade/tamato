@@ -180,7 +180,7 @@ class Notification(TimestampedMixin):
                 try:
                     response = self.client.send_email(
                         email_address=user.email,
-                        template_id="aelkuylga",
+                        template_id=self.template_id,
                         personalisation=self.personalisation,
                     )
                     print(response)
