@@ -46,3 +46,7 @@ NOTIFICATIONS_API_KEY = "test-key"
 TARIFF_API_INTERFACE = "publishing.tariff_api.interface.TariffAPIStubbed"
 
 FILE_UPLOAD_HANDLERS = ("django.core.files.uploadhandler.MemoryFileUploadHandler",)
+
+NOTIFICATIONS_API_INTERFACE = (
+    "notifications.notifications_api.interface.NotificationsAPIStubbed"
+)

@@ -1,6 +1,7 @@
 from os import path
 from tempfile import NamedTemporaryFile
 
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count
 from django.db.models import Q
@@ -19,6 +20,8 @@ from importer.filters import ImportBatchFilter
 from importer.filters import TaricImportFilter
 from importer.goods_report import GoodsReporter
 from importer.models import ImportBatchStatus
+from notifications.create_and_send_notification import create_and_send_notificaiton
+from notifications.notification_type import GOODS_REPORT
 from workbaskets.validators import WorkflowStatus
 
 
@@ -236,3 +239,37 @@ class DownloadGoodsReportView(
     def get(self, request, *args, **kwargs) -> HttpResponse:
         import_batch = self.get_object()
         return self.download_response(import_batch)
+
+
+class NotifyGoodsReportView(
+    PermissionRequiredMixin,
+    DetailView,
+):
+    """View used to notify an import report of goods changes in Excel format."""
+
+    permission_required = "common.add_trackedmodel"
+    model = models.ImportBatch
+
+    def get(self, request, *args, **kwargs):
+        import_batch = self.get_object()
+
+        # create notification
+        create_and_send_notificaiton(
+            template_id=settings.GOODS_REPORT_TEMPLATE_ID,
+            email_type=GOODS_REPORT,
+            attachment_id=import_batch.id,
+            personalisation={
+                "tgb_id": import_batch.name,
+            },
+        )
+
+        return redirect(
+            reverse("goods-report-notify-success", kwargs={"pk": import_batch.id}),
+        )
+
+
+class NotifyGoodsReportSuccessView(DetailView):
+    """Goods Report notification success trigger view."""
+
+    template_name = "eu-importer/notify-success.jinja"
+    model = models.ImportBatch

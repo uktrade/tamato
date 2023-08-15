@@ -10,4 +10,5 @@ class NotifiedUserAdminForm(forms.ModelForm):
             "email",
             "enrol_packaging",
             "enrol_api_publishing",
+            "enrol_goods_report",
         ]

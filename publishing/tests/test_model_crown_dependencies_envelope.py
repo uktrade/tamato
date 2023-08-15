@@ -1,6 +1,6 @@
 import pytest
-from django.conf import settings
 
+from notifications.models import Notification
 from publishing.models import ApiPublishingState
 from publishing.models import CrownDependenciesEnvelope
 
@@ -48,10 +48,9 @@ def test_notify_processing_succeeded(
     personalisation = {
         "envelope_id": pwb.envelope.envelope_id,
     }
+    notification = Notification.objects.last()
     mocked_publishing_models_send_emails_delay.assert_called_with(
-        template_id=settings.API_PUBLISH_SUCCESS_TEMPLATE_ID,
-        personalisation=personalisation,
-        email_type="publishing",
+        notification_id=notification.id,
     )
 
 
@@ -72,8 +71,8 @@ def test_notify_processing_failed(
     personalisation = {
         "envelope_id": pwb.envelope.envelope_id,
     }
+
+    notification = Notification.objects.last()
     mocked_publishing_models_send_emails_delay.assert_called_with(
-        template_id=settings.API_PUBLISH_FAILED_TEMPLATE_ID,
-        personalisation=personalisation,
-        email_type="publishing",
+        notification_id=notification.id,
     )

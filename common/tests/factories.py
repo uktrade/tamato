@@ -25,6 +25,9 @@ from measures.validators import DutyExpressionId
 from measures.validators import ImportExportCode
 from measures.validators import MeasureTypeCombination
 from measures.validators import OrderNumberCaptureCode
+from notifications.notification_type import GOODS_REPORT
+from notifications.notification_type import PACKAGING
+from notifications.notification_type import PUBLISHING
 from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
 from workbaskets.validators import WorkflowStatus
@@ -1313,6 +1316,40 @@ class NotificationLogFactory(factory.django.DjangoModelFactory):
 
     template_id = string_sequence(length=10)
     recipients = factory.Faker("text", max_nb_chars=24)
+
+
+class GoodsReportNotificationFactory(factory.django.DjangoModelFactory):
+    """This is a factory for a goods report notification, requires an import
+    batch id to be passed in via attachment_id."""
+
+    class Meta:
+        model = "notifications.Notification"
+
+    template_id = string_sequence(length=10)
+    email_type = GOODS_REPORT
+    # attachment_object = ImportBatchFactory()
+
+
+class PackagingNotificationFactory(factory.django.DjangoModelFactory):
+    """This is a factory for a goods report notification, requires an import
+    batch id to be passed in via attachment_id."""
+
+    class Meta:
+        model = "notifications.Notification"
+
+    template_id = string_sequence(length=10)
+    email_type = PACKAGING
+
+
+class PublishingNotificationFactory(factory.django.DjangoModelFactory):
+    """This is a factory for a goods report notification, requires an import
+    batch id to be passed in via attachment_id."""
+
+    class Meta:
+        model = "notifications.Notification"
+
+    template_id = string_sequence(length=10)
+    email_type = PUBLISHING
 
 
 class PackagedWorkBasketFactory(factory.django.DjangoModelFactory):

@@ -9,6 +9,7 @@ from typing import Dict
 from typing import Optional
 from typing import Sequence
 from typing import Type
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import boto3
@@ -1528,3 +1529,12 @@ def empty_goods_import_batch():
         status=ImportBatchStatus.SUCCEEDED,
         workbasket_id=archived_workbasket.id,
     )
+
+
+@pytest.fixture()
+def mocked_send_emails_delay():
+    with patch(
+        "notifications.tasks.send_emails.delay",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ) as mocked_delay:
+        yield mocked_delay

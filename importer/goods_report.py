@@ -441,6 +441,7 @@ class GoodsReporter:
             </env:envelope>
         """
         tree = ET.parse(self.goods_file)
+        print(tree)
         root = tree.getroot()
 
         for transaction in root.iterfind(

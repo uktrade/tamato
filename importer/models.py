@@ -1,6 +1,7 @@
 from logging import getLogger
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models import Q
 from django.db.models import QuerySet
@@ -107,6 +108,12 @@ class ImportBatch(TimestampedMixin):
         default="",
         blank=True,
         validators=[validate_virus_check_result],
+    )
+    notifications = GenericRelation(
+        "notifications.Notification",
+        content_type_field="attachment_type",
+        object_id_field="attachment_id",
+        related_query_name="import_batch",
     )
 
     objects = models.Manager.from_queryset(ImporterQuerySet)()

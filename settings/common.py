@@ -741,6 +741,11 @@ MEASURES_PAGINATOR_MAX_COUNT = int(
 # key used to instantiate GOVUK Notify python client
 NOTIFICATIONS_API_KEY = os.environ.get("NOTIFICATIONS_API_KEY")
 
+NOTIFICATIONS_API_INTERFACE = os.environ.get(
+    "NOTIFICATIONS_API_INTERFACE",
+    "notifications.notifications_api.interface.NotificationAPI",
+)
+
 ENABLE_PACKAGING_NOTIFICATIONS = is_truthy(
     os.environ.get("ENABLE_PACKAGING_NOTIFICATIONS", "true"),
 )
@@ -754,6 +759,7 @@ CDS_ACCEPTED_TEMPLATE_ID = os.environ.get("CDS_ACCEPTED_TEMPLATE_ID")
 CDS_REJECTED_TEMPLATE_ID = os.environ.get("CDS_REJECTED_TEMPLATE_ID")
 API_PUBLISH_SUCCESS_TEMPLATE_ID = os.environ.get("API_PUBLISH_SUCCESS_TEMPLATE_ID")
 API_PUBLISH_FAILED_TEMPLATE_ID = os.environ.get("API_PUBLISH_FAILED_TEMPLATE_ID")
+GOODS_REPORT_TEMPLATE_ID = os.environ.get("GOODS_REPORT_TEMPLATE_ID")
 
 # Base service URL - required when constructing an absolute TAP URL to a page
 # from a Celery task where no HTTP request object is available.

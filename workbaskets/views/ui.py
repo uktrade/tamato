@@ -343,7 +343,10 @@ class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
                 for line in goods_report.report_lines
             ]
             context["import_batch_pk"] = import_batch.pk
-
+            # notifications only relevant to a goods import
+            context["unsent_notification"] = (
+                import_batch.goods_import and not import_batch.notifications.exists()
+            )
         return context
 
 
@@ -493,12 +496,23 @@ class CurrentWorkBasket(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page = self.paginator.get_page(self.request.GET.get("page", 1))
+        # set to true if there is an associated goods import batch with an unsent notification
+        try:
+            unsent_notifcation = (
+                self.workbasket.importbatch
+                and self.workbasket.importbatch.goods_import
+                and not self.workbasket.importbatch.notifications.exists()
+            )
+        except ObjectDoesNotExist:
+            unsent_notifcation = False
+
         context.update(
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
                 "uploaded_envelope_dates": self.uploaded_envelope_dates,
                 "rule_check_in_progress": False,
+                "unsent_notification": unsent_notifcation,
             },
         )
         if self.workbasket.rule_check_task_id:

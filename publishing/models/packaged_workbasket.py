@@ -25,8 +25,9 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
+from notifications.create_and_send_notification import create_and_send_notificaiton
 from notifications.models import NotificationLog
-from notifications.tasks import send_emails
+from notifications.notification_type import PACKAGING
 from publishing import models as publishing_models
 from publishing.models.decorators import save_after
 from publishing.models.decorators import skip_notifications_if_disabled
@@ -404,7 +405,6 @@ class PackagedWorkBasket(TimestampedMixin):
         Envelope model. Will return True if the previous_id comes back as None
         (this means the envelope is the first to be published to the API)
         """
-
         previous_id = PackagedWorkBasket.objects.last_unpublished_envelope_id()
         if self.envelope.envelope_id[2:] == "0001":
             year = int(self.envelope.envelope_id[:2])
@@ -578,11 +578,10 @@ class PackagedWorkBasket(TimestampedMixin):
             "embargo": self.embargo if self.embargo else "None",
             "jira_url": self.jira_url,
         }
-
-        send_emails.delay(
+        create_and_send_notificaiton(
             template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
+            email_type=PACKAGING,
             personalisation=personalisation,
-            email_type="packaging",
         )
 
     def notify_processing_completed(self, template_id):
@@ -609,10 +608,10 @@ class PackagedWorkBasket(TimestampedMixin):
             "comments": self.loadingreports.first().comments,
         }
 
-        send_emails.delay(
+        create_and_send_notificaiton(
             template_id=template_id,
+            email_type=PACKAGING,
             personalisation=personalisation,
-            email_type="packaging",
         )
 
     @skip_notifications_if_disabled
@@ -640,6 +639,7 @@ class PackagedWorkBasket(TimestampedMixin):
         """
         # TODO: Apply correct lookup when .packaged_work_basket is available.
         # return NotificationLog.objects.filter(packaged_work_basket=self).last()
+        # tODSO update
         return NotificationLog.objects.last() if self.position == 1 else None
 
     # Queue management.
