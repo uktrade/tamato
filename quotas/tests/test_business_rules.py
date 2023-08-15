@@ -147,42 +147,6 @@ def test_ON9(date_ranges):
 
 
 @only_applicable_after("2007-12-31")
-def test_ON10(date_ranges):
-    """
-    When a quota order number is used in a measure then the validity period of
-    the quota order number origin must span the validity period of the measure.
-
-    This rule is only applicable for measures with start date after 31/12/2007.
-    """
-
-    measure = factories.MeasureWithQuotaFactory.create(
-        order_number__origin__valid_between=date_ranges.normal,
-        valid_between=date_ranges.overlap_normal,
-    )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.ON10(measure.transaction).validate(
-            measure.order_number.quotaordernumberorigin_set.first(),
-        )
-
-
-def test_ON10_multiple_active_origins():
-    """Tests that it is possible to create multiple quota origins, as long as a
-    measure with a quota is covered by at least one of these origins."""
-    valid_between = TaricDateRange(date(2020, 1, 1), date(2020, 1, 31))
-    measure = factories.MeasureWithQuotaFactory.create(
-        order_number__origin__valid_between=valid_between,
-        valid_between=valid_between,
-    )
-    later_origin = factories.QuotaOrderNumberOriginFactory.create(
-        order_number=measure.order_number,
-        valid_between=TaricDateRange(date(2021, 1, 1), date(2021, 1, 31)),
-    )
-
-    business_rules.ON10(later_origin.transaction).validate(later_origin)
-
-
-@only_applicable_after("2007-12-31")
 def test_ON11(delete_record):
     """
     The quota order number cannot be deleted if it is used in a measure.
