@@ -16,9 +16,12 @@
 {% if object.footnote_associations.current().order_by("pk") %}
   {% set table_rows = [] %}
   {% for association in object.footnote_associations.current().order_by("valid_between") %}
-    {% set edit_link %}
+    {% set actions_html %}
       {% if association.get_url('edit') %}
-        <a href="{{ association.get_url('edit') }}" class="govuk-link">Edit</a>
+        <a href="{{ association.get_url('edit') }}" class="govuk-link">Edit</a><br>
+      {% endif %}
+      {% if association.get_url('delete') %}
+        <a href="{{ association.get_url('delete') }}" class="govuk-link">Delete</a>
       {% endif %}
     {% endset %}
     {{ table_rows.append([
@@ -26,7 +29,7 @@
         {"text": association.associated_footnote.descriptions.first().description },
         {"text": "{:%d %b %Y}".format(association.valid_between.lower) },
         {"text": "{:%d %b %Y}".format(association.valid_between.upper) if association.valid_between.upper else "—" },
-        {"text": edit_link },
+        {"text": actions_html },
       ]) or "" }}
   {% endfor %}
     {{ govukTable({
