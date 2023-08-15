@@ -3,40 +3,37 @@ import pytest
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
 from geo_areas.models import GeographicalAreaDescription
-from geo_areas.new_import_parsers import *
 from importer import new_importer
-from measures.new_import_parsers import NewMeasureTypeSeriesParser
+from measures.new_import_parsers import NewFootnoteAssociationMeasureParser
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewMeasureTypeSeriesParser:
+class TestNewFootnoteAssociationMeasureParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="measure.type.series" substitutionGroup="abstract.record">
+        <xs:element name="footnote.association.measure" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
-                    <xs:element name="validity.start.date" type="Date"/>
-                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
+                    <xs:element name="measure.sid" type="SID"/>
+                    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
+                    <xs:element name="footnote.id" type="FootnoteId"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>
     """
 
-    target_parser_class = NewMeasureTypeSeriesParser
+    target_parser_class = NewFootnoteAssociationMeasureParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure.type.series.id": "A",
-            "validity.start.date": "2021-01-01",
-            "validity.end.date": "2022-01-01",
-            "measure.type.combination": "6",
+            "measure_sid": "1",
+            "footnote_type_id": "AA",
+            "footnote_id": "BBB",
         }
 
         target = self.target_parser_class()
@@ -50,14 +47,13 @@ class TestNewMeasureTypeSeriesParser:
         )
 
         # verify all properties
-        assert target.sid == 8
-        assert target.valid_between_lower == date(2021, 1, 1)
-        assert target.valid_between_upper == date(2022, 1, 1)
-        assert target.measure_type_combination == 6
+        assert target.footnoted_measure__sid == 1
+        assert target.associated_footnote__footnote_type__footnote_type_id == "AA"
+        assert target.associated_footnote__footnote_id == "BBB"
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
-            "measure_series_CREATE.xml",
+            "footnote_association_measure_CREATE.xml",
             __file__,
         )
 

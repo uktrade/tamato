@@ -29,7 +29,7 @@ class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParse
 
     identity_fields = ["sid"]
 
-    sid: int = None
+    sid: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
     application_code: str = None
@@ -61,7 +61,7 @@ class NewAdditionalCodeTypeDescriptionParser(NewWritable, NewElementParser):
 
     identity_fields = ["sid"]
 
-    sid: int = None
+    sid: str = None
     description: str = None
 
 
@@ -94,7 +94,7 @@ class NewAdditionalCodeParser(NewWritable, NewElementParser):
 
     identity_fields = ["sid"]
 
-    sid: int = None
+    sid: str = None
     type__sid: int = None
     code: str = None
     valid_between_lower: date = None
@@ -135,7 +135,7 @@ class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
     sid: int = None
     # language_id: str = None
     described_additionalcode__sid: int = None
-    described_additionalcode__type_sid: int = None
+    described_additionalcode__type_sid: str = None
     described_additionalcode__code: str = None
     description: str = None
     validity_start: date = None
@@ -191,7 +191,7 @@ class NewAdditionalCodeDescriptionPeriodParser(
 
     sid: int = None
     described_additionalcode__sid: int = None
-    described_additionalcode__type__sid: int = None
+    described_additionalcode__type__sid: str = None
     described_additionalcode__code: str = None
     validity_start: date = None
 
@@ -254,5 +254,5 @@ class NewFootnoteAssociationAdditionalCodeParser(
     associated_footnote__footnote_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    additional_code__type__sid: int = None
+    additional_code__type__sid: str = None
     additional_code__code: str = None

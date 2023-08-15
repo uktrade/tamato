@@ -2,41 +2,53 @@ import pytest
 
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
-from geo_areas.models import GeographicalAreaDescription
 from geo_areas.new_import_parsers import *
 from importer import new_importer
-from measures.new_import_parsers import NewMeasureTypeSeriesParser
+from measures.models import MeasureType
+from measures.new_import_parsers import NewMeasureTypeParser
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewMeasureTypeSeriesParser:
+class TestNewMeasureTypeParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="measure.type.series" substitutionGroup="abstract.record">
+        <xs:element name="measure.type" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
+                    <xs:element name="measure.type.id" type="MeasureTypeId"/>
                     <xs:element name="validity.start.date" type="Date"/>
                     <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
+                    <xs:element name="trade.movement.code" type="TradeMovementCode"/>
+                    <xs:element name="priority.code" type="PriorityCode"/>
+                    <xs:element name="measure.component.applicable.code" type="MeasurementUnitApplicabilityCode"/>
+                    <xs:element name="origin.dest.code" type="OriginCode"/>
+                    <xs:element name="order.number.capture.code" type="OrderNumberCaptureCode"/>
+                    <xs:element name="measure.explosion.level" type="MeasureExplosionLevel"/>
+                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>
     """
 
-    target_parser_class = NewMeasureTypeSeriesParser
+    target_parser_class = NewMeasureTypeParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure.type.series.id": "A",
-            "validity.start.date": "2021-01-01",
-            "validity.end.date": "2022-01-01",
-            "measure.type.combination": "6",
+            "measure_type_id": "ZZZ",
+            "trade_movement_code": "1",
+            "priority_code": "2",
+            "measure_component_applicable_code": "3",
+            "origin_dest_code": "4",
+            "order_number_capture_code": "5",
+            "measure_explosion_level": "6",
+            "measure_type_series_id": "7",
+            "validity_start_date": "2021-01-01",
+            "validity_end_date": "2022-01-01",
         }
 
         target = self.target_parser_class()
@@ -50,14 +62,20 @@ class TestNewMeasureTypeSeriesParser:
         )
 
         # verify all properties
-        assert target.sid == 8
+        assert target.sid == "ZZZ"
+        assert target.trade_movement_code == 1
+        assert target.priority_code == 2
+        assert target.measure_component_applicability_code == 3
+        assert target.origin_destination_code == 4
+        assert target.order_number_capture_code == 5
+        assert target.measure_explosion_level == 6
+        assert target.measure_type_series__sid == "7"
         assert target.valid_between_lower == date(2021, 1, 1)
         assert target.valid_between_upper == date(2022, 1, 1)
-        assert target.measure_type_combination == 6
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
-            "measure_series_CREATE.xml",
+            "measure_type_CREATE.xml",
             __file__,
         )
 
@@ -78,11 +96,17 @@ class TestNewMeasureTypeSeriesParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.sid == 3
-        assert target.described_geographicalarea__sid == 8
-        assert target.described_geographicalarea__area_id == "AB01"
-        assert target.description == "Some Description"
+        assert target.sid == "ZZZ"
+        assert target.trade_movement_code == 1
+        assert target.priority_code == 2
+        assert target.measure_component_applicability_code == 3
+        assert target.origin_destination_code == 4
+        assert target.order_number_capture_code == 5
+        assert target.measure_explosion_level == 6
+        assert target.measure_type_series__sid == "A"
+        assert target.valid_between_lower == date(2021, 1, 1)
+        assert target.valid_between_upper == date(2022, 1, 1)
 
         assert len(importer.issues()) == 0
 
-        assert GeographicalAreaDescription.objects.all().count() == 1
+        assert MeasureType.objects.all().count() == 1

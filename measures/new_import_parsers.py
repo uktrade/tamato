@@ -1,7 +1,6 @@
 from datetime import date
 
 from certificates.models import CertificateType
-from footnotes.models import FootnoteType
 from importer.new_parsers import ModelLink
 from importer.new_parsers import ModelLinkField
 from importer.new_parsers import NewElementParser
@@ -226,12 +225,20 @@ class NewDutyExpressionParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "duty.expression"
 
-    sid: str = None
+    model_links = []
+
+    value_mapping = {
+        "duty_expression_id": "sid",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
+    sid: int = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    duty_amount_applicability_code: date = None
-    measurement_unit_applicability_code: date = None
-    monetary_unit_applicability_code: date = None
+    duty_amount_applicability_code: int = None
+    measurement_unit_applicability_code: int = None
+    monetary_unit_applicability_code: int = None
 
 
 class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
@@ -257,7 +264,7 @@ class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "duty.expression.description"
 
-    sid: str = None
+    sid: int = None
     # language_id: str = None
     description: str = None
 
@@ -280,16 +287,25 @@ class NewMeasureTypeParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "measure.type"
 
+    value_mapping = {
+        "measure_type_id": "sid",
+        "measure_component_applicable_code": "measure_component_applicability_code",
+        "origin_dest_code": "origin_destination_code",
+        "measure_type_series_id": "measure_type_series__sid",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     sid: str = None
+    trade_movement_code: int = None
+    priority_code: int = None
+    measure_component_applicability_code: int = None
+    origin_destination_code: int = None
+    order_number_capture_code: int = None
+    measure_explosion_level: int = None
+    measure_type_series__sid: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    trade_movement_code: str = None
-    priority_code: str = None
-    measure_component_applicability_code: str = None
-    origin_destination_code: str = None
-    order_number_capture_code: str = None
-    measure_explosion_level: str = None
-    measure_type_series__sid: str = None
 
 
 class NewMeasureTypeDescriptionParser(NewWritable, NewElementParser):
@@ -300,7 +316,7 @@ class NewMeasureTypeDescriptionParser(NewWritable, NewElementParser):
         ModelLink(
             models.MeasureType,
             [
-                ModelLinkField("measure_type__sid", "sid"),
+                ModelLinkField("sid", "sid"),
             ],
             "measure.type",
         ),
@@ -343,6 +359,13 @@ class NewAdditionalCodeTypeMeasureTypeParser(
             "additional.code.type",
         ),
     ]
+
+    value_mapping = {
+        "measure_type_id": "measure_type__sid",
+        "additional_code_type_id": "additional_code_type__sid",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
 
     record_code = "240"
     subrecord_code = "00"
@@ -464,17 +487,11 @@ class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
             "goods.nomenclature",
         ),
         ModelLink(
-            AdditionalCodeType,
-            [
-                ModelLinkField("additional_code__type__sid", "sid"),
-            ],
-            "additional.code.type",
-        ),
-        ModelLink(
             AdditionalCode,
             [
                 ModelLinkField("additional_code__code", "code"),
                 ModelLinkField("additional_code__sid", "sid"),
+                ModelLinkField("additional_code__type__sid", "type__sid"),
             ],
             "additional.code",
         ),
@@ -772,29 +789,29 @@ class NewFootnoteAssociationMeasureParser(NewWritable, NewElementParser):
             "measure",
         ),
         ModelLink(
-            FootnoteType,
-            [
-                ModelLinkField(
-                    "associated_footnote__footnote_type__footnote_type_id",
-                    "footnote_type_id",
-                ),
-            ],
-            "footnote.type",
-        ),
-        ModelLink(
             Footnote,
             [
                 ModelLinkField("associated_footnote__footnote_id", "footnote_id"),
+                ModelLinkField(
+                    "associated_footnote__footnote_type__footnote_type_id",
+                    "footnote_type__footnote_type_id",
+                ),
             ],
             "footnote",
         ),
     ]
+
+    value_mapping = {
+        "measure_sid": "footnoted_measure__sid",
+        "footnote_type_id": "associated_footnote__footnote_type__footnote_type_id",
+        "footnote_id": "associated_footnote__footnote_id",
+    }
 
     record_code = "430"
     subrecord_code = "20"
 
     xml_object_tag = "footnote.association.measure"
 
-    footnoted_measure__sid: str = None
+    footnoted_measure__sid: int = None
     associated_footnote__footnote_type__footnote_type_id: str = None
     associated_footnote__footnote_id: str = None

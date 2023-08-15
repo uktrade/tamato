@@ -1,41 +1,44 @@
 import pytest
 
+from additional_codes.new_import_parsers import *
+
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
 from geo_areas.new_import_parsers import *
 from importer import new_importer
-from measures.new_import_parsers import NewMeasureTypeSeriesParser
+from measures.models import AdditionalCodeTypeMeasureType
+from measures.new_import_parsers import NewAdditionalCodeTypeMeasureTypeParser
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewMeasureTypeSeriesParser:
+class TestNewAdditionalCodeTypeMeasureTypeParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="measure.type.series" substitutionGroup="abstract.record">
+        <xs:element name="additional.code.type.measure.type" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
+                    <xs:element name="measure.type.id" type="MeasureTypeId"/>
+                    <xs:element name="additional.code.type.id" type="AdditionalCodeTypeId"/>
                     <xs:element name="validity.start.date" type="Date"/>
                     <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>
     """
 
-    target_parser_class = NewMeasureTypeSeriesParser
+    target_parser_class = NewAdditionalCodeTypeMeasureTypeParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure_type_series_id": "A",
+            "measure_type_id": "A",
+            "additional_code_type_id": "Z",
             "validity_start_date": "2021-01-01",
             "validity_end_date": "2022-01-01",
-            "measure_type_combination": "6",
         }
 
         target = self.target_parser_class()
@@ -49,14 +52,14 @@ class TestNewMeasureTypeSeriesParser:
         )
 
         # verify all properties
-        assert target.sid == "A"
+        assert target.measure_type__sid == "A"
+        assert target.additional_code_type__sid == "Z"
         assert target.valid_between_lower == date(2021, 1, 1)
         assert target.valid_between_upper == date(2022, 1, 1)
-        assert target.measure_type_combination == 6
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
-            "measure_series_CREATE.xml",
+            "additional_code_type_measure_type_CREATE.xml",
             __file__,
         )
 
@@ -67,9 +70,9 @@ class TestNewMeasureTypeSeriesParser:
         )
 
         # check there is one AdditionalCodeType imported
-        assert len(importer.parsed_transactions) == 1
+        assert len(importer.parsed_transactions) == 4
 
-        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        target_message = importer.parsed_transactions[3].parsed_messages[0]
         assert target_message.record_code == self.target_parser_class.record_code
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
@@ -77,11 +80,12 @@ class TestNewMeasureTypeSeriesParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.sid == "A"
+        # verify all properties
+        assert target.measure_type__sid == "ZZZ"
+        assert target.additional_code_type__sid == "Z"
         assert target.valid_between_lower == date(2021, 1, 1)
         assert target.valid_between_upper == date(2022, 1, 1)
-        assert target.measure_type_combination == 6
 
         assert len(importer.issues()) == 0
 
-        assert MeasureTypeSereise.objects.all().count() == 1
+        assert AdditionalCodeTypeMeasureType.objects.all().count() == 1

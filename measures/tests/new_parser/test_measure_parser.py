@@ -5,38 +5,68 @@ from common.tests.util import get_test_xml_file
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.new_import_parsers import *
 from importer import new_importer
-from measures.new_import_parsers import NewMeasureTypeSeriesParser
+from measures.new_import_parsers import NewMeasureParser
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewMeasureTypeSeriesParser:
+class TestNewMeasureParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="measure.type.series" substitutionGroup="abstract.record">
+        <xs:element name="measure" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
+                    <xs:element name="measure.sid" type="SID"/>
+                    <xs:element name="measure.type" type="MeasureTypeId"/>
+                    <xs:element name="geographical.area" type="GeographicalAreaId"/>
+                    <xs:element name="goods.nomenclature.item.id" type="GoodsNomenclatureItemId" minOccurs="0"/>
+                    <xs:element name="additional.code.type" type="AdditionalCodeTypeId" minOccurs="0"/>
+                    <xs:element name="additional.code" type="AdditionalCode" minOccurs="0"/>
+                    <xs:element name="ordernumber" type="OrderNumber" minOccurs="0"/>
+                    <xs:element name="reduction.indicator" type="ReductionIndicator" minOccurs="0"/>
                     <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="measure.generating.regulation.role" type="RegulationRoleTypeId"/>
+                    <xs:element name="measure.generating.regulation.id" type="RegulationId"/>
                     <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
+                    <xs:element name="justification.regulation.role" type="RegulationRoleTypeId" minOccurs="0"/>
+                    <xs:element name="justification.regulation.id" type="RegulationId" minOccurs="0"/>
+                    <xs:element name="stopped.flag" type="StoppedFlag"/>
+                    <xs:element name="geographical.area.sid" type="SID" minOccurs="0"/>
+                    <xs:element name="goods.nomenclature.sid" type="SID" minOccurs="0"/>
+                    <xs:element name="additional.code.sid" type="SID" minOccurs="0"/>
+                    <xs:element name="export.refund.nomenclature.sid" type="SID" minOccurs="0"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>
     """
 
-    target_parser_class = NewMeasureTypeSeriesParser
+    target_parser_class = NewMeasureParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure.type.series.id": "A",
-            "validity.start.date": "2021-01-01",
-            "validity.end.date": "2022-01-01",
-            "measure.type.combination": "6",
+            "measure_sid": "1",
+            "measure_type": "AA",
+            "geographical_area": "1",
+            "goods_nomenclature_item_id": "",
+            "additional_code_type": "",
+            "additional_code": "",
+            "ordernumber": "",
+            "reduction_indicator": "",
+            "validity_start_date": "2021-01-01",
+            "validity_end_date": "2022-01-01",
+            "measure_generating_regulation_role": "",
+            "measure_generating_regulation_id": "",
+            "justification_regulation_role": "",
+            "justification_regulation_id": "",
+            "stopped_flag": "",
+            "geographical_area_sid": "",
+            "goods_nomenclature_sid": "",
+            "additional_code_sid": "",
+            "export_refund_nomenclature_sid": "",
         }
 
         target = self.target_parser_class()
@@ -50,10 +80,28 @@ class TestNewMeasureTypeSeriesParser:
         )
 
         # verify all properties
+        assert target.sid == 1
+        assert target.type == 1
+        assert target.geographical_area == 1
+        assert target.goods_nomenclature_item_id == 1
+        assert target.additional_code_type == 1
+        assert target.additional_code == 1
+        assert target.ordernumber == 1
+        assert target.reduction_indicator == 1
+        assert target.validity_start_date == 1
+        assert target.validity_end_date == 1
+        assert target.measure_generating_regulation_role == 1
+        assert target.measure_generating_regulation_id == 1
+        assert target.justification_regulation_role == 1
+        assert target.justification_regulation_id == 1
+        assert target.stopped_flag == 1
+        assert target.geographical_area_sid == 1
+        assert target.goods_nomenclature_sid == 1
+        assert target.additional_code_sid == 1
+        assert target.export_refund_nomenclature_sid == 1
         assert target.sid == 8
         assert target.valid_between_lower == date(2021, 1, 1)
         assert target.valid_between_upper == date(2022, 1, 1)
-        assert target.measure_type_combination == 6
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
