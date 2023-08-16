@@ -1,11 +1,22 @@
 
-{% macro sort_by(request, sort_by, title, base_url, anchor="") %}
-
+{% macro sort_by(request, sort_by, title, base_url, query_params="", anchor="") %}
+  {{query_params}}
+  {{sort_by}}
+  {{request.GET.sort_by}}
+  {{request.GET.order}}
   {% if request.GET.sort_by == sort_by and request.GET.order == "desc" %}
-    <a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ base_url }}?sort_by={{ sort_by }}&order=asc{{ anchor }}">
-      {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
-    </a>
+    {% if query_params %}
+      <a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ base_url }}&sort_by={{ sort_by }}&order=asc{{ anchor }}">
+        {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
+      </a>
+    {% else %}
+      <a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ base_url }}?sort_by={{ sort_by }}&order=asc{{ anchor }}">
+        {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
+      </a>
+    {% endif %}
+
   {% else %}
+  {# this is going wrong cause I dont have sortby or order until I click it, so need to have two lots #}
     <a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ base_url }}?sort_by={{ sort_by }}&order=desc{{ anchor }}">
       {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
     </a>

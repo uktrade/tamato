@@ -30,6 +30,7 @@ from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -125,20 +126,39 @@ class MeasureSearch(FilterView):
     filterset_class = MeasureFilter
 
     def form_valid(self, form):
+        print(form)
         return HttpResponseRedirect(reverse("measure-ui-list"))
 
 
-class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView):
+class MeasureList(
+    MeasureSelectionMixin,
+    MeasureMixin,
+    SortingMixin,
+    FormView,
+    TamatoListView,
+):
     """UI endpoint for viewing and filtering Measures."""
 
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
     form_class = SelectableObjectsForm
+    sort_by_fields = ["sid"]
 
     def dispatch(self, *args, **kwargs):
         if not self.request.GET:
             return HttpResponseRedirect(reverse("measure-ui-search"))
         return super().dispatch(*args, **kwargs)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        ordering = self.get_ordering()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+
+        return queryset
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -161,6 +181,10 @@ class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView)
         context["measure_selections"] = Measure.objects.filter(
             pk__in=measure_selections,
         )
+        context[
+            "base_url"
+        ] = f'{reverse("measure-ui-list")}?{urlencode(self.filterset.data)}'
+        context["query_params"] = True
         return context
 
     def get_initial(self):

@@ -3,6 +3,7 @@
 {% from "includes/measures/conditions.jinja" import conditions_list %}
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/sort_by.jinja" import sort_by %}
 
 {# Sets out checkbox #}
 {% macro checkbox_item(field) -%}
@@ -25,6 +26,10 @@
 {% set checkbox_check_all -%}
 <div id="check-all-checkbox"></div>
 {%- endset %}
+
+{% set sid %}
+  {{ sort_by(request, "sid", "ID", base_url, query_params) }}
+{% endset %}
 
 {# sets out form #}
 <form method="post">
@@ -68,7 +73,7 @@
         {{ govukTable({
           "head": [
             {"html": checkbox_check_all},
-            {"text": "ID"},
+            {"text": sid},
             {"text": "Type"},
             {"text": "Commodity code"},
             {"text": "Start date"},
