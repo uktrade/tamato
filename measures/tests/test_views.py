@@ -471,6 +471,21 @@ def test_measure_list_view(view, url_pattern, valid_user_client):
     """Verify that measure list view is under the url measures/ and doesn't
     return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
+    url = reverse("measure-ui-list")
+
+    response = valid_user_client.get(url)
+    # response = valid_user_client.get(url)
+    ######################################################################################################################################################
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        features="lxml",
+    )
+    print("*" * 80, f"{page=}" f"{response=}", f"{url=}")
+    accordion_button = page.find("button", id="accordion-heading-1")
+    print("*" * 80, f"{accordion_button=}")
+    assert "foo" == "bar"
+    # assert accordion_button[0].text == "Select one or more options to search"
+    # TODO: add tests here for new widgets & styles
 
 
 @pytest.mark.parametrize(

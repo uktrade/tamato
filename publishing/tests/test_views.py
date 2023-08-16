@@ -260,12 +260,9 @@ def test_find_processed_envelopes_list_view(
     assert envelope.envelope_id in envelope_row.select("td")[0].text
 
 
-from publishing.models.envelope import EnvelopeQuerySet
-
-
 @mock.patch(
     "publishing.models.envelope.Envelope.get_versions",
-    return_value=mock.MagicMock(spec=EnvelopeQuerySet),
+    return_value=mock.MagicMock(spec=Envelope),
 )
 @mock.patch(
     "publishing.models.envelope.Envelope.xml_file_exists",

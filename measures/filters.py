@@ -258,6 +258,7 @@ class MeasureFilter(TamatoFilter):
         return queryset
 
     def measures_filter(self, queryset, name, value):
+        print("f" * 80, f"{type(queryset)=}", f"{name=}", f"{value=}")
         if value:
             modifier = self.data["measure_filters_modifier"]
             if modifier == "active":
