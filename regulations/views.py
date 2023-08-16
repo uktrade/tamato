@@ -38,7 +38,7 @@ class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
 class RegulationList(TamatoListView):
     """UI endpoint that allows regulations to be viewed."""
 
-    queryset = Regulation.objects.latest_approved().select_related("regulation_group")
+    queryset = Regulation.objects.current().select_related("regulation_group")
     template_name = "regulations/list.jinja"
     filterset_class = RegulationFilter
     search_fields = ["regulation_id", "pk"]
