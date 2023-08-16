@@ -589,6 +589,41 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     assert not session_workbasket.tracked_model_checks.exists()
 
 
+def test_workbasket_business_rule_status(valid_user_client):
+    """Testing that the live status of a workbasket resets after an item has
+    been updated, created or deleted in the workbasket."""
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    with workbasket.new_transaction() as transaction:
+        footnote = factories.FootnoteFactory.create(
+            transaction=transaction,
+            footnote_type__transaction=transaction,
+        )
+        TrackedModelCheckFactory.create(
+            transaction_check__transaction=transaction,
+            model=footnote,
+            successful=True,
+        )
+    workbasket.save_to_session(valid_user_client.session)
+
+    url = reverse("workbaskets:current-workbasket")
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(response.content.decode(response.charset))
+    success_banner = page.find(
+        "div",
+        attrs={"class": "govuk-notification-banner--success"},
+    )
+    assert success_banner
+
+    footnote2 = factories.FootnoteFactory.create(
+        transaction=workbasket.new_transaction(),
+    )
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(response.content.decode(response.charset))
+    assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
+
+
 def test_submit_for_packaging(valid_user_client, session_workbasket):
     """Test that a GET request to the submit-for-packaging endpoint returns a
     302, redirecting to the create packaged workbasket page."""
