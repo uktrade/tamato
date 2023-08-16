@@ -50,7 +50,7 @@ class RegulationFilter(
     )
 
     regulation_usage = LazyMultipleChoiceFilter(
-        choices=RegulationUsage.choices[1:],
+        choices=RegulationUsage.choices,
         widget=CheckboxSelectMultiple,
         method="filter_regulation_usage",
         label="Regulation usage",
