@@ -609,7 +609,7 @@ def test_workbasket_business_rule_status(valid_user_client):
 
     url = reverse("workbaskets:current-workbasket")
     response = valid_user_client.get(url)
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset))
     success_banner = page.find(
         "div",
         attrs={"class": "govuk-notification-banner--success"},
@@ -620,7 +620,7 @@ def test_workbasket_business_rule_status(valid_user_client):
         transaction=workbasket.new_transaction(),
     )
     response = valid_user_client.get(url)
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset))
     assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
 
 
