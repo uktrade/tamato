@@ -1,6 +1,10 @@
+import pytest
+
 from commodities.filters import CommodityFilter
 from commodities.models.orm import GoodsNomenclature
 from common.tests import factories
+
+pytestmark = pytest.mark.django_db
 
 
 def test_commodity_filter_footnotes(rf):
