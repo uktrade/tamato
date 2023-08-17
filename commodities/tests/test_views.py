@@ -17,6 +17,7 @@ from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.validators import UpdateType
 from common.views import TrackedModelDetailMixin
 
 pytestmark = pytest.mark.django_db
@@ -523,3 +524,38 @@ def test_commodity_footnote_update_success(valid_user_client, date_ranges):
     )
     assert response.status_code == 302
     assert response.url == updated_association.get_url("confirm-update")
+
+
+def test_footnote_association_delete(valid_user_client):
+    commodity = factories.GoodsNomenclatureFactory.create()
+    footnote1 = factories.FootnoteFactory.create()
+    association1 = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+        associated_footnote=footnote1,
+        goods_nomenclature=commodity,
+    )
+    url = association1.get_url("delete")
+    response = valid_user_client.post(url, {"submit": "Delete"})
+
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "footnote_association_goods_nomenclature-ui-confirm-delete",
+        kwargs={"sid": commodity.sid},
+    )
+
+    tx = Transaction.objects.last()
+
+    assert tx.workbasket.tracked_models.first().associated_footnote == footnote1
+    assert tx.workbasket.tracked_models.first().goods_nomenclature == commodity
+    assert tx.workbasket.tracked_models.first().update_type == UpdateType.DELETE
+
+    confirm_response = valid_user_client.get(response.url)
+    soup = BeautifulSoup(
+        confirm_response.content.decode(response.charset),
+        "html.parser",
+    )
+    h1 = soup.select("h1")[0]
+
+    assert (
+        h1.text.strip()
+        == f"Footnote association {footnote1.footnote_type.footnote_type_id}{footnote1.footnote_id} for commodity code {commodity.item_id} has been deleted",
+    )

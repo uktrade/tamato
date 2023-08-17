@@ -1,8 +1,10 @@
+import re
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
 from bs4 import BeautifulSoup
+from django.contrib.auth.models import Permission
 from django.urls import reverse
 from django.utils.timezone import localtime
 
@@ -589,6 +591,41 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     assert not session_workbasket.tracked_model_checks.exists()
 
 
+def test_workbasket_business_rule_status(valid_user_client):
+    """Testing that the live status of a workbasket resets after an item has
+    been updated, created or deleted in the workbasket."""
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    with workbasket.new_transaction() as transaction:
+        footnote = factories.FootnoteFactory.create(
+            transaction=transaction,
+            footnote_type__transaction=transaction,
+        )
+        TrackedModelCheckFactory.create(
+            transaction_check__transaction=transaction,
+            model=footnote,
+            successful=True,
+        )
+    workbasket.save_to_session(valid_user_client.session)
+
+    url = reverse("workbaskets:current-workbasket")
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(response.content.decode(response.charset))
+    success_banner = page.find(
+        "div",
+        attrs={"class": "govuk-notification-banner--success"},
+    )
+    assert success_banner
+
+    footnote2 = factories.FootnoteFactory.create(
+        transaction=workbasket.new_transaction(),
+    )
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(response.content.decode(response.charset))
+    assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
+
+
 def test_submit_for_packaging(valid_user_client, session_workbasket):
     """Test that a GET request to the submit-for-packaging endpoint returns a
     302, redirecting to the create packaged workbasket page."""
@@ -1020,3 +1057,139 @@ def test_workbasket_changes_view_without_permission(client, session_workbasket):
     response = client.get(url)
 
     assert response.status_code == 403
+
+
+def test_successfully_delete_workbasket(
+    valid_user_client,
+    valid_user,
+    session_empty_workbasket,
+):
+    """Test that deleting an empty workbasket by a user having the necessary
+    `workbasket.can_delete` permssion."""
+
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="delete_workbasket"),
+    )
+    workbasket_pk = session_empty_workbasket.pk
+    delete_url = reverse(
+        "workbaskets:workbasket-ui-delete",
+        kwargs={"pk": workbasket_pk},
+    )
+
+    # GET the form view.
+    response = valid_user_client.get(delete_url)
+    page = BeautifulSoup(response.content, "html.parser")
+    assert response.status_code == 200
+    assert f"Delete workbasket {workbasket_pk}" in page.select("main h1")[0].text
+
+    # POST the delete form.
+    response = valid_user_client.post(delete_url, {})
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "workbaskets:workbasket-ui-delete-done",
+        kwargs={"deleted_pk": workbasket_pk},
+    )
+    assert not models.WorkBasket.objects.filter(pk=workbasket_pk)
+
+    # GET the deletion done page for the URL provided by the redirect response.
+    response = valid_user_client.get(response.url)
+    page = BeautifulSoup(response.content, "html.parser")
+    assert response.status_code == 200
+    assert (
+        f"Workbasket {workbasket_pk} has been deleted"
+        in page.select(".govuk-panel h1")[0].text
+    )
+
+
+def test_delete_workbasket_missing_user_permission(
+    valid_user_client,
+    session_empty_workbasket,
+):
+    """Test that attempts to access the delete workbasket view and delete a
+    workbasket fails for a user without the necessary permissions."""
+
+    workbasket_pk = session_empty_workbasket.pk
+    url = reverse(
+        "workbaskets:workbasket-ui-delete",
+        kwargs={"pk": workbasket_pk},
+    )
+
+    # Get the form view.
+    get_response = valid_user_client.get(url)
+    assert get_response.status_code == 403
+    assert models.WorkBasket.objects.filter(pk=workbasket_pk)
+
+    # POST the delete form.
+    response = valid_user_client.post(url, {})
+    assert response.status_code == 403
+    assert models.WorkBasket.objects.filter(pk=workbasket_pk)
+
+
+def test_delete_nonempty_workbasket(
+    valid_user_client,
+    valid_user,
+    session_workbasket,
+):
+    """Test that attempts to delete a non-empty workbasket fails."""
+
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="delete_workbasket"),
+    )
+    workbasket_pk = session_workbasket.pk
+    workbasket_object_count = session_workbasket.tracked_models.count()
+    delete_url = reverse(
+        "workbaskets:workbasket-ui-delete",
+        kwargs={"pk": workbasket_pk},
+    )
+    assert workbasket_object_count
+
+    # POST the delete form.
+    response = valid_user_client.post(delete_url, {})
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content, "html.parser")
+    error_list = page.select("ul.govuk-list.govuk-error-summary__list")[0]
+    assert error_list.find(
+        text=re.compile(
+            f"Workbasket {workbasket_pk} contains {workbasket_object_count} "
+            f"item\(s\), but must be empty",
+        ),
+    )
+    assert models.WorkBasket.objects.filter(pk=workbasket_pk)
+
+
+def test_application_access_after_workbasket_delete(
+    valid_user_client,
+    session_empty_workbasket,
+):
+    """
+    Test that after deleting a user's 'current' workbasket, the user is still
+    able to access the application via a valid view - that is, a view unrelated
+    to the deleted workbasket, which would obviously fail with a not found
+    error. This is to ensure the user's session is left in a valid state after
+    deleting their current workbasket - i.e. this test is concerned with
+    ensuring application avoids 500-series errors under the above conditions.
+    """
+
+    workbasket_pk = session_empty_workbasket.pk
+    url = reverse("workbaskets:workbasket-ui-list")
+
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(response.content, "html.parser")
+    # A workbasket link should be available in the header nav bar before
+    # session workbasket deletion.
+    assert response.status_code == 200
+
+    assert (
+        f"Workbasket {workbasket_pk}"
+        in page.select("header nav a.workbasket-link")[0].text
+    )
+
+    session_empty_workbasket.delete()
+
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(response.content, "html.parser")
+    # No workbasket link should exist in the header nav bar after session
+    # workbasket deletion.
+    assert response.status_code == 200
+    assert not page.select("header nav a.workbasket-link")
