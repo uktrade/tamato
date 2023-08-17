@@ -11,6 +11,7 @@ from django.forms import widgets
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
 from common.forms import ValidityPeriodForm
+from common.forms import delete_form_for
 from footnotes.models import Footnote
 
 
@@ -101,3 +102,8 @@ class CommodityFootnoteForm(ValidityPeriodForm, forms.ModelForm):
 
 class CommodityFootnoteEditForm(CommodityFootnoteForm):
     pass
+
+
+FootnoteAssociationGoodsNomenclatureDeleteForm = delete_form_for(
+    FootnoteAssociationGoodsNomenclature,
+)
