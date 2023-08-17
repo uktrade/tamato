@@ -357,10 +357,26 @@ def published_footnote_type(queued_workbasket):
 
 @pytest.fixture
 @given("there is a current workbasket")
-def session_workbasket(client, new_workbasket):
-    new_workbasket.save_to_session(client.session)
-    client.session.save()
+def session_workbasket(client, new_workbasket) -> WorkBasket:
+    # The valid_user_client.session property returns a new session instance on
+    # each reference, so first get a single session instance via the property.
+    session = client.session
+    new_workbasket.save_to_session(session)
+    session.save()
     return new_workbasket
+
+
+@pytest.fixture
+def session_empty_workbasket(valid_user_client) -> WorkBasket:
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    # The valid_user_client.session property returns a new session instance on
+    # each reference, so first get a single session instance via the property.
+    session = valid_user_client.session
+    workbasket.save_to_session(session)
+    session.save()
+    return workbasket
 
 
 @pytest.fixture
@@ -473,7 +489,10 @@ def use_create_form(valid_user_api_client: APIClient):
     use_update_form
     """
 
-    def use(Model: Type[TrackedModel], new_data: Callable[Dict[str, str]]):
+    def use(
+        Model: Type[TrackedModel],
+        new_data: Callable[[Dict[str, str]], Dict[str, str]],
+    ):
         """
         :param Model: Model class to test
         :param new_data function to populate form initial data.

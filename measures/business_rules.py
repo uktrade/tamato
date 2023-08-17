@@ -528,7 +528,7 @@ class ME119(ValidityPeriodContained):
                 valid_between = origin.valid_between
                 if validity_range_contains_range(
                     valid_between,
-                    contained_measure.valid_between,
+                    contained_measure.effective_valid_between,
                 ):
                     return
 
