@@ -2,6 +2,8 @@ from datetime import date
 from datetime import timedelta
 
 import pytest
+from bs4 import BeautifulSoup
+from django.urls import reverse
 
 from common.tests import factories
 from common.util import TaricDateRange
@@ -45,7 +47,7 @@ def test_filter_by_active_measures():
 
 
 @pytest.fixture
-def queryset2(session_workbasket):
+def queryset(session_workbasket):
     with session_workbasket.new_transaction() as transaction:
         measure_in_workbasket_1 = factories.MeasureFactory.create(
             transaction=transaction,
@@ -81,4 +83,31 @@ def test_filter_by_current_workbasket(
 
 # use BS --> tick relevant box
 # do filtered objects show
-# def test_active_measures_filter_works_on_page():
+def test_active_measures_filter_works_on_page(valid_user_client):
+    active_measure = factories.MeasureFactory.create(
+        valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
+    )
+    measure_starts_today = factories.MeasureFactory.create(
+        valid_between=TaricDateRange(date.today()),
+    )
+    expired_measure = factories.MeasureFactory.create(
+        valid_between=TaricDateRange(
+            date.today() + timedelta(days=-100),
+            date.today() + timedelta(days=-99),
+        ),
+    )
+    future_measure = factories.MeasureFactory.create(
+        valid_between=TaricDateRange(
+            date.today() + timedelta(days=10),
+            date.today() + timedelta(days=99),
+        ),
+    )
+    url = reverse("measure-ui-search")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    # measure_ids_in_table = [e.text for e in soup.select("table tr td:first-child")]
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    measure_ids_in_table = [e.text for e in soup.select("table tr td:first-child")]
+    [str(measure.sid) for measure in Measure.objects.all()]
+    assert 0
