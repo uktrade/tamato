@@ -18,9 +18,11 @@ from django.urls import reverse
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
+from django.views.generic import DeleteView
 from django.views.generic import UpdateView
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
+from django.views.generic.edit import FormMixin
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 
@@ -493,12 +495,17 @@ class CurrentWorkBasket(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page = self.paginator.get_page(self.request.GET.get("page", 1))
+        user_can_delete_workbasket = (
+            self.request.user.is_superuser
+            or self.request.user.has_perm("workbaskets.delete_workbasket")
+        )
         context.update(
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
                 "uploaded_envelope_dates": self.uploaded_envelope_dates,
                 "rule_check_in_progress": False,
+                "user_can_delete_workbasket": user_can_delete_workbasket,
             },
         )
         if self.workbasket.rule_check_task_id:
@@ -654,3 +661,58 @@ class WorkBasketViolationDetail(DetailView):
             self.override_violation()
 
         return redirect("workbaskets:workbasket-ui-violations")
+
+
+class WorkBasketDelete(PermissionRequiredMixin, FormMixin, DeleteView):
+    """
+    UI to confirm (or cancel) workbasket deletion.
+
+    Rather than using the current workbasket to identify the target workbasket
+    for deletion, it is identified by its primary key as a URL captured param.
+    This reduces the chances of deleting the wrong workbasket.
+    """
+
+    form_class = forms.WorkbasketDeleteForm
+    model = WorkBasket
+    permission_required = "workbaskets.delete_workbasket"
+    template_name = "workbaskets/delete_workbasket.jinja"
+
+    def get_success_url(self) -> str:
+        return reverse(
+            "workbaskets:workbasket-ui-delete-done",
+            kwargs={"deleted_pk": self.kwargs["pk"]},
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["instance"] = self.get_object()
+        return kwargs
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        self.object.delete()
+        return redirect(self.get_success_url())
+
+
+class WorkBasketDeleteDone(TemplateView):
+    """
+    UI presented after successfully deleting a workbasket.
+
+    The deleted workbasket's primary key is identified via the `deleted_pk`
+    captured param, distinguishing it from the typical `pk` identifier - since
+    the object has been deleted and the PK therefore no longer exists.
+    """
+
+    template_name = "workbaskets/delete_workbasket_done.jinja"
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["deleted_pk"] = self.kwargs["deleted_pk"]
+        return context_data

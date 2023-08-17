@@ -1,0 +1,38 @@
+{% extends "common/confirm_create.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit commodities", "href": url("commodity-ui-list")},
+      {"text": object._meta.verbose_name|capitalize ~ ": " ~ object|string ~ " footnotes", "href": url("commodity-ui-detail-footnotes", args=[object.sid])},
+      {"text": "Delete footnote association"}
+    ])
+  }}
+{% endblock %}
+
+{% set messages %}
+  {% for message in get_messages(request) %}
+    {{ message }}
+  {% endfor %}
+{% endset  %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": messages,
+    "text": "This change has been added to your workbasket",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block main_button %}
+  {{ govukButton({
+    "text": "Back to commodity",
+    "href": url('commodity-ui-detail-footnotes', args=[object.sid]),
+    "classes": "govuk-button--primary"
+  }) }}
+{% endblock%}
+
+{% block actions %}
+<li><a class="govuk-link" href="{{ url('commodity-ui-add-footnote', args=[object.sid]) }}">Add another footnote</a></li>
+<li><a href="{{ url('commodity-ui-list') }}">Find and edit commodities</a></li>
+{% endblock %}

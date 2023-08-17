@@ -172,16 +172,11 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
         batch.workbasket = workbasket
         batch.save()
 
-        if self.cleaned_data.get("commodities"):
-            record_group = TARIC_RECORD_GROUPS["commodities"]
-        else:
-            record_group = None
-
         self.process_file(
             self.files["taric_file"],
             batch,
             user,
-            record_group=record_group,
+            record_group=None,
             status=self.cleaned_data["status"],
             workbasket_id=workbasket.id,
         )

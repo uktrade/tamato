@@ -1,5 +1,49 @@
+{% extends "layouts/layout.jinja" %}
+
 {% set form_url = "commodity-ui-list" %}
-{% set list_include = "includes/commodities/list.jinja" %}
 
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
-{%- include "layouts/commodity_list.jinja" -%}    
+{% set create_url = create_url or "create" %}
+
+{% set page_title = "Find a commodity code" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title},
+    ])
+  }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-quarter background-light-grey govuk-!-padding-3">
+      <h2 class="govuk-heading-m">Search and filter</h2>
+      <form method="get" action="{{ url(form_url) }}">
+        {{ crispy(filter.form) }}
+      </form>
+    </div>
+
+    <div class="govuk-grid-column-three-quarters">
+      {% if paginator.count > 0 %}
+        {% include "includes/common/pagination-list-summary.jinja" %}
+      {% endif %}
+      {% if object_list %}
+        {% include "includes/commodities/table.jinja" %}
+      {% else %}
+        <p class="govuk-body">There are no results for your search, please:</p>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>check the spelling of your keywords</li>
+          <li>use more general keywords</li>
+          <li>select or deselect different filters</li>
+          <li>get help via our <a class="govuk-link" href="#">support and feedback form</a></li>
+        </ul>
+      {% endif %}
+      {% include "includes/common/pagination.jinja" %}
+    </div>
+  </div>
+{% endblock %}

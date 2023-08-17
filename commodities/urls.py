@@ -94,4 +94,14 @@ urlpatterns = [
         views.FootnoteAssociationGoodsNomenclatureConfirmUpdate.as_view(),
         name="footnote_association_goods_nomenclature-ui-confirm-update",
     ),
+    path(
+        f"{footnote_association_pattern}/delete/",
+        views.FootnoteAssociationGoodsNomenclatureDelete.as_view(),
+        name="footnote_association_goods_nomenclature-ui-delete",
+    ),
+    path(
+        f"commodities/<sid>/footnote-associations/confirm-delete/",
+        views.FootnoteAssociationGoodsNomenclatureConfirmDelete.as_view(),
+        name="footnote_association_goods_nomenclature-ui-confirm-delete",
+    ),
 ]
