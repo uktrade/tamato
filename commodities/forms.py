@@ -2,6 +2,7 @@ from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -24,9 +25,16 @@ class CommodityFilterForm(forms.Form):
             Field.text("item_id", label_size=Size.SMALL),
             Field.text("descriptions__description", label_size=Size.SMALL),
             Field.text("active_state", label_size=Size.SMALL),
-            Button("submit", "Search and Filter", css_class="govuk-!-margin-top-6"),
+            Fieldset(
+                Field.text("with_footnotes", label_size=Size.SMALL),
+                legend="Footnotes",
+            ),
+            Button(
+                "submit",
+                "Search and Filter",
+            ),
             HTML(
-                f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                f'<a class="govuk-button govuk-button--secondary" href="{self.clear_url}"> Clear </a>',
             ),
         )
 
