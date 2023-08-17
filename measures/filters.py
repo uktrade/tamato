@@ -258,7 +258,6 @@ class MeasureFilter(TamatoFilter):
         return queryset
 
     def measures_filter(self, queryset, name, value):
-        print("f" * 80, f"{type(queryset)=}", f"{name=}", f"{value=}")
         if value:
             modifier = self.data["measure_filters_modifier"]
             if modifier == "active":
@@ -275,10 +274,11 @@ class MeasureFilter(TamatoFilter):
                     .annotate(end_date=EndDate("valid_between"))
                     .filter(filter_query)
                 )
+
             if modifier == "current":
-                queryset = WorkBasket.get_current_transaction(
-                    self.request,
-                ).workbasket.measures
+                queryset = WorkBasket.objects.filter(
+                    id=self.request.session["workbasket"].id,
+                )[0].measures
 
         return queryset
 
