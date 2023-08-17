@@ -263,10 +263,16 @@ class MeasureFilter(TamatoFilter):
             if modifier == "active":
                 current_date = date.today()
 
-                filter_query = Q(end_date__gt=current_date) | Q(
-                    end_date__isnull=True,
-                ) & Q(
-                    start_date__lt=current_date,
+                filter_query = (
+                    Q(
+                        start_date__lt=current_date,
+                    )
+                    | Q(start_date=current_date)
+                ) & (
+                    Q(end_date__gt=current_date)
+                    | Q(
+                        end_date__isnull=True,
+                    )
                 )
                 queryset = (
                     queryset.with_effective_valid_between()

@@ -11,22 +11,25 @@ from measures.models import Measure
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def queryset():
-    factories.TransactionFactory.create(),
-    measure1 = factories.MeasureFactory.create(
+def test_filter_by_active_measures():
+    active_measure = factories.MeasureFactory.create(
         valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
     )
-    measure2 = factories.MeasureFactory.create(
+    measure_starts_today = factories.MeasureFactory.create(
+        valid_between=TaricDateRange(date.today()),
+    )
+    expired_measure = factories.MeasureFactory.create(
         valid_between=TaricDateRange(
             date.today() + timedelta(days=-100),
             date.today() + timedelta(days=-99),
         ),
     )
-
-
-# Does filter by active measures only remove non-active measures?
-def test_filter_by_active_measures(queryset):
+    future_measure = factories.MeasureFactory.create(
+        valid_between=TaricDateRange(
+            date.today() + timedelta(days=10),
+            date.today() + timedelta(days=99),
+        ),
+    )
     self = MeasureFilter(data={"measure_filters_modifier": "active"})
     qs = Measure.objects.all()
     result = MeasureFilter.measures_filter(
@@ -35,9 +38,10 @@ def test_filter_by_active_measures(queryset):
         name="measure_filters_modifier",
         value="active",
     )
-    assert len(result) == 1
+
+    assert len(result) == 2
     assert result[0] == qs[0]
-    assert qs[1] not in result
+    assert expired_measure and future_measure not in result
 
 
 @pytest.fixture
@@ -56,9 +60,7 @@ def queryset2(session_workbasket):
 
 def test_filter_by_current_workbasket(
     session_workbasket,
-    valid_user_client,
     session_request,
-    queryset2,
 ):
     self = MeasureFilter(
         data={"measure_filters_modifier": "current"},
@@ -79,3 +81,4 @@ def test_filter_by_current_workbasket(
 
 # use BS --> tick relevant box
 # do filtered objects show
+# def test_active_measures_filter_works_on_page():
