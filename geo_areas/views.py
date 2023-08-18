@@ -322,10 +322,9 @@ class GeographicalMembershipsCreate(
         members = [d["member"] for d in form.cleaned_data if "member" in d]
         geo_groups = [d["geo_group"] for d in form.cleaned_data if "geo_group" in d]
 
-        tx = self.get_transaction()
-
         if members:
             for member, valid_between in zip(members, validity_periods):
+                tx = self.get_transaction()
                 membership = GeographicalMembership(
                     geo_group=geo_area,
                     member=member,
@@ -337,6 +336,7 @@ class GeographicalMembershipsCreate(
 
         if geo_groups:
             for geo_group, valid_between in zip(geo_groups, validity_periods):
+                tx = self.get_transaction()
                 membership = GeographicalMembership(
                     geo_group=geo_group,
                     member=geo_area,
