@@ -166,7 +166,7 @@ class GeoAreaUpdateMixin(GeoAreaMixin, TrackedModelDetailMixin):
         else:
             return
 
-        tx = WorkBasket.get_current_transaction(self.request)
+        tx = self.workbasket.new_transaction()
         valid_between = form.cleaned_data["new_membership_valid_between"]
         membership = GeographicalMembership(
             geo_group=geo_group,
@@ -322,7 +322,7 @@ class GeographicalMembershipsCreate(
         members = [d["member"] for d in form.cleaned_data if "member" in d]
         geo_groups = [d["geo_group"] for d in form.cleaned_data if "geo_group" in d]
 
-        tx = WorkBasket.get_current_transaction(self.request)
+        tx = self.get_transaction()
 
         if members:
             for member, valid_between in zip(members, validity_periods):
