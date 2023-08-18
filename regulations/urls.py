@@ -17,6 +17,19 @@ api_router.register(r"regulations", views.RegulationViewSet, basename="regulatio
 detail = "<reg_type:role_type>/<reg_id:regulation_id>"
 ui_patterns = get_ui_paths(views, detail)
 
+ui_patterns += [
+    path(
+        f"{detail}/measures/",
+        views.RegulationDetailMeasures.as_view(),
+        name="regulation-ui-detail-measures",
+    ),
+    path(
+        f"{detail}/version-control/",
+        views.RegulationDetailVersionControl.as_view(),
+        name="regulation-ui-detail-version-control",
+    ),
+]
+
 urlpatterns = [
     path("regulations/", include(ui_patterns)),
     path("api/", include(api_router.urls)),
