@@ -803,8 +803,6 @@ class MeasureFilterForm(forms.Form):
                             ),
                             Div(
                                 "modc",
-                                "active_measures",
-                                "current_workbasket",
                                 css_class="govuk-grid-column-full form-group-margin-bottom-2",
                             ),
                             css_class="govuk-grid-row govuk-!-margin-top-6",
