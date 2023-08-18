@@ -94,6 +94,10 @@ class RegulationFormBase(ValidityPeriodForm):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
+        usage_choices = self.fields["regulation_usage"].choices
+        usage_choices.insert(0, (None, "Select a regulation usage"))
+        self.fields["regulation_usage"].choices = usage_choices
+
         self.fields["end_date"].help_text = (
             "Leave the end date empty if the regulation is required for an "
             "unlimited amount of time."
