@@ -59,21 +59,12 @@ class MeasureTypeFilterBackend(TamatoFilterBackend):
 class MeasureFilter(TamatoFilter):
     def __init__(self, *args, **kwargs):
         if kwargs["data"]:
-            # kwargs["data"]._mutable = True
-            # if "start_date_modifier" not in kwargs["data"]:
-            #     kwargs["data"]["start_date_modifier"] = "exact"
-            # if "end_date_modifier" not in kwargs["data"]:
-            #     kwargs["data"]["end_date_modifier"] = "exact"
-            # kwargs["data"]._mutable = False
-            # TODO: refactor to use pop rather than a copy of data
-            # OR: pop data from quargs then re-add it in.
             data = kwargs["data"].copy()
             if "start_date_modifier" not in data:
                 data["start_date_modifier"] = "exact"
             if "end_date_modifier" not in data:
                 data["end_date_modifier"] = "exact"
-
-            super(MeasureFilter, self).__init__(*args, data)
+            kwargs["data"] = data
 
         super(MeasureFilter, self).__init__(*args, **kwargs)
 

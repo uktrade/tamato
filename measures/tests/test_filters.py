@@ -60,14 +60,18 @@ def queryset(session_workbasket):
 
 
 def test_filter_by_current_workbasket(
+    valid_user_client,
     session_workbasket: WorkBasket,
     session_request,
 ):
+    session = valid_user_client.session
+    session["workbasket"] = {"id": session_workbasket.pk}
+    session.save()
     self = MeasureFilter(
-        data={"measure_filters_modifier": "current"},
+        data={"measure_filters_modifier": "current", "_mutable": False},
         request=session_request,
     )
-    self.request.session["workbasket"] = session_workbasket
+    # self.request.session["workbasket"] = session_workbasket
     qs = Measure.objects.all()
     # assert 0
     result = MeasureFilter.measures_filter(
