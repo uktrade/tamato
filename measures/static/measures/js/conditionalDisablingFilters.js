@@ -1,7 +1,7 @@
 // conditionally disables modc filter based on goods_nomenclature_autocomplete filter having a value
 // TODO: refactor to allow passing two widget ids: 1. widget condition is based on 2. widget to be disabled.
 
-const setFilterDisabledToggle = () => {
+const initFilterDisabledToggleForComCode = () => {
     document.addEventListener('DOMContentLoaded', function() {
         let specificCommodityCode = document.getElementById('goods_nomenclature_autocomplete');
         let includeInheritedMeasures = document.getElementById('id_modc');
@@ -18,4 +18,4 @@ const setFilterDisabledToggle = () => {
     })
 }
 
-export default setFilterDisabledToggle
+export default initFilterDisabledToggleForComCode
