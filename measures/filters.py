@@ -59,11 +59,21 @@ class MeasureTypeFilterBackend(TamatoFilterBackend):
 class MeasureFilter(TamatoFilter):
     def __init__(self, *args, **kwargs):
         if kwargs["data"]:
+            # kwargs["data"]._mutable = True
+            # if "start_date_modifier" not in kwargs["data"]:
+            #     kwargs["data"]["start_date_modifier"] = "exact"
+            # if "end_date_modifier" not in kwargs["data"]:
+            #     kwargs["data"]["end_date_modifier"] = "exact"
+            # kwargs["data"]._mutable = False
+            # TODO: refactor to use pop rather than a copy of data
+            # OR: pop data from quargs then re-add it in.
             data = kwargs["data"].copy()
             if "start_date_modifier" not in data:
                 data["start_date_modifier"] = "exact"
             if "end_date_modifier" not in data:
                 data["end_date_modifier"] = "exact"
+
+            super(MeasureFilter, self).__init__(*args, data)
 
         super(MeasureFilter, self).__init__(*args, **kwargs)
 
@@ -200,7 +210,7 @@ class MeasureFilter(TamatoFilter):
     certificates = AutoCompleteFilter(
         label="Certificates",
         field_name="certificates",
-        queryset=Certificate.objects.all(),
+        queryset=Certificate.objects.current(),
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
         },
@@ -277,9 +287,10 @@ class MeasureFilter(TamatoFilter):
                 )
 
             if modifier == "current":
-                queryset = WorkBasket.objects.filter(
-                    id=self.request.session["workbasket"].id,
-                )[0].measures
+                # queryset = WorkBasket.objects.filter(
+                #     id=self.request.session["workbasket"].id,
+                # )[0].measures
+                queryset = WorkBasket.current(self.request).measures
 
         return queryset
 

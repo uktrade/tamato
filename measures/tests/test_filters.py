@@ -7,6 +7,7 @@ from common.tests import factories
 from common.util import TaricDateRange
 from measures.filters import MeasureFilter
 from measures.models import Measure
+from workbaskets.models import WorkBasket
 
 pytestmark = pytest.mark.django_db
 
@@ -59,7 +60,7 @@ def queryset(session_workbasket):
 
 
 def test_filter_by_current_workbasket(
-    session_workbasket,
+    session_workbasket: WorkBasket,
     session_request,
 ):
     self = MeasureFilter(
@@ -68,7 +69,7 @@ def test_filter_by_current_workbasket(
     )
     self.request.session["workbasket"] = session_workbasket
     qs = Measure.objects.all()
-
+    # assert 0
     result = MeasureFilter.measures_filter(
         self,
         queryset=qs,
