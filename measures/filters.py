@@ -278,9 +278,6 @@ class MeasureFilter(TamatoFilter):
                 )
 
             if modifier == "current":
-                # queryset = WorkBasket.objects.filter(
-                #     id=self.request.session["workbasket"].id,
-                # )[0].measures
                 queryset = WorkBasket.current(self.request).measures
 
         return queryset
