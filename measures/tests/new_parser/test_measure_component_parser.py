@@ -3,40 +3,43 @@ import pytest
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
 from geo_areas.models import GeographicalAreaDescription
-from geo_areas.new_import_parsers import *
 from importer import new_importer
-from measures.new_import_parsers import NewMeasureTypeSeriesParser
+from measures.new_import_parsers import NewMeasureComponentParser
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewMeasureTypeSeriesParser:
+class TestNewMeasureComponentParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="measure.type.series" substitutionGroup="abstract.record">
+        <xs:element name="measure.component" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
-                    <xs:element name="validity.start.date" type="Date"/>
-                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
+                    <xs:element name="measure.sid" type="SID"/>
+                    <xs:element name="duty.expression.id" type="DutyExpressionId"/>
+                    <xs:element name="duty.amount" type="DutyAmount" minOccurs="0"/>
+                    <xs:element name="monetary.unit.code" type="MonetaryUnitCode" minOccurs="0"/>
+                    <xs:element name="measurement.unit.code" type="MeasurementUnitCode" minOccurs="0"/>
+                    <xs:element name="measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode" minOccurs="0"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>
     """
 
-    target_parser_class = NewMeasureTypeSeriesParser
+    target_parser_class = NewMeasureComponentParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure.type.series.id": "A",
-            "validity.start.date": "2021-01-01",
-            "validity.end.date": "2022-01-01",
-            "measure.type.combination": "6",
+            "measure_sid": "5",
+            "duty_expression_id": "4",
+            "duty_amount": "12.93",
+            "monetary_unit_code": "ABC",
+            "measurement_unit_code": "3",
+            "measurement_unit_qualifier_code": "2",
         }
 
         target = self.target_parser_class()
@@ -50,14 +53,16 @@ class TestNewMeasureTypeSeriesParser:
         )
 
         # verify all properties
-        assert target.sid == 8
-        assert target.valid_between_lower == date(2021, 1, 1)
-        assert target.valid_between_upper == date(2022, 1, 1)
-        assert target.measure_type_combination == 6
+        assert target.component_measure__sid == 5
+        assert target.duty_expression__sid == 4
+        assert target.duty_amount == 12.93
+        assert target.monetary_unit__code == "ABC"
+        assert target.component_measurement__measurement_unit__code == "3"
+        assert target.component_measurement__measurement_unit_qualifier__code == "2"
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
-            "measure_series_CREATE.xml",
+            "measure_component_CREATE.xml",
             __file__,
         )
 

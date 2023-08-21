@@ -5,31 +5,30 @@ from common.tests.util import get_test_xml_file
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.new_import_parsers import *
 from importer import new_importer
-from measures.new_import_parsers import NewMeasureTypeSeriesParser
+from measures.new_import_parsers import NewMeasureActionParser
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewMeasureTypeSeriesParser:
+class TestNewMeasureActionParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="measure.type.series" substitutionGroup="abstract.record">
+        <xs:element name="measure.action" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
+                    <xs:element name="action.code" type="ActionCode"/>
                     <xs:element name="validity.start.date" type="Date"/>
                     <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>
     """
 
-    target_parser_class = NewMeasureTypeSeriesParser
+    target_parser_class = NewMeasureActionParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

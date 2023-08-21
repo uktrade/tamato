@@ -170,11 +170,20 @@ class NewElementParser:
     update_type_name: str = None
     links_valid: bool = None
     value_mapping = {}
-    model_links = None
+    model_links = []
     parent_parser = None
     issues = []
     parent_handler = None
-    excluded_fields = ["language_id"]
+    excluded_fields = [
+        "language_id",
+        "antidumping_regulation_role",
+        "related_antidumping_regulation_id",
+        "complete_abrogation_regulation_role",
+        "complete_abrogation_regulation_id",
+        "explicit_abrogation_regulation_role",
+        "explicit_abrogation_regulation_id",
+        "export_refund_nomenclature_sid",
+    ]
     model = None
     identity_fields = []
 
@@ -333,11 +342,11 @@ class NewElementParser:
         self.transaction_id = transaction_id
         if self.record_code != record_code:
             raise Exception(
-                f"Record code mismatch : expected : {self.record_code}, got : {record_code} - data: {data}",
+                f"Record code mismatch : expected : {self.record_code}, got : {record_code} - data: {data}, Type: {self.__class__.__name__}",
             )
         if self.subrecord_code != subrecord_code:
             raise Exception(
-                f"Sub-record code mismatch : expected : {self.subrecord_code}, got : {subrecord_code} - data: {data}",
+                f"Sub-record code mismatch : expected : {self.subrecord_code}, got : {subrecord_code} - data: {data}, Type: {self.__class__.__name__}",
             )
 
         self.sequence_number = sequence_number
@@ -378,6 +387,15 @@ class NewElementParser:
                     field_data_typed = int(field_data_raw)
                 elif field_data_type == float:
                     field_data_typed = float(field_data_raw)
+                elif field_data_type == bool:
+                    if field_data_raw == "1":
+                        field_data_typed = True
+                    elif field_data_raw == "0":
+                        field_data_typed = False
+                    else:
+                        raise Exception(
+                            f"data value for bool : {field_data_raw} not handled, should only be 1 or 0, {mapped_data_item_key}",
+                        )
                 else:
                     raise Exception(
                         f"data type {field_data_type.__name__} not handled, does the handler have the correct data type?",

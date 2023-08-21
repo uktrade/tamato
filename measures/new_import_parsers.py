@@ -64,6 +64,12 @@ class NewMeasurementUnitParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "measurement.unit"
 
+    value_mapping = {
+        "measurement_unit_code": "code",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     code: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -77,14 +83,14 @@ class NewMeasurementUnitDescriptionParser(NewWritable, NewElementParser):
         ModelLink(
             models.MeasurementUnit,
             [
-                ModelLinkField("measurement_unit__code", "code"),
+                ModelLinkField("code", "code"),
             ],
             "measurement.unit",
         ),
     ]
 
     value_mapping = {
-        "measurement_unit__code": "code",
+        "measurement_unit_code": "code",
     }
 
     record_code = "210"
@@ -106,6 +112,8 @@ class NewMeasurementUnitQualifierParser(
 
     value_mapping = {
         "measurement_unit_qualifier_code": "code",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
     }
 
     record_code = "215"
@@ -166,6 +174,13 @@ class NewMeasurementParser(NewValidityMixin, NewWritable, NewElementParser):
         ),
     ]
 
+    value_mapping = {
+        "measurement_unit_code": "measurement_unit__code",
+        "measurement_unit_qualifier_code": "measurement_unit_qualifier__code",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     record_code = "220"
     subrecord_code = "00"
 
@@ -184,6 +199,14 @@ class NewMonetaryUnitParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "monetary.unit"
 
+    model_links = []
+
+    value_mapping = {
+        "monetary_unit_code": "code",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     code: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -197,7 +220,7 @@ class NewMonetaryUnitDescriptionParser(NewWritable, NewElementParser):
         ModelLink(
             models.MonetaryUnit,
             [
-                ModelLinkField("monetary_unit__code", "code"),
+                ModelLinkField("code", "code"),
             ],
             "monetary.unit",
         ),
@@ -422,10 +445,19 @@ class NewMeasureConditionCodeDescriptionParser(NewWritable, NewElementParser):
 class NewMeasureActionParser(NewValidityMixin, NewWritable, NewElementParser):
     # handler = MeasureActionHandler
     model = models.MeasureAction
+
+    model_links = []
+
     record_code = "355"
     subrecord_code = "00"
 
     xml_object_tag = "measure.action"
+
+    value_mapping = {
+        "action_code": "code",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
 
     code: str = None
     valid_between_lower: date = None
@@ -440,7 +472,7 @@ class NewMeasureActionDescriptionParser(NewWritable, NewElementParser):
         ModelLink(
             models.MeasureAction,
             [
-                ModelLinkField("action_code", "code"),
+                ModelLinkField("code", "code"),
             ],
             "measure.action",
         ),
@@ -449,6 +481,7 @@ class NewMeasureActionDescriptionParser(NewWritable, NewElementParser):
     value_mapping = {
         "action_code": "code",
     }
+
     record_code = "355"
     subrecord_code = "05"
 
@@ -494,6 +527,7 @@ class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
                 ModelLinkField("additional_code__type__sid", "type__sid"),
             ],
             "additional.code",
+            True,
         ),
         ModelLink(
             QuotaOrderNumber,
@@ -524,29 +558,50 @@ class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
         ),
     ]
 
+    value_mapping = {
+        "measure_sid": "sid",
+        "justification_regulation_role": "terminating_regulation__role_type",
+        "justification_regulation_id": "terminating_regulation__regulation_id",
+        "measure_type": "measure_type__sid",
+        "geographical_area_sid": "geographical_area__sid",
+        "geographical_area": "geographical_area__area_id",
+        "goods_nomenclature_item_id": "goods_nomenclature__item_id",
+        "additional_code_type": "additional_code__type__sid",
+        "additional_code": "additional_code__code",
+        "additional_code_sid": "additional_code__sid",
+        "ordernumber": "order_number__order_number",
+        "reduction_indicator": "reduction",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+        "measure_generating_regulation_role": "generating_regulation__role_type",
+        "measure_generating_regulation_id": "generating_regulation__regulation_id",
+        "stopped_flag": "stopped",
+        "goods_nomenclature_sid": "goods_nomenclature__sid",
+    }
+
     record_code = "430"
     subrecord_code = "00"
 
     xml_object_tag = "measure"
 
-    sid: str = None
+    sid: int = None
     measure_type__sid: str = None
     geographical_area__area_id: str = None
-    geographical_area__sid: str = None
+    geographical_area__sid: int = None
     goods_nomenclature__item_id: str = None
-    goods_nomenclature__sid: str = None
+    goods_nomenclature__sid: int = None
     additional_code__type__sid: str = None
     additional_code__code: str = None
-    additional_code__sid: str = None
+    additional_code__sid: int = None
     order_number__order_number: str = None
-    reduction: str = None
+    reduction: int = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    generating_regulation__role_type: str = None
+    generating_regulation__role_type: int = None
     generating_regulation__regulation_id: str = None
-    terminating_regulation__role_type: str = None
+    terminating_regulation__role_type: int = None
     terminating_regulation__regulation_id: str = None
-    stopped: str = None
+    stopped: bool = None
 
 
 class NewMeasureComponentParser(NewWritable, NewElementParser):
@@ -573,34 +628,38 @@ class NewMeasureComponentParser(NewWritable, NewElementParser):
                 ModelLinkField("monetary_unit__code", "code"),
             ],
             "monetary.unit",
+            True,
         ),
         ModelLink(
-            models.MeasurementUnit,
+            models.Measurement,
             [
                 ModelLinkField("component_measurement__measurement_unit__code", "code"),
-            ],
-            "measurement.unit",
-        ),
-        ModelLink(
-            models.MeasurementUnitQualifier,
-            [
                 ModelLinkField(
                     "component_measurement__measurement_unit_qualifier__code",
                     "code",
                 ),
             ],
-            "measurement.unit.qualifier",
+            "measurement",
+            True,
         ),
     ]
+
+    value_mapping = {
+        "measure_sid": "component_measure__sid",
+        "duty_expression_id": "duty_expression__sid",
+        "monetary_unit_code": "monetary_unit__code",
+        "measurement_unit_code": "component_measurement__measurement_unit__code",
+        "measurement_unit_qualifier_code": "component_measurement__measurement_unit_qualifier__code",
+    }
 
     record_code = "430"
     subrecord_code = "05"
 
     xml_object_tag = "measure.component"
 
-    component_measure__sid: str = None
-    duty_expression__sid: str = None
-    duty_amount: str = None
+    component_measure__sid: int = None
+    duty_expression__sid: int = None
+    duty_amount: float = None
     monetary_unit__code: str = None
     component_measurement__measurement_unit__code: str = None
     component_measurement__measurement_unit_qualifier__code: str = None
@@ -784,7 +843,7 @@ class NewFootnoteAssociationMeasureParser(NewWritable, NewElementParser):
         ModelLink(
             models.Measure,
             [
-                ModelLinkField("modified_measure__sid", "sid"),
+                ModelLinkField("footnoted_measure__sid", "sid"),
             ],
             "measure",
         ),

@@ -16,6 +16,14 @@ class NewRegulationGroupParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "regulation.group"
 
+    model_links = []
+
+    value_mapping = {
+        "regulation_group_id": "group_id",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     group_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -35,6 +43,10 @@ class NewRegulationGroupDescriptionParser(NewWritable, NewElementParser):
         ),
     ]
 
+    value_mapping = {
+        "regulation_group_id": "group_id",
+    }
+
     record_code = "150"
     subrecord_code = "05"
 
@@ -48,25 +60,48 @@ class NewRegulationGroupDescriptionParser(NewWritable, NewElementParser):
 class NewBaseRegulationParser(NewValidityMixin, NewWritable, NewElementParser):
     model = models.Regulation
 
+    model_links = [
+        ModelLink(
+            models.Group,
+            [
+                ModelLinkField("regulation_group__group_id", "group_id"),
+            ],
+            "group",
+        ),
+    ]
+
+    value_mapping = {
+        "officialjournal_number": "official_journal_number",
+        "officialjournal_page": "official_journal_page",
+        "published_date": "published_at",
+        "base_regulation_id": "regulation_id",
+        "base_regulation_role": "role_type",
+        "regulation_group_id": "regulation_group__group_id",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+        "stopped_flag": "stopped",
+        "approved_flag": "approved",
+    }
+
     record_code = "285"
     subrecord_code = "00"
 
     xml_object_tag = "base.regulation"
 
-    role_type: str = None
+    role_type: int = None
     regulation_id: str = None
-    published_at: str = None
+    published_at: date = None
     official_journal_number: str = None
-    official_journal_page: str = None
+    official_journal_page: int = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    effective_end_date: str = None
-    community_code: str = None
+    effective_end_date: date = None
+    community_code: int = None
     regulation_group__group_id: str = None
-    replacement_indicator: str = None
-    stopped: str = None
+    replacement_indicator: int = None
+    stopped: bool = None
     information_text: str = None
-    approved: str = None
+    approved: bool = None
 
 
 class NewModificationRegulationParser(NewValidityMixin, NewWritable, NewElementParser):

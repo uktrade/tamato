@@ -1,39 +1,42 @@
 import pytest
 
+from additional_codes.new_import_parsers import *
+
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
+from geo_areas.new_import_parsers import *
 from importer import new_importer
-from measures.models import FootnoteAssociationMeasure
-from measures.new_import_parsers import NewFootnoteAssociationMeasureParser
+from regulations.models import Group
+from regulations.new_import_parsers import NewRegulationGroupParser
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewFootnoteAssociationMeasureParser:
+class TestNewRegulationGroupParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="footnote.association.measure" substitutionGroup="abstract.record">
+        <xs:element name="regulation.group" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="measure.sid" type="SID"/>
-                    <xs:element name="footnote.type.id" type="FootnoteTypeId"/>
-                    <xs:element name="footnote.id" type="FootnoteId"/>
+                    <xs:element name="regulation.group.id" type="RegulationGroupId"/>
+                    <xs:element name="validity.start.date" type="Date"/>
+                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>
     """
 
-    target_parser_class = NewFootnoteAssociationMeasureParser
+    target_parser_class = NewRegulationGroupParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure_sid": "1",
-            "footnote_type_id": "AA",
-            "footnote_id": "BBB",
+            "regulation_group_id": "ASD",
+            "validity_start_date": "2021-01-01",
+            "validity_end_date": "2022-01-01",
         }
 
         target = self.target_parser_class()
@@ -47,13 +50,13 @@ class TestNewFootnoteAssociationMeasureParser:
         )
 
         # verify all properties
-        assert target.footnoted_measure__sid == 1
-        assert target.associated_footnote__footnote_type__footnote_type_id == "AA"
-        assert target.associated_footnote__footnote_id == "BBB"
+        assert target.group_id == "ASD"
+        assert target.valid_between_lower == date(2021, 1, 1)
+        assert target.valid_between_upper == date(2022, 1, 1)
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
-            "footnote_association_measure_CREATE.xml",
+            "regulation_group_CREATE.xml",
             __file__,
         )
 
@@ -64,9 +67,9 @@ class TestNewFootnoteAssociationMeasureParser:
         )
 
         # check there is one AdditionalCodeType imported
-        assert len(importer.parsed_transactions) == 11
+        assert len(importer.parsed_transactions) == 1
 
-        target_message = importer.parsed_transactions[10].parsed_messages[0]
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
         assert target_message.record_code == self.target_parser_class.record_code
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
@@ -74,10 +77,11 @@ class TestNewFootnoteAssociationMeasureParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.footnoted_measure__sid == 99
-        assert target.associated_footnote__footnote_type__footnote_type_id == "3"
-        assert target.associated_footnote__footnote_id == "9"
+        # verify all properties
+        assert target.group_id == "ABC"
+        assert target.valid_between_lower == date(2021, 1, 1)
+        assert target.valid_between_upper == date(2022, 1, 1)
 
         assert len(importer.issues()) == 0
 
-        assert FootnoteAssociationMeasure.objects.all().count() == 1
+        assert Group.objects.all().count() == 1
