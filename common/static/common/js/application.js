@@ -23,3 +23,4 @@ initAll();
 initCheckboxes();
 initConditionalMeasureConditions();
 initAutocompleteProgressiveEnhancement();
+initFilterDisabledToggleForComCode();
