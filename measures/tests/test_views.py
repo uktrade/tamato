@@ -35,6 +35,7 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
+from measures.validators import MeasureExplosionLevel
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
@@ -410,6 +411,51 @@ def test_measure_detail_version_control(valid_user_client):
     ]
     expected_dates = [f"{measure.transaction.updated_at:%d %b %Y}"] * num_rows
     assert activity_dates == expected_dates
+
+
+def test_measure_detail_core_data_tab_template(valid_user_client):
+    """Tests that the details core tab request returns a 200, and renders the
+    rows and links the summary table correctly for a measure with multiple
+    geographic exclusions."""
+    measure = factories.MeasureFactory(
+        with_additional_code=True,
+        with_order_number=True,
+    )
+    exclusion_1 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        modified_measure=measure,
+    )
+    exclusion_2 = factories.MeasureExcludedGeographicalAreaFactory.create(
+        modified_measure=measure,
+    )
+    url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#core-data"
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    # Check the right amount of rows render
+    num_rows = len(page.find_all("div", class_="govuk-summary-list__row"))
+    assert num_rows == 13
+
+    # Check that the links appear as expected
+    summary_list = page.find("dl", "govuk-summary-list")
+    sorted_expected_links = sorted(
+        [
+            f"/regulations/{measure.generating_regulation.role_type}/{measure.generating_regulation.regulation_id}/",
+            f"/commodities/{measure.goods_nomenclature.sid}/",
+            f"/additional_codes/{measure.additional_code.sid}/",
+            f"/geographical-areas/{measure.geographical_area.sid}/",
+            f"/geographical-areas/{exclusion_1.excluded_geographical_area.sid}/",
+            f"/geographical-areas/{exclusion_2.excluded_geographical_area.sid}/",
+            f"/quotas/{measure.order_number.sid}/",
+        ],
+    )
+    sorted_summary_links = sorted([item["href"] for item in summary_list.find_all("a")])
+
+    for index, link in enumerate(sorted_summary_links):
+        assert sorted_expected_links[index] == sorted_summary_links[index]
 
 
 @pytest.mark.parametrize(
@@ -999,12 +1045,13 @@ def test_measure_edit_update_view(valid_user_client, erga_omnes):
     response = valid_user_client.post(url, data=data)
     assert response.status_code == 302
 
-    measure.refresh_from_db()
-    assert measure.update_type == UpdateType.UPDATE
-    assert measure.geographical_area == geo_area
+    with override_current_transaction(Transaction.objects.last()):
+        updated_measure = Measure.objects.current().get(sid=measure.sid)
+        assert updated_measure.update_type == UpdateType.UPDATE
+        assert updated_measure.geographical_area == geo_area
 
 
-def test_measure_edit_create_view(valid_user_client, erga_omnes):
+def test_measure_edit_create_view(valid_user_client, duty_sentence_parser, erga_omnes):
     """Test that a measure CREATE instance can be edited."""
     measure = factories.MeasureFactory.create(
         update_type=UpdateType.CREATE,
@@ -1018,12 +1065,14 @@ def test_measure_edit_create_view(valid_user_client, erga_omnes):
 
     data = model_to_dict(measure)
     data = {k: v for k, v in data.items() if v is not None}
+    new_duty = "1.000% + 2.000 GBP"
     start_date = data["valid_between"].lower
     data.update(
         {
             "start_date_0": start_date.day,
             "start_date_1": start_date.month,
             "start_date_2": start_date.year,
+            "duty_sentence": new_duty,
             "geo_area": "COUNTRY",
             "country_region-geographical_area_country_or_region": geo_area.pk,
             "submit": "submit",
@@ -1032,9 +1081,10 @@ def test_measure_edit_create_view(valid_user_client, erga_omnes):
     response = valid_user_client.post(url, data=data)
     assert response.status_code == 302
 
-    measure.refresh_from_db()
-    assert measure.update_type == UpdateType.CREATE
-    assert measure.geographical_area == geo_area
+    with override_current_transaction(Transaction.objects.last()):
+        updated_measure = Measure.objects.current().get(sid=measure.sid)
+        assert updated_measure.update_type == UpdateType.UPDATE
+        assert updated_measure.duty_sentence == new_duty
 
 
 @pytest.mark.django_db
@@ -1054,6 +1104,7 @@ def test_measure_form_wizard_finish(
     erga_omnes,
 ):
     measure_type = factories.MeasureTypeFactory.create(
+        measure_explosion_level=MeasureExplosionLevel.TARIC,
         measure_component_applicability_code=ApplicabilityCode.PERMITTED,
         valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
     )

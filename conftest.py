@@ -54,6 +54,7 @@ from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
 from common.validators import UpdateType
+from importer.models import ImportBatchStatus
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
 from workbaskets.models import WorkBasket
@@ -171,9 +172,9 @@ def assert_spanning_enforced(spanning_dates, update_type):
 
     This is useful in implementing tests for business rules of the form:
 
-        When a "contained object" is used in a "container object" the validity
-        period of the "container object" must span the validity period of the
-        "contained object".
+    When a "contained object" is used in a "container object" the validity
+    period of the "container object" must span the validity period of the
+    "contained object".
     """
 
     def check(
@@ -356,10 +357,26 @@ def published_footnote_type(queued_workbasket):
 
 @pytest.fixture
 @given("there is a current workbasket")
-def session_workbasket(client, new_workbasket):
-    new_workbasket.save_to_session(client.session)
-    client.session.save()
+def session_workbasket(client, new_workbasket) -> WorkBasket:
+    # The valid_user_client.session property returns a new session instance on
+    # each reference, so first get a single session instance via the property.
+    session = client.session
+    new_workbasket.save_to_session(session)
+    session.save()
     return new_workbasket
+
+
+@pytest.fixture
+def session_empty_workbasket(valid_user_client) -> WorkBasket:
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    # The valid_user_client.session property returns a new session instance on
+    # each reference, so first get a single session instance via the property.
+    session = valid_user_client.session
+    workbasket.save_to_session(session)
+    session.save()
+    return workbasket
 
 
 @pytest.fixture
@@ -472,7 +489,10 @@ def use_create_form(valid_user_api_client: APIClient):
     use_update_form
     """
 
-    def use(Model: Type[TrackedModel], new_data: Callable[Dict[str, str]]):
+    def use(
+        Model: Type[TrackedModel],
+        new_data: Callable[[Dict[str, str]], Dict[str, str]],
+    ):
         """
         :param Model: Model class to test
         :param new_data function to populate form initial data.
@@ -970,8 +990,8 @@ def envelope_storage(s3, s3_bucket_names):
         bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
     )
     assert storage.endpoint_url is settings.S3_ENDPOINT_URL
-    assert storage.access_key is settings.S3_ACCESS_KEY_ID
-    assert storage.secret_key is settings.S3_SECRET_ACCESS_KEY
+    assert storage.access_key is settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID
+    assert storage.secret_key is settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY
     assert storage.bucket_name in s3_bucket_names()
     return storage
 
@@ -987,6 +1007,20 @@ def loading_report_storage(s3):
         LoadingReportStorage,
         bucket_name=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
     )
+
+
+@pytest.fixture
+def importer_storage(s3):
+    """Patch CommodityImporterStorage with moto so that nothing is really
+    uploaded to s3."""
+    from importer.storages import CommodityImporterStorage
+
+    storage = make_storage_mock(
+        s3,
+        CommodityImporterStorage,
+        bucket_name=settings.IMPORTER_STORAGE_BUCKET_NAME,
+    )
+    return storage
 
 
 @pytest.fixture(
@@ -1318,11 +1352,12 @@ def unordered_transactions():
     Fixture that creates some transactions, where one is a draft.
 
     The draft transaction has approved transactions on either side, this allows
-    testing of save_draft and it's callers to verify the transactions are getting
-    sorted.
+    testing of save_draft and it's callers to verify the transactions are
+    getting sorted.
 
-    UnorderedTransactionData is returned, so the user can set the new_transaction partition to DRAFT
-    and while also using an existing_transaction.
+    UnorderedTransactionData is returned, so the user can set the
+    new_transaction partition to DRAFT and while also using an
+    existing_transaction.
     """
     from common.tests.factories import ApprovedTransactionFactory
     from common.tests.factories import FootnoteFactory
@@ -1462,3 +1497,53 @@ def quotas_json():
 def mock_aioresponse():
     with aioresponses() as m:
         yield m
+
+
+@pytest.fixture
+def importing_goods_import_batch():
+    editing_workbasket = factories.WorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        goods_import=True,
+        status=ImportBatchStatus.IMPORTING,
+        workbasket_id=editing_workbasket.id,
+    )
+
+
+@pytest.fixture
+def failed_goods_import_batch():
+    editing_workbasket = factories.WorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        goods_import=True,
+        status=ImportBatchStatus.FAILED,
+        workbasket_id=editing_workbasket.id,
+    )
+
+
+@pytest.fixture
+def completed_goods_import_batch():
+    editing_workbasket = factories.WorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        goods_import=True,
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=editing_workbasket.id,
+    )
+
+
+@pytest.fixture
+def published_goods_import_batch():
+    published_workbasket = factories.PublishedWorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        goods_import=True,
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=published_workbasket.id,
+    )
+
+
+@pytest.fixture
+def empty_goods_import_batch():
+    archived_workbasket = factories.ArchivedWorkBasketFactory.create()
+    return factories.ImportBatchFactory.create(
+        goods_import=True,
+        status=ImportBatchStatus.SUCCEEDED,
+        workbasket_id=archived_workbasket.id,
+    )

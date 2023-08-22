@@ -37,7 +37,7 @@ class TestCommandBase(ABC):
             self.TARGET_COMMAND
         except AttributeError:
             pytest.skip(
-                "Skipping since base class does nopt have TARGET_COMMAND defined",
+                "Skipping since base class does not have TARGET_COMMAND defined",
             )
 
         assert self.get_help_count(eval(self.TARGET_COMMAND)) > 0

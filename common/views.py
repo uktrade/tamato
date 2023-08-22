@@ -38,6 +38,7 @@ from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.celery import app
 from common.models import TrackedModel
+from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
 from workbaskets.models import WorkBasket
@@ -64,6 +65,8 @@ class HomeView(FormView, View):
             return redirect(reverse("publishing:envelope-queue-ui-list"))
         elif form.cleaned_data["workbasket_action"] == "SEARCH":
             return redirect(reverse("search-page"))
+        elif form.cleaned_data["workbasket_action"] == "IMPORT":
+            return redirect(reverse("commodity_importer-ui-list"))
 
 
 class SearchPageView(TemplateView):
@@ -175,7 +178,12 @@ class AppInfoView(
         if self.request.user.is_superuser:
             data["GIT_BRANCH"] = os.getenv("GIT_BRANCH", "Unavailable")
             data["GIT_COMMIT"] = os.getenv("GIT_COMMIT", "Unavailable")
-            data["UPDATED_TIME"] = datetime.fromtimestamp(os.path.getmtime(__file__))
+            data["APP_UPDATED_TIME"] = datetime.fromtimestamp(
+                os.path.getmtime(__file__),
+            )
+            data["LAST_TRANSACTION_TIME"] = (
+                Transaction.objects.order_by("-updated_at").first().updated_at
+            )
 
         return data
 
@@ -270,15 +278,16 @@ class BusinessRulesMixin:
 
     validate_business_rules: Tuple[Type[BusinessRule], ...] = tuple()
 
-    def form_violates(self, form) -> bool:
+    def form_violates(self, form, transaction=None) -> bool:
         """
         If any of the specified business rules are violated, reshow the form
         with the violations as form errors.
 
         :param form: The submitted form
+        :param transaction: The transaction containing the version of the object to be validated. Defaults to `self.object.transaction`
         """
         violations = False
-        transaction = self.object.transaction
+        transaction = transaction or self.object.transaction
 
         for rule in self.validate_business_rules:
             try:

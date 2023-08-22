@@ -52,6 +52,11 @@ ui_patterns = [
         name="review-workbasket",
     ),
     path(
+        f"current/review-goods/",
+        ui_views.WorkbasketReviewGoodsView.as_view(),
+        name="workbasket-ui-review-goods",
+    ),
+    path(
         f"current/violations/",
         ui_views.WorkBasketViolations.as_view(),
         name="workbasket-ui-violations",
@@ -85,6 +90,16 @@ ui_patterns = [
         f"<wb_pk>/violations/<pk>/",
         ui_views.WorkBasketViolationDetail.as_view(),
         name="workbasket-ui-violation-detail",
+    ),
+    path(
+        f"<pk>/delete/",
+        ui_views.WorkBasketDelete.as_view(),
+        name="workbasket-ui-delete",
+    ),
+    path(
+        f"<deleted_pk>/delete-done/",
+        ui_views.WorkBasketDeleteDone.as_view(),
+        name="workbasket-ui-delete-done",
     ),
 ]
 

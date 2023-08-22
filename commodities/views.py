@@ -1,22 +1,17 @@
 from datetime import date
 from urllib.parse import urlencode
 
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib import messages
 from django.urls import reverse
-from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.views.generic import FormView
 from django.views.generic import ListView
-from django.views.generic import TemplateView
 from rest_framework import permissions
 from rest_framework import viewsets
 
 from commodities import business_rules
+from commodities import forms
 from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
-from commodities.forms import CommodityFootnoteForm
-from commodities.forms import CommodityImportForm
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models import GoodsNomenclature
 from commodities.models.dc import CommodityCollectionLoader
@@ -26,14 +21,15 @@ from commodities.models.dc import get_chapter_collection
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from common.serializers import AutoCompleteSerializer
 from common.views import SortingMixin
+from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
 from measures.models import Measure
 from workbaskets.models import WorkBasket
-from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricCreateView
-from workbaskets.views.mixins import WithCurrentWorkBasket
+from workbaskets.views.generic import CreateTaricDeleteView
+from workbaskets.views.generic import CreateTaricUpdateView
 
 
 class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
@@ -60,25 +56,6 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
         )
 
 
-@method_decorator(require_current_workbasket, name="dispatch")
-class CommodityImportView(PermissionRequiredMixin, FormView, WithCurrentWorkBasket):
-    template_name = "commodities/import.jinja"
-    form_class = CommodityImportForm
-    success_url = reverse_lazy("commodity-ui-import-success")
-    permission_required = [
-        "common.add_trackedmodel",
-        "common.change_trackedmodel",
-    ]
-
-    def form_valid(self, form):
-        form.save(user=self.request.user, workbasket_id=self.workbasket.id)
-        return super().form_valid(form)
-
-
-class CommodityImportSuccessView(TemplateView):
-    template_name = "commodities/import-success.jinja"
-
-
 class CommodityMixin:
     model = GoodsNomenclature
 
@@ -86,7 +63,7 @@ class CommodityMixin:
         return GoodsNomenclature.objects.current()
 
 
-class CommodityFootnoteMixin:
+class FootnoteAssociationMixin:
     model = FootnoteAssociationGoodsNomenclature
 
     def get_queryset(self):
@@ -251,7 +228,7 @@ class MeasuresOnDeclarableCommoditiesList(CommodityMeasuresAsDefinedList):
 
 
 class CommodityAddFootnote(CreateTaricCreateView):
-    form_class = CommodityFootnoteForm
+    form_class = forms.CommodityFootnoteForm
     template_name = "commodity_footnotes/create.jinja"
 
     validate_business_rules = (
@@ -289,6 +266,64 @@ class CommodityAddFootnote(CreateTaricCreateView):
         return context
 
 
-class CommodityAddFootnoteConfirm(CommodityFootnoteMixin, TrackedModelDetailView):
+class CommodityAddFootnoteConfirm(FootnoteAssociationMixin, TrackedModelDetailView):
     template_name = "commodity_footnotes/confirm_create.jinja"
     required_url_kwargs = ("pk",)
+
+
+class FootnoteAssociationGoodsNomenclatureUpdate(
+    FootnoteAssociationMixin,
+    TrackedModelDetailMixin,
+    CreateTaricUpdateView,
+):
+    form_class = forms.CommodityFootnoteEditForm
+    template_name = "commodity_footnotes/edit.jinja"
+    success_path = "confirm-update"
+
+    validate_business_rules = (
+        business_rules.NIG18,
+        business_rules.NIG22,
+        business_rules.NIG23,
+        business_rules.NIG24,
+    )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["tx"] = self.workbasket.new_transaction()
+        return kwargs
+
+
+class FootnoteAssociationGoodsNomenclatureConfirmUpdate(
+    FootnoteAssociationMixin,
+    TrackedModelDetailView,
+):
+    template_name = "commodity_footnotes/confirm_update.jinja"
+
+
+class FootnoteAssociationGoodsNomenclatureDelete(
+    FootnoteAssociationMixin,
+    TrackedModelDetailMixin,
+    CreateTaricDeleteView,
+):
+    template_name = "commodity_footnotes/delete.jinja"
+    form_class = forms.FootnoteAssociationGoodsNomenclatureDeleteForm
+
+    def get_success_url(self) -> str:
+        return reverse(
+            "footnote_association_goods_nomenclature-ui-confirm-delete",
+            kwargs={"sid": self.object.goods_nomenclature.sid},
+        )
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Footnote association {self.object.associated_footnote.footnote_type.footnote_type_id}{self.object.associated_footnote.footnote_id} for commodity code {self.object.goods_nomenclature.item_id} has been deleted",
+        )
+        return super().form_valid(form)
+
+
+class FootnoteAssociationGoodsNomenclatureConfirmDelete(
+    CommodityMixin,
+    TrackedModelDetailView,
+):
+    template_name = "commodity_footnotes/confirm_delete.jinja"

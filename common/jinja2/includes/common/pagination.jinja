@@ -10,10 +10,12 @@
       <div class="govuk-body">
         Showing {{ page_obj|length }} of {{ objects_count }}
         {# Polymorphic TrackedModelsQuerySet instances don't have a valid `model`. #}
-        {% if page_obj.object_list.model %}
+        {% if items_name %}
+          {{items_name}}
+        {% elif page_obj.object_list.model %}
           {{ page_obj.object_list.model._meta.verbose_name_plural if paginator.count > 1 else page_obj.object_list.model._meta.verbose_name }}
         {% else %}
-          {{ items_name if items_name else "items" }}
+          "items"
         {% endif %}
       </div>
       <div class="govuk-body align-left">

@@ -38,7 +38,6 @@ class CommunityCode(models.IntegerChoices):
 
 
 class RegulationUsage(models.TextChoices):
-    __empty__ = "Select a regulation usage"
     DRAFT_REGULATION = "C", "C: Draft regulation"
     PREFERENTIAL_TRADE_AGREEMENT = "P", "P: Preferential Trade Agreement / FTA"
     UNILATERAL_PREFERENCES = "U", "U: Unilateral preferences (GSP)"

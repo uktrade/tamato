@@ -49,3 +49,8 @@ if SKIP_CLAM_AV_FILE_UPLOAD:
         "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
         "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
     )
+
+try:
+    from settings.dev_override import *
+except ImportError:
+    pass

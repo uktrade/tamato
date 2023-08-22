@@ -156,8 +156,8 @@ def get_checkable_data(model: TrackedModel, ignore=frozenset()):
     Returns a dict representing the model's data ignoring any automatically set
     fields and fields with names passed to `ignore`.
 
-    The returned data will contain the identifying fields for any linked
-    models rather than internal PKs.
+    The returned data will contain the identifying fields for any linked models
+    rather than internal PKs.
 
     For example:
 
@@ -301,10 +301,8 @@ def get_class_based_view_urls_matching_url(
 
 
 def get_view_model(view_class, override_models):
-    """
-    :return view_model from a view class, if the fully qualified classname is present inf override_models
-    this is returned instead.
-    """
+    """:return view_model from a view class, if the fully qualified classname is
+    present inf override_models this is returned instead."""
     # User may supply their own model in the override_models dict, keyed by the view_class
     fq_class_name = fully_qualified_classname(view_class)
     if fq_class_name in override_models:
@@ -428,7 +426,11 @@ def assert_model_view_renders(
     # Models can be overridden using the override_models parameter.
     bits = url_pattern[0]
     params = get_fields_dict(instance, bits[0][1])
-    url = bits[0][0] % params
+    converters = url_pattern[3]
+    converted_params = {
+        key: converters[key].to_url(value) for key, value in params.items()
+    }
+    url = bits[0][0] % converted_params
 
     assert len(url) > 1, "No matching URLs were found."
 
@@ -778,9 +780,9 @@ def only_applicable_after(cutoff):
     """
     Decorator which asserts that a test fails after a specified cutoff date.
 
-    :param cutoff: A date string, or datetime object before which the test should fail.
+    :param cutoff: A date string, or datetime object before which the test
+        should fail.
     """
-
     cutoff = parse_date(cutoff)
 
     def decorator(fn):

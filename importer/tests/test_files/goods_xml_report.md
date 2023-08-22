@@ -1,0 +1,3 @@
+| update_type   | whats_being_updated   |   goods_nomenclature_code |   suffix | validity_start_date   | validity_end_date   | comments   |   containing_transaction_id |   containing_message_id |
+|:--------------|:----------------------|--------------------------:|---------:|:----------------------|:--------------------|:-----------|----------------------------:|------------------------:|
+| CREATE        | Goods nomenclature    |                7019720081 |       80 | 2022-02-26            |                     |            |                    19282658 |                    4575 |

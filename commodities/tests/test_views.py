@@ -1,13 +1,11 @@
 import datetime
 import json
-from os import path
-from unittest.mock import patch
 
 import pytest
 from bs4 import BeautifulSoup
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
+from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
 from commodities.views import CommodityList
 from common.models.transactions import Transaction
@@ -15,58 +13,14 @@ from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.factories import GoodsNomenclatureDescriptionFactory
 from common.tests.factories import GoodsNomenclatureFactory
-from common.tests.factories import ImportBatchFactory
 from common.tests.util import assert_model_view_renders
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.validators import UpdateType
 from common.views import TrackedModelDetailMixin
 
 pytestmark = pytest.mark.django_db
-
-TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
-
-
-def test_commodities_import_200(valid_user_client):
-    url = reverse("commodity-ui-import")
-    response = valid_user_client.get(url)
-    assert response.status_code == 200
-
-
-@patch("commodities.forms.CommodityImportForm.save")
-def test_commodities_import_success_redirect(mock_save, valid_user_client):
-    mock_save.return_value = ImportBatchFactory.create()
-    url = reverse("commodity-ui-import")
-    redirect_url = reverse("commodity-ui-import-success")
-    with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as f:
-        content = f.read()
-    taric_file = SimpleUploadedFile("taric_file.xml", content, content_type="text/xml")
-    response = valid_user_client.post(url, {"taric_file": taric_file})
-    assert response.status_code == 302
-    assert response.url == redirect_url
-
-    response = valid_user_client.get(redirect_url)
-    assert response.status_code == 200
-
-
-@pytest.mark.parametrize(
-    "file_name,error_msg",
-    [
-        ("invalid.xml", "The selected file could not be uploaded - try again"),
-        ("broken.xml", "The selected file could not be uploaded - try again"),
-        ("dtd.xml", "The selected file could not be uploaded - try again"),
-        ("invalid_type.txt", "The selected file must be XML"),
-    ],
-)
-def test_commodities_import_failure(file_name, error_msg, valid_user_client):
-    url = reverse("commodity-ui-import")
-    with open(f"{TEST_FILES_PATH}/{file_name}", "rb") as f:
-        content = f.read()
-    taric_file = SimpleUploadedFile("taric_file.xml", content, content_type="text/xml")
-    response = valid_user_client.post(url, {"taric_file": taric_file})
-    assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
-    assert error_msg in soup.select(".govuk-error-message")[0].text
 
 
 def test_commodity_list_displays_commodity_suffix_indent_and_description(
@@ -534,13 +488,74 @@ def test_commodity_footnotes_page(valid_user_client):
     footnotes = soup.select(".govuk-table__body .govuk-table__row")
     assert len(footnotes) == commodity.footnote_associations.count()
 
-    first_footnote_description = (
-        footnotes[0].select(".govuk-table__cell:nth-child(2)")[0].text.strip()
+    page_footnote_descriptions = {
+        element.select(".govuk-table__cell:nth-child(2)")[0].text.strip()
+        for element in footnotes
+    }
+    footnote_descriptions = {
+        footnote_association.associated_footnote.descriptions.first().description
+        for footnote_association in commodity.footnote_associations.all()
+    }
+    assert not footnote_descriptions.difference(page_footnote_descriptions)
+
+
+def test_commodity_footnote_update_success(valid_user_client, date_ranges):
+    commodity = factories.GoodsNomenclatureFactory.create()
+    footnote1 = factories.FootnoteFactory.create()
+    association1 = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+        associated_footnote=footnote1,
+        goods_nomenclature=commodity,
     )
+    url = association1.get_url("edit")
+    data = {
+        "goods_nomenclature": commodity.id,
+        "associated_footnote": footnote1.id,
+        "start_date_0": date_ranges.later.lower.day,
+        "start_date_1": date_ranges.later.lower.month,
+        "start_date_2": date_ranges.later.lower.year,
+        "end_date": "",
+    }
+    response = valid_user_client.post(url, data)
+    tx = Transaction.objects.last()
+    updated_association = (
+        FootnoteAssociationGoodsNomenclature.objects.approved_up_to_transaction(
+            tx,
+        ).first()
+    )
+    assert response.status_code == 302
+    assert response.url == updated_association.get_url("confirm-update")
+
+
+def test_footnote_association_delete(valid_user_client):
+    commodity = factories.GoodsNomenclatureFactory.create()
+    footnote1 = factories.FootnoteFactory.create()
+    association1 = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+        associated_footnote=footnote1,
+        goods_nomenclature=commodity,
+    )
+    url = association1.get_url("delete")
+    response = valid_user_client.post(url, {"submit": "Delete"})
+
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "footnote_association_goods_nomenclature-ui-confirm-delete",
+        kwargs={"sid": commodity.sid},
+    )
+
+    tx = Transaction.objects.last()
+
+    assert tx.workbasket.tracked_models.first().associated_footnote == footnote1
+    assert tx.workbasket.tracked_models.first().goods_nomenclature == commodity
+    assert tx.workbasket.tracked_models.first().update_type == UpdateType.DELETE
+
+    confirm_response = valid_user_client.get(response.url)
+    soup = BeautifulSoup(
+        confirm_response.content.decode(response.charset),
+        "html.parser",
+    )
+    h1 = soup.select("h1")[0]
+
     assert (
-        first_footnote_description
-        == commodity.footnote_associations.order_by("valid_between")
-        .first()
-        .associated_footnote.descriptions.first()
-        .description
+        h1.text.strip()
+        == f"Footnote association {footnote1.footnote_type.footnote_type_id}{footnote1.footnote_id} for commodity code {commodity.item_id} has been deleted",
     )

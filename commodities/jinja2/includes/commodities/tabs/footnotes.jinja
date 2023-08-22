@@ -13,22 +13,32 @@
       {% include "includes/commodities/actions.jinja" %}
   </div>
 </div>
-{% if object.footnote_associations.current() %}
+{% if object.footnote_associations.current().order_by("pk") %}
   {% set table_rows = [] %}
   {% for association in object.footnote_associations.current().order_by("valid_between") %}
+    {% set actions_html %}
+      {% if association.get_url('edit') %}
+        <a href="{{ association.get_url('edit') }}" class="govuk-link">Edit</a><br>
+      {% endif %}
+      {% if association.get_url('delete') %}
+        <a href="{{ association.get_url('delete') }}" class="govuk-link">Delete</a>
+      {% endif %}
+    {% endset %}
     {{ table_rows.append([
         {"text": create_link(association.associated_footnote.get_url(), association.associated_footnote|string) },
         {"text": association.associated_footnote.descriptions.first().description },
         {"text": "{:%d %b %Y}".format(association.valid_between.lower) },
         {"text": "{:%d %b %Y}".format(association.valid_between.upper) if association.valid_between.upper else "—" },
+        {"text": actions_html },
       ]) or "" }}
   {% endfor %}
     {{ govukTable({
     "head": [
-        {"text": "SID"},
+        {"text": "Footnote SID"},
         {"text": "Description", "classes": "govuk-!-width-two-thirds"},
         {"text": "Start date"},
         {"text": "End date"},
+        {"text": "Actions"},
     ],
     "rows": table_rows
     }) }}

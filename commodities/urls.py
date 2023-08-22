@@ -1,8 +1,24 @@
 from django.urls import include
 from django.urls import path
+from django.urls import register_converter
 from rest_framework import routers
 
 from commodities import views
+from common.path_converters import TaricDateRangeConverter
+from footnotes.path_converters import FootnoteIdConverter
+from footnotes.path_converters import FootnoteTypeIdConverter
+
+register_converter(FootnoteIdConverter, "footnote_id")
+register_converter(FootnoteTypeIdConverter, "footnote_type_id")
+register_converter(TaricDateRangeConverter, "taric_date_range")
+
+footnote_association_pattern = (
+    "commodities/<sid:goods_nomenclature__sid>"
+    "/footnote-associations/"
+    "<footnote_type_id:associated_footnote__footnote_type__footnote_type_id>"
+    "<footnote_id:associated_footnote__footnote_id>"
+    "/date/<taric_date_range:valid_between>"
+)
 
 api_router = routers.DefaultRouter()
 api_router.register(
@@ -59,13 +75,33 @@ urlpatterns = [
         name="commodity-ui-add-footnote-confirm",
     ),
     path(
-        "import/commodities/",
-        views.CommodityImportView.as_view(),
-        name="commodity-ui-import",
+        f"{footnote_association_pattern}/edit/",
+        views.FootnoteAssociationGoodsNomenclatureUpdate.as_view(),
+        name="footnote_association_goods_nomenclature-ui-edit",
     ),
     path(
-        "import/commodities/success/",
-        views.CommodityImportSuccessView.as_view(),
-        name="commodity-ui-import-success",
+        f"{footnote_association_pattern}/edit-update/",
+        views.FootnoteAssociationGoodsNomenclatureUpdate.as_view(),
+        name="footnote_association_goods_nomenclature-ui-edit-update",
+    ),
+    path(
+        f"{footnote_association_pattern}/edit-create/",
+        views.FootnoteAssociationGoodsNomenclatureUpdate.as_view(),
+        name="footnote_association_goods_nomenclature-ui-edit-create",
+    ),
+    path(
+        f"{footnote_association_pattern}/confirm-update/",
+        views.FootnoteAssociationGoodsNomenclatureConfirmUpdate.as_view(),
+        name="footnote_association_goods_nomenclature-ui-confirm-update",
+    ),
+    path(
+        f"{footnote_association_pattern}/delete/",
+        views.FootnoteAssociationGoodsNomenclatureDelete.as_view(),
+        name="footnote_association_goods_nomenclature-ui-delete",
+    ),
+    path(
+        f"commodities/<sid>/footnote-associations/confirm-delete/",
+        views.FootnoteAssociationGoodsNomenclatureConfirmDelete.as_view(),
+        name="footnote_association_goods_nomenclature-ui-confirm-delete",
     ),
 ]

@@ -1,3 +1,4 @@
+import os
 import xml.etree.ElementTree as ET
 from logging import getLogger
 from tempfile import TemporaryFile
@@ -13,7 +14,7 @@ from importer import models
 from importer.namespaces import make_schema_dataclass
 from importer.namespaces import nsmap
 from importer.namespaces import xsd_schema_paths
-from importer.utils import dependency_tree
+from importer.utils import build_dependency_tree
 
 MAX_FILE_SIZE = 1024 * 1024 * 50  # Will keep chunks roughly close to 50MB
 Tags = make_schema_dataclass(xsd_schema_paths)
@@ -165,9 +166,10 @@ def rewrite_comm_codes(batch: models.ImportBatch, envelope_id: str, record_code=
     Take the given commodity code data and rewrite it in the correct order
     required by the hierarchical tree.
 
-    Commodity codes in seed files often are given out of order which breaks the hierarchical
-    tree representing them. This function takes all transactions with the relevant record_code
-    (400), sorts them and rewrites them in the expected order.
+    Commodity codes in seed files often are given out of order which breaks the
+    hierarchical tree representing them. This function takes all transactions
+    with the relevant record_code (400), sorts them and rewrites them in the
+    expected order.
 
     N.B. This happens entirely within memory.
     """
@@ -219,18 +221,19 @@ def write_transaction_to_chunk(
     """
     Write a given transaction to the relevant chunk.
 
-    Finds the chunk to write to. If the batch is a split_job the chunk is based on record code
-    and possibly chapter heading (for commodities and measures). If the batch is not a split
-    job it simply uses the current or next chunk.
+    Finds the chunk to write to. If the batch is a split_job the chunk is based
+    on record code and possibly chapter heading (for commodities and measures).
+    If the batch is not a split job it simply uses the current or next chunk.
 
-    If a chunk reaches the given size limit it is written to the database and a new chunk
-    started.
+    If a chunk reaches the given size limit it is written to the database and a
+    new chunk started.
     """
     chapter_heading = None
 
     if batch.split_job:
         record_code = get_record_code(transaction)
 
+        dependency_tree = build_dependency_tree()
         if record_code not in dependency_tree:
             return
 
@@ -274,11 +277,12 @@ def filter_transaction_records(
     Filters the records in a transaction based on record codes in the record
     group.
 
-    Record identifiers are concatenated record_code and subrecord_code child element values.
+    Record identifiers are concatenated record_code and subrecord_code child
+    element values.
 
-    Returns the a copy of the transaction element with non-matching records removed.
-    Returns the untouched transaction if record_group is none.
-    Returns None if there are no matching records in the transaction.
+    Returns the a copy of the transaction element with non-matching records
+    removed. Returns the untouched transaction if record_group is none. Returns
+    None if there are no matching records in the transaction.
     """
     if record_group is None:
         return elem
@@ -327,15 +331,20 @@ def chunk_taric(
     taric3_file: InMemoryUploadedFile,
     batch: models.ImportBatch,
     record_group: Sequence[str] = None,
-) -> models.ImportBatch:
+) -> int:
     """
     Parses a TARIC3 XML stream and breaks it into a batch of chunks.
 
     All chunks are written to the database. If the batch is intended to be split
     on record code then the commodity codes are also sorted into the correct
     order.
+
+    Returns the number of chunks created and associated with `batch`.
     """
     chunks_in_progress = {}
+
+    # set file position to start of stream
+    taric3_file.seek(0, os.SEEK_SET)
     xmlparser = ET.iterparse(taric3_file, ["start", "end"])
 
     element_counter = 0
@@ -358,10 +367,12 @@ def chunk_taric(
         if element_counter % 100000 == 0:
             logger.info("%d transactions done", element_counter)
 
+    chunk_count = len(chunks_in_progress)
+
     for key, chunk in chunks_in_progress.items():
         close_chunk(chunk, batch, key)
 
     if batch.split_job:
         rewrite_comm_codes(batch, envelope_id)
 
-    return batch
+    return chunk_count

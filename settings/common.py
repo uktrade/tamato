@@ -148,6 +148,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "common.models.utils.ValidateSessionWorkBasketMiddleware",
     "common.models.utils.TransactionMiddleware",
     "csp.middleware.CSPMiddleware",
 ]
@@ -374,18 +375,38 @@ if VCAP_SERVICES.get("aws-s3-bucket"):
     app_bucket_creds = VCAP_SERVICES["aws-s3-bucket"][0]["credentials"]
 
     S3_REGION_NAME = app_bucket_creds["aws_region"]
-    S3_ACCESS_KEY_ID = app_bucket_creds["aws_access_key_id"]
-    S3_SECRET_ACCESS_KEY = app_bucket_creds["aws_secret_access_key"]
-    HMRC_PACKAGING_STORAGE_BUCKET_NAME = app_bucket_creds["bucket_name"]
+
+    for bucket in VCAP_SERVICES["aws-s3-bucket"]:
+        # name is set by us when we are setting up the s3 service
+        credentials = bucket["credentials"]
+        if "hmrc-packaging" in bucket["name"]:
+            HMRC_PACKAGING_STORAGE_BUCKET_NAME = credentials["bucket_name"]
+            HMRC_PACKAGING_S3_REGION_NAME = credentials["aws_region"]
+            HMRC_PACKAGING_S3_ACCESS_KEY_ID = credentials["aws_access_key_id"]
+            HMRC_PACKAGING_S3_SECRET_ACCESS_KEY = credentials["aws_secret_access_key"]
+        if "importer" in bucket["name"]:
+            IMPORTER_STORAGE_BUCKET_NAME = credentials["bucket_name"]
+            IMPORTER_S3_REGION_NAME = credentials["aws_region"]
+            IMPORTER_S3_ACCESS_KEY_ID = credentials["aws_access_key_id"]
+            IMPORTER_S3_SECRET_ACCESS_KEY = credentials["aws_secret_access_key"]
 else:
-    S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
-    S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
-    S3_SECRET_ACCESS_KEY = os.environ.get(
+    IMPORTER_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
+    IMPORTER_S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
+    IMPORTER_S3_SECRET_ACCESS_KEY = os.environ.get(
+        "S3_SECRET_ACCESS_KEY",
+    )
+    HMRC_PACKAGING_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
+    HMRC_PACKAGING_S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
+    HMRC_PACKAGING_S3_SECRET_ACCESS_KEY = os.environ.get(
         "S3_SECRET_ACCESS_KEY",
     )
     HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
         "HMRC_PACKAGING_STORAGE_BUCKET_NAME",
         "hmrc-packaging",
+    )
+    IMPORTER_STORAGE_BUCKET_NAME = os.environ.get(
+        "IMPORTER_STORAGE_BUCKET_NAME",
+        "importer",
     )
 
 S3_ENDPOINT_URL = os.environ.get(
@@ -406,6 +427,11 @@ HMRC_ENVELOPE_STORAGE_DIRECTORY = os.environ.get(
 HMRC_LOADING_REPORTS_STORAGE_DIRECTORY = os.environ.get(
     "HMRC_LOADING_REPORTS_STORAGE_DIRECTORY",
     "loading-report/",
+)
+
+COMMODITY_IMPORTER_ENVELOPE_STORAGE_DIRECTORY = os.environ.get(
+    "COMMODITY_IMPORTER_ENVELOPE_STORAGE_DIRECTORY",
+    "commodity-envelope/",
 )
 
 # Settings about retrying uploads if the api cannot be contacted.
@@ -520,7 +546,10 @@ CELERY_ROUTES = {
     re.compile(r"(checks)\.tasks\..*"): {
         "queue": "rule-check",
     },
-    re.compile(r"(exporter|importer|notifications|publishing)\.tasks\..*"): {
+    re.compile(r"(importer)\.tasks\..*"): {
+        "queue": "importer",
+    },
+    re.compile(r"(exporter|notifications|publishing)\.tasks\..*"): {
         "queue": "standard",
     },
 }

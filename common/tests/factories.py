@@ -19,6 +19,7 @@ from common.tests.util import wrap_numbers_over_max_digits
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
+from importer.models import ImportBatchStatus
 from importer.models import ImporterChunkStatus
 from measures.validators import DutyExpressionId
 from measures.validators import ImportExportCode
@@ -103,6 +104,7 @@ class UserFactory(factory.django.DjangoModelFactory):
         model = "auth.User"
 
     username = factory.sequence(lambda n: f"{factory.Faker('name')}{n}")
+    email = factory.Faker("email")
 
 
 class UserGroupFactory(factory.django.DjangoModelFactory):
@@ -306,7 +308,7 @@ class RegulationFactory(TrackedModelMixin, ValidityFactoryMixin):
     class Meta:
         model = "regulations.Regulation"
 
-    regulation_id = factory.Sequence(lambda n: f"R{Dates().now:%y}{n:04d}0")
+    regulation_id = factory.Sequence(lambda n: f"R{Dates().now:%y}{n+1:04d}0")
     approved = True
     role_type = 1
     community_code = 1
@@ -349,6 +351,13 @@ class UIRegulationFactory(BaseRegulationFactory):
     """
 
     published_at = date_ranges("now")
+
+
+class UIDraftRegulationFactory(UIRegulationFactory):
+    """Draft regulation factory used by our UI form tests."""
+
+    regulation_id = factory.Sequence(lambda n: f"C{Dates().now:%y}{n+1:04d}0")
+    approved = False
 
 
 class AmendmentFactory(TrackedModelMixin):
@@ -1262,6 +1271,11 @@ class ImportBatchFactory(factory.django.DjangoModelFactory):
         model = "importer.ImportBatch"
 
     name = factory.sequence(str)
+    author = factory.SubFactory(UserFactory)
+    status = ImportBatchStatus.IMPORTING
+    split_job = False
+    created_at = factory.Faker("date_object")
+    workbasket = factory.SubFactory(WorkBasketFactory)
 
 
 class ImporterXMLChunkFactory(factory.django.DjangoModelFactory):

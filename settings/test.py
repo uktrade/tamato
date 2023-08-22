@@ -35,8 +35,10 @@ NURSERY_CACHE_ENGINE = "importer.cache.memory.MemoryCacheEngine"
 SKIP_WORKBASKET_VALIDATION = is_truthy(os.getenv("SKIP_WORKBASKET_VALIDATION", True))
 USE_IMPORTER_CACHE = is_truthy(os.getenv("USE_IMPORTER_CACHE", False))
 
-S3_ACCESS_KEY_ID = "test_local_id"
-S3_SECRET_ACCESS_KEY = "test_local_key"
+HMRC_PACKAGING_S3_ACCESS_KEY_ID = "test_local_id"
+HMRC_PACKAGING_S3_SECRET_ACCESS_KEY = "test_local_key"
+IMPORTER_S3_ACCESS_KEY_ID = "test_local_id"
+IMPORTER_S3_SECRET_ACCESS_KEY = "test_local_key"
 S3_ENDPOINT_URL = "https://test-s3-url/"
 
 NOTIFICATIONS_API_KEY = "test-key"

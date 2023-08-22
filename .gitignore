@@ -61,6 +61,7 @@ allure-results/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+settings/dev_override.py
 
 # Flask stuff:
 instance/
@@ -77,6 +78,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
 
 # IPython
 profile_default/
@@ -104,6 +106,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
 .venv
 env/
 venv/
@@ -159,3 +162,6 @@ ner_output_file.txt
 
 tmp/**
 _dumped_cache.pkl
+
+# Vim
+.swp

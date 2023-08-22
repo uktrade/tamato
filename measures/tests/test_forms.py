@@ -20,6 +20,7 @@ from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
 from measures.forms import MeasureStartDateForm
 from measures.models import Measure
+from measures.validators import MeasureExplosionLevel
 
 pytestmark = pytest.mark.django_db
 
@@ -578,6 +579,7 @@ def test_measure_forms_commodity_and_duties_form_duties_not_permitted():
     """Test that form is invalid when a duty is specified on a commodity but not
     permitted for measure type."""
     measure_type = factories.MeasureTypeFactory.create(
+        measure_explosion_level=MeasureExplosionLevel.TARIC,
         measure_component_applicability_code=ApplicabilityCode.NOT_PERMITTED,
     )
     form = forms.MeasureCommodityAndDutiesForm(
@@ -591,6 +593,38 @@ def test_measure_forms_commodity_and_duties_form_duties_not_permitted():
         f"Duties cannot be added to a commodity for measure type {measure_type}"
         in form.errors["duties"]
     )
+
+
+@pytest.mark.parametrize(
+    "item_id, is_valid",
+    [
+        ("1234567891", False),
+        ("1234567890", False),
+        ("1234567800", True),
+    ],
+)
+def test_measure_forms_commodity_and_duties_form_measure_explosion_level(
+    item_id,
+    is_valid,
+):
+    """Test that form is invalid when a commodity at 8 digit level or higher is
+    selected for an export measure type (measure_explosion_level=8)"""
+    commodity = factories.SimpleGoodsNomenclatureFactory.create(item_id=item_id)
+    export_measure_type = factories.MeasureTypeFactory.create(
+        measure_explosion_level=MeasureExplosionLevel.COMBINED_NOMENCLATURE,
+    )
+    error_message = f"Commodity must sit at {export_measure_type.measure_explosion_level} digit level or higher for measure type {export_measure_type}"
+    data = {
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity.pk,
+    }
+    form = forms.MeasureCommodityAndDutiesForm(
+        data,
+        prefix=f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0",
+        measure_type=export_measure_type,
+    )
+    assert form.is_valid() == is_valid
+    if not is_valid:
+        assert error_message in form.errors["commodity"]
 
 
 @pytest.mark.parametrize(

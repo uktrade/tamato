@@ -154,7 +154,7 @@ docker-up-db:
 	@${COMPOSE_LOCAL} up -d db
 	@echo 
 	@echo "Waiting for database \"ready for connections\""
-	@sleep 10; 
+	@sleep 15; 
 	@echo "Database Ready for connections!"
 
 ## docker-db-dump: Run db dump to import data into Docker
@@ -163,7 +163,7 @@ docker-db-dump: docker-up-db
 	@cat ${DUMP_FILE} | ${COMPOSE_LOCAL} exec -T db psql -U postgres 
 
 ## docker-first-use: Run application for first time in Docker 
-docker-first-use: docker-down docker-clean docker-build docker-db-dump \
+docker-first-use: docker-down docker-clean node_modules compilescss docker-build docker-db-dump \
 	docker-migrate docker-superuser docker-up 
 
 ## docker-makemigrations: Run django makemigrations in Docker
@@ -199,7 +199,7 @@ docker-collectstatic:
 	@echo
 	@echo "> Collecting static assets in docker..."
 	@${COMPOSE_LOCAL} ${DOCKER_RUN} \
-		${PROJECT} ${PYTHON} manage.py collectstatic
+		${PROJECT} ${PYTHON} manage.py collectstatic --noinput
 
 ## docker-bash: Run bash shell in Docker container
 docker-bash:
