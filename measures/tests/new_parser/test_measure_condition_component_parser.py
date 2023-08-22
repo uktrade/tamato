@@ -11,19 +11,21 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewMeasureTypeSeriesParser:
+class TestNewMeasureConditionComponentParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="measure.type.series" substitutionGroup="abstract.record">
+        <xs:element name="measure.condition.component" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
-                    <xs:element name="validity.start.date" type="Date"/>
-                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
+                    <xs:element name="measure.condition.sid" type="SID"/>
+                    <xs:element name="duty.expression.id" type="DutyExpressionId"/>
+                    <xs:element name="duty.amount" type="DutyAmount" minOccurs="0"/>
+                    <xs:element name="monetary.unit.code" type="MonetaryUnitCode" minOccurs="0"/>
+                    <xs:element name="measurement.unit.code" type="MeasurementUnitCode" minOccurs="0"/>
+                    <xs:element name="measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode" minOccurs="0"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>

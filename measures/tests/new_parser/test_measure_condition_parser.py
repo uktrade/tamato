@@ -11,19 +11,26 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.new_importer
-class TestNewMeasureTypeSeriesParser:
+class TestNewMeasureConditionParser:
     """
     Example XML:
 
     .. code-block:: XML
 
-        <xs:element name="measure.type.series" substitutionGroup="abstract.record">
+        <xs:element name="measure.condition" substitutionGroup="abstract.record">
             <xs:complexType>
                 <xs:sequence>
-                    <xs:element name="measure.type.series.id" type="MeasureTypeSeriesId"/>
-                    <xs:element name="validity.start.date" type="Date"/>
-                    <xs:element name="validity.end.date" type="Date" minOccurs="0"/>
-                    <xs:element name="measure.type.combination" type="MeasureTypeCombination"/>
+                    <xs:element name="measure.condition.sid" type="SID"/>
+                    <xs:element name="measure.sid" type="SID"/>
+                    <xs:element name="condition.code" type="ConditionCode"/>
+                    <xs:element name="component.sequence.number" type="ComponentSequenceNumber"/>
+                    <xs:element name="condition.duty.amount" type="DutyAmount" minOccurs="0"/>
+                    <xs:element name="condition.monetary.unit.code" type="MonetaryUnitCode" minOccurs="0"/>
+                    <xs:element name="condition.measurement.unit.code" type="MeasurementUnitCode" minOccurs="0"/>
+                    <xs:element name="condition.measurement.unit.qualifier.code" type="MeasurementUnitQualifierCode" minOccurs="0"/>
+                    <xs:element name="action.code" type="ActionCode" minOccurs="0"/>
+                    <xs:element name="certificate.type.code" type="CertificateTypeCode" minOccurs="0"/>
+                    <xs:element name="certificate.code" type="CertificateCode" minOccurs="0"/>
                 </xs:sequence>
             </xs:complexType>
         </xs:element>
@@ -33,10 +40,17 @@ class TestNewMeasureTypeSeriesParser:
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure.type.series.id": "A",
-            "validity.start.date": "2021-01-01",
-            "validity.end.date": "2022-01-01",
-            "measure.type.combination": "6",
+            "measure.condition.sid": "A",
+            "measure.sid": "A",
+            "condition.code": "A",
+            "component.sequence.number": "A",
+            "condition.duty.amount": "A",
+            "condition.monetary.unit.code": "A",
+            "condition.measurement.unit.code": "A",
+            "condition.measurement.unit.qualifier.code": "A",
+            "action.code": "A",
+            "certificate.type.code": "A",
+            "certificate.code": "A",
         }
 
         target = self.target_parser_class()

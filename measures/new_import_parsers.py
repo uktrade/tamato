@@ -134,7 +134,7 @@ class NewMeasurementUnitQualifierDescriptionParser(NewWritable, NewElementParser
         ModelLink(
             models.MeasurementUnitQualifier,
             [
-                ModelLinkField("measurement_unit__code", "code"),
+                ModelLinkField("code", "code"),
             ],
             "measurement.unit.qualifier",
         ),
@@ -409,6 +409,12 @@ class NewMeasureConditionCodeParser(NewValidityMixin, NewWritable, NewElementPar
 
     xml_object_tag = "measure.condition.code"
 
+    value_mapping = {
+        "condition_code": "code",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+    }
+
     code: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -422,7 +428,7 @@ class NewMeasureConditionCodeDescriptionParser(NewWritable, NewElementParser):
         ModelLink(
             models.MeasureConditionCode,
             [
-                ModelLinkField("condition_code", "code"),
+                ModelLinkField("code", "code"),
             ],
             "measure.condition.code",
         ),
@@ -831,9 +837,15 @@ class NewMeasureExcludedGeographicalAreaParser(NewWritable, NewElementParser):
 
     xml_object_tag = "measure.excluded.geographical.area"
 
-    modified_measure__sid: str = None
+    value_mapping = {
+        "measure_id": "modified_measure__sid",
+        "excluded_geographical_area": "excluded_geographical_area__area_id",
+        "geographical_area_sid": "excluded_geographical_area__sid",
+    }
+
+    modified_measure__sid: int = None
     excluded_geographical_area__area_id: str = None
-    excluded_geographical_area__sid: str = None
+    excluded_geographical_area__sid: int = None
 
 
 class NewFootnoteAssociationMeasureParser(NewWritable, NewElementParser):
