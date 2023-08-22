@@ -39,6 +39,10 @@
   {{ sort_by(request, "geo_area", "Geographical area", base_url, query_params) }}
 {% endset %}
 
+{% set commodity %}
+  {{ sort_by(request, "commodity", "Commodity code", base_url, query_params) }}
+{% endset %}
+
 {# sets out form #}
 <form method="post">
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -83,7 +87,7 @@
             {"html": checkbox_check_all},
             {"text": sid},
             {"text": measure_type},
-            {"text": "Commodity code"},
+            {"text": commodity},
             {"text": "Start date"},
             {"text": "End date"},
             {"text": "Duties"},
