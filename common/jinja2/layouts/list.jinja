@@ -19,13 +19,11 @@
     {% endif %}
   </p>
 
-  <div class="filter-layout">
-    <div class="filter-layout__filters">
-      <h2 class="govuk-heading-m govuk-!-margin-top-3">Search and filter</h2>
-      <form method="get" action="{{ url(form_url) }}">
-          {{ crispy(filter.form) }}
-      </form>
-    </div>
+  <div>
+    <h2 class="govuk-heading-m govuk-!-margin-top-3">Search and filter</h2>
+    <form method="get" action="{{ url(form_url) }}">
+        {{ crispy(filter.form) }}
+    </form>
 
     <div class="filter-layout__content">
       {% if paginator.count > 0 %}
