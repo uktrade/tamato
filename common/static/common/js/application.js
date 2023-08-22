@@ -11,7 +11,6 @@ import initStepNav from './step-by-step-nav';
 import { initAll } from 'govuk-frontend';
 import initCheckboxes from './checkboxes';
 import initConditionalMeasureConditions from './conditionalMeasureConditions';
-import initFilterDisabledToggleForComCode from '../../../../measures/static/measures/js/conditionalDisablingFilters'
 showHideCheckboxes();
 // Initialise accessible-autocomplete components without a `name` attr in order
 // to avoid the "dummy" autocomplete field being submitted as part of the form
@@ -24,4 +23,3 @@ initAll();
 initCheckboxes();
 initConditionalMeasureConditions();
 initAutocompleteProgressiveEnhancement();
-initFilterDisabledToggleForComCode();
