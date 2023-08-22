@@ -142,9 +142,10 @@ class MeasureList(
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
     form_class = SelectableObjectsForm
-    sort_by_fields = ["sid", "measure_type"]
+    sort_by_fields = ["sid", "measure_type", "geo_area"]
     custom_sorting = {
         "measure_type": "measure_type__sid",
+        "geo_area": "geographical_area__area_id",
     }
 
     def dispatch(self, *args, **kwargs):

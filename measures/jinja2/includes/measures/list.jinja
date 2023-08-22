@@ -35,6 +35,10 @@
   {{ sort_by(request, "measure_type", "Type", base_url, query_params) }}
 {% endset %}
 
+{% set geo_area %}
+  {{ sort_by(request, "geo_area", "Geographical area", base_url, query_params) }}
+{% endset %}
+
 {# sets out form #}
 <form method="post">
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -84,7 +88,7 @@
             {"text": "End date"},
             {"text": "Duties"},
             {"text": "Additional code"},
-            {"text": "Geographical area"},
+            {"text": geo_area},
             {"text": "Quota"},
             {"text": "Footnote"},
             {"text": "Conditions"},
