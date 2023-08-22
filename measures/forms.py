@@ -787,6 +787,7 @@ class MeasureFilterForm(forms.Form):
                             Div(
                                 "order_number",
                                 "certificates",
+                                "geographical_area",
                                 css_class="govuk-grid-column-one-third",
                             ),
                             css_class="govuk-grid-row",
@@ -837,18 +838,18 @@ class MeasureFilterForm(forms.Form):
                             Div(
                                 Button(
                                     "submit",
-                                    "Search and Filter",
+                                    "Search and ilter",
                                     css_class="govuk-!-margin-top-6",
                                 ),
                                 HTML(
-                                    f'<a class="govuk-link govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                                    f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
                                 ),
                                 css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
                             ),
                             css_class="govuk-grid-row govuk-!-padding-top-6",
                         ),
                     ),
-                    css_class="govuk-grid-row govuk-!-padding-top-6",
+                    css_class="govuk-grid-row govuk-!-padding-6",
                 ),
             ),
         )
