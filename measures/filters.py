@@ -1,5 +1,3 @@
-from datetime import date
-
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import CharField
@@ -11,7 +9,6 @@ from django_filters import ChoiceFilter
 from django_filters import DateFilter
 
 from additional_codes.models import AdditionalCode
-from certificates.models import Certificate
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models.orm import GoodsNomenclature
 from common.filters import AutoCompleteFilter
@@ -36,12 +33,6 @@ BEFORE_EXACT_AFTER_CHOICES = (
     ("after", "after"),
 )
 
-
-ACTIVE_CURRENT_CHOICES = (
-    ("active", "Show active measures only"),
-    ("current", "Only include measures in this current workbasket"),
-)
-
 GOV_UK_TWO_THIRDS = "govuk-!-width-two-thirds"
 
 
@@ -59,13 +50,12 @@ class MeasureTypeFilterBackend(TamatoFilterBackend):
 class MeasureFilter(TamatoFilter):
     def __init__(self, *args, **kwargs):
         if kwargs["data"]:
-            data = kwargs["data"].copy()
-            if "start_date_modifier" not in data:
-                data["start_date_modifier"] = "exact"
-            if "end_date_modifier" not in data:
-                data["end_date_modifier"] = "exact"
-            kwargs["data"] = data
-
+            kwargs["data"]._mutable = True
+            if "start_date_modifier" not in kwargs["data"]:
+                kwargs["data"]["start_date_modifier"] = "exact"
+            if "end_date_modifier" not in kwargs["data"]:
+                kwargs["data"]["end_date_modifier"] = "exact"
+            kwargs["data"]._mutable = False
         super(MeasureFilter, self).__init__(*args, **kwargs)
 
     sid = CharFilter(
@@ -96,24 +86,17 @@ class MeasureFilter(TamatoFilter):
         },
     )
 
-    # measures on declarable commodities in goods_nomenclature
+    # measures on declarable commodities
     modc = BooleanFilter(
-        label="Include inherited measures for specific commodity code",
-        widget=forms.CheckboxInput,
+        label="Include inherited measures",
+        help_text="Only applies if a specific commodity code is entered",
+        widget=forms.CheckboxInput(),
         field_name="goods_nomenclature",
         method="commodity_modifier",
     )
 
-    measure_filters_modifier = ChoiceFilter(
-        label="",
-        widget=forms.RadioSelect,
-        method="measures_filter",
-        empty_label=None,
-        choices=ACTIVE_CURRENT_CHOICES,
-    )
-
     goods_nomenclature__item_id = CharFilter(
-        label="Commodity code starting with",
+        label="Commodity code starts with",
         widget=forms.TextInput(
             attrs={
                 "class": GOV_UK_TWO_THIRDS,
@@ -198,15 +181,6 @@ class MeasureFilter(TamatoFilter):
         method="filter_end_date",
     )
 
-    certificates = AutoCompleteFilter(
-        label="Certificates",
-        field_name="certificates",
-        queryset=Certificate.objects.current(),
-        attrs={
-            "display_class": GOV_UK_TWO_THIRDS,
-        },
-    )
-
     clear_url = reverse_lazy("measure-ui-search")
 
     def date_modifier(self, queryset, name, value):
@@ -256,30 +230,6 @@ class MeasureFilter(TamatoFilter):
                 .annotate(end_date=EndDate("db_effective_valid_between"))
                 .filter(filter_query)
             )
-        return queryset
-
-    def measures_filter(self, queryset, name, value):
-        if value:
-            modifier = self.data["measure_filters_modifier"]
-            if modifier == "active":
-                current_date = date.today()
-
-                filter_query = Q(start_date__lte=current_date) & (
-                    Q(end_date__gt=current_date)
-                    | Q(
-                        end_date__isnull=True,
-                    )
-                )
-                queryset = (
-                    queryset.with_effective_valid_between()
-                    .annotate(start_date=StartDate("valid_between"))
-                    .annotate(end_date=EndDate("valid_between"))
-                    .filter(filter_query)
-                )
-
-            if modifier == "current":
-                queryset = WorkBasket.current(self.request).measures
-
         return queryset
 
     class Meta:
