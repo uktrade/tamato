@@ -117,7 +117,7 @@ class QuotaDetail(QuotaOrderNumberMixin, TrackedModelDetailView, SortingMixin):
 
     @property
     def quota_data(self):
-        data = get_quota_data(self.object.order_number)
+        data = get_quota_data({"order_number": self.object.order_number})
         if not data or data["meta"]["pagination"]["total_count"] == 0:
             return None
         return data.get("data")[0]

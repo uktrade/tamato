@@ -20,6 +20,7 @@ from commodities.models.dc import SnapshotMoment
 from commodities.models.dc import get_chapter_collection
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from common.serializers import AutoCompleteSerializer
+from common.tariffs_api import get_commodity_data
 from common.views import SortingMixin
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -223,6 +224,54 @@ class MeasuresOnDeclarableCommoditiesList(CommodityMeasuresAsDefinedList):
         url_params = urlencode({"goods_nomenclature": self.commodity.id, "modc": True})
         measures_url = f"{reverse('measure-ui-list')}?{url_params}"
         context["measures_url"] = measures_url
+
+        return context
+
+
+class CommodityMeasuresVATExcise(CommodityMixin, TrackedModelDetailView):
+    template_name = "includes/commodities/tabs/measures-vat-excise.jinja"
+
+    @cached_property
+    def commodity_data(self):
+        data = get_commodity_data(self.object.item_id)
+        if not data:
+            return None
+        return data
+
+    def get_related(self, measure, key):
+        all_related = [
+            related
+            for related in self.commodity_data["included"]
+            if measure["relationships"].get(key)
+            and related["id"] == measure["relationships"][key]["data"]["id"]
+        ]
+        if all_related:
+            return all_related[0]
+        return None
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "measures"
+        context["commodity"] = self.object
+        context["commodity_data"] = self.commodity_data
+        if self.commodity_data:
+            measures = [
+                item
+                for item in self.commodity_data["included"]
+                if item["type"] == "measure"
+            ]
+            vat_excise_measures = [
+                {
+                    "measure": item,
+                    "measure_type": self.get_related(item, "measure_type"),
+                    "geographical_area": self.get_related(item, "geographical_area"),
+                    "duty_expression": self.get_related(item, "duty_expression"),
+                }
+                for item in measures
+                if item["attributes"].get("vat") or item["attributes"].get("excise")
+            ]
+            context["measures"] = measures
+            context["vat_excise_measures"] = vat_excise_measures
 
         return context
 

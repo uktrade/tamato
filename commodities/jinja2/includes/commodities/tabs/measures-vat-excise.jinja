@@ -1,0 +1,84 @@
+{% extends "commodities/detail.jinja" %}
+{% from "components/sort_by.jinja" import sort_by %}
+
+{% set extra_tabs_links = [
+    {
+      "text": "Measures as defined",
+      "href": url('commodity-ui-detail-measures-as-defined', args=[object.sid]),
+      "selected": False,
+    },
+    {
+      "text": "Measures on declarable commodities",
+      "href": url('commodity-ui-detail-measures-declarable', args=[object.sid]),
+      "selected": False,
+    },
+    {
+      "text": "VAT & excise measures",
+      "href": url('commodity-ui-detail-measures-vat-excise', args=[object.sid]),
+      "selected": True,
+    },
+  ]
+%}
+
+{% block extra_tabs %}
+{{ fake_tabs(extra_tabs_links) }}
+{% endblock %}
+
+{% block tab_content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-three-quarters">
+    <h2 class="govuk-heading-l">VAT & excise measures</h2>
+  </div>
+  <div class="govuk-grid-column-one-quarter">
+    <div class="app-related-items" role="complementary">
+        <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
+        <ul class="govuk-list govuk-!-font-size-16">
+            <li><a class="govuk-link" href="https://www.trade-tariff.service.gov.uk/commodities/{{ object.item_id }}#vat_excise" target="_blank" noopener noreferrer>View this data on the UK Integrated Online Tariff </a></li>
+        </ul>
+    </div>
+  </div>
+</div>
+
+{% set table_rows = [] %}
+
+{% for object in vat_excise_measures %}
+
+  {% set excluded_countries %}
+  {% if object.measure.relationships.excluded_countries %}
+    {% for country in object.measure.relationships.excluded_countries.data %}
+      {{ country.id }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  {% else %}
+  —
+  {% endif %}
+  {% endset %}
+
+  {{ table_rows.append([
+    {"text": object.measure.id },
+    {"text": object.measure_type.attributes.description },
+    {"text": object.geographical_area.attributes.description if object.geographical_area else "—" },
+    {"text": excluded_countries },
+    {"text": object.duty_expression.attributes.verbose_duty if object.duty_expression else "—" },
+    {"text": format_date_string(object.measure.attributes.effective_start_date) if object.measure.attributes.effective_start_date else "—" },
+    {"text": format_date_string(object.measure.attributes.effective_end_date) if object.measure.attributes.effective_end_date else "—"},
+  ]) or "" }}
+{% endfor %}
+
+{% if vat_excise_measures %}
+  {{ govukTable({
+    "head": [
+      {"text": "ID"},
+      {"text": "Measure type"},
+      {"text": "Geographical area"},
+      {"text": "Excluded countries"},
+      {"text": "Duties"},
+      {"text": "Start date"},
+      {"text": "End date"},
+    ],
+    "rows": table_rows
+  }) }}
+{% else %}
+  <p class="govuk-body">There are no VAT or excise measures for this commodity code.</p>
+{% endif %}
+
+{% endblock %}
