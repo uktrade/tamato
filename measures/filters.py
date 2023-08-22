@@ -36,8 +36,8 @@ BEFORE_EXACT_AFTER_CHOICES = (
     ("after", "after"),
 )
 
-ACTIVE_CURRENT_CHOICES = (
-    ("active", "Show active measures only"),
+LIVE_CURRENT_CHOICES = (
+    ("live", "Show live measures only"),
     ("current", "Only include measures in this current workbasket"),
 )
 
@@ -107,7 +107,7 @@ class MeasureFilter(TamatoFilter):
         widget=forms.RadioSelect,
         method="measures_filter",
         empty_label=None,
-        choices=ACTIVE_CURRENT_CHOICES,
+        choices=LIVE_CURRENT_CHOICES,
     )
 
     goods_nomenclature__item_id = CharFilter(
@@ -259,15 +259,18 @@ class MeasureFilter(TamatoFilter):
     def measures_filter(self, queryset, name, value):
         if value:
             modifier = self.data["measure_filters_modifier"]
-            if modifier == "active":
+            if modifier == "live":
+                # TODO: filter criteria:
+                # start date: today/earlier
+                # end date: today/later/null
+                # do not use effective_valid_between
                 current_date = date.today()
 
                 filter_query = Q(start_date__lte=current_date) & (
                     Q(end_date__gte=current_date) | Q(end_date__isnull=True)
                 )
                 queryset = (
-                    queryset.with_effective_valid_between()
-                    .annotate(start_date=StartDate("valid_between"))
+                    queryset.annotate(start_date=StartDate("valid_between"))
                     .annotate(end_date=EndDate("valid_between"))
                     .filter(filter_query)
                 )

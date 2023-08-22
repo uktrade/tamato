@@ -12,7 +12,7 @@ from workbaskets.models import WorkBasket
 pytestmark = pytest.mark.django_db
 
 
-def test_filter_by_active_measures():
+def test_filter_by_live_measures():
     active_measure = factories.MeasureFactory.create(
         valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
     )
@@ -31,13 +31,13 @@ def test_filter_by_active_measures():
             date.today() + timedelta(days=99),
         ),
     )
-    self = MeasureFilter(data={"measure_filters_modifier": "active"})
+    self = MeasureFilter(data={"measure_filters_modifier": "live"})
     qs = Measure.objects.all()
     result = MeasureFilter.measures_filter(
         self,
         queryset=qs,
         name="measure_filters_modifier",
-        value="active",
+        value="live",
     )
 
     assert len(result) == 2
@@ -68,7 +68,7 @@ def test_filter_by_current_workbasket(
     session["workbasket"] = {"id": session_workbasket.pk}
     session.save()
     self = MeasureFilter(
-        data={"measure_filters_modifier": "current", "_mutable": False},
+        data={"measure_filters_modifier": "current"},
         request=session_request,
     )
     qs = Measure.objects.all()

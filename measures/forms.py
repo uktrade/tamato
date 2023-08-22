@@ -838,7 +838,7 @@ class MeasureFilterForm(forms.Form):
                             Div(
                                 Button(
                                     "submit",
-                                    "Search and ilter",
+                                    "Search and filter",
                                     css_class="govuk-!-margin-top-6",
                                 ),
                                 HTML(
