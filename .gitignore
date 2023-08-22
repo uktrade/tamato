@@ -164,4 +164,4 @@ tmp/**
 _dumped_cache.pkl
 
 # Vim
-.swp
+*.swp
