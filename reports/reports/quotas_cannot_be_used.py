@@ -4,7 +4,12 @@ from django.db.models import Exists
 
 from reports.reports.base_table import ReportBaseTable
 
-from quotas.models import QuotaOrderNumber, QuotaDefinition, QuotaOrderNumberOriginExclusion, QuotaOrderNumberOrigin
+from quotas.models import (
+    QuotaOrderNumber,
+    QuotaDefinition,
+    QuotaOrderNumberOriginExclusion,
+    QuotaOrderNumberOrigin,
+)
 from measures.models import Measure, MeasureExcludedGeographicalArea
 
 
@@ -26,7 +31,7 @@ class Report(ReportBaseTable):
             {"text": row.order_number},
             {"text": row.valid_between.lower},
             {"text": row.valid_between.upper},
-            {"text": row.reason}
+            {"text": row.reason},
         ]
 
     def rows(self) -> [[dict]]:
@@ -38,7 +43,9 @@ class Report(ReportBaseTable):
 
     def query(self):
         quotas_with_definition_periods = self.get_quotas_with_definition_periods()
-        quotas_can_be_used = self.find_quotas_that_cannot_be_used(quotas_with_definition_periods)
+        quotas_can_be_used = self.find_quotas_that_cannot_be_used(
+            quotas_with_definition_periods
+        )
         return quotas_can_be_used
 
     def get_quotas_with_definition_periods(self):
@@ -46,7 +53,7 @@ class Report(ReportBaseTable):
             valid_between__isnull=False,
             valid_between__startswith__lt=datetime.datetime.now(),
             valid_between__endswith__gte=datetime.datetime.now(),
-            )
+        )
 
         return quota_definitions
 
@@ -55,25 +62,36 @@ class Report(ReportBaseTable):
 
         current_time = datetime.datetime.now()
 
-        quota_order_numbers_without_definitions = QuotaOrderNumber.objects.latest_approved().filter(
-            valid_between__isnull=False,
-            valid_between__startswith__lt=current_time,
-            valid_between__endswith__gte=current_time
-        ).exclude(definitions__in=quotas_with_definition_periods)
+        quota_order_numbers_without_definitions = (
+            QuotaOrderNumber.objects.latest_approved()
+            .filter(
+                valid_between__isnull=False,
+                valid_between__startswith__lt=current_time,
+                valid_between__endswith__gte=current_time,
+            )
+            .exclude(definitions__in=quotas_with_definition_periods)
+        )
 
         for quota in quotas_with_definition_periods:
-            measures = Measure.objects.latest_approved().filter(order_number=quota.order_number)
+            measures = Measure.objects.latest_approved().filter(
+                order_number=quota.order_number
+            )
 
             if not Exists(measures.filter(order_number=quota.order_number)):
                 matching_data.add(quota)
             else:
-                quota_order_number = QuotaOrderNumber.objects.latest_approved().filter(
-                    order_number=quota.order_number
-                ).order_by("-sid").first()
+                quota_order_number = (
+                    QuotaOrderNumber.objects.latest_approved()
+                    .filter(order_number=quota.order_number)
+                    .order_by("-sid")
+                    .first()
+                )
 
                 if quota_order_number:
-                    quota_order_number_origin = QuotaOrderNumberOrigin.objects.latest_approved().filter(
-                        order_number_id=quota_order_number.pk
+                    quota_order_number_origin = (
+                        QuotaOrderNumberOrigin.objects.latest_approved().filter(
+                            order_number_id=quota_order_number.pk
+                        )
                     )
 
                     for origin in quota_order_number_origin:
@@ -84,7 +102,7 @@ class Report(ReportBaseTable):
                         for geo_exclusion in geo_exclusions:
                             exclusions = MeasureExcludedGeographicalArea.objects.latest_approved().filter(
                                 modified_measure__order_number=quota.order_number,
-                                excluded_geographical_area=geo_exclusion.excluded_geographical_area
+                                excluded_geographical_area=geo_exclusion.excluded_geographical_area,
                             )
 
                             if exclusions.exists():
@@ -95,9 +113,8 @@ class Report(ReportBaseTable):
 
         for quota in matching_data:
             if quota not in quotas_with_definition_periods:
-                quota.reason = 'Definition period has not been set'
+                quota.reason = "Definition period has not been set"
             else:
-                quota.reason = 'Geographical area/exclusions data does not have any measures with matching data'
+                quota.reason = "Geographical area/exclusions data does not have any measures with matching data"
 
         return list(matching_data)
-
