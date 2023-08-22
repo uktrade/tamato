@@ -10,6 +10,8 @@ from commodities.models.orm import GoodsNomenclature
 from commodities.views import CommodityList
 from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
+from common.tariffs_api import COMMODITIES
+from common.tariffs_api import ENDPOINTS
 from common.tests import factories
 from common.tests.factories import GoodsNomenclatureDescriptionFactory
 from common.tests.factories import GoodsNomenclatureFactory
@@ -108,10 +110,12 @@ def test_commodities_detail_views(
     view,
     url_pattern,
     valid_user_client,
+    requests_mock,
     session_with_workbasket,
 ):
     """Verify that commodity detail views are under the url commodities/ and
     don't return an error."""
+    requests_mock.get(url=f"{ENDPOINTS[COMMODITIES]}0000000000", status_code=400)
     override_models = {"commodities.views.CommodityAddFootnote": GoodsNomenclature}
     assert_model_view_renders(
         view,

@@ -5,9 +5,10 @@ from bs4 import BeautifulSoup
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.urls import reverse
 
-from common import tariffs_api
 from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
+from common.tariffs_api import ENDPOINTS
+from common.tariffs_api import QUOTAS
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import assert_read_only_model_view_returns_list
@@ -140,7 +141,7 @@ def test_quota_detail_api_response_no_results(
 
     response_json = {"meta": {"pagination": {"total_count": 0}}}
 
-    response = requests_mock.get(url=tariffs_api.QUOTAS, json=response_json)
+    response = requests_mock.get(url=ENDPOINTS[QUOTAS], json=response_json)
 
     response = valid_user_client.get(
         reverse("quota-ui-detail", kwargs={"sid": quota.sid}),
@@ -162,7 +163,7 @@ def test_quota_detail_api_response_has_results(
         valid_between=date_ranges.future,
     )
 
-    response = requests_mock.get(url=tariffs_api.QUOTAS, json=quotas_json)
+    response = requests_mock.get(url=ENDPOINTS[QUOTAS], json=quotas_json)
 
     response = valid_user_client.get(
         reverse("quota-ui-detail", kwargs={"sid": quota_order_number.sid}),

@@ -1,8 +1,9 @@
 import pytest
 
+from common.tariffs_api import ENDPOINTS
 from common.tariffs_api import QUOTAS
 from common.tariffs_api import async_get_all
-from common.tariffs_api import build_urls
+from common.tariffs_api import build_quota_definition_urls
 from common.tariffs_api import get_quota_data
 from common.tariffs_api import serialize_quota_data
 from common.tests import factories
@@ -19,14 +20,14 @@ def quota_definitions(quota_order_number):
 
 
 def test_get_quota_data_error(quota_order_number, requests_mock):
-    requests_mock.get(url=QUOTAS, status_code=400)
-    data = get_quota_data(quota_order_number.id)
+    requests_mock.get(url=ENDPOINTS[QUOTAS], status_code=400)
+    data = get_quota_data({"order_number": quota_order_number.id})
     assert data is None
 
 
 async def test_get_quota_data_ok(quota_order_number, requests_mock, quotas_json):
-    requests_mock.get(url=QUOTAS, json=quotas_json, status_code=200)
-    data = get_quota_data(quota_order_number.id)
+    requests_mock.get(url=ENDPOINTS[QUOTAS], json=quotas_json, status_code=200)
+    data = get_quota_data({"order_number": quota_order_number.id})
     assert data == quotas_json
 
 
@@ -37,7 +38,10 @@ async def test_async_get_all(
     quota_definitions,
     quotas_json,
 ):
-    urls = build_urls(quota_order_number.order_number, quota_definitions)
+    urls = build_quota_definition_urls(
+        quota_order_number.order_number,
+        quota_definitions,
+    )
     for url in urls:
         mock_aioresponse.get(url, status=200, payload=quotas_json)
     data = await async_get_all(urls)
@@ -53,7 +57,10 @@ async def test_async_get_all_failure(
     quota_definitions,
     quotas_json,
 ):
-    urls = build_urls(quota_order_number.order_number, quota_definitions)
+    urls = build_quota_definition_urls(
+        quota_order_number.order_number,
+        quota_definitions,
+    )
     for url in urls:
         mock_aioresponse.get(url, status=400, payload=quotas_json)
     data = await async_get_all(urls)
@@ -62,8 +69,11 @@ async def test_async_get_all_failure(
         assert d == None
 
 
-def test_build_urls(quota_order_number, quota_definitions):
-    urls = build_urls(quota_order_number.order_number, quota_definitions)
+def test_build_quota_definition_urls(quota_order_number, quota_definitions):
+    urls = build_quota_definition_urls(
+        quota_order_number.order_number,
+        quota_definitions,
+    )
     assert len(urls) == 5
     for i, url in enumerate(urls):
         assert QUOTAS in url
