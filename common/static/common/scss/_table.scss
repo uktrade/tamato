@@ -26,3 +26,32 @@
 .govuk-table__cell li {
   white-space: nowrap;
 }
+
+table.tap-workbasket-items tbody {
+  .start-transaction {
+    font-size: 0.9rem;
+    background-color: #eee;
+    .details {
+      font-weight: bold;
+    }
+    .demote,
+    .promote {
+      display: inline-block;
+      margin-left: 1rem;
+    }
+  }
+  .start-transaction.first-cell,
+  .item.first-cell {
+    border-left: 1px solid #b1b4b6;
+  }
+  .start-transaction.last-cell,
+  .item.last-cell {
+    border-right: 1px solid #b1b4b6;
+  }
+  .end-transaction div {
+    height: 1.5rem;
+  }
+  .govuk-link.disabled {
+    color: #ccc;
+  }
+}

@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Type
 
 import boto3
@@ -27,6 +28,8 @@ from django.views.generic.list import ListView
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.models import TrackedModel
+from common.models import Transaction
+from common.models.transactions import TransactionPartition
 from common.pagination import build_pagination_list
 from common.views import SortingMixin
 from common.views import TamatoListView
@@ -367,6 +370,7 @@ class CurrentWorkBasket(FormView):
         "remove-all": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
+        "move-transaction": "workbaskets:current-workbasket",
     }
 
     @property
@@ -374,8 +378,123 @@ class CurrentWorkBasket(FormView):
         return WorkBasket.current(self.request)
 
     @property
-    def paginator(self):
-        return Paginator(self.workbasket.tracked_models, per_page=50)
+    def paginator(self) -> Paginator:
+        """Returns a Paginator instance of the workbasket's TrackedModel
+        instances ordered by their parent Transaction's `order` attribute."""
+        return Paginator(
+            self.workbasket.tracked_models.order_by("transaction__order"),
+            per_page=50,
+        )
+
+    def workbasket_transactions(self):
+        """Returns the current workbasket's transactions ordered by `order`,
+        while guarding against non-editing status on workbasket to minimise
+        chances of mishap."""
+        return Transaction.objects.filter(
+            workbasket=self.workbasket,
+            workbasket__status=WorkflowStatus.EDITING,
+        ).order_by("order")
+
+    def _get_transaction_pk_from_form_action(self, form_action):
+        """
+        Extract a primary key value from the form_action string value.
+
+        See the `regex_pattern` attribute in this function for valid formats.
+        """
+        regex_pattern = "(promote-transaction|demote-transaction)__([0-9]+)"
+        try:
+            pk = int(re.search(regex_pattern, form_action).group(2))
+        except AttributeError:
+            logger.error(
+                f"Invalid form_action format, {form_action}, must match the "
+                f"regular expression pattern '{regex_pattern}'.",
+            )
+            return None
+
+        try:
+            # Guard against referencing transactions that are in anything other
+            # than the DRAFT partition and which are additionally in the
+            # current workbasket, which must be in EDITING status - DRAFT
+            # should also imply this state.
+            return Transaction.objects.get(
+                workbasket=self.workbasket,
+                workbasket__status=WorkflowStatus.EDITING,
+                partition=TransactionPartition.DRAFT,
+                pk=pk,
+            )
+        except ObjectDoesNotExist:
+            logger.error(
+                f"Invalid transaction key in form_action, {form_action}",
+            )
+            return None
+
+    @atomic
+    def promote_transaction(self, form_action):
+        promoted_transaction = self._get_transaction_pk_from_form_action(form_action)
+        demoted_transaction = (
+            self.workbasket_transactions()
+            .filter(
+                order__lt=promoted_transaction.order,
+            )
+            .last()
+        )
+        if not promoted_transaction or not demoted_transaction:
+            return HttpResponseRedirect(self.get_success_url())
+
+        promoted_transaction.order, demoted_transaction.order = (
+            demoted_transaction.order,
+            promoted_transaction.order,
+        )
+        Transaction.objects.bulk_update(
+            [promoted_transaction, demoted_transaction],
+            ["order"],
+        )
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    @atomic
+    def demote_transaction(self, form_action):
+        demoted_transaction = self._get_transaction_pk_from_form_action(form_action)
+        promoted_transaction = (
+            self.workbasket_transactions()
+            .filter(
+                order__gt=demoted_transaction.order,
+            )
+            .first()
+        )
+        if not demoted_transaction or not promoted_transaction:
+            return HttpResponseRedirect(self.get_success_url())
+
+        demoted_transaction.order, promoted_transaction.order = (
+            promoted_transaction.order,
+            demoted_transaction.order,
+        )
+        Transaction.objects.bulk_update(
+            [demoted_transaction, promoted_transaction],
+            ["order"],
+        )
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def is_transaction_first_in_workbasket(self, transaction):
+        """Returns True if the transaction is the first in the workbasket, False
+        otherwise."""
+        return self.workbasket_transactions().first() == transaction
+
+    def is_transaction_last_in_workbasket(self, transaction):
+        """Returns True if the transaction is the last in the current
+        workbasket, False otherwise."""
+        return self.workbasket_transactions().last() == transaction
+
+    def is_obj_first_in_transaction(self, tracked_model):
+        """Returns True if the object is the first TrackedModel instance in its
+        parent transaction, False otherwise."""
+        return tracked_model == tracked_model.transaction.tracked_models.first()
+
+    def is_obj_last_in_transaction(self, tracked_model):
+        """Returns True if the object is the last TrackedModel instance in its
+        parent transaction, False otherwise."""
+        return tracked_model == tracked_model.transaction.tracked_models.last()
 
     @property
     def latest_upload(self):
@@ -396,7 +515,7 @@ class CurrentWorkBasket(FormView):
             }
         return None
 
-    def _append_url_page_param(self, url, form_action):
+    def _append_url_page_param(self, url, form_action=None):
         """Based upon 'form_action', append a 'page' URL parameter to the given
         url param and return the result."""
         page = self.paginator.get_page(self.request.GET.get("page", 1))
@@ -416,6 +535,16 @@ class CurrentWorkBasket(FormView):
         paged form data while preserving the user's form changes, or finally
         submit the form data for processing."""
         form = self.get_form()
+
+        # TODO: Promotion & demotion may be better handled by another, separate form.
+        # Handle transaction movement.
+        form_action = form.data.get("form-action", "")
+        if form_action.startswith("promote-transaction"):
+            return self.promote_transaction(form_action)
+        elif form_action.startswith("demote-transaction"):
+            return self.demote_transaction(form_action)
+
+        # Handle TrackedModel removal.
         if form.is_valid():
             return self.form_valid(form)
         else:
@@ -475,6 +604,12 @@ class CurrentWorkBasket(FormView):
                 ),
                 form_action,
             )
+        elif form_action.startswith("promote-transaction") or form_action.startswith(
+            "demote-transaction",
+        ):
+            return self._append_url_page_param(
+                reverse(self.action_success_url_names["move-transaction"]),
+            )
         return reverse("home")
 
     def get_initial(self):
@@ -499,6 +634,10 @@ class CurrentWorkBasket(FormView):
                 "page_obj": page,
                 "uploaded_envelope_dates": self.uploaded_envelope_dates,
                 "rule_check_in_progress": False,
+                "is_transaction_first_in_workbasket": self.is_transaction_first_in_workbasket,
+                "is_transaction_last_in_workbasket": self.is_transaction_last_in_workbasket,
+                "is_obj_first_in_transaction": self.is_obj_first_in_transaction,
+                "is_obj_last_in_transaction": self.is_obj_last_in_transaction,
             },
         )
         if self.workbasket.rule_check_task_id:
