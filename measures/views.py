@@ -142,7 +142,10 @@ class MeasureList(
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
     form_class = SelectableObjectsForm
-    sort_by_fields = ["sid"]
+    sort_by_fields = ["sid", "measure_type"]
+    custom_sorting = {
+        "measure_type": "measure_type__sid",
+    }
 
     def dispatch(self, *args, **kwargs):
         if not self.request.GET:
@@ -153,6 +156,7 @@ class MeasureList(
         queryset = super().get_queryset()
 
         ordering = self.get_ordering()
+
         if ordering:
             if isinstance(ordering, str):
                 ordering = (ordering,)
@@ -181,10 +185,21 @@ class MeasureList(
         context["measure_selections"] = Measure.objects.filter(
             pk__in=measure_selections,
         )
-        context[
-            "base_url"
-        ] = f'{reverse("measure-ui-list")}?{urlencode(self.filterset.data)}'
         context["query_params"] = True
+
+        # Remove sort by and order here, as the queryset will have already been ordered
+        if "sort_by" and "ordered" in self.filterset.data:
+            cleaned_filterset = self.filterset.data.copy()
+            cleaned_filterset.pop("sort_by")
+            cleaned_filterset.pop("ordered")
+            context[
+                "base_url"
+            ] = f'{reverse("measure-ui-list")}?{urlencode(cleaned_filterset)}'
+        else:
+            context[
+                "base_url"
+            ] = f'{reverse("measure-ui-list")}?{urlencode(self.filterset.data)}'
+
         return context
 
     def get_initial(self):

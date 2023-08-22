@@ -1,25 +1,25 @@
 
 {% macro sort_by(request, sort_by, title, base_url, query_params, anchor="") %}
 
-  {% if request.GET.sort_by == sort_by and request.GET.order == "desc" %}
+  {% if request.GET.sort_by == sort_by and request.GET.ordered == "desc" %}
 
     {% if query_params %}
-      <a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ base_url }}&sort_by={{ sort_by }}&order=asc{{ anchor }}">
+      <a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ base_url }}&sort_by={{ sort_by }}&ordered=asc{{ anchor }}">
         {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
       </a>
     {% else %}
-      <a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ base_url }}?sort_by={{ sort_by }}&order=asc{{ anchor }}">
+      <a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ base_url }}?sort_by={{ sort_by }}&ordered=asc{{ anchor }}">
         {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
       </a>
     {% endif %}
 
   {% else %}
     {% if query_params %}
-      <a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ base_url }}&sort_by={{ sort_by }}&order=desc{{ anchor }}">
+      <a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ base_url }}&sort_by={{ sort_by }}&ordered=desc{{ anchor }}">
       {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
     </a>
     {% else %}
-      <a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ base_url }}?sort_by={{ sort_by }}&order=desc{{ anchor }}">
+      <a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ base_url }}?sort_by={{ sort_by }}&ordered=desc{{ anchor }}">
       {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
     </a>
     {% endif %}
