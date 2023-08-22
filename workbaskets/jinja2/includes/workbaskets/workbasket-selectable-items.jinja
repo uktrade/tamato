@@ -58,7 +58,7 @@
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-grid-column-full">
       {% if change_count %}
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset">
@@ -70,21 +70,33 @@
           </fieldset>
         </div>
         <h2 class="govuk-body">Select a component you would like to edit or remove:</h2>
-
       {% else %}
         <h2 class="govuk-body">There is nothing in your workbasket yet.</h2>
+
+        {% if user_can_delete_workbasket %}
+          <p>
+            {{ govukButton({
+              "text": "Delete workbasket",
+              "href": url("workbaskets:workbasket-ui-delete", kwargs={"pk": workbasket.pk}),
+              "classes": "govuk-button--warning"
+            }) }}
+          </p>
+        {% endif %}
       {% endif %}
     </div>
   </div>
 
   {% if uploaded_envelope_dates %}
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-grid-column-full">
       <div class="govuk-warning-text">
         <span class="govuk-warning-text__icon">!</span>
         <strong class="govuk-warning-text__text">
           <span class="govuk-warning-text__assistive">Warning</span>
-          We've created an envelope which contains your published changes between {{ "{:%d %b %Y}".format(uploaded_envelope_dates.start) }} and {{ "{:%d %b %Y}".format(uploaded_envelope_dates.end) }}. It's ready for your action.
+          We've created an envelope which contains your published changes
+          between {{ "{:%d %b %Y}".format(uploaded_envelope_dates.start) }} and
+          {{ "{:%d %b %Y}".format(uploaded_envelope_dates.end) }}. It's ready
+          for your action.
         </strong>
       </div>
       <div class="govuk-button-group">

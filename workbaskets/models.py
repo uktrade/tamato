@@ -511,16 +511,24 @@ class WorkBasket(TimestampedMixin):
         return WorkBasket.objects.get(pk=session["workbasket"]["id"])
 
     @classmethod
+    def remove_current_from_session(cls, session):
+        """Remove the current workbasket from the user's session."""
+        if "workbasket" in session:
+            del session["workbasket"]
+
+    @classmethod
     def current(cls, request):
         """Get the current workbasket in the session."""
         if "workbasket" in request.session:
             workbasket = cls.load_from_session(request.session)
 
             if workbasket.status != WorkflowStatus.EDITING:
-                del request.session["workbasket"]
+                cls.remove_current_from_session(request.session)
                 return None
 
             return workbasket
+        else:
+            return None
 
     @classmethod
     def get_current_transaction(cls, request):
