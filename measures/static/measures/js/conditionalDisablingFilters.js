@@ -10,12 +10,14 @@ const initFilterDisabledToggleForComCode = () => {
 
         specificCommodityCode.addEventListener('change', function() {
             if (this.value) {
+                console.log('a', 'fires')
                 includeInheritedMeasures.disabled = false;
             } else {
+                console.log('b', 'fires')
                 includeInheritedMeasures.disabled = true;
             }
         })
     })
 }
 
-export default initFilterDisabledToggleForComCode
+export default initFilterDisabledToggleForComCode;
