@@ -42,8 +42,7 @@ from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
 from common.serializers import TrackedModelSerializer
-from common.tariffs_api import ENDPOINTS
-from common.tariffs_api import QUOTAS
+from common.tariffs_api import Endpoints
 from common.tests import factories
 from common.tests.models import model_with_history
 from common.tests.util import Dates
@@ -1450,7 +1449,7 @@ def quota_order_number():
 
 @pytest.fixture
 def mock_quota_api_no_data(requests_mock):
-    yield requests_mock.get(url=ENDPOINTS[QUOTAS], json={})
+    yield requests_mock.get(url=Endpoints.QUOTAS.value, json={})
 
 
 @pytest.fixture

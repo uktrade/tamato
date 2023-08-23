@@ -1,7 +1,6 @@
 import pytest
 
-from common.tariffs_api import ENDPOINTS
-from common.tariffs_api import QUOTAS
+from common.tariffs_api import Endpoints
 from common.tariffs_api import async_get_all
 from common.tariffs_api import build_quota_definition_urls
 from common.tariffs_api import get_quota_data
@@ -20,13 +19,13 @@ def quota_definitions(quota_order_number):
 
 
 def test_get_quota_data_error(quota_order_number, requests_mock):
-    requests_mock.get(url=ENDPOINTS[QUOTAS], status_code=400)
+    requests_mock.get(url=Endpoints.QUOTAS.value, status_code=400)
     data = get_quota_data({"order_number": quota_order_number.id})
     assert data is None
 
 
 async def test_get_quota_data_ok(quota_order_number, requests_mock, quotas_json):
-    requests_mock.get(url=ENDPOINTS[QUOTAS], json=quotas_json, status_code=200)
+    requests_mock.get(url=Endpoints.QUOTAS.value, json=quotas_json, status_code=200)
     data = get_quota_data({"order_number": quota_order_number.id})
     assert data == quotas_json
 
@@ -76,7 +75,7 @@ def test_build_quota_definition_urls(quota_order_number, quota_definitions):
     )
     assert len(urls) == 5
     for i, url in enumerate(urls):
-        assert QUOTAS in url
+        assert "quotas" in url
         assert str(quota_definitions[i].valid_between.lower.year) in url
         assert str(quota_definitions[i].valid_between.lower.month) in url
         assert str(quota_definitions[i].valid_between.lower.day) in url

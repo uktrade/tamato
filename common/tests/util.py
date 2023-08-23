@@ -36,8 +36,7 @@ from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.renderers import counter_generator
 from common.serializers import validate_taric_xml_record_order
-from common.tariffs_api import COMMODITIES
-from common.tariffs_api import ENDPOINTS
+from common.tariffs_api import Endpoints
 from common.tests import factories
 from common.util import TaricDateRange
 from common.util import get_accessor
@@ -423,7 +422,10 @@ def assert_model_view_renders(
 
     instance = factory.create()
     if isinstance(instance, GoodsNomenclature):
-        requests_mock.get(url=f"{ENDPOINTS[COMMODITIES]}{instance.item_id}", json={})
+        requests_mock.get(
+            url=f"{Endpoints.COMMODITIES.value}{instance.item_id}",
+            json={},
+        )
 
     # Build URL using fields from the model.
     # An error retrieving model fields may indicate the class-based-view's
