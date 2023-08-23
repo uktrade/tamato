@@ -8,8 +8,10 @@ from django.urls import reverse
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
 from commodities.views import CommodityList
+from common.jinja2 import format_date_string
 from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
+from common.tariffs_api import Endpoints
 from common.tests import factories
 from common.tests.factories import GoodsNomenclatureDescriptionFactory
 from common.tests.factories import GoodsNomenclatureFactory
@@ -557,7 +559,101 @@ def test_footnote_association_delete(valid_user_client):
     )
     h1 = soup.select("h1")[0]
 
-    assert (
-        h1.text.strip()
-        == f"Footnote association {footnote1.footnote_type.footnote_type_id}{footnote1.footnote_id} for commodity code {commodity.item_id} has been deleted",
+    assert h1.text.strip() == (
+        f"Footnote association {footnote1.footnote_type.footnote_type_id}{footnote1.footnote_id} for commodity code {commodity.item_id} has been deleted"
     )
+
+
+def test_commodity_measures_vat_excise_no_data(valid_user_client, requests_mock):
+    commodity = factories.GoodsNomenclatureFactory.create()
+    requests_mock.get(url=f"{Endpoints.COMMODITIES.value}{commodity.item_id}", json={})
+    url = reverse(
+        "commodity-ui-detail-measures-vat-excise",
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+def test_commodity_measures_vat_excise_with_data(
+    valid_user_client,
+    requests_mock,
+    mock_commodity_data_vat_excise,
+    mock_commodity_data_vat_duty_expression,
+    mock_commodity_data_geo_area,
+    mock_commodity_data_vat_measure_type,
+    mock_commodity_data_vat_measure,
+):
+    commodity = factories.GoodsNomenclatureFactory.create()
+    requests_mock.get(
+        url=f"{Endpoints.COMMODITIES.value}{commodity.item_id}",
+        json=mock_commodity_data_vat_excise,
+    )
+    url = reverse(
+        "commodity-ui-detail-measures-vat-excise",
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    cells = soup.select(".govuk-table__body > .govuk-table__row:first-child > td")
+    cells[0].text == mock_commodity_data_vat_measure["id"]
+    cells[1].text == mock_commodity_data_vat_measure_type["attributes"]["description"]
+    cells[2].text == mock_commodity_data_geo_area["attributes"]["description"]
+    cells[4].text == mock_commodity_data_vat_duty_expression["attributes"][
+        "verbose_duty"
+    ]
+    cells[5].text == format_date_string(
+        mock_commodity_data_vat_measure["attributes"]["effective_start_date"],
+    )
+
+
+def test_commodity_measures_vat_excise_no_measures(
+    valid_user_client,
+    requests_mock,
+    mock_commodity_data_no_vat_excise,
+):
+    commodity = factories.GoodsNomenclatureFactory.create()
+    requests_mock.get(
+        url=f"{Endpoints.COMMODITIES.value}{commodity.item_id}",
+        json=mock_commodity_data_no_vat_excise,
+    )
+    url = reverse(
+        "commodity-ui-detail-measures-vat-excise",
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+def test_commodity_measures_vat_excise_get_related(
+    valid_user_client,
+    requests_mock,
+    mock_commodity_data_vat_excise,
+    mock_commodity_data_vat_measure,
+):
+    commodity = factories.GoodsNomenclatureFactory.create()
+
+    measure = mock_commodity_data_vat_measure.copy()
+    del measure["relationships"]["duty_expression"]
+
+    data = mock_commodity_data_vat_excise.copy()
+    data["included"].append(mock_commodity_data_vat_measure)
+    requests_mock.get(
+        url=f"{Endpoints.COMMODITIES.value}{commodity.item_id}",
+        json=data,
+    )
+    url = reverse(
+        "commodity-ui-detail-measures-vat-excise",
+        kwargs={"sid": commodity.sid},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    cells = soup.select(".govuk-table__body > .govuk-table__row:first-child > td")
+    # duty sentence
+    assert cells[4].text == "—"
