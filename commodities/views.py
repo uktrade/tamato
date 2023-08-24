@@ -239,14 +239,51 @@ class CommodityMeasuresVATExcise(CommodityMixin, TrackedModelDetailView):
             return None
         return data
 
-    def get_related(self, measure, key):
+    def get_related(self, measure, relationship_name):
+        """
+        The data we get from the tariffs API is structured like this:
+        {
+            "data": {
+                "id": <id>,
+                "type": <object type>,
+                "attributes": {<commodity attributes>}
+            },
+            "relationships": {
+                <relationship name>: {
+                    "data": [
+                        {"id": <id>,"type": <object type>},
+                        etc
+                    ]
+            },
+            "included": [
+                {
+                    "id": <id>,
+                    "type": <object type>,
+                    "attributes": {<object attributes>},
+                    "relationships": {
+                        <relationship name>: {
+                            "data": [
+                                {"id": <id>,"type": <object type>},
+                                etc
+                            ]
+                    },
+                }
+            ]
+        }
+        We use the relationships dictionaries to return the full data for a related object.
+
+        :param measure: Measure data as returned in "included" list
+        :param relationship_name: <relationship name> used as a key to lookup the data in the "relationships" dictionary
+        """
         all_related = [
             related
             for related in self.commodity_data["included"]
-            if measure["relationships"].get(key)
-            and related["id"] == measure["relationships"][key]["data"]["id"]
+            if measure["relationships"].get(relationship_name)
+            and related["id"]
+            == measure["relationships"][relationship_name]["data"]["id"]
         ]
         if all_related:
+            # don't expect there to be duplicate ids
             return all_related[0]
         return None
 
