@@ -73,9 +73,9 @@ class TestNewMeasureConditionComponentParser:
         )
 
         # check there is one AdditionalCodeType imported
-        assert len(importer.parsed_transactions) == 7
+        assert len(importer.parsed_transactions) == 6
 
-        target_message = importer.parsed_transactions[6].parsed_messages[0]
+        target_message = importer.parsed_transactions[5].parsed_messages[0]
         assert target_message.record_code == self.target_parser_class.record_code
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
@@ -83,12 +83,12 @@ class TestNewMeasureConditionComponentParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.condition__sid == 1
-        assert target.duty_expression__sid == 77
-        assert target.duty_amount == 12.7
-        assert target.monetary_unit__code == "ABC"
-        assert target.component_measurement__measurement_unit__code == "CDE"
-        assert target.component_measurement__measurement_unit_qualifier__code == "X"
+        assert target.condition__sid == 5
+        assert target.duty_expression__sid == 7
+        assert target.duty_amount == 14.5
+        assert target.monetary_unit__code == "ZZZ"
+        assert target.component_measurement__measurement_unit__code == "XXX"
+        assert target.component_measurement__measurement_unit_qualifier__code == "A"
 
         assert len(importer.issues()) == 0
 

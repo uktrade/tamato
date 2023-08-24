@@ -3,9 +3,8 @@ import pytest
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
 from geo_areas.models import GeographicalAreaDescription
-from geo_areas.new_import_parsers import *
 from importer import new_importer
-from measures.new_import_parsers import NewMeasureTypeSeriesParser
+from measures.new_import_parsers import NewMeasureConditionParser
 
 pytestmark = pytest.mark.django_db
 
@@ -36,21 +35,21 @@ class TestNewMeasureConditionParser:
         </xs:element>
     """
 
-    target_parser_class = NewMeasureTypeSeriesParser
+    target_parser_class = NewMeasureConditionParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure.condition.sid": "A",
-            "measure.sid": "A",
-            "condition.code": "A",
-            "component.sequence.number": "A",
-            "condition.duty.amount": "A",
-            "condition.monetary.unit.code": "A",
-            "condition.measurement.unit.code": "A",
-            "condition.measurement.unit.qualifier.code": "A",
-            "action.code": "A",
-            "certificate.type.code": "A",
-            "certificate.code": "A",
+            "measure_condition_sid": "7",
+            "measure_sid": "8",
+            "condition_code": "AA",
+            "component_sequence_number": "3",
+            "condition_duty_amount": "12.5",
+            "condition_monetary_unit_code": "GBP",
+            "condition_measurement_unit_code": "ABC",
+            "condition_measurement_unit_qualifier_code": "A",
+            "action_code": "XYZ",
+            "certificate_type_code": "A",
+            "certificate_code": "CER",
         }
 
         target = self.target_parser_class()
@@ -64,10 +63,17 @@ class TestNewMeasureConditionParser:
         )
 
         # verify all properties
-        assert target.sid == 8
-        assert target.valid_between_lower == date(2021, 1, 1)
-        assert target.valid_between_upper == date(2022, 1, 1)
-        assert target.measure_type_combination == 6
+        assert target.sid == 7
+        assert target.dependent_measure__sid == 8
+        assert target.condition_code__code == "AA"
+        assert target.component_sequence_number == 3
+        assert target.duty_amount == 12.5
+        assert target.monetary_unit__code == "GBP"
+        assert target.condition_measurement__measurement_unit__code == "ABC"
+        assert target.condition_measurement__measurement_unit_qualifier__code == "A"
+        assert target.action__code == "XYZ"
+        assert target.required_certificate__certificate_type__sid == "A"
+        assert target.required_certificate__sid == "CER"
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(

@@ -744,11 +744,24 @@ class NewMeasureConditionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "measure.condition"
 
-    sid: str = None
-    dependent_measure__sid: str = None
+    value_mapping = {
+        "measure_condition_sid": "sid",
+        "measure_sid": "dependent_measure__sid",
+        "condition_code": "condition_code__code",
+        "condition_duty_amount": "duty_amount",
+        "condition_monetary_unit_code": "monetary_unit__code",
+        "condition_measurement_unit_code": "condition_measurement__measurement_unit__code",
+        "condition_measurement_unit_qualifier_code": "condition_measurement__measurement_unit_qualifier__code",
+        "action_code": "action__code",
+        "certificate_type_code": "required_certificate__certificate_type__sid",
+        "certificate_code": "required_certificate__sid",
+    }
+
+    sid: int = None
+    dependent_measure__sid: int = None
     condition_code__code: str = None
-    component_sequence_number: str = None
-    duty_amount: str = None
+    component_sequence_number: int = None
+    duty_amount: float = None
     monetary_unit__code: str = None
     condition_measurement__measurement_unit__code: str = None
     condition_measurement__measurement_unit_qualifier__code: str = None
