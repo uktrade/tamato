@@ -631,12 +631,12 @@ class ME17(MustExist):
     If the additional code type has as application "non-Meursing" then the
     additional code must exist as a non-Meursing additional code.
 
-    UK tariff does not use meursing tables, so this is essentially saying that an
-    additional code must exist.
+    UK tariff does not use meursing tables, so this is essentially saying that
+    an additional code must exist.
 
     This refers to the fact that the TARIC Measure record has separate
-    additional_code_type and additional_code fields. Our data model combines these into
-    a single foreign key relation to AdditionalCode.
+    additional_code_type and additional_code fields. Our data model combines
+    these into a single foreign key relation to AdditionalCode.
 
     It is not possible to violate this rule as a result.
     """
@@ -1214,9 +1214,8 @@ class ME111(MeasureConditionComponentApplicability):
 
 
 class ME65(BusinessRule):
-    """An exclusion can only be entered if the measure is applicable to a geographical
-    area group (area code = 1).
-    """
+    """An exclusion can only be entered if the measure is applicable to a
+    geographical area group (area code = 1)."""
 
     def validate(self, exclusion):
         if exclusion.modified_measure.geographical_area.area_code != AreaCode.GROUP:
@@ -1230,6 +1229,7 @@ class ME66(ExclusionMembership):
     excluded_from = "modified_measure"
 
 
+@skip_when_deleted
 class ME67(BusinessRule):
     """
     The membership period of the excluded geographical area must span the valid
@@ -1246,46 +1246,48 @@ class ME67(BusinessRule):
         from measures.models import Measure
 
         # Need to get latest version of measure
-        measure = Measure.objects.approved_up_to_transaction(self.transaction).get(
+        measures = Measure.objects.approved_up_to_transaction(self.transaction).filter(
             sid=exclusion.modified_measure.sid,
         )
 
-        geo_area = measure.geographical_area
-        members = geo_area.members.approved_up_to_transaction(
-            self.transaction,
-        )
-
-        matching_members_to_exclusion_period = members.filter(
-            Q(
-                member__area_id=exclusion.excluded_geographical_area.area_id,
-                valid_between__startswith__lte=measure.valid_between.lower,
-            ),
-        )
-        if measure.valid_between.upper is None:
-            matching_members_to_exclusion_period = (
-                matching_members_to_exclusion_period.filter(
-                    valid_between__endswith__isnull=True,
-                )
+        # If no measures are found, this mean the measure is deleted and we can skip the check
+        # if there is a result, it should be only 1 result, but incase there are multiple it selects last, which is
+        # the most recent record
+        if measures.exists():
+            geo_area = measures.last().geographical_area
+            members = geo_area.members.approved_up_to_transaction(
+                self.transaction,
             )
-        else:
-            # Because the top of the date range is open - comparisons performed with less-than don't include
-            # the top value
-            # e.g. if a date range is 1/1/2020 to 31/1/2020, in the database the upper will be stored as 1/2/2020
-            # which means we must use gt rather than gte here. See the tests for ME67 for clarity - they all work
-            # correctly and the queried dates are all exactly within the ranges, no days space so we can be
-            # confident this rule is behaving as expected.
-            matching_members_to_exclusion_period = (
-                matching_members_to_exclusion_period.filter(
+
+            matching_members_to_exclusion_period = members.filter(
+                Q(
+                    member__area_id=exclusion.excluded_geographical_area.area_id,
+                    valid_between__startswith__lte=measures.last().valid_between.lower,
+                ),
+            )
+            if measures.last().valid_between.upper is None:
+                matching_members_to_exclusion_period = (
+                    matching_members_to_exclusion_period.filter(
+                        valid_between__endswith__isnull=True,
+                    )
+                )
+            else:
+                # Because the top of the date range is open - comparisons performed with less-than don't include
+                # the top value
+                # e.g. if a date range is 1/1/2020 to 31/1/2020, in the database the upper will be stored as 1/2/2020
+                # which means we must use gt rather than gte here. See the tests for ME67 for clarity - they all work
+                # correctly and the queried dates are all exactly within the ranges, no days space so we can be
+                # confident this rule is behaving as expected.
+                matching_members_to_exclusion_period = matching_members_to_exclusion_period.filter(
                     Q(valid_between__endswith__isnull=True)
                     | Q(
                         valid_between__endswith__isnull=False,
-                        valid_between__endswith__gt=measure.valid_between.upper,
+                        valid_between__endswith__gt=measures.last().valid_between.upper,
                     ),
                 )
-            )
 
-        if not matching_members_to_exclusion_period.exists():
-            raise self.violation(exclusion)
+            if not matching_members_to_exclusion_period.exists():
+                raise self.violation(exclusion)
 
 
 class ME68(BusinessRule):
@@ -1334,8 +1336,11 @@ class ME70(BusinessRule):
 
 
 class ME71(FootnoteApplicability):
-    """Footnotes with a footnote type for which the application type = "CN footnotes"
-    cannot be associated with TARIC codes (codes with pos. 9-10 different from 00).
+    """
+    Footnotes with a footnote type for which the application type = "CN
+    footnotes" cannot be associated with TARIC codes (codes with pos.
+
+    9-10 different from 00).
     """
 
     applicable_field = "footnoted_measure"
