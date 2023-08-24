@@ -35,7 +35,7 @@ class TestNewAdditionalCodeParser:
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
             "additional_code_sid": 123,
-            "additional_code_type_id": 123,
+            "additional_code_type_id": "A",
             "additional_code": "123",
             "validity_start_date": "2023-01-22",
             "validity_end_date": "2024-01-22",
@@ -53,7 +53,7 @@ class TestNewAdditionalCodeParser:
 
         # verify all properties
         assert target.sid == 123  # converts "additional.code.sid" to sid
-        assert target.type__sid == 123
+        assert target.type__sid == "A"
         assert target.code == "123"  # converts "additional.code" to code
         assert target.valid_between_lower == date(2023, 1, 22)
         assert target.valid_between_upper == date(2024, 1, 22)
@@ -82,7 +82,7 @@ class TestNewAdditionalCodeParser:
         assert taric_object.sid == 1
         assert taric_object.valid_between_lower == date(2021, 1, 1)
         assert taric_object.valid_between_upper is None
-        assert taric_object.type__sid == 5
+        assert taric_object.type__sid == "5"
         assert taric_object.code == "3"
 
         # check for issues
@@ -122,7 +122,7 @@ class TestNewAdditionalCodeParser:
         assert taric_object.sid == 1
         assert taric_object.valid_between_lower == date(2021, 1, 1)
         assert taric_object.valid_between_upper is None
-        assert taric_object.type__sid == 12
+        assert taric_object.type__sid == "12"
         assert taric_object.code == "111"
 
         # check for issues

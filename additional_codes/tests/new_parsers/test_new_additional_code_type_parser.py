@@ -51,7 +51,7 @@ class TestNewAdditionalCodeTypeParser:
         )
 
         # verify all properties
-        assert target.sid == 123  # converts "additional.code.type.id" to sid
+        assert target.sid == "123"  # converts "additional.code.type.id" to sid
         assert target.valid_between_lower == date(2023, 1, 22)
         assert target.valid_between_upper == date(2024, 1, 22)
         assert target.application_code == "123"
@@ -76,7 +76,7 @@ class TestNewAdditionalCodeTypeParser:
 
         # check properties
         target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == 1
+        assert target_taric_object.sid == "1"
         assert target_taric_object.valid_between_lower == date(2021, 1, 1)
         assert target_taric_object.valid_between_upper == date(2021, 12, 31)
         assert target_taric_object.application_code == "111"
@@ -106,7 +106,7 @@ class TestNewAdditionalCodeTypeParser:
 
         # check properties
         target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == 5
+        assert target_taric_object.sid == "5"
         assert target_taric_object.valid_between_lower == date(2021, 1, 1)
         assert target_taric_object.valid_between_upper == date(2021, 12, 31)
         assert target_taric_object.application_code == "111"

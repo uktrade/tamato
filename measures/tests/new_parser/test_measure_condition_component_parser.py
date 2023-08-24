@@ -3,9 +3,8 @@ import pytest
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
 from geo_areas.models import GeographicalAreaDescription
-from geo_areas.new_import_parsers import *
 from importer import new_importer
-from measures.new_import_parsers import NewMeasureTypeSeriesParser
+from measures.new_import_parsers import NewMeasureConditionComponentParser
 
 pytestmark = pytest.mark.django_db
 
@@ -31,14 +30,16 @@ class TestNewMeasureConditionComponentParser:
         </xs:element>
     """
 
-    target_parser_class = NewMeasureTypeSeriesParser
+    target_parser_class = NewMeasureConditionComponentParser
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure.type.series.id": "A",
-            "validity.start.date": "2021-01-01",
-            "validity.end.date": "2022-01-01",
-            "measure.type.combination": "6",
+            "measure_condition_sid": "1",
+            "duty_expression_id": "77",
+            "duty_amount": "12.7",
+            "monetary_unit_code": "ABC",
+            "measurement_unit_code": "CDE",
+            "measurement_unit_qualifier_code": "X",
         }
 
         target = self.target_parser_class()
@@ -52,14 +53,16 @@ class TestNewMeasureConditionComponentParser:
         )
 
         # verify all properties
-        assert target.sid == 8
-        assert target.valid_between_lower == date(2021, 1, 1)
-        assert target.valid_between_upper == date(2022, 1, 1)
-        assert target.measure_type_combination == 6
+        assert target.condition__sid == 1
+        assert target.duty_expression__sid == 77
+        assert target.duty_amount == 12.7
+        assert target.monetary_unit__code == "ABC"
+        assert target.component_measurement__measurement_unit__code == "CDE"
+        assert target.component_measurement__measurement_unit_qualifier__code == "X"
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
-            "measure_series_CREATE.xml",
+            "measure_condition_component_CREATE.xml",
             __file__,
         )
 
@@ -70,9 +73,9 @@ class TestNewMeasureConditionComponentParser:
         )
 
         # check there is one AdditionalCodeType imported
-        assert len(importer.parsed_transactions) == 2
+        assert len(importer.parsed_transactions) == 7
 
-        target_message = importer.parsed_transactions[1].parsed_messages[0]
+        target_message = importer.parsed_transactions[6].parsed_messages[0]
         assert target_message.record_code == self.target_parser_class.record_code
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
@@ -80,10 +83,12 @@ class TestNewMeasureConditionComponentParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.sid == 3
-        assert target.described_geographicalarea__sid == 8
-        assert target.described_geographicalarea__area_id == "AB01"
-        assert target.description == "Some Description"
+        assert target.condition__sid == 1
+        assert target.duty_expression__sid == 77
+        assert target.duty_amount == 12.7
+        assert target.monetary_unit__code == "ABC"
+        assert target.component_measurement__measurement_unit__code == "CDE"
+        assert target.component_measurement__measurement_unit_qualifier__code == "X"
 
         assert len(importer.issues()) == 0
 

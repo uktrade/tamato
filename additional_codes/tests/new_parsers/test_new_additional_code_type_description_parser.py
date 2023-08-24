@@ -29,7 +29,7 @@ class TestNewAdditionalCodeTypeDescriptionParser:
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "additional_code_type_id": "123",
+            "additional_code_type_id": "B",
             "description": "some description",
         }
 
@@ -44,7 +44,7 @@ class TestNewAdditionalCodeTypeDescriptionParser:
         )
 
         # verify all properties
-        assert target.sid == 123  # converts "additional.code.type.id" to sid
+        assert target.sid == "B"  # converts "additional.code.type.id" to sid
         assert target.description == "some description"
 
     def test_import(self, superuser):
@@ -70,7 +70,7 @@ class TestNewAdditionalCodeTypeDescriptionParser:
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == 1
+        assert target_taric_object.sid == "1"
         assert target_taric_object.description == "some description"
 
         # check for issues
@@ -108,7 +108,7 @@ class TestNewAdditionalCodeTypeDescriptionParser:
 
         # check properties for additional code
         target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == 12
+        assert target_taric_object.sid == "12"
         assert target_taric_object.description == "some description"
 
         assert len(importer.issues()) == 1
@@ -116,5 +116,5 @@ class TestNewAdditionalCodeTypeDescriptionParser:
             str(target_taric_object.issues[0])
             == "ERROR: Missing expected parent object NewAdditionalCodeTypeParser\n"
             "  additional.code.type.description > additional.code.type\n"
-            "  link_data: {'sid': 12}"
+            "  link_data: {'sid': '12'}"
         )

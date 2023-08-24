@@ -10,7 +10,9 @@ from commodities.models import GoodsNomenclatureIndent
 from commodities.models import GoodsNomenclatureOrigin
 from commodities.models import GoodsNomenclatureSuccessor
 from commodities.new_import_parsers import *
+from footnotes.models import Footnote
 from footnotes.models import FootnoteDescription
+from footnotes.models import FootnoteType
 from footnotes.new_import_parsers import *
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
@@ -385,7 +387,6 @@ pytestmark = pytest.mark.django_db
                 MeasureType,
                 GeographicalArea,
                 GoodsNomenclature,
-                AdditionalCodeType,
                 AdditionalCode,
                 QuotaOrderNumber,
                 Regulation,
@@ -400,8 +401,7 @@ pytestmark = pytest.mark.django_db
                 Measure,
                 DutyExpression,
                 MonetaryUnit,
-                MeasurementUnit,
-                MeasurementUnitQualifier,
+                Measurement,
             ],
             False,
         ),
@@ -429,8 +429,7 @@ pytestmark = pytest.mark.django_db
                 MeasureCondition,
                 DutyExpression,
                 MonetaryUnit,
-                MeasurementUnit,
-                MeasurementUnitQualifier,
+                Measurement,
             ],
             False,
         ),
@@ -445,7 +444,7 @@ pytestmark = pytest.mark.django_db
             NewFootnoteAssociationMeasureParser,
             FootnoteAssociationMeasure,
             "footnote.association.measure",
-            [Measure, FootnoteType, Footnote],
+            [Measure, Footnote],
             False,
         ),
         # Quotas

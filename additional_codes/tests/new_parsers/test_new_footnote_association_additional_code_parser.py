@@ -42,7 +42,7 @@ class TestNewAdditionalCodeTypeParser:
             "validity_start_date": "2023-01-22",
             "validity_end_date": "2024-01-22",
             "additional_code": "666",
-            "additional_code_type_id": "777",
+            "additional_code_type_id": "Z",
         }
 
         target = self.target_parser_class()
@@ -64,7 +64,7 @@ class TestNewAdditionalCodeTypeParser:
         assert target.valid_between_lower == date(2023, 1, 22)
         assert target.valid_between_upper == date(2024, 1, 22)
         assert target.additional_code__code == "666"
-        assert target.additional_code__type__sid == 777
+        assert target.additional_code__type__sid == "Z"
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
@@ -96,7 +96,7 @@ class TestNewAdditionalCodeTypeParser:
         assert target_taric_object.associated_footnote__footnote_id == "4"
         assert target_taric_object.valid_between_upper == date(2021, 1, 1)
         assert target_taric_object.valid_between_lower == date(2021, 1, 1)
-        assert target_taric_object.additional_code__type__sid == 4
+        assert target_taric_object.additional_code__type__sid == "4"
         assert target_taric_object.additional_code__code == "7"
 
         assert len(importer.issues()) == 0

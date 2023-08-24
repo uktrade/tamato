@@ -39,7 +39,7 @@ class TestNewAdditionalCodeDescriptionParser:
         expected_data_example = {
             "additional_code_description_period_sid": "123",
             "additional_code_sid": "123",
-            "additional_code_type_id": "123",
+            "additional_code_type_id": "A",
             "additional_code": "123",
             "description": "some description",
         }
@@ -57,7 +57,7 @@ class TestNewAdditionalCodeDescriptionParser:
         # verify all properties
         assert target.sid == 123  # converts "additional.code.type.id" to sid
         assert target.described_additionalcode__sid == 123
-        assert target.described_additionalcode__type_sid == 123
+        assert target.described_additionalcode__type_sid == "A"
         assert target.described_additionalcode__code == "123"
         assert target.description == "some description"
 
@@ -98,7 +98,7 @@ class TestNewAdditionalCodeDescriptionParser:
         assert type(target_taric_object) == NewAdditionalCodeDescriptionParser
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type_sid == 9
+        assert target_taric_object.described_additionalcode__type_sid == "9"
         assert target_taric_object.described_additionalcode__code == "2"
         assert target_taric_object.description == "some description"
         assert target_taric_object.validity_start == date(2021, 1, 1)
@@ -135,7 +135,7 @@ class TestNewAdditionalCodeDescriptionParser:
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type_sid == 12
+        assert target_taric_object.described_additionalcode__type_sid == "12"
         assert target_taric_object.described_additionalcode__code == "111"
         assert target_taric_object.description == "some description"
 

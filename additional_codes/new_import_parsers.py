@@ -94,8 +94,8 @@ class NewAdditionalCodeParser(NewWritable, NewElementParser):
 
     identity_fields = ["sid"]
 
-    sid: str = None
-    type__sid: int = None
+    sid: int = None
+    type__sid: str = None
     code: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None

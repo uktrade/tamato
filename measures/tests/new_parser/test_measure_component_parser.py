@@ -1,10 +1,14 @@
 import pytest
 
+from commodities.new_import_parsers import *
+
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
 from geo_areas.models import GeographicalAreaDescription
+from geo_areas.new_import_parsers import *
 from importer import new_importer
-from measures.new_import_parsers import NewMeasureComponentParser
+from measures.new_import_parsers import *
+from regulations.new_import_parsers import *
 
 pytestmark = pytest.mark.django_db
 
@@ -73,9 +77,9 @@ class TestNewMeasureComponentParser:
         )
 
         # check there is one AdditionalCodeType imported
-        assert len(importer.parsed_transactions) == 2
+        assert len(importer.parsed_transactions) == 14
 
-        target_message = importer.parsed_transactions[1].parsed_messages[0]
+        target_message = importer.parsed_transactions[13].parsed_messages[0]
         assert target_message.record_code == self.target_parser_class.record_code
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
@@ -83,10 +87,12 @@ class TestNewMeasureComponentParser:
         # check properties for additional code
         target = target_message.taric_object
 
-        assert target.sid == 3
-        assert target.described_geographicalarea__sid == 8
-        assert target.described_geographicalarea__area_id == "AB01"
-        assert target.description == "Some Description"
+        assert target.component_measure__sid == 99
+        assert target.duty_expression__sid == 7
+        assert target.duty_amount == 12.77
+        assert target.monetary_unit__code == "ZZZ"
+        assert target.component_measurement__measurement_unit__code == "XYZ"
+        assert target.component_measurement__measurement_unit_qualifier__code == "F"
 
         assert len(importer.issues()) == 0
 

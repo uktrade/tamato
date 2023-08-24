@@ -35,7 +35,7 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         expected_data_example = {
             "additional_code_description_period_sid": "123",
             "additional_code_sid": "123",
-            "additional_code_type_id": "123",
+            "additional_code_type_id": "A",
             "additional_code": "123",
             "validity_start_date": "2023-01-22",
         }
@@ -54,7 +54,7 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         assert target.sid == 123  # converts "additional.code.type.id" to sid
         assert target.validity_start == date(2023, 1, 22)
         assert target.described_additionalcode__sid == 123
-        assert target.described_additionalcode__type__sid == 123
+        assert target.described_additionalcode__type__sid == "A"
         assert target.described_additionalcode__code == "123"
 
     def test_import(self, superuser):
@@ -83,7 +83,7 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type__sid == 4
+        assert target_taric_object.described_additionalcode__type__sid == "4"
         assert target_taric_object.described_additionalcode__code == "3"
         assert target_taric_object.validity_start == date(2021, 1, 1)
 
@@ -126,7 +126,7 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type__sid == 5
+        assert target_taric_object.described_additionalcode__type__sid == "5"
         assert target_taric_object.described_additionalcode__code == "3"
         assert target_taric_object.validity_start == date(2021, 1, 1)
 

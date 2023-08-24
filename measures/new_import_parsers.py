@@ -639,10 +639,13 @@ class NewMeasureComponentParser(NewWritable, NewElementParser):
         ModelLink(
             models.Measurement,
             [
-                ModelLinkField("component_measurement__measurement_unit__code", "code"),
+                ModelLinkField(
+                    "component_measurement__measurement_unit__code",
+                    "measurement_unit__code",
+                ),
                 ModelLinkField(
                     "component_measurement__measurement_unit_qualifier__code",
-                    "code",
+                    "measurement_unit_qualifier__code",
                 ),
             ],
             "measurement",
@@ -780,21 +783,18 @@ class NewMeasureConditionComponentParser(NewWritable, NewElementParser):
             "monetary.unit",
         ),
         ModelLink(
-            models.MeasurementUnit,
-            [
-                ModelLinkField("component_measurement__measurement_unit__code", "code"),
-            ],
-            "measurement.unit",
-        ),
-        ModelLink(
-            models.MeasurementUnitQualifier,
+            models.Measurement,
             [
                 ModelLinkField(
+                    "component_measurement__measurement_unit__code",
+                    "measurement_unit__code",
+                ),
+                ModelLinkField(
                     "component_measurement__measurement_unit_qualifier__code",
-                    "code",
+                    "measurement_unit_qualifier__code",
                 ),
             ],
-            "measurement.unit.qualifier",
+            "measurement",
         ),
     ]
 
@@ -803,9 +803,17 @@ class NewMeasureConditionComponentParser(NewWritable, NewElementParser):
 
     xml_object_tag = "measure.condition.component"
 
-    condition__sid: str = None
-    duty_expression__sid: str = None
-    duty_amount: str = None
+    value_mapping = {
+        "measure_condition_sid": "condition__sid",
+        "duty_expression_id": "duty_expression__sid",
+        "monetary_unit_code": "monetary_unit__code",
+        "measurement_unit_code": "component_measurement__measurement_unit__code",
+        "measurement_unit_qualifier_code": "component_measurement__measurement_unit_qualifier__code",
+    }
+
+    condition__sid: int = None
+    duty_expression__sid: int = None
+    duty_amount: float = None
     monetary_unit__code: str = None
     component_measurement__measurement_unit__code: str = None
     component_measurement__measurement_unit_qualifier__code: str = None
@@ -838,7 +846,7 @@ class NewMeasureExcludedGeographicalAreaParser(NewWritable, NewElementParser):
     xml_object_tag = "measure.excluded.geographical.area"
 
     value_mapping = {
-        "measure_id": "modified_measure__sid",
+        "measure_sid": "modified_measure__sid",
         "excluded_geographical_area": "excluded_geographical_area__area_id",
         "geographical_area_sid": "excluded_geographical_area__sid",
     }

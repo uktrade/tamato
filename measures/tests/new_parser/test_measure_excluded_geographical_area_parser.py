@@ -31,7 +31,7 @@ class TestNewMeasureExcludedGeographicalAreaParser:
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
-            "measure_id": "12",
+            "measure_sid": "12",
             "excluded_geographical_area": "ABCD",
             "geographical_area_sid": "77",
         }
@@ -64,9 +64,9 @@ class TestNewMeasureExcludedGeographicalAreaParser:
         )
 
         # check there is one AdditionalCodeType imported
-        assert len(importer.parsed_transactions) == 2
+        assert len(importer.parsed_transactions) == 10
 
-        target_message = importer.parsed_transactions[1].parsed_messages[0]
+        target_message = importer.parsed_transactions[9].parsed_messages[0]
         assert target_message.record_code == self.target_parser_class.record_code
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
