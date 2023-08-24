@@ -15,6 +15,7 @@ from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.forms import delete_form_for
 from common.serializers import AutoCompleteSerializer
+from common.tariffs_api import URLs
 from common.tariffs_api import get_quota_data
 from common.tariffs_api import get_quota_definitions_data
 from common.validators import UpdateType
@@ -117,7 +118,7 @@ class QuotaDetail(QuotaOrderNumberMixin, TrackedModelDetailView, SortingMixin):
 
     @property
     def quota_data(self):
-        data = get_quota_data(self.object.order_number)
+        data = get_quota_data({"order_number": self.object.order_number})
         if not data or data["meta"]["pagination"]["total_count"] == 0:
             return None
         return data.get("data")[0]
@@ -129,6 +130,9 @@ class QuotaDetail(QuotaOrderNumberMixin, TrackedModelDetailView, SortingMixin):
 
         current_definition = definitions.as_at_and_beyond(date.today()).first()
         context["current_definition"] = current_definition
+        context[
+            "uk_tariff_url"
+        ] = f"{URLs.BASE_URL.value}quota_search?order_number={self.object.order_number}"
 
         context[
             "quota_associations"
