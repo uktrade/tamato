@@ -20,6 +20,7 @@ from commodities.models.dc import SnapshotMoment
 from commodities.models.dc import get_chapter_collection
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from common.serializers import AutoCompleteSerializer
+from common.tariffs_api import URLs
 from common.tariffs_api import get_commodity_data
 from common.views import SortingMixin
 from common.views import TrackedModelDetailMixin
@@ -254,6 +255,9 @@ class CommodityMeasuresVATExcise(CommodityMixin, TrackedModelDetailView):
         context["selected_tab"] = "measures"
         context["commodity"] = self.object
         context["commodity_data"] = self.commodity_data
+        context[
+            "uk_tariff_url"
+        ] = f"{URLs.BASE_URL.value}commodities/{self.object.item_id}#vat_excise"
         if self.commodity_data:
             measures = [
                 item

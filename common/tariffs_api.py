@@ -5,11 +5,14 @@ from urllib.parse import urlencode
 import aiohttp
 import requests
 
-BASE_URL = "https://www.trade-tariff.service.gov.uk/api/v2/"
+
+class URLs(Enum):
+    BASE_URL = "https://www.trade-tariff.service.gov.uk/"
+    API_URL = f"{BASE_URL}api/v2/"
 
 
 class Endpoints(Enum):
-    QUOTAS = f"{BASE_URL}quotas/search"
+    QUOTAS = f"{URLs.API_URL.value}quotas/search"
     """
     GET /quotas/search Retrieves a list of quota definitions Retrieves a
     paginated list of quota definitions, optionally filtered by a variety of
@@ -17,7 +20,7 @@ class Endpoints(Enum):
 
     https://api.trade-tariff.service.gov.uk/reference.html#get-quotas-search
     """
-    COMMODITIES = f"{BASE_URL}commodities/"
+    COMMODITIES = f"{URLs.API_URL.value}commodities/"
     """
     GET /commodities/{id} Retrieves a commodity This resource represents a
     single commodity.
