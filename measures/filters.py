@@ -1,5 +1,3 @@
-from datetime import date
-
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import CharField
@@ -37,7 +35,6 @@ BEFORE_EXACT_AFTER_CHOICES = (
 )
 
 LIVE_CURRENT_CHOICES = (
-    ("live", "Show live measures only"),
     ("current", "Only include measures in this current workbasket"),
 )
 
@@ -259,21 +256,8 @@ class MeasureFilter(TamatoFilter):
     def measures_filter(self, queryset, name, value):
         if value:
             modifier = self.data["measure_filters_modifier"]
-            if modifier == "live":
-                # TODO: filter criteria:
-                # start date: today/earlier
-                # end date: today/later/null
-                # do not use effective_valid_between
-                current_date = date.today()
-
-                filter_query = Q(start_date__lte=current_date) & (
-                    Q(end_date__gte=current_date) | Q(end_date__isnull=True)
-                )
-                queryset = (
-                    queryset.annotate(start_date=StartDate("valid_between"))
-                    .annotate(end_date=EndDate("valid_between"))
-                    .filter(filter_query)
-                )
+            # TODO: Add a new filter option: live measures.
+            # criteria: start date: today/earlier; end date: today/later/null
             if modifier == "current":
                 queryset = WorkBasket.current(self.request).measures
 

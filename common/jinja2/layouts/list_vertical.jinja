@@ -17,13 +17,13 @@
 
   <div class="full-width-search">
     <div class="govuk-!-margin-bottom-5">
-      <h2 class="govuk-heading-m govuk-!-margin-3">Search and filter</h2>
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-5">Search and filter</h2>
       <form method="get" action="{{ url(form_url) }}">
           {{ crispy(filter.form) }}
       </form>
     </div>
 
-    <div class="filter-layout__content govuk-!-margin-top-5">
+    <div class="govuk-!-margin-top-3">
       {% if paginator.count > 0 %}
         {% include "includes/common/pagination-list-summary.jinja" %}
       {% endif %}
