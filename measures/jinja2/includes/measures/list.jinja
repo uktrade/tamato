@@ -39,6 +39,10 @@
   {{ sort_by(request, "geo_area", "Geographical area", base_url, query_params) }}
 {% endset %}
 
+{% set start_date %}
+  {{ sort_by(request, "start_date", "Start date", base_url, query_params) }}
+{% endset %}
+
 
 {# sets out form #}
 <form method="post">
@@ -85,7 +89,7 @@
             {"text": sid},
             {"text": measure_type},
             {"text": "Commodity"},
-            {"text": "Start date"},
+            {"text": start_date},
             {"text": "End date"},
             {"text": "Duties"},
             {"text": "Additional code"},
