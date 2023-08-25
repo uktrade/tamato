@@ -708,22 +708,22 @@ measure has a null additional code.</p>
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></span><span class="sig-name descname"><span class="pre">ME17</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME17"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME17" title="Permalink to this definition">¶</a></dt>
 <dd><p>If the additional code type has as application “non-Meursing” then the
 additional code must exist as a non-Meursing additional code.</p>
-<p>UK tariff does not use meursing tables, so this is essentially saying that an
-additional code must exist.</p>
+<p>UK tariff does not use meursing tables, so this is essentially saying that
+an additional code must exist.</p>
 <p>This refers to the fact that the TARIC Measure record has separate
-additional_code_type and additional_code fields. Our data model combines these into
-a single foreign key relation to AdditionalCode.</p>
+additional_code_type and additional_code fields. Our data model combines
+these into a single foreign key relation to AdditionalCode.</p>
 <p>It is not possible to violate this rule as a result.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="measures.business_rules.ME17.Violation">
 <em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME17.Violation" title="Permalink to this definition">¶</a></dt>
 <dd><p>If the additional code type has as application “non-Meursing” then the
 additional code must exist as a non-Meursing additional code.</p>
-<p>UK tariff does not use meursing tables, so this is essentially saying that an
-additional code must exist.</p>
+<p>UK tariff does not use meursing tables, so this is essentially saying that
+an additional code must exist.</p>
 <p>This refers to the fact that the TARIC Measure record has separate
-additional_code_type and additional_code fields. Our data model combines these into
-a single foreign key relation to AdditionalCode.</p>
+additional_code_type and additional_code fields. Our data model combines
+these into a single foreign key relation to AdditionalCode.</p>
 <p>It is not possible to violate this rule as a result.</p>
 </dd></dl>
 
@@ -1324,13 +1324,13 @@ validity period of the measure.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="measures.business_rules.ME65">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></span><span class="sig-name descname"><span class="pre">ME65</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME65"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME65" title="Permalink to this definition">¶</a></dt>
-<dd><p>An exclusion can only be entered if the measure is applicable to a geographical
-area group (area code = 1).</p>
+<dd><p>An exclusion can only be entered if the measure is applicable to a
+geographical area group (area code = 1).</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="measures.business_rules.ME65.Violation">
 <em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME65.Violation" title="Permalink to this definition">¶</a></dt>
-<dd><p>An exclusion can only be entered if the measure is applicable to a geographical
-area group (area code = 1).</p>
+<dd><p>An exclusion can only be entered if the measure is applicable to a
+geographical area group (area code = 1).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1483,13 +1483,15 @@ measure.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="measures.business_rules.ME71">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">measures.business_rules.</span></span><span class="sig-name descname"><span class="pre">ME71</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/measures/business_rules.html#ME71"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#measures.business_rules.ME71" title="Permalink to this definition">¶</a></dt>
-<dd><p>Footnotes with a footnote type for which the application type = “CN footnotes”
-cannot be associated with TARIC codes (codes with pos. 9-10 different from 00).</p>
+<dd><p>Footnotes with a footnote type for which the application type = “CN
+footnotes” cannot be associated with TARIC codes (codes with pos 9-10
+different from 00).</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="measures.business_rules.ME71.Violation">
 <em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#measures.business_rules.ME71.Violation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Footnotes with a footnote type for which the application type = “CN footnotes”
-cannot be associated with TARIC codes (codes with pos. 9-10 different from 00).</p>
+<dd><p>Footnotes with a footnote type for which the application type = “CN
+footnotes” cannot be associated with TARIC codes (codes with pos 9-10
+different from 00).</p>
 </dd></dl>
 
 </dd></dl>

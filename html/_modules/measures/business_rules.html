@@ -760,12 +760,12 @@
 <span class="sd">    If the additional code type has as application &quot;non-Meursing&quot; then the</span>
 <span class="sd">    additional code must exist as a non-Meursing additional code.</span>
 
-<span class="sd">    UK tariff does not use meursing tables, so this is essentially saying that an</span>
-<span class="sd">    additional code must exist.</span>
+<span class="sd">    UK tariff does not use meursing tables, so this is essentially saying that</span>
+<span class="sd">    an additional code must exist.</span>
 
 <span class="sd">    This refers to the fact that the TARIC Measure record has separate</span>
-<span class="sd">    additional_code_type and additional_code fields. Our data model combines these into</span>
-<span class="sd">    a single foreign key relation to AdditionalCode.</span>
+<span class="sd">    additional_code_type and additional_code fields. Our data model combines</span>
+<span class="sd">    these into a single foreign key relation to AdditionalCode.</span>
 
 <span class="sd">    It is not possible to violate this rule as a result.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1343,9 +1343,8 @@
 
 
 <div class="viewcode-block" id="ME65"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME65">[docs]</a><span class="k">class</span> <span class="nc">ME65</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An exclusion can only be entered if the measure is applicable to a geographical</span>
-<span class="sd">    area group (area code = 1).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An exclusion can only be entered if the measure is applicable to a</span>
+<span class="sd">    geographical area group (area code = 1).&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ME65.validate"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME65.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">area_code</span> <span class="o">!=</span> <span class="n">AreaCode</span><span class="o">.</span><span class="n">GROUP</span><span class="p">:</span>
@@ -1375,46 +1374,51 @@
         <span class="kn">from</span> <span class="nn">measures.models</span> <span class="kn">import</span> <span class="n">Measure</span>
 
         <span class="c1"># Need to get latest version of measure</span>
-        <span class="n">measure</span> <span class="o">=</span> <span class="n">Measure</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="n">measures</span> <span class="o">=</span> <span class="n">Measure</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">sid</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">modified_measure</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">geo_area</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span>
-        <span class="n">members</span> <span class="o">=</span> <span class="n">geo_area</span><span class="o">.</span><span class="n">members</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">matching_members_to_exclusion_period</span> <span class="o">=</span> <span class="n">members</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">Q</span><span class="p">(</span>
-                <span class="n">member__area_id</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span><span class="o">.</span><span class="n">area_id</span><span class="p">,</span>
-                <span class="n">valid_between__startswith__lte</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">matching_members_to_exclusion_period</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">matching_members_to_exclusion_period</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                    <span class="n">valid_between__endswith__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Because the top of the date range is open - comparisons performed with less-than don&#39;t include</span>
-            <span class="c1"># the top value</span>
-            <span class="c1"># e.g. if a date range is 1/1/2020 to 31/1/2020, in the database the upper will be stored as 1/2/2020</span>
-            <span class="c1"># which means we must use gt rather than gte here. See the tests for ME67 for clarity - they all work</span>
-            <span class="c1"># correctly and the queried dates are all exactly within the ranges, no days space so we can be</span>
-            <span class="c1"># confident this rule is behaving as expected.</span>
-            <span class="n">matching_members_to_exclusion_period</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">matching_members_to_exclusion_period</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                    <span class="n">Q</span><span class="p">(</span><span class="n">valid_between__endswith__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                    <span class="o">|</span> <span class="n">Q</span><span class="p">(</span>
-                        <span class="n">valid_between__endswith__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                        <span class="n">valid_between__endswith__gt</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span><span class="p">,</span>
-                    <span class="p">),</span>
-                <span class="p">)</span>
+        <span class="c1"># If no measures are found, this mean the measure is deleted and we can skip the check</span>
+        <span class="c1"># if there is a result, it should be only 1 result, but incase there are multiple it selects last, which is</span>
+        <span class="c1"># the most recent record</span>
+        <span class="k">if</span> <span class="n">measures</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">measure</span> <span class="o">=</span> <span class="n">measures</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+            <span class="n">geo_area</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">geographical_area</span>
+            <span class="n">members</span> <span class="o">=</span> <span class="n">geo_area</span><span class="o">.</span><span class="n">members</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">matching_members_to_exclusion_period</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
+            <span class="n">matching_members_to_exclusion_period</span> <span class="o">=</span> <span class="n">members</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">Q</span><span class="p">(</span>
+                    <span class="n">member__area_id</span><span class="o">=</span><span class="n">exclusion</span><span class="o">.</span><span class="n">excluded_geographical_area</span><span class="o">.</span><span class="n">area_id</span><span class="p">,</span>
+                    <span class="n">valid_between__startswith__lte</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">matching_members_to_exclusion_period</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">matching_members_to_exclusion_period</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">valid_between__endswith__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Because the top of the date range is open - comparisons performed with less-than don&#39;t include</span>
+                <span class="c1"># the top value</span>
+                <span class="c1"># e.g. if a date range is 1/1/2020 to 31/1/2020, in the database the upper will be stored as 1/2/2020</span>
+                <span class="c1"># which means we must use gt rather than gte here. See the tests for ME67 for clarity - they all work</span>
+                <span class="c1"># correctly and the queried dates are all exactly within the ranges, no days space so we can be</span>
+                <span class="c1"># confident this rule is behaving as expected.</span>
+                <span class="n">matching_members_to_exclusion_period</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">matching_members_to_exclusion_period</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">Q</span><span class="p">(</span><span class="n">valid_between__endswith__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                        <span class="o">|</span> <span class="n">Q</span><span class="p">(</span>
+                            <span class="n">valid_between__endswith__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                            <span class="n">valid_between__endswith__gt</span><span class="o">=</span><span class="n">measure</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">upper</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">matching_members_to_exclusion_period</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="ME68"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME68">[docs]</a><span class="k">class</span> <span class="nc">ME68</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
@@ -1463,9 +1467,9 @@
 
 
 <div class="viewcode-block" id="ME71"><a class="viewcode-back" href="../../business_rules/measures.html#measures.business_rules.ME71">[docs]</a><span class="k">class</span> <span class="nc">ME71</span><span class="p">(</span><span class="n">FootnoteApplicability</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Footnotes with a footnote type for which the application type = &quot;CN footnotes&quot;</span>
-<span class="sd">    cannot be associated with TARIC codes (codes with pos. 9-10 different from 00).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Footnotes with a footnote type for which the application type = &quot;CN</span>
+<span class="sd">    footnotes&quot; cannot be associated with TARIC codes (codes with pos 9-10</span>
+<span class="sd">    different from 00).&quot;&quot;&quot;</span>
 
     <span class="n">applicable_field</span> <span class="o">=</span> <span class="s2">&quot;footnoted_measure&quot;</span></div>
 
