@@ -60,6 +60,11 @@ urlpatterns = [
         name="commodity-ui-detail-measures-as-defined",
     ),
     path(
+        f"commodities/<sid>/measures-vat-excise/",
+        views.CommodityMeasuresVATExcise.as_view(),
+        name="commodity-ui-detail-measures-vat-excise",
+    ),
+    path(
         f"commodities/<sid>/version/",
         views.CommodityVersion.as_view(),
         name="commodity-ui-detail-version",
