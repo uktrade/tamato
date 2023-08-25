@@ -1229,7 +1229,6 @@ class ME66(ExclusionMembership):
     excluded_from = "modified_measure"
 
 
-@skip_when_deleted
 class ME67(BusinessRule):
     """
     The membership period of the excluded geographical area must span the valid
