@@ -1253,7 +1253,8 @@ class ME67(BusinessRule):
         # if there is a result, it should be only 1 result, but incase there are multiple it selects last, which is
         # the most recent record
         if measures.exists():
-            geo_area = measures.last().geographical_area
+            measure = measures.last()
+            geo_area = measure.geographical_area
             members = geo_area.members.approved_up_to_transaction(
                 self.transaction,
             )
@@ -1261,10 +1262,10 @@ class ME67(BusinessRule):
             matching_members_to_exclusion_period = members.filter(
                 Q(
                     member__area_id=exclusion.excluded_geographical_area.area_id,
-                    valid_between__startswith__lte=measures.last().valid_between.lower,
+                    valid_between__startswith__lte=measure.valid_between.lower,
                 ),
             )
-            if measures.last().valid_between.upper is None:
+            if measure.valid_between.upper is None:
                 matching_members_to_exclusion_period = (
                     matching_members_to_exclusion_period.filter(
                         valid_between__endswith__isnull=True,
@@ -1277,12 +1278,14 @@ class ME67(BusinessRule):
                 # which means we must use gt rather than gte here. See the tests for ME67 for clarity - they all work
                 # correctly and the queried dates are all exactly within the ranges, no days space so we can be
                 # confident this rule is behaving as expected.
-                matching_members_to_exclusion_period = matching_members_to_exclusion_period.filter(
-                    Q(valid_between__endswith__isnull=True)
-                    | Q(
-                        valid_between__endswith__isnull=False,
-                        valid_between__endswith__gt=measures.last().valid_between.upper,
-                    ),
+                matching_members_to_exclusion_period = (
+                    matching_members_to_exclusion_period.filter(
+                        Q(valid_between__endswith__isnull=True)
+                        | Q(
+                            valid_between__endswith__isnull=False,
+                            valid_between__endswith__gt=measure.valid_between.upper,
+                        ),
+                    )
                 )
 
             if not matching_members_to_exclusion_period.exists():
