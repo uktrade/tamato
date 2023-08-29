@@ -31,6 +31,8 @@ class NotificationLog(TimestampedMixin):
     """
 
     recipients = models.TextField()
+    """Comma separated email addresses, as a single string, of the recipients of
+    the notification."""
     notification = models.ForeignKey(
         "notifications.Notification",
         default=None,
@@ -46,6 +48,14 @@ class Notification(PolymorphicModel):
     notification.
     """
 
+    notified_object_pk: int
+    """The primary key of the."""
+
+    notified_object_pk = models.IntegerField(
+        default=None,
+        null=True,
+    )
+
     def notify_template_id(self) -> str:
         """
         GOV.UK Notify template ID specific to each Notification sub-class.
@@ -57,6 +67,14 @@ class Notification(PolymorphicModel):
     def notified_users(self) -> models.QuerySet[NotifiedUser]:
         """
         Returns the queryset of NotifiedUsers for a specific notifications.
+
+        Implement in concrete subclasses.
+        """
+        raise NotImplementedError
+
+    def notified_object(self) -> models.Model:
+        """
+        Returns the object instance that is being notified on.
 
         Implement in concrete subclasses.
         """
@@ -112,6 +130,15 @@ class EnvelopeReadyForProcessingNotification(Notification):
     def notified_users(self):
         return NotifiedUser.objects.filter(
             Q(enrol_packaging=True) | Q(enrole_api_publishing=True),
+        )
+
+    def notified_object(self) -> models.Model:
+        from publishing.models import PackagedWorkBasket
+
+        return (
+            PackagedWorkBasket.objects.get(self.notified_object_pk)
+            if self.notified_object_pk
+            else None
         )
 
 
