@@ -1,6 +1,6 @@
 import datetime
 
-from django.db.models import Exists
+from django.db.models import Exists, Q
 
 from reports.reports.base_table import ReportBaseTable
 
@@ -43,34 +43,42 @@ class Report(ReportBaseTable):
 
     def query(self):
         quotas_with_definition_periods = self.get_quotas_with_definition_periods()
-        quotas_can_be_used = self.find_quotas_that_cannot_be_used(
+        quotas_cannot_be_used = self.find_quotas_that_cannot_be_used(
             quotas_with_definition_periods
         )
-        return quotas_can_be_used
+        return quotas_cannot_be_used
 
     def get_quotas_with_definition_periods(self):
         quota_definitions = QuotaDefinition.objects.latest_approved().filter(
             valid_between__isnull=False,
-            valid_between__startswith__lt=datetime.datetime.now(),
+            valid_between__startswith__lte=datetime.datetime.now(),
             valid_between__endswith__gte=datetime.datetime.now(),
         )
 
-        return quota_definitions
+        return list(quota_definitions)
 
     def find_quotas_that_cannot_be_used(self, quotas_with_definition_periods):
         matching_data = set()
 
         current_time = datetime.datetime.now()
 
+        filter_query = (
+                               Q(valid_between__endswith__gte=current_time)
+                               | Q(valid_between__endswith=None)
+                       ) & Q(
+            valid_between__isnull=False,
+            valid_between__startswith__lte=current_time
+        )
+
         quota_order_numbers_without_definitions = (
             QuotaOrderNumber.objects.latest_approved()
             .filter(
-                valid_between__isnull=False,
-                valid_between__startswith__lt=current_time,
-                valid_between__endswith__gte=current_time,
+                filter_query
             )
             .exclude(definitions__in=quotas_with_definition_periods)
         )
+
+        matching_data.update(quota_order_numbers_without_definitions)
 
         for quota in quotas_with_definition_periods:
             measures = Measure.objects.latest_approved().filter(
@@ -78,7 +86,7 @@ class Report(ReportBaseTable):
             )
 
             if not Exists(measures.filter(order_number=quota.order_number)):
-                matching_data.add(quota)
+                matching_data.add(quota.order_number)
             else:
                 quota_order_number = (
                     QuotaOrderNumber.objects.latest_approved()
@@ -108,13 +116,17 @@ class Report(ReportBaseTable):
                             if exclusions.exists():
                                 matching_data.discard(quota)
                                 break
-
-        matching_data.update(quota_order_numbers_without_definitions)
+                            else:
+                                matching_data.add(quota.order_number)
 
         for quota in matching_data:
-            if quota not in quotas_with_definition_periods:
-                quota.reason = "Definition period has not been set"
-            else:
+            matching_definition = next(
+                (quota_definition for quota_definition in quotas_with_definition_periods
+                 if quota_definition.order_number == quota), None)
+
+            if matching_definition:
                 quota.reason = "Geographical area/exclusions data does not have any measures with matching data"
+            else:
+                quota.reason = "Definition period has not been set"
 
         return list(matching_data)
