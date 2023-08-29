@@ -88,7 +88,7 @@
   {% set rule_check_block %}{% endset %}
 
 {% elif workbasket.tracked_model_checks.exists() and not workbasket.unchecked_or_errored_transactions.exists() %}
-  {% set live_rule_check_status = "Passed rule check" %}
+  {% set live_rule_check_status = "Business rule check passed. No business rule violations" %}
   {% set rule_check_button = run_business_rules_form %}
   {% set rule_check_block %}
     <div class="govuk-notification-banner govuk-notification-banner--success"   
@@ -103,7 +103,7 @@
   {% endset %}
 
 {% elif workbasket.tracked_model_check_errors.exists() and not rule_check_in_progress %}
-  {% set live_rule_check_status = "Failed rule check" %}
+  {% set live_rule_check_status = "Business rule check failed. Please check the box above for more details" %}
   {% set rule_check_button = run_business_rules_form %}
   {% set rule_check_block %}
     <div class="govuk-error-summary" aria-labelledby="summary-title" role="alert" data-module="govuk-error-summary">
@@ -113,7 +113,7 @@
   {% endset %}
 
 {% elif workbasket.tracked_models.exists() %}
-  {% set live_rule_check_status = "No rule check performed yet" %}
+  {% set live_rule_check_status = "Business rule check has not been run" %}
   {% set rule_check_button = run_business_rules_form %}
   {% set rule_check_block %}{% endset %}
 

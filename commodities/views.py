@@ -1,6 +1,7 @@
 from datetime import date
 from urllib.parse import urlencode
 
+from django.contrib import messages
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.views.generic import ListView
@@ -8,10 +9,9 @@ from rest_framework import permissions
 from rest_framework import viewsets
 
 from commodities import business_rules
+from commodities import forms
 from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
-from commodities.forms import CommodityFootnoteEditForm
-from commodities.forms import CommodityFootnoteForm
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models import GoodsNomenclature
 from commodities.models.dc import CommodityCollectionLoader
@@ -20,13 +20,17 @@ from commodities.models.dc import SnapshotMoment
 from commodities.models.dc import get_chapter_collection
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from common.serializers import AutoCompleteSerializer
+from common.tariffs_api import URLs
+from common.tariffs_api import get_commodity_data
 from common.views import SortingMixin
+from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
 from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
+from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
 
 
@@ -225,8 +229,96 @@ class MeasuresOnDeclarableCommoditiesList(CommodityMeasuresAsDefinedList):
         return context
 
 
+class CommodityMeasuresVATExcise(CommodityMixin, TrackedModelDetailView):
+    template_name = "includes/commodities/tabs/measures-vat-excise.jinja"
+
+    @cached_property
+    def commodity_data(self):
+        data = get_commodity_data(self.object.item_id)
+        if not data:
+            return None
+        return data
+
+    def get_related(self, measure, relationship_name):
+        """
+        The data we get from the tariffs API is structured like this:
+        {
+            "data": {
+                "id": <id>,
+                "type": <object type>,
+                "attributes": {<commodity attributes>}
+            },
+            "relationships": {
+                <relationship name>: {
+                    "data": [
+                        {"id": <id>,"type": <object type>},
+                        etc
+                    ]
+            },
+            "included": [
+                {
+                    "id": <id>,
+                    "type": <object type>,
+                    "attributes": {<object attributes>},
+                    "relationships": {
+                        <relationship name>: {
+                            "data": [
+                                {"id": <id>,"type": <object type>},
+                                etc
+                            ]
+                    },
+                }
+            ]
+        }
+        We use the relationships dictionaries to return the full data for a related object.
+
+        :param measure: Measure data as returned in "included" list
+        :param relationship_name: <relationship name> used as a key to lookup the data in the "relationships" dictionary
+        """
+        all_related = [
+            related
+            for related in self.commodity_data["included"]
+            if measure["relationships"].get(relationship_name)
+            and related["id"]
+            == measure["relationships"][relationship_name]["data"]["id"]
+        ]
+        if all_related:
+            # don't expect there to be duplicate ids
+            return all_related[0]
+        return None
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "measures"
+        context["commodity"] = self.object
+        context["commodity_data"] = self.commodity_data
+        context[
+            "uk_tariff_url"
+        ] = f"{URLs.BASE_URL.value}commodities/{self.object.item_id}#vat_excise"
+        if self.commodity_data:
+            measures = [
+                item
+                for item in self.commodity_data["included"]
+                if item["type"] == "measure"
+            ]
+            vat_excise_measures = [
+                {
+                    "measure": item,
+                    "measure_type": self.get_related(item, "measure_type"),
+                    "geographical_area": self.get_related(item, "geographical_area"),
+                    "duty_expression": self.get_related(item, "duty_expression"),
+                }
+                for item in measures
+                if item["attributes"].get("vat") or item["attributes"].get("excise")
+            ]
+            context["measures"] = measures
+            context["vat_excise_measures"] = vat_excise_measures
+
+        return context
+
+
 class CommodityAddFootnote(CreateTaricCreateView):
-    form_class = CommodityFootnoteForm
+    form_class = forms.CommodityFootnoteForm
     template_name = "commodity_footnotes/create.jinja"
 
     validate_business_rules = (
@@ -271,10 +363,10 @@ class CommodityAddFootnoteConfirm(FootnoteAssociationMixin, TrackedModelDetailVi
 
 class FootnoteAssociationGoodsNomenclatureUpdate(
     FootnoteAssociationMixin,
-    TrackedModelDetailView,
+    TrackedModelDetailMixin,
     CreateTaricUpdateView,
 ):
-    form_class = CommodityFootnoteEditForm
+    form_class = forms.CommodityFootnoteEditForm
     template_name = "commodity_footnotes/edit.jinja"
     success_path = "confirm-update"
 
@@ -296,3 +388,32 @@ class FootnoteAssociationGoodsNomenclatureConfirmUpdate(
     TrackedModelDetailView,
 ):
     template_name = "commodity_footnotes/confirm_update.jinja"
+
+
+class FootnoteAssociationGoodsNomenclatureDelete(
+    FootnoteAssociationMixin,
+    TrackedModelDetailMixin,
+    CreateTaricDeleteView,
+):
+    template_name = "commodity_footnotes/delete.jinja"
+    form_class = forms.FootnoteAssociationGoodsNomenclatureDeleteForm
+
+    def get_success_url(self) -> str:
+        return reverse(
+            "footnote_association_goods_nomenclature-ui-confirm-delete",
+            kwargs={"sid": self.object.goods_nomenclature.sid},
+        )
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Footnote association {self.object.associated_footnote.footnote_type.footnote_type_id}{self.object.associated_footnote.footnote_id} for commodity code {self.object.goods_nomenclature.item_id} has been deleted",
+        )
+        return super().form_valid(form)
+
+
+class FootnoteAssociationGoodsNomenclatureConfirmDelete(
+    CommodityMixin,
+    TrackedModelDetailView,
+):
+    template_name = "commodity_footnotes/confirm_delete.jinja"

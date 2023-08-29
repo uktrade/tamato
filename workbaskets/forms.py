@@ -79,6 +79,27 @@ class WorkbasketUpdateForm(WorkbasketCreateForm):
         )
 
 
+class WorkbasketDeleteForm(forms.Form):
+    """Form used as part of deleting a workbasket."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.instance = kwargs.pop("instance")
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        workbasket = self.instance
+        models_count = workbasket.tracked_models.count()
+        if models_count:
+            raise forms.ValidationError(
+                f"Workbasket {workbasket.pk} contains {models_count} item(s), "
+                f"but must be empty in order to permit deletion.",
+            )
+
+        return cleaned_data
+
+
 class SelectableObjectField(forms.BooleanField):
     """Associates an object instance with a BooleanField."""
 

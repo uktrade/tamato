@@ -1,0 +1,47 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Delete workbasket " ~ deleted_pk %}
+
+
+{% block breadcrumb %}
+<div class="govuk-breadcrumbs">
+  <ol class="govuk-breadcrumbs__list">
+    <li class="govuk-breadcrumbs__list-item">
+      <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
+    </li>
+    <li class="govuk-breadcrumbs__list-item">
+      {{ page_title }}
+    </li>
+  </ol>
+</div>
+{% endblock %}
+
+
+{% block content %}
+<div class="govuk-grid-row govuk-!-margin-bottom-3">
+  <div class="govuk-grid-column-two-thirds">
+    {{ govukPanel({
+      "titleText": "Workbasket " ~ deleted_pk ~ " has been deleted",
+      "classes": "govuk-!-margin-bottom-7"
+    }) }}
+
+    <h2 class="govuk-heading-m">Next steps</h2>
+    <p class="govuk-body">
+      To manage another workbasket select one from the workbasket list.
+    </p>
+
+    {{ govukButton({
+      "text": "Go to workbasket list",
+      "href": url("workbaskets:workbasket-ui-list"),
+      "classes": "govuk-button--primary"
+    }) }}
+
+    <ul class="govuk-list govuk-list-spaced">
+      <li><a class="govuk-link" href="{{ url('home') }}">Return to home page</a></li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

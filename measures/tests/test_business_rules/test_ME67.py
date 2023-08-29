@@ -6,6 +6,7 @@ from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import raises_if
 from common.util import TaricDateRange
+from common.validators import UpdateType
 from measures import business_rules
 
 pytestmark = pytest.mark.django_db
@@ -221,6 +222,59 @@ def test_ME67_with_end_dates_in_range():
     )
     business_rules.ME67(exclusion_for_end_dated_measure.transaction).validate(
         exclusion_for_end_dated_measure,
+    )
+
+
+def test_ME67_works_when_measures_are_deleted():
+    """
+    When checking against exclusions, the rule check historically looked at the
+    old version of the measure.
+
+    This test verifies the fix correctly queries the latest version of the
+    measure, even when its being deleted in the current transaction where the
+    measure may be deleted.
+    """
+
+    # setup, create measure with origin as geo group
+    approved_transaction = factories.ApprovedTransactionFactory.create()
+
+    validity = TaricDateRange(date(2021, 1, 1), date(2022, 1, 1))
+    validity2 = TaricDateRange(date(2021, 6, 1), date(2022, 1, 1))
+    geo_group = factories.GeoGroupFactory.create(
+        valid_between=validity,
+        transaction=approved_transaction,
+    )
+    geo_member = factories.GeographicalMembershipFactory.create(
+        geo_group=geo_group,
+        valid_between=validity2,
+        transaction=approved_transaction,
+    )
+
+    # Create measure in history
+    original_measure = factories.MeasureFactory.create(
+        transaction=approved_transaction,
+        geographical_area=geo_group,
+        valid_between=validity,
+    )
+
+    measure_exclusion = factories.MeasureExcludedGeographicalAreaFactory(
+        transaction=approved_transaction,
+        modified_measure=original_measure,
+        excluded_geographical_area=geo_member.member,
+    )
+
+    draft_transaction = factories.UnapprovedTransactionFactory.create()
+
+    # Update measure in draft workbasket with new start date
+    original_measure.new_version(
+        workbasket=draft_transaction.workbasket,
+        transaction=draft_transaction,
+        update_type=UpdateType.DELETE,
+    )
+
+    # ME67 should not throw an exception in this case, as it will use the measures draft date in the check
+    business_rules.ME67(draft_transaction).validate(
+        measure_exclusion,
     )
 
 
