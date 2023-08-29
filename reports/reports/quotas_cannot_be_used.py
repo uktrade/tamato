@@ -63,18 +63,13 @@ class Report(ReportBaseTable):
         current_time = datetime.datetime.now()
 
         filter_query = (
-                               Q(valid_between__endswith__gte=current_time)
-                               | Q(valid_between__endswith=None)
-                       ) & Q(
-            valid_between__isnull=False,
-            valid_between__startswith__lte=current_time
-        )
+            Q(valid_between__endswith__gte=current_time)
+            | Q(valid_between__endswith=None)
+        ) & Q(valid_between__isnull=False, valid_between__startswith__lte=current_time)
 
         quota_order_numbers_without_definitions = (
             QuotaOrderNumber.objects.latest_approved()
-            .filter(
-                filter_query
-            )
+            .filter(filter_query)
             .exclude(definitions__in=quotas_with_definition_periods)
         )
 
@@ -121,8 +116,13 @@ class Report(ReportBaseTable):
 
         for quota in matching_data:
             matching_definition = next(
-                (quota_definition for quota_definition in quotas_with_definition_periods
-                 if quota_definition.order_number == quota), None)
+                (
+                    quota_definition
+                    for quota_definition in quotas_with_definition_periods
+                    if quota_definition.order_number == quota
+                ),
+                None,
+            )
 
             if matching_definition:
                 quota.reason = "Geographical area/exclusions data does not have any measures with matching data"
