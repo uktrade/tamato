@@ -46,17 +46,20 @@ class Notification(PolymorphicModel):
     notification.
     """
 
-    notify_template_id: str
-    """GOV.UK Notify template ID, assigned in concrete subclasses."""
-
-    def send_emails(self):
+    def notify_template_id(self) -> str:
         """
-        Handle sending emails for this notification to all associated
-        NotifiedUser instances.
+        GOV.UK Notify template ID specific to each Notification sub-class.
 
         Implement in concrete subclasses.
         """
+        raise NotImplementedError
 
+    def notified_users(self) -> models.QuerySet[NotifiedUser]:
+        """
+        Returns the queryset of NotifiedUsers for a specific notifications.
+
+        Implement in concrete subclasses.
+        """
         raise NotImplementedError
 
     def schedule_send_emails(self, countdown=1):
@@ -65,10 +68,10 @@ class Notification(PolymorphicModel):
 
         send_emails.apply_sync(args=[self.pk], countdown=countdown)
 
-    def send_email_notifications(self, notified_users):
-        """Send the individual notification emails to users via GOV.UK
-        Notify."""
+    def send_emails(self):
+        """Send the notification emails to users via GOV.UK Notify."""
 
+        notified_users = self.notified_users()
         if not notified_users:
             logger.error(
                 f"No notified users for {self.__class__.__name__} "
@@ -82,7 +85,7 @@ class Notification(PolymorphicModel):
             try:
                 notifications_client.send_email_notification(
                     email_address=user.email,
-                    template_id=self.notify_template_id,
+                    template_id=self.notify_template_id(),
                     # TODO: get personalisation data.
                     personalisation={},
                 )
@@ -103,13 +106,13 @@ class EnvelopeReadyForProcessingNotification(Notification):
     """Manage sending notifications when envelopes are ready for processing by
     HMRC."""
 
-    notify_template_id = "todo:notify-template-id-goes-here"
+    def notify_template_id(self) -> str:
+        return settings.READY_FOR_CDS_TEMPLATE_ID
 
-    def send_emails(self):
-        notified_users = NotifiedUser.objects.filter(
+    def notified_users(self):
+        return NotifiedUser.objects.filter(
             Q(enrol_packaging=True) | Q(enrole_api_publishing=True),
         )
-        self.send_email_notifications(notified_users)
 
 
 class EnvelopeAcceptedNotification(Notification):
@@ -125,7 +128,7 @@ class GoodsSuccessfulImportNotification(Notification):
 
 
 # ========================== start ==========================
-# Code between start and end is a rewrite of, and drop-in replacement for
+# Code between start and end is a rewrite of, and drop-in replacement for,
 # notifications.tasks.send_emails().
 
 from celery import shared_task
