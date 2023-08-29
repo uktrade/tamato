@@ -1,7 +1,9 @@
 import pytest
 
+from commodities.filters import CommodityFilter
 from commodities.filters import GoodsNomenclatureFilterBackend
 from commodities.models.orm import GoodsNomenclature
+from common.filters import CurrentWorkBasketMixin
 from common.filters import TamatoFilterMixin
 from common.filters import type_choices
 from common.tests.factories import GoodsNomenclatureDescriptionFactory
@@ -42,3 +44,44 @@ def test_search_queryset_returns_case_insensitive():
     result = GoodsNomenclatureFilterBackend().search_queryset(qs, "RED")
 
     assert nomenclature in result
+
+
+# @pytest.fixture
+# def queryset(session_workbasket):
+
+
+def test_filter_by_current_workbasket_mixin(
+    valid_user_client,
+    session_workbasket,
+    session_request,
+):
+    with session_workbasket.new_transaction() as transaction:
+        commodity_in_workbasket_1 = GoodsNomenclatureFactory.create(
+            transaction=transaction,
+        )
+        commodity_in_workbasket_2 = GoodsNomenclatureFactory.create(
+            transaction=transaction,
+        )
+
+    commodity_not_in_workbasket_1 = GoodsNomenclatureFactory.create(
+        transaction=transaction,
+    )
+    commodity_not_in_workbasket_2 = GoodsNomenclatureFactory.create(
+        transaction=transaction,
+    )
+
+    session = valid_user_client.session
+    session["workbasket"] = {"id": session_workbasket.pk}
+    session.save()
+    qs = GoodsNomenclature.objects.all()
+    self = CommodityFilter(data={"current_work_basket": "current"})
+
+    result = CurrentWorkBasketMixin().filter_work_basket(
+        self,
+        queryset=qs,
+        name="current_work_basket",
+        value="current",
+    )
+
+    assert 0
+    # assert commodity_in_workbasket_1, commodity_in_workbasket_2 in result

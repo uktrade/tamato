@@ -22,6 +22,7 @@ from django.db.models import Q
 from django.db.models.functions import Extract
 from django.utils.safestring import mark_safe
 from django_filters import CharFilter
+from django_filters import ChoiceFilter
 from django_filters import FilterSet
 from django_filters import MultipleChoiceFilter
 from django_filters.constants import EMPTY_VALUES
@@ -34,8 +35,10 @@ from common.models.tracked_qs import TrackedModelQuerySet
 from common.util import StartDate
 from common.util import TaricDateRange
 from common.validators import SymbolValidator
+from workbaskets.models import WorkBasket
 
 ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
+CURRENT_WORKBASKET_CHOICES = (("current", "Current Workbasket"),)
 
 
 def field_to_layout(field_name, field):
@@ -313,3 +316,41 @@ class AutoCompleteFilter(CharFilter):
     value."""
 
     field_class = AutoCompleteField
+
+
+class CurrentWorkBasketMixin(FilterSet):
+    """Generic filter mixin to filter an object by association with current Work
+    Basket."""
+
+    current_work_basket = ChoiceFilter(
+        choices=CURRENT_WORKBASKET_CHOICES,
+        widget=forms.RadioSelect,
+        method="filter_work_basket",
+        label="Work Basket",
+        required=False,
+    )
+
+    def filter_work_basket(self, queryset, name, value):
+        """
+        Filter the given queryset to those which have the specified active
+        state.
+
+        :param queryset: The queryset to filterby
+        :param name: The name of the field
+        :param value: The value of the field
+        """
+        current_workbasket = WorkBasket.current(self.request)
+        target_model = self._meta.model
+        print("*" * 80, f"{name=}")
+        if value == "current":
+            wanted_objects_id = set()
+            for model in current_workbasket.tracked_models.all():
+                if type(model) == target_model:
+                    print("*" * 80, f"{model=}")
+                    wanted_objects_id.add(model.id)
+            #     return queryset.filter(wanted_objects)
+            # TODO: check if each of the objects we're applying this to has an id field or a pk field. If mix, create Union
+            queryset = queryset.with_workbasket(current_workbasket).filter(
+                id__in=wanted_objects_id,
+            )
+        return queryset
