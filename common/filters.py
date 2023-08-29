@@ -341,15 +341,11 @@ class CurrentWorkBasketMixin(FilterSet):
         """
         current_workbasket = WorkBasket.current(self.request)
         target_model = self._meta.model
-        print("*" * 80, f"{name=}")
         if value == "current":
             wanted_objects_id = set()
             for model in current_workbasket.tracked_models.all():
                 if type(model) == target_model:
-                    print("*" * 80, f"{model=}")
                     wanted_objects_id.add(model.id)
-            #     return queryset.filter(wanted_objects)
-            # TODO: check if each of the objects we're applying this to has an id field or a pk field. If mix, create Union
             queryset = queryset.with_workbasket(current_workbasket).filter(
                 id__in=wanted_objects_id,
             )

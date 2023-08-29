@@ -46,10 +46,6 @@ def test_search_queryset_returns_case_insensitive():
     assert nomenclature in result
 
 
-# @pytest.fixture
-# def queryset(session_workbasket):
-
-
 def test_filter_by_current_workbasket_mixin(
     valid_user_client,
     session_workbasket,
@@ -62,26 +58,27 @@ def test_filter_by_current_workbasket_mixin(
         commodity_in_workbasket_2 = GoodsNomenclatureFactory.create(
             transaction=transaction,
         )
-
-    commodity_not_in_workbasket_1 = GoodsNomenclatureFactory.create(
-        transaction=transaction,
-    )
-    commodity_not_in_workbasket_2 = GoodsNomenclatureFactory.create(
-        transaction=transaction,
-    )
+    commodity_not_in_workbasket_1 = GoodsNomenclatureFactory.create()
+    commodity_not_in_workbasket_2 = GoodsNomenclatureFactory.create()
 
     session = valid_user_client.session
     session["workbasket"] = {"id": session_workbasket.pk}
     session.save()
     qs = GoodsNomenclature.objects.all()
-    self = CommodityFilter(data={"current_work_basket": "current"})
 
-    result = CurrentWorkBasketMixin().filter_work_basket(
-        self,
+    self = CommodityFilter(
+        CurrentWorkBasketMixin,
+        request=session_request,
+    )
+
+    res = CurrentWorkBasketMixin.filter_work_basket(
+        self=self,
         queryset=qs,
         name="current_work_basket",
         value="current",
     )
 
-    assert 0
-    # assert commodity_in_workbasket_1, commodity_in_workbasket_2 in result
+    for model in res:
+        assert type(model) == self._meta.model
+
+    assert commodity_not_in_workbasket_1, commodity_not_in_workbasket_2 not in res
