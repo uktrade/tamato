@@ -1,6 +1,14 @@
+import logging
+
+from django.conf import settings
 from django.db import models
+from django.db.models.query_utils import Q
+from notifications_python_client.notifications import NotificationsAPIClient
+from polymorphic.models import PolymorphicModel
 
 from common.models.mixins import TimestampedMixin
+
+logger = logging.getLogger(__name__)
 
 
 class NotifiedUser(models.Model):
@@ -17,10 +25,118 @@ class NotifiedUser(models.Model):
 
 class NotificationLog(TimestampedMixin):
     """
-    A NotificationLog records which email template a group of users received.
+    A NotificationLog records which Notification a group of users received.
 
     We create one each time a group of users receive an email.
     """
 
-    template_id = models.CharField(max_length=100)
     recipients = models.TextField()
+    notification = models.ForeignKey(
+        "notifications.Notification",
+        default=None,
+        null=True,
+    )
+
+
+class Notification(PolymorphicModel):
+    """
+    Base class to manage sending notifications.
+
+    Subclasses specialise this class's behaviour for specific categories of
+    notification.
+    """
+
+    notify_template_id: str
+    """GOV.UK Notify template ID, assigned in concrete subclasses."""
+
+    def send_emails(self):
+        """
+        Handle sending emails for this notification to all associated
+        NotifiedUser instances.
+
+        Implement in concrete subclasses.
+        """
+
+        raise NotImplementedError
+
+    def schedule_send_emails(self, countdown=1):
+        """Schedule a call to send a notification email, run as an asynchronous
+        background task."""
+
+        send_emails.apply_sync(args=[self.pk], countdown=countdown)
+
+    def send_email_notifications(self, notified_users):
+        """Send the individual notification emails to users via GOV.UK
+        Notify."""
+
+        if not notified_users:
+            logger.error(
+                f"No notified users for {self.__class__.__name__} "
+                f"with pk={self.pk}",
+            )
+            return
+
+        notifications_client = NotificationsAPIClient(settings.NOTIFICATIONS_API_KEY)
+        recipients = ""
+        for user in notified_users:
+            try:
+                notifications_client.send_email_notification(
+                    email_address=user.email,
+                    template_id=self.notify_template_id,
+                    # TODO: get personalisation data.
+                    personalisation={},
+                )
+
+                recipients += f"{user.email} \n"
+            except:
+                logger.error(
+                    f"Failed to send email notification to {user.email}.",
+                )
+
+        NotificationLog.objects.create(
+            recipients=recipients,
+            notification=self,
+        )
+
+
+class EnvelopeReadyForProcessingNotification(Notification):
+    """Manage sending notifications when envelopes are ready for processing by
+    HMRC."""
+
+    notify_template_id = "todo:notify-template-id-goes-here"
+
+    def send_emails(self):
+        notified_users = NotifiedUser.objects.filter(
+            Q(enrol_packaging=True) | Q(enrole_api_publishing=True),
+        )
+        self.send_email_notifications(notified_users)
+
+
+class EnvelopeAcceptedNotification(Notification):
+    """TODO."""
+
+
+class EnvelopeRejectedNotification(Notification):
+    """TODO."""
+
+
+class GoodsSuccessfulImportNotification(Notification):
+    """TODO."""
+
+
+# ========================== start ==========================
+# Code between start and end is a rewrite of, and drop-in replacement for
+# notifications.tasks.send_emails().
+
+from celery import shared_task
+from django.db.transaction import atomic
+
+
+@shared_task
+@atomic
+def send_emails(notification_pk: int):
+    notification = Notification.objects.get(pk=notification_pk)
+    notification.send_emails()
+
+
+# ========================== end ==========================
