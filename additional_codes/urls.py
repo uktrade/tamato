@@ -18,7 +18,14 @@ api_router.register(
 
 detail = "<sid:sid>"
 description_detail = "<sid:described_additionalcode__sid>/description/<sid:sid>"
-ui_patterns = get_ui_paths(views, detail, description=description_detail)
+ui_patterns = [
+    *get_ui_paths(views, detail, description=description_detail),
+    path(
+        "search/",
+        views.AdditionalCodeSearch.as_view(),
+        name="additional_code-ui-search",
+    ),
+]
 
 
 urlpatterns = [

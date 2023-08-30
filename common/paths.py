@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 BULK_ACTIONS = {
     "List": "",
+    "Search": "search/",
     "Create": "create/",
 }
 """Map of view class name suffixes to URL path action names, used to handle

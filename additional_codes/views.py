@@ -2,8 +2,10 @@ from typing import Type
 
 from django.db import transaction
 from django.http import HttpResponseRedirect
+from django_filters.views import FilterView
 from rest_framework import permissions
 from rest_framework import viewsets
+from rest_framework.reverse import reverse
 
 from additional_codes import business_rules
 from additional_codes.filters import AdditionalCodeFilter
@@ -64,6 +66,20 @@ class AdditionalCodeMixin:
         return AdditionalCode.objects.approved_up_to_transaction(tx).select_related(
             "type",
         )
+
+
+class AdditionalCodeSearch(FilterView):
+    """
+    UI endpoint for filtering Additional Codes.
+
+    Does not list any Codes. Redirects to AdditionalCodeList on form submit.
+    """
+
+    template_name = "additional_codes/search.jinja"
+    filterset_class = AdditionalCodeFilter
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(reverse("additional-code-ui-list"))
 
 
 class AdditionalCodeList(AdditionalCodeMixin, TamatoListView):
