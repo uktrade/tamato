@@ -586,3 +586,233 @@ def scenario_8(scenario_7, transaction_pool) -> TScenario:
     ]
 
     return (collection, changes)
+
+
+@pytest.fixture
+def mock_commodity_data_geo_area():
+    return {
+        "id": "1011",
+        "type": "geographical_area",
+        "attributes": {
+            "id": "1011",
+            "description": "ERGA OMNES",
+            "geographical_area_id": "1011",
+        },
+        "relationships": {
+            "children_geographical_areas": {
+                "data": [
+                    # omitted
+                ],
+            },
+        },
+    }
+
+
+@pytest.fixture
+def mock_commodity_data_no_vat_excise(mock_commodity_data_geo_area):
+    """Partial data from the tariffs API commodities endpoint for commodity code
+    0101210000 See common/tariffs_api.py."""
+    return {
+        "included": [
+            {
+                "id": "103",
+                "type": "measure_type",
+                "attributes": {
+                    "description": "Third country duty",
+                    "measure_type_series_id": "C",
+                    "measure_component_applicable_code": 1,
+                    "order_number_capture_code": 2,
+                    "trade_movement_code": 0,
+                    "validity_end_date": None,
+                    "validity_start_date": "1972-01-01T00:00:00.000Z",
+                    "id": "103",
+                    "measure_type_series_description": "Applicable duty",
+                },
+            },
+            mock_commodity_data_geo_area,
+            {
+                "id": "20000000",
+                "type": "measure",
+                "attributes": {
+                    "origin": "eu",
+                    "import": True,
+                    "export": False,
+                    "id": 20000000,
+                    "effective_start_date": "2021-01-01T00:00:00.000Z",
+                    "effective_end_date": None,
+                    "excise": False,
+                    "vat": False,
+                    "reduction_indicator": None,
+                    "meursing": False,
+                    "resolved_duty_expression": "",
+                    "universal_waiver_applies": False,
+                },
+                "relationships": {
+                    "duty_expression": {
+                        "data": {
+                            "id": "20000000-duty_expression",
+                            "type": "duty_expression",
+                        },
+                    },
+                    "measure_type": {"data": {"id": "103", "type": "measure_type"}},
+                    "geographical_area": {
+                        "data": {"id": "1011", "type": "geographical_area"},
+                    },
+                    "excluded_countries": {"data": []},
+                },
+            },
+            {
+                "id": "2982599-duty_expression",
+                "type": "duty_expression",
+                "attributes": {
+                    "base": "p/st",
+                    "formatted_base": "<abbr title='Number of items'>p/st</abbr>",
+                    "verbose_duty": "items (p/st)",
+                },
+            },
+            {
+                "id": "109",
+                "type": "measure_type",
+                "attributes": {
+                    "description": "Supplementary unit",
+                    "measure_type_series_id": "O",
+                    "measure_component_applicable_code": 1,
+                    "order_number_capture_code": 2,
+                    "trade_movement_code": 2,
+                    "validity_end_date": None,
+                    "validity_start_date": "2008-01-01T00:00:00.000Z",
+                    "id": "109",
+                    "measure_type_series_description": "Supplementary unit",
+                },
+            },
+            {
+                "id": "2982599",
+                "type": "measure",
+                "attributes": {
+                    "origin": "eu",
+                    "import": True,
+                    "export": True,
+                    "id": 2982599,
+                    "effective_start_date": "2008-01-01T00:00:00.000Z",
+                    "effective_end_date": None,
+                    "excise": False,
+                    "vat": False,
+                    "reduction_indicator": None,
+                    "meursing": False,
+                    "resolved_duty_expression": "",
+                    "universal_waiver_applies": False,
+                },
+                "relationships": {
+                    "duty_expression": {
+                        "data": {
+                            "id": "2982599-duty_expression",
+                            "type": "duty_expression",
+                        },
+                    },
+                    "measure_type": {"data": {"id": "109", "type": "measure_type"}},
+                    "geographical_area": {
+                        "data": {"id": "1011", "type": "geographical_area"},
+                    },
+                    "excluded_countries": {"data": []},
+                },
+            },
+            {
+                "id": "-1010362444-duty_expression",
+                "type": "duty_expression",
+                "attributes": {
+                    "base": "20.00 %",
+                    "formatted_base": "<span>20.00</span> %",
+                    "verbose_duty": "20.00%",
+                },
+            },
+            {
+                "id": "20204539-duty_expression",
+                "type": "duty_expression",
+                "attributes": {"base": "", "formatted_base": "", "verbose_duty": ""},
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def mock_commodity_data_vat_measure():
+    return {
+        "id": "-1010362444",
+        "type": "measure",
+        "attributes": {
+            "origin": "uk",
+            "import": True,
+            "export": False,
+            "id": -1010362444,
+            "effective_start_date": "2020-06-01T00:00:00.000Z",
+            "effective_end_date": None,
+            "excise": False,
+            "vat": True,
+            "reduction_indicator": None,
+            "meursing": False,
+            "resolved_duty_expression": "",
+            "universal_waiver_applies": False,
+        },
+        "relationships": {
+            "duty_expression": {
+                "data": {
+                    "id": "-1010362444-duty_expression",
+                    "type": "duty_expression",
+                },
+            },
+            "measure_type": {"data": {"id": "305", "type": "measure_type"}},
+            "geographical_area": {"data": {"id": "1011", "type": "geographical_area"}},
+            "excluded_countries": {"data": []},
+        },
+    }
+
+
+@pytest.fixture
+def mock_commodity_data_vat_measure_type():
+    return {
+        "id": "305",
+        "type": "measure_type",
+        "attributes": {
+            "description": "Value added tax",
+            "measure_type_series_id": "P",
+            "measure_component_applicable_code": 0,
+            "order_number_capture_code": 2,
+            "trade_movement_code": 0,
+            "validity_end_date": None,
+            "validity_start_date": "1972-01-01T00:00:00.000Z",
+            "id": "305",
+            "measure_type_series_description": "VAT",
+        },
+    }
+
+
+@pytest.fixture
+def mock_commodity_data_vat_duty_expression():
+    return {
+        "id": "-1010362444-duty_expression",
+        "type": "duty_expression",
+        "attributes": {
+            "base": "20.00 %",
+            "formatted_base": "<span>20.00</span> %",
+            "verbose_duty": "20.00%",
+        },
+    }
+
+
+@pytest.fixture
+def mock_commodity_data_vat_excise(
+    mock_commodity_data_no_vat_excise,
+    mock_commodity_data_vat_measure,
+    mock_commodity_data_vat_measure_type,
+    mock_commodity_data_vat_duty_expression,
+):
+    """Partial data from the tariffs API commodities endpoint for commodity code
+    0101210000 See common/tariffs_api.py."""
+    extra = [
+        mock_commodity_data_vat_duty_expression,
+        mock_commodity_data_vat_measure_type,
+        mock_commodity_data_vat_measure,
+    ]
+    data = mock_commodity_data_no_vat_excise.copy()
+    data["included"].extend(extra)
+    return data

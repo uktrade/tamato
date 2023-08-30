@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 
 from crispy_forms.utils import render_crispy_form
 from django.conf import settings
@@ -104,6 +105,15 @@ def debug_output(text):
     return ""
 
 
+def format_date_string(date_str):
+    """Parses and converts a date string from the format returned by the tariffs
+    API to the one used in the TAP UI."""
+    if date_str:
+        date_object = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ").date()
+        return date_object.strftime("%d %b %Y")
+    return ""
+
+
 def environment(**kwargs):
     """
     Set up the Jinja template environment.
@@ -132,6 +142,7 @@ def environment(**kwargs):
             "render_bundle": render_bundle,
             "settings": settings,
             "static": static,
+            "format_date_string": format_date_string,
             "intcomma": intcomma,
             "url": reverse,
             "webpack_static": webpack_static,
