@@ -73,46 +73,47 @@ class Report(ReportBaseTable):
             .exclude(definitions__in=quotas_with_definition_periods)
         )
 
-        matching_data.update(quota_order_numbers_without_definitions)
+        matching_data.update(quota_order_numbers_without_definitions.exclude(order_number__startswith="09"))
 
         for quota in quotas_with_definition_periods:
-            measures = Measure.objects.latest_approved().filter(
-                order_number=quota.order_number
-            )
-
-            if not Exists(measures.filter(order_number=quota.order_number)):
-                matching_data.add(quota.order_number)
-            else:
-                quota_order_number = (
-                    QuotaOrderNumber.objects.latest_approved()
-                    .filter(order_number=quota.order_number)
-                    .order_by("-sid")
-                    .first()
+            if not str(quota.order_number).startswith("09"):
+                measures = Measure.objects.latest_approved().filter(
+                    order_number=quota.order_number
                 )
 
-                if quota_order_number:
-                    quota_order_number_origin = (
-                        QuotaOrderNumberOrigin.objects.latest_approved().filter(
-                            order_number_id=quota_order_number.pk
-                        )
+                if not Exists(measures.filter(order_number=quota.order_number)):
+                    matching_data.add(quota.order_number)
+                else:
+                    quota_order_number = (
+                        QuotaOrderNumber.objects.latest_approved()
+                        .filter(order_number=quota.order_number)
+                        .order_by("-sid")
+                        .first()
                     )
 
-                    for origin in quota_order_number_origin:
-                        geo_exclusions = QuotaOrderNumberOriginExclusion.objects.latest_approved().filter(
-                            origin_id=origin.pk
+                    if quota_order_number:
+                        quota_order_number_origin = (
+                            QuotaOrderNumberOrigin.objects.latest_approved().filter(
+                                order_number_id=quota_order_number.pk
+                            )
                         )
 
-                        for geo_exclusion in geo_exclusions:
-                            exclusions = MeasureExcludedGeographicalArea.objects.latest_approved().filter(
-                                modified_measure__order_number=quota.order_number,
-                                excluded_geographical_area=geo_exclusion.excluded_geographical_area,
+                        for origin in quota_order_number_origin:
+                            geo_exclusions = QuotaOrderNumberOriginExclusion.objects.latest_approved().filter(
+                                origin_id=origin.pk
                             )
 
-                            if exclusions.exists():
-                                matching_data.discard(quota)
-                                break
-                            else:
-                                matching_data.add(quota.order_number)
+                            for geo_exclusion in geo_exclusions:
+                                exclusions = MeasureExcludedGeographicalArea.objects.latest_approved().filter(
+                                    modified_measure__order_number=quota.order_number,
+                                    excluded_geographical_area=geo_exclusion.excluded_geographical_area,
+                                )
+
+                                if exclusions.exists():
+                                    matching_data.discard(quota)
+                                    break
+                                else:
+                                    matching_data.add(quota.order_number)
 
         for quota in matching_data:
             matching_definition = next(
