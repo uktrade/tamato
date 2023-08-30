@@ -30,11 +30,13 @@ from freezegun import freeze_time
 from lxml import etree
 from pytz import timezone
 
+from commodities.models.orm import GoodsNomenclature
 from common.business_rules import BusinessRule
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.renderers import counter_generator
 from common.serializers import validate_taric_xml_record_order
+from common.tariffs_api import Endpoints
 from common.tests import factories
 from common.util import TaricDateRange
 from common.util import get_accessor
@@ -300,10 +302,8 @@ def get_class_based_view_urls_matching_url(
 
 
 def get_view_model(view_class, override_models):
-    """
-    :return view_model from a view class, if the fully qualified classname is present inf override_models
-    this is returned instead.
-    """
+    """:return view_model from a view class, if the fully qualified classname is
+    present inf override_models this is returned instead."""
     # User may supply their own model in the override_models dict, keyed by the view_class
     fq_class_name = fully_qualified_classname(view_class)
     if fq_class_name in override_models:
@@ -394,6 +394,7 @@ def assert_model_view_renders(
     url_pattern,
     valid_user_client,
     override_models: Optional[Dict[str, ModelBase]] = None,
+    requests_mock=None,
 ):
     """
     Integration test to verify class based views.
@@ -420,6 +421,11 @@ def assert_model_view_renders(
     assert factory is not None, f"Factory not found: factories.{factory_class_name}"
 
     instance = factory.create()
+    if isinstance(instance, GoodsNomenclature):
+        requests_mock.get(
+            url=f"{Endpoints.COMMODITIES.value}{instance.item_id}",
+            json={},
+        )
 
     # Build URL using fields from the model.
     # An error retrieving model fields may indicate the class-based-view's
@@ -781,7 +787,8 @@ def only_applicable_after(cutoff):
     """
     Decorator which asserts that a test fails after a specified cutoff date.
 
-    :param cutoff: A date string, or datetime object before which the test should fail.
+    :param cutoff: A date string, or datetime object before which the test
+        should fail.
     """
     cutoff = parse_date(cutoff)
 
