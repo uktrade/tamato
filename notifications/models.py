@@ -4,7 +4,6 @@ from django.conf import settings
 from django.db import models
 from django.db.models.query_utils import Q
 from notifications_python_client.notifications import NotificationsAPIClient
-from polymorphic.models import PolymorphicModel
 
 from common.models.mixins import TimestampedMixin
 
@@ -40,21 +39,25 @@ class NotificationLog(TimestampedMixin):
     )
 
 
-class Notification(PolymorphicModel):
+class Notification(models.Model):
     """
     Base class to manage sending notifications.
 
     Subclasses specialise this class's behaviour for specific categories of
     notification.
+
+    Subclasses should specify the proxy model of inheritance:
+    https://docs.djangoproject.com/en/dev/topics/db/models/#proxy-models
     """
 
-    notified_object_pk: int
-    """The primary key of the."""
+    def __init__(self, notified_object_pk: int = None):
+        self.notified_object_pk = notified_object_pk
 
     notified_object_pk = models.IntegerField(
         default=None,
         null=True,
     )
+    """The primary key of the object being notified on."""
 
     def notify_template_id(self) -> str:
         """
@@ -123,6 +126,9 @@ class Notification(PolymorphicModel):
 class EnvelopeReadyForProcessingNotification(Notification):
     """Manage sending notifications when envelopes are ready for processing by
     HMRC."""
+
+    class Meta:
+        proxy = True
 
     def notify_template_id(self) -> str:
         return settings.READY_FOR_CDS_TEMPLATE_ID
