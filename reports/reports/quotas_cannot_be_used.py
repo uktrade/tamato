@@ -73,7 +73,11 @@ class Report(ReportBaseTable):
             .exclude(definitions__in=quotas_with_definition_periods)
         )
 
-        matching_data.update(quota_order_numbers_without_definitions.exclude(order_number__startswith="09"))
+        matching_data.update(
+            quota_order_numbers_without_definitions.exclude(
+                order_number__startswith="09"
+            )
+        )
 
         for quota in quotas_with_definition_periods:
             if not str(quota.order_number).startswith("09"):
