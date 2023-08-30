@@ -326,6 +326,7 @@ class CurrentWorkBasketMixin(FilterSet):
         choices=CURRENT_WORKBASKET_CHOICES,
         widget=forms.RadioSelect,
         method="filter_work_basket",
+        empty_label=None,
         label="Work Basket",
         required=False,
     )
