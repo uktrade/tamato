@@ -21,8 +21,8 @@ from django.contrib.postgres.search import SearchVector
 from django.db.models import Q
 from django.db.models.functions import Extract
 from django.utils.safestring import mark_safe
+from django_filters import BooleanFilter
 from django_filters import CharFilter
-from django_filters import ChoiceFilter
 from django_filters import FilterSet
 from django_filters import MultipleChoiceFilter
 from django_filters.constants import EMPTY_VALUES
@@ -322,19 +322,17 @@ class CurrentWorkBasketMixin(FilterSet):
     """Generic filter mixin to filter an object by association with current Work
     Basket."""
 
-    current_work_basket = ChoiceFilter(
-        choices=CURRENT_WORKBASKET_CHOICES,
-        widget=forms.RadioSelect,
+    current_work_basket = BooleanFilter(
+        widget=forms.CheckboxInput(),
         method="filter_work_basket",
-        empty_label=None,
-        label="Work Basket",
+        label="Filter by current Workbasket",
         required=False,
     )
 
     def filter_work_basket(self, queryset, name, value):
         """
-        Filter the given queryset to those which have the specified active
-        state.
+        Filter the given queryset to those which are part of the current
+        workbasket.
 
         :param queryset: The queryset to filterby
         :param name: The name of the field
