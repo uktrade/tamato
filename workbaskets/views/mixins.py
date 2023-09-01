@@ -16,6 +16,3 @@ class WithCurrentWorkBasket:
             transaction = current.transactions.last()
 
         return qs.approved_up_to_transaction(transaction)
-
-    def get_context_data(self, *args, **kwargs):
-        return super().get_context_data(workbasket=self.workbasket, *args, **kwargs)

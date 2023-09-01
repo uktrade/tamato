@@ -746,6 +746,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
 
     def get_context_data(self, *args, **kwargs):
         return super().get_context_data(
+            workbasket=self.workbasket,
             data_upload=self.data_upload,
             matching_measures=self.matching_measures,
             *args,
