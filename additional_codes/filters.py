@@ -7,6 +7,7 @@ from django.urls import reverse_lazy
 
 from additional_codes import models
 from common.filters import ActiveStateMixin
+from common.filters import CurrentWorkBasketMixin
 from common.filters import LazyMultipleChoiceFilter
 from common.filters import StartYearMixin
 from common.filters import TamatoFilter
@@ -47,6 +48,7 @@ class AdditionalCodeFilter(
     AdditionalCodeFilterMixin,
     StartYearMixin,
     ActiveStateMixin,
+    CurrentWorkBasketMixin,
 ):
     """
     FilterSet for Additional Codes.
@@ -69,4 +71,10 @@ class AdditionalCodeFilter(
     class Meta:
         model = models.AdditionalCode
         # Defines the order shown in the form.
-        fields = ["search", "additional_code_type", "start_year", "active_state"]
+        fields = [
+            "search",
+            "additional_code_type",
+            "start_year",
+            "active_state",
+            "current_work_basket",
+        ]

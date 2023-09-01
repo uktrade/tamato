@@ -7,6 +7,7 @@ from django.urls import reverse_lazy
 from django_filters import MultipleChoiceFilter
 
 from common.filters import ActiveStateMixin
+from common.filters import CurrentWorkBasketMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
@@ -34,6 +35,7 @@ class GeographicalAreaFilter(
     TamatoFilter,
     GeographicalAreaFilterMixin,
     ActiveStateMixin,
+    CurrentWorkBasketMixin,
 ):
     area_code = MultipleChoiceFilter(
         choices=AreaCode.choices,
@@ -47,4 +49,4 @@ class GeographicalAreaFilter(
 
     class Meta:
         model = GeographicalArea
-        fields = ["search", "area_code", "active_state"]
+        fields = ["search", "area_code", "active_state", "current_work_basket"]

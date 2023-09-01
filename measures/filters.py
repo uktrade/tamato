@@ -34,10 +34,6 @@ BEFORE_EXACT_AFTER_CHOICES = (
     ("after", "after"),
 )
 
-LIVE_CURRENT_CHOICES = (
-    ("current", "Only include measures in this current workbasket"),
-)
-
 GOV_UK_TWO_THIRDS = "govuk-!-width-two-thirds"
 
 
@@ -99,12 +95,11 @@ class MeasureFilter(TamatoFilter):
         method="commodity_modifier",
     )
 
-    measure_filters_modifier = ChoiceFilter(
-        label="",
-        widget=forms.RadioSelect,
+    measure_filters_modifier = BooleanFilter(
+        label="Filter by current Workbasket",
+        widget=forms.CheckboxInput(),
         method="measures_filter",
-        empty_label=None,
-        choices=LIVE_CURRENT_CHOICES,
+        required=False,
     )
 
     goods_nomenclature__item_id = CharFilter(
@@ -255,11 +250,7 @@ class MeasureFilter(TamatoFilter):
 
     def measures_filter(self, queryset, name, value):
         if value:
-            modifier = self.data["measure_filters_modifier"]
-            # TODO: Add a new filter option: live measures.
-            # criteria: start date: today/earlier; end date: today/later/null
-            if modifier == "current":
-                queryset = WorkBasket.current(self.request).measures
+            queryset = WorkBasket.current(self.request).measures
 
         return queryset
 
