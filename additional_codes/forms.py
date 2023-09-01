@@ -1,4 +1,5 @@
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fixed
 from crispy_forms_gds.layout import Fluid
@@ -207,6 +208,32 @@ class AdditionalCodeCreateDescriptionForm(CreateDescriptionForm):
     class Meta:
         model = models.AdditionalCodeDescription
         fields = ("described_additionalcode", "description", "validity_start")
+
+
+class AdditionalCodeFilterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Div(
+                Field.text("search", field_width=Fluid.TWO_THIRDS),
+            ),
+            Div(
+                Div(
+                    Field.text("additional_code_type", field_width=Fluid.ONE_HALF),
+                    css_class="govuk-grid-column-one-half",
+                ),
+                Div(
+                    Field.text("start_year", field_width=Fluid.ONE_HALF),
+                    css_class="govuk-grid-column-one-half",
+                ),
+                css_class="govuk-grid-row",
+            ),
+            Div(
+                Field.text("active_state", field_width=Fluid.ONE_THIRD),
+            ),
+        )
 
 
 AdditionalCodeDeleteForm = delete_form_for(models.AdditionalCode)

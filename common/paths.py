@@ -7,7 +7,8 @@ from django.urls import path
 
 logger = logging.getLogger(__name__)
 
-
+# TODO: Swap list & search around so / >search and list/ goes to list
+# TODO: Update links on workbasket page to point at search not list
 BULK_ACTIONS = {
     "List": "",
     "Search": "search/",
