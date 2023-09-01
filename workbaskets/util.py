@@ -82,12 +82,10 @@ def find_comm_code(cell, row_data):
     return False
 
 
-def find_dates(cell, dates):
+def find_date(cell):
     matches = re.compile(DATE_REGEX).match(cell)
     if matches:
-        dates.append(cell)
-        return True
-    return False
+        return cell
 
 
 def find_duty_sentence(cell, row_data):
@@ -109,10 +107,10 @@ def find_duty_sentence(cell, row_data):
 
 def get_delimiter(date_string):
     if "/" in date_string:
-        delimiter = "/"
+        return "/"
     elif "-" in date_string:
-        delimiter = "-"
-    return delimiter
+        return "-"
+    return None
 
 
 def parse_dates(dates):
@@ -172,8 +170,9 @@ def serialize_uploaded_data(data):
             if commodity:
                 continue
 
-            found_dates = find_dates(cell, dates)
-            if found_dates:
+            found_date = find_date(cell)
+            if found_date:
+                dates.append(found_date)
                 continue
 
             duty = find_duty_sentence(cell, row_data)
