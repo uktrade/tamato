@@ -9,6 +9,7 @@ from django_filters import ChoiceFilter
 from django_filters import DateFilter
 
 from additional_codes.models import AdditionalCode
+from certificates.models import Certificate
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models.orm import GoodsNomenclature
 from common.filters import AutoCompleteFilter
@@ -50,12 +51,12 @@ class MeasureTypeFilterBackend(TamatoFilterBackend):
 class MeasureFilter(TamatoFilter):
     def __init__(self, *args, **kwargs):
         if kwargs["data"]:
-            kwargs["data"]._mutable = True
-            if "start_date_modifier" not in kwargs["data"]:
-                kwargs["data"]["start_date_modifier"] = "exact"
-            if "end_date_modifier" not in kwargs["data"]:
-                kwargs["data"]["end_date_modifier"] = "exact"
-            kwargs["data"]._mutable = False
+            data = kwargs["data"].copy()
+            if "start_date_modifier" not in data:
+                data["start_date_modifier"] = "exact"
+            if "end_date_modifier" not in data:
+                data["end_date_modifier"] = "exact"
+            kwargs["data"] = data
         super(MeasureFilter, self).__init__(*args, **kwargs)
 
     sid = CharFilter(
@@ -89,14 +90,20 @@ class MeasureFilter(TamatoFilter):
     # measures on declarable commodities
     modc = BooleanFilter(
         label="Include inherited measures",
-        help_text="Only applies if a specific commodity code is entered",
         widget=forms.CheckboxInput(),
         field_name="goods_nomenclature",
         method="commodity_modifier",
     )
 
+    measure_filters_modifier = BooleanFilter(
+        label="Filter by current Workbasket",
+        widget=forms.CheckboxInput(),
+        method="measures_filter",
+        required=False,
+    )
+
     goods_nomenclature__item_id = CharFilter(
-        label="Commodity code starts with",
+        label="Commodity code starting with",
         widget=forms.TextInput(
             attrs={
                 "class": GOV_UK_TWO_THIRDS,
@@ -181,6 +188,15 @@ class MeasureFilter(TamatoFilter):
         method="filter_end_date",
     )
 
+    certificates = AutoCompleteFilter(
+        label="Certificates",
+        field_name="certificates",
+        queryset=Certificate.objects.current(),
+        attrs={
+            "display_class": GOV_UK_TWO_THIRDS,
+        },
+    )
+
     clear_url = reverse_lazy("measure-ui-search")
 
     def date_modifier(self, queryset, name, value):
@@ -230,6 +246,12 @@ class MeasureFilter(TamatoFilter):
                 .annotate(end_date=EndDate("db_effective_valid_between"))
                 .filter(filter_query)
             )
+        return queryset
+
+    def measures_filter(self, queryset, name, value):
+        if value:
+            queryset = WorkBasket.current(self.request).measures
+
         return queryset
 
     class Meta:

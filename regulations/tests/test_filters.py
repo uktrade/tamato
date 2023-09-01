@@ -39,10 +39,11 @@ def test_regulation_filter_filters_queryset(
     search_filter,
     value,
     expected_result,
+    session_request,
 ):
     """Test that `RegulationFilter` filters queryset by search filter value."""
     regulation = regulation_factory()
-    filter = RegulationFilter(data={search_filter: [value]})
+    filter = RegulationFilter(data={search_filter: [value]}, request=session_request)
     result = filter.qs
     assert len(result) == expected_result
     if result:

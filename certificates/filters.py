@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from certificates import models
 from certificates.validators import COMBINED_CERTIFICATE_AND_TYPE_ID
 from common.filters import ActiveStateMixin
+from common.filters import CurrentWorkBasketMixin
 from common.filters import LazyMultipleChoiceFilter
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
@@ -31,6 +32,7 @@ class CertificateFilter(
     TamatoFilter,
     CertificateFilterMixin,
     ActiveStateMixin,
+    CurrentWorkBasketMixin,
 ):
     certificate_type = LazyMultipleChoiceFilter(
         choices=type_choices(models.CertificateType.objects.latest_approved()),
@@ -45,4 +47,4 @@ class CertificateFilter(
 
     class Meta:
         model = models.Certificate
-        fields = ["search", "certificate_type", "active_state"]
+        fields = ["search", "certificate_type", "active_state", "current_work_basket"]
