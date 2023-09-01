@@ -1,7 +1,6 @@
 import re
 from datetime import date
 
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from parsec import ParseError
 
@@ -50,6 +49,10 @@ def delete_workbasket(workbasket):
     workbasket.delete()
 
 
+# permits both date formats
+# YYYY-MM-DD
+# DD-MM-YYYY
+# and either - or / separator
 DATE_REGEX = (
     r"([0-9]{2}(\/|-)[0-9]{2}(\/|-)[0-9]{4})|([0-9]{4}(\/|-)[0-9]{2}(\/|-)[0-9]{2})"
 )
@@ -61,108 +64,125 @@ class TableRow:
         self.valid_between = valid_between
         self.duty = duty
 
+    @property
+    def all_none(self):
+        return not all([self.commodity, self.valid_between, self.duty])
+
+
+def find_comm_code(cell, row_data):
+    from commodities.models.orm import GoodsNomenclature
+
+    matches = re.compile(ITEM_ID_REGEX).match(cell)
+    if matches:
+        commodity = (
+            GoodsNomenclature.objects.latest_approved().filter(item_id=cell).first()
+        )
+        row_data.commodity = commodity
+        return True
+    return False
+
+
+def find_dates(cell, dates):
+    matches = re.compile(DATE_REGEX).match(cell)
+    if matches:
+        dates.append(cell)
+        return True
+    return False
+
+
+def find_duty_sentence(cell, row_data):
+    from measures.parsers import DutySentenceParser
+
+    # because we may not know the measure validity period, take today's date instead
+    # we only need to look for something that looks like a duty sentence, not necessarily a valid one
+    duty_sentence_parser = DutySentenceParser.create(
+        date.today(),
+    )
+    duty_sentence = cell.replace(" ", "")
+    try:
+        duty_sentence_parser.parse(duty_sentence)
+        row_data.duty = cell
+        return True
+    except ParseError:
+        return False
+
+
+def get_delimiter(date_string):
+    if "/" in date_string:
+        delimiter = "/"
+    elif "-" in date_string:
+        delimiter = "-"
+    return delimiter
+
+
+def parse_dates(dates):
+    parsed_dates = []
+    for date_string in dates:
+        delimiter = get_delimiter(date_string)
+        components = [int(component) for component in date_string.split(delimiter)]
+
+        # year first
+        if components[0] > 1000:
+            parsed_dates.append(
+                date(components[0], components[1], components[2]),
+            )
+        # year last
+        elif components[-1] > 1000:
+            parsed_dates.append(
+                date(components[2], components[1], components[0]),
+            )
+    return parsed_dates
+
+
+def assign_validity(dates, row_data):
+    parsed_dates = parse_dates(dates)
+
+    # assume start date for an open-ended measure
+    if len(parsed_dates) == 1:
+        row_data.valid_between = TaricDateRange(
+            parsed_dates[0],
+            None,
+        )
+    elif len(parsed_dates) == 2:
+        if parsed_dates[0] > parsed_dates[1]:
+            row_data.valid_between = TaricDateRange(
+                parsed_dates[1],
+                parsed_dates[0],
+            )
+        elif parsed_dates[1] > parsed_dates[0]:
+            row_data.valid_between = TaricDateRange(
+                parsed_dates[0],
+                parsed_dates[1],
+            )
+
 
 def serialize_uploaded_data(data):
     serialized = []
     rows = data.strip().split("\n")
     table = [row.strip().split("\t") for row in rows]
-    from commodities.models.orm import GoodsNomenclature
 
     for row in table:
         row_data = TableRow()
         dates = []
         for cell in row:
-            # look for comm code
-            matches = re.compile(ITEM_ID_REGEX).match(cell)
-            if matches:
-                commodity = (
-                    GoodsNomenclature.objects.latest_approved()
-                    .filter(item_id=cell)
-                    .first()
-                )
-                row_data.commodity = commodity
-                continue
-            # look for dates
-            matches = re.compile(DATE_REGEX).match(cell)
-            if matches:
-                dates.append(cell)
+            if not cell:
                 continue
 
-            # look for duty sentence
-            # if it didn't match comm code or date it's probably a duty
-            row_data.duty = cell
-            continue
+            commodity = find_comm_code(cell, row_data)
+            if commodity:
+                continue
 
-        if len(dates) == 2:
-            # should only have 2 dates - start and end
-            if "/" in dates[0]:
-                delimiter = "/"
-            elif "-" in dates[0]:
-                delimiter = "-"
-            parsed_dates = []
-            for date_string in dates:
-                components = [
-                    int(component) for component in date_string.split(delimiter)
-                ]
+            found_dates = find_dates(cell, dates)
+            if found_dates:
+                continue
 
-                # year first
-                if components[0] > 1000:
-                    parsed_dates.append(
-                        date(components[0], components[1], components[2]),
-                    )
-                # year last
-                elif components[-1] > 1000:
-                    parsed_dates.append(
-                        date(components[2], components[1], components[0]),
-                    )
+            duty = find_duty_sentence(cell, row_data)
+            if duty:
+                continue
 
-            if parsed_dates[0] > parsed_dates[1]:
-                row_data.valid_between = TaricDateRange(
-                    parsed_dates[1],
-                    parsed_dates[0],
-                )
-            elif parsed_dates[1] > parsed_dates[0]:
-                row_data.valid_between = TaricDateRange(
-                    parsed_dates[0],
-                    parsed_dates[1],
-                )
+        assign_validity(dates, row_data)
 
-        # if only one date this must be the start date
-        elif len(dates) == 1:
-            start_date = dates[0]
+        if not row_data.all_none:
+            serialized.append(row_data)
 
-            if "/" in start_date:
-                delimiter = "/"
-            elif "-" in start_date:
-                delimiter = "-"
-
-            components = [int(component) for component in start_date.split(delimiter)]
-
-            # year first
-            if components[0] > 1000:
-                row_data.valid_between = TaricDateRange(
-                    date(components[0], components[1], components[2]),
-                )
-            # year last
-            elif components[-1] > 1000:
-                row_data.valid_between = TaricDateRange(
-                    date(components[2], components[1], components[0]),
-                )
-
-        from measures.parsers import DutySentenceParser
-
-        duty_sentence_parser = DutySentenceParser.create(
-            row_data.valid_between.lower,
-        )
-
-        if row_data.duty:
-            try:
-                duty_sentence_parser.parse(row_data.duty)
-            except ParseError as error:
-                error_index = int(error.loc().split(":", 1)[1])
-                raise ValidationError(
-                    f'"{row_data.duty[error_index:]}" is an invalid duty expression',
-                )
-
-        serialized.append(row_data)
     return serialized
