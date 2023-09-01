@@ -38,7 +38,6 @@ from common.validators import SymbolValidator
 from workbaskets.models import WorkBasket
 
 ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
-CURRENT_WORKBASKET_CHOICES = (("current", "Current Workbasket"),)
 
 
 def field_to_layout(field_name, field):
@@ -340,7 +339,7 @@ class CurrentWorkBasketMixin(FilterSet):
         """
         current_workbasket = WorkBasket.current(self.request)
         target_model = self._meta.model
-        if value == "current":
+        if value:
             wanted_objects_id = set()
             for model in current_workbasket.tracked_models.all():
                 if type(model) == target_model:

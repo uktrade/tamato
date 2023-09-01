@@ -75,10 +75,11 @@ def test_filter_by_current_workbasket_mixin(
         self=self,
         queryset=qs,
         name="current_work_basket",
-        value="current",
+        value=True,
     )
 
     for model in res:
         assert type(model) == self._meta.model
 
+    assert commodity_in_workbasket_1, commodity_in_workbasket_2 in res
     assert commodity_not_in_workbasket_1, commodity_not_in_workbasket_2 not in res

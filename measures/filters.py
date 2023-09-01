@@ -34,10 +34,6 @@ BEFORE_EXACT_AFTER_CHOICES = (
     ("after", "after"),
 )
 
-LIVE_CURRENT_CHOICES = (
-    ("current", "Only include measures in this current workbasket"),
-)
-
 GOV_UK_TWO_THIRDS = "govuk-!-width-two-thirds"
 
 
