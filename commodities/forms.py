@@ -29,6 +29,7 @@ class CommodityFilterForm(forms.Form):
                 Field.text("with_footnotes", label_size=Size.SMALL),
                 legend="Footnotes",
             ),
+            Field.text("current_work_basket", label_size=Size.SMALL),
             Button(
                 "submit",
                 "Search and Filter",
