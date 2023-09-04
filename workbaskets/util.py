@@ -66,7 +66,7 @@ class TableRow:
 
     @property
     def all_none(self):
-        return not all([self.commodity, self.valid_between, self.duty])
+        return not any([self.commodity, self.valid_between, self.duty])
 
 
 def find_comm_code(cell, row_data):
