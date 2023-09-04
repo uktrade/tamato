@@ -157,8 +157,9 @@ class WorkbasketCompareForm(forms.Form):
     data = forms.CharField(widget=forms.Textarea(), validators=[SymbolValidator])
 
     def clean(self):
-        serialized = serialize_uploaded_data(self.cleaned_data["data"])
-        return {"data": serialized, "raw_data": self.cleaned_data["data"]}
+        if self.cleaned_data:
+            serialized = serialize_uploaded_data(self.cleaned_data["data"])
+            return {"data": serialized, "raw_data": self.cleaned_data["data"]}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
