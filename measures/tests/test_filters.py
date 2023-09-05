@@ -51,11 +51,17 @@ def test_filter_by_certificates(
     session.save()
 
     measure_with_certificate = factories.MeasureFactory.create()
+    measure_with_different_certificate = factories.MeasureFactory.create()
     measure_no_certificate = factories.MeasureFactory.create()
     certificate = factories.CertificateFactory.create()
+    other_certificate = factories.CertificateFactory.create()
     factories.MeasureConditionFactory.create(
         dependent_measure=measure_with_certificate,
         required_certificate=certificate,
+    )
+    factories.MeasureConditionFactory.create(
+        dependent_measure=measure_with_different_certificate,
+        required_certificate=other_certificate,
     )
 
     qs = Measure.objects.all()
@@ -70,3 +76,4 @@ def test_filter_by_certificates(
 
     assert measure_with_certificate in res
     assert measure_no_certificate not in res
+    assert measure_with_different_certificate not in res
