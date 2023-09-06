@@ -27,6 +27,7 @@ from rest_framework.reverse import reverse
 
 from common.forms import unprefix_formset_data
 from common.models import TrackedModel
+from common.pagination import build_pagination_list
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
 from common.validators import UpdateType
@@ -179,7 +180,20 @@ class MeasureList(
         return MeasurePaginator(self.filterset.qs, per_page=20)
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = {}
+        paginator = self.paginator
+        page = paginator.get_page(self.request.GET.get("page", 1))
+        context["is_paginated"] = True
+        context["filter"] = kwargs["filter"]
+        context["form"] = self.get_form()
+        context["view"] = self
+        context["paginator"] = paginator
+        context["page_obj"] = page
+        context["object_list"] = page.object_list
+        context["page_links"] = build_pagination_list(
+            page.number,
+            page.paginator.num_pages,
+        )
         measure_selections = [
             SelectableObjectsForm.object_id_from_field_name(name)
             for name in self.measure_selections
