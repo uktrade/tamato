@@ -59,14 +59,14 @@ DATE_REGEX = (
 
 
 class TableRow:
-    def __init__(self, commodity=None, valid_between=None, duty=None):
+    def __init__(self, commodity=None, valid_between=None, duty_sentence=None):
         self.commodity = commodity
         self.valid_between = valid_between
-        self.duty = duty
+        self.duty_sentence = duty_sentence
 
     @property
     def all_none(self):
-        return not any([self.commodity, self.valid_between, self.duty])
+        return not any([self.commodity, self.valid_between, self.duty_sentence])
 
 
 def find_comm_code(cell, row_data):
@@ -99,7 +99,7 @@ def find_duty_sentence(cell, row_data):
     duty_sentence = cell.replace(" ", "")
     try:
         duty_sentence_parser.parse(duty_sentence)
-        row_data.duty = cell
+        row_data.duty_sentence = cell
         return True
     except ParseError:
         return False
@@ -175,8 +175,8 @@ def serialize_uploaded_data(data):
                 dates.append(found_date)
                 continue
 
-            duty = find_duty_sentence(cell, row_data)
-            if duty:
+            duty_sentence = find_duty_sentence(cell, row_data)
+            if duty_sentence:
                 continue
 
         assign_validity(dates, row_data)

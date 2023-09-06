@@ -708,20 +708,20 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             for row in form.cleaned_data["data"]:
                 DataRow.objects.create(
                     valid_between=row.valid_between,
-                    duty_sentence=row.duty,
+                    duty_sentence=row.duty_sentence,
                     commodity=row.commodity,
                     data_upload=existing,
                 )
             existing.save()
         except DataUpload.DoesNotExist:
             data_upload = DataUpload.objects.create(
-                raw_data=form.cleaned_data["data"],
+                raw_data=form.cleaned_data["raw_data"],
                 workbasket=self.workbasket,
             )
             for row in form.cleaned_data["data"]:
                 DataRow.objects.create(
                     valid_between=row.valid_between,
-                    duty_sentence=row.duty,
+                    duty_sentence=row.duty_sentence,
                     commodity=row.commodity,
                     data_upload=data_upload,
                 )
