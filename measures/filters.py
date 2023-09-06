@@ -192,7 +192,7 @@ class MeasureFilter(TamatoFilter):
     certificates = AutoCompleteFilter(
         label="Certificates",
         field_name="conditions__required_certificate",
-        queryset=Certificate.objects.all(),
+        queryset=Certificate.objects.current(),
         method="certificates_filter",
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
@@ -257,8 +257,16 @@ class MeasureFilter(TamatoFilter):
         return queryset
 
     def certificates_filter(self, queryset, name, value):
+        """
+        Returns a MeasuresQuerySet for Measures associated with a specific
+        Certificate via MeasureCondition.
+
+        1. check for Ceritificates with a matching SID
+        2. match associated MeasureConditions
+        3. filter by dependent_measure_ids
+        """
         if value:
-            wanted_measures_ids = set()
+            measure_ids = set()
             certificates = Certificate.objects.filter(sid=value.sid)
             for certificate in certificates:
                 measure_conditions = MeasureCondition.objects.filter(
@@ -266,9 +274,9 @@ class MeasureFilter(TamatoFilter):
                 )
 
                 for condition in measure_conditions:
-                    wanted_measures_ids.add(condition.dependent_measure_id)
+                    measure_ids.add(condition.dependent_measure_id)
 
-            queryset = queryset.filter(id__in=wanted_measures_ids)
+            queryset = queryset.filter(id__in=measure_ids)
 
         return queryset
 
