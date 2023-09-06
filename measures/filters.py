@@ -23,6 +23,7 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from measures.forms import MeasureFilterForm
 from measures.models import Measure
+from measures.models import MeasureCondition
 from measures.models import MeasureType
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -190,8 +191,9 @@ class MeasureFilter(TamatoFilter):
 
     certificates = AutoCompleteFilter(
         label="Certificates",
-        field_name="certificates",
+        field_name="conditions__required_certificate",
         queryset=Certificate.objects.current(),
+        method="certificates_filter",
         attrs={
             "display_class": GOV_UK_TWO_THIRDS,
         },
@@ -251,6 +253,30 @@ class MeasureFilter(TamatoFilter):
     def measures_filter(self, queryset, name, value):
         if value:
             queryset = WorkBasket.current(self.request).measures
+
+        return queryset
+
+    def certificates_filter(self, queryset, name, value):
+        """
+        Returns a MeasuresQuerySet for Measures associated with a specific
+        Certificate via MeasureCondition.
+
+        1. check for Ceritificates with a matching SID
+        2. match associated MeasureConditions
+        3. filter by dependent_measure_ids
+        """
+        if value:
+            measure_ids = set()
+            certificates = Certificate.objects.filter(sid=value.sid)
+            for certificate in certificates:
+                measure_conditions = MeasureCondition.objects.filter(
+                    required_certificate=certificate,
+                )
+
+                for condition in measure_conditions:
+                    measure_ids.add(condition.dependent_measure_id)
+
+            queryset = queryset.filter(id__in=measure_ids)
 
         return queryset
 
