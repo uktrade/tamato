@@ -1201,10 +1201,27 @@ def test_workbasket_compare_200(valid_user_client, session_workbasket):
 def test_workbasket_compare_prev_uploaded(valid_user_client, session_workbasket):
     factories.GoodsNomenclatureFactory()
     factories.GoodsNomenclatureFactory()
-    data_upload = factories.DataUploadFactory(workbasket=session_workbasket)
+    factories.DataUploadFactory(workbasket=session_workbasket)
     url = reverse("workbaskets:workbasket-ui-compare")
     response = valid_user_client.get(url)
     assert "Previously uploaded data" in response.content.decode(response.charset)
+
+
+def test_workbasket_update_prev_uploaded(valid_user_client, session_workbasket):
+    factories.GoodsNomenclatureFactory()
+    factories.GoodsNomenclatureFactory()
+    data_upload = factories.DataUploadFactory(workbasket=session_workbasket)
+    url = reverse("workbaskets:workbasket-ui-compare")
+    data = {
+        "data": (
+            "0000000001\t1.000%\t20/05/2021\t31/08/2024\n"
+            "0000000002\t2.000%\t20/05/2021\t31/08/2024"
+        ),
+    }
+    response = valid_user_client.post(url, data)
+    assert response.status_code == 302
+    data_upload.refresh_from_db()
+    assert data_upload.raw_data == data["data"]
 
 
 def test_workbasket_compare_form_submit_302(valid_user_client, session_workbasket):
@@ -1218,3 +1235,53 @@ def test_workbasket_compare_form_submit_302(valid_user_client, session_workbaske
     response = valid_user_client.post(url, data)
     assert response.status_code == 302
     assert response.url == url
+
+
+def test_workbasket_compare_found_measures(
+    valid_user_client,
+    session_workbasket,
+    date_ranges,
+    duty_sentence_parser,
+    percent_or_amount,
+):
+    commodity = factories.GoodsNomenclatureFactory()
+
+    with session_workbasket.new_transaction():
+        measure = factories.MeasureFactory(
+            valid_between=date_ranges.normal,
+            goods_nomenclature=commodity,
+        )
+        duty_string = "4.000%"
+        # create measure components equivalent to a duty sentence of "4.000%"
+        factories.MeasureComponentFactory.create(
+            component_measure=measure,
+            duty_expression=percent_or_amount,
+            duty_amount=4.0,
+            monetary_unit=None,
+            component_measurement=None,
+        )
+
+    url = reverse("workbaskets:workbasket-ui-compare")
+    data = {
+        "data": (
+            # this first line should match the measure in the workbasket
+            f"{commodity.item_id}\t{duty_string}\t{date_ranges.normal.lower.isoformat()}\t{date_ranges.normal.upper.isoformat()}\n"
+            "0000000002\t2.000%\t20/05/2021\t31/08/2024\n"
+        ),
+    }
+    response = valid_user_client.post(url, data)
+    assert response.status_code == 302
+    assert response.url == url
+
+    # view the uploaded data
+    response2 = valid_user_client.get(response.url)
+    assert response2.status_code == 200
+    decoded = response2.content.decode(response2.charset)
+    soup = BeautifulSoup(decoded, "html.parser")
+    assert "1 matching measure found" in soup.select("h2")[1].text
+
+    # previously uploaded data
+    assert len(soup.select("tbody")[0].select("tr")) == 2
+
+    # measure found
+    assert len(soup.select("tbody")[1].select("tr")) == 1
