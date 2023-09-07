@@ -1,4 +1,6 @@
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fixed
@@ -230,8 +232,33 @@ class AdditionalCodeFilterForm(forms.Form):
                 ),
                 css_class="govuk-grid-row",
             ),
+            HTML(
+                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+            ),
             Div(
-                Field.text("active_state", field_width=Fluid.ONE_THIRD),
+                Div(
+                    Field.text("active_state", field_width=Fluid.ONE_THIRD),
+                    css_class="govuk-grid-column-one-half",
+                ),
+                Div(
+                    Field.text("current_work_basket", field_width=Fluid.ONE_THIRD),
+                    css_class="govuk-grid-column-one-half",
+                ),
+                css_class="govuk-grid-row",
+            ),
+            Div(
+                Div(
+                    Button(
+                        "submit",
+                        "Search and filter",
+                        css_class="govuk-!-margin-top-6",
+                    ),
+                    HTML(
+                        f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                    ),
+                    css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                ),
+                css_class="govuk-grid-row govuk-!-padding-top-3",
             ),
         )
 
