@@ -3,11 +3,13 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.db import transaction
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
+from django_filters.views import FilterView
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -103,6 +105,20 @@ class QuotaOrderNumberMixin:
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
         return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+
+
+class QuotaSearch(FilterView):
+    """
+    UI Endpoint for filtering Quotas.
+
+    Does not list any Quotas. Redirects to QuotasList on submit
+    """
+
+    template_name = "quotas/search.jinja"
+    filterset_class = QuotaFilter
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(reverse("quota-ui-list"))
 
 
 class QuotaList(QuotaOrderNumberMixin, TamatoListView):

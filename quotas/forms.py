@@ -5,6 +5,7 @@ from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fluid
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -32,15 +33,73 @@ class QuotaFilterForm(forms.Form):
         self.helper = FormHelper()
 
         self.helper.layout = Layout(
-            Field.text("order_number", label_size=Size.SMALL),
-            Field.text("origin", label_size=Size.SMALL),
-            Field.radios("mechanism", legend_size=Size.SMALL),
-            Field.radios("category", legend_size=Size.SMALL),
-            Field.radios("active_state", legend_size=Size.SMALL),
-            Field.text("current_work_basket", label_size=Size.SMALL),
-            Button("submit", "Search and Filter", css_class="govuk-!-margin-top-6"),
+            Div(
+                Field.text(
+                    "order_number",
+                    label_size=Size.SMALL,
+                    field_width=Fluid.ONE_THIRD,
+                ),
+                Field.text(
+                    "origin",
+                    label_size=Size.SMALL,
+                    field_width=Fluid.ONE_THIRD,
+                ),
+                css_class="govuk-grid-row",
+            ),
             HTML(
-                f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+            ),
+            Div(
+                Div(
+                    Field.radios(
+                        "mechanism",
+                        legend_size=Size.SMALL,
+                        field_width=Fluid.ONE_THIRD,
+                    ),
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    Field.radios(
+                        "active_state",
+                        legend_size=Size.SMALL,
+                        field_width=Fluid.ONE_THIRD,
+                    ),
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    Field.text(
+                        "current_work_basket",
+                        label_size=Size.SMALL,
+                        field_width=Fluid.ONE_THIRD,
+                    ),
+                    css_class="govuk-grid-column-one-third",
+                ),
+                css_class="govuk-grid-row",
+            ),
+            Div(
+                Div(
+                    Field.radios(
+                        "category",
+                        legend_size=Size.SMALL,
+                        field_width=Fluid.ONE_THIRD,
+                    ),
+                    css_class="govuk-grid-column-one-half",
+                ),
+                css_class="govuk-grid-row",
+            ),
+            Div(
+                Div(
+                    Button(
+                        "submit",
+                        "Search and filter",
+                        css_class="govuk-!-margin-top-6",
+                    ),
+                    HTML(
+                        f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                    ),
+                    css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                ),
+                css_class="govuk-grid-row govuk-!-padding-top-3",
             ),
         )
 

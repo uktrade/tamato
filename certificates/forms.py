@@ -296,7 +296,7 @@ class CertificateFilterForm(forms.Form):
                     Field.text("current_work_basket", field_width=Fluid.ONE_THIRD),
                     css_class="govuk-grid-column-one-third",
                 ),
-                cass_class="gov_grid-row",
+                css_class="gov_grid-row",
             ),
             Div(
                 Div(
