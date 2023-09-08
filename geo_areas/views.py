@@ -1,8 +1,10 @@
 from typing import Type
 
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django_filters.views import FilterView
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -72,6 +74,20 @@ class GeoAreaCreateDescriptionMixin:
             sid=(self.kwargs.get("sid")),
         )
         return context
+
+
+class GeoAreaSearch(FilterView):
+    """
+    UI endpoint for filtering GeoAreas.
+
+    Does not list any GeoAreas. Redirects to GeoAreaList on form submit.
+    """
+
+    template_name = "geo_areas/search.jinja"
+    filterset_class = GeographicalAreaFilter
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(reverse("geo_area-ui-list"))
 
 
 class GeoAreaList(

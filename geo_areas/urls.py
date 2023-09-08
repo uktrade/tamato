@@ -14,6 +14,11 @@ ui_patterns = get_ui_paths(views, detail, description=description_detail)
 
 ui_patterns += [
     path(
+        "",
+        views.GeoAreaSearch.as_view(),
+        name="geo_areas-ui-search",
+    ),
+    path(
         "<sid:sid>/membership-create/",
         views.GeographicalMembershipsCreate.as_view(),
         name="geo_area-ui-membership-create",

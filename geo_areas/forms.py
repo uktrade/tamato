@@ -4,9 +4,11 @@ from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Accordion
 from crispy_forms_gds.layout import AccordionSection
+from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
+from crispy_forms_gds.layout import Fluid
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -891,6 +893,57 @@ class CountryRegionForm(forms.Form):
             self.initial["geographical_area_country_or_region"] = self.initial[
                 "geographical_area"
             ]
+
+
+class GeographicalAreaFilterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Div(
+                Field.text("search", field_width=Fluid.TWO_THIRDS),
+            ),
+            Div(
+                Div(
+                    Field.text("area_code", field_width=Fluid.ONE_THIRD),
+                    css_class="govuk-grid-column-one-half",
+                ),
+                Div(
+                    "area_code",
+                    css_class="govuk-grid-column-one-half",
+                ),
+                css_class="govuk-grid-row",
+            ),
+            HTML(
+                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+            ),
+            Div(
+                Div(
+                    Field.text("active_state", field_width=Fluid.ONE_THIRD),
+                    css_class="govuk-grid-column-one-half",
+                ),
+                Div(
+                    Field.text("current_work_basket", field_width=Fluid.ONE_THIRD),
+                    css_class="govuk-grid-column-one-half",
+                ),
+                css_class="govuk-grid-row",
+            ),
+            Div(
+                Div(
+                    Button(
+                        "submit",
+                        "Search and filter",
+                        css_class="govuk-!-margin-top-6",
+                    ),
+                    HTML(
+                        f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                    ),
+                    css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                ),
+                css_class="govuk-grid-row govuk-!-padding-top-3",
+            ),
+        )
 
 
 CountryRegionFormSet = formset_factory(

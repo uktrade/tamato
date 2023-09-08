@@ -11,6 +11,7 @@ from common.filters import CurrentWorkBasketMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
+from geo_areas.forms import GeographicalAreaFilterForm
 from geo_areas.models import GeographicalArea
 from geo_areas.validators import AreaCode
 
@@ -49,4 +50,7 @@ class GeographicalAreaFilter(
 
     class Meta:
         model = GeographicalArea
+
+        form = GeographicalAreaFilterForm
+
         fields = ["search", "area_code", "active_state", "current_work_basket"]
