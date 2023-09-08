@@ -46,7 +46,7 @@ class CommodityFilter(ActiveStateMixin, TamatoFilter, CurrentWorkBasketMixin):
         lookup_expr="icontains",
         validators=[AlphanumericValidator],
     )
-    clear_url = reverse_lazy("commodity-ui-list")
+    clear_url = reverse_lazy("commodity-ui-search")
     with_footnotes = BooleanFilter(
         label="Show commodity codes with footnotes",
         widget=forms.CheckboxInput(),

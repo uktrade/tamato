@@ -1,8 +1,9 @@
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Button
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
-from crispy_forms_gds.layout import Fieldset
+from crispy_forms_gds.layout import Fluid
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -22,14 +23,36 @@ class CommodityFilterForm(forms.Form):
         self.helper = FormHelper()
 
         self.helper.layout = Layout(
-            Field.text("item_id", label_size=Size.SMALL),
-            Field.text("descriptions__description", label_size=Size.SMALL),
-            Field.text("active_state", label_size=Size.SMALL),
-            Fieldset(
-                Field.text("with_footnotes", label_size=Size.SMALL),
-                legend="Footnotes",
+            Div(
+                Div(
+                    Field.text(
+                        "item_id",
+                        field_width=Fluid.FULL,
+                    ),
+                    css_class="govuk-grid-column-one-half",
+                ),
+                Div(
+                    Field.text("descriptions__description", field_width=Fluid.FULL),
+                    css_class="govuk-grid-column-one-half",
+                ),
+                css_class="govuk-grid-row",
             ),
-            Field.text("current_work_basket", label_size=Size.SMALL),
+            Div(
+                Div(
+                    Field.text("active_state", field_width=Fluid.ONE_THIRD),
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    Field.text("with_footnotes", field_width=Fluid.ONE_THIRD),
+                    legend="Footnotes",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    Field.text("current_work_basket", field_width=Fluid.ONE_THIRD),
+                    css_class="govuk-grid-column-one-third",
+                ),
+                css_class="govuk-grid-row",
+            ),
             Button(
                 "submit",
                 "Search and Filter",

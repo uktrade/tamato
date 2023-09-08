@@ -2,9 +2,11 @@ from datetime import date
 from urllib.parse import urlencode
 
 from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.views.generic import ListView
+from django_filters.views import FilterView
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -73,6 +75,20 @@ class FootnoteAssociationMixin:
         return FootnoteAssociationGoodsNomenclature.objects.approved_up_to_transaction(
             tx,
         )
+
+
+class CommoditySearch(FilterView):
+    """
+    UI endpoint for filtering Commodities.
+
+    Does not list any Commodities. Redirects to CommodityList on form submit.
+    """
+
+    template_name = "commodities/search.jinja"
+    filterset_class = CommodityFilter
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(reverse("commodity-ui-list"))
 
 
 class CommodityList(CommodityMixin, WithPaginationListView):

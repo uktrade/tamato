@@ -1,4 +1,12 @@
-{% extends "layouts/layout.jinja" %}
+{% set form_url = "commodity-ui-list" %}
+{% set list_include = "includes/commodities/list.jinja" %}
+
+
+{%- include "includes/common/pagination-list-summary.jinja" -%}
+
+
+
+{# {% extends "layouts/layout.jinja" %}
 
 {% set form_url = "commodity-ui-list" %}
 
@@ -46,4 +54,4 @@
       {% include "includes/common/pagination.jinja" %}
     </div>
   </div>
-{% endblock %}
+{% endblock %} #}

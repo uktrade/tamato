@@ -26,13 +26,13 @@ api_router.register(
     views.GoodsNomenclatureViewset,
     basename="goodsnomenclature",
 )
-
+# TODO: resolve problem where whereby url pattern must conform to "commodities/sid/"
 urlpatterns = [
     path("api/", include(api_router.urls)),
     path(
         "commodities/",
-        views.CommodityList.as_view(),
-        name="commodity-ui-list",
+        views.CommoditySearch.as_view(),
+        name="commodity-ui-search",
     ),
     path(
         f"commodities/<sid>/",
