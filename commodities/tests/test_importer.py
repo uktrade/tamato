@@ -1,6 +1,7 @@
-import pytest
 from datetime import date
 from unittest.mock import Mock
+
+import pytest
 
 from commodities import models
 from commodities import serializers
@@ -31,47 +32,71 @@ def test_goods_nomenclature_description_importer(
 
 
 def test_goods_nomenclature_description_update_that_comes_without_a_description_period_but_exists_in_our_db(
-        imported_fields_match, date_ranges):
-    goods_nomenclature = factories.GoodsNomenclatureFactory.create(sid=123, valid_between=date_ranges.normal)
-    goods_nomenclature_description = factories.GoodsNomenclatureDescriptionFactory.create(sid=321, validity_start=
-    date_ranges.normal.lower, described_goods_nomenclature=goods_nomenclature)
+    imported_fields_match,
+    date_ranges,
+):
+    goods_nomenclature = factories.GoodsNomenclatureFactory.create(
+        sid=123,
+        valid_between=date_ranges.normal,
+    )
+    goods_nomenclature_description = (
+        factories.GoodsNomenclatureDescriptionFactory.create(
+            sid=321,
+            validity_start=date_ranges.normal.lower,
+            described_goods_nomenclature=goods_nomenclature,
+        )
+    )
 
     goods_nomenclature_description_handler = {
         "transaction_id": 1,
         "data": {
             "sid": 321,
             "described_goods_nomenclature": goods_nomenclature,
-        }
+        },
     }
 
     nursary = Mock()
-    handler = GoodsNomenclatureDescriptionHandler(goods_nomenclature_description_handler, nursary)
+    handler = GoodsNomenclatureDescriptionHandler(
+        goods_nomenclature_description_handler,
+        nursary,
+    )
 
     handler.create_missing_goods_nomenclature_description_period(handler)
 
-    assert goods_nomenclature_description_handler["data"][
-               "validity_start"] == goods_nomenclature_description.validity_start
+    assert (
+        goods_nomenclature_description_handler["data"]["validity_start"]
+        == goods_nomenclature_description.validity_start
+    )
 
 
 def test_goods_nomenclature_description_update_that_comes_without_a_description_period_but_does_not_exist_in_our_db(
-        imported_fields_match, date_ranges):
-    goods_nomenclature = factories.GoodsNomenclatureFactory.create(sid=123, valid_between=date_ranges.normal)
+    imported_fields_match,
+    date_ranges,
+):
+    goods_nomenclature = factories.GoodsNomenclatureFactory.create(
+        sid=123,
+        valid_between=date_ranges.normal,
+    )
 
     goods_nomenclature_description_handler = {
         "transaction_id": 1,
         "data": {
             "sid": 321,
             "described_goods_nomenclature": goods_nomenclature,
-        }
+        },
     }
 
     nursary = Mock()
-    handler = GoodsNomenclatureDescriptionHandler(goods_nomenclature_description_handler, nursary)
+    handler = GoodsNomenclatureDescriptionHandler(
+        goods_nomenclature_description_handler,
+        nursary,
+    )
 
     handler.create_missing_goods_nomenclature_description_period(handler)
 
-    assert goods_nomenclature_description_handler["data"][
-               "validity_start"] == date.today()
+    assert (
+        goods_nomenclature_description_handler["data"]["validity_start"] == date.today()
+    )
 
 
 def test_goods_nomenclature_origin_importer(
@@ -205,6 +230,7 @@ def test_footnote_association_goods_nomenclature_importer(imported_fields_match)
             "associated_footnote": factories.FootnoteFactory,
         },
     )
+
 
 # The fourth of these parameters ("starts_with_normal") currently hangs during run_xml_import
 # Further investigation needed
