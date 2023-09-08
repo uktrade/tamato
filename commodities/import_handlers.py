@@ -167,13 +167,23 @@ class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandle
         # Ultimately this is a crude temporary measure that will be superseded by a correct implementation splitting
         # out description periods into a new table
 
-        goods_nomenclature_description = GoodsNomenclatureDescription.objects.filter(
-            sid=self.data['sid']).latest_approved().first()
+        goods_nomenclature_description = (
+            GoodsNomenclatureDescription.objects.filter(sid=self.data["sid"])
+            .latest_approved()
+            .first()
+        )
 
-        if goods_nomenclature_description and goods_nomenclature_description.described_goods_nomenclature.valid_between.lower:
-            data['validity_start'] = goods_nomenclature_description.described_goods_nomenclature.valid_between.lower
+        if (
+            goods_nomenclature_description
+            and goods_nomenclature_description.described_goods_nomenclature.valid_between.lower
+        ):
+            data[
+                "validity_start"
+            ] = (
+                goods_nomenclature_description.described_goods_nomenclature.valid_between.lower
+            )
         else:
-            data['validity_start'] = date.today()
+            data["validity_start"] = date.today()
 
         # Update the goods nomenclature description with the start date
         goods_nomenclature_description_handler.data.update(data)
