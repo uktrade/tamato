@@ -2,8 +2,10 @@ from typing import Type
 
 from django.db import transaction
 from django.http import HttpResponseRedirect
+from django_filters.views import FilterView
 from rest_framework import permissions
 from rest_framework import viewsets
+from rest_framework.reverse import reverse
 
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
@@ -88,6 +90,20 @@ class FootnoteCreateDescriptionMixin:
             footnote_id=(self.kwargs.get("footnote_id")),
         )
         return context
+
+
+class FootnoteSearch(FilterView):
+    """
+    UI Endpoint for filtering Footnotes Does not list any Footnotes.
+
+    Redirects to FootnoteList on submit
+    """
+
+    template_name = "footnotes/search.jinja"
+    filterset_class = FootnoteFilter
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(reverse("footnote-ui-search"))
 
 
 class FootnoteList(FootnoteMixin, TamatoListView):

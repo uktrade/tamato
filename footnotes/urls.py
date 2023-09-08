@@ -24,7 +24,10 @@ api_router.register(
 
 detail = "<footnote_type_id:footnote_type__footnote_type_id><footnote_id:footnote_id>"
 description_detail = "<footnote_type_id:described_footnote__footnote_type__footnote_type_id><footnote_id:described_footnote__footnote_id>/description/<sid:sid>"
-ui_patterns = get_ui_paths(views, detail, description=description_detail)
+ui_patterns = [
+    *get_ui_paths(views, detail, description=description_detail),
+    path("", views.FootnoteSearch.as_view(), name="footnotes-ui-search"),
+]
 
 urlpatterns = [
     path("footnotes/", include(ui_patterns)),

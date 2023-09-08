@@ -284,6 +284,9 @@ class CertificateFilterForm(forms.Form):
                 Div(Field.text("certificate_type", field_width=Fluid.ONE_HALF)),
                 css_class="gov_grid-column-one-half",
             ),
+            HTML(
+                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+            ),
             Div(
                 Div(
                     Field.text("active_state", field_width=Fluid.ONE_THIRD),

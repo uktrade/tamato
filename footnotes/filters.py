@@ -14,6 +14,7 @@ from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
 from common.filters import type_choices
 from footnotes import models
+from footnotes.forms import FootnoteFilterForm
 from footnotes.validators import FOOTNOTE_ID_PATTERN
 from footnotes.validators import FOOTNOTE_TYPE_ID_PATTERN
 
@@ -69,6 +70,7 @@ class FootnoteFilter(
 
     class Meta:
         model = models.Footnote
+        form = FootnoteFilterForm
         fields = [
             "search",
             "footnote_type",
