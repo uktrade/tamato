@@ -282,11 +282,18 @@ class CertificateFilterForm(forms.Form):
             ),
             Div(
                 Div(Field.text("certificate_type", field_width=Fluid.ONE_HALF)),
-                cass_class="gov_grid-column-one-half",
+                css_class="gov_grid-column-one-half",
             ),
             Div(
-                Div(Field.text("active_state", field_width=Fluid.ONE_HALF)),
-                Div(Field.text("current_work_basket", field_width=Fluid.ONE_HALF)),
+                Div(
+                    Field.text("active_state", field_width=Fluid.ONE_THIRD),
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    Field.text("current_work_basket", field_width=Fluid.ONE_THIRD),
+                    css_class="govuk-grid-column-one-third",
+                ),
+                cass_class="gov_grid-row",
             ),
             Div(
                 Div(
