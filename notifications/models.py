@@ -3,9 +3,12 @@ import logging
 from django.conf import settings
 from django.db import models
 from django.db.models.query_utils import Q
-from notifications_python_client.notifications import NotificationsAPIClient
+from django.urls import reverse
 
 from common.models.mixins import TimestampedMixin
+from notifications.notify import prepare_link_to_file
+from notifications.notify import send_emails
+from notifications.tasks import send_emails_task
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +20,10 @@ class NotifiedUser(models.Model):
     email = models.EmailField()
     enrol_packaging = models.BooleanField(default=True)
     enrol_api_publishing = models.BooleanField(default=False)
+    enrol_goods_report = models.BooleanField(default=False)
 
-    def __str__(self):
-        return self.email
+    def __str__(self) -> str:
+        return str(self.email)
 
 
 class NotificationLog(TimestampedMixin):
@@ -29,6 +33,10 @@ class NotificationLog(TimestampedMixin):
     We create one each time a group of users receive an email.
     """
 
+    response_ids = models.TextField(
+        default=None,
+        null=True,
+    )
     recipients = models.TextField()
     """Comma separated email addresses, as a single string, of the recipients of
     the notification."""
@@ -36,6 +44,48 @@ class NotificationLog(TimestampedMixin):
         "notifications.Notification",
         default=None,
         null=True,
+        on_delete=models.PROTECT,
+    )
+    success = models.BooleanField(default=True)
+
+
+class CustomNotificationChoice:
+    def __init__(self, value, label, template_id):
+        self.value = value
+        self.label = label
+        self.template_id = template_id
+
+
+class NotificationTypeChoices(models.TextChoices):
+    GOODS_REPORT = CustomNotificationChoice(
+        "goods_report",
+        "Goods Report",
+        settings.GOODS_REPORT_TEMPLATE_ID,
+    )
+    PACKAGING_NOTIFY_READY = CustomNotificationChoice(
+        "packaging_notify_ready",
+        "Packaging Notify Ready",
+        settings.READY_FOR_CDS_TEMPLATE_ID,
+    )
+    PACKAGING_ACCEPTED = CustomNotificationChoice(
+        "packaging_accepted",
+        "Packaging Accepted",
+        settings.CDS_ACCEPTED_TEMPLATE_ID,
+    )
+    PACKAGING_REJECTED = CustomNotificationChoice(
+        "packaging_rejected",
+        "Packaging Rejected",
+        settings.CDS_REJECTED_TEMPLATE_ID,
+    )
+    PUBLISHING_SUCCESS = CustomNotificationChoice(
+        "publishing_success",
+        "Publishing Successful",
+        settings.API_PUBLISH_SUCCESS_TEMPLATE_ID,
+    )
+    PUBLISHING_FAILED = CustomNotificationChoice(
+        "publishing_failed",
+        "Publishing Failed",
+        settings.API_PUBLISH_FAILED_TEMPLATE_ID,
     )
 
 
@@ -50,14 +100,28 @@ class Notification(models.Model):
     https://docs.djangoproject.com/en/dev/topics/db/models/#proxy-models
     """
 
-    def __init__(self, notified_object_pk: int = None):
-        self.notified_object_pk = notified_object_pk
+    # def __init__(self, notificaiton_type: NotificationTypeChoices, notified_object_pk: int = None,  ):
+    #     self.notified_object_pk = notified_object_pk
+    #     self.notificaiton_type = notificaiton_type
 
     notified_object_pk = models.IntegerField(
         default=None,
         null=True,
     )
     """The primary key of the object being notified on."""
+
+    notificaiton_type = models.CharField(
+        max_length=150,
+        choices=[(choice.value, choice.label) for choice in NotificationTypeChoices],
+    )
+
+    def get_personalisation(self) -> dict:
+        """
+        Returns the personalisation of the notified object.
+
+        Implement in concrete subclasses.
+        """
+        raise NotImplementedError
 
     def notify_template_id(self) -> str:
         """
@@ -83,11 +147,14 @@ class Notification(models.Model):
         """
         raise NotImplementedError
 
+    def synchronous_send_emails(self):
+        """Synchronously call to send a notification email."""
+        send_emails_task(self.pk, type(self))
+
     def schedule_send_emails(self, countdown=1):
         """Schedule a call to send a notification email, run as an asynchronous
         background task."""
-
-        send_emails.apply_sync(args=[self.pk], countdown=countdown)
+        send_emails_task.apply_sync(args=[self.pk, type(self)], countdown=countdown)
 
     def send_emails(self):
         """Send the notification emails to users via GOV.UK Notify."""
@@ -100,27 +167,27 @@ class Notification(models.Model):
             )
             return
 
-        notifications_client = NotificationsAPIClient(settings.NOTIFICATIONS_API_KEY)
-        recipients = ""
-        for user in notified_users:
-            try:
-                notifications_client.send_email_notification(
-                    email_address=user.email,
-                    template_id=self.notify_template_id(),
-                    # TODO: get personalisation data.
-                    personalisation={},
-                )
+        personalisation = self.get_personalisation()
 
-                recipients += f"{user.email} \n"
-            except:
-                logger.error(
-                    f"Failed to send email notification to {user.email}.",
-                )
+        result = send_emails(
+            self.notify_template_id(),
+            personalisation,
+            notified_users,
+        )
 
         NotificationLog.objects.create(
-            recipients=recipients,
+            response_ids=result["response_ids"],
+            recipients=result["recipients"],
             notification=self,
         )
+
+        # if any emails failed create a log for unsuccessful emails
+        if result["failed_recipients"]:
+            NotificationLog.objects.create(
+                recipients=result["failed_recipients"],
+                notification=self,
+                success=False,
+            )
 
 
 class EnvelopeReadyForProcessingNotification(Notification):
@@ -130,12 +197,33 @@ class EnvelopeReadyForProcessingNotification(Notification):
     class Meta:
         proxy = True
 
+    def get_personalisation(self) -> dict:
+        packaged_workbasket = self.notified_object()
+        eif = "Immediately"
+        if packaged_workbasket.eif:
+            eif = packaged_workbasket.eif.strftime("%d/%m/%Y")
+
+        personalisation = {
+            "envelope_id": packaged_workbasket.envelope.envelope_id,
+            "description": packaged_workbasket.description,
+            "download_url": (
+                settings.BASE_SERVICE_URL + reverse("publishing:envelope-queue-ui-list")
+            ),
+            "theme": packaged_workbasket.theme,
+            "eif": eif,
+            "embargo": packaged_workbasket.embargo
+            if packaged_workbasket.embargo
+            else "None",
+            "jira_url": packaged_workbasket.jira_url,
+        }
+        return personalisation
+
     def notify_template_id(self) -> str:
-        return settings.READY_FOR_CDS_TEMPLATE_ID
+        return NotificationTypeChoices.PACKAGING_NOTIFY_READY.template_id
 
     def notified_users(self):
         return NotifiedUser.objects.filter(
-            Q(enrol_packaging=True) | Q(enrole_api_publishing=True),
+            Q(enrol_packaging=True),
         )
 
     def notified_object(self) -> models.Model:
@@ -149,30 +237,194 @@ class EnvelopeReadyForProcessingNotification(Notification):
 
 
 class EnvelopeAcceptedNotification(Notification):
-    """TODO."""
+    """Manage sending notifications when envelopes have been accepted by
+    HMRC."""
+
+    class Meta:
+        proxy = True
+
+    def get_personalisation(self) -> dict:
+        packaged_workbasket = self.notified_object()
+        loading_report_message = "Loading report: No loading report was provided."
+        loading_reports = packaged_workbasket.loadingreports.exclude(
+            file_name="",
+        ).values_list(
+            "file_name",
+            flat=True,
+        )
+        if loading_reports:
+            file_names = ", ".join(loading_reports)
+            loading_report_message = f"Loading report(s): {file_names}"
+
+        personalisation = {
+            "envelope_id": packaged_workbasket.envelope.envelope_id,
+            "transaction_count": packaged_workbasket.workbasket.transactions.count(),
+            "loading_report_message": loading_report_message,
+            "comments": packaged_workbasket.loadingreports.first().comments,
+        }
+        return personalisation
+
+    def notify_template_id(self) -> str:
+        return NotificationTypeChoices.PACKAGING_ACCEPTED.template_id
+
+    def notified_users(self):
+        return NotifiedUser.objects.filter(
+            Q(enrol_packaging=True),
+        )
+
+    def notified_object(self) -> models.Model:
+        from publishing.models import PackagedWorkBasket
+
+        return (
+            PackagedWorkBasket.objects.get(self.notified_object_pk)
+            if self.notified_object_pk
+            else None
+        )
 
 
 class EnvelopeRejectedNotification(Notification):
-    """TODO."""
+    """Manage sending notifications when envelopes have been rejected by
+    HMRC."""
+
+    class Meta:
+        proxy = True
+
+    def get_personalisation(self) -> dict:
+        packaged_workbasket = self.notified_object()
+        loading_report_message = "Loading report: No loading report was provided."
+        loading_reports = packaged_workbasket.loadingreports.exclude(
+            file_name="",
+        ).values_list(
+            "file_name",
+            flat=True,
+        )
+        if loading_reports:
+            file_names = ", ".join(loading_reports)
+            loading_report_message = f"Loading report(s): {file_names}"
+
+        personalisation = {
+            "envelope_id": packaged_workbasket.envelope.envelope_id,
+            "transaction_count": packaged_workbasket.workbasket.transactions.count(),
+            "loading_report_message": loading_report_message,
+            "comments": packaged_workbasket.loadingreports.first().comments,
+        }
+        return personalisation
+
+    def notify_template_id(self) -> str:
+        return NotificationTypeChoices.PACKAGING_REJECTED.template_id
+
+    def notified_users(self):
+        return NotifiedUser.objects.filter(
+            Q(enrol_packaging=True),
+        )
+
+    def notified_object(self) -> models.Model:
+        from publishing.models import PackagedWorkBasket
+
+        return (
+            PackagedWorkBasket.objects.get(self.notified_object_pk)
+            if self.notified_object_pk
+            else None
+        )
+
+
+class CrownDependenciesEnvelopeSuccessNotification(Notification):
+    """Manage sending notifications when envelopes have been successfully
+    published to the Crown Dependencies api."""
+
+    class Meta:
+        proxy = True
+
+    def get_personalisation(self) -> dict:
+        crown_dependicies_envelope = self.notified_object()
+        personalisation = {
+            "envelope_id": crown_dependicies_envelope.packagedworkbaskets.last().envelope.envelope_id,
+        }
+        return personalisation
+
+    def notify_template_id(self) -> str:
+        return NotificationTypeChoices.PUBLISHING_SUCCESS.template_id
+
+    def notified_users(self):
+        return NotifiedUser.objects.filter(
+            Q(enrole_api_publishing=True),
+        )
+
+    def notified_object(self) -> models.Model:
+        from publishing.models import CrownDependenciesEnvelope
+
+        return (
+            CrownDependenciesEnvelope.objects.get(self.notified_object_pk)
+            if self.notified_object_pk
+            else None
+        )
+
+
+class CrownDependenciesEnvelopeFailedNotification(Notification):
+    """Manage sending notifications when envelopes have been failed being
+    published to the Crown Dependencies api."""
+
+    class Meta:
+        proxy = True
+
+    def get_personalisation(self) -> dict:
+        self.notified_object()
+        personalisation = {
+            "envelope_id": self.packagedworkbaskets.last().envelope.envelope_id,
+        }
+        return personalisation
+
+    def notify_template_id(self) -> str:
+        return NotificationTypeChoices.PUBLISHING_FAILED.template_id
+
+    def notified_users(self):
+        return NotifiedUser.objects.filter(
+            Q(enrole_api_publishing=True),
+        )
+
+    def notified_object(self) -> models.Model:
+        from publishing.models import CrownDependenciesEnvelope
+
+        return (
+            CrownDependenciesEnvelope.objects.get(self.notified_object_pk)
+            if self.notified_object_pk
+            else None
+        )
 
 
 class GoodsSuccessfulImportNotification(Notification):
-    """TODO."""
+    """Manage sending notifications when a goods report has been reviewed and
+    can be sent to Crown Dependencies."""
 
+    class Meta:
+        proxy = True
 
-# ========================== start ==========================
-# Code between start and end is a rewrite of, and drop-in replacement for,
-# notifications.tasks.send_emails().
+    def get_personalisation(self) -> dict:
+        import_batch = self.notified_object()
+        personalisation = (
+            {
+                "tgb_id": import_batch.name,
+                "link_to_file": prepare_link_to_file(
+                    import_batch.taric_file,
+                    confirm_email_before_download=True,
+                ),
+            },
+        )
+        return personalisation
 
-from celery import shared_task
-from django.db.transaction import atomic
+    def notify_template_id(self) -> str:
+        return NotificationTypeChoices.GOODS_REPORT.template_id
 
+    def notified_users(self):
+        return NotifiedUser.objects.filter(
+            Q(enrol_goods_report=True),
+        )
 
-@shared_task
-@atomic
-def send_emails(notification_pk: int):
-    notification = Notification.objects.get(pk=notification_pk)
-    notification.send_emails()
+    def notified_object(self) -> models.Model:
+        from importer.models import ImportBatch
 
-
-# ========================== end ==========================
+        return (
+            ImportBatch.objects.get(self.notified_object_pk)
+            if self.notified_object_pk
+            else None
+        )

@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import PROTECT
 from django.db.models import SET_NULL
@@ -20,13 +19,15 @@ from django.db.models import URLField
 from django.db.models import Value
 from django.db.models.functions import Coalesce
 from django.db.transaction import atomic
-from django.urls import reverse
 from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
+from notifications.models import EnvelopeAcceptedNotification
+from notifications.models import EnvelopeReadyForProcessingNotification
+from notifications.models import EnvelopeRejectedNotification
 from notifications.models import NotificationLog
-from notifications.tasks import send_emails
+from notifications.models import NotificationTypeChoices
 from publishing import models as publishing_models
 from publishing.models.decorators import save_after
 from publishing.models.decorators import skip_notifications_if_disabled
@@ -397,7 +398,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     def next_expected_to_api(self) -> bool:
         """
-        checks if previous envelope in sequence has been published to the API.
+        Checks if previous envelope in sequence has been published to the API.
 
         This check will check if the previous packaged workbasket has a
         CrownDependenciesEnvelope OR has published_to_tariffs_api set in the
@@ -531,8 +532,8 @@ class PackagedWorkBasket(TimestampedMixin):
     def refresh_from_db(self, using=None, fields=None):
         """Reload instance from database but avoid writing to
         self.processing_state directly in order to avoid the exception
-        'AttributeError: Direct processing_state modification is not allowed.'
-        """
+        'AttributeError: Direct processing_state modification is not
+        allowed.'."""
         if fields is None:
             refresh_state = True
             fields = [f.name for f in self._meta.concrete_fields]
@@ -563,71 +564,34 @@ class PackagedWorkBasket(TimestampedMixin):
         therefore normally called when the process for doing that has completed
         (see `publishing.tasks.create_xml_envelope_file()`).
         """
-        eif = "Immediately"
-        if self.eif:
-            eif = self.eif.strftime("%d/%m/%Y")
-
-        personalisation = {
-            "envelope_id": self.envelope.envelope_id,
-            "description": self.description,
-            "download_url": (
-                settings.BASE_SERVICE_URL + reverse("publishing:envelope-queue-ui-list")
-            ),
-            "theme": self.theme,
-            "eif": eif,
-            "embargo": self.embargo if self.embargo else "None",
-            "jira_url": self.jira_url,
-        }
-
-        send_emails.delay(
-            template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
-            personalisation=personalisation,
-            email_type="packaging",
+        notification = EnvelopeReadyForProcessingNotification(
+            notificaiton_type=NotificationTypeChoices.PACKAGING_NOTIFY_READY,
+            notified_object_pk=self.pk,
         )
-
-    def notify_processing_completed(self, template_id):
-        """
-        Notify users that envelope processing has completed (accepted or
-        rejected) for this instance.
-
-        `template_id` should be the ID of the Notify email template of either
-        the successfully processed email or failed processing.
-        """
-        loading_report_message = "Loading report: No loading report was provided."
-        loading_reports = self.loadingreports.exclude(file_name="").values_list(
-            "file_name",
-            flat=True,
-        )
-        if loading_reports:
-            file_names = ", ".join(loading_reports)
-            loading_report_message = f"Loading report(s): {file_names}"
-
-        personalisation = {
-            "envelope_id": self.envelope.envelope_id,
-            "transaction_count": self.workbasket.transactions.count(),
-            "loading_report_message": loading_report_message,
-            "comments": self.loadingreports.first().comments,
-        }
-
-        send_emails.delay(
-            template_id=template_id,
-            personalisation=personalisation,
-            email_type="packaging",
-        )
+        notification.save()
+        notification.schedule_send_emails()
 
     @skip_notifications_if_disabled
     def notify_processing_succeeded(self):
         """Notify users that envelope processing has succeeded (i.e. the
         associated envelope was correctly ingested into HMRC systems)."""
-
-        self.notify_processing_completed(settings.CDS_ACCEPTED_TEMPLATE_ID)
+        notification = EnvelopeAcceptedNotification(
+            notificaiton_type=NotificationTypeChoices.PACKAGING_ACCEPTED,
+            notified_object_pk=self.pk,
+        )
+        notification.save()
+        notification.schedule_send_emails()
 
     @skip_notifications_if_disabled
     def notify_processing_failed(self):
         """Notify users that envelope processing has failed (i.e. HMRC systems
         rejected this instance's associated envelope file)."""
-
-        self.notify_processing_completed(settings.CDS_REJECTED_TEMPLATE_ID)
+        notification = EnvelopeRejectedNotification(
+            notificaiton_type=NotificationTypeChoices.PACKAGING_REJECTED,
+            notified_object_pk=self.pk,
+        )
+        notification.save()
+        notification.schedule_send_emails()
 
     @property
     def cds_notified_notification_log(self) -> NotificationLog:

@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 
-from django.conf import settings
 from django.db.models import DateTimeField
 from django.db.models import Manager
 from django.db.models import QuerySet
@@ -10,7 +9,9 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
-from notifications.tasks import send_emails
+from notifications.models import CrownDependenciesEnvelopeFailedNotification
+from notifications.models import CrownDependenciesEnvelopeSuccessNotification
+from notifications.models import NotificationTypeChoices
 from publishing.models.decorators import save_after
 from publishing.models.decorators import skip_notifications_if_disabled
 from publishing.models.packaged_workbasket import PackagedWorkBasket
@@ -79,11 +80,13 @@ class CrownDependenciesEnvelope(TimestampedMixin):
     """
     Represents a crown dependencies envelope.
 
-    This model contains the Envelope upload status to the Channel islands API and it's publishing times.
+    This model contains the Envelope upload status to the Channel islands API
+    and it's publishing times.
 
     An Envelope contains one or more Transactions, listing changes to be applied
     to the tariff in the sequence defined by the transaction IDs. Contains
-    xml_file which is a reference to the envelope stored on s3. This can be found in the Envelope model.
+    xml_file which is a reference to the envelope stored on s3. This can be
+    found in the Envelope model.
     """
 
     class Meta:
@@ -149,43 +152,34 @@ class CrownDependenciesEnvelope(TimestampedMixin):
         with a failed outcome."""
         self.notify_publishing_failed()
 
-    def notify_publishing_completed(self, template_id: str):
-        """
-        Notify users that envelope publishing has completed (success or failure)
-        for this instance.
-
-        `template_id` should be the ID of the Notify email template of either
-        the successfully published or failed publishing email.
-        """
-
-        personalisation = {
-            "envelope_id": self.packagedworkbaskets.last().envelope.envelope_id,
-        }
-
-        send_emails.delay(
-            template_id=template_id,
-            personalisation=personalisation,
-            email_type="publishing",
-        )
-
     @skip_notifications_if_disabled
     def notify_publishing_success(self):
         """Notify users that an envelope has successfully publishing to api."""
 
-        self.notify_publishing_completed(settings.API_PUBLISH_SUCCESS_TEMPLATE_ID)
+        notification = CrownDependenciesEnvelopeSuccessNotification(
+            notificaiton_type=NotificationTypeChoices.PUBLISHING_SUCCESS,
+            notified_object_pk=self.pk,
+        )
+        notification.save()
+        notification.schedule_send_emails()
 
     @skip_notifications_if_disabled
     def notify_publishing_failed(self):
         """Notify users that an envelope has failed publishing to api."""
 
-        self.notify_publishing_completed(settings.API_PUBLISH_FAILED_TEMPLATE_ID)
+        notification = CrownDependenciesEnvelopeFailedNotification(
+            notificaiton_type=NotificationTypeChoices.PUBLISHING_FAILED,
+            notified_object_pk=self.pk,
+        )
+        notification.save()
+        notification.schedule_send_emails()
 
     @atomic
     def refresh_from_db(self, using=None, fields=None):
         """Reload instance from database but avoid writing to
         self.publishing_state directly in order to avoid the exception
-        'AttributeError: Direct publishing_state modification is not allowed.'
-        """
+        'AttributeError: Direct publishing_state modification is not
+        allowed.'."""
         if fields is None:
             refresh_state = True
             fields = [f.name for f in self._meta.concrete_fields]

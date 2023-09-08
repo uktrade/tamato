@@ -38,6 +38,8 @@ from importer.goods_report import GoodsReporter
 from importer.goods_report import GoodsReportLine
 from measures.filters import MeasureFilter
 from measures.models import Measure
+from notifications.models import Notification
+from notifications.models import NotificationTypeChoices
 from workbaskets import forms
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
@@ -346,6 +348,15 @@ class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
             ]
             context["import_batch_pk"] = import_batch.pk
 
+            # notifications only relevant to a goods import
+            context["unsent_notification"] = (
+                import_batch.goods_import
+                and not Notification.objects.filter(
+                    notified_object_pk=import_batch.pk,
+                    notificaiton_type=NotificationTypeChoices.GOODS_REPORT,
+                ).exists()
+            )
+
         return context
 
 
@@ -499,6 +510,19 @@ class CurrentWorkBasket(FormView):
             self.request.user.is_superuser
             or self.request.user.has_perm("workbaskets.delete_workbasket")
         )
+        # set to true if there is an associated goods import batch with an unsent notification
+        try:
+            import_batch = self.workbasket.importbatch
+            unsent_notifcation = (
+                import_batch
+                and import_batch.goods_import
+                and not Notification.objects.filter(
+                    notified_object_pk=import_batch.pk,
+                    notificaiton_type=NotificationTypeChoices.GOODS_REPORT,
+                ).exists()
+            )
+        except ObjectDoesNotExist:
+            unsent_notifcation = False
         context.update(
             {
                 "workbasket": self.workbasket,
@@ -506,6 +530,7 @@ class CurrentWorkBasket(FormView):
                 "uploaded_envelope_dates": self.uploaded_envelope_dates,
                 "rule_check_in_progress": False,
                 "user_can_delete_workbasket": user_can_delete_workbasket,
+                "unsent_notification": unsent_notifcation,
             },
         )
         if self.workbasket.rule_check_task_id:
