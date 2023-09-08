@@ -154,6 +154,8 @@ class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView)
         return MeasurePaginator(self.filterset.qs, per_page=20)
 
     def get_context_data(self, **kwargs):
+        # References to page or pagination in the template were heavily increasing load time. By setting everything we need in the context,
+        # we can reduce load time
         context = {}
         context["filter"] = kwargs["filter"]
         context["form"] = self.get_form()
