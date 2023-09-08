@@ -27,6 +27,7 @@ from rest_framework.reverse import reverse
 
 from common.forms import unprefix_formset_data
 from common.models import TrackedModel
+from common.pagination import build_pagination_list
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
 from common.validators import UpdateType
@@ -153,7 +154,31 @@ class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView)
         return MeasurePaginator(self.filterset.qs, per_page=20)
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = {}
+        context["filter"] = kwargs["filter"]
+        context["form"] = self.get_form()
+        context["view"] = self
+
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+
+        context["is_paginated"] = True
+        context["results_count"] = self.paginator.count
+        context["results_limit_breached"] = self.paginator.limit_breached
+        context["page_count"] = self.paginator.num_pages
+        context["has_other_pages"] = page.has_other_pages()
+        context["has_previous_page"] = page.has_previous()
+        if context["has_previous_page"]:
+            context["prev_page_number"] = page.previous_page_number()
+        context["has_next_page"] = page.has_next()
+        if context["has_next_page"]:
+            context["next_page_number"] = page.next_page_number()
+        context["page_number"] = page.number
+        context["list_items_count"] = self.paginator.per_page
+        context["object_list"] = page.object_list
+        context["page_links"] = build_pagination_list(
+            page.number,
+            page.paginator.num_pages,
+        )
         measure_selections = [
             SelectableObjectsForm.object_id_from_field_name(name)
             for name in self.measure_selections
