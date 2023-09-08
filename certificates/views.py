@@ -2,8 +2,10 @@ from typing import Type
 
 from django.db import transaction
 from django.http import HttpResponseRedirect
+from django_filters.views import FilterView
 from rest_framework import permissions
 from rest_framework import viewsets
+from rest_framework.reverse import reverse
 
 from certificates import business_rules
 from certificates import forms
@@ -57,6 +59,20 @@ class CertificateMixin:
         return models.Certificate.objects.approved_up_to_transaction(tx).select_related(
             "certificate_type",
         )
+
+
+class CertificateSearch(FilterView):
+    """
+    UI Endpoint for filtering Certificates Does not list any Certificates.
+
+    Redirects to CertificatesList on submit
+    """
+
+    template_name = "certificates/search.jinja"
+    filterset_class = CertificateFilter
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(reverse("certificate-ui-list"))
 
 
 class CertificateList(CertificateMixin, TamatoListView):

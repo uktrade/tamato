@@ -1,6 +1,10 @@
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Button
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fixed
+from crispy_forms_gds.layout import Fluid
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -265,6 +269,40 @@ class CertificateCreateDescriptionForm(CreateDescriptionForm):
     class Meta:
         model = models.CertificateDescription
         fields = ("described_certificate", "description", "validity_start")
+
+
+class CertificateFilterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Div(
+                Field.text("search", field_width=Fluid.TWO_THIRDS),
+            ),
+            Div(
+                Div(Field.text("certificate_type", field_width=Fluid.ONE_HALF)),
+                cass_class="gov_grid-column-one-half",
+            ),
+            Div(
+                Div(Field.text("active_state", field_width=Fluid.ONE_HALF)),
+                Div(Field.text("current_work_basket", field_width=Fluid.ONE_HALF)),
+            ),
+            Div(
+                Div(
+                    Button(
+                        "submit",
+                        "Search and filter",
+                        css_class="govuk-!-margin-top-6",
+                    ),
+                    HTML(
+                        f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                    ),
+                    css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                ),
+                css_class="govuk-grid-row govuk-!-padding-top-3",
+            ),
+        )
 
 
 CertificateDeleteForm = delete_form_for(models.Certificate)

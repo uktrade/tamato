@@ -24,7 +24,10 @@ api_router.register(
 
 detail = "<ctype_sid:certificate_type__sid><cert_sid:sid>"
 description_detail = "<ctype_sid:described_certificate__certificate_type__sid><cert_sid:described_certificate__sid>/description/<sid:sid>"
-ui_patterns = get_ui_paths(views, detail, description=description_detail)
+ui_patterns = [
+    *get_ui_paths(views, detail, description=description_detail),
+    path("", views.CertificateSearch.as_view(), name="certificates-ui-search"),
+]
 
 urlpatterns = [
     path("certificates/", include(ui_patterns)),

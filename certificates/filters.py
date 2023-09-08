@@ -4,6 +4,7 @@ from django.db.models import CharField
 from django.urls import reverse_lazy
 
 from certificates import models
+from certificates.forms import CertificateFilterForm
 from certificates.validators import COMBINED_CERTIFICATE_AND_TYPE_ID
 from common.filters import ActiveStateMixin
 from common.filters import CurrentWorkBasketMixin
@@ -43,8 +44,9 @@ class CertificateFilter(
         required=False,
     )
 
-    clear_url = reverse_lazy("certificate-ui-list")
+    clear_url = reverse_lazy("certificate-ui-search")
 
     class Meta:
         model = models.Certificate
+        form = CertificateFilterForm
         fields = ["search", "certificate_type", "active_state", "current_work_basket"]
