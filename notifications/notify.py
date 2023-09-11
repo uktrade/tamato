@@ -74,6 +74,7 @@ def send_emails(template_id, personalisation: dict, email_addresses: List[str]) 
             response_ids += f"{response['id']} \n"
             recipients += f"{email} \n"
         except Exception as e:
+            # TODO extract error info?
             failed_recipients += f"{email} \n"
             logger.error(
                 f"Failed to send email notification to {email}, with status code {e.status_code}.",

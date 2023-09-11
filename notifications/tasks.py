@@ -6,8 +6,6 @@ from django.db.transaction import atomic
 logger = logging.getLogger(__name__)
 
 
-# def get_notifications_client():
-#     return NotificationsAPIClient(settings.NOTIFICATIONS_API_KEY)
 @shared_task
 @atomic
 def send_emails_task(notification_pk: int):
