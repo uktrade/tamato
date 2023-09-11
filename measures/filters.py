@@ -51,41 +51,38 @@ class MeasureTypeFilterBackend(TamatoFilterBackend):
 
 class MeasureFilter(TamatoFilter):
     def __init__(self, *args, **kwargs):
-        if kwargs["data"]:
-            data = kwargs["data"].copy()
-            if "start_date_modifier" not in data:
-                data["start_date_modifier"] = "exact"
-            if "end_date_modifier" not in data:
-                data["end_date_modifier"] = "exact"
-            kwargs["data"] = data
-        super(MeasureFilter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        self.optimize_query()
+
+    def optimize_query(self):
+        data_copy = self.data.copy()  # Create a copy of the QueryDict
+
+        data = self.data
+        if not data:
+            return
+
+        # Check for missing date modifiers and set defaults
+        data_copy["start_date_modifier"] = data_copy.get("start_date_modifier", "exact")
+        data_copy["end_date_modifier"] = data_copy.get("end_date_modifier", "exact")
 
     sid = CharFilter(
         label="ID",
         widget=forms.TextInput(),
-        validators=[
-            NumericValidator,
-        ],
+        validators=[NumericValidator],
     )
 
     measure_type = AutoCompleteFilter(
         label="Type",
         field_name="measure_type__sid",
-        queryset=MeasureType.objects.all(),
-        attrs={
-            "display_class": GOV_UK_TWO_THIRDS,
-            "min_length": 3,
-        },
+        queryset=MeasureType.objects.all().select_related("measure_type"),
+        attrs={"display_class": GOV_UK_TWO_THIRDS, "min_length": 3},
     )
 
     goods_nomenclature = AutoCompleteFilter(
         label="Specific commodity code",
         field_name="goods_nomenclature__item_id",
-        queryset=GoodsNomenclature.objects.all(),
-        attrs={
-            "display_class": GOV_UK_TWO_THIRDS,
-            "min_length": 4,
-        },
+        queryset=GoodsNomenclature.objects.all().select_related("goods_nomenclature"),
+        attrs={"display_class": GOV_UK_TWO_THIRDS, "min_length": 4},
     )
 
     # measures on declarable commodities
@@ -205,19 +202,15 @@ class MeasureFilter(TamatoFilter):
         return queryset
 
     def commodity_modifier(self, queryset, name, value):
-        if value:
-            if self.data["goods_nomenclature"]:
-                commodity = (
-                    GoodsNomenclature.objects.filter(id=self.data["goods_nomenclature"])
-                    .current()
-                    .first()
-                )
+        if value and self.data.get("goods_nomenclature"):
+            commodity_item_id = self.data["goods_nomenclature"]
 
-                queryset = get_measures_on_declarable_commodities(
-                    WorkBasket.get_current_transaction(self.request),
-                    commodity.item_id,
-                )
+            # Validate the commodity_item_id here if necessary
 
+            queryset = get_measures_on_declarable_commodities(
+                WorkBasket.get_current_transaction(self.request),
+                commodity_item_id,
+            )
         return queryset
 
     def filter_start_date(self, queryset, name, value):
@@ -261,13 +254,14 @@ class MeasureFilter(TamatoFilter):
         Returns a MeasuresQuerySet for Measures associated with a specific
         Certificate via MeasureCondition.
 
-        1. check for Ceritificates with a matching SID
-        2. match associated MeasureConditions
-        3. filter by dependent_measure_ids
+        1. Check for Certificates with a matching SID
+        2. Match associated MeasureConditions
+        3. Filter by dependent_measure_ids
         """
         if value:
             measure_ids = set()
             certificates = Certificate.objects.filter(sid=value.sid)
+
             for certificate in certificates:
                 measure_conditions = MeasureCondition.objects.filter(
                     required_certificate=certificate,
@@ -282,8 +276,5 @@ class MeasureFilter(TamatoFilter):
 
     class Meta:
         model = Measure
-
         form = MeasureFilterForm
-
-        # Defines the order shown in the form.
         fields = ["search", "sid"]

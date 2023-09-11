@@ -25,161 +25,67 @@ from common.util import EndDate
 from common.util import StartDate
 
 
+from django.db.models import Value, Case, CharField, When, F
+
 class ComponentQuerySet(TrackedModelQuerySet):
-    """QuerySet that can be used with MeasureComponent or
-    MeasureConditionComponent."""
 
-    def duty_sentence(
-        self,
-        component_parent: Union["measures.Measure", "measures.MeasureCondition"],
-    ):
-        """
-        Returns the human-readable "duty sentence" for a Measure or
-        MeasureCondition instance as a string. The returned string value is a
-        (Postgresql) string aggregation of all the measure's "current"
-        components.
-
-        This operation relies on the `prefix` and `abbreviation` fields being
-        filled in on duty expressions and units, which are not supplied by the
-        TARIC3 XML by default.
-
-        Strings output by this aggregation should be valid input to the
-        :class:`~measures.parsers.DutySentenceParser`.
-
-        The string aggregation will be generated using the below SQL:
-
-        .. code:: SQL
-
-            STRING_AGG(
-              TRIM(
-                CONCAT(
-                  CASE
-                    WHEN (
-                      "measures_dutyexpression"."prefix" IS NULL
-                      OR "measures_dutyexpression"."prefix" = ''
-                    ) THEN
-                    ELSE CONCAT("measures_dutyexpression"."prefix",' ')
-                  END,
-                  CONCAT(
-                    "measures_measureconditioncomponent"."duty_amount",
-                    CONCAT(
-                      CASE
-                        WHEN (
-                          "measures_measureconditioncomponent"."duty_amount" IS NOT NULL
-                          AND "measures_measureconditioncomponent"."monetary_unit_id" IS NULL
-                        ) THEN '%'
-                        WHEN "measures_measureconditioncomponent"."duty_amount" IS NULL THEN ''
-                        ELSE CONCAT(' ', "measures_monetaryunit"."code")
-                      END,
-                      CONCAT(
-                        CASE
-                          WHEN "measures_measurementunit"."abbreviation" IS NULL THEN ''
-                          WHEN "measures_measureconditioncomponent"."monetary_unit_id" IS NULL THEN "measures_measurementunit"."abbreviation"
-                          ELSE CONCAT(' / ', "measures_measurementunit"."abbreviation")
-                        END,
-                        CASE
-                          WHEN "measures_measurementunitqualifier"."abbreviation" IS NULL THEN
-                          ELSE CONCAT(
-                            ' / ',
-                            "measures_measurementunitqualifier"."abbreviation"
-                          )
-                        END
-                      )
-                    )
-                  )
-                )
-              ),
-            ) AS "duty_sentence"
-        """
-
-        # Components with the greatest transaction_id that is less than
-        # or equal to component_parent's transaction_id, are considered 'current'.
+    def duty_sentence(self, component_parent):
+        # Get the "current" components based on transaction_id.
         component_qs = component_parent.components.approved_up_to_transaction(
             component_parent.transaction,
         )
+
         if not component_qs:
             return ""
+
+        # Get the latest transaction_id.
         latest_transaction_id = component_qs.aggregate(
-            latest_transaction_id=Max(
-                "transaction_id",
-            ),
+            latest_transaction_id=Max("transaction_id"),
         ).get("latest_transaction_id")
+
+        # Filter components by the latest transaction_id.
         component_qs = component_qs.filter(transaction_id=latest_transaction_id)
 
-        # Aggregate all the current Components for component_parent to form its
-        # duty sentence.
-        duty_sentence = component_qs.aggregate(
-            duty_sentence=StringAgg(
-                expression=Trim(
-                    Concat(
-                        Case(
-                            When(
-                                Q(duty_expression__prefix__isnull=True)
-                                | Q(duty_expression__prefix=""),
-                                then=Value(""),
-                            ),
-                            default=Concat(
-                                F("duty_expression__prefix"),
-                                Value(" "),
-                            ),
-                        ),
-                        "duty_amount",
-                        Case(
-                            When(
-                                monetary_unit=None,
-                                duty_amount__isnull=False,
-                                then=Value("%"),
-                            ),
-                            When(
-                                duty_amount__isnull=True,
-                                then=Value(""),
-                            ),
-                            default=Concat(
-                                Value(" "),
-                                F("monetary_unit__code"),
-                            ),
-                        ),
-                        Case(
-                            When(
-                                Q(component_measurement=None)
-                                | Q(component_measurement__measurement_unit=None)
-                                | Q(
-                                    component_measurement__measurement_unit__abbreviation=None,
-                                ),
-                                then=Value(""),
-                            ),
-                            When(
-                                monetary_unit__isnull=True,
-                                then=F(
-                                    "component_measurement__measurement_unit__abbreviation",
-                                ),
-                            ),
-                            default=Concat(
-                                Value(" / "),
-                                F(
-                                    "component_measurement__measurement_unit__abbreviation",
-                                ),
-                            ),
-                        ),
-                        Case(
-                            When(
-                                component_measurement__measurement_unit_qualifier__abbreviation=None,
-                                then=Value(""),
-                            ),
-                            default=Concat(
-                                Value(" / "),
-                                F(
-                                    "component_measurement__measurement_unit_qualifier__abbreviation",
-                                ),
-                            ),
-                        ),
-                        output_field=CharField(),
-                    ),
+        # Construct the duty sentence.
+        duty_sentence = component_qs.annotate(
+            prefix_value=Case(
+                When(
+                    trackedmodel_ptr_id__isnull=True,
+                    then=Value(""),
                 ),
+                default=F('duty_expression__prefix'),
+                output_field=CharField(),
+            ),
+            monetary_unit_value=Case(
+                When(
+                    Q(duty_amount__isnull=False) & Q(monetary_unit=None),
+                    then=Value("%"),
+                ),
+                When(duty_amount__isnull=True, then=Value("")),
+                default=Value(" "),
+                output_field=CharField(),
+            ),
+        ).annotate(
+            full_sentence=Trim(
+                Concat(
+                    'prefix_value',
+                    Value(" "),
+                    F('duty_expression__monetary_unit_applicability_code'),
+                    Value(" / "),
+                    F('component_measurement__measurement_unit__abbreviation'),
+                    Value(" / "),
+                    F('component_measurement__measurement_unit_qualifier__abbreviation'),
+                ),
+                output_field=CharField(),
+            )
+        ).aggregate(
+            duty_sentence=StringAgg(
+                'full_sentence',
                 delimiter=" ",
                 ordering="duty_expression__sid",
             ),
         )
+
         return duty_sentence.get("duty_sentence", "")
 
 
@@ -271,82 +177,48 @@ class MeasuresQuerySet(TrackedModelQuerySet, ValidityQuerySet):
 
 class MeasureConditionQuerySet(TrackedModelQuerySet):
     def with_reference_price_string(self):
-        """
-        Returns a MeasureCondition queryset annotated with
-        ``reference_price_string`` query expression.
-
-        This expression should evaluate to a valid reference price string
-        (https://uktrade.github.io/tariff-data-manual/documentation/data-structures/measure-conditions.html#condition-codes)
-
-        If a condition has no duty_amount value, then this expression evaluates to an empty string value ("").
-        Else it returns the result of three Case() expressions chained together.
-        The first Case() expression evaluates to "%" if the condition has a duty amount and no monetary unit,
-        else " ".
-
-        The second evaluates to "" when a condition has no condition_measurement
-        or its measurement has no measurement unit or the measurement unit has no abbreviation,
-        else, if it has no monetary unit, the measurement unit abbreviation is returned,
-        else, if it has a monetary unit, the abbreviation is returned prefixed by " / ".
-
-        The third evaluates to "" when a measurement unit qualifier has no abbreviation,
-        else the unit qualifier abbreviation is returned prefixed by " / ".
-        """
-        return self.annotate(
+        return self.select_related("monetary_unit", "condition_measurement__measurement_unit",
+                                   "condition_measurement__measurement_unit_qualifier").annotate(
             reference_price_string=Case(
                 When(
                     duty_amount__isnull=True,
                     then=Value(""),
                 ),
                 default=Concat(
-                    "duty_amount",
+                    F("duty_amount"),
                     Case(
                         When(
                             monetary_unit=None,
                             duty_amount__isnull=False,
                             then=Value("%"),
                         ),
-                        default=Concat(
-                            Value(" "),
-                            F("monetary_unit__code"),
-                        ),
+                        default=Value(" "),  # Space separator
+                        output_field=CharField(),
                     ),
+                    F("monetary_unit__code"),
                     Case(
                         When(
-                            Q(condition_measurement__isnull=True)
-                            | Q(
-                                condition_measurement__measurement_unit__isnull=True,
-                            )
-                            | Q(
-                                condition_measurement__measurement_unit__abbreviation__isnull=True,
-                            ),
+                            condition_measurement__isnull=True
+                                                          | F("condition_measurement__measurement_unit__isnull")
+                                                          | F(
+                                "condition_measurement__measurement_unit__abbreviation__isnull"),
                             then=Value(""),
                         ),
-                        When(
-                            monetary_unit__isnull=True,
-                            then=F(
-                                "condition_measurement__measurement_unit__abbreviation",
-                            ),
-                        ),
-                        default=Concat(
-                            Value(" / "),
-                            F(
-                                "condition_measurement__measurement_unit__abbreviation",
-                            ),
-                        ),
+                        default=Value(" / "),
+                        output_field=CharField(),
                     ),
+                    F("condition_measurement__measurement_unit__abbreviation"),
                     Case(
                         When(
                             condition_measurement__measurement_unit_qualifier__abbreviation__isnull=True,
                             then=Value(""),
                         ),
-                        default=Concat(
-                            Value(" / "),
-                            F(
-                                "condition_measurement__measurement_unit_qualifier__abbreviation",
-                            ),
-                        ),
+                        default=Value(" / "),
+                        output_field=CharField(),
                     ),
+                    F("condition_measurement__measurement_unit_qualifier__abbreviation"),
                     output_field=CharField(),
                 ),
+                output_field=CharField(),
             ),
         )
