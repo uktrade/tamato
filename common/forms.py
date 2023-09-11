@@ -275,7 +275,9 @@ class HomeForm(forms.Form):
 
         choices += CommonUserActions.choices
 
-        if self.user.has_perm("common.add_trackedmodel") and self.user.has_perm("common.change_trackedmodel"):
+        if self.user.has_perm("common.add_trackedmodel") or self.user.has_perm(
+            "common.change_trackedmodel"
+        ):
             choices += ImportUserActions.choices
 
         self.fields["workbasket_action"] = forms.ChoiceField(
