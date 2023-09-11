@@ -1,13 +1,7 @@
-from typing import Union
-
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import Case
-from django.db.models import CharField
-from django.db.models import F
+from django.db.models import Value, Case, CharField, When, F
 from django.db.models import Func
 from django.db.models import Q
-from django.db.models import Value
-from django.db.models import When
 from django.db.models.aggregates import Max
 from django.db.models.fields import DateField
 from django.db.models.functions import Coalesce
@@ -17,7 +11,6 @@ from django.db.models.functions.comparison import NullIf
 from django.db.models.functions.text import Trim
 from django_cte.cte import With
 
-import measures
 from common.fields import TaricDateRangeField
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.querysets import ValidityQuerySet
@@ -25,11 +18,20 @@ from common.util import EndDate
 from common.util import StartDate
 
 
-from django.db.models import Value, Case, CharField, When, F
-
-
 class ComponentQuerySet(TrackedModelQuerySet):
     def duty_sentence(self, component_parent):
+        """
+        Generate a duty sentence based on the latest transaction_id of components
+        associated with a given component parent.
+
+        Args:
+            component_parent (TrackedModel): The parent component for which the
+                duty sentence is generated.
+
+        Returns:
+            str: The duty sentence as a string.
+        """
+
         # Get the "current" components based on transaction_id.
         component_qs = component_parent.components.approved_up_to_transaction(
             component_parent.transaction,
