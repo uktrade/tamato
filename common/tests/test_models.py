@@ -81,6 +81,23 @@ def test_as_at_today(model1_with_history):
     }
 
 
+def test_as_at_today_and_beyond(date_ranges, validity_factory):
+    """Ensure only records active at the current date and future records are
+    fetched."""
+    outdated_record = {validity_factory.create(valid_between=date_ranges.earlier).pk}
+
+    active_and_future_records = {
+        validity_factory.create(valid_between=date_ranges.normal).pk,
+        validity_factory.create(valid_between=date_ranges.later).pk,
+    }
+
+    Model = validity_factory._meta.get_model_class()
+    queryset = set(Model.objects.as_at_today_and_beyond().values_list("pk", flat=True))
+
+    assert queryset != outdated_record
+    assert queryset == active_and_future_records
+
+
 def test_get_version_raises_error():
     """Ensure that trying to get a specific version raises an error if no
     identifiers given."""
