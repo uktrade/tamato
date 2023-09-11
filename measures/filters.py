@@ -81,7 +81,7 @@ class MeasureFilter(TamatoFilter):
     goods_nomenclature = AutoCompleteFilter(
         label="Specific commodity code",
         field_name="goods_nomenclature__item_id",
-        queryset=GoodsNomenclature.objects.all().select_related("goods_nomenclature"),
+        queryset=GoodsNomenclature.objects.all().select_related("trackedmodel_ptr"),
         attrs={"display_class": GOV_UK_TWO_THIRDS, "min_length": 4},
     )
 
