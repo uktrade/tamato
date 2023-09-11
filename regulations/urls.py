@@ -19,6 +19,11 @@ ui_patterns = get_ui_paths(views, detail)
 
 ui_patterns += [
     path(
+        "search",
+        views.RegulationSearch.as_view(),
+        name="regulation-ui-search",
+    ),
+    path(
         f"{detail}/measures/",
         views.RegulationDetailMeasures.as_view(),
         name="regulation-ui-detail-measures",

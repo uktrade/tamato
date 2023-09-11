@@ -1,8 +1,10 @@
 from typing import Type
 from urllib.parse import urlencode
 
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import ListView
+from django_filters.views import FilterView
 from rest_framework import viewsets
 
 from common.models import TrackedModel
@@ -39,6 +41,20 @@ class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
         return Regulation.objects.approved_up_to_transaction(tx).select_related(
             "regulation_group",
         )
+
+
+class RegulationSearch(FilterView):
+    """
+    UI endpoint for filtering Regulations.
+
+    Does not list any Regulations, redirects to RegulationList on form submit
+    """
+
+    template_name = "regulations/search.jinja"
+    filterset_class = RegulationFilter
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(reverse("regulation-ui-list"))
 
 
 class RegulationList(TamatoListView):

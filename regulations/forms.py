@@ -3,11 +3,15 @@ import string
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Button
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
+from crispy_forms_gds.layout import Fluid
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
+from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ChoiceField
 from django.forms import IntegerField
@@ -401,6 +405,66 @@ class RegulationEditForm(RegulationFormBase):
         )
 
         return new_regulation
+
+
+# "search", "regulation_usage", "regulation_group", "approved", "start_year", "active_state", "current_work_basket",
+class RegulationFilterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Div(
+                Field.text("search", field_width=Fluid.ONE_HALF),
+            ),
+            Div(
+                Div(
+                    "regulation_usage",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    "regulation_group",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    "start_year",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                css_class="govuk-grid-row govuk-!-margin-top-6",
+            ),
+            HTML(
+                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+            ),
+            Div(
+                Div(
+                    "approved",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    "active_state",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    "current_work_basket",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                css_class="govuk-grid-row govuk-!-margin-top-6",
+            ),
+            Div(
+                Div(
+                    Button(
+                        "submit",
+                        "Search and filter",
+                        css_class="govuk-!-margin-top-6",
+                    ),
+                    HTML(
+                        f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                    ),
+                    css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                ),
+                css_class="govuk-grid-row govuk-!-padding-top-3",
+            ),
+        )
 
 
 RegulationDeleteForm = delete_form_for(Regulation)
