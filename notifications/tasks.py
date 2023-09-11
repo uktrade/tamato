@@ -10,9 +10,11 @@ logger = logging.getLogger(__name__)
 #     return NotificationsAPIClient(settings.NOTIFICATIONS_API_KEY)
 @shared_task
 @atomic
-def send_emails_task(notification_pk: int, notification_type: "Notification"):
+def send_emails_task(notification_pk: int):
     """Task for emailing all users signed up to receive packaging updates and
     creating a log to record which users received which email template."""
-    print(notification_type)
-    notification = notification_type.objects.get(pk=notification_pk)
-    notification.send_emails()
+    from notifications.models import Notification
+
+    notification = Notification.objects.get(pk=notification_pk)
+    sub_notification = notification.return_subclass_instance()
+    sub_notification.send_emails()

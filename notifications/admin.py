@@ -72,19 +72,22 @@ class NotificationLogAdmin(admin.ModelAdmin):
 class NotificationAdmin(admin.ModelAdmin):
     """Class providing read-only list and detail views for notification."""
 
+    # TODO add filters on notification_type
+
     ordering = ["pk"]
     list_display = (
         "pk",
-        "notificaiton_type",
+        "notification_type",
         "notified_object_pk",
-        # "display_users",
+        "display_users",
     )
 
     readonly_fields = []
 
     def display_users(self, obj):
+        subclass_obj = obj.return_subclass_instance()
         return ", ".join(
-            [user.email for user in obj.notified_users().all()],
+            [user.email for user in subclass_obj.notified_users().all()],
         )
 
     display_users.short_description = "Recipients"

@@ -157,7 +157,7 @@ class CrownDependenciesEnvelope(TimestampedMixin):
         """Notify users that an envelope has successfully publishing to api."""
 
         notification = CrownDependenciesEnvelopeSuccessNotification(
-            notificaiton_type=NotificationTypeChoices.PUBLISHING_SUCCESS,
+            notification_type=NotificationTypeChoices.PUBLISHING_SUCCESS,
             notified_object_pk=self.pk,
         )
         notification.save()
@@ -168,7 +168,7 @@ class CrownDependenciesEnvelope(TimestampedMixin):
         """Notify users that an envelope has failed publishing to api."""
 
         notification = CrownDependenciesEnvelopeFailedNotification(
-            notificaiton_type=NotificationTypeChoices.PUBLISHING_FAILED,
+            notification_type=NotificationTypeChoices.PUBLISHING_FAILED,
             notified_object_pk=self.pk,
         )
         notification.save()

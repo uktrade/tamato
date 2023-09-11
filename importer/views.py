@@ -254,10 +254,7 @@ class NotifyGoodsReportView(
 
         # create notification
         notification = GoodsSuccessfulImportNotification(
-            notificaiton_type=(
-                NotificationTypeChoices.GOODS_REPORT.value,
-                NotificationTypeChoices.GOODS_REPORT.label,
-            ),
+            notification_type=NotificationTypeChoices.GOODS_REPORT,
             notified_object_pk=import_batch.id,
         )
         notification.save()

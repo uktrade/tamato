@@ -353,7 +353,7 @@ class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
                 import_batch.goods_import
                 and not Notification.objects.filter(
                     notified_object_pk=import_batch.pk,
-                    notificaiton_type=NotificationTypeChoices.GOODS_REPORT,
+                    notification_type=NotificationTypeChoices.GOODS_REPORT,
                 ).exists()
             )
 
@@ -518,7 +518,7 @@ class CurrentWorkBasket(FormView):
                 and import_batch.goods_import
                 and not Notification.objects.filter(
                     notified_object_pk=import_batch.pk,
-                    notificaiton_type=NotificationTypeChoices.GOODS_REPORT,
+                    notification_type=NotificationTypeChoices.GOODS_REPORT,
                 ).exists()
             )
         except ObjectDoesNotExist:

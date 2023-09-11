@@ -565,7 +565,7 @@ class PackagedWorkBasket(TimestampedMixin):
         (see `publishing.tasks.create_xml_envelope_file()`).
         """
         notification = EnvelopeReadyForProcessingNotification(
-            notificaiton_type=NotificationTypeChoices.PACKAGING_NOTIFY_READY,
+            notification_type=NotificationTypeChoices.PACKAGING_NOTIFY_READY,
             notified_object_pk=self.pk,
         )
         notification.save()
@@ -576,7 +576,7 @@ class PackagedWorkBasket(TimestampedMixin):
         """Notify users that envelope processing has succeeded (i.e. the
         associated envelope was correctly ingested into HMRC systems)."""
         notification = EnvelopeAcceptedNotification(
-            notificaiton_type=NotificationTypeChoices.PACKAGING_ACCEPTED,
+            notification_type=NotificationTypeChoices.PACKAGING_ACCEPTED,
             notified_object_pk=self.pk,
         )
         notification.save()
@@ -587,7 +587,7 @@ class PackagedWorkBasket(TimestampedMixin):
         """Notify users that envelope processing has failed (i.e. HMRC systems
         rejected this instance's associated envelope file)."""
         notification = EnvelopeRejectedNotification(
-            notificaiton_type=NotificationTypeChoices.PACKAGING_REJECTED,
+            notification_type=NotificationTypeChoices.PACKAGING_REJECTED,
             notified_object_pk=self.pk,
         )
         notification.save()

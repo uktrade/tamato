@@ -49,43 +49,33 @@ class NotificationLog(TimestampedMixin):
     success = models.BooleanField(default=True)
 
 
-class CustomNotificationChoice:
-    def __init__(self, value, label, template_id):
-        self.value = value
-        self.label = label
-        self.template_id = template_id
+# class NotificationManager(models.Manager):
 
 
 class NotificationTypeChoices(models.TextChoices):
-    GOODS_REPORT = CustomNotificationChoice(
+    GOODS_REPORT = (
         "goods_report",
         "Goods Report",
-        settings.GOODS_REPORT_TEMPLATE_ID,
     )
-    PACKAGING_NOTIFY_READY = CustomNotificationChoice(
+    PACKAGING_NOTIFY_READY = (
         "packaging_notify_ready",
         "Packaging Notify Ready",
-        settings.READY_FOR_CDS_TEMPLATE_ID,
     )
-    PACKAGING_ACCEPTED = CustomNotificationChoice(
+    PACKAGING_ACCEPTED = (
         "packaging_accepted",
         "Packaging Accepted",
-        settings.CDS_ACCEPTED_TEMPLATE_ID,
     )
-    PACKAGING_REJECTED = CustomNotificationChoice(
+    PACKAGING_REJECTED = (
         "packaging_rejected",
         "Packaging Rejected",
-        settings.CDS_REJECTED_TEMPLATE_ID,
     )
-    PUBLISHING_SUCCESS = CustomNotificationChoice(
+    PUBLISHING_SUCCESS = (
         "publishing_success",
         "Publishing Successful",
-        settings.API_PUBLISH_SUCCESS_TEMPLATE_ID,
     )
-    PUBLISHING_FAILED = CustomNotificationChoice(
+    PUBLISHING_FAILED = (
         "publishing_failed",
         "Publishing Failed",
-        settings.API_PUBLISH_FAILED_TEMPLATE_ID,
     )
 
 
@@ -110,10 +100,22 @@ class Notification(models.Model):
     )
     """The primary key of the object being notified on."""
 
-    notificaiton_type = models.CharField(
-        max_length=150,
-        choices=[(choice.value, choice.label) for choice in NotificationTypeChoices],
+    notification_type = models.CharField(
+        max_length=100,
+        choices=NotificationTypeChoices.choices,
     )
+
+    def return_subclass_instance(self) -> "Notification":
+        subclasses = {
+            NotificationTypeChoices.GOODS_REPORT: GoodsSuccessfulImportNotification,
+            NotificationTypeChoices.PACKAGING_ACCEPTED: EnvelopeAcceptedNotification,
+            NotificationTypeChoices.PACKAGING_NOTIFY_READY: EnvelopeReadyForProcessingNotification,
+            NotificationTypeChoices.PACKAGING_REJECTED: EnvelopeRejectedNotification,
+            NotificationTypeChoices.PUBLISHING_SUCCESS: CrownDependenciesEnvelopeSuccessNotification,
+            NotificationTypeChoices.PUBLISHING_FAILED: CrownDependenciesEnvelopeFailedNotification,
+        }
+        self.__class__ = subclasses[self.notification_type]
+        return self
 
     def get_personalisation(self) -> dict:
         """
@@ -149,12 +151,12 @@ class Notification(models.Model):
 
     def synchronous_send_emails(self):
         """Synchronously call to send a notification email."""
-        send_emails_task(self.pk, type(self))
+        send_emails_task(self.pk)
 
     def schedule_send_emails(self, countdown=1):
         """Schedule a call to send a notification email, run as an asynchronous
         background task."""
-        send_emails_task.apply_sync(args=[self.pk, type(self)], countdown=countdown)
+        send_emails_task.apply_async(args=[self.pk], countdown=countdown)
 
     def send_emails(self):
         """Send the notification emails to users via GOV.UK Notify."""
@@ -219,7 +221,7 @@ class EnvelopeReadyForProcessingNotification(Notification):
         return personalisation
 
     def notify_template_id(self) -> str:
-        return NotificationTypeChoices.PACKAGING_NOTIFY_READY.template_id
+        return settings.READY_FOR_CDS_TEMPLATE_ID
 
     def notified_users(self):
         return NotifiedUser.objects.filter(
@@ -230,7 +232,7 @@ class EnvelopeReadyForProcessingNotification(Notification):
         from publishing.models import PackagedWorkBasket
 
         return (
-            PackagedWorkBasket.objects.get(self.notified_object_pk)
+            PackagedWorkBasket.objects.get(pk=self.notified_object_pk)
             if self.notified_object_pk
             else None
         )
@@ -265,7 +267,7 @@ class EnvelopeAcceptedNotification(Notification):
         return personalisation
 
     def notify_template_id(self) -> str:
-        return NotificationTypeChoices.PACKAGING_ACCEPTED.template_id
+        return settings.CDS_ACCEPTED_TEMPLATE_ID
 
     def notified_users(self):
         return NotifiedUser.objects.filter(
@@ -311,7 +313,7 @@ class EnvelopeRejectedNotification(Notification):
         return personalisation
 
     def notify_template_id(self) -> str:
-        return NotificationTypeChoices.PACKAGING_REJECTED.template_id
+        return settings.CDS_REJECTED_TEMPLATE_ID
 
     def notified_users(self):
         return NotifiedUser.objects.filter(
@@ -322,7 +324,7 @@ class EnvelopeRejectedNotification(Notification):
         from publishing.models import PackagedWorkBasket
 
         return (
-            PackagedWorkBasket.objects.get(self.notified_object_pk)
+            PackagedWorkBasket.objects.get(pk=self.notified_object_pk)
             if self.notified_object_pk
             else None
         )
@@ -343,18 +345,18 @@ class CrownDependenciesEnvelopeSuccessNotification(Notification):
         return personalisation
 
     def notify_template_id(self) -> str:
-        return NotificationTypeChoices.PUBLISHING_SUCCESS.template_id
+        return settings.API_PUBLISH_SUCCESS_TEMPLATE_ID
 
     def notified_users(self):
         return NotifiedUser.objects.filter(
-            Q(enrole_api_publishing=True),
+            Q(enrol_api_publishing=True),
         )
 
     def notified_object(self) -> models.Model:
         from publishing.models import CrownDependenciesEnvelope
 
         return (
-            CrownDependenciesEnvelope.objects.get(self.notified_object_pk)
+            CrownDependenciesEnvelope.objects.get(pk=self.notified_object_pk)
             if self.notified_object_pk
             else None
         )
@@ -375,18 +377,18 @@ class CrownDependenciesEnvelopeFailedNotification(Notification):
         return personalisation
 
     def notify_template_id(self) -> str:
-        return NotificationTypeChoices.PUBLISHING_FAILED.template_id
+        return settings.API_PUBLISH_FAILED_TEMPLATE_ID
 
     def notified_users(self):
         return NotifiedUser.objects.filter(
-            Q(enrole_api_publishing=True),
+            Q(enrol_api_publishing=True),
         )
 
     def notified_object(self) -> models.Model:
         from publishing.models import CrownDependenciesEnvelope
 
         return (
-            CrownDependenciesEnvelope.objects.get(self.notified_object_pk)
+            CrownDependenciesEnvelope.objects.get(pk=self.notified_object_pk)
             if self.notified_object_pk
             else None
         )
@@ -401,19 +403,17 @@ class GoodsSuccessfulImportNotification(Notification):
 
     def get_personalisation(self) -> dict:
         import_batch = self.notified_object()
-        personalisation = (
-            {
-                "tgb_id": import_batch.name,
-                "link_to_file": prepare_link_to_file(
-                    import_batch.taric_file,
-                    confirm_email_before_download=True,
-                ),
-            },
-        )
+        personalisation = {
+            "tgb_id": import_batch.name,
+            "link_to_file": prepare_link_to_file(
+                import_batch.taric_file,
+                confirm_email_before_download=True,
+            ),
+        }
         return personalisation
 
     def notify_template_id(self) -> str:
-        return NotificationTypeChoices.GOODS_REPORT.template_id
+        return settings.GOODS_REPORT_TEMPLATE_ID
 
     def notified_users(self):
         return NotifiedUser.objects.filter(
@@ -423,8 +423,9 @@ class GoodsSuccessfulImportNotification(Notification):
     def notified_object(self) -> models.Model:
         from importer.models import ImportBatch
 
+        print(self.notified_object_pk)
         return (
-            ImportBatch.objects.get(self.notified_object_pk)
+            ImportBatch.objects.get(id=self.notified_object_pk)
             if self.notified_object_pk
             else None
         )
