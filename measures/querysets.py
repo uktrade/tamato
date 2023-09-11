@@ -27,8 +27,8 @@ from common.util import StartDate
 
 from django.db.models import Value, Case, CharField, When, F
 
-class ComponentQuerySet(TrackedModelQuerySet):
 
+class ComponentQuerySet(TrackedModelQuerySet):
     def duty_sentence(self, component_parent):
         # Get the "current" components based on transaction_id.
         component_qs = component_parent.components.approved_up_to_transaction(
@@ -47,43 +47,49 @@ class ComponentQuerySet(TrackedModelQuerySet):
         component_qs = component_qs.filter(transaction_id=latest_transaction_id)
 
         # Construct the duty sentence.
-        duty_sentence = component_qs.annotate(
-            prefix_value=Case(
-                When(
-                    trackedmodel_ptr_id__isnull=True,
-                    then=Value(""),
+        duty_sentence = (
+            component_qs.annotate(
+                prefix_value=Case(
+                    When(
+                        trackedmodel_ptr_id__isnull=True,
+                        then=Value(""),
+                    ),
+                    default=F("duty_expression__prefix"),
+                    output_field=CharField(),
                 ),
-                default=F('duty_expression__prefix'),
-                output_field=CharField(),
-            ),
-            monetary_unit_value=Case(
-                When(
-                    Q(duty_amount__isnull=False) & Q(monetary_unit=None),
-                    then=Value("%"),
+                monetary_unit_value=Case(
+                    When(
+                        Q(duty_amount__isnull=False) & Q(monetary_unit=None),
+                        then=Value("%"),
+                    ),
+                    When(duty_amount__isnull=True, then=Value("")),
+                    default=Value(" "),
+                    output_field=CharField(),
                 ),
-                When(duty_amount__isnull=True, then=Value("")),
-                default=Value(" "),
-                output_field=CharField(),
-            ),
-        ).annotate(
-            full_sentence=Trim(
-                Concat(
-                    'prefix_value',
-                    Value(" "),
-                    F('duty_expression__monetary_unit_applicability_code'),
-                    Value(" / "),
-                    F('component_measurement__measurement_unit__abbreviation'),
-                    Value(" / "),
-                    F('component_measurement__measurement_unit_qualifier__abbreviation'),
-                ),
-                output_field=CharField(),
             )
-        ).aggregate(
-            duty_sentence=StringAgg(
-                'full_sentence',
-                delimiter=" ",
-                ordering="duty_expression__sid",
-            ),
+            .annotate(
+                full_sentence=Trim(
+                    Concat(
+                        "prefix_value",
+                        Value(" "),
+                        F("duty_expression__monetary_unit_applicability_code"),
+                        Value(" / "),
+                        F("component_measurement__measurement_unit__abbreviation"),
+                        Value(" / "),
+                        F(
+                            "component_measurement__measurement_unit_qualifier__abbreviation"
+                        ),
+                    ),
+                    output_field=CharField(),
+                )
+            )
+            .aggregate(
+                duty_sentence=StringAgg(
+                    "full_sentence",
+                    delimiter=" ",
+                    ordering="duty_expression__sid",
+                ),
+            )
         )
 
         return duty_sentence.get("duty_sentence", "")
@@ -177,8 +183,11 @@ class MeasuresQuerySet(TrackedModelQuerySet, ValidityQuerySet):
 
 class MeasureConditionQuerySet(TrackedModelQuerySet):
     def with_reference_price_string(self):
-        return self.select_related("monetary_unit", "condition_measurement__measurement_unit",
-                                   "condition_measurement__measurement_unit_qualifier").annotate(
+        return self.select_related(
+            "monetary_unit",
+            "condition_measurement__measurement_unit",
+            "condition_measurement__measurement_unit_qualifier",
+        ).annotate(
             reference_price_string=Case(
                 When(
                     duty_amount__isnull=True,
@@ -199,9 +208,10 @@ class MeasureConditionQuerySet(TrackedModelQuerySet):
                     Case(
                         When(
                             condition_measurement__isnull=True
-                                                          | F("condition_measurement__measurement_unit__isnull")
-                                                          | F(
-                                "condition_measurement__measurement_unit__abbreviation__isnull"),
+                            | F("condition_measurement__measurement_unit__isnull")
+                            | F(
+                                "condition_measurement__measurement_unit__abbreviation__isnull"
+                            ),
                             then=Value(""),
                         ),
                         default=Value(" / "),
@@ -216,7 +226,9 @@ class MeasureConditionQuerySet(TrackedModelQuerySet):
                         default=Value(" / "),
                         output_field=CharField(),
                     ),
-                    F("condition_measurement__measurement_unit_qualifier__abbreviation"),
+                    F(
+                        "condition_measurement__measurement_unit_qualifier__abbreviation"
+                    ),
                     output_field=CharField(),
                 ),
                 output_field=CharField(),
