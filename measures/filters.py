@@ -74,7 +74,7 @@ class MeasureFilter(TamatoFilter):
     measure_type = AutoCompleteFilter(
         label="Type",
         field_name="measure_type__sid",
-        queryset=MeasureType.objects.all().select_related("measure_type"),
+        queryset=MeasureType.objects.all().select_related("trackedmodel_ptr"),
         attrs={"display_class": GOV_UK_TWO_THIRDS, "min_length": 3},
     )
 

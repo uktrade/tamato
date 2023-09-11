@@ -209,11 +209,9 @@ class MeasureConditionQuerySet(TrackedModelQuerySet):
                     F("monetary_unit__code"),
                     Case(
                         When(
-                            condition_measurement__isnull=True
-                            | F("condition_measurement__measurement_unit__isnull")
-                            | F(
-                                "condition_measurement__measurement_unit__abbreviation__isnull"
-                            ),
+                            Q(condition_measurement__isnull=True) |
+                            Q(condition_measurement__measurement_unit__isnull=True) |
+                            Q(condition_measurement__measurement_unit__abbreviation__isnull=True),
                             then=Value(""),
                         ),
                         default=Value(" / "),
