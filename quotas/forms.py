@@ -90,7 +90,7 @@ class QuotaOriginExclusionsForm(forms.Form):
         self.fields["exclusion"].queryset = (
             GeographicalArea.objects.current()
             .with_latest_description()
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
         self.fields[
@@ -258,7 +258,7 @@ class QuotaOrderNumberOriginForm(
         self.fields["geographical_area"].queryset = (
             GeographicalArea.objects.current()
             .with_latest_description()
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
         self.fields[
