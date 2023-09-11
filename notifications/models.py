@@ -174,7 +174,7 @@ class Notification(models.Model):
         result = send_emails(
             self.notify_template_id(),
             personalisation,
-            notified_users,
+            [user.email for user in notified_users],
         )
 
         NotificationLog.objects.create(
@@ -198,6 +198,12 @@ class EnvelopeReadyForProcessingNotification(Notification):
 
     class Meta:
         proxy = True
+
+    def __init__(self, notified_object_pk: int):
+        super(EnvelopeReadyForProcessingNotification, self).__init__(
+            notified_object_pk=notified_object_pk,
+            notification_type=NotificationTypeChoices.PACKAGING_NOTIFY_READY,
+        )
 
     def get_personalisation(self) -> dict:
         packaged_workbasket = self.notified_object()
@@ -245,6 +251,12 @@ class EnvelopeAcceptedNotification(Notification):
     class Meta:
         proxy = True
 
+    def __init__(self, notified_object_pk: int):
+        super(EnvelopeAcceptedNotification, self).__init__(
+            notified_object_pk=notified_object_pk,
+            notification_type=NotificationTypeChoices.PACKAGING_ACCEPTED,
+        )
+
     def get_personalisation(self) -> dict:
         packaged_workbasket = self.notified_object()
         loading_report_message = "Loading report: No loading report was provided."
@@ -290,6 +302,12 @@ class EnvelopeRejectedNotification(Notification):
 
     class Meta:
         proxy = True
+
+    def __init__(self, notified_object_pk: int):
+        super(EnvelopeRejectedNotification, self).__init__(
+            notified_object_pk=notified_object_pk,
+            notification_type=NotificationTypeChoices.PACKAGING_REJECTED,
+        )
 
     def get_personalisation(self) -> dict:
         packaged_workbasket = self.notified_object()
@@ -337,6 +355,12 @@ class CrownDependenciesEnvelopeSuccessNotification(Notification):
     class Meta:
         proxy = True
 
+    def __init__(self, notified_object_pk: int):
+        super(CrownDependenciesEnvelopeSuccessNotification, self).__init__(
+            notified_object_pk=notified_object_pk,
+            notification_type=NotificationTypeChoices.PUBLISHING_SUCCESS,
+        )
+
     def get_personalisation(self) -> dict:
         crown_dependicies_envelope = self.notified_object()
         personalisation = {
@@ -368,6 +392,12 @@ class CrownDependenciesEnvelopeFailedNotification(Notification):
 
     class Meta:
         proxy = True
+
+    def __init__(self, notified_object_pk: int):
+        super(CrownDependenciesEnvelopeFailedNotification, self).__init__(
+            notified_object_pk=notified_object_pk,
+            notification_type=NotificationTypeChoices.PUBLISHING_FAILED,
+        )
 
     def get_personalisation(self) -> dict:
         self.notified_object()
@@ -401,6 +431,12 @@ class GoodsSuccessfulImportNotification(Notification):
     class Meta:
         proxy = True
 
+    def __init__(self, notified_object_pk: int):
+        super(GoodsSuccessfulImportNotification, self).__init__(
+            notified_object_pk=notified_object_pk,
+            notification_type=NotificationTypeChoices.GOODS_REPORT,
+        )
+
     def get_personalisation(self) -> dict:
         import_batch = self.notified_object()
         personalisation = {
@@ -423,7 +459,6 @@ class GoodsSuccessfulImportNotification(Notification):
     def notified_object(self) -> models.Model:
         from importer.models import ImportBatch
 
-        print(self.notified_object_pk)
         return (
             ImportBatch.objects.get(id=self.notified_object_pk)
             if self.notified_object_pk

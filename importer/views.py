@@ -20,7 +20,6 @@ from importer.filters import TaricImportFilter
 from importer.goods_report import GoodsReporter
 from importer.models import ImportBatchStatus
 from notifications.models import GoodsSuccessfulImportNotification
-from notifications.models import NotificationTypeChoices
 from workbaskets.validators import WorkflowStatus
 
 
@@ -254,7 +253,6 @@ class NotifyGoodsReportView(
 
         # create notification
         notification = GoodsSuccessfulImportNotification(
-            notification_type=NotificationTypeChoices.GOODS_REPORT,
             notified_object_pk=import_batch.id,
         )
         notification.save()

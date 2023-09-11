@@ -3,7 +3,6 @@ from django.core.management.base import CommandError
 
 from importer.models import ImportBatch
 from notifications.models import GoodsSuccessfulImportNotification
-from notifications.models import NotificationTypeChoices
 
 
 def send_notifcation(
@@ -19,7 +18,6 @@ def send_notifcation(
         )
 
     notification = GoodsSuccessfulImportNotification(
-        notification_type=NotificationTypeChoices.GOODS_REPORT,
         notified_object_pk=import_batch.id,
     )
     notification.save()

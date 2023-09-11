@@ -27,7 +27,6 @@ from notifications.models import EnvelopeAcceptedNotification
 from notifications.models import EnvelopeReadyForProcessingNotification
 from notifications.models import EnvelopeRejectedNotification
 from notifications.models import NotificationLog
-from notifications.models import NotificationTypeChoices
 from publishing import models as publishing_models
 from publishing.models.decorators import save_after
 from publishing.models.decorators import skip_notifications_if_disabled
@@ -565,7 +564,6 @@ class PackagedWorkBasket(TimestampedMixin):
         (see `publishing.tasks.create_xml_envelope_file()`).
         """
         notification = EnvelopeReadyForProcessingNotification(
-            notification_type=NotificationTypeChoices.PACKAGING_NOTIFY_READY,
             notified_object_pk=self.pk,
         )
         notification.save()
@@ -576,7 +574,6 @@ class PackagedWorkBasket(TimestampedMixin):
         """Notify users that envelope processing has succeeded (i.e. the
         associated envelope was correctly ingested into HMRC systems)."""
         notification = EnvelopeAcceptedNotification(
-            notification_type=NotificationTypeChoices.PACKAGING_ACCEPTED,
             notified_object_pk=self.pk,
         )
         notification.save()
@@ -587,7 +584,6 @@ class PackagedWorkBasket(TimestampedMixin):
         """Notify users that envelope processing has failed (i.e. HMRC systems
         rejected this instance's associated envelope file)."""
         notification = EnvelopeRejectedNotification(
-            notification_type=NotificationTypeChoices.PACKAGING_REJECTED,
             notified_object_pk=self.pk,
         )
         notification.save()

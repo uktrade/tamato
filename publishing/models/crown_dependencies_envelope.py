@@ -11,7 +11,6 @@ from django_fsm import transition
 from common.models.mixins import TimestampedMixin
 from notifications.models import CrownDependenciesEnvelopeFailedNotification
 from notifications.models import CrownDependenciesEnvelopeSuccessNotification
-from notifications.models import NotificationTypeChoices
 from publishing.models.decorators import save_after
 from publishing.models.decorators import skip_notifications_if_disabled
 from publishing.models.packaged_workbasket import PackagedWorkBasket
@@ -157,7 +156,6 @@ class CrownDependenciesEnvelope(TimestampedMixin):
         """Notify users that an envelope has successfully publishing to api."""
 
         notification = CrownDependenciesEnvelopeSuccessNotification(
-            notification_type=NotificationTypeChoices.PUBLISHING_SUCCESS,
             notified_object_pk=self.pk,
         )
         notification.save()
@@ -168,7 +166,6 @@ class CrownDependenciesEnvelope(TimestampedMixin):
         """Notify users that an envelope has failed publishing to api."""
 
         notification = CrownDependenciesEnvelopeFailedNotification(
-            notification_type=NotificationTypeChoices.PUBLISHING_FAILED,
             notified_object_pk=self.pk,
         )
         notification.save()
