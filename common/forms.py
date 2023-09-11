@@ -250,8 +250,11 @@ class HMRCCDSManagerActions(TextChoices):
 
 class CommonUserActions(TextChoices):
     SEARCH = "SEARCH", "Search the tariff"
-    IMPORT = "IMPORT", "Import EU Taric files"
     # Change this to be dependent on permissions later
+
+
+class ImportUserActions(TextChoices):
+    IMPORT = "IMPORT", "Import EU Taric files"
 
 
 class HomeForm(forms.Form):
@@ -271,6 +274,9 @@ class HomeForm(forms.Form):
             choices += HMRCCDSManagerActions.choices
 
         choices += CommonUserActions.choices
+
+        if self.user.has_perm("common.add_trackedmodel") and self.user.has_perm("common.change_trackedmodel"):
+            choices += ImportUserActions.choices
 
         self.fields["workbasket_action"] = forms.ChoiceField(
             label="",
