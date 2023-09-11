@@ -7,7 +7,7 @@
   {% for association in object.footnoteassociationmeasure_set.current() %}
     {{ table_rows.append([
         {"text": create_link(association.associated_footnote.get_url(), association.associated_footnote|string) },
-        {"text": association.associated_footnote.descriptions.first().description },
+        {"text": association.associated_footnote.descriptions.last().description },
       ]) or "" }}
   {% endfor %}
     {{ govukTable({

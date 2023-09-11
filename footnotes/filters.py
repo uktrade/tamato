@@ -6,6 +6,7 @@ from django.forms import CheckboxSelectMultiple
 from django.urls import reverse_lazy
 
 from common.filters import ActiveStateMixin
+from common.filters import CurrentWorkBasketMixin
 from common.filters import LazyMultipleChoiceFilter
 from common.filters import StartYearMixin
 from common.filters import TamatoFilter
@@ -53,6 +54,7 @@ class FootnoteFilter(
     FootnoteFilterMixin,
     StartYearMixin,
     ActiveStateMixin,
+    CurrentWorkBasketMixin,
 ):
     footnote_type = LazyMultipleChoiceFilter(
         choices=type_choices(models.FootnoteType.objects.latest_approved()),
@@ -67,4 +69,10 @@ class FootnoteFilter(
 
     class Meta:
         model = models.Footnote
-        fields = ["search", "footnote_type", "start_year", "active_state"]
+        fields = [
+            "search",
+            "footnote_type",
+            "start_year",
+            "active_state",
+            "current_work_basket",
+        ]
