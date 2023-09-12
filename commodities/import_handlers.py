@@ -167,6 +167,7 @@ class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandle
         # Ultimately this is a crude temporary measure that will be superseded by a correct implementation splitting
         # out description periods into a new table
 
+        # goods_nomenclature_description = None if no description exists
         goods_nomenclature_description = (
             GoodsNomenclatureDescription.objects.filter(sid=self.data["sid"])
             .latest_approved()
