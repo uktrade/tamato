@@ -282,7 +282,7 @@ class QuotaDefinitionUpdateForm(
             "quota_critical",
         ]
 
-    description = forms.CharField(label="", widget=forms.Textarea())
+    description = forms.CharField(label="", widget=forms.Textarea(), required=False)
     volume = forms.DecimalField(
         label="Current volume",
         widget=forms.TextInput(),
