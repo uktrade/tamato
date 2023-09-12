@@ -1035,6 +1035,10 @@ class MeasureGeographicalAreaForm(
     )
 
     @property
+    def erga_omnes_instance(self):
+        return GeographicalArea.objects.current().erga_omnes().get()
+
+    @property
     def geo_area_field_name(self):
         return f"{self.prefix}-geo_area"
 
@@ -1062,9 +1066,7 @@ class MeasureGeographicalAreaForm(
 
         return initial
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    def get_initial_data(self):
         geographical_area_fields = {
             constants.GeoAreaType.ERGA_OMNES: self.erga_omnes_instance,
             constants.GeoAreaType.GROUP: self.data.get(
@@ -1088,9 +1090,15 @@ class MeasureGeographicalAreaForm(
         countries_initial_data = self.get_countries_initial()
         nested_forms_initial.update(geo_area_initial_data)
         nested_forms_initial.update(countries_initial_data)
-        kwargs.pop("initial")
-        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
 
+        return nested_forms_initial
+
+    def init_fields(self):
+        if self.order_number:
+            self.fields["geo_area"].required = False
+            self.fields["geo_area"].disabled = True
+
+    def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -1104,9 +1112,14 @@ class MeasureGeographicalAreaForm(
             ),
         )
 
-    @property
-    def erga_omnes_instance(self):
-        return GeographicalArea.objects.current().erga_omnes().get()
+    def __init__(self, *args, **kwargs):
+        self.order_number = kwargs.pop("order_number", None)
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        nested_forms_initial = self.get_initial_data() if not self.order_number else {}
+        kwargs.pop("initial", None)
+        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
+        self.init_layout()
 
     def clean(self):
         cleaned_data = super().clean()
