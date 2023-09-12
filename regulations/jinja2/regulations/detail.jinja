@@ -1,30 +1,40 @@
-{% from "components/tabs/macro.njk" import govukTabs %}
+{% extends "layouts/detail.jinja" %}
+
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
+{% from "components/tabs/macro.njk" import govukTabs %}
+{% from "macros/fake_tabs.jinja" import fake_tabs %}
 
 {% set page_title = "Regulation: " ~ object.regulation_id %}
-{% set find_edit_url = url("regulation-ui-list") %}
 
-{% set core_data_tab_html %}{% include "includes/regulations/tabs/core_data.jinja" %}{% endset %}
-{% set version_control_tab_html %}{% include "includes/regulations/tabs/version_control.jinja" %}{% endset %}
-
-{% set tabs = {
-    "items": [
-      {
-        "label": "Details",
-        "id": "core-data",
-        "panel": {
-          "html": core_data_tab_html
-        }
-      },
-      {
-        "label": "Version control",
-        "id": "version-control",
-        "panel": {
-          "html": version_control_tab_html
-        }
-      }
-    ]
-  }
+{% set links = [
+    {
+      "text": "Details",
+      "href": url('regulation-ui-detail', kwargs={"role_type": object.role_type, "regulation_id": object.regulation_id}),
+      "selected": selected_tab == "details"
+    },
+    {
+      "text": "Measures",
+      "href": url('regulation-ui-detail-measures', kwargs={"role_type": object.role_type, "regulation_id": object.regulation_id}),
+      "selected": selected_tab == "measures",
+    },
+    {
+      "text": "Version control",
+      "href": url('regulation-ui-detail-version-control', kwargs={"role_type": object.role_type, "regulation_id": object.regulation_id}),
+      "selected": selected_tab == "version-control"
+    },
+  ]
 %}
 
-{%- include "layouts/detail.jinja" -%}
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+    </div>
+  </div>
+  {{ fake_tabs(links) }}
+  <div class="govuk-tabs__panel {% block content_class %}{% endblock %}">
+    {% block tab_content %}
+      {% include "includes/regulations/tabs/core_data.jinja" %}
+    {% endblock %}
+  </div>
+{% endblock %}

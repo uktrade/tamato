@@ -2,11 +2,13 @@ from django import forms
 from django.contrib.postgres.aggregates import StringAgg
 from django.db import models
 from django.urls import reverse_lazy
+from django_filters import BooleanFilter
 from django_filters import CharFilter
 
 from commodities.forms import CommodityFilterForm
 from commodities.models.orm import GoodsNomenclature
 from common.filters import ActiveStateMixin
+from common.filters import CurrentWorkBasketMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.validators import AlphanumericValidator
@@ -31,7 +33,7 @@ class GoodsNomenclatureFilterBackend(TamatoFilterBackend):
         return super().search_queryset(queryset, search_term)
 
 
-class CommodityFilter(ActiveStateMixin, TamatoFilter):
+class CommodityFilter(ActiveStateMixin, TamatoFilter, CurrentWorkBasketMixin):
     item_id = CharFilter(
         label="Code",
         widget=forms.TextInput(),
@@ -45,10 +47,30 @@ class CommodityFilter(ActiveStateMixin, TamatoFilter):
         validators=[AlphanumericValidator],
     )
     clear_url = reverse_lazy("commodity-ui-list")
+    with_footnotes = BooleanFilter(
+        label="Show commodity codes with footnotes",
+        widget=forms.CheckboxInput(),
+        field_name="associated_footnotes",
+        method="footnotes_count",
+    )
+
+    def footnotes_count(self, queryset, name, value):
+        if value:
+            queryset = queryset.annotate(
+                num_footnotes=models.Count("footnote_associations"),
+            ).filter(num_footnotes__gt=0)
+
+        return queryset
 
     class Meta:
         model = GoodsNomenclature
         form = CommodityFilterForm
 
         # Defines the order shown in the form.
-        fields = ["search", "item_id", "active_state", "descriptions__description"]
+        fields = [
+            "search",
+            "item_id",
+            "active_state",
+            "descriptions__description",
+            "current_work_basket",
+        ]

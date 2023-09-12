@@ -3,13 +3,19 @@
 {% set table_rows = [] %}
 {% for commodity in object_list|sort(attribute='item_id') %}
     {% set commodity_link -%}
-        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("commodity-ui-detail", kwargs={"sid": commodity.sid}) }}">{{ commodity.code }}</a>
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', kwargs={'sid': commodity.sid}) }}">{{ commodity.code }}</a>
+    {%- endset %}
+    {% set commodity_footnotes -%}
+    {% for association in commodity.footnote_associations.current() %}
+        <a class="govuk-link" href="{{ association.associated_footnote.get_url() }}">{{ association.associated_footnote }}</a>{% if not loop.last %}, {% endif %}
+    {% endfor %}
     {%- endset %}
     {{ table_rows.append([
         {"html": commodity_link},
         {"text": commodity.suffix},
         {"text": commodity.get_indent_as_at(today).indent},
         {"text": commodity.get_description().description},
+        {"text": commodity_footnotes},
     ]) or "" }}
 {% endfor %}
 {{ govukTable({
@@ -18,6 +24,7 @@
         {"text": "Suffix"},
         {"text": "Indent"},
         {"text": "Commodity description"},
+        {"text": "Footnotes"},
 
     ],
     "rows": table_rows
