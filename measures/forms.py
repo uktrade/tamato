@@ -1124,6 +1124,19 @@ class MeasureGeographicalAreaForm(
     def clean(self):
         cleaned_data = super().clean()
 
+        # Use quota order number origins and exclusions to set cleaned_data
+        if self.order_number:
+            origins = self.order_number.quotaordernumberorigin_set.current()
+            cleaned_data["geo_areas_and_exclusions"] = [
+                {
+                    "geo_area": origin.geographical_area,
+                    "exclusions": list(origin.excluded_areas.current()),
+                }
+                for origin in origins
+            ]
+            return cleaned_data
+
+        # Otherwise take geographical data from form
         geo_area_choice = self.cleaned_data.get("geo_area")
 
         geographical_area_fields = {
@@ -1134,29 +1147,35 @@ class MeasureGeographicalAreaForm(
         if geo_area_choice:
             if not self.formset_submitted:
                 if geo_area_choice == constants.GeoAreaType.ERGA_OMNES:
-                    cleaned_data["geo_area_list"] = [self.erga_omnes_instance]
+                    cleaned_data["geo_areas_and_exclusions"] = [
+                        {"geo_area": self.erga_omnes_instance},
+                    ]
 
                 elif geo_area_choice == constants.GeoAreaType.GROUP:
                     data_key = constants.SUBFORM_PREFIX_MAPPING[geo_area_choice]
-                    cleaned_data["geo_area_list"] = [cleaned_data[data_key]]
+                    cleaned_data["geo_areas_and_exclusions"] = [
+                        {"geo_area": cleaned_data[data_key]},
+                    ]
 
                 elif geo_area_choice == constants.GeoAreaType.COUNTRY:
                     field_name = geographical_area_fields[geo_area_choice]
                     data_key = constants.SUBFORM_PREFIX_MAPPING[geo_area_choice]
-                    cleaned_data["geo_area_list"] = [
-                        geo_area[field_name] for geo_area in cleaned_data[data_key]
+                    cleaned_data["geo_areas_and_exclusions"] = [
+                        {"geo_area": geo_area[field_name]}
+                        for geo_area in cleaned_data[data_key]
                     ]
 
-                exclusions = cleaned_data.get(
+                geo_area_exclusions = cleaned_data.get(
                     constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
                 )
-                if exclusions:
-                    cleaned_data["geo_area_exclusions"] = [
+                if geo_area_exclusions:
+                    exclusions = [
                         exclusion[constants.FIELD_NAME_MAPPING[geo_area_choice]]
-                        for exclusion in cleaned_data[
-                            constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
-                        ]
+                        for exclusion in geo_area_exclusions
                     ]
+                    cleaned_data["geo_areas_and_exclusions"][0][
+                        "exclusions"
+                    ] = exclusions
 
         return cleaned_data
 
