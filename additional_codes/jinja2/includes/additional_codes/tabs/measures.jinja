@@ -13,13 +13,13 @@
     {"html": measure_link},
     {"html": commodity_link},
     {"text": "{:%d %b %Y}".format(object.valid_between.lower)},
-    {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
+    {"text": "{:%d %b %Y}".format(object.effective_end_date) if object.effective_end_date else "-"}
   ]) or "" }}
 {% endfor %}
 
 
-<div class="quota__core-data govuk-grid-row">
-    <div class="quota__core-data__content govuk-grid-column-three-quarters">
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
         <h2 class="govuk-heading-l">Details</h2>
         {% if measures %}
         <p class="govuk-body">Showing currently active measures.</p>
