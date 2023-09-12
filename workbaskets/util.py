@@ -70,14 +70,9 @@ class TableRow:
 
 
 def find_comm_code(cell, row_data):
-    from commodities.models.orm import GoodsNomenclature
-
     matches = re.compile(ITEM_ID_REGEX).match(cell)
     if matches:
-        commodity = (
-            GoodsNomenclature.objects.latest_approved().filter(item_id=cell).first()
-        )
-        row_data.commodity = commodity
+        row_data.commodity = cell
         return True
     return False
 

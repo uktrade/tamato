@@ -734,7 +734,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             for row in self.data_upload.rows.all():
                 matches = self.workbasket_measures.filter(
                     valid_between=row.valid_between,
-                    goods_nomenclature=row.commodity,
+                    goods_nomenclature__item_id=row.commodity,
                 )
                 duty_matches = [
                     measure

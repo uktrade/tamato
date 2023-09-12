@@ -31,7 +31,7 @@ def test_get_comm_code():
     created_commodity = factories.GoodsNomenclatureFactory()
     row_data = TableRow()
     find_comm_code(created_commodity.item_id, row_data)
-    assert row_data.commodity == created_commodity
+    assert row_data.commodity == created_commodity.item_id
 
 
 @pytest.mark.parametrize(
@@ -92,6 +92,6 @@ def test_serialize_uploaded_data():
         date(2021, 5, 20),
         date(2024, 8, 31),
     )
-    assert serialized[0].commodity == commodity1
+    assert serialized[0].commodity == commodity1.item_id
     assert serialized[1].valid_between == TaricDateRange(date(2024, 8, 31), None)
-    assert serialized[1].commodity == commodity2
+    assert serialized[1].commodity == commodity2.item_id

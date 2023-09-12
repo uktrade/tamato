@@ -650,10 +650,10 @@ class DataRow(ValidityMixin, models.Model):
         null=True,
         related_name="rows",
     )
-    commodity = models.ForeignKey(
-        "commodities.GoodsNomenclature",
-        on_delete=models.PROTECT,
+    commodity = models.CharField(
+        max_length=255,
         null=True,
+        blank=True,
     )
     duty_sentence = models.CharField(
         max_length=255,
