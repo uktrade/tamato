@@ -3,6 +3,7 @@
 {% from "includes/measures/conditions.jinja" import conditions_list %}
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/sort_by.jinja" import sort_by %}
 
 {# Sets out checkbox #}
 {% macro checkbox_item(field) -%}
@@ -25,6 +26,23 @@
 {% set checkbox_check_all -%}
 <div id="check-all-checkbox"></div>
 {%- endset %}
+
+{% set sid %}
+  {{ sort_by(request, "sid", "ID", base_url, query_params) }}
+{% endset %}
+
+{% set measure_type %}
+  {{ sort_by(request, "measure_type", "Type", base_url, query_params) }}
+{% endset %}
+
+{% set geo_area %}
+  {{ sort_by(request, "geo_area", "Geographical area", base_url, query_params) }}
+{% endset %}
+
+{% set start_date %}
+  {{ sort_by(request, "start_date", "Start date", base_url, query_params) }}
+{% endset %}
+
 
 {# sets out form #}
 <form method="post">
@@ -62,22 +80,24 @@
                 {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
                 {"text": footnotes_display(measure.footnoteassociationmeasure_set.current())},
                 {"text": conditions_list(measure) if measure.conditions.latest_approved() else "-", "classes": "govuk-!-width-one-quarter"},
+                {"text": create_link(url("regulation-ui-detail", kwargs={"role_type": measure.generating_regulation.role_type,"regulation_id": measure.generating_regulation.regulation_id}), measure.generating_regulation.regulation_id) if measure.generating_regulation.regulation_id else '-'},
               ]) or "" }} 
           {% endfor %}
         {{ govukTable({
           "head": [
             {"html": checkbox_check_all},
-            {"text": "ID"},
-            {"text": "Type"},
-            {"text": "Commodity code"},
-            {"text": "Start date"},
+            {"text": sid},
+            {"text": measure_type},
+            {"text": "Commodity"},
+            {"text": start_date},
             {"text": "End date"},
             {"text": "Duties"},
             {"text": "Additional code"},
-            {"text": "Geographical area"},
+            {"text": geo_area},
             {"text": "Quota"},
             {"text": "Footnote"},
             {"text": "Conditions"},
+            {"text": "Regulation"},
           ],
           "rows": table_rows,
           "classes": "govuk-table-m"
