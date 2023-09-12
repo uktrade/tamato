@@ -241,26 +241,17 @@ class FootnoteFilterForm(forms.Form):
             Div(Field.text("search", field_width=Fluid.TWO_THIRDS)),
             Div(
                 Div(
-                    Field.text("footnote_type", field_width=Fluid.ONE_THIRD),
-                    css_class="govuk-grid-column-one-half",
+                    "footnote_type",
+                    css_class="govuk-grid-column-one-third",
                 ),
                 Div(
-                    Field.text("start_year", field_width=Fluid.ONE_THIRD),
-                    css_class="govuk-grid-column-one-half",
-                ),
-                css_class="govuk-grid-row",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            Div(
-                Div(
-                    Field.text("active_state", field_width=Fluid.ONE_THIRD),
-                    css_class="govuk-grid-column-one-half",
+                    "start_year",
+                    css_class="govuk-grid-column-one-third",
                 ),
                 Div(
-                    Field.text("current_work_basket", field_width=Fluid.ONE_THIRD),
-                    css_class="govuk-grid-column-one-half",
+                    "active_state",
+                    "current_work_basket",
+                    css_class="govuk-grid-column-one-third",
                 ),
                 css_class="govuk-grid-row",
             ),

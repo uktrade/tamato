@@ -62,7 +62,7 @@ class AdditionalCodeFilter(
         choices=type_choices(models.AdditionalCodeType.objects.latest_approved()),
         widget=CheckboxSelectMultiple,
         field_name="type__sid",
-        label="Additional Code Type",
+        label="Additional code type",
         help_text="Select all that apply",
         required=False,
     )

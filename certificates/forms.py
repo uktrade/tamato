@@ -280,23 +280,20 @@ class CertificateFilterForm(forms.Form):
             Div(
                 Field.text("search", field_width=Fluid.TWO_THIRDS),
             ),
-            Div(
-                Div(Field.text("certificate_type", field_width=Fluid.ONE_HALF)),
-                css_class="gov_grid-column-one-half",
-            ),
             HTML(
                 '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
             ),
             Div(
                 Div(
-                    Field.text("active_state", field_width=Fluid.ONE_THIRD),
-                    css_class="govuk-grid-column-one-third",
+                    "certificate_type",
+                    css_class="govuk-grid-column-two-thirds",
                 ),
                 Div(
-                    Field.text("current_work_basket", field_width=Fluid.ONE_THIRD),
+                    "active_state",
+                    "current_work_basket",
                     css_class="govuk-grid-column-one-third",
                 ),
-                css_class="gov_grid-row",
+                css_class="govuk-grid-row",
             ),
             Div(
                 Div(

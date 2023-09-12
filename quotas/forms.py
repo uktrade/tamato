@@ -5,7 +5,6 @@ from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
-from crispy_forms_gds.layout import Fluid
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -34,15 +33,10 @@ class QuotaFilterForm(forms.Form):
 
         self.helper.layout = Layout(
             Div(
-                Field.text(
+                Div(
                     "order_number",
-                    label_size=Size.SMALL,
-                    field_width=Fluid.ONE_THIRD,
-                ),
-                Field.text(
                     "origin",
-                    label_size=Size.SMALL,
-                    field_width=Fluid.ONE_THIRD,
+                    css_class="govuk-grid-column-full",
                 ),
                 css_class="govuk-grid-row",
             ),
@@ -51,39 +45,17 @@ class QuotaFilterForm(forms.Form):
             ),
             Div(
                 Div(
-                    Field.radios(
-                        "mechanism",
-                        legend_size=Size.SMALL,
-                        field_width=Fluid.ONE_THIRD,
-                    ),
+                    "category",
                     css_class="govuk-grid-column-one-third",
                 ),
                 Div(
-                    Field.radios(
-                        "active_state",
-                        legend_size=Size.SMALL,
-                        field_width=Fluid.ONE_THIRD,
-                    ),
+                    "mechanism",
                     css_class="govuk-grid-column-one-third",
                 ),
                 Div(
-                    Field.text(
-                        "current_work_basket",
-                        label_size=Size.SMALL,
-                        field_width=Fluid.ONE_THIRD,
-                    ),
+                    "active_state",
+                    "current_work_basket",
                     css_class="govuk-grid-column-one-third",
-                ),
-                css_class="govuk-grid-row",
-            ),
-            Div(
-                Div(
-                    Field.radios(
-                        "category",
-                        legend_size=Size.SMALL,
-                        field_width=Fluid.ONE_THIRD,
-                    ),
-                    css_class="govuk-grid-column-one-half",
                 ),
                 css_class="govuk-grid-row",
             ),

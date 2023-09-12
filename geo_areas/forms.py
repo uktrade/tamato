@@ -906,26 +906,16 @@ class GeographicalAreaFilterForm(forms.Form):
             ),
             Div(
                 Div(
-                    Field.text("area_code", field_width=Fluid.ONE_THIRD),
-                    css_class="govuk-grid-column-one-half",
-                ),
-                Div(
                     "area_code",
-                    css_class="govuk-grid-column-one-half",
-                ),
-                css_class="govuk-grid-row",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            Div(
-                Div(
-                    Field.text("active_state", field_width=Fluid.ONE_THIRD),
-                    css_class="govuk-grid-column-one-half",
+                    css_class="govuk-grid-column-one-third",
                 ),
                 Div(
-                    Field.text("current_work_basket", field_width=Fluid.ONE_THIRD),
-                    css_class="govuk-grid-column-one-half",
+                    "active_state",
+                    css_class="govuk-grid-column-one-third",
+                ),
+                Div(
+                    "current_work_basket",
+                    css_class="govuk-grid-column-one-third",
                 ),
                 css_class="govuk-grid-row",
             ),

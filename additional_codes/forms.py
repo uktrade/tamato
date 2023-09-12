@@ -1,5 +1,7 @@
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Accordion
+from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
@@ -218,47 +220,59 @@ class AdditionalCodeFilterForm(forms.Form):
         self.helper = FormHelper()
 
         self.helper.layout = Layout(
-            Div(
-                Field.text("search", field_width=Fluid.TWO_THIRDS),
-            ),
-            Div(
-                Div(
-                    Field.text("additional_code_type", field_width=Fluid.ONE_HALF),
-                    css_class="govuk-grid-column-one-half",
-                ),
-                Div(
-                    Field.text("start_year", field_width=Fluid.ONE_HALF),
-                    css_class="govuk-grid-column-one-half",
-                ),
-                css_class="govuk-grid-row",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            Div(
-                Div(
-                    Field.text("active_state", field_width=Fluid.ONE_THIRD),
-                    css_class="govuk-grid-column-one-half",
-                ),
-                Div(
-                    Field.text("current_work_basket", field_width=Fluid.ONE_THIRD),
-                    css_class="govuk-grid-column-one-half",
-                ),
-                css_class="govuk-grid-row",
-            ),
-            Div(
-                Div(
-                    Button(
-                        "submit",
-                        "Search and filter",
-                        css_class="govuk-!-margin-top-6",
+            Accordion(
+                AccordionSection(
+                    "Search and filter",
+                    Div(
+                        Field.text("search", field_width=Fluid.TWO_THIRDS),
+                    ),
+                    Div(
+                        Div(
+                            "additional_code_type",
+                            css_class="govuk-grid-column-full",
+                        ),
+                        css_class="govuk-grid-row horizontal-list",
                     ),
                     HTML(
-                        f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                        '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
                     ),
-                    css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                    Div(
+                        Div(
+                            "start_year",
+                            css_class="govuk-grid-column-full",
+                        ),
+                        css_class="govuk-grid-row horizontal-list",
+                    ),
+                    HTML(
+                        '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+                    ),
+                    Div(
+                        Div(
+                            "active_state",
+                            css_class="govuk-grid-column-one-half horizontal-list",
+                        ),
+                        Div(
+                            "current_work_basket",
+                            css_class="govuk-grid-column-one-half",
+                        ),
+                        css_class="govuk-grid-row",
+                    ),
+                    Div(
+                        Div(
+                            Button(
+                                "submit",
+                                "Search and filter",
+                                css_class="govuk-!-margin-top-6",
+                            ),
+                            HTML(
+                                f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                            ),
+                            css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                        ),
+                        css_class="govuk-grid-row govuk-!-padding-top-3",
+                    ),
                 ),
-                css_class="govuk-grid-row govuk-!-padding-top-3",
+                css_class="govuk-grid-row govuk-!-padding-3 govuk-accordion__section--expanded",
             ),
         )
 

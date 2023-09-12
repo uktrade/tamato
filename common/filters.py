@@ -287,7 +287,7 @@ class StartYearMixin(FilterSet):
         choices=last_10_years,
         widget=forms.CheckboxSelectMultiple,
         method="filter_start_year",
-        label="Start Year",
+        label="Start year",
         help_text="Select all that apply",
         required=False,
     )
@@ -324,7 +324,8 @@ class CurrentWorkBasketMixin(FilterSet):
     current_work_basket = BooleanFilter(
         widget=forms.CheckboxInput(),
         method="filter_work_basket",
-        label="Filter by current Workbasket",
+        label="Filter by current workbasket",
+        help_text="Filter by current workbasket",
         required=False,
     )
 
