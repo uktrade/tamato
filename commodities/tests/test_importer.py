@@ -38,6 +38,7 @@ def test_goods_nomenclature_description_update_that_comes_without_a_description_
     goods_nomenclature = factories.GoodsNomenclatureFactory.create(
         sid=123,
         valid_between=date_ranges.normal,
+        description=None,
     )
     goods_nomenclature_description = (
         factories.GoodsNomenclatureDescriptionFactory.create(
@@ -76,6 +77,7 @@ def test_goods_nomenclature_description_update_that_comes_without_a_description_
     goods_nomenclature = factories.GoodsNomenclatureFactory.create(
         sid=123,
         valid_between=date_ranges.normal,
+        description=None,
     )
 
     goods_nomenclature_description_handler = {
