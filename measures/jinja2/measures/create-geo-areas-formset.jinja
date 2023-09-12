@@ -1,0 +1,43 @@
+{% extends "measures/create-wizard-step.jinja" %}
+
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block form %}
+  {% if order_number and origins_and_exclusions %}
+    {% set row_data = [] %}
+    {% for data in origins_and_exclusions %}
+      {% set origin %}
+        {{ data["origin"].area_id }} - {{ data["origin"].get_description().description }}
+      {% endset %}
+
+      {{ row_data.append({
+        "key": {"text": "Geographical area"},
+        "value": {"text": origin},
+        "actions": {"items": []}
+      }) or "" }}
+
+      {% if data.get("exclusions") %}
+        {% set exclusions %}
+          {% for exclusion in data["exclusions"] %}
+            {{ exclusion.area_id }} - {{ exclusion.get_description().description }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        {% endset %}
+
+        {{ row_data.append({
+          "key": {"text": "Geographical area exclusions"},
+          "value": {"text": exclusions if data["exclusions"] else "-"},
+          "actions": {"items": []}
+        }) or "" }}
+      {% endif %}
+    {% endfor %}
+
+    {{ govukSummaryList({
+      "rows": row_data,
+    })}}
+
+    {{ govukButton({"text": "Continue"}) }}
+
+  {% else %}
+    {{ crispy(form) }}
+  {% endif %}
+{% endblock %}
