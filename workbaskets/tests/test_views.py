@@ -1204,7 +1204,7 @@ def test_workbasket_compare_prev_uploaded(valid_user_client, session_workbasket)
     factories.DataUploadFactory(workbasket=session_workbasket)
     url = reverse("workbaskets:workbasket-ui-compare")
     response = valid_user_client.get(url)
-    assert "Previously uploaded data" in response.content.decode(response.charset)
+    assert "Worksheet data" in response.content.decode(response.charset)
 
 
 def test_workbasket_update_prev_uploaded(valid_user_client, session_workbasket):

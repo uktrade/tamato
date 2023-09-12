@@ -36,13 +36,13 @@
   {% endcall %}
 
   {% if data_upload %}
-    <h2 class="govuk-heading-l">Previously uploaded data</h2>
+    <h2 class="govuk-heading-l">Worksheet data</h2>
 
     {% set table_rows = [] %}
     {% for row in data_upload.serialized %}
       {{ table_rows.append([
-        {"text": row.commodity},
-        {"text": row.duty },
+        {"text": row.commodity if row.commodity else "—"},
+        {"text": row.duty_sentence if row.duty_sentence else "—" },
         {"text": "{:%d %b %Y}".format(row.valid_between.lower) },
         {"text": "{:%d %b %Y}".format(row.valid_between.upper) if row.valid_between.upper else "—" },
       ]) or "" }}

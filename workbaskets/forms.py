@@ -154,7 +154,11 @@ class SelectableObjectsForm(forms.Form):
 
 
 class WorkbasketCompareForm(forms.Form):
-    data = forms.CharField(widget=forms.Textarea(), validators=[SymbolValidator])
+    data = forms.CharField(
+        label="Compare worksheet data against the measures in this workbasket",
+        widget=forms.Textarea(),
+        validators=[SymbolValidator],
+    )
 
     def clean(self):
         if self.cleaned_data:
