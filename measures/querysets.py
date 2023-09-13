@@ -1,7 +1,7 @@
 from typing import Union
 
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import Value, Case, CharField, When, F
+from django.db.models import Value, Case, CharField, When, F, FloatField, Subquery
 from django.db.models import Func
 from django.db.models import Q
 from django.db.models.aggregates import Max
@@ -23,7 +23,9 @@ import measures
 
 
 class ComponentQuerySet(TrackedModelQuerySet):
-    def duty_sentence(self, component_parent: Union["measures.Measure", "measures.MeasureCondition"]):
+    def duty_sentence(
+            self, component_parent: Union["measures.Measure", "measures.MeasureCondition"]
+    ):
         """
         Generate a duty sentence based on the latest transaction_id of components
         associated with a given component parent.
@@ -52,8 +54,8 @@ class ComponentQuerySet(TrackedModelQuerySet):
         # Filter components by the latest transaction_id.
         component_qs = component_qs.filter(transaction_id=latest_transaction_id)
 
-        # Construct the duty sentence.
-        duty_sentence = component_qs.annotate(
+        # Subquery to concatenate the values.
+        subquery = component_qs.annotate(
             prefix_value=Case(
                 When(
                     trackedmodel_ptr_id__isnull=True,
@@ -64,34 +66,60 @@ class ComponentQuerySet(TrackedModelQuerySet):
             ),
             monetary_unit_value=Case(
                 When(
-                    Q(duty_amount__isnull=False) & Q(monetary_unit=None),
-                    then=Value("%"),
+                    Q(duty_amount__isnull=False) & Q(monetary_unit__isnull=False),
+                    then=Cast(F('duty_amount') / 100.0, FloatField()),
                 ),
-                When(duty_amount__isnull=True, then=Value("")),
-                default=Value(" "),
-                output_field=CharField(),
+                default=Value(None),  # Set default to None
+                output_field=FloatField(),
             ),
-            full_sentence=Trim(
-                Concat(
-                    "prefix_value",
-                    Value(" "),
-                    F("duty_expression__monetary_unit_applicability_code"),
-                    Value(" / "),
-                    F("component_measurement__measurement_unit__abbreviation"),
-                    Value(" / "),
-                    F("component_measurement__measurement_unit_qualifier__abbreviation"),
+            final_full_sentence=Concat(
+                Case(
+                    When(
+                        trackedmodel_ptr_id__isnull=True,
+                        then=Value(""),
+                    ),
+                    default=F("duty_expression__prefix"),
+                    output_field=CharField(),
                 ),
-                output_field=CharField(),
-            )
-        ).aggregate(
-            duty_sentence=StringAgg(
-                "full_sentence",
-                delimiter=" ",
+                Value("0.000% + "),  # Add '0.000% + ' as a prefix
+                Case(
+                    When(
+                        Q(duty_amount__isnull=False) & Q(monetary_unit__isnull=False),
+                        then=Cast(F('duty_expression__monetary_unit_applicability_code'), CharField()),
+                    ),
+                    default=Value(None),  # Set default to None
+                    output_field=CharField(),
+                ),
+                Case(
+                    When(
+                        Q(duty_amount__isnull=False) & Q(monetary_unit__isnull=False),
+                        then=Cast(F('component_measurement__measurement_unit__abbreviation'), CharField()),
+                    ),
+                    default=Value(None),  # Set default to None
+                    output_field=CharField(),
+                ),
+                Case(
+                    When(
+                        Q(duty_amount__isnull=False) & Q(monetary_unit__isnull=False),
+                        then=Cast(F('component_measurement__measurement_unit_qualifier__abbreviation'),
+                                  CharField()),
+                    ),
+                    default=Value(None),  # Set default to None
+                    output_field=CharField(),
+                ),
+            ),
+        )
+
+        # Use StringAgg to concatenate the values in the subquery.
+        duty_sentence = subquery.values("final_full_sentence").annotate(
+            final_full_sentence2=StringAgg(
+                "final_full_sentence",
+                delimiter="",
                 ordering="duty_expression__sid",
             ),
         )
 
-        return duty_sentence["duty_sentence"]
+        return duty_sentence
 
 
 class MeasuresQuerySet(TrackedModelQuerySet, ValidityQuerySet):
