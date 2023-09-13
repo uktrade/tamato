@@ -26,6 +26,21 @@ class ComponentQuerySet(TrackedModelQuerySet):
     def duty_sentence(
         self, component_parent: Union["measures.Measure", "measures.MeasureCondition"]
     ):
+        """
+        Generate a duty sentence for a given component parent.
+
+        This function calculates and formats a duty sentence for a component parent, which can be either a 'measures.Measure' or a 'measures.MeasureCondition'.
+
+        Args:
+            component_parent (Union["measures.Measure", "measures.MeasureCondition"]): The component parent for which to generate the duty sentence.
+
+        Returns:
+            str: The formatted duty sentence as a string. If no duty sentence can be generated, an empty string is returned.
+
+        Note:
+            The duty sentence is constructed by concatenating various components, including the duty amount, monetary unit code, measurement unit abbreviation, and measurement unit qualifier abbreviation, in a specific format based on their availability and conditions.
+
+        """
         prefix_expression = F("duty_expression__prefix")
         duty_amount_expression = F("duty_amount")
         monetary_unit_code_expression = F("monetary_unit__code")
