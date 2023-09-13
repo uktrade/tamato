@@ -27,7 +27,7 @@ class FilterShowMore {
 
         let choices = Array.from(this.module.getElementsByClassName('govuk-checkboxes__item js-hidden'));
         choices.forEach((choice) => {
-            choice.style.display = 'block';
+            choice.classList.remove("js-hidden");
         });
         showMoreClicked[this.module.getAttribute('data-show-more-id')] = true;
     }
