@@ -259,15 +259,6 @@ def policy_group(db) -> Group:
                 codename=codename,
             ),
         )
-    # for app_label, codename in [
-    #
-    # ]:
-    #     tariff_group.permissions.add(
-    #         Permission.objects.get(
-    #             content_type__app_label=app_label,
-    #             codename=codename,
-    #         )
-    #     )
     return group
 
 
