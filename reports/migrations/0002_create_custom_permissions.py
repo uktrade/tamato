@@ -12,7 +12,6 @@ def create_custom_permissions(apps, schema_editor):
         name="Can view report index",
         content_type=content_type,
     )
-    Group.objects.get(name="Tariff Managers").permissions.add(view_permission)
 
     edit_permission, _ = Permission.objects.get_or_create(
         codename="view_report",
@@ -20,11 +19,11 @@ def create_custom_permissions(apps, schema_editor):
         content_type=content_type,
     )
 
-    Group.objects.get(name="Tariff Managers").permissions.add(edit_permission)
-
 
 class Migration(migrations.Migration):
-    dependencies = []
+    dependencies = [
+        ("reports", "0001_report"),
+    ]
 
     operations = [
         migrations.RunPython(create_custom_permissions),

@@ -7,7 +7,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("reports", "0001_create_custom_permissions"),
     ]
 
     operations = [
