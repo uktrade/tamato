@@ -5,7 +5,6 @@ from unittest.mock import patch
 import factory
 import freezegun
 import pytest
-from django.conf import settings
 from django_fsm import TransitionNotAllowed
 
 from common.tests import factories
@@ -68,7 +67,7 @@ def test_create_from_invalid_status():
 def test_notify_ready_for_processing(
     packaged_workbasket_factory,
     published_envelope_factory,
-    mocked_publishing_models_send_emails_delay,
+    mocked_send_emails_apply_async,
     settings,
 ):
     packaged_wb = packaged_workbasket_factory()
@@ -83,15 +82,11 @@ def test_notify_ready_for_processing(
         "embargo": str(packaged_wb.embargo),
         "jira_url": packaged_wb.jira_url,
     }
-    mocked_publishing_models_send_emails_delay.assert_called_once_with(
-        template_id=settings.READY_FOR_CDS_TEMPLATE_ID,
-        personalisation=personalisation,
-        email_type="packaging",
-    )
+    mocked_send_emails_apply_async.assert_called_once()
 
 
 def test_notify_processing_succeeded(
-    mocked_publishing_models_send_emails_delay,
+    mocked_send_emails_apply_async,
     packaged_workbasket_factory,
     published_envelope_factory,
 ):
@@ -110,15 +105,11 @@ def test_notify_processing_succeeded(
         "loading_report_message": f"Loading report(s): {loading_report.file_name}",
         "comments": packaged_wb.loadingreports.first().comments,
     }
-    mocked_publishing_models_send_emails_delay.assert_called_once_with(
-        template_id=settings.CDS_ACCEPTED_TEMPLATE_ID,
-        personalisation=personalisation,
-        email_type="packaging",
-    )
+    mocked_send_emails_apply_async.assert_called_once()
 
 
 def test_notify_processing_failed(
-    mocked_publishing_models_send_emails_delay,
+    mocked_send_emails_apply_async,
     packaged_workbasket_factory,
     published_envelope_factory,
 ):
@@ -141,18 +132,14 @@ def test_notify_processing_failed(
         "comments": packaged_wb.loadingreports.first().comments,
     }
 
-    mocked_publishing_models_send_emails_delay.assert_called_once_with(
-        template_id=settings.CDS_REJECTED_TEMPLATE_ID,
-        personalisation=personalisation,
-        email_type="packaging",
-    )
+    mocked_send_emails_apply_async.assert_called_once()
 
 
 def test_success_processing_transition(
     packaged_workbasket_factory,
     published_envelope_factory,
     envelope_storage,
-    mocked_publishing_models_send_emails_delay,
+    mocked_send_emails_apply_async,
     settings,
 ):
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False

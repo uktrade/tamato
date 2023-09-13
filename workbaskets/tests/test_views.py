@@ -16,9 +16,12 @@ from common.tests.factories import GeographicalAreaFactory
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.factories import MeasureFactory
 from exporter.tasks import upload_workbaskets
+from importer.models import ImportBatch
+from importer.models import ImportBatchStatus
 from measures.models import Measure
 from workbaskets import models
 from workbaskets.forms import SelectableObjectsForm
+from workbaskets.tasks import check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views import ui
 
@@ -663,6 +666,109 @@ def test_submit_for_packaging(valid_user_client, session_workbasket):
     assert response.url[: len(response_url)] == response_url
 
 
+@pytest.fixture
+def successful_business_rules_setup(session_workbasket, valid_user_client):
+    """Sets up data and runs business rules."""
+    with session_workbasket.new_transaction() as transaction:
+        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        measure = MeasureFactory.create(transaction=transaction)
+        geo_area = GeographicalAreaFactory.create(transaction=transaction)
+        objects = [good, measure, geo_area]
+        for obj in objects:
+            TrackedModelCheckFactory.create(
+                transaction_check__transaction=transaction,
+                model=obj,
+                successful=True,
+            )
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+        "error_count": session_workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
+
+    # run rule checks so unchecked_or_errored_transactions is set
+    check_workbasket_sync(session_workbasket)
+
+
+def import_batch_with_notification():
+    import_batch = factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        goods_import=True,
+        taric_file="goods.xml",
+    )
+
+    return factories.GoodsSuccessfulImportNotificationFactory(
+        notified_object_pk=import_batch.id,
+    )
+
+
+@pytest.mark.parametrize(
+    "import_batch_factory,disabled",
+    [
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.SUCCEEDED,
+                goods_import=True,
+            ),
+            True,
+        ),
+        (
+            import_batch_with_notification,
+            False,
+        ),
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.SUCCEEDED,
+            ),
+            False,
+        ),
+        (
+            lambda: None,
+            False,
+        ),
+    ],
+    ids=(
+        "goods_import_no_notification",
+        "goods_import_with_notification",
+        "master_import",
+        "no_import",
+    ),
+)
+def test_submit_for_packaging_disabled(
+    successful_business_rules_setup,
+    valid_user_client,
+    session_workbasket,
+    import_batch_factory,
+    disabled,
+):
+    """Test that the submit-for-packaging button is disabled when a notification
+    has not been sent for a commodity code import (goods)"""
+
+    import_batch = import_batch_factory()
+
+    if import_batch:
+        import_batch.workbasket_id = session_workbasket.id
+        if isinstance(import_batch, ImportBatch):
+            import_batch.save()
+
+    response = valid_user_client.get(
+        reverse("workbaskets:current-workbasket"),
+    )
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    packaging_button = soup.find("a", href="/publishing/create/")
+
+    if disabled:
+        assert packaging_button.has_attr("disabled")
+    else:
+        assert not packaging_button.has_attr("disabled")
+
+
 def test_terminate_rule_check(valid_user_client, session_workbasket):
     session_workbasket.rule_check_task_id = 123
 
@@ -1193,3 +1299,79 @@ def test_application_access_after_workbasket_delete(
     # workbasket deletion.
     assert response.status_code == 200
     assert not page.select("header nav a.workbasket-link")
+
+
+def make_goods_import_batch(importer_storage, **kwargs):
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        goods_import=True,
+        taric_file="goods.xml",
+        **kwargs,
+    )
+
+
+@pytest.mark.parametrize(
+    "import_batch_factory,visable",
+    [
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.SUCCEEDED,
+                goods_import=True,
+                taric_file="goods.xml",
+            ),
+            True,
+        ),
+        (
+            import_batch_with_notification,
+            False,
+        ),
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.SUCCEEDED,
+            ),
+            False,
+        ),
+        (
+            lambda: None,
+            False,
+        ),
+    ],
+    ids=(
+        "goods_import_no_notification",
+        "goods_import_with_notification",
+        "master_import",
+        "no_import",
+    ),
+)
+def test_review_goods_notification_button(
+    successful_business_rules_setup,
+    valid_user_client,
+    session_workbasket,
+    import_batch_factory,
+    visable,
+):
+    """Test that the submit-for-packaging button is disabled when a notification
+    has not been sent for a commodity code import (goods)"""
+
+    import_batch = import_batch_factory()
+
+    if import_batch:
+        import_batch.workbasket_id = session_workbasket.id
+        if isinstance(import_batch, ImportBatch):
+            import_batch.save()
+
+    response = valid_user_client.get(
+        reverse("workbaskets:workbasket-ui-review-goods"),
+    )
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    # notify_button = soup.find("a", href=f"/notify-goods-report/{import_batch.id}/")
+    notify_button = soup.select(".govuk-body")
+
+    print(notify_button)
+    if visable:
+        assert notify_button
+    else:
+        assert not notify_button

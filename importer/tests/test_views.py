@@ -1,4 +1,5 @@
 from os import path
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
@@ -282,3 +283,29 @@ def test_import_list_filters_return_correct_imports(
     assert len(page.find_all(class_="status-badge")) == 1
     assert page.find(class_="status-badge", text=expected_status_text)
     assert page.find("tbody").find("td", text=import_batch.name)
+
+
+def test_notify_channel_islands_redirects(
+    valid_user_client,
+    completed_goods_import_batch,
+):
+    """Tests that, when the notify button is clicked that it redirects to the
+    conformation page on successful notification trigger."""
+
+    with patch(
+        "notifications.tasks.send_emails_task",
+        return_value=MagicMock(),
+    ) as mocked_email_task:
+        response = valid_user_client.get(
+            reverse(
+                "goods-report-notify",
+                kwargs={"pk": completed_goods_import_batch.pk},
+            ),
+        )
+
+        mocked_email_task.assert_called_once()
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "goods-report-notify-success",
+        kwargs={"pk": completed_goods_import_batch.pk},
+    )
