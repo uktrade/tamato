@@ -241,7 +241,7 @@ class AdditionalCodeFilterForm(forms.Form):
                             "start_year",
                             css_class="govuk-grid-column-full",
                         ),
-                        css_class="govuk-grid-row horizontal-list",
+                        css_class="govuk-grid-row horizontal-list-five",
                     ),
                     HTML(
                         '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',

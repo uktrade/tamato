@@ -80,6 +80,13 @@ ul.govuk-tabs__list[role=tablist] {
   }
 }
 
+.horizontal-list-five{
+  .govuk-checkboxes__item {
+    display: inline-block;
+    width: 15%;
+  }
+}
+
 #id_current_work_basket_hint {
   color: #0b0c0c;
 }
