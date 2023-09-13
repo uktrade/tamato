@@ -1,3 +1,5 @@
+from typing import Union
+
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import Value, Case, CharField, When, F
 from django.db.models import Func
@@ -17,9 +19,11 @@ from common.querysets import ValidityQuerySet
 from common.util import EndDate
 from common.util import StartDate
 
+import measures
+
 
 class ComponentQuerySet(TrackedModelQuerySet):
-    def duty_sentence(self, component_parent):
+    def duty_sentence(self, component_parent: Union["measures.Measure", "measures.MeasureCondition"]):
         """
         Generate a duty sentence based on the latest transaction_id of components
         associated with a given component parent.
