@@ -30,6 +30,7 @@ from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -128,23 +129,56 @@ class MeasureSearch(FilterView):
         return HttpResponseRedirect(reverse("measure-ui-list"))
 
 
-class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView):
+class MeasureList(
+    MeasureSelectionMixin,
+    MeasureMixin,
+    SortingMixin,
+    FormView,
+    TamatoListView,
+):
     """UI endpoint for viewing and filtering Measures."""
 
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
     form_class = SelectableObjectsForm
+    sort_by_fields = ["sid", "measure_type", "geo_area", "start_date"]
+    custom_sorting = {
+        "measure_type": "measure_type__sid",
+        "geo_area": "geographical_area__area_id",
+        "start_date": "valid_between",
+    }
 
     def dispatch(self, *args, **kwargs):
         if not self.request.GET:
             return HttpResponseRedirect(reverse("measure-ui-search"))
         return super().dispatch(*args, **kwargs)
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        ordering = self.get_ordering()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+
+        return queryset
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         page = self.paginator.get_page(self.request.GET.get("page", 1))
         kwargs["objects"] = page.object_list
         return kwargs
+
+    def cleaned_query_params(self):
+        # Remove the sort_by and ordered params in order to stop them being duplicated in the base url
+        if "sort_by" and "ordered" in self.filterset.data:
+            cleaned_filterset = self.filterset.data.copy()
+            cleaned_filterset.pop("sort_by")
+            cleaned_filterset.pop("ordered")
+            return cleaned_filterset
+        else:
+            return self.filterset.data
 
     @property
     def paginator(self):
@@ -161,6 +195,10 @@ class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView)
         context["measure_selections"] = Measure.objects.filter(
             pk__in=measure_selections,
         )
+        context["query_params"] = True
+        context[
+            "base_url"
+        ] = f'{reverse("measure-ui-list")}?{urlencode(self.cleaned_query_params())}'
         return context
 
     def get_initial(self):

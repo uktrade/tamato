@@ -388,7 +388,7 @@ class SortingMixin:
 
     def get_ordering(self):
         sort_by = self.request.GET.get("sort_by")
-        order = self.request.GET.get("order")
+        ordered = self.request.GET.get("ordered")
         assert hasattr(
             self,
             "sort_by_fields",
@@ -399,7 +399,7 @@ class SortingMixin:
             if hasattr(self, "custom_sorting") and self.custom_sorting.get(sort_by):
                 sort_by = self.custom_sorting.get(sort_by)
 
-            if order == "desc":
+            if ordered == "desc":
                 sort_by = f"-{sort_by}"
 
             return sort_by
