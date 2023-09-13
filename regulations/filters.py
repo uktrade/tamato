@@ -10,6 +10,7 @@ from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.filters import TamatoFilterMixin
 from common.filters import type_choices
+from regulations.forms import RegulationFilterForm
 from regulations.models import Group
 from regulations.models import Regulation
 from regulations.validators import RegulationUsage
@@ -35,6 +36,7 @@ class RegulationFilter(
 ):
     class Meta:
         model = Regulation
+        form = RegulationFilterForm
         fields = [
             "search",
             "regulation_usage",
