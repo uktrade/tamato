@@ -23,22 +23,39 @@ class ComponentQuerySet(TrackedModelQuerySet):
     """QuerySet that can be used with MeasureComponent or
     MeasureConditionComponent."""
 
-    def duty_sentence(self, component_parent: Union["measures.Measure", "measures.MeasureCondition"]):
+    def duty_sentence(
+        self, component_parent: Union["measures.Measure", "measures.MeasureCondition"]
+    ):
         prefix_expression = F("duty_expression__prefix")
         duty_amount_expression = F("duty_amount")
         monetary_unit_code_expression = F("monetary_unit__code")
-        measurement_unit_abbreviation_expression = F("component_measurement__measurement_unit__abbreviation")
-        measurement_unit_qualifier_abbreviation_expression = F("component_measurement__measurement_unit_qualifier__abbreviation")
+        measurement_unit_abbreviation_expression = F(
+            "component_measurement__measurement_unit__abbreviation"
+        )
+        measurement_unit_qualifier_abbreviation_expression = F(
+            "component_measurement__measurement_unit_qualifier__abbreviation"
+        )
 
-        def concatenate_expression(duty_amount, monetary_unit_code, measurement_unit_abbreviation, measurement_unit_qualifier_abbreviation):
+        def concatenate_expression(
+            duty_amount,
+            monetary_unit_code,
+            measurement_unit_abbreviation,
+            measurement_unit_qualifier_abbreviation,
+        ):
             return Concat(
                 Case(
-                    When(Q(duty_expression__prefix__isnull=True) | Q(duty_expression__prefix=""), then=Value("")),
+                    When(
+                        Q(duty_expression__prefix__isnull=True)
+                        | Q(duty_expression__prefix=""),
+                        then=Value(""),
+                    ),
                     default=Concat(prefix_expression, Value(" ")),
                 ),
                 duty_amount,
                 Case(
-                    When(monetary_unit=None, duty_amount__isnull=False, then=Value("%")),
+                    When(
+                        monetary_unit=None, duty_amount__isnull=False, then=Value("%")
+                    ),
                     When(duty_amount__isnull=True, then=Value("")),
                     default=Concat(Value(" "), monetary_unit_code),
                 ),
@@ -49,7 +66,9 @@ class ComponentQuerySet(TrackedModelQuerySet):
                         | Q(component_measurement__measurement_unit__abbreviation=None),
                         then=Value(""),
                     ),
-                    When(monetary_unit__isnull=True, then=measurement_unit_abbreviation),
+                    When(
+                        monetary_unit__isnull=True, then=measurement_unit_abbreviation
+                    ),
                     default=Concat(Value(" / "), measurement_unit_abbreviation),
                 ),
                 Case(
@@ -57,7 +76,9 @@ class ComponentQuerySet(TrackedModelQuerySet):
                         component_measurement__measurement_unit_qualifier__abbreviation=None,
                         then=Value(""),
                     ),
-                    default=Concat(Value(" / "), measurement_unit_qualifier_abbreviation),
+                    default=Concat(
+                        Value(" / "), measurement_unit_qualifier_abbreviation
+                    ),
                 ),
                 output_field=CharField(),
             )
