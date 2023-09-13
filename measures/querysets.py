@@ -47,58 +47,51 @@ class ComponentQuerySet(TrackedModelQuerySet):
         # Get the latest transaction_id.
         latest_transaction_id = component_qs.aggregate(
             latest_transaction_id=Max("transaction_id"),
-        ).get("latest_transaction_id")
+        )["latest_transaction_id"]
 
         # Filter components by the latest transaction_id.
         component_qs = component_qs.filter(transaction_id=latest_transaction_id)
 
         # Construct the duty sentence.
-        duty_sentence = (
-            component_qs.annotate(
-                prefix_value=Case(
-                    When(
-                        trackedmodel_ptr_id__isnull=True,
-                        then=Value(""),
-                    ),
-                    default=F("duty_expression__prefix"),
-                    output_field=CharField(),
+        duty_sentence = component_qs.annotate(
+            prefix_value=Case(
+                When(
+                    trackedmodel_ptr_id__isnull=True,
+                    then=Value(""),
                 ),
-                monetary_unit_value=Case(
-                    When(
-                        Q(duty_amount__isnull=False) & Q(monetary_unit=None),
-                        then=Value("%"),
-                    ),
-                    When(duty_amount__isnull=True, then=Value("")),
-                    default=Value(" "),
-                    output_field=CharField(),
+                default=F("duty_expression__prefix"),
+                output_field=CharField(),
+            ),
+            monetary_unit_value=Case(
+                When(
+                    Q(duty_amount__isnull=False) & Q(monetary_unit=None),
+                    then=Value("%"),
                 ),
-            )
-            .annotate(
-                full_sentence=Trim(
-                    Concat(
-                        "prefix_value",
-                        Value(" "),
-                        F("duty_expression__monetary_unit_applicability_code"),
-                        Value(" / "),
-                        F("component_measurement__measurement_unit__abbreviation"),
-                        Value(" / "),
-                        F(
-                            "component_measurement__measurement_unit_qualifier__abbreviation"
-                        ),
-                    ),
-                    output_field=CharField(),
-                )
-            )
-            .aggregate(
-                duty_sentence=StringAgg(
-                    "full_sentence",
-                    delimiter=" ",
-                    ordering="duty_expression__sid",
+                When(duty_amount__isnull=True, then=Value("")),
+                default=Value(" "),
+                output_field=CharField(),
+            ),
+            full_sentence=Trim(
+                Concat(
+                    "prefix_value",
+                    Value(" "),
+                    F("duty_expression__monetary_unit_applicability_code"),
+                    Value(" / "),
+                    F("component_measurement__measurement_unit__abbreviation"),
+                    Value(" / "),
+                    F("component_measurement__measurement_unit_qualifier__abbreviation"),
                 ),
+                output_field=CharField(),
             )
+        ).aggregate(
+            duty_sentence=StringAgg(
+                "full_sentence",
+                delimiter=" ",
+                ordering="duty_expression__sid",
+            ),
         )
 
-        return duty_sentence.get("duty_sentence", "")
+        return duty_sentence["duty_sentence"]
 
 
 class MeasuresQuerySet(TrackedModelQuerySet, ValidityQuerySet):
