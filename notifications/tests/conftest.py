@@ -1,6 +1,3 @@
-from unittest.mock import patch
-
-import factory
 import pytest
 
 from common.tests import factories
@@ -57,37 +54,3 @@ def successful_publishing_notification(crown_dependencies_envelope_factory):
     return factories.CrownDependenciesEnvelopeSuccessNotificationFactory(
         notified_object_pk=cde.id,
     )
-
-
-@pytest.fixture()
-def notify_send_emails_return_value():
-    """
-    Factory fixture to create a mock for sending an email. This allows you to
-    override the response in the test.
-
-    params:
-        response_ids: [list of uuids],
-        recipients: [list of strings],
-        failed_recipients: [list of strings]
-    """
-
-    return {
-        "response_ids": " \n".join([factory.Faker("uuid")]),
-        "recipients": " \n".join([str(factory.Faker("email"))]),
-        "failed_recipients": "",
-    }
-
-
-@pytest.fixture()
-def mock_prepare_link():
-    return_value = {
-        "file": "VGVzdA==",
-        "is_csv": False,
-        "confirm_email_before_download": True,
-        "retention_period": None,
-    }
-    with patch(
-        "notifications.models.GoodsSuccessfulImportNotification.prepare_link_to_file",
-        return_value=return_value,
-    ) as mocked_prepare_link_to_file:
-        yield mocked_prepare_link_to_file
