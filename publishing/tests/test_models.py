@@ -70,6 +70,8 @@ def test_notify_ready_for_processing(
     mocked_send_emails_apply_async,
     settings,
 ):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = True
+
     packaged_wb = packaged_workbasket_factory()
     envelope = published_envelope_factory(packaged_workbasket=packaged_wb)
     packaged_wb.notify_ready_for_processing()
@@ -89,7 +91,10 @@ def test_notify_processing_succeeded(
     mocked_send_emails_apply_async,
     packaged_workbasket_factory,
     published_envelope_factory,
+    settings,
 ):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = True
+
     packaged_wb = packaged_workbasket_factory()
     loading_report = factories.LoadingReportFactory.create(
         packaged_workbasket=packaged_wb,
@@ -112,7 +117,9 @@ def test_notify_processing_failed(
     mocked_send_emails_apply_async,
     packaged_workbasket_factory,
     published_envelope_factory,
+    settings,
 ):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = True
     packaged_wb = packaged_workbasket_factory()
     loading_report1 = factories.LoadingReportFactory.create(
         packaged_workbasket=packaged_wb,

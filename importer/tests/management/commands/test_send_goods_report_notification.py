@@ -41,7 +41,7 @@ def test_send_goods_report_notification(
     notification."""
 
     with patch(
-        "notifications.tasks.send_emails_task",
+        "notifications.models.send_emails_task",
         return_value=MagicMock(),
     ) as mocked_email_task:
         call_command(

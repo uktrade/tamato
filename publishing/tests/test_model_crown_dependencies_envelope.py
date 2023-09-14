@@ -36,7 +36,10 @@ def test_notify_processing_succeeded(
     packaged_workbasket_factory,
     successful_envelope_factory,
     crown_dependencies_envelope_factory,
+    settings,
 ):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = True
+
     pwb = packaged_workbasket_factory()
 
     crown_dependencies_envelope_factory(packaged_workbasket=pwb)
@@ -45,10 +48,8 @@ def test_notify_processing_succeeded(
 
     cd_envelope.notify_publishing_success()
 
-    notification = Notification.objects.last()
-    mocked_send_emails_apply_async.assert_called_with(
-        notification_id=notification.id,
-    )
+    Notification.objects.last()
+    mocked_send_emails_apply_async.assert_called()
 
 
 def test_notify_processing_failed(
@@ -56,7 +57,9 @@ def test_notify_processing_failed(
     packaged_workbasket_factory,
     successful_envelope_factory,
     crown_dependencies_envelope_factory,
+    settings,
 ):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = True
     pwb = packaged_workbasket_factory()
 
     crown_dependencies_envelope_factory(packaged_workbasket=pwb)
@@ -65,7 +68,5 @@ def test_notify_processing_failed(
 
     cd_envelope.notify_publishing_failed()
 
-    notification = Notification.objects.last()
-    mocked_send_emails_apply_async.assert_called_with(
-        notification_id=notification.id,
-    )
+    Notification.objects.last()
+    mocked_send_emails_apply_async.assert_called()

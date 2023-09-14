@@ -158,6 +158,7 @@ class CrownDependenciesEnvelope(TimestampedMixin):
         notification = CrownDependenciesEnvelopeSuccessNotification(
             notified_object_pk=self.pk,
         )
+        print(notification)
         notification.save()
         notification.schedule_send_emails()
 

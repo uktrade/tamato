@@ -158,7 +158,7 @@ class Notification(models.Model):
         background task."""
         send_emails_task.apply_async(args=[self.pk], countdown=countdown)
 
-    def send_emails(self):
+    def send_notification_emails(self):
         """Send the notification emails to users via GOV.UK Notify."""
 
         notified_users = self.notified_users()

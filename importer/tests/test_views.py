@@ -293,7 +293,7 @@ def test_notify_channel_islands_redirects(
     conformation page on successful notification trigger."""
 
     with patch(
-        "notifications.tasks.send_emails_task",
+        "notifications.models.send_emails_task",
         return_value=MagicMock(),
     ) as mocked_email_task:
         response = valid_user_client.get(

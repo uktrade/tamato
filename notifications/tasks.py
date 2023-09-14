@@ -13,7 +13,6 @@ def send_emails_task(notification_pk: int):
     creating a log to record which users received which email template."""
     from notifications.models import Notification
 
-    print("in here")
     notification = Notification.objects.get(pk=notification_pk)
     sub_notification = notification.return_subclass_instance()
-    sub_notification.send_emails()
+    sub_notification.send_notification_emails()
