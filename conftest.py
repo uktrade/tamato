@@ -8,6 +8,7 @@ from typing import Callable
 from typing import Dict
 from typing import Optional
 from typing import Sequence
+from typing import Tuple
 from typing import Type
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -54,10 +55,18 @@ from common.tests.util import get_form_data
 from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
+from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from importer.models import ImportBatchStatus
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
+from measures.models import DutyExpression
+from measures.models import MeasureConditionComponent
+from measures.models import Measurement
+from measures.models import MeasurementUnit
+from measures.models import MeasurementUnitQualifier
+from measures.models import MonetaryUnit
+from measures.parsers import DutySentenceParser
 from publishing.models import PackagedWorkBasket
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
@@ -1549,6 +1558,270 @@ def empty_goods_import_batch():
         status=ImportBatchStatus.SUCCEEDED,
         workbasket_id=archived_workbasket.id,
     )
+
+
+@pytest.fixture
+def duty_sentence_parser(
+    duty_expressions: Dict[int, DutyExpression],
+    monetary_units: Dict[str, MonetaryUnit],
+    measurements: Dict[Tuple[str, Optional[str]], Measurement],
+) -> DutySentenceParser:
+    return DutySentenceParser(
+        duty_expressions.values(),
+        monetary_units.values(),
+        measurements.values(),
+    )
+
+
+@pytest.fixture
+def percent_or_amount() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=1,
+        prefix="",
+        duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
+        measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
+        monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
+    )
+
+
+@pytest.fixture
+def plus_percent_or_amount() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=4,
+        prefix="+",
+        duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
+        measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
+        monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
+    )
+
+
+@pytest.fixture
+def plus_agri_component() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=12,
+        prefix="+ AC",
+        duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+        measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
+        monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
+    )
+
+
+@pytest.fixture
+def plus_amount_only() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=20,
+        prefix="+",
+        duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
+        measurement_unit_applicability_code=ApplicabilityCode.MANDATORY,
+        monetary_unit_applicability_code=ApplicabilityCode.MANDATORY,
+    )
+
+
+@pytest.fixture
+def nothing() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=37,
+        prefix="NIHIL",
+        duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+        measurement_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+        monetary_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+    )
+
+
+@pytest.fixture
+def supplementary_unit() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=99,
+        prefix="",
+        duty_amount_applicability_code=ApplicabilityCode.PERMITTED,
+        measurement_unit_applicability_code=ApplicabilityCode.MANDATORY,
+        monetary_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+    )
+
+
+@pytest.fixture
+def duty_expressions(
+    percent_or_amount: DutyExpression,
+    plus_percent_or_amount: DutyExpression,
+    plus_agri_component: DutyExpression,
+    plus_amount_only: DutyExpression,
+    supplementary_unit: DutyExpression,
+    nothing: DutyExpression,
+) -> Dict[int, DutyExpression]:
+    return {
+        d.sid: d
+        for d in [
+            percent_or_amount,
+            plus_percent_or_amount,
+            plus_agri_component,
+            plus_amount_only,
+            supplementary_unit,
+            nothing,
+        ]
+    }
+
+
+@pytest.fixture
+def monetary_units() -> Dict[str, MonetaryUnit]:
+    return {
+        m.code: m
+        for m in [
+            factories.MonetaryUnitFactory(code="EUR"),
+            factories.MonetaryUnitFactory(code="GBP"),
+            factories.MonetaryUnitFactory(code="XEM"),
+        ]
+    }
+
+
+@pytest.fixture
+def measurement_units() -> Sequence[MeasurementUnit]:
+    return [
+        factories.MeasurementUnitFactory(code="KGM", abbreviation="kg"),
+        factories.MeasurementUnitFactory(code="DTN", abbreviation="100 kg"),
+        factories.MeasurementUnitFactory(code="MIL", abbreviation="1,000 p/st"),
+    ]
+
+
+@pytest.fixture
+def unit_qualifiers() -> Sequence[MeasurementUnitQualifier]:
+    return [
+        factories.MeasurementUnitQualifierFactory(code="Z", abbreviation="lactic."),
+    ]
+
+
+@pytest.fixture
+def measurements(
+    measurement_units,
+    unit_qualifiers,
+) -> Dict[Tuple[str, Optional[str]], Measurement]:
+    measurements = [
+        *[
+            factories.MeasurementFactory(
+                measurement_unit=m,
+                measurement_unit_qualifier=None,
+            )
+            for m in measurement_units
+        ],
+        factories.MeasurementFactory(
+            measurement_unit=measurement_units[1],
+            measurement_unit_qualifier=unit_qualifiers[0],
+        ),
+    ]
+    return {
+        (
+            m.measurement_unit.code,
+            m.measurement_unit_qualifier.code if m.measurement_unit_qualifier else None,
+        ): m
+        for m in measurements
+    }
+
+
+@pytest.fixture
+def condition_duty_sentence_parser(
+    duty_expressions: Dict[int, DutyExpression],
+    monetary_units: Dict[str, MonetaryUnit],
+    measurements: Dict[Tuple[str, Optional[str]], Measurement],
+) -> DutySentenceParser:
+    return DutySentenceParser(
+        duty_expressions.values(),
+        monetary_units.values(),
+        measurements.values(),
+        MeasureConditionComponent,
+    )
+
+
+@pytest.fixture
+def get_component_data(duty_expressions, monetary_units, measurements) -> Callable:
+    def getter(
+        duty_expression_id,
+        amount,
+        monetary_unit_code,
+        measurement_codes,
+    ) -> Dict:
+        return {
+            "duty_expression": duty_expressions.get(duty_expression_id),
+            "duty_amount": amount,
+            "monetary_unit": monetary_units.get(monetary_unit_code),
+            "component_measurement": measurements.get(measurement_codes),
+        }
+
+    return getter
+
+
+@pytest.fixture(
+    params=(
+        ("4.000%", [(1, 4.0, None, None)]),
+        ("1.230 EUR / kg", [(1, 1.23, "EUR", ("KGM", None))]),
+        ("0.300 XEM / 100 kg / lactic.", [(1, 0.3, "XEM", ("DTN", "Z"))]),
+        (
+            "12.900% + 20.000 EUR / kg",
+            [(1, 12.9, None, None), (4, 20.0, "EUR", ("KGM", None))],
+        ),
+        ("kg", [(99, None, None, ("KGM", None))]),
+        ("100 kg", [(99, None, None, ("DTN", None))]),
+        ("1.000 EUR", [(1, 1.0, "EUR", None)]),
+        ("0.000% + AC", [(1, 0.0, None, None), (12, None, None, None)]),
+    ),
+    ids=[
+        "simple_ad_valorem",
+        "simple_specific_duty",
+        "unit_with_qualifier",
+        "multi_component_expression",
+        "supplementary_unit",
+        "supplementary_unit_with_numbers",
+        "monetary_unit_without_measurement",
+        "non_amount_expression",
+    ],
+)
+def reversible_duty_sentence_data(request, get_component_data):
+    """Duty sentence test cases that are syntactically correct and are also
+    formatted correctly."""
+    expected, component_data = request.param
+    return expected, [get_component_data(*args) for args in component_data]
+
+
+@pytest.fixture(
+    params=(
+        ("20.0 EUR/100kg", [(1, 20.0, "EUR", ("DTN", None))]),
+        ("1.0 EUR/1000 p/st", [(1, 1.0, "EUR", ("MIL", None))]),
+    ),
+    ids=[
+        "parses_without_spaces",
+        "parses_without_commas",
+    ],
+)
+def irreversible_duty_sentence_data(request, get_component_data):
+    """Duty sentence test cases that are syntactically correct but are not in
+    the canonical rendering format with spaces and commas in the correct
+    places."""
+    expected, component_data = request.param
+    return expected, [get_component_data(*args) for args in component_data]
+
+
+@pytest.fixture(
+    params=(
+        (
+            (
+                "0.000% + AC",
+                [(1, 0.0, None, None), (12, None, None, None)],
+            ),
+            (
+                "12.900% + 20.000 EUR / kg",
+                [(1, 12.9, None, None), (4, 20.0, "EUR", ("KGM", None))],
+            ),
+        ),
+    ),
+)
+def duty_sentence_x_2_data(request, get_component_data):
+    """Duty sentence test cases that can be used to create a history of
+    components."""
+    history = []
+    for version in request.param:
+        expected, component_data = version
+        history.append(
+            (expected, [get_component_data(*args) for args in component_data]),
+        )
+    return history
 
 
 @pytest.fixture()

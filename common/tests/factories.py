@@ -1406,6 +1406,28 @@ class CrownDependenciesPublishingOperationalStatusFactory(
         model = "publishing.CrownDependenciesPublishingOperationalStatus"
 
 
+class DataUploadFactory(factory.django.DjangoModelFactory):
+    """Creates a DataUpload instance."""
+
+    class Meta:
+        model = "workbaskets.DataUpload"
+
+    raw_data = factory.Faker("text", max_nb_chars=500)
+    workbasket = factory.SubFactory(WorkBasketFactory)
+
+
+class DataRowFactory(factory.django.DjangoModelFactory):
+    """Creates a DataRow instance."""
+
+    class Meta:
+        model = "workbaskets.DataRow"
+
+    data_upload = factory.SubFactory(DataUploadFactory)
+    commodity = factory.SubFactory(GoodsNomenclatureFactory)
+    duty_sentence = factory.Faker("text", max_nb_chars=24)
+    valid_between = date_ranges("no_end")
+
+
 class SucceededImportBatchFactory(ImportBatchFactory):
     status = ImportBatchStatus.SUCCEEDED
     goods_import = True
