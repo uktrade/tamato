@@ -156,31 +156,34 @@ class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView)
     def get_context_data(self, **kwargs):
         # References to page or pagination in the template were heavily increasing load time. By setting everything we need in the context,
         # we can reduce load time
-        context = {}
-        context["filter"] = kwargs["filter"]
-        context["form"] = self.get_form()
-        context["view"] = self
-
         page = self.paginator.get_page(self.request.GET.get("page", 1))
-
-        context["is_paginated"] = True
-        context["results_count"] = self.paginator.count
-        context["results_limit_breached"] = self.paginator.limit_breached
-        context["page_count"] = self.paginator.num_pages
-        context["has_other_pages"] = page.has_other_pages()
-        context["has_previous_page"] = page.has_previous()
+        context = {}
+        context.update(
+            {
+                "filter": kwargs["filter"],
+                "form": self.get_form(),
+                "view": self,
+                "is_paginated": True,
+                "results_count": self.paginator.count,
+                "results_limit_breached": self.paginator.limit_breached,
+                "page_count": self.paginator.num_pages,
+                "has_other_pages": page.has_other_pages(),
+                "has_previous_page": page.has_previous(),
+                "has_next_page": page.has_next(),
+                "page_number": page.number,
+                "list_items_count": self.paginator.per_page,
+                "object_list": page.object_list,
+                "page_links": build_pagination_list(
+                    page.number,
+                    page.paginator.num_pages,
+                ),
+            },
+        )
         if context["has_previous_page"]:
             context["prev_page_number"] = page.previous_page_number()
-        context["has_next_page"] = page.has_next()
         if context["has_next_page"]:
             context["next_page_number"] = page.next_page_number()
-        context["page_number"] = page.number
-        context["list_items_count"] = self.paginator.per_page
-        context["object_list"] = page.object_list
-        context["page_links"] = build_pagination_list(
-            page.number,
-            page.paginator.num_pages,
-        )
+
         measure_selections = [
             SelectableObjectsForm.object_id_from_field_name(name)
             for name in self.measure_selections
