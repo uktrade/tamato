@@ -901,37 +901,43 @@ class GeographicalAreaFilterForm(forms.Form):
         self.helper = FormHelper()
 
         self.helper.layout = Layout(
-            Div(
-                Field.text("search", field_width=Fluid.TWO_THIRDS),
-            ),
-            Div(
-                Div(
-                    "area_code",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                Div(
-                    "active_state",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                Div(
-                    "current_work_basket",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                css_class="govuk-grid-row",
-            ),
-            Div(
-                Div(
-                    Button(
-                        "submit",
-                        "Search and filter",
-                        css_class="govuk-!-margin-top-6",
+            Accordion(
+                AccordionSection(
+                    "Search and filter",
+                    Div(
+                        Field.text("search", field_width=Fluid.TWO_THIRDS),
                     ),
-                    HTML(
-                        f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                    Div(
+                        Div(
+                            "area_code",
+                            css_class="govuk-grid-column-one-third",
+                        ),
+                        Div(
+                            "active_state",
+                            css_class="govuk-grid-column-one-third",
+                        ),
+                        Div(
+                            "current_work_basket",
+                            css_class="govuk-grid-column-one-third",
+                        ),
+                        css_class="govuk-grid-row",
                     ),
-                    css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                    Div(
+                        Div(
+                            Button(
+                                "submit",
+                                "Search and filter",
+                                css_class="govuk-!-margin-top-6",
+                            ),
+                            HTML(
+                                f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                            ),
+                            css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                        ),
+                        css_class="govuk-grid-row govuk-!-padding-top-3",
+                    ),
+                    css_class="govuk-accordion__section--expanded",
                 ),
-                css_class="govuk-grid-row govuk-!-padding-top-3",
             ),
         )
 

@@ -1,5 +1,7 @@
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Accordion
+from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
@@ -238,36 +240,42 @@ class FootnoteFilterForm(forms.Form):
         self.helper = FormHelper()
 
         self.helper.layout = Layout(
-            Div(Field.text("search", field_width=Fluid.TWO_THIRDS)),
-            Div(
-                Div(
-                    "footnote_type",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                Div(
-                    "start_year",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                Div(
-                    "active_state",
-                    "current_work_basket",
-                    css_class="govuk-grid-column-one-third",
-                ),
-                css_class="govuk-grid-row",
-            ),
-            Div(
-                Div(
-                    Button(
-                        "submit",
-                        "Search and filter",
-                        css_class="govuk-!-margin-top-6",
+            Accordion(
+                AccordionSection(
+                    "Search and filter",
+                    Div(Field.text("search", field_width=Fluid.TWO_THIRDS)),
+                    Div(
+                        Div(
+                            "footnote_type",
+                            css_class="govuk-grid-column-one-third",
+                        ),
+                        Div(
+                            "start_year",
+                            css_class="govuk-grid-column-one-third",
+                        ),
+                        Div(
+                            "active_state",
+                            "current_work_basket",
+                            css_class="govuk-grid-column-one-third",
+                        ),
+                        css_class="govuk-grid-row",
                     ),
-                    HTML(
-                        f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                    Div(
+                        Div(
+                            Button(
+                                "submit",
+                                "Search and filter",
+                                css_class="govuk-!-margin-top-6",
+                            ),
+                            HTML(
+                                f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                            ),
+                            css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                        ),
+                        css_class="govuk-grid-row govuk-!-padding-top-3",
                     ),
-                    css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                    css_class="govuk-accordion__section--expanded",
                 ),
-                css_class="govuk-grid-row govuk-!-padding-top-3",
             ),
         )
 
