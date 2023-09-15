@@ -12,6 +12,7 @@ import { initAll } from 'govuk-frontend';
 import initCheckboxes from './checkboxes';
 import initConditionalMeasureConditions from './conditionalMeasureConditions';
 import initFilterDisabledToggleForComCode from './conditionalDisablingFilters'
+import initCloseAccordionSection from './openCloseAccordion';
 showHideCheckboxes();
 // Initialise accessible-autocomplete components without a `name` attr in order
 // to avoid the "dummy" autocomplete field being submitted as part of the form
@@ -25,3 +26,4 @@ initCheckboxes();
 initConditionalMeasureConditions();
 initAutocompleteProgressiveEnhancement();
 initFilterDisabledToggleForComCode();
+initCloseAccordionSection();
