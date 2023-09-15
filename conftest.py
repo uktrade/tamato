@@ -1901,7 +1901,10 @@ def published_envelope_factory(packaged_workbasket_factory, envelope_storage):
 
 
 @pytest.fixture(scope="function")
-def successful_envelope_factory(published_envelope_factory):
+def successful_envelope_factory(
+    published_envelope_factory,
+    mocked_send_emails_apply_async,
+):
     """
     Factory fixture to create a successfully processed envelope and update the
     packaged_workbasket envelope field.

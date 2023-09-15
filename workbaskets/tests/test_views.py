@@ -669,9 +669,9 @@ def test_submit_for_packaging(valid_user_client, session_workbasket):
 def successful_business_rules_setup(session_workbasket, valid_user_client):
     """Sets up data and runs business rules."""
     with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
-        measure = MeasureFactory.create(transaction=transaction)
-        geo_area = GeographicalAreaFactory.create(transaction=transaction)
+        good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
+        measure = factories.MeasureFactory.create(transaction=transaction)
+        geo_area = factories.GeographicalAreaFactory.create(transaction=transaction)
         objects = [good, measure, geo_area]
         for obj in objects:
             TrackedModelCheckFactory.create(
@@ -1404,7 +1404,7 @@ def make_goods_import_batch(importer_storage, **kwargs):
     )
 
 
-@pytest.skip("Unable to mock s3 file read from within ET.parse currently")
+@pytest.mark.skip(reason="Unable to mock s3 file read from within ET.parse currently")
 @pytest.mark.parametrize(
     "import_batch_factory,visable",
     [

@@ -72,8 +72,6 @@ class NotificationLogAdmin(admin.ModelAdmin):
 class NotificationAdmin(admin.ModelAdmin):
     """Class providing read-only list and detail views for notification."""
 
-    # TODO add filters on notification_type
-
     ordering = ["pk"]
     list_display = (
         "pk",
@@ -81,6 +79,8 @@ class NotificationAdmin(admin.ModelAdmin):
         "notified_object_pk",
         "display_users",
     )
+
+    list_filter = ("notification_type",)
 
     readonly_fields = []
 
