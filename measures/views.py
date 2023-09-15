@@ -141,11 +141,12 @@ class MeasureList(
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
     form_class = SelectableObjectsForm
-    sort_by_fields = ["sid", "measure_type", "geo_area", "start_date"]
+    sort_by_fields = ["sid", "measure_type", "geo_area", "start_date", "end_date"]
     custom_sorting = {
         "measure_type": "measure_type__sid",
         "geo_area": "geographical_area__area_id",
         "start_date": "valid_between",
+        "end_date": "db_effective_end_date",
     }
 
     def dispatch(self, *args, **kwargs):
@@ -157,10 +158,14 @@ class MeasureList(
         queryset = super().get_queryset()
 
         ordering = self.get_ordering()
+
         if ordering:
             if isinstance(ordering, str):
+                if ordering in "-db_effective_end_date":
+                    queryset = queryset.with_effective_valid_between()
+
                 ordering = (ordering,)
-            queryset = queryset.order_by(*ordering)
+                queryset = queryset.order_by(*ordering)
 
         return queryset
 
