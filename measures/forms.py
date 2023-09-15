@@ -779,7 +779,7 @@ class MeasureFilterForm(forms.Form):
                                 "goods_nomenclature",
                                 Field.text("sid", field_width=Fluid.TWO_THIRDS),
                                 "regulation",
-                                "footnotes",
+                                "footnote",
                                 css_class="govuk-grid-column-one-third",
                             ),
                             Div(

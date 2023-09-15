@@ -5,3 +5,9 @@
 .govuk-accordion__section-content > :last-child {
   @extend .govuk-\!-margin-bottom-6;
 }
+.govuk-accordion__section-button {
+  color: black !important;
+}
+.govuk-accordion__icon {
+  display: none !important;
+}
