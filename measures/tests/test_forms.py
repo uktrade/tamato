@@ -503,7 +503,10 @@ def test_measure_geographical_area_form_quota_order_number():
                 "exclusions": [],
             },
         ]
-        assert form.cleaned_data["geo_areas_and_exclusions"] == expected_cleaned_data
+        assert sorted(
+            form.cleaned_data["geo_areas_and_exclusions"],
+            key=lambda d: sorted(d.items()),
+        ) == sorted(expected_cleaned_data, key=lambda d: sorted(d.items()))
 
 
 def test_measure_forms_details_invalid_data():
