@@ -7,6 +7,7 @@ from django.db import transaction
 from commodities import import_parsers as parsers
 from commodities import models
 from commodities import serializers
+from commodities.models.orm import GoodsNomenclatureDescription
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from importer.handlers import BaseHandler
@@ -154,6 +155,10 @@ class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandle
         TODO : implement correct period handling to correctly resolve this crude workaround
         """
         data = dict()
+
+        # The code below looks for an existing goods nomenclature description in our db (using the description sid)
+        # and if it finds one it will use the validity start date from that record to use in the new description.
+        # If there is no existing description found then it will use todays date as the validity start date.
         # Setting to today's date is not perfect, and could cause issues in circumstances where the end date of the
         # goods nomenclature is before today, however if that's the case it does not really matter.
         # an additional possibility is that there already exists a description with this date, which will cause a rule
@@ -161,7 +166,25 @@ class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandle
 
         # Ultimately this is a crude temporary measure that will be superseded by a correct implementation splitting
         # out description periods into a new table
-        data["validity_start"] = date.today()
+
+        # goods_nomenclature_description = None if no description exists
+        goods_nomenclature_description = (
+            GoodsNomenclatureDescription.objects.filter(sid=self.data["sid"])
+            .latest_approved()
+            .first()
+        )
+
+        if (
+            goods_nomenclature_description
+            and goods_nomenclature_description.described_goods_nomenclature.valid_between.lower
+        ):
+            data[
+                "validity_start"
+            ] = (
+                goods_nomenclature_description.described_goods_nomenclature.valid_between.lower
+            )
+        else:
+            data["validity_start"] = date.today()
 
         # Update the goods nomenclature description with the start date
         goods_nomenclature_description_handler.data.update(data)

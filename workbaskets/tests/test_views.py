@@ -12,9 +12,6 @@ from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
 from common.models.utils import override_current_transaction
 from common.tests import factories
-from common.tests.factories import GeographicalAreaFactory
-from common.tests.factories import GoodsNomenclatureFactory
-from common.tests.factories import MeasureFactory
 from exporter.tasks import upload_workbaskets
 from measures.models import Measure
 from workbaskets import models
@@ -165,7 +162,7 @@ def test_review_workbasket_displays_objects_in_current_workbasket(
     selection form of the review workbasket page."""
 
     with session_workbasket.new_transaction():
-        GoodsNomenclatureFactory.create()
+        factories.GoodsNomenclatureFactory.create()
 
     response = valid_user_client.get(
         reverse(
@@ -189,7 +186,7 @@ def test_review_workbasket_displays_rule_violation_summary(
     detailing the number of tracked model changes and business rule violations,
     dated to the most recent `TrackedModelCheck`."""
     with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
             model=good,
@@ -555,7 +552,7 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     assert not session_workbasket.rule_check_task_id
 
     with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
             model=good,
@@ -630,9 +627,9 @@ def test_submit_for_packaging(valid_user_client, session_workbasket):
     """Test that a GET request to the submit-for-packaging endpoint returns a
     302, redirecting to the create packaged workbasket page."""
     with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
-        measure = MeasureFactory.create(transaction=transaction)
-        geo_area = GeographicalAreaFactory.create(transaction=transaction)
+        good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
+        measure = factories.MeasureFactory.create(transaction=transaction)
+        geo_area = factories.GeographicalAreaFactory.create(transaction=transaction)
         objects = [good, measure, geo_area]
         for obj in objects:
             TrackedModelCheckFactory.create(
@@ -689,7 +686,7 @@ def test_workbasket_violations(valid_user_client, session_workbasket):
         "workbaskets:workbasket-ui-violations",
     )
     with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
             model=good,
@@ -721,7 +718,7 @@ def test_workbasket_violations(valid_user_client, session_workbasket):
 
 def test_violation_detail_page(valid_user_client, session_workbasket):
     with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
+        good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
             model=good,
@@ -864,9 +861,9 @@ def test_violation_detail_page_non_superuser_override_violation(
 @pytest.fixture
 def setup(session_workbasket, valid_user_client):
     with session_workbasket.new_transaction() as transaction:
-        good = GoodsNomenclatureFactory.create(transaction=transaction)
-        measure = MeasureFactory.create(transaction=transaction)
-        geo_area = GeographicalAreaFactory.create(transaction=transaction)
+        good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
+        measure = factories.MeasureFactory.create(transaction=transaction)
+        geo_area = factories.GeographicalAreaFactory.create(transaction=transaction)
         regulation = factories.RegulationFactory.create(transaction=transaction)
         additional_code = factories.AdditionalCodeFactory.create(
             transaction=transaction,
@@ -1193,3 +1190,98 @@ def test_application_access_after_workbasket_delete(
     # workbasket deletion.
     assert response.status_code == 200
     assert not page.select("header nav a.workbasket-link")
+
+
+def test_workbasket_compare_200(valid_user_client, session_workbasket):
+    url = reverse("workbaskets:workbasket-ui-compare")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+
+def test_workbasket_compare_prev_uploaded(valid_user_client, session_workbasket):
+    factories.GoodsNomenclatureFactory()
+    factories.GoodsNomenclatureFactory()
+    factories.DataUploadFactory(workbasket=session_workbasket)
+    url = reverse("workbaskets:workbasket-ui-compare")
+    response = valid_user_client.get(url)
+    assert "Worksheet data" in response.content.decode(response.charset)
+
+
+def test_workbasket_update_prev_uploaded(valid_user_client, session_workbasket):
+    factories.GoodsNomenclatureFactory()
+    factories.GoodsNomenclatureFactory()
+    data_upload = factories.DataUploadFactory(workbasket=session_workbasket)
+    url = reverse("workbaskets:workbasket-ui-compare")
+    data = {
+        "data": (
+            "0000000001\t1.000%\t20/05/2021\t31/08/2024\n"
+            "0000000002\t2.000%\t20/05/2021\t31/08/2024"
+        ),
+    }
+    response = valid_user_client.post(url, data)
+    assert response.status_code == 302
+    data_upload.refresh_from_db()
+    assert data_upload.raw_data == data["data"]
+
+
+def test_workbasket_compare_form_submit_302(valid_user_client, session_workbasket):
+    url = reverse("workbaskets:workbasket-ui-compare")
+    data = {
+        "data": (
+            "0000000001\t1.000%\t20/05/2021\t31/08/2024\n"
+            "0000000002\t2.000%\t20/05/2021\t31/08/2024\n"
+        ),
+    }
+    response = valid_user_client.post(url, data)
+    assert response.status_code == 302
+    assert response.url == url
+
+
+def test_workbasket_compare_found_measures(
+    valid_user_client,
+    session_workbasket,
+    date_ranges,
+    duty_sentence_parser,
+    percent_or_amount,
+):
+    commodity = factories.GoodsNomenclatureFactory()
+
+    with session_workbasket.new_transaction():
+        measure = factories.MeasureFactory(
+            valid_between=date_ranges.normal,
+            goods_nomenclature=commodity,
+        )
+        duty_string = "4.000%"
+        # create measure components equivalent to a duty sentence of "4.000%"
+        factories.MeasureComponentFactory.create(
+            component_measure=measure,
+            duty_expression=percent_or_amount,
+            duty_amount=4.0,
+            monetary_unit=None,
+            component_measurement=None,
+        )
+
+    url = reverse("workbaskets:workbasket-ui-compare")
+    data = {
+        "data": (
+            # this first line should match the measure in the workbasket
+            f"{commodity.item_id}\t{duty_string}\t{date_ranges.normal.lower.isoformat()}\t{date_ranges.normal.upper.isoformat()}\n"
+            "0000000002\t2.000%\t20/05/2021\t31/08/2024\n"
+        ),
+    }
+    response = valid_user_client.post(url, data)
+    assert response.status_code == 302
+    assert response.url == url
+
+    # view the uploaded data
+    response2 = valid_user_client.get(response.url)
+    assert response2.status_code == 200
+    decoded = response2.content.decode(response2.charset)
+    soup = BeautifulSoup(decoded, "html.parser")
+    assert "1 matching measure found" in soup.select("h2")[1].text
+
+    # previously uploaded data
+    assert len(soup.select("tbody")[0].select("tr")) == 2
+
+    # measure found
+    assert len(soup.select("tbody")[1].select("tr")) == 1

@@ -8,6 +8,7 @@ from django_filters import CharFilter
 from commodities.forms import CommodityFilterForm
 from commodities.models.orm import GoodsNomenclature
 from common.filters import ActiveStateMixin
+from common.filters import CurrentWorkBasketMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.validators import AlphanumericValidator
@@ -32,7 +33,7 @@ class GoodsNomenclatureFilterBackend(TamatoFilterBackend):
         return super().search_queryset(queryset, search_term)
 
 
-class CommodityFilter(ActiveStateMixin, TamatoFilter):
+class CommodityFilter(ActiveStateMixin, TamatoFilter, CurrentWorkBasketMixin):
     item_id = CharFilter(
         label="Code",
         widget=forms.TextInput(),
@@ -66,4 +67,10 @@ class CommodityFilter(ActiveStateMixin, TamatoFilter):
         form = CommodityFilterForm
 
         # Defines the order shown in the form.
-        fields = ["search", "item_id", "active_state", "descriptions__description"]
+        fields = [
+            "search",
+            "item_id",
+            "active_state",
+            "descriptions__description",
+            "current_work_basket",
+        ]

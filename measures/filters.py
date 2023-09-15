@@ -9,6 +9,7 @@ from django_filters import ChoiceFilter
 from django_filters import DateFilter
 
 from additional_codes.models import AdditionalCode
+from certificates.models import Certificate
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models.orm import GoodsNomenclature
 from common.filters import AutoCompleteFilter
@@ -22,6 +23,7 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from measures.forms import MeasureFilterForm
 from measures.models import Measure
+from measures.models import MeasureCondition
 from measures.models import MeasureType
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -50,12 +52,12 @@ class MeasureTypeFilterBackend(TamatoFilterBackend):
 class MeasureFilter(TamatoFilter):
     def __init__(self, *args, **kwargs):
         if kwargs["data"]:
-            kwargs["data"]._mutable = True
-            if "start_date_modifier" not in kwargs["data"]:
-                kwargs["data"]["start_date_modifier"] = "exact"
-            if "end_date_modifier" not in kwargs["data"]:
-                kwargs["data"]["end_date_modifier"] = "exact"
-            kwargs["data"]._mutable = False
+            data = kwargs["data"].copy()
+            if "start_date_modifier" not in data:
+                data["start_date_modifier"] = "exact"
+            if "end_date_modifier" not in data:
+                data["end_date_modifier"] = "exact"
+            kwargs["data"] = data
         super(MeasureFilter, self).__init__(*args, **kwargs)
 
     sid = CharFilter(
@@ -89,14 +91,20 @@ class MeasureFilter(TamatoFilter):
     # measures on declarable commodities
     modc = BooleanFilter(
         label="Include inherited measures",
-        help_text="Only applies if a specific commodity code is entered",
         widget=forms.CheckboxInput(),
         field_name="goods_nomenclature",
         method="commodity_modifier",
     )
 
+    measure_filters_modifier = BooleanFilter(
+        label="Filter by current Workbasket",
+        widget=forms.CheckboxInput(),
+        method="measures_filter",
+        required=False,
+    )
+
     goods_nomenclature__item_id = CharFilter(
-        label="Commodity code starts with",
+        label="Commodity code starting with",
         widget=forms.TextInput(
             attrs={
                 "class": GOV_UK_TWO_THIRDS,
@@ -181,6 +189,16 @@ class MeasureFilter(TamatoFilter):
         method="filter_end_date",
     )
 
+    certificates = AutoCompleteFilter(
+        label="Certificates",
+        field_name="conditions__required_certificate",
+        queryset=Certificate.objects.current(),
+        method="certificates_filter",
+        attrs={
+            "display_class": GOV_UK_TWO_THIRDS,
+        },
+    )
+
     clear_url = reverse_lazy("measure-ui-search")
 
     def date_modifier(self, queryset, name, value):
@@ -230,6 +248,36 @@ class MeasureFilter(TamatoFilter):
                 .annotate(end_date=EndDate("db_effective_valid_between"))
                 .filter(filter_query)
             )
+        return queryset
+
+    def measures_filter(self, queryset, name, value):
+        if value:
+            queryset = WorkBasket.current(self.request).measures
+
+        return queryset
+
+    def certificates_filter(self, queryset, name, value):
+        """
+        Returns a MeasuresQuerySet for Measures associated with a specific
+        Certificate via MeasureCondition.
+
+        1. check for Ceritificates with a matching SID
+        2. match associated MeasureConditions
+        3. filter by dependent_measure_ids
+        """
+        if value:
+            measure_ids = set()
+            certificates = Certificate.objects.filter(sid=value.sid)
+            for certificate in certificates:
+                measure_conditions = MeasureCondition.objects.filter(
+                    required_certificate=certificate,
+                )
+
+                for condition in measure_conditions:
+                    measure_ids.add(condition.dependent_measure_id)
+
+            queryset = queryset.filter(id__in=measure_ids)
+
         return queryset
 
     class Meta:

@@ -21,6 +21,7 @@ from django.contrib.postgres.search import SearchVector
 from django.db.models import Q
 from django.db.models.functions import Extract
 from django.utils.safestring import mark_safe
+from django_filters import BooleanFilter
 from django_filters import CharFilter
 from django_filters import FilterSet
 from django_filters import MultipleChoiceFilter
@@ -34,6 +35,7 @@ from common.models.tracked_qs import TrackedModelQuerySet
 from common.util import StartDate
 from common.util import TaricDateRange
 from common.validators import SymbolValidator
+from workbaskets.models import WorkBasket
 
 ACTIVE_STATE_CHOICES = [Choice("active", "Active"), Choice("terminated", "Terminated")]
 
@@ -313,3 +315,36 @@ class AutoCompleteFilter(CharFilter):
     value."""
 
     field_class = AutoCompleteField
+
+
+class CurrentWorkBasketMixin(FilterSet):
+    """Generic filter mixin to filter an object by association with current Work
+    Basket."""
+
+    current_work_basket = BooleanFilter(
+        widget=forms.CheckboxInput(),
+        method="filter_work_basket",
+        label="Filter by current Workbasket",
+        required=False,
+    )
+
+    def filter_work_basket(self, queryset, name, value):
+        """
+        Filter the given queryset to those which are part of the current
+        workbasket.
+
+        :param queryset: The queryset to filterby
+        :param name: The name of the field
+        :param value: The value of the field
+        """
+        current_workbasket = WorkBasket.current(self.request)
+        target_model = self._meta.model
+        if value:
+            wanted_objects_id = set()
+            for model in current_workbasket.tracked_models.all():
+                if type(model) == target_model:
+                    wanted_objects_id.add(model.id)
+            queryset = queryset.with_workbasket(current_workbasket).filter(
+                id__in=wanted_objects_id,
+            )
+        return queryset

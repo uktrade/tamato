@@ -3,6 +3,7 @@ from django.forms import CheckboxSelectMultiple
 from django.urls import reverse_lazy
 
 from common.filters import ActiveStateMixin
+from common.filters import CurrentWorkBasketMixin
 from common.filters import LazyMultipleChoiceFilter
 from common.filters import StartYearMixin
 from common.filters import TamatoFilter
@@ -30,6 +31,7 @@ class RegulationFilter(
     RegulationFilterMixin,
     StartYearMixin,
     ActiveStateMixin,
+    CurrentWorkBasketMixin,
 ):
     class Meta:
         model = Regulation
@@ -40,6 +42,7 @@ class RegulationFilter(
             "approved",
             "start_year",
             "active_state",
+            "current_work_basket",
         ]
 
     clear_url = reverse_lazy("regulation-ui-list")
