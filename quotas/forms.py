@@ -311,11 +311,58 @@ class QuotaDefinitionUpdateForm(
         model = models.QuotaDefinition
         fields = [
             "valid_between",
+            "description",
+            "volume",
+            "initial_volume",
+            "measurement_unit",
+            "measurement_unit_qualifier",
+            "quota_critical_threshold",
+            "quota_critical",
         ]
+
+    description = forms.CharField(label="", widget=forms.Textarea(), required=False)
+    volume = forms.DecimalField(
+        label="Current volume",
+        widget=forms.TextInput(),
+        error_messages={"invalid": "Volume must be a number"},
+    )
+    initial_volume = forms.DecimalField(
+        widget=forms.TextInput(),
+        error_messages={"invalid": "Initial volume must be a number"},
+    )
+    quota_critical_threshold = forms.DecimalField(
+        label="Threshold",
+        help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
+        widget=forms.TextInput(),
+        error_messages={"invalid": "Critical threshold must be a number"},
+    )
+    quota_critical = forms.TypedChoiceField(
+        label="Is the quota definition period in a critical state?",
+        help_text="This determines if a trader needs to pay securities when utilising the quota.",
+        coerce=lambda value: value == "True",
+        choices=((True, "Yes"), (False, "No")),
+        widget=forms.RadioSelect(),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.init_layout()
+        self.init_fields()
+
+    def init_fields(self):
+        self.fields["measurement_unit"].queryset = self.fields[
+            "measurement_unit"
+        ].queryset.order_by("code")
+        self.fields[
+            "measurement_unit"
+        ].label_from_instance = lambda obj: f"{obj.code} - {obj.description}"
+
+        self.fields["measurement_unit_qualifier"].queryset = self.fields[
+            "measurement_unit_qualifier"
+        ].queryset.order_by("code")
+        self.fields[
+            "measurement_unit_qualifier"
+        ].label_from_instance = lambda obj: f"{obj.code} - {obj.description}"
 
     def init_layout(self):
         self.helper = FormHelper(self)
@@ -323,9 +370,31 @@ class QuotaDefinitionUpdateForm(
         self.helper.legend_size = Size.SMALL
 
         self.helper.layout = Layout(
-            Div(
-                "start_date",
-                "end_date",
+            Accordion(
+                AccordionSection(
+                    "Description",
+                    "description",
+                ),
+                AccordionSection(
+                    "Validity period",
+                    "start_date",
+                    "end_date",
+                ),
+                AccordionSection(
+                    "Measurements",
+                    Field("measurement_unit", css_class="govuk-!-width-full"),
+                    Field("measurement_unit_qualifier", css_class="govuk-!-width-full"),
+                ),
+                AccordionSection(
+                    "Volume",
+                    "initial_volume",
+                    "volume",
+                ),
+                AccordionSection(
+                    "Criticality",
+                    "quota_critical_threshold",
+                    "quota_critical",
+                ),
                 css_class="govuk-!-width-two-thirds",
             ),
             Submit(

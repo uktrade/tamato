@@ -80,6 +80,11 @@ urlpatterns = [
         name="quota_definition-ui-edit",
     ),
     path(
+        f"quota_definitions/<sid>/edit-update/",
+        views.QuotaDefinitionUpdate.as_view(),
+        name="quota_definition-ui-edit-update",
+    ),
+    path(
         f"quota_definitions/<sid>/delete/",
         views.QuotaDefinitionDelete.as_view(),
         name="quota_definition-ui-delete",
