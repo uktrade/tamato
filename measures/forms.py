@@ -977,6 +977,7 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         help_text=(
             "Search for a quota using its order number. "
             "You can then select the correct quota from the dropdown list. "
+            "Selecting a quota will automatically populate the appropriate geographical areas on the next page."
         ),
         queryset=QuotaOrderNumber.objects.all(),
         required=False,

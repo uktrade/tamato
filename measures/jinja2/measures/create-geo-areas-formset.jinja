@@ -1,9 +1,23 @@
 {% extends "measures/create-wizard-step.jinja" %}
-
+{% from "components/details/macro.njk" import govukDetails %}
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block breadcrumb %}
+  {% if request.path != "/" %}
+    {{ breadcrumbs(request, [{"text": "Review the geographical areas"}]) }}
+  {% endif %}
+  {% endblock %}
+
+{% block page_title_heading %}Review the geographical areas{% endblock %}
 
 {% block form %}
   {% if order_number and origins_and_exclusions %}
+
+    {{ govukDetails({
+      "summaryText": "What can I do if the geographical areas are incorrect?",
+      "text": "The geographical areas are determined by the quota you entered on the previous page. If the geographical areas are incorrect, you will need to edit the quota. You will then need to re-enter the quota to reflect the changes."
+    }) }}
+
     {% set row_data = [] %}
     {% for data in origins_and_exclusions %}
       {% set origin %}
