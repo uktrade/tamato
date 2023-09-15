@@ -91,8 +91,10 @@ def test_as_at_today_and_beyond(date_ranges, validity_factory):
         validity_factory.create(valid_between=date_ranges.later).pk,
     }
 
-    Model = validity_factory._meta.get_model_class()
-    queryset = set(Model.objects.as_at_today_and_beyond().values_list("pk", flat=True))
+    test_model = validity_factory._meta.get_model_class()
+    queryset = set(
+        test_model.objects.as_at_today_and_beyond().values_list("pk", flat=True),
+    )
 
     assert queryset != outdated_record
     assert queryset == active_and_future_records
