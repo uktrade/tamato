@@ -1494,3 +1494,25 @@ def test_measure_review_form_validates_components_applicability_exclusivity(
         "A duty cannot be specified on both commodities and conditions"
         in form.errors["__all__"]
     )
+
+
+def test_measures_edit_geographical_area_form_cleaned_data(erga_omnes):
+    """Tests that `MeasuresEditGeographicalArea` sets `cleaned_data` when passed
+    valid geographical area form data."""
+    area_group = factories.GeoGroupFactory.create()
+    excluded_area = factories.CountryFactory.create()
+
+    data = {
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.GROUP,
+        f"{GEO_AREA_FORM_PREFIX}-geographical_area_group": area_group.pk,
+        "geo_group_exclusions_formset-0-geo_group_exclusion": excluded_area.pk,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasuresEditGeographicalAreaForm(
+            data=data,
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert form.is_valid()
+        assert form.cleaned_data["geographical_area"] == area_group
+        assert form.cleaned_data["exclusions"] == [excluded_area]
