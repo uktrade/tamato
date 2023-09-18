@@ -41,7 +41,6 @@ def parse_response(response):
 
 def get_commodity_data(id):
     url = f"{Endpoints.COMMODITIES.value}{id}"
-    print(url)
     return parse_response(requests.get(url))
 
 
