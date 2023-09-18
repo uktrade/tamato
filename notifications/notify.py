@@ -18,7 +18,7 @@ def get_notifications_client():
 def prepare_link_to_file(
     file,
     is_csv=False,
-    confirm_email_before_download=None,
+    confirm_email_before_download=True,
     retention_period=None,
 ):
     """
@@ -28,7 +28,7 @@ def prepare_link_to_file(
     params:
         file: file which to generate report from
         is_csv: if the file being attached is a csv set to True, default False
-        confirm_email_before_download: security feature where user opening files must be on Gov Notify email list
+        confirm_email_before_download: security feature where user opening files must be on Gov Notify email list, True by default
         retention_period: how long the file link is valid for, default 6 months
     """
 

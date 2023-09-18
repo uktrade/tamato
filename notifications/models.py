@@ -443,7 +443,6 @@ class GoodsSuccessfulImportNotification(Notification):
             "tgb_id": import_batch.name,
             "link_to_file": prepare_link_to_file(
                 import_batch.taric_file,
-                confirm_email_before_download=True,
             ),
         }
         return personalisation
