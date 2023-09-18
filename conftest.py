@@ -250,8 +250,6 @@ def policy_group(db) -> Group:
         ("publishing", "consume_from_packaging_queue"),
         ("publishing", "manage_packaging_queue"),
         ("publishing", "view_envelope"),
-        ("reports", "view_report"),
-        ("reports", "view_report_index"),
     ]:
         group.permissions.add(
             Permission.objects.get(
