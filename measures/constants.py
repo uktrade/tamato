@@ -9,3 +9,4 @@ class MeasureEditSteps(models.TextChoices):
     QUOTA_ORDER_NUMBER = ("quota_order_number", "Quota order number")
     REGULATION = ("regulation", "Regulation")
     DUTIES = ("duties", "Duties")
+    GEOGRAPHICAL_AREA = ("geographical_area", "Geographical area")
