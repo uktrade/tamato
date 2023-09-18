@@ -1,6 +1,6 @@
-from django.contrib.auth.models import Group
-from django.contrib.auth.models import Permission
 import pytest
+
+from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
 
 pytestmark = pytest.mark.django_db
