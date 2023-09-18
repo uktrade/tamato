@@ -7,7 +7,7 @@ import reports.reports.index as index_model
 import reports.utils as utils
 
 
-@permission_required("app.view_report_index")
+@permission_required("reports.view_report_index")
 def index(request):
     context = {
         "report": index_model.IndexTable(),
@@ -16,7 +16,7 @@ def index(request):
     return render(request, "reports/index.jinja", context)
 
 
-@permission_required("app.view_report")
+@permission_required("reports.view_report")
 def report(request):
     # find the report based on the request
     report_class = utils.get_report_by_slug(request.resolver_match.url_name)
