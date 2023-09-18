@@ -60,6 +60,8 @@ To get a database dump, please contact the TAP team.
 Installing
 ~~~~~~~~~~
 
+We use [pip-tools](https://github.com/jazzband/pip-tools) to manage dependencies across three files - :code:`requirements.txt`, :code:`requirements-dev.txt` and :code:`requirements-dev-jupyter.txt`. These have corresponding :code:`.in` files where we specify our top-level dependencies. With :code:`pip-tools` installed, run :code:`pip-compile requirements.in` to regenerate :code:`requirements.txt`, then run :code:`pip-compile requirements-dev.in` to regenerate :code:`requirements-dev.txt`. You can then use :code:`pip-sync requirements-dev.txt` to install all dependencies locally/for testing/etc.
+
 .. code:: sh
 
     $ git clone git@github.com:uktrade/tamato
@@ -67,7 +69,9 @@ Installing
     $ python -m venv venv
     $ source venv/bin/activate
     $ pip install -U pip
-    $ pip install wheel -r requirements-dev.txt
+    $ pip install pip-tools
+    $ pip-compile requirements-dev.in
+    $ pip install -r requirements-dev.txt
     $ npm install
     $ npm run build
 

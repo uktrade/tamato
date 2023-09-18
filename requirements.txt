@@ -93,7 +93,7 @@ coverage[toml]==5.4
     # via
     #   -r requirements.in
     #   pytest-cov
-crispy-forms-gds @ git+https://github.com/uktrade/crispy-forms-gds.git@b50168d0e23ffacbdd30e7819ec8f9a08e055c8e
+crispy-forms-gds @ git+https://github.com/uktrade/crispy-forms-gds.git
     # via -r requirements.in
 cryptography==41.0.3
     # via moto
@@ -204,8 +204,6 @@ gevent==21.12.0
     # via -r requirements.in
 glob2==0.7
     # via pytest-bdd
-govuk-frontend-jinja @ git+https://github.com/alphagov/govuk-frontend-jinja.git@15845e4cca3a05df72c6e13ec6a7e35acc682f52
-    # via -r requirements.in
 govuk-tech-docs-sphinx-theme==1.0.0
     # via -r requirements.in
 greenlet==1.1.3.post0
@@ -224,8 +222,6 @@ iniconfig==2.0.0
     # via pytest
 jinja2==3.1.2
     # via
-    #   -r requirements.in
-    #   govuk-frontend-jinja
     #   moto
     #   sphinx
 jmespath==0.10.0
