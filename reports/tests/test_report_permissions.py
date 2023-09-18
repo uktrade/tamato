@@ -25,5 +25,3 @@ def test_can_only_view_report_with_relevant_permission(client, valid_user):
 
     valid_response = client.get(reverse("reports:index"))
     assert valid_response.status_code == 200
-
-
