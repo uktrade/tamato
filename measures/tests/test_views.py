@@ -1307,10 +1307,9 @@ def test_measure_form_wizard_create_measures(
     # Create measures returns a list of created measures
     measure_data = wizard.create_measures(form_data)
     measures = Measure.objects.filter(goods_nomenclature__in=[commodity1, commodity2])
-
     """
-    In this implementation goods_nomenclature is a FK of Measure, so there is one measure
-    for each commodity specified in formset-commodities.
+    In this implementation goods_nomenclature is a FK of Measure, so there is
+    one measure for each commodity specified in formset-commodities.
 
     Verify that the expected measures were created.
     """
@@ -1535,10 +1534,7 @@ def test_measure_form_wizard_create_measures_with_tariff_suspension_action(
     # Create measures returns a list of created measures
     measure_data = wizard.create_measures(form_data)
     measures = Measure.objects.filter(goods_nomenclature=commodity1)
-
-    """
-    Verify that the expected measures were created.
-    """
+    """Verify that the expected measures were created."""
     assert len(measure_data) == 1
 
     # Each created measure contains the supplied condition codes where DELETE=False
@@ -2374,6 +2370,87 @@ def test_multiple_measure_edit_preserves_footnote_associations(
         assert measure.footnotes.count() == expected_footnote_count
         for footnote in measure.footnotes.all():
             assert footnote in expected_footnotes
+
+
+def test_multiple_measure_edit_geographical_area_and_exclusions(
+    valid_user_client,
+    session_workbasket,
+    erga_omnes,
+):
+    """Tests that the geographical area and exclusions of multiple measures can
+    be edited in `MeasureEditWizard`."""
+    measure_1 = factories.MeasureFactory.create(with_exclusion=True)
+    measure_2 = factories.MeasureFactory.create(with_exclusion=True)
+    new_geo_area = erga_omnes
+    new_excluded_area = factories.CountryFactory.create()
+
+    url = reverse("measure-ui-edit-multiple")
+    session = valid_user_client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: 1,
+                measure_2.pk: 1,
+            },
+        },
+    )
+    session.save()
+
+    STEP_KEY = "measure_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: START,
+                "start-fields_to_edit": [MeasureEditSteps.GEOGRAPHICAL_AREA],
+            },
+            "next_step": MeasureEditSteps.GEOGRAPHICAL_AREA,
+        },
+        {
+            "data": {
+                STEP_KEY: MeasureEditSteps.GEOGRAPHICAL_AREA,
+                "geographical_area-geo_area": "ERGA_OMNES",
+                "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": new_excluded_area.pk,
+            },
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    complete_response = valid_user_client.get(response.url)
+    assert complete_response.status_code == 302
+    assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+
+    workbasket_measures = Measure.objects.filter(
+        transaction__workbasket=session_workbasket,
+    )
+    assert workbasket_measures
+
+    with override_current_transaction(Transaction.objects.last()):
+        for measure in workbasket_measures:
+            assert measure.update_type == UpdateType.UPDATE
+            assert measure.geographical_area == new_geo_area
+            assert (
+                measure.exclusions.current().first().excluded_geographical_area
+                == new_excluded_area
+            )
 
 
 def test_measure_list_redirects_to_search_with_no_params(valid_user_client):
