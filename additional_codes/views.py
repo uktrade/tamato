@@ -170,7 +170,7 @@ class AdditionalCodeCreateDescriptionMixin:
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["described_object"] = AdditionalCode.objects.get(
+        context["described_object"] = AdditionalCode.objects.current().get(
             sid=(self.kwargs.get("sid")),
         )
         return context
@@ -193,7 +193,7 @@ class AdditionalCodeDescriptionCreate(
 
     def get_initial(self):
         initial = super().get_initial()
-        initial["described_additionalcode"] = AdditionalCode.objects.get(
+        initial["described_additionalcode"] = AdditionalCode.objects.current().get(
             sid=(self.kwargs.get("sid")),
         )
         return initial
