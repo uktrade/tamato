@@ -4,7 +4,7 @@
         <ul class="govuk-list govuk-!-font-size-16">
         {% set edit_url = object.get_url('edit') %}
         {% if measures_url %}
-        <li><a class="govuk-link" href="{{ measures_url }}">View in find and edit measures</a></li>
+            <li><a class="govuk-link" href="{{ measures_url }}">View in find and edit measures</a></li>
         {% endif %}
         {% if edit_url %}
             <li><a class="govuk-link" href="{{ edit_url }}">Edit this {{object._meta.verbose_name}}</a></li>

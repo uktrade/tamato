@@ -208,11 +208,8 @@ def test_additional_code_details_list_current_measures(
         valid_between=date_ranges.normal,
         additional_code=additional_code,
     )
-
     url = reverse("additional_code-ui-detail", kwargs={"sid": additional_code.sid})
-
     response = valid_user_client.get(url)
-
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     num_measures = len(
         soup.select("#measures table tbody > tr > td:first-child"),
@@ -222,18 +219,15 @@ def test_additional_code_details_list_current_measures(
 
 def test_additional_code_details_list_no_measures(valid_user_client):
     additional_code = factories.AdditionalCodeFactory()
-
     url = reverse("additional_code-ui-detail", kwargs={"sid": additional_code.sid})
-
     response = valid_user_client.get(url)
-
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     num_measures = len(
         soup.select("#measures table tbody > tr > td:first-child"),
     )
     assert num_measures == 0
 
-    
+
 def test_additional_code_description_create(valid_user_client):
     """Tests that `AdditionalCodeDescriptionCreate` view returns 200 and creates
     a description for the current version of an additional code."""
@@ -265,4 +259,3 @@ def test_additional_code_description_create(valid_user_client):
     assert AdditionalCodeDescription.objects.filter(
         described_additionalcode__sid=new_version.sid,
     ).exists()
-
