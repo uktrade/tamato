@@ -1593,7 +1593,7 @@ def test_measure_create_wizard_get_form_kwargs(
     step,
     session_request,
     measure_type,
-    order_number,
+    quota_order_number,
 ):
     details_data = {
         "measure_create_wizard-current_step": "measure_details",
@@ -1603,7 +1603,7 @@ def test_measure_create_wizard_get_form_kwargs(
         "measure_details-start_date_2": [2021],
         "measure_details-min_commodity_count": [2],
     }
-    quota_data = {"quota_order_number-order_number": [order_number]}
+    quota_data = {"quota_order_number-order_number": [quota_order_number]}
 
     storage = MeasureCreateSessionStorage(request=session_request, prefix="")
     storage.set_step_data("measure_details", details_data)
@@ -1620,7 +1620,7 @@ def test_measure_create_wizard_get_form_kwargs(
     form_kwargs = wizard.get_form_kwargs(step)
 
     if step == "geographical_area":
-        assert form_kwargs["order_number"] == order_number
+        assert form_kwargs["order_number"] == quota_order_number
     elif step == "commodities":
         assert form_kwargs["measure_start_date"] == date(2021, 4, 2)
         assert form_kwargs["min_commodity_count"] == 2

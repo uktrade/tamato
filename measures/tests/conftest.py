@@ -312,11 +312,6 @@ def commodity2():
 
 
 @pytest.fixture()
-def order_number():
-    return factories.QuotaOrderNumberFactory.create()
-
-
-@pytest.fixture()
 def mock_request(rf, valid_user, valid_user_client):
     request = rf.get("/")
     request.user = valid_user
