@@ -22,7 +22,7 @@ class NotifiedUser(models.Model):
     enrol_api_publishing = models.BooleanField(default=False)
     enrol_goods_report = models.BooleanField(default=False)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return str(self.email)
 
 
@@ -47,9 +47,6 @@ class NotificationLog(TimestampedMixin):
         on_delete=models.PROTECT,
     )
     success = models.BooleanField(default=True)
-
-
-# class NotificationManager(models.Manager):
 
 
 class NotificationTypeChoices(models.TextChoices):
@@ -89,10 +86,6 @@ class Notification(models.Model):
     Subclasses should specify the proxy model of inheritance:
     https://docs.djangoproject.com/en/dev/topics/db/models/#proxy-models
     """
-
-    # def __init__(self, notificaiton_type: NotificationTypeChoices, notified_object_pk: int = None,  ):
-    #     self.notified_object_pk = notified_object_pk
-    #     self.notificaiton_type = notificaiton_type
 
     notified_object_pk = models.IntegerField(
         default=None,
