@@ -8,7 +8,10 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from additional_codes.models import AdditionalCode
+from additional_codes.models import AdditionalCodeDescription
 from additional_codes.views import AdditionalCodeList
+from common.models import Transaction
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import assert_read_only_model_view_returns_list
@@ -229,3 +232,37 @@ def test_additional_code_details_list_no_measures(valid_user_client):
         soup.select("#measures table tbody > tr > td:first-child"),
     )
     assert num_measures == 0
+
+    
+def test_additional_code_description_create(valid_user_client):
+    """Tests that `AdditionalCodeDescriptionCreate` view returns 200 and creates
+    a description for the current version of an additional code."""
+    additional_code = factories.AdditionalCodeFactory.create()
+    new_version = additional_code.new_version(
+        workbasket=additional_code.transaction.workbasket,
+    )
+    assert not AdditionalCodeDescription.objects.exists()
+
+    url = reverse(
+        "additional_code-ui-description-create",
+        kwargs={"sid": new_version.sid},
+    )
+    data = {
+        "description": "new test description",
+        "described_additionalcode": new_version.pk,
+        "validity_start_0": 1,
+        "validity_start_1": 1,
+        "validity_start_2": 2023,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        get_response = valid_user_client.get(url)
+        assert get_response.status_code == 200
+
+        post_response = valid_user_client.post(url, data)
+        assert post_response.status_code == 302
+
+    assert AdditionalCodeDescription.objects.filter(
+        described_additionalcode__sid=new_version.sid,
+    ).exists()
+

@@ -82,6 +82,11 @@ ui_patterns = [
         name="workbasket-ui-delete-changes-done",
     ),
     path(
+        f"compare/",
+        ui_views.WorkBasketCompare.as_view(),
+        name="workbasket-ui-compare",
+    ),
+    path(
         f"<pk>/changes/",
         ui_views.WorkBasketChanges.as_view(),
         name="workbasket-ui-changes",
