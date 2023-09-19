@@ -215,3 +215,17 @@ def test_additional_code_details_list_current_measures(
         soup.select("#measures table tbody > tr > td:first-child"),
     )
     assert num_measures == 4
+
+
+def test_additional_code_details_list_no_measures(valid_user_client):
+    additional_code = factories.AdditionalCodeFactory()
+
+    url = reverse("additional_code-ui-detail", kwargs={"sid": additional_code.sid})
+
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    num_measures = len(
+        soup.select("#measures table tbody > tr > td:first-child"),
+    )
+    assert num_measures == 0
