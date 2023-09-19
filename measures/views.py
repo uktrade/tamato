@@ -713,7 +713,7 @@ class MeasureCreateWizard(
                         "origin": origin.geographical_area,
                         "exclusions": list(origin.excluded_areas.current()),
                     }
-                    for origin in self.quota_order_number.quotaordernumberorigin_set.current()
+                    for origin in self.quota_order_number.quotaordernumberorigin_set.current().as_at_today_and_beyond()
                 ]
             context.update(
                 {

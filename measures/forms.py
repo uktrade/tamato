@@ -1095,7 +1095,9 @@ class MeasureGeographicalAreaForm(
         return nested_forms_initial
 
     def init_fields(self):
-        if self.order_number:
+        if (
+            self.order_number.quotaordernumberorigin_set.current().as_at_today_and_beyond()
+        ):
             self.fields["geo_area"].required = False
             self.fields["geo_area"].disabled = True
 
