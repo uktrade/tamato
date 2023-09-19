@@ -40,6 +40,7 @@ factory-boy
 flower
 freezegun
 gevent
+govuk-frontend-jinja @ git+https://github.com/alphagov/govuk-frontend-jinja.git@15845e4cca3a05df72c6e13ec6a7e35acc682f52
 govuk-tech-docs-sphinx-theme
 gunicorn
 lxml
