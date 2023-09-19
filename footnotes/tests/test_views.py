@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -220,3 +221,27 @@ def test_footnote_type_api_list_view(valid_user_client):
         expected_results,
         valid_user_client,
     )
+
+
+def test_current_footnote_returned_when_creating_description(
+    workbasket,
+    valid_user_client,
+    date_ranges,
+):
+    selected_type = factories.FootnoteTypeFactory.create()
+    old_version = factories.FootnoteFactory.create(
+        valid_between=date_ranges.starts_1_month_ago_no_end,
+        footnote_type=selected_type,
+    )
+    current_version = old_version.new_version(
+        workbasket,
+        valid_between=date_ranges.starts_1_month_ago_to_1_month_ahead,
+    )
+
+    url = reverse(
+        "footnote-ui-description-create",
+        args=(selected_type.footnote_type_id, current_version.footnote_id),
+    )
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
