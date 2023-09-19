@@ -1096,7 +1096,10 @@ class MeasureGeographicalAreaForm(
 
     def init_fields(self):
         if (
-            self.order_number.quotaordernumberorigin_set.current().as_at_today_and_beyond()
+            self.order_number
+            and self.order_number.quotaordernumberorigin_set.current()
+            .as_at_today_and_beyond()
+            .exists()
         ):
             self.fields["geo_area"].required = False
             self.fields["geo_area"].disabled = True
