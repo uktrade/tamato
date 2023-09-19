@@ -601,7 +601,7 @@ class MeasureCreateWizard(
                     measure_data = {
                         "measure_type": data["measure_type"],
                         "geographical_area": geo_data["geo_area"],
-                        "exclusions": geo_data.get("exclusions", None) or [],
+                        "exclusions": geo_data.get("exclusions", []),
                         "goods_nomenclature": commodity_data["commodity"],
                         "additional_code": data["additional_code"],
                         "order_number": data["order_number"],
