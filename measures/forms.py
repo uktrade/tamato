@@ -1651,7 +1651,7 @@ class MeasureGeographicalAreaExclusionsForm(forms.Form):
             GeographicalArea.objects.current()
             .with_latest_description()
             .as_at_today_and_beyond()
-            .order_by("description"),
+            .order_by("description")
         )
 
         self.fields[
