@@ -2372,16 +2372,14 @@ def test_multiple_measure_edit_preserves_footnote_associations(
             assert footnote in expected_footnotes
 
 
-def test_multiple_measure_edit_geographical_area_and_exclusions(
+def test_multiple_measure_edit_geographical_area_exclusions(
     valid_user_client,
     session_workbasket,
-    erga_omnes,
 ):
-    """Tests that the geographical area and exclusions of multiple measures can
-    be edited in `MeasureEditWizard`."""
+    """Tests that the geographical area exclusions of multiple measures can be
+    edited in `MeasureEditWizard`."""
     measure_1 = factories.MeasureFactory.create(with_exclusion=True)
-    measure_2 = factories.MeasureFactory.create(with_exclusion=True)
-    new_geo_area = erga_omnes
+    measure_2 = factories.MeasureFactory.create()
     new_excluded_area = factories.CountryFactory.create()
 
     url = reverse("measure-ui-edit-multiple")
@@ -2405,15 +2403,14 @@ def test_multiple_measure_edit_geographical_area_and_exclusions(
         {
             "data": {
                 STEP_KEY: START,
-                "start-fields_to_edit": [MeasureEditSteps.GEOGRAPHICAL_AREA],
+                "start-fields_to_edit": [MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS],
             },
-            "next_step": MeasureEditSteps.GEOGRAPHICAL_AREA,
+            "next_step": MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS,
         },
         {
             "data": {
-                STEP_KEY: MeasureEditSteps.GEOGRAPHICAL_AREA,
-                "geographical_area-geo_area": "ERGA_OMNES",
-                "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": new_excluded_area.pk,
+                STEP_KEY: MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS,
+                "form-0-excluded_area": new_excluded_area.pk,
             },
             "next_step": "complete",
         },
@@ -2446,7 +2443,6 @@ def test_multiple_measure_edit_geographical_area_and_exclusions(
     with override_current_transaction(Transaction.objects.last()):
         for measure in workbasket_measures:
             assert measure.update_type == UpdateType.UPDATE
-            assert measure.geographical_area == new_geo_area
             assert (
                 measure.exclusions.current().first().excluded_geographical_area
                 == new_excluded_area
