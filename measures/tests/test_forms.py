@@ -471,18 +471,26 @@ def test_measure_forms_geo_area_invalid_data_error_messages(data, error, erga_om
         assert error in form.errors["geo_area"]
 
 
-def test_measure_geographical_area_form_quota_order_number():
+def test_measure_geographical_area_form_quota_order_number(date_ranges):
     """Tests that `MeasureGeographicalAreaForm` sets `cleaned_data` with
     geographical data from quota order number if one is passed in `kwargs`."""
-    origin_1 = factories.QuotaOrderNumberOriginFactory.create()
-    origin_2 = factories.QuotaOrderNumberOriginFactory.create(
-        order_number=origin_1.order_number,
+    old_origin = factories.QuotaOrderNumberOriginFactory.create(
+        valid_between=date_ranges.earlier,
     )
-    origin_1_exclusions = factories.QuotaOrderNumberOriginExclusionFactory.create_batch(
-        2,
-        origin=origin_1,
+    order_number = old_origin.order_number
+
+    new_origin_1 = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=order_number,
     )
-    order_number = origin_1.order_number
+    new_origin_2 = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=order_number,
+    )
+    new_origin_1_exclusions = (
+        factories.QuotaOrderNumberOriginExclusionFactory.create_batch(
+            2,
+            origin=new_origin_1,
+        )
+    )
 
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaForm(
@@ -495,11 +503,11 @@ def test_measure_geographical_area_form_quota_order_number():
 
         expected_cleaned_data = [
             {
-                "geo_area": origin_1.geographical_area,
-                "exclusions": list(origin_1.excluded_areas.all()),
+                "geo_area": new_origin_1.geographical_area,
+                "exclusions": list(new_origin_1.excluded_areas.all()),
             },
             {
-                "geo_area": origin_2.geographical_area,
+                "geo_area": new_origin_2.geographical_area,
                 "exclusions": [],
             },
         ]
