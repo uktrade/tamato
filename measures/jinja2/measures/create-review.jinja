@@ -74,19 +74,18 @@
   {% endcall %}
 
   {% call(rows, data) review_step("geographical_area") %}
-    {% for item in data.geo_area_list %}
-    {{ rows.extend([
-      ("Geographical area", item.get_description().description|safe),
-    ]) }}
-    {% endfor %}
-    {% if data.geo_area_exclusions %}
-      {% for item in data.geo_area_exclusions %}
+    {% for geo_data in data.geo_areas_and_exclusions %}
       {{ rows.extend([
-        ("Excluded geographical area", item.get_description().description|safe),
+        ("Geographical area", geo_data["geo_area"].get_description().description|safe),
       ]) }}
-      {% endfor %}
-    {% endif %}
-
+      {% if geo_data.get("exclusions") %}
+        {% for exclusion in geo_data["exclusions"] %}
+          {{ rows.extend([
+            ("Excluded geographical area", exclusion.get_description().description|safe),
+          ]) }}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
   {% endcall %}
 
   {% call(rows, data) review_step("commodities") %}

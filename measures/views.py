@@ -562,7 +562,7 @@ class MeasureCreateWizard(
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
         REGULATION_ID: "measures/create-wizard-step.jinja",
         QUOTA_ORDER_NUMBER: "measures/create-wizard-step.jinja",
-        GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
+        GEOGRAPHICAL_AREA: "measures/create-geo-areas-formset.jinja",
         COMMODITIES: "measures/create-comm-codes-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
         CONDITIONS: "measures/create-formset.jinja",
@@ -726,11 +726,11 @@ class MeasureCreateWizard(
 
         for commodity_data in data.get("formset-commodities", []):
             if not commodity_data.get("DELETE"):
-                for geo_area in data["geo_area_list"]:
+                for geo_data in data["geo_areas_and_exclusions"]:
                     measure_data = {
                         "measure_type": data["measure_type"],
-                        "geographical_area": geo_area,
-                        "exclusions": data.get("geo_area_exclusions", None) or [],
+                        "geographical_area": geo_data["geo_area"],
+                        "exclusions": geo_data.get("exclusions", []),
                         "goods_nomenclature": commodity_data["commodity"],
                         "additional_code": data["additional_code"],
                         "order_number": data["order_number"],
@@ -811,7 +811,7 @@ class MeasureCreateWizard(
 
         Note: This patched version of `super().get_cleaned_data_for_step` temporarily saves the cleaned_data
         to provide quick retrieval should another call for it be made in the same request (as happens in
-        `get_form_kwargs()` and qtemplate for summary page) to avoid revalidating forms unnecessarily.
+        `get_form_kwargs()` and template for summary page) to avoid revalidating forms unnecessarily.
         """
         self.cleaned_data = getattr(self, "cleaned_data", {})
         if step in self.cleaned_data:
@@ -820,6 +820,12 @@ class MeasureCreateWizard(
         self.cleaned_data[step] = super().get_cleaned_data_for_step(step)
         return self.cleaned_data[step]
 
+    @property
+    def quota_order_number(self):
+        cleaned_data = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBER)
+        order_number = cleaned_data.get("order_number") if cleaned_data else None
+        return order_number
+
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
         context["step_metadata"] = self.step_metadata
@@ -827,11 +833,32 @@ class MeasureCreateWizard(
             context["form"].is_bound = False
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
+
+        if self.steps.current == self.GEOGRAPHICAL_AREA:
+            origins_and_exclusions = None
+            if self.quota_order_number:
+                origins_and_exclusions = [
+                    {
+                        "origin": origin.geographical_area,
+                        "exclusions": list(origin.excluded_areas.current()),
+                    }
+                    for origin in self.quota_order_number.quotaordernumberorigin_set.current().as_at_today_and_beyond()
+                ]
+            context.update(
+                {
+                    "order_number": self.quota_order_number,
+                    "origins_and_exclusions": origins_and_exclusions,
+                },
+            )
+
         return context
 
     def get_form_kwargs(self, step):
         kwargs = {}
-        if step == self.COMMODITIES:
+        if step == self.GEOGRAPHICAL_AREA:
+            kwargs["order_number"] = self.quota_order_number
+
+        elif step == self.COMMODITIES:
             measure_start_date = None
             measure_type = None
             min_commodity_count = 0
@@ -852,7 +879,7 @@ class MeasureCreateWizard(
                 "measure_type": measure_type,
             }
 
-        if step == self.CONDITIONS:
+        elif step == self.CONDITIONS:
             measure_start_date = None
             measure_type = None
             measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
@@ -864,7 +891,7 @@ class MeasureCreateWizard(
                 "measure_type": measure_type,
             }
 
-        if step == self.SUMMARY:
+        elif step == self.SUMMARY:
             measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
             measure_type = (
                 measure_details.get("measure_type") if measure_details else None

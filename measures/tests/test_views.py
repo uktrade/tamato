@@ -1252,7 +1252,10 @@ def test_measure_form_wizard_create_measures(
     form_data = {
         "measure_type": measure_type,
         "generating_regulation": regulation,
-        "geo_area_list": [geo_area1, geo_area2],
+        "geo_areas_and_exclusions": [
+            {"geo_area": geo_area1},
+            {"geo_area": geo_area2},
+        ],
         "order_number": None,
         "valid_between": date_ranges.normal,
         "formset-commodities": [
@@ -1508,7 +1511,9 @@ def test_measure_form_wizard_create_measures_with_tariff_suspension_action(
     form_data = {
         "measure_type": measure_type,
         "generating_regulation": regulation,
-        "geo_area_list": [geo_area1],
+        "geo_areas_and_exclusions": [
+            {"geo_area": geo_area1},
+        ],
         "order_number": None,
         "valid_between": date_ranges.normal,
         "formset-commodities": [
@@ -1583,27 +1588,28 @@ def test_measure_form_wizard_create_measures_with_tariff_suspension_action(
     )
 
 
-@pytest.mark.parametrize("step", ["commodities", "conditions"])
+@pytest.mark.parametrize("step", ["geographical_area", "commodities", "conditions"])
 def test_measure_create_wizard_get_form_kwargs(
     step,
     session_request,
     measure_type,
-    regulation,
-    erga_omnes,
+    quota_order_number,
 ):
     details_data = {
         "measure_create_wizard-current_step": "measure_details",
         "measure_details-measure_type": [measure_type.pk],
-        "measure_details-generating_regulation": [regulation.pk],
-        "measure_details-geo_area_type": ["ERGA_OMNES"],
         "measure_details-start_date_0": [2],
         "measure_details-start_date_1": [4],
         "measure_details-start_date_2": [2021],
         "measure_details-min_commodity_count": [2],
     }
+    quota_data = {"quota_order_number-order_number": [quota_order_number]}
+
     storage = MeasureCreateSessionStorage(request=session_request, prefix="")
     storage.set_step_data("measure_details", details_data)
+    storage.set_step_data("quota_order_number", quota_data)
     storage._set_current_step(step)
+
     wizard = MeasureCreateWizard(
         request=session_request,
         storage=storage,
@@ -1613,17 +1619,14 @@ def test_measure_create_wizard_get_form_kwargs(
     wizard.form_list = OrderedDict(wizard.form_list)
     form_kwargs = wizard.get_form_kwargs(step)
 
-    if step == "commodities":
-        assert "measure_start_date" in form_kwargs
-        assert "min_commodity_count" in form_kwargs
-        assert "measure_type" in form_kwargs["form_kwargs"]
+    if step == "geographical_area":
+        assert form_kwargs["order_number"] == quota_order_number
+    elif step == "commodities":
         assert form_kwargs["measure_start_date"] == date(2021, 4, 2)
         assert form_kwargs["min_commodity_count"] == 2
         assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
     else:
         # conditions
-        assert "measure_start_date" in form_kwargs["form_kwargs"]
-        assert "measure_type" in form_kwargs["form_kwargs"]
         assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
         assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
 

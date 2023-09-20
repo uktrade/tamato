@@ -81,7 +81,7 @@ class FootnoteCreateDescriptionMixin:
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["described_object"] = models.Footnote.objects.get(
+        context["described_object"] = models.Footnote.objects.current().get(
             footnote_type__footnote_type_id=(
                 self.kwargs.get("footnote_type__footnote_type_id")
             ),
@@ -218,7 +218,7 @@ class FootnoteDescriptionCreate(
 
     def get_initial(self):
         initial = super().get_initial()
-        initial["described_footnote"] = models.Footnote.objects.get(
+        initial["described_footnote"] = models.Footnote.objects.current().get(
             footnote_type__footnote_type_id=(
                 self.kwargs.get("footnote_type__footnote_type_id")
             ),
