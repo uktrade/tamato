@@ -1639,16 +1639,20 @@ class MeasureDutiesForm(forms.Form):
 class MeasureGeographicalAreaExclusionsForm(forms.Form):
     excluded_area = forms.ModelChoiceField(
         label="",
-        queryset=GeographicalArea.objects.current()
-        .with_latest_description()
-        .as_at_today_and_beyond()
-        .order_by("description"),
+        queryset=None,
         help_text="Select a geographical area to be excluded",
         required=False,
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["excluded_area"].queryset = (
+            GeographicalArea.objects.current()
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .order_by("description"),
+        )
 
         self.fields[
             "excluded_area"
