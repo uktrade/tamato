@@ -866,6 +866,7 @@ def test_update_quota_definition(valid_user_client, date_ranges):
         valid_between=date_ranges.big_no_end,
     )
     url = reverse("quota_definition-ui-edit", kwargs={"sid": quota_definition.sid})
+    measurement_unit = factories.MeasurementUnitFactory()
 
     data = {
         "start_date_0": date_ranges.normal.lower.day,
@@ -874,6 +875,13 @@ def test_update_quota_definition(valid_user_client, date_ranges):
         "end_date_0": date_ranges.normal.upper.day,
         "end_date_1": date_ranges.normal.upper.month,
         "end_date_2": date_ranges.normal.upper.year,
+        "description": "Lorem ipsum.",
+        "volume": "80601000.000",
+        "initial_volume": "80601000.000",
+        "measurement_unit": measurement_unit.pk,
+        "measurement_unit_qualifier": "",
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
     }
 
     response = valid_user_client.post(url, data)
@@ -892,6 +900,12 @@ def test_update_quota_definition(valid_user_client, date_ranges):
     )
 
     assert updated_definition.valid_between == date_ranges.normal
+    assert updated_definition.description == "Lorem ipsum."
+    assert updated_definition.volume == 80601000.000
+    assert updated_definition.initial_volume == 80601000.000
+    assert updated_definition.measurement_unit == measurement_unit
+    assert updated_definition.quota_critical_threshold == 90
+    assert updated_definition.quota_critical == False
 
 
 def test_delete_quota_definition_page_200(valid_user_client):
