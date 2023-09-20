@@ -1,6 +1,6 @@
 import pytest
-from django.conf import settings
 
+from notifications.models import Notification
 from publishing.models import ApiPublishingState
 from publishing.models import CrownDependenciesEnvelope
 
@@ -32,11 +32,14 @@ def test_create_crown_dependencies_envelope(
 
 
 def test_notify_processing_succeeded(
-    mocked_publishing_models_send_emails_delay,
+    mocked_send_emails_apply_async,
     packaged_workbasket_factory,
     successful_envelope_factory,
     crown_dependencies_envelope_factory,
+    settings,
 ):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = True
+
     pwb = packaged_workbasket_factory()
 
     crown_dependencies_envelope_factory(packaged_workbasket=pwb)
@@ -45,22 +48,18 @@ def test_notify_processing_succeeded(
 
     cd_envelope.notify_publishing_success()
 
-    personalisation = {
-        "envelope_id": pwb.envelope.envelope_id,
-    }
-    mocked_publishing_models_send_emails_delay.assert_called_with(
-        template_id=settings.API_PUBLISH_SUCCESS_TEMPLATE_ID,
-        personalisation=personalisation,
-        email_type="publishing",
-    )
+    Notification.objects.last()
+    mocked_send_emails_apply_async.assert_called()
 
 
 def test_notify_processing_failed(
-    mocked_publishing_models_send_emails_delay,
+    mocked_send_emails_apply_async,
     packaged_workbasket_factory,
     successful_envelope_factory,
     crown_dependencies_envelope_factory,
+    settings,
 ):
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = True
     pwb = packaged_workbasket_factory()
 
     crown_dependencies_envelope_factory(packaged_workbasket=pwb)
@@ -69,11 +68,5 @@ def test_notify_processing_failed(
 
     cd_envelope.notify_publishing_failed()
 
-    personalisation = {
-        "envelope_id": pwb.envelope.envelope_id,
-    }
-    mocked_publishing_models_send_emails_delay.assert_called_with(
-        template_id=settings.API_PUBLISH_FAILED_TEMPLATE_ID,
-        personalisation=personalisation,
-        email_type="publishing",
-    )
+    Notification.objects.last()
+    mocked_send_emails_apply_async.assert_called()

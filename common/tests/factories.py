@@ -1426,3 +1426,34 @@ class DataRowFactory(factory.django.DjangoModelFactory):
     commodity = factory.SubFactory(GoodsNomenclatureFactory)
     duty_sentence = factory.Faker("text", max_nb_chars=24)
     valid_between = date_ranges("no_end")
+
+
+class SucceededImportBatchFactory(ImportBatchFactory):
+    status = ImportBatchStatus.SUCCEEDED
+    goods_import = True
+    taric_file = "goods.xml"
+
+
+class GoodsSuccessfulImportNotificationFactory(factory.django.DjangoModelFactory):
+    """This is a factory for a goods report notification, requires an import id
+    passed by notified_object_id."""
+
+    class Meta:
+        model = "notifications.GoodsSuccessfulImportNotification"
+
+
+class EnvelopeReadyForProcessingNotificationFactory(factory.django.DjangoModelFactory):
+    """This is a factory for an envelope ready for processing notificaiton."""
+
+    class Meta:
+        model = "notifications.EnvelopeReadyForProcessingNotification"
+
+
+class CrownDependenciesEnvelopeSuccessNotificationFactory(
+    factory.django.DjangoModelFactory,
+):
+    """This is a factory for a crown dependencies envelope success
+    notification."""
+
+    class Meta:
+        model = "notifications.CrownDependenciesEnvelopeSuccessNotification"
