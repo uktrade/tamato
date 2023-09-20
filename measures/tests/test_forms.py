@@ -764,6 +764,46 @@ def test_measure_forms_conditions_form_valid_data(date_ranges):
         assert form.is_valid()
 
 
+@pytest.mark.parametrize(
+    ("code", "valid"),
+    (
+        ("01", True),
+        ("02", True),
+        ("03", True),
+        ("04", True),
+        ("05", False),
+    ),
+)
+def test_measure_forms_conditions_form_actions_validation_skipped(
+    code,
+    valid,
+    date_ranges,
+):
+    """
+    Tests that MeasureConditionsForm is valid when actions 1-4 is used and no
+    certificate or reference price is provide but fails for other action codes.
+
+    Initialised with minimal required fields.
+    """
+    code_with_certificate = factories.MeasureConditionCodeFactory()
+    action = factories.MeasureActionFactory.create(
+        code=code,
+    )
+
+    data = {
+        "condition_code": code_with_certificate.pk,
+        "action": action.pk,
+    }
+    # MeasureConditionsForm.__init__ expects prefix kwarg for instantiating crispy forms `Layout` object
+    form = forms.MeasureConditionsForm(data, prefix="")
+
+    with override_current_transaction(action.transaction):
+        if valid:
+            assert form.is_valid()
+        else:
+            assert not form.is_valid()
+
+
 def test_measure_forms_conditions_wizard_form_valid_data(date_ranges):
     """Tests that MeasureConditionsWizardStepForm is valid when initialised with
     minimal required fields."""
