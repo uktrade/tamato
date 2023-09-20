@@ -146,7 +146,7 @@ def test_start_processing(valid_user_client, unpause_queue):
 def test_accept_envelope(
     packaged_workbasket_factory,
     published_envelope_factory,
-    mocked_publishing_models_send_emails_delay,
+    mocked_send_emails_apply_async,
     valid_user_client,
 ):
     packaged_work_basket = packaged_workbasket_factory()
@@ -183,7 +183,7 @@ def test_accept_envelope(
 def test_reject_envelope(
     packaged_workbasket_factory,
     published_envelope_factory,
-    mocked_publishing_models_send_emails_delay,
+    mocked_send_emails_apply_async,
     superuser_client,
 ):
     packaged_work_basket_1 = packaged_workbasket_factory()

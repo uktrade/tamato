@@ -37,6 +37,15 @@
           "classes": "govuk-button--secondary",
         }) }}
       {% endif %}
+
+      {% if unsent_notification %}
+        {{ govukButton({
+          "text": "Notify Channel Islands",
+          "href": url("goods-report-notify", kwargs={"pk": import_batch_pk}),
+          "classes": "govuk-button--primary",
+          "preventDoubleClick": true,
+        }) }}
+      {% endif %}
     </p>
 
     {% if report_lines %}

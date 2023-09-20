@@ -165,3 +165,5 @@ _dumped_cache.pkl
 
 # Vim
 .swp
+
+tamato_*.sql

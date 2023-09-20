@@ -1,5 +1,7 @@
+import os
 import re
 from unittest.mock import MagicMock
+from unittest.mock import mock_open
 from unittest.mock import patch
 
 import pytest
@@ -13,9 +15,12 @@ from checks.tests.factories import TrackedModelCheckFactory
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from exporter.tasks import upload_workbaskets
+from importer.models import ImportBatch
+from importer.models import ImportBatchStatus
 from measures.models import Measure
 from workbaskets import models
 from workbaskets.forms import SelectableObjectsForm
+from workbaskets.tasks import check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views import ui
 
@@ -660,6 +665,109 @@ def test_submit_for_packaging(valid_user_client, session_workbasket):
     assert response.url[: len(response_url)] == response_url
 
 
+@pytest.fixture
+def successful_business_rules_setup(session_workbasket, valid_user_client):
+    """Sets up data and runs business rules."""
+    with session_workbasket.new_transaction() as transaction:
+        good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
+        measure = factories.MeasureFactory.create(transaction=transaction)
+        geo_area = factories.GeographicalAreaFactory.create(transaction=transaction)
+        objects = [good, measure, geo_area]
+        for obj in objects:
+            TrackedModelCheckFactory.create(
+                transaction_check__transaction=transaction,
+                model=obj,
+                successful=True,
+            )
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+        "error_count": session_workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
+
+    # run rule checks so unchecked_or_errored_transactions is set
+    check_workbasket_sync(session_workbasket)
+
+
+def import_batch_with_notification():
+    import_batch = factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        goods_import=True,
+        taric_file="goods.xml",
+    )
+
+    return factories.GoodsSuccessfulImportNotificationFactory(
+        notified_object_pk=import_batch.id,
+    )
+
+
+@pytest.mark.parametrize(
+    "import_batch_factory,disabled",
+    [
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.SUCCEEDED,
+                goods_import=True,
+            ),
+            True,
+        ),
+        (
+            import_batch_with_notification,
+            False,
+        ),
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.SUCCEEDED,
+            ),
+            False,
+        ),
+        (
+            lambda: None,
+            False,
+        ),
+    ],
+    ids=(
+        "goods_import_no_notification",
+        "goods_import_with_notification",
+        "master_import",
+        "no_import",
+    ),
+)
+def test_submit_for_packaging_disabled(
+    successful_business_rules_setup,
+    valid_user_client,
+    session_workbasket,
+    import_batch_factory,
+    disabled,
+):
+    """Test that the submit-for-packaging button is disabled when a notification
+    has not been sent for a commodity code import (goods)"""
+
+    import_batch = import_batch_factory()
+
+    if import_batch:
+        import_batch.workbasket_id = session_workbasket.id
+        if isinstance(import_batch, ImportBatch):
+            import_batch.save()
+
+    response = valid_user_client.get(
+        reverse("workbaskets:current-workbasket"),
+    )
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    packaging_button = soup.find("a", href="/publishing/create/")
+
+    if disabled:
+        assert packaging_button.has_attr("disabled")
+    else:
+        assert not packaging_button.has_attr("disabled")
+
+
 def test_terminate_rule_check(valid_user_client, session_workbasket):
     session_workbasket.rule_check_task_id = 123
 
@@ -1285,3 +1393,93 @@ def test_workbasket_compare_found_measures(
 
     # measure found
     assert len(soup.select("tbody")[1].select("tr")) == 1
+
+
+def make_goods_import_batch(importer_storage, **kwargs):
+    return factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        goods_import=True,
+        taric_file="goods.xml",
+        **kwargs,
+    )
+
+
+@pytest.mark.skip(reason="Unable to mock s3 file read from within ET.parse currently")
+@pytest.mark.parametrize(
+    "import_batch_factory,visable",
+    [
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.SUCCEEDED,
+                goods_import=True,
+                taric_file="goods.xml",
+            ),
+            True,
+        ),
+        (
+            import_batch_with_notification,
+            False,
+        ),
+        (
+            lambda: factories.ImportBatchFactory.create(
+                status=ImportBatchStatus.SUCCEEDED,
+            ),
+            False,
+        ),
+        (
+            lambda: None,
+            False,
+        ),
+    ],
+    ids=(
+        "goods_import_no_notification",
+        "goods_import_with_notification",
+        "master_import",
+        "no_import",
+    ),
+)
+def test_review_goods_notification_button(
+    successful_business_rules_setup,
+    valid_user_client,
+    session_workbasket,
+    import_batch_factory,
+    visable,
+):
+    """Test that the submit-for-packaging button is disabled when a notification
+    has not been sent for a commodity code import (goods)"""
+
+    import_batch = import_batch_factory()
+
+    if import_batch:
+        import_batch.workbasket_id = session_workbasket.id
+        if isinstance(import_batch, ImportBatch):
+            import_batch.save()
+
+    def mock_xlsx_open(filename, mode):
+        if os.path.basename(filename) == "goods.xlsx":
+            return mock_open().return_value
+        return open(filename, mode)
+
+    with patch(
+        "importer.goods_report.GoodsReport.xlsx_file",
+        return_value="",
+    ) as mocked_xlsx_file:
+        # with patch(
+        #     ".open",
+        #     mock_xlsx_open,
+        # ):
+        response = valid_user_client.get(
+            reverse("workbaskets:workbasket-ui-review-goods"),
+        )
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    # notify_button = soup.find("a", href=f"/notify-goods-report/{import_batch.id}/")
+    notify_button = soup.select(".govuk-body")
+
+    print(notify_button)
+    if visable:
+        assert notify_button
+    else:
+        assert not notify_button
