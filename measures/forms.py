@@ -1639,7 +1639,7 @@ class MeasureDutiesForm(forms.Form):
 class MeasureGeographicalAreaExclusionsForm(forms.Form):
     excluded_area = forms.ModelChoiceField(
         label="",
-        queryset=None,
+        queryset=GeographicalArea.objects.all(),
         help_text="Select a geographical area to be excluded",
         required=False,
     )
