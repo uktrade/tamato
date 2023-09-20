@@ -245,7 +245,10 @@ class MeasureConditionsFormMixin(forms.ModelForm):
 
         # Note this is a quick fix & hard coded for now
         # Action code's 1,2,3,4 are flexible and have edge cases that all neither Price or certificate to be present
-        skip_price_and_reference_check = action.code in ["01", "02", "03", "04"]
+        if action:
+            skip_price_and_reference_check = action.code in ["01", "02", "03", "04"]
+        else:
+            skip_price_and_reference_check = False
         # Price or certificate must be present but no both; if the action code is not negative
         if (
             not skip_price_and_reference_check
