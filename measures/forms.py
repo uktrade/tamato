@@ -1590,104 +1590,36 @@ class MeasureDutiesForm(forms.Form):
         return cleaned_data
 
 
-class MeasuresEditGeographicalAreaForm(
-    MeasureGeoAreaInitialDataMixin,
-    BindNestedFormMixin,
-    forms.Form,
-):
-    """Used in `MeasureEditWizard` to allow editing the geographical area and
-    exclusions of multiple measures."""
-
-    geo_area = RadioNested(
+class MeasureGeographicalAreaExclusionsForm(forms.Form):
+    excluded_area = forms.ModelChoiceField(
         label="",
-        help_text=(
-            "Choose the geographical area to which the measures apply. "
-            "This can be a specific country or a group of countries, and exclusions can be specified. "
-            "The measures will only apply to imports from or exports to the selected area."
-        ),
-        choices=constants.GeoAreaType.choices,
-        nested_forms={
-            constants.GeoAreaType.ERGA_OMNES.value: [ErgaOmnesExclusionsFormSet],
-            constants.GeoAreaType.GROUP.value: [
-                GeoGroupForm,
-                GeoGroupExclusionsFormSet,
-            ],
-            constants.GeoAreaType.COUNTRY.value: [CountryRegionForm],
-        },
-        error_messages={"required": "A geographical area must be selected"},
+        queryset=GeographicalArea.objects.current()
+        .with_latest_description()
+        .as_at_today_and_beyond()
+        .order_by("description"),
+        help_text="Select a geographical area to be excluded",
+        required=False,
     )
-
-    @property
-    def geo_area_field_name(self):
-        return f"{self.prefix}-geo_area"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        geographical_area_fields = {
-            constants.GeoAreaType.ERGA_OMNES: self.erga_omnes_instance,
-            constants.GeoAreaType.GROUP: self.data.get(
-                f"{self.prefix}-geographical_area_group",
-            ),
-            constants.GeoAreaType.COUNTRY: self.data.get(
-                f"{self.prefix}-geographical_area_country_or_region",
-            ),
-        }
-
-        self.fields["geo_area"].initial = self.data.get(f"{self.prefix}-geo_area")
-
-        nested_forms_initial = {}
-
-        if self.fields["geo_area"].initial:
-            nested_forms_initial["geographical_area"] = geographical_area_fields[
-                self.fields["geo_area"].initial
-            ]
-
-        geo_area_initial_data = self.get_geo_area_initial()
-        nested_forms_initial.update(geo_area_initial_data)
-        kwargs.pop("initial", None)
-        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
+        self.fields[
+            "excluded_area"
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
 
         self.helper = FormHelper(self)
         self.helper.form_tag = False
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            "geo_area",
-            Submit(
-                "submit",
-                "Save",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
+            Fieldset(
+                "excluded_area",
             ),
         )
 
-    @property
-    def erga_omnes_instance(self):
-        return GeographicalArea.objects.current().erga_omnes().get()
 
-    def clean(self):
-        cleaned_data = super().clean()
+class MeasureGeographicalAreaExclusionsFormSet(FormSet):
+    """Allows editing the geographical area exclusions of multiple measures in
+    `MeasureEditWizard`."""
 
-        geographical_area_fields = {
-            constants.GeoAreaType.ERGA_OMNES: self.erga_omnes_instance,
-            constants.GeoAreaType.GROUP: cleaned_data.get("geographical_area_group"),
-            constants.GeoAreaType.COUNTRY: cleaned_data.get(
-                "geographical_area_country_or_region",
-            ),
-        }
-
-        if cleaned_data.get("geo_area"):
-            geo_area_choice = cleaned_data.get("geo_area")
-            cleaned_data["geographical_area"] = geographical_area_fields[
-                geo_area_choice
-            ]
-            exclusions = cleaned_data.get(
-                constants.FORMSET_PREFIX_MAPPING[geo_area_choice],
-            )
-            if exclusions:
-                cleaned_data["exclusions"] = [
-                    exclusion[constants.FIELD_NAME_MAPPING[geo_area_choice]]
-                    for exclusion in exclusions
-                ]
-
-        return cleaned_data
+    form = MeasureGeographicalAreaExclusionsForm

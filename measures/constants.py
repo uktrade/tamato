@@ -1,6 +1,7 @@
 from django.db import models
 
 START = "start"
+GEOGRAPHICAL_AREA_EXCLUSIONS = "geographical_area_exclusions"
 
 
 class MeasureEditSteps(models.TextChoices):
@@ -9,4 +10,7 @@ class MeasureEditSteps(models.TextChoices):
     QUOTA_ORDER_NUMBER = ("quota_order_number", "Quota order number")
     REGULATION = ("regulation", "Regulation")
     DUTIES = ("duties", "Duties")
-    GEOGRAPHICAL_AREA = ("geographical_area", "Geographical area")
+    GEOGRAPHICAL_AREA_EXCLUSIONS = (
+        "geographical_area_exclusions",
+        "Geographical area exclusions",
+    )
