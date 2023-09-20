@@ -241,10 +241,15 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         price = cleaned_data.get("reference_price")
         certificate = cleaned_data.get("required_certificate")
         applicable_duty = cleaned_data.get("applicable_duty")
+        action = cleaned_data.get("action")
 
+        # Note this is a quick fix & hard coded for now
+        # Action code's 1,2,3,4 are flexible and have edge cases that all neither Price or certificate to be present
+        skip_price_and_reference_check = action.code in ["01", "02", "03", "04"]
         # Price or certificate must be present but no both; if the action code is not negative
         if (
-            not is_negative_action_code
+            not skip_price_and_reference_check
+            and not is_negative_action_code
             and (not price and not certificate)
             or (price and certificate)
         ):
