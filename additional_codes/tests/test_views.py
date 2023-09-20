@@ -2,6 +2,7 @@ import datetime
 
 import factory
 import pytest
+from bs4 import BeautifulSoup
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -190,6 +191,41 @@ def test_additional_code_type_api_list_view(valid_user_client):
         expected_results,
         valid_user_client,
     )
+
+
+def test_additional_code_details_list_current_measures(
+    valid_user_client,
+    date_ranges,
+):
+    additional_code = factories.AdditionalCodeFactory()
+    old_measures = factories.MeasureFactory.create_batch(
+        5,
+        valid_between=date_ranges.adjacent_earlier_big,
+        additional_code=additional_code,
+    )
+    current_measures = factories.MeasureFactory.create_batch(
+        4,
+        valid_between=date_ranges.normal,
+        additional_code=additional_code,
+    )
+    url = reverse("additional_code-ui-detail", kwargs={"sid": additional_code.sid})
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    num_measures = len(
+        soup.select("#measures table tbody > tr > td:first-child"),
+    )
+    assert num_measures == 4
+
+
+def test_additional_code_details_list_no_measures(valid_user_client):
+    additional_code = factories.AdditionalCodeFactory()
+    url = reverse("additional_code-ui-detail", kwargs={"sid": additional_code.sid})
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    num_measures = len(
+        soup.select("#measures table tbody > tr > td:first-child"),
+    )
+    assert num_measures == 0
 
 
 def test_additional_code_description_create(valid_user_client):

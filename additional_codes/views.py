@@ -1,7 +1,11 @@
+from datetime import datetime
 from typing import Type
+from urllib.parse import urlencode
 
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -26,6 +30,7 @@ from common.views import DescriptionDeleteMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
@@ -133,6 +138,29 @@ class AdditionalCodeConfirmCreate(AdditionalCodeMixin, TrackedModelDetailView):
 
 class AdditionalCodeDetail(AdditionalCodeMixin, TrackedModelDetailView):
     template_name = "additional_codes/detail.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        measures = (
+            Measure.objects.with_effective_valid_between()
+            .filter(
+                (
+                    Q(db_effective_end_date__isnull=True)
+                    | Q(db_effective_end_date__gte=datetime.today())
+                )
+                & Q(is_current__isnull=False),
+            )
+            .filter(additional_code=self.object)
+        )
+        url_params = urlencode({"additional_code": self.object.pk})
+        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+
+        return super().get_context_data(
+            measures=measures,
+            url_params=url_params,
+            measures_url=measures_url,
+            *args,
+            **kwargs,
+        )
 
 
 class AdditionalCodeUpdateMixin(
