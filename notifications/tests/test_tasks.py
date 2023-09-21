@@ -14,8 +14,11 @@ def test_send_emails_goods_report_notification(
 ):
     """Tests that email notifications are only sent to users subscribed to email
     type and that a log is created with this user's email."""
-    expected_present_email = "goods_report@email.co.uk"  # /PS-IGNORE
-    expected_unenrolled_email = "no_goods_report@email.co.uk"  # /PS-IGNORE
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = goods_report_notification
 
     return_value = {
         "file": "VGVzdA==",
@@ -37,19 +40,20 @@ def test_send_emails_goods_report_notification(
         ) as mocked_send_emails:
             tasks.send_emails_task.apply(
                 kwargs={
-                    "notification_pk": goods_report_notification.id,
+                    "notification_pk": notification.id,
                 },
             )
             mocked_send_emails.assert_called_once()
             mocked_prepare_link_to_file.assert_called_once()
 
     log = models.NotificationLog.objects.get(
-        notification=goods_report_notification,
+        notification=notification,
         recipients=expected_present_email,
         success=True,
     )
 
-    assert expected_unenrolled_email not in log.recipients
+    assert expected_present_email in log.recipients
+    assert expected_not_present_email not in log.recipients
 
 
 def test_send_emails_packaging_notification(
@@ -58,8 +62,11 @@ def test_send_emails_packaging_notification(
     """Tests that email notifications are only sent to users subscribed to email
     type and that a log is created with this user's email."""
 
-    expected_present_email = "packaging@email.co.uk"  # /PS-IGNORE
-    expected_unenrolled_email = "no_packaging@email.co.uk"  # /PS-IGNORE
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = ready_for_packaging_notification
 
     with patch(
         "notifications.models.send_emails",
@@ -71,18 +78,19 @@ def test_send_emails_packaging_notification(
     ) as mocked_send_emails:
         tasks.send_emails_task.apply(
             kwargs={
-                "notification_pk": ready_for_packaging_notification.id,
+                "notification_pk": notification.id,
             },
         )
         mocked_send_emails.assert_called_once()
 
     log = models.NotificationLog.objects.get(
-        notification=ready_for_packaging_notification,
+        notification=notification,
         recipients=expected_present_email,
         success=True,
     )
 
-    assert expected_unenrolled_email not in log.recipients
+    assert expected_present_email in log.recipients
+    assert expected_not_present_email not in log.recipients
 
 
 def test_send_emails_publishing_notification(
@@ -92,8 +100,11 @@ def test_send_emails_publishing_notification(
     """Tests that email notifications are only sent to users subscribed to email
     type and that a log is created with this user's email."""
 
-    expected_present_email = "publishing@email.co.uk"  # /PS-IGNORE
-    expected_unenrolled_email = "no_publishing@email.co.uk"  # /PS-IGNORE
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = successful_publishing_notification
 
     with patch(
         "notifications.models.send_emails",
@@ -105,15 +116,16 @@ def test_send_emails_publishing_notification(
     ) as mocked_send_emails:
         tasks.send_emails_task.apply(
             kwargs={
-                "notification_pk": successful_publishing_notification.id,
+                "notification_pk": notification.id,
             },
         )
         mocked_send_emails.assert_called_once()
 
     log = models.NotificationLog.objects.get(
-        notification=successful_publishing_notification,
+        notification=notification,
         recipients=expected_present_email,
         success=True,
     )
 
-    assert expected_unenrolled_email not in log.recipients
+    assert expected_present_email in log.recipients
+    assert expected_not_present_email not in log.recipients
