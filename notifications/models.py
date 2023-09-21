@@ -283,7 +283,7 @@ class EnvelopeAcceptedNotification(Notification):
         from publishing.models import PackagedWorkBasket
 
         return (
-            PackagedWorkBasket.objects.get(self.notified_object_pk)
+            PackagedWorkBasket.objects.get(pk=self.notified_object_pk)
             if self.notified_object_pk
             else None
         )

@@ -2,6 +2,7 @@ import pytest
 
 from common.tests import factories
 from importer.models import ImportBatchStatus
+from publishing.models import PackagedWorkBasket
 
 
 @pytest.fixture()
@@ -53,4 +54,48 @@ def successful_publishing_notification(crown_dependencies_envelope_factory):
     cde = crown_dependencies_envelope_factory()
     return factories.CrownDependenciesEnvelopeSuccessNotificationFactory(
         notified_object_pk=cde.id,
+    )
+
+
+@pytest.fixture()
+def accepted_packaging_notification(successful_envelope_factory, settings):
+    factories.NotifiedUserFactory(
+        email="packaging@email.co.uk",  # /PS-IGNORE
+    )
+    factories.NotifiedUserFactory(
+        email="no_packaging@email.co.uk",  # /PS-IGNORE
+        enrol_packaging=False,
+    )
+
+    ### disable so it doesn't create it's own notification
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    packaged_wb = successful_envelope_factory()
+    return factories.EnvelopeAcceptedNotificationFactory(
+        notified_object_pk=packaged_wb.id,
+    )
+
+
+@pytest.fixture()
+def rejected_packaging_notification(published_envelope_factory, settings):
+    factories.NotifiedUserFactory(
+        email="packaging@email.co.uk",  # /PS-IGNORE
+    )
+    factories.NotifiedUserFactory(
+        email="no_packaging@email.co.uk",  # /PS-IGNORE
+        enrol_packaging=False,
+    )
+
+    ### disable so it doesn't create it's own notification
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    envelope = published_envelope_factory()
+    packaged_wb = PackagedWorkBasket.objects.get(
+        envelope=envelope,
+    )
+    packaged_wb.begin_processing()
+
+    factories.LoadingReportFactory.create(packaged_workbasket=packaged_wb)
+    packaged_wb.processing_failed()
+    packaged_wb.save()
+    return factories.EnvelopeRejectedNotificationFactory(
+        notified_object_pk=packaged_wb.id,
     )

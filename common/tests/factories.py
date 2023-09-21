@@ -1449,6 +1449,20 @@ class EnvelopeReadyForProcessingNotificationFactory(factory.django.DjangoModelFa
         model = "notifications.EnvelopeReadyForProcessingNotification"
 
 
+class EnvelopeAcceptedNotificationFactory(factory.django.DjangoModelFactory):
+    """This is a factory for an envelope ready for processing notificaiton."""
+
+    class Meta:
+        model = "notifications.EnvelopeAcceptedNotification"
+
+
+class EnvelopeRejectedNotificationFactory(factory.django.DjangoModelFactory):
+    """This is a factory for an envelope ready for processing notificaiton."""
+
+    class Meta:
+        model = "notifications.EnvelopeRejectedNotification"
+
+
 class CrownDependenciesEnvelopeSuccessNotificationFactory(
     factory.django.DjangoModelFactory,
 ):

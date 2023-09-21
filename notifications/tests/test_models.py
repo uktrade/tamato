@@ -73,6 +73,62 @@ def test_create_packaging_notification(ready_for_packaging_notification):
     }
 
 
+def test_create_accepted_envelope(accepted_packaging_notification):
+    """Test that the creating a notification correctly assigns users."""
+
+    expected_present_email = f"packaging@email.co.uk"  # /PS-IGNORE
+    expected_not_present_email = f"no_packaging@email.co.uk"  # /PS-IGNORE
+
+    users = accepted_packaging_notification.notified_users()
+
+    for user in users:
+        assert user.email == expected_present_email
+        assert user.email != expected_not_present_email
+
+    assert isinstance(
+        accepted_packaging_notification.notified_object(),
+        PackagedWorkBasket,
+    )
+
+    content = accepted_packaging_notification.get_personalisation()
+    assert "envelope_id" in content and content["envelope_id"] == "230001"
+    assert "transaction_count" in content and content["transaction_count"] == 1
+    assert (
+        "loading_report_message" in content
+        and content["loading_report_message"]
+        == "Loading report(s): REPORT_DBT23000.html"
+    )
+    assert "comments" in content
+
+
+def test_create_rejected_envelope(rejected_packaging_notification):
+    """Test that the creating a notification correctly assigns users."""
+
+    expected_present_email = f"packaging@email.co.uk"  # /PS-IGNORE
+    expected_not_present_email = f"no_packaging@email.co.uk"  # /PS-IGNORE
+
+    users = rejected_packaging_notification.notified_users()
+
+    for user in users:
+        assert user.email == expected_present_email
+        assert user.email != expected_not_present_email
+
+    assert isinstance(
+        rejected_packaging_notification.notified_object(),
+        PackagedWorkBasket,
+    )
+
+    content = rejected_packaging_notification.get_personalisation()
+    assert "envelope_id" in content and content["envelope_id"] == "230001"
+    assert "transaction_count" in content and content["transaction_count"] == 1
+    assert (
+        "loading_report_message" in content
+        and content["loading_report_message"]
+        == "Loading report(s): REPORT_DBT23001.html"
+    )
+    assert "comments" in content
+
+
 def test_create_successful_publishing_notification(successful_publishing_notification):
     """Test that the creating a notification correctly assigns users."""
 
