@@ -865,6 +865,7 @@ class MeasureFilterForm(forms.Form):
                         ),
                     ),
                     css_class="govuk-grid-row govuk-!-padding-3 black-label--no-button",
+                    id="accordion-open-close-section",
                 ),
             ),
         )

@@ -2,13 +2,13 @@
 const initOpenCloseAccordionSection = () => {
     document.addEventListener('DOMContentLoaded', function() {
 
-        let expandedSection = document.getElementsByClassName('govuk-accordion__section')
+        let expandedSection = document.getElementById('accordion-open-close-section')
         let pathname = window.location.pathname
-        if(expandedSection.length > 0){
-            if (pathname.includes('measures/search')){
-                expandedSection[0].classList.add('govuk-accordion__section--expanded');
-            } else if (pathname.includes('measures') && !pathname.includes('search')){
-                expandedSection[0].classList.remove('govuk-accordion__section--expanded');
+        if(expandedSection){
+            if (pathname.includes('search')){
+                expandedSection.classList.add('govuk-accordion__section--expanded');
+            } else if (!pathname.includes('search')){
+                expandedSection.classList.remove('govuk-accordion__section--expanded');
             }
         }
     }
