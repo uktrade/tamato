@@ -87,8 +87,6 @@ def test_create_accepted_envelope(accepted_packaging_notification):
         expected_present_email,
         expected_not_present_email,
     ) = accepted_packaging_notification
-    expected_present_email = f"packaging@email.co.uk"  # /PS-IGNORE
-    expected_not_present_email = f"no_packaging@email.co.uk"  # /PS-IGNORE
 
     users = notification.notified_users()
 
@@ -120,8 +118,6 @@ def test_create_rejected_envelope(rejected_packaging_notification):
         expected_present_email,
         expected_not_present_email,
     ) = rejected_packaging_notification
-    expected_present_email = f"packaging@email.co.uk"  # /PS-IGNORE
-    expected_not_present_email = f"no_packaging@email.co.uk"  # /PS-IGNORE
 
     users = notification.notified_users()
 
@@ -153,8 +149,6 @@ def test_create_successful_publishing_notification(successful_publishing_notific
         expected_present_email,
         expected_not_present_email,
     ) = successful_publishing_notification
-    expected_present_email = f"publishing@email.co.uk"  # /PS-IGNORE
-    expected_not_present_email = f"no_publishing@email.co.uk"  # /PS-IGNORE
 
     users = notification.notified_users()
 
@@ -179,8 +173,6 @@ def test_create_failed_publishing_notification(failed_publishing_notification):
         expected_present_email,
         expected_not_present_email,
     ) = failed_publishing_notification
-    expected_present_email = f"publishing@email.co.uk"  # /PS-IGNORE
-    expected_not_present_email = f"no_publishing@email.co.uk"  # /PS-IGNORE
 
     users = notification.notified_users()
 
