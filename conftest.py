@@ -10,6 +10,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Type
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import boto3
@@ -66,6 +67,7 @@ from measures.models import MeasurementUnit
 from measures.models import MeasurementUnitQualifier
 from measures.models import MonetaryUnit
 from measures.parsers import DutySentenceParser
+from publishing.models import PackagedWorkBasket
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
@@ -1820,3 +1822,178 @@ def duty_sentence_x_2_data(request, get_component_data):
             (expected, [get_component_data(*args) for args in component_data]),
         )
     return history
+
+
+@pytest.fixture()
+def mocked_send_emails_apply_async():
+    with patch(
+        "notifications.tasks.send_emails_task.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ) as mocked_delay:
+        yield mocked_delay
+
+
+@pytest.fixture()
+def mocked_send_emails():
+    with patch(
+        "notifications.tasks.send_emails_task",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ) as mocked_delay:
+        yield mocked_delay
+
+
+@pytest.fixture(scope="function")
+def packaged_workbasket_factory(queued_workbasket_factory):
+    """
+    Factory fixture to create a packaged workbasket.
+
+    params:
+    workbasket defaults to queued_workbasket_factory() which creates a
+    Workbasket in the state QUEUED with an approved transaction and tracked models
+    """
+
+    def factory_method(workbasket=None, **kwargs):
+        if not workbasket:
+            workbasket = queued_workbasket_factory()
+        with patch(
+            "publishing.tasks.create_xml_envelope_file.apply_async",
+            return_value=MagicMock(id=factory.Faker("uuid4")),
+        ):
+            packaged_workbasket = factories.QueuedPackagedWorkBasketFactory(
+                workbasket=workbasket, **kwargs
+            )
+        return packaged_workbasket
+
+    return factory_method
+
+
+@pytest.fixture(scope="function")
+def published_envelope_factory(packaged_workbasket_factory, envelope_storage):
+    """
+    Factory fixture to create an envelope and update the packaged_workbasket
+    envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(packaged_workbasket=None, **kwargs):
+        if not packaged_workbasket:
+            packaged_workbasket = packaged_workbasket_factory()
+
+        with patch(
+            "publishing.storages.EnvelopeStorage.save",
+            wraps=MagicMock(side_effect=envelope_storage.save),
+        ) as mock_save:
+            envelope = factories.PublishedEnvelopeFactory(
+                packaged_work_basket=packaged_workbasket,
+                **kwargs,
+            )
+            mock_save.assert_called_once()
+
+        packaged_workbasket.envelope = envelope
+        packaged_workbasket.save()
+        return envelope
+
+    return factory_method
+
+
+@pytest.fixture(scope="function")
+def successful_envelope_factory(
+    published_envelope_factory,
+    mocked_send_emails_apply_async,
+):
+    """
+    Factory fixture to create a successfully processed envelope and update the
+    packaged_workbasket envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(**kwargs):
+        envelope = published_envelope_factory(**kwargs)
+
+        packaged_workbasket = PackagedWorkBasket.objects.get(
+            envelope=envelope,
+        )
+
+        packaged_workbasket.begin_processing()
+        assert packaged_workbasket.position == 0
+        assert (
+            packaged_workbasket.pk
+            == PackagedWorkBasket.objects.currently_processing().pk
+        )
+        factories.LoadingReportFactory.create(packaged_workbasket=packaged_workbasket)
+        packaged_workbasket.processing_succeeded()
+        packaged_workbasket.save()
+        assert packaged_workbasket.position == 0
+        return envelope
+
+    return factory_method
+
+
+@pytest.fixture(scope="function")
+def failed_envelope_factory(
+    published_envelope_factory,
+    mocked_send_emails_apply_async,
+):
+    """
+    Factory fixture to create a successfully processed envelope and update the
+    packaged_workbasket envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(**kwargs):
+        envelope = published_envelope_factory(**kwargs)
+
+        packaged_workbasket = PackagedWorkBasket.objects.get(
+            envelope=envelope,
+        )
+
+        packaged_workbasket.begin_processing()
+        assert packaged_workbasket.position == 0
+        assert (
+            packaged_workbasket.pk
+            == PackagedWorkBasket.objects.currently_processing().pk
+        )
+        factories.LoadingReportFactory.create(packaged_workbasket=packaged_workbasket)
+
+        packaged_workbasket.processing_failed()
+        packaged_workbasket.save()
+        assert packaged_workbasket.position == 0
+        return envelope
+
+    return factory_method
+
+
+@pytest.fixture(scope="function")
+def crown_dependencies_envelope_factory(successful_envelope_factory):
+    """
+    Factory fixture to create a crown dependencies envelope.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(**kwargs):
+        envelope = successful_envelope_factory(**kwargs)
+
+        packaged_workbasket = PackagedWorkBasket.objects.get(
+            envelope=envelope,
+        )
+        return factories.CrownDependenciesEnvelopeFactory(
+            packaged_work_basket=packaged_workbasket,
+        )
+
+    return factory_method
