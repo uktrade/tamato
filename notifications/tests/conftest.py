@@ -58,6 +58,30 @@ def successful_publishing_notification(crown_dependencies_envelope_factory):
 
 
 @pytest.fixture()
+def failed_publishing_notification(successful_envelope_factory, settings):
+    factories.NotifiedUserFactory(
+        email="publishing@email.co.uk",  # /PS-IGNORE
+        enrol_packaging=False,
+        enrol_api_publishing=True,
+    )
+    factories.NotifiedUserFactory(
+        email="no_publishing@email.co.uk",  # /PS-IGNORE
+    )
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+    successful_envelope_factory()
+    pwb = PackagedWorkBasket.objects.get_unpublished_to_api().last()
+    crown_dependencies_envelope = factories.CrownDependenciesEnvelopeFactory(
+        packaged_work_basket=pwb,
+    )
+
+    crown_dependencies_envelope.publishing_failed()
+    return factories.CrownDependenciesEnvelopeFailedNotificationFactory(
+        notified_object_pk=crown_dependencies_envelope.id,
+    )
+
+
+@pytest.fixture()
 def accepted_packaging_notification(successful_envelope_factory, settings):
     factories.NotifiedUserFactory(
         email="packaging@email.co.uk",  # /PS-IGNORE

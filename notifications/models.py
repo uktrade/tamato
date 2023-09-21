@@ -393,9 +393,9 @@ class CrownDependenciesEnvelopeFailedNotification(Notification):
         )
 
     def get_personalisation(self) -> dict:
-        self.notified_object()
+        crown_dependicies_envelope = self.notified_object()
         personalisation = {
-            "envelope_id": self.packagedworkbaskets.last().envelope.envelope_id,
+            "envelope_id": crown_dependicies_envelope.packagedworkbaskets.last().envelope.envelope_id,
         }
         return personalisation
 

@@ -150,6 +150,27 @@ def test_create_successful_publishing_notification(successful_publishing_notific
     assert content == {"envelope_id": "230001"}
 
 
+def test_create_failed_publishing_notification(failed_publishing_notification):
+    """Test that the creating a notification correctly assigns users."""
+
+    expected_present_email = f"publishing@email.co.uk"  # /PS-IGNORE
+    expected_not_present_email = f"no_publishing@email.co.uk"  # /PS-IGNORE
+
+    users = failed_publishing_notification.notified_users()
+
+    for user in users:
+        assert user.email == expected_present_email
+        assert user.email != expected_not_present_email
+
+    assert isinstance(
+        failed_publishing_notification.notified_object(),
+        CrownDependenciesEnvelope,
+    )
+
+    content = failed_publishing_notification.get_personalisation()
+    assert content == {"envelope_id": "230001"}
+
+
 def test_send_notification_emails(ready_for_packaging_notification):
     expected_present_email = f"packaging@email.co.uk"  # /PS-IGNORE
     expected_not_present_email = f"no_packaging@email.co.uk"  # /PS-IGNORE
