@@ -2,6 +2,7 @@
 import os
 import time
 from datetime import datetime
+from typing import Dict
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -41,6 +42,7 @@ from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
+from publishing.models import PackagedWorkBasket
 from workbaskets.models import WorkBasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
@@ -130,15 +132,54 @@ class AppInfoView(
 ):
     template_name = "common/app_info.jinja"
 
-    def active_checks(self):
-        results = []
+    def active_tasks(self) -> Dict:
         inspect = app.control.inspect()
         if not inspect:
-            return results
+            return {}
 
         active_tasks = inspect.active()
         if not active_tasks:
-            return results
+            return {}
+
+        return active_tasks
+
+    @staticmethod
+    def timestamp_to_datetime_string(timestamp):
+        return make_aware(
+            datetime.fromtimestamp(
+                timestamp,
+            ),
+        ).strftime("%Y-%m-%d, %H:%M:%S")
+
+    def active_envelope_generation(self, active_tasks):
+        results = []
+
+        for _, task_info_list in active_tasks.items():
+            for task_info in task_info_list:
+                if task_info.get("name") == "publishing.tasks.create_xml_envelope_file":
+                    date_time_start = AppInfoView.timestamp_to_datetime_string(
+                        task_info.get("time_start"),
+                    )
+
+                    packaged_workbasket_id = task_info.get("args", [""])[0]
+                    packaged_workbasket = PackagedWorkBasket.objects.get(
+                        id=packaged_workbasket_id,
+                    )
+                    workbasket_id = packaged_workbasket.workbasket.id
+
+                    results.append(
+                        {
+                            "task_id": task_info.get("id"),
+                            "packaged_workbasket_id": packaged_workbasket_id,
+                            "workbasket_id": workbasket_id,
+                            "date_time_start": date_time_start,
+                        },
+                    )
+
+        return results
+
+    def active_checks(self, active_tasks):
+        results = []
 
         for _, task_info_list in active_tasks.items():
             for task_info in task_info_list:
@@ -146,11 +187,9 @@ class AppInfoView(
                     task_info.get("name")
                     == "workbaskets.tasks.call_check_workbasket_sync"
                 ):
-                    date_time_start = make_aware(
-                        datetime.fromtimestamp(
-                            task_info.get("time_start"),
-                        ),
-                    ).strftime("%Y-%m-%d, %H:%M:%S")
+                    date_time_start = AppInfoView.timestamp_to_datetime_string(
+                        task_info.get("time_start"),
+                    )
 
                     workbasket_id = task_info.get("args", [""])[0]
                     workbasket = WorkBasket.objects.get(id=workbasket_id)
@@ -170,8 +209,12 @@ class AppInfoView(
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         try:
-            data["active_checks"] = self.active_checks()
+            active_tasks = self.active_tasks()
             data["celery_healthy"] = True
+            data["active_checks"] = self.active_checks(active_tasks)
+            data["active_envelope_generation"] = self.active_envelope_generation(
+                active_tasks,
+            )
         except kombu.exceptions.OperationalError as oe:
             data["celery_healthy"] = False
 

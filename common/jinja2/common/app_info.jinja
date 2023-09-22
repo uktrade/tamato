@@ -29,57 +29,10 @@
   </h1>
 
 
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
-      <h2 class="govuk-heading-m">Active business rule checks</h2>
-
-      {% set table_head = [
-          {"text": "Workbasket ID"},
-          {"text": "Time started"},
-          {"text": "Checks completed"},
-          {"text": "Celery task ID"},
-      ] %}
-      {% set table_rows = [] %}
-
-      {% if celery_healthy %}
-        {% if active_checks %}
-          {% for check in active_checks %}
-            {{ table_rows.append([
-                {"text": check.workbasket_id},
-                {"text": check.date_time_start},
-                {"text": check.checks_completed},
-                {"text": check.task_id},
-            ]) or "" }}
-          {% endfor %}
-        {% else %}
-          {{ table_rows.append([
-            {
-              "text": "No active checks.",
-              "colspan": 4,
-            }
-          ]) or "" }}
-        {% endif %}
-      {% else %}
-          {{ table_rows.append([
-            {
-              "text": "Business rule check details are currently unavailable.",
-              "colspan": 4,
-            }
-          ]) or "" }}
-      {% endif %}
-
-      {{ govukTable({
-          "head": table_head,
-          "rows": table_rows
-      }) }}
-    </div>
-  </div>
-
-
   {% if request.user.is_superuser %}
-  <div class="govuk-grid-row govuk-!-margin-top-6">
+  <div class="govuk-grid-row govuk-!-margin-bottom-6">
     <div class="govuk-grid-column-full">
-      <h2 class="govuk-heading-m">Deployment Information</h2>
+      <h2 class="govuk-heading-m">Deployment information</h2>
 
       {% set table_head = [
         {"text": "Name"},
@@ -116,6 +69,100 @@
       }) }}
     </div>
   </div>
-{% endif %}
+  {% endif %}
+
+
+  <div class="govuk-grid-row govuk-!-margin-bottom-6">
+    <div class="govuk-grid-column-full">
+      <h2 class="govuk-heading-m">Active business rule checks</h2>
+
+      {% set table_head = [
+          {"text": "Workbasket ID"},
+          {"text": "Time started"},
+          {"text": "Checks completed"},
+          {"text": "Celery task ID"},
+      ] %}
+      {% set table_rows = [] %}
+
+      {% if celery_healthy %}
+        {% if active_checks %}
+          {% for check in active_checks %}
+            {{ table_rows.append([
+                {"text": check.workbasket_id},
+                {"text": check.date_time_start},
+                {"text": check.checks_completed},
+                {"text": check.task_id},
+            ]) or "" }}
+          {% endfor %}
+        {% else %}
+          {{ table_rows.append([
+            {
+              "text": "No active business rule checks.",
+              "colspan": 4,
+            }
+          ]) or "" }}
+        {% endif %}
+      {% else %}
+          {{ table_rows.append([
+            {
+              "text": "Business rule check details are currently unavailable.",
+              "colspan": 4,
+            }
+          ]) or "" }}
+      {% endif %}
+
+      {{ govukTable({
+          "head": table_head,
+          "rows": table_rows
+      }) }}
+    </div>
+  </div>
+
+
+  <div class="govuk-grid-row govuk-!-margin-bottom-6">
+    <div class="govuk-grid-column-full">
+      <h2 class="govuk-heading-m">Active envelope generation tasks</h2>
+
+      {% set table_head = [
+          {"text": "Packaged Workbasket ID"},
+          {"text": "Workbasket ID"},
+          {"text": "Time started"},
+          {"text": "Celery task ID"},
+      ] %}
+      {% set table_rows = [] %}
+
+      {% if celery_healthy %}
+        {% if active_envelope_generation %}
+          {% for generation_info in active_envelope_generation %}
+            {{ table_rows.append([
+                {"text": generation_info.packaged_workbasket_id},
+                {"text": generation_info.workbasket_id},
+                {"text": generation_info.date_time_start},
+                {"text": generation_info.task_id},
+            ]) or "" }}
+          {% endfor %}
+        {% else %}
+          {{ table_rows.append([
+            {
+              "text": "No active envelope generation tasks.",
+              "colspan": 4,
+            }
+          ]) or "" }}
+        {% endif %}
+      {% else %}
+          {{ table_rows.append([
+            {
+              "text": "Envelope generation task details are currently unavailable.",
+              "colspan": 4,
+            }
+          ]) or "" }}
+      {% endif %}
+
+      {{ govukTable({
+          "head": table_head,
+          "rows": table_rows
+      }) }}
+    </div>
+  </div>
 
 {% endblock %}
