@@ -131,6 +131,7 @@ class AppInfoView(
     TemplateView,
 ):
     template_name = "common/app_info.jinja"
+    DATETIME_FORMAT = "%d %b %Y, %H:%M"
 
     def active_tasks(self) -> Dict:
         inspect = app.control.inspect()
@@ -146,10 +147,8 @@ class AppInfoView(
     @staticmethod
     def timestamp_to_datetime_string(timestamp):
         return make_aware(
-            datetime.fromtimestamp(
-                timestamp,
-            ),
-        ).strftime("%Y-%m-%d, %H:%M:%S")
+            datetime.fromtimestamp(timestamp),
+        ).strftime(AppInfoView.DATETIME_FORMAT)
 
     def active_envelope_generation(self, active_tasks):
         results = []
@@ -221,11 +220,16 @@ class AppInfoView(
         if self.request.user.is_superuser:
             data["GIT_BRANCH"] = os.getenv("GIT_BRANCH", "Unavailable")
             data["GIT_COMMIT"] = os.getenv("GIT_COMMIT", "Unavailable")
-            data["APP_UPDATED_TIME"] = datetime.fromtimestamp(
+            data["APP_UPDATED_TIME"] = AppInfoView.timestamp_to_datetime_string(
                 os.path.getmtime(__file__),
             )
+            last_transaction = Transaction.objects.order_by("updated_at").last()
             data["LAST_TRANSACTION_TIME"] = (
-                Transaction.objects.order_by("-updated_at").first().updated_at
+                format(
+                    last_transaction.updated_at.strftime(AppInfoView.DATETIME_FORMAT),
+                )
+                if last_transaction
+                else "No transactions"
             )
 
         return data

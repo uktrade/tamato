@@ -30,7 +30,7 @@
 
 
   {% if request.user.is_superuser %}
-  <div class="govuk-grid-row govuk-!-margin-bottom-6">
+  <div class="govuk-grid-row govuk-!-margin-bottom-6 info-section">
     <div class="govuk-grid-column-full">
       <h2 class="govuk-heading-m">Deployment information</h2>
 
@@ -53,12 +53,12 @@
         ],
         [
           {"text": "APP_UPDATED_TIME"},
-          {"text": "{:%d %b %Y, %H:%M}".format(APP_UPDATED_TIME|localtime)},
+          {"text": APP_UPDATED_TIME},
           {"text": "Estimated application deploy time"},
         ],
         [
           {"text": "LAST_TRANSACTION_TIME"},
-          {"text": "{:%d %b %Y, %H:%M}".format(LAST_TRANSACTION_TIME|localtime)},
+          {"text": LAST_TRANSACTION_TIME},
           {"text": "Last transaction change time"},
         ],
       ] %}
@@ -72,14 +72,14 @@
   {% endif %}
 
 
-  <div class="govuk-grid-row govuk-!-margin-bottom-6">
+  <div class="govuk-grid-row govuk-!-margin-bottom-6 info-section">
     <div class="govuk-grid-column-full">
       <h2 class="govuk-heading-m">Active business rule checks</h2>
 
       {% set table_head = [
           {"text": "Workbasket ID"},
-          {"text": "Time started"},
           {"text": "Checks completed"},
+          {"text": "Time started"},
           {"text": "Celery task ID"},
       ] %}
       {% set table_rows = [] %}
@@ -89,8 +89,8 @@
           {% for check in active_checks %}
             {{ table_rows.append([
                 {"text": check.workbasket_id},
-                {"text": check.date_time_start},
                 {"text": check.checks_completed},
+                {"text": check.date_time_start},
                 {"text": check.task_id},
             ]) or "" }}
           {% endfor %}
@@ -119,7 +119,7 @@
   </div>
 
 
-  <div class="govuk-grid-row govuk-!-margin-bottom-6">
+  <div class="govuk-grid-row govuk-!-margin-bottom-6 info-section">
     <div class="govuk-grid-column-full">
       <h2 class="govuk-heading-m">Active envelope generation tasks</h2>
 
