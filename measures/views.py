@@ -392,15 +392,6 @@ class MeasureEditWizard(
                 )
             return
 
-        if not exclusions:
-            for exclusion in existing_exclusions:
-                exclusion.new_version(
-                    update_type=UpdateType.DELETE,
-                    modified_measure=measure,
-                    workbasket=workbasket,
-                )
-            return
-
         new_excluded_areas = get_all_members_of_geo_groups(
             validity=measure.valid_between,
             geo_areas=exclusions,
