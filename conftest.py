@@ -1938,6 +1938,44 @@ def successful_envelope_factory(
 
 
 @pytest.fixture(scope="function")
+def failed_envelope_factory(
+    published_envelope_factory,
+    mocked_send_emails_apply_async,
+):
+    """
+    Factory fixture to create a successfully processed envelope and update the
+    packaged_workbasket envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(**kwargs):
+        envelope = published_envelope_factory(**kwargs)
+
+        packaged_workbasket = PackagedWorkBasket.objects.get(
+            envelope=envelope,
+        )
+
+        packaged_workbasket.begin_processing()
+        assert packaged_workbasket.position == 0
+        assert (
+            packaged_workbasket.pk
+            == PackagedWorkBasket.objects.currently_processing().pk
+        )
+        factories.LoadingReportFactory.create(packaged_workbasket=packaged_workbasket)
+
+        packaged_workbasket.processing_failed()
+        packaged_workbasket.save()
+        assert packaged_workbasket.position == 0
+        return envelope
+
+    return factory_method
+
+
+@pytest.fixture(scope="function")
 def crown_dependencies_envelope_factory(successful_envelope_factory):
     """
     Factory fixture to create a crown dependencies envelope.

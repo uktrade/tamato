@@ -47,6 +47,17 @@ from workbaskets.models import WorkBasket
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture()
+def mocked_diff_components():
+    """Mocks `diff_components()` inside `update_measure_components()` in
+    `MeasureEditWizard` to prevent parsing errors where test measures lack a
+    duty sentence."""
+    with patch(
+        "measures.views.MeasureEditWizard.update_measure_components",
+    ) as update_measure_components:
+        yield update_measure_components
+
+
 def test_measure_footnotes_update_get_delete_key():
     footnote_key = "form-0-footnote"
     expected = "form-0-DELETE"
@@ -1718,6 +1729,7 @@ def test_measuretype_api_list_view(valid_user_client):
 def test_multiple_measure_start_and_end_date_edit_functionality(
     valid_user_client,
     session_workbasket,
+    mocked_diff_components,
 ):
     """Tests that MeasureEditWizard takes a list of measures, and sets their
     update type to update, updates their end dates and start dates, and clears
@@ -1841,6 +1853,7 @@ def test_multiple_measure_edit_single_form_functionality(
     data,
     valid_user_client,
     session_workbasket,
+    mocked_diff_components,
 ):
     """Tests that MeasureEditWizard takes a list of measures, and sets their
     update type to update, updates their end dates and start dates, and clears
@@ -1913,6 +1926,7 @@ def test_multiple_measure_edit_single_form_functionality(
 def test_multiple_measure_edit_only_regulation(
     valid_user_client,
     session_workbasket,
+    mocked_diff_components,
 ):
     """Tests the regulation step in MeasureEditWizard."""
     measure_1 = factories.MeasureFactory.create()
@@ -2147,6 +2161,7 @@ def test_measure_list_selected_measures_list(valid_user_client):
 def test_multiple_measure_edit_only_quota_order_number(
     valid_user_client,
     session_workbasket,
+    mocked_diff_components,
 ):
     """Tests the regulation step in MeasureEditWizard."""
     measure_1 = factories.MeasureFactory.create()
@@ -2298,6 +2313,7 @@ def test_multiple_measure_edit_only_duties(
 def test_multiple_measure_edit_preserves_footnote_associations(
     valid_user_client,
     session_workbasket,
+    mocked_diff_components,
 ):
     """Tests that footnote associations are preserved in MeasureEditWizard."""
 
@@ -2373,6 +2389,84 @@ def test_multiple_measure_edit_preserves_footnote_associations(
         assert measure.footnotes.count() == expected_footnote_count
         for footnote in measure.footnotes.all():
             assert footnote in expected_footnotes
+
+
+def test_multiple_measure_edit_geographical_area_exclusions(
+    valid_user_client,
+    session_workbasket,
+    mocked_diff_components,
+):
+    """Tests that the geographical area exclusions of multiple measures can be
+    edited in `MeasureEditWizard`."""
+    measure_1 = factories.MeasureFactory.create(with_exclusion=True)
+    measure_2 = factories.MeasureFactory.create()
+    new_excluded_area = factories.CountryFactory.create()
+
+    url = reverse("measure-ui-edit-multiple")
+    session = valid_user_client.session
+    session.update(
+        {
+            "workbasket": {
+                "id": session_workbasket.pk,
+            },
+            "MULTIPLE_MEASURE_SELECTIONS": {
+                measure_1.pk: 1,
+                measure_2.pk: 1,
+            },
+        },
+    )
+    session.save()
+
+    STEP_KEY = "measure_edit_wizard-current_step"
+
+    wizard_data = [
+        {
+            "data": {
+                STEP_KEY: START,
+                "start-fields_to_edit": [MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS],
+            },
+            "next_step": MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS,
+        },
+        {
+            "data": {
+                STEP_KEY: MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS,
+                "form-0-excluded_area": new_excluded_area.pk,
+            },
+            "next_step": "complete",
+        },
+    ]
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["data"][STEP_KEY]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-edit-multiple",
+            kwargs={"step": step_data["next_step"]},
+        )
+
+    complete_response = valid_user_client.get(response.url)
+    assert complete_response.status_code == 302
+    assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
+
+    workbasket_measures = Measure.objects.filter(
+        transaction__workbasket=session_workbasket,
+    )
+    assert workbasket_measures
+
+    with override_current_transaction(Transaction.objects.last()):
+        for measure in workbasket_measures:
+            assert measure.update_type == UpdateType.UPDATE
+            assert (
+                measure.exclusions.current().first().excluded_geographical_area
+                == new_excluded_area
+            )
 
 
 def test_measure_list_redirects_to_search_with_no_params(valid_user_client):

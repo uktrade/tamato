@@ -3,6 +3,7 @@ import json
 from itertools import groupby
 from operator import attrgetter
 from typing import Any
+from typing import List
 from typing import Type
 from urllib.parse import urlencode
 
@@ -34,6 +35,8 @@ from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from geo_areas.models import GeographicalArea
+from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
 from measures.constants import START
 from measures.constants import MeasureEditSteps
@@ -44,6 +47,7 @@ from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureActionPair
 from measures.models import MeasureConditionComponent
+from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
@@ -267,10 +271,15 @@ class MeasureEditWizard(
         (MeasureEditSteps.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
         (MeasureEditSteps.REGULATION, forms.MeasureRegulationForm),
         (MeasureEditSteps.DUTIES, forms.MeasureDutiesForm),
+        (
+            MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS,
+            forms.MeasureGeographicalAreaExclusionsFormSet,
+        ),
     ]
 
     templates = {
         START: "measures/edit-multiple-start.jinja",
+        MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS: "measures/edit-multiple-formset.jinja",
     }
 
     step_metadata = {
@@ -293,6 +302,9 @@ class MeasureEditWizard(
         MeasureEditSteps.DUTIES: {
             "title": "Edit the duties",
         },
+        MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS: {
+            "title": "Edit the geographical area exclusions",
+        },
     }
 
     def get_template_names(self):
@@ -313,7 +325,11 @@ class MeasureEditWizard(
 
     def get_form_kwargs(self, step):
         kwargs = {}
-        if step not in [START, MeasureEditSteps.QUOTA_ORDER_NUMBER]:
+        if step not in [
+            START,
+            MeasureEditSteps.QUOTA_ORDER_NUMBER,
+            MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS,
+        ]:
             kwargs["selected_measures"] = self.get_queryset()
 
         if step == MeasureEditSteps.DUTIES:
@@ -327,6 +343,103 @@ class MeasureEditWizard(
             kwargs["measures_start_date"] = start_date
 
         return kwargs
+
+    def update_measure_components(
+        self,
+        measure: Measure,
+        duties: str,
+        workbasket: WorkBasket,
+    ):
+        """Updates the measure components associated to the measure."""
+        diff_components(
+            instance=measure,
+            duty_sentence=duties if duties else measure.duty_sentence,
+            start_date=measure.valid_between.lower,
+            workbasket=workbasket,
+            transaction=workbasket.current_transaction,
+        )
+
+    def update_measure_condition_components(
+        self,
+        measure: Measure,
+        workbasket: WorkBasket,
+    ):
+        """Updates the measure condition components associated to the
+        measure."""
+        conditions = measure.conditions.current()
+        for condition in conditions:
+            condition.new_version(
+                dependent_measure=measure,
+                workbasket=workbasket,
+            )
+
+    def update_measure_excluded_geographical_areas(
+        self,
+        edited: bool,
+        measure: Measure,
+        exclusions: List[GeographicalArea],
+        workbasket: WorkBasket,
+    ):
+        """Updates the excluded geographical areas associated to the measure."""
+        existing_exclusions = measure.exclusions.current()
+
+        # Update any exclusions to new measure version
+        if not edited:
+            for exclusion in existing_exclusions:
+                exclusion.new_version(
+                    modified_measure=measure,
+                    workbasket=workbasket,
+                )
+            return
+
+        new_excluded_areas = get_all_members_of_geo_groups(
+            validity=measure.valid_between,
+            geo_areas=exclusions,
+        )
+
+        for geo_area in new_excluded_areas:
+            existing_exclusion = existing_exclusions.filter(
+                excluded_geographical_area=geo_area,
+            ).first()
+            if existing_exclusion:
+                existing_exclusion.new_version(
+                    modified_measure=measure,
+                    workbasket=workbasket,
+                )
+            else:
+                MeasureExcludedGeographicalArea.objects.create(
+                    modified_measure=measure,
+                    excluded_geographical_area=geo_area,
+                    update_type=UpdateType.CREATE,
+                    transaction=workbasket.new_transaction(),
+                )
+
+        removed_excluded_areas = {
+            e.excluded_geographical_area for e in existing_exclusions
+        }.difference(set(exclusions))
+
+        exclusions_to_remove = [
+            existing_exclusions.get(excluded_geographical_area__id=geo_area.id)
+            for geo_area in removed_excluded_areas
+        ]
+
+        for exclusion in exclusions_to_remove:
+            exclusion.new_version(
+                update_type=UpdateType.DELETE,
+                modified_measure=measure,
+                workbasket=workbasket,
+            )
+
+    def update_measure_footnote_associations(self, measure, workbasket):
+        """Updates the footnotes associated to the measure."""
+        footnote_associations = FootnoteAssociationMeasure.objects.current().filter(
+            footnoted_measure__sid=measure.sid,
+        )
+        for fa in footnote_associations:
+            fa.new_version(
+                footnoted_measure=measure,
+                workbasket=workbasket,
+            )
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
@@ -349,6 +462,10 @@ class MeasureEditWizard(
         new_quota_order_number = cleaned_data.get("order_number", None)
         new_generating_regulation = cleaned_data.get("generating_regulation", None)
         new_duties = cleaned_data.get("duties", None)
+        new_exclusions = [
+            e["excluded_area"]
+            for e in cleaned_data.get("formset-geographical_area_exclusions", [])
+        ]
         for measure in selected_measures:
             new_measure = measure.new_version(
                 workbasket=workbasket,
@@ -366,24 +483,27 @@ class MeasureEditWizard(
                 if new_generating_regulation
                 else measure.generating_regulation,
             )
-            if new_duties:
-                diff_components(
-                    instance=new_measure,
-                    duty_sentence=new_duties,
-                    start_date=new_measure.valid_between.lower,
-                    workbasket=workbasket,
-                    transaction=workbasket.current_transaction,
-                )
-            footnote_associations = FootnoteAssociationMeasure.objects.current().filter(
-                footnoted_measure=measure,
+            self.update_measure_components(
+                measure=new_measure,
+                duties=new_duties,
+                workbasket=workbasket,
             )
-            for fa in footnote_associations:
-                fa.new_version(
-                    workbasket=workbasket,
-                    update_type=UpdateType.UPDATE,
-                    footnoted_measure=new_measure,
-                )
-            self.session_store.clear()
+            self.update_measure_condition_components(
+                measure=new_measure,
+                workbasket=workbasket,
+            )
+            self.update_measure_excluded_geographical_areas(
+                edited="geographical_area_exclusions"
+                in cleaned_data.get("fields_to_edit", []),
+                measure=new_measure,
+                exclusions=new_exclusions,
+                workbasket=workbasket,
+            )
+            self.update_measure_footnote_associations(
+                measure=new_measure,
+                workbasket=workbasket,
+            )
+        self.session_store.clear()
 
         return redirect(reverse("workbaskets:review-workbasket"))
 
