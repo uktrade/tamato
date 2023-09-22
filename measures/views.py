@@ -38,7 +38,6 @@ from common.views import TrackedModelDetailView
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
-from measures.constants import GEOGRAPHICAL_AREA_EXCLUSIONS
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.filters import MeasureFilter
@@ -280,7 +279,7 @@ class MeasureEditWizard(
 
     templates = {
         START: "measures/edit-multiple-start.jinja",
-        GEOGRAPHICAL_AREA_EXCLUSIONS: "measures/edit-multiple-formset.jinja",
+        MeasureEditSteps.GEOGRAPHICAL_AREA_EXCLUSIONS: "measures/edit-multiple-formset.jinja",
     }
 
     step_metadata = {

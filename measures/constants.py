@@ -1,7 +1,6 @@
 from django.db import models
 
 START = "start"
-GEOGRAPHICAL_AREA_EXCLUSIONS = "geographical_area_exclusions"
 
 
 class MeasureEditSteps(models.TextChoices):
