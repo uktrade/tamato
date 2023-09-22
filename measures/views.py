@@ -383,6 +383,7 @@ class MeasureEditWizard(
         """Updates the excluded geographical areas associated to the measure."""
         existing_exclusions = measure.exclusions.current()
 
+        # Update any exclusions to new measure version
         if not edited:
             for exclusion in existing_exclusions:
                 exclusion.new_version(
