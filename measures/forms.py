@@ -777,13 +777,17 @@ class MeasureFilterForm(forms.Form):
         self.helper.layout = Layout(
             Accordion(
                 AccordionSection(
-                    "Select one or more options to search",
+                    "Search and filter",
+                    HTML(
+                        '<h3 class="govuk-body">Select one or more options to search</h3>',
+                    ),
                     Div(
                         Div(
                             Div(
                                 "goods_nomenclature",
                                 Field.text("sid", field_width=Fluid.TWO_THIRDS),
                                 "regulation",
+                                "footnote",
                                 css_class="govuk-grid-column-one-third",
                             ),
                             Div(
@@ -813,6 +817,9 @@ class MeasureFilterForm(forms.Form):
                             ),
                             Div(
                                 "modc",
+                                HTML(
+                                    "<h3 class='govuk-body'>To use the 'Include inherited measures' filter, enter a valid commodity code in the 'Select commodity code' filter above</h3>",
+                                ),
                                 css_class="govuk-grid-column-full form-group-margin-bottom-2",
                             ),
                             css_class="govuk-grid-row govuk-!-margin-top-6",
@@ -840,7 +847,7 @@ class MeasureFilterForm(forms.Form):
                                 "end_date",
                                 css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
                             ),
-                            css_class="govuk-grid-row govuk-!-padding-top-6 filter-layout__filters",
+                            css_class="govuk-grid-row govuk-!-padding-top-6",
                         ),
                         Div(
                             Div(
@@ -857,7 +864,8 @@ class MeasureFilterForm(forms.Form):
                             css_class="govuk-grid-row govuk-!-padding-top-3",
                         ),
                     ),
-                    css_class="govuk-grid-row govuk-!-padding-3",
+                    css_class="govuk-grid-row govuk-!-padding-3 black-label--no-button govuk-accordion__section--expanded",
+                    id="accordion-open-close-section",
                 ),
             ),
         )
