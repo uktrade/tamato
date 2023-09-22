@@ -5,8 +5,10 @@ import pytest
 # note : need to import these objects to make them available to the parser
 from commodities.models import GoodsNomenclatureIndent
 from commodities.new_import_parsers import NewGoodsNomenclatureIndentParser
+from common.tests import factories
 from common.tests.util import get_test_xml_file
 from importer import new_importer
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -55,10 +57,10 @@ class TestNewGoodsNomenclatureIndentParser:
         )
 
         # verify all properties
-        assert target.sid == 8  # converts "certificate_code" to sid
+        assert target.sid == 8
         assert target.indented_goods_nomenclature__sid == 555
         assert target.validity_start == date(2022, 1, 1)
-        assert target.indent == 2  # converts "certificate_code" to sid
+        assert target.indent == 2
         assert target.indented_goods_nomenclature__item_id == "0100000000"
         assert target.indented_goods_nomenclature__suffix == 10
 
@@ -68,13 +70,16 @@ class TestNewGoodsNomenclatureIndentParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
             import_title="Importing stuff",
             author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 2
         assert len(importer.parsed_transactions[0].parsed_messages) == 1
         assert len(importer.parsed_transactions[1].parsed_messages) == 1
@@ -85,10 +90,9 @@ class TestNewGoodsNomenclatureIndentParser:
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
 
-        # check properties for additional code
         target = target_message.taric_object
 
-        assert target.sid == 9  # converts "certificate_code" to sid
+        assert target.sid == 9
         assert target.indented_goods_nomenclature__sid == 1
         assert target.validity_start == date(2021, 1, 1)
         assert target.indent == 1

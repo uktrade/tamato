@@ -1,7 +1,7 @@
 from datetime import date
 
-from importer.new_parsers import ModelLink
-from importer.new_parsers import ModelLinkField
+from importer.new_parser_model_links import ModelLink
+from importer.new_parser_model_links import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
@@ -112,20 +112,41 @@ class NewModificationRegulationParser(NewValidityMixin, NewWritable, NewElementP
 
     xml_object_tag = "modification.regulation"
 
-    enacting_regulation__role_type: str = None
+    value_mapping = {
+        "modification_regulation_role": "enacting_regulation__role_type",
+        "modification_regulation_id": "enacting_regulation__regulation_id",
+        "published_date": "enacting_regulation__published_at",
+        "officialjournal_number": "enacting_regulation__official_journal_number",
+        "officialjournal_page": "enacting_regulation__official_journal_page",
+        "validity_start_date": "enacting_regulation__valid_between_lower",
+        "validity_end_date": "enacting_regulation__valid_between_upper",
+        "effective_end_date": "enacting_regulation__effective_end_date",
+        "base_regulation_role": "target_regulation__role_type",
+        "base_regulation_id": "target_regulation__regulation_id",
+        # "complete_abrogation_regulation_role": "3",
+        # "complete_abrogation_regulation_id": "EF123123",
+        # "explicit_abrogation_regulation_role": "3",
+        # "explicit_abrogation_regulation_id": "GH123123",
+        "replacement_indicator": "enacting_regulation__replacement_indicator",
+        "stopped_flag": "enacting_regulation__stopped",
+        "information_text": "enacting_regulation__information_text",
+        "approved_flag": "enacting_regulation__approved",
+    }
+
+    enacting_regulation__role_type: int = None
     enacting_regulation__regulation_id: str = None
-    enacting_regulation__published_at: str = None
+    enacting_regulation__published_at: date = None
     enacting_regulation__official_journal_number: str = None
-    enacting_regulation__official_journal_page: str = None
+    enacting_regulation__official_journal_page: int = None
     enacting_regulation__valid_between_lower: date = None
     enacting_regulation__valid_between_upper: date = None
-    enacting_regulation__effective_end_date: str = None
-    target_regulation__role_type: str = None
+    enacting_regulation__effective_end_date: date = None
+    target_regulation__role_type: int = None
     target_regulation__regulation_id: str = None
-    enacting_regulation__replacement_indicator: str = None
-    enacting_regulation__stopped: str = None
+    enacting_regulation__replacement_indicator: int = None
+    enacting_regulation__stopped: bool = None
     enacting_regulation__information_text: str = None
-    enacting_regulation__approved: str = None
+    enacting_regulation__approved: bool = None
 
 
 class NewFullTemporaryStopRegulationParser(
@@ -133,27 +154,74 @@ class NewFullTemporaryStopRegulationParser(
     NewWritable,
     NewElementParser,
 ):
+    """This handler creates both a base regulation with provided properties, and
+    a suspension."""
+
+    value_mapping = {
+        "full_temporary_stop_regulation_role": "enacting_regulation__role_type",
+        "full_temporary_stop_regulation_id": "enacting_regulation__regulation_id",
+        "published_date": "enacting_regulation__published_at",
+        "officialjournal_number": "enacting_regulation__official_journal_number",
+        "officialjournal_page": "enacting_regulation__official_journal_page",
+        "validity_start_date": "enacting_regulation__valid_between_lower",
+        "validity_end_date": "enacting_regulation__valid_between_upper",
+        "effective_enddate": "effective_end_date",
+        # "complete_abrogation_regulation_role": "3",
+        # "complete_abrogation_regulation_id": "CD123123",
+        # "explicit_abrogation_regulation_role": "3",
+        # "explicit_abrogation_regulation_id": "EF123123",
+        "replacement_indicator": "enacting_regulation__replacement_indicator",
+        "information_text": "enacting_regulation__information_text",
+        "approved_flag": "enacting_regulation__approved",
+    }
+
     model = models.Suspension
     record_code = "300"
     subrecord_code = "00"
 
     xml_object_tag = "full.temporary.stop.regulation"
 
-    enacting_regulation__role_type: str = None
+    enacting_regulation__role_type: int = None
     enacting_regulation__regulation_id: str = None
-    enacting_regulation__published_at: str = None
+    enacting_regulation__published_at: date = None
     enacting_regulation__official_journal_number: str = None
-    enacting_regulation__official_journal_page: str = None
+    enacting_regulation__official_journal_page: int = None
     enacting_regulation__valid_between_lower: date = None
     enacting_regulation__valid_between_upper: date = None
-    effective_end_date: str = None
-    enacting_regulation__replacement_indicator: str = None
+    effective_end_date: date = None
+    enacting_regulation__replacement_indicator: int = None
     enacting_regulation__information_text: str = None
-    enacting_regulation__approved: str = None
+    enacting_regulation__approved: bool = None
 
 
 class NewFullTemporaryStopActionParser(NewWritable, NewElementParser):
     model = models.Suspension
+
+    model_links = [
+        ModelLink(
+            models.Regulation,
+            [
+                ModelLinkField("enacting_regulation__role_type", "role_type"),
+                ModelLinkField("enacting_regulation__regulation_id", "regulation_id"),
+            ],
+            "base.regulation",
+        ),
+        ModelLink(
+            models.Regulation,
+            [
+                ModelLinkField("target_regulation__role_type", "role_type"),
+                ModelLinkField("target_regulation__regulation_id", "regulation_id"),
+            ],
+            "base.regulation",
+        ),
+    ]
+
+    value_mapping = {
+        "fts_regulation_role": "enacting_regulation__role_type",
+        "fts_regulation_id": "enacting_regulation__regulation_id",
+        "stopped_regulation_role": "target_regulation__role_type",
+        "stopped_regulation_id": "target_regulation__regulation_id",
+    }
 
     record_code = "305"
     subrecord_code = "00"
@@ -169,14 +237,40 @@ class NewFullTemporaryStopActionParser(NewWritable, NewElementParser):
 class NewRegulationReplacementParser(NewWritable, NewElementParser):
     model = models.Replacement
 
+    model_links = [
+        ModelLink(
+            models.Regulation,
+            [
+                ModelLinkField("enacting_regulation__role_type", "role_type"),
+                ModelLinkField("enacting_regulation__regulation_id", "regulation_id"),
+            ],
+            "base.regulation",
+        ),
+        ModelLink(
+            models.Regulation,
+            [
+                ModelLinkField("target_regulation__role_type", "role_type"),
+                ModelLinkField("target_regulation__regulation_id", "regulation_id"),
+            ],
+            "base.regulation",
+        ),
+    ]
+
+    value_mapping = {
+        "replacing_regulation_role": "enacting_regulation__role_type",
+        "replacing_regulation_id": "enacting_regulation__regulation_id",
+        "replaced_regulation_role": "target_regulation__role_type",
+        "replaced_regulation_id": "target_regulation__regulation_id",
+    }
+
     record_code = "305"
     subrecord_code = "00"
 
     xml_object_tag = "regulation.replacement"
 
-    enacting_regulation__role_type: str = None
+    enacting_regulation__role_type: int = None
     enacting_regulation__regulation_id: str = None
-    target_regulation__role_type: str = None
+    target_regulation__role_type: int = None
     target_regulation__regulation_id: str = None
     measure_type_id: str = None
     geographical_area_id: str = None

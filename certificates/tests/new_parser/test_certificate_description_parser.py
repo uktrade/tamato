@@ -2,8 +2,10 @@ import pytest
 
 # note : need to import these objects to make them available to the parser
 from certificates.new_import_parsers import *
+from common.tests import factories
 from common.tests.util import get_test_xml_file
 from importer import new_importer
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -61,13 +63,16 @@ class TestNewCertificateDescriptionParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
             import_title="Importing stuff",
             author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 5
 
@@ -76,11 +81,10 @@ class TestNewCertificateDescriptionParser:
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
 
-        # check properties for additional code
-        target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == 8
-        assert target_taric_object.described_certificate__certificate_type__sid == "A"
-        assert target_taric_object.described_certificate__sid == "123"
-        assert target_taric_object.description == "This is a description"
+        target = target_message.taric_object
+        assert target.sid == 8
+        assert target.described_certificate__certificate_type__sid == "A"
+        assert target.described_certificate__sid == "123"
+        assert target.description == "This is a description"
 
         assert len(importer.issues()) == 0

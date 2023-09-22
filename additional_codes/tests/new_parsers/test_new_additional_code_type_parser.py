@@ -3,8 +3,10 @@ from datetime import date
 import pytest
 
 from additional_codes.new_import_parsers import NewAdditionalCodeTypeParser
+from common.tests import factories
 from common.tests.util import get_test_xml_file
 from importer import new_importer
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -37,7 +39,7 @@ class TestNewAdditionalCodeTypeParser:
             "validity_start_date": "2023-01-22",
             "validity_end_date": "2024-01-22",
             "application_code": "123",
-            # "meursing_table_plan_id": "123" - this property is not imported
+            "meursing_table_plan_id": "123",  # this property is not imported
         }
 
         target = self.target_parser_class()
@@ -50,8 +52,7 @@ class TestNewAdditionalCodeTypeParser:
             expected_data_example,
         )
 
-        # verify all properties
-        assert target.sid == "123"  # converts "additional.code.type.id" to sid
+        assert target.sid == "123"
         assert target.valid_between_lower == date(2023, 1, 22)
         assert target.valid_between_upper == date(2024, 1, 22)
         assert target.application_code == "123"
@@ -59,13 +60,16 @@ class TestNewAdditionalCodeTypeParser:
     def test_import(self, superuser):
         file_to_import = get_test_xml_file("additional_code_type_CREATE.xml", __file__)
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
-            "Importing stuff",
-            superuser.username,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
+            import_title="Importing stuff",
+            author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 2
 
@@ -89,13 +93,16 @@ class TestNewAdditionalCodeTypeParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
-            "Importing stuff",
-            superuser.username,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
+            import_title="Importing stuff",
+            author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 1
 

@@ -6,9 +6,11 @@ from django.db import IntegrityError
 from django.db import transaction
 
 from common.models import Transaction
+from importer.models import BatchImportError
+from importer.models import ImportBatch
 from importer.new_importer_issue import NewImportIssueReportItem
+from importer.new_parser_model_links import ModelLink
 from importer.new_parsers import MessageParser
-from importer.new_parsers import ModelLink
 from importer.new_parsers import NewElementParser
 from importer.new_parsers import ParserHelper
 from importer.new_parsers import TransactionParser
@@ -27,11 +29,14 @@ class NewImporter:
 
     def __init__(
         self,
-        taric3_file: str,
+        import_batch: ImportBatch,
+        taric3_file: str = None,
+        taric3_xml_string: str = None,
         import_title: str = None,
         author_username: str = None,
         workbasket: WorkBasket = None,
     ):
+        # Guard Clauses
         if not workbasket:
             if not import_title:
                 raise Exception(
@@ -42,11 +47,24 @@ class NewImporter:
                     "Author username is required when no workbasket is provided",
                 )
 
+        if not taric3_file and not taric3_xml_string:
+            raise Exception(
+                "No valid source provided, either taric3_file or taric3_xml_string need to be populated",
+            )
+
+        if taric3_xml_string and taric3_file:
+            raise Exception(
+                "Multiple valid source provided, either taric3_file or taric3_xml_string need to be populated, pick one",
+            )
+
         self.parsed_transactions = []
 
-        # Read xml into string
-        with open(taric3_file, "r") as file:
-            self.raw_xml = file.read()
+        if taric3_xml_string:
+            self.raw_xml = taric3_xml_string
+        else:
+            # Read xml into string
+            with open(taric3_file, "r") as file:
+                self.raw_xml = file.read()
 
         # load the taric3 file into memory, via beautiful soup
         self.bs_taric3_file = BeautifulSoup(self.raw_xml, "xml")
@@ -70,6 +88,10 @@ class NewImporter:
         if self.can_save():
             self.populate_parent_attributes()
             self.commit_data()
+
+        # Store issues against import
+        for issue in self.issues():
+            BatchImportError.create_from_import_issue_report_item(issue, import_batch)
 
         return
 
@@ -159,38 +181,52 @@ class NewImporter:
         try:
             if message.update_type == 1:  # Update
                 # find model based on identity key
-                model_instance = message.taric_object.model.latest_approved().get(
-                    **message.taric_object.model_query_parameters()
+                model_instance = (
+                    message.taric_object.__class__.model.objects.approved_up_to_transaction(
+                        transaction,
+                    )
+                    .filter(**message.taric_object.model_query_parameters())
+                    .last()
                 )
 
                 # update model with all attributes from model
                 model_instance.new_version(
                     transaction=transaction,
+                    workbasket=transaction.workbasket,
                     **message.taric_object.model_attributes(transaction),
                 )
 
             elif message.update_type == 2:  # Delete
-                model_instance = message.taric_object.model.latest_approved().get(
+                model_instance = message.taric_object.__class__.model.objects.approved_up_to_transaction(
+                    transaction,
+                ).get(
                     **message.taric_object.model_query_parameters()
                 )
 
                 # mark the model as deleted
                 model_instance.new_version(
                     transaction=transaction,
+                    workbasket=transaction.workbasket,
                     update_type=message.taric_object.update_type,
                 )
 
             elif message.update_type == 3:  # Create
                 message.taric_object.__class__.model.objects.create(
                     transaction=transaction,
-                    **message.taric_object.model_attributes(transaction),
+                    **message.taric_object.model_attributes(
+                        transaction,
+                        include_non_taric_attributes=True,
+                    ),
                 )
-        except IntegrityError:
+        except IntegrityError as e:
             report_item = NewImportIssueReportItem(
-                message.taric_object.xml_object_tag,
-                "None",
-                {},
-                f"Database Integrity error, review related issues to determine what went wrong",
+                object_type=message.taric_object.xml_object_tag,
+                related_object_type="None",
+                related_object_identity_keys={},
+                description=f"Database Integrity error, review related issues to determine what went wrong {e}",
+                taric_change_type=message.update_type_name,
+                object_details=str(message.taric_object),
+                transaction_id=message.transaction_id,
             )
 
             message.taric_object.issues.append(report_item)
@@ -319,6 +355,9 @@ class NewImporter:
                             parent_parser_class.xml_object_tag,
                             parsed_message.taric_object.get_identity_fields_and_values_for_parent(),
                             f"Missing expected parent object {parent_parser_class.__name__}",
+                            taric_change_type=parsed_message.update_type_name,
+                            object_details=str(parsed_message.taric_object),
+                            transaction_id=parsed_message.transaction_id,
                         )
 
                         parsed_message.taric_object.issues.append(report_item)
@@ -328,8 +367,8 @@ class NewImporter:
                         parsed_message.taric_object,
                     )
 
+                    # No child classes, we are good to go here
                     if len(child_parser_classes) == 0:
-                        # all good! - nothing to check
                         continue
 
                     # verify if a child of these types, linked to the current object exist in previous / current
@@ -349,14 +388,21 @@ class NewImporter:
 
                     for child_parser_class in child_parser_classes:
                         if child_parser_class.__name__ not in child_matches.keys():
-                            report_item = NewImportIssueReportItem(
-                                parsed_message.taric_object.xml_object_tag,
-                                child_parser_class.xml_object_tag,
-                                {},
-                                f"Missing expected child object {child_parser_class.__name__}",
-                            )
+                            # This is where description periods can inherit from last create / update if the parsed message is an update to an existing object
+                            if not parsed_message.can_populate_child_attrs_from_history(
+                                child_parser_class,
+                            ):
+                                report_item = NewImportIssueReportItem(
+                                    parsed_message.taric_object.xml_object_tag,
+                                    child_parser_class.xml_object_tag,
+                                    {},
+                                    f"Missing expected child object {child_parser_class.__name__}",
+                                    taric_change_type=parsed_message.update_type_name,
+                                    object_details=str(parsed_message.taric_object),
+                                    transaction_id=parsed_message.transaction_id,
+                                )
 
-                            parsed_message.taric_object.issues.append(report_item)
+                                parsed_message.taric_object.issues.append(report_item)
 
     def _verify_link(
         self,
@@ -440,6 +486,9 @@ class NewImporter:
             link_data.xml_tag_name,
             identity_keys,
             description,
+            taric_change_type=target_taric_object.update_type_name,
+            object_details=str(target_taric_object),
+            transaction_id=target_taric_object.transaction_id,
         )
 
         target_taric_object.issues.append(report_item)

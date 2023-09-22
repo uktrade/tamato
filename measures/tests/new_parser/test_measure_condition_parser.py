@@ -1,10 +1,13 @@
 import pytest
 
+from common.tests import factories
+
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
-from geo_areas.models import GeographicalAreaDescription
 from importer import new_importer
+from measures.models import MeasureCondition
 from measures.new_import_parsers import NewMeasureConditionParser
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -77,32 +80,41 @@ class TestNewMeasureConditionParser:
 
     def test_import(self, superuser):
         file_to_import = get_test_xml_file(
-            "measure_series_CREATE.xml",
+            "measure_condition_CREATE.xml",
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
             import_title="Importing stuff",
             author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
-        assert len(importer.parsed_transactions) == 2
+        assert len(importer.parsed_transactions) == 21
 
-        target_message = importer.parsed_transactions[1].parsed_messages[0]
+        target_message = importer.parsed_transactions[20].parsed_messages[0]
         assert target_message.record_code == self.target_parser_class.record_code
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
 
-        # check properties for additional code
         target = target_message.taric_object
 
-        assert target.sid == 3
-        assert target.described_geographicalarea__sid == 8
-        assert target.described_geographicalarea__area_id == "AB01"
-        assert target.description == "Some Description"
+        assert target.sid == 5
+        assert target.dependent_measure__sid == 99
+        assert target.condition_code__code == "A"
+        assert target.component_sequence_number == 5
+        assert target.duty_amount == 12.77
+        assert target.monetary_unit__code == "ZZZ"
+        assert target.condition_measurement__measurement_unit__code == "XXX"
+        assert target.condition_measurement__measurement_unit_qualifier__code == "A"
+        assert target.action__code == "ABC"
+        assert target.required_certificate__certificate_type__sid == "A"
+        assert target.required_certificate__sid == "123"
 
         assert len(importer.issues()) == 0
 
-        assert GeographicalAreaDescription.objects.all().count() == 1
+        assert MeasureCondition.objects.all().count() == 1

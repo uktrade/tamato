@@ -6,8 +6,10 @@ from additional_codes.models import AdditionalCode
 from additional_codes.models import AdditionalCodeDescription
 from additional_codes.models import AdditionalCodeType
 from additional_codes.new_import_parsers import NewAdditionalCodeDescriptionParser
+from common.tests import factories
 from common.tests.util import get_test_xml_file
 from importer import new_importer
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -55,7 +57,7 @@ class TestNewAdditionalCodeDescriptionParser:
         )
 
         # verify all properties
-        assert target.sid == 123  # converts "additional.code.type.id" to sid
+        assert target.sid == 123
         assert target.described_additionalcode__sid == 123
         assert target.described_additionalcode__type_sid == "A"
         assert target.described_additionalcode__code == "123"
@@ -67,13 +69,16 @@ class TestNewAdditionalCodeDescriptionParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
             import_title="Importing stuff",
             author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 5
 
@@ -83,11 +88,9 @@ class TestNewAdditionalCodeDescriptionParser:
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
 
-        # check properties for additional code
         target_taric_object = target_message.taric_object
 
         for message in importer.parsed_transactions[0].parsed_messages:
-            # check for issues
             assert len(message.taric_object.issues) == 0
 
         assert AdditionalCode.objects.all().count() == 1
@@ -110,13 +113,17 @@ class TestNewAdditionalCodeDescriptionParser:
             "additional_code_description_invalid_additional_code_CREATE.xml",
             __file__,
         )
+
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
             import_title="Importing stuff",
             author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 1
 
@@ -131,7 +138,6 @@ class TestNewAdditionalCodeDescriptionParser:
         )
         assert type(target_message.taric_object) == NewAdditionalCodeDescriptionParser
 
-        # check properties for additional code
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1

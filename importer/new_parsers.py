@@ -12,6 +12,10 @@ from common.models import Transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from importer.new_importer_issue import NewImportIssueReportItem
+from importer.new_parser_model_links import ModelLink
+from quotas.models import QuotaEvent
+
+# import all parsers
 
 
 class TransactionParser:
@@ -67,6 +71,18 @@ class MessageParser:
         self._populate_data_dict(self.update_type, self.update_type_name)
         self.taric_object = self._construct_taric_object()
 
+    def can_populate_child_attrs_from_history(self, klass):
+        if (
+            self.update_type != 3 and "Period" in klass.__name__
+        ):  # Only periods handled currently - may extend
+            if hasattr(
+                self.taric_object,
+                "last_published_description_with_period",
+            ):  # check rthere is a method for getting child object
+                return True
+
+        return False
+
     def _populate_data_dict(self, update_type, update_type_name):
         """Iterates through properties in the object tag and returns a
         dictionary of those properties."""
@@ -108,26 +124,6 @@ class MessageParser:
         parsed_tag_name = parsed_tag_name.replace(".", "_")
 
         return parsed_tag_name
-
-
-class ModelLinkField:
-    def __init__(self, parser_field_name, object_field_name):
-        self.parser_field_name = parser_field_name
-        self.object_field_name = object_field_name
-
-
-class ModelLink:
-    def __init__(
-        self,
-        model,
-        fields: List[ModelLinkField],
-        xml_tag_name: str,
-        optional=False,
-    ):
-        self.model = model
-        self.fields = fields
-        self.xml_tag_name = xml_tag_name
-        self.optional = optional
 
 
 class NewElementParser:
@@ -172,6 +168,7 @@ class NewElementParser:
     value_mapping = {}
     model_links = []
     parent_parser = None
+    data_fields = []
     issues = []
     parent_handler = None
     excluded_fields = [
@@ -183,7 +180,9 @@ class NewElementParser:
         "explicit_abrogation_regulation_role",
         "explicit_abrogation_regulation_id",
         "export_refund_nomenclature_sid",
+        "meursing_table_plan_id",
     ]
+    non_taric_additional_fields = []
     model = None
     identity_fields = []
 
@@ -383,14 +382,17 @@ class NewElementParser:
                             field_data_raw,
                             "%Y-%m-%d",
                         ).date()
+                elif field_data_type == datetime:
+                    if field_data_raw is not None:
+                        field_data_typed = datetime.fromisoformat(field_data_raw)
                 elif field_data_type == int:
                     field_data_typed = int(field_data_raw)
                 elif field_data_type == float:
                     field_data_typed = float(field_data_raw)
                 elif field_data_type == bool:
-                    if field_data_raw == "1":
+                    if field_data_raw in ["1", "Y"]:
                         field_data_typed = True
-                    elif field_data_raw == "0":
+                    elif field_data_raw in ["0", "N"]:
                         field_data_typed = False
                     else:
                         raise Exception(
@@ -439,7 +441,12 @@ class NewElementParser:
         else:
             return None
 
-    def model_attributes(self, transaction: Transaction, raise_error_if_no_match=True):
+    def model_attributes(
+        self,
+        transaction: Transaction,
+        raise_error_if_no_match=True,
+        include_non_taric_attributes=False,
+    ):
         excluded_variable_names = [
             "__annotations__",
             "__doc__",
@@ -463,7 +470,6 @@ class NewElementParser:
         model_attributes = {}
 
         # resolve links to other models
-
         for link in self.model_links:
             # check all fields link to the same property / linked model
             property_list = []
@@ -474,7 +480,7 @@ class NewElementParser:
             property_list = list(dict.fromkeys(property_list))
 
             # if an exception raises from the two checks below, it indicates that there is an issue with the parser
-            # in some way, these circumstances should not occur if the parsers are good and well formed .
+            # in some way, these circumstances should not occur if the parsers are good and well-formed .
             if len(property_list) > 1:
                 raise Exception(
                     f"multiple properties for link : {self.__class__.__name__} : {property_list}",
@@ -506,6 +512,9 @@ class NewElementParser:
                     ParserHelper.get_parser_by_model(link.model).xml_object_tag,
                     fields_and_values,
                     f"Missing expected linked object {ParserHelper.get_parser_by_model(link.model).__name__}",
+                    taric_change_type=self.update_type_name,
+                    object_details=str(self),
+                    transaction_id=self.transaction_id,
                 )
 
                 self.issues.append(report_item)
@@ -517,12 +526,34 @@ class NewElementParser:
             ):
                 continue
 
-            if hasattr(self.__class__.model, model_field):
-                model_attributes[model_field] = getattr(self, model_field)
-            else:
-                raise Exception(
-                    f"Error creating model {self.__class__.model.__name__}, model does not have an attribute {model_field}",
+            # Only append non data fields to the model, data fields are used to collect and attach via a defined
+            # column in json format - mainly used for quota events
+            if model_field not in self.data_fields:
+                if hasattr(self.__class__.model, model_field):
+                    model_attributes[model_field] = getattr(self, model_field)
+                else:
+                    raise Exception(
+                        f"Error creating model {self.__class__.model.__name__}, model does not have an attribute {model_field}",
+                    )
+
+        # QuotaEvents have the subrecord code recorded in the database table to distinguish the type
+        if self.__class__.model == QuotaEvent:
+            model_attributes["subrecord_code"] = self.subrecord_code
+
+        # there are instances where no taric fields have defaults, and if not populated will cause an exception when
+        # data is written to the database. non_taric_attribute is a property available in each of the parsers and can be
+        # populated with these values, and will receive a default value from the parser model on creation
+        if include_non_taric_attributes:
+            for non_taric_attribute in self.non_taric_additional_fields:
+                model_attributes[non_taric_attribute] = getattr(
+                    self,
+                    non_taric_attribute,
                 )
+
+        # finally, if this model; has a parent, remove SID which will be linked to the model it should be updating
+        if self.parent_parser:
+            if "sid" in model_attributes.keys():
+                del model_attributes["sid"]
 
         return model_attributes
 
@@ -532,6 +563,9 @@ class NewElementParser:
         # This is determined by the lack of a parent_parser, if a parent parser is present that means the model will be
         # appended to a parent and should not be saved directly
         if self.parent_parser:
+            if self.update_type == 1:  # update
+                return True
+
             return False
 
         return True

@@ -1,6 +1,7 @@
 import pytest
 
 from additional_codes.new_import_parsers import *
+from common.tests import factories
 
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
@@ -8,6 +9,7 @@ from geo_areas.new_import_parsers import *
 from importer import new_importer
 from measures.models import AdditionalCodeTypeMeasureType
 from measures.new_import_parsers import NewAdditionalCodeTypeMeasureTypeParser
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -63,13 +65,16 @@ class TestNewAdditionalCodeTypeMeasureTypeParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
             import_title="Importing stuff",
             author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 4
 
         target_message = importer.parsed_transactions[3].parsed_messages[0]
@@ -77,7 +82,6 @@ class TestNewAdditionalCodeTypeMeasureTypeParser:
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
 
-        # check properties for additional code
         target = target_message.taric_object
 
         # verify all properties

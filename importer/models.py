@@ -9,6 +9,7 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models import TimestampedMixin
+from importer.new_importer_issue import NewImportIssueReportItem
 from importer.storages import CommodityImporterStorage
 from workbaskets.util import clear_workbasket
 from workbaskets.validators import WorkflowStatus
@@ -176,6 +177,42 @@ class ImportBatch(TimestampedMixin):
         return (
             f"ImportBatch(pk={self.pk}, name={self.name}, "
             f"author={self.author}, status={self.status})"
+        )
+
+
+class BatchImportError(TimestampedMixin):
+    object_type = models.CharField(max_length=250)
+    related_object_type = models.CharField(max_length=250)
+
+    related_object_identity_keys = models.CharField(max_length=1000)
+    description = models.CharField(max_length=2000)
+    issue_type = models.CharField(max_length=2000)
+
+    batch = models.ForeignKey(
+        ImportBatch,
+        on_delete=models.PROTECT,
+        related_name="issues",
+    )
+
+    object_details = models.TextField(default=None)
+    taric_change_type = models.CharField(max_length=20, default=None)
+    transaction_id = models.CharField(max_length=50, default=None)
+
+    @staticmethod
+    def create_from_import_issue_report_item(
+        issue: NewImportIssueReportItem,
+        import_batch: ImportBatch,
+    ):
+        BatchImportError.objects.create(
+            batch=import_batch,
+            object_type=issue.object_type,
+            related_object_type=issue.related_object_type,
+            related_object_identity_keys=issue.related_object_identity_keys,
+            description=issue.description,
+            issue_type=issue.issue_type,
+            taric_change_type=issue.taric_change_type,
+            object_details=issue.object_details,
+            transaction_id=issue.transaction_id,
         )
 
 

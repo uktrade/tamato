@@ -3,8 +3,10 @@ from datetime import date
 import pytest
 
 from additional_codes.new_import_parsers import NewAdditionalCodeDescriptionPeriodParser
+from common.tests import factories
 from common.tests.util import get_test_xml_file
 from importer import new_importer
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -51,7 +53,7 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         )
 
         # verify all properties
-        assert target.sid == 123  # converts "additional.code.type.id" to sid
+        assert target.sid == 123
         assert target.validity_start == date(2023, 1, 22)
         assert target.described_additionalcode__sid == 123
         assert target.described_additionalcode__type__sid == "A"
@@ -63,13 +65,16 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
-            "Importing stuff",
-            superuser.username,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
+            import_title="Importing stuff",
+            author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 5
 
@@ -79,7 +84,6 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
 
-        # check properties for additional code
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
@@ -97,13 +101,16 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
-            "Importing stuff",
-            superuser.username,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
+            import_title="Importing stuff",
+            author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 3
 
@@ -122,13 +129,12 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
             == NewAdditionalCodeDescriptionPeriodParser
         )
 
-        # check properties for additional code
-        target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == 5
-        assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type__sid == "5"
-        assert target_taric_object.described_additionalcode__code == "3"
-        assert target_taric_object.validity_start == date(2021, 1, 1)
+        target = target_message.taric_object
+        assert target.sid == 5
+        assert target.described_additionalcode__sid == 1
+        assert target.described_additionalcode__type__sid == "5"
+        assert target.described_additionalcode__code == "3"
+        assert target.validity_start == date(2021, 1, 1)
 
         assert len(importer.issues()) == 2
 

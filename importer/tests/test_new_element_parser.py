@@ -44,6 +44,7 @@ class TestNewElementParser:
             "explicit_abrogation_regulation_role",
             "explicit_abrogation_regulation_id",
             "export_refund_nomenclature_sid",
+            "meursing_table_plan_id",
         ]
         assert target.xml_object_tag is None
 

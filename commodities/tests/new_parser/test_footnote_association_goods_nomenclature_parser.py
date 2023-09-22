@@ -6,9 +6,11 @@ import pytest
 from commodities.models import FootnoteAssociationGoodsNomenclature
 from commodities.models import GoodsNomenclature
 from commodities.new_import_parsers import *
+from common.tests import factories
 from common.tests.util import get_test_xml_file
 from footnotes.new_import_parsers import *
 from importer import new_importer
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -72,13 +74,16 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
             import_title="Importing stuff",
             author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 2
         assert len(importer.parsed_transactions[0].parsed_messages) == 4
         assert len(importer.parsed_transactions[1].parsed_messages) == 1
@@ -89,7 +94,6 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
 
-        # check properties for additional code
         target = target_message.taric_object
 
         assert target.goods_nomenclature__sid == 1
@@ -111,15 +115,18 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
             import_title="Importing stuff",
             author_username=superuser.username,
         )
 
         assert not importer.can_save()
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 2
         assert len(importer.parsed_transactions[1].parsed_messages) == 1
 
@@ -134,6 +141,7 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
             importer.issues()[0],
         )
         assert (
-            "ERROR: Database Integrity error, review related issues to determine what went wrong\n"
-            in str(importer.issues()[1])
+            "ERROR: Database Integrity error, review related issues to determine what went wrong null value in column "
+            '"associated_footnote_id" of relation "commodities_footnoteassociationgoodsnomenclature" violates not-null '
+            "constraint\n" in str(importer.issues()[1])
         )

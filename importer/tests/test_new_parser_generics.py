@@ -413,11 +413,9 @@ pytestmark = pytest.mark.django_db
                 Measure,
                 MeasureConditionCode,
                 MonetaryUnit,
-                MeasurementUnit,
-                MeasurementUnitQualifier,
+                Measurement,
                 MeasureAction,
                 Certificate,
-                CertificateType,
             ],
             False,
         ),
@@ -500,7 +498,56 @@ pytestmark = pytest.mark.django_db
         (
             NewQuotaEventParser,
             QuotaEvent,
-            "quota.([a-z.]+).event",
+            "parent.quota.event",
+            [QuotaDefinition],
+            False,
+        ),
+        (
+            NewQuotaBalanceEventParser,
+            QuotaEvent,
+            "quota.balance.event",
+            [QuotaDefinition],
+            False,
+        ),
+        (
+            NewQuotaClosedAndTransferredEventParser,
+            QuotaEvent,
+            "quota.closed.and.transferred.event",
+            [QuotaDefinition],
+            False,
+        ),
+        (
+            NewQuotaCriticalEventParser,
+            QuotaEvent,
+            "quota.critical.event",
+            [QuotaDefinition],
+            False,
+        ),
+        (
+            NewQuotaExhaustionEventParser,
+            QuotaEvent,
+            "quota.exhaustion.event",
+            [QuotaDefinition],
+            False,
+        ),
+        (
+            NewQuotaReopeningEventParser,
+            QuotaEvent,
+            "quota.reopening.event",
+            [QuotaDefinition],
+            False,
+        ),
+        (
+            NewQuotaUnblockingEventParser,
+            QuotaEvent,
+            "quota.unblocking.event",
+            [QuotaDefinition],
+            False,
+        ),
+        (
+            NewQuotaUnsuspensionEventParser,
+            QuotaEvent,
+            "quota.unsuspension.event",
             [QuotaDefinition],
             False,
         ),
@@ -593,10 +640,16 @@ def test_importer_generics(
         "valid_between_upper",
         "record_code",
         "identity_fields",
+        "non_taric_additional_fields",
+        "data_fields",
+        "last_published_description_with_period",
     ]
 
     for variable_name in vars(parser_class).keys():
         if variable_name not in excluded_variable_names:
+            # Skip fields that are defined in data_fields - these are collected and appended to a data column
+            if variable_name in parser_class.data_fields:
+                continue
             # where a variable name contains '__' it defines a related object and its properties, we only need to check
             # that the part preceding the '__' exists
             variable_first_part = variable_name.split("__")[0]

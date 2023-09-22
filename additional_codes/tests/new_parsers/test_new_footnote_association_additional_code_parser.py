@@ -3,9 +3,11 @@ from datetime import date
 import pytest
 
 from additional_codes.new_import_parsers import *
+from common.tests import factories
 from common.tests.util import get_test_xml_file
 from footnotes.new_import_parsers import *
 from importer import new_importer
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -56,9 +58,7 @@ class TestNewAdditionalCodeTypeParser:
         )
 
         # verify all properties
-        assert (
-            target.additional_code__sid == 111
-        )  # converts "additional.code.type.id" to sid
+        assert target.additional_code__sid == 111
         assert target.associated_footnote__footnote_type__footnote_type_id == 5
         assert target.associated_footnote__footnote_id == "555"
         assert target.valid_between_lower == date(2023, 1, 22)
@@ -72,13 +72,16 @@ class TestNewAdditionalCodeTypeParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
-            "Importing stuff",
-            superuser.username,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
+            import_title="Importing stuff",
+            author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 3
 
         target_message = importer.parsed_transactions[2].parsed_messages[0]
@@ -114,10 +117,14 @@ class TestNewAdditionalCodeTypeParser:
             __file__,
         )
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
-            "Importing stuff",
-            superuser.username,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
+            import_title="Importing stuff",
+            author_username=superuser.username,
         )
 
         assert len(importer.issues()) == 2

@@ -1,8 +1,8 @@
 from datetime import date
 
 from footnotes.import_handlers import *
-from importer.new_parsers import ModelLink
-from importer.new_parsers import ModelLinkField
+from importer.new_parser_model_links import ModelLink
+from importer.new_parser_model_links import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewChildPeriod
 from importer.parsers import NewValidityMixin

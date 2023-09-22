@@ -1,21 +1,26 @@
+import json
 from datetime import date
 
-from importer.new_parsers import ModelLink
-from importer.new_parsers import ModelLinkField
+from importer.new_parser_model_links import ModelLink
+from importer.new_parser_model_links import ModelLinkField
 from importer.new_parsers import NewElementParser
-from importer.parsers import NewValidityMixin
-from importer.parsers import NewWritable
 from quotas.import_handlers import *
 
 
-class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable):
+class NewQuotaOrderNumberParser(NewElementParser):
     model = models.QuotaOrderNumber
 
     value_mapping = {
-        "id": "order_number",
+        "quota_order_number_sid": "sid",
+        "quota_order_number_id": "order_number",
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
+
+    non_taric_additional_fields = [
+        "mechanism",
+        "category",
+    ]
 
     model_links = []
 
@@ -23,19 +28,24 @@ class NewQuotaOrderNumberParser(NewElementParser, NewValidityMixin, NewWritable)
     record_code = "360"
     subrecord_code = "00"
 
-    sid: str = None
+    sid: int = None
     order_number: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
 
+    # non taric properties
+    mechanism: int = 0  # default
+    category: int = 1  # default
 
-class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementParser):
+
+class NewQuotaOrderNumberOriginParser(NewElementParser):
     model = models.QuotaOrderNumberOrigin
 
     value_mapping = {
+        "quota_order_number_origin_sid": "sid",
+        "quota_order_number_sid": "order_number__sid",
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
-        "quota_order_number_sid": "order_number__sid",
         "geographical_area_id": "geographical_area__area_id",
         "geographical_area_sid": "geographical_area__sid",
     }
@@ -62,15 +72,15 @@ class NewQuotaOrderNumberOriginParser(NewValidityMixin, NewWritable, NewElementP
     record_code = "360"
     subrecord_code = "10"
 
-    sid: str = None
-    order_number__sid: str = None
+    sid: int = None
+    order_number__sid: int = None
     geographical_area__area_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    geographical_area__sid: str = None
+    geographical_area__sid: int = None
 
 
-class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
+class NewQuotaOrderNumberOriginExclusionParser(NewElementParser):
     model = models.QuotaOrderNumberOriginExclusion
 
     model_links = [
@@ -92,20 +102,21 @@ class NewQuotaOrderNumberOriginExclusionParser(NewWritable, NewElementParser):
         ),
     ]
 
+    value_mapping = {
+        "quota_order_number_origin_sid": "origin__sid",
+        "excluded_geographical_area_sid": "excluded_geographical_area__sid",
+    }
+
     xml_object_tag = "quota.order.number.origin.exclusions"
     record_code = "360"
     subrecord_code = "15"
 
-    origin__sid: str = None
-    excluded_geographical_area__sid: str = None
+    origin__sid: int = None
+    excluded_geographical_area__sid: int = None
 
 
-class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
+class NewQuotaDefinitionParser(NewElementParser):
     model = models.QuotaDefinition
-    value_mapping = {
-        "validity_start_date": "valid_between_lower",
-        "validity_end_date": "valid_between_upper",
-    }
 
     model_links = [
         # create dependency to quota order number
@@ -148,23 +159,36 @@ class NewQuotaDefinitionParser(NewValidityMixin, NewWritable, NewElementParser):
     record_code = "370"
     subrecord_code = "00"
 
-    sid: str = None
+    value_mapping = {
+        "quota_definition_sid": "sid",
+        "quota_order_number_id": "order_number__order_number",
+        "validity_start_date": "valid_between_lower",
+        "validity_end_date": "valid_between_upper",
+        "quota_order_number_sid": "order_number__sid",
+        "monetary_unit_code": "monetary_unit__code",
+        "measurement_unit_code": "measurement_unit__code",
+        "measurement_unit_qualifier_code": "measurement_unit_qualifier__code",
+        "critical_state": "quota_critical",
+        "critical_threshold": "quota_critical_threshold",
+    }
+
+    sid: int = None
     order_number__order_number: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    order_number__sid: str = None
+    order_number__sid: int = None
     volume: int = None
-    initial_volume: str = None
+    initial_volume: float = None
     monetary_unit__code: str = None
     measurement_unit__code: str = None
     measurement_unit_qualifier__code: str = None
-    maximum_precision: str = None
-    quota_critical: str = None
-    quota_critical_threshold: str = None
+    maximum_precision: int = None
+    quota_critical: bool = None
+    quota_critical_threshold: int = None
     description: str = None
 
 
-class NewQuotaAssociationParser(NewWritable, NewElementParser):
+class NewQuotaAssociationParser(NewElementParser):
     model = models.QuotaAssociation
     model_links = [
         # create dependency to QuotaDefinition (main quota)
@@ -185,25 +209,25 @@ class NewQuotaAssociationParser(NewWritable, NewElementParser):
         ),
     ]
 
+    value_mapping = {
+        "main_quota_definition_sid": "main_quota__sid",
+        "sub_quota_definition_sid": "sub_quota__sid",
+        "relation_type": "sub_quota_relation_type",
+    }
+
     xml_object_tag = "quota.association"
     record_code = "370"
     subrecord_code = "05"
 
-    main_quota__sid: str = None
-    sub_quota__sid: str = None
+    main_quota__sid: int = None
+    sub_quota__sid: int = None
     sub_quota_relation_type: str = None
-    coefficient: str = None
+    coefficient: float = None
 
 
-class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, NewElementParser):
+class NewQuotaSuspensionParser(NewElementParser):
     model = models.QuotaSuspension
 
-    value_mapping = {
-        "validity_start_date": "valid_between_lower",
-        "validity_end_date": "valid_between_upper",
-    }
-
-    # create dependency to QuotaDefinition
     model_links = [
         ModelLink(
             models.QuotaDefinition,
@@ -213,55 +237,39 @@ class NewQuotaSuspensionParser(NewValidityMixin, NewWritable, NewElementParser):
             "quota.definition",
         ),
     ]
+
+    value_mapping = {
+        "suspension_start_date": "valid_between_lower",
+        "suspension_end_date": "valid_between_upper",
+        "quota_suspension_period_sid": "sid",
+        "quota_definition_sid": "quota_definition__sid",
+    }
 
     xml_object_tag = "quota.suspension.period"
     record_code = "370"
     subrecord_code = "15"
 
-    sid: str = None
-    quota_definition__sid: str = None
-    valid_between_lower: str = None
-    valid_between_upper: str = None
+    sid: int = None
+    quota_definition__sid: int = None
+    valid_between_lower: date = None
+    valid_between_upper: date = None
     description: str = None
 
 
-class NewQuotaBlockingParser(NewValidityMixin, NewWritable, NewElementParser):
+class NewQuotaBlockingParser(NewElementParser):
     model = models.QuotaBlocking
-
-    value_mapping = {
-        "validity_start_date": "valid_between_lower",
-        "validity_end_date": "valid_between_upper",
-    }
-
-    # create dependency to QuotaDefinition
-    model_links = [
-        ModelLink(
-            models.QuotaDefinition,
-            [
-                ModelLinkField("quota_definition__sid", "sid"),
-            ],
-            "quota.definition",
-        ),
-    ]
 
     xml_object_tag = "quota.blocking.period"
     record_code = "370"
     subrecord_code = "10"
 
-    sid: str = None
-    quota_definition__sid: str = None
-    valid_between_lower: str = None
-    valid_between_upper: str = None
-    blocking_period_type: str = None
-    description: str = None
+    value_mapping = {
+        "quota_blocking_period_sid": "sid",
+        "quota_definition_sid": "quota_definition__sid",
+        "blocking_start_date": "valid_between_lower",
+        "blocking_end_date": "valid_between_upper",
+    }
 
-
-class NewQuotaEventParser(NewWritable, NewElementParser):
-    # TODO: review all possible examples of quota events
-    # handler = QuotaEventHandler
-    model = models.QuotaEvent
-
-    # create dependency to QuotaDefinition
     model_links = [
         ModelLink(
             models.QuotaDefinition,
@@ -272,39 +280,194 @@ class NewQuotaEventParser(NewWritable, NewElementParser):
         ),
     ]
 
-    xml_object_tag = r"quota.([a-z.]+).event"
+    sid: int = None
+    quota_definition__sid: int = None
+    valid_between_lower: date = None
+    valid_between_upper: date = None
+    blocking_period_type: int = None
+    description: str = None
+
+
+class NewQuotaEventParser(NewElementParser):
+    model = models.QuotaEvent
+
+    model_links = [
+        ModelLink(
+            models.QuotaDefinition,
+            [
+                ModelLinkField("quota_definition__sid", "sid"),
+            ],
+            "quota.definition",
+        ),
+    ]
+
+    data_fields = []
+
+    xml_object_tag = "parent.quota.event"  # parent to all quota events - should never match anything directly
     record_code = "375"
     subrecord_code = "subrecord_code"
 
     quota_definition__sid: str = None
-    occurrence_timestamp: str = None
+    occurrence_timestamp: datetime = None
 
-    # _additional_components = {
-    #     # balance event
-    #     TextElement(Tag("old.balance")): "old.balance",
-    #     TextElement(Tag("new.balance")): "new.balance",
-    #     TextElement(Tag("imported.amount")): "imported.amount",
-    #     TextElement(
-    #         Tag("last.import.date.in.allocation"),
-    #     ): "last.import.date.in.allocation",
-    #     # unblocking event
-    #     TextElement(Tag("unblocking.date")): "unblocking.date",
-    #     # critical event
-    #     TextElement(Tag("critical.state")): "critical.state",
-    #     TextElement(
-    #         Tag("critical.state.change.date"),
-    #     ): "critical.state.change.date",
-    #     # exhaustion event
-    #     TextElement(Tag("exhaustion.date")): "exhaustion.date",
-    #     # reopening event
-    #     TextElement(Tag("reopening.date")): "reopening.date",
-    #     # unsuspension event
-    #     TextElement(Tag("unsuspension.date")): "unsuspension.date",
-    #     # closed and transferred event
-    #     TextElement(Tag("transfer.date")): "transfer.date",
-    #     TextElement(Tag("quota.closed")): "quota.closed",
-    #     TextElement(Tag("transferred.amount")): "transferred.amount",
-    #     TextElement(
-    #         Tag("target.quota.definition.sid"),
-    #     ): "target.quota.definition.sid",
-    # }
+    @property
+    def data(self):
+        data_result = {}
+        for field in self.__class__.data_fields:
+            data_result[field.replace("_", ".")] = getattr(self, field)
+
+        return json.dumps(data_result)
+
+
+class NewQuotaBalanceEventParser(NewQuotaEventParser):
+    xml_object_tag = "quota.balance.event"
+    subrecord_code = "00"
+
+    value_mapping = {
+        "quota_definition_sid": "quota_definition__sid",
+    }
+
+    data_fields = [
+        "new_balance",
+        "old_balance",
+        "imported_amount",
+        "last_import_date_in_allocation",
+    ]
+
+    # data fields
+    new_balance: str = None
+    old_balance: str = None
+    imported_amount: str = None
+    last_import_date_in_allocation: str = None
+
+    # fields
+    quota_definition__sid: int = None
+    occurrence_timestamp: datetime = None
+
+
+class NewQuotaUnblockingEventParser(NewQuotaEventParser):
+    xml_object_tag = "quota.unblocking.event"
+    subrecord_code = "05"
+
+    value_mapping = {
+        "quota_definition_sid": "quota_definition__sid",
+    }
+
+    data_fields = [
+        "unblocking_date",
+    ]
+
+    # data fields
+    unblocking_date: str = None
+
+    # fields
+    quota_definition__sid: int = None
+    occurrence_timestamp: datetime = None
+
+
+class NewQuotaCriticalEventParser(NewQuotaEventParser):
+    xml_object_tag = "quota.critical.event"
+    subrecord_code = "10"
+
+    value_mapping = {
+        "quota_definition_sid": "quota_definition__sid",
+    }
+
+    data_fields = [
+        "critical_state",
+        "critical_state_change_date",
+    ]
+
+    # data fields
+    critical_state: str = None
+    critical_state_change_date: str = None
+
+    # fields
+    quota_definition__sid: int = None
+    occurrence_timestamp: datetime = None
+
+
+class NewQuotaExhaustionEventParser(NewQuotaEventParser):
+    xml_object_tag = "quota.exhaustion.event"
+    subrecord_code = "15"
+
+    value_mapping = {
+        "quota_definition_sid": "quota_definition__sid",
+    }
+
+    data_fields = [
+        "exhaustion_date",
+    ]
+
+    # data fields
+    exhaustion_date: str = None
+
+    # fields
+    quota_definition__sid: int = None
+    occurrence_timestamp: datetime = None
+
+
+class NewQuotaReopeningEventParser(NewQuotaEventParser):
+    xml_object_tag = "quota.reopening.event"
+    subrecord_code = "20"
+
+    value_mapping = {
+        "quota_definition_sid": "quota_definition__sid",
+    }
+
+    data_fields = [
+        "reopening_date",
+    ]
+
+    # data fields
+    reopening_date: str = None
+
+    # fields
+    quota_definition__sid: int = None
+    occurrence_timestamp: datetime = None
+
+
+class NewQuotaUnsuspensionEventParser(NewQuotaEventParser):
+    xml_object_tag = "quota.unsuspension.event"
+    subrecord_code = "25"
+
+    value_mapping = {
+        "quota_definition_sid": "quota_definition__sid",
+    }
+
+    data_fields = [
+        "unsuspension_date",
+    ]
+
+    # data fields
+    unsuspension_date: str = None
+
+    # fields
+    quota_definition__sid: int = None
+    occurrence_timestamp: datetime = None
+
+
+class NewQuotaClosedAndTransferredEventParser(NewQuotaEventParser):
+    xml_object_tag = "quota.closed.and.transferred.event"
+    subrecord_code = "30"
+
+    value_mapping = {
+        "quota_definition_sid": "quota_definition__sid",
+    }
+
+    data_fields = [
+        "quota_closed",
+        "transferred_amount",
+        "transfer_date",
+        "target_quota_definition_sid",
+    ]
+
+    # data fields
+    quota_closed: str = None
+    transferred_amount: str = None
+    transfer_date: str = None
+    target_quota_definition_sid: str = None
+
+    # fields
+    quota_definition__sid: int = None
+    occurrence_timestamp: datetime = None

@@ -2,11 +2,14 @@ from datetime import date
 
 import pytest
 
+from common.tests import factories
+
 # note : need to import these objects to make them available to the parser
 from common.tests.util import get_test_xml_file
 from footnotes.models import Footnote
 from footnotes.new_import_parsers import NewFootnoteParser
 from importer import new_importer
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -59,13 +62,16 @@ class TestNewFootnoteParser:
     def test_import(self, superuser):
         file_to_import = get_test_xml_file("footnote_CREATE.xml", __file__)
 
+        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+
         importer = new_importer.NewImporter(
-            file_to_import,
+            import_batch=import_batch,
+            taric3_file=file_to_import,
             import_title="Importing stuff",
             author_username=superuser.username,
         )
 
-        # check there is one AdditionalCodeType imported
         assert len(importer.parsed_transactions) == 1
 
         target_message = importer.parsed_transactions[0].parsed_messages[3]
@@ -74,7 +80,6 @@ class TestNewFootnoteParser:
         assert target_message.subrecord_code == self.target_parser_class.subrecord_code
         assert type(target_message.taric_object) == self.target_parser_class
 
-        # check properties for additional code
         target = target_message.taric_object
         assert target.footnote_type__footnote_type_id == "3"
         assert target.footnote_id == "9"

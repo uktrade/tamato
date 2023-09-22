@@ -1,8 +1,7 @@
 from datetime import date
 
-from certificates.models import CertificateType
-from importer.new_parsers import ModelLink
-from importer.new_parsers import ModelLinkField
+from importer.new_parser_model_links import ModelLink
+from importer.new_parser_model_links import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewValidityMixin
 from importer.parsers import NewWritable
@@ -700,21 +699,18 @@ class NewMeasureConditionParser(NewWritable, NewElementParser):
             "monetary.unit",
         ),
         ModelLink(
-            models.MeasurementUnit,
-            [
-                ModelLinkField("condition_measurement__measurement_unit__code", "code"),
-            ],
-            "measurement.unit",
-        ),
-        ModelLink(
-            models.MeasurementUnitQualifier,
+            models.Measurement,
             [
                 ModelLinkField(
+                    "condition_measurement__measurement_unit__code",
+                    "measurement_unit__code",
+                ),
+                ModelLinkField(
                     "condition_measurement__measurement_unit_qualifier__code",
-                    "code",
+                    "measurement_unit_qualifier__code",
                 ),
             ],
-            "measurement.unit.qualifier",
+            "measurement",
         ),
         ModelLink(
             models.MeasureAction,
@@ -727,15 +723,12 @@ class NewMeasureConditionParser(NewWritable, NewElementParser):
             Certificate,
             [
                 ModelLinkField("required_certificate__sid", "sid"),
+                ModelLinkField(
+                    "required_certificate__certificate_type__sid",
+                    "certificate_type__sid",
+                ),
             ],
             "certificate",
-        ),
-        ModelLink(
-            CertificateType,
-            [
-                ModelLinkField("required_certificate__certificate_type__sid", "sid"),
-            ],
-            "certificate.type",
         ),
     ]
 

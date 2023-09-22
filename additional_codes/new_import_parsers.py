@@ -3,8 +3,8 @@ from datetime import date
 import additional_codes.models
 from additional_codes.import_handlers import *
 from footnotes.models import Footnote
-from importer.new_parsers import ModelLink
-from importer.new_parsers import ModelLinkField
+from importer.new_parser_model_links import ModelLink
+from importer.new_parser_model_links import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewChildPeriod
 from importer.parsers import NewValidityMixin

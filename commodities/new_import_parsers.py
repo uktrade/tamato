@@ -1,8 +1,9 @@
 from datetime import date
 
 from commodities.import_handlers import *
-from importer.new_parsers import ModelLink
-from importer.new_parsers import ModelLinkField
+from commodities.models import GoodsNomenclatureDescription
+from importer.new_parser_model_links import ModelLink
+from importer.new_parser_model_links import ModelLinkField
 from importer.new_parsers import NewElementParser
 from importer.parsers import NewChildPeriod
 from importer.parsers import NewValidityMixin
@@ -17,7 +18,7 @@ class NewGoodsNomenclatureParser(NewWritable, NewElementParser):
     value_mapping = {
         "goods_nomenclature_sid": "sid",
         "goods_nomenclature_item_id": "item_id",
-        "productline_suffix": "suffix",
+        "producline_suffix": "suffix",
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
         "statistical_indicator": "statistical",
@@ -55,8 +56,8 @@ class NewGoodsNomenclatureOriginParser(NewWritable, NewElementParser):
         ModelLink(
             models.GoodsNomenclature,
             [
-                ModelLinkField("derived_from_goods_nomenclature__sid", "sid"),
                 ModelLinkField("derived_from_goods_nomenclature__item_id", "item_id"),
+                ModelLinkField("derived_from_goods_nomenclature__suffix", "suffix"),
             ],
             "goods.nomenclature",
         ),
@@ -68,6 +69,7 @@ class NewGoodsNomenclatureOriginParser(NewWritable, NewElementParser):
         "derived_goods_nomenclature_sid": "derived_from_goods_nomenclature__sid",
         "derived_goods_nomenclature_item_id": "derived_from_goods_nomenclature__item_id",
         "productline_suffix": "new_goods_nomenclature__suffix",
+        "derived_productline_suffix": "derived_from_goods_nomenclature__suffix",
     }
 
     record_code = "400"
@@ -77,9 +79,9 @@ class NewGoodsNomenclatureOriginParser(NewWritable, NewElementParser):
 
     new_goods_nomenclature__sid: int = None
     new_goods_nomenclature__item_id: str = None
-    derived_from_goods_nomenclature__sid: int = None
-    derived_from_goods_nomenclature__item_id: str = None
     new_goods_nomenclature__suffix: int = None
+    derived_from_goods_nomenclature__item_id: str = None
+    derived_from_goods_nomenclature__suffix: int = None
 
 
 class NewGoodsNomenclatureSuccessorParser(NewWritable, NewElementParser):
@@ -154,12 +156,33 @@ class NewGoodsNomenclatureDescriptionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "goods.nomenclature.description"
 
+    identity_fields = [
+        "described_goods_nomenclature__sid",
+        "described_goods_nomenclature__item_id",
+        "described_goods_nomenclature__suffix",
+    ]
+
     sid: int = None
     # language_id: str = None
     described_goods_nomenclature__sid: int = None
     described_goods_nomenclature__item_id: str = None
     described_goods_nomenclature__suffix: int = None
     description: str = None
+
+    def last_published_description_with_period(self):
+        # find previous period
+        latest_description = (
+            GoodsNomenclatureDescription.objects.latest_approved()
+            .filter(
+                described_goods_nomenclature__sid=self.described_goods_nomenclature__sid,
+                described_goods_nomenclature__item_id=self.described_goods_nomenclature__item_id,
+                described_goods_nomenclature__suffix=self.described_goods_nomenclature__suffix,
+            )
+            .last()
+        )
+
+        # do stuff
+        return latest_description
 
 
 class NewGoodsNomenclatureDescriptionPeriodParser(
@@ -192,10 +215,12 @@ class NewGoodsNomenclatureDescriptionPeriodParser(
     value_mapping = {
         "goods_nomenclature_description_period_sid": "sid",
         "goods_nomenclature_sid": "described_goods_nomenclature__sid",
-        "goods_nomenclature_item_id": "described_goods_nomenclature__sid",
+        "goods_nomenclature_item_id": "described_goods_nomenclature__item_id",
         "productline_suffix": "described_goods_nomenclature__suffix",
         "validity_start_date": "validity_start",
     }
+
+    identity_fields = ["sid"]
 
     record_code = "400"
     subrecord_code = "10"
@@ -237,6 +262,8 @@ class NewGoodsNomenclatureIndentParser(NewWritable, NewElementParser):
     subrecord_code = "05"
 
     xml_object_tag = "goods.nomenclature.indents"
+
+    identity_fields = ["sid"]
 
     sid: int = None
     indented_goods_nomenclature__sid: int = None
@@ -290,6 +317,13 @@ class NewFootnoteAssociationGoodsNomenclatureParser(
     subrecord_code = "20"
 
     xml_object_tag = "footnote.association.goods.nomenclature"
+
+    identity_fields = [
+        "goods_nomenclature__sid",
+        "associated_footnote__footnote_id",
+        "goods_nomenclature__item_id",
+        "goods_nomenclature__suffix",
+    ]
 
     goods_nomenclature__sid: int = None
     associated_footnote__footnote_type__footnote_type_id: int = None
