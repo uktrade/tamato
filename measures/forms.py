@@ -1642,3 +1642,42 @@ class MeasureDutiesForm(forms.Form):
                 validate_duties(duties, measure.valid_between.lower)
 
         return cleaned_data
+
+
+class MeasureGeographicalAreaExclusionsForm(forms.Form):
+    excluded_area = forms.ModelChoiceField(
+        label="",
+        queryset=GeographicalArea.objects.all(),
+        help_text="Select a geographical area to be excluded",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["excluded_area"].queryset = (
+            GeographicalArea.objects.current()
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .order_by("description")
+        )
+
+        self.fields[
+            "excluded_area"
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "excluded_area",
+            ),
+        )
+
+
+class MeasureGeographicalAreaExclusionsFormSet(FormSet):
+    """Allows editing the geographical area exclusions of multiple measures in
+    `MeasureEditWizard`."""
+
+    form = MeasureGeographicalAreaExclusionsForm

@@ -1,0 +1,58 @@
+{% extends "measures/edit-wizard-step.jinja" %}
+
+{% from "components/fieldset/macro.njk" import govukFieldset %}
+{% from "components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block form %}
+  {% set formset = form %}
+  {{ crispy(formset.management_form, no_form_tags) }}
+
+  {% if formset.non_form_errors() %}
+    {% set error_list = [] %}
+    {% for error in formset.non_form_errors() %}
+      {{ error_list.append({
+        "html": '<p class="govuk-error-message">' ~ error ~ '</p>',
+      }) or "" }}
+    {% endfor %}
+
+    {{ govukErrorSummary({
+      "titleText": "There is a problem",
+      "errorList": error_list
+    }) }}
+  {% endif %}
+
+  {% for form in formset %}
+    {% if form.non_field_errors() %}
+      {% set error_list = [] %}
+      {% for error in form.non_field_errors() %}
+        {{ error_list.append({
+          "html": '<p class="govuk-error-message">' ~ error ~ '</p>',
+        }) or "" }}
+      {% endfor %}
+
+      {{ govukErrorSummary({
+        "titleText": "There is a problem",
+        "errorList": error_list
+      }) }}
+    {% endif %}
+    {{ crispy(form) }}
+  {% endfor %}
+
+  {% if formset.data[formset.prefix ~ "-ADD"] %}
+    {{ crispy(formset.empty_form)|replace("__prefix__", formset.forms|length)|safe }}
+  {% endif %}
+
+  <div class="govuk-button-group">
+  {{ govukButton({"text": "Save"}) }}
+
+  {% if formset.total_form_count() + 1 < formset.max_num %}
+  {{ govukButton({
+      "text": "Add another",
+      "attributes": {"id": "add-new"},
+      "classes": "govuk-button--secondary",
+      "value": "1",
+      "name": formset.prefix ~ "-ADD",
+    }) }}
+  {% endif %}
+  </div>
+{% endblock %}
