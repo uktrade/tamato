@@ -11,7 +11,14 @@ from common.celery import app
 logger = logging.getLogger(__name__)
 
 
-@app.task
+@app.task(
+    default_retry_delay=settings.ENVELOPE_GENERATION_DEFAULT_RETRY_DELAY,
+    max_retries=settings.ENVELOPE_GENERATION_MAX_RETRIES,
+    retry_backoff=True,
+    retry_backoff_max=settings.ENVELOPE_GENERATION_RETRY_BACKOFF_MAX,
+    retry_jitter=True,
+    autoretry_for=(Exception,),
+)
 def create_xml_envelope_file(
     packaged_work_basket_id: int,
     notify_when_done: bool = True,

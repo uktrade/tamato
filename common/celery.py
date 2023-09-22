@@ -20,3 +20,7 @@ app.autodiscover_tasks()
 # this should be automactically configured via ^^ config_from_object
 # but it isn't so here it's configured here
 app.conf.task_routes = settings.CELERY_ROUTES
+
+# this means the celery task only sends the acknowledgement (removes from task queue)
+# after it has completed
+# app.conf.task_ack_late = True # What's the impact on all of our tasks?
