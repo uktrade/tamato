@@ -118,13 +118,39 @@ def test_healthcheck_response(response, status_code, status):
     assert payload[1].tag == "response_time"
 
 
-def test_app_info(valid_user_client):
+def test_app_info_non_superuser(valid_user_client):
+    """Users without the superuser permission have a restricted view of
+    application information."""
     response = valid_user_client.get(reverse("app-info"))
 
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
-    assert "Active business rule checks" in page.select("h2")[0].text
+    h2_elements = page.select(".info-section h2")
+
+    assert len(h2_elements) == 2
+    assert "Active business rule checks" in h2_elements[0].text
+    assert "Active envelope generation tasks" in h2_elements[1].text
+
+
+def test_app_info_superuser(superuser_client, new_workbasket):
+    """
+    Superusers should have an unrestricted view of application information.
+
+    The new_workbasket fixture provides access to transaction information in the
+    deployment infomation section.
+    """
+    response = superuser_client.get(reverse("app-info"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    h2_elements = page.select(".info-section h2")
+
+    assert len(h2_elements) == 3
+    assert "Deployment information" in h2_elements[0].text
+    assert "Active business rule checks" in h2_elements[1].text
+    assert "Active envelope generation tasks" in h2_elements[2].text
 
 
 def test_index_displays_footer_links(valid_user_client):
