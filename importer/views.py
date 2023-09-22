@@ -20,6 +20,7 @@ from importer.filters import TaricImportFilter
 from importer.goods_report import GoodsReporter
 from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
+from notifications.models import GoodsSuccessfulImportNotification
 from workbaskets.validators import WorkflowStatus
 
 
@@ -291,3 +292,34 @@ class DownloadGoodsReportView(
     def get(self, request, *args, **kwargs) -> HttpResponse:
         import_batch = self.get_object()
         return self.download_response(import_batch)
+
+
+class NotifyGoodsReportView(
+    PermissionRequiredMixin,
+    DetailView,
+):
+    """View used to notify an import report of goods changes in Excel format."""
+
+    permission_required = "common.add_trackedmodel"
+    model = models.ImportBatch
+
+    def get(self, request, *args, **kwargs):
+        import_batch = self.get_object()
+
+        # create notification
+        notification = GoodsSuccessfulImportNotification(
+            notified_object_pk=import_batch.id,
+        )
+        notification.save()
+        notification.synchronous_send_emails()
+
+        return redirect(
+            reverse("goods-report-notify-success", kwargs={"pk": import_batch.id}),
+        )
+
+
+class NotifyGoodsReportSuccessView(DetailView):
+    """Goods Report notification success trigger view."""
+
+    template_name = "eu-importer/notify-success.jinja"
+    model = models.ImportBatch

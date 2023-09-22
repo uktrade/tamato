@@ -42,7 +42,7 @@
         },
         {
             "key": {"text": "Additional code"},
-            "value": {"text": create_link(url("additional_code-ui-detail", kwargs={"sid": object.additional_code.sid}), object.additional_code.sid) if object.additional_code else "-"},
+            "value": {"text": create_link(url("additional_code-ui-detail", kwargs={"sid": object.additional_code.sid}), object.additional_code.type.sid~object.additional_code.code) if object.additional_code else "-"},
             "actions": {"items": []}
         },
         {

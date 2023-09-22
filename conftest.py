@@ -8,7 +8,9 @@ from typing import Callable
 from typing import Dict
 from typing import Optional
 from typing import Sequence
+from typing import Tuple
 from typing import Type
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import boto3
@@ -42,7 +44,7 @@ from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
 from common.serializers import TrackedModelSerializer
-from common.tariffs_api import QUOTAS
+from common.tariffs_api import Endpoints
 from common.tests import factories
 from common.tests.models import model_with_history
 from common.tests.util import Dates
@@ -53,10 +55,19 @@ from common.tests.util import get_form_data
 from common.tests.util import make_duplicate_record
 from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
+from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from importer.models import ImportBatchStatus
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
+from measures.models import DutyExpression
+from measures.models import MeasureConditionComponent
+from measures.models import Measurement
+from measures.models import MeasurementUnit
+from measures.models import MeasurementUnitQualifier
+from measures.models import MonetaryUnit
+from measures.parsers import DutySentenceParser
+from publishing.models import PackagedWorkBasket
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
@@ -1449,7 +1460,7 @@ def quota_order_number():
 
 @pytest.fixture
 def mock_quota_api_no_data(requests_mock):
-    yield requests_mock.get(url=QUOTAS, json={})
+    yield requests_mock.get(url=Endpoints.QUOTAS.value, json={})
 
 
 @pytest.fixture
@@ -1547,3 +1558,442 @@ def empty_goods_import_batch():
         status=ImportBatchStatus.SUCCEEDED,
         workbasket_id=archived_workbasket.id,
     )
+
+
+@pytest.fixture
+def duty_sentence_parser(
+    duty_expressions: Dict[int, DutyExpression],
+    monetary_units: Dict[str, MonetaryUnit],
+    measurements: Dict[Tuple[str, Optional[str]], Measurement],
+) -> DutySentenceParser:
+    return DutySentenceParser(
+        duty_expressions.values(),
+        monetary_units.values(),
+        measurements.values(),
+    )
+
+
+@pytest.fixture
+def percent_or_amount() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=1,
+        prefix="",
+        duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
+        measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
+        monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
+    )
+
+
+@pytest.fixture
+def plus_percent_or_amount() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=4,
+        prefix="+",
+        duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
+        measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
+        monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
+    )
+
+
+@pytest.fixture
+def plus_agri_component() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=12,
+        prefix="+ AC",
+        duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+        measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
+        monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
+    )
+
+
+@pytest.fixture
+def plus_amount_only() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=20,
+        prefix="+",
+        duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
+        measurement_unit_applicability_code=ApplicabilityCode.MANDATORY,
+        monetary_unit_applicability_code=ApplicabilityCode.MANDATORY,
+    )
+
+
+@pytest.fixture
+def nothing() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=37,
+        prefix="NIHIL",
+        duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+        measurement_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+        monetary_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+    )
+
+
+@pytest.fixture
+def supplementary_unit() -> DutyExpression:
+    return factories.DutyExpressionFactory(
+        sid=99,
+        prefix="",
+        duty_amount_applicability_code=ApplicabilityCode.PERMITTED,
+        measurement_unit_applicability_code=ApplicabilityCode.MANDATORY,
+        monetary_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+    )
+
+
+@pytest.fixture
+def duty_expressions(
+    percent_or_amount: DutyExpression,
+    plus_percent_or_amount: DutyExpression,
+    plus_agri_component: DutyExpression,
+    plus_amount_only: DutyExpression,
+    supplementary_unit: DutyExpression,
+    nothing: DutyExpression,
+) -> Dict[int, DutyExpression]:
+    return {
+        d.sid: d
+        for d in [
+            percent_or_amount,
+            plus_percent_or_amount,
+            plus_agri_component,
+            plus_amount_only,
+            supplementary_unit,
+            nothing,
+        ]
+    }
+
+
+@pytest.fixture
+def monetary_units() -> Dict[str, MonetaryUnit]:
+    return {
+        m.code: m
+        for m in [
+            factories.MonetaryUnitFactory(code="EUR"),
+            factories.MonetaryUnitFactory(code="GBP"),
+            factories.MonetaryUnitFactory(code="XEM"),
+        ]
+    }
+
+
+@pytest.fixture
+def measurement_units() -> Sequence[MeasurementUnit]:
+    return [
+        factories.MeasurementUnitFactory(code="KGM", abbreviation="kg"),
+        factories.MeasurementUnitFactory(code="DTN", abbreviation="100 kg"),
+        factories.MeasurementUnitFactory(code="MIL", abbreviation="1,000 p/st"),
+    ]
+
+
+@pytest.fixture
+def unit_qualifiers() -> Sequence[MeasurementUnitQualifier]:
+    return [
+        factories.MeasurementUnitQualifierFactory(code="Z", abbreviation="lactic."),
+    ]
+
+
+@pytest.fixture
+def measurements(
+    measurement_units,
+    unit_qualifiers,
+) -> Dict[Tuple[str, Optional[str]], Measurement]:
+    measurements = [
+        *[
+            factories.MeasurementFactory(
+                measurement_unit=m,
+                measurement_unit_qualifier=None,
+            )
+            for m in measurement_units
+        ],
+        factories.MeasurementFactory(
+            measurement_unit=measurement_units[1],
+            measurement_unit_qualifier=unit_qualifiers[0],
+        ),
+    ]
+    return {
+        (
+            m.measurement_unit.code,
+            m.measurement_unit_qualifier.code if m.measurement_unit_qualifier else None,
+        ): m
+        for m in measurements
+    }
+
+
+@pytest.fixture
+def condition_duty_sentence_parser(
+    duty_expressions: Dict[int, DutyExpression],
+    monetary_units: Dict[str, MonetaryUnit],
+    measurements: Dict[Tuple[str, Optional[str]], Measurement],
+) -> DutySentenceParser:
+    return DutySentenceParser(
+        duty_expressions.values(),
+        monetary_units.values(),
+        measurements.values(),
+        MeasureConditionComponent,
+    )
+
+
+@pytest.fixture
+def get_component_data(duty_expressions, monetary_units, measurements) -> Callable:
+    def getter(
+        duty_expression_id,
+        amount,
+        monetary_unit_code,
+        measurement_codes,
+    ) -> Dict:
+        return {
+            "duty_expression": duty_expressions.get(duty_expression_id),
+            "duty_amount": amount,
+            "monetary_unit": monetary_units.get(monetary_unit_code),
+            "component_measurement": measurements.get(measurement_codes),
+        }
+
+    return getter
+
+
+@pytest.fixture(
+    params=(
+        ("4.000%", [(1, 4.0, None, None)]),
+        ("1.230 EUR / kg", [(1, 1.23, "EUR", ("KGM", None))]),
+        ("0.300 XEM / 100 kg / lactic.", [(1, 0.3, "XEM", ("DTN", "Z"))]),
+        (
+            "12.900% + 20.000 EUR / kg",
+            [(1, 12.9, None, None), (4, 20.0, "EUR", ("KGM", None))],
+        ),
+        ("kg", [(99, None, None, ("KGM", None))]),
+        ("100 kg", [(99, None, None, ("DTN", None))]),
+        ("1.000 EUR", [(1, 1.0, "EUR", None)]),
+        ("0.000% + AC", [(1, 0.0, None, None), (12, None, None, None)]),
+    ),
+    ids=[
+        "simple_ad_valorem",
+        "simple_specific_duty",
+        "unit_with_qualifier",
+        "multi_component_expression",
+        "supplementary_unit",
+        "supplementary_unit_with_numbers",
+        "monetary_unit_without_measurement",
+        "non_amount_expression",
+    ],
+)
+def reversible_duty_sentence_data(request, get_component_data):
+    """Duty sentence test cases that are syntactically correct and are also
+    formatted correctly."""
+    expected, component_data = request.param
+    return expected, [get_component_data(*args) for args in component_data]
+
+
+@pytest.fixture(
+    params=(
+        ("20.0 EUR/100kg", [(1, 20.0, "EUR", ("DTN", None))]),
+        ("1.0 EUR/1000 p/st", [(1, 1.0, "EUR", ("MIL", None))]),
+    ),
+    ids=[
+        "parses_without_spaces",
+        "parses_without_commas",
+    ],
+)
+def irreversible_duty_sentence_data(request, get_component_data):
+    """Duty sentence test cases that are syntactically correct but are not in
+    the canonical rendering format with spaces and commas in the correct
+    places."""
+    expected, component_data = request.param
+    return expected, [get_component_data(*args) for args in component_data]
+
+
+@pytest.fixture(
+    params=(
+        (
+            (
+                "0.000% + AC",
+                [(1, 0.0, None, None), (12, None, None, None)],
+            ),
+            (
+                "12.900% + 20.000 EUR / kg",
+                [(1, 12.9, None, None), (4, 20.0, "EUR", ("KGM", None))],
+            ),
+        ),
+    ),
+)
+def duty_sentence_x_2_data(request, get_component_data):
+    """Duty sentence test cases that can be used to create a history of
+    components."""
+    history = []
+    for version in request.param:
+        expected, component_data = version
+        history.append(
+            (expected, [get_component_data(*args) for args in component_data]),
+        )
+    return history
+
+
+@pytest.fixture()
+def mocked_send_emails_apply_async():
+    with patch(
+        "notifications.tasks.send_emails_task.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ) as mocked_delay:
+        yield mocked_delay
+
+
+@pytest.fixture()
+def mocked_send_emails():
+    with patch(
+        "notifications.tasks.send_emails_task",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ) as mocked_delay:
+        yield mocked_delay
+
+
+@pytest.fixture(scope="function")
+def packaged_workbasket_factory(queued_workbasket_factory):
+    """
+    Factory fixture to create a packaged workbasket.
+
+    params:
+    workbasket defaults to queued_workbasket_factory() which creates a
+    Workbasket in the state QUEUED with an approved transaction and tracked models
+    """
+
+    def factory_method(workbasket=None, **kwargs):
+        if not workbasket:
+            workbasket = queued_workbasket_factory()
+        with patch(
+            "publishing.tasks.create_xml_envelope_file.apply_async",
+            return_value=MagicMock(id=factory.Faker("uuid4")),
+        ):
+            packaged_workbasket = factories.QueuedPackagedWorkBasketFactory(
+                workbasket=workbasket, **kwargs
+            )
+        return packaged_workbasket
+
+    return factory_method
+
+
+@pytest.fixture(scope="function")
+def published_envelope_factory(packaged_workbasket_factory, envelope_storage):
+    """
+    Factory fixture to create an envelope and update the packaged_workbasket
+    envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(packaged_workbasket=None, **kwargs):
+        if not packaged_workbasket:
+            packaged_workbasket = packaged_workbasket_factory()
+
+        with patch(
+            "publishing.storages.EnvelopeStorage.save",
+            wraps=MagicMock(side_effect=envelope_storage.save),
+        ) as mock_save:
+            envelope = factories.PublishedEnvelopeFactory(
+                packaged_work_basket=packaged_workbasket,
+                **kwargs,
+            )
+            mock_save.assert_called_once()
+
+        packaged_workbasket.envelope = envelope
+        packaged_workbasket.save()
+        return envelope
+
+    return factory_method
+
+
+@pytest.fixture(scope="function")
+def successful_envelope_factory(
+    published_envelope_factory,
+    mocked_send_emails_apply_async,
+):
+    """
+    Factory fixture to create a successfully processed envelope and update the
+    packaged_workbasket envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(**kwargs):
+        envelope = published_envelope_factory(**kwargs)
+
+        packaged_workbasket = PackagedWorkBasket.objects.get(
+            envelope=envelope,
+        )
+
+        packaged_workbasket.begin_processing()
+        assert packaged_workbasket.position == 0
+        assert (
+            packaged_workbasket.pk
+            == PackagedWorkBasket.objects.currently_processing().pk
+        )
+        factories.LoadingReportFactory.create(packaged_workbasket=packaged_workbasket)
+        packaged_workbasket.processing_succeeded()
+        packaged_workbasket.save()
+        assert packaged_workbasket.position == 0
+        return envelope
+
+    return factory_method
+
+
+@pytest.fixture(scope="function")
+def failed_envelope_factory(
+    published_envelope_factory,
+    mocked_send_emails_apply_async,
+):
+    """
+    Factory fixture to create a successfully processed envelope and update the
+    packaged_workbasket envelope field.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(**kwargs):
+        envelope = published_envelope_factory(**kwargs)
+
+        packaged_workbasket = PackagedWorkBasket.objects.get(
+            envelope=envelope,
+        )
+
+        packaged_workbasket.begin_processing()
+        assert packaged_workbasket.position == 0
+        assert (
+            packaged_workbasket.pk
+            == PackagedWorkBasket.objects.currently_processing().pk
+        )
+        factories.LoadingReportFactory.create(packaged_workbasket=packaged_workbasket)
+
+        packaged_workbasket.processing_failed()
+        packaged_workbasket.save()
+        assert packaged_workbasket.position == 0
+        return envelope
+
+    return factory_method
+
+
+@pytest.fixture(scope="function")
+def crown_dependencies_envelope_factory(successful_envelope_factory):
+    """
+    Factory fixture to create a crown dependencies envelope.
+
+    params:
+    packaged_workbasket defaults to packaged_workbasket_factory() which creates a
+    Packaged workbasket with a Workbasket in the state QUEUED
+    with an approved transaction and tracked models
+    """
+
+    def factory_method(**kwargs):
+        envelope = successful_envelope_factory(**kwargs)
+
+        packaged_workbasket = PackagedWorkBasket.objects.get(
+            envelope=envelope,
+        )
+        return factories.CrownDependenciesEnvelopeFactory(
+            packaged_work_basket=packaged_workbasket,
+        )
+
+    return factory_method

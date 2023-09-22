@@ -4,6 +4,7 @@ from django_filters import MultipleChoiceFilter
 
 from common.filters import ActiveStateMixin
 from common.filters import AutoCompleteFilter
+from common.filters import CurrentWorkBasketMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from geo_areas.models import GeographicalArea
@@ -16,7 +17,7 @@ class OrderNumberFilterBackend(TamatoFilterBackend):
     search_fields = ("order_number",)  # XXX order is significant
 
 
-class QuotaFilter(TamatoFilter, ActiveStateMixin):
+class QuotaFilter(TamatoFilter, ActiveStateMixin, CurrentWorkBasketMixin):
     order_number = AutoCompleteFilter(
         label="Order number",
         field_name="order_number",
@@ -51,4 +52,4 @@ class QuotaFilter(TamatoFilter, ActiveStateMixin):
         form = QuotaFilterForm
 
         model = models.QuotaDefinition
-        fields = ["order_number"]
+        fields = ["order_number", "current_work_basket"]

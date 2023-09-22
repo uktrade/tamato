@@ -85,7 +85,7 @@ class GeoAreaCountryForm(forms.Form):
             GeographicalArea.objects.filter(area_code=AreaCode.COUNTRY)
             .current()
             .with_latest_description()
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
         self.fields[
@@ -107,7 +107,7 @@ class GeoAreaRegionForm(forms.Form):
             GeographicalArea.objects.filter(area_code=AreaCode.REGION)
             .current()
             .with_latest_description()
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
         self.fields[
@@ -196,7 +196,7 @@ class GeographicalMembershipAddForm(
             GeographicalArea.objects.filter(area_code=AreaCode.GROUP)
             .current()
             .with_latest_description()
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
         self.fields[
@@ -542,7 +542,7 @@ class GeographicalMembershipGroupForm(DateValidationMixin, ValidityPeriodForm):
             .exclude(pk__in=current_memberships)
             .current()
             .with_latest_description()
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
         self.fields[
@@ -631,7 +631,7 @@ class GeographicalMembershipMemberForm(DateValidationMixin, ValidityPeriodForm):
             )
             .current()
             .with_latest_description()
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
         self.fields[
@@ -768,7 +768,7 @@ class ErgaOmnesExclusionsForm(forms.Form):
         self.fields["erga_omnes_exclusion"].queryset = (
             GeographicalArea.objects.current()
             .with_latest_description()
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
         self.fields[
@@ -803,7 +803,7 @@ class GeoGroupForm(forms.Form):
             GeographicalArea.objects.current()
             .with_latest_description()
             .filter(area_code=AreaCode.GROUP)
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
         # descriptions__description" should make this implicitly distinct()
@@ -830,7 +830,7 @@ class GeoGroupExclusionsForm(forms.Form):
         self.fields["geo_group_exclusion"].queryset = (
             GeographicalArea.objects.current()
             .with_latest_description()
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
         self.fields[
@@ -879,7 +879,7 @@ class CountryRegionForm(forms.Form):
             GeographicalArea.objects.current()
             .with_latest_description()
             .exclude(area_code=AreaCode.GROUP)
-            .as_at_today()
+            .as_at_today_and_beyond()
             .order_by("description")
         )
 

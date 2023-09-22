@@ -1,5 +1,11 @@
-from django.db import transaction
+import re
+from datetime import date
 
+from django.db import transaction
+from parsec import ParseError
+
+from commodities.validators import ITEM_ID_REGEX
+from common.util import TaricDateRange
 from importer.nursery import get_nursery
 
 
@@ -41,3 +47,136 @@ def delete_workbasket(workbasket):
     itself."""
     clear_workbasket(workbasket)
     workbasket.delete()
+
+
+# permits both date formats
+# YYYY-MM-DD
+# DD-MM-YYYY
+# and either - or / separator
+DATE_REGEX = (
+    r"([0-9]{2}(\/|-)[0-9]{2}(\/|-)[0-9]{4})|([0-9]{4}(\/|-)[0-9]{2}(\/|-)[0-9]{2})"
+)
+
+
+class TableRow:
+    def __init__(self, commodity=None, valid_between=None, duty_sentence=None):
+        self.commodity = commodity
+        self.valid_between = valid_between
+        self.duty_sentence = duty_sentence
+
+    @property
+    def all_none(self):
+        return not any([self.commodity, self.valid_between, self.duty_sentence])
+
+
+def find_comm_code(cell, row_data):
+    matches = re.compile(ITEM_ID_REGEX).match(cell)
+    if matches:
+        row_data.commodity = cell
+        return True
+    return False
+
+
+def find_date(cell):
+    matches = re.compile(DATE_REGEX).match(cell)
+    if matches:
+        return cell
+
+
+def find_duty_sentence(cell, row_data):
+    from measures.parsers import DutySentenceParser
+
+    # because we may not know the measure validity period, take today's date instead
+    # we only need to look for something that looks like a duty sentence, not necessarily a valid one
+    duty_sentence_parser = DutySentenceParser.create(
+        date.today(),
+    )
+    duty_sentence = cell.replace(" ", "")
+    try:
+        duty_sentence_parser.parse(duty_sentence)
+        row_data.duty_sentence = cell
+        return True
+    except ParseError:
+        return False
+
+
+def get_delimiter(date_string):
+    if "/" in date_string:
+        return "/"
+    elif "-" in date_string:
+        return "-"
+    return None
+
+
+def parse_dates(dates):
+    parsed_dates = []
+    for date_string in dates:
+        delimiter = get_delimiter(date_string)
+        components = [int(component) for component in date_string.split(delimiter)]
+
+        # year first
+        if components[0] > 1000:
+            parsed_dates.append(
+                date(components[0], components[1], components[2]),
+            )
+        # year last
+        elif components[-1] > 1000:
+            parsed_dates.append(
+                date(components[2], components[1], components[0]),
+            )
+    return parsed_dates
+
+
+def assign_validity(dates, row_data):
+    parsed_dates = parse_dates(dates)
+
+    # assume start date for an open-ended measure
+    if len(parsed_dates) == 1:
+        row_data.valid_between = TaricDateRange(
+            parsed_dates[0],
+            None,
+        )
+    elif len(parsed_dates) == 2:
+        if parsed_dates[0] > parsed_dates[1]:
+            row_data.valid_between = TaricDateRange(
+                parsed_dates[1],
+                parsed_dates[0],
+            )
+        elif parsed_dates[1] > parsed_dates[0]:
+            row_data.valid_between = TaricDateRange(
+                parsed_dates[0],
+                parsed_dates[1],
+            )
+
+
+def serialize_uploaded_data(data):
+    serialized = []
+    rows = data.strip().split("\n")
+    table = [row.strip().split("\t") for row in rows]
+
+    for row in table:
+        row_data = TableRow()
+        dates = []
+        for cell in row:
+            if not cell:
+                continue
+
+            commodity = find_comm_code(cell, row_data)
+            if commodity:
+                continue
+
+            found_date = find_date(cell)
+            if found_date:
+                dates.append(found_date)
+                continue
+
+            duty_sentence = find_duty_sentence(cell, row_data)
+            if duty_sentence:
+                continue
+
+        assign_validity(dates, row_data)
+
+        if not row_data.all_none:
+            serialized.append(row_data)
+
+    return serialized

@@ -2,7 +2,10 @@ import datetime
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 
+from common.models import Transaction
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
 from common.tests.util import assert_read_only_model_view_returns_list
@@ -17,6 +20,7 @@ from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from footnotes.models import Footnote
+from footnotes.models import FootnoteDescription
 from footnotes.views import FootnoteList
 from workbaskets.tasks import check_workbasket_sync
 
@@ -220,3 +224,35 @@ def test_footnote_type_api_list_view(valid_user_client):
         expected_results,
         valid_user_client,
     )
+
+
+def test_footnote_description_create(valid_user_client):
+    """Tests that `FootnoteDescriptionCreate` view returns 200 and creates a
+    description for the current version of an footnote."""
+    footnote = factories.FootnoteFactory.create(description=None)
+    new_version = footnote.new_version(workbasket=footnote.transaction.workbasket)
+    assert not FootnoteDescription.objects.exists()
+
+    url = reverse(
+        "footnote-ui-description-create",
+        kwargs={
+            "footnote_type__footnote_type_id": footnote.footnote_type.footnote_type_id,
+            "footnote_id": footnote.footnote_id,
+        },
+    )
+    data = {
+        "description": "new test description",
+        "described_footnote": new_version.pk,
+        "validity_start_0": 1,
+        "validity_start_1": 1,
+        "validity_start_2": 2023,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        get_response = valid_user_client.get(url)
+        assert get_response.status_code == 200
+
+        post_response = valid_user_client.post(url, data)
+        assert post_response.status_code == 302
+
+    assert FootnoteDescription.objects.filter(described_footnote=new_version).exists()

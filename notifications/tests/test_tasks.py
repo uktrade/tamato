@@ -1,93 +1,131 @@
 from unittest.mock import patch
-from uuid import uuid4
 
+import factory
 import pytest
 
-from common.tests import factories
 from notifications import models
 from notifications import tasks
 
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.skip(reason="TODO mock Notify client correctly")
-@patch("notifications.tasks.NotificationsAPIClient.send_email_notification")
-def test_send_emails_cds(send_email_notification, settings):
-    """Tests that email notifications are only sent to users subscribed to
-    packaging emails and that a log is created with this user's email and
-    template id."""
-    enrolled_user = factories.NotifiedUserFactory.create()
-    unenrolled_user = factories.NotifiedUserFactory.create(enrol_packaging=False)
-    template_id = uuid4()
+def test_send_emails_goods_report_notification(
+    goods_report_notification,
+):
+    """Tests that email notifications are only sent to users subscribed to email
+    type and that a log is created with this user's email."""
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = goods_report_notification
 
-    personalisation = {
-        "envelope_id": "220001",
-        "description": "description",
-        "download_url": "https://example.com",
-        "theme": "theme",
-        "eif": None,
-        "embargo": "None",
-        "jira_url": "https://example.com",
+    return_value = {
+        "file": "VGVzdA==",
+        "is_csv": False,
+        "confirm_email_before_download": True,
+        "retention_period": None,
     }
+    with patch(
+        "notifications.models.prepare_link_to_file",
+        return_value=return_value,
+    ) as mocked_prepare_link_to_file:
+        with patch(
+            "notifications.models.send_emails",
+            return_value={
+                "response_ids": " \n".join([str(factory.Faker("uuid"))]),
+                "recipients": " \n".join([expected_present_email]),
+                "failed_recipients": "",
+            },
+        ) as mocked_send_emails:
+            tasks.send_emails_task.apply(
+                kwargs={
+                    "notification_pk": notification.id,
+                },
+            )
+            mocked_send_emails.assert_called_once()
+            mocked_prepare_link_to_file.assert_called_once()
 
-    tasks.send_emails.apply(
-        kwargs={
-            "template_id": template_id,
-            "personalisation": personalisation,
-            "email_type": "packaging",
-        },
-    )
-
-    send_email_notification.assert_called_once_with(
-        email_address=enrolled_user.email,
-        template_id=template_id,
-        personalisation=personalisation,
-    )
-
-    recipients = f"{enrolled_user.email} \n"
     log = models.NotificationLog.objects.get(
-        template_id=template_id,
-        recipients=recipients,
+        notification=notification,
+        recipients=expected_present_email,
+        success=True,
     )
 
-    assert unenrolled_user.email not in log.recipients
+    assert expected_present_email in log.recipients
+    assert expected_not_present_email not in log.recipients
 
 
-@pytest.mark.skip(reason="TODO mock Notify client correctly")
-@patch("notifications.tasks.NotificationsAPIClient.send_email_notification")
-def test_send_emails_api(send_email_notification, settings):
-    """Tests that email notifications are only sent to users subscribed to
-    packaging emails and that a log is created with this user's email and
-    template id."""
-    enrolled_user = factories.NotifiedUserFactory.create(
-        enrol_packaging=False,
-        enrol_api_publishing=True,
-    )
-    unenrolled_user = factories.NotifiedUserFactory.create(enrol_packaging=False)
-    template_id = uuid4()
+def test_send_emails_packaging_notification(
+    ready_for_packaging_notification,
+):
+    """Tests that email notifications are only sent to users subscribed to email
+    type and that a log is created with this user's email."""
 
-    personalisation = {
-        "envelope_id": "220001",
-    }
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = ready_for_packaging_notification
 
-    tasks.send_emails.apply(
-        kwargs={
-            "template_id": template_id,
-            "personalisation": personalisation,
-            "email_type": "publishing",
+    with patch(
+        "notifications.models.send_emails",
+        return_value={
+            "response_ids": " \n".join([str(factory.Faker("uuid"))]),
+            "recipients": " \n".join([expected_present_email]),
+            "failed_recipients": "",
         },
-    )
+    ) as mocked_send_emails:
+        tasks.send_emails_task.apply(
+            kwargs={
+                "notification_pk": notification.id,
+            },
+        )
+        mocked_send_emails.assert_called_once()
 
-    send_email_notification.assert_called_once_with(
-        email_address=enrolled_user.email,
-        template_id=template_id,
-        personalisation=personalisation,
-    )
-
-    recipients = f"{enrolled_user.email} \n"
     log = models.NotificationLog.objects.get(
-        template_id=template_id,
-        recipients=recipients,
+        notification=notification,
+        recipients=expected_present_email,
+        success=True,
     )
 
-    assert unenrolled_user.email not in log.recipients
+    assert expected_present_email in log.recipients
+    assert expected_not_present_email not in log.recipients
+
+
+def test_send_emails_publishing_notification(
+    successful_publishing_notification,
+    # mock_notify_send_emails,
+):
+    """Tests that email notifications are only sent to users subscribed to email
+    type and that a log is created with this user's email."""
+
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = successful_publishing_notification
+
+    with patch(
+        "notifications.models.send_emails",
+        return_value={
+            "response_ids": " \n".join([str(factory.Faker("uuid"))]),
+            "recipients": " \n".join([expected_present_email]),
+            "failed_recipients": "",
+        },
+    ) as mocked_send_emails:
+        tasks.send_emails_task.apply(
+            kwargs={
+                "notification_pk": notification.id,
+            },
+        )
+        mocked_send_emails.assert_called_once()
+
+    log = models.NotificationLog.objects.get(
+        notification=notification,
+        recipients=expected_present_email,
+        success=True,
+    )
+
+    assert expected_present_email in log.recipients
+    assert expected_not_present_email not in log.recipients

@@ -4,6 +4,8 @@ from itertools import groupby
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Accordion
+from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
@@ -239,10 +241,18 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         price = cleaned_data.get("reference_price")
         certificate = cleaned_data.get("required_certificate")
         applicable_duty = cleaned_data.get("applicable_duty")
+        action = cleaned_data.get("action")
 
+        # Note this is a quick fix & hard coded for now
+        # Action code's 1,2,3,4 are flexible and have edge cases that all neither Price or certificate to be present
+        if action:
+            skip_price_and_reference_check = action.code in ["01", "02", "03", "04"]
+        else:
+            skip_price_and_reference_check = False
         # Price or certificate must be present but no both; if the action code is not negative
         if (
-            not is_negative_action_code
+            not skip_price_and_reference_check
+            and not is_negative_action_code
             and (not price and not certificate)
             or (price and certificate)
         ):
@@ -765,53 +775,90 @@ class MeasureFilterForm(forms.Form):
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            Div(
-                Field.text("sid", field_width=Fluid.TWO_THIRDS),
-                css_class="govuk-grid-row quarters",
-            ),
-            Div(
-                "goods_nomenclature",
-                "goods_nomenclature__item_id",
-                "modc",
-                css_class="govuk-grid-row quarters",
-            ),
-            Div(
-                "additional_code",
-                "order_number",
-                "measure_type",
-                "regulation",
-                "geographical_area",
-                "footnote",
-                css_class="govuk-grid-row quarters",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            Div(
-                Div(
-                    Field.radios(
-                        "start_date_modifier",
-                        inline=True,
+            Accordion(
+                AccordionSection(
+                    "Select one or more options to search",
+                    Div(
+                        Div(
+                            Div(
+                                "goods_nomenclature",
+                                Field.text("sid", field_width=Fluid.TWO_THIRDS),
+                                "regulation",
+                                css_class="govuk-grid-column-one-third",
+                            ),
+                            Div(
+                                "goods_nomenclature__item_id",
+                                "additional_code",
+                                "measure_type",
+                                css_class="govuk-grid-column-one-third",
+                            ),
+                            Div(
+                                "order_number",
+                                "certificates",
+                                "geographical_area",
+                                css_class="govuk-grid-column-one-third",
+                            ),
+                            css_class="govuk-grid-row",
+                        ),
+                        HTML(
+                            '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+                        ),
+                        HTML(
+                            '<h3 class="govuk-body">Filters</h3>',
+                        ),
+                        Div(
+                            Div(
+                                Field.radios("measure_filters_modifier", inline=True),
+                                css_class="govuk-grid-column-full form-group-margin-bottom-2",
+                            ),
+                            Div(
+                                "modc",
+                                css_class="govuk-grid-column-full form-group-margin-bottom-2",
+                            ),
+                            css_class="govuk-grid-row govuk-!-margin-top-6",
+                        ),
+                        HTML(
+                            '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+                        ),
+                        HTML(
+                            '<p class="govuk-body">Time period</p>',
+                        ),
+                        Div(
+                            Div(
+                                Field.radios(
+                                    "start_date_modifier",
+                                    inline=True,
+                                ),
+                                "start_date",
+                                css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
+                            ),
+                            Div(
+                                Field.radios(
+                                    "end_date_modifier",
+                                    inline=True,
+                                ),
+                                "end_date",
+                                css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
+                            ),
+                            css_class="govuk-grid-row govuk-!-padding-top-6 filter-layout__filters",
+                        ),
+                        Div(
+                            Div(
+                                Button(
+                                    "submit",
+                                    "Search and filter",
+                                    css_class="govuk-!-margin-top-6",
+                                ),
+                                HTML(
+                                    f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
+                                ),
+                                css_class="govuk-grid-column-full govuk-button-group govuk-!-padding-top-6",
+                            ),
+                            css_class="govuk-grid-row govuk-!-padding-top-3",
+                        ),
                     ),
-                    "start_date",
-                    css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
+                    css_class="govuk-grid-row govuk-!-padding-3",
                 ),
-                Div(
-                    Field.radios(
-                        "end_date_modifier",
-                        inline=True,
-                    ),
-                    "end_date",
-                    css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
-                ),
-                css_class="govuk-grid-row govuk-!-margin-top-6",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            Button("submit", "Search and Filter", css_class="govuk-!-margin-top-6"),
-            HTML(
-                f'<a class="govuk-button govuk-button--secondary govuk-!-margin-top-6" href="{self.clear_url}"> Clear </a>',
             ),
         )
 
@@ -938,6 +985,7 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         help_text=(
             "Search for a quota using its order number. "
             "You can then select the correct quota from the dropdown list. "
+            "Selecting a quota will automatically populate the appropriate geographical areas on the next page."
         ),
         queryset=QuotaOrderNumber.objects.all(),
         required=False,
@@ -996,6 +1044,10 @@ class MeasureGeographicalAreaForm(
     )
 
     @property
+    def erga_omnes_instance(self):
+        return GeographicalArea.objects.current().erga_omnes().get()
+
+    @property
     def geo_area_field_name(self):
         return f"{self.prefix}-geo_area"
 
@@ -1023,9 +1075,7 @@ class MeasureGeographicalAreaForm(
 
         return initial
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    def get_initial_data(self):
         geographical_area_fields = {
             constants.GeoAreaType.ERGA_OMNES: self.erga_omnes_instance,
             constants.GeoAreaType.GROUP: self.data.get(
@@ -1049,9 +1099,20 @@ class MeasureGeographicalAreaForm(
         countries_initial_data = self.get_countries_initial()
         nested_forms_initial.update(geo_area_initial_data)
         nested_forms_initial.update(countries_initial_data)
-        kwargs.pop("initial")
-        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
 
+        return nested_forms_initial
+
+    def init_fields(self):
+        if (
+            self.order_number
+            and self.order_number.quotaordernumberorigin_set.current()
+            .as_at_today_and_beyond()
+            .exists()
+        ):
+            self.fields["geo_area"].required = False
+            self.fields["geo_area"].disabled = True
+
+    def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -1065,13 +1126,31 @@ class MeasureGeographicalAreaForm(
             ),
         )
 
-    @property
-    def erga_omnes_instance(self):
-        return GeographicalArea.objects.current().erga_omnes().get()
+    def __init__(self, *args, **kwargs):
+        self.order_number = kwargs.pop("order_number", None)
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        nested_forms_initial = self.get_initial_data() if not self.order_number else {}
+        kwargs.pop("initial", None)
+        self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
+        self.init_layout()
 
     def clean(self):
         cleaned_data = super().clean()
 
+        # Use quota order number origins and exclusions to set cleaned_data
+        if self.order_number:
+            origins = self.order_number.quotaordernumberorigin_set.current()
+            cleaned_data["geo_areas_and_exclusions"] = [
+                {
+                    "geo_area": origin.geographical_area,
+                    "exclusions": list(origin.excluded_areas.current()),
+                }
+                for origin in origins
+            ]
+            return cleaned_data
+
+        # Otherwise take geographical data from form
         geo_area_choice = self.cleaned_data.get("geo_area")
 
         geographical_area_fields = {
@@ -1082,29 +1161,35 @@ class MeasureGeographicalAreaForm(
         if geo_area_choice:
             if not self.formset_submitted:
                 if geo_area_choice == constants.GeoAreaType.ERGA_OMNES:
-                    cleaned_data["geo_area_list"] = [self.erga_omnes_instance]
+                    cleaned_data["geo_areas_and_exclusions"] = [
+                        {"geo_area": self.erga_omnes_instance},
+                    ]
 
                 elif geo_area_choice == constants.GeoAreaType.GROUP:
                     data_key = constants.SUBFORM_PREFIX_MAPPING[geo_area_choice]
-                    cleaned_data["geo_area_list"] = [cleaned_data[data_key]]
+                    cleaned_data["geo_areas_and_exclusions"] = [
+                        {"geo_area": cleaned_data[data_key]},
+                    ]
 
                 elif geo_area_choice == constants.GeoAreaType.COUNTRY:
                     field_name = geographical_area_fields[geo_area_choice]
                     data_key = constants.SUBFORM_PREFIX_MAPPING[geo_area_choice]
-                    cleaned_data["geo_area_list"] = [
-                        geo_area[field_name] for geo_area in cleaned_data[data_key]
+                    cleaned_data["geo_areas_and_exclusions"] = [
+                        {"geo_area": geo_area[field_name]}
+                        for geo_area in cleaned_data[data_key]
                     ]
 
-                exclusions = cleaned_data.get(
+                geo_area_exclusions = cleaned_data.get(
                     constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
                 )
-                if exclusions:
-                    cleaned_data["geo_area_exclusions"] = [
+                if geo_area_exclusions:
+                    exclusions = [
                         exclusion[constants.FIELD_NAME_MAPPING[geo_area_choice]]
-                        for exclusion in cleaned_data[
-                            constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice]
-                        ]
+                        for exclusion in geo_area_exclusions
                     ]
+                    cleaned_data["geo_areas_and_exclusions"][0][
+                        "exclusions"
+                    ] = exclusions
 
         return cleaned_data
 
@@ -1549,3 +1634,42 @@ class MeasureDutiesForm(forms.Form):
                 validate_duties(duties, measure.valid_between.lower)
 
         return cleaned_data
+
+
+class MeasureGeographicalAreaExclusionsForm(forms.Form):
+    excluded_area = forms.ModelChoiceField(
+        label="",
+        queryset=GeographicalArea.objects.all(),
+        help_text="Select a geographical area to be excluded",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["excluded_area"].queryset = (
+            GeographicalArea.objects.current()
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .order_by("description")
+        )
+
+        self.fields[
+            "excluded_area"
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "excluded_area",
+            ),
+        )
+
+
+class MeasureGeographicalAreaExclusionsFormSet(FormSet):
+    """Allows editing the geographical area exclusions of multiple measures in
+    `MeasureEditWizard`."""
+
+    form = MeasureGeographicalAreaExclusionsForm

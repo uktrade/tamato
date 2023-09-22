@@ -38,7 +38,11 @@ from importer.goods_report import GoodsReporter
 from importer.goods_report import GoodsReportLine
 from measures.filters import MeasureFilter
 from measures.models import Measure
+from notifications.models import Notification
+from notifications.models import NotificationTypeChoices
 from workbaskets import forms
+from workbaskets.models import DataRow
+from workbaskets.models import DataUpload
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
@@ -346,6 +350,15 @@ class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
             ]
             context["import_batch_pk"] = import_batch.pk
 
+            # notifications only relevant to a goods import
+            context["unsent_notification"] = (
+                import_batch.goods_import
+                and not Notification.objects.filter(
+                    notified_object_pk=import_batch.pk,
+                    notification_type=NotificationTypeChoices.GOODS_REPORT,
+                ).exists()
+            )
+
         return context
 
 
@@ -369,6 +382,7 @@ class CurrentWorkBasket(FormView):
         "remove-all": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
+        "compare-data": "workbaskets:current-workbasket",
     }
 
     @property
@@ -409,20 +423,6 @@ class CurrentWorkBasket(FormView):
             page_number = page.next_page_number()
         return f"{url}?page={page_number}"
 
-    def get(self, request, *args, **kwargs):
-        """Service GET requests by displaying the page and form."""
-        return self.render_to_response(self.get_context_data())
-
-    def post(self, request, *args, **kwargs):
-        """Manage POST requests, which can either be requests to change the
-        paged form data while preserving the user's form changes, or finally
-        submit the form data for processing."""
-        form = self.get_form()
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
-
     @atomic
     def run_business_rules(self):
         """Remove old checks, start new checks via a Celery task and save the
@@ -442,42 +442,19 @@ class CurrentWorkBasket(FormView):
 
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
-        if form_action == "remove-selected":
-            return reverse(
-                self.action_success_url_names[form_action],
-            )
-        elif form_action == "remove-all":
-            return reverse(
-                self.action_success_url_names[form_action],
-            )
-        elif form_action in ("page-prev", "page-next"):
-            return self._append_url_page_param(
-                reverse(
-                    self.action_success_url_names[form_action],
-                ),
-                form_action,
-            )
-        elif form_action == "run-business-rules":
+        if form_action == "run-business-rules":
             self.run_business_rules()
-            return self._append_url_page_param(
-                reverse(
-                    self.action_success_url_names[form_action],
-                ),
-                form_action,
-            )
-        elif form_action == "submit-for-packaging":
-            return reverse(
-                self.action_success_url_names[form_action],
-            )
         elif form_action == "terminate-rule-check":
             self.workbasket.terminate_rule_check()
+        try:
             return self._append_url_page_param(
                 reverse(
                     self.action_success_url_names[form_action],
                 ),
                 form_action,
             )
-        return reverse("home")
+        except KeyError:
+            return reverse("home")
 
     def get_initial(self):
         store = SessionStore(
@@ -499,6 +476,19 @@ class CurrentWorkBasket(FormView):
             self.request.user.is_superuser
             or self.request.user.has_perm("workbaskets.delete_workbasket")
         )
+        # set to true if there is an associated goods import batch with an unsent notification
+        try:
+            import_batch = self.workbasket.importbatch
+            unsent_notifcation = (
+                import_batch
+                and import_batch.goods_import
+                and not Notification.objects.filter(
+                    notified_object_pk=import_batch.pk,
+                    notification_type=NotificationTypeChoices.GOODS_REPORT,
+                ).exists()
+            )
+        except ObjectDoesNotExist:
+            unsent_notifcation = False
         context.update(
             {
                 "workbasket": self.workbasket,
@@ -506,6 +496,7 @@ class CurrentWorkBasket(FormView):
                 "uploaded_envelope_dates": self.uploaded_envelope_dates,
                 "rule_check_in_progress": False,
                 "user_can_delete_workbasket": user_can_delete_workbasket,
+                "unsent_notification": unsent_notifcation,
             },
         )
         if self.workbasket.rule_check_task_id:
@@ -716,3 +707,73 @@ class WorkBasketDeleteDone(TemplateView):
         context_data = super().get_context_data(**kwargs)
         context_data["deleted_pk"] = self.kwargs["deleted_pk"]
         return context_data
+
+
+class WorkBasketCompare(WithCurrentWorkBasket, FormView):
+    success_url = reverse_lazy("workbaskets:workbasket-ui-compare")
+    template_name = "workbaskets/compare.jinja"
+    form_class = forms.WorkbasketCompareForm
+
+    @property
+    def workbasket_measures(self):
+        return self.workbasket.measures.all()
+
+    @property
+    def data_upload(self):
+        try:
+            return DataUpload.objects.get(workbasket=self.workbasket)
+        except DataUpload.DoesNotExist:
+            return None
+
+    def form_valid(self, form):
+        try:
+            existing = DataUpload.objects.get(workbasket=self.workbasket)
+            existing.raw_data = form.cleaned_data["raw_data"]
+            existing.rows.all().delete()
+            for row in form.cleaned_data["data"]:
+                DataRow.objects.create(
+                    valid_between=row.valid_between,
+                    duty_sentence=row.duty_sentence,
+                    commodity=row.commodity,
+                    data_upload=existing,
+                )
+            existing.save()
+        except DataUpload.DoesNotExist:
+            data_upload = DataUpload.objects.create(
+                raw_data=form.cleaned_data["raw_data"],
+                workbasket=self.workbasket,
+            )
+            for row in form.cleaned_data["data"]:
+                DataRow.objects.create(
+                    valid_between=row.valid_between,
+                    duty_sentence=row.duty_sentence,
+                    commodity=row.commodity,
+                    data_upload=data_upload,
+                )
+        return super().form_valid(form)
+
+    @property
+    def matching_measures(self):
+        measures = []
+        if self.data_upload:
+            for row in self.data_upload.rows.all():
+                matches = self.workbasket_measures.filter(
+                    valid_between=row.valid_between,
+                    goods_nomenclature__item_id=row.commodity,
+                )
+                duty_matches = [
+                    measure
+                    for measure in matches
+                    if measure.duty_sentence == row.duty_sentence
+                ]
+                measures += duty_matches
+        return measures
+
+    def get_context_data(self, *args, **kwargs):
+        return super().get_context_data(
+            workbasket=self.workbasket,
+            data_upload=self.data_upload,
+            matching_measures=self.matching_measures,
+            *args,
+            **kwargs,
+        )
