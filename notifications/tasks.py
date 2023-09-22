@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(
-    default_retry_delay=settings.NOTIFICATIONS_API_DEFAULT_RETRY_DELAY,
-    max_retries=settings.NOTIFICATIONS_API_MAX_RETRIES,
+    default_retry_delay=settings.NOTIFICATIONS_DEFAULT_RETRY_DELAY,
+    max_retries=settings.NOTIFICATIONS_MAX_RETRIES,
     retry_backoff=True,
     retry_backoff_max=settings.NOTIFICATIONS_RETRY_BACKOFF_MAX,
     retry_jitter=True,
