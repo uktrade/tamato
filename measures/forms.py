@@ -45,6 +45,8 @@ from geo_areas.forms import GeoGroupForm
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import models
+from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import MeasureEditSteps
 from measures.models import MeasureExcludedGeographicalArea
 from measures.parsers import DutySentenceParser
@@ -57,9 +59,6 @@ from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
-
-MEASURE_CONDITIONS_FORMSET_PREFIX = "measure-conditions-formset"
-MEASURE_COMMODITIES_FORMSET_PREFIX = "measure_commodities_duties_formset"
 
 
 class MeasureGeoAreaInitialDataMixin(FormSetSubmitMixin):

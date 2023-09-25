@@ -13,8 +13,8 @@ from common.validators import ApplicabilityCode
 from geo_areas import constants
 from geo_areas.validators import AreaCode
 from measures import forms
-from measures.forms import MEASURE_COMMODITIES_FORMSET_PREFIX
-from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
+from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.forms import MeasureConditionsFormSet
 from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm

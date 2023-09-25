@@ -13,3 +13,7 @@ class MeasureEditSteps(models.TextChoices):
         "geographical_area_exclusions",
         "Geographical area exclusions",
     )
+
+
+MEASURE_CONDITIONS_FORMSET_PREFIX = "measure-conditions-formset"
+MEASURE_COMMODITIES_FORMSET_PREFIX = "measure_commodities_duties_formset"
