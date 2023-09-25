@@ -591,6 +591,31 @@ def test_measure_update_get_footnotes(session_with_workbasket):
     assert len(footnotes) == 0
 
 
+def test_measure_update_form_creates_footnote_association(
+    measure_form,
+    valid_user_client,
+):
+    """Test that editing a measure to add a new footnote doesn't require
+    pressing "Add another footnote" button before submitting (saving) the
+    form."""
+    footnote = factories.FootnoteFactory.create()
+    measure = measure_form.instance
+    assert not measure.footnotes.exists()
+
+    form_data = {k: v for k, v in measure_form.data.items() if v is not None}
+    # Add footnote to form data and not to "formset_initial" in session data (i.e not pressing "Add another footnote")
+    form_data["form-0-footnote"] = footnote.pk
+
+    url = reverse("measure-ui-edit", kwargs={"sid": measure.sid})
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    assert FootnoteAssociationMeasure.objects.filter(
+        footnoted_measure__sid=measure.sid,
+        associated_footnote=footnote,
+    ).exists()
+
+
 # https://uktrade.atlassian.net/browse/TP2000-340
 def test_measure_update_updates_footnote_association(measure_form, client, valid_user):
     """Tests that when updating a measure with an existing footnote the
