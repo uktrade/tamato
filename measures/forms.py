@@ -689,7 +689,7 @@ class MeasureForm(
                 "component_measure",
             )
 
-        # Footnotes added via "Add new footnote" button
+        # Footnotes added via "Add another footnote" button
         footnote_pks = [
             form["footnote"]
             for form in self.request.session.get(f"formset_initial_{sid}", [])
