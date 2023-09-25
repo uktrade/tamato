@@ -612,10 +612,8 @@ class MeasureForm(
         return cleaned_data
 
     def save(self, commit=True):
-        """Get the measure instance after form submission, get from session
-        storage any footnote pks created via the Footnote formset and any pks
-        not removed from the measure after editing and create footnotes via
-        FootnoteAssociationMeasure."""
+        """Updates a measure instance's geographical area and exclusions,
+        duties, and footnote associations following form submission."""
         instance = super().save(commit=False)
         if commit:
             instance.save()
@@ -691,10 +689,22 @@ class MeasureForm(
                 "component_measure",
             )
 
+        # Footnotes added via "Add new footnote" button
         footnote_pks = [
-            dct["footnote"]
-            for dct in self.request.session.get(f"formset_initial_{sid}", [])
+            form["footnote"]
+            for form in self.request.session.get(f"formset_initial_{sid}", [])
         ]
+
+        # Footnote submitted directly via "Save" button
+        if hasattr(self.request, "POST"):
+            form_footnote = self.request.POST.get(
+                f"form-{len(footnote_pks)}-footnote",
+                None,
+            )
+            if form_footnote:
+                footnote_pks.append(form_footnote)
+
+        # Footnotes already on measure
         footnote_pks.extend(self.request.session.get(f"instance_footnotes_{sid}", []))
 
         self.request.session.pop(f"formset_initial_{sid}", None)
