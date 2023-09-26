@@ -23,6 +23,21 @@ ui_patterns += [
         views.GeographicalMembershipConfirmCreate.as_view(),
         name="geo_area-ui-membership-confirm-create",
     ),
+    path(
+        f"{detail}/descriptions/",
+        views.GeoAreaDetailDescriptions.as_view(),
+        name="geo_area-ui-detail-descriptions",
+    ),
+    path(
+        f"{detail}/version-control/",
+        views.GeoAreaDetailVersionControl.as_view(),
+        name="geo_area-ui-detail-version-control",
+    ),
+    path(
+        f"{detail}/memberships/",
+        views.GeoAreaDetailMemberships.as_view(),
+        name="geo_area-ui-detail-memberships",
+    ),
 ]
 
 

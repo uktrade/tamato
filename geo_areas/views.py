@@ -92,6 +92,47 @@ class GeoAreaDetail(
 ):
     template_name = "geo_areas/detail.jinja"
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "details"
+        return context
+
+
+class GeoAreaDetailVersionControl(GeoAreaDetail):
+    """Displays version history for a geo area as a simulated tab on geo area
+    view."""
+
+    template_name = "includes/geo_areas/tabs/version_control.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "version-control"
+        return context
+
+
+class GeoAreaDetailDescriptions(GeoAreaDetail):
+    """Displays descriptions for a geo area as a simulated tab on geo area
+    view."""
+
+    template_name = "includes/geo_areas/tabs/descriptions.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "descriptions"
+        return context
+
+
+class GeoAreaDetailMemberships(GeoAreaDetail):
+    """Displays memberships for a geo area as a simulated tab on geo area
+    view."""
+
+    template_name = "includes/geo_areas/tabs/memberships.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "memberships"
+        return context
+
 
 class GeoAreaDelete(
     GeoAreaMixin,
