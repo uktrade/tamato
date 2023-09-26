@@ -7,7 +7,7 @@ const nodeListForEach = (nodes, callback) => {
     }
 }
 
-const newLine = /\n/g;
+const newLine = /[\n\r]/g;
 const removeNewLine = (str) => str.replace(newLine, "")
 
 const cleanResults = (results) => {
