@@ -1,8 +1,10 @@
 from typing import Type
+from urllib.parse import urlencode
 
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.views.generic import ListView
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -11,9 +13,11 @@ from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import DescriptionDeleteMixin
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from common.views import WithPaginationListMixin
 from geo_areas import business_rules
 from geo_areas import forms
 from geo_areas.filters import GeographicalAreaFilter
@@ -23,6 +27,7 @@ from geo_areas.forms import GeoMembershipAction
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
+from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
@@ -131,6 +136,43 @@ class GeoAreaDetailMemberships(GeoAreaDetail):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["selected_tab"] = "memberships"
+        return context
+
+
+class GeoAreaDetailMeasures(SortingMixin, WithPaginationListMixin, ListView):
+    """Displays a paginated list of measures for a geo area as a simulated tab
+    on regulation detail view."""
+
+    model = Measure
+    template_name = "includes/geo_areas/tabs/measures.jinja"
+    paginate_by = 20
+    sort_by_fields = ["goods_nomenclature", "start_date"]
+    custom_sorting = {
+        "start_date": "valid_between",
+    }
+
+    @property
+    def geo_area(self):
+        return GeographicalArea.objects.current().get(
+            sid=self.kwargs["sid"],
+        )
+
+    def get_queryset(self):
+        queryset = self.geo_area.measures.current()
+        ordering = self.get_ordering()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["object"] = self.geo_area
+        context["selected_tab"] = "measures"
+        url_params = urlencode({"geographical_area": self.geo_area.pk})
+        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+        context["measures_url"] = measures_url
         return context
 
 

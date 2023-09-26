@@ -38,6 +38,11 @@ ui_patterns += [
         views.GeoAreaDetailMemberships.as_view(),
         name="geo_area-ui-detail-memberships",
     ),
+    path(
+        f"{detail}/measures/",
+        views.GeoAreaDetailMeasures.as_view(),
+        name="geo_area-ui-detail-measures",
+    ),
 ]
 
 
