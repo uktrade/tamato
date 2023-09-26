@@ -777,13 +777,17 @@ class MeasureFilterForm(forms.Form):
         self.helper.layout = Layout(
             Accordion(
                 AccordionSection(
-                    "Select one or more options to search",
+                    "Search and filter",
+                    HTML(
+                        '<h3 class="govuk-body">Select one or more options to search</h3>',
+                    ),
                     Div(
                         Div(
                             Div(
                                 "goods_nomenclature",
                                 Field.text("sid", field_width=Fluid.TWO_THIRDS),
                                 "regulation",
+                                "footnote",
                                 css_class="govuk-grid-column-one-third",
                             ),
                             Div(
@@ -813,6 +817,9 @@ class MeasureFilterForm(forms.Form):
                             ),
                             Div(
                                 "modc",
+                                HTML(
+                                    "<h3 class='govuk-body'>To use the 'Include inherited measures' filter, enter a valid commodity code in the 'Select commodity code' filter above</h3>",
+                                ),
                                 css_class="govuk-grid-column-full form-group-margin-bottom-2",
                             ),
                             css_class="govuk-grid-row govuk-!-margin-top-6",
@@ -840,7 +847,7 @@ class MeasureFilterForm(forms.Form):
                                 "end_date",
                                 css_class="govuk-grid-column-one-half form-group-margin-bottom-2",
                             ),
-                            css_class="govuk-grid-row govuk-!-padding-top-6 filter-layout__filters",
+                            css_class="govuk-grid-row govuk-!-padding-top-6",
                         ),
                         Div(
                             Div(
@@ -857,7 +864,8 @@ class MeasureFilterForm(forms.Form):
                             css_class="govuk-grid-row govuk-!-padding-top-3",
                         ),
                     ),
-                    css_class="govuk-grid-row govuk-!-padding-3",
+                    css_class="govuk-grid-row govuk-!-padding-3 black-label--no-button govuk-accordion__section--expanded",
+                    id="accordion-open-close-section",
                 ),
             ),
         )
@@ -1636,3 +1644,42 @@ class MeasureDutiesForm(forms.Form):
                 validate_duties(duties, measure.valid_between.lower)
 
         return cleaned_data
+
+
+class MeasureGeographicalAreaExclusionsForm(forms.Form):
+    excluded_area = forms.ModelChoiceField(
+        label="",
+        queryset=GeographicalArea.objects.all(),
+        help_text="Select a geographical area to be excluded",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["excluded_area"].queryset = (
+            GeographicalArea.objects.current()
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .order_by("description")
+        )
+
+        self.fields[
+            "excluded_area"
+        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "excluded_area",
+            ),
+        )
+
+
+class MeasureGeographicalAreaExclusionsFormSet(FormSet):
+    """Allows editing the geographical area exclusions of multiple measures in
+    `MeasureEditWizard`."""
+
+    form = MeasureGeographicalAreaExclusionsForm

@@ -1590,3 +1590,29 @@ def test_measure_review_form_validates_components_applicability_exclusivity(
         "A duty cannot be specified on both commodities and conditions"
         in form.errors["__all__"]
     )
+
+
+def test_measure_geographical_area_exclusions_form_valid_choice():
+    """Tests that `MeasureGeographicalAreaExclusionsForm` is valid when an
+    available geographical area is selected."""
+    geo_area = factories.GeographicalAreaFactory.create()
+    data = {
+        "excluded_area": geo_area.pk,
+    }
+    with override_current_transaction(geo_area.transaction):
+        form = forms.MeasureGeographicalAreaExclusionsForm(data)
+        assert form.is_valid()
+        assert form.cleaned_data["excluded_area"] == geo_area
+
+
+def test_measure_geographical_area_exclusions_form_invalid_choice():
+    """Tests that `MeasureGeographicalAreaExclusionsForm` raises an raises an
+    invalid choice error when an unavailable geographical area is selected."""
+    data = {
+        "excluded_area": "geo_area",
+    }
+    form = forms.MeasureGeographicalAreaExclusionsForm(data)
+    assert not form.is_valid()
+    assert form.errors["excluded_area"] == [
+        "Select a valid choice. That choice is not one of the available choices.",
+    ]
