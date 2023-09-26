@@ -14,16 +14,19 @@ pytestmark = pytest.mark.django_db
 def test_create_goods_report_notification(goods_report_notification):
     """Test that the creating a notification correctly assigns users."""
 
-    expected_present_email = f"goods_report@email.co.uk"  # /PS-IGNORE
-    expected_not_present_email = f"no_goods_report@email.co.uk"  # /PS-IGNORE
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = goods_report_notification
 
-    users = goods_report_notification.notified_users()
+    users = notification.notified_users()
 
     for user in users:
         assert user.email == expected_present_email
         assert user.email != expected_not_present_email
 
-    import_batch = goods_report_notification.notified_object()
+    import_batch = notification.notified_object()
     assert isinstance(import_batch, ImportBatch)
 
     return_value = {
@@ -36,7 +39,7 @@ def test_create_goods_report_notification(goods_report_notification):
         "notifications.models.prepare_link_to_file",
         return_value=return_value,
     ) as mocked_prepare_link_to_file:
-        personalisation = goods_report_notification.get_personalisation()
+        personalisation = notification.get_personalisation()
 
         assert personalisation == {
             "tgb_id": import_batch.name,
@@ -47,21 +50,24 @@ def test_create_goods_report_notification(goods_report_notification):
 def test_create_packaging_notification(ready_for_packaging_notification):
     """Test that the creating a notification correctly assigns users."""
 
-    expected_present_email = f"packaging@email.co.uk"  # /PS-IGNORE
-    expected_not_present_email = f"no_packaging@email.co.uk"  # /PS-IGNORE
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = ready_for_packaging_notification
 
-    users = ready_for_packaging_notification.notified_users()
+    users = notification.notified_users()
 
     for user in users:
         assert user.email == expected_present_email
         assert user.email != expected_not_present_email
 
     assert isinstance(
-        ready_for_packaging_notification.notified_object(),
+        notification.notified_object(),
         PackagedWorkBasket,
     )
 
-    content = ready_for_packaging_notification.get_personalisation()
+    content = notification.get_personalisation()
     assert content == {
         "envelope_id": "230001",
         "description": "",
@@ -73,30 +79,123 @@ def test_create_packaging_notification(ready_for_packaging_notification):
     }
 
 
-def test_create_successful_publishing_notification(successful_publishing_notification):
+def test_create_accepted_envelope(accepted_packaging_notification):
     """Test that the creating a notification correctly assigns users."""
 
-    expected_present_email = f"publishing@email.co.uk"  # /PS-IGNORE
-    expected_not_present_email = f"no_publishing@email.co.uk"  # /PS-IGNORE
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = accepted_packaging_notification
 
-    users = successful_publishing_notification.notified_users()
+    users = notification.notified_users()
 
     for user in users:
         assert user.email == expected_present_email
         assert user.email != expected_not_present_email
 
     assert isinstance(
-        successful_publishing_notification.notified_object(),
+        notification.notified_object(),
+        PackagedWorkBasket,
+    )
+
+    content = notification.get_personalisation()
+    assert "envelope_id" in content and content["envelope_id"] == "230001"
+    assert "transaction_count" in content and content["transaction_count"] == 1
+    assert (
+        "loading_report_message" in content
+        and content["loading_report_message"]
+        == "Loading report(s): REPORT_DBT23000.html"
+    )
+    assert "comments" in content
+
+
+def test_create_rejected_envelope(rejected_packaging_notification):
+    """Test that the creating a notification correctly assigns users."""
+
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = rejected_packaging_notification
+
+    users = notification.notified_users()
+
+    for user in users:
+        assert user.email == expected_present_email
+        assert user.email != expected_not_present_email
+
+    assert isinstance(
+        notification.notified_object(),
+        PackagedWorkBasket,
+    )
+
+    content = notification.get_personalisation()
+    assert "envelope_id" in content and content["envelope_id"] == "230001"
+    assert "transaction_count" in content and content["transaction_count"] == 1
+    assert (
+        "loading_report_message" in content
+        and content["loading_report_message"]
+        == "Loading report(s): REPORT_DBT23001.html"
+    )
+    assert "comments" in content
+
+
+def test_create_successful_publishing_notification(successful_publishing_notification):
+    """Test that the creating a notification correctly assigns users."""
+
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = successful_publishing_notification
+
+    users = notification.notified_users()
+
+    for user in users:
+        assert user.email == expected_present_email
+        assert user.email != expected_not_present_email
+
+    assert isinstance(
+        notification.notified_object(),
         CrownDependenciesEnvelope,
     )
 
-    content = successful_publishing_notification.get_personalisation()
+    content = notification.get_personalisation()
+    assert content == {"envelope_id": "230001"}
+
+
+def test_create_failed_publishing_notification(failed_publishing_notification):
+    """Test that the creating a notification correctly assigns users."""
+
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = failed_publishing_notification
+
+    users = notification.notified_users()
+
+    for user in users:
+        assert user.email == expected_present_email
+        assert user.email != expected_not_present_email
+
+    assert isinstance(
+        notification.notified_object(),
+        CrownDependenciesEnvelope,
+    )
+
+    content = notification.get_personalisation()
     assert content == {"envelope_id": "230001"}
 
 
 def test_send_notification_emails(ready_for_packaging_notification):
-    expected_present_email = f"packaging@email.co.uk"  # /PS-IGNORE
-    expected_not_present_email = f"no_packaging@email.co.uk"  # /PS-IGNORE
+    (
+        notification,
+        expected_present_email,
+        expected_not_present_email,
+    ) = ready_for_packaging_notification
+
     with patch(
         "notifications.models.send_emails",
         return_value={
@@ -105,11 +204,11 @@ def test_send_notification_emails(ready_for_packaging_notification):
             "failed_recipients": "",
         },
     ) as mocked_send_emails:
-        ready_for_packaging_notification.send_notification_emails()
+        notification.send_notification_emails()
         mocked_send_emails.assert_called_once()
 
     log_success = NotificationLog.objects.get(
-        notification=ready_for_packaging_notification,
+        notification=notification,
         recipients=expected_present_email,
         success=True,
     )
@@ -124,11 +223,11 @@ def test_send_notification_emails(ready_for_packaging_notification):
             "failed_recipients": " \n".join([expected_present_email]),
         },
     ) as mocked_send_emails:
-        ready_for_packaging_notification.send_notification_emails()
+        notification.send_notification_emails()
         mocked_send_emails.assert_called_once()
 
     log_fail = NotificationLog.objects.get(
-        notification=ready_for_packaging_notification,
+        notification=notification,
         success=False,
     )
 
