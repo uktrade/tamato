@@ -1,9 +1,8 @@
-let button = document.querySelectorAll('span.add-debounce > button')[0]
+let button = document.getElementById('add-debounce')
 
 const debounceButton = () => {
-    if (!button) {
-        return
-    } else if (button) {
+    if (button) {
+        console.log('button', button)
         addEventListener('submit', function() {
             button.disabled = true,
             alert("Your action is being processed and the submit button is now disabled. You will be taken to a confirmation screen once the action has been processed.")}

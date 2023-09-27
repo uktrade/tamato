@@ -130,5 +130,5 @@
     {% endif %}
   {% endcall %}
 
-  <span class="add-debounce">{{ govukButton({"text": "Create", "preventDoubleClick": true, css_class:"test"}) }}</span>
+  {{ govukButton({"text": "Create", "preventDoubleClick": true, "attributes": {"id": "add-debounce"},}) }}
 {% endblock %}
