@@ -24,6 +24,10 @@ class NewFootnoteTypeParser(NewWritable, NewElementParser):
 
     xml_object_tag = "footnote.type"
 
+    identity_fields = [
+        "footnote_type_id",
+    ]
+
     footnote_type_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -48,6 +52,10 @@ class NewFootnoteTypeDescriptionParser(NewWritable, NewElementParser):
     subrecord_code = "05"
 
     xml_object_tag = "footnote.type.description"
+
+    identity_fields = [
+        "footnote_type_id",
+    ]
 
     footnote_type_id: str = None
     # language_id: str = None
@@ -77,6 +85,10 @@ class NewFootnoteParser(NewValidityMixin, NewWritable, NewElementParser):
     subrecord_code = "00"
 
     xml_object_tag = "footnote"
+
+    identity_fields = [
+        "footnote_id",
+    ]
 
     footnote_type__footnote_type_id: str = None
     footnote_id: str = None
@@ -111,6 +123,11 @@ class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
     subrecord_code = "10"
 
     xml_object_tag = "footnote.description"
+
+    identity_fields = [
+        "described_footnote__footnote_type__footnote_type_id",
+        "described_footnote__footnote_id",
+    ]
 
     sid: int = None
     # language_id: str = None
@@ -155,6 +172,10 @@ class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser, NewChild
     subrecord_code = "05"
 
     xml_object_tag = "footnote.description.period"
+
+    identity_fields = [
+        "sid",
+    ]
 
     sid: int = None
     described_footnote__footnote_type__footnote_type_id: str = None

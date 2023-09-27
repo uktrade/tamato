@@ -220,7 +220,7 @@ class TestNewGoodsNomenclatureDescriptionParser:
         assert GoodsNomenclatureDescription.objects.all().count() == 2
 
         last_imported_goods_description = (
-            GoodsNomenclatureDescription.objects.all().last()
+            GoodsNomenclatureDescription.objects.all().order_by("pk").last()
         )
 
         assert last_imported_goods_description.description == "Some Description Changed"

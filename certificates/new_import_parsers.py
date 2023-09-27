@@ -126,7 +126,7 @@ class NewCertificateDescriptionParser(NewWritable, NewElementParser):
         "certificate_code": "described_certificate__sid",
     }
 
-    identity_fields = ["sid"]
+    identity_fields = ["sid", "described_certificate__sid"]
 
     sid: int = None
     described_certificate__certificate_type__sid: str = None

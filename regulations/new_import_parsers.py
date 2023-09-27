@@ -24,6 +24,10 @@ class NewRegulationGroupParser(NewValidityMixin, NewWritable, NewElementParser):
         "validity_end_date": "valid_between_upper",
     }
 
+    identity_fields = [
+        "group_id",
+    ]
+
     group_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -51,6 +55,10 @@ class NewRegulationGroupDescriptionParser(NewWritable, NewElementParser):
     subrecord_code = "05"
 
     xml_object_tag = "regulation.group.description"
+
+    identity_fields = [
+        "group_id",
+    ]
 
     group_id: str = None
     # language_id: str = None
@@ -87,6 +95,11 @@ class NewBaseRegulationParser(NewValidityMixin, NewWritable, NewElementParser):
     subrecord_code = "00"
 
     xml_object_tag = "base.regulation"
+
+    identity_fields = [
+        "regulation_id",
+        "role_type",
+    ]
 
     role_type: int = None
     regulation_id: str = None
@@ -132,6 +145,13 @@ class NewModificationRegulationParser(NewValidityMixin, NewWritable, NewElementP
         "information_text": "enacting_regulation__information_text",
         "approved_flag": "enacting_regulation__approved",
     }
+
+    identity_fields = [
+        "enacting_regulation__role_type",
+        "enacting_regulation__regulation_id",
+        "target_regulation__regulation_id",
+        "target_regulation__role_type",
+    ]
 
     enacting_regulation__role_type: int = None
     enacting_regulation__regulation_id: str = None
@@ -181,6 +201,11 @@ class NewFullTemporaryStopRegulationParser(
 
     xml_object_tag = "full.temporary.stop.regulation"
 
+    identity_fields = [
+        "enacting_regulation__role_type",
+        "enacting_regulation__regulation_id",
+    ]
+
     enacting_regulation__role_type: int = None
     enacting_regulation__regulation_id: str = None
     enacting_regulation__published_at: date = None
@@ -228,6 +253,13 @@ class NewFullTemporaryStopActionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "fts.regulation.action"
 
+    identity_fields = [
+        "enacting_regulation__role_type",
+        "enacting_regulation__regulation_id",
+        "target_regulation__regulation_id",
+        "target_regulation__role_type",
+    ]
+
     enacting_regulation__role_type: str = None
     enacting_regulation__regulation_id: str = None
     target_regulation__role_type: str = None
@@ -267,6 +299,13 @@ class NewRegulationReplacementParser(NewWritable, NewElementParser):
     subrecord_code = "00"
 
     xml_object_tag = "regulation.replacement"
+
+    identity_fields = [
+        "enacting_regulation__role_type",
+        "enacting_regulation__regulation_id",
+        "target_regulation__regulation_id",
+        "target_regulation__role_type",
+    ]
 
     enacting_regulation__role_type: int = None
     enacting_regulation__regulation_id: str = None

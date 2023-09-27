@@ -14,6 +14,7 @@ def get_test_xml_file(file_name):
     return os.path.join(current_directory, "test_files", file_name)
 
 
+@pytest.mark.new_importer
 class TestTransactionParser:
     def test_init(self):
         taric3_file = get_test_xml_file("additional_code_CREATE.xml")
@@ -30,4 +31,4 @@ class TestTransactionParser:
         parsed_transaction = TransactionParser(transactions[0])
 
         assert len(transactions) == 1
-        assert len(parsed_transaction.parsed_messages) == 2
+        assert len(parsed_transaction.parsed_messages) == 3

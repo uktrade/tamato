@@ -130,7 +130,11 @@ class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "additional.code.description"
 
-    identity_fields = ["sid"]
+    identity_fields = [
+        "described_additionalcode__sid",
+        "described_additionalcode__type_sid",
+        "described_additionalcode__code",
+    ]
 
     sid: int = None
     # language_id: str = None
@@ -247,12 +251,18 @@ class NewFootnoteAssociationAdditionalCodeParser(
 
     xml_object_tag = "footnote.association.additional.code"
 
-    identity_fields = []
+    identity_fields = [
+        "additional_code__sid",
+        "additional_code__code",
+        "additional_code__type__sid",
+        "associated_footnote__footnote_type__footnote_type_id",
+        "associated_footnote__footnote_id",
+    ]
 
     additional_code__sid: int = None
+    additional_code__code: str = None
+    additional_code__type__sid: str = None
     associated_footnote__footnote_type__footnote_type_id: int = None
     associated_footnote__footnote_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    additional_code__type__sid: str = None
-    additional_code__code: str = None

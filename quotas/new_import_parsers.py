@@ -24,9 +24,14 @@ class NewQuotaOrderNumberParser(NewElementParser):
 
     model_links = []
 
-    xml_object_tag = "quota.order.number"
     record_code = "360"
     subrecord_code = "00"
+
+    xml_object_tag = "quota.order.number"
+
+    identity_fields = [
+        "sid",
+    ]
 
     sid: int = None
     order_number: str = None
@@ -72,6 +77,10 @@ class NewQuotaOrderNumberOriginParser(NewElementParser):
     record_code = "360"
     subrecord_code = "10"
 
+    identity_fields = [
+        "sid",
+    ]
+
     sid: int = None
     order_number__sid: int = None
     geographical_area__area_id: str = None
@@ -110,6 +119,11 @@ class NewQuotaOrderNumberOriginExclusionParser(NewElementParser):
     xml_object_tag = "quota.order.number.origin.exclusions"
     record_code = "360"
     subrecord_code = "15"
+
+    identity_fields = [
+        "origin__sid",
+        "excluded_geographical_area__sid",
+    ]
 
     origin__sid: int = None
     excluded_geographical_area__sid: int = None
@@ -172,6 +186,11 @@ class NewQuotaDefinitionParser(NewElementParser):
         "critical_threshold": "quota_critical_threshold",
     }
 
+    identity_fields = [
+        "sid",
+        "order_number__sid",
+    ]
+
     sid: int = None
     order_number__order_number: str = None
     valid_between_lower: date = None
@@ -215,9 +234,16 @@ class NewQuotaAssociationParser(NewElementParser):
         "relation_type": "sub_quota_relation_type",
     }
 
-    xml_object_tag = "quota.association"
     record_code = "370"
     subrecord_code = "05"
+
+    xml_object_tag = "quota.association"
+
+    identity_fields = [
+        "main_quota__sid",
+        "sub_quota__sid",
+        "sub_quota_relation_type",
+    ]
 
     main_quota__sid: int = None
     sub_quota__sid: int = None
@@ -245,9 +271,14 @@ class NewQuotaSuspensionParser(NewElementParser):
         "quota_definition_sid": "quota_definition__sid",
     }
 
-    xml_object_tag = "quota.suspension.period"
     record_code = "370"
     subrecord_code = "15"
+
+    xml_object_tag = "quota.suspension.period"
+
+    identity_fields = [
+        "sid",
+    ]
 
     sid: int = None
     quota_definition__sid: int = None
@@ -280,6 +311,10 @@ class NewQuotaBlockingParser(NewElementParser):
         ),
     ]
 
+    identity_fields = [
+        "sid",
+    ]
+
     sid: int = None
     quota_definition__sid: int = None
     valid_between_lower: date = None
@@ -303,9 +338,15 @@ class NewQuotaEventParser(NewElementParser):
 
     data_fields = []
 
-    xml_object_tag = "parent.quota.event"  # parent to all quota events - should never match anything directly
     record_code = "375"
     subrecord_code = "subrecord_code"
+
+    xml_object_tag = "parent.quota.event"  # parent to all quota events - should never match anything directly
+
+    identity_fields = [
+        "quota_definition__sid",
+        "occurrence_timestamp",
+    ]
 
     quota_definition__sid: str = None
     occurrence_timestamp: datetime = None
@@ -334,6 +375,11 @@ class NewQuotaBalanceEventParser(NewQuotaEventParser):
         "last_import_date_in_allocation",
     ]
 
+    identity_fields = [
+        "quota_definition__sid",
+        "occurrence_timestamp",
+    ]
+
     # data fields
     new_balance: str = None
     old_balance: str = None
@@ -346,12 +392,18 @@ class NewQuotaBalanceEventParser(NewQuotaEventParser):
 
 
 class NewQuotaUnblockingEventParser(NewQuotaEventParser):
-    xml_object_tag = "quota.unblocking.event"
     subrecord_code = "05"
 
     value_mapping = {
         "quota_definition_sid": "quota_definition__sid",
     }
+
+    xml_object_tag = "quota.unblocking.event"
+
+    identity_fields = [
+        "quota_definition__sid",
+        "occurrence_timestamp",
+    ]
 
     data_fields = [
         "unblocking_date",
@@ -366,7 +418,6 @@ class NewQuotaUnblockingEventParser(NewQuotaEventParser):
 
 
 class NewQuotaCriticalEventParser(NewQuotaEventParser):
-    xml_object_tag = "quota.critical.event"
     subrecord_code = "10"
 
     value_mapping = {
@@ -376,6 +427,14 @@ class NewQuotaCriticalEventParser(NewQuotaEventParser):
     data_fields = [
         "critical_state",
         "critical_state_change_date",
+    ]
+
+    xml_object_tag = "quota.critical.event"
+
+    identity_fields = [
+        "critical_state",
+        "quota_definition__sid",
+        "occurrence_timestamp",
     ]
 
     # data fields
@@ -388,7 +447,6 @@ class NewQuotaCriticalEventParser(NewQuotaEventParser):
 
 
 class NewQuotaExhaustionEventParser(NewQuotaEventParser):
-    xml_object_tag = "quota.exhaustion.event"
     subrecord_code = "15"
 
     value_mapping = {
@@ -397,6 +455,13 @@ class NewQuotaExhaustionEventParser(NewQuotaEventParser):
 
     data_fields = [
         "exhaustion_date",
+    ]
+
+    xml_object_tag = "quota.exhaustion.event"
+
+    identity_fields = [
+        "quota_definition__sid",
+        "occurrence_timestamp",
     ]
 
     # data fields
@@ -408,7 +473,6 @@ class NewQuotaExhaustionEventParser(NewQuotaEventParser):
 
 
 class NewQuotaReopeningEventParser(NewQuotaEventParser):
-    xml_object_tag = "quota.reopening.event"
     subrecord_code = "20"
 
     value_mapping = {
@@ -417,6 +481,13 @@ class NewQuotaReopeningEventParser(NewQuotaEventParser):
 
     data_fields = [
         "reopening_date",
+    ]
+
+    xml_object_tag = "quota.reopening.event"
+
+    identity_fields = [
+        "quota_definition__sid",
+        "occurrence_timestamp",
     ]
 
     # data fields
@@ -428,7 +499,6 @@ class NewQuotaReopeningEventParser(NewQuotaEventParser):
 
 
 class NewQuotaUnsuspensionEventParser(NewQuotaEventParser):
-    xml_object_tag = "quota.unsuspension.event"
     subrecord_code = "25"
 
     value_mapping = {
@@ -437,6 +507,13 @@ class NewQuotaUnsuspensionEventParser(NewQuotaEventParser):
 
     data_fields = [
         "unsuspension_date",
+    ]
+
+    xml_object_tag = "quota.unsuspension.event"
+
+    identity_fields = [
+        "quota_definition__sid",
+        "occurrence_timestamp",
     ]
 
     # data fields
@@ -448,7 +525,6 @@ class NewQuotaUnsuspensionEventParser(NewQuotaEventParser):
 
 
 class NewQuotaClosedAndTransferredEventParser(NewQuotaEventParser):
-    xml_object_tag = "quota.closed.and.transferred.event"
     subrecord_code = "30"
 
     value_mapping = {
@@ -460,6 +536,13 @@ class NewQuotaClosedAndTransferredEventParser(NewQuotaEventParser):
         "transferred_amount",
         "transfer_date",
         "target_quota_definition_sid",
+    ]
+
+    xml_object_tag = "quota.closed.and.transferred.event"
+
+    identity_fields = [
+        "quota_definition__sid",
+        "occurrence_timestamp",
     ]
 
     # data fields

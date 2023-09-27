@@ -20,12 +20,10 @@ class QuotaOrderNumberOriginHandler(BaseHandler):
         {
             "model": models.QuotaOrderNumber,
             "name": "order_number",
-            "xml_tag_name": "quota.order.number",
         },
         {
             "model": GeographicalArea,
             "name": "geographical_area",
-            "xml_tag_name": "geographical.area",
         },
     )
     serializer_class = serializers.QuotaOrderNumberOriginSerializer

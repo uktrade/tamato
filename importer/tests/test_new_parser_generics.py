@@ -659,6 +659,9 @@ def test_importer_generics(
                 f"property named {variable_first_part} found."
             )
 
+        # Check that each parser has a populated identity field, used to identify the record on updates
+        assert len(parser_class.identity_fields) > 0
+
     # check that there is a direct link between parent model and child model when should_append_to_parent is True
     # this link can be on the parent or the child
     if child_to_other_parser:

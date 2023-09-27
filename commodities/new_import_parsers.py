@@ -29,7 +29,7 @@ class NewGoodsNomenclatureParser(NewWritable, NewElementParser):
 
     xml_object_tag = "goods.nomenclature"
 
-    identity_fields = ["sid"]
+    identity_fields = ["sid", "item_id", "suffix"]
 
     sid: int = None
     item_id: str = None
@@ -77,6 +77,14 @@ class NewGoodsNomenclatureOriginParser(NewWritable, NewElementParser):
 
     xml_object_tag = "goods.nomenclature.origin"
 
+    identity_fields = [
+        "new_goods_nomenclature__sid",
+        "new_goods_nomenclature__item_id",
+        "new_goods_nomenclature__suffix",
+        "derived_from_goods_nomenclature__item_id",
+        "derived_from_goods_nomenclature__suffix",
+    ]
+
     new_goods_nomenclature__sid: int = None
     new_goods_nomenclature__item_id: str = None
     new_goods_nomenclature__suffix: int = None
@@ -121,11 +129,19 @@ class NewGoodsNomenclatureSuccessorParser(NewWritable, NewElementParser):
 
     xml_object_tag = "goods.nomenclature.successor"
 
-    absorbed_into_goods_nomenclature__item_id: str = None
-    absorbed_into_goods_nomenclature__suffix: int = None
+    identity_fields = [
+        "replaced_goods_nomenclature__sid",
+        "replaced_goods_nomenclature__item_id",
+        "replaced_goods_nomenclature__suffix",
+        "absorbed_into_goods_nomenclature__item_id",
+        "absorbed_into_goods_nomenclature__suffix",
+    ]
+
     replaced_goods_nomenclature__sid: int = None
     replaced_goods_nomenclature__item_id: str = None
     replaced_goods_nomenclature__suffix: int = None
+    absorbed_into_goods_nomenclature__item_id: str = None
+    absorbed_into_goods_nomenclature__suffix: int = None
 
 
 class NewGoodsNomenclatureDescriptionParser(NewWritable, NewElementParser):
@@ -320,15 +336,15 @@ class NewFootnoteAssociationGoodsNomenclatureParser(
 
     identity_fields = [
         "goods_nomenclature__sid",
-        "associated_footnote__footnote_id",
         "goods_nomenclature__item_id",
         "goods_nomenclature__suffix",
+        "associated_footnote__footnote_id",
     ]
 
     goods_nomenclature__sid: int = None
+    goods_nomenclature__item_id: str = None
+    goods_nomenclature__suffix: int = None
     associated_footnote__footnote_type__footnote_type_id: int = None
     associated_footnote__footnote_id: int = None
     valid_between_lower: date = None
     valid_between_upper: date = None
-    goods_nomenclature__item_id: str = None
-    goods_nomenclature__suffix: int = None

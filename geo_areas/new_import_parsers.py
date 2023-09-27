@@ -37,6 +37,10 @@ class NewGeographicalAreaParser(NewValidityMixin, NewWritable, NewElementParser)
 
     xml_object_tag = "geographical.area"
 
+    identity_fields = [
+        "sid",
+    ]
+
     sid: int = None
     area_id: str = None
     valid_between_lower: date = None
@@ -69,6 +73,12 @@ class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
     subrecord_code = "10"
 
     xml_object_tag = "geographical.area.description"
+
+    identity_fields = [
+        "sid",
+        "described_geographicalarea__sid",
+        "described_geographicalarea__area_id",
+    ]
 
     sid: int = None
     described_geographicalarea__sid: int = None
@@ -114,6 +124,10 @@ class NewGeographicalAreaDescriptionPeriodParser(
 
     xml_object_tag = "geographical.area.description.period"
 
+    identity_fields = [
+        "sid",
+    ]
+
     sid: int = None
     described_geographicalarea__sid: int = None
     described_geographicalarea__area_id: str = None
@@ -151,6 +165,11 @@ class NewGeographicalMembershipParser(NewValidityMixin, NewWritable, NewElementP
     subrecord_code = "15"
 
     xml_object_tag = "geographical.membership"
+
+    identity_fields = [
+        "member__sid",
+        "geo_group__sid",
+    ]
 
     member__sid: int = None
     geo_group__sid: int = None

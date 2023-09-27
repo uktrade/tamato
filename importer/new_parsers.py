@@ -78,7 +78,7 @@ class MessageParser:
             if hasattr(
                 self.taric_object,
                 "last_published_description_with_period",
-            ):  # check rthere is a method for getting child object
+            ):  # check there is a method for getting child object
                 return True
 
         return False

@@ -23,6 +23,10 @@ class NewMeasureTypeSeriesParser(NewValidityMixin, NewWritable, NewElementParser
         "validity_end_date": "valid_between_upper",
     }
 
+    identity_fields = [
+        "sid",
+    ]
+
     sid: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -50,6 +54,10 @@ class NewMeasureTypeSeriesDescriptionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "measure.type.series.description"
 
+    identity_fields = [
+        "sid",
+    ]
+
     sid: str = None
     # language_id: str = None
     description: str = None
@@ -62,6 +70,10 @@ class NewMeasurementUnitParser(NewValidityMixin, NewWritable, NewElementParser):
     subrecord_code = "00"
 
     xml_object_tag = "measurement.unit"
+
+    identity_fields = [
+        "code",
+    ]
 
     value_mapping = {
         "measurement_unit_code": "code",
@@ -97,6 +109,10 @@ class NewMeasurementUnitDescriptionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "measurement.unit.description"
 
+    identity_fields = [
+        "code",
+    ]
+
     code: str = None
     # language_id: str = None
     description: str = None
@@ -119,6 +135,10 @@ class NewMeasurementUnitQualifierParser(
     subrecord_code = "00"
 
     xml_object_tag = "measurement.unit.qualifier"
+
+    identity_fields = [
+        "code",
+    ]
 
     code: str = None
     valid_between_lower: date = None
@@ -147,6 +167,10 @@ class NewMeasurementUnitQualifierDescriptionParser(NewWritable, NewElementParser
     subrecord_code = "05"
 
     xml_object_tag = "measurement.unit.qualifier.description"
+
+    identity_fields = [
+        "code",
+    ]
 
     code: str = None
     # language_id: str = None
@@ -185,6 +209,11 @@ class NewMeasurementParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "measurement"
 
+    identity_fields = [
+        "measurement_unit__code",
+        "measurement_unit_qualifier__code",
+    ]
+
     measurement_unit__code: str = None
     measurement_unit_qualifier__code: str = None
     valid_between_lower: date = None
@@ -205,6 +234,10 @@ class NewMonetaryUnitParser(NewValidityMixin, NewWritable, NewElementParser):
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
+
+    identity_fields = [
+        "code",
+    ]
 
     code: str = None
     valid_between_lower: date = None
@@ -234,6 +267,10 @@ class NewMonetaryUnitDescriptionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "monetary.unit.description"
 
+    identity_fields = [
+        "code",
+    ]
+
     code: str = None
     # language_id: str = None
     description: str = None
@@ -246,6 +283,12 @@ class NewDutyExpressionParser(NewValidityMixin, NewWritable, NewElementParser):
     subrecord_code = "00"
 
     xml_object_tag = "duty.expression"
+
+    identity_fields = [
+        "sid",
+        "measurement_unit_applicability_code",
+        "monetary_unit_applicability_code",
+    ]
 
     model_links = []
 
@@ -286,6 +329,10 @@ class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "duty.expression.description"
 
+    identity_fields = [
+        "sid",
+    ]
+
     sid: int = None
     # language_id: str = None
     description: str = None
@@ -317,6 +364,10 @@ class NewMeasureTypeParser(NewValidityMixin, NewWritable, NewElementParser):
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
+
+    identity_fields = [
+        "sid",
+    ]
 
     sid: str = None
     trade_movement_code: int = None
@@ -352,6 +403,10 @@ class NewMeasureTypeDescriptionParser(NewWritable, NewElementParser):
     subrecord_code = "05"
 
     xml_object_tag = "measure.type.description"
+
+    identity_fields = [
+        "sid",
+    ]
 
     sid: str = None
     # language_id: str = None
@@ -394,6 +449,11 @@ class NewAdditionalCodeTypeMeasureTypeParser(
 
     xml_object_tag = "additional.code.type.measure.type"
 
+    identity_fields = [
+        "measure_type__sid",
+        "additional_code_type__sid",
+    ]
+
     measure_type__sid: str = None
     additional_code_type__sid: str = None
     valid_between_lower: date = None
@@ -413,6 +473,10 @@ class NewMeasureConditionCodeParser(NewValidityMixin, NewWritable, NewElementPar
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
+
+    identity_fields = [
+        "code",
+    ]
 
     code: str = None
     valid_between_lower: date = None
@@ -442,6 +506,10 @@ class NewMeasureConditionCodeDescriptionParser(NewWritable, NewElementParser):
 
     xml_object_tag = "measure.condition.code.description"
 
+    identity_fields = [
+        "code",
+    ]
+
     code: str = None
     # language_id: str = None
     description: str = None
@@ -463,6 +531,10 @@ class NewMeasureActionParser(NewValidityMixin, NewWritable, NewElementParser):
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
+
+    identity_fields = [
+        "code",
+    ]
 
     code: str = None
     valid_between_lower: date = None
@@ -491,6 +563,10 @@ class NewMeasureActionDescriptionParser(NewWritable, NewElementParser):
     subrecord_code = "05"
 
     xml_object_tag = "measure.action.description"
+
+    identity_fields = [
+        "code",
+    ]
 
     code: str = None
     # language_id: str = None
@@ -589,6 +665,10 @@ class NewMeasureParser(NewValidityMixin, NewWritable, NewElementParser):
 
     xml_object_tag = "measure"
 
+    identity_fields = [
+        "sid",
+    ]
+
     sid: int = None
     measure_type__sid: str = None
     geographical_area__area_id: str = None
@@ -664,6 +744,12 @@ class NewMeasureComponentParser(NewWritable, NewElementParser):
     subrecord_code = "05"
 
     xml_object_tag = "measure.component"
+
+    identity_fields = [
+        "component_measure__sid",
+        "component_measurement__measurement_unit__code",
+        "component_measurement__measurement_unit_qualifier__code",
+    ]
 
     component_measure__sid: int = None
     duty_expression__sid: int = None
@@ -750,6 +836,10 @@ class NewMeasureConditionParser(NewWritable, NewElementParser):
         "certificate_code": "required_certificate__sid",
     }
 
+    identity_fields = [
+        "sid",
+    ]
+
     sid: int = None
     dependent_measure__sid: int = None
     condition_code__code: str = None
@@ -817,6 +907,12 @@ class NewMeasureConditionComponentParser(NewWritable, NewElementParser):
         "measurement_unit_qualifier_code": "component_measurement__measurement_unit_qualifier__code",
     }
 
+    identity_fields = [
+        "condition__sid",
+        "component_measurement__measurement_unit__code",
+        "component_measurement__measurement_unit_qualifier__code",
+    ]
+
     condition__sid: int = None
     duty_expression__sid: int = None
     duty_amount: float = None
@@ -857,6 +953,11 @@ class NewMeasureExcludedGeographicalAreaParser(NewWritable, NewElementParser):
         "geographical_area_sid": "excluded_geographical_area__sid",
     }
 
+    identity_fields = [
+        "modified_measure__sid",
+        "excluded_geographical_area__sid",
+    ]
+
     modified_measure__sid: int = None
     excluded_geographical_area__area_id: str = None
     excluded_geographical_area__sid: int = None
@@ -896,6 +997,11 @@ class NewFootnoteAssociationMeasureParser(NewWritable, NewElementParser):
     subrecord_code = "20"
 
     xml_object_tag = "footnote.association.measure"
+
+    identity_fields = [
+        "footnoted_measure__sid",
+        "associated_footnote__footnote_id",
+    ]
 
     footnoted_measure__sid: int = None
     associated_footnote__footnote_type__footnote_type_id: str = None
