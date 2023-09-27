@@ -1148,7 +1148,9 @@ class MeasureGeographicalAreaForm(
 
         # Use quota order number origins and exclusions to set cleaned_data
         if self.order_number:
-            origins = self.order_number.quotaordernumberorigin_set.current()
+            origins = (
+                self.order_number.quotaordernumberorigin_set.current().as_at_today_and_beyond()
+            )
             cleaned_data["geo_areas_and_exclusions"] = [
                 {
                     "geo_area": origin.geographical_area,
