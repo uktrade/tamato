@@ -240,7 +240,6 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         """
         price = cleaned_data.get("reference_price")
         certificate = cleaned_data.get("required_certificate")
-        cleaned_data.get("applicable_duty")
         action = cleaned_data.get("action")
 
         # Note this is a quick fix & hard coded for now
