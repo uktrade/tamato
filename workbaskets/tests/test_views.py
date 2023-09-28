@@ -14,6 +14,7 @@ from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
 from common.models.utils import override_current_transaction
 from common.tests import factories
+from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
 from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
@@ -445,9 +446,94 @@ def test_workbasket_list_all_view_search_filters(
     assert wb.get_status_display() in row_text
 
 
-def test_workbasket_measures_review(valid_user_client):
-    """Test that valid user receives a 200 on GET for
-    ReviewMeasuresWorkbasketView and correct measures display in html table."""
+@pytest.mark.parametrize(
+    "url",
+    (
+        "workbaskets:workbasket-ui-review-additional-codes",
+        "workbaskets:workbasket-ui-review-certificates",
+        "workbaskets:workbasket-ui-review-goods",
+        "workbaskets:workbasket-ui-review-footnotes",
+        "workbaskets:workbasket-ui-review-geo-areas",
+        "workbaskets:workbasket-ui-review-measures",
+        "workbaskets:workbasket-ui-review-quotas",
+        "workbaskets:workbasket-ui-review-regulations",
+    ),
+)
+def test_workbasket_review_tabs_without_permission(url, client):
+    """Tests that workbasket review tabs return 403 to users without
+    view_workbasket permission."""
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    url = reverse(url)
+    response = client.get(url)
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize(
+    ("url", "object_factory", "num_columns"),
+    [
+        (
+            "workbaskets:workbasket-ui-review-additional-codes",
+            lambda: factories.AdditionalCodeFactory(),
+            6,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-certificates",
+            lambda: factories.CertificateFactory.create(),
+            6,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-footnotes",
+            lambda: factories.FootnoteFactory.create(),
+            6,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-geo-areas",
+            lambda: factories.GeographicalAreaFactory.create(),
+            6,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-measures",
+            lambda: factories.MeasureFactory.create(),
+            11,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-quotas",
+            lambda: factories.QuotaOrderNumberFactory.create(),
+            6,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-regulations",
+            lambda: factories.RegulationFactory.create(),
+            6,
+        ),
+    ],
+)
+def test_workbasket_review_tabs(
+    url,
+    object_factory,
+    num_columns,
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that workbasket review tabs return 200 and display objects in
+    table."""
+    with session_workbasket.new_transaction():
+        object_factory()
+    url = reverse(url)
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    columns = page.select(".govuk-table__header")
+    rows = page.select("tbody > tr")
+    assert len(columns) == num_columns
+    assert len(rows) == 1
+
+
+def test_workbasket_review_measures(valid_user_client):
+    """Tests that `WorkBasketReviewMeasuresView` returns 200 and displays
+    measures in table."""
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
@@ -494,12 +580,47 @@ def test_workbasket_measures_review(valid_user_client):
     assert not measure_end_dates.difference(table_end_dates)
 
 
-def test_workbasket_measures_review_pagination(
+@pytest.mark.parametrize(
+    ("update_type", "expected_result"),
+    [
+        ("", 4),
+        (UpdateType.CREATE, 2),
+        (UpdateType.UPDATE, 1),
+        (UpdateType.DELETE, 1),
+    ],
+)
+def test_workbasket_review_measures_filters_update_type(
+    update_type,
+    expected_result,
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that `WorkBasketReviewMeasuresView` filters measures by
+    `update_type`."""
+    with session_workbasket.new_transaction():
+        created_measures = factories.MeasureFactory.create_batch(2)
+    updated_measure = created_measures[0].new_version(workbasket=session_workbasket)
+    deleted_measure = created_measures[1].new_version(
+        update_type=UpdateType.DELETE,
+        workbasket=session_workbasket,
+    )
+
+    url = reverse("workbaskets:workbasket-ui-review-measures")
+    search_filter = f"?update_type={update_type}"
+    response = valid_user_client.get(url + search_filter)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    rows = page.select("tbody > tr")
+    assert len(rows) == expected_result
+
+
+def test_workbasket_review_measures_pagination(
     valid_user_client,
     unapproved_transaction,
 ):
-    """Test that the first 30 measures in the workbasket are displayed in the
-    table."""
+    """Tests that `WorkBasketReviewMeasuresView` paginates when there are more
+    than 30 measures in the workbasket."""
 
     with override_current_transaction(unapproved_transaction):
         workbasket = factories.WorkBasketFactory.create(
@@ -521,7 +642,9 @@ def test_workbasket_measures_review_pagination(
     assert measure_sids.issubset({str(m.sid) for m in workbasket_measures})
 
 
-def test_workbasket_measures_review_conditions(valid_user_client):
+def test_workbasket_review_measures_conditions(valid_user_client):
+    """Tests that `WorkBasketReviewMeasuresView` displays the conditions on a
+    measure."""
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
@@ -530,7 +653,6 @@ def test_workbasket_measures_review_conditions(valid_user_client):
     tx = workbasket.new_transaction()
     measure = factories.MeasureFactory.create(transaction=tx)
     condition = factories.MeasureConditionFactory.create(
-        # transaction=tx,
         dependent_measure=measure,
         condition_code__code="B",
         required_certificate=certificate,
