@@ -1,5 +1,4 @@
 import logging
-from typing import Type
 
 import boto3
 from botocore.client import Config
@@ -26,20 +25,24 @@ from django.views.generic.edit import FormMixin
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 
+from additional_codes.models import AdditionalCode
+from certificates.models import Certificate
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
-from common.models import TrackedModel
 from common.pagination import build_pagination_list
 from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
+from footnotes.models import Footnote
+from geo_areas.models import GeographicalArea
 from importer.goods_report import GoodsReporter
 from importer.goods_report import GoodsReportLine
-from measures.filters import MeasureFilter
 from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
+from quotas.models import QuotaOrderNumber
+from regulations.models import Regulation
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
@@ -284,82 +287,6 @@ def download_envelope(request):
     )
 
     return HttpResponseRedirect(url)
-
-
-@method_decorator(require_current_workbasket, name="dispatch")
-class WorkBasketReviewMeasuresView(PermissionRequiredMixin, TamatoListView):
-    model: Type[TrackedModel] = Measure
-    paginate_by = 30
-
-    @property
-    def workbasket(self) -> WorkBasket:
-        return WorkBasket.current(self.request)
-
-    def get_queryset(self):
-        return Measure.objects.filter(
-            transaction__workbasket=self.workbasket,
-        ).order_by("sid")
-
-    template_name = "workbaskets/review-workbasket.jinja"
-    permission_required = "workbaskets.change_workbasket"
-    filterset_class = MeasureFilter
-
-
-@method_decorator(require_current_workbasket, name="dispatch")
-class WorkbasketReviewGoodsView(WithCurrentWorkBasket, TemplateView):
-    """UI endpoint for reviewing goods changes in a workbasket."""
-
-    template_name = "workbaskets/review-goods.jinja"
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-
-        # Default values should there be no ImportBatch instance associated with
-        # the workbasket.
-        context["column_headings"] = [
-            description
-            for description in GoodsReportLine.COLUMN_DESCRIPTIONS
-            if description != "Containing transaction ID"
-            and description != "Containing message ID"
-        ]
-        context["report_lines"] = []
-        context["import_batch_pk"] = None
-
-        # Get actual values from the ImportBatch instance if one is associated
-        # with the workbasket.
-        try:
-            import_batch = self.workbasket.importbatch
-        except ObjectDoesNotExist:
-            import_batch = None
-
-        if import_batch and import_batch.taric_file:
-            reporter = GoodsReporter(import_batch.taric_file)
-            goods_report = reporter.create_report()
-
-            context["report_lines"] = [
-                [
-                    line.update_type.title(),
-                    line.record_name.title(),
-                    line.goods_nomenclature_item_id,
-                    line.suffix,
-                    line.validity_start_date,
-                    line.validity_end_date,
-                    line.comments,
-                ]
-                for line in goods_report.report_lines
-            ]
-            context["import_batch_pk"] = import_batch.pk
-
-            # notifications only relevant to a goods import
-            context["unsent_notification"] = (
-                import_batch.goods_import
-                and not Notification.objects.filter(
-                    notified_object_pk=import_batch.pk,
-                    notification_type=NotificationTypeChoices.GOODS_REPORT,
-                ).exists()
-            )
-
-        return context
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
@@ -777,3 +704,180 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             *args,
             **kwargs,
         )
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class WorkBasketReviewView(PermissionRequiredMixin, TamatoListView):
+    """Base view from which nested workbasket review tab views inherit."""
+
+    template_name = "workbaskets/review.jinja"
+    filterset_fields = ["update_type"]
+    paginate_by = 30
+    permission_required = "workbaskets.view_workbasket"
+
+    def get_queryset(self):
+        return self.model.objects.filter(
+            transaction__workbasket=self.workbasket,
+        )
+
+
+class WorkBasketReviewAdditionalCodesView(WorkBasketReviewView):
+    """UI endpoint for reviewing additional code changes in a workbasket."""
+
+    model = AdditionalCode
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "additional-codes"
+        context["tab_template"] = "includes/additional_codes/list.jinja"
+        return context
+
+
+class WorkBasketReviewCertificatesView(WorkBasketReviewView):
+    """UI endpoint for reviewing certificate changes in a workbasket."""
+
+    model = Certificate
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "certificates"
+        context["tab_template"] = "includes/certificates/list.jinja"
+        return context
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class WorkbasketReviewGoodsView(
+    PermissionRequiredMixin,
+    WithCurrentWorkBasket,
+    TemplateView,
+):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    template_name = "workbaskets/review-goods.jinja"
+    permission_required = "workbaskets.view_workbasket"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "commodities"
+
+        # Default values should there be no ImportBatch instance associated with
+        # the workbasket.
+        context["column_headings"] = [
+            description
+            for description in GoodsReportLine.COLUMN_DESCRIPTIONS
+            if description != "Containing transaction ID"
+            and description != "Containing message ID"
+        ]
+        context["report_lines"] = []
+        context["import_batch_pk"] = None
+
+        # Get actual values from the ImportBatch instance if one is associated
+        # with the workbasket.
+        try:
+            import_batch = self.workbasket.importbatch
+        except ObjectDoesNotExist:
+            import_batch = None
+
+        if import_batch and import_batch.taric_file:
+            reporter = GoodsReporter(import_batch.taric_file)
+            goods_report = reporter.create_report()
+
+            context["report_lines"] = [
+                [
+                    line.update_type.title(),
+                    line.record_name.title(),
+                    line.goods_nomenclature_item_id,
+                    line.suffix,
+                    line.validity_start_date,
+                    line.validity_end_date,
+                    line.comments,
+                ]
+                for line in goods_report.report_lines
+            ]
+            context["import_batch_pk"] = import_batch.pk
+
+            # notifications only relevant to a goods import
+            context["unsent_notification"] = (
+                import_batch.goods_import
+                and not Notification.objects.filter(
+                    notified_object_pk=import_batch.pk,
+                    notification_type=NotificationTypeChoices.GOODS_REPORT,
+                ).exists()
+            )
+
+        return context
+
+
+class WorkBasketReviewFootnotesView(WorkBasketReviewView):
+    """UI endpoint for reviewing footnote changes in a workbasket."""
+
+    model = Footnote
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "footnotes"
+        context["tab_template"] = "includes/footnotes/list.jinja"
+        return context
+
+
+class WorkBasketReviewGeoAreasView(WorkBasketReviewView):
+    """UI endpoint for reviewing geographical area changes in a workbasket."""
+
+    model = GeographicalArea
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "geographical-areas"
+        context["tab_template"] = "includes/geo_areas/list.jinja"
+        return context
+
+
+class WorkBasketReviewMeasuresView(WorkBasketReviewView):
+    """UI endpoint for reviewing measures in a workbasket."""
+
+    model = Measure
+
+    def get_queryset(self):
+        return (
+            Measure.objects.filter(
+                transaction__workbasket=self.workbasket,
+            )
+            .select_related(
+                "measure_type",
+                "geographical_area",
+                "goods_nomenclature",
+                "order_number",
+                "generating_regulation",
+            )
+            .order_by("sid")
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "measures"
+        context["tab_template"] = "includes/measures/workbasket-measures.jinja"
+        return context
+
+
+class WorkBasketReviewQuotasView(WorkBasketReviewView):
+    """UI endpoint for reviewing quota changes in a workbasket."""
+
+    model = QuotaOrderNumber
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "quotas"
+        context["tab_template"] = "includes/quotas/list.jinja"
+        return context
+
+
+class WorkBasketReviewRegulationsView(WorkBasketReviewView):
+    """UI endpoint for reviewing regulation changes in a workbasket."""
+
+    model = Regulation
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "regulations"
+        context["tab_template"] = "includes/regulations/list.jinja"
+        return context

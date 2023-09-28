@@ -47,14 +47,44 @@ ui_patterns = [
         name="edit-workbasket",
     ),
     path(
-        f"current/review-measures/",
-        ui_views.WorkBasketReviewMeasuresView.as_view(),
-        name="workbasket-ui-review-measures",
+        f"current/review-additional-codes/",
+        ui_views.WorkBasketReviewAdditionalCodesView.as_view(),
+        name="workbasket-ui-review-additional-codes",
+    ),
+    path(
+        f"current/review-certificates/",
+        ui_views.WorkBasketReviewCertificatesView.as_view(),
+        name="workbasket-ui-review-certificates",
     ),
     path(
         f"current/review-goods/",
         ui_views.WorkbasketReviewGoodsView.as_view(),
         name="workbasket-ui-review-goods",
+    ),
+    path(
+        f"current/review-footnotes/",
+        ui_views.WorkBasketReviewFootnotesView.as_view(),
+        name="workbasket-ui-review-footnotes",
+    ),
+    path(
+        f"current/review-geographical-areas/",
+        ui_views.WorkBasketReviewGeoAreasView.as_view(),
+        name="workbasket-ui-review-geo-areas",
+    ),
+    path(
+        f"current/review-measures/",
+        ui_views.WorkBasketReviewMeasuresView.as_view(),
+        name="workbasket-ui-review-measures",
+    ),
+    path(
+        f"current/review-quotas/",
+        ui_views.WorkBasketReviewQuotasView.as_view(),
+        name="workbasket-ui-review-quotas",
+    ),
+    path(
+        f"current/review-regulations/",
+        ui_views.WorkBasketReviewRegulationsView.as_view(),
+        name="workbasket-ui-review-regulations",
     ),
     path(
         f"current/violations/",
