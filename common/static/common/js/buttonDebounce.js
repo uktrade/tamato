@@ -1,9 +1,7 @@
 const tapDebounce = function(event) {
-    console.log('b fires')
     let DEBOUNCE_TIMEOUT_IN_SECONDS = 5;
 
     if (this.tapDebounceFormSubmitTimer) {
-        console.log('c fires')
         event.preventDefault();
         button.disabled = true
         return false
