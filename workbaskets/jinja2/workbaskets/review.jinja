@@ -1,0 +1,91 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
+{% from "macros/fake_tabs.jinja" import fake_tabs %}
+
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Review{% endset %}
+
+{% set links = [
+  {
+    "text": "Additional codes",
+    "href": url("workbaskets:workbasket-ui-review-additional-codes"),
+    "selected": selected_tab == "additional-codes"
+  },
+  {
+    "text": "Certificates",
+    "href": url("workbaskets:workbasket-ui-review-certificates"),
+    "selected": selected_tab == "certificates"
+  },
+  {
+    "text": "Commodities",
+    "href": url("workbaskets:workbasket-ui-review-goods"),
+    "selected": selected_tab == "commodities"
+  },
+  {
+    "text": "Footnotes",
+    "href": url("workbaskets:workbasket-ui-review-footnotes"),
+    "selected": selected_tab == "footnotes"
+  },
+  {
+    "text": "Geographical areas",
+    "href": url("workbaskets:workbasket-ui-review-geo-areas"),
+    "selected": selected_tab == "geographical-areas"
+  },
+  {
+    "text": "Measures",
+    "href": url("workbaskets:workbasket-ui-review-measures"),
+    "selected": selected_tab == "measures"
+  },
+  {
+    "text": "Quotas",
+    "href": url("workbaskets:workbasket-ui-review-quotas"),
+    "selected": selected_tab == "quotas"
+  },
+  {
+    "text": "Regulations",
+    "href": url("workbaskets:workbasket-ui-review-regulations"),
+    "selected": selected_tab == "regulations"
+  },
+  ]
+%}
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+    {{ page_title }}
+  </h1>
+
+  {{ navigation(request, "review") }}
+
+  {{ fake_tabs(links) }}
+
+  <div class="govuk-tabs__panel {% block content_class %}{% endblock %}">
+    {% block filters %}
+      <nav class="workbasket-filters">
+        <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
+        <ul class="govuk-list">
+          <li>
+            <a href="{{ request.path }}?update_type=" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if not request.GET.update_type %}selected-link{% endif %}">All</a>
+          </li>
+          <li>
+            <a href="{{ request.path }}?update_type=3" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.update_type == "3" %}selected-link{% endif %}">Create</a>
+          </li>
+          <li>
+            <a href="{{ request.path }}?update_type=1" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.update_type == "1" %}selected-link{% endif %}">Update</a>
+          </li>
+          <li>
+            <a href="{{ request.path }}?update_type=2" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.update_type == "2" %}selected-link{% endif %}">Delete</a>
+          </li>
+        </ul>
+      </nav>
+    {% endblock %}
+
+    {% block tab_content %}
+      {% if object_list %}
+        {% include tab_template %}
+      {% else %}
+        <p class="govuk-body govuk-!-margin-top-5">0 {{ selected_tab|replace("-", " ") }} available to review.</p>
+      {% endif %}
+      {% include "includes/common/pagination.jinja" %}
+    {% endblock %}
+  </div>
+{% endblock %}
