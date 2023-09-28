@@ -15,10 +15,6 @@
 
   <div class="full-width-search">
     <div class="govuk-!-margin-bottom-5">
-      <h2 class="govuk-heading-m govuk-!-margin-bottom-5">Search and filter</h2>
-      <p class="govuk-body">
-        Select one or more options to search
-      </p>
       <form method="get" action="{{ url(form_url) }}">
           {{ crispy(filter.form) }}
       </form>

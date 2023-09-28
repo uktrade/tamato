@@ -1,0 +1,67 @@
+{% extends "measures/create-wizard-step.jinja" %}
+{% from "components/details/macro.njk" import govukDetails %}
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block breadcrumb %}
+  {% if order_number %}
+    {% if request.path != "/" %}
+      {{ breadcrumbs(request, [{"text": "Review the geographical areas"}]) }}
+    {% endif %}
+  {% else %}
+    {{ super() }}
+  {% endif %}
+{% endblock %}
+
+{% block page_title_heading %}
+  {% if order_number %}
+    Review the geographical areas
+  {% else %}
+    {{ super() }}
+  {% endif %}
+{% endblock %}
+
+{% block form %}
+  {% if order_number and origins_and_exclusions %}
+
+    {{ govukDetails({
+      "summaryText": "What can I do if the geographical areas are incorrect?",
+      "text": "The geographical areas are determined by the quota you entered on the previous page. If the geographical areas are incorrect, you will need to edit the quota. You will then need to re-enter the quota to reflect the changes."
+    }) }}
+
+    {% set row_data = [] %}
+    {% for data in origins_and_exclusions %}
+      {% set origin %}
+        {{ data["origin"].area_id }} - {{ data["origin"].get_description().description }}
+      {% endset %}
+
+      {{ row_data.append({
+        "key": {"text": "Geographical area"},
+        "value": {"text": origin},
+        "actions": {"items": []}
+      }) or "" }}
+
+      {% if data.get("exclusions") %}
+        {% set exclusions %}
+          {% for exclusion in data["exclusions"] %}
+            {{ exclusion.area_id }} - {{ exclusion.get_description().description }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        {% endset %}
+
+        {{ row_data.append({
+          "key": {"text": "Geographical area exclusions"},
+          "value": {"text": exclusions if data["exclusions"] else "-"},
+          "actions": {"items": []}
+        }) or "" }}
+      {% endif %}
+    {% endfor %}
+
+    {{ govukSummaryList({
+      "rows": row_data,
+    })}}
+
+    {{ govukButton({"text": "Continue"}) }}
+
+  {% else %}
+    {{ crispy(form) }}
+  {% endif %}
+{% endblock %}
