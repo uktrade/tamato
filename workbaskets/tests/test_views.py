@@ -292,7 +292,7 @@ def test_select_workbasket_with_errored_status(valid_user_client):
         ("view-summary", "workbaskets:current-workbasket"),
         ("add-edit-items", "workbaskets:edit-workbasket"),
         ("view-violations", "workbaskets:workbasket-ui-violations"),
-        ("review-measures", "workbaskets:review-workbasket"),
+        ("review-measures", "workbaskets:workbasket-ui-review-measures"),
         ("review-goods", "workbaskets:workbasket-ui-review-goods"),
         ("", "workbaskets:current-workbasket"),
     ],
@@ -456,7 +456,7 @@ def test_workbasket_measures_review(valid_user_client):
     with workbasket.new_transaction() as tx:
         factories.MeasureFactory.create_batch(30, transaction=tx)
 
-    url = reverse("workbaskets:review-workbasket")
+    url = reverse("workbaskets:workbasket-ui-review-measures")
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
@@ -507,7 +507,7 @@ def test_workbasket_measures_review_pagination(
         )
         factories.MeasureFactory.create_batch(40, transaction=unapproved_transaction)
 
-    url = reverse("workbaskets:review-workbasket")
+    url = reverse("workbaskets:workbasket-ui-review-measures")
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
@@ -536,7 +536,7 @@ def test_workbasket_measures_review_conditions(valid_user_client):
         required_certificate=certificate,
         action__code="27",
     )
-    url = reverse("workbaskets:review-workbasket")
+    url = reverse("workbaskets:workbasket-ui-review-measures")
     response = valid_user_client.get(url)
     soup = BeautifulSoup(str(response.content), "html.parser")
     # 11th column is conditions. We're interested in the first (and only) row.

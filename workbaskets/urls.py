@@ -47,9 +47,9 @@ ui_patterns = [
         name="edit-workbasket",
     ),
     path(
-        f"current/review/",
-        ui_views.ReviewMeasuresWorkbasketView.as_view(),
-        name="review-workbasket",
+        f"current/review-measures/",
+        ui_views.WorkBasketReviewMeasuresView.as_view(),
+        name="workbasket-ui-review-measures",
     ),
     path(
         f"current/review-goods/",

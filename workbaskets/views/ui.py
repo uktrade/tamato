@@ -153,7 +153,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
                 "path_name": "workbaskets:workbasket-ui-violations",
             },
             "review-measures": {
-                "path_name": "workbaskets:review-workbasket",
+                "path_name": "workbaskets:workbasket-ui-review-measures",
             },
             "review-goods": {
                 "path_name": "workbaskets:workbasket-ui-review-goods",
@@ -287,7 +287,7 @@ def download_envelope(request):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class ReviewMeasuresWorkbasketView(PermissionRequiredMixin, TamatoListView):
+class WorkBasketReviewMeasuresView(PermissionRequiredMixin, TamatoListView):
     model: Type[TrackedModel] = Measure
     paginate_by = 30
 
