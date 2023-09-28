@@ -1,13 +1,24 @@
-let button = document.getElementById('add-debounce')
-let infoText = document.getElementById('add-debounce-inset-text')
+const tapDebounce = function(event) {
+    console.log('b fires')
+    let DEBOUNCE_TIMEOUT_IN_SECONDS = 5;
 
-const debounceButton = () => {
-    if (button) {
-        addEventListener('submit', function() {
-            button.disabled = true,
-            infoText.classList.remove('js-hidden')
-        })
+    if (this.tapDebounceFormSubmitTimer) {
+        console.log('c fires')
+        event.preventDefault();
+        button.disabled = true
+        return false
     }
-}
 
-export default debounceButton;
+
+    this.tapDebounceFormSubmitTimer = setTimeout(function () {
+        this.tapDebounceFormSubmitTimer = null;
+    }.bind(this), DEBOUNCE_TIMEOUT_IN_SECONDS * 1000);
+};
+
+document.querySelectorAll("[data-prevent-double-click").forEach(
+    (element) => {
+        element.addEventListener('click', tapDebounce);
+    }
+)
+
+export default tapDebounce;

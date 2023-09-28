@@ -129,6 +129,5 @@
       {% endfor %}
     {% endif %}
   {% endcall %}
-  {{ govukInsetText({"text": "Your measures are being processed and the submit button is now disabled. You will be taken to a confirmation screen once the measures have been created.", "classes": "js-hidden", "attributes": {"id": "add-debounce-inset-text"},})}}
-  {{ govukButton({"text": "Create", "preventDoubleClick": true, "attributes": {"id": "add-debounce"},}) }}
+  {{ govukButton({"text": "Create", "preventDoubleClick": true}) }}
 {% endblock %}
