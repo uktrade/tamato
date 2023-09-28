@@ -42,7 +42,7 @@ def test_measure_conditions_list():
         .get(pk=cond.pk)
     )
     assert cond.reference_price_string == "48.100 EUR / 100 kg"
-    assert cond.condition_string == "2.500%"
+    assert cond.duty_sentence == "2.500%"
 
 
 def test_stringify_measure_condition():
@@ -88,7 +88,7 @@ def test_stringify_measure_condition():
         .get(pk=cond.pk)
     )
     assert cond.reference_price_string == "0.000 EUR / 100 kg"
-    assert cond.condition_string == "2.500% + 37.800 EUR / 100 kg"
+    assert cond.duty_sentence == "2.500% + 37.800 EUR / 100 kg"
 
 
 @pytest.fixture(
