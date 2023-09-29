@@ -3,12 +3,22 @@
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block breadcrumb %}
-  {% if request.path != "/" %}
-    {{ breadcrumbs(request, [{"text": "Review the geographical areas"}]) }}
+  {% if order_number %}
+    {% if request.path != "/" %}
+      {{ breadcrumbs(request, [{"text": "Review the geographical areas"}]) }}
+    {% endif %}
+  {% else %}
+    {{ super() }}
   {% endif %}
-  {% endblock %}
+{% endblock %}
 
-{% block page_title_heading %}Review the geographical areas{% endblock %}
+{% block page_title_heading %}
+  {% if order_number %}
+    Review the geographical areas
+  {% else %}
+    {{ super() }}
+  {% endif %}
+{% endblock %}
 
 {% block form %}
   {% if order_number and origins_and_exclusions %}
