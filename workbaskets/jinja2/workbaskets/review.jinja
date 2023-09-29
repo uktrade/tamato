@@ -61,7 +61,7 @@
   <div class="govuk-tabs__panel {% block content_class %}{% endblock %}">
     {% block filters %}
       <nav class="workbasket-filters">
-        <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
+        <p class="govuk-body govuk-!-font-weight-bold">Filter by action:</p>
         <ul class="govuk-list">
           <li>
             <a href="{{ request.path }}?update_type=" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if not request.GET.update_type %}selected-link{% endif %}">All</a>
