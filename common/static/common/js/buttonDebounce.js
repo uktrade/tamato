@@ -1,22 +1,31 @@
-const tapDebounce = function(event) {
+const tapDebounce = (event) => {
     let DEBOUNCE_TIMEOUT_IN_SECONDS = 5;
-
-    if (this.tapDebounceFormSubmitTimer) {
-        event.preventDefault();
-        button.disabled = true
-        return false
+    let target = event.target;
+    if (target.tapDebounceFormSubmitTimer) {
+      event.preventDefault();
+      return false;
     }
 
+    let targetDefaultCursor = target.style.cursor;
 
-    this.tapDebounceFormSubmitTimer = setTimeout(function () {
-        this.tapDebounceFormSubmitTimer = null;
-    }.bind(this), DEBOUNCE_TIMEOUT_IN_SECONDS * 1000);
+    target.tapDebounceFormSubmitTimer = setTimeout(
+      function () {
+        target.tapDebounceFormSubmitTimer = null;
+        target.style.cursor = targetDefaultCursor;
+      }.bind(target),
+      DEBOUNCE_TIMEOUT_IN_SECONDS * 1000
+    );
+    target.style.cursor = "wait";
 };
 
-document.querySelectorAll("[data-prevent-double-click").forEach(
-    (element) => {
-        element.addEventListener('click', tapDebounce);
-    }
-)
 
-export default tapDebounce;
+const initTapDebounce = () => {
+  document.querySelectorAll("[data-prevent-double-click").forEach(
+    (element) => {
+        
+      element.addEventListener('click', tapDebounce);
+    }
+  )
+}
+
+export default initTapDebounce;
