@@ -1,3 +1,9 @@
+/**
+ * govuk data-prevent-double-click function has a timeout of 1 second. 
+ * If the request takes > 1 second, the button can be clicked again.
+ * This duplicates the functionality but increases the timeout to 5 seconds.
+ */
+
 const tapDebounce = (event) => {
     let DEBOUNCE_TIMEOUT_IN_SECONDS = 5;
     let target = event.target;
