@@ -252,8 +252,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         if (
             not skip_price_and_reference_check
             and not is_negative_action_code
-            and (not price and not certificate)
-            or (price and certificate)
+            and (price and certificate)
         ):
             self.add_error(
                 None,
