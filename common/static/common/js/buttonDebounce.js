@@ -26,7 +26,7 @@ const tapDebounce = (event) => {
 
 
 const initTapDebounce = () => {
-  document.querySelectorAll("[data-prevent-double-click").forEach(
+  document.querySelectorAll("[data-prevent-double-click]").forEach(
     (element) => {
         
       element.addEventListener('click', tapDebounce);
