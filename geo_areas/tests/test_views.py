@@ -20,6 +20,7 @@ from geo_areas.forms import GeoMembershipAction
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalMembership
 from geo_areas.validators import AreaCode
+from geo_areas.views import GeoAreaDetailMeasures
 from geo_areas.views import GeoAreaList
 
 pytestmark = pytest.mark.django_db
@@ -492,3 +493,209 @@ def test_geographical_membership_create_view(
         assert membership.member == country
         assert membership.geo_group == area_groups[i]
         assert membership.valid_between == date_ranges.no_end
+
+
+def test_geo_area_detail_measures_view(valid_user_client):
+    """Test that `GeoAreaDetailMeasures` view returns 200 and renders actions
+    link and other tabs."""
+    geo_area = factories.GeographicalAreaFactory.create()
+
+    url_kwargs = {
+        "sid": geo_area.sid,
+    }
+    details_tab_url = reverse("geo_area-ui-detail", kwargs=url_kwargs)
+    version_control_tab_url = reverse(
+        "geo_area-ui-detail-version-control",
+        kwargs=url_kwargs,
+    )
+    measures_tab_url = reverse("geo_area-ui-detail-measures", kwargs=url_kwargs)
+    descriptions_tab_url = reverse("geo_area-ui-detail-descriptions", kwargs=url_kwargs)
+    memberships_tab_url = reverse("geo_area-ui-detail-memberships", kwargs=url_kwargs)
+    expected_tabs = {
+        "Details": details_tab_url,
+        "Descriptions": descriptions_tab_url,
+        "Memberships": memberships_tab_url,
+        "Measures": measures_tab_url,
+        "Version control": version_control_tab_url,
+    }
+
+    response = valid_user_client.get(measures_tab_url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    tabs = {tab.text: tab.attrs["href"] for tab in page.select(".govuk-tabs__tab")}
+    assert tabs == expected_tabs
+
+    actions = page.find("h2", text="Actions").find_next("a")
+    assert actions.text == "View in find and edit measures"
+    assert (
+        actions.attrs["href"]
+        == f"{reverse('measure-ui-list')}?geographical_area={geo_area.pk}"
+    )
+
+
+def test_geo_area_detail_measures_view_lists_measures(valid_user_client):
+    """Test that `GeoAreaDetailMeasures` view displays a paginated list of
+    measures for a geo area."""
+    geo_area = factories.GeographicalAreaFactory.create()
+    measures = factories.MeasureFactory.create_batch(
+        21,
+        geographical_area=geo_area,
+    )
+
+    url = reverse(
+        "geo_area-ui-detail-measures",
+        kwargs={
+            "sid": geo_area.sid,
+        },
+    )
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    table_rows = page.select(".govuk-table tbody tr")
+    assert len(table_rows) == GeoAreaDetailMeasures.paginate_by
+
+    table_measure_sids = {
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    }
+    assert table_measure_sids.issubset({m.sid for m in measures})
+
+    assert page.find("nav", class_="pagination").find_next("a", href="?page=2")
+
+
+def test_geo_area_detail_measures_view_sorting_commodity(valid_user_client):
+    """Test that measures listed on `GeoAreaDetailMeasures` view can be sorted
+    by commodity code in ascending or descending order."""
+    geo_area = factories.GeographicalAreaFactory.create()
+    measures = factories.MeasureFactory.create_batch(
+        3,
+        geographical_area=geo_area,
+    )
+    commodity_codes = [measure.goods_nomenclature.item_id for measure in measures]
+
+    url = reverse(
+        "geo_area-ui-detail-measures",
+        kwargs={
+            "sid": geo_area.sid,
+        },
+    )
+    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&order=asc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_commodity_codes = [
+        commodity.text
+        for commodity in page.select(".govuk-table tbody tr td:nth-child(2) a")
+    ]
+    assert table_commodity_codes == commodity_codes
+
+    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&order=desc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_commodity_codes = [
+        commodity.text
+        for commodity in page.select(".govuk-table tbody tr td:nth-child(2) a")
+    ]
+    commodity_codes.reverse()
+    assert table_commodity_codes == commodity_codes
+
+
+def test_geo_area_detail_measures_view_sorting_start_date(
+    date_ranges,
+    valid_user_client,
+):
+    """Test that measures listed on `GeoAreaDetailMeasures` view can be sorted
+    by start date in ascending or descending order."""
+    geo_area = factories.GeographicalAreaFactory.create()
+    measure1 = factories.MeasureFactory.create(
+        geographical_area=geo_area,
+        valid_between=date_ranges.earlier,
+    )
+    measure2 = factories.MeasureFactory.create(
+        geographical_area=geo_area,
+        valid_between=date_ranges.normal,
+    )
+    measure3 = factories.MeasureFactory.create(
+        geographical_area=geo_area,
+        valid_between=date_ranges.later,
+    )
+
+    url = reverse(
+        "geo_area-ui-detail-measures",
+        kwargs={
+            "sid": geo_area.sid,
+        },
+    )
+    response = valid_user_client.get(f"{url}?sort_by=start_date&order=asc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_measure_sids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert table_measure_sids == [measure1.sid, measure2.sid, measure3.sid]
+
+    response = valid_user_client.get(f"{url}?sort_by=start_date&order=desc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_measure_sids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert table_measure_sids == [measure3.sid, measure2.sid, measure1.sid]
+
+
+def test_geo_area_detail_version_control_view(valid_user_client):
+    """Test that `GeoAreaDetailVersionControl` view returns 200 and renders
+    table content and other tabs."""
+    geo_area = factories.GeographicalAreaFactory.create()
+    geo_area.new_version(geo_area.transaction.workbasket)
+
+    url_kwargs = {
+        "sid": geo_area.sid,
+    }
+
+    details_tab_url = reverse("geo_area-ui-detail", kwargs=url_kwargs)
+    version_control_tab_url = reverse(
+        "geo_area-ui-detail-version-control",
+        kwargs=url_kwargs,
+    )
+    measures_tab_url = reverse("geo_area-ui-detail-measures", kwargs=url_kwargs)
+    descriptions_tab_url = reverse("geo_area-ui-detail-descriptions", kwargs=url_kwargs)
+    memberships_tab_url = reverse("geo_area-ui-detail-memberships", kwargs=url_kwargs)
+    expected_tabs = {
+        "Details": details_tab_url,
+        "Descriptions": descriptions_tab_url,
+        "Memberships": memberships_tab_url,
+        "Measures": measures_tab_url,
+        "Version control": version_control_tab_url,
+    }
+
+    response = valid_user_client.get(version_control_tab_url)
+    assert response.status_code == 200
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    tabs = {tab.text: tab.attrs["href"] for tab in page.select(".govuk-tabs__tab")}
+    assert tabs == expected_tabs
+
+    table_rows = page.select("table > tbody > tr")
+    assert len(table_rows) == 2
+
+    update_types = {
+        update.text for update in page.select("table > tbody > tr > td:first-child")
+    }
+    assert update_types == {"Create", "Update"}
