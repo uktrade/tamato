@@ -859,6 +859,45 @@ def test_measure_update_remove_conditions(
     assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 0
 
 
+def test_measure_update_negative_condition(
+    client,
+    valid_user,
+    measure_edit_conditions_and_negative_action_data,
+    duty_sentence_parser,
+    erga_omnes,
+):
+    """Tests that html contains appropriate form validation errors after posting
+    to measure edit endpoint with a valid applicable_duty string for the
+    negative action."""
+
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-applicable_duty"
+    ] = "3.5%"
+
+    measure = Measure.objects.first()
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    client.force_login(valid_user)
+    response = client.post(url, data=measure_edit_conditions_and_negative_action_data)
+
+    assert response.status_code == 302
+
+    tx = Transaction.objects.last()
+    updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
+        sid=measure.sid,
+    )
+
+    assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 2
+
+    condition = updated_measure.conditions.approved_up_to_transaction(tx).last()
+
+    components = condition.components.approved_up_to_transaction(tx).order_by(
+        *MeasureConditionComponent._meta.ordering
+    )
+
+    assert components.count() == 1
+    assert components.first().duty_amount == 3.5
+
+
 def test_measure_update_invalid_conditions(
     client,
     valid_user,
@@ -866,14 +905,9 @@ def test_measure_update_invalid_conditions(
     duty_sentence_parser,
     erga_omnes,
 ):
-    """
-    Tests that html contains appropriate form validation errors after posting to
-    measure edit endpoint with compound reference_price and an invalid
-    applicable_duty string.
-
-    Also tests form validation on negative action code's checking that
-    reference_price, required_certificate & applicable_duty must be empty
-    """
+    """Tests that html contains appropriate form validation errors after posting
+    to measure edit endpoint with compound reference_price and an invalid
+    applicable_duty string."""
     measure_edit_conditions_and_negative_action_data[
         f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price"
     ] = "3.5% + 11 GBP / 100 kg"
@@ -915,12 +949,6 @@ def test_measure_update_invalid_conditions(
     assert (
         a_tags[2].text
         == "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
-    )
-
-    assert a_tags[3].attrs["href"] == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-__all__"
-    assert (
-        a_tags[3].text
-        == "If the action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’."
     )
 
 

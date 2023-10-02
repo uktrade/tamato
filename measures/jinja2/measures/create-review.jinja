@@ -1,5 +1,5 @@
 {% extends "measures/create-wizard-step.jinja" %}
-
+{% from "components/inset-text/macro.njk" import govukInsetText %}
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
 {% from 'includes/measures/macros/conditions.jinja' import requirement %}
 
@@ -129,6 +129,5 @@
       {% endfor %}
     {% endif %}
   {% endcall %}
-
-  {{ govukButton({"text": "Create", "preventDoubleClick": true,}) }}
+  {{ govukButton({"text": "Create", "preventDoubleClick": true}) }}
 {% endblock %}
