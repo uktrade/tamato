@@ -778,7 +778,13 @@ class WorkbasketReviewGoodsView(
         except ObjectDoesNotExist:
             import_batch = None
 
-        if import_batch and import_batch.taric_file:
+        taric_file = None
+        if import_batch and import_batch.taric_file and import_batch.taric_file.name:
+            taric_file = import_batch.taric_file.storage.exists(
+                import_batch.taric_file.name,
+            )
+
+        if taric_file:
             reporter = GoodsReporter(import_batch.taric_file)
             goods_report = reporter.create_report()
 
