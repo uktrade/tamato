@@ -56,7 +56,9 @@
 
   {{ navigation(request, "review") }}
 
-  {{ fake_tabs(links) }}
+  <div id="workbasket-review-tabs">
+    {{ fake_tabs(links) }}
+  </div>
 
   <div class="govuk-tabs__panel {% block content_class %}{% endblock %}">
     {% block filters %}

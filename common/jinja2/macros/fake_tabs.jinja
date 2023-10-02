@@ -1,5 +1,5 @@
 {% macro fake_tabs(links_list) -%}
-  <ul class="govuk-tabs__list" role="tablist">
+  <ul class="govuk-tabs__list">
   {% for link in links_list %}
     <li class="govuk-tabs__list-item {% if link.selected %}govuk-tabs__list-item--selected{% endif %}">
       <a class="govuk-tabs__tab" href="{{ link.href }}">{{ link.text }}</a>
