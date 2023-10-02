@@ -1,5 +1,5 @@
 
-{% macro sort_by(request, sort_by, title, base_url, query_params="False", anchor="") %}
+{% macro sort_by(request, sort_by, title, base_url, query_params=False, anchor="") %}
 
   {% if query_params %}
     {% set query_string_prefix = "&"%}
