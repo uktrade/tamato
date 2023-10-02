@@ -128,15 +128,6 @@ def environment(**kwargs):
             "pluralize": pluralize,
         },
     )
-    environment = os.environ.get("ENV", "dev")
-    if environment.lower() == "development":
-        environment_label = environment[:3]
-    elif environment.lower() == "testing":
-        environment_label = environment[:4]
-    elif environment.lower() == "training":
-        environment_label = environment[:5]
-    else:
-        environment_label = environment
 
     env.globals.update(
         {
@@ -144,8 +135,7 @@ def environment(**kwargs):
             "query_transform": query_transform,
             "debug_output": debug_output,
             "crispy": render_crispy_form,
-            "env": environment,
-            "environment_label": environment_label,
+            "env": os.environ.get("ENV", "dev"),
             "get_messages": messages.get_messages,
             "get_current_workbasket": WorkBasket.current,
             "localtime": template_localtime,

@@ -11,30 +11,30 @@
     line-height: 40px;
     font-size: 14px;
     z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    display: flex;
 }
 
 
 // .environment-banner:after {
 //     content: attr(data-environment);
-//     position: fixed;
-//     right: 0.5px;
-//     top: 17px;
-//     transform: rotate(45deg); -40%, -200%
-//     font-size: 18px;
+//     position: absolute;
+//     right: 50%;
+//     top: 50%;
+//     transform: translate(10%, -175%) rotate(45deg);
+//     font-size: 15px;
 //     background-color: transparent;
 //     color: white;
-//     padding: 2px;
+//     padding: 4px;
+//     white-space: nowrap;
 // }
 
-.environment-banner:after {
-    content: attr(data-environment);
+.text-wrapper {
     position: absolute;
-    right: 50%;
-    top: 50%;
-    transform: translate(20%, -150%) rotate(45deg);
-    font-size: 15px;
-    background-color: transparent;
+    transform: translate(-40%, -125%) rotate(45deg);
     color: white;
+    background-color: transparent;
     padding: 4px;
     white-space: nowrap;
 }

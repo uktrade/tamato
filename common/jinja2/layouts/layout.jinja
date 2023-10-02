@@ -55,7 +55,8 @@
   {% endblock %}
 
   {% if env != "production"%}
-    <div class="environment-banner" data-environment="DEVELOPMENT"> 
+    <div class="environment-banner"> 
+      <div class="text-wrapper">{{ env}}</div>
     </div>
   {% endif %}
 {% endblock %}
