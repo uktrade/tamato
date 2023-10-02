@@ -165,12 +165,11 @@ class MeasureList(
         ordering = self.get_ordering()
 
         if ordering:
-            if isinstance(ordering, str):
-                if ordering in "-db_effective_end_date":
-                    queryset = queryset.with_effective_valid_between()
+            if ordering in "-db_effective_end_date":
+                queryset = queryset.with_effective_valid_between()
 
-                ordering = (ordering,)
-                queryset = queryset.order_by(*ordering)
+            ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
 
         return queryset
 
