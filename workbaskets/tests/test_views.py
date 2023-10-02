@@ -581,7 +581,7 @@ def test_workbasket_review_measures(valid_user_client):
 
 
 @pytest.mark.parametrize(
-    ("update_type", "expected_result"),
+    ("update_type", "expected_measure_count"),
     [
         ("", 4),
         (UpdateType.CREATE, 2),
@@ -591,7 +591,7 @@ def test_workbasket_review_measures(valid_user_client):
 )
 def test_workbasket_review_measures_filters_update_type(
     update_type,
-    expected_result,
+    expected_measure_count,
     valid_user_client,
     session_workbasket,
 ):
@@ -612,7 +612,7 @@ def test_workbasket_review_measures_filters_update_type(
 
     page = BeautifulSoup(str(response.content), "html.parser")
     rows = page.select("tbody > tr")
-    assert len(rows) == expected_result
+    assert len(rows) == expected_measure_count
 
 
 def test_workbasket_review_measures_pagination(
