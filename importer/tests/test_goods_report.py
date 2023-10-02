@@ -389,7 +389,7 @@ def test_goods_report_line_csv_columns():
     """Test that `GoodsReportLine` returns a csv representation of column
     names."""
     csv_column_names = (
-        "update_type,whats_being_updated,goods_nomenclature_code,"
+        "update_type,whats_being_updated,commodity_code,"
         "suffix,validity_start_date,validity_end_date,comments,"
         "containing_transaction_id,containing_message_id\r\n"
     )

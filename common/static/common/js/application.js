@@ -13,6 +13,7 @@ import initCheckboxes from './checkboxes';
 import initConditionalMeasureConditions from './conditionalMeasureConditions';
 import initFilterDisabledToggleForComCode from './conditionalDisablingFilters'
 import initOpenCloseAccordionSection from './openCloseAccordion';
+import initTapDebounce from './buttonDebounce';
 showHideCheckboxes();
 // Initialise accessible-autocomplete components without a `name` attr in order
 // to avoid the "dummy" autocomplete field being submitted as part of the form
@@ -27,3 +28,4 @@ initConditionalMeasureConditions();
 initAutocompleteProgressiveEnhancement();
 initFilterDisabledToggleForComCode();
 initOpenCloseAccordionSection();
+initTapDebounce();

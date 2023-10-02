@@ -11,10 +11,7 @@
             <a href="{{ url('workbaskets:workbasket-ui-violations') }}" class="govuk-link">View violations ({{request.session.workbasket.error_count}})</a>
         </li>
         <li class="{% if active_link == 'review' %}active{% endif %}">
-            <a href="{{ url('workbaskets:review-workbasket') }}" class="govuk-link">Review measures ({{request.session.workbasket.measure_count}})</a>
-        </li>
-        <li class="{% if active_link == 'review-goods' %}active{% endif %}">
-            <a href="{{ url('workbaskets:workbasket-ui-review-goods') }}" class="govuk-link">Review goods</a>
+            <a href="{{ url('workbaskets:workbasket-ui-review-measures') }}" class="govuk-link">Review ({{request.session.workbasket.measure_count}})</a>
         </li>
         <li class="{% if active_link == 'compare' %}active{% endif %}">
             <a href="{{ url('workbaskets:workbasket-ui-compare') }}" class="govuk-link">Worksheet check</a>

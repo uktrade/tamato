@@ -1,75 +1,41 @@
-{% extends "layouts/layout.jinja" %}
-{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% extends "workbaskets/review.jinja" %}
 {% from "components/button/macro.njk" import govukButton %}
-{% from "components/table/macro.njk" import govukTable %}
-{% from "includes/workbaskets/navigation.jinja" import navigation %}
 
-{% set page_title %} Workbasket {{ request.session.workbasket.id }} - Review goods {% endset %}
+{% block filters %}{% endblock %}
+{% block tab_content %}
+  <div class="govuk-body">
+    {{ report_lines|length if report_lines else 0 }} goods
+    change{{ report_lines|pluralize }} available to review.
 
-{% block breadcrumb %}
-{{ govukBreadcrumbs({
-  "items": [
-    {"text": "Home", "href": url("home")},
-    {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-    {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Review goods" }
-  ]})
-}}
-{% endblock %}
-
-{% block content %}
-  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
-    {{ page_title }}
-  </h1>
-
-  {{ navigation(request, "review-goods") }}
-
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
-
-    <p class="govuk-body" style="display:inline-block">
-      {{ report_lines|length if report_lines else 0 }} goods
-      change{{ report_lines|pluralize }} available to review.
-
-      {% if import_batch_pk %}
-        {{ govukButton({
-          "text": "Download as Excel",
-          "href": url("goods-report-ui-download", kwargs={"pk": import_batch_pk}),
-          "classes": "govuk-button--secondary",
-        }) }}
-      {% endif %}
-
-      {% if unsent_notification %}
-        {{ govukButton({
-          "text": "Notify Channel Islands",
-          "href": url("goods-report-notify", kwargs={"pk": import_batch_pk}),
-          "classes": "govuk-button--primary",
-          "preventDoubleClick": true,
-        }) }}
-      {% endif %}
-    </p>
-
-    {% if report_lines %}
-      {% set headings = [] %}
-      {% for heading in column_headings %}
-        {{ headings.append({"text": heading}) or "" }}
-      {% endfor %}
-
-      {% set rows = [] %}
-      {% for row in report_lines %}
-        {% set cells = [] %}
-        {% for cell in row %}
-          {{ cells.append({"text": cell}) or "" }}
-        {% endfor %}
-        {{ rows.append(cells) or "" }}
-      {% endfor %}
-
-      {{ govukTable({
-        "head": headings,
-        "rows": rows,
-      }) }}
+    {% if import_batch_pk %}
+      <a href="{{ url("goods-report-ui-download", kwargs={"pk": import_batch_pk}) }}" class="govuk-link fake-link align-right govuk-!-margin-left-5">Download as Excel <span class="down-arrow">&#9660;</span></a>
     {% endif %}
-    
-    {% set items_name = "goods changes" %}
+
+    {% if unsent_notification %}
+      <a href="{{ url("goods-report-notify", kwargs={"pk": import_batch_pk}) }}" class="govuk-link fake-link align-right">Notify Channel Islands <span class="right-arrow">&#9654;</span></a>
+    {% endif %}
   </div>
-</div>
+
+  {% if report_lines %}
+    {% set headings = [] %}
+    {% for heading in column_headings %}
+      {{ headings.append({"text": heading}) or "" }}
+    {% endfor %}
+
+    {% set rows = [] %}
+    {% for row in report_lines %}
+      {% set cells = [] %}
+      {% for cell in row %}
+        {{ cells.append({"text": cell}) or "" }}
+      {% endfor %}
+      {{ rows.append(cells) or "" }}
+    {% endfor %}
+
+    {{ govukTable({
+      "head": headings,
+      "rows": rows,
+    }) }}
+  {% endif %}
+
+  {% set items_name = "goods changes" %}
 {% endblock %}
