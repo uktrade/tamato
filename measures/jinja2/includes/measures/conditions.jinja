@@ -15,14 +15,14 @@
 
         {% if condition.reference_price_string -%}
           <span class="condition_reference">
-            (> {{ condition.reference_price_string }})
+            (&gt; {{ condition.reference_price_string }})
           </span>
         {%- endif %}
 
         <span class="condition_action">{{ condition.action.code }}</span>
 
-        {% if condition.condition_string %}
-          - {{ condition.condition_string }}
+        {% if condition.duty_sentence %}
+          - {{ condition.duty_sentence }}
         {% endif %}
       </li>
     {%- endfor %}

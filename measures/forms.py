@@ -240,7 +240,6 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         """
         price = cleaned_data.get("reference_price")
         certificate = cleaned_data.get("required_certificate")
-        applicable_duty = cleaned_data.get("applicable_duty")
         action = cleaned_data.get("action")
 
         # Note this is a quick fix & hard coded for now
@@ -253,21 +252,12 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         if (
             not skip_price_and_reference_check
             and not is_negative_action_code
-            and (not price and not certificate)
-            or (price and certificate)
+            and (price and certificate)
         ):
             self.add_error(
                 None,
                 ValidationError(
                     "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’.",
-                ),
-            )
-
-        if is_negative_action_code and (price or certificate or applicable_duty):
-            self.add_error(
-                None,
-                ValidationError(
-                    "If the action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’.",
                 ),
             )
 
@@ -379,7 +369,6 @@ class MeasureConditionsBaseFormSet(FormSet):
         Validates formset using validate_conditions_formset which will raise a
         ValidationError if the formset contains errors.
         """
-
         # cleaned_data is only set if forms are all valid
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
@@ -391,7 +380,11 @@ class MeasureConditionsBaseFormSet(FormSet):
                 continue
             cleaned_data += [form.cleaned_data]
 
-        validate_conditions_formset(cleaned_data)
+        actions = [form["action"] for form in cleaned_data]
+        negative_actions = models.MeasureActionPair.objects.filter(
+            negative_action__in=actions,
+        ).values_list("negative_action", flat=True)
+        validate_conditions_formset(cleaned_data, negative_actions)
 
         return cleaned_data
 

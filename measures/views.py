@@ -1013,7 +1013,7 @@ class MeasureUpdateBase(
                         value = value.pk
                     initial_dict[field] = value
 
-            initial_dict["applicable_duty"] = condition.condition_string
+            initial_dict["applicable_duty"] = condition.duty_sentence
             initial_dict["reference_price"] = condition.reference_price_string
             initial_dict["condition_sid"] = condition.sid
             conditions_formset.initial.append(initial_dict)
