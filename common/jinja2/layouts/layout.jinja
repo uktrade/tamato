@@ -53,6 +53,11 @@
     {{ breadcrumbs(request, [{"text": page_title}]) }}
   {% endif %}
   {% endblock %}
+
+  {% if env != "production"%}
+    <div class="environment-banner" data-environment="DEVELOPMENT"> 
+    </div>
+  {% endif %}
 {% endblock %}
 
 {% block footer %}

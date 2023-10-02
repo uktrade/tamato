@@ -1,0 +1,40 @@
+.environment-banner {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-left: 100px solid transparent;
+    border-top: 100px solid green;
+    color: white;
+    text-align: right;
+    line-height: 40px;
+    font-size: 14px;
+    z-index: 1000;
+}
+
+
+// .environment-banner:after {
+//     content: attr(data-environment);
+//     position: fixed;
+//     right: 0.5px;
+//     top: 17px;
+//     transform: rotate(45deg); -40%, -200%
+//     font-size: 18px;
+//     background-color: transparent;
+//     color: white;
+//     padding: 2px;
+// }
+
+.environment-banner:after {
+    content: attr(data-environment);
+    position: absolute;
+    right: 50%;
+    top: 50%;
+    transform: translate(20%, -150%) rotate(45deg);
+    font-size: 15px;
+    background-color: transparent;
+    color: white;
+    padding: 4px;
+    white-space: nowrap;
+}
