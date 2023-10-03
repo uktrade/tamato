@@ -134,6 +134,35 @@ class CertificateConfirmCreate(CertificateMixin, TrackedModelDetailView):
 class CertificateDetail(CertificateMixin, TrackedModelDetailView):
     template_name = "certificates/detail.jinja"
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "details"
+        return context
+
+
+class CertificateDetailDescriptions(CertificateDetail):
+    """Displays descriptions for a certificate as a simulated tab on certificate
+    view."""
+
+    template_name = "includes/certificates/tabs/descriptions.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "descriptions"
+        return context
+
+
+class CertificateDetailVersionControl(CertificateDetail):
+    """Displays version history for a certificate as a simulated tab on
+    certificate view."""
+
+    template_name = "includes/certificates/tabs/version_control.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "version-control"
+        return context
+
 
 class CertificateUpdateMixin(
     CertificateMixin,
