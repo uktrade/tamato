@@ -10,8 +10,9 @@ class Command(BaseCommand):
     help = (
         "View and manage the packaging queue. The bare command prints the "
         "state of queued PackageWorkBasket instances, including those in both "
-        "that has state AWAITING_PROCESSING. Instances in state "
-        "CURRENTLY_PROCESSING will be unchanged to avoid surprises for "
+        "that have state AWAITING_PROCESSING. Instances in state "
+        "CURRENTLY_PROCESSING will be unchanged to avoid surprises for queue "
+        "consumers."
     )
 
     def add_arguments(self, parser):
