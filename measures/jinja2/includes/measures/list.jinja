@@ -2,7 +2,9 @@
 {% from 'macros/footnotes_display.jinja' import footnotes_display %}
 {% from "includes/measures/conditions.jinja" import conditions_list %}
 {% from "components/button/macro.njk" import govukButton %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
+
 
 {# Sets out checkbox #}
 {% macro checkbox_item(field) -%}
@@ -25,6 +27,26 @@
 {% set checkbox_check_all -%}
 <div id="check-all-checkbox"></div>
 {%- endset %}
+
+{% set sid %}
+  {{ create_sortable_anchor(request, "sid", "ID", base_url, query_params) }}
+{% endset %}
+
+{% set measure_type %}
+  {{ create_sortable_anchor(request, "measure_type", "Type", base_url, query_params) }}
+{% endset %}
+
+{% set geo_area %}
+  {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url, query_params) }}
+{% endset %}
+
+{% set start_date %}
+  {{ create_sortable_anchor(request, "start_date", "Start date", base_url, query_params) }}
+{% endset %}
+
+{% set end_date %}
+  {{ create_sortable_anchor(request, "end_date", "End date", base_url, query_params) }}
+{% endset %}
 
 {# sets out form #}
 <form method="post">
@@ -67,14 +89,14 @@
         {{ govukTable({
           "head": [
             {"html": checkbox_check_all},
-            {"text": "ID"},
-            {"text": "Type"},
-            {"text": "Commodity code"},
-            {"text": "Start date"},
-            {"text": "End date"},
+            {"text": sid},
+            {"text": measure_type},
+            {"text": "Commodity"},
+            {"text": start_date},
+            {"text": end_date},
             {"text": "Duties"},
             {"text": "Additional code"},
-            {"text": "Geographical area"},
+            {"text": geo_area},
             {"text": "Quota"},
             {"text": "Footnote"},
             {"text": "Conditions"},
