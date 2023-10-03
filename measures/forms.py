@@ -696,13 +696,12 @@ class MeasureForm(
         ]
 
         # Footnote submitted directly via "Save" button
-        if hasattr(self.request, "POST"):
-            form_footnote = self.request.POST.get(
-                f"form-{len(footnote_pks)}-footnote",
-                None,
-            )
-            if form_footnote:
-                footnote_pks.append(form_footnote)
+        form_footnote = self.request.POST.get(
+            f"form-{len(footnote_pks)}-footnote",
+            None,
+        )
+        if form_footnote:
+            footnote_pks.append(form_footnote)
 
         # Footnotes already on measure
         footnote_pks.extend(self.request.session.get(f"instance_footnotes_{sid}", []))
