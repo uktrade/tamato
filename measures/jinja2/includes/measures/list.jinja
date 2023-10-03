@@ -61,7 +61,7 @@
                 {"html": create_link(url("geo_area-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
                 {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
                 {"text": footnotes_display(measure.footnoteassociationmeasure_set.current())},
-                {"text": conditions_list(measure) if measure.conditions.latest_approved() else "-", "classes": "govuk-!-width-one-quarter"},
+                {"text": conditions_list(measure) if measure.conditions.current() else "-", "classes": "govuk-!-width-one-quarter"},
               ]) or "" }} 
           {% endfor %}
         {{ govukTable({

@@ -124,7 +124,7 @@ def validate_duties(duties, measure_start_date):
         raise ValidationError("Enter a valid duty sentence.")
 
 
-def validate_conditions_formset(cleaned_data):
+def validate_conditions_formset(cleaned_data, negative_actions):
     """
     Checks condition formset level errors using set checks:
 
@@ -162,11 +162,7 @@ def validate_conditions_formset(cleaned_data):
         condition_negative_action_bool.append(
             (
                 condition["condition_code"],
-                not (
-                    bool(condition["reference_price"])
-                    | bool(condition["required_certificate"])
-                    | bool(condition["applicable_duty"])
-                ),
+                condition["action"].id in negative_actions,
             ),
         )
         condition_action_tuple.append(

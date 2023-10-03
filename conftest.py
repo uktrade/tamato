@@ -258,6 +258,7 @@ def policy_group(db) -> Group:
         ("common", "change_trackedmodel"),
         ("workbaskets", "add_workbasket"),
         ("workbaskets", "change_workbasket"),
+        ("workbaskets", "view_workbasket"),
         ("publishing", "consume_from_packaging_queue"),
         ("publishing", "manage_packaging_queue"),
         ("publishing", "view_envelope"),
