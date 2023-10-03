@@ -128,6 +128,7 @@ def environment(**kwargs):
             "pluralize": pluralize,
         },
     )
+
     env.globals.update(
         {
             "break_words": break_words,
