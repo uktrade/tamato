@@ -56,7 +56,7 @@
 
   {% if env != "production"%}
     <div class="environment-banner"> 
-      <div class="text-wrapper">{{ env}}</div>
+      <div class="text-wrapper">{{ env|upper}}</div>
     </div>
   {% endif %}
 {% endblock %}
