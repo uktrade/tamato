@@ -1,5 +1,5 @@
 
-{% macro sort_by(request, sort_by, title, base_url, query_params=False, fragment="") %}
+{% macro create_sortable_anchor(request, sort_by, title, base_url, query_params=False, fragment="") %}
 
   {% if query_params %}
     {% set query_string_prefix = "&"%}

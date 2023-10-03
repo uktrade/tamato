@@ -2,7 +2,7 @@
 {% from 'macros/footnotes_display.jinja' import footnotes_display %}
 {% from "includes/measures/conditions.jinja" import conditions_list %}
 {% from "components/button/macro.njk" import govukButton %}
-{% from "components/sort_by.jinja" import sort_by %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 
 
@@ -29,23 +29,23 @@
 {%- endset %}
 
 {% set sid %}
-  {{ sort_by(request, "sid", "ID", base_url, query_params) }}
+  {{ create_sortable_anchor(request, "sid", "ID", base_url, query_params) }}
 {% endset %}
 
 {% set measure_type %}
-  {{ sort_by(request, "measure_type", "Type", base_url, query_params) }}
+  {{ create_sortable_anchor(request, "measure_type", "Type", base_url, query_params) }}
 {% endset %}
 
 {% set geo_area %}
-  {{ sort_by(request, "geo_area", "Geographical area", base_url, query_params) }}
+  {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url, query_params) }}
 {% endset %}
 
 {% set start_date %}
-  {{ sort_by(request, "start_date", "Start date", base_url, query_params) }}
+  {{ create_sortable_anchor(request, "start_date", "Start date", base_url, query_params) }}
 {% endset %}
 
 {% set end_date %}
-  {{ sort_by(request, "end_date", "End date", base_url, query_params) }}
+  {{ create_sortable_anchor(request, "end_date", "End date", base_url, query_params) }}
 {% endset %}
 
 {# sets out form #}

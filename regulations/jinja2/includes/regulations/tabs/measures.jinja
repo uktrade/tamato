@@ -1,6 +1,6 @@
 {% extends "regulations/detail.jinja" %}
 
-{% from "components/sort_by.jinja" import sort_by %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "components/table/macro.njk" import govukTable %}
 
 {% set actions_menu %}
@@ -48,15 +48,15 @@
   {% set base_url = url('regulation-ui-detail-measures', kwargs={"role_type": object.role_type, "regulation_id": object.regulation_id}) %}
 
   {% set commodity_code %}
-    {{ sort_by(request, "goods_nomenclature", "Commodity code", base_url) }}
+    {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
   {% endset %}
 
   {% set geo_area %}
-    {{ sort_by(request, "geo_area", "Geographical area", base_url) }}
+    {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url) }}
   {% endset %}
 
   {% set start_date %}
-    {{ sort_by(request, "start_date", "Start date", base_url) }}
+    {{ create_sortable_anchor(request, "start_date", "Start date", base_url) }}
   {% endset %}
 
   {% if paginator.count > 0 %}

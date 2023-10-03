@@ -1,5 +1,5 @@
 {% extends "commodities/detail.jinja" %}
-{% from "components/sort_by.jinja" import sort_by %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 
 {% set extra_tabs_links = [
     {
@@ -65,19 +65,19 @@
 {% set base_url = url('commodity-ui-detail-measures-declarable', args=[commodity.sid]) %}
 
 {% set comm_code %}
-  {{ sort_by(request, "commodity", "Commodity code", base_url) }}
+  {{ create_sortable_anchor(request, "commodity", "Commodity code", base_url) }}
 {% endset %}
 
 {% set measure_type %}
-  {{ sort_by(request, "measure_type", "Measure type", base_url) }}
+  {{ create_sortable_anchor(request, "measure_type", "Measure type", base_url) }}
 {% endset %}
 
 {% set geo_area %}
-  {{ sort_by(request, "geo_area", "Geographical area", base_url) }}
+  {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url) }}
 {% endset %}
 
 {% set start_date %}
-  {{ sort_by(request, "start_date", "Start date", base_url) }}
+  {{ create_sortable_anchor(request, "start_date", "Start date", base_url) }}
 {% endset %}
 
 {% if paginator.count > 0 %}
