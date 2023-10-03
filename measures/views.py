@@ -547,7 +547,7 @@ class MeasureEditWizard(
             )
         self.session_store.clear()
 
-        return redirect(reverse("workbaskets:review-workbasket"))
+        return redirect(reverse("workbaskets:workbasket-ui-review-measures"))
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
@@ -1239,7 +1239,7 @@ class MeasureMultipleDelete(MeasureSelectionQuerysetMixin, TemplateView, ListVie
             )
         self.session_store.clear()
 
-        return redirect(reverse("workbaskets:review-workbasket"))
+        return redirect(reverse("workbaskets:workbasket-ui-review-measures"))
 
 
 class MeasureSelectionUpdate(MeasureSessionStoreMixin, View):
