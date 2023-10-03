@@ -101,7 +101,7 @@ class GoodsReportLine:
     COLUMNS = {
         "update_type": "Update type",
         "whats_being_updated": "What's being updated",
-        "goods_nomenclature_code": "Goods nomenclature code",
+        "commodity_code": "Commodity code",
         "suffix": "Suffix",
         "validity_start_date": "Validity start date",
         "validity_end_date": "Validity end date",
