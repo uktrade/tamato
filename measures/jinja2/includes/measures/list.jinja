@@ -26,6 +26,26 @@
 <div id="check-all-checkbox"></div>
 {%- endset %}
 
+{% set sid %}
+  {{ sort_by(request, "sid", "ID", base_url, query_params) }}
+{% endset %}
+
+{% set measure_type %}
+  {{ sort_by(request, "measure_type", "Type", base_url, query_params) }}
+{% endset %}
+
+{% set geo_area %}
+  {{ sort_by(request, "geo_area", "Geographical area", base_url, query_params) }}
+{% endset %}
+
+{% set start_date %}
+  {{ sort_by(request, "start_date", "Start date", base_url, query_params) }}
+{% endset %}
+
+{% set end_date %}
+  {{ sort_by(request, "end_date", "End date", base_url, query_params) }}
+{% endset %}
+
 {# sets out form #}
 <form method="post">
   <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -68,11 +88,11 @@
         {{ govukTable({
           "head": [
             {"html": checkbox_check_all},
-            {"text": "ID"},
-            {"text": "Type"},
-            {"text": "Commodity code"},
-            {"text": "Start date"},
-            {"text": "End date"},
+            {"text": sid},
+            {"text": measure_type},
+            {"text": "Commodity"},
+            {"text": start_date},
+            {"text": end_date},
             {"text": "Duties"},
             {"text": "Additional code"},
             {"text": "Geographical area"},

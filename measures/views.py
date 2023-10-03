@@ -30,6 +30,7 @@ from common.forms import unprefix_formset_data
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
 from common.serializers import AutoCompleteSerializer
+from common.util import EndDate
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import TamatoListView
@@ -139,11 +140,33 @@ class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView)
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
     form_class = SelectableObjectsForm
+    sort_by_fields = ["sid", "measure_type", "geo_area", "start_date", "end_date"]
+    custom_sorting = {
+        "measure_type": "measure_type__sid",
+        "geo_area": "geographical_area__area_id",
+        "start_date": "valid_between",
+        "end_date": "effective_valid_between.upper",
+    }
 
     def dispatch(self, *args, **kwargs):
         if not self.request.GET:
             return HttpResponseRedirect(reverse("measure-ui-search"))
         return super().dispatch(*args, **kwargs)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        queryset = queryset.with_effective_valid_between().annotate(
+            end_date=EndDate("db_effective_valid_between"),
+        )
+
+        ordering = self.get_ordering()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+
+        return queryset
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
