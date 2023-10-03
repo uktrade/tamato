@@ -9,14 +9,15 @@
     color: white;
     text-align: center;
     font-size: 18px;
+    
+    .text-wrapper {
+        position: absolute;
+        font-weight: 900;
+        transform: translate(-90%, -325%) rotate(45deg);
+        color: white;
+        background-color: transparent;
+        padding: 4px;
+        white-space: nowrap;
+    }
 }
 
-.text-wrapper {
-    position: absolute;
-    font-weight: 900;
-    transform: translate(-90%, -325%) rotate(45deg);
-    color: white;
-    background-color: transparent;
-    padding: 4px;
-    white-space: nowrap;
-}
