@@ -267,14 +267,12 @@ class MeasureFilter(TamatoFilter):
         """
         if value:
             measure_ids = set()
-            certificates = Certificate.objects.filter(sid=value.sid)
-            for certificate in certificates:
-                measure_conditions = MeasureCondition.objects.filter(
-                    required_certificate=certificate,
-                )
+            measure_conditions = MeasureCondition.objects.filter(
+                required_certificate=value.trackedmodel_ptr_id,
+            )
 
-                for condition in measure_conditions:
-                    measure_ids.add(condition.dependent_measure_id)
+            for condition in measure_conditions:
+                measure_ids.add(condition.dependent_measure_id)
 
             queryset = queryset.filter(id__in=measure_ids)
 
