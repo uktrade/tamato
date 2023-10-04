@@ -33,6 +33,11 @@ ui_patterns += [
         name="certificate-ui-detail-descriptions",
     ),
     path(
+        f"{detail}/measures/",
+        views.CertificateDetailMeasures.as_view(),
+        name="certificate-ui-detail-measures",
+    ),
+    path(
         f"{detail}/version-control/",
         views.CertificateDetailVersionControl.as_view(),
         name="certificate-ui-detail-version-control",
