@@ -483,6 +483,135 @@ class WorkBasketDetailView(PermissionRequiredMixin, DetailView):
     permission_required = "workbaskets.view_workbasket"
 
 
+class WorkBasketChangesView(PermissionRequiredMixin, SortingMixin, FormView):
+    """UI endpoint for viewing changes in a workbasket."""
+
+    template_name = "workbaskets/changes.jinja"
+    permission_required = "workbaskets.view_workbasket"
+    form_class = forms.SelectableObjectsForm
+    paginate_by = 50
+    sort_by_fields = ["component", "action", "activity_date"]
+    custom_sorting = {
+        "component": "polymorphic_ctype",
+        "action": "update_type",
+        "activity_date": "transaction__updated_at",
+    }
+    form_action_redirect_map = {
+        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
+        "remove-all": "workbaskets:workbasket-ui-changes-delete",
+        "page-prev": "workbaskets:workbasket-ui-changes",
+        "page-next": "workbaskets:workbasket-ui-changes",
+    }
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    @property
+    def paginator(self):
+        return Paginator(
+            self.workbasket.tracked_models.select_related(
+                "polymorphic_ctype",
+                "transaction",
+            ),
+            per_page=self.paginate_by,
+        )
+
+    def get_queryset(self):
+        queryset = self.paginator.object_list
+        page_number = int(self.request.GET.get("page", 1))
+        items_per_page = page_number * self.paginate_by
+
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering,)
+            return queryset.order_by(*ordering)[:items_per_page]
+        else:
+            return queryset[:items_per_page]
+
+    def _append_url_params(self, url, form_action):
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_number = 1
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+
+        sort_by = self.request.GET.get("sort_by", None)
+        ordered = self.request.GET.get("ordered", None)
+        if sort_by and ordered:
+            return f"{url}?page={page_number}&sort_by={sort_by}&ordered={ordered}"
+        else:
+            return f"{url}?page={page_number}"
+
+    def get_initial(self):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        return store.data.copy()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["objects"] = self.get_queryset()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        user_can_delete_items = (
+            self.request.user.is_superuser
+            or self.request.user.has_perm("workbaskets.change_workbasket")
+        )
+        user_can_delete_workbasket = (
+            self.request.user.is_superuser
+            or self.request.user.has_perm("workbaskets.delete_workbasket")
+        )
+        context.update(
+            {
+                "workbasket": self.workbasket,
+                "page_obj": page,
+                "user_can_delete_items": user_can_delete_items,
+                "user_can_delete_workbasket": user_can_delete_workbasket,
+            },
+        )
+        return context
+
+    def form_valid(self, form):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        form_action = self.request.POST.get("form-action")
+        store.remove_items(form.cleaned_data)
+        if form_action == "remove-all":
+            object_list = {
+                self.form_class.field_name_for_object(obj): True
+                for obj in self.workbasket.tracked_models
+            }
+            store.add_items(object_list)
+        else:
+            to_add = {key: value for key, value in form.cleaned_data.items() if value}
+            store.add_items(to_add)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        try:
+            return self._append_url_params(
+                reverse(
+                    self.form_action_redirect_map[form_action],
+                    kwargs={"pk": self.workbasket.pk},
+                ),
+                form_action,
+            )
+        except KeyError:
+            return reverse(
+                "workbaskets:workbasket-ui-detail",
+                kwargs={"pk": self.workbasket.pk},
+            )
+
+
 class WorkBasketViolations(SortingMixin, WithPaginationListView):
     """UI endpoint for viewing a specified workbasket's business rule
     violations."""
