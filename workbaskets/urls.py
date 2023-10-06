@@ -127,6 +127,16 @@ ui_patterns = [
         name="workbasket-ui-changes",
     ),
     path(
+        f"<pk>/changes/delete/",
+        ui_views.WorkBasketDeleteChanges.as_view(),
+        name="workbasket-ui-changes-delete",
+    ),
+    path(
+        f"<pk>/changes/confirm-delete/",
+        ui_views.WorkBasketDeleteChangesDone.as_view(),
+        name="workbasket-ui-changes-confirm-delete",
+    ),
+    path(
         f"<wb_pk>/violations/<pk>/",
         ui_views.WorkBasketViolationDetail.as_view(),
         name="workbasket-ui-violation-detail",

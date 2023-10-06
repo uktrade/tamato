@@ -188,7 +188,11 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
 
     @property
     def workbasket(self) -> WorkBasket:
-        return WorkBasket.current(self.request)
+        workbasket_pk = self.kwargs.get("pk", None)
+        if workbasket_pk:
+            return WorkBasket.objects.get(pk=workbasket_pk)
+        else:
+            return WorkBasket.current(self.request)
 
     def _session_store(self, workbasket):
         """Get the current user's SessionStore for the WorkBasket that they're
@@ -212,9 +216,14 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
         return self.workbasket.tracked_models.filter(pk__in=pks)
 
     def post(self, request, *args, **kwargs):
+        workbasket_pk = self.kwargs.get("pk", None)
+
         if request.POST.get("action", None) != "delete":
             # The user has cancelled out of the deletion process.
-            return redirect("workbaskets:current-workbasket")
+            if workbasket_pk:
+                return redirect("workbaskets:workbasket-ui-changes", pk=workbasket_pk)
+            else:
+                return redirect("workbaskets:current-workbasket")
 
         # By reverse ordering on record_code + subrecord_code we're able to
         # delete child entities first, avoiding protected foreign key
@@ -239,14 +248,29 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
         session_store = self._session_store(self.workbasket)
         session_store.clear()
 
-        redirect_url = reverse(
-            "workbaskets:workbasket-ui-delete-changes-done",
-        )
+        if workbasket_pk:
+            redirect_url = reverse(
+                "workbaskets:workbasket-ui-changes-confirm-delete",
+                kwargs={"pk": workbasket_pk},
+            )
+        else:
+            redirect_url = reverse(
+                "workbaskets:workbasket-ui-delete-changes-done",
+            )
         return redirect(redirect_url)
 
 
 class WorkBasketDeleteChangesDone(TemplateView):
     template_name = "workbaskets/delete_changes_confirm.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        workbasket_pk = self.kwargs.get("pk", None)
+        if workbasket_pk:
+            context["workbasket"] = WorkBasket.objects.get(pk=workbasket_pk)
+        else:
+            context["workbasket"] = None
+        return context
 
 
 def download_envelope(request):
@@ -530,6 +554,9 @@ class WorkBasketChangesView(PermissionRequiredMixin, SortingMixin, FormView):
             return queryset[:items_per_page]
 
     def _append_url_params(self, url, form_action):
+        if form_action in ["remove-selected", "remove-all"]:
+            return url
+
         page = self.paginator.get_page(self.request.GET.get("page", 1))
         page_number = 1
         if form_action == "page-prev":
