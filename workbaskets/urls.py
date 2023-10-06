@@ -117,9 +117,9 @@ ui_patterns = [
         name="workbasket-ui-compare",
     ),
     path(
-        f"<pk>/changes/",
-        ui_views.WorkBasketChanges.as_view(),
-        name="workbasket-ui-changes",
+        f"<pk>/",
+        ui_views.WorkBasketDetailView.as_view(),
+        name="workbasket-ui-detail",
     ),
     path(
         f"<wb_pk>/violations/<pk>/",
