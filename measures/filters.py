@@ -257,22 +257,12 @@ class MeasureFilter(TamatoFilter):
         return queryset
 
     def certificates_filter(self, queryset, name, value):
-        """
-        Returns a MeasuresQuerySet for Measures associated with a specific
-        Certificate via MeasureCondition.
-
-        1. check for Ceritificates with a matching SID
-        2. match associated MeasureConditions
-        3. filter by dependent_measure_ids
-        """
+        """Returns a MeasuresQuerySet for Measures associated with a specific
+        Certificate via MeasureCondition."""
         if value:
-            measure_ids = set()
-            measure_conditions = MeasureCondition.objects.filter(
+            measure_ids = MeasureCondition.objects.filter(
                 required_certificate=value.trackedmodel_ptr_id,
-            )
-
-            for condition in measure_conditions:
-                measure_ids.add(condition.dependent_measure_id)
+            ).values_list("dependent_measure_id", flat=True)
 
             queryset = queryset.filter(id__in=measure_ids)
 
