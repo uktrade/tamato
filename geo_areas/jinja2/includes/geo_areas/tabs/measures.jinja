@@ -1,6 +1,6 @@
 {% extends "geo_areas/detail.jinja" %}
 
-{% from "components/sort_by.jinja" import sort_by %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "components/table/macro.njk" import govukTable %}
 
 {% set actions_menu %}
@@ -43,11 +43,11 @@
   {% set base_url = url('geo_area-ui-detail-measures', kwargs={"sid": object.sid}) %}
 
   {% set commodity_code %}
-    {{ sort_by(request, "goods_nomenclature", "Commodity code", base_url) }}
+    {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
   {% endset %}
 
   {% set start_date %}
-    {{ sort_by(request, "start_date", "Start date", base_url) }}
+    {{ create_sortable_anchor(request, "start_date", "Start date", base_url) }}
   {% endset %}
 
   {% if paginator.count > 0 %}

@@ -1,0 +1,21 @@
+
+{% macro create_sortable_anchor(request, sort_by, title, base_url, query_params=False, fragment="") %}
+
+  {% if query_params %}
+    {% set query_string_prefix = "&"%}
+  {% else %}
+    {% set query_string_prefix = "?"%}
+  {% endif %}
+
+  {% if request.GET.sort_by == sort_by and request.GET.ordered == "desc" %}
+
+      <a class="govuk-link govuk-link--no-visited-state sort-icon--down" href="{{ base_url }}{{query_string_prefix}}sort_by={{ sort_by }}&ordered=asc{{ fragment }}">
+        {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
+      </a>
+  {% else %}
+      <a class="govuk-link govuk-link--no-visited-state sort-icon--up" href="{{ base_url }}{{query_string_prefix}}sort_by={{ sort_by }}&ordered=desc{{ fragment }}">
+      {{ title }} <img src="{{ static('common/images/sort_icon.svg') }}" alt="">
+    </a>
+  {% endif %}
+
+{% endmacro %}

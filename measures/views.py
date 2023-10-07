@@ -32,17 +32,18 @@ from common.pagination import build_pagination_list
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
-from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureActionPair
@@ -133,23 +134,60 @@ class MeasureSearch(FilterView):
         return HttpResponseRedirect(reverse("measure-ui-list"))
 
 
-class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView):
+class MeasureList(
+    MeasureSelectionMixin,
+    MeasureMixin,
+    SortingMixin,
+    FormView,
+    TamatoListView,
+):
     """UI endpoint for viewing and filtering Measures."""
 
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
     form_class = SelectableObjectsForm
+    sort_by_fields = ["sid", "measure_type", "geo_area", "start_date", "end_date"]
+    custom_sorting = {
+        "measure_type": "measure_type__sid",
+        "geo_area": "geographical_area__area_id",
+        "start_date": "valid_between",
+        "end_date": "db_effective_end_date",
+    }
 
     def dispatch(self, *args, **kwargs):
         if not self.request.GET:
             return HttpResponseRedirect(reverse("measure-ui-search"))
         return super().dispatch(*args, **kwargs)
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        ordering = self.get_ordering()
+
+        if ordering:
+            if ordering in "-db_effective_end_date":
+                queryset = queryset.with_effective_valid_between()
+
+            ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+
+        return queryset
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         page = self.paginator.get_page(self.request.GET.get("page", 1))
         kwargs["objects"] = page.object_list
         return kwargs
+
+    def cleaned_query_params(self):
+        # Remove the sort_by and ordered params in order to stop them being duplicated in the base url
+        if "sort_by" and "ordered" in self.filterset.data:
+            cleaned_filterset = self.filterset.data.copy()
+            cleaned_filterset.pop("sort_by")
+            cleaned_filterset.pop("ordered")
+            return cleaned_filterset
+        else:
+            return self.filterset.data
 
     @property
     def paginator(self):
@@ -195,6 +233,10 @@ class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView)
         context["measure_selections"] = Measure.objects.filter(
             pk__in=measure_selections,
         )
+        context["query_params"] = True
+        context[
+            "base_url"
+        ] = f'{reverse("measure-ui-list")}?{urlencode(self.cleaned_query_params())}'
         return context
 
     def get_initial(self):
@@ -972,20 +1014,20 @@ class MeasureUpdateBase(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        initial = self.request.session.get(
+        context["no_form_tags"] = FormHelper()
+        context["no_form_tags"].form_tag = False
+
+        formset_footnotes = self.request.session.get(
             f"formset_initial_{self.kwargs.get('sid')}",
             [],
         )
         footnotes_formset = forms.MeasureUpdateFootnotesFormSet()
-        footnotes_formset.initial = initial
+        footnotes_formset.initial = formset_footnotes
         footnotes_formset.form_kwargs = {"path": self.request.path}
         context["footnotes_formset"] = footnotes_formset
-        context["no_form_tags"] = FormHelper()
-        context["no_form_tags"].form_tag = False
         context["footnotes"] = self.get_footnotes(context["measure"])
 
         conditions_initial = []
-
         if self.request.POST:
             conditions_initial = unprefix_formset_data(
                 MEASURE_CONDITIONS_FORMSET_PREFIX,
@@ -994,12 +1036,12 @@ class MeasureUpdateBase(
             conditions_formset = forms.MeasureConditionsFormSet(
                 self.request.POST,
                 initial=conditions_initial,
-                prefix="measure-conditions-formset",
+                prefix=MEASURE_CONDITIONS_FORMSET_PREFIX,
             )
         else:
             conditions_formset = forms.MeasureConditionsFormSet(
                 initial=conditions_initial,
-                prefix="measure-conditions-formset",
+                prefix=MEASURE_CONDITIONS_FORMSET_PREFIX,
             )
         conditions = self.get_conditions(context["measure"])
         form_fields = conditions_formset.form.Meta.fields

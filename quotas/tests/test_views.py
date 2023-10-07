@@ -565,7 +565,7 @@ def test_quota_definitions_list_sort_by_start_date(
     )
     url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(f"{url}?sort_by=valid_between&order=asc")
+    response = valid_user_client.get(f"{url}?sort_by=valid_between&ordered=asc")
     assert response.status_code == 200
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     definition_sids = [
@@ -574,7 +574,7 @@ def test_quota_definitions_list_sort_by_start_date(
     ]
     assert definition_sids == [definition1.sid, definition2.sid]
 
-    response = valid_user_client.get(f"{url}?sort_by=valid_between&order=desc")
+    response = valid_user_client.get(f"{url}?sort_by=valid_between&ordered=desc")
     assert response.status_code == 200
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     definition_sids = [
