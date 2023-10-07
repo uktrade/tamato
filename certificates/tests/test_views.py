@@ -1,11 +1,13 @@
 import datetime
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from certificates import models
 from certificates.views import CertificateDescriptionCreate
+from certificates.views import CertificateDetailMeasures
 from certificates.views import CertificateList
 from common.models.utils import override_current_transaction
 from common.tests import factories
@@ -227,3 +229,226 @@ def test_certificate_type_api_list_view(valid_user_client):
         expected_results,
         valid_user_client,
     )
+
+
+def test_certificate_detail_measures_view(valid_user_client):
+    """Test that `CertificateDetailMeasures` view returns 200 and renders
+    actions link and other tabs."""
+    certificate = factories.CertificateFactory.create()
+
+    url_kwargs = {
+        "sid": certificate.sid,
+        "certificate_type__sid": certificate.certificate_type.sid,
+    }
+    details_tab_url = reverse("certificate-ui-detail", kwargs=url_kwargs)
+    version_control_tab_url = reverse(
+        "certificate-ui-detail-version-control",
+        kwargs=url_kwargs,
+    )
+    measures_tab_url = reverse("certificate-ui-detail-measures", kwargs=url_kwargs)
+    descriptions_tab_url = reverse(
+        "certificate-ui-detail-descriptions",
+        kwargs=url_kwargs,
+    )
+    expected_tabs = {
+        "Details": details_tab_url,
+        "Descriptions": descriptions_tab_url,
+        "Measures": measures_tab_url,
+        "Version control": version_control_tab_url,
+    }
+
+    response = valid_user_client.get(measures_tab_url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    tabs = {tab.text: tab.attrs["href"] for tab in page.select(".govuk-tabs__tab")}
+    assert tabs == expected_tabs
+
+    actions = page.find("h2", text="Actions").find_next("a")
+    assert actions.text == "View in find and edit measures"
+    assert (
+        actions.attrs["href"]
+        == f"{reverse('measure-ui-list')}?certificates={certificate.pk}"
+    )
+
+
+def test_certificate_detail_measures_view_lists_measures(valid_user_client):
+    """Test that `CertificateDetailMeasures` view displays a paginated list of
+    measures for a certificate."""
+    certificate = factories.CertificateFactory.create()
+    measures = []
+    for measure_with_condition in range(21):
+        measure = factories.MeasureFactory.create()
+        factories.MeasureConditionFactory.create(
+            dependent_measure=measure,
+            required_certificate=certificate,
+        )
+        measures.append(measure)
+    url = reverse(
+        "certificate-ui-detail-measures",
+        kwargs={
+            "sid": certificate.sid,
+            "certificate_type__sid": certificate.certificate_type.sid,
+        },
+    )
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    table_rows = page.select(".govuk-table tbody tr")
+    assert len(table_rows) == CertificateDetailMeasures.paginate_by
+
+    table_measure_sids = {
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    }
+    assert table_measure_sids.issubset({m.sid for m in measures})
+
+    assert page.find("nav", class_="pagination").find_next("a", href="?page=2")
+
+
+def test_certificate_detail_measures_view_sorting_commodity(valid_user_client):
+    """Test that measures listed on `CertificateDetailMeasures` view can be
+    sorted by commodity code in ascending or descending order."""
+    certificate = factories.CertificateFactory.create()
+    measures = []
+    for measure_with_condition in range(3):
+        measure = factories.MeasureFactory.create()
+        factories.MeasureConditionFactory.create(
+            dependent_measure=measure,
+            required_certificate=certificate,
+        )
+        measures.append(measure)
+    commodity_codes = [measure.goods_nomenclature.item_id for measure in measures]
+
+    url = reverse(
+        "certificate-ui-detail-measures",
+        kwargs={
+            "sid": certificate.sid,
+            "certificate_type__sid": certificate.certificate_type.sid,
+        },
+    )
+    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&order=asc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_commodity_codes = [
+        commodity.text
+        for commodity in page.select(".govuk-table tbody tr td:nth-child(2) a")
+    ]
+    assert table_commodity_codes == commodity_codes
+
+    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&order=desc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_commodity_codes = [
+        commodity.text
+        for commodity in page.select(".govuk-table tbody tr td:nth-child(2) a")
+    ]
+    commodity_codes.reverse()
+    assert table_commodity_codes == commodity_codes
+
+
+def test_certificate_detail_measures_view_sorting_start_date(
+    date_ranges,
+    valid_user_client,
+):
+    """Test that measures listed on `CertificateDetailMeasures` view can be
+    sorted by start date in ascending or descending order."""
+    certificate = factories.CertificateFactory.create()
+    measures = [
+        factories.MeasureFactory.create(
+            valid_between=date_ranges.earlier,
+        ),
+        factories.MeasureFactory.create(
+            valid_between=date_ranges.normal,
+        ),
+        factories.MeasureFactory.create(
+            valid_between=date_ranges.later,
+        ),
+    ]
+    for measure in measures:
+        factories.MeasureConditionFactory.create(
+            dependent_measure=measure,
+            required_certificate=certificate,
+        )
+    url = reverse(
+        "certificate-ui-detail-measures",
+        kwargs={
+            "sid": certificate.sid,
+            "certificate_type__sid": certificate.certificate_type.sid,
+        },
+    )
+    response = valid_user_client.get(f"{url}?sort_by=start_date&order=asc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_measure_sids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert table_measure_sids == [measures[0].sid, measures[1].sid, measures[2].sid]
+
+    response = valid_user_client.get(f"{url}?sort_by=start_date&order=desc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_measure_sids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert table_measure_sids == [measures[2].sid, measures[1].sid, measures[0].sid]
+
+
+def test_certificate_detail_version_control_view(valid_user_client):
+    """Test that `CertificateDetailVersionControl` view returns 200 and renders
+    table content and other tabs."""
+    certificate = factories.CertificateFactory.create()
+    certificate.new_version(certificate.transaction.workbasket)
+
+    url_kwargs = {
+        "sid": certificate.sid,
+        "certificate_type__sid": certificate.certificate_type.sid,
+    }
+
+    details_tab_url = reverse("certificate-ui-detail", kwargs=url_kwargs)
+    version_control_tab_url = reverse(
+        "certificate-ui-detail-version-control",
+        kwargs=url_kwargs,
+    )
+    measures_tab_url = reverse("certificate-ui-detail-measures", kwargs=url_kwargs)
+    descriptions_tab_url = reverse(
+        "certificate-ui-detail-descriptions",
+        kwargs=url_kwargs,
+    )
+    expected_tabs = {
+        "Details": details_tab_url,
+        "Descriptions": descriptions_tab_url,
+        "Measures": measures_tab_url,
+        "Version control": version_control_tab_url,
+    }
+
+    response = valid_user_client.get(version_control_tab_url)
+    assert response.status_code == 200
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    tabs = {tab.text: tab.attrs["href"] for tab in page.select(".govuk-tabs__tab")}
+    assert tabs == expected_tabs
+
+    table_rows = page.select("table > tbody > tr")
+    assert len(table_rows) == 2
+
+    update_types = {
+        update.text for update in page.select("table > tbody > tr > td:first-child")
+    }
+    assert update_types == {"Create", "Update"}

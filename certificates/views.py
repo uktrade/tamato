@@ -192,13 +192,10 @@ class CertificateDetailMeasures(SortingMixin, WithPaginationListMixin, ListView)
         )
 
     def get_queryset(self):
-        measure_conditions = MeasureCondition.objects.filter(
+        measure_ids = MeasureCondition.objects.filter(
             required_certificate=self.certificate.trackedmodel_ptr_id,
-        )
-        measure_ids = set()
-        for condition in measure_conditions:
-            measure_ids.add(condition.dependent_measure_id)
-        queryset = Measure.objects.all().filter(trackedmodel_ptr_id__in=measure_ids)
+        ).values_list("dependent_measure_id", flat=True)
+        queryset = Measure.objects.all().current().filter(id__in=measure_ids)
         ordering = self.get_ordering()
         if ordering:
             if isinstance(ordering, str):
