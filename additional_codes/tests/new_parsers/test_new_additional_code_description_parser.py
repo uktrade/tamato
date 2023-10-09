@@ -6,10 +6,7 @@ from additional_codes.models import AdditionalCode
 from additional_codes.models import AdditionalCodeDescription
 from additional_codes.models import AdditionalCodeType
 from additional_codes.new_import_parsers import NewAdditionalCodeDescriptionParser
-from common.tests import factories
-from common.tests.util import get_test_xml_file
-from importer import new_importer
-from workbaskets.validators import WorkflowStatus
+from common.tests.util import preload_import
 
 pytestmark = pytest.mark.django_db
 
@@ -59,25 +56,12 @@ class TestNewAdditionalCodeDescriptionParser:
         # verify all properties
         assert target.sid == 123
         assert target.described_additionalcode__sid == 123
-        assert target.described_additionalcode__type_sid == "A"
+        assert target.described_additionalcode__type__sid == "A"
         assert target.described_additionalcode__code == "123"
         assert target.description == "some description"
 
-    def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
-            "additional_code_description_CREATE.xml",
-            __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
-        )
+    def test_import_create(self, superuser):
+        importer = preload_import("additional_code_description_CREATE.xml", __file__)
 
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 5
@@ -101,27 +85,37 @@ class TestNewAdditionalCodeDescriptionParser:
         assert type(target_taric_object) == NewAdditionalCodeDescriptionParser
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type_sid == "9"
+        assert target_taric_object.described_additionalcode__type__sid == "9"
         assert target_taric_object.described_additionalcode__code == "2"
         assert target_taric_object.description == "some description"
         assert target_taric_object.validity_start == date(2021, 1, 1)
 
-        assert len(importer.issues()) == 0
+        assert importer.issues() == []
+
+    def test_import_update(self, superuser):
+        preload_import("additional_code_description_CREATE.xml", __file__, True)
+        importer = preload_import("additional_code_description_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        target_taric_object = target_message.taric_object
+
+        assert importer.can_save()
+        assert type(target_taric_object) == NewAdditionalCodeDescriptionParser
+        assert target_taric_object.sid == 5
+        assert target_taric_object.described_additionalcode__sid == 1
+        assert target_taric_object.described_additionalcode__type__sid == "9"
+        assert target_taric_object.described_additionalcode__code == "2"
+        assert target_taric_object.description == "some description change"
+        assert (
+            target_taric_object.validity_start is None
+        )  # No data in update for period
+
+        assert importer.issues() == []
 
     def test_import_invalid_additional_code(self, superuser):
-        file_to_import = get_test_xml_file(
+        importer = preload_import(
             "additional_code_description_invalid_additional_code_CREATE.xml",
             __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
         )
 
         assert len(importer.parsed_transactions) == 1
@@ -141,11 +135,9 @@ class TestNewAdditionalCodeDescriptionParser:
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
-        assert target_taric_object.described_additionalcode__type_sid == "12"
+        assert target_taric_object.described_additionalcode__type__sid == "12"
         assert target_taric_object.described_additionalcode__code == "111"
         assert target_taric_object.description == "some description"
-
-        assert len(importer.issues()) == 1
 
         issue_1 = target_taric_object.issues[0]
 

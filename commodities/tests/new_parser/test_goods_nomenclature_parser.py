@@ -5,10 +5,7 @@ import pytest
 # note : need to import these objects to make them available to the parser
 from commodities.models import GoodsNomenclature
 from commodities.new_import_parsers import NewGoodsNomenclatureParser
-from common.tests import factories
-from common.tests.util import get_test_xml_file
-from importer import new_importer
-from workbaskets.validators import WorkflowStatus
+from common.tests.util import preload_import
 
 pytestmark = pytest.mark.django_db
 
@@ -65,17 +62,7 @@ class TestNewGoodsNomenclatureParser:
         assert target.statistical == 0
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file("goods_nomenclature_CREATE.xml", __file__)
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
-        )
+        importer = preload_import("goods_nomenclature_CREATE.xml", __file__)
 
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 1
@@ -99,20 +86,7 @@ class TestNewGoodsNomenclatureParser:
         assert len(importer.issues()) == 0
 
     def test_import_then_delete(self, superuser):
-        file_to_import = get_test_xml_file(
-            "goods_nomenclature_CREATE_then_DELETE.xml",
-            __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
-        )
+        importer = preload_import("goods_nomenclature_CREATE_then_DELETE.xml", __file__)
 
         assert len(importer.parsed_transactions) == 2
 
@@ -134,3 +108,27 @@ class TestNewGoodsNomenclatureParser:
         assert GoodsNomenclature.objects.latest_approved().count() == 0
 
         assert len(importer.issues()) == 0
+
+    def test_import_then_update(self, superuser):
+        preload_import("goods_nomenclature_CREATE.xml", __file__, True)
+        importer = preload_import("goods_nomenclature_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        target_taric_object = target_message.taric_object
+
+        assert target_taric_object.sid == 1
+        assert target_taric_object.item_id == "0100000000"
+        assert target_taric_object.suffix == 10
+        assert target_taric_object.valid_between_lower == date(2021, 1, 2)
+        assert target_taric_object.valid_between_upper is None
+        assert target_taric_object.statistical == 0
+
+        assert GoodsNomenclature.objects.all().count() == 2
+        assert GoodsNomenclature.objects.latest_approved().count() == 1
+
+        assert len(importer.issues()) == 0
+
+        latest_gn = GoodsNomenclature.objects.all().order_by("pk").last()
+
+        assert latest_gn.valid_between.lower == date(2021, 1, 2)

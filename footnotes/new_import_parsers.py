@@ -28,6 +28,7 @@ class NewFootnoteTypeParser(NewWritable, NewElementParser):
         "footnote_type_id",
     ]
 
+    allow_update_without_children = True
     footnote_type_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -128,6 +129,8 @@ class NewFootnoteDescriptionParser(NewWritable, NewElementParser):
         "described_footnote__footnote_type__footnote_type_id",
         "described_footnote__footnote_id",
     ]
+
+    allow_update_without_children = True
 
     sid: int = None
     # language_id: str = None

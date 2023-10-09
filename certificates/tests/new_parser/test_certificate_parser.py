@@ -4,10 +4,7 @@ import pytest
 
 # note : need to import these objects to make them available to the parser
 from certificates.new_import_parsers import NewCertificateParser
-from common.tests import factories
-from common.tests.util import get_test_xml_file
-from importer import new_importer
-from workbaskets.validators import WorkflowStatus
+from common.tests.util import preload_import
 
 pytestmark = pytest.mark.django_db
 
@@ -58,17 +55,7 @@ class TestNewCertificateParser:
         assert target.valid_between_upper == date(2024, 1, 22)
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file("certificate_CREATE.xml", __file__)
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
-        )
+        importer = preload_import("certificate_CREATE.xml", __file__)
 
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 3
@@ -85,6 +72,18 @@ class TestNewCertificateParser:
         assert target_taric_object.valid_between_lower == date(2021, 1, 1)
         assert target_taric_object.valid_between_upper == date(2021, 12, 31)
 
-        for message in importer.parsed_transactions[0].parsed_messages:
-            # check for issues
-            assert len(message.taric_object.issues) == 0
+        assert importer.issues() == []
+
+    def test_import_update(self, superuser):
+        preload_import("certificate_CREATE.xml", __file__, True)
+        importer = preload_import("certificate_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        target_taric_object = target_message.taric_object
+
+        assert target_taric_object.sid == 123
+        assert target_taric_object.certificate_type__sid == "A"
+        assert target_taric_object.valid_between_lower == date(2021, 1, 11)
+        assert target_taric_object.valid_between_upper == date(2021, 12, 31)
+
+        assert importer.issues() == []

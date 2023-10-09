@@ -298,6 +298,8 @@ class NewDutyExpressionParser(NewValidityMixin, NewWritable, NewElementParser):
         "validity_end_date": "valid_between_upper",
     }
 
+    allow_update_without_children = True
+
     sid: int = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -1002,6 +1004,8 @@ class NewFootnoteAssociationMeasureParser(NewWritable, NewElementParser):
         "footnoted_measure__sid",
         "associated_footnote__footnote_id",
     ]
+
+    updates_allowed = False
 
     footnoted_measure__sid: int = None
     associated_footnote__footnote_type__footnote_type_id: str = None

@@ -1,7 +1,6 @@
 from datetime import date
 
 from commodities.import_handlers import *
-from commodities.models import GoodsNomenclatureDescription
 from importer.new_parser_model_links import ModelLink
 from importer.new_parser_model_links import ModelLinkField
 from importer.new_parsers import NewElementParser
@@ -85,6 +84,8 @@ class NewGoodsNomenclatureOriginParser(NewWritable, NewElementParser):
         "derived_from_goods_nomenclature__suffix",
     ]
 
+    updates_allowed = False
+
     new_goods_nomenclature__sid: int = None
     new_goods_nomenclature__item_id: str = None
     new_goods_nomenclature__suffix: int = None
@@ -137,6 +138,8 @@ class NewGoodsNomenclatureSuccessorParser(NewWritable, NewElementParser):
         "absorbed_into_goods_nomenclature__suffix",
     ]
 
+    updates_allowed = False
+
     replaced_goods_nomenclature__sid: int = None
     replaced_goods_nomenclature__item_id: str = None
     replaced_goods_nomenclature__suffix: int = None
@@ -184,21 +187,7 @@ class NewGoodsNomenclatureDescriptionParser(NewWritable, NewElementParser):
     described_goods_nomenclature__item_id: str = None
     described_goods_nomenclature__suffix: int = None
     description: str = None
-
-    def last_published_description_with_period(self):
-        # find previous period
-        latest_description = (
-            GoodsNomenclatureDescription.objects.latest_approved()
-            .filter(
-                described_goods_nomenclature__sid=self.described_goods_nomenclature__sid,
-                described_goods_nomenclature__item_id=self.described_goods_nomenclature__item_id,
-                described_goods_nomenclature__suffix=self.described_goods_nomenclature__suffix,
-            )
-            .last()
-        )
-
-        # do stuff
-        return latest_description
+    allow_update_without_children = True
 
 
 class NewGoodsNomenclatureDescriptionPeriodParser(

@@ -2,14 +2,10 @@ from datetime import date
 
 import pytest
 
-from common.tests import factories
-
 # note : need to import these objects to make them available to the parser
-from common.tests.util import get_test_xml_file
+from common.tests.util import preload_import
 from geo_areas.models import GeographicalArea
 from geo_areas.new_import_parsers import NewGeographicalAreaParser
-from importer import new_importer
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -67,17 +63,7 @@ class TestNewGeographicalAreaParser:
         assert target.parent__sid == 7
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file("geographical_area_CREATE.xml", __file__)
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
-        )
+        importer = preload_import("geographical_area_CREATE.xml", __file__)
 
         assert len(importer.parsed_transactions) == 1
 
@@ -98,3 +84,22 @@ class TestNewGeographicalAreaParser:
         assert len(importer.issues()) == 0
 
         assert GeographicalArea.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("geographical_area_CREATE.xml", __file__, True)
+        importer = preload_import("geographical_area_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        target = target_message.taric_object
+
+        assert target.sid == 8
+        assert target.area_id == "AB01"
+        assert target.valid_between_lower == date(2021, 1, 11)
+        assert target.valid_between_upper == date(2022, 1, 1)
+        assert target.area_code == 1
+        assert target.parent__sid is None
+
+        assert importer.issues() == []
+
+        assert GeographicalArea.objects.all().count() == 2

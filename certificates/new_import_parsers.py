@@ -16,6 +16,7 @@ class NewCertificateTypeParser(NewValidityMixin, NewWritable, NewElementParser):
     model = CertificateType
     record_code = "110"
     subrecord_code = "00"
+    allow_update_without_children = True
 
     xml_object_tag = "certificate.type"
 
@@ -98,6 +99,7 @@ class NewCertificateParser(NewValidityMixin, NewWritable, NewElementParser):
 
 class NewCertificateDescriptionParser(NewWritable, NewElementParser):
     model = CertificateDescription
+    allow_update_without_children = True
     model_links = [
         ModelLink(
             models.CertificateType,

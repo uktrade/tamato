@@ -5,6 +5,7 @@ import pytest
 from additional_codes.new_import_parsers import *
 from common.tests import factories
 from common.tests.util import get_test_xml_file
+from common.tests.util import preload_import
 from footnotes.new_import_parsers import *
 from importer import new_importer
 from workbaskets.validators import WorkflowStatus
@@ -67,19 +68,9 @@ class TestNewAdditionalCodeTypeParser:
         assert target.additional_code__type__sid == "Z"
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
+        importer = preload_import(
             "footnote_association_additional_code_CREATE.xml",
             __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
         )
 
         assert len(importer.parsed_transactions) == 3
@@ -102,14 +93,35 @@ class TestNewAdditionalCodeTypeParser:
         assert target_taric_object.additional_code__type__sid == "4"
         assert target_taric_object.additional_code__code == "7"
 
-        assert len(importer.issues()) == 0
+        assert importer.issues() == []
 
-        for message in importer.parsed_transactions[0].parsed_messages:
-            assert_error_string = ""
-            for issue in message.taric_object.issues:
-                assert_error_string += f"{issue}"
+    def test_import_update(self, superuser):
+        preload_import(
+            "footnote_association_additional_code_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "footnote_association_additional_code_UPDATE.xml",
+            __file__,
+        )
 
-            assert len(message.taric_object.issues) == 0, assert_error_string
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        # check properties
+        target_taric_object = target_message.taric_object
+        assert target_taric_object.additional_code__sid == 1
+        assert (
+            target_taric_object.associated_footnote__footnote_type__footnote_type_id
+            == 7
+        )
+        assert target_taric_object.associated_footnote__footnote_id == "4"
+        assert target_taric_object.valid_between_upper == date(2022, 1, 1)
+        assert target_taric_object.valid_between_lower == date(2021, 1, 11)
+        assert target_taric_object.additional_code__type__sid == "4"
+        assert target_taric_object.additional_code__code == "7"
+
+        assert importer.issues() == []
 
     def test_import_invalid_footnote(self, superuser):
         file_to_import = get_test_xml_file(

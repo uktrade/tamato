@@ -26,9 +26,10 @@ class TransactionParser:
     (taric objects we need to try and import)
     """
 
-    def __init__(self, transaction: bs4.Tag):
+    def __init__(self, transaction: bs4.Tag, index):
         self.parsed_messages: List[MessageParser] = []
         self.taric_objects = []
+        self.index = index
 
         self.messages_xml_tags = transaction.find_all("env:app.message")
 
@@ -72,13 +73,10 @@ class MessageParser:
         self.taric_object = self._construct_taric_object()
 
     def can_populate_child_attrs_from_history(self, klass):
-        if (
-            self.update_type != 3 and "Period" in klass.__name__
-        ):  # Only periods handled currently - may extend
-            if hasattr(
-                self.taric_object,
-                "last_published_description_with_period",
-            ):  # check there is a method for getting child object
+        if self.update_type != 3:
+            if (
+                self.taric_object.__class__.allow_update_without_children
+            ):  # child objects allowed to be populated from history on updates
                 return True
 
         return False
@@ -185,6 +183,8 @@ class NewElementParser:
     non_taric_additional_fields = []
     model = None
     identity_fields = []
+    allow_update_without_children = False
+    updates_allowed = True
 
     def __init__(self):
         self.issues = []
@@ -571,7 +571,7 @@ class NewElementParser:
         return True
 
     def is_child_object(self):
-        return not self.can_save_to_model()
+        return self.parent_parser is not None
 
 
 class TaricObjectLink:

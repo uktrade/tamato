@@ -643,6 +643,8 @@ def test_importer_generics(
         "non_taric_additional_fields",
         "data_fields",
         "last_published_description_with_period",
+        "allow_update_without_children",
+        "updates_allowed",
     ]
 
     for variable_name in vars(parser_class).keys():

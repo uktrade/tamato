@@ -1,13 +1,9 @@
 import pytest
 
-from common.tests import factories
-
 # note : need to import these objects to make them available to the parser
-from common.tests.util import get_test_xml_file
-from importer import new_importer
+from common.tests.util import preload_import
 from measures.models import MeasureExcludedGeographicalArea
 from measures.new_import_parsers import NewMeasureExcludedGeographicalAreaParser
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -55,19 +51,9 @@ class TestNewMeasureExcludedGeographicalAreaParser:
         assert target.excluded_geographical_area__sid == 77
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
+        importer = preload_import(
             "measure_excluded_geographical_area_CREATE.xml",
             __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
         )
 
         assert len(importer.parsed_transactions) == 10

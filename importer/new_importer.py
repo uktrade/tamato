@@ -102,7 +102,7 @@ class NewImporter:
         for parsed_transaction in self.parsed_transactions:
             for message in parsed_transaction.parsed_messages:
                 if message.taric_object.model == taric_object.model:
-                    if not message.taric_object.is_child_object():
+                    if message.taric_object.is_child_object():
                         parent = self.find_parent_object_matching_fields(
                             taric_object.__class__.model,
                             taric_object.get_identity_fields_and_values_for_parent(),
@@ -140,13 +140,17 @@ class NewImporter:
         for parsed_transaction in self.parsed_transactions:
             for message in parsed_transaction.parsed_messages:
                 if message.taric_object.is_child_object():
-                    parent = self.find_parent_for_parser_object(message.taric_object)
-                    attributes = message.taric_object.model_attributes(
-                        self.workbasket.transactions.last(),
-                        False,
-                    )
-                    for attribute_key in attributes.keys():
-                        setattr(parent, attribute_key, attributes[attribute_key])
+                    # We only need the parent to be present for creation, if it's an update it can be applied in isolation
+                    if message.update_type != 1:
+                        parent = self.find_parent_for_parser_object(
+                            message.taric_object,
+                        )
+                        attributes = message.taric_object.model_attributes(
+                            self.workbasket.transactions.last(),
+                            False,
+                        )
+                        for attribute_key in attributes.keys():
+                            setattr(parent, attribute_key, attributes[attribute_key])
 
     @transaction.atomic
     def commit_data(self):
@@ -274,8 +278,8 @@ class NewImporter:
     def parse(self):
         transactions = self.bs_taric3_file.find_all("env:transaction")
 
-        for transaction in transactions:
-            self.parsed_transactions.append(TransactionParser(transaction))
+        for index, xml_transaction in enumerate(transactions):
+            self.parsed_transactions.append(TransactionParser(xml_transaction, index))
 
     def find_child_objects(
         self,
@@ -341,13 +345,19 @@ class NewImporter:
         object is not present
         """
 
-        for transaction in self.parsed_transactions:
-            for parsed_message in transaction.parsed_messages:
-                if parsed_message.taric_object.is_child_object():
+        for parsed_transaction in self.parsed_transactions:
+            for parsed_message in parsed_transaction.parsed_messages:
+                if (
+                    parsed_message.taric_object.is_child_object()
+                    and parsed_message.update_type != 1
+                ):
                     parent_parser_class = ParserHelper.get_parser_by_model(
                         parsed_message.taric_object.__class__.model,
                     )
-                    parent = self.find_parent(parsed_message.taric_object, transaction)
+                    parent = self.find_parent(
+                        parsed_message.taric_object,
+                        parsed_transaction,
+                    )
 
                     if parent is None:
                         report_item = NewImportIssueReportItem(
@@ -362,6 +372,9 @@ class NewImporter:
 
                         parsed_message.taric_object.issues.append(report_item)
                 else:
+                    # Check update type
+                    self.validate_update_type_for(parsed_message, parsed_transaction)
+
                     # get the child models
                     child_parser_classes = ParserHelper.get_child_parsers(
                         parsed_message.taric_object,
@@ -378,7 +391,7 @@ class NewImporter:
                         object_matches = self.find_child_objects(
                             child_parser_class,
                             parsed_message.taric_object,
-                            transaction,
+                            parsed_transaction,
                         )
                         for object_match in object_matches:
                             if object_match.__class__.__name__ in child_matches.keys():
@@ -403,6 +416,173 @@ class NewImporter:
                                 )
 
                                 parsed_message.taric_object.issues.append(report_item)
+
+    def validate_update_type_for(self, parsed_message, parsed_transaction):
+        if parsed_message.update_type == 3:  # Create
+            # Check if record exists for identity keys
+            model_instances = (
+                parsed_message.taric_object.__class__.model.objects.all().filter(
+                    **parsed_message.taric_object.model_query_parameters()
+                )
+            )
+
+            last_parsed_message_for_model = None
+
+            for tmp_transaction in self.parsed_transactions:
+                if parsed_transaction.index == tmp_transaction.index:
+                    break  # done, don't want to process same transaction as the object we are looking at
+
+                for message in tmp_transaction.parsed_messages:
+                    # Check for match of identifying fields
+                    if (
+                        message.taric_object.model_query_parameters()
+                        == parsed_message.taric_object.model_query_parameters()
+                    ):
+                        if type(message.taric_object) is type(
+                            parsed_message.taric_object,
+                        ):
+                            # We have a match
+                            last_parsed_message_for_model = message
+
+            if last_parsed_message_for_model or model_instances.count() > 0:
+                # Any scenario is invalid at this point, since we are dealing with a creation, raise issue
+
+                report_item = NewImportIssueReportItem(
+                    parsed_message.taric_object.xml_object_tag,
+                    "",
+                    parsed_message.taric_object.model_query_parameters(),
+                    f"Identity keys match existing object in database (checking all published and unpublished data)",
+                    taric_change_type=parsed_message.update_type_name,
+                    object_details=str(parsed_message.taric_object),
+                    transaction_id=parsed_message.transaction_id,
+                )
+
+                parsed_message.taric_object.issues.append(report_item)
+
+        if parsed_message.update_type == 1:
+            if not parsed_message.taric_object.__class__.updates_allowed:
+                report_item = NewImportIssueReportItem(
+                    parsed_message.taric_object.xml_object_tag,
+                    "",
+                    parsed_message.taric_object.model_query_parameters(),
+                    f"Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be updated, only created and deleted",
+                    taric_change_type=parsed_message.update_type_name,
+                    object_details=str(parsed_message.taric_object),
+                    transaction_id=parsed_message.transaction_id,
+                )
+
+                parsed_message.taric_object.issues.append(report_item)
+
+            # Check if updated, deleted object exists, else raise issue
+            model_instances = parsed_message.taric_object.__class__.model.objects.latest_approved().filter(
+                **parsed_message.taric_object.model_query_parameters()
+            )
+
+            last_parsed_message_for_model = None
+
+            for tmp_transaction in self.parsed_transactions:
+                if parsed_transaction.index == tmp_transaction.index:
+                    break  # done, don't want to process same transaction as the object we are looking at
+
+                for message in tmp_transaction.parsed_messages:
+                    # Check for match of identifying fields
+                    if (
+                        message.taric_object.model_query_parameters()
+                        == parsed_message.taric_object.model_query_parameters()
+                    ):
+                        if type(message.taric_object) is type(
+                            parsed_message.taric_object,
+                        ):
+                            # We have a match
+                            last_parsed_message_for_model = message
+
+            change_valid = True
+            message = ""
+
+            # If there are not any entries for this model, prior to this change : not valid
+            if not last_parsed_message_for_model and model_instances.count() == 0:
+                change_valid = False
+                message = (
+                    f"Identity keys do not match an existing object in database or import, cant apply update to a deleted or non existent object",
+                )
+            # If the model has been deleted previously in the same envelope : not valid
+            elif (
+                last_parsed_message_for_model
+                and last_parsed_message_for_model.update_type == 2
+            ):
+                change_valid = False
+                message = (
+                    f"Identity keys match a previous message in this import that deletes this object",
+                )
+
+            if not change_valid:
+                report_item = NewImportIssueReportItem(
+                    parsed_message.taric_object.xml_object_tag,
+                    "",
+                    parsed_message.taric_object.model_query_parameters(),
+                    message,
+                    taric_change_type=parsed_message.update_type_name,
+                    object_details=str(parsed_message.taric_object),
+                    transaction_id=parsed_message.transaction_id,
+                )
+
+                parsed_message.taric_object.issues.append(report_item)
+
+        if parsed_message.update_type == 2:
+            # Check if updated, deleted object exists, else raise issue
+            model_instances = parsed_message.taric_object.__class__.model.objects.latest_approved().filter(
+                **parsed_message.taric_object.model_query_parameters()
+            )
+
+            last_parsed_message_for_model = None
+
+            for tmp_transaction in self.parsed_transactions:
+                if parsed_transaction.index == tmp_transaction.index:
+                    break  # done, don't want to process same transaction as the object we are looking at
+
+                for message in tmp_transaction.parsed_messages:
+                    # Check for match of identifying fields
+                    if (
+                        message.taric_object.model_query_parameters()
+                        == parsed_message.taric_object.model_query_parameters()
+                    ):
+                        if type(message.taric_object) is type(
+                            parsed_message.taric_object,
+                        ):
+                            # We have a match
+                            last_parsed_message_for_model = message
+
+            change_valid = True
+            message = ""
+
+            # If there are not any entries for this model, prior to this change : not valid
+            if not last_parsed_message_for_model and model_instances.count() == 0:
+                change_valid = False
+                message = (
+                    f"Identity keys do not match an existing object in database or import, cant delete non existent object",
+                )
+            # If the model has been deleted previously in the same envelope : not valid
+            elif (
+                last_parsed_message_for_model
+                and last_parsed_message_for_model.update_type == 2
+            ):
+                change_valid = False
+                message = (
+                    f"Identity keys match a previous message in this import that deletes this object",
+                )
+
+            if not change_valid:
+                report_item = NewImportIssueReportItem(
+                    parsed_message.taric_object.xml_object_tag,
+                    "",
+                    parsed_message.taric_object.model_query_parameters(),
+                    message,
+                    taric_change_type=parsed_message.update_type_name,
+                    object_details=str(parsed_message.taric_object),
+                    transaction_id=parsed_message.transaction_id,
+                )
+
+                parsed_message.taric_object.issues.append(report_item)
 
     def _verify_link(
         self,

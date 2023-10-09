@@ -1,10 +1,7 @@
 import pytest
 
 from additional_codes.new_import_parsers import NewAdditionalCodeTypeDescriptionParser
-from common.tests import factories
-from common.tests.util import get_test_xml_file
-from importer import new_importer
-from workbaskets.validators import WorkflowStatus
+from common.tests.util import preload_import
 
 pytestmark = pytest.mark.django_db
 
@@ -49,19 +46,9 @@ class TestNewAdditionalCodeTypeDescriptionParser:
         assert target.description == "some description"
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
+        importer = preload_import(
             "additional_code_type_description_CREATE.xml",
             __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
         )
 
         assert len(importer.parsed_transactions) == 1
@@ -73,26 +60,36 @@ class TestNewAdditionalCodeTypeDescriptionParser:
         assert type(target_message.taric_object) == self.target_parser_class
 
         target_taric_object = target_message.taric_object
-        assert target_taric_object.sid == "1"
+        assert target_taric_object.sid == "5"
         assert target_taric_object.description == "some description"
 
-        for message in importer.parsed_transactions[0].parsed_messages:
-            assert len(message.taric_object.issues) == 0
+        assert importer.issues() == []
 
-    def test_import_invalid_type(self, superuser):
-        file_to_import = get_test_xml_file(
-            "additional_code_type_description_without_type_CREATE.xml",
+    def test_import_update(self, superuser):
+        preload_import("additional_code_type_description_CREATE.xml", __file__, True)
+        importer = preload_import(
+            "additional_code_type_description_UPDATE.xml",
             __file__,
         )
 
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+        assert len(importer.parsed_transactions) == 1
+        assert len(importer.parsed_transactions[0].parsed_messages) == 1
 
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
+
+        target_taric_object = target_message.taric_object
+        assert target_taric_object.sid == "5"
+        assert target_taric_object.description == "some description that changed"
+
+        assert importer.issues() == []
+
+    def test_import_invalid_type(self, superuser):
+        importer = preload_import(
+            "additional_code_type_description_without_type_CREATE.xml",
+            __file__,
         )
 
         assert len(importer.parsed_transactions) == 1

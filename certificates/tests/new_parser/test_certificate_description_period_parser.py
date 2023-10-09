@@ -6,10 +6,7 @@ from certificates.models import CertificateDescription
 
 # note : need to import these objects to make them available to the parser
 from certificates.new_import_parsers import NewCertificateDescriptionPeriodParser
-from common.tests import factories
-from common.tests.util import get_test_xml_file
-from importer import new_importer
-from workbaskets.validators import WorkflowStatus
+from common.tests.util import preload_import
 
 pytestmark = pytest.mark.django_db
 
@@ -60,20 +57,7 @@ class TestNewCertificateDescriptionPeriodParser:
         assert target.validity_start == date(2021, 1, 1)
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
-            "certificate_description_period_CREATE.xml",
-            __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
-        )
+        importer = preload_import("certificate_description_period_CREATE.xml", __file__)
 
         assert len(importer.parsed_transactions) == 1
         assert len(importer.parsed_transactions[0].parsed_messages) == 5
@@ -93,6 +77,17 @@ class TestNewCertificateDescriptionPeriodParser:
         assert target.validity_start == target_taric_object.validity_start
         assert target.sid == int(target_taric_object.sid)
 
-        for message in importer.parsed_transactions[0].parsed_messages:
-            # check for issues
-            assert len(message.taric_object.issues) == 0
+        assert importer.issues() == []
+
+    def test_import_update(self, superuser):
+        preload_import("certificate_description_period_CREATE.xml", __file__, True)
+        importer = preload_import("certificate_description_period_UPDATE.xml", __file__)
+
+        assert importer.issues() == []
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        target_taric_object = target_message.taric_object
+        assert target_taric_object.sid == 9
+        assert target_taric_object.described_certificate__certificate_type__sid == "A"
+        assert target_taric_object.described_certificate__sid == "123"
+        assert target_taric_object.validity_start == date(2021, 11, 1)

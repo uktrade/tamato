@@ -80,6 +80,8 @@ class NewGeographicalAreaDescriptionParser(NewWritable, NewElementParser):
         "described_geographicalarea__area_id",
     ]
 
+    allow_update_without_children = True
+
     sid: int = None
     described_geographicalarea__sid: int = None
     described_geographicalarea__area_id: str = None

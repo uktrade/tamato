@@ -432,7 +432,6 @@ class NewQuotaCriticalEventParser(NewQuotaEventParser):
     xml_object_tag = "quota.critical.event"
 
     identity_fields = [
-        "critical_state",
         "quota_definition__sid",
         "occurrence_timestamp",
     ]

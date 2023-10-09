@@ -5,10 +5,7 @@ import pytest
 # note : need to import these objects to make them available to the parser
 from commodities.models import GoodsNomenclatureDescription
 from commodities.new_import_parsers import NewGoodsNomenclatureDescriptionPeriodParser
-from common.tests import factories
-from common.tests.util import get_test_xml_file
-from importer import new_importer
-from workbaskets.validators import WorkflowStatus
+from common.tests.util import preload_import
 
 pytestmark = pytest.mark.django_db
 
@@ -60,20 +57,10 @@ class TestNewGoodsNomenclatureDescriptionPeriodParser:
         assert target.described_goods_nomenclature__item_id == "0100000000"
         assert target.described_goods_nomenclature__suffix == 10
 
-    def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
+    def test_import_create_and_update_in_same_file(self, superuser):
+        importer = preload_import(
             "goods_nomenclature_description_period_UPDATE.xml",
             __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
         )
 
         assert len(importer.parsed_transactions) == 3
@@ -99,4 +86,38 @@ class TestNewGoodsNomenclatureDescriptionPeriodParser:
             2021,
             1,
             2,
+        )
+
+    def test_import_update_with_existing_description(self, superuser):
+        preload_import(
+            "goods_nomenclature_description_period_UPDATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "goods_nomenclature_description_period_only_UPDATE.xml",
+            __file__,
+        )
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        assert target_message.record_code == self.target_parser_class.record_code
+        assert target_message.subrecord_code == self.target_parser_class.subrecord_code
+        assert type(target_message.taric_object) == self.target_parser_class
+
+        # check properties
+        target = target_message.taric_object
+
+        assert target.sid == 7
+        assert target.described_goods_nomenclature__sid == 1
+        assert target.described_goods_nomenclature__item_id == "0100000000"
+        assert target.described_goods_nomenclature__suffix == 10
+
+        assert len(importer.issues()) == 0
+
+        assert GoodsNomenclatureDescription.objects.all().count() == 3
+        assert GoodsNomenclatureDescription.objects.all().last().validity_start == date(
+            2021,
+            1,
+            3,
         )

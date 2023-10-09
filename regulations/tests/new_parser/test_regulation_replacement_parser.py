@@ -1,16 +1,13 @@
 import pytest
 
 from additional_codes.new_import_parsers import *
-from common.tests import factories
 
 # note : need to import these objects to make them available to the parser
-from common.tests.util import get_test_xml_file
+from common.tests.util import preload_import
 from geo_areas.new_import_parsers import *
-from importer import new_importer
 from measures.new_import_parsers import *
 from regulations.models import Replacement
 from regulations.new_import_parsers import *
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -70,19 +67,9 @@ class TestNewRegulationReplacementParser:
         assert target.chapter_heading == "09"
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
+        importer = preload_import(
             "regulation_replacement_CREATE.xml",
             __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
         )
 
         assert len(importer.parsed_transactions) == 6

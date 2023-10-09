@@ -6,11 +6,8 @@ import pytest
 from commodities.models import FootnoteAssociationGoodsNomenclature
 from commodities.models import GoodsNomenclature
 from commodities.new_import_parsers import *
-from common.tests import factories
-from common.tests.util import get_test_xml_file
+from common.tests.util import preload_import
 from footnotes.new_import_parsers import *
-from importer import new_importer
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -69,19 +66,9 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
         assert target.goods_nomenclature__suffix == 10
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
+        importer = preload_import(
             "footnote_association_goods_nomenclature_CREATE.xml",
             __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
         )
 
         assert len(importer.parsed_transactions) == 2
@@ -109,20 +96,36 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
 
         assert len(importer.issues()) == 0
 
-    def test_import_failure_no_footnote(self, superuser):
-        file_to_import = get_test_xml_file(
-            "footnote_association_goods_nomenclature_no_footnote_CREATE.xml",
+    def test_import_update(self):
+        preload_import(
+            "footnote_association_goods_nomenclature_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "footnote_association_goods_nomenclature_UPDATE.xml",
             __file__,
         )
 
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        target = target_message.taric_object
 
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
+        assert target.goods_nomenclature__sid == 1
+        assert target.associated_footnote__footnote_type__footnote_type_id == 3
+        assert target.associated_footnote__footnote_id == 9
+        assert target.valid_between_lower == date(2022, 1, 11)
+        assert target.valid_between_upper == date(2023, 1, 1)
+        assert target.goods_nomenclature__item_id == "0100000000"
+        assert target.goods_nomenclature__suffix == 10
+
+        assert FootnoteAssociationGoodsNomenclature.objects.all().count() == 2
+
+        assert len(importer.issues()) == 0
+
+    def test_import_failure_no_footnote(self, superuser):
+        importer = preload_import(
+            "footnote_association_goods_nomenclature_no_footnote_CREATE.xml",
+            __file__,
         )
 
         assert not importer.can_save()

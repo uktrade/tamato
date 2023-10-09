@@ -2,14 +2,10 @@ from datetime import date
 
 import pytest
 
-from common.tests import factories
-
 # note : need to import these objects to make them available to the parser
-from common.tests.util import get_test_xml_file
+from common.tests.util import preload_import
 from footnotes.models import FootnoteDescription
 from footnotes.new_import_parsers import NewFootnoteDescriptionPeriodParser
-from importer import new_importer
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -60,20 +56,7 @@ class TestNewFootnoteDescriptionPeriodParser:
         assert target.validity_start == date(2022, 1, 1)
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
-            "footnote_description_period_CREATE.xml",
-            __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
-        )
+        importer = preload_import("footnote_description_period_CREATE.xml", __file__)
 
         assert len(importer.parsed_transactions) == 2
 
@@ -93,3 +76,20 @@ class TestNewFootnoteDescriptionPeriodParser:
         assert len(importer.issues()) == 0
 
         assert FootnoteDescription.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("footnote_description_period_CREATE.xml", __file__, True)
+        importer = preload_import("footnote_description_period_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        target = target_message.taric_object
+
+        assert target.sid == 7
+        assert target.described_footnote__footnote_type__footnote_type_id == "3"
+        assert target.described_footnote__footnote_id == "9"
+        assert target.validity_start == date(2021, 1, 22)
+
+        assert len(importer.issues()) == 0
+
+        assert FootnoteDescription.objects.all().count() == 2

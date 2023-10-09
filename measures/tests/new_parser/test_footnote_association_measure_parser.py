@@ -1,13 +1,9 @@
 import pytest
 
-from common.tests import factories
-
 # note : need to import these objects to make them available to the parser
-from common.tests.util import get_test_xml_file
-from importer import new_importer
+from common.tests.util import preload_import
 from measures.models import FootnoteAssociationMeasure
 from measures.new_import_parsers import NewFootnoteAssociationMeasureParser
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -55,20 +51,7 @@ class TestNewFootnoteAssociationMeasureParser:
         assert target.associated_footnote__footnote_id == "BBB"
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
-            "footnote_association_measure_CREATE.xml",
-            __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
-        )
+        importer = preload_import("footnote_association_measure_CREATE.xml", __file__)
 
         assert len(importer.parsed_transactions) == 11
 
@@ -86,3 +69,14 @@ class TestNewFootnoteAssociationMeasureParser:
         assert len(importer.issues()) == 0
 
         assert FootnoteAssociationMeasure.objects.all().count() == 1
+
+    def test_import_update_raises_issue(self, superuser):
+        preload_import("footnote_association_measure_CREATE.xml", __file__, True)
+        importer = preload_import("footnote_association_measure_UPDATE.xml", __file__)
+
+        assert len(importer.issues()) == 1
+
+        assert (
+            "Taric objects of type FootnoteAssociationMeasure can't be updated, only created and deleted"
+            in str(importer.issues()[0])
+        )

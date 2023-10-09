@@ -3,10 +3,7 @@ from datetime import date
 import pytest
 
 from additional_codes.new_import_parsers import NewAdditionalCodeDescriptionPeriodParser
-from common.tests import factories
-from common.tests.util import get_test_xml_file
-from importer import new_importer
-from workbaskets.validators import WorkflowStatus
+from common.tests.util import preload_import
 
 pytestmark = pytest.mark.django_db
 
@@ -60,19 +57,9 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         assert target.described_additionalcode__code == "123"
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
+        importer = preload_import(
             "additional_code_description_period_CREATE.xml",
             __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
         )
 
         assert len(importer.parsed_transactions) == 1
@@ -91,24 +78,32 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         assert target_taric_object.described_additionalcode__code == "3"
         assert target_taric_object.validity_start == date(2021, 1, 1)
 
-        for message in importer.parsed_transactions[0].parsed_messages:
-            # check for issues
-            assert len(message.taric_object.issues) == 0
+        assert importer.issues() == []
 
-    def test_import_no_description(self, superuser):
-        file_to_import = get_test_xml_file(
-            "additional_code_description_period_without_description_CREATE.xml",
+    def test_import_update(self):
+        preload_import("additional_code_description_period_CREATE.xml", __file__, True)
+        importer = preload_import(
+            "additional_code_description_period_UPDATE.xml",
             __file__,
         )
 
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        target_taric_object = target_message.taric_object
 
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
+        assert importer.can_save()
+
+        assert target_taric_object.sid == 5
+        assert target_taric_object.described_additionalcode__sid == 1
+        assert target_taric_object.described_additionalcode__type__sid == "4"
+        assert target_taric_object.described_additionalcode__code == "3"
+        assert target_taric_object.validity_start == date(2021, 1, 11)
+
+        assert importer.issues() == []
+
+    def test_import_no_description(self):
+        importer = preload_import(
+            "additional_code_description_period_without_description_CREATE.xml",
+            __file__,
         )
 
         assert len(importer.parsed_transactions) == 1

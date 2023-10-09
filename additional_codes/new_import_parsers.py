@@ -33,6 +33,7 @@ class NewAdditionalCodeTypeParser(NewValidityMixin, NewWritable, NewElementParse
     valid_between_lower: date = None
     valid_between_upper: date = None
     application_code: str = None
+    allow_update_without_children = True
 
 
 # This gets joined to AdditionalCodeType as description column
@@ -111,7 +112,7 @@ class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
             [
                 ModelLinkField("described_additionalcode__sid", "sid"),
                 ModelLinkField("described_additionalcode__code", "code"),
-                ModelLinkField("described_additionalcode__type_sid", "type__sid"),
+                ModelLinkField("described_additionalcode__type__sid", "type__sid"),
             ],
             "additional.code",
         ),
@@ -120,7 +121,7 @@ class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
     value_mapping = {
         "additional_code_description_period_sid": "sid",
         "additional_code_sid": "described_additionalcode__sid",
-        "additional_code_type_id": "described_additionalcode__type_sid",
+        "additional_code_type_id": "described_additionalcode__type__sid",
         "additional_code": "described_additionalcode__code",
         "validity_start_date": "validity_start",
     }
@@ -132,17 +133,18 @@ class NewAdditionalCodeDescriptionParser(NewWritable, NewElementParser):
 
     identity_fields = [
         "described_additionalcode__sid",
-        "described_additionalcode__type_sid",
+        "described_additionalcode__type__sid",
         "described_additionalcode__code",
     ]
 
     sid: int = None
     # language_id: str = None
     described_additionalcode__sid: int = None
-    described_additionalcode__type_sid: str = None
+    described_additionalcode__type__sid: str = None
     described_additionalcode__code: str = None
     description: str = None
     validity_start: date = None
+    allow_update_without_children = True
 
 
 class NewAdditionalCodeDescriptionPeriodParser(
@@ -159,15 +161,9 @@ class NewAdditionalCodeDescriptionPeriodParser(
             [
                 ModelLinkField("described_additionalcode__sid", "sid"),
                 ModelLinkField("described_additionalcode__code", "code"),
+                ModelLinkField("described_additionalcode__type__sid", "type__sid"),
             ],
             "additional.code",
-        ),
-        ModelLink(
-            models.AdditionalCodeType,
-            [
-                ModelLinkField("described_additionalcode__type__sid", "sid"),
-            ],
-            "additional.code.type",
         ),
         ModelLink(
             models.AdditionalCodeDescription,

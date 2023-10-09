@@ -1,13 +1,9 @@
 import pytest
 
-from common.tests import factories
-
 # note : need to import these objects to make them available to the parser
-from common.tests.util import get_test_xml_file
-from importer import new_importer
+from common.tests.util import preload_import
 from quotas.models import QuotaEvent
 from quotas.new_import_parsers import *
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -76,19 +72,9 @@ class TestNewQuotaClosedAndTransferredEventParser:
         )
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
+        importer = preload_import(
             "quota_closed_and_transferred_event_CREATE.xml",
             __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
         )
 
         assert len(importer.parsed_transactions) == 6

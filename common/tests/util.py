@@ -27,6 +27,7 @@ from django.template.loader import render_to_string
 from django.urls import get_resolver
 from django.urls import reverse
 from django_filters.views import FilterView
+from factory import fuzzy
 from freezegun import freeze_time
 from lxml import etree
 from pytz import timezone
@@ -42,6 +43,9 @@ from common.tests import factories
 from common.util import TaricDateRange
 from common.util import get_accessor
 from common.util import get_field_tuple
+from importer import new_importer
+from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
 
 INTERDEPENDENT_IMPORT_IMPLEMENTED = True
 UPDATE_IMPORTER_IMPLEMENTED = True
@@ -931,3 +935,56 @@ def get_test_xml_file(file_name, from_file):
     path_to_current_file = os.path.realpath(from_file)
     current_directory = os.path.split(path_to_current_file)[0]
     return os.path.join(current_directory, "importer_examples", file_name)
+
+
+def preload_import(file_name, from_file, approve_workbasket=False):
+    file_to_import = get_test_xml_file(
+        file_name,
+        from_file,
+    )
+
+    workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+    user = factories.UserFactory.create()
+
+    importer = new_importer.NewImporter(
+        import_batch=import_batch,
+        taric3_file=file_to_import,
+        import_title=f"Importing stuff {fuzzy.FuzzyText(length=15)}",
+        author_username=user.username,
+        workbasket=workbasket,
+    )
+
+    if importer.can_save() and approve_workbasket:
+        # force publish workbasket
+        queue_workbasket_for_test(workbasket.id)
+    elif not importer.can_save() and approve_workbasket:  # there
+        assert (
+            False
+        ), "Tried to approve workbasket but the import contains issues, check the import"
+
+    return importer
+
+
+def queue_workbasket_for_test(workbasket_id):
+    user = factories.UserFactory.create()
+
+    workbasket = WorkBasket.objects.all().get(id=int(workbasket_id))
+
+    # force publish workbasket
+    workbasket.full_clean()
+    workbasket.approve(int(user.id), "REVISION_ONLY")
+    workbasket.status = WorkflowStatus.QUEUED
+    workbasket.save()
+
+    assert (
+        WorkBasket.objects.all().get(id=int(workbasket_id)).status
+        == WorkflowStatus.QUEUED
+    )
+    assert (
+        WorkBasket.objects.all()
+        .get(id=int(workbasket_id))
+        .transactions.first()
+        .partition
+        == 2
+    )

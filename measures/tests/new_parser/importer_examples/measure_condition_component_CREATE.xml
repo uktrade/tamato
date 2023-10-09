@@ -597,7 +597,7 @@
                     <oub:record.sequence.number>3</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:measurement.unit.qualifier>
-                        <oub:measurement.unit.qualifier.code>A</oub:measurement.unit.qualifier.code>
+                        <oub:measurement.unit.qualifier.code>B</oub:measurement.unit.qualifier.code>
                         <oub:validity.start.date>2021-01-01</oub:validity.start.date>
                         <oub:validity.end.date>2022-01-01</oub:validity.end.date>
                     </oub:measurement.unit.qualifier>
@@ -614,7 +614,7 @@
                     <oub:record.sequence.number>3</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:measurement.unit.qualifier.description>
-                        <oub:measurement.unit.qualifier.code>A</oub:measurement.unit.qualifier.code>
+                        <oub:measurement.unit.qualifier.code>B</oub:measurement.unit.qualifier.code>
                         <oub:language.id>ZZ</oub:language.id>
                         <oub:description>Some description</oub:description>
                     </oub:measurement.unit.qualifier.description>
@@ -669,7 +669,7 @@
                     <oub:record.sequence.number>3</oub:record.sequence.number>
                     <oub:update.type>3</oub:update.type>
                     <oub:measurement>
-                        <oub:measurement.unit.qualifier.code>A</oub:measurement.unit.qualifier.code>
+                        <oub:measurement.unit.qualifier.code>B</oub:measurement.unit.qualifier.code>
                         <oub:measurement.unit.code>XXX</oub:measurement.unit.code>
                         <oub:validity.start.date>2021-01-01</oub:validity.start.date>
                         <oub:validity.end.date>2022-01-01</oub:validity.end.date>
@@ -696,7 +696,7 @@
                         <oub:condition.duty.amount>12.77</oub:condition.duty.amount>
                         <oub:condition.monetary.unit.code>ZZZ</oub:condition.monetary.unit.code>
                         <oub:condition.measurement.unit.code>XXX</oub:condition.measurement.unit.code>
-                        <oub:condition.measurement.unit.qualifier.code>A</oub:condition.measurement.unit.qualifier.code>
+                        <oub:condition.measurement.unit.qualifier.code>B</oub:condition.measurement.unit.qualifier.code>
                         <oub:action.code>ABC</oub:action.code>
                         <oub:certificate.type.code>A</oub:certificate.type.code>
                         <oub:certificate.code>123</oub:certificate.code>
@@ -721,7 +721,7 @@
                         <oub:duty.amount>14.5</oub:duty.amount>
                         <oub:monetary.unit.code>ZZZ</oub:monetary.unit.code>
                         <oub:measurement.unit.code>XXX</oub:measurement.unit.code>
-                        <oub:measurement.unit.qualifier.code>A</oub:measurement.unit.qualifier.code>
+                        <oub:measurement.unit.qualifier.code>B</oub:measurement.unit.qualifier.code>
                     </oub:measure.condition.component>
                 </oub:record>
             </oub:transmission>

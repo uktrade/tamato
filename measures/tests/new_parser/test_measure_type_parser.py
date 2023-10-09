@@ -1,14 +1,10 @@
 import pytest
 
-from common.tests import factories
-
 # note : need to import these objects to make them available to the parser
-from common.tests.util import get_test_xml_file
+from common.tests.util import preload_import
 from geo_areas.new_import_parsers import *
-from importer import new_importer
 from measures.models import MeasureType
 from measures.new_import_parsers import NewMeasureTypeParser
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -77,20 +73,7 @@ class TestNewMeasureTypeParser:
         assert target.valid_between_upper == date(2022, 1, 1)
 
     def test_import(self, superuser):
-        file_to_import = get_test_xml_file(
-            "measure_type_CREATE.xml",
-            __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = new_importer.NewImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
-        )
+        importer = preload_import("measure_type_CREATE.xml", __file__)
 
         assert len(importer.parsed_transactions) == 2
 

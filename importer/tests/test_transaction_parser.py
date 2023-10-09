@@ -28,7 +28,7 @@ class TestTransactionParser:
 
         transactions = bs_taric3_file.find_all("env:transaction")
 
-        parsed_transaction = TransactionParser(transactions[0])
+        parsed_transaction = TransactionParser(transactions[0], 1)
 
         assert len(transactions) == 1
         assert len(parsed_transaction.parsed_messages) == 3
