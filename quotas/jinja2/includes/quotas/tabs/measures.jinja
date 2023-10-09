@@ -1,4 +1,4 @@
-{% from "components/sort_by.jinja" import sort_by %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 
 {% set table_rows = [] %}
 {% for object in measures %}
@@ -19,7 +19,7 @@
 {% set base_url = url('quota-ui-detail', args=[object.sid]) %}
 
 {% set commodity_code %}
-  {{ sort_by(request, "goods_nomenclature", "Commodity code", base_url, "#measures") }}
+  {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url, "#measures") }}
 {% endset %}
 
 <div class="quota__measures govuk-grid-row">

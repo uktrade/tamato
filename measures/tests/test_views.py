@@ -26,6 +26,7 @@ from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from geo_areas.validators import AreaCode
 from measures.business_rules import ME70
 from measures.constants import START
 from measures.constants import MeasureEditSteps
@@ -589,6 +590,31 @@ def test_measure_update_get_footnotes(session_with_workbasket):
     footnotes = view.get_footnotes(association.footnoted_measure)
 
     assert len(footnotes) == 0
+
+
+def test_measure_update_form_creates_footnote_association(
+    measure_form,
+    valid_user_client,
+):
+    """Test that editing a measure to add a new footnote doesn't require
+    pressing "Add another footnote" button before submitting (saving) the
+    form."""
+    footnote = factories.FootnoteFactory.create()
+    measure = measure_form.instance
+    assert not measure.footnotes.exists()
+
+    form_data = {k: v for k, v in measure_form.data.items() if v is not None}
+    # Add footnote to form data and not to "formset_initial" in session data (i.e not pressing "Add another footnote")
+    form_data["form-0-footnote"] = footnote.pk
+
+    url = reverse("measure-ui-edit", kwargs={"sid": measure.sid})
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    assert FootnoteAssociationMeasure.objects.filter(
+        footnoted_measure__sid=measure.sid,
+        associated_footnote=footnote,
+    ).exists()
 
 
 # https://uktrade.atlassian.net/browse/TP2000-340
@@ -2506,3 +2532,87 @@ def test_measure_list_redirects_to_search_with_no_params(valid_user_client):
 def test_measure_search_200(valid_user_client):
     response = valid_user_client.get(reverse("measure-ui-search"))
     assert response.status_code == 200
+
+
+def test_measures_list_sorting(valid_user_client, date_ranges):
+    # make measure types
+    type1 = factories.MeasureTypeFactory.create(sid="111")
+    type2 = factories.MeasureTypeFactory.create(sid="222")
+    type3 = factories.MeasureTypeFactory.create(sid="333")
+
+    # Make geo_groups
+    # Erga Omnes
+    area_1 = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1011",
+    )
+    # North America
+    area_2 = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="2200",
+    )
+    # European Union
+    area_3 = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1013",
+    )
+
+    # make measures
+    measure1 = factories.MeasureFactory.create(
+        measure_type=type1,
+        geographical_area=area_2,
+        valid_between=date_ranges.no_end,
+    )
+    measure2 = factories.MeasureFactory.create(
+        measure_type=type2,
+        geographical_area=area_3,
+        valid_between=date_ranges.earlier,
+    )
+    measure3 = factories.MeasureFactory.create(
+        measure_type=type3,
+        geographical_area=area_1,
+        valid_between=date_ranges.later,
+    )
+
+    sort_by_list = [
+        "?sort_by=sid&ordered=desc",
+        "?sort_by=sid&ordered=asc",
+        "?sort_by=measure_type&ordered=desc",
+        "?sort_by=measure_type&ordered=asc",
+        "?sort_by=start_date&ordered=desc",
+        "?sort_by=start_date&ordered=asc",
+        "?sort_by=end_date&ordered=desc",
+        "?sort_by=end_date&ordered=asc",
+        "?sort_by=geo_area&ordered=desc",
+        "?sort_by=geo_area&ordered=asc",
+    ]
+
+    expected_order_list = [
+        # sid desc, asc
+        [measure3.sid, measure2.sid, measure1.sid],
+        [measure1.sid, measure2.sid, measure3.sid],
+        # type desc, asc
+        [measure3.sid, measure2.sid, measure1.sid],
+        [measure1.sid, measure2.sid, measure3.sid],
+        # start date desc, asc
+        [measure3.sid, measure1.sid, measure2.sid],
+        [measure2.sid, measure1.sid, measure3.sid],
+        # end date desc, asc
+        [measure1.sid, measure3.sid, measure2.sid],
+        [measure2.sid, measure3.sid, measure1.sid],
+        # geo area desc, asc
+        [measure1.sid, measure2.sid, measure3.sid],
+        [measure3.sid, measure2.sid, measure1.sid],
+    ]
+
+    for index, item in enumerate(sort_by_list):
+        url = reverse("measure-ui-list") + item
+        response = valid_user_client.get(url)
+
+        assert response.status_code == 200
+
+        soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+        measure_sids = [
+            int(el.text) for el in soup.select(".govuk-table tbody tr td:nth-child(2)")
+        ]
+        assert measure_sids == expected_order_list[index]

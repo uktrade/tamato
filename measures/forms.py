@@ -45,6 +45,8 @@ from geo_areas.forms import GeoGroupForm
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import models
+from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import MeasureEditSteps
 from measures.models import MeasureExcludedGeographicalArea
 from measures.parsers import DutySentenceParser
@@ -57,9 +59,6 @@ from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
-
-MEASURE_CONDITIONS_FORMSET_PREFIX = "measure-conditions-formset"
-MEASURE_COMMODITIES_FORMSET_PREFIX = "measure_commodities_duties_formset"
 
 
 class MeasureGeoAreaInitialDataMixin(FormSetSubmitMixin):
@@ -606,10 +605,8 @@ class MeasureForm(
         return cleaned_data
 
     def save(self, commit=True):
-        """Get the measure instance after form submission, get from session
-        storage any footnote pks created via the Footnote formset and any pks
-        not removed from the measure after editing and create footnotes via
-        FootnoteAssociationMeasure."""
+        """Updates a measure instance's geographical area and exclusions,
+        duties, and footnote associations following form submission."""
         instance = super().save(commit=False)
         if commit:
             instance.save()
@@ -685,10 +682,21 @@ class MeasureForm(
                 "component_measure",
             )
 
+        # Footnotes added via "Add another footnote" button
         footnote_pks = [
-            dct["footnote"]
-            for dct in self.request.session.get(f"formset_initial_{sid}", [])
+            form["footnote"]
+            for form in self.request.session.get(f"formset_initial_{sid}", [])
         ]
+
+        # Footnote submitted directly via "Save" button
+        form_footnote = self.request.POST.get(
+            f"form-{len(footnote_pks)}-footnote",
+            None,
+        )
+        if form_footnote:
+            footnote_pks.append(form_footnote)
+
+        # Footnotes already on measure
         footnote_pks.extend(self.request.session.get(f"instance_footnotes_{sid}", []))
 
         self.request.session.pop(f"formset_initial_{sid}", None)

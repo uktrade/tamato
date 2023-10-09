@@ -13,8 +13,8 @@ from common.validators import ApplicabilityCode
 from geo_areas import constants
 from geo_areas.validators import AreaCode
 from measures import forms
-from measures.forms import MEASURE_COMMODITIES_FORMSET_PREFIX
-from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
+from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.forms import MeasureConditionsFormSet
 from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
@@ -35,6 +35,7 @@ def test_diff_components_not_called(
     duty_sentence_parser,
 ):
     with override_current_transaction(Transaction.objects.last()):
+        measure_form.request.POST = {}
         measure_form.save(commit=False)
 
     assert diff_components.called == False
@@ -42,6 +43,7 @@ def test_diff_components_not_called(
 
 @patch("measures.forms.diff_components")
 def test_diff_components_called(diff_components, measure_form, duty_sentence_parser):
+    measure_form.request.POST = {}
     measure_form.data.update(duty_sentence="6.000%")
     with override_current_transaction(Transaction.objects.last()):
         measure_form.save(commit=False)
