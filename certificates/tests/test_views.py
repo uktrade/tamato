@@ -332,7 +332,7 @@ def test_certificate_detail_measures_view_sorting_commodity(valid_user_client):
             "certificate_type__sid": certificate.certificate_type.sid,
         },
     )
-    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&order=asc")
+    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&ordered=asc")
     page = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",
@@ -343,7 +343,7 @@ def test_certificate_detail_measures_view_sorting_commodity(valid_user_client):
     ]
     assert table_commodity_codes == commodity_codes
 
-    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&order=desc")
+    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&ordered=desc")
     page = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",
@@ -386,7 +386,7 @@ def test_certificate_detail_measures_view_sorting_start_date(
             "certificate_type__sid": certificate.certificate_type.sid,
         },
     )
-    response = valid_user_client.get(f"{url}?sort_by=start_date&order=asc")
+    response = valid_user_client.get(f"{url}?sort_by=start_date&ordered=asc")
     page = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",
@@ -396,7 +396,7 @@ def test_certificate_detail_measures_view_sorting_start_date(
     ]
     assert table_measure_sids == [measures[0].sid, measures[1].sid, measures[2].sid]
 
-    response = valid_user_client.get(f"{url}?sort_by=start_date&order=desc")
+    response = valid_user_client.get(f"{url}?sort_by=start_date&ordered=desc")
     page = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",

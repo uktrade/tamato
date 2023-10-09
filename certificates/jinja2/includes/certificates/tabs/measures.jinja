@@ -1,6 +1,6 @@
 {% extends "certificates/detail.jinja" %}
 
-{% from "components/sort_by.jinja" import sort_by %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 
 {% set actions_menu %}
   <div class="govuk-grid-column-one-quarter">
@@ -46,11 +46,11 @@
   {% set base_url = url('certificate-ui-detail-measures', kwargs={"certificate_type__sid":object.certificate_type.sid, "sid":object.sid}) %}
 
   {% set commodity_code %}
-    {{ sort_by(request, "goods_nomenclature", "Commodity code", base_url) }}
+    {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
   {% endset %}
 
   {% set start_date %}
-    {{ sort_by(request, "start_date", "Start date", base_url) }}
+    {{ create_sortable_anchor(request, "start_date", "Start date", base_url) }}
   {% endset %}
 
   {% if paginator.count > 0 %}
