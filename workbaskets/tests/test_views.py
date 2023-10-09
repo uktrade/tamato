@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
+from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils.timezone import localtime
 
@@ -1225,65 +1226,228 @@ def test_violation_list_page_sorting_ignores_invalid_params(
     assert response.status_code == 200
 
 
-def test_workbasket_changes_view_workbasket_details(
-    setup,
-    valid_user_client,
-    session_workbasket,
-):
-    url = reverse(
+@pytest.mark.parametrize(
+    "url_name,",
+    (
+        "workbaskets:workbasket-ui-detail",
         "workbaskets:workbasket-ui-changes",
-        kwargs={"pk": session_workbasket.pk},
-    )
+    ),
+)
+def test_workbasket_detail_views_without_permission(url_name, client):
+    """Tests that `WorkBasketDetailView` and `WorkBasketChangesView` return 403
+    to users without `view_workbasket` permission."""
 
-    response = valid_user_client.get(url)
-    assert response.status_code == 200
-
-    soup = BeautifulSoup(str(response.content), "html.parser")
-
-    table = soup.select("table")[0]
-    row_text = [row.text for row in table.findChildren("td")]
-
-    assert str(session_workbasket.id) in row_text
-    assert session_workbasket.title in row_text
-    assert session_workbasket.reason in row_text
-    assert str(session_workbasket.tracked_models.count()) in row_text
-    assert session_workbasket.created_at.strftime("%d %b %y %H:%M") in row_text
-    assert session_workbasket.updated_at.strftime("%d %b %y %H:%M") in row_text
-    assert session_workbasket.get_status_display() in row_text
-
-
-def test_workbasket_changes_view_workbasket_changes(
-    setup,
-    valid_user_client,
-    session_workbasket,
-):
-    url = reverse(
-        "workbaskets:workbasket-ui-changes",
-        kwargs={"pk": session_workbasket.pk},
-    )
-
-    response = valid_user_client.get(url)
-    assert response.status_code == 200
-
-    soup = BeautifulSoup(str(response.content), "html.parser")
-
-    num_changes = len(soup.select(".govuk-accordion__section"))
-    assert num_changes == session_workbasket.tracked_models.count()
-
-    version_control_tabs = soup.select('a[href="#version-control"]')
-    assert len(version_control_tabs) == 2
-
-
-def test_workbasket_changes_view_without_permission(client, session_workbasket):
-    url = reverse(
-        "workbaskets:workbasket-ui-changes",
-        kwargs={"pk": session_workbasket.pk},
-    )
+    workbasket = factories.WorkBasketFactory.create()
+    url = reverse(url_name, kwargs={"pk": workbasket.pk})
     user = factories.UserFactory.create()
     client.force_login(user)
     response = client.get(url)
 
     assert response.status_code == 403
+
+
+def test_workbasket_detail_view_displays_workbasket_details(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that `WorkBasketDetailView` returns 200 and displays workbasket
+    details in table."""
+
+    url = reverse(
+        "workbaskets:workbasket-ui-detail",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    table = soup.select("table")[0]
+    row_text = [row.text for row in table.findChildren("td")]
+
+    assert session_workbasket.get_status_display().upper() in row_text[0]
+    assert str(session_workbasket.id) in row_text[1]
+    assert session_workbasket.title in row_text[2]
+    assert session_workbasket.reason in row_text[3]
+    assert str(session_workbasket.tracked_models.count()) in row_text[4]
+    assert session_workbasket.created_at.strftime("%d %b %y %H:%M") in row_text[5]
+    assert session_workbasket.updated_at.strftime("%d %b %y %H:%M") in row_text[6]
+
+
+def test_workbasket_changes_view_without_change_permission(client, session_workbasket):
+    """Tests that `WorkBasketChangesView` displays changes in a workbasket
+    without the ability to remove items to users without `change_workbasket`
+    permission."""
+
+    url = reverse(
+        "workbaskets:workbasket-ui-changes",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    user = factories.UserFactory.create()
+    user.user_permissions.add(Permission.objects.get(codename="view_workbasket"))
+    client.force_login(user)
+    response = client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    columns = page.select(".govuk-table__header")
+    rows = page.select("tbody > tr")
+    checkboxes = page.select(".govuk-checkboxes__input")
+    remove_button = page.find("button", value="remove-selected")
+
+    assert len(columns) == 5
+    assert len(rows) == session_workbasket.tracked_models.count()
+    assert not checkboxes
+    assert not remove_button
+
+
+def test_workbasket_changes_view_with_change_permission(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that `WorkBasketChangesView` displays changes in a workbasket with
+    the ability to remove items to users with `change_workbasket` permission."""
+
+    url = reverse(
+        "workbaskets:workbasket-ui-changes",
+        kwargs={"pk": session_workbasket.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(str(response.content), "html.parser")
+    columns = page.select(".govuk-table__header")
+    rows = page.select("tbody > tr")
+    checkboxes = page.select(".govuk-checkboxes__input")
+    remove_button = page.find("button", value="remove-selected")
+
+    assert len(columns) == 6
+    assert len(rows) == session_workbasket.tracked_models.count()
+    assert checkboxes
+    assert remove_button
+
+
+@pytest.mark.parametrize(
+    ("page_param", "expected_item_count", "load_more"),
+    [
+        ("?page=1", 1, True),
+        ("?page=2", 2, True),
+        ("?page=3", 3, False),
+    ],
+)
+def test_workbasket_changes_view_pagination(
+    page_param,
+    expected_item_count,
+    load_more,
+    valid_user_client,
+):
+    """Tests that `WorkBasketChangesView` paginates items in workbasket,
+    returning the previous pages' results plus the new page's result (according
+    to `paginate_by`) upon loading more."""
+
+    workbasket = factories.WorkBasketFactory.create()
+    with workbasket.new_transaction() as transaction:
+        factories.SimpleGoodsNomenclatureFactory.create_batch(
+            3,
+            transaction=transaction,
+        )
+    total_item_count = workbasket.tracked_models.count()
+    assert total_item_count == 3
+
+    with patch("workbaskets.views.ui.WorkBasketChangesView.paginate_by", 1):
+        url = reverse("workbaskets:workbasket-ui-changes", kwargs={"pk": workbasket.pk})
+        response = valid_user_client.get(url + page_param)
+        assert response.status_code == 200
+
+        page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+        rows = page.select("tbody > tr")
+        pagination_text = page.select(".pagination > p")[0].text
+        progress_bar = page.find(
+            "progress",
+            value=expected_item_count,
+            max=total_item_count,
+        )
+        load_more_button = page.find("button", value="page-next")
+
+        assert len(rows) == expected_item_count
+        assert (
+            f"You've viewed {expected_item_count} out of {total_item_count} items"
+            in pagination_text
+        )
+        assert progress_bar
+        if load_more:
+            assert load_more_button
+        else:
+            assert not load_more_button
+
+
+@pytest.mark.parametrize(
+    ("ordering_param", "expected_ordering"),
+    [
+        ("?sort_by=component&ordered=asc", "polymorphic_ctype"),
+        ("?sort_by=component&ordered=desc", "-polymorphic_ctype"),
+        ("?sort_by=action&ordered=asc", "update_type"),
+        ("?sort_by=action&ordered=desc", "-update_type"),
+        ("?sort_by=activity_date&ordered=asc", "transaction__updated_up"),
+        ("?sort_by=activity_date&ordered=desc", "-transaction__updated_up"),
+    ],
+)
+def test_workbasket_changes_view_sort_by_queryset(ordering_param, expected_ordering):
+    """Tests that `WorkBasketChangesView` orders queryset according to `sort_by`
+    and `ordered` GET request URL params."""
+
+    workbasket = factories.WorkBasketFactory.create()
+    with workbasket.new_transaction() as transaction:
+        footnote = factories.FootnoteFactory.create(transaction=transaction)
+        footnote.new_version(update_type=UpdateType.DELETE, workbasket=workbasket)
+
+    request = RequestFactory()
+    url = reverse("workbaskets:workbasket-ui-changes", kwargs={"pk": workbasket.pk})
+    get_request = request.get(url + ordering_param)
+    view = ui.WorkBasketChangesView(request=get_request, kwargs={"pk": workbasket.pk})
+    assert list(view.get_queryset()) == list(
+        workbasket.tracked_models.order_by(expected_ordering),
+    )
+
+
+def test_workbasket_changes_view_remove_selected(valid_user_client):
+    """Tests that items in a workbasket can be selected and removed on
+    `WorkBasketChangesView`."""
+
+    footnote_type = factories.FootnoteTypeFactory.create()
+    workbasket = factories.WorkBasketFactory.create()
+    footnote = factories.FootnoteFactory.create(
+        footnote_type=footnote_type,
+        transaction=workbasket.new_transaction(),
+    )
+    footnote_description = footnote.descriptions.first()
+    assert workbasket.tracked_models.count() == 2
+
+    form_data = {
+        "form-action": "remove-selected",
+        f"selectableobject_{footnote.pk}": True,
+        f"selectableobject_{footnote_description.pk}": True,
+    }
+    view_url = reverse(
+        "workbaskets:workbasket-ui-changes",
+        kwargs={"pk": workbasket.pk},
+    )
+    delete_changes_url = reverse(
+        "workbaskets:workbasket-ui-changes-delete",
+        kwargs={"pk": workbasket.pk},
+    )
+    confirm_delete_url = reverse(
+        "workbaskets:workbasket-ui-changes-confirm-delete",
+        kwargs={"pk": workbasket.pk},
+    )
+
+    response = valid_user_client.post(view_url, form_data)
+    assert response.status_code == 302
+    assert response.url == delete_changes_url
+
+    response = valid_user_client.post(delete_changes_url, {"action": "delete"})
+    assert response.status_code == 302
+    assert response.url == confirm_delete_url
+    assert workbasket.tracked_models.count() == 0
 
 
 def test_successfully_delete_workbasket(
