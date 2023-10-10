@@ -159,6 +159,35 @@ class FootnoteConfirmCreate(FootnoteMixin, TrackedModelDetailView):
 class FootnoteDetail(FootnoteMixin, TrackedModelDetailView):
     template_name = "footnotes/detail.jinja"
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "details"
+        return context
+
+
+class FootnoteDetailDescriptions(FootnoteDetail):
+    """Displays descriptions for a footnote as a simulated tab on footnote
+    view."""
+
+    template_name = "includes/footnotes/tabs/descriptions.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "descriptions"
+        return context
+
+
+class FootnoteDetailVersionControl(FootnoteDetail):
+    """Displays version history for a footnote as a simulated tab on footnote
+    view."""
+
+    template_name = "includes/footnotes/tabs/version_control.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "version-control"
+        return context
+
 
 class FootnoteUpdateMixin(
     FootnoteMixin,
