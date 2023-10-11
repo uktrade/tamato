@@ -1395,14 +1395,21 @@ def test_workbasket_changes_view_sort_by_queryset(ordering_param, expected_order
     """Tests that `WorkBasketChangesView` orders queryset according to `sort_by`
     and `ordered` GET request URL params."""
 
+    additional_code_type = factories.AdditionalCodeTypeFactory.create()
     workbasket = factories.WorkBasketFactory.create()
-    footnote_type = factories.FootnoteTypeFactory.create()
-    with workbasket.new_transaction() as transaction:
-        footnote = factories.FootnoteFactory.create(
-            footnote_type=footnote_type,
-            transaction=transaction,
-        )
-    footnote.new_version(update_type=UpdateType.DELETE, workbasket=workbasket)
+    additional_code = factories.AdditionalCodeFactory.create(
+        type=additional_code_type,
+        transaction=workbasket.new_transaction(),
+    )
+    additional_code_description = factories.AdditionalCodeDescriptionFactory.create(
+        described_additionalcode=additional_code,
+        transaction=workbasket.new_transaction(),
+    )
+    additional_code.new_version(
+        update_type=UpdateType.DELETE,
+        workbasket=workbasket,
+        transaction=workbasket.new_transaction(),
+    )
 
     request = RequestFactory()
     url = reverse("workbaskets:workbasket-ui-changes", kwargs={"pk": workbasket.pk})
