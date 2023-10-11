@@ -1,0 +1,74 @@
+{% extends "footnotes/detail.jinja" -%}
+
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+
+{% set actions_menu %}
+  <div class="govuk-grid-column-one-quarter">
+    <div class="app-related-items" role="complementary">
+      <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
+      <ul class="govuk-list govuk-!-font-size-16">
+        <li><a class="govuk-link" href="{{ measures_url }}">View in find and edit measures</a></li>
+      </ul>
+    </div>
+  </div>
+{% endset %}
+
+{% block tab_content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+      <h2 class="govuk-heading-l">Measures</h2>
+    </div>
+    {{ actions_menu }}
+  </div>
+
+  {% set table_rows = [] %}
+  {% for measure in object_list %}
+    {% set measure_link %}
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('measure-ui-detail', kwargs={'sid': measure.sid}) }}">{{ measure.sid }}</a>
+    {% endset %}
+
+    {% set commodity_link %}
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', args=[measure.goods_nomenclature.sid]) }}">{{ measure.goods_nomenclature.item_id }}</a>
+    {% endset %}
+
+    {% set geo_area_link -%}
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('geo_area-ui-detail', kwargs={'sid': measure.geographical_area.sid}) }}">{{ measure.geographical_area }} - {{ measure.geographical_area.structure_description }}</a>
+    {% endset %}
+
+    {{ table_rows.append([
+      {"text": measure_link},
+      {"html": commodity_link},
+      {"text": "{:%d %b %Y}".format(measure.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else "-"},
+    ]) or "" }}
+  {% endfor %}
+
+  {% set base_url = url('footnote-ui-detail-measures', kwargs={"footnote_type__footnote_type_id":object.footnote_type.footnote_type_id, "footnote_id":object.footnote_id}) %}
+
+  {% set commodity_code %}
+    {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
+  {% endset %}
+
+  {% set start_date %}
+    {{ create_sortable_anchor(request, "start_date", "Start date", base_url) }}
+  {% endset %}
+
+  {% if paginator.count > 0 %}
+    {% include "includes/common/pagination-list-summary.jinja" %}
+  {% endif %}
+
+  {% if object_list %}
+    {{ govukTable({
+      "head": [
+        {"text": "Measure SID"},
+        {"text": commodity_code},
+        {"text": start_date},
+        {"text": "End date"},
+      ],
+      "rows": table_rows
+    }) }}
+  {% else %}
+    <p class="govuk-body">There are no measures for this certificate.</p>
+  {% endif %}
+  {% include "includes/common/pagination.jinja" %}
+{% endblock %}

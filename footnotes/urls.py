@@ -33,6 +33,11 @@ ui_patterns += [
         name="footnote-ui-detail-descriptions",
     ),
     path(
+        f"{detail}/measures/",
+        views.FootnoteDetailMeasures.as_view(),
+        name="footnote-ui-detail-measures",
+    ),
+    path(
         f"{detail}/version-control/",
         views.FootnoteDetailVersionControl.as_view(),
         name="footnote-ui-detail-version-control",

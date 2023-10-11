@@ -1,7 +1,10 @@
 from typing import Type
+from urllib.parse import urlencode
 
 from django.db import transaction
 from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.views.generic import ListView
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -9,15 +12,20 @@ from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.validators import UpdateType
 from common.views import DescriptionDeleteMixin
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from common.views import WithPaginationListMixin
 from footnotes import business_rules
 from footnotes import forms
 from footnotes import models
 from footnotes.filters import FootnoteFilter
 from footnotes.filters import FootnoteFilterBackend
+from footnotes.models import Footnote
 from footnotes.serializers import FootnoteTypeSerializer
+from measures.models import FootnoteAssociationMeasure
+from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
@@ -186,6 +194,55 @@ class FootnoteDetailVersionControl(FootnoteDetail):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["selected_tab"] = "version-control"
+        return context
+
+
+class FootnoteDetailMeasures(SortingMixin, WithPaginationListMixin, ListView):
+    """Displays a paginated list of measures for a footnote as a simulated tab
+    on footnote view."""
+
+    model = Measure
+    template_name = "includes/footnotes/tabs/measures.jinja"
+    paginate_by = 20
+    sort_by_fields = ["goods_nomenclature", "start_date"]
+    custom_sorting = {
+        "start_date": "valid_between",
+    }
+
+    @property
+    def footnote(self):
+        return Footnote.objects.get(
+            footnote_type__footnote_type_id=self.kwargs[
+                "footnote_type__footnote_type_id"
+            ],
+            footnote_id=self.kwargs["footnote_id"],
+        )
+
+    def get_queryset(self):
+        footnote_associations = FootnoteAssociationMeasure.objects.filter(
+            associated_footnote_id=self.footnote.trackedmodel_ptr_id,
+        ).values_list("footnoted_measure", flat=True)
+        queryset = (
+            Measure.objects.all()
+            .current()
+            .filter(
+                id__in=footnote_associations,
+            )
+        )
+        ordering = self.get_ordering()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["object"] = self.footnote
+        context["selected_tab"] = "measures"
+        url_params = urlencode({"footnote": self.footnote.pk})
+        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+        context["measures_url"] = measures_url
         return context
 
 
