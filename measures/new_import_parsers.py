@@ -538,6 +538,8 @@ class NewMeasureActionParser(NewValidityMixin, NewWritable, NewElementParser):
         "code",
     ]
 
+    allow_update_without_children = True
+
     code: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None

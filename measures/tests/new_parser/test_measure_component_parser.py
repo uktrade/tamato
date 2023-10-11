@@ -85,3 +85,21 @@ class TestNewMeasureComponentParser:
         assert len(importer.issues()) == 0
 
         assert GeographicalAreaDescription.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("measure_component_CREATE.xml", __file__, True)
+        importer = preload_import("measure_component_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        target = target_message.taric_object
+
+        assert target.component_measure__sid == 99
+        assert target.duty_expression__sid == 7
+        assert target.duty_amount == 17.5
+        assert target.monetary_unit__code == "ZZZ"
+        assert target.component_measurement__measurement_unit__code == "XYZ"
+        assert target.component_measurement__measurement_unit_qualifier__code == "F"
+
+        assert len(importer.issues()) == 0
+
+        assert GeographicalAreaDescription.objects.all().count() == 2
