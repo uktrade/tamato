@@ -548,7 +548,7 @@ class WorkBasketChangesView(PermissionRequiredMixin, SortingMixin, FormView):
 
         ordering = self.get_ordering()
         if ordering:
-            ordering = (ordering,)
+            ordering = (ordering, "transaction")
             return queryset.order_by(*ordering)[:items_per_page]
         else:
             return queryset[:items_per_page]
