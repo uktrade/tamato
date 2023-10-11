@@ -180,7 +180,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
         return redirect(reverse("workbaskets:workbasket-ui-list"))
 
 
-class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
+class WorkBasketChangesDelete(PermissionRequiredMixin, ListView):
     """UI for user review of WorkBasket item deletion."""
 
     template_name = "workbaskets/delete_changes.jinja"
@@ -188,11 +188,7 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
 
     @property
     def workbasket(self) -> WorkBasket:
-        workbasket_pk = self.kwargs.get("pk", None)
-        if workbasket_pk:
-            return WorkBasket.objects.get(pk=workbasket_pk)
-        else:
-            return WorkBasket.current(self.request)
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
 
     def _session_store(self, workbasket):
         """Get the current user's SessionStore for the WorkBasket that they're
@@ -216,14 +212,15 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
         return self.workbasket.tracked_models.filter(pk__in=pks)
 
     def post(self, request, *args, **kwargs):
-        workbasket_pk = self.kwargs.get("pk", None)
-
         if request.POST.get("action", None) != "delete":
             # The user has cancelled out of the deletion process.
-            if workbasket_pk:
-                return redirect("workbaskets:workbasket-ui-changes", pk=workbasket_pk)
-            else:
+            if self.workbasket == WorkBasket.current(self.request):
                 return redirect("workbaskets:current-workbasket")
+            else:
+                return redirect(
+                    "workbaskets:workbasket-ui-changes",
+                    pk=self.workbasket.pk,
+                )
 
         # By reverse ordering on record_code + subrecord_code we're able to
         # delete child entities first, avoiding protected foreign key
@@ -248,28 +245,22 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
         session_store = self._session_store(self.workbasket)
         session_store.clear()
 
-        if workbasket_pk:
-            redirect_url = reverse(
-                "workbaskets:workbasket-ui-changes-confirm-delete",
-                kwargs={"pk": workbasket_pk},
-            )
-        else:
-            redirect_url = reverse(
-                "workbaskets:workbasket-ui-delete-changes-done",
-            )
+        redirect_url = reverse(
+            "workbaskets:workbasket-ui-changes-confirm-delete",
+            kwargs={"pk": self.workbasket.pk},
+        )
         return redirect(redirect_url)
 
 
-class WorkBasketDeleteChangesDone(TemplateView):
+class WorkBasketChangesConfirmDelete(TemplateView):
     template_name = "workbaskets/delete_changes_confirm.jinja"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        workbasket_pk = self.kwargs.get("pk", None)
-        if workbasket_pk:
-            context["workbasket"] = WorkBasket.objects.get(pk=workbasket_pk)
-        else:
-            context["workbasket"] = None
+        session_workbasket = WorkBasket.current(self.request)
+        workbasket = WorkBasket.objects.get(pk=self.kwargs["pk"])
+        if workbasket.pk != session_workbasket.pk:
+            context["workbasket"] = workbasket
         return context
 
 
@@ -328,8 +319,6 @@ class CurrentWorkBasket(FormView):
         "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
         "run-business-rules": "workbaskets:current-workbasket",
         "terminate-rule-check": "workbaskets:current-workbasket",
-        "remove-selected": "workbaskets:workbasket-ui-delete-changes",
-        "remove-all": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
         "compare-data": "workbaskets:current-workbasket",
@@ -396,6 +385,11 @@ class CurrentWorkBasket(FormView):
             self.run_business_rules()
         elif form_action == "terminate-rule-check":
             self.workbasket.terminate_rule_check()
+        elif form_action in ["remove-selected", "remove-all"]:
+            return reverse(
+                "workbaskets:workbasket-ui-changes-delete",
+                kwargs={"pk": self.workbasket.pk},
+            )
         try:
             return self._append_url_page_param(
                 reverse(

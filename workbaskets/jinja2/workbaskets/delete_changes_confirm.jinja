@@ -33,7 +33,7 @@
     {% if workbasket %}
       {{ govukButton({
         "text": "Return to workbasket",
-        "href": url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk}),
+        "href": url("workbaskets:workbasket-ui-changes", kwargs={"pk": workbasket.pk}),
       }) }}
     {% else %}
       {{ govukButton({

@@ -321,7 +321,6 @@ def test_select_workbasket_redirects_to_tab(
 @pytest.mark.parametrize(
     "form_action, url_name",
     [
-        ("remove-selected", "workbaskets:workbasket-ui-delete-changes"),
         ("page-prev", "workbaskets:current-workbasket"),
         ("page-next", "workbaskets:current-workbasket"),
     ],
@@ -349,20 +348,11 @@ def test_review_workbasket_redirects(
         assert "?page=3" in response.url
 
 
-def test_delete_changes_confirm_200(valid_user_client, session_workbasket):
-    url = reverse(
-        "workbaskets:workbasket-ui-delete-changes-done",
-    )
-    response = valid_user_client.get(url)
-    assert response.status_code == 200
-
-
 @pytest.mark.parametrize(
     "url_name,",
     (
         "workbaskets:workbasket-ui-list",
         "workbaskets:workbasket-ui-list-all",
-        "workbaskets:workbasket-ui-delete-changes",
         "workbaskets:edit-workbasket",
     ),
 )
