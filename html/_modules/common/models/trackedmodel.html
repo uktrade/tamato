@@ -393,8 +393,8 @@
 <span class="sd">        Get a name/value mapping of the fields that identify this model.</span>
 
 <span class="sd">        :param identifying_fields Optional[Iterable[str]]: Optionally override</span>
-<span class="sd">            the fields to retrieve</span>
-<span class="sd">        :rtype dict[str, Any]: A dict of field names to values</span>
+<span class="sd">        the fields to retrieve :rtype dict[str, Any]: A dict of field names to</span>
+<span class="sd">        values</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">identifying_fields</span> <span class="o">=</span> <span class="n">identifying_fields</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields</span>
@@ -758,8 +758,8 @@
 <span class="sd">        Callers should handle the case where no URL is returned.</span>
 
 <span class="sd">        :param action str: The view type to generate a URL for (default</span>
-<span class="sd">            &quot;detail&quot;), eg: &quot;list&quot; or &quot;edit&quot;</span>
-<span class="sd">        :rtype Optional[str]: The generated URL</span>
+<span class="sd">            &quot;detail&quot;), eg: &quot;list&quot; or &quot;edit&quot; :rtype Optional[str]: The generated</span>
+<span class="sd">            URL</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">action</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">,</span> <span class="s2">&quot;create&quot;</span><span class="p">]:</span>
@@ -789,8 +789,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the prefix string for a view name for this model.</span>
 
-<span class="sd">        By default, this is the verbose name of the model with spaces replaced by</span>
-<span class="sd">        underscores, but this method allows this to be overridden.</span>
+<span class="sd">        By default, this is the verbose name of the model with spaces replaced</span>
+<span class="sd">        by underscores, but this method allows this to be overridden.</span>
 
 <span class="sd">        :rtype str: The prefix</span>
 <span class="sd">        &quot;&quot;&quot;</span>
