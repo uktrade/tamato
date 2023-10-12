@@ -7,7 +7,6 @@
     <div class="govuk-grid-column-full">
         {% set description_rows = [] %}
         {% set descriptions = object.get_descriptions() %}
-        {% set is_only_description = descriptions|length == 1 %}
         
         {% for description in descriptions %}
             {% set description_row = [
