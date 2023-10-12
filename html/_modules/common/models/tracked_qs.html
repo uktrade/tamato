@@ -265,7 +265,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Exclude results which have the specified version_group.</span>
 
-<span class="sd">        :param version_group VersionGroup: Exclude the members of this version group</span>
+<span class="sd">        :param version_group VersionGroup: Exclude the members of this version</span>
+<span class="sd">            group</span>
 <span class="sd">        :rtype QuerySet:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">version_group</span><span class="o">=</span><span class="n">version_group</span><span class="p">)</span>
@@ -374,6 +375,11 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
             <span class="s2">&quot;version_group&quot;</span><span class="p">,</span> <span class="s2">&quot;version_group__current_version&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">related_lookups</span>
         <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">with_transactions_and_models</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Runs a `.select_related` operation for `transaction` and</span>
+<span class="sd">        `polymorphic_ctype`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;transaction&quot;</span><span class="p">,</span> <span class="s2">&quot;polymorphic_ctype&quot;</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_when_model_record_codes</span><span class="p">():</span>
