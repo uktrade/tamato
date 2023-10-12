@@ -1,6 +1,5 @@
 {% set parent_code %}
     {% if parent %}
-        print('fires')
         <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("commodity-ui-detail", kwargs={"sid": parent.sid}) }}">{{ parent.code }}</a>
     {% endif %}
 {% endset %}
