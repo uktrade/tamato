@@ -197,6 +197,7 @@ def test_commodity_measures(url_name, valid_user_client, commodity, measures):
         "commodity-ui-detail-measures-as-defined",
         "commodity-ui-detail-measures-declarable",
         "commodity-ui-detail-hierarchy",
+        "commodity-ui-detail-descriptions",
     ],
 )
 def test_commodity_views_200(url_name, valid_user_client, commodity, measures):
