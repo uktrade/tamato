@@ -550,10 +550,11 @@ class NewElementParser:
                     non_taric_attribute,
                 )
 
-        # finally, if this model; has a parent, remove SID which will be linked to the model it should be updating
+        # finally, if this model; has a parent, remove sid, code and group_id which will be linked to the model it should be updating
         if self.parent_parser:
-            if "sid" in model_attributes.keys():
-                del model_attributes["sid"]
+            for field in ["sid", "code", "group_id"]:
+                if field in model_attributes.keys() and field in self.identity_fields:
+                    del model_attributes[field]
 
         return model_attributes
 
@@ -565,9 +566,7 @@ class NewElementParser:
         if self.parent_parser:
             if self.update_type == 1:  # update
                 return True
-
             return False
-
         return True
 
     def is_child_object(self):

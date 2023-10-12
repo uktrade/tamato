@@ -142,3 +142,30 @@ class TestNewQuotaDefinitionParser:
         assert len(importer.issues()) == 0
 
         assert QuotaDefinition.objects.all().count() == 2
+
+    def test_import_update(self, superuser):
+        preload_import("quota_definition_CREATE.xml", __file__, True)
+        importer = preload_import("quota_definition_UPDATE.xml", __file__)
+
+        # check - measurement unit variant
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        target = target_message.taric_object
+
+        # check properties
+        assert target.sid == 99
+        assert target.order_number__order_number == "054515"
+        assert target.valid_between_lower == date(2023, 1, 11)
+        assert target.valid_between_upper == date(2024, 1, 1)
+        assert target.order_number__sid == 7
+        assert target.volume == 1200.0
+        assert target.initial_volume == 200.0
+        assert target.monetary_unit__code == "ZZZ"
+        assert target.measurement_unit__code is None
+        assert target.measurement_unit_qualifier__code is None
+        assert target.maximum_precision == 3
+        assert target.quota_critical is False
+        assert target.quota_critical_threshold == 75
+        assert target.description == "Some Description with changes"
+
+        assert QuotaDefinition.objects.all().count() == 3

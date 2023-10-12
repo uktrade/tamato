@@ -86,3 +86,14 @@ class TestNewQuotaEventParser:
             .count()
             == 1
         )
+
+    def test_import_update(self, superuser):
+        preload_import("quota_exhaustion_event_CREATE.xml", __file__, True)
+        importer = preload_import("quota_exhaustion_event_UPDATE.xml", __file__)
+
+        assert len(importer.issues()) == 1
+
+        assert (
+            "Taric objects of type QuotaEvent can't be updated, only created and deleted"
+            in str(importer.issues()[0])
+        )

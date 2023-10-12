@@ -98,3 +98,25 @@ class TestNewMeasureTypeParser:
         assert len(importer.issues()) == 0
 
         assert MeasureType.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("measure_type_CREATE.xml", __file__, True)
+        importer = preload_import("measure_type_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        target = target_message.taric_object
+
+        assert target.sid == "ZZZ"
+        assert target.trade_movement_code == 1
+        assert target.priority_code == 2
+        assert target.measure_component_applicability_code == 3
+        assert target.origin_destination_code == 4
+        assert target.order_number_capture_code == 5
+        assert target.measure_explosion_level == 6
+        assert target.measure_type_series__sid == "A"
+        assert target.valid_between_lower == date(2021, 1, 11)
+        assert target.valid_between_upper == date(2022, 1, 1)
+
+        assert len(importer.issues()) == 0
+
+        assert MeasureType.objects.all().count() == 2

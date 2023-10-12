@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from additional_codes.models import AdditionalCodeDescription
 from additional_codes.new_import_parsers import NewAdditionalCodeDescriptionPeriodParser
 from common.tests.util import preload_import
 
@@ -99,6 +100,8 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         assert target_taric_object.validity_start == date(2021, 1, 11)
 
         assert importer.issues() == []
+
+        assert AdditionalCodeDescription.objects.all().count() == 2
 
     def test_import_no_description(self):
         importer = preload_import(

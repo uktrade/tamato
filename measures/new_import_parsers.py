@@ -27,6 +27,8 @@ class NewMeasureTypeSeriesParser(NewValidityMixin, NewWritable, NewElementParser
         "sid",
     ]
 
+    allow_update_without_children = True
+
     sid: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None
@@ -80,6 +82,8 @@ class NewMeasurementUnitParser(NewValidityMixin, NewWritable, NewElementParser):
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
     }
+
+    allow_update_without_children = True
 
     code: str = None
     valid_between_lower: date = None
@@ -139,6 +143,8 @@ class NewMeasurementUnitQualifierParser(
     identity_fields = [
         "code",
     ]
+
+    allow_update_without_children = True
 
     code: str = None
     valid_between_lower: date = None
@@ -238,6 +244,8 @@ class NewMonetaryUnitParser(NewValidityMixin, NewWritable, NewElementParser):
     identity_fields = [
         "code",
     ]
+
+    allow_update_without_children = True
 
     code: str = None
     valid_between_lower: date = None
@@ -371,6 +379,8 @@ class NewMeasureTypeParser(NewValidityMixin, NewWritable, NewElementParser):
         "sid",
     ]
 
+    allow_update_without_children = True
+
     sid: str = None
     trade_movement_code: int = None
     priority_code: int = None
@@ -479,6 +489,8 @@ class NewMeasureConditionCodeParser(NewValidityMixin, NewWritable, NewElementPar
     identity_fields = [
         "code",
     ]
+
+    allow_update_without_children = True
 
     code: str = None
     valid_between_lower: date = None

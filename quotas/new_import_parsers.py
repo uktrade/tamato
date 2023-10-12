@@ -380,6 +380,8 @@ class NewQuotaBalanceEventParser(NewQuotaEventParser):
         "occurrence_timestamp",
     ]
 
+    updates_allowed = False
+
     # data fields
     new_balance: str = None
     old_balance: str = None
@@ -409,6 +411,8 @@ class NewQuotaUnblockingEventParser(NewQuotaEventParser):
         "unblocking_date",
     ]
 
+    updates_allowed = False
+
     # data fields
     unblocking_date: str = None
 
@@ -435,6 +439,8 @@ class NewQuotaCriticalEventParser(NewQuotaEventParser):
         "quota_definition__sid",
         "occurrence_timestamp",
     ]
+
+    updates_allowed = False
 
     # data fields
     critical_state: str = None
@@ -463,6 +469,8 @@ class NewQuotaExhaustionEventParser(NewQuotaEventParser):
         "occurrence_timestamp",
     ]
 
+    updates_allowed = False
+
     # data fields
     exhaustion_date: str = None
 
@@ -489,6 +497,8 @@ class NewQuotaReopeningEventParser(NewQuotaEventParser):
         "occurrence_timestamp",
     ]
 
+    updates_allowed = False
+
     # data fields
     reopening_date: str = None
 
@@ -514,6 +524,8 @@ class NewQuotaUnsuspensionEventParser(NewQuotaEventParser):
         "quota_definition__sid",
         "occurrence_timestamp",
     ]
+
+    updates_allowed = False
 
     # data fields
     unsuspension_date: str = None
@@ -543,6 +555,8 @@ class NewQuotaClosedAndTransferredEventParser(NewQuotaEventParser):
         "quota_definition__sid",
         "occurrence_timestamp",
     ]
+
+    updates_allowed = False
 
     # data fields
     quota_closed: str = None

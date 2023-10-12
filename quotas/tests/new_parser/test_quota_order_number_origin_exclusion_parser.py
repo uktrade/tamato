@@ -69,3 +69,25 @@ class TestNewQuotaOrderNumberOriginExclusionParser:
 
         assert len(importer.issues()) == 0
         assert QuotaOrderNumberOriginExclusion.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import(
+            "quota_order_number_origin_exclusion_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "quota_order_number_origin_exclusion_UPDATE.xml",
+            __file__,
+        )
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        # check properties
+        target = target_message.taric_object
+        assert target.origin__sid == 123
+        assert target.excluded_geographical_area__sid == 8
+
+        assert len(importer.issues()) == 0
+
+        assert QuotaOrderNumberOriginExclusion.objects.all().count() == 2

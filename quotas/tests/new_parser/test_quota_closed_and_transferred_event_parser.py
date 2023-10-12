@@ -2,6 +2,7 @@ import pytest
 
 # note : need to import these objects to make them available to the parser
 from common.tests.util import preload_import
+from measures.new_import_parsers import *
 from quotas.models import QuotaEvent
 from quotas.new_import_parsers import *
 
@@ -108,4 +109,22 @@ class TestNewQuotaClosedAndTransferredEventParser:
             .filter(subrecord_code=self.target_parser_class.subrecord_code)
             .count()
             == 1
+        )
+
+    def test_import_update(self, superuser):
+        preload_import(
+            "quota_closed_and_transferred_event_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "quota_closed_and_transferred_event_UPDATE.xml",
+            __file__,
+        )
+
+        assert len(importer.issues()) == 1
+
+        assert (
+            "Taric objects of type QuotaEvent can't be updated, only created and deleted"
+            in str(importer.issues()[0])
         )

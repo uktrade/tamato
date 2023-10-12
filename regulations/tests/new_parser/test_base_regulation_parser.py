@@ -6,6 +6,7 @@ from additional_codes.new_import_parsers import *
 from common.tests.util import preload_import
 from geo_areas.new_import_parsers import *
 from regulations.models import Group
+from regulations.models import Regulation
 from regulations.new_import_parsers import NewBaseRegulationParser
 
 pytestmark = pytest.mark.django_db
@@ -131,3 +132,37 @@ class TestNewBaseRegulationParser:
         assert len(importer.issues()) == 0
 
         assert Group.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import(
+            "base_regulation_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "base_regulation_UPDATE.xml",
+            __file__,
+        )
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        target = target_message.taric_object
+
+        # verify all properties
+        assert target.role_type == 1
+        assert target.regulation_id == "Z0000001"
+        assert target.published_at == date(2023, 1, 11)
+        assert target.official_journal_number == "ABCDE"
+        assert target.official_journal_page == 7
+        assert target.valid_between_lower == date(2021, 1, 11)
+        assert target.valid_between_upper == date(2022, 1, 11)
+        assert target.effective_end_date == date(2023, 1, 11)
+        assert target.community_code == 1
+        assert target.regulation_group__group_id == "ABC"
+        assert target.replacement_indicator == 7
+        assert target.stopped is False
+        assert target.information_text == "Some Info Text with changes"
+        assert target.approved is True
+
+        assert len(importer.issues()) == 0
+
+        assert Regulation.objects.all().count() == 2

@@ -28,6 +28,8 @@ class NewRegulationGroupParser(NewValidityMixin, NewWritable, NewElementParser):
         "group_id",
     ]
 
+    allow_update_without_children = True
+
     group_id: str = None
     valid_between_lower: date = None
     valid_between_upper: date = None

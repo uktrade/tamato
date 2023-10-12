@@ -103,3 +103,15 @@ class TestNewQuotaBalanceEventParser:
             .count()
             == 1
         )
+
+    def test_import_update(self, superuser):
+        # No Updates for this object type
+        preload_import("quota_balance_event_CREATE.xml", __file__, True)
+        importer = preload_import("quota_balance_event_UPDATE.xml", __file__)
+
+        assert len(importer.issues()) == 1
+
+        assert (
+            "Taric objects of type QuotaEvent can't be updated, only created and deleted"
+            in str(importer.issues()[0])
+        )

@@ -6,8 +6,8 @@ from commodities.new_import_parsers import *
 # note : need to import these objects to make them available to the parser
 from common.tests.util import preload_import
 from footnotes.new_import_parsers import *
-from geo_areas.models import GeographicalAreaDescription
 from geo_areas.new_import_parsers import *
+from measures.models import Measure
 from measures.new_import_parsers import NewMeasureParser
 from regulations.new_import_parsers import *
 
@@ -136,4 +136,35 @@ class TestNewMeasureParser:
 
         assert len(importer.issues()) == 0
 
-        assert GeographicalAreaDescription.objects.all().count() == 1
+        assert Measure.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("measure_CREATE.xml", __file__, True)
+        importer = preload_import("measure_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        target = target_message.taric_object
+
+        assert target.sid == 99
+        assert target.measure_type__sid == "ZZZ"
+        assert target.geographical_area__area_id == "AB01"
+        assert target.geographical_area__sid == 8
+        assert target.goods_nomenclature__item_id == "0100000000"
+        assert target.goods_nomenclature__sid == 1
+        assert target.additional_code__type__sid is None
+        assert target.additional_code__code is None
+        assert target.additional_code__sid is None
+        assert target.order_number__order_number is None
+        assert target.reduction is None
+        assert target.generating_regulation__role_type == 1
+        assert target.generating_regulation__regulation_id == "Z0000001"
+        assert target.terminating_regulation__role_type == 1
+        assert target.terminating_regulation__regulation_id == "Z0000001"
+        assert target.stopped is True
+        assert target.valid_between_lower == date(2021, 1, 11)
+        assert target.valid_between_upper == date(2022, 1, 1)
+
+        assert len(importer.issues()) == 0
+
+        assert Measure.objects.all().count() == 2

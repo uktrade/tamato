@@ -72,3 +72,22 @@ class TestNewMeasureExcludedGeographicalAreaParser:
         assert len(importer.issues()) == 0
 
         assert MeasureExcludedGeographicalArea.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("measure_excluded_geographical_area_CREATE.xml", __file__, True)
+        importer = preload_import(
+            "measure_excluded_geographical_area_UPDATE.xml",
+            __file__,
+        )
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        target = target_message.taric_object
+
+        assert target.modified_measure__sid == 99
+        assert target.excluded_geographical_area__area_id == "AB01"
+        assert target.excluded_geographical_area__sid == 8
+
+        assert len(importer.issues()) == 0
+
+        assert MeasureExcludedGeographicalArea.objects.all().count() == 2

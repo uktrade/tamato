@@ -4,8 +4,8 @@ from commodities.new_import_parsers import *
 
 # note : need to import these objects to make them available to the parser
 from common.tests.util import preload_import
-from geo_areas.models import GeographicalAreaDescription
 from geo_areas.new_import_parsers import *
+from measures.models import MeasureComponent
 from measures.new_import_parsers import *
 from regulations.new_import_parsers import *
 
@@ -84,7 +84,7 @@ class TestNewMeasureComponentParser:
 
         assert len(importer.issues()) == 0
 
-        assert GeographicalAreaDescription.objects.all().count() == 1
+        assert MeasureComponent.objects.all().count() == 1
 
     def test_import_update(self, superuser):
         preload_import("measure_component_CREATE.xml", __file__, True)
@@ -102,4 +102,4 @@ class TestNewMeasureComponentParser:
 
         assert len(importer.issues()) == 0
 
-        assert GeographicalAreaDescription.objects.all().count() == 2
+        assert MeasureComponent.objects.all().count() == 2

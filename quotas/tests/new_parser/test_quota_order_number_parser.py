@@ -76,3 +76,20 @@ class TestNewQuotaOrderNumberParser:
         assert len(importer.issues()) == 0
 
         assert QuotaOrderNumber.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("quota_order_number_CREATE.xml", __file__, True)
+        importer = preload_import("quota_order_number_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        target = target_message.taric_object
+
+        assert target.sid == 7
+        assert target.order_number == "054515"
+        assert target.valid_between_lower == date(2021, 1, 11)
+        assert target.valid_between_upper is None
+
+        assert len(importer.issues()) == 0
+
+        assert QuotaOrderNumber.objects.all().count() == 2

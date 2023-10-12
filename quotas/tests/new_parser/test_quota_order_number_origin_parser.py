@@ -88,3 +88,29 @@ class TestNewQuotaOrderNumberOriginParser:
 
         assert len(importer.issues()) == 0
         assert QuotaOrderNumberOrigin.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import(
+            "quota_order_number_origin_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "quota_order_number_origin_UPDATE.xml",
+            __file__,
+        )
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        # check properties
+        target = target_message.taric_object
+
+        assert target.sid == 123
+        assert target.order_number__sid == 7
+        assert target.geographical_area__sid == 8
+        assert target.geographical_area__area_id == "AB01"
+        assert target.valid_between_lower == date(2021, 1, 11)
+        assert target.valid_between_upper == date(2022, 1, 1)
+
+        assert len(importer.issues()) == 0
+
+        assert QuotaOrderNumberOrigin.objects.all().count() == 2

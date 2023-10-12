@@ -2,7 +2,7 @@ import pytest
 
 # note : need to import these objects to make them available to the parser
 from common.tests.util import preload_import
-from geo_areas.models import GeographicalAreaDescription
+from measures.models import MeasureConditionComponent
 from measures.new_import_parsers import NewMeasureConditionComponentParser
 
 pytestmark = pytest.mark.django_db
@@ -80,4 +80,23 @@ class TestNewMeasureConditionComponentParser:
 
         assert len(importer.issues()) == 0
 
-        assert GeographicalAreaDescription.objects.all().count() == 1
+        assert MeasureConditionComponent.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("measure_condition_component_CREATE.xml", __file__, True)
+        importer = preload_import("measure_condition_component_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        target = target_message.taric_object
+
+        assert target.condition__sid == 5
+        assert target.duty_expression__sid == 7
+        assert target.duty_amount == 99.99
+        assert target.monetary_unit__code == "ZZZ"
+        assert target.component_measurement__measurement_unit__code == "XXX"
+        assert target.component_measurement__measurement_unit_qualifier__code == "B"
+
+        assert len(importer.issues()) == 0
+
+        assert MeasureConditionComponent.objects.all().count() == 2

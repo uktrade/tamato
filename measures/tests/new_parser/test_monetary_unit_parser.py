@@ -70,3 +70,19 @@ class TestNewMonetaryUnitParser:
         assert len(importer.issues()) == 0
 
         assert MonetaryUnit.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("monetary_unit_CREATE.xml", __file__, True)
+        importer = preload_import("monetary_unit_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        target = target_message.taric_object
+
+        assert target.code == "ZZZ"
+        assert target.valid_between_lower == date(2021, 1, 11)
+        assert target.valid_between_upper == date(2022, 1, 1)
+
+        assert len(importer.issues()) == 0
+
+        assert MonetaryUnit.objects.all().count() == 2

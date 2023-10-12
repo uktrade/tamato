@@ -101,3 +101,27 @@ class TestNewMeasureConditionParser:
         assert len(importer.issues()) == 0
 
         assert MeasureCondition.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("measure_condition_CREATE.xml", __file__, True)
+        importer = preload_import("measure_condition_UPDATE.xml", __file__)
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+
+        target = target_message.taric_object
+
+        assert target.sid == 5
+        assert target.dependent_measure__sid == 99
+        assert target.condition_code__code == "A"
+        assert target.component_sequence_number == 5
+        assert target.duty_amount == 99.99
+        assert target.monetary_unit__code == "ZZZ"
+        assert target.condition_measurement__measurement_unit__code == "XXX"
+        assert target.condition_measurement__measurement_unit_qualifier__code == "A"
+        assert target.action__code == "ABC"
+        assert target.required_certificate__certificate_type__sid == "A"
+        assert target.required_certificate__sid == "123"
+
+        assert len(importer.issues()) == 0
+
+        assert MeasureCondition.objects.all().count() == 2

@@ -71,3 +71,21 @@ class TestNewMeasureConditionCodeDescriptionParser:
         assert len(importer.issues()) == 0
 
         assert MeasureConditionCode.objects.all().count() == 1
+
+    def test_import_update(self, superuser):
+        preload_import("measure_condition_code_description_CREATE.xml", __file__, True)
+        importer = preload_import(
+            "measure_condition_code_description_UPDATE.xml",
+            __file__,
+        )
+
+        target_message = importer.parsed_transactions[0].parsed_messages[0]
+        target = target_message.taric_object
+
+        # verify all properties
+        assert target.code == "A"
+        assert target.description == "Some Description with changes"
+
+        assert len(importer.issues()) == 0
+
+        assert MeasureConditionCode.objects.all().count() == 2
