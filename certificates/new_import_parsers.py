@@ -182,6 +182,8 @@ class NewCertificateDescriptionPeriodParser(
 
     identity_fields = ["sid"]
 
+    deletes_allowed = False
+
     sid: int = None
     described_certificate__certificate_type__sid: str = None
     described_certificate__sid: str = None

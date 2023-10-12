@@ -86,3 +86,19 @@ class TestNewCertificateDescriptionParser:
         assert target.described_certificate__certificate_type__sid == "A"
         assert target.described_certificate__sid == "123"
         assert target.description == "This is a description with changes"
+
+    def test_import_delete(self):
+        preload_import(
+            "certificate_description_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "certificate_description_DELETE.xml",
+            __file__,
+        )
+        # check for issues
+        assert importer.issues() == []
+        assert importer.can_save()
+        assert CertificateDescription.objects.all().count() == 2
+        assert CertificateDescription.objects.all().last().update_type == 2

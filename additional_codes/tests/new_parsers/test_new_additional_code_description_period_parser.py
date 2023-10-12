@@ -103,6 +103,21 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
 
         assert AdditionalCodeDescription.objects.all().count() == 2
 
+    def test_import_delete(self):
+        preload_import("additional_code_description_period_CREATE.xml", __file__, True)
+        importer = preload_import(
+            "additional_code_description_period_DELETE.xml",
+            __file__,
+        )
+
+        assert len(importer.issues()) == 1
+        assert not importer.can_save()
+
+        assert (
+            "Taric objects of type AdditionalCodeDescription can't be deleted"
+            in str(importer.issues()[0])
+        )
+
     def test_import_no_description(self):
         importer = preload_import(
             "additional_code_description_period_without_description_CREATE.xml",

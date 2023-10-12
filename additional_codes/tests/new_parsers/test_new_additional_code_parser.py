@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from additional_codes.models import AdditionalCode
 from additional_codes.new_import_parsers import NewAdditionalCodeParser
 from additional_codes.new_import_parsers import NewAdditionalCodeTypeParser
 from common.tests.util import preload_import
@@ -78,7 +79,7 @@ class TestNewAdditionalCodeParser:
         # check for issues
         assert importer.issues() == []
 
-    def test_import_update_success(self, superuser):
+    def test_import_update(self, superuser):
         preload_import("additional_code_CREATE.xml", __file__, True)
         importer = preload_import("additional_code_UPDATE.xml", __file__)
 
@@ -99,6 +100,16 @@ class TestNewAdditionalCodeParser:
 
         # check for issues
         assert importer.issues() == []
+
+    def test_import_delete(self, superuser):
+        preload_import("additional_code_CREATE.xml", __file__, True)
+        importer = preload_import("additional_code_DELETE.xml", __file__)
+
+        # check for issues
+        assert importer.issues() == []
+        assert importer.can_save()
+        assert AdditionalCode.objects.all().count() == 2
+        assert AdditionalCode.objects.all().last().update_type == 2
 
     def test_import_invalid_type(self, superuser):
         importer = preload_import("additional_code_invalid_type_CREATE.xml", __file__)

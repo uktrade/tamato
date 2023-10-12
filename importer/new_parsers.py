@@ -183,8 +183,11 @@ class NewElementParser:
     non_taric_additional_fields = []
     model = None
     identity_fields = []
+
+    # Properties to explicitly define behaviour
     allow_update_without_children = False
     updates_allowed = True
+    deletes_allowed = True
 
     def __init__(self):
         self.issues = []

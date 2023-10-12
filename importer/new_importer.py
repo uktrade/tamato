@@ -349,7 +349,7 @@ class NewImporter:
             for parsed_message in parsed_transaction.parsed_messages:
                 if (
                     parsed_message.taric_object.is_child_object()
-                    and parsed_message.update_type != 1
+                    and parsed_message.update_type == 3  # Create
                 ):
                     parent_parser_class = ParserHelper.get_parser_by_model(
                         parsed_message.taric_object.__class__.model,
@@ -465,7 +465,7 @@ class NewImporter:
                     parsed_message.taric_object.xml_object_tag,
                     "",
                     parsed_message.taric_object.model_query_parameters(),
-                    f"Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be updated, only created and deleted",
+                    f"Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be updated",
                     taric_change_type=parsed_message.update_type_name,
                     object_details=str(parsed_message.taric_object),
                     transaction_id=parsed_message.transaction_id,
@@ -529,6 +529,23 @@ class NewImporter:
                 parsed_message.taric_object.issues.append(report_item)
 
         if parsed_message.update_type == 2:
+            if not parsed_message.taric_object.__class__.deletes_allowed:
+                msg = f"Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be deleted"
+                if parsed_message.taric_object.is_child_object:
+                    msg = f"Children of Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be deleted directly"
+
+                report_item = NewImportIssueReportItem(
+                    parsed_message.taric_object.xml_object_tag,
+                    "",
+                    parsed_message.taric_object.model_query_parameters(),
+                    msg,
+                    taric_change_type=parsed_message.update_type_name,
+                    object_details=str(parsed_message.taric_object),
+                    transaction_id=parsed_message.transaction_id,
+                )
+
+                parsed_message.taric_object.issues.append(report_item)
+
             # Check if updated, deleted object exists, else raise issue
             model_instances = parsed_message.taric_object.__class__.model.objects.latest_approved().filter(
                 **parsed_message.taric_object.model_query_parameters()

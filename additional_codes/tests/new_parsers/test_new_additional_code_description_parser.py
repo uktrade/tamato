@@ -112,6 +112,17 @@ class TestNewAdditionalCodeDescriptionParser:
 
         assert importer.issues() == []
 
+        assert AdditionalCodeDescription.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("additional_code_description_CREATE.xml", __file__, True)
+        importer = preload_import("additional_code_description_DELETE.xml", __file__)
+
+        assert importer.can_save()
+        assert importer.issues() == []
+        assert AdditionalCodeDescription.objects.all().count() == 2
+        assert AdditionalCodeDescription.objects.all().last().update_type == 2
+
     def test_import_invalid_additional_code(self, superuser):
         importer = preload_import(
             "additional_code_description_invalid_additional_code_CREATE.xml",

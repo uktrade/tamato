@@ -91,6 +91,16 @@ class TestNewAdditionalCodeTypeParser:
         assert target_taric_object.valid_between_lower == date(2021, 1, 11)
         assert target_taric_object.valid_between_upper == date(2021, 12, 31)
 
+    def test_import_delete(self, superuser):
+        preload_import("additional_code_type_CREATE.xml", __file__, True)
+        importer = preload_import("additional_code_type_DELETE.xml", __file__)
+
+        # check for issues
+        assert importer.issues() == []
+        assert importer.can_save()
+        assert AdditionalCodeType.objects.all().count() == 2
+        assert AdditionalCodeType.objects.all().last().update_type == 2
+
     def test_import_no_description(self, superuser):
         importer = preload_import(
             "additional_code_type_no_description_CREATE.xml",

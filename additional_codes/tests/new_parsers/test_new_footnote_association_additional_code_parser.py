@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from additional_codes.models import FootnoteAssociationAdditionalCode
 from additional_codes.new_import_parsers import *
 from common.tests import factories
 from common.tests.util import get_test_xml_file
@@ -122,6 +123,22 @@ class TestNewAdditionalCodeTypeParser:
         assert target_taric_object.additional_code__code == "7"
 
         assert importer.issues() == []
+
+    def test_import_delete(self, superuser):
+        preload_import(
+            "footnote_association_additional_code_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "footnote_association_additional_code_DELETE.xml",
+            __file__,
+        )
+        # check for issues
+        assert importer.issues() == []
+        assert importer.can_save()
+        assert FootnoteAssociationAdditionalCode.objects.all().count() == 2
+        assert FootnoteAssociationAdditionalCode.objects.all().last().update_type == 2
 
     def test_import_invalid_footnote(self, superuser):
         file_to_import = get_test_xml_file(

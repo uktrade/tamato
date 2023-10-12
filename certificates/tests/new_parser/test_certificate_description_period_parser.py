@@ -91,3 +91,18 @@ class TestNewCertificateDescriptionPeriodParser:
         assert target_taric_object.described_certificate__certificate_type__sid == "A"
         assert target_taric_object.described_certificate__sid == "123"
         assert target_taric_object.validity_start == date(2021, 11, 1)
+
+    def test_import_delete(self):
+        preload_import("certificate_description_period_CREATE.xml", __file__, True)
+        importer = preload_import(
+            "certificate_description_period_DELETE.xml",
+            __file__,
+        )
+
+        assert len(importer.issues()) == 1
+        assert not importer.can_save()
+
+        assert (
+            "Children of Taric objects of type CertificateDescription can't be deleted directly"
+            in str(importer.issues()[0])
+        )

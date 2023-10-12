@@ -86,6 +86,22 @@ class TestNewAdditionalCodeTypeDescriptionParser:
 
         assert importer.issues() == []
 
+    def test_import_delete(self, superuser):
+        preload_import("additional_code_type_description_CREATE.xml", __file__, True)
+        importer = preload_import(
+            "additional_code_type_description_DELETE.xml",
+            __file__,
+        )
+
+        # check for issues
+        assert len(importer.issues()) == 1
+        assert not importer.can_save()
+
+        assert (
+            "Children of Taric objects of type AdditionalCodeType can't be deleted directly"
+            in str(importer.issues()[0])
+        )
+
     def test_import_invalid_type(self, superuser):
         importer = preload_import(
             "additional_code_type_description_without_type_CREATE.xml",

@@ -62,6 +62,8 @@ class NewAdditionalCodeTypeDescriptionParser(NewWritable, NewElementParser):
 
     identity_fields = ["sid"]
 
+    deletes_allowed = False
+
     sid: str = None
     description: str = None
 
@@ -188,6 +190,8 @@ class NewAdditionalCodeDescriptionPeriodParser(
     xml_object_tag = "additional.code.description.period"
 
     identity_fields = ["sid"]
+
+    deletes_allowed = False
 
     sid: int = None
     described_additionalcode__sid: int = None
