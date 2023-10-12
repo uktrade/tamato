@@ -62,7 +62,6 @@ class TestNewCertificateTypeDescriptionParser:
         target = target_message.taric_object
         assert target.sid == "A"
         assert target.description == "some description"
-
         assert importer.issues() == []
 
     def test_import_update(self, superuser):
