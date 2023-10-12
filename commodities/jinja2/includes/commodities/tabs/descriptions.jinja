@@ -1,0 +1,37 @@
+{% extends "commodities/detail.jinja" %}
+
+{% from 'macros/create_link.jinja' import create_link %}
+
+{% block tab_content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        {% set description_rows = [] %}
+        {% set descriptions = object.get_descriptions() %}
+        {% set is_only_description = descriptions|length == 1 %}
+        
+        {% for description in descriptions %}
+            {% set description_row = [
+                {"text": "{:%d %b %Y}".format(description.validity_start)},
+                {"text": description.description},
+            ]%}
+                {{ description_rows.append(description_row) or "" }}
+        {% endfor %}
+        
+        {% set head = [
+        {"text": "Start date", "classes":  "govuk-!-width-one-eighth"},
+        {"text": "Description"},
+        ]%}
+
+        {% if not omit_actions and description_rows.0|length >= 3 %}
+            {{ head.append({"text": "Actions"}) or "" }}
+        {% endif %}
+
+        <h2 class="govuk-heading-l">Descriptions</h2>
+     
+        {{ govukTable({
+        "head": head,
+        "rows": description_rows
+        }) }}
+    </div>
+</div>
+{% endblock %}

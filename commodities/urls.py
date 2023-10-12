@@ -50,6 +50,11 @@ urlpatterns = [
         name="commodity-ui-detail-hierarchy",
     ),
     path(
+        f"commodities/<sid>/descriptions/",
+        views.CommodityDetailDescriptions.as_view(),
+        name="commodity-ui-detail-description",
+    ),
+    path(
         f"commodities/<sid>/measures-on-declarable-commodities/",
         views.MeasuresOnDeclarableCommoditiesList.as_view(),
         name="commodity-ui-detail-measures-declarable",
