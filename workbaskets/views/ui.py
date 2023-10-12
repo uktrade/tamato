@@ -330,7 +330,10 @@ class CurrentWorkBasket(FormView):
 
     @property
     def paginator(self):
-        return Paginator(self.workbasket.tracked_models, per_page=50)
+        return Paginator(
+            self.workbasket.tracked_models.with_transactions_and_models(),
+            per_page=50,
+        )
 
     @property
     def latest_upload(self):
@@ -528,10 +531,7 @@ class WorkBasketChangesView(PermissionRequiredMixin, SortingMixin, FormView):
     @property
     def paginator(self):
         return Paginator(
-            self.workbasket.tracked_models.select_related(
-                "polymorphic_ctype",
-                "transaction",
-            ),
+            self.workbasket.tracked_models.with_transactions_and_models(),
             per_page=self.paginate_by,
         )
 
