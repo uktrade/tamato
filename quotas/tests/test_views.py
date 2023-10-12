@@ -1059,3 +1059,20 @@ def test_quota_create_origin_no_overlapping_origins(
         "There may be no overlap in time of two quota order number origins with "
         "the same quota order number SID and geographical area id."
     )
+
+
+@pytest.mark.django_db
+def test_quota_order_number_origin_edit_create_view(valid_user_client, date_ranges, approved_transaction):
+    quota_order_number = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    url = reverse("quota_order_number_origin-ui-edit-create", kwargs={"sid": quota_order_number.sid})
+
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    assert b"<form" in response.content
+    assert b"div_id_exclusions" in response.content
