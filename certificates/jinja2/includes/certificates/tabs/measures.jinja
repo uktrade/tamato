@@ -1,7 +1,6 @@
-{% extends "regulations/detail.jinja" %}
+{% extends "certificates/detail.jinja" %}
 
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
-{% from "components/table/macro.njk" import govukTable %}
 
 {% set actions_menu %}
   <div class="govuk-grid-column-one-quarter">
@@ -39,20 +38,15 @@
     {{ table_rows.append([
       {"text": measure_link},
       {"html": commodity_link},
-      {"text": geo_area_link},
       {"text": "{:%d %b %Y}".format(measure.valid_between.lower) },
       {"text": "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else "-"},
     ]) or "" }}
   {% endfor %}
 
-  {% set base_url = url('regulation-ui-detail-measures', kwargs={"role_type": object.role_type, "regulation_id": object.regulation_id}) %}
+  {% set base_url = url('certificate-ui-detail-measures', kwargs={"certificate_type__sid":object.certificate_type.sid, "sid":object.sid}) %}
 
   {% set commodity_code %}
     {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
-  {% endset %}
-
-  {% set geo_area %}
-    {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url) }}
   {% endset %}
 
   {% set start_date %}
@@ -68,14 +62,13 @@
       "head": [
         {"text": "Measure SID"},
         {"text": commodity_code},
-        {"text": geo_area},
         {"text": start_date},
         {"text": "End date"},
       ],
       "rows": table_rows
     }) }}
   {% else %}
-    <p class="govuk-body">There are no measures for this regulation.</p>
+    <p class="govuk-body">There are no measures for this certificate.</p>
   {% endif %}
   {% include "includes/common/pagination.jinja" %}
 {% endblock %}

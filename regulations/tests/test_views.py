@@ -157,7 +157,7 @@ def test_regulation_detail_measures_view_sorting_commodity(valid_user_client):
             "regulation_id": regulation.regulation_id,
         },
     )
-    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&order=asc")
+    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&ordered=asc")
     page = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",
@@ -168,7 +168,7 @@ def test_regulation_detail_measures_view_sorting_commodity(valid_user_client):
     ]
     assert table_commodity_codes == commodity_codes
 
-    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&order=desc")
+    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&ordered=desc")
     page = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",
@@ -208,7 +208,7 @@ def test_regulation_detail_measures_view_sorting_start_date(
             "regulation_id": regulation.regulation_id,
         },
     )
-    response = valid_user_client.get(f"{url}?sort_by=start_date&order=asc")
+    response = valid_user_client.get(f"{url}?sort_by=start_date&ordered=asc")
     page = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",
@@ -218,7 +218,7 @@ def test_regulation_detail_measures_view_sorting_start_date(
     ]
     assert table_measure_sids == [measure1.sid, measure2.sid, measure3.sid]
 
-    response = valid_user_client.get(f"{url}?sort_by=start_date&order=desc")
+    response = valid_user_client.get(f"{url}?sort_by=start_date&ordered=desc")
     page = BeautifulSoup(
         response.content.decode(response.charset),
         "html.parser",

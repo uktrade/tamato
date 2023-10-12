@@ -1,6 +1,10 @@
+from datetime import date
+
 import pytest
 
 from common.tests import factories
+from common.util import TaricDateRange
+from common.validators import UpdateType
 from measures.filters import MeasureFilter
 from measures.models import Measure
 from workbaskets.models import WorkBasket
@@ -50,11 +54,18 @@ def test_filter_by_certificates(
     session["workbasket"] = {"id": session_workbasket.pk}
     session.save()
 
-    measure_with_certificate = factories.MeasureFactory.create()
+    old_date_range = TaricDateRange(date(2021, 1, 1), date(2023, 1, 1))
+    new_date_range = TaricDateRange(date(2023, 1, 1))
+
+    measure_with_certificate = factories.MeasureFactory.create(
+        valid_between=old_date_range,
+        stopped=True,
+    )
     measure_with_different_certificate = factories.MeasureFactory.create()
     measure_no_certificate = factories.MeasureFactory.create()
     certificate = factories.CertificateFactory.create()
     other_certificate = factories.CertificateFactory.create()
+
     factories.MeasureConditionFactory.create(
         dependent_measure=measure_with_certificate,
         required_certificate=certificate,
@@ -64,16 +75,31 @@ def test_filter_by_certificates(
         required_certificate=other_certificate,
     )
 
+    # update a measure, both updated and original measure_with_certificate should show in result
+    new_transaction = factories.TransactionFactory.create()
+    updated_measure = measure_with_certificate.new_version(
+        workbasket=new_transaction.workbasket,
+        transaction=new_transaction,
+        update_type=UpdateType.UPDATE,
+        valid_between=new_date_range,
+        stopped=False,
+    )
+    factories.MeasureConditionFactory.create(
+        dependent_measure=updated_measure,
+        required_certificate=certificate,
+    )
     qs = Measure.objects.all()
 
-    self = MeasureFilter(data={"certificates": certificate.trackedmodel_ptr_id})
-    res = MeasureFilter.certificates_filter(
-        self,
+    measure_filter = MeasureFilter(
+        data={"certificates": certificate.trackedmodel_ptr_id},
+    )
+    filtered_measures = measure_filter.certificates_filter(
         queryset=qs,
         name="certificates",
         value=certificate,
     )
 
-    assert measure_with_certificate in res
-    assert measure_no_certificate not in res
-    assert measure_with_different_certificate not in res
+    assert measure_with_certificate in filtered_measures
+    assert measure_no_certificate not in filtered_measures
+    assert measure_with_different_certificate not in filtered_measures
+    assert updated_measure in filtered_measures
