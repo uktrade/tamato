@@ -1,0 +1,168 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "includes/workbaskets/navigation.jinja" import create_workbasket_detail_navigation with context %}
+{% from "macros/checkbox_item.jinja" import checkbox_item %}
+
+{% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% set checkbox_check_all %}
+  <div id="check-all-checkbox"></div>
+{% endset %}
+
+{% set base_url = url("workbaskets:workbasket-ui-changes", args=[workbasket.pk]) ~ "?page=" ~ page_obj.number %}
+
+{% set component %}
+  {{ create_sortable_anchor(request, "component", "Component", base_url, True) }}
+{% endset %}
+
+{% set action %}
+  {{ create_sortable_anchor(request, "action", "Action", base_url, True) }}
+{% endset %}
+
+{% set activity_date %}
+  {{ create_sortable_anchor(request, "activity_date", "Activity date", base_url, True) }}
+{% endset %}
+
+{% set current_count = page_obj|length + ((page_obj.number - 1) * view.paginate_by) %}
+{% set total_count = "{0:,}".format(page_obj.paginator.count) %}
+
+{% set load_more_pagination %}
+  <nav id="workbasket-items" class="pagination" role="navigation" aria-label="Pagination navigation">
+    <p class="govuk-body govuk-!-margin-0">
+      You've viewed {{current_count}} out of {{total_count}} items
+    </p>
+
+    <progress value="{{current_count}}" max="{{total_count}}" role="progressbar"></progress>
+
+    {% if page_obj.has_next() %}
+      {{ govukButton({
+        "text": "Load more",
+        "name": "form-action",
+        "value": "page-next",
+      }) }}
+    {% endif %}
+  </nav>
+{% endset %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
+
+  {{ create_workbasket_detail_navigation(active_tab="changes") }}
+
+  <h2 class="govuk-heading-m">Changes</h2>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+    {% if not workbasket.tracked_models.count() %}
+      <p class="govuk-body">There are no changes in the workbasket.</p>
+
+      {% if user_can_delete_workbasket %}
+        {{ govukButton({
+          "text": "Delete workbasket",
+          "href": url("workbaskets:workbasket-ui-delete", kwargs={"pk": workbasket.pk}),
+          "classes": "govuk-button--warning"
+        }) }}
+      {% endif %}
+
+    {% elif workbasket.status == "EDITING" and user_can_delete_items %}
+      <p class="govuk-body">Select to remove or click on the ID link to edit:</p>
+      <form method="post">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        {% if form.fields %}
+          {% set table_rows = [] %}
+          {% for field in form %}
+            {% set checkbox = checkbox_item(field) %}
+            {% set obj = field.field.obj %}
+            {% set object_link %}
+              <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
+                {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
+              </a>
+            {% endset %}
+            {% set object_description -%}
+              {{ obj.structure_description if obj.structure_description else "-" }}
+            {% endset %}
+
+            {{ table_rows.append([
+              {"html": checkbox},
+              {"html": object_link, "classes": "govuk-!-width-one-quarter"},
+              {"text": obj._meta.verbose_name.title(), "classes": "govuk-!-width-one-quarter"},
+              {"text": obj.update_type_str},
+              {"text": object_description, "classes": "govuk-!-width-one-quarter"},
+              {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
+            ]) or "" }}
+          {% endfor %}
+
+          {{ govukTable({
+            "head": [
+              {"html": checkbox_check_all},
+              {"text": "ID"},
+              {"text": component},
+              {"text": action },
+              {"text": "Description"},
+              {"text": activity_date},
+            ],
+              "rows": table_rows
+            }) }}
+        {% endif %}
+
+        <div class="govuk-button-group">
+          <button value="remove-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Remove</button>
+          <button value="remove-all" name="form-action" class="govuk-button govuk-button--warning" data-module="govuk-button">Remove all workbasket changes</button>
+        </div>
+        
+        {{ load_more_pagination }}
+      </form>
+
+    {% else %}
+      {% set table_rows = [] %}
+      {% for obj in view.get_queryset() %}
+        {% set object_link %}
+          <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
+            {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
+          </a>
+        {% endset %}
+        {% set object_description -%}
+          {{ obj.structure_description if obj.structure_description else "-" }}
+        {% endset %}
+
+        {{ table_rows.append([
+          {"html": object_link},
+          {"text": obj._meta.verbose_name.title()},
+          {"text": obj.update_type_str},
+          {"text": object_description},
+          {"text": "{:%d %b %Y}".format(obj.transaction.updated_at)},
+        ]) or "" }}
+      {% endfor %}
+
+      <form method="post">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        {{ govukTable({
+          "head": [
+            {"text": "ID"},
+            {"text": component},
+            {"text": action},
+            {"text": "Description"},
+            {"text": activity_date},
+          ],
+          "rows": table_rows
+        }) }}
+        
+        {{ load_more_pagination }}
+
+      </form>
+    {% endif %}
+    </div>
+  </div>
+{% endblock %}

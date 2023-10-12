@@ -136,7 +136,8 @@ class TrackedModelQuerySet(
         """
         Exclude results which have the specified version_group.
 
-        :param version_group VersionGroup: Exclude the members of this version group
+        :param version_group VersionGroup: Exclude the members of this version
+            group
         :rtype QuerySet:
         """
         return self.exclude(version_group=version_group)
@@ -245,6 +246,11 @@ class TrackedModelQuerySet(
         return self.select_related(
             "version_group", "version_group__current_version", *related_lookups
         )
+
+    def with_transactions_and_models(self) -> TrackedModelQuerySet:
+        """Runs a `.select_related` operation for `transaction` and
+        `polymorphic_ctype`."""
+        return self.select_related("transaction", "polymorphic_ctype")
 
     @staticmethod
     def _when_model_record_codes():
