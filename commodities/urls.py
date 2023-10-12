@@ -52,7 +52,7 @@ urlpatterns = [
     path(
         f"commodities/<sid>/descriptions/",
         views.CommodityDetailDescriptions.as_view(),
-        name="commodity-ui-detail-description",
+        name="commodity-ui-detail-descriptions",
     ),
     path(
         f"commodities/<sid>/measures-on-declarable-commodities/",

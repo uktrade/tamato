@@ -14,20 +14,19 @@
                 {"text": "{:%d %b %Y}".format(description.validity_start)},
                 {"text": description.description},
             ]%}
-                {{ description_rows.append(description_row) or "" }}
+            {{ description_rows.append(description_row) or "" }}
         {% endfor %}
         
         {% set head = [
         {"text": "Start date", "classes":  "govuk-!-width-one-eighth"},
         {"text": "Description"},
         ]%}
-
         {% if not omit_actions and description_rows.0|length >= 3 %}
             {{ head.append({"text": "Actions"}) or "" }}
         {% endif %}
 
         <h2 class="govuk-heading-l">Descriptions</h2>
-     
+        
         {{ govukTable({
         "head": head,
         "rows": description_rows
