@@ -257,10 +257,8 @@ class WorkBasketChangesConfirmDelete(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        session_workbasket = WorkBasket.current(self.request)
-        workbasket = WorkBasket.objects.get(pk=self.kwargs["pk"])
-        if workbasket.pk != session_workbasket.pk:
-            context["workbasket"] = workbasket
+        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["view_workbasket"] = WorkBasket.objects.get(pk=self.kwargs["pk"])
         return context
 
 
