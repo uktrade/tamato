@@ -115,7 +115,6 @@ class QuotaList(QuotaOrderNumberMixin, TamatoListView):
 class QuotaDetail(QuotaOrderNumberMixin, TrackedModelDetailView, SortingMixin):
     template_name = "quotas/detail.jinja"
     sort_by_fields = ["goods_nomenclature"]
-
     @property
     def quota_data(self):
         data = get_quota_data({"order_number": self.object.order_number})
@@ -298,6 +297,13 @@ class QuotaUpdateMixin(
 class QuotaUpdate(
     QuotaUpdateMixin,
     CreateTaricUpdateView,
+):
+    pass
+
+
+class QuotaEditCreate(
+    QuotaUpdateMixin,
+    EditTaricView,
 ):
     pass
 
