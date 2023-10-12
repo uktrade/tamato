@@ -1062,13 +1062,18 @@ def test_quota_create_origin_no_overlapping_origins(
 
 
 @pytest.mark.django_db
-def test_quota_order_number_origin_edit_create_view(valid_user_client, date_ranges, approved_transaction):
+def test_quota_order_number_origin_edit_create_view(
+    valid_user_client, date_ranges, approved_transaction
+):
     quota_order_number = factories.QuotaOrderNumberFactory.create(
         valid_between=date_ranges.no_end,
         transaction=approved_transaction,
     )
 
-    url = reverse("quota_order_number_origin-ui-edit-create", kwargs={"sid": quota_order_number.sid})
+    url = reverse(
+        "quota_order_number_origin-ui-edit-create",
+        kwargs={"sid": quota_order_number.sid},
+    )
 
     response = valid_user_client.get(url)
 
