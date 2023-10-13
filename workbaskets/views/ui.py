@@ -30,7 +30,6 @@ from certificates.models import Certificate
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.views import SortingMixin
-from common.views import TamatoListView
 from common.views import WithPaginationListView
 from exporter.models import Upload
 from footnotes.models import Footnote
@@ -826,8 +825,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
         )
 
 
-@method_decorator(require_current_workbasket, name="dispatch")
-class WorkBasketReviewView(PermissionRequiredMixin, TamatoListView):
+class WorkBasketReviewView(PermissionRequiredMixin, WithPaginationListView):
     """Base view from which nested workbasket review tab views inherit."""
 
     template_name = "workbaskets/review.jinja"
@@ -835,10 +833,20 @@ class WorkBasketReviewView(PermissionRequiredMixin, TamatoListView):
     paginate_by = 30
     permission_required = "workbaskets.view_workbasket"
 
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
     def get_queryset(self):
         return self.model.objects.filter(
             transaction__workbasket=self.workbasket,
         )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["workbasket"] = self.workbasket
+        return context
 
 
 class WorkBasketReviewAdditionalCodesView(WorkBasketReviewView):
@@ -865,10 +873,8 @@ class WorkBasketReviewCertificatesView(WorkBasketReviewView):
         return context
 
 
-@method_decorator(require_current_workbasket, name="dispatch")
 class WorkbasketReviewGoodsView(
     PermissionRequiredMixin,
-    WithCurrentWorkBasket,
     TemplateView,
 ):
     """UI endpoint for reviewing goods changes in a workbasket."""
@@ -876,9 +882,15 @@ class WorkbasketReviewGoodsView(
     template_name = "workbaskets/review-goods.jinja"
     permission_required = "workbaskets.view_workbasket"
 
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["selected_tab"] = "commodities"
+        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["workbasket"] = self.workbasket
 
         # Default values should there be no ImportBatch instance associated with
         # the workbasket.
@@ -923,13 +935,14 @@ class WorkbasketReviewGoodsView(
             context["import_batch_pk"] = import_batch.pk
 
             # notifications only relevant to a goods import
-            context["unsent_notification"] = (
-                import_batch.goods_import
-                and not Notification.objects.filter(
-                    notified_object_pk=import_batch.pk,
-                    notification_type=NotificationTypeChoices.GOODS_REPORT,
-                ).exists()
-            )
+            if context["workbasket"] == context["session_workbasket"]:
+                context["unsent_notification"] = (
+                    import_batch.goods_import
+                    and not Notification.objects.filter(
+                        notified_object_pk=import_batch.pk,
+                        notification_type=NotificationTypeChoices.GOODS_REPORT,
+                    ).exists()
+                )
 
         return context
 

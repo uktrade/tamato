@@ -11,7 +11,7 @@
             <a href="{{ url('workbaskets:workbasket-ui-violations') }}" class="govuk-link">View violations ({{request.session.workbasket.error_count}})</a>
         </li>
         <li class="{% if active_link == 'review' %}active{% endif %}">
-            <a href="{{ url('workbaskets:workbasket-ui-review-measures') }}" class="govuk-link">Review ({{request.session.workbasket.measure_count}})</a>
+            <a href="{{ url('workbaskets:workbasket-ui-review-measures', args=[request.session.workbasket.id]) }}" class="govuk-link">Review ({{request.session.workbasket.measure_count}})</a>
         </li>
         <li class="{% if active_link == 'compare' %}active{% endif %}">
             <a href="{{ url('workbaskets:workbasket-ui-compare') }}" class="govuk-link">Worksheet check</a>
@@ -28,6 +28,9 @@
     </li>
     <li class="{% if active_tab == "changes" %}active{% endif %}">
       <a href="{{ url("workbaskets:workbasket-ui-changes", args=[workbasket.pk]) }}" class="govuk-link">Changes</a>
+    </li>
+    <li class="{% if active_tab == "review" %}active{% endif %}">
+      <a href="{{ url("workbaskets:workbasket-ui-review-measures", args=[workbasket.pk]) }}" class="govuk-link">Review</a>
     </li>
   </ul>
 </nav>
