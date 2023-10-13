@@ -96,6 +96,8 @@ class CommodityDetail(CommodityMixin, TrackedModelDetailView):
 
         indent = self.object.get_indent_as_at(date.today())
         context["indent_number"] = indent.indent if indent else "-"
+        context["indent_sid"] = indent.sid if indent else "-"
+        context["indent_start_date"] = indent.validity_start if indent else "-"
 
         collection = get_chapter_collection(self.object)
         tx = WorkBasket.get_current_transaction(self.request)
