@@ -289,20 +289,21 @@ def test_select_workbasket_with_errored_status(valid_user_client):
 
 
 @pytest.mark.parametrize(
-    "workbasket_tab, expected_url",
+    "workbasket_tab, expected_url, url_kwargs_required",
     [
-        ("view-summary", "workbaskets:current-workbasket"),
-        ("add-edit-items", "workbaskets:edit-workbasket"),
-        ("view-violations", "workbaskets:workbasket-ui-violations"),
-        ("review-measures", "workbaskets:workbasket-ui-review-measures"),
-        ("review-goods", "workbaskets:workbasket-ui-review-goods"),
-        ("", "workbaskets:current-workbasket"),
+        ("view-summary", "workbaskets:current-workbasket", False),
+        ("add-edit-items", "workbaskets:edit-workbasket", False),
+        ("view-violations", "workbaskets:workbasket-ui-violations", False),
+        ("review-measures", "workbaskets:workbasket-ui-review-measures", True),
+        ("review-goods", "workbaskets:workbasket-ui-review-goods", True),
+        ("", "workbaskets:current-workbasket", False),
     ],
 )
 def test_select_workbasket_redirects_to_tab(
     valid_user_client,
     workbasket_tab,
     expected_url,
+    url_kwargs_required,
 ):
     """Test that SelectWorkbasketView redirects to a specific tab on the
     selected workbasket if a tab has been provided."""
@@ -315,7 +316,10 @@ def test_select_workbasket_redirects_to_tab(
         },
     )
     assert response.status_code == 302
-    assert response.url == reverse(expected_url)
+    if url_kwargs_required:
+        assert response.url == reverse(expected_url, kwargs={"pk": workbasket.pk})
+    else:
+        assert response.url == reverse(expected_url)
 
 
 @pytest.mark.parametrize(
@@ -453,9 +457,10 @@ def test_workbasket_list_all_view_search_filters(
 def test_workbasket_review_tabs_without_permission(url, client):
     """Tests that workbasket review tabs return 403 to users without
     view_workbasket permission."""
+    workbasket = factories.WorkBasketFactory.create()
     user = factories.UserFactory.create()
     client.force_login(user)
-    url = reverse(url)
+    url = reverse(url, kwargs={"pk": workbasket.pk})
     response = client.get(url)
     assert response.status_code == 403
 
@@ -511,7 +516,7 @@ def test_workbasket_review_tabs(
     table."""
     with session_workbasket.new_transaction():
         object_factory()
-    url = reverse(url)
+    url = reverse(url, kwargs={"pk": session_workbasket.pk})
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
@@ -533,7 +538,10 @@ def test_workbasket_review_measures(valid_user_client):
     with workbasket.new_transaction() as tx:
         factories.MeasureFactory.create_batch(30, transaction=tx)
 
-    url = reverse("workbaskets:workbasket-ui-review-measures")
+    url = reverse(
+        "workbaskets:workbasket-ui-review-measures",
+        kwargs={"pk": workbasket.pk},
+    )
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
@@ -596,7 +604,10 @@ def test_workbasket_review_measures_filters_update_type(
         workbasket=session_workbasket,
     )
 
-    url = reverse("workbaskets:workbasket-ui-review-measures")
+    url = reverse(
+        "workbaskets:workbasket-ui-review-measures",
+        kwargs={"pk": session_workbasket.pk},
+    )
     search_filter = f"?update_type={update_type}"
     response = valid_user_client.get(url + search_filter)
     assert response.status_code == 200
@@ -619,7 +630,10 @@ def test_workbasket_review_measures_pagination(
         )
         factories.MeasureFactory.create_batch(40, transaction=unapproved_transaction)
 
-    url = reverse("workbaskets:workbasket-ui-review-measures")
+    url = reverse(
+        "workbaskets:workbasket-ui-review-measures",
+        kwargs={"pk": workbasket.pk},
+    )
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
@@ -649,7 +663,10 @@ def test_workbasket_review_measures_conditions(valid_user_client):
         required_certificate=certificate,
         action__code="27",
     )
-    url = reverse("workbaskets:workbasket-ui-review-measures")
+    url = reverse(
+        "workbaskets:workbasket-ui-review-measures",
+        kwargs={"pk": workbasket.pk},
+    )
     response = valid_user_client.get(url)
     soup = BeautifulSoup(str(response.content), "html.parser")
     # 11th column is conditions. We're interested in the first (and only) row.
@@ -1406,7 +1423,7 @@ def test_workbasket_changes_view_sort_by_queryset(ordering_param, expected_order
     get_request = request.get(url + ordering_param)
     view = ui.WorkBasketChangesView(request=get_request, kwargs={"pk": workbasket.pk})
     assert list(view.get_queryset()) == list(
-        workbasket.tracked_models.order_by(expected_ordering),
+        workbasket.tracked_models.order_by(expected_ordering, "transaction"),
     )
 
 

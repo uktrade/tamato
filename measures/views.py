@@ -547,7 +547,12 @@ class MeasureEditWizard(
             )
         self.session_store.clear()
 
-        return redirect(reverse("workbaskets:workbasket-ui-review-measures"))
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-review-measures",
+                kwargs={"pk": workbasket.pk},
+            ),
+        )
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
@@ -1229,17 +1234,23 @@ class MeasureMultipleDelete(MeasureSelectionQuerysetMixin, TemplateView, ListVie
             # The user has cancelled out of the deletion process.
             return redirect("home")
 
+        workbasket = WorkBasket.current(request)
         object_list = self.get_queryset()
 
         for obj in object_list:
             # make a new version of the object with an update type of delete.
             obj.new_version(
-                workbasket=WorkBasket.current(request),
+                workbasket=workbasket,
                 update_type=UpdateType.DELETE,
             )
         self.session_store.clear()
 
-        return redirect(reverse("workbaskets:workbasket-ui-review-measures"))
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-review-measures",
+                kwargs={"pk": workbasket.pk},
+            ),
+        )
 
 
 class MeasureSelectionUpdate(MeasureSessionStoreMixin, View):
