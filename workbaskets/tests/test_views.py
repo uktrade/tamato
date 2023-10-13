@@ -1423,7 +1423,7 @@ def test_workbasket_changes_view_sort_by_queryset(ordering_param, expected_order
     get_request = request.get(url + ordering_param)
     view = ui.WorkBasketChangesView(request=get_request, kwargs={"pk": workbasket.pk})
     assert list(view.get_queryset()) == list(
-        workbasket.tracked_models.order_by(expected_ordering),
+        workbasket.tracked_models.order_by(expected_ordering, "transaction"),
     )
 
 
