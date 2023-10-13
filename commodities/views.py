@@ -431,3 +431,18 @@ class CommodityDetailDescriptions(CommodityDetail):
         context = super().get_context_data(*args, **kwargs)
         context["selected_tab"] = "descriptions"
         return context
+
+
+class CommodityDetailIndentHistory(CommodityDetail):
+    """Displays Indent History for a Comm Code as a simulated tab on Commodity
+    Code view."""
+
+    template_name = "includes/commodities/tabs/indent-history.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        indents = self.object.indents.filter()
+
+        context["selected_tab"] = "indent-history"
+        context["indents"] = indents
+        return context
