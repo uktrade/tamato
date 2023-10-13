@@ -4,7 +4,11 @@
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 {% from "macros/fake_tabs.jinja" import fake_tabs %}
 
-{% set page_title %}Workbasket {{ workbasket.id }} - Review{% endset %}
+{% if workbasket == session_workbasket %}
+  {% set page_title %}Workbasket {{ workbasket.id }} - Review{% endset %}
+{% else %}
+  {% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
+{% endif %}
 
 {% set links = [
   {
