@@ -146,18 +146,23 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
         workbasket_tab_map = {
             "view-summary": {
                 "path_name": "workbaskets:current-workbasket",
+                "kwargs": {},
             },
             "add-edit-items": {
                 "path_name": "workbaskets:edit-workbasket",
+                "kwargs": {},
             },
             "view-violations": {
                 "path_name": "workbaskets:workbasket-ui-violations",
+                "kwargs": {},
             },
             "review-measures": {
                 "path_name": "workbaskets:workbasket-ui-review-measures",
+                "kwargs": {"pk": workbasket_pk},
             },
             "review-goods": {
                 "path_name": "workbaskets:workbasket-ui-review-goods",
+                "kwargs": {"pk": workbasket_pk},
             },
         }
 
@@ -172,7 +177,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
 
             if workbasket_tab:
                 view = workbasket_tab_map[workbasket_tab]
-                return redirect(reverse(view["path_name"]))
+                return redirect(reverse(view["path_name"], kwargs=view["kwargs"]))
             else:
                 return redirect(reverse("workbaskets:current-workbasket"))
 
