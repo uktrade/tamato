@@ -26,6 +26,9 @@ from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
 
+from additional_codes.models import AdditionalCode
+from certificates.models import Certificate
+from commodities.models.orm import GoodsNomenclature
 from common.forms import unprefix_formset_data
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
@@ -36,6 +39,7 @@ from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
@@ -54,6 +58,8 @@ from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
+from quotas.models import QuotaOrderNumber
+from regulations.models import Regulation
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
@@ -189,6 +195,74 @@ class MeasureList(
         else:
             return self.filterset.data
 
+    def selected_filter_formatter(self):
+        selected_filters = {k: v for k, v in self.filterset.data.items() if v}
+        selected_filters_string = []
+
+        if "goods_nomenclature" in selected_filters:
+            goods = GoodsNomenclature.objects.get(
+                id=selected_filters["goods_nomenclature"],
+            )
+            selected_filters_string.append(f"commodity code {goods.autocomplete_label}")
+
+        if "goods_nomenclature__item_id" in selected_filters:
+            selected_filters_string.append(
+                f"commodity code starting with {selected_filters['goods_nomenclature__item_id']}",
+            )
+
+        if "order_number" in selected_filters:
+            quota = QuotaOrderNumber.objects.get(id=selected_filters["order_number"])
+            selected_filters_string.append(f"Quota order number {quota.structure_code}")
+
+        if "sid" in selected_filters:
+            measure = Measure.objects.get(sid=selected_filters["sid"])
+            selected_filters_string.append(f"ID {measure.sid}")
+
+        if "additional_code" in selected_filters:
+            code = AdditionalCode.objects.get(id=selected_filters["additional_code"])
+            selected_filters_string.append(f"Additional code {code.structure_code}")
+
+        if "certificates" in selected_filters:
+            certificate = Certificate.objects.get(id=selected_filters["certificates"])
+            selected_filters_string.append(f" Certificate {certificate.structure_code}")
+
+        if "regulation" in selected_filters:
+            regulation = Regulation.objects.get(id=selected_filters["regulation"])
+            selected_filters_string.append(
+                f" Regulation {regulation.autocomplete_label}",
+            )
+
+        if "measure_type" in selected_filters:
+            measure_type = MeasureType.objects.get(id=selected_filters["measure_type"])
+            selected_filters_string.append(
+                f"measure type {measure_type.autocomplete_label}",
+            )
+
+        if "geographical_area" in selected_filters:
+            area = GeographicalArea.objects.get(
+                id=selected_filters["geographical_area"],
+            )
+            selected_filters_string.append(f"{area.autocomplete_label}")
+
+        if "footnote" in selected_filters:
+            footnote = Footnote.objects.get(id=selected_filters["footnote"])
+            selected_filters_string.append(f"Footnote {footnote.structure_code}")
+
+        # Start and End date
+
+        if "modc" in selected_filters:
+            selected_filters_string.append("Include inherited measures")
+
+        if "measure_filters_modifier" in selected_filters:
+            selected_filters_string.append("Filter by current Workbasket")
+
+        selected_filters_nested_lists = [
+            selected_filters_string[x : x + 7]
+            for x in range(0, len(selected_filters_string), 7)
+        ]
+
+        return selected_filters_nested_lists
+
     @property
     def paginator(self):
         filterset_class = self.get_filterset_class()
@@ -219,6 +293,7 @@ class MeasureList(
                     page.number,
                     page.paginator.num_pages,
                 ),
+                "selected_filter_lists": self.selected_filter_formatter(),
             },
         )
         if context["has_previous_page"]:
