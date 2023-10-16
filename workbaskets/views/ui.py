@@ -29,7 +29,6 @@ from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
-from common.pagination import build_pagination_list
 from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import WithPaginationListView
@@ -181,7 +180,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
         return redirect(reverse("workbaskets:workbasket-ui-list"))
 
 
-class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
+class WorkBasketChangesDelete(PermissionRequiredMixin, ListView):
     """UI for user review of WorkBasket item deletion."""
 
     template_name = "workbaskets/delete_changes.jinja"
@@ -189,7 +188,7 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
 
     @property
     def workbasket(self) -> WorkBasket:
-        return WorkBasket.current(self.request)
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
 
     def _session_store(self, workbasket):
         """Get the current user's SessionStore for the WorkBasket that they're
@@ -215,7 +214,13 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) != "delete":
             # The user has cancelled out of the deletion process.
-            return redirect("workbaskets:current-workbasket")
+            if self.workbasket == WorkBasket.current(self.request):
+                return redirect("workbaskets:current-workbasket")
+            else:
+                return redirect(
+                    "workbaskets:workbasket-ui-changes",
+                    pk=self.workbasket.pk,
+                )
 
         # By reverse ordering on record_code + subrecord_code we're able to
         # delete child entities first, avoiding protected foreign key
@@ -241,13 +246,20 @@ class WorkBasketDeleteChanges(PermissionRequiredMixin, ListView):
         session_store.clear()
 
         redirect_url = reverse(
-            "workbaskets:workbasket-ui-delete-changes-done",
+            "workbaskets:workbasket-ui-changes-confirm-delete",
+            kwargs={"pk": self.workbasket.pk},
         )
         return redirect(redirect_url)
 
 
-class WorkBasketDeleteChangesDone(TemplateView):
+class WorkBasketChangesConfirmDelete(TemplateView):
     template_name = "workbaskets/delete_changes_confirm.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["view_workbasket"] = WorkBasket.objects.get(pk=self.kwargs["pk"])
+        return context
 
 
 def download_envelope(request):
@@ -305,8 +317,6 @@ class CurrentWorkBasket(FormView):
         "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
         "run-business-rules": "workbaskets:current-workbasket",
         "terminate-rule-check": "workbaskets:current-workbasket",
-        "remove-selected": "workbaskets:workbasket-ui-delete-changes",
-        "remove-all": "workbaskets:workbasket-ui-delete-changes",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
         "compare-data": "workbaskets:current-workbasket",
@@ -318,7 +328,10 @@ class CurrentWorkBasket(FormView):
 
     @property
     def paginator(self):
-        return Paginator(self.workbasket.tracked_models, per_page=50)
+        return Paginator(
+            self.workbasket.tracked_models.with_transactions_and_models(),
+            per_page=50,
+        )
 
     @property
     def latest_upload(self):
@@ -373,6 +386,11 @@ class CurrentWorkBasket(FormView):
             self.run_business_rules()
         elif form_action == "terminate-rule-check":
             self.workbasket.terminate_rule_check()
+        elif form_action in ["remove-selected", "remove-all"]:
+            return reverse(
+                "workbaskets:workbasket-ui-changes-delete",
+                kwargs={"pk": self.workbasket.pk},
+            )
         try:
             return self._append_url_page_param(
                 reverse(
@@ -476,39 +494,141 @@ class WorkBasketList(PermissionRequiredMixin, WithPaginationListView):
         return WorkBasket.objects.order_by("-updated_at")
 
 
-class WorkBasketChanges(PermissionRequiredMixin, DetailView):
+class WorkBasketDetailView(PermissionRequiredMixin, DetailView):
     """UI endpoint for viewing a specified workbasket."""
 
     model = WorkBasket
     template_name = "workbaskets/detail.jinja"
-    permission_required = "workbaskets.change_workbasket"
+    permission_required = "workbaskets.view_workbasket"
+
+
+class WorkBasketChangesView(PermissionRequiredMixin, SortingMixin, FormView):
+    """UI endpoint for viewing changes in a workbasket."""
+
+    template_name = "workbaskets/changes.jinja"
+    permission_required = "workbaskets.view_workbasket"
+    form_class = forms.SelectableObjectsForm
     paginate_by = 50
+    sort_by_fields = ["component", "action", "activity_date"]
+    custom_sorting = {
+        "component": "polymorphic_ctype",
+        "action": "update_type",
+        "activity_date": "transaction__updated_at",
+    }
+    form_action_redirect_map = {
+        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
+        "remove-all": "workbaskets:workbasket-ui-changes-delete",
+        "page-prev": "workbaskets:workbasket-ui-changes",
+        "page-next": "workbaskets:workbasket-ui-changes",
+    }
 
-    def get_context_data(self, **kwargs):
-        """
-        Although this is a detail view of a WorkBasket instance, it provides a
-        view of its contained items (TrackedModel instances) as a paged list.
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
 
-        A paginator and related objects are therefore added to page context.
-        """
-        items = self.get_object().tracked_models.all()
-        paginator = Paginator(items, WorkBasketChanges.paginate_by)
-        try:
-            page_number = int(self.request.GET.get("page", 1))
-        except ValueError:
-            page_number = 1
-        page_obj = paginator.get_page(page_number)
-        context = super().get_context_data(**kwargs)
-        context["paginator"] = paginator
-        context["page_obj"] = page_obj
-        context["is_paginated"] = True
-        context["object_list"] = items
-        context["page_links"] = build_pagination_list(
-            page_number,
-            page_obj.paginator.num_pages,
+    @property
+    def paginator(self):
+        return Paginator(
+            self.workbasket.tracked_models.with_transactions_and_models(),
+            per_page=self.paginate_by,
         )
 
+    def get_queryset(self):
+        queryset = self.paginator.object_list
+        page_number = int(self.request.GET.get("page", 1))
+        items_per_page = page_number * self.paginate_by
+
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering, "transaction")
+            return queryset.order_by(*ordering)[:items_per_page]
+        else:
+            return queryset[:items_per_page]
+
+    def _append_url_params(self, url, form_action):
+        if form_action in ["remove-selected", "remove-all"]:
+            return url
+
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_number = 1
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+
+        sort_by = self.request.GET.get("sort_by", None)
+        ordered = self.request.GET.get("ordered", None)
+        if sort_by and ordered:
+            return f"{url}?page={page_number}&sort_by={sort_by}&ordered={ordered}"
+        else:
+            return f"{url}?page={page_number}"
+
+    def get_initial(self):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        return store.data.copy()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["objects"] = self.get_queryset()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        user_can_delete_items = (
+            self.request.user.is_superuser
+            or self.request.user.has_perm("workbaskets.change_workbasket")
+        )
+        user_can_delete_workbasket = (
+            self.request.user.is_superuser
+            or self.request.user.has_perm("workbaskets.delete_workbasket")
+        )
+        context.update(
+            {
+                "workbasket": self.workbasket,
+                "page_obj": page,
+                "user_can_delete_items": user_can_delete_items,
+                "user_can_delete_workbasket": user_can_delete_workbasket,
+            },
+        )
         return context
+
+    def form_valid(self, form):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        form_action = self.request.POST.get("form-action")
+        store.remove_items(form.cleaned_data)
+        if form_action == "remove-all":
+            object_list = {
+                self.form_class.field_name_for_object(obj): True
+                for obj in self.workbasket.tracked_models
+            }
+            store.add_items(object_list)
+        else:
+            to_add = {key: value for key, value in form.cleaned_data.items() if value}
+            store.add_items(to_add)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        try:
+            return self._append_url_params(
+                reverse(
+                    self.form_action_redirect_map[form_action],
+                    kwargs={"pk": self.workbasket.pk},
+                ),
+                form_action,
+            )
+        except KeyError:
+            return reverse(
+                "workbaskets:workbasket-ui-detail",
+                kwargs={"pk": self.workbasket.pk},
+            )
 
 
 class WorkBasketViolations(SortingMixin, WithPaginationListView):

@@ -1,19 +1,28 @@
 {% extends "layouts/layout.jinja" %}
-
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 
 {% set page_title = "Remove tariff changes" %}
 
+{% block breadcrumb %}
+  {% if request.session.workbasket.id != view.workbasket.pk %}
+    {{ breadcrumbs(request, [
+        {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
+        {
+          "text": "Workbasket " ~ view.workbasket.id ~ "-" ~ view.workbasket.status,
+          "href": url("workbaskets:workbasket-ui-detail", kwargs={"pk": view.workbasket.pk}),
+        },
+        {"text": page_title}
+      ])
+    }}
+  {% else %}
+    {{ super() }}
+  {% endif %}
+{% endblock %}
+
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-xl">
-        Remove tariff changes
-        <span class="govuk-caption-xl"></span>
-      </h1>
-    </div>
-  </div>
+  <h1 class="govuk-heading-xl">Remove tariff changes</h1>
 
   <div class="govuk-grid-row govuk-!-margin-bottom-5">
     <div class="govuk-grid-column-full">
@@ -24,7 +33,6 @@
 
       <form method="post">
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
         <div class="govuk-button-group">
           {% if object_list -%}
             {{ govukButton({
@@ -42,7 +50,6 @@
               "disabled": "true"
             }) }}
           {% endif %}
-
           {{ govukButton({
             "text": "Cancel",
             "classes": "govuk-button--secondary",
@@ -51,11 +58,7 @@
           }) }}
         </div>
       </form>
-    </div>
-  </div>
 
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
       <ul class="govuk-list">
       {% for obj in object_list %}
         <li>

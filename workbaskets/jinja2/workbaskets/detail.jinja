@@ -1,80 +1,80 @@
 {% extends "layouts/layout.jinja" %}
-
-{% from "components/accordion/macro.njk" import govukAccordion %}
-{% from "components/tabs/macro.njk" import govukTabs %}
-{% from "components/input/macro.njk" import govukInput %}
-{% from "components/table/macro.njk" import govukTable %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "includes/workbaskets/navigation.jinja" import create_workbasket_detail_navigation with context %}
+{% from "workbaskets/macros/workbasket_status_tag.jinja" import create_workbasket_status_tag %}
 
-
-{% set page_title = "Workbasket: " ~ workbasket.title %}
-
+{% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
-      {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list")},
+      {
+        "text": "Find and view workbaskets",
+        "href": url("workbaskets:workbasket-ui-list-all")
+      },
       {"text": page_title}
     ])
   }}
 {% endblock %}
 
-
 {% block content %}
-  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
 
-  <div class="govuk-grid-row govuk-!-margin-bottom-6">
+  {{ create_workbasket_detail_navigation(active_tab="details") }}
+
+  <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-
-      <h2 class="govuk-heading-l">Details</h2>
+      <h2 class="govuk-heading-m">Details</h2>
 
       {{ govukTable({
-          "firstCellIsHeader": true,
-          "rows": [
+        "firstCellIsHeader": true,
+        "rows": [
           [
-              {"text": "Workbasket ID"},
-              {"text": workbasket.pk}
+            {"text": "Status"},
+            {"html": create_workbasket_status_tag(workbasket.status)},
           ],
           [
-              {"text": "Workbasket name"},
-              {"text": workbasket.title},
+            {"text": "Workbasket ID"},
+            {"text": workbasket.pk}
           ],
           [
-              {"text": "Reason"},
-              {"text": workbasket.reason or ""}
+            {"text": "Jira number"},
+            {"text": workbasket.title},
           ],
           [
-              {"text": "Number of changes"},
-              {"text": '{0:,}'.format(workbasket.tracked_models.count()) }
+            {"text": "Description"},
+            {"text": workbasket.reason or ""}
           ],
           [
-              {"text": "Created"},
-              {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)}
+            {"text": "Number of changes"},
+            {"text": '{0:,}'.format(workbasket.tracked_models.count())}
           ],
           [
-              {"text": "Last amended"},
-              {"text": "{:%d %b %y %H:%M}".format(workbasket.updated_at)}
+            {"text": "Created"},
+            {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)}
           ],
           [
-              {"text": "Workbasket status"},
-              {"text": workbasket.get_status_display()}
+            {"text": "Activity date"},
+            {"text": "{:%d %b %y %H:%M}".format(workbasket.updated_at)}
           ],
-          ]
-      }) }}
+      ]}) }}
     </div>
   </div>
 
-  <div class="govuk-grid-row govuk-!-margin-bottom-5">
-    <div class="govuk-grid-column-full">
+  {% if workbasket.status == "EDITING" %}
+    <form action="{{ url("workbaskets:workbasket-ui-list") }}" method="post" style="display: inline">
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+      <input type="hidden" name="workbasket" value="{{ workbasket.pk }}">
+      <input type="hidden" name="workbasket-tab" value="view-summary">
+      <input type="submit" class="govuk-button" name="submit" value="Go to summary view">
+    </form>
+  {% endif %}
 
-      <h2 class="govuk-heading-l">Changes</h2>
-
-      {% set object_list = page_obj %}
-      {% set items_name = "changes" %}
-
-      {% include "includes/common/pagination-list-summary.jinja" %}
-      {% include "includes/workbaskets/workbasket-items-accordion.jinja" %}
-      {% include "includes/common/pagination.jinja" %}
-    </div>
+  {{ govukButton({
+    "text": "Return to homepage",
+    "href": url("home"),
+    "classes": "govuk-button--secondary",
+  }) }}
   </div>
 {% endblock %}
-      

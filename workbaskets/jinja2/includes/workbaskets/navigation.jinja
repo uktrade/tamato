@@ -19,3 +19,16 @@
     </ul>
 </nav>
 {% endmacro %}
+
+{% macro create_workbasket_detail_navigation(active_tab) %}
+<nav class="workbasket-navigation govuk-!-margin-bottom-7">
+  <ul class="govuk-list">
+    <li class="{% if active_tab == "details" %}active{% endif %}">
+      <a href="{{ url("workbaskets:workbasket-ui-detail", args=[workbasket.pk]) }}" class="govuk-link">Details</a>
+    </li>
+    <li class="{% if active_tab == "changes" %}active{% endif %}">
+      <a href="{{ url("workbaskets:workbasket-ui-changes", args=[workbasket.pk]) }}" class="govuk-link">Changes</a>
+    </li>
+  </ul>
+</nav>
+{% endmacro %}

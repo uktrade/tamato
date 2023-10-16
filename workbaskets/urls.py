@@ -92,11 +92,6 @@ ui_patterns = [
         name="workbasket-ui-violations",
     ),
     path(
-        f"current/delete-changes/",
-        ui_views.WorkBasketDeleteChanges.as_view(),
-        name="workbasket-ui-delete-changes",
-    ),
-    path(
         f"<pk>/confirm-create/",
         ui_views.WorkBasketConfirmCreate.as_view(),
         name="workbasket-ui-confirm-create",
@@ -107,19 +102,29 @@ ui_patterns = [
         name="workbasket-ui-confirm-update",
     ),
     path(
-        f"current/delete-changes-done/",
-        ui_views.WorkBasketDeleteChangesDone.as_view(),
-        name="workbasket-ui-delete-changes-done",
-    ),
-    path(
         f"compare/",
         ui_views.WorkBasketCompare.as_view(),
         name="workbasket-ui-compare",
     ),
     path(
+        f"<pk>/",
+        ui_views.WorkBasketDetailView.as_view(),
+        name="workbasket-ui-detail",
+    ),
+    path(
         f"<pk>/changes/",
-        ui_views.WorkBasketChanges.as_view(),
+        ui_views.WorkBasketChangesView.as_view(),
         name="workbasket-ui-changes",
+    ),
+    path(
+        f"<pk>/changes/delete/",
+        ui_views.WorkBasketChangesDelete.as_view(),
+        name="workbasket-ui-changes-delete",
+    ),
+    path(
+        f"<pk>/changes/confirm-delete/",
+        ui_views.WorkBasketChangesConfirmDelete.as_view(),
+        name="workbasket-ui-changes-confirm-delete",
     ),
     path(
         f"<wb_pk>/violations/<pk>/",
