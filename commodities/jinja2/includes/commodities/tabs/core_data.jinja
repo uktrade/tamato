@@ -26,17 +26,17 @@
             },
             {
                 "key": {"text": "Indent number"},
-                "value": {"text": indent_number},
+                "value": {"text": indent_number  if indent_start_date else "-"},
                 "actions": {"items": []}
             },
             {
                 "key": {"text": "Indent SID"},
-                "value": {"text": indent_sid},
+                "value": {"text": indent_sid  if indent_start_date else "-"},
                 "actions": {"items": []}
             },
             {
                 "key": {"text": "Indent start date"},
-                "value": {"text": "{:%d %b %Y}".format(indent_start_date)},
+                "value": {"text": "{:%d %b %Y}".format(indent_start_date) if indent_start_date else "-"},
                 "actions": {"items": []}
             },
             {
