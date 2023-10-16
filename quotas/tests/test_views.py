@@ -116,7 +116,12 @@ def test_quota_detail_views(
 ):
     """Verify that quota detail views are under the url quotas and don't return
     an error."""
-    assert_model_view_renders(view, url_pattern, valid_user_client)
+    assert_model_view_renders(
+        view,
+        url_pattern,
+        valid_user_client,
+        override_models={"quotas.views.QuotaDefinitionCreate": models.QuotaOrderNumber},
+    )
 
 
 def test_quota_detail(valid_user_client, date_ranges, mock_quota_api_no_data):
