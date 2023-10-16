@@ -35,12 +35,12 @@
 {% endset %}
 
 {% set current_count = page_obj|length + ((page_obj.number - 1) * view.paginate_by) %}
-{% set total_count = "{0:,}".format(page_obj.paginator.count) %}
+{% set total_count = page_obj.paginator.count %}
 
 {% set load_more_pagination %}
   <nav id="workbasket-items" class="pagination" role="navigation" aria-label="Pagination navigation">
     <p class="govuk-body govuk-!-margin-0">
-      You've viewed {{current_count}} out of {{total_count}} items
+      You've viewed {{current_count}} out of {{"{0:,}".format(total_count)}} item{{ total_count|pluralize }}
     </p>
 
     <progress value="{{current_count}}" max="{{total_count}}" role="progressbar"></progress>
