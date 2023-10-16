@@ -1087,6 +1087,3 @@ def test_quota_order_number_origin_edit_create_view(
     )
 
     assert response.status_code == 302
-
-    assert b"<form" in response.content
-    assert b"div_id_exclusions" in response.content
