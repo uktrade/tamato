@@ -21,6 +21,7 @@ from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
 from geo_areas.models import GeographicalArea
+from measures.models import MeasurementUnit
 from quotas import models
 from quotas import validators
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
@@ -299,6 +300,10 @@ class QuotaDefinitionUpdateForm(
             "required": "Enter the initial volume",
         },
     )
+    measurement_unit = forms.ModelChoiceField(
+        queryset=MeasurementUnit.objects.all(),
+        error_messages={"required": "Select the measurement unit"},
+    )
     quota_critical_threshold = forms.DecimalField(
         label="Threshold",
         help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
@@ -414,6 +419,11 @@ class QuotaDefinitionCreateForm(
             "required": "Enter the initial volume",
         },
     )
+    measurement_unit = forms.ModelChoiceField(
+        queryset=MeasurementUnit.objects.all(),
+        error_messages={"required": "Select the measurement unit"},
+    )
+
     quota_critical_threshold = forms.DecimalField(
         label="Threshold",
         help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
@@ -431,11 +441,9 @@ class QuotaDefinitionCreateForm(
         widget=forms.RadioSelect(),
         error_messages={"required": "Critical state must be set"},
     )
-
     maximum_precision = forms.IntegerField(
         widget=forms.HiddenInput(),
     )
-
     order_number = forms.ModelChoiceField(
         queryset=models.QuotaOrderNumber.objects.all(),
         widget=forms.HiddenInput(),
