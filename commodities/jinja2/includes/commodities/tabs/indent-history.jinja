@@ -11,9 +11,9 @@
         
         {% for i in indents %}
             {% set indent_row = [
-                {"text": i.sid if indent_start_date else "-"},
-                {"text": i.indent if indent_start_date else "-"},
-                {"text": "{:%d %b %Y}".format(i.validity_start) if indent_start_date else "-"},
+                {"text": i.sid if i.sid else "-"},
+                {"text": i.indent if i.indent else "-"},
+                {"text": "{:%d %b %Y}".format(i.validity_start) if i.validity_start else "-"},
 
             ]%}
             {{ indent_rows.append(indent_row) or "" }}
@@ -24,7 +24,6 @@
         {"text": "Indent number", "classes":  "govuk-!-width-one-eighth"},
         {"text": "Indent start date", "classes":  "govuk-!-width-one-eighth"},
         ]%}
-        {# valid_between.lower (start) valid_between.upper (end) #}
 
         <h2 class="govuk-heading-l">Indent history</h2>
         

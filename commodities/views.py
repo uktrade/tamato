@@ -95,9 +95,9 @@ class CommodityDetail(CommodityMixin, TrackedModelDetailView):
         context = super().get_context_data(*args, **kwargs)
 
         indent = self.object.get_indent_as_at(date.today())
+        context["indent_number"] = indent.indent if indent else "-"
+        context["indent_sid"] = indent.sid if indent else "-"
         if indent:
-            context["indent_number"] = indent.indent
-            context["indent_sid"] = indent.sid
             context["indent_start_date"] = indent.validity_start
 
         collection = get_chapter_collection(self.object)
