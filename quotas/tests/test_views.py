@@ -1070,9 +1070,16 @@ def test_quota_order_number_origin_edit_create_view(
         transaction=approved_transaction,
     )
 
+    origin = factories.QuotaOrderNumberOriginFactory.create(
+        transaction=approved_transaction,
+        geographical_area=geo_group1,
+        valid_between=date_ranges.normal,
+        order_number=quota_order_number,
+    )
+
     url = reverse(
         "quota_order_number_origin-ui-edit-create",
-        kwargs={"sid": quota_order_number.sid},
+        kwargs={"sid": origin.sid},
     )
 
     response = valid_user_client.get(url)
