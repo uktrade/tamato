@@ -645,6 +645,7 @@ def test_importer_generics(
         "last_published_description_with_period",
         "allow_update_without_children",
         "updates_allowed",
+        "deletes_allowed",
     ]
 
     for variable_name in vars(parser_class).keys():

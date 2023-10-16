@@ -60,6 +60,7 @@ class NewMeasureTypeSeriesDescriptionParser(NewWritable, NewElementParser):
         "sid",
     ]
 
+    deletes_allowed = False
     sid: str = None
     # language_id: str = None
     description: str = None
@@ -343,6 +344,7 @@ class NewDutyExpressionDescriptionParser(NewWritable, NewElementParser):
         "sid",
     ]
 
+    deletes_allowed = False
     sid: int = None
     # language_id: str = None
     description: str = None
@@ -420,6 +422,7 @@ class NewMeasureTypeDescriptionParser(NewWritable, NewElementParser):
         "sid",
     ]
 
+    deletes_allowed = False
     sid: str = None
     # language_id: str = None
     description: str = None
@@ -524,6 +527,7 @@ class NewMeasureConditionCodeDescriptionParser(NewWritable, NewElementParser):
         "code",
     ]
 
+    deletes_allowed = False
     code: str = None
     # language_id: str = None
     description: str = None
@@ -584,6 +588,7 @@ class NewMeasureActionDescriptionParser(NewWritable, NewElementParser):
         "code",
     ]
 
+    deletes_allowed = False
     code: str = None
     # language_id: str = None
     description: str = None

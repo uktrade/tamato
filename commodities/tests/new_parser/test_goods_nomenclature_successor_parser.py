@@ -87,6 +87,13 @@ class TestNewGoodsNomenclatureSuccessorParser:
         assert len(importer.issues()) == 1
 
         assert (
-            "Taric objects of type GoodsNomenclatureSuccessor can't be updated, only created and deleted"
+            "Taric objects of type GoodsNomenclatureSuccessor can't be updated"
             in str(importer.issues()[0])
         )
+
+    def test_import_delete_raises_issue(self, superuser):
+        preload_import("goods_nomenclature_successor_CREATE.xml", __file__, True)
+        importer = preload_import("goods_nomenclature_successor_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 0
+        assert importer.can_save()

@@ -102,3 +102,12 @@ class TestNewDutyExpressionParser:
         assert len(importer.issues()) == 0
 
         assert DutyExpression.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("duty_expression_CREATE.xml", __file__, True)
+        importer = preload_import("duty_expression_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 0
+        assert importer.issues() == []
+
+        assert DutyExpression.objects.all().count() == 2

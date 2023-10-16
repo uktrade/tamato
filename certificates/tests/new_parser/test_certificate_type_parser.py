@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from certificates.models import CertificateType
 from certificates.new_import_parsers import NewCertificateTypeParser
 from common.tests.util import preload_import
 
@@ -80,3 +81,13 @@ class TestNewCertificateTypeParser:
         assert target_taric_object.valid_between_upper == date(2021, 12, 31)
 
         assert importer.issues() == []
+
+    def test_import_delete(self, superuser):
+        preload_import("certificate_type_CREATE.xml", __file__, True)
+        importer = preload_import("certificate_type_DELETE.xml", __file__)
+
+        assert importer.issues() == []
+
+        assert importer.can_save()
+        assert CertificateType.objects.all().count() == 2
+        assert CertificateType.objects.all().last().update_type == 2

@@ -53,6 +53,8 @@ class NewCertificateTypeDescriptionParser(NewWritable, NewElementParser):
         "certificate_type_code": "sid",
     }
 
+    deletes_allowed = False
+
     record_code = "110"
     subrecord_code = "05"
 

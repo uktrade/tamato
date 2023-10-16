@@ -93,7 +93,6 @@ class TestNewQuotaEventParser:
 
         assert len(importer.issues()) == 1
 
-        assert (
-            "Taric objects of type QuotaEvent can't be updated, only created and deleted"
-            in str(importer.issues()[0])
+        assert "Taric objects of type QuotaEvent can't be updated" in str(
+            importer.issues()[0],
         )

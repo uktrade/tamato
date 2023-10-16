@@ -91,3 +91,12 @@ class TestNewGeographicalMembershipParser:
         assert importer.issues() == []
 
         assert GeographicalMembership.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("geographical_membership_CREATE.xml", __file__, True)
+        importer = preload_import("geographical_membership_DELETE.xml", __file__)
+
+        assert importer.issues() == []
+        assert importer.can_save()
+
+        assert GeographicalMembership.objects.all().count() == 2

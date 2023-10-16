@@ -77,6 +77,15 @@ class TestNewFootnoteAssociationMeasureParser:
         assert len(importer.issues()) == 1
 
         assert (
-            "Taric objects of type FootnoteAssociationMeasure can't be updated, only created and deleted"
+            "Taric objects of type FootnoteAssociationMeasure can't be updated"
             in str(importer.issues()[0])
         )
+
+    def test_import_delete(self, superuser):
+        preload_import("footnote_association_measure_CREATE.xml", __file__, True)
+        importer = preload_import("footnote_association_measure_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 0
+        assert importer.can_save()
+
+        assert FootnoteAssociationMeasure.objects.all().count() == 2

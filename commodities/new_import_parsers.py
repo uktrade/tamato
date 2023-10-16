@@ -225,6 +225,8 @@ class NewGoodsNomenclatureDescriptionPeriodParser(
         "validity_start_date": "validity_start",
     }
 
+    deletes_allowed = False
+
     identity_fields = ["sid"]
 
     record_code = "400"

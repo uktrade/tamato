@@ -168,3 +168,12 @@ class TestNewMeasureParser:
         assert len(importer.issues()) == 0
 
         assert Measure.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("measure_CREATE.xml", __file__, True)
+        importer = preload_import("measure_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 0
+        assert importer.can_save()
+
+        assert Measure.objects.all().count() == 2

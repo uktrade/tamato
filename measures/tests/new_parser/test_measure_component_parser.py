@@ -103,3 +103,12 @@ class TestNewMeasureComponentParser:
         assert len(importer.issues()) == 0
 
         assert MeasureComponent.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("measure_component_CREATE.xml", __file__, True)
+        importer = preload_import("measure_component_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 0
+        assert importer.can_save()
+
+        assert MeasureComponent.objects.all().count() == 2

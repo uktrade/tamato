@@ -86,3 +86,12 @@ class TestNewMeasureActionParser:
         assert importer.issues() == []
 
         assert MeasureAction.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("measure_action_CREATE.xml", __file__, True)
+        importer = preload_import("measure_action_DELETE.xml", __file__)
+
+        assert importer.issues() == []
+        assert importer.can_save()
+
+        assert MeasureAction.objects.all().count() == 2

@@ -93,3 +93,14 @@ class TestNewFootnoteDescriptionPeriodParser:
         assert len(importer.issues()) == 0
 
         assert FootnoteDescription.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("footnote_description_period_CREATE.xml", __file__, True)
+        importer = preload_import("footnote_description_period_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 1
+        assert (
+            "Children of Taric objects of type FootnoteDescription can't be deleted directly"
+            in str(importer.issues()[0])
+        )
+        assert not importer.can_save()

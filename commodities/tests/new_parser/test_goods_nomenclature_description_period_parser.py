@@ -88,7 +88,7 @@ class TestNewGoodsNomenclatureDescriptionPeriodParser:
             2,
         )
 
-    def test_import_update_with_existing_description(self, superuser):
+    def test_import_update(self, superuser):
         preload_import(
             "goods_nomenclature_description_period_UPDATE.xml",
             __file__,
@@ -120,4 +120,22 @@ class TestNewGoodsNomenclatureDescriptionPeriodParser:
             2021,
             1,
             3,
+        )
+
+    def test_import_delete(self, superuser):
+        preload_import(
+            "goods_nomenclature_description_period_UPDATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "goods_nomenclature_description_period_only_DELETE.xml",
+            __file__,
+        )
+
+        assert not importer.can_save()
+        assert len(importer.issues()) == 1
+        assert (
+            "Children of Taric objects of type GoodsNomenclatureDescription can't be deleted directly"
+            in str(importer.issues()[0])
         )

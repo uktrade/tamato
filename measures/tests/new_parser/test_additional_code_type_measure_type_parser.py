@@ -100,3 +100,15 @@ class TestNewAdditionalCodeTypeMeasureTypeParser:
         assert importer.issues() == []
 
         assert AdditionalCodeTypeMeasureType.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("additional_code_type_measure_type_CREATE.xml", __file__, True)
+        importer = preload_import(
+            "additional_code_type_measure_type_DELETE.xml",
+            __file__,
+        )
+
+        assert importer.can_save()
+        assert importer.issues() == []
+
+        assert AdditionalCodeTypeMeasureType.objects.all().count() == 2

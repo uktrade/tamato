@@ -102,3 +102,21 @@ class TestNewGeographicalAreaDescriptionPeriodParser:
         assert target.validity_start == date(2022, 1, 11)
 
         assert GeographicalAreaDescription.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import(
+            "geographical_area_description_period_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "geographical_area_description_period_DELETE.xml",
+            __file__,
+        )
+
+        assert len(importer.issues()) == 1
+        assert (
+            "Children of Taric objects of type GeographicalAreaDescription can't be deleted directly"
+            in str(importer.issues()[0])
+        )
+        assert not importer.can_save()

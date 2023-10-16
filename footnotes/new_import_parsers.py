@@ -180,6 +180,8 @@ class NewFootnoteDescriptionPeriodParser(NewWritable, NewElementParser, NewChild
         "sid",
     ]
 
+    deletes_allowed = False
+
     sid: int = None
     described_footnote__footnote_type__footnote_type_id: str = None
     described_footnote__footnote_id: str = None

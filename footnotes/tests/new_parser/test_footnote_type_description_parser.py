@@ -79,3 +79,11 @@ class TestNewFootnoteTypeDescriptionParser:
 
         assert FootnoteType.objects.all().count() == 2
         assert importer.issues() == []
+
+    def test_import_delete(self, superuser):
+        preload_import("footnote_type_description_CREATE.xml", __file__, True)
+        importer = preload_import("footnote_type_description_DELETE.xml", __file__)
+
+        assert FootnoteType.objects.all().count() == 2
+        assert importer.issues() == []
+        assert importer.can_save()

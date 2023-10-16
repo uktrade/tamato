@@ -92,6 +92,15 @@ class TestNewMeasureTypeSeriesParser:
 
         assert MeasureTypeSeries.objects.all().count() == 2
 
+    def test_import_delete(self, superuser):
+        preload_import("measure_series_CREATE.xml", __file__, True)
+        importer = preload_import("measure_series_DELETE.xml", __file__)
+
+        assert importer.issues() == []
+        assert importer.can_save()
+
+        assert MeasureTypeSeries.objects.all().count() == 2
+
     def test_import_failure_no_description(self, superuser):
         importer = preload_import("measure_series_no_description_CREATE.xml", __file__)
 

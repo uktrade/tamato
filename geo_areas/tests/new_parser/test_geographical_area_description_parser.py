@@ -91,3 +91,12 @@ class TestNewGeographicalAreaDescriptionParser:
         assert importer.issues() == []
 
         assert GeographicalAreaDescription.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("geographical_area_description_CREATE.xml", __file__, True)
+        importer = preload_import("geographical_area_description_DELETE.xml", __file__)
+
+        assert importer.issues() == []
+        assert importer.can_save()
+
+        assert GeographicalAreaDescription.objects.all().count() == 2

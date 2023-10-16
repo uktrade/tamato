@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope id="000001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+    <env:transaction id="1">
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>430</oub:record.code>
+                    <oub:subrecord.code>11</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>2</oub:update.type>
+                    <oub:measure.condition.component>
+                        <oub:measure.condition.sid>5</oub:measure.condition.sid>
+                        <oub:duty.expression.id>7</oub:duty.expression.id>
+                        <oub:duty.amount>99.99</oub:duty.amount>
+                        <oub:monetary.unit.code>ZZZ</oub:monetary.unit.code>
+                        <oub:measurement.unit.code>XXX</oub:measurement.unit.code>
+                        <oub:measurement.unit.qualifier.code>B</oub:measurement.unit.qualifier.code>
+                    </oub:measure.condition.component>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>

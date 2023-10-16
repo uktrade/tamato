@@ -111,6 +111,18 @@ class TestNewGoodsNomenclatureDescriptionParser:
 
         assert len(importer.issues()) == 0
 
+    def test_import_delete(self, superuser):
+        preload_import(
+            "goods_nomenclature_description_with_period_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import("goods_nomenclature_description_DELETE.xml", __file__)
+
+        assert importer.can_save()
+        assert GoodsNomenclatureDescription.objects.all().count() == 2
+        assert len(importer.issues()) == 0
+
     def test_import_failure_no_period(self, superuser):
         importer = preload_import(
             "goods_nomenclature_description_no_period_CREATE.xml",

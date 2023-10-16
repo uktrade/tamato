@@ -122,6 +122,22 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
 
         assert len(importer.issues()) == 0
 
+    def test_import_delete(self):
+        preload_import(
+            "footnote_association_goods_nomenclature_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "footnote_association_goods_nomenclature_DELETE.xml",
+            __file__,
+        )
+
+        assert len(importer.issues()) == 0
+        assert importer.can_save()
+
+        assert FootnoteAssociationGoodsNomenclature.objects.all().count() == 2
+
     def test_import_failure_no_footnote(self, superuser):
         importer = preload_import(
             "footnote_association_goods_nomenclature_no_footnote_CREATE.xml",

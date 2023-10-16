@@ -86,7 +86,6 @@ class TestNewGoodsNomenclatureOriginParser:
 
         assert len(importer.issues()) == 1
 
-        assert (
-            "Taric objects of type GoodsNomenclatureOrigin can't be updated, only created and deleted"
-            in str(importer.issues()[0])
+        assert "Taric objects of type GoodsNomenclatureOrigin can't be updated" in str(
+            importer.issues()[0],
         )

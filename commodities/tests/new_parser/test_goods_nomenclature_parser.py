@@ -109,7 +109,7 @@ class TestNewGoodsNomenclatureParser:
 
         assert len(importer.issues()) == 0
 
-    def test_import_then_update(self, superuser):
+    def test_import_update(self, superuser):
         preload_import("goods_nomenclature_CREATE.xml", __file__, True)
         importer = preload_import("goods_nomenclature_UPDATE.xml", __file__)
 
@@ -132,3 +132,12 @@ class TestNewGoodsNomenclatureParser:
         latest_gn = GoodsNomenclature.objects.all().order_by("pk").last()
 
         assert latest_gn.valid_between.lower == date(2021, 1, 2)
+
+    def test_import_delete_raises_issue(self, superuser):
+        preload_import("goods_nomenclature_CREATE.xml", __file__, True)
+        importer = preload_import("goods_nomenclature_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 0
+        assert importer.can_save()
+        assert GoodsNomenclature.objects.all().count() == 2
+        assert GoodsNomenclature.objects.latest_approved().count() == 1

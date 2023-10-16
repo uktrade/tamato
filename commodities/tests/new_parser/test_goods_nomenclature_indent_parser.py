@@ -117,3 +117,11 @@ class TestNewGoodsNomenclatureIndentParser:
         )
 
         assert latest_goods_indent.validity_start == date(2021, 1, 2)
+
+    def test_import_delete(self, superuser):
+        preload_import("goods_nomenclature_indent_CREATE.xml", __file__, True)
+        importer = preload_import("goods_nomenclature_indent_DELETE.xml", __file__)
+
+        assert importer.can_save()
+        assert len(importer.issues()) == 0
+        assert GoodsNomenclatureIndent.objects.all().count() == 2

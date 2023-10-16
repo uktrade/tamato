@@ -89,3 +89,18 @@ class TestNewMeasureConditionCodeDescriptionParser:
         assert len(importer.issues()) == 0
 
         assert MeasureConditionCode.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("measure_condition_code_description_CREATE.xml", __file__, True)
+        importer = preload_import(
+            "measure_condition_code_description_DELETE.xml",
+            __file__,
+        )
+
+        assert len(importer.issues()) == 1
+        assert not importer.can_save()
+
+        assert (
+            "Children of Taric objects of type MeasureConditionCode can't be deleted directly"
+            in str(importer.issues()[0])
+        )

@@ -130,6 +130,7 @@ class NewGeographicalAreaDescriptionPeriodParser(
         "sid",
     ]
 
+    deletes_allowed = False
     sid: int = None
     described_geographicalarea__sid: int = None
     described_geographicalarea__area_id: str = None
