@@ -1059,3 +1059,66 @@ def test_quota_create_origin_no_overlapping_origins(
         "There may be no overlap in time of two quota order number origins with "
         "the same quota order number SID and geographical area id."
     )
+
+
+@pytest.mark.django_db
+def test_quota_order_number_and_origin_edit_create_view(
+    valid_user_client, date_ranges, approved_transaction, geo_group1, geo_group2
+):
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    origin = models.QuotaOrderNumberOrigin.objects.last()
+
+    form_data = {
+        "start_date_0": origin.valid_between.lower.day,
+        "start_date_1": origin.valid_between.lower.month,
+        "start_date_2": origin.valid_between.lower.year,
+        "geographical_area": geo_group1.id,
+        "quota-origin-exclusions-formset-__prefix__-exclusion": geo_group2.id,
+        "submit": "Save",
+    }
+
+    response = valid_user_client.post(
+        reverse("quota_order_number_origin-ui-edit-create", kwargs={"sid": origin.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 302
+
+    response = valid_user_client.get(
+        reverse("quota-ui-edit-create", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_quota_order_number_update_view(
+    valid_user_client, date_ranges, approved_transaction, geo_group1, geo_group2
+):
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    origin = models.QuotaOrderNumberOrigin.objects.last()
+
+    form_data = {
+        "start_date_0": origin.valid_between.lower.day,
+        "start_date_1": origin.valid_between.lower.month,
+        "start_date_2": origin.valid_between.lower.year,
+        "geographical_area": geo_group1.id,
+        "quota-origin-exclusions-formset-__prefix__-exclusion": geo_group2.id,
+        "submit": "Save",
+    }
+
+    response = valid_user_client.get(
+        reverse("quota-ui-edit-update", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 200
