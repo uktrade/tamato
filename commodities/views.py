@@ -96,6 +96,9 @@ class CommodityDetail(CommodityMixin, TrackedModelDetailView):
 
         indent = self.object.get_indent_as_at(date.today())
         context["indent_number"] = indent.indent if indent else "-"
+        context["indent_sid"] = indent.sid if indent else "-"
+        if indent:
+            context["indent_start_date"] = indent.validity_start
 
         collection = get_chapter_collection(self.object)
         tx = WorkBasket.get_current_transaction(self.request)
@@ -428,4 +431,19 @@ class CommodityDetailDescriptions(CommodityDetail):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["selected_tab"] = "descriptions"
+        return context
+
+
+class CommodityDetailIndentHistory(CommodityDetail):
+    """Displays Indent History for a Comm Code as a simulated tab on Commodity
+    Code view."""
+
+    template_name = "includes/commodities/tabs/indent-history.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        indents = self.object.indents.all()
+
+        context["selected_tab"] = "indent-history"
+        context["indents"] = indents
         return context

@@ -1,0 +1,36 @@
+{% extends "commodities/detail.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% from 'macros/create_link.jinja' import create_link %}
+
+{% block tab_content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        {% set indent_rows = [] %}
+        
+        
+        {% for i in indents %}
+            {% set indent_row = [
+                {"text": i.sid if i.sid else "-"},
+                {"text": i.indent if i.indent else "-"},
+                {"text": "{:%d %b %Y}".format(i.validity_start) if i.validity_start else "-"},
+
+            ]%}
+            {{ indent_rows.append(indent_row) or "" }}
+        {% endfor %}
+        
+        {% set head = [
+        {"text": "SID"},
+        {"text": "Indent number"},
+        {"text": "Indent start date"},
+        ]%}
+
+        <h2 class="govuk-heading-l">Indent history</h2>
+        
+        {{ govukTable({
+        "head": head,
+        "rows": indent_rows
+        }) }}
+    </div>
+</div>
+{% endblock %}
