@@ -1186,3 +1186,43 @@ def test_create_new_quota_definition(
     assert "No" in details
     assert f"{created_definition.quota_critical_threshold}%" in details
     assert created_definition.measurement_unit.abbreviation.capitalize() in details
+
+
+def test_create_new_quota_definition_business_rule_violation(
+    valid_user_client,
+    approved_transaction,
+    date_ranges,
+):
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    measurement_unit = factories.MeasurementUnitFactory.create()
+
+    form_data = {
+        "start_date_0": date_ranges.earlier.lower.day,
+        "start_date_1": date_ranges.earlier.lower.month,
+        "start_date_2": date_ranges.earlier.lower.year,
+        "description": "Lorem ipsum",
+        "volume": "1000000",
+        "initial_volume": "1000000",
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
+        "order_number": quota.pk,
+        "maximum_precision": "3",
+        "measurement_unit": measurement_unit.pk,
+    }
+
+    url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    assert soup.select(".govuk-error-summary")
+    errors = [el.text.strip() for el in soup.select(".govuk-error-summary__list li")]
+    assert (
+        "The validity period of the quota definition must be spanned by one of the validity periods of the referenced quota order number."
+        in errors
+    )
