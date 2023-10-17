@@ -5,7 +5,7 @@
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
       {"text": "Find and edit quotas", "href": url("quota-ui-list")},
-      {"text": order_number._meta.verbose_name|capitalize ~ ": " ~ order_number|string, "href": order_number.get_url() ~ "#definitions"},
+      {"text": "Quota order number", "href": url("quota-ui-detail", args=[view.kwargs.sid]) ~ "#definitions"},
       {"text": page_title}
     ])
   }}

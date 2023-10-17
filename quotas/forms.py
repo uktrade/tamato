@@ -391,7 +391,6 @@ class QuotaDefinitionCreateForm(
     class Meta:
         model = models.QuotaDefinition
         fields = [
-            "order_number",
             "valid_between",
             "description",
             "volume",
@@ -444,13 +443,8 @@ class QuotaDefinitionCreateForm(
     maximum_precision = forms.IntegerField(
         widget=forms.HiddenInput(),
     )
-    order_number = forms.ModelChoiceField(
-        queryset=models.QuotaOrderNumber.objects.all(),
-        widget=forms.HiddenInput(),
-    )
 
     def __init__(self, *args, **kwargs):
-        self.order_number = kwargs.pop("order_number")
         super().__init__(*args, **kwargs)
         self.init_layout()
         self.init_fields()
@@ -459,8 +453,6 @@ class QuotaDefinitionCreateForm(
         # This is always set to 3 for current definitions
         # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
         self.fields["maximum_precision"].initial = 3
-
-        self.fields["order_number"].initial = self.order_number
 
         # Set these as the default values
         self.fields["quota_critical"].initial = False

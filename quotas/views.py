@@ -502,22 +502,10 @@ class QuotaDefinitionCreate(QuotaDefinitionUpdateMixin, CreateTaricCreateView):
     template_name = "quota-definitions/create.jinja"
     form_class = forms.QuotaDefinitionCreateForm
 
-    @property
-    def order_number(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).get(
-            sid=self.kwargs["sid"],
-        )
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["order_number"] = self.order_number
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["order_number"] = self.order_number
-        return context
+    def form_valid(self, form):
+        quota = models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
+        form.instance.order_number = quota
+        return super().form_valid(form)
 
 
 class QuotaDefinitionConfirmCreate(
