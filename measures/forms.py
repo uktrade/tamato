@@ -811,7 +811,7 @@ class MeasureFilterForm(forms.Form):
                             Div(
                                 "modc",
                                 HTML(
-                                    "<h3 class='govuk-body'>To use the 'Include inherited measures' filter, enter a valid commodity code in the 'Select commodity code' filter above</h3>",
+                                    "<h3 class='govuk-body'>To use the 'Include inherited measures' filter, enter a valid commodity code in the 'Specific commodity code' filter above</h3>",
                                 ),
                                 css_class="govuk-grid-column-full form-group-margin-bottom-2",
                             ),
