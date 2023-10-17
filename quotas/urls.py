@@ -60,6 +60,11 @@ urlpatterns = [
         name="quota_order_number_origin-ui-edit",
     ),
     path(
+        f"quota_order_number_origins/<sid>/edit-create/",
+        views.QuotaOrderNumberOriginUpdate.as_view(),
+        name="quota_order_number_origin-ui-edit-create",
+    ),
+    path(
         f"quotas/<sid>/quota_order_number_origins/",
         views.QuotaOrderNumberOriginCreate.as_view(),
         name="quota_order_number_origin-ui-create",

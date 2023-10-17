@@ -302,6 +302,13 @@ class QuotaUpdate(
     pass
 
 
+class QuotaEditCreate(
+    QuotaUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
 class QuotaEditUpdate(
     QuotaUpdateMixin,
     EditTaricView,
