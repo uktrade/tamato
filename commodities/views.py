@@ -442,7 +442,7 @@ class CommodityDetailIndentHistory(CommodityDetail):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        indents = self.object.indents.filter()
+        indents = self.object.indents.all()
 
         context["selected_tab"] = "indent-history"
         context["indents"] = indents
