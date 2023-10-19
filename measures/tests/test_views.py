@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 from typing import OrderedDict
 from unittest.mock import patch
+from urllib.parse import urlencode
 
 import pytest
 from bs4 import BeautifulSoup
@@ -2591,3 +2592,54 @@ def test_measures_list_sorting(valid_user_client, date_ranges):
             int(el.text) for el in soup.select(".govuk-table tbody tr td:nth-child(2)")
         ]
         assert measure_sids == expected_order_list[index]
+
+
+def test_measure_list_results_show_chosen_filters(valid_user_client, date_ranges):
+    # make measure types
+    type1 = factories.MeasureTypeFactory.create(sid="111")
+
+    # Erga Omnes
+    area_1 = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1011",
+    )
+
+    # make measure
+    measure = factories.MeasureFactory.create(
+        measure_type=type1,
+        geographical_area=area_1,
+        valid_between=date_ranges.later,
+    )
+    url_params = urlencode(
+        {
+            "goods_nomenclature": measure.goods_nomenclature_id,
+            "sid": measure.sid,
+            "regulation": measure.generating_regulation_id,
+            "goods_nomenclature__item_id": measure.goods_nomenclature.item_id[:3],
+            "measure_type": measure.measure_type_id,
+            "geographical_area": measure.geographical_area_id,
+            "start_date_0": measure.valid_between.lower.day,
+            "start_date_1": measure.valid_between.lower.month,
+            "start_date_2": measure.valid_between.lower.year,
+            "end_date_0": measure.valid_between.upper.day,
+            "end_date_1": measure.valid_between.upper.month,
+            "end_date_2": measure.valid_between.upper.year,
+        },
+    )
+    response = valid_user_client.get(f"{reverse('measure-ui-list')}?{url_params}")
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    assert len(soup.find_all("ul", class_="govuk-list--bullet")) == 2
+
+    list = soup.find("ul", {"class": "govuk-list govuk-list--bullet"})
+    items = list.find_all("li")
+    assert f"Commodity code {measure.goods_nomenclature.autocomplete_label}" in items[0]
+    assert (
+        f"Commodity code starting with {measure.goods_nomenclature.item_id[:3]}"
+        in items[1]
+    )
+    assert f"ID {measure.sid}" in items[2]
+    assert f"Regulation {measure.generating_regulation.autocomplete_label}" in items[3]
+    assert f"Measure type {measure.measure_type.autocomplete_label}" in items[4]
