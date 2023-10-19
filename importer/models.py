@@ -9,8 +9,8 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models import TimestampedMixin
-from importer.new_importer_issue import NewImportIssueReportItem
 from importer.storages import CommodityImporterStorage
+from taric_parsers.importer_issue import *
 from workbaskets.util import clear_workbasket
 from workbaskets.validators import WorkflowStatus
 
@@ -200,7 +200,7 @@ class BatchImportError(TimestampedMixin):
 
     @staticmethod
     def create_from_import_issue_report_item(
-        issue: NewImportIssueReportItem,
+        issue: ImportIssueReportItem,
         import_batch: ImportBatch,
     ):
         BatchImportError.objects.create(

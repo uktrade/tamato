@@ -1,5 +1,5 @@
 """
-tamato URL Configuration.
+Tamato URL Configuration.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.0/topics/http/urls/
@@ -35,6 +35,7 @@ urlpatterns = [
     path("", include("quotas.urls")),
     path("", include("regulations.urls")),
     path("", include("reports.urls")),
+    path("", include("taric_parsers.urls")),
     path("", include("workbaskets.urls", namespace="workbaskets")),
     path("admin/", admin.site.urls),
 ]

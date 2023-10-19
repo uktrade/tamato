@@ -8,10 +8,10 @@ from typing import Sequence
 
 from common.celery import app
 from importer import models
-from importer import new_importer
 from importer.models import BatchImportError
 from importer.taric import process_taric_xml_stream
 from importer.utils import build_dependency_tree
+from taric_parsers.importer import *
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 

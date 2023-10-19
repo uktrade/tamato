@@ -35,15 +35,13 @@ from pytz import timezone
 from commodities.models.orm import GoodsNomenclature
 from common.business_rules import BusinessRule
 from common.models.trackedmodel import TrackedModel
-from common.models.transactions import Transaction
 from common.renderers import counter_generator
 from common.serializers import validate_taric_xml_record_order
 from common.tariffs_api import Endpoints
 from common.tests import factories
-from common.util import TaricDateRange
 from common.util import get_accessor
 from common.util import get_field_tuple
-from importer import new_importer
+from taric_parsers.importer import *
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
@@ -947,7 +945,7 @@ def preload_import(file_name, from_file, approve_workbasket=False):
     import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
     user = factories.UserFactory.create()
 
-    importer = new_importer.NewImporter(
+    importer = TaricImporter(
         import_batch=import_batch,
         taric3_file=file_to_import,
         import_title=f"Importing stuff {fuzzy.FuzzyText(length=15)}",

@@ -15,24 +15,6 @@ general_importer_urlpatterns = [
     ),
 ]
 
-new_general_importer_urlpatterns = [
-    path(
-        "new_importer/<pk>/details/",
-        views.NewImportBatchDetails.as_view(),
-        name="new_import_batch_details",
-    ),
-    path(
-        "new_importer/",
-        views.NewImportBatchList.as_view(),
-        name="new_import_batch-ui-list",
-    ),
-    path(
-        "new_importer/create/",
-        views.NewUploadTaricFileView.as_view(),
-        name="new_import_batch-ui-create",
-    ),
-]
-
 commodity_importer_urlpatterns = [
     path(
         "commodity-importer/",
@@ -71,8 +53,4 @@ commodity_importer_urlpatterns = [
     ),
 ]
 
-urlpatterns = (
-    general_importer_urlpatterns
-    + commodity_importer_urlpatterns
-    + new_general_importer_urlpatterns
-)
+urlpatterns = general_importer_urlpatterns + commodity_importer_urlpatterns

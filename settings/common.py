@@ -114,6 +114,7 @@ DOMAIN_APPS = [
     "quotas.apps.QuotasConfig",
     "reports.apps.ReportsConfig",
     "regulations.apps.RegulationsConfig",
+    "taric_parsers.apps.TaricParsersConfig",
 ]
 
 TAMATO_APPS = [
