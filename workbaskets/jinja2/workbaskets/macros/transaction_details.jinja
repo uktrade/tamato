@@ -1,0 +1,25 @@
+{% macro transaction_details(transaction) %}
+  <span class="details">Transaction: {{ transaction.pk }}</span>
+
+  <div id="transaction-order-actions">
+    {% if is_transaction_first_in_workbasket(transaction) or not user_can_delete_items %}
+      <span class="govuk-link disabled promote">Move up &#9206;</span>
+    {% else %}
+      <button name="form-action"
+        value="promote-transaction__{{ transaction.pk }}"
+        class="govuk-link fake-link promote"
+        data-module="govuk-button"
+        >Move up &#9206;</button>
+    {% endif %}
+
+    {% if is_transaction_last_in_workbasket(transaction) or not user_can_delete_items %}
+      <span class="govuk-link disabled demote">Move down &#9207;</span>
+    {% else %}
+      <button name="form-action"
+        value="demote-transaction__{{ transaction.pk }}"
+        class="govuk-link fake-link demote"
+        data-module="govuk-button"
+        >Move down &#9207;</button>
+    {% endif %}
+  </div>
+{% endmacro %}

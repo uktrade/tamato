@@ -1,11 +1,11 @@
 {% extends "layouts/layout.jinja" %}
-{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/table/macro.njk" import govukTable %}
 {% from "includes/workbaskets/navigation.jinja" import create_workbasket_detail_navigation with context %}
 {% from "macros/checkbox_item.jinja" import checkbox_item %}
 {% from "workbaskets/macros/load_more_pagination.jinja" import load_more_pagination with context %}
+{% from "workbaskets/macros/transaction_details.jinja" import transaction_details with context %}
 
 {% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
 
@@ -21,19 +21,7 @@
   <div id="check-all-checkbox"></div>
 {% endset %}
 
-{% set base_url = url("workbaskets:workbasket-ui-changes", args=[workbasket.pk]) ~ "?page=" ~ page_obj.number %}
-
-{% set component %}
-  {{ create_sortable_anchor(request, "component", "Component", base_url, True) }}
-{% endset %}
-
-{% set action %}
-  {{ create_sortable_anchor(request, "action", "Action", base_url, True) }}
-{% endset %}
-
-{% set activity_date %}
-  {{ create_sortable_anchor(request, "activity_date", "Activity date", base_url, True) }}
-{% endset %}
+{% set base_url = url("workbaskets:workbasket-ui-transaction-order", args=[workbasket.pk]) ~ "?page=" ~ page_obj.number %}
 
 {% set current_count = page_obj|length + ((page_obj.number - 1) * view.paginate_by) %}
 {% set total_count = page_obj.paginator.count %}
@@ -41,23 +29,15 @@
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
 
-  {{ create_workbasket_detail_navigation(active_tab="changes") }}
+  {{ create_workbasket_detail_navigation(active_tab="transaction-order") }}
 
-  <h2 class="govuk-heading-m">Changes</h2>
+  <h2 class="govuk-heading-m">Transaction order</h2>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
 
     {% if not workbasket.tracked_models.count() %}
-      <p class="govuk-body">There are no changes in the workbasket.</p>
-
-      {% if user_can_delete_workbasket %}
-        {{ govukButton({
-          "text": "Delete workbasket",
-          "href": url("workbaskets:workbasket-ui-delete", kwargs={"pk": workbasket.pk}),
-          "classes": "govuk-button--warning"
-        }) }}
-      {% endif %}
+      <p class="govuk-body">There are no transactions in the workbasket.</p>
 
     {% elif workbasket.status == "EDITING" and user_can_delete_items %}
       <p class="govuk-body">Select to remove or click on the ID link to edit:</p>
@@ -77,34 +57,60 @@
               {{ obj.structure_description if obj.structure_description else "-" }}
             {% endset %}
 
+            {# Above each transaction add transaction info and actions. #}
+            {% if loop.first or is_obj_first_in_transaction(obj) %}
+              {{ table_rows.append([
+                { "text": "", "classes": "transaction-start first-cell"},
+                {
+                  "html": transaction_details(obj.transaction),
+                  "colspan": 7,
+                  "classes": "transaction-start last-cell",
+                },
+              ]) or "" }}
+            {% endif %}
+
+            {# TrackedModel instance. #}
             {{ table_rows.append([
+              {"text": "", "classes": "item first-cell"},
               {"html": checkbox},
               {"html": object_link, "classes": "govuk-!-width-one-quarter"},
-              {"text": obj._meta.verbose_name.title(), "classes": "govuk-!-width-one-quarter"},
+              {"text": obj._meta.verbose_name.title()},
               {"text": obj.update_type_str},
-              {"text": object_description, "classes": "govuk-!-width-one-quarter"},
-              {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter"},
+              {"html": object_description, "classes": "govuk-!-width-one-quarter"},
+              {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter item last-cell"},
             ]) or "" }}
+
+            {# Below each transaction add a spacer line. #}
+            {% if not loop.last and is_obj_last_in_transaction(obj) %}
+              {{ table_rows.append([
+                {
+                  "text": "",
+                  "colspan": 7,
+                  "classes": "transaction-end",
+                },
+              ]) or "" }}
+            {% endif  %}
           {% endfor %}
 
           {{ govukTable({
             "head": [
+              {"text": ""},
               {"html": checkbox_check_all},
               {"text": "ID"},
-              {"text": component},
-              {"text": action },
+              {"text": "Component"},
+              {"text": "Action"},
               {"text": "Description"},
-              {"text": activity_date},
+              {"text": "Activity date"},
             ],
-              "rows": table_rows
-            }) }}
+            "rows": table_rows,
+            "classes": "workbasket-items",
+          }) }}
         {% endif %}
 
         <div class="govuk-button-group">
           <button value="remove-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Remove</button>
-          <button value="remove-all" name="form-action" class="govuk-button govuk-button--warning" data-module="govuk-button">Remove all workbasket changes</button>
         </div>
-        
+
         {{ load_more_pagination(current_count, total_count) }}
       </form>
 
@@ -119,29 +125,59 @@
         {% set object_description -%}
           {{ obj.structure_description if obj.structure_description else "-" }}
         {% endset %}
+        {% set transaction_detail %}
+          <span class="details">Transaction: {{ obj.transaction.pk }}</span>
+        {% endset %}
 
+        {# Above each transaction add transaction info. #}
+        {% if loop.first or is_obj_first_in_transaction(obj) %}
+          {{ table_rows.append([
+            {"text": "", "classes": "transaction-start first-cell"},
+            {
+              "html": transaction_detail,
+              "colspan": 7,
+              "classes": "transaction-start last-cell",
+            },
+           ]) or "" }}
+        {% endif %}
+
+        {# TrackedModel instance. #}
         {{ table_rows.append([
+          {"text": "", "classes": "item first-cell"},
           {"html": object_link},
           {"text": obj._meta.verbose_name.title()},
           {"text": obj.update_type_str},
-          {"text": object_description},
-          {"text": "{:%d %b %Y}".format(obj.transaction.updated_at)},
+          {"text": object_description, "classes": "govuk-!-width-one-third"},
+          {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter item last-cell"},
         ]) or "" }}
+
+        {# Below each transaction add a spacer line. #}
+        {% if not loop.last and is_obj_last_in_transaction(obj) %}
+          {{ table_rows.append([
+            {
+              "text": "",
+              "colspan": 7,
+              "classes": "transaction-end",
+            },
+          ]) or "" }}
+        {% endif  %}
       {% endfor %}
 
       <form method="post">
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         {{ govukTable({
           "head": [
+            {"text": ""},
             {"text": "ID"},
-            {"text": component},
-            {"text": action},
+            {"text": "Component"},
+            {"text": "Action"},
             {"text": "Description"},
-            {"text": activity_date},
+            {"text": "Activity date"},
           ],
-          "rows": table_rows
+          "rows": table_rows,
+          "classes": "workbasket-items",
         }) }}
-        
+
         {{ load_more_pagination(current_count, total_count) }}
 
       </form>
