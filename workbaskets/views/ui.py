@@ -1,4 +1,5 @@
 import logging
+import re
 
 import boto3
 from botocore.client import Config
@@ -29,6 +30,8 @@ from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
+from common.models import Transaction
+from common.models.transactions import TransactionPartition
 from common.views import SortingMixin
 from common.views import WithPaginationListView
 from exporter.models import Upload
@@ -506,25 +509,10 @@ class WorkBasketDetailView(PermissionRequiredMixin, DetailView):
     permission_required = "workbaskets.view_workbasket"
 
 
-class WorkBasketChangesView(PermissionRequiredMixin, SortingMixin, FormView):
-    """UI endpoint for viewing changes in a workbasket."""
-
-    template_name = "workbaskets/changes.jinja"
+class WorkBasketChangesMixin(PermissionRequiredMixin, FormView):
     permission_required = "workbaskets.view_workbasket"
     form_class = forms.SelectableObjectsForm
     paginate_by = 50
-    sort_by_fields = ["component", "action", "activity_date"]
-    custom_sorting = {
-        "component": "polymorphic_ctype",
-        "action": "update_type",
-        "activity_date": "transaction__updated_at",
-    }
-    form_action_redirect_map = {
-        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
-        "remove-all": "workbaskets:workbasket-ui-changes-delete",
-        "page-prev": "workbaskets:workbasket-ui-changes",
-        "page-next": "workbaskets:workbasket-ui-changes",
-    }
 
     @property
     def workbasket(self):
@@ -533,39 +521,12 @@ class WorkBasketChangesView(PermissionRequiredMixin, SortingMixin, FormView):
     @property
     def paginator(self):
         return Paginator(
-            self.workbasket.tracked_models.with_transactions_and_models(),
+            self.workbasket.tracked_models.with_transactions_and_models().order_by(
+                "transaction__order",
+                "pk",
+            ),
             per_page=self.paginate_by,
         )
-
-    def get_queryset(self):
-        queryset = self.paginator.object_list
-        page_number = int(self.request.GET.get("page", 1))
-        items_per_page = page_number * self.paginate_by
-
-        ordering = self.get_ordering()
-        if ordering:
-            ordering = (ordering, "transaction")
-            return queryset.order_by(*ordering)[:items_per_page]
-        else:
-            return queryset[:items_per_page]
-
-    def _append_url_params(self, url, form_action):
-        if form_action in ["remove-selected", "remove-all"]:
-            return url
-
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        page_number = 1
-        if form_action == "page-prev":
-            page_number = page.previous_page_number()
-        elif form_action == "page-next":
-            page_number = page.next_page_number()
-
-        sort_by = self.request.GET.get("sort_by", None)
-        ordered = self.request.GET.get("ordered", None)
-        if sort_by and ordered:
-            return f"{url}?page={page_number}&sort_by={sort_by}&ordered={ordered}"
-        else:
-            return f"{url}?page={page_number}"
 
     def get_initial(self):
         store = SessionStore(
@@ -600,6 +561,24 @@ class WorkBasketChangesView(PermissionRequiredMixin, SortingMixin, FormView):
         )
         return context
 
+    def _append_url_params(self, url, form_action):
+        if form_action in ["remove-selected", "remove-all"]:
+            return url
+
+        page_number = int(self.request.GET.get("page", 1))
+        page = self.paginator.get_page(page_number)
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+
+        sort_by = self.request.GET.get("sort_by", None)
+        ordered = self.request.GET.get("ordered", None)
+        if sort_by and ordered:
+            return f"{url}?page={page_number}&sort_by={sort_by}&ordered={ordered}"
+        else:
+            return f"{url}?page={page_number}"
+
     def form_valid(self, form):
         store = SessionStore(
             self.request,
@@ -633,6 +612,216 @@ class WorkBasketChangesView(PermissionRequiredMixin, SortingMixin, FormView):
                 "workbaskets:workbasket-ui-detail",
                 kwargs={"pk": self.workbasket.pk},
             )
+
+
+class WorkBasketChangesView(SortingMixin, WorkBasketChangesMixin):
+    """UI endpoint for viewing changes in a workbasket."""
+
+    template_name = "workbaskets/changes.jinja"
+    sort_by_fields = ["component", "action", "activity_date"]
+    custom_sorting = {
+        "component": "polymorphic_ctype",
+        "action": "update_type",
+        "activity_date": "transaction__updated_at",
+    }
+    form_action_redirect_map = {
+        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
+        "remove-all": "workbaskets:workbasket-ui-changes-delete",
+        "page-prev": "workbaskets:workbasket-ui-changes",
+        "page-next": "workbaskets:workbasket-ui-changes",
+    }
+
+    def get_queryset(self):
+        queryset = self.paginator.object_list
+        page_number = int(self.request.GET.get("page", 1))
+        items_per_page = page_number * self.paginate_by
+
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering, "transaction")
+            return queryset.order_by(*ordering)[:items_per_page]
+        else:
+            return queryset[:items_per_page]
+
+
+class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
+    """UI endpoint for re-ordering transactions in a workbasket."""
+
+    template_name = "workbaskets/transaction_order.jinja"
+
+    form_action_redirect_map = {
+        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
+        "page-prev": "workbaskets:workbasket-ui-transaction-order",
+        "page-next": "workbaskets:workbasket-ui-transaction-order",
+        "move-transaction": "workbaskets:workbasket-ui-transaction-order",
+    }
+
+    def get_queryset(self):
+        queryset = self.paginator.object_list
+        page_number = int(self.request.GET.get("page", 1))
+        items_per_page = page_number * self.paginate_by
+        return queryset[:items_per_page]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "is_transaction_first_in_workbasket": self.is_transaction_first_in_workbasket,
+                "is_transaction_last_in_workbasket": self.is_transaction_last_in_workbasket,
+                "is_obj_first_in_transaction": self.is_obj_first_in_transaction,
+                "is_obj_last_in_transaction": self.is_obj_last_in_transaction,
+            },
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        # Handle transaction movement.
+        form_action = form.data.get("form-action", "")
+        if form_action.startswith("promote-transaction"):
+            return self.promote_transaction(form_action)
+        elif form_action.startswith("demote-transaction"):
+            return self.demote_transaction(form_action)
+
+        # Handle TrackedModel removal.
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        if form_action.startswith("promote-transaction") or form_action.startswith(
+            "demote-transaction",
+        ):
+            form_action = "move-transaction"
+        try:
+            return self._append_url_params(
+                reverse(
+                    self.form_action_redirect_map[form_action],
+                    kwargs={"pk": self.workbasket.pk},
+                ),
+                form_action,
+            )
+        except KeyError:
+            return reverse(
+                "workbaskets:workbasket-ui-detail",
+                kwargs={"pk": self.workbasket.pk},
+            )
+
+    def workbasket_transactions(self):
+        """Returns the current workbasket's transactions ordered by `order`,
+        while guarding against non-editing status on workbasket to minimise
+        chances of mishap."""
+        return Transaction.objects.filter(
+            workbasket=self.workbasket,
+            workbasket__status=WorkflowStatus.EDITING,
+        ).order_by("order")
+
+    def _get_transaction_pk_from_form_action(self, form_action):
+        """
+        Extract a primary key value from the form_action string value.
+
+        See the `regex_pattern` attribute in this function for valid formats.
+        """
+        regex_pattern = "(promote-transaction|demote-transaction)__([0-9]+)"
+        try:
+            pk = int(re.search(regex_pattern, form_action).group(2))
+        except AttributeError:
+            logger.error(
+                f"Invalid form_action format, {form_action}, must match the "
+                f"regular expression pattern '{regex_pattern}'.",
+            )
+            return None
+
+        try:
+            # Guard against referencing transactions that are in anything other
+            # than the DRAFT partition and which are additionally in the
+            # current workbasket, which must be in EDITING status - DRAFT
+            # should also imply this state.
+            return Transaction.objects.get(
+                workbasket=self.workbasket,
+                workbasket__status=WorkflowStatus.EDITING,
+                partition=TransactionPartition.DRAFT,
+                pk=pk,
+            )
+        except ObjectDoesNotExist:
+            logger.error(
+                f"Invalid transaction key in form_action, {form_action}",
+            )
+            return None
+
+    @atomic
+    def promote_transaction(self, form_action):
+        """Swap the transaction order of the promoted transaction with the
+        transaction above it (now demoted_transaction)."""
+        promoted_transaction = self._get_transaction_pk_from_form_action(form_action)
+        demoted_transaction = (
+            self.workbasket_transactions()
+            .filter(
+                order__lt=promoted_transaction.order,
+            )
+            .last()
+        )
+        if not promoted_transaction or not demoted_transaction:
+            return HttpResponseRedirect(self.get_success_url())
+
+        promoted_transaction.order, demoted_transaction.order = (
+            demoted_transaction.order,
+            promoted_transaction.order,
+        )
+        Transaction.objects.bulk_update(
+            [promoted_transaction, demoted_transaction],
+            ["order"],
+        )
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    @atomic
+    def demote_transaction(self, form_action):
+        """Swap the transaction order of the demoted transaction with the
+        transaction below it (now promoted transaction)."""
+        demoted_transaction = self._get_transaction_pk_from_form_action(form_action)
+        promoted_transaction = (
+            self.workbasket_transactions()
+            .filter(
+                order__gt=demoted_transaction.order,
+            )
+            .first()
+        )
+        if not demoted_transaction or not promoted_transaction:
+            return HttpResponseRedirect(self.get_success_url())
+
+        demoted_transaction.order, promoted_transaction.order = (
+            promoted_transaction.order,
+            demoted_transaction.order,
+        )
+        Transaction.objects.bulk_update(
+            [demoted_transaction, promoted_transaction],
+            ["order"],
+        )
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def is_transaction_first_in_workbasket(self, transaction):
+        """Returns `True` if the transaction is the first in the workbasket,
+        `False` otherwise."""
+        return self.workbasket_transactions().first() == transaction
+
+    def is_transaction_last_in_workbasket(self, transaction):
+        """Returns `True` if the transaction is the last in the current
+        workbasket, `False` otherwise."""
+        return self.workbasket_transactions().last() == transaction
+
+    def is_obj_first_in_transaction(self, tracked_model):
+        """Returns `True` if the object is the first TrackedModel instance in
+        its parent transaction, `False` otherwise."""
+        return tracked_model == tracked_model.transaction.tracked_models.first()
+
+    def is_obj_last_in_transaction(self, tracked_model):
+        """Returns `True` if the object is the last TrackedModel instance in its
+        parent transaction, `False` otherwise."""
+        return tracked_model == tracked_model.transaction.tracked_models.last()
 
 
 class WorkBasketViolations(SortingMixin, WithPaginationListView):
