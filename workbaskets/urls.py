@@ -47,6 +47,11 @@ ui_patterns = [
         name="edit-workbasket",
     ),
     path(
+        f"current/check/",
+        ui_views.CheckWorkbasketView.as_view(),
+        name="check-workbasket",
+    ),
+    path(
         f"<pk>/review-additional-codes/",
         ui_views.WorkBasketReviewAdditionalCodesView.as_view(),
         name="workbasket-ui-review-additional-codes",
@@ -89,7 +94,7 @@ ui_patterns = [
     path(
         f"current/violations/",
         ui_views.WorkBasketViolations.as_view(),
-        name="workbasket-ui-violations",
+        name="workbasket-check-ui-violations",
     ),
     path(
         f"<pk>/confirm-create/",
@@ -104,7 +109,7 @@ ui_patterns = [
     path(
         f"compare/",
         ui_views.WorkBasketCompare.as_view(),
-        name="workbasket-ui-compare",
+        name="workbasket-check-ui-compare",
     ),
     path(
         f"<pk>/",

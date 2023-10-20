@@ -1,0 +1,25 @@
+{% extends "layouts/form.jinja" %}
+
+{% from 'macros/create_link.jinja' import create_link %}
+{% from 'macros/footnotes_display.jinja' import footnotes_display %}
+{% from "includes/measures/conditions.jinja" import conditions_list %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+
+{% set page_title %}
+  Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Summary WORKING
+{% endset %}
+
+{% set change_workbasket_details_link = url("workbaskets:workbasket-ui-update", kwargs={"pk": workbasket.pk}) %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }} </h1>
+  {{ navigation(request, "check") }}
+
+  {% include "includes/workbaskets/workbasket-business-rules.jinja" %}
+  {% include "includes/workbaskets/workbasket-compare-data.jinja" %}
+
+{% endblock %}

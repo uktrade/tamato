@@ -153,7 +153,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
                 "kwargs": {},
             },
             "view-violations": {
-                "path_name": "workbaskets:workbasket-ui-violations",
+                "path_name": "workbaskets:workbasket-check-ui-violations",
                 "kwargs": {},
             },
             "review-measures": {
@@ -387,6 +387,7 @@ class CurrentWorkBasket(FormView):
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
         if form_action == "run-business-rules":
+            print("e" * 80, "fires")
             self.run_business_rules()
         elif form_action == "terminate-rule-check":
             self.workbasket.terminate_rule_check()
@@ -702,7 +703,7 @@ class WorkBasketViolationDetail(DetailView):
         if request.POST.get("action", None) == "delete" and request.user.is_superuser:
             self.override_violation()
 
-        return redirect("workbaskets:workbasket-ui-violations")
+        return redirect("workbaskets:workbasket-check-ui-violations")
 
 
 class WorkBasketDelete(PermissionRequiredMixin, FormMixin, DeleteView):
@@ -758,6 +759,116 @@ class WorkBasketDeleteDone(TemplateView):
         context_data = super().get_context_data(**kwargs)
         context_data["deleted_pk"] = self.kwargs["deleted_pk"]
         return context_data
+
+
+# class WorkBasketViolations(SortingMixin, WithPaginationListView):
+#     """UI endpoint for viewing a specified workbasket's business rule
+#     violations."""
+
+#     model = TrackedModelCheck
+#     template_name = "workbaskets/violations.jinja"
+#     paginate_by = 50
+#     sort_by_fields = ["model", "date", "check_name"]
+#     custom_sorting = {
+#         "date": "transaction_check__transaction__created_at",
+#         "model": "model__polymorphic_ctype",
+#     }
+
+#     @property
+#     def workbasket(self) -> WorkBasket:
+#         return WorkBasket.current(self.request)
+
+#     def get_context_data(self, **kwargs):
+#         return super().get_context_data(workbasket=self.workbasket, **kwargs)
+
+#     def get_queryset(self):
+#         self.queryset = TrackedModelCheck.objects.filter(
+#             transaction_check__transaction__workbasket=self.workbasket,
+#             successful=False,
+#         )
+#         return super().get_queryset()
+
+
+class CheckWorkbasketView(WithCurrentWorkBasket, FormView):
+    success_url = reverse_lazy("workbaskets:check-workbasket")
+    template_name = "workbaskets/check.jinja"
+    form_class = forms.WorkbasketCompareForm
+    model = TrackedModelCheck
+    paginate_by = 50
+    sort_by_fields = ["model", "date", "check_name"]
+    custom_sorting = {
+        "date": "transaction_check__transaction__created_at",
+        "model": "model__polymorphic_ctype",
+    }
+    print("-" * 80, "fires")
+    # if 'run_business_rules
+
+    @property
+    def workbasket_measures(self):
+        print("a" * 80, "fires")
+        return self.workbasket.measures.all()
+
+    @property
+    def data_upload(self):
+        print("b" * 80, "fires")
+        try:
+            return DataUpload.objects.get(workbasket=self.workbasket)
+        except DataUpload.DoesNotExist:
+            return None
+
+    def form_valid(self, form):
+        print("c" * 80, "fires")
+        try:
+            existing = DataUpload.objects.get(workbasket=self.workbasket)
+            existing.raw_data = form.cleaned_data["raw_data"]
+            existing.rows.all().delete()
+            for row in form.cleaned_data["data"]:
+                DataRow.objects.create(
+                    valid_between=row.valid_between,
+                    duty_sentence=row.duty_sentence,
+                    commodity=row.commodity,
+                    data_upload=existing,
+                )
+            existing.save()
+        except DataUpload.DoesNotExist:
+            data_upload = DataUpload.objects.create(
+                raw_data=form.cleaned_data["raw_data"],
+                workbasket=self.workbasket,
+            )
+            for row in form.cleaned_data["data"]:
+                DataRow.objects.create(
+                    valid_between=row.valid_between,
+                    duty_sentence=row.duty_sentence,
+                    commodity=row.commodity,
+                    data_upload=data_upload,
+                )
+        return super().form_valid(form)
+
+    @property
+    def matching_measures(self):
+        measures = []
+        if self.data_upload:
+            for row in self.data_upload.rows.all():
+                matches = self.workbasket_measures.filter(
+                    valid_between=row.valid_between,
+                    goods_nomenclature__item_id=row.commodity,
+                )
+                duty_matches = [
+                    measure
+                    for measure in matches
+                    if measure.duty_sentence == row.duty_sentence
+                ]
+                measures += duty_matches
+        return measures
+
+    def get_context_data(self, *args, **kwargs):
+        return super().get_context_data(
+            workbasket=self.workbasket,
+            data_upload=self.data_upload,
+            matching_measures=self.matching_measures,
+            *args,
+            **kwargs,
+        )
 
 
 class WorkBasketCompare(WithCurrentWorkBasket, FormView):
@@ -828,6 +939,20 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             *args,
             **kwargs,
         )
+
+
+class WorkBasketCheckView:
+    """Base view for running rule checks and workbasket comparisons."""
+
+    template_name = "workbaskets/checks.jinja"
+
+    # TODO: create tabs for check & violations
+    # TODO: update tests
+    # TODO: update front page
+    # TODO: Activity?
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
 
 
 class WorkBasketReviewView(PermissionRequiredMixin, WithPaginationListView):

@@ -7,15 +7,18 @@
         <li class="{% if active_link == 'edit' %}active{% endif %}">
             <a href="{{ url('workbaskets:edit-workbasket') }}" class="govuk-link">Add/edit items</a>
         </li>
+        <li class="{% if active_link == 'check' %}active{% endif %}">
+            <a href="{{ url('workbaskets:check-workbasket') }}" class="govuk-link">Check workbasket</a>
+        </li>
         <li class="{% if active_link == 'violations' %}active{% endif %}">
-            <a href="{{ url('workbaskets:workbasket-ui-violations') }}" class="govuk-link">View violations ({{request.session.workbasket.error_count}})</a>
+            <a href="{{ url('workbaskets:workbasket-check-ui-violations') }}" class="govuk-link">View violations ({{request.session.workbasket.error_count}})</a>
         </li>
         <li class="{% if active_link == 'review' %}active{% endif %}">
             <a href="{{ url('workbaskets:workbasket-ui-review-measures', args=[request.session.workbasket.id]) }}" class="govuk-link">Review ({{request.session.workbasket.measure_count}})</a>
         </li>
-        <li class="{% if active_link == 'compare' %}active{% endif %}">
+        {# <li class="{% if active_link == 'compare' %}active{% endif %}">
             <a href="{{ url('workbaskets:workbasket-ui-compare') }}" class="govuk-link">Worksheet check</a>
-        </li>
+        </li> #}
     </ul>
 </nav>
 {% endmacro %}
