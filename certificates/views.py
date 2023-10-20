@@ -17,7 +17,6 @@ from certificates.models import Certificate
 from certificates.serializers import CertificateTypeSerializer
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
-from common.validators import UpdateType
 from common.views import DescriptionDeleteMixin
 from common.views import SortingMixin
 from common.views import TamatoListView
@@ -87,26 +86,14 @@ class CertificateCreate(CreateTaricCreateView):
     form_class = forms.CertificateCreateForm
 
     @transaction.atomic
-    def form_valid(self, form):
-        transaction = self.get_transaction()
-        transaction.save()
-        self.object = form.save(commit=False)
-        self.object.update_type = UpdateType.CREATE
-        self.object.transaction = transaction
-        self.object.save()
-
-        return super().form_valid(form)
-
-    @transaction.atomic
     def get_result_object(self, form):
-        object = super().get_result_object(form)
+        certificate = super().get_result_object(form)
         description = form.cleaned_data["certificate_description"]
-        description.described_certificate = self.object
-        description.update_type = UpdateType.CREATE
-        description.transaction = object.transaction
+        description.described_certificate = certificate
+        description.update_type = self.update_type
+        description.transaction = certificate.transaction
         description.save()
-
-        return object
+        return certificate
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
