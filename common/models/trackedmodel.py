@@ -264,8 +264,8 @@ class TrackedModel(PolymorphicModel):
         Get a name/value mapping of the fields that identify this model.
 
         :param identifying_fields Optional[Iterable[str]]: Optionally override
-            the fields to retrieve
-        :rtype dict[str, Any]: A dict of field names to values
+        the fields to retrieve :rtype dict[str, Any]: A dict of field names to
+        values
         """
 
         identifying_fields = identifying_fields or self.identifying_fields
@@ -629,8 +629,8 @@ class TrackedModel(PolymorphicModel):
         Callers should handle the case where no URL is returned.
 
         :param action str: The view type to generate a URL for (default
-            "detail"), eg: "list" or "edit"
-        :rtype Optional[str]: The generated URL
+            "detail"), eg: "list" or "edit" :rtype Optional[str]: The generated
+            URL
         """
         kwargs = {}
         if action not in ["list", "create"]:
@@ -660,8 +660,8 @@ class TrackedModel(PolymorphicModel):
         """
         Get the prefix string for a view name for this model.
 
-        By default, this is the verbose name of the model with spaces replaced by
-        underscores, but this method allows this to be overridden.
+        By default, this is the verbose name of the model with spaces replaced
+        by underscores, but this method allows this to be overridden.
 
         :rtype str: The prefix
         """

@@ -13,7 +13,7 @@ from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
-from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.forms import MeasureForm
 from measures.models import Measure
 from measures.models import MeasureAction

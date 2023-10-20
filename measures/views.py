@@ -43,11 +43,11 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
-from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureActionPair
@@ -660,7 +660,12 @@ class MeasureEditWizard(
             )
         self.session_store.clear()
 
-        return redirect(reverse("workbaskets:workbasket-ui-review-measures"))
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-review-measures",
+                kwargs={"pk": workbasket.pk},
+            ),
+        )
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
@@ -1127,20 +1132,20 @@ class MeasureUpdateBase(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        initial = self.request.session.get(
+        context["no_form_tags"] = FormHelper()
+        context["no_form_tags"].form_tag = False
+
+        formset_footnotes = self.request.session.get(
             f"formset_initial_{self.kwargs.get('sid')}",
             [],
         )
         footnotes_formset = forms.MeasureUpdateFootnotesFormSet()
-        footnotes_formset.initial = initial
+        footnotes_formset.initial = formset_footnotes
         footnotes_formset.form_kwargs = {"path": self.request.path}
         context["footnotes_formset"] = footnotes_formset
-        context["no_form_tags"] = FormHelper()
-        context["no_form_tags"].form_tag = False
         context["footnotes"] = self.get_footnotes(context["measure"])
 
         conditions_initial = []
-
         if self.request.POST:
             conditions_initial = unprefix_formset_data(
                 MEASURE_CONDITIONS_FORMSET_PREFIX,
@@ -1149,12 +1154,12 @@ class MeasureUpdateBase(
             conditions_formset = forms.MeasureConditionsFormSet(
                 self.request.POST,
                 initial=conditions_initial,
-                prefix="measure-conditions-formset",
+                prefix=MEASURE_CONDITIONS_FORMSET_PREFIX,
             )
         else:
             conditions_formset = forms.MeasureConditionsFormSet(
                 initial=conditions_initial,
-                prefix="measure-conditions-formset",
+                prefix=MEASURE_CONDITIONS_FORMSET_PREFIX,
             )
         conditions = self.get_conditions(context["measure"])
         form_fields = conditions_formset.form.Meta.fields
@@ -1342,17 +1347,23 @@ class MeasureMultipleDelete(MeasureSelectionQuerysetMixin, TemplateView, ListVie
             # The user has cancelled out of the deletion process.
             return redirect("home")
 
+        workbasket = WorkBasket.current(request)
         object_list = self.get_queryset()
 
         for obj in object_list:
             # make a new version of the object with an update type of delete.
             obj.new_version(
-                workbasket=WorkBasket.current(request),
+                workbasket=workbasket,
                 update_type=UpdateType.DELETE,
             )
         self.session_store.clear()
 
-        return redirect(reverse("workbaskets:workbasket-ui-review-measures"))
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-review-measures",
+                kwargs={"pk": workbasket.pk},
+            ),
+        )
 
 
 class MeasureSelectionUpdate(MeasureSessionStoreMixin, View):

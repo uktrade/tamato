@@ -25,6 +25,18 @@
       "selected": selected_tab == "details"
     },
     {
+      "text": "Descriptions",
+      "id": "descriptions",
+      "href": url('commodity-ui-detail-descriptions', args=[commodity.sid]),
+      "selected": selected_tab == "descriptions"
+    },
+    {
+      "text": "Indent history",
+      "id": "indent-history",
+      "href": url('commodity-ui-detail-indent-history', args=[commodity.sid]),
+      "selected": selected_tab == "indent-history"
+    },
+    {
       "text": "Measures",
       "href": url('commodity-ui-detail-measures-as-defined', args=[commodity.sid]),
       "selected": selected_tab == "measures",

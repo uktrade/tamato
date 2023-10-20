@@ -6,23 +6,22 @@ module.exports = {
   mode: process.env.ENV == "production" ? "production" : "development",
   context: __dirname,
   entry: {
-      main: [
-        './common/static/common/js/application.js',
-        './common/static/common/js/step-by-step-nav.js',
-        './common/static/common/scss/application.scss'
-      ]
+    main: [
+      './common/static/common/js/application.js',
+      './common/static/common/scss/application.scss'
+    ]
   },
   output: {
-      // Where Webpack will compile assets to
-      path: path.resolve('./static/webpack_bundles/'),
-      // Where the compiled assets will be accessed through Django
-      // (they are picked up by `collectstatic`)
-      publicPath: '/assets/webpack_bundles/',
-      filename: "[name]-[hash].js"
+    // Where Webpack will compile assets to
+    path: path.resolve('./static/webpack_bundles/'),
+    // Where the compiled assets will be accessed through Django
+    // (they are picked up by `collectstatic`)
+    publicPath: '/assets/webpack_bundles/',
+    filename: "[name]-[hash].js"
   },
 
   plugins: [
-    new BundleTracker({filename: './webpack-stats.json'}),
+    new BundleTracker({ filename: './webpack-stats.json' }),
     new MiniCssExtractPlugin({
       filename: '[name]-[hash].css',
       chunkFilename: '[id]-[hash].css'
