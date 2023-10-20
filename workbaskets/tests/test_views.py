@@ -1470,10 +1470,10 @@ def test_workbasket_changes_view_remove_selected(valid_user_client):
     assert workbasket.tracked_models.count() == 0
 
 
-def test_workbasket_transaction_order_view_with_move_permission(valid_user_client):
+def test_workbasket_transaction_order_view_with_reorder_permission(valid_user_client):
     """Test that `WorkBasketTransactionOrderView` returns status code 200,
-    displaying tabs, table and buttons to users with permission to move
-    transactions."""
+    displaying tabs, table and buttons to users with the requisite
+    permission."""
 
     workbasket = factories.WorkBasketFactory.create()
     factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
@@ -1499,9 +1499,9 @@ def test_workbasket_transaction_order_view_with_move_permission(valid_user_clien
     assert move_up_button and move_down_button
 
 
-def test_workbasket_transaction_order_view_without_move_permission(client):
-    """Tests that users without the requisite permissions cannot re-order
-    transactions `WorkBasketTransactionOrderView`."""
+def test_workbasket_transaction_order_view_without_reorder_permission(client):
+    """Tests that users without the requisite permission cannot reorder
+    transactions on `WorkBasketTransactionOrderView`."""
 
     workbasket = factories.WorkBasketFactory.create()
     factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
@@ -1527,8 +1527,8 @@ def test_workbasket_transaction_order_view_without_move_permission(client):
 
 def test_workbasket_transaction_order_view_promote_transaction():
     """Tests that `WorkBasketTransactionOrderView.promote_transaction()` swaps
-    transaction order of the promoted transaction with the transaction above it
-    (demoted transaction) while other transactions remain in place."""
+    transaction order of the promoted transaction with the (demoted) transaction
+    above it while others remain in place."""
 
     workbasket = factories.WorkBasketFactory.create()
     factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
@@ -1565,8 +1565,8 @@ def test_workbasket_transaction_order_view_promote_transaction():
 
 def test_workbasket_transaction_order_view_demote_transaction():
     """Tests that `WorkBasketTransactionOrderView.demote_transaction()` swaps
-    transaction order of the demoted transaction with the transaction below it
-    (promoted transaction) while other transactions remain in place."""
+    transaction order of the demoted transaction with the (promoted) transaction
+    below it while others remain in place."""
 
     workbasket = factories.WorkBasketFactory.create()
     factories.TestModel1Factory.create(transaction=workbasket.new_transaction())

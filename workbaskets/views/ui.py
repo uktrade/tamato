@@ -645,7 +645,7 @@ class WorkBasketChangesView(SortingMixin, WorkBasketChangesMixin):
 
 
 class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
-    """UI endpoint for re-ordering transactions in a workbasket."""
+    """UI endpoint for reordering transactions in a workbasket."""
 
     template_name = "workbaskets/transaction_order.jinja"
 
@@ -754,7 +754,7 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
     @atomic
     def promote_transaction(self, form_action):
         """Swap the transaction order of the promoted transaction with the
-        transaction above it (now demoted_transaction)."""
+        (demoted) transaction above it."""
         promoted_transaction = self._get_transaction_pk_from_form_action(form_action)
         demoted_transaction = (
             self.workbasket_transactions()
@@ -780,7 +780,7 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
     @atomic
     def demote_transaction(self, form_action):
         """Swap the transaction order of the demoted transaction with the
-        transaction below it (now promoted transaction)."""
+        (promoted) transaction below it."""
         demoted_transaction = self._get_transaction_pk_from_form_action(form_action)
         promoted_transaction = (
             self.workbasket_transactions()
