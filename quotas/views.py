@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -103,6 +104,20 @@ class QuotaOrderNumberMixin:
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
         return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+
+
+class QuotaCreate(QuotaOrderNumberMixin, CreateTaricCreateView):
+    form_class = forms.QuotaOrderNumberCreateForm
+    template_name = "layouts/create.jinja"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        return super().get_context_data(
+            page_title="Create a new quota order number", **kwargs
+        )
+
+
+class QuotaConfirmCreate(QuotaOrderNumberMixin, TrackedModelDetailView):
+    template_name = "quota-definitions/confirm-create.jinja"
 
 
 class QuotaList(QuotaOrderNumberMixin, TamatoListView):

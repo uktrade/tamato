@@ -26,6 +26,12 @@ from quotas import models
 from quotas import validators
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 
+CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
+SAFEGUARD_HELP_TEXT = (
+    "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
+)
+START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as this may cause issues with CDS downstream"
+
 
 class QuotaFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -115,12 +121,6 @@ class QuotaUpdateForm(
     ValidityPeriodForm,
     forms.ModelForm,
 ):
-    CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
-    SAFEGUARD_HELP_TEXT = (
-        "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
-    )
-    START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as this may cause issues with CDS downstream"
-
     class Meta:
         model = models.QuotaOrderNumber
         fields = [
@@ -149,12 +149,12 @@ class QuotaUpdateForm(
                 attrs={"disabled": True},
                 choices=validators.QuotaCategory.choices,
             )
-            self.fields["category"].help_text = self.SAFEGUARD_HELP_TEXT
+            self.fields["category"].help_text = SAFEGUARD_HELP_TEXT
         else:
             self.fields["category"].choices = validators.QuotaCategoryEditing.choices
-            self.fields["category"].help_text = self.CATEGORY_HELP_TEXT
+            self.fields["category"].help_text = CATEGORY_HELP_TEXT
 
-        self.fields["start_date"].help_text = self.START_DATE_HELP_TEXT
+        self.fields["start_date"].help_text = START_DATE_HELP_TEXT
 
     def init_layout(self):
         self.helper = FormHelper(self)
@@ -189,6 +189,78 @@ class QuotaUpdateForm(
                     css_class="govuk-grid-column-two-thirds",
                 ),
                 css_class="govuk-grid-row",
+            ),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
+class QuotaOrderNumberCreateForm(
+    ValidityPeriodForm,
+    forms.ModelForm,
+):
+    class Meta:
+        model = models.QuotaOrderNumber
+        fields = [
+            "order_number",
+            "valid_between",
+            "category",
+            "mechanism",
+        ]
+
+    order_number = forms.CharField(
+        help_text=CATEGORY_HELP_TEXT,
+        validators=[validators.quota_order_number_validator],
+        error_messages={
+            "invalid": "Order number must be six digits long",
+            "required": "Enter the order number",
+        },
+    )
+    category = forms.ChoiceField(
+        choices=validators.QuotaCategory.choices,
+        help_text=CATEGORY_HELP_TEXT,
+        error_messages={
+            "invalid_choice": "Please select a valid category",
+            "required": "Choose the category",
+        },
+    )
+    mechanism = forms.ChoiceField(
+        choices=validators.AdministrationMechanism.choices,
+        error_messages={
+            "invalid_choice": "Please select a valid mechanism",
+            "required": "Choose the mechanism",
+        },
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.set_initial_data(*args, **kwargs)
+        self.init_layout()
+
+    def set_initial_data(self, *args, **kwargs):
+        self.fields["category"].initial = self.instance.category
+
+    def init_fields(self):
+        self.fields["start_date"].help_text = START_DATE_HELP_TEXT
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Div(
+                "order_number",
+                "start_date",
+                "end_date",
+                "category",
+                "mechanism",
+                css_class="govuk-width-!-two-thirds",
             ),
             Submit(
                 "submit",

@@ -15,7 +15,7 @@
 {% block main_button %}
 {{ govukButton({
   "text": "Create another",
-  "href": url("quota_definition-ui-create", args=[object.order_number.sid]),
+  "href": object.get_url('create'),
   "classes": "govuk-button--primary"
 }) }}
 {% endblock%}
