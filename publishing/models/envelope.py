@@ -239,7 +239,7 @@ class Envelope(TimestampedMixin):
         return f"{now:%y}{counter:04d}"
 
     def delete_envelope(self, **kwargs):
-        """delete function within model to ensure that the file is deleted from
+        """Delete function within model to ensure that the file is deleted from
         s3 and then set the delete flag in the model."""
         self.xml_file.delete()
         self.deleted = True
@@ -298,13 +298,8 @@ class Envelope(TimestampedMixin):
         workbaskets = WorkBasket.objects.filter(pk=workbasket.pk)
         transactions = workbaskets.ordered_transactions()
 
-        if not transactions:
-            msg = f"transactions to upload:  {transactions.count()} does not contain any transactions."
-            logger.error(msg)
-            raise EnvelopeNoTransactions(msg)
-
-        # Envelope XML is written to temporary files for validation before anything is created
-        # in the database or uploaded to s3.
+        # Envelope XML is written to temporary files for validation before
+        # anything is created in the database or uploaded to s3.
         with tempfile.TemporaryDirectory(prefix="dit-tamato_") as temporary_directory:
             output_file_constructor = dit_file_generator(
                 temporary_directory,
@@ -342,7 +337,9 @@ class Envelope(TimestampedMixin):
                 # If valid upload to s3
                 total_transactions = len(rendered_envelope.transactions)
                 logger.info(
-                    f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, using {envelope_file.tell()} bytes.",
+                    f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML "
+                    f"valid. {total_transactions} transactions, using "
+                    f"{envelope_file.tell()} bytes.",
                 )
 
                 envelope_file.seek(0, os.SEEK_SET)
