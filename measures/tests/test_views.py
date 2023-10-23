@@ -2664,15 +2664,15 @@ def test_measure_list_results_show_chosen_filters(valid_user_client, date_ranges
     current_tranx = Transaction.objects.last()
     with override_current_transaction(current_tranx):
         assert (
-            f"Commodity code {measure.goods_nomenclature.autocomplete_label}"
+            f"Commodity Code {measure.goods_nomenclature.autocomplete_label}"
             in items[0]
         )
         assert (
-            f"Commodity code starting with {measure.goods_nomenclature.item_id[:3]}"
+            f"Commodity Code starting with {measure.goods_nomenclature.item_id[:3]}"
             in items[1]
         )
         assert f"ID {measure.sid}" in items[2]
         assert (
             f"Regulation {measure.generating_regulation.autocomplete_label}" in items[3]
         )
-        assert f"Measure type {measure.measure_type.autocomplete_label}" in items[4]
+        assert f"Measure Type {measure.measure_type.autocomplete_label}" in items[4]

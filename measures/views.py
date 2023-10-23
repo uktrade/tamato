@@ -211,12 +211,12 @@ class MeasureList(
                 id=selected_filters["goods_nomenclature"],
             )
             selected_filters_strings.append(
-                f"Commodity code {goods.autocomplete_label}",
+                f"Commodity Code {goods.autocomplete_label}",
             )
 
         if "goods_nomenclature__item_id" in selected_filters:
             selected_filters_strings.append(
-                f"Commodity code starting with {selected_filters['goods_nomenclature__item_id']}",
+                f"Commodity Code starting with {selected_filters['goods_nomenclature__item_id']}",
             )
 
         if "order_number" in selected_filters:
@@ -224,7 +224,7 @@ class MeasureList(
                 id=selected_filters["order_number"],
             )
             selected_filters_strings.append(
-                f"Quota order number {quota.structure_code}",
+                f"Quota Order Number {quota.structure_code}",
             )
 
         if "sid" in selected_filters:
@@ -235,7 +235,7 @@ class MeasureList(
             code = AdditionalCode.objects.current().get(
                 id=selected_filters["additional_code"],
             )
-            selected_filters_strings.append(f"Additional code {code.structure_code}")
+            selected_filters_strings.append(f"Additional Code {code.structure_code}")
 
         if "certificates" in selected_filters:
             certificate = Certificate.objects.current().get(
@@ -256,7 +256,7 @@ class MeasureList(
                 id=selected_filters["measure_type"],
             )
             selected_filters_strings.append(
-                f"Measure type {measure_type.autocomplete_label}",
+                f"Measure Type {measure_type.autocomplete_label}",
             )
 
         if "geographical_area" in selected_filters:
@@ -275,7 +275,7 @@ class MeasureList(
             else:
                 modifier = selected_filters["start_date_modifier"]
             selected_filters_strings.append(
-                f"start date: {modifier} {selected_filters['start_date_0']}/{selected_filters['start_date_1']}/{selected_filters['start_date_2']}",
+                f"Start date: {modifier} {selected_filters['start_date_0']}/{selected_filters['start_date_1']}/{selected_filters['start_date_2']}",
             )
 
         if "end_date_0" and "end_date_1" and "end_date_2" in selected_filters:
@@ -284,14 +284,14 @@ class MeasureList(
             else:
                 modifier = selected_filters["end_date_modifier"]
             selected_filters_strings.append(
-                f"end date: {modifier} {selected_filters['end_date_0']}/{selected_filters['end_date_1']}/{selected_filters['end_date_2']}",
+                f"End date: {modifier} {selected_filters['end_date_0']}/{selected_filters['end_date_1']}/{selected_filters['end_date_2']}",
             )
 
         if "modc" in selected_filters:
-            selected_filters_strings.append("include inherited measures")
+            selected_filters_strings.append("Include inherited measures")
 
         if "measure_filters_modifier" in selected_filters:
-            selected_filters_strings.append("filter by current workbasket")
+            selected_filters_strings.append("Filter by current workbasket")
 
         # This splits the selected_filter_strings into nested lists of 7 so that the lists can be shown side by side in the template.
         selected_filters_lists = [
