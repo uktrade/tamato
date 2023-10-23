@@ -92,3 +92,21 @@ class TestNewMeasurementUnitQualifierDescriptionParser:
         assert len(importer.issues()) == 0
 
         assert MeasurementUnitQualifier.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import(
+            "measurement_unit_qualifier_description_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "measurement_unit_qualifier_description_DELETE.xml",
+            __file__,
+        )
+
+        assert len(importer.issues()) == 1
+
+        assert (
+            "Children of Taric objects of type MeasurementUnitQualifier can't be deleted directly"
+            in str(importer.issues()[0])
+        )

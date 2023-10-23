@@ -86,3 +86,11 @@ class TestNewMonetaryUnitParser:
         assert len(importer.issues()) == 0
 
         assert MonetaryUnit.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("monetary_unit_CREATE.xml", __file__, True)
+        importer = preload_import("monetary_unit_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 0
+
+        assert MonetaryUnit.objects.all().count() == 2

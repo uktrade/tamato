@@ -124,7 +124,7 @@ class TestNewQuotaDefinitionParser:
         target = target_message.taric_object
 
         # check properties
-        assert target.sid == 99
+        assert target.sid == 100
         assert target.order_number__order_number == "054515"
         assert target.valid_between_lower == date(2023, 1, 1)
         assert target.valid_between_upper == date(2024, 1, 1)
@@ -153,7 +153,7 @@ class TestNewQuotaDefinitionParser:
         target = target_message.taric_object
 
         # check properties
-        assert target.sid == 99
+        assert target.sid == 100
         assert target.order_number__order_number == "054515"
         assert target.valid_between_lower == date(2023, 1, 11)
         assert target.valid_between_upper == date(2024, 1, 1)
@@ -167,5 +167,15 @@ class TestNewQuotaDefinitionParser:
         assert target.quota_critical is False
         assert target.quota_critical_threshold == 75
         assert target.description == "Some Description with changes"
+
+        assert importer.issues() == []
+
+        assert QuotaDefinition.objects.all().count() == 3
+
+    def test_import_delete(self, superuser):
+        preload_import("quota_definition_CREATE.xml", __file__, True)
+        importer = preload_import("quota_definition_DELETE.xml", __file__)
+
+        assert importer.issues() == []
 
         assert QuotaDefinition.objects.all().count() == 3

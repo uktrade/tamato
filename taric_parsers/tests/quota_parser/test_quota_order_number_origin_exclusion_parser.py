@@ -91,3 +91,18 @@ class TestNewQuotaOrderNumberOriginExclusionParser:
         assert len(importer.issues()) == 0
 
         assert QuotaOrderNumberOriginExclusion.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import(
+            "quota_order_number_origin_exclusion_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "quota_order_number_origin_exclusion_DELETE.xml",
+            __file__,
+        )
+
+        assert len(importer.issues()) == 0
+
+        assert QuotaOrderNumberOriginExclusion.objects.all().count() == 2

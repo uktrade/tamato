@@ -82,3 +82,14 @@ class TestNewMonetaryUnitDescriptionParser:
         assert len(importer.issues()) == 0
 
         assert MonetaryUnit.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("monetary_unit_description_CREATE.xml", __file__, True)
+        importer = preload_import("monetary_unit_description_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 1
+
+        assert (
+            "Children of Taric objects of type MonetaryUnit can't be deleted directly"
+            in str(importer.issues()[0])
+        )

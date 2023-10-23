@@ -86,3 +86,11 @@ class TestNewMeasurementUnitQualifierParser:
         assert len(importer.issues()) == 0
 
         assert MeasurementUnitQualifier.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("measurement_unit_qualifier_CREATE.xml", __file__, True)
+        importer = preload_import("measurement_unit_qualifier_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 0
+
+        assert MeasurementUnitQualifier.objects.all().count() == 2

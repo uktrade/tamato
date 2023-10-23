@@ -165,3 +165,18 @@ class TestNewBaseRegulationParser:
         assert len(importer.issues()) == 0
 
         assert Regulation.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import(
+            "base_regulation_CREATE.xml",
+            __file__,
+            True,
+        )
+        importer = preload_import(
+            "base_regulation_DELETE.xml",
+            __file__,
+        )
+
+        assert len(importer.issues()) == 0
+
+        assert Regulation.objects.all().count() == 2

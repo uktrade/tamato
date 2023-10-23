@@ -93,3 +93,11 @@ class TestNewQuotaOrderNumberParser:
         assert len(importer.issues()) == 0
 
         assert QuotaOrderNumber.objects.all().count() == 2
+
+    def test_import_delete(self, superuser):
+        preload_import("quota_order_number_CREATE.xml", __file__, True)
+        importer = preload_import("quota_order_number_DELETE.xml", __file__)
+
+        assert len(importer.issues()) == 0
+
+        assert QuotaOrderNumber.objects.all().count() == 2

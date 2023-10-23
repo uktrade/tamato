@@ -182,6 +182,7 @@ class NewMeasurementUnitQualifierDescriptionParser(Writable, BaseTaricParser):
         "code",
     ]
 
+    deletes_allowed = False
     code: str = None
     # language_id: str = None
     description: str = None
@@ -282,6 +283,8 @@ class NewMonetaryUnitDescriptionParser(Writable, BaseTaricParser):
     identity_fields = [
         "code",
     ]
+
+    deletes_allowed = False
 
     code: str = None
     # language_id: str = None

@@ -10,9 +10,9 @@
                     <oub:record.code>370</oub:record.code>
                     <oub:subrecord.code>00</oub:subrecord.code>
                     <oub:record.sequence.number>1</oub:record.sequence.number>
-                    <oub:update.type>1</oub:update.type>
+                    <oub:update.type>2</oub:update.type>
                     <oub:quota.definition>
-                        <oub:quota.definition.sid>100</oub:quota.definition.sid>
+                        <oub:quota.definition.sid>99</oub:quota.definition.sid>
                         <oub:quota.order.number.id>054515</oub:quota.order.number.id>
                         <oub:quota.order.number.sid>7</oub:quota.order.number.sid>
                         <oub:validity.start.date>2023-01-11</oub:validity.start.date>
