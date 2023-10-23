@@ -9,6 +9,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 
@@ -31,6 +32,7 @@ SAFEGUARD_HELP_TEXT = (
     "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
 )
 START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as this may cause issues with CDS downstream"
+ORDER_NUMBER_HELP_TEXT = "The order number must begin with 05 and be 6 digits long. Licensed quotas must begin 054 and safeguards must begin 058"
 
 
 class QuotaFilterForm(forms.Form):
@@ -213,10 +215,10 @@ class QuotaOrderNumberCreateForm(
         ]
 
     order_number = forms.CharField(
-        help_text=CATEGORY_HELP_TEXT,
+        help_text=ORDER_NUMBER_HELP_TEXT,
         validators=[validators.quota_order_number_validator],
         error_messages={
-            "invalid": "Order number must be six digits long",
+            "invalid": "Order number must be six digits long and begin with 05",
             "required": "Enter the order number",
         },
     )
@@ -269,6 +271,30 @@ class QuotaOrderNumberCreateForm(
                 data_prevent_double_click="true",
             ),
         )
+
+    def clean(self):
+        category = self.cleaned_data.get("category")
+        mechanism = self.cleaned_data.get("mechanism")
+        order_number = self.cleaned_data.get("order_number", "")
+
+        if int(mechanism) == validators.AdministrationMechanism.LICENSED:
+            if int(category) == validators.QuotaCategory.SAFEGUARD:
+                raise ValidationError(
+                    "Mechanism cannot be set to licensed for safeguard quotas",
+                )
+            if not order_number.startswith("054"):
+                raise ValidationError(
+                    "The order number for licensed quotas must begin with 054",
+                )
+
+        if int(
+            category,
+        ) == validators.QuotaCategory.SAFEGUARD and not order_number.startswith("058"):
+            raise ValidationError(
+                "The order number for safeguard quotas must begin with 058",
+            )
+
+        return super().clean()
 
 
 class QuotaOrderNumberOriginForm(

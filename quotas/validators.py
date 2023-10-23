@@ -5,7 +5,7 @@ from django.core.validators import MinValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 
-quota_order_number_validator = RegexValidator(r"^[0-9]{6}$")
+quota_order_number_validator = RegexValidator(r"^05[0-9]{4}$")
 monetary_unit_code_validator = RegexValidator(r"^[A-Z]{3}$")
 measurement_unit_code_validator = RegexValidator(r"^[A-Z]{3}$")
 measurement_unit_qualifier_code_validator = RegexValidator(r"^[A-Z]$")
