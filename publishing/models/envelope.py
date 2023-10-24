@@ -42,10 +42,6 @@ class EnvelopeInvalidQueuePosition(Exception):
     pass
 
 
-class EnvelopeNoTransactions(Exception):
-    pass
-
-
 class MultipleEnvelopesGenerated(Exception):
     pass
 

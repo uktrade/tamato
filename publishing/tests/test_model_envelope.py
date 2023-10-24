@@ -8,7 +8,6 @@ from common.tests import factories
 from publishing.models import Envelope
 from publishing.models import EnvelopeCurrentlyProccessing
 from publishing.models import EnvelopeInvalidQueuePosition
-from publishing.models import EnvelopeNoTransactions
 from publishing.models import PackagedWorkBasket
 from publishing.util import TaricDataAssertionError
 
@@ -65,7 +64,10 @@ def test_upload_envelope_no_transactions():
     """Test that an Envelope cannot be created when there are no
     transactions."""
     packaged_workbasket = factories.PackagedWorkBasketFactory()
-    with pytest.raises(EnvelopeNoTransactions):
+    with pytest.raises(
+        TaricDataAssertionError,
+        match="Envelope does not have any transactions!",
+    ):
         factories.PublishedEnvelopeFactory(
             packaged_work_basket=packaged_workbasket,
         )
