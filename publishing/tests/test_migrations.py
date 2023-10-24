@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.contenttypes.models import ContentType
 
 
 @pytest.mark.django_db()
@@ -6,6 +7,16 @@ def test_add_packaged_workbasket_to_loading_report(migrator):
     """Test that packaged workbaskets with a loading report are added to the
     newly-created `packaged_workbasket` field on the associated `LoadingReport`
     model before `loading_report` field is removed from `PackagedWorkBasket`."""
+
+    # The initial migration must reference ContentType instances (in the DB)
+    # when inserting Permission object during migrator.apply_initial_migration()
+    # execution.
+    # A (stale) ContentType cache gives an incorrect account of ContentType
+    # DB table state, so attempts by the initial migration to insert those
+    # Permission objects fails on foreign key violations because they're
+    # referencing missing ContentType objects (they're not in the database, only
+    # in the ContentType cache).
+    ContentType.objects.clear_cache()
 
     # Before migration
     old_state = migrator.apply_initial_migration(
