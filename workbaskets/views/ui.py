@@ -387,7 +387,6 @@ class CurrentWorkBasket(FormView):
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
         if form_action == "run-business-rules":
-            print("e" * 80, "fires")
             self.run_business_rules()
         elif form_action == "terminate-rule-check":
             self.workbasket.terminate_rule_check()
@@ -761,116 +760,6 @@ class WorkBasketDeleteDone(TemplateView):
         return context_data
 
 
-# class WorkBasketViolations(SortingMixin, WithPaginationListView):
-#     """UI endpoint for viewing a specified workbasket's business rule
-#     violations."""
-
-#     model = TrackedModelCheck
-#     template_name = "workbaskets/violations.jinja"
-#     paginate_by = 50
-#     sort_by_fields = ["model", "date", "check_name"]
-#     custom_sorting = {
-#         "date": "transaction_check__transaction__created_at",
-#         "model": "model__polymorphic_ctype",
-#     }
-
-#     @property
-#     def workbasket(self) -> WorkBasket:
-#         return WorkBasket.current(self.request)
-
-#     def get_context_data(self, **kwargs):
-#         return super().get_context_data(workbasket=self.workbasket, **kwargs)
-
-#     def get_queryset(self):
-#         self.queryset = TrackedModelCheck.objects.filter(
-#             transaction_check__transaction__workbasket=self.workbasket,
-#             successful=False,
-#         )
-#         return super().get_queryset()
-
-
-class CheckWorkbasketView(WithCurrentWorkBasket, FormView):
-    success_url = reverse_lazy("workbaskets:check-workbasket")
-    template_name = "workbaskets/check.jinja"
-    form_class = forms.WorkbasketCompareForm
-    model = TrackedModelCheck
-    paginate_by = 50
-    sort_by_fields = ["model", "date", "check_name"]
-    custom_sorting = {
-        "date": "transaction_check__transaction__created_at",
-        "model": "model__polymorphic_ctype",
-    }
-    print("-" * 80, "fires")
-    # if 'run_business_rules
-
-    @property
-    def workbasket_measures(self):
-        print("a" * 80, "fires")
-        return self.workbasket.measures.all()
-
-    @property
-    def data_upload(self):
-        print("b" * 80, "fires")
-        try:
-            return DataUpload.objects.get(workbasket=self.workbasket)
-        except DataUpload.DoesNotExist:
-            return None
-
-    def form_valid(self, form):
-        print("c" * 80, "fires")
-        try:
-            existing = DataUpload.objects.get(workbasket=self.workbasket)
-            existing.raw_data = form.cleaned_data["raw_data"]
-            existing.rows.all().delete()
-            for row in form.cleaned_data["data"]:
-                DataRow.objects.create(
-                    valid_between=row.valid_between,
-                    duty_sentence=row.duty_sentence,
-                    commodity=row.commodity,
-                    data_upload=existing,
-                )
-            existing.save()
-        except DataUpload.DoesNotExist:
-            data_upload = DataUpload.objects.create(
-                raw_data=form.cleaned_data["raw_data"],
-                workbasket=self.workbasket,
-            )
-            for row in form.cleaned_data["data"]:
-                DataRow.objects.create(
-                    valid_between=row.valid_between,
-                    duty_sentence=row.duty_sentence,
-                    commodity=row.commodity,
-                    data_upload=data_upload,
-                )
-        return super().form_valid(form)
-
-    @property
-    def matching_measures(self):
-        measures = []
-        if self.data_upload:
-            for row in self.data_upload.rows.all():
-                matches = self.workbasket_measures.filter(
-                    valid_between=row.valid_between,
-                    goods_nomenclature__item_id=row.commodity,
-                )
-                duty_matches = [
-                    measure
-                    for measure in matches
-                    if measure.duty_sentence == row.duty_sentence
-                ]
-                measures += duty_matches
-        return measures
-
-    def get_context_data(self, *args, **kwargs):
-        return super().get_context_data(
-            workbasket=self.workbasket,
-            data_upload=self.data_upload,
-            matching_measures=self.matching_measures,
-            *args,
-            **kwargs,
-        )
-
-
 class WorkBasketCompare(WithCurrentWorkBasket, FormView):
     success_url = reverse_lazy("workbaskets:workbasket-ui-compare")
     template_name = "workbaskets/compare.jinja"
@@ -941,18 +830,175 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
         )
 
 
-class WorkBasketCheckView:
-    """Base view for running rule checks and workbasket comparisons."""
-
+class WorkBasketChecksView(TemplateView):
     template_name = "workbaskets/checks.jinja"
+    form_class = forms.SelectableObjectsForm
 
-    # TODO: create tabs for check & violations
-    # TODO: update tests
-    # TODO: update front page
-    # TODO: Activity?
+    # Form action mappings to URL names.
+    action_success_url_names = {
+        "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
+        "run-business-rules": "workbaskets:current-workbasket",
+        "terminate-rule-check": "workbaskets:current-workbasket",
+        "page-prev": "workbaskets:current-workbasket",
+        "page-next": "workbaskets:current-workbasket",
+        "compare-data": "workbaskets:current-workbasket",
+    }
+
     @property
-    def workbasket(self):
-        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    @property
+    def paginator(self):
+        return Paginator(
+            self.workbasket.tracked_models.with_transactions_and_models(),
+            per_page=50,
+        )
+
+    @property
+    def latest_upload(self):
+        return Upload.objects.order_by("created_date").last()
+
+    @property
+    def uploaded_envelope_dates(self):
+        """Gets a list of all transactions from the `latest_approved_workbasket`
+        in the order they were updated and returns a dict with the first and
+        last transactions as values for "start" and "end" keys respectively."""
+        if self.latest_upload:
+            transactions = self.latest_upload.envelope.transactions.order_by(
+                "updated_at",
+            )
+            return {
+                "start": transactions.first().updated_at,
+                "end": transactions.last().updated_at,
+            }
+        return None
+
+    def _append_url_page_param(self, url, form_action):
+        """Based upon 'form_action', append a 'page' URL parameter to the given
+        url param and return the result."""
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_number = 1
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+        return f"{url}?page={page_number}"
+
+    @atomic
+    def run_business_rules(self):
+        """Remove old checks, start new checks via a Celery task and save the
+        newly created task's ID on the workbasket."""
+        workbasket = self.workbasket
+        workbasket.delete_checks()
+        task = call_check_workbasket_sync.apply_async(
+            (workbasket.pk,),
+            countdown=1,
+        )
+        logger.info(
+            f"Started rule check against workbasket.id={workbasket.pk} "
+            f"on task.id={task.id}",
+        )
+        workbasket.rule_check_task_id = task.id
+        workbasket.save()
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        if form_action == "run-business-rules":
+            self.run_business_rules()
+        elif form_action == "terminate-rule-check":
+            self.workbasket.terminate_rule_check()
+        elif form_action in ["remove-selected", "remove-all"]:
+            return reverse(
+                "workbaskets:workbasket-ui-changes-delete",
+                kwargs={"pk": self.workbasket.pk},
+            )
+        try:
+            return self._append_url_page_param(
+                reverse(
+                    self.action_success_url_names[form_action],
+                ),
+                form_action,
+            )
+        except KeyError:
+            return reverse("home")
+
+    def get_initial(self):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        return store.data.copy()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        user_can_delete_workbasket = (
+            self.request.user.is_superuser
+            or self.request.user.has_perm("workbaskets.delete_workbasket")
+        )
+        # set to true if there is an associated goods import batch with an unsent notification
+        try:
+            import_batch = self.workbasket.importbatch
+            unsent_notifcation = (
+                import_batch
+                and import_batch.goods_import
+                and not Notification.objects.filter(
+                    notified_object_pk=import_batch.pk,
+                    notification_type=NotificationTypeChoices.GOODS_REPORT,
+                ).exists()
+            )
+        except ObjectDoesNotExist:
+            unsent_notifcation = False
+        context.update(
+            {
+                "workbasket": self.workbasket,
+                "page_obj": page,
+                "uploaded_envelope_dates": self.uploaded_envelope_dates,
+                "rule_check_in_progress": False,
+                "user_can_delete_workbasket": user_can_delete_workbasket,
+                "unsent_notification": unsent_notifcation,
+            },
+        )
+        if self.workbasket.rule_check_task_id:
+            result = AsyncResult(self.workbasket.rule_check_task_id)
+            if result.status != "SUCCESS":
+                context.update({"rule_check_in_progress": True})
+            else:
+                self.workbasket.save_to_session(self.request.session)
+
+            num_completed, total = self.workbasket.rule_check_progress()
+            context.update(
+                {
+                    "rule_check_progress": f"Completed {num_completed} out of {total} checks",
+                },
+            )
+
+        return context
+
+    def form_valid(self, form):
+        store = SessionStore(
+            self.request,
+            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
+        )
+        form_action = self.request.POST.get("form-action")
+        store.remove_items(form.cleaned_data)
+        if form_action == "remove-all":
+            object_list = {
+                self.form_class.field_name_for_object(obj): True
+                for obj in self.workbasket.tracked_models
+            }
+            store.add_items(object_list)
+        else:
+            to_add = {key: value for key, value in form.cleaned_data.items() if value}
+            store.add_items(to_add)
+        return super().form_valid(form)
 
 
 class WorkBasketReviewView(PermissionRequiredMixin, WithPaginationListView):
