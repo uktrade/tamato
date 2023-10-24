@@ -35,17 +35,6 @@ class TestNewElementParser:
         assert target.model_links == []
         assert target.parent_parser is None
         assert target.parent_handler is None
-        assert target.excluded_fields == [
-            "language_id",
-            "antidumping_regulation_role",
-            "related_antidumping_regulation_id",
-            "complete_abrogation_regulation_role",
-            "complete_abrogation_regulation_id",
-            "explicit_abrogation_regulation_role",
-            "explicit_abrogation_regulation_id",
-            "export_refund_nomenclature_sid",
-            "meursing_table_plan_id",
-        ]
         assert target.xml_object_tag is None
 
     def test_links_raises_exception(self):

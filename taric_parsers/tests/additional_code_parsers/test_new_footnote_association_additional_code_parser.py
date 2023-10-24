@@ -3,13 +3,9 @@ from datetime import date
 import pytest
 
 from additional_codes.models import *
-from common.tests import factories
-from common.tests.util import get_test_xml_file
 from common.tests.util import preload_import
-from taric_parsers.importer import TaricImporter
 from taric_parsers.parsers.additional_code_parsers import *
 from taric_parsers.parsers.footnote_parser import *
-from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -141,19 +137,9 @@ class TestNewAdditionalCodeTypeParser:
         assert FootnoteAssociationAdditionalCode.objects.all().last().update_type == 2
 
     def test_import_invalid_footnote(self, superuser):
-        file_to_import = get_test_xml_file(
+        importer = preload_import(
             "footnote_association_additional_code_invalid_footnote_CREATE.xml",
             __file__,
-        )
-
-        workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-        import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-
-        importer = TaricImporter(
-            import_batch=import_batch,
-            taric3_file=file_to_import,
-            import_title="Importing stuff",
-            author_username=superuser.username,
         )
 
         assert len(importer.issues()) == 2

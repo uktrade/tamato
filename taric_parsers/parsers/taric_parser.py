@@ -16,10 +16,41 @@ from taric_parsers.importer_issue import ImportIssueReportItem
 from taric_parsers.parser_model_link import *
 
 # import all parsers
+EXCLUDED_PARSER_PROPERTIES = [
+    "__annotations__",
+    "__doc__",
+    "__module__",
+    "issues",
+    "model",
+    "model_links",
+    "parent_parser",
+    "value_mapping",
+    "xml_object_tag",
+    "valid_between_lower",
+    "valid_between_upper",
+    "sequence_number",
+    "update_type_name",
+    "links_valid",
+    "transaction_id",
+]
+
+EXCLUDED_FIELDS_FOR_POPULATION = [
+    "language_id",
+    "antidumping_regulation_role",
+    "related_antidumping_regulation_id",
+    "complete_abrogation_regulation_role",
+    "complete_abrogation_regulation_id",
+    "explicit_abrogation_regulation_role",
+    "explicit_abrogation_regulation_id",
+    "export_refund_nomenclature_sid",
+    "meursing_table_plan_id",
+]
 
 
 class TransactionParser:
     """
+    Responsible for representing a parsed TARIC transaciton.
+
     A transmission contains multiple messages.
 
     Parsing a transmission will result in an ordered list of parsed messages
@@ -27,6 +58,13 @@ class TransactionParser:
     """
 
     def __init__(self, transaction: bs4.Tag, index):
+        """
+        Responsible for representing a parsed TARIC transaction.
+
+        Args:
+            transaction: (required) bs4.Tag, The containing XML tag that contains the transaction data
+            index: (required)
+        """
         self.parsed_messages: List[MessageParser] = []
         self.taric_objects = []
         self.index = index
@@ -41,9 +79,18 @@ class TransactionParser:
 
 
 class MessageParser:
-    """A message contains create / update / delete to a single taric object."""
+    """Responsible for representing a parsed TARIC message."""
 
     def __init__(self, message: bs4.Tag):
+        """
+        Initialise a message parser instance.
+
+        This object represents a parsed TARIC3 message - the container for all object types, e.g. goods nomenclature
+
+        Args:
+            message: (required) bs4.Tag, The containing XML tag that contains the message data
+        """
+
         self.data = {}
         self.message = message
         self.transaction_id = self.message.find("oub:transaction.id").text
@@ -72,12 +119,18 @@ class MessageParser:
         self._populate_data_dict(self.update_type, self.update_type_name)
         self.taric_object = self._construct_taric_object()
 
-    def can_populate_child_attrs_from_history(self, klass):
+    def can_populate_child_attrs_from_history(self):
+        """
+        Determines if an object can be updated without all child parsers
+        present.
+
+        Returns:
+            bool, indicates if the parsed object can be updated without all children present
+        """
+
         if self.update_type != 3:
-            if (
-                self.taric_object.__class__.allow_update_without_children
-            ):  # child objects allowed to be populated from history on updates
-                return True
+            # child objects allowed to be populated from history on updates
+            return self.taric_object.__class__.allow_update_without_children
 
         return False
 
@@ -169,17 +222,6 @@ class BaseTaricParser:
     data_fields = []
     issues = []
     parent_handler = None
-    excluded_fields = [
-        "language_id",
-        "antidumping_regulation_role",
-        "related_antidumping_regulation_id",
-        "complete_abrogation_regulation_role",
-        "complete_abrogation_regulation_id",
-        "explicit_abrogation_regulation_role",
-        "explicit_abrogation_regulation_id",
-        "export_refund_nomenclature_sid",
-        "meursing_table_plan_id",
-    ]
     non_taric_additional_fields = []
     model = None
     identity_fields = []
@@ -190,11 +232,19 @@ class BaseTaricParser:
     deletes_allowed = True
 
     def __init__(self):
+        """Initialises a blank instance of BaseTaricParser, with default
+        values."""
         self.issues = []
         self.sequence_number = None
         self.model = None
 
     def links(self) -> list[ModelLink]:
+        """
+        Get defined links to other models.
+
+        Returns:
+            list[ModelLink], A list of model link objects defined on the mdoel
+        """
         if self.model_links is None:
             raise Exception(
                 f"No model defined for {self.__class__.__name__}, is this correct?",
@@ -202,7 +252,14 @@ class BaseTaricParser:
 
         return self.model_links
 
-    def model_query_parameters(self):
+    def model_query_parameters(self) -> dict:
+        """
+        Get the models query parameters, to search for it, and parent objects in
+        the import data and in the database.
+
+        Returns:
+            dict, a dictionary of the parsers identity fields, and the corresponding values.
+        """
         query_args = {}
         for identity_field in self.identity_fields:
             query_arg_value = getattr(self, identity_field)
@@ -261,7 +318,17 @@ class BaseTaricParser:
 
         return result
 
-    def is_child_for(self, potential_parent):
+    def is_child_for(self, potential_parent) -> bool:
+        """
+        Returns a boolean to indicate of the current is associated with the
+        potential parent.
+
+        Args:
+            potential_parent: (required) BaseTaricParser, A parsed object that needs to be checked against.
+
+        Returns:
+            bool, indicating if the potential_parent matches the identity keys the child has.
+        """
         if (
             potential_parent.is_child_object()
             or potential_parent.__class__.model != self.__class__.model
@@ -300,7 +367,16 @@ class BaseTaricParser:
 
     @classmethod
     def identity_fields_for_parent(cls, include_optional=False) -> dict:
-        # todo : add description
+        """
+        Returns a dictionary of identity keys and values that will link the
+        child to the parent.
+
+        Args:
+            include_optional: bool, if the relationship is optional it will not be included if include_optional is false
+
+        Returns:
+            dict, a dictionary of field mappings between child and parent parser objects
+        """
 
         # guard clauses
         if cls.parent_parser is None:
@@ -342,6 +418,19 @@ class BaseTaricParser:
         sequence_number: int,
         data: dict,
     ):
+        """
+        Populate the parser from the defined properties and data.
+
+        Args:
+            transaction_id: (required) int, The transaction ID from TARIC XML
+            record_code: (required) str,  record code from TARIC XML
+            subrecord_code: (required) str, subrecord code from TARIC XML
+            sequence_number: (required) int, sequence number from TARIC XML
+            data: (required) dict, data from TARIC XML
+
+        Returns:
+            None, all actions are performed on the current object
+        """
         # standard data
         self.transaction_id = transaction_id
         if self.record_code != record_code:
@@ -358,7 +447,7 @@ class BaseTaricParser:
         # model specific data
         for data_item_key in data.keys():
             # some fields like language_id need to be skipped - we only care about en
-            if data_item_key in self.excluded_fields:
+            if data_item_key in EXCLUDED_FIELDS_FOR_POPULATION:
                 continue
 
             mapped_data_item_key = data_item_key
@@ -433,6 +522,21 @@ class BaseTaricParser:
         related_model,
         transaction: Transaction,
     ):
+        """
+        Get the linked model from the existing database records.
+
+        Args:
+            fields_and_values: dict, dictionary of fields and properties that are used to query the database
+            related_model: TrackedModel class, The tracked model that is to be queried
+            transaction: Transaction, The transaction (in the database) that the query can perform up to.
+
+        Returns:
+            TrackedModel, when matched
+            None, When not matched
+
+        Exception:
+            When multiple models are matched which is invalid and should not happen normally
+        """
         models = related_model.objects.approved_up_to_transaction(transaction).filter(
             **fields_and_values
         )
@@ -441,7 +545,7 @@ class BaseTaricParser:
             return models.first()
         elif models.count() > 1:
             raise Exception(
-                "multiple models matched query, please check data and query",
+                f"multiple models matched query for {related_model.__name__} using {fields_and_values}, please check data and query",
             )
         else:
             return None
@@ -451,25 +555,19 @@ class BaseTaricParser:
         transaction: Transaction,
         raise_error_if_no_match=True,
         include_non_taric_attributes=False,
-    ):
-        excluded_variable_names = [
-            "__annotations__",
-            "__doc__",
-            "__module__",
-            "issues",
-            "model",
-            "model_links",
-            "parent_parser",
-            "value_mapping",
-            "xml_object_tag",
-            "valid_between_lower",
-            "valid_between_upper",
-            "sequence_number",
-            "update_type_name",
-            "links_valid",
-            "transaction_id",
-        ]
+    ) -> dict:
+        """
+        Returns a dictionary of model attributes, for use iun populating
+        database models, and other uses.
 
+        Args:
+            transaction: (required) Transaction, The transaction used to search the database up to for models
+            raise_error_if_no_match: (optional) bool, Flag to indicate if an exception should be raised if a related model cant be matched.
+            include_non_taric_attributes: (optional) bool, flag to indicate if output should include non TARIC attributes. There are some edge cases where this is needed.
+
+        Returns:
+            dict, Dictionary of populated attributes for the mdoel
+        """
         additional_excluded_variable_names = []
 
         model_attributes = {}
@@ -527,7 +625,7 @@ class BaseTaricParser:
         for model_field in vars(self).keys():
             if (
                 model_field
-                in excluded_variable_names + additional_excluded_variable_names
+                in EXCLUDED_PARSER_PROPERTIES + additional_excluded_variable_names
             ):
                 continue
 
@@ -563,7 +661,15 @@ class BaseTaricParser:
 
         return model_attributes
 
-    def can_save_to_model(self):
+    def can_save_to_model(self) -> bool:
+        """
+        Can the model be saved to the database.
+
+        This method checks that the parser that represents a TARIC object can be saved to a TAP model by checking associated issues recorded during validation
+
+        Returns:
+            bool, value indicating if the model can be saved
+        """
         # This method checks that the parser represents an object that can be saved to a TAP model, and not a child
         # object that simply holds attributes.
         # This is determined by the lack of a parent_parser, if a parent parser is present that means the model will be
@@ -575,12 +681,31 @@ class BaseTaricParser:
         return True
 
     def is_child_object(self):
+        """
+        Is the object a child object, meaning does it have a parent it needs to
+        append attributes to.
+
+        Returns:
+            bool, boolean indicating it is or is not a child object in the TAP database model
+        """
         return self.parent_parser is not None
 
 
 class ParserHelper:
     @staticmethod
     def get_parser_by_model(model):
+        """
+        Gets the corresponding parser for the presented model.
+
+        Args:
+            model: TrackedModel Class, The class to get the parser class for
+
+        Returns:
+            BaseTaricParser, The parser class used to represent the presented model
+
+        Exception:
+            If no matching parser class is found.
+        """
         # get all classes that can represent an imported taric object
         classes = ParserHelper.get_parser_classes()
 
@@ -589,10 +714,21 @@ class ParserHelper:
             if cls.model == model and cls.parent_parser is None:
                 return cls
 
-        raise Exception(f"No parser class found for parsing {model.__name__}")
+        raise Exception(
+            f"No parser class found for parsing {model.__name__}. Have you imported all required parser models? ",
+        )
 
     @staticmethod
     def get_child_parsers(parser: BaseTaricParser):
+        """
+        Returns a list of child parsers associated with the presented parser.
+
+        Args:
+            parser: (required) BaseTaricParser, The parent parser class, to get the children for.
+
+        Returns:
+            list, list containing all child parsers associated with the provided model
+        """
         result = []
 
         parser_classes = ParserHelper.get_parser_classes()
@@ -606,6 +742,19 @@ class ParserHelper:
 
     @staticmethod
     def get_parser_by_tag(object_type: str):
+        """
+        Returns the child parsers associated with the presented XML tag, from
+        the TARIC spec.
+
+        Args:
+            object_type: (required) str, string representing the XML tag
+
+        Returns:
+            BaseTaricParser Class, class matching the provided tag
+
+        Exception:
+            raises if there is no match
+        """
         # get all classes that can represent an imported taric object
         classes = ParserHelper.get_parser_classes()
 
@@ -617,11 +766,26 @@ class ParserHelper:
         raise Exception(f"No parser class matching {object_type}")
 
     @staticmethod
-    def get_parser_classes():
+    def get_parser_classes() -> list[BaseTaricParser]:
+        """
+        List of parser classes.
+
+        Returns:
+            list[BaseTaricParser], list of all classes that parse TARIC objects
+        """
         return ParserHelper.subclasses_for(BaseTaricParser)
 
     @staticmethod
-    def subclasses_for(cls):
+    def subclasses_for(cls) -> list:
+        """
+        Recursive, Returns all subclasses of the provided class.
+
+        Args:
+            cls: class, Any class, that you need all the subclasses for.
+
+        Returns:
+            list, list of classes
+        """
         all_subclasses = []
 
         for subclass in cls.__subclasses__():
