@@ -319,8 +319,6 @@ class CurrentWorkBasket(FormView):
     # Form action mappings to URL names.
     action_success_url_names = {
         "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
-        "run-business-rules": "workbaskets:current-workbasket",
-        "terminate-rule-check": "workbaskets:current-workbasket",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
         "compare-data": "workbaskets:current-workbasket",
@@ -366,44 +364,6 @@ class CurrentWorkBasket(FormView):
         elif form_action == "page-next":
             page_number = page.next_page_number()
         return f"{url}?page={page_number}"
-
-    @atomic
-    def run_business_rules(self):
-        """Remove old checks, start new checks via a Celery task and save the
-        newly created task's ID on the workbasket."""
-        workbasket = self.workbasket
-        workbasket.delete_checks()
-        task = call_check_workbasket_sync.apply_async(
-            (workbasket.pk,),
-            countdown=1,
-        )
-        logger.info(
-            f"Started rule check against workbasket.id={workbasket.pk} "
-            f"on task.id={task.id}",
-        )
-        workbasket.rule_check_task_id = task.id
-        workbasket.save()
-
-    def get_success_url(self):
-        form_action = self.request.POST.get("form-action")
-        if form_action == "run-business-rules":
-            self.run_business_rules()
-        elif form_action == "terminate-rule-check":
-            self.workbasket.terminate_rule_check()
-        elif form_action in ["remove-selected", "remove-all"]:
-            return reverse(
-                "workbaskets:workbasket-ui-changes-delete",
-                kwargs={"pk": self.workbasket.pk},
-            )
-        try:
-            return self._append_url_page_param(
-                reverse(
-                    self.action_success_url_names[form_action],
-                ),
-                form_action,
-            )
-        except KeyError:
-            return reverse("home")
 
     def get_initial(self):
         store = SessionStore(
