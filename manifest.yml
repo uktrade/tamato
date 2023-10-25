@@ -4,9 +4,10 @@ applications:
       - nodejs_buildpack
       - python_buildpack
     processes:
-    - type: web
-      memory: 1G
-    - type: worker
-      memory: 4G
-    - type: rule-check-worker
-      memory: 6G
+      - type: web
+        memory: 1G
+      - type: worker
+        memory: 4G
+      - type: rule-check-worker
+        memory: 6G
+    stack: cflinuxfs4
