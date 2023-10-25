@@ -161,7 +161,6 @@ class WorkbasketCompareForm(forms.Form):
     )
 
     def clean(self):
-        print("d" * 80, "fires")
         if self.cleaned_data:
             serialized = serialize_uploaded_data(self.cleaned_data["data"])
             return {"data": serialized, "raw_data": self.cleaned_data["data"]}

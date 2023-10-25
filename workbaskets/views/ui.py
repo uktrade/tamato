@@ -153,7 +153,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
                 "kwargs": {},
             },
             "view-violations": {
-                "path_name": "workbaskets:workbasket-check-ui-violations",
+                "path_name": "workbaskets:workbasket-ui-violations",
                 "kwargs": {},
             },
             "review-measures": {
@@ -702,7 +702,7 @@ class WorkBasketViolationDetail(DetailView):
         if request.POST.get("action", None) == "delete" and request.user.is_superuser:
             self.override_violation()
 
-        return redirect("workbaskets:workbasket-check-ui-violations")
+        return redirect("workbaskets:workbasket-ui-violations")
 
 
 class WorkBasketDelete(PermissionRequiredMixin, FormMixin, DeleteView):
@@ -830,18 +830,16 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
         )
 
 
-class WorkBasketChecksView(TemplateView):
+class WorkBasketChecksView(FormView):
     template_name = "workbaskets/checks.jinja"
     form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.
     action_success_url_names = {
-        "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
-        "run-business-rules": "workbaskets:current-workbasket",
-        "terminate-rule-check": "workbaskets:current-workbasket",
-        "page-prev": "workbaskets:current-workbasket",
-        "page-next": "workbaskets:current-workbasket",
-        "compare-data": "workbaskets:current-workbasket",
+        "run-business-rules": "workbaskets:workbasket-checks",
+        "terminate-rule-check": "workbaskets:workbasket-checks",
+        "page-prev": "workbaskets:workbasket-checks",
+        "page-next": "workbaskets:workbasket-checks",
     }
 
     @property

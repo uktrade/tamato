@@ -293,7 +293,7 @@ def test_select_workbasket_with_errored_status(valid_user_client):
     [
         ("view-summary", "workbaskets:current-workbasket", False),
         ("add-edit-items", "workbaskets:edit-workbasket", False),
-        ("view-violations", "workbaskets:workbasket-check-ui-violations", False),
+        ("view-violations", "workbaskets:workbasket-ui-violations", False),
         ("review-measures", "workbaskets:workbasket-ui-review-measures", True),
         ("review-goods", "workbaskets:workbasket-ui-review-goods", True),
         ("", "workbaskets:current-workbasket", False),
@@ -921,7 +921,7 @@ def test_workbasket_violations(valid_user_client, session_workbasket):
     displays the correct column values for one unsuccessful
     `TrackedModelCheck`."""
     url = reverse(
-        "workbaskets:workbasket-check-ui-violations",
+        "workbaskets:workbasket-ui-violations",
     )
     with session_workbasket.new_transaction() as transaction:
         good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
@@ -1009,7 +1009,7 @@ def test_violation_detail_page_superuser_override_last_violation(
     response = superuser_client.post(url, data={"action": "delete"})
 
     assert response.status_code == 302
-    redirect_url = reverse("workbaskets:workbasket-check-ui-violations")
+    redirect_url = reverse("workbaskets:workbasket-ui-violations")
     assert redirect_url in response["Location"]
 
     model_check.refresh_from_db()
@@ -1053,7 +1053,7 @@ def test_violation_detail_page_superuser_override_one_of_two_violation(
     response = superuser_client.post(url, data={"action": "delete"})
 
     assert response.status_code == 302
-    redirect_url = reverse("workbaskets:workbasket-check-ui-violations")
+    redirect_url = reverse("workbaskets:workbasket-ui-violations")
     assert redirect_url in response["Location"]
 
     assert (
@@ -1136,7 +1136,7 @@ def setup(session_workbasket, valid_user_client):
 def test_violation_list_page_sorting_date(setup, valid_user_client, session_workbasket):
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
-        "workbaskets:workbasket-check-ui-violations",
+        "workbaskets:workbasket-ui-violations",
     )
     response = valid_user_client.get(f"{url}?sort_by=date&order=asc")
 
@@ -1167,7 +1167,7 @@ def test_violation_list_page_sorting_model_name(
 ):
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
-        "workbaskets:workbasket-check-ui-violations",
+        "workbaskets:workbasket-ui-violations",
     )
     response = valid_user_client.get(f"{url}?sort_by=model&order=asc")
 
@@ -1198,7 +1198,7 @@ def test_violation_list_page_sorting_check_name(
 ):
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
-        "workbaskets:workbasket-check-ui-violations",
+        "workbaskets:workbasket-ui-violations",
     )
     response = valid_user_client.get(f"{url}?sort_by=check_name&order=asc")
 
@@ -1226,7 +1226,7 @@ def test_violation_list_page_sorting_ignores_invalid_params(
 ):
     """Tests that the page doesn't break if invalid params are sent."""
     url = reverse(
-        "workbaskets:workbasket-check-ui-violations",
+        "workbaskets:workbasket-ui-violations",
     )
     response = valid_user_client.get(f"{url}?sort_by=foo&order=bar")
 

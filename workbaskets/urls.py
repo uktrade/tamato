@@ -94,7 +94,7 @@ ui_patterns = [
     path(
         f"current/violations/",
         ui_views.WorkBasketViolations.as_view(),
-        name="workbasket-check-ui-violations",
+        name="workbasket-ui-violations",
     ),
     path(
         f"<pk>/confirm-create/",
