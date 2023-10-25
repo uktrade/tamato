@@ -1,3 +1,4 @@
+{% from "macros/checkbox_item.jinja" import checkbox_item %}
 {% from 'macros/create_link.jinja' import create_link %}
 {% from 'macros/footnotes_display.jinja' import footnotes_display %}
 {% from "includes/measures/conditions.jinja" import conditions_list %}
@@ -5,23 +6,6 @@
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 
-
-{# Sets out checkbox #}
-{% macro checkbox_item(field) -%}
-  {% set id = field.id_for_label %}
-  {% set name = field.name %}
-  {% set checked = "checked" if field.value() else "" %}
-  <div class="govuk-form-group">
-    <fieldset class="govuk-fieldset">
-      <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
-        <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="{{ id }}" name="{{ name }}" type="checkbox" {{ checked }} data-check-trackedmodel>
-          <label class="govuk-label govuk-checkboxes__label" for="{{ id }}"></label>
-        </div>
-      </div>
-    </fieldset>
-  </div>
-{%- endmacro %}
 
 {# Sets out checking all checkbox #}
 {% set checkbox_check_all -%}
@@ -83,6 +67,7 @@
                 {"html": create_link(url("geo_area-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
                 {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
                 {"text": footnotes_display(measure.footnoteassociationmeasure_set.current())},
+                {"text": create_link(url("regulation-ui-detail", kwargs={"role_type": measure.generating_regulation.role_type,"regulation_id": measure.generating_regulation.regulation_id}), measure.generating_regulation.regulation_id) if measure.generating_regulation.regulation_id else '-'},
                 {"text": conditions_list(measure) if measure.conditions.current() else "-", "classes": "govuk-!-width-one-quarter"},
               ]) or "" }} 
           {% endfor %}
@@ -99,6 +84,7 @@
             {"text": geo_area},
             {"text": "Quota"},
             {"text": "Footnote"},
+            {"text": "Regulations"},
             {"text": "Conditions"},
           ],
           "rows": table_rows,
