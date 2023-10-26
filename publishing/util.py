@@ -84,24 +84,27 @@ class TaricDataAssertionError(AssertionError):
 # and would not support the rendering of multiple envelopes
 
 
-def validate_envelope(envelope_file, workbaskets, skip_declaration=False):
+def validate_envelope(envelope_file: bytes, workbaskets, skip_declaration=False):
     """
     Validate envelope content for XML issues and data missing & order issues.
 
     Catches and re-raises DocumentInvalid and TaricDataAssertionError
     exceptions, although other exceptions may be possible.
     """
-    valid_xml_declaration = '<?xml version="1.0" encoding="UTF-8"?>'
+
     with open(settings.PATH_XSD_TARIC) as xsd_file:
-        if skip_declaration:
-            pos = envelope_file.tell()
+        if not skip_declaration:
+            position_before = envelope_file.tell()
+            valid_xml_declaration = b'<?xml version="1.0" encoding="UTF-8"?>'
             xml_declaration = envelope_file.read(len(valid_xml_declaration))
+
             if xml_declaration != valid_xml_declaration:
                 logger.warning(
                     f"Expected XML declaration first line of envelope to be "
                     f"XML encoding declaration, but found: {xml_declaration}",
                 )
-                envelope_file.seek(pos, os.SEEK_SET)
+
+            envelope_file.seek(position_before, os.SEEK_SET)
 
         schema = etree.XMLSchema(parse_xml(xsd_file))
         xml = parse_xml(envelope_file)
