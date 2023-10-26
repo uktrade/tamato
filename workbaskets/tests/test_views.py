@@ -202,7 +202,7 @@ def test_review_workbasket_displays_rule_violation_summary(
 
     response = valid_user_client.get(
         reverse(
-            "workbaskets:current-workbasket",
+            "workbaskets:workbasket-checks",
         ),
     )
     page = BeautifulSoup(
