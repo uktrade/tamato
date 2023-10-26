@@ -385,7 +385,14 @@ class WorkBasket(TimestampedMixin):
             workbasket=self,
         )
         total = transactions.count()
-
+        print(
+            "*" * 80,
+            "rule_check_progress",
+            self,
+            transaction_checks,
+            num_completed,
+            total,
+        )
         return num_completed, total
 
     @property
