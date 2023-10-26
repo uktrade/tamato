@@ -47,7 +47,6 @@ details
 
     <hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">
 
-    {# <a href="#" class="govuk-button govuk-button-primary">Review violation</a> #}
     {% if request.user.is_superuser %}
       <form method="post">
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
