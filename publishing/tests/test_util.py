@@ -311,8 +311,6 @@ def test_validate_envelope_no_declaration(caplog):
     correctly log a warning message."""
 
     with open(f"{TEST_FILES_PATH}/envelope_no_declaration.xml", "rb") as envelope_file:
-        workbaskets = WorkBasket.objects.none()
-
         try:
             import logging
 
@@ -324,7 +322,7 @@ def test_validate_envelope_no_declaration(caplog):
             with caplog.at_level(logging.WARNING):
                 validate_envelope(
                     envelope_file,
-                    workbaskets=workbaskets,
+                    workbaskets=WorkBasket.objects.none(),
                     skip_declaration=False,
                 )
         except (DocumentInvalid, TaricDataAssertionError):
