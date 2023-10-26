@@ -365,6 +365,23 @@ class CurrentWorkBasket(FormView):
             page_number = page.next_page_number()
         return f"{url}?page={page_number}"
 
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        if form_action in ["remove-selected", "remove-all"]:
+            return reverse(
+                "workbaskets:workbasket-ui-changes-delete",
+                kwargs={"pk": self.workbasket.pk},
+            )
+        try:
+            return self._append_url_page_param(
+                reverse(
+                    self.action_success_url_names[form_action],
+                ),
+                form_action,
+            )
+        except KeyError:
+            return reverse("home")
+
     def get_initial(self):
         store = SessionStore(
             self.request,
@@ -721,7 +738,7 @@ class WorkBasketDeleteDone(TemplateView):
 
 
 class WorkBasketCompare(WithCurrentWorkBasket, FormView):
-    success_url = reverse_lazy("workbaskets:workbasket-ui-compare")
+    success_url = reverse_lazy("workbaskets:workbasket-check-ui-compare")
     template_name = "workbaskets/compare.jinja"
     form_class = forms.WorkbasketCompareForm
 

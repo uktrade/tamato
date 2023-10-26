@@ -1605,7 +1605,7 @@ def test_application_access_after_workbasket_delete(
 
 
 def test_workbasket_compare_200(valid_user_client, session_workbasket):
-    url = reverse("workbaskets:workbasket-ui-compare")
+    url = reverse("workbaskets:workbasket-check-ui-compare")
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
@@ -1614,7 +1614,7 @@ def test_workbasket_compare_prev_uploaded(valid_user_client, session_workbasket)
     factories.GoodsNomenclatureFactory()
     factories.GoodsNomenclatureFactory()
     factories.DataUploadFactory(workbasket=session_workbasket)
-    url = reverse("workbaskets:workbasket-ui-compare")
+    url = reverse("workbaskets:workbasket-check-ui-compare")
     response = valid_user_client.get(url)
     assert "Worksheet data" in response.content.decode(response.charset)
 
@@ -1623,7 +1623,7 @@ def test_workbasket_update_prev_uploaded(valid_user_client, session_workbasket):
     factories.GoodsNomenclatureFactory()
     factories.GoodsNomenclatureFactory()
     data_upload = factories.DataUploadFactory(workbasket=session_workbasket)
-    url = reverse("workbaskets:workbasket-ui-compare")
+    url = reverse("workbaskets:workbasket-check-ui-compare")
     data = {
         "data": (
             "0000000001\t1.000%\t20/05/2021\t31/08/2024\n"
@@ -1637,7 +1637,7 @@ def test_workbasket_update_prev_uploaded(valid_user_client, session_workbasket):
 
 
 def test_workbasket_compare_form_submit_302(valid_user_client, session_workbasket):
-    url = reverse("workbaskets:workbasket-ui-compare")
+    url = reverse("workbaskets:workbasket-check-ui-compare")
     data = {
         "data": (
             "0000000001\t1.000%\t20/05/2021\t31/08/2024\n"
@@ -1673,7 +1673,7 @@ def test_workbasket_compare_found_measures(
             component_measurement=None,
         )
 
-    url = reverse("workbaskets:workbasket-ui-compare")
+    url = reverse("workbaskets:workbasket-check-ui-compare")
     data = {
         "data": (
             # this first line should match the measure in the workbasket
