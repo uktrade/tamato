@@ -307,6 +307,9 @@ def test_validate_envelope_records_out_of_order(queued_workbasket):
 
 
 def test_validate_envelope_no_declaration(caplog):
+    """Test that validated envelopes containing no XML declaration element
+    correctly log a warning message."""
+
     with open(f"{TEST_FILES_PATH}/envelope_no_declaration.xml", "rb") as envelope_file:
         workbaskets = WorkBasket.objects.none()
 
