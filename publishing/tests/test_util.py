@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from lxml.etree import DocumentInvalid
 
 from common.tests import factories
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
@@ -10,6 +11,8 @@ from publishing.util import validate_envelope
 from workbaskets.models import WorkBasket
 
 pytestmark = pytest.mark.django_db
+
+TEST_FILES_PATH = os.path.join(os.path.dirname(__file__), "test_files")
 
 
 def test_validate_envelope(queued_workbasket_factory):
@@ -301,3 +304,30 @@ def test_validate_envelope_records_out_of_order(queued_workbasket):
         envelope_file.seek(0, os.SEEK_SET)
         validate_envelope(envelope_file, workbaskets=workbaskets)
         assert "Elements out of order in XML:" in e
+
+
+def test_validate_envelope_no_declaration(caplog):
+    with open(f"{TEST_FILES_PATH}/envelope_no_declaration.xml", "rb") as envelope_file:
+        workbaskets = WorkBasket.objects.none()
+
+        try:
+            import logging
+
+            # Ensure logging propagation is enabled else log messages won't
+            # reach this module.
+            logger = logging.getLogger("publishing")
+            logger.propagate = True
+
+            with caplog.at_level(logging.WARNING):
+                validate_envelope(
+                    envelope_file,
+                    workbaskets=workbaskets,
+                    skip_declaration=False,
+                )
+        except (DocumentInvalid, TaricDataAssertionError):
+            # Ignore DocumentInvalid and TaricDataAssertionError exceptions as
+            # this test is only concerned with checking the XML declaration
+            # part of validate_envelope()
+            pass
+
+        assert "Expected XML declaration" in caplog.text
