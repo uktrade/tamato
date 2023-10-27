@@ -117,7 +117,7 @@ class QuotaCreate(QuotaOrderNumberMixin, CreateTaricCreateView):
 
 
 class QuotaConfirmCreate(QuotaOrderNumberMixin, TrackedModelDetailView):
-    template_name = "quota-definitions/confirm-create.jinja"
+    template_name = "quotas/confirm-create.jinja"
 
 
 class QuotaList(QuotaOrderNumberMixin, TamatoListView):
