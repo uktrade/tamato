@@ -84,7 +84,11 @@ class TaricDataAssertionError(AssertionError):
 # and would not support the rendering of multiple envelopes
 
 
-def validate_envelope(envelope_file: bytes, workbaskets, skip_declaration=False):
+def validate_envelope(
+    envelope_file: bytes,
+    workbaskets,
+    skip_declaration=False,
+) -> None:
     """
     Validate envelope content for XML issues and data missing & order issues.
 
