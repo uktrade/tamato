@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Iterable
@@ -19,47 +18,9 @@ from importer.nursery import TariffObjectNursery
 from importer.utils import DispatchedObjectType
 from importer.utils import LinksType
 from importer.utils import generate_key
+from taric_parsers.importer_issue import ImportIssueReportItem
 
 logger = logging.getLogger(__name__)
-
-
-class ImportIssueReportItem:
-    """
-    Class for in memory representation if an issue detected on import, the
-    status may change during the process so this will not be committed until the
-    import process is complete or has been found to have errors.
-
-    params:
-        object_type: str,
-            String representation of the object type, as found in XML e.g. goods.nomenclature
-        related_object_type: str,
-            String representation of the related object type, as found in XML e.g. goods.nomenclature.description
-        related_object_identity_keys: dict,
-            Dictionary of identity names and values used to link the related object
-        related_cache_key: str,
-            The string expected to be used to cache the related object
-        description: str,
-            Description of the detected issue
-    """
-
-    def __init__(
-        self,
-        object_type: str,
-        related_object_type: str,
-        related_object_identity_keys: Iterable[str],
-        related_cache_key: str,
-        description: str,
-    ):
-        self.object_type = object_type
-        self.related_object_type = related_object_type
-        self.related_object_identity_keys = related_object_identity_keys
-        self.related_cache_key = related_cache_key
-        self.description = description
-
-    def missing_object_method_name(self):
-        """Returns a string representing the related object data type (but
-        replaces full stops with underscores for readability."""
-        return re.sub("\\.", "_", self.related_object_type)
 
 
 @dataclass
@@ -408,8 +369,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
 
         Raises DoesNotExist if no kwargs passed.
 
-        First attempts to retrieve the object PK from the cache (saves queries). If this
-        is not found a database query is made to find the object.
+        First attempts to retrieve the object PK from the cache (saves queries).
+        If this is not found a database query is made to find the object.
 
         returns tuple(Object: model, bool: From Cache)
         """
@@ -501,8 +462,8 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         """
         Pre-processing before the object is saved to the database.
 
-        Generally this is used for adding the links to the object (as these cannot
-        be easily validated against the serializer).
+        Generally this is used for adding the links to the object (as these
+        cannot be easily validated against the serializer).
 
         Return the final dataset to be used when saving to the database.
         """
@@ -525,11 +486,13 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         """
         Build up all the data for the object.
 
-        This method co-ordinates the attempts to fetch the dependent data as well as the linked
-        data. If at any point one of these steps fails an empty set returns (signifying failure).
+        This method co-ordinates the attempts to fetch the dependent data as
+        well as the linked data. If at any point one of these steps fails an
+        empty set returns (signifying failure).
 
-        if all steps are deemed successful the object is dispatched to the database automatically.
-        On success a set of all the keys for any objects used which may be in the cache is returned.
+        if all steps are deemed successful the object is dispatched to the
+        database automatically. On success a set of all the keys for any objects
+        used which may be in the cache is returned.
         """
         if not self.dependency_keys and not self.links:
             self.dispatch()

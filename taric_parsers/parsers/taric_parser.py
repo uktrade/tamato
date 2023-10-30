@@ -230,6 +230,7 @@ class BaseTaricParser:
     allow_update_without_children = False
     updates_allowed = True
     deletes_allowed = True
+    skip_identity_check = False
 
     def __init__(self):
         """Initialises a blank instance of BaseTaricParser, with default
@@ -352,16 +353,12 @@ class BaseTaricParser:
         return match
 
     def get_identity_fields_and_values_for_parent(self):
-        """We want to create an array of values to be used to query the parent,
-        using the child values."""
+        """Return a dict of values to be used to query the parent, using the
+        child values."""
         result = {}
 
-        fields = self.identity_fields_for_parent()
-
-        for field in fields:
-            # the key is the field name of the child object, the value is the parent field name
-
-            result[fields[field]] = getattr(self, field)
+        for field in self.identity_fields_for_parent():
+            result[self.identity_fields_for_parent()[field]] = getattr(self, field)
 
         return result
 
@@ -544,6 +541,26 @@ class BaseTaricParser:
         if models.count() == 1:
             return models.first()
         elif models.count() > 1:
+            filtered_models = []
+            for model in models:
+                if hasattr(model, "valid_between"):
+                    # Check if this record is current
+                    if date.today() in model.valid_between:
+                        filtered_models.append(model)
+
+                elif hasattr(model, "validity_start"):
+                    # check for latest
+                    if (
+                        len(filtered_models) > 0
+                        and model.validity_start > filtered_models[0].validity_start
+                    ):
+                        filtered_models = [model]
+                    elif len(filtered_models) == 0:
+                        filtered_models = [model]
+
+            if len(filtered_models) == 1:
+                return filtered_models[0]
+
             raise Exception(
                 f"multiple models matched query for {related_model.__name__} using {fields_and_values}, please check data and query",
             )

@@ -1,17 +1,17 @@
 from datetime import date
 
-from geo_areas.import_handlers import *
+from geo_areas.models import *
 from taric_parsers.parser_model_link import *
 from taric_parsers.parsers.mixins import *
 from taric_parsers.parsers.taric_parser import *
 
 
 class NewGeographicalAreaParser(ValidityMixin, Writable, BaseTaricParser):
-    model = models.GeographicalArea
+    model = GeographicalArea
 
     model_links = [
         ModelLink(
-            models.GeographicalArea,
+            GeographicalArea,
             [
                 ModelLinkField("parent__sid", "sid"),
             ],
@@ -47,11 +47,11 @@ class NewGeographicalAreaParser(ValidityMixin, Writable, BaseTaricParser):
 
 
 class NewGeographicalAreaDescriptionParser(Writable, BaseTaricParser):
-    model = models.GeographicalAreaDescription
+    model = GeographicalAreaDescription
 
     model_links = [
         ModelLink(
-            models.GeographicalArea,
+            GeographicalArea,
             [
                 ModelLinkField("described_geographicalarea__sid", "sid"),
                 ModelLinkField("described_geographicalarea__area_id", "area_id"),
@@ -90,12 +90,12 @@ class NewGeographicalAreaDescriptionPeriodParser(
     BaseTaricParser,
     ChildPeriod,
 ):
-    model = models.GeographicalAreaDescription
+    model = GeographicalAreaDescription
     parent_parser = NewGeographicalAreaDescriptionParser
 
     model_links = [
         ModelLink(
-            models.GeographicalArea,
+            GeographicalArea,
             [
                 ModelLinkField("described_geographicalarea__sid", "sid"),
                 ModelLinkField("described_geographicalarea__area_id", "area_id"),
@@ -103,7 +103,7 @@ class NewGeographicalAreaDescriptionPeriodParser(
             "geographical.area",
         ),
         ModelLink(
-            models.GeographicalAreaDescription,
+            GeographicalAreaDescription,
             [
                 ModelLinkField("sid", "sid"),
             ],
@@ -135,18 +135,18 @@ class NewGeographicalAreaDescriptionPeriodParser(
 
 
 class NewGeographicalMembershipParser(ValidityMixin, Writable, BaseTaricParser):
-    model = models.GeographicalMembership
+    model = GeographicalMembership
 
     model_links = [
         ModelLink(
-            models.GeographicalArea,
+            GeographicalArea,
             [
                 ModelLinkField("member__sid", "sid"),
             ],
             "geographical.area",
         ),
         ModelLink(
-            models.GeographicalArea,
+            GeographicalArea,
             [
                 ModelLinkField("geo_group__sid", "sid"),
             ],

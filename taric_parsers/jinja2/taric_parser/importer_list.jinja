@@ -1,0 +1,29 @@
+{% set table_rows = [] %}
+{% for object in object_list %}
+{% set details_link -%}
+<a class="govuk-link govuk-!-font-weight-bold" href="{{ url('taric_parser_import_ui_details', kwargs={'pk': object.pk}) }}">{{ object.name }}</a>
+{%- endset %}
+{{ table_rows.append([
+    {"text": object.pk},
+    {"text": details_link},
+    {"text": "{:%d %b %Y}".format(object.created_at)},
+    {"text": object.pending_chunks},
+    {"text": object.running_chunks},
+    {"text": object.completed_chunks},
+    {"text": object.errored_chunks},
+    {"text": object.import_issues},
+  ]) or "" }}
+{% endfor %}
+{{ govukTable({
+  "head": [
+    {"text": "ID"},
+    {"text": "Name"},
+    {"text": "Start date"},
+    {"text": "Chunks waiting"},
+    {"text": "Chunks running"},
+    {"text": "Chunks done"},
+    {"text": "Chunks errored"},
+    {"text": "Import issues"},
+  ],
+  "rows": table_rows
+}) }}

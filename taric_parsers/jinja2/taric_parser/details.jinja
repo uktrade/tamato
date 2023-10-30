@@ -5,7 +5,7 @@
 
 {% block breadcrumb %}
     {{ breadcrumbs(request, [
-      {"text": "Find and edit import batches", "href": url("import_batch-ui-list")},
+      {"text": "Find and edit import batches", "href": url("taric_parser_import_ui_list")},
       {"text": page_title}
     ]) }}
 {% endblock %}
@@ -17,19 +17,19 @@
         {% set table_rows = [] %}
         {% for issue in issues %}
         {{ table_rows.append([
-            {"text": issue.description},
             {"text": issue.issue_type},
             {"text": issue.object_type},
             {"text": issue.related_object_type},
+            {"text": issue.description},
             {"text": issue.related_object_identity_keys},
           ]) or "" }}
         {% endfor %}
         {{ govukTable({
           "head": [
-            {"text": "Description"},
             {"text": "Severity"},
-            {"text": "Objecte"},
+            {"text": "Object"},
             {"text": "Related Object"},
+            {"text": "Description"},
             {"text": "Identity Data"},
           ],
           "rows": table_rows

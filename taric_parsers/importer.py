@@ -8,7 +8,9 @@ from django.db import transaction
 from importer.models import BatchImportError
 from importer.models import ImportBatch
 from taric.models import Envelope
-from taric_parsers.parsers.taric_parser import *
+from taric_parsers.parsers import *  # noinspection PyUnresolvedReferences
+from taric_parsers.parsers.quota_parser import *  # noinspection PyUnresolvedReferences
+from taric_parsers.parsers.taric_parser import *  # noinspection PyUnresolvedReferences
 from workbaskets.models import WorkBasket
 
 
@@ -232,18 +234,32 @@ class TaricImporter:
                 )
 
             elif message.update_type == 2:  # Delete
-                model_instance = message.taric_object.__class__.model.objects.approved_up_to_transaction(
+                model_instances = message.taric_object.__class__.model.objects.approved_up_to_transaction(
                     transaction,
-                ).get(
+                ).filter(
                     **message.taric_object.model_query_parameters()
                 )
 
-                # mark the model as deleted
-                model_instance.new_version(
-                    transaction=transaction,
-                    workbasket=transaction.workbasket,
-                    update_type=message.taric_object.update_type,
-                )
+                if model_instances.count() == 1:
+                    # mark the model as deleted
+                    model_instances.first().new_version(
+                        transaction=transaction,
+                        workbasket=transaction.workbasket,
+                        update_type=message.taric_object.update_type,
+                    )
+                elif model_instances.count() != 1:
+                    if model_instances.count() > 1:
+                        msg = "Multiple models matching query detected, please review data and correct before proceeding with this import."
+                    else:
+                        msg = "No matches for this model detected in published data, please verify record exists before attempting a delete of the record"
+
+                    self.create_import_issue(
+                        message,
+                        related_tag="self",
+                        related_identity_keys=message.taric_object.model_query_parameters(),
+                        issue_type="ERROR",
+                        message=msg,
+                    )
 
             elif message.update_type == 3:  # Create
                 message.taric_object.__class__.model.objects.create(
@@ -386,6 +402,7 @@ class TaricImporter:
         related_tag="",
         related_identity_keys=None,
         message="",
+        issue_type="ERROR",
     ):
         """
         Creates an import issue that will be recorded against the database at
@@ -409,6 +426,7 @@ class TaricImporter:
             taric_change_type=parsed_message.update_type_name,
             object_details=str(parsed_message.taric_object),
             transaction_id=parsed_message.transaction_id,
+            issue_type=issue_type,
         )
 
         parsed_message.taric_object.issues.append(report_item)
@@ -523,18 +541,53 @@ class TaricImporter:
                 message,
             )
 
+    def find_change_in_parsed_transaction(
+        self,
+        parsed_transaction,
+        parser_class,
+        identity_fields,
+    ):
+        for parsed_message in parsed_transaction.parsed_messages:
+            if parsed_message.taric_object is parser_class:
+                match = True
+
+                for identity_field in identity_fields.keys():
+                    if (
+                        getattr(parsed_message.taric_object, identity_field)
+                        != identity_fields[identity_field]
+                    ):
+                        match = False
+
+                if match and len(identity_fields.keys()) > 0:
+                    return parsed_message.taric_object
+
+        return None
+
     def validate_update_type_delete(self, parsed_message, parsed_transaction):
         if not parsed_message.taric_object.__class__.deletes_allowed:
             if parsed_message.taric_object.is_child_object:
+                # is the parent being deleted in the same transaction?
+                if self.find_change_in_parsed_transaction(
+                    parsed_transaction,
+                    ParserHelper.get_parser_by_model(
+                        parsed_message.taric_object.__class__.model,
+                    ),
+                    parsed_message.taric_object.get_identity_fields_and_values_for_parent(),
+                ):
+                    return
+
                 msg = f"Children of Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be deleted directly"
+                issue_type = "WARNING"
             else:
                 msg = f"Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be deleted"
+                issue_type = "ERROR"
 
             self.create_import_issue(
                 parsed_message,
                 "",
                 parsed_message.taric_object.model_query_parameters(),
                 msg,
+                issue_type,
             )
 
         # Check if updated, deleted object exists, else raise issue
@@ -632,15 +685,27 @@ class TaricImporter:
             )
         )
 
-        if last_parsed_message_for_model or model_instances.count() > 0:
-            # Any scenario is invalid at this point, since we are dealing with a creation, raise issue
+        # check for deletes
+        create_issue = False
+        if not parsed_message.taric_object.skip_identity_check:
+            if (
+                model_instances.count() > 0
+                and model_instances.last().update_type != UpdateType.DELETE
+            ):
+                create_issue = True
+            elif (
+                last_parsed_message_for_model
+                and last_parsed_message_for_model.update_type != UpdateType.DELETE
+            ):
+                create_issue = True
 
-            self.create_import_issue(
-                parsed_message,
-                "",
-                parsed_message.taric_object.model_query_parameters(),
-                f"Identity keys match existing object in database (checking all published and unpublished data)",
-            )
+            if create_issue:
+                self.create_import_issue(
+                    parsed_message,
+                    "",
+                    parsed_message.taric_object.model_query_parameters(),
+                    f"Identity keys match existing non-deleted object in database (checking all published and unpublished data)",
+                )
 
     def validate_update_type_for(self, parsed_message, parsed_transaction):
         if parsed_message.update_type == 3:  # Create

@@ -550,6 +550,9 @@ CELERY_ROUTES = {
     re.compile(r"(importer)\.tasks\..*"): {
         "queue": "importer",
     },
+    re.compile(r"(taric_parsers)\.tasks\..*"): {
+        "queue": "importer",
+    },
     re.compile(r"(exporter|notifications|publishing)\.tasks\..*"): {
         "queue": "standard",
     },

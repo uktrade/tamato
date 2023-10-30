@@ -1,14 +1,14 @@
 from datetime import date
 
-from commodities.import_handlers import *
+from commodities.models import *
+from footnotes.models import *
 from taric_parsers.parser_model_link import *
 from taric_parsers.parsers.mixins import *
 from taric_parsers.parsers.taric_parser import *
 
 
 class NewGoodsNomenclatureParser(Writable, BaseTaricParser):
-    # handler = GoodsNomenclatureHandler
-    model = models.GoodsNomenclature
+    model = GoodsNomenclature
 
     model_links = []
     value_mapping = {
@@ -37,11 +37,11 @@ class NewGoodsNomenclatureParser(Writable, BaseTaricParser):
 
 class NewGoodsNomenclatureOriginParser(Writable, BaseTaricParser):
     # handler = GoodsNomenclatureOriginHandler
-    model = models.GoodsNomenclatureOrigin
+    model = GoodsNomenclatureOrigin
 
     model_links = [
         ModelLink(
-            models.GoodsNomenclature,
+            GoodsNomenclature,
             [
                 ModelLinkField("new_goods_nomenclature__sid", "sid"),
                 ModelLinkField("new_goods_nomenclature__item_id", "item_id"),
@@ -50,7 +50,7 @@ class NewGoodsNomenclatureOriginParser(Writable, BaseTaricParser):
             "goods.nomenclature",
         ),
         ModelLink(
-            models.GoodsNomenclature,
+            GoodsNomenclature,
             [
                 ModelLinkField("derived_from_goods_nomenclature__item_id", "item_id"),
                 ModelLinkField("derived_from_goods_nomenclature__suffix", "suffix"),
@@ -91,12 +91,11 @@ class NewGoodsNomenclatureOriginParser(Writable, BaseTaricParser):
 
 
 class NewGoodsNomenclatureSuccessorParser(Writable, BaseTaricParser):
-    # handler = GoodsNomenclatureSuccessorHandler
-    model = models.GoodsNomenclatureSuccessor
+    model = GoodsNomenclatureSuccessor
 
     model_links = [
         ModelLink(
-            models.GoodsNomenclature,
+            GoodsNomenclature,
             [
                 ModelLinkField("replaced_goods_nomenclature__sid", "sid"),
                 ModelLinkField("replaced_goods_nomenclature__item_id", "item_id"),
@@ -105,7 +104,7 @@ class NewGoodsNomenclatureSuccessorParser(Writable, BaseTaricParser):
             "goods.nomenclature",
         ),
         ModelLink(
-            models.GoodsNomenclature,
+            GoodsNomenclature,
             [
                 ModelLinkField("absorbed_into_goods_nomenclature__item_id", "item_id"),
                 ModelLinkField("absorbed_into_goods_nomenclature__suffix", "suffix"),
@@ -145,11 +144,11 @@ class NewGoodsNomenclatureSuccessorParser(Writable, BaseTaricParser):
 
 
 class NewGoodsNomenclatureDescriptionParser(Writable, BaseTaricParser):
-    model = models.GoodsNomenclatureDescription
+    model = GoodsNomenclatureDescription
 
     model_links = [
         ModelLink(
-            models.GoodsNomenclature,
+            GoodsNomenclature,
             [
                 ModelLinkField("described_goods_nomenclature__sid", "sid"),
                 ModelLinkField("described_goods_nomenclature__item_id", "item_id"),
@@ -185,6 +184,7 @@ class NewGoodsNomenclatureDescriptionParser(Writable, BaseTaricParser):
     described_goods_nomenclature__suffix: int = None
     description: str = None
     allow_update_without_children = True
+    skip_identity_check = True
 
 
 class NewGoodsNomenclatureDescriptionPeriodParser(
@@ -192,12 +192,12 @@ class NewGoodsNomenclatureDescriptionPeriodParser(
     BaseTaricParser,
     ChildPeriod,
 ):
-    model = models.GoodsNomenclatureDescription
+    model = GoodsNomenclatureDescription
     parent_parser = NewGoodsNomenclatureDescriptionParser
 
     model_links = [
         ModelLink(
-            models.GoodsNomenclature,
+            GoodsNomenclature,
             [
                 ModelLinkField("described_goods_nomenclature__sid", "sid"),
                 ModelLinkField("described_goods_nomenclature__item_id", "item_id"),
@@ -206,7 +206,7 @@ class NewGoodsNomenclatureDescriptionPeriodParser(
             "goods.nomenclature",
         ),
         ModelLink(
-            models.GoodsNomenclatureDescription,
+            GoodsNomenclatureDescription,
             [
                 ModelLinkField("sid", "sid"),
             ],
@@ -239,11 +239,11 @@ class NewGoodsNomenclatureDescriptionPeriodParser(
 
 
 class NewGoodsNomenclatureIndentParser(Writable, BaseTaricParser):
-    model = models.GoodsNomenclatureIndent
+    model = GoodsNomenclatureIndent
 
     model_links = [
         ModelLink(
-            models.GoodsNomenclature,
+            GoodsNomenclature,
             [
                 ModelLinkField("indented_goods_nomenclature__sid", "sid"),
                 ModelLinkField("indented_goods_nomenclature__item_id", "item_id"),
@@ -282,11 +282,11 @@ class NewFootnoteAssociationGoodsNomenclatureParser(
     Writable,
     BaseTaricParser,
 ):
-    model = models.FootnoteAssociationGoodsNomenclature
+    model = FootnoteAssociationGoodsNomenclature
 
     model_links = [
         ModelLink(
-            models.GoodsNomenclature,
+            GoodsNomenclature,
             [
                 ModelLinkField("goods_nomenclature__sid", "sid"),
                 ModelLinkField("goods_nomenclature__item_id", "item_id"),

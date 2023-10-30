@@ -18,7 +18,6 @@ from importer import models
 from importer.filters import ImportBatchFilter
 from importer.filters import TaricImportFilter
 from importer.goods_report import GoodsReporter
-from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from notifications.models import GoodsSuccessfulImportNotification
 from workbaskets.validators import WorkflowStatus
@@ -53,35 +52,6 @@ class ImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
     filterset_class = ImportBatchFilter
 
 
-class NewImportBatchList(RequiresSuperuserMixin, WithPaginationListView):
-    """UI endpoint for viewing and filtering General Import Batches."""
-
-    queryset = (
-        models.ImportBatch.objects.all()
-        .order_by("-created_at")
-        .annotate(
-            chunks_done=Count(
-                "chunks",
-                filter=Q(chunks__status=models.ImporterChunkStatus.DONE),
-            ),
-            chunks_running=Count(
-                "chunks",
-                filter=Q(chunks__status=models.ImporterChunkStatus.RUNNING),
-            ),
-            chunks_waiting=Count(
-                "chunks",
-                filter=Q(chunks__status=models.ImporterChunkStatus.WAITING),
-            ),
-            chunks_errored=Count(
-                "chunks",
-                filter=Q(chunks__status=models.ImporterChunkStatus.ERRORED),
-            ),
-        )
-    )
-    template_name = "newimporter/list.jinja"
-    filterset_class = ImportBatchFilter
-
-
 class UploadTaricFileView(RequiresSuperuserMixin, FormView):
     form_class = forms.UploadTaricForm
     fields = ["name", "split_job"]
@@ -91,31 +61,6 @@ class UploadTaricFileView(RequiresSuperuserMixin, FormView):
     def form_valid(self, form):
         form.save(user=self.request.user)
         return super().form_valid(form)
-
-
-class NewUploadTaricFileView(RequiresSuperuserMixin, FormView):
-    form_class = forms.NewUploadTaricForm
-    fields = ["name"]
-    success_url = reverse_lazy("new_import_batch-ui-list")
-    template_name = "newimporter/create.jinja"
-
-    def form_valid(self, form):
-        form.save(user=self.request.user)
-        return super().form_valid(form)
-
-
-class NewImportBatchDetails(RequiresSuperuserMixin, DetailView):
-    """UI endpoint for viewing details of an import, and view failures and
-    errors."""
-
-    model = ImportBatch
-    queryset = ImportBatch.objects.all()
-    template_name = "newimporter/details.jinja"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["issues"] = context["object"].issues.all()
-        return context
 
 
 class CommodityImportListView(

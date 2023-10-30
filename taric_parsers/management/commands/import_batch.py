@@ -2,12 +2,12 @@ from django.core.management import BaseCommand
 
 from importer import models
 from importer.namespaces import TARIC_RECORD_GROUPS
-from importer.tasks import new_import_chunk
+from taric_parsers.tasks import import_chunk
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.validators import WorkflowStatus
 
 
-def new_run_batch(
+def run_batch(
     batch_id: int,
     partition_scheme_setting: str,
     username: str,
@@ -15,7 +15,7 @@ def new_run_batch(
 ):
     import_batch = models.ImportBatch.objects.get(pk=batch_id)
 
-    new_import_chunk.delay(
+    import_chunk.delay(
         chunk_pk=import_batch.chunks.first().pk,
         workbasket_id=workbasket_id,
         partition_scheme_setting=partition_scheme_setting,
@@ -66,10 +66,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        new_run_batch(
+        run_batch(
             batch_id=options["batch_id"],
-            status=options["status"],
             partition_scheme_setting=options["partition_scheme"],
             username=options["username"],
-            record_group=options["commodities"],
         )

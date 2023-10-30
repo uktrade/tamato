@@ -1,11 +1,8 @@
 {% set table_rows = [] %}
 {% for object in object_list %}
-{% set details_link -%}
-<a class="govuk-link govuk-!-font-weight-bold" href="{{ url('new_import_batch_details', kwargs={'pk': object.pk}) }}">{{ object.name }}</a>
-{%- endset %}
-{{ table_rows.append([
+  {{ table_rows.append([
     {"text": object.pk},
-    {"text": details_link},
+    {"text": object.name},
     {"text": "{:%d %b %Y}".format(object.created_at)},
     {"text": object.chunks_waiting},
     {"text": object.chunks_running},

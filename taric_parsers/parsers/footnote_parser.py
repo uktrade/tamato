@@ -1,13 +1,13 @@
 from datetime import date
 
-from footnotes.import_handlers import *
+from footnotes.models import *
 from taric_parsers.parser_model_link import *
 from taric_parsers.parsers.mixins import *
 from taric_parsers.parsers.taric_parser import *
 
 
 class NewFootnoteTypeParser(Writable, BaseTaricParser):
-    model = models.FootnoteType
+    model = FootnoteType
 
     model_links = []
 
@@ -33,12 +33,12 @@ class NewFootnoteTypeParser(Writable, BaseTaricParser):
 
 
 class NewFootnoteTypeDescriptionParser(Writable, BaseTaricParser):
-    model = models.FootnoteType
+    model = FootnoteType
     parent_parser = NewFootnoteTypeParser
 
     model_links = [
         ModelLink(
-            models.FootnoteType,
+            FootnoteType,
             [
                 ModelLinkField("footnote_type_id", "footnote_type_id"),
             ],
@@ -61,11 +61,11 @@ class NewFootnoteTypeDescriptionParser(Writable, BaseTaricParser):
 
 
 class NewFootnoteParser(ValidityMixin, Writable, BaseTaricParser):
-    model = models.Footnote
+    model = Footnote
 
     model_links = [
         ModelLink(
-            models.FootnoteType,
+            FootnoteType,
             [
                 ModelLinkField("footnote_type__footnote_type_id", "footnote_type_id"),
             ],
@@ -95,11 +95,11 @@ class NewFootnoteParser(ValidityMixin, Writable, BaseTaricParser):
 
 
 class NewFootnoteDescriptionParser(Writable, BaseTaricParser):
-    model = models.FootnoteDescription
+    model = FootnoteDescription
 
     model_links = [
         ModelLink(
-            models.Footnote,
+            Footnote,
             [
                 ModelLinkField("described_footnote__footnote_id", "footnote_id"),
                 ModelLinkField(
@@ -137,12 +137,12 @@ class NewFootnoteDescriptionParser(Writable, BaseTaricParser):
 
 
 class NewFootnoteDescriptionPeriodParser(Writable, BaseTaricParser, ChildPeriod):
-    model = models.FootnoteDescription
+    model = FootnoteDescription
     parent_parser = NewFootnoteDescriptionParser
 
     model_links = [
         ModelLink(
-            models.Footnote,
+            Footnote,
             [
                 ModelLinkField("described_footnote__footnote_id", "footnote_id"),
                 ModelLinkField(
@@ -153,7 +153,7 @@ class NewFootnoteDescriptionPeriodParser(Writable, BaseTaricParser, ChildPeriod)
             "footnote",
         ),
         ModelLink(
-            models.FootnoteDescription,
+            FootnoteDescription,
             [
                 ModelLinkField("sid", "sid"),
             ],

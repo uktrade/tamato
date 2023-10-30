@@ -1,22 +1,22 @@
 from django.urls import path
 
-from importer import views
+from taric_parsers import views
 
 importer_urlpatterns = [
     path(
-        "new_importer/<pk>/details/",
-        views.NewImportBatchDetails.as_view(),
-        name="new_import_batch_details",
+        "taric_parser/<pk>/details/",
+        views.TaricImportDetails.as_view(),
+        name="taric_parser_import_ui_details",
     ),
     path(
-        "new_importer/",
-        views.NewImportBatchList.as_view(),
-        name="new_import_batch-ui-list",
+        "taric_parser/",
+        views.TaricImportList.as_view(),
+        name="taric_parser_import_ui_list",
     ),
     path(
-        "new_importer/create/",
-        views.NewUploadTaricFileView.as_view(),
-        name="new_import_batch-ui-create",
+        "taric_parser/create/",
+        views.TaricImportUpload.as_view(),
+        name="taric_parser_import_ui_create",
     ),
 ]
 
