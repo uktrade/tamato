@@ -1670,10 +1670,10 @@ def test_workbasket_transaction_order_first_or_last_transaction_in_workbasket():
     assert view.last_transaction_in_workbasket != model_1.transaction
 
 
-def test_workbasket_transaction_order_is_obj_first_or_last_in_transaction():
+def test_workbasket_transaction_order_tracked_models_first_or_last_in_transactions():
     """Tests that `WorkBasketTransactionOrderView`'s
-    `is_obj_first_in_transaction()` and `is_obj_last_in_transaction()` return
-    the expected boolean result."""
+    `tracked_models_first_in_transactions` and
+    `tracked_models_last_in_transactions` return the expected tracked models."""
     workbasket = factories.WorkBasketFactory.create()
     with workbasket.new_transaction() as transaction:
         model_1, model_2 = factories.TestModel1Factory.create_batch(
@@ -1692,11 +1692,11 @@ def test_workbasket_transaction_order_is_obj_first_or_last_in_transaction():
         kwargs={"pk": workbasket.pk},
     )
 
-    assert view.is_obj_first_in_transaction(model_1) == True
-    assert view.is_obj_first_in_transaction(model_2) == False
+    assert model_1.pk in view.tracked_models_first_in_transactions
+    assert model_2.pk not in view.tracked_models_first_in_transactions
 
-    assert view.is_obj_last_in_transaction(model_2) == True
-    assert view.is_obj_last_in_transaction(model_1) == False
+    assert model_2.pk in view.tracked_models_last_in_transactions
+    assert model_1.pk not in view.tracked_models_last_in_transactions
 
 
 def test_successfully_delete_workbasket(

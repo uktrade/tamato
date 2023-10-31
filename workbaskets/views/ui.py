@@ -10,6 +10,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
+from django.db.models import Max
+from django.db.models import Min
 from django.db.models import ProtectedError
 from django.db.transaction import atomic
 from django.http import Http404
@@ -515,7 +517,7 @@ class WorkBasketChangesMixin(PermissionRequiredMixin, FormView):
     form_class = forms.SelectableObjectsForm
     paginate_by = 50
 
-    @property
+    @cached_property
     def workbasket(self):
         return WorkBasket.objects.get(pk=self.kwargs["pk"])
 
@@ -669,8 +671,8 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             {
                 "first_transaction_in_workbasket": self.first_transaction_in_workbasket,
                 "last_transaction_in_workbasket": self.last_transaction_in_workbasket,
-                "is_obj_first_in_transaction": self.is_obj_first_in_transaction,
-                "is_obj_last_in_transaction": self.is_obj_last_in_transaction,
+                "tracked_models_first_in_transactions": self.tracked_models_first_in_transactions,
+                "tracked_models_last_in_transactions": self.tracked_models_last_in_transactions,
             },
         )
         return context
@@ -812,15 +814,25 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
     def last_transaction_in_workbasket(self):
         return self.workbasket_transactions().last()
 
-    def is_obj_first_in_transaction(self, tracked_model):
-        """Returns `True` if the object is the first TrackedModel instance in
-        its parent transaction, `False` otherwise."""
-        return tracked_model == tracked_model.transaction.tracked_models.first()
+    @cached_property
+    def tracked_models_first_in_transactions(self):
+        """Returns a list of pks of tracked models that are first in their
+        parent transaction."""
+        return (
+            self.workbasket_transactions()
+            .annotate(first_tracked_models=Min("tracked_models__pk"))
+            .values_list("first_tracked_models", flat=True)
+        )
 
-    def is_obj_last_in_transaction(self, tracked_model):
-        """Returns `True` if the object is the last TrackedModel instance in its
-        parent transaction, `False` otherwise."""
-        return tracked_model == tracked_model.transaction.tracked_models.last()
+    @cached_property
+    def tracked_models_last_in_transactions(self):
+        """Returns a list of pks of tracked models that are last in their parent
+        transaction."""
+        return (
+            self.workbasket_transactions()
+            .annotate(last_tracked_models=Max("tracked_models__pk"))
+            .values_list("last_tracked_models", flat=True)
+        )
 
 
 class WorkBasketViolations(SortingMixin, WithPaginationListView):

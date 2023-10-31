@@ -58,7 +58,7 @@
             {% endset %}
 
             {# Above each transaction add transaction info and actions. #}
-            {% if loop.first or is_obj_first_in_transaction(obj) %}
+            {% if loop.first or obj.pk in tracked_models_first_in_transactions %}
               {{ table_rows.append([
                 { "text": "", "classes": "transaction-start first-cell"},
                 {
@@ -81,7 +81,7 @@
             ]) or "" }}
 
             {# Below each transaction add a spacer line. #}
-            {% if not loop.last and is_obj_last_in_transaction(obj) %}
+            {% if not loop.last and obj.pk in tracked_models_last_in_transactions %}
               {{ table_rows.append([
                 {
                   "text": "",
@@ -130,7 +130,7 @@
         {% endset %}
 
         {# Above each transaction add transaction info. #}
-        {% if loop.first or is_obj_first_in_transaction(obj) %}
+        {% if loop.first or obj.pk in tracked_models_first_in_transactions %}
           {{ table_rows.append([
             {"text": "", "classes": "transaction-start first-cell"},
             {
@@ -152,7 +152,7 @@
         ]) or "" }}
 
         {# Below each transaction add a spacer line. #}
-        {% if not loop.last and is_obj_last_in_transaction(obj) %}
+        {% if not loop.last and obj.pk in tracked_models_last_in_transactions %}
           {{ table_rows.append([
             {
               "text": "",
