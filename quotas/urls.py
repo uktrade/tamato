@@ -85,7 +85,7 @@ urlpatterns = [
         name="quota_order_number_origin-ui-edit-create",
     ),
     path(
-        f"quotas/<sid>/quota_order_number_origins/",
+        f"quotas/<sid>/quota_order_number_origins/create/",
         views.QuotaOrderNumberOriginCreate.as_view(),
         name="quota_order_number_origin-ui-create",
     ),
