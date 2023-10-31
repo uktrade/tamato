@@ -301,7 +301,7 @@ class QuotaDefinitionUpdateForm(
         },
     )
     measurement_unit = forms.ModelChoiceField(
-        queryset=MeasurementUnit.objects.all(),
+        queryset=MeasurementUnit.objects.current(),
         error_messages={"required": "Select the measurement unit"},
     )
     quota_critical_threshold = forms.DecimalField(
@@ -419,7 +419,7 @@ class QuotaDefinitionCreateForm(
         },
     )
     measurement_unit = forms.ModelChoiceField(
-        queryset=MeasurementUnit.objects.all(),
+        queryset=MeasurementUnit.objects.current(),
         error_messages={"required": "Select the measurement unit"},
     )
 
