@@ -29,7 +29,23 @@
     {{ page_title }}
   </h1>
 
-  {{ navigation(request, "compare") }}
+  {{ navigation(request) }}
+  <div class="govuk-grid-column-full">
+    <h2 class="govuk-heading-m">Introduction</h2>
+    <p class="govuk-body">You can use this checker to compare worksheet measure data (specifically commodity codes, duty rates, start dates and end dates) with measures in your workbasket. It will list all matching measures that are in both your worksheet and workbasket.</p>
+    <p class="govuk-body">Currently, it won’t show you any measures that are in your worksheet but not in your workbasket and vice versa. It also won’t check whether you are comparing the same number of worksheet and workbasket measures.</p>
+
+    <h2 class="govuk-heading-m">Worksheet data</h2>
+    <p class="govuk-body">Paste your worksheet data below. This must include commodity codes, duty rates and start dates. End dates are optional.</p>
+    <p class="govuk-body">If you are pasting both start and end dates, the start dates must appear before the end dates.</p>
+    <p class="govuk-body">Duty rates must be to 3 decimal places and dates must be in a DD/MM/YYYY format (e.g. 01/01/2024).</p>
+    
+    <h2 class="govuk-heading-m">Formatted worksheet data</h2>
+    <p class="govuk-body">This is your worksheet data in a table format.</p>
+    
+    <h2 class="govuk-heading-m">13 matching measures found</h2>
+    <p class="govuk-body">These are measures that are the same across both your worksheet and your workbasket.</p>
+  </div>
 
   {% call django_form() %}
     {{ crispy(form) }}
