@@ -1,5 +1,4 @@
 from datetime import date
-from typing import Any
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -110,7 +109,7 @@ class QuotaCreate(QuotaOrderNumberMixin, CreateTaricCreateView):
     form_class = forms.QuotaOrderNumberCreateForm
     template_name = "layouts/create.jinja"
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    def get_context_data(self, **kwargs):
         return super().get_context_data(
             page_title="Create a new quota order number", **kwargs
         )
