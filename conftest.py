@@ -22,7 +22,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.management import create_contenttypes
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.db import DEFAULT_DB_ALIAS
 from django.test.client import RequestFactory
 from django.test.html import parse_html
 from django.urls import reverse
@@ -143,6 +145,41 @@ def spanning_dates(request, date_ranges):
         getattr(date_ranges, contained_validity),
         container_spans_contained,
     )
+
+
+@pytest.fixture
+def tap_migrator_factory(migrator_factory):
+    """
+    This fixture is an override of the django-test-migrations fixture of
+    `django_test_migrations.contrib.pytest_plugin.migrator_factory()`.
+
+    One or two issues in Django, and / or related libraries that TAP uses for
+    its migration unit testing, continues to cause problems in migration unit
+    tests. A couple of examples of the reported issue:
+    https://code.djangoproject.com/ticket/10827
+    https://github.com/wemake-services/django-test-migrations/blob/93db540c00a830767eeab5f90e2eef1747c940d4/django_test_migrations/migrator.py#L73
+
+    An initial migration must reference ContentType instances (in the DB).
+    This can occur when inserting Permission objects during
+    `migrator.apply_initial_migration()` execution.
+
+    At that point, a stale ContentType cache can give an incorrect account of
+    ContentType DB table state, so attempts by an initial migration to insert
+    those Permission objects fails on foreign key violations because they're
+    referencing missing ContentType objects (they're not in the database, only
+    in the ContentType cache).
+    """
+    ContentType.objects.clear_cache()
+    return migrator_factory
+
+
+@pytest.fixture
+def migrator(tap_migrator_factory):
+    """Override of `django_test_migrations.contrib.pytest_plugin.migrator()`,
+    substituting a call to
+    `django_test_migrations.contrib.pytest_plugin.migrator_factory()` with a
+    locally overriden instance, `tap_migrator_factory()`."""
+    return tap_migrator_factory(DEFAULT_DB_ALIAS)
 
 
 @pytest.fixture

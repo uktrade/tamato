@@ -55,6 +55,11 @@ urlpatterns = [
         name="commodity-ui-detail-descriptions",
     ),
     path(
+        f"commodities/<sid>/indent-history/",
+        views.CommodityDetailIndentHistory.as_view(),
+        name="commodity-ui-detail-indent-history",
+    ),
+    path(
         f"commodities/<sid>/measures-on-declarable-commodities/",
         views.MeasuresOnDeclarableCommoditiesList.as_view(),
         name="commodity-ui-detail-measures-declarable",
