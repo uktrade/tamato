@@ -256,12 +256,21 @@ class QuotaOrderNumberCreateForm(
         self.helper.legend_size = Size.SMALL
 
         self.helper.layout = Layout(
-            Div(
-                "order_number",
-                "start_date",
-                "end_date",
-                "category",
-                "mechanism",
+            Accordion(
+                AccordionSection(
+                    "Order number",
+                    "order_number",
+                ),
+                AccordionSection(
+                    "Validity",
+                    "start_date",
+                    "end_date",
+                ),
+                AccordionSection(
+                    "Category and mechanism",
+                    "category",
+                    "mechanism",
+                ),
                 css_class="govuk-width-!-two-thirds",
             ),
             Submit(
@@ -277,7 +286,10 @@ class QuotaOrderNumberCreateForm(
         mechanism = self.cleaned_data.get("mechanism")
         order_number = self.cleaned_data.get("order_number", "")
 
-        if int(mechanism) == validators.AdministrationMechanism.LICENSED:
+        if (
+            mechanism is not None
+            and int(mechanism) == validators.AdministrationMechanism.LICENSED
+        ):
             if int(category) == validators.QuotaCategory.SAFEGUARD:
                 raise ValidationError(
                     "Mechanism cannot be set to licensed for safeguard quotas",
@@ -287,9 +299,14 @@ class QuotaOrderNumberCreateForm(
                     "The order number for licensed quotas must begin with 054",
                 )
 
-        if int(
-            category,
-        ) == validators.QuotaCategory.SAFEGUARD and not order_number.startswith("058"):
+        if (
+            category is not None
+            and int(
+                category,
+            )
+            == validators.QuotaCategory.SAFEGUARD
+            and not order_number.startswith("058")
+        ):
             raise ValidationError(
                 "The order number for safeguard quotas must begin with 058",
             )
