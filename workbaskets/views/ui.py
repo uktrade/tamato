@@ -1,5 +1,6 @@
 import logging
 import re
+from functools import cached_property
 
 import boto3
 from botocore.client import Config
@@ -666,8 +667,8 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                "is_transaction_first_in_workbasket": self.is_transaction_first_in_workbasket,
-                "is_transaction_last_in_workbasket": self.is_transaction_last_in_workbasket,
+                "first_transaction_in_workbasket": self.first_transaction_in_workbasket,
+                "last_transaction_in_workbasket": self.last_transaction_in_workbasket,
                 "is_obj_first_in_transaction": self.is_obj_first_in_transaction,
                 "is_obj_last_in_transaction": self.is_obj_last_in_transaction,
             },
@@ -803,15 +804,13 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
 
         return HttpResponseRedirect(self.get_success_url())
 
-    def is_transaction_first_in_workbasket(self, transaction):
-        """Returns `True` if the transaction is the first in the workbasket,
-        `False` otherwise."""
-        return self.workbasket_transactions().first() == transaction
+    @cached_property
+    def first_transaction_in_workbasket(self):
+        return self.workbasket_transactions().first()
 
-    def is_transaction_last_in_workbasket(self, transaction):
-        """Returns `True` if the transaction is the last in the current
-        workbasket, `False` otherwise."""
-        return self.workbasket_transactions().last() == transaction
+    @cached_property
+    def last_transaction_in_workbasket(self):
+        return self.workbasket_transactions().last()
 
     def is_obj_first_in_transaction(self, tracked_model):
         """Returns `True` if the object is the first TrackedModel instance in

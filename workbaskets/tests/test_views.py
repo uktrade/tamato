@@ -1640,10 +1640,10 @@ def test_workbasket_transaction_order_form_action_redirect(
         )
 
 
-def test_workbasket_transaction_order_is_transaction_first_or_last_in_workbasket():
+def test_workbasket_transaction_order_first_or_last_transaction_in_workbasket():
     """Tests that `WorkBasketTransactionOrderView`'s
-    `is_transaction_first_in_workbasket()` and
-    `is_transaction_last_in_workbasket()` return the expected boolean result."""
+    `first_transaction_in_workbasket` and `last_transaction_in_workbasket`
+    return the expected transaction."""
     workbasket = factories.WorkBasketFactory.create()
     model_1 = factories.TestModel1Factory.create(
         transaction=workbasket.new_transaction(),
@@ -1663,11 +1663,11 @@ def test_workbasket_transaction_order_is_transaction_first_or_last_in_workbasket
         kwargs={"pk": workbasket.pk},
     )
 
-    assert view.is_transaction_first_in_workbasket(model_1.transaction) == True
-    assert view.is_transaction_first_in_workbasket(model_2.transaction) == False
+    assert view.first_transaction_in_workbasket == model_1.transaction
+    assert view.first_transaction_in_workbasket != model_2.transaction
 
-    assert view.is_transaction_last_in_workbasket(model_2.transaction) == True
-    assert view.is_transaction_last_in_workbasket(model_1.transaction) == False
+    assert view.last_transaction_in_workbasket == model_2.transaction
+    assert view.last_transaction_in_workbasket != model_1.transaction
 
 
 def test_workbasket_transaction_order_is_obj_first_or_last_in_transaction():

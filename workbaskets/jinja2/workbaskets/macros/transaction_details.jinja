@@ -2,7 +2,7 @@
   <span class="details">Transaction: {{ transaction.pk }}</span>
 
   <div id="transaction-order-actions">
-    {% if is_transaction_first_in_workbasket(transaction) or not user_can_delete_items %}
+    {% if transaction == first_transaction_in_workbasket or not user_can_delete_items %}
       <span class="govuk-link disabled promote">Move up &#9206;</span>
     {% else %}
       <button name="form-action"
@@ -12,7 +12,7 @@
         >Move up &#9206;</button>
     {% endif %}
 
-    {% if is_transaction_last_in_workbasket(transaction) or not user_can_delete_items %}
+    {% if transaction == last_transaction_in_workbasket or not user_can_delete_items %}
       <span class="govuk-link disabled demote">Move down &#9207;</span>
     {% else %}
       <button name="form-action"
