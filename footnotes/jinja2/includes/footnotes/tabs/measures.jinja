@@ -1,4 +1,4 @@
-{% extends "certificates/detail.jinja" %}
+{% extends "footnotes/detail.jinja" -%}
 
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 
@@ -44,13 +44,13 @@
     ]) or "" }}
   {% endfor %}
 
-  {% set base_url = url('certificate-ui-detail-measures', kwargs={"certificate_type__sid":object.certificate_type.sid, "sid":object.sid}) %}
+  {% set base_url = url('footnote-ui-detail-measures', kwargs={"footnote_type__footnote_type_id":object.footnote_type.footnote_type_id, "footnote_id":object.footnote_id}) %}
 
   {% set commodity_code %}
     {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
   {% endset %}
 
-  {% set geo_area %}
+ {% set geo_area %}
     {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url) }}
   {% endset %}
 
@@ -74,7 +74,7 @@
       "rows": table_rows
     }) }}
   {% else %}
-    <p class="govuk-body">There are no measures for this certificate.</p>
+    <p class="govuk-body">There are no measures for this footnote.</p>
   {% endif %}
   {% include "includes/common/pagination.jinja" %}
 {% endblock %}
