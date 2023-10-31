@@ -22,10 +22,7 @@ from footnotes import forms
 from footnotes import models
 from footnotes.filters import FootnoteFilter
 from footnotes.filters import FootnoteFilterBackend
-from footnotes.models import Footnote
 from footnotes.serializers import FootnoteTypeSerializer
-from measures.models import FootnoteAssociationMeasure
-from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
@@ -201,17 +198,18 @@ class FootnoteDetailMeasures(SortingMixin, WithPaginationListMixin, ListView):
     """Displays a paginated list of measures for a footnote as a simulated tab
     on footnote view."""
 
-    model = Measure
+    model = models.Footnote
     template_name = "includes/footnotes/tabs/measures.jinja"
     paginate_by = 20
-    sort_by_fields = ["goods_nomenclature", "start_date"]
+    sort_by_fields = ["goods_nomenclature", "geo_area", "start_date"]
     custom_sorting = {
+        "geo_area": "geographical_area__area_id",
         "start_date": "valid_between",
     }
 
     @property
     def footnote(self):
-        return Footnote.objects.get(
+        return models.Footnote.objects.get(
             footnote_type__footnote_type_id=self.kwargs[
                 "footnote_type__footnote_type_id"
             ],
@@ -219,16 +217,7 @@ class FootnoteDetailMeasures(SortingMixin, WithPaginationListMixin, ListView):
         )
 
     def get_queryset(self):
-        footnote_associations = FootnoteAssociationMeasure.objects.filter(
-            associated_footnote_id=self.footnote.trackedmodel_ptr_id,
-        ).values_list("footnoted_measure", flat=True)
-        queryset = (
-            Measure.objects.all()
-            .current()
-            .filter(
-                id__in=footnote_associations,
-            )
-        )
+        queryset = self.footnote.measure_set.all().current()
         ordering = self.get_ordering()
         if ordering:
             if isinstance(ordering, str):

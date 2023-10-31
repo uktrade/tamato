@@ -38,6 +38,7 @@
     {{ table_rows.append([
       {"text": measure_link},
       {"html": commodity_link},
+      {"text": geo_area_link},
       {"text": "{:%d %b %Y}".format(measure.valid_between.lower) },
       {"text": "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else "-"},
     ]) or "" }}
@@ -47,6 +48,10 @@
 
   {% set commodity_code %}
     {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
+  {% endset %}
+
+  {% set geo_area %}
+    {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url) }}
   {% endset %}
 
   {% set start_date %}
@@ -62,6 +67,7 @@
       "head": [
         {"text": "Measure SID"},
         {"text": commodity_code},
+        {"text": geo_area},
         {"text": start_date},
         {"text": "End date"},
       ],
