@@ -8,9 +8,15 @@ from django.db import transaction
 from importer.models import BatchImportError
 from importer.models import ImportBatch
 from taric.models import Envelope
-from taric_parsers.parsers import *  # noinspection PyUnresolvedReferences
-from taric_parsers.parsers.quota_parser import *  # noinspection PyUnresolvedReferences
-from taric_parsers.parsers.taric_parser import *  # noinspection PyUnresolvedReferences
+from taric_parsers.parsers.additional_code_parsers import *  # noqa
+from taric_parsers.parsers.certificate_parser import *  # noqa
+from taric_parsers.parsers.commodity_parser import *  # noqa
+from taric_parsers.parsers.footnote_parser import *  # noqa
+from taric_parsers.parsers.geo_area_parser import *  # noqa
+from taric_parsers.parsers.measure_parser import *  # noqa
+from taric_parsers.parsers.quota_parser import *  # noqa
+from taric_parsers.parsers.regulation_parser import *  # noqa
+from taric_parsers.parsers.taric_parser import *  # noqa
 from workbaskets.models import WorkBasket
 
 
