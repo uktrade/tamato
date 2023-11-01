@@ -339,7 +339,9 @@ class CurrentWorkBasket(FormView):
     @property
     def paginator(self):
         return Paginator(
-            self.workbasket.tracked_models.with_transactions_and_models(),
+            self.workbasket.tracked_models.with_transactions_and_models().order_by(
+                "transaction__order",
+            ),
             per_page=50,
         )
 
