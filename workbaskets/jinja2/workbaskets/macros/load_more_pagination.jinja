@@ -1,0 +1,17 @@
+{% macro load_more_pagination(current_count, total_count, item="item") %}
+  <nav id="workbasket-items" class="pagination" role="navigation" aria-label="Pagination navigation">
+    <p class="govuk-body govuk-!-margin-0">
+      You've viewed {{current_count}} out of {{"{0:,}".format(total_count)}} {{item}}{{ total_count|pluralize }}
+    </p>
+
+    <progress value="{{current_count}}" max="{{total_count}}" role="progressbar"></progress>
+
+    {% if page_obj.has_next() %}
+      {{ govukButton({
+        "text": "Load more",
+        "name": "form-action",
+        "value": "page-next",
+      }) }}
+    {% endif %}
+  </nav>
+{% endmacro %}
