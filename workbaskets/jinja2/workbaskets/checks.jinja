@@ -1,5 +1,5 @@
 {% extends "layouts/layout.jinja" %}
-{% from "components/table/macro.njk" import govukTable %}
+{% from "components/button/macro.njk" import govukButton %}
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 {% from "macros/fake_tabs.jinja" import fake_tabs %}
 
@@ -19,8 +19,16 @@
           Worksheet check
         </dt>
         <dd class="govuk-summary-list__value">
-          <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("workbaskets:workbasket-check-ui-compare") }}">Compare worksheet data with workbasket data</a>
+          Compare worksheet data with workbasket data
         </dd>
+        <dt class="govuk-summary-list__actions">
+          {{
+            govukButton({
+              "text": "Compare data",
+              "href": url("workbaskets:workbasket-check-ui-compare"),
+              "classes": "govuk-button--secondary govuk-!-margin-0"
+          })}}
+        </dt>
     </div>
     </dl>
 </div>

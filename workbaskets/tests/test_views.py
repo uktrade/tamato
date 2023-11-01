@@ -741,7 +741,7 @@ def test_workbasket_business_rule_status(valid_user_client):
         )
     workbasket.save_to_session(valid_user_client.session)
 
-    url = reverse("workbaskets:current-workbasket")
+    url = reverse("workbaskets:workbasket-checks")
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset))
     success_banner = page.find(
