@@ -13,6 +13,40 @@
   </div>
 </div>
 
+<script nonce="{{ request.csp_nonce }}">
+  var originsData = [
+    {% for origin in object.quotaordernumberorigin_set.current() %}
+      {
+        "exclusions": [
+          {}
+        ],
+        "geo_area_name": "{{ origin.geographical_area.area_id  ~ " - " ~ origin.geographical_area.get_description().description }}",
+        "geo_area_pk": {{origin.geographical_area.pk}},
+        "start_date_0": {{origin.valid_between.lower.day}},
+        "start_date_1": {{origin.valid_between.lower.month}},
+        "start_date_2": {{origin.valid_between.lower.year}},
+        {% if origin.valid_between.upper %}
+          "end_date_0": {{origin.valid_between.upper.day}},
+          "end_date_1": {{origin.valid_between.upper.month}},
+          "end_date_2": {{origin.valid_between.upper.year}},
+        {% else %}
+          "end_date_0": "",
+          "end_date_1": "",
+          "end_date_2": "",
+        {% endif %}
+      },
+    {% endfor %}
+  ];
+  var geoAreasOptions = [
+    {% for geo_area in geo_area_options %}
+    {
+      "name": "{{ geo_area.area_id  ~ " - " ~ geo_area.get_description().description }}",
+      "value": {{ geo_area.pk }},
+    },
+    {% endfor %}
+  ]
+</script>
+
 <a href="{{ url('quota_order_number_origin-ui-create', args=[object.sid])}}" class="govuk-button govuk-button--secondary">
   Create new origin
 </a>

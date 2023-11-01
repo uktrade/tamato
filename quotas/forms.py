@@ -137,10 +137,12 @@ class QuotaUpdateForm(
     )
 
     def __init__(self, *args, **kwargs):
+        request = kwargs.pop("request")
+        geo_area_options = kwargs.pop("geo_area_options")
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.set_initial_data(*args, **kwargs)
-        self.init_layout()
+        self.init_layout(request, geo_area_options)
 
     def set_initial_data(self, *args, **kwargs):
         self.fields["category"].initial = self.instance.category
@@ -148,7 +150,8 @@ class QuotaUpdateForm(
     def init_fields(self):
         if self.instance.category == validators.QuotaCategory.SAFEGUARD:
             self.fields["category"].widget = forms.Select(
-                attrs={"disabled": True},
+                # TODO: disabled inputs don't get submitted. FIX
+                # attrs={"disabled": True},
                 choices=validators.QuotaCategory.choices,
             )
             self.fields["category"].help_text = SAFEGUARD_HELP_TEXT
@@ -158,7 +161,7 @@ class QuotaUpdateForm(
 
         self.fields["start_date"].help_text = START_DATE_HELP_TEXT
 
-    def init_layout(self):
+    def init_layout(self, request, geo_area_options):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -167,6 +170,8 @@ class QuotaUpdateForm(
             "includes/quotas/quota-edit-origins.jinja",
             {
                 "object": self.instance,
+                "request": request,
+                "geo_area_options": geo_area_options,
             },
         )
 

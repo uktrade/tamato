@@ -23,6 +23,7 @@ from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures.models import Measure
 from quotas import business_rules
@@ -294,6 +295,19 @@ class QuotaUpdateMixin(
         UniqueIdentifyingFields,
         UpdateValidity,
     )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        kwargs["request"] = self.request
+        kwargs["geo_area_options"] = (
+            GeographicalArea.objects.current()
+            .prefetch_related("descriptions")
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .order_by("description")
+        )
+        return kwargs
 
     @transaction.atomic
     def get_result_object(self, form):
