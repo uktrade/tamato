@@ -38,12 +38,12 @@ def create_xml_envelope_file(
     this instance (with state == ProcessingState.AWAITING_PROCESSING)
     becomes the new top-most instance.
 
-
     If the Celery process used to execute this function fails, then this
     function may be called again in order to generate the envelope.
     """
     from publishing.models import Envelope
     from publishing.models import PackagedWorkBasket
+    from publishing.models.envelope import ValidationState
 
     packaged_work_basket = PackagedWorkBasket.objects.get(
         pk=packaged_work_basket_id,
@@ -53,6 +53,19 @@ def create_xml_envelope_file(
         packaged_work_basket=packaged_work_basket,
     )
     packaged_work_basket.save()
+
+    if (
+        packaged_work_basket.envelope.validation_state
+        != ValidationState.SUCCESSFULLY_VALIDATED
+    ):
+        logger.error(
+            f"Failed to successfully validate envelope "
+            f"{packaged_work_basket.envelope.pk} "
+            f"(PackagedWorkBasket={packaged_work_basket.pk}, "
+            f"WorkBasket={packaged_work_basket.workbasket.pk}) during envelope "
+            f"creation process.",
+        )
+        return
 
     if notify_when_done:
         packaged_work_basket.notify_ready_for_processing()
