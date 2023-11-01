@@ -818,21 +818,17 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
     def tracked_models_first_in_transactions(self):
         """Returns a list of pks of tracked models that are first in their
         parent transaction."""
-        return (
-            self.workbasket_transactions()
-            .annotate(first_tracked_models=Min("tracked_models__pk"))
-            .values_list("first_tracked_models", flat=True)
-        )
+        return self.workbasket.transactions.annotate(
+            first_tracked_models=Min("tracked_models__pk"),
+        ).values_list("first_tracked_models", flat=True)
 
     @property
     def tracked_models_last_in_transactions(self):
         """Returns a list of pks of tracked models that are last in their parent
         transaction."""
-        return (
-            self.workbasket_transactions()
-            .annotate(last_tracked_models=Max("tracked_models__pk"))
-            .values_list("last_tracked_models", flat=True)
-        )
+        return self.workbasket.transactions.annotate(
+            last_tracked_models=Max("tracked_models__pk"),
+        ).values_list("last_tracked_models", flat=True)
 
 
 class WorkBasketViolations(SortingMixin, WithPaginationListView):
