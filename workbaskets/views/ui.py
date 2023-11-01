@@ -814,7 +814,7 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
     def last_transaction_in_workbasket(self):
         return self.workbasket_transactions().last()
 
-    @cached_property
+    @property
     def tracked_models_first_in_transactions(self):
         """Returns a list of pks of tracked models that are first in their
         parent transaction."""
@@ -824,7 +824,7 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             .values_list("first_tracked_models", flat=True)
         )
 
-    @cached_property
+    @property
     def tracked_models_last_in_transactions(self):
         """Returns a list of pks of tracked models that are last in their parent
         transaction."""
