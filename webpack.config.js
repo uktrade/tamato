@@ -48,6 +48,18 @@ module.exports = {
         ]
       },
 
+      // Babel
+      {
+        test: /\.m?js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: ["@babel/preset-env", "@babel/react"]
+          }
+        }
+      },
+
       // Extract compiled SCSS separately from JS
       {
         test: /\.s[ac]ss$/i,
