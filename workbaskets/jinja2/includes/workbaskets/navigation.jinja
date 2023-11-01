@@ -29,6 +29,9 @@
     <li class="{% if active_tab == "changes" %}active{% endif %}">
       <a href="{{ url("workbaskets:workbasket-ui-changes", args=[workbasket.pk]) }}" class="govuk-link">Changes</a>
     </li>
+    <li class="{% if active_tab == "transaction-order" %}active{% endif %}">
+      <a href="{{ url("workbaskets:workbasket-ui-transaction-order", args=[workbasket.pk]) }}" class="govuk-link">Transaction order</a>
+    </li>
     <li class="{% if active_tab == "review" %}active{% endif %}">
       <a href="{{ url("workbaskets:workbasket-ui-review-measures", args=[workbasket.pk]) }}" class="govuk-link">Review</a>
     </li>

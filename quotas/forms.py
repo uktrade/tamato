@@ -21,6 +21,7 @@ from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
 from geo_areas.models import GeographicalArea
+from measures.models import MeasurementUnit
 from quotas import models
 from quotas import validators
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
@@ -287,17 +288,30 @@ class QuotaDefinitionUpdateForm(
     volume = forms.DecimalField(
         label="Current volume",
         widget=forms.TextInput(),
-        error_messages={"invalid": "Volume must be a number"},
+        error_messages={
+            "invalid": "Volume must be a number",
+            "required": "Enter the volume",
+        },
     )
     initial_volume = forms.DecimalField(
         widget=forms.TextInput(),
-        error_messages={"invalid": "Initial volume must be a number"},
+        error_messages={
+            "invalid": "Initial volume must be a number",
+            "required": "Enter the initial volume",
+        },
+    )
+    measurement_unit = forms.ModelChoiceField(
+        queryset=MeasurementUnit.objects.current(),
+        error_messages={"required": "Select the measurement unit"},
     )
     quota_critical_threshold = forms.DecimalField(
         label="Threshold",
         help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
         widget=forms.TextInput(),
-        error_messages={"invalid": "Critical threshold must be a number"},
+        error_messages={
+            "invalid": "Critical threshold must be a number",
+            "required": "Enter the critical threshold",
+        },
     )
     quota_critical = forms.TypedChoiceField(
         label="Is the quota definition period in a critical state?",
@@ -305,6 +319,7 @@ class QuotaDefinitionUpdateForm(
         coerce=lambda value: value == "True",
         choices=((True, "Yes"), (False, "No")),
         widget=forms.RadioSelect(),
+        error_messages={"required": "Critical state must be set"},
     )
 
     def __init__(self, *args, **kwargs):
@@ -359,6 +374,137 @@ class QuotaDefinitionUpdateForm(
                     "quota_critical",
                 ),
                 css_class="govuk-!-width-two-thirds",
+            ),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
+class QuotaDefinitionCreateForm(
+    ValidityPeriodForm,
+    forms.ModelForm,
+):
+    class Meta:
+        model = models.QuotaDefinition
+        fields = [
+            "valid_between",
+            "description",
+            "volume",
+            "initial_volume",
+            "measurement_unit",
+            "measurement_unit_qualifier",
+            "quota_critical_threshold",
+            "quota_critical",
+            "maximum_precision",
+        ]
+
+    description = forms.CharField(label="", widget=forms.Textarea(), required=False)
+    volume = forms.DecimalField(
+        label="Current volume",
+        widget=forms.TextInput(),
+        error_messages={
+            "invalid": "Volume must be a number",
+            "required": "Enter the volume",
+        },
+    )
+    initial_volume = forms.DecimalField(
+        widget=forms.TextInput(),
+        error_messages={
+            "invalid": "Initial volume must be a number",
+            "required": "Enter the initial volume",
+        },
+    )
+    measurement_unit = forms.ModelChoiceField(
+        queryset=MeasurementUnit.objects.current(),
+        error_messages={"required": "Select the measurement unit"},
+    )
+
+    quota_critical_threshold = forms.DecimalField(
+        label="Threshold",
+        help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
+        widget=forms.TextInput(),
+        error_messages={
+            "invalid": "Critical threshold must be a number",
+            "required": "Enter the critical threshold",
+        },
+    )
+    quota_critical = forms.TypedChoiceField(
+        label="Is the quota definition period in a critical state?",
+        help_text="This determines if a trader needs to pay securities when utilising the quota.",
+        coerce=lambda value: value == "True",
+        choices=((True, "Yes"), (False, "No")),
+        widget=forms.RadioSelect(),
+        error_messages={"required": "Critical state must be set"},
+    )
+    maximum_precision = forms.IntegerField(
+        widget=forms.HiddenInput(),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_layout()
+        self.init_fields()
+
+    def init_fields(self):
+        # This is always set to 3 for current definitions
+        # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
+        self.fields["maximum_precision"].initial = 3
+
+        # Set these as the default values
+        self.fields["quota_critical"].initial = False
+        self.fields["quota_critical_threshold"].initial = 90
+
+        self.fields["measurement_unit"].queryset = self.fields[
+            "measurement_unit"
+        ].queryset.order_by("code")
+        self.fields[
+            "measurement_unit"
+        ].label_from_instance = lambda obj: f"{obj.code} - {obj.description}"
+
+        self.fields["measurement_unit_qualifier"].queryset = self.fields[
+            "measurement_unit_qualifier"
+        ].queryset.order_by("code")
+        self.fields[
+            "measurement_unit_qualifier"
+        ].label_from_instance = lambda obj: f"{obj.code} - {obj.description}"
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Accordion(
+                AccordionSection(
+                    "Description",
+                    "description",
+                    "order_number",
+                ),
+                AccordionSection(
+                    "Validity period",
+                    "start_date",
+                    "end_date",
+                ),
+                AccordionSection(
+                    "Measurements",
+                    Field("measurement_unit", css_class="govuk-!-width-full"),
+                    Field("measurement_unit_qualifier", css_class="govuk-!-width-full"),
+                ),
+                AccordionSection(
+                    "Volume",
+                    "initial_volume",
+                    "volume",
+                    "maximum_precision",
+                ),
+                AccordionSection(
+                    "Criticality",
+                    "quota_critical_threshold",
+                    "quota_critical",
+                ),
             ),
             Submit(
                 "submit",
