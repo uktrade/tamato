@@ -179,8 +179,9 @@ class CertificateDetailMeasures(SortingMixin, WithPaginationListMixin, ListView)
     model = Measure
     template_name = "includes/certificates/tabs/measures.jinja"
     paginate_by = 20
-    sort_by_fields = ["goods_nomenclature", "start_date"]
+    sort_by_fields = ["goods_nomenclature", "geo_area", "start_date"]
     custom_sorting = {
+        "geo_area": "geographical_area__area_id",
         "start_date": "valid_between",
     }
 

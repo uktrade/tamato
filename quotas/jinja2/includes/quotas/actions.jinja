@@ -3,7 +3,10 @@
       <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
       <ul class="govuk-list govuk-!-font-size-16">
             <li><a class="govuk-link" href="{{ url('quota-definitions', args=[object.sid]) }}">View definition periods</a></li>
+            <li><a class="govuk-link" href="{{ url('quota_definition-ui-create', args=[object.sid]) }}">Create definition period</a></li>
+            <br>
             <li><a class="govuk-link" href="{{ measures_url }}">View all measures</a></li>
+            <br>
           {% set edit_url = object.get_url('edit') %}
           {% if edit_url %}
             <li><a class="govuk-link" href="{{ edit_url }}">Edit this {{object._meta.verbose_name}}</a></li>
