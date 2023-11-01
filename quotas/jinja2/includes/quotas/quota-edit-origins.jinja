@@ -1,14 +1,16 @@
 {% from "quota-origins/macros/origin_display.jinja" import origin_display %}
 
-<div class="govuk-grid-row">
-  {% for origin in object.quotaordernumberorigin_set.current().with_latest_geo_area_description()%}
-  <div class="govuk-grid-column-three-quarters">
-    {{ origin_display(origin) }}
+<div id="quota_origins">
+  <div class="govuk-grid-row">
+    {% for origin in object.quotaordernumberorigin_set.current().with_latest_geo_area_description() %}
+    <div class="govuk-grid-column-three-quarters">
+      {{ origin_display(origin) }}
+    </div>
+    <div class="govuk-grid-column-one-quarter">
+      <a class="govuk-link" href="{{ url('quota_order_number_origin-ui-edit', args=[origin.sid]) }}">Edit this origin</a>
+    </div>
+    {% endfor %}
   </div>
-  <div class="govuk-grid-column-one-quarter">
-    <a class="govuk-link" href="{{ url('quota_order_number_origin-ui-edit', args=[origin.sid]) }}">Edit this origin</a>
-  </div>
-  {% endfor %}
 </div>
 
 <a href="{{ url('quota_order_number_origin-ui-create', args=[object.sid])}}" class="govuk-button govuk-button--secondary">

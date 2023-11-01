@@ -188,9 +188,8 @@ class QuotaUpdateForm(
                             HTML(origins_html),
                         ),
                     ),
-                    css_class="govuk-grid-column-two-thirds",
                 ),
-                css_class="govuk-grid-row",
+                css_class="govuk-width-!-two-thirds",
             ),
             Submit(
                 "submit",
