@@ -40,12 +40,17 @@ TARIC_RECORD_GROUPS: Dict[str, Sequence[str]] = dict(
     # Record "40020" is excluded from the below record group
     # because we don't want to synchronize footnote associations
     # with external systems when we align commodity code changes.
+    #
+    # Record "40025" is excluded from the below record group
+    # because we don't want to synchronize nomenclature group memberships
+    # with external systems when we align commodity code changes.
     commodities=(
         "40000",
         "40005",
         "40010",
         "40015",
-        # "40025", nomenclature group memberships should not be included
+        # "40020", footnote associations
+        # "40025", nomenclature group memberships
         "40035",
         "40040",
     ),
