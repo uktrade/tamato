@@ -20,9 +20,9 @@ function QuotaOriginForm({ origin, options, index, removeOrigin }) {
                         onFocus: function noRefCheck() { }
                     }}
                     inputNames={{
-                        day: `origins_${index}_start_date_0`,
-                        month: `origins_${index}_start_date_1`,
-                        year: `origins_${index}_start_date_2`,
+                        day: `origins-${index}-start_date_0`,
+                        month: `origins-${index}-start_date_1`,
+                        year: `origins-${index}-start_date_2`,
                     }}
                     defaultValues={{
                         day: data.start_date_0,
@@ -43,9 +43,9 @@ function QuotaOriginForm({ origin, options, index, removeOrigin }) {
                         onFocus: function noRefCheck() { }
                     }}
                     inputNames={{
-                        day: `origins_${index}_end_date_0`,
-                        month: `origins_${index}_end_date_1`,
-                        year: `origins_${index}_end_date_2`,
+                        day: `origins-${index}-end_date_0`,
+                        month: `origins-${index}-end_date_1`,
+                        year: `origins-${index}-end_date_2`,
                     }}
                     defaultValues={{
                         day: data.end_date_0,
@@ -62,8 +62,8 @@ function QuotaOriginForm({ origin, options, index, removeOrigin }) {
                 </Fieldset.Legend>
                 <select
                     className="govuk-select"
-                    name={`origins_${index}_geographical_area`}
-                    defaultValue={data.geo_area_pk}
+                    name={`origins-${index}-geographical_area`}
+                    defaultValue={data.geographical_area}
                 >
                     {options.map(geoArea =>
                         <option key={geoArea.pk} value={geoArea.value}>{geoArea.name}</option>

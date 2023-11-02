@@ -26,6 +26,7 @@ from measures.models import MeasurementUnit
 from quotas import models
 from quotas import validators
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
+from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
 
 CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
 SAFEGUARD_HELP_TEXT = (
@@ -132,17 +133,18 @@ class QuotaUpdateForm(
 
     category = forms.ChoiceField(
         label="",
-        choices=[],  # set in __init__
+        choices=validators.QuotaCategory.choices,
         error_messages={"invalid_choice": "Please select a valid category"},
     )
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop("request")
-        geo_area_options = kwargs.pop("geo_area_options")
+        self.geo_area_options = kwargs.pop("geo_area_options")
+        self.existing_origins = kwargs.pop("existing_origins")
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.set_initial_data(*args, **kwargs)
-        self.init_layout(request, geo_area_options)
+        self.init_layout(request)
 
     def set_initial_data(self, *args, **kwargs):
         self.fields["category"].initial = self.instance.category
@@ -161,7 +163,38 @@ class QuotaUpdateForm(
 
         self.fields["start_date"].help_text = START_DATE_HELP_TEXT
 
-    def init_layout(self, request, geo_area_options):
+    def get_origins_initial(self):
+        initial = [
+            {
+                "geographical_area": o.geographical_area.pk,
+                "start_date_0": o.valid_between.lower.day,
+                "start_date_1": o.valid_between.lower.month,
+                "start_date_2": o.valid_between.lower.year,
+                "end_date_0": o.valid_between.upper.day
+                if o.valid_between.upper
+                else "",
+                "end_date_1": o.valid_between.upper.month
+                if o.valid_between.upper
+                else "",
+                "end_date_2": o.valid_between.upper.year
+                if o.valid_between.upper
+                else "",
+            }
+            for o in self.existing_origins
+        ]
+        # if we just submitted the form, overwrite initial with submitted data
+        # this prevents newly added origin data being cleared if the form does not pass validation
+        if bool(self.data.get("submit")):
+            new_data = unprefix_formset_data(
+                QUOTA_ORIGINS_FORMSET_PREFIX,
+                self.data.copy(),
+            )
+            initial = new_data
+            print(initial)
+
+        return initial
+
+    def init_layout(self, request):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -171,7 +204,8 @@ class QuotaUpdateForm(
             {
                 "object": self.instance,
                 "request": request,
-                "geo_area_options": geo_area_options,
+                "geo_area_options": self.geo_area_options,
+                "origins_initial": self.get_origins_initial(),
             },
         )
 

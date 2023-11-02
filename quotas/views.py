@@ -307,6 +307,7 @@ class QuotaUpdateMixin(
             .as_at_today_and_beyond()
             .order_by("description")
         )
+        kwargs["existing_origins"] = self.object.quotaordernumberorigin_set.current()
         return kwargs
 
     @transaction.atomic
