@@ -332,3 +332,31 @@ def test_validate_envelope_no_declaration(caplog):
             pass
 
         assert "Expected XML declaration" in caplog.text
+
+
+def test_validate_envelope_skip_no_declaration_check(caplog):
+    """Test that validated envelopes that contain no XML declaration element
+    correctly skip the declaration check when instructed to do so."""
+
+    with open(f"{TEST_FILES_PATH}/envelope_no_declaration.xml", "rb") as envelope_file:
+        try:
+            import logging
+
+            # Ensure logging propagation is enabled else log messages won't
+            # reach this module.
+            logger = logging.getLogger("publishing")
+            logger.propagate = True
+
+            with caplog.at_level(logging.WARNING):
+                validate_envelope(
+                    envelope_file,
+                    workbaskets=WorkBasket.objects.none(),
+                    skip_declaration=True,
+                )
+        except (DocumentInvalid, TaricDataAssertionError):
+            # Ignore DocumentInvalid and TaricDataAssertionError exceptions as
+            # this test is only concerned with the XML declaration
+            # part of validate_envelope()
+            pass
+
+        assert "Expected XML declaration" not in caplog.text
