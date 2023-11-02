@@ -1,72 +1,77 @@
+import { useState } from 'react';
 import React from 'react';
-import { DateField, Fieldset, Select } from 'govuk-react'
+import { Button, DateField, Fieldset, Select } from 'govuk-react'
 
-function QuotaOriginForm({ origin, options, index }) {
+
+function QuotaOriginForm({ origin, options, index, removeOrigin }) {
+    const [data, setData] = useState({ ...origin });
+
     return (
         <div>
-            <h3 class="govuk-heading-m">Origin {index + 1}</h3>
-            <div class="govuk-form-group">
+            <h3 className="govuk-heading-m">Origin {index + 1}</h3>
+            <div className="govuk-form-group">
                 <Fieldset.Legend size="S">
                     Start date
                 </Fieldset.Legend>
                 <DateField
                     input={{
                         onBlur: function noRefCheck() { },
-                        onChange: function noRefCheck() { },
+                        onChange: setData.bind(this, { ...data }),
                         onFocus: function noRefCheck() { }
                     }}
                     inputNames={{
-                        day: `origin_${index}_start_date_0`,
-                        month: `origin_${index}_start_date_1`,
-                        year: `origin_${index}_start_date_2`,
+                        day: `origins_${index}_start_date_0`,
+                        month: `origins_${index}_start_date_1`,
+                        year: `origins_${index}_start_date_2`,
                     }}
                     defaultValues={{
-                        day: origin.start_date_0,
-                        month: origin.start_date_1,
-                        year: origin.start_date_2,
+                        day: data.start_date_0,
+                        month: data.start_date_1,
+                        year: data.start_date_2,
                     }}
                 >
                 </DateField>
             </div>
-            <div class="govuk-form-group">
+            <div className="govuk-form-group">
                 <Fieldset.Legend size="S">
                     End date
                 </Fieldset.Legend>
                 <DateField
                     input={{
                         onBlur: function noRefCheck() { },
-                        onChange: function noRefCheck() { },
+                        onChange: setData.bind(this, { ...data }),
                         onFocus: function noRefCheck() { }
                     }}
                     inputNames={{
-                        day: `origin_${index}_end_date_0`,
-                        month: `origin_${index}_end_date_1`,
-                        year: `origin_${index}_end_date_2`,
+                        day: `origins_${index}_end_date_0`,
+                        month: `origins_${index}_end_date_1`,
+                        year: `origins_${index}_end_date_2`,
                     }}
                     defaultValues={{
-                        day: origin.end_date_0,
-                        month: origin.end_date_1,
-                        year: origin.end_date_2,
+                        day: data.end_date_0,
+                        month: data.end_date_1,
+                        year: data.end_date_2,
                     }}
                     hintText="Leave empty if a quota order number origin is needed for an unlimited time"
                 >
                 </DateField>
             </div>
-            <div class="govuk-form-group">
+            <div className="govuk-form-group">
                 <Fieldset.Legend size="S">
                     Geographical area
                 </Fieldset.Legend>
                 <select
-                    class="govuk-select"
-                    name={`origin_${index}_geographical_area`}
-                    defaultValue={origin.geo_area_pk}
+                    className="govuk-select"
+                    name={`origins_${index}_geographical_area`}
+                    defaultValue={data.geo_area_pk}
                 >
                     {options.map(geoArea =>
                         <option key={geoArea.pk} value={geoArea.value}>{geoArea.name}</option>
                     )}
                 </select>
             </div>
-            <hr class="govuk-!-margin-top-3" />
+            <button onClick={removeOrigin.bind(this, origin)} className="govuk-button govuk-button--secondary">Delete</button>
+            <hr className="govuk-!-margin-top-3" />
         </div>)
 }
 
