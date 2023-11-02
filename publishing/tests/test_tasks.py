@@ -76,7 +76,8 @@ def test_create_and_upload_envelope_fails(
     packaged_workbasket_factory,
     envelope_storage,
 ):
-    """Verify EnvelopeStorage is not called as there are validation errors."""
+    """Verify EnvelopeStorage is not created as there are validation errors due
+    to the envelope containing no transactions."""
 
     packaged_work_basket = packaged_workbasket_factory(
         workbasket=queued_workbasket,
