@@ -1526,13 +1526,13 @@ def test_workbasket_transaction_order_view_without_reorder_permission(client):
 
 
 @pytest.mark.parametrize(
-    "move_transaction_action",
+    "form_action",
     (
         "promote-transaction",
         "demote-transaction",
     ),
 )
-def test_workbasket_transaction_order_view_move_transaction(move_transaction_action):
+def test_workbasket_transaction_order_view_move_transaction(form_action):
     """Tests that transactions can be moved up (promoted) and moved down
     (demoted) and doing so resets the rule check status of the workbasket."""
     workbasket = factories.WorkBasketFactory.create()
@@ -1565,14 +1565,14 @@ def test_workbasket_transaction_order_view_move_transaction(move_transaction_act
         "workbaskets:workbasket-ui-transaction-order",
         kwargs={"pk": workbasket.pk},
     )
-    data = {"form-action": f"{move_transaction_action}__{transaction_2.pk}"}
+    data = {"form-action": f"{form_action}__{transaction_2.pk}"}
     post_request = request.post(url, data=data)
 
     view = ui.WorkBasketTransactionOrderView(
         request=post_request,
         kwargs={"pk": workbasket.pk},
     )
-    if move_transaction_action == "demote-transaction":
+    if form_action == "demote-transaction":
         # Demoting transaction_2
         view.demote_transaction(form_action=data["form-action"])
 
