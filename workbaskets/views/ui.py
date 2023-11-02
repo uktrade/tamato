@@ -1,4 +1,5 @@
 import logging
+import re
 
 import boto3
 from botocore.client import Config
@@ -752,6 +753,23 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             return DataUpload.objects.get(workbasket=self.workbasket)
         except DataUpload.DoesNotExist:
             return None
+
+    @staticmethod
+    def format_duty_sentence(duty_sentence):
+        # doesn't account for if a whole number is passed
+        duty_rate = re.search("[0-9]+\.[0-9]+", duty_sentence).group(0)
+        # checks for decimal place then separates duty_rate into before and after decimal place
+        if "." in duty_rate:
+            bdp = duty_rate.split(".")[0]
+            adp = duty_rate.split(".")[1].ljust(3, "0")
+
+            print("*" * 80, duty_sentence.replace(duty_rate, bdp + "." + adp))
+            new_ds = duty_sentence.replace(duty_rate, bdp + "." + adp)
+            return new_ds
+        else:
+            print("*" * 80, duty_sentence.replace(duty_rate, duty_rate + ".000"))
+            new_ds = duty_sentence.replace(duty_rate, duty_rate + ".000")
+            return new_ds
 
     def form_valid(self, form):
         try:
