@@ -1528,11 +1528,26 @@ def test_workbasket_transaction_order_view_without_reorder_permission(client):
 def test_workbasket_transaction_order_view_promote_transaction():
     """Tests that `WorkBasketTransactionOrderView.promote_transaction()` swaps
     transaction order of the promoted transaction with the (demoted) transaction
-    above it while others remain in place."""
+    above it while others remain in place, and resets rule check status."""
 
     workbasket = factories.WorkBasketFactory.create()
+
+    # transaction_1
+    model_1 = factories.TestModel1Factory.create(
+        transaction=workbasket.new_transaction(),
+    )
+
+    TrackedModelCheckFactory.create(
+        transaction_check__transaction=model_1.transaction,
+        model=model_1,
+        successful=True,
+    )
+    assert workbasket.tracked_model_checks.exists()
+
+    # transaction_2
     factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
-    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+
+    # transaction_3
     with workbasket.new_transaction() as transaction:
         factories.TestModel1Factory.create_batch(2, transaction=transaction)
 
@@ -1562,15 +1577,33 @@ def test_workbasket_transaction_order_view_promote_transaction():
     assert new_transaction_2 == transaction_1
     assert new_transaction_3 == transaction_3
 
+    # Verify previous business rule checks are deleted
+    assert not workbasket.tracked_model_checks.exists()
+
 
 def test_workbasket_transaction_order_view_demote_transaction():
     """Tests that `WorkBasketTransactionOrderView.demote_transaction()` swaps
     transaction order of the demoted transaction with the (promoted) transaction
-    below it while others remain in place."""
+    below it while others remain in place, and resets rule check status."""
 
     workbasket = factories.WorkBasketFactory.create()
+
+    # transaction_1
+    model_1 = factories.TestModel1Factory.create(
+        transaction=workbasket.new_transaction(),
+    )
+
+    TrackedModelCheckFactory.create(
+        transaction_check__transaction=model_1.transaction,
+        model=model_1,
+        successful=True,
+    )
+    assert workbasket.tracked_model_checks.exists()
+
+    # transaction_2
     factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
-    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+
+    # transaction_3
     with workbasket.new_transaction() as transaction:
         factories.TestModel1Factory.create_batch(2, transaction=transaction)
 
@@ -1599,6 +1632,9 @@ def test_workbasket_transaction_order_view_demote_transaction():
     assert new_transaction_1 == transaction_1
     assert new_transaction_2 == transaction_3
     assert new_transaction_3 == transaction_2
+
+    # Verify previous business rule checks are deleted
+    assert not workbasket.tracked_model_checks.exists()
 
 
 @pytest.mark.parametrize(
