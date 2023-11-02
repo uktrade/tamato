@@ -780,6 +780,9 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             ["order"],
         )
 
+        # Transaction reordering necessitates a new business rules check
+        self.workbasket.delete_checks()
+
         return HttpResponseRedirect(self.get_success_url())
 
     @atomic
@@ -805,6 +808,9 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             [demoted_transaction, promoted_transaction],
             ["order"],
         )
+
+        # Transaction reordering necessitates a new business rules check
+        self.workbasket.delete_checks()
 
         return HttpResponseRedirect(self.get_success_url())
 
