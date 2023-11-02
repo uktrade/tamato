@@ -617,6 +617,7 @@ def test_importer_generics(
         "allow_update_without_children",
         "updates_allowed",
         "deletes_allowed",
+        "skip_identity_check",
     ]
 
     for variable_name in vars(parser_class).keys():

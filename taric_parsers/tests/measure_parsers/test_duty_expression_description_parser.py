@@ -88,8 +88,10 @@ class TestNewDutyExpressionDescriptionParser:
         preload_import("duty_expression_description_CREATE.xml", __file__, True)
         importer = preload_import("duty_expression_description_DELETE.xml", __file__)
 
+        # whilst there is an issue, it's only a warning, so it will be able to save
+        assert importer.can_save()
+
         assert len(importer.issues()) == 1
-        assert not importer.can_save()
 
         assert (
             "Children of Taric objects of type DutyExpression can't be deleted directly"

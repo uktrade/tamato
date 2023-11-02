@@ -97,9 +97,10 @@ class TestNewMeasureTypeSeriesDescriptionParser:
             __file__,
         )
 
+        assert importer.can_save()
+
         assert len(importer.issues()) == 1
         assert (
             "Children of Taric objects of type MeasureTypeSeries can't be deleted directly"
             in str(importer.issues()[0])
         )
-        assert not importer.can_save()

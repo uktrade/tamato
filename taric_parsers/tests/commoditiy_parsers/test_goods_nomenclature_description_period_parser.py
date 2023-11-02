@@ -133,7 +133,8 @@ class TestNewGoodsNomenclatureDescriptionPeriodParser:
             __file__,
         )
 
-        assert not importer.can_save()
+        assert importer.can_save()
+
         assert len(importer.issues()) == 1
         assert (
             "Children of Taric objects of type GoodsNomenclatureDescription can't be deleted directly"

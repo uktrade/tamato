@@ -169,6 +169,10 @@ class TaricImporter:
         # need to copy all child attributes to parent objects within the import only
         for parsed_transaction in self.parsed_transactions:
             for message in parsed_transaction.parsed_messages:
+                # skip if the update has been flagged as not to import changes
+                if not message.taric_object.import_changes:
+                    continue
+
                 if message.taric_object.is_child_object():
                     # We only need the parent to be present for creation, if it's an update it can be applied in isolation
                     if message.update_type != 1:
@@ -198,6 +202,9 @@ class TaricImporter:
             )
 
             for message in parsed_transaction.parsed_messages:
+                if not message.taric_object.import_changes:
+                    continue
+
                 if message.taric_object.can_save_to_model():
                     self.commit_changes_from_message(
                         message,
@@ -582,7 +589,9 @@ class TaricImporter:
                 ):
                     return
 
-                msg = f"Children of Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be deleted directly"
+                parsed_message.taric_object.import_changes = False
+
+                msg = f"Children of Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be deleted directly. This change will not be imported."
                 issue_type = "WARNING"
             else:
                 msg = f"Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be deleted"

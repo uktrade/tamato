@@ -14,7 +14,7 @@ class TestForGenericImportErrors:
         assert len(importer.issues()) == 1
 
         assert (
-            "ERROR: Identity keys match existing object in database (checking all published and unpublished data)"
+            "ERROR: Identity keys match existing non-deleted object in database (checking all published and unpublished data)"
             in str(importer.issues()[0])
         )
         assert "additional.code >" in str(importer.issues()[0])

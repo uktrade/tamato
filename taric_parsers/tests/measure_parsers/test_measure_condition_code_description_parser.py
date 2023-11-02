@@ -97,8 +97,9 @@ class TestNewMeasureConditionCodeDescriptionParser:
             __file__,
         )
 
+        assert importer.can_save()
+
         assert len(importer.issues()) == 1
-        assert not importer.can_save()
 
         assert (
             "Children of Taric objects of type MeasureConditionCode can't be deleted directly"

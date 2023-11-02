@@ -87,8 +87,9 @@ class TestNewMeasureActionDescriptionParser:
         preload_import("measure_action_description_CREATE.xml", __file__, True)
         importer = preload_import("measure_action_description_DELETE.xml", __file__)
 
+        assert importer.can_save()
+
         assert (
             "Children of Taric objects of type MeasureAction can't be deleted directly"
             in str(importer.issues()[0])
         )
-        assert not importer.can_save()

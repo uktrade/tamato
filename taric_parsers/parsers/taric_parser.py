@@ -225,6 +225,7 @@ class BaseTaricParser:
     non_taric_additional_fields = []
     model = None
     identity_fields = []
+    import_changes = True
 
     # Properties to explicitly define behaviour
     allow_update_without_children = False

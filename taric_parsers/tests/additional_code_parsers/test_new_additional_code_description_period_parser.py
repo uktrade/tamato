@@ -110,8 +110,9 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
             __file__,
         )
 
+        assert importer.can_save()
+
         assert len(importer.issues()) == 1
-        assert not importer.can_save()
 
         assert (
             "Taric objects of type AdditionalCodeDescription can't be deleted"

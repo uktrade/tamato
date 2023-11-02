@@ -93,9 +93,10 @@ class TestNewAdditionalCodeTypeDescriptionParser:
             __file__,
         )
 
+        assert importer.can_save()
+
         # check for issues
         assert len(importer.issues()) == 1
-        assert not importer.can_save()
 
         assert (
             "Children of Taric objects of type AdditionalCodeType can't be deleted directly"

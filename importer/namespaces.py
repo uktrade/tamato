@@ -26,18 +26,15 @@ xsd_schema_paths: Dict[str, str] = (
     ("env", PATH_XSD_ENVELOPE),
     ("oub", PATH_XSD_TARIC),
 )
-
 """
-Define additional groups in the below dictionary
-for use as a `record_group` argument
-to importer.chunker.chunk_taric.
+Define additional groups in the below dictionary for use as a `record_group`
+argument to importer.chunker.chunk_taric.
 
-Check importer.forms.UploadTaricForm.save
-for example usage when users check
-the 'Commodities Only' box in /importers/create.
+Check importer.forms.UploadTaricForm.save for example usage when users check the
+'Commodities Only' box in /importers/create.
 
-The only group defined at the moment is commodities,
-which is easily extensible to additional record groups.
+The only group defined at the moment is commodities, which is easily extensible
+to additional record groups.
 """
 TARIC_RECORD_GROUPS: Dict[str, Sequence[str]] = dict(
     # Record "40020" is excluded from the below record group
@@ -48,7 +45,7 @@ TARIC_RECORD_GROUPS: Dict[str, Sequence[str]] = dict(
         "40005",
         "40010",
         "40015",
-        "40025",
+        # "40025", nomenclature group memberships should not be included
         "40035",
         "40040",
     ),
