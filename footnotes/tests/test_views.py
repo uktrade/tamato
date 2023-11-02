@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
@@ -21,6 +22,7 @@ from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from footnotes.models import Footnote
 from footnotes.models import FootnoteDescription
+from footnotes.views import FootnoteDetailMeasures
 from footnotes.views import FootnoteList
 from workbaskets.tasks import check_workbasket_sync
 
@@ -256,3 +258,219 @@ def test_footnote_description_create(valid_user_client):
         assert post_response.status_code == 302
 
     assert FootnoteDescription.objects.filter(described_footnote=new_version).exists()
+
+
+def test_footnote_detail_measures_view(valid_user_client):
+    """Test that `FootnoteDetailMeasures` view returns 200 and renders actions
+    link and other tabs."""
+    footnote = factories.FootnoteFactory.create()
+    url_kwargs = {
+        "footnote_type__footnote_type_id": footnote.footnote_type.footnote_type_id,
+        "footnote_id": footnote.footnote_id,
+    }
+    details_tab_url = reverse("footnote-ui-detail", kwargs=url_kwargs)
+    descriptions_tab_url = reverse("footnote-ui-detail-descriptions", kwargs=url_kwargs)
+    version_control_tab_url = reverse(
+        "footnote-ui-detail-version-control",
+        kwargs=url_kwargs,
+    )
+    measures_tab_url = reverse("footnote-ui-detail-measures", kwargs=url_kwargs)
+
+    expected_tabs = {
+        "Details": details_tab_url,
+        "Descriptions": descriptions_tab_url,
+        "Measures": measures_tab_url,
+        "Version control": version_control_tab_url,
+    }
+    response = valid_user_client.get(measures_tab_url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    tabs = {tab.text: tab.attrs["href"] for tab in page.select(".govuk-tabs__tab")}
+    assert tabs == expected_tabs
+
+    actions = page.find("h2", text="Actions").find_next("a")
+    assert actions.text == "View in find and edit measures"
+    assert (
+        actions.attrs["href"] == f"{reverse('measure-ui-list')}?footnote={footnote.id}"
+    )
+
+
+def test_footnote_detail_measures_view_lists_measures(valid_user_client):
+    """Test that `FootnoteDetailMeasures` view displays a paginated list of
+    measures for a footnote."""
+    footnote = factories.FootnoteFactory.create()
+    measures = []
+    for measure_with_footnote in range(21):
+        measure = factories.MeasureFactory.create()
+        factories.FootnoteAssociationMeasureFactory.create(
+            footnoted_measure=measure,
+            associated_footnote=footnote,
+        )
+        measures.append(measure)
+    url = reverse(
+        "footnote-ui-detail-measures",
+        kwargs={
+            "footnote_type__footnote_type_id": footnote.footnote_type.footnote_type_id,
+            "footnote_id": footnote.footnote_id,
+        },
+    )
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    table_rows = page.select(".govuk-table tbody tr")
+    assert len(table_rows) == FootnoteDetailMeasures.paginate_by
+
+    table_measure_sids = {
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    }
+    assert table_measure_sids.issubset({m.sid for m in measures})
+
+    assert page.find("nav", class_="pagination").find_next("a", href="?page=2")
+
+
+def test_footnote_detail_measures_view_sorting_commodity(valid_user_client):
+    """Test that measures listed on `FootnoteDetailMeasures` view can be sorted
+    by commodity code in ascending or descending order."""
+    footnote = factories.FootnoteFactory.create()
+    measures = []
+    for measure_with_footnote in range(3):
+        measure = factories.MeasureFactory.create()
+        factories.FootnoteAssociationMeasureFactory.create(
+            footnoted_measure=measure,
+            associated_footnote=footnote,
+        )
+        measures.append(measure)
+    commodity_codes = [measure.goods_nomenclature.item_id for measure in measures]
+    url = reverse(
+        "footnote-ui-detail-measures",
+        kwargs={
+            "footnote_type__footnote_type_id": footnote.footnote_type.footnote_type_id,
+            "footnote_id": footnote.footnote_id,
+        },
+    )
+    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&ordered=asc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_commodity_codes = [
+        commodity.text
+        for commodity in page.select(".govuk-table tbody tr td:nth-child(2) a")
+    ]
+    assert table_commodity_codes == commodity_codes
+
+    response = valid_user_client.get(f"{url}?sort_by=goods_nomenclature&ordered=desc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_commodity_codes = [
+        commodity.text
+        for commodity in page.select(".govuk-table tbody tr td:nth-child(2) a")
+    ]
+    commodity_codes.reverse()
+    print(table_commodity_codes)
+    print(commodity_codes)
+    assert table_commodity_codes == commodity_codes
+
+
+def test_footnote_detail_measures_view_sorting_start_date(
+    date_ranges,
+    valid_user_client,
+):
+    """Test that measures listed on `FootnoteDetailMeasures` view can be sorted
+    by start date in ascending or descending order."""
+    footnote = factories.FootnoteFactory.create()
+    measures = [
+        factories.MeasureFactory.create(
+            valid_between=date_ranges.earlier,
+        ),
+        factories.MeasureFactory.create(
+            valid_between=date_ranges.normal,
+        ),
+        factories.MeasureFactory.create(
+            valid_between=date_ranges.later,
+        ),
+    ]
+    for measure in measures:
+        factories.FootnoteAssociationMeasureFactory.create(
+            footnoted_measure=measure,
+            associated_footnote=footnote,
+        )
+    url = reverse(
+        "footnote-ui-detail-measures",
+        kwargs={
+            "footnote_type__footnote_type_id": footnote.footnote_type.footnote_type_id,
+            "footnote_id": footnote.footnote_id,
+        },
+    )
+    response = valid_user_client.get(f"{url}?sort_by=start_date&ordered=asc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_measure_sids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert table_measure_sids == [measures[0].sid, measures[1].sid, measures[2].sid]
+
+    response = valid_user_client.get(f"{url}?sort_by=start_date&ordered=desc")
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    table_measure_sids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert table_measure_sids == [measures[2].sid, measures[1].sid, measures[0].sid]
+
+
+def test_footnote_detail_version_control_view(valid_user_client):
+    """Test that `FootnoteDetailVersionControl` view returns 200 and renders
+    table content and other tabs."""
+    footnote = factories.FootnoteFactory.create()
+    footnote.new_version(footnote.transaction.workbasket)
+
+    url_kwargs = {
+        "footnote_type__footnote_type_id": footnote.footnote_type.footnote_type_id,
+        "footnote_id": footnote.footnote_id,
+    }
+    details_tab_url = reverse("footnote-ui-detail", kwargs=url_kwargs)
+    descriptions_tab_url = reverse("footnote-ui-detail-descriptions", kwargs=url_kwargs)
+    version_control_tab_url = reverse(
+        "footnote-ui-detail-version-control",
+        kwargs=url_kwargs,
+    )
+    measures_tab_url = reverse("footnote-ui-detail-measures", kwargs=url_kwargs)
+
+    expected_tabs = {
+        "Details": details_tab_url,
+        "Descriptions": descriptions_tab_url,
+        "Measures": measures_tab_url,
+        "Version control": version_control_tab_url,
+    }
+
+    response = valid_user_client.get(version_control_tab_url)
+    assert response.status_code == 200
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    tabs = {tab.text: tab.attrs["href"] for tab in page.select(".govuk-tabs__tab")}
+    assert tabs == expected_tabs
+
+    table_rows = page.select("table > tbody > tr")
+    assert len(table_rows) == 2
+
+    update_types = {
+        update.text for update in page.select("table > tbody > tr > td:first-child")
+    }
+    assert update_types == {"Create", "Update"}

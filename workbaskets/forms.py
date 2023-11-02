@@ -119,7 +119,7 @@ class SelectableObjectsForm(forms.Form):
     FIELD_NAME_PREFIX = "selectableobject_"
 
     def __init__(self, *args, **kwargs):
-        objects = kwargs.pop("objects")
+        objects = kwargs.pop("objects", [])
 
         super().__init__(*args, **kwargs)
 
