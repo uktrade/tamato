@@ -20,6 +20,8 @@
     <span class="process-envelope tamato-badge-light-grey">
       GENERATING ENVELOPE
     </span>
+  {% elif obj.envelope and not obj.envelope.successfully_validated %}
+    <span class="tamato-badge-light-red">ENVELOPE INVALID</span>
   {% else %}
     <form method="post" action="">
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -31,7 +33,7 @@
       >
         Start processing <span class="right-arrow">&#9654;</span>
       </button>
-      </form>
+    </form>
   {% endif %}
 {% endmacro -%}
 

@@ -8,7 +8,6 @@ from publishing.models.envelope import Envelope
 from publishing.models.envelope import EnvelopeCurrentlyProccessing
 from publishing.models.envelope import EnvelopeId
 from publishing.models.envelope import EnvelopeInvalidQueuePosition
-from publishing.models.envelope import EnvelopeNoTransactions
 from publishing.models.loading_report import LoadingReport
 from publishing.models.operational_status import (
     CrownDependenciesPublishingOperationalStatus,
@@ -38,7 +37,6 @@ __all__ = [
     "EnvelopeId",
     "EnvelopeCurrentlyProccessing",
     "EnvelopeInvalidQueuePosition",
-    "EnvelopeNoTransactions",
     "LoadingReport",
     "OperationalStatus",
     "CrownDependenciesEnvelope",
