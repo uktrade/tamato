@@ -42,6 +42,7 @@ def create_xml_envelope_file(
     function may be called again in order to generate the envelope.
     """
     from publishing.models import Envelope
+    from publishing.models import OperationalStatus
     from publishing.models import PackagedWorkBasket
     from publishing.models.envelope import ValidationState
 
@@ -58,12 +59,17 @@ def create_xml_envelope_file(
         packaged_work_basket.envelope.validation_state
         != ValidationState.SUCCESSFULLY_VALIDATED
     ):
+        OperationalStatus.pause_queue(user=None)
         logger.error(
             f"Failed to successfully validate envelope "
-            f"{packaged_work_basket.envelope.pk} "
-            f"(PackagedWorkBasket={packaged_work_basket.pk}, "
+            f"(Envelope={packaged_work_basket.envelope.pk}, "
+            f"PackagedWorkBasket={packaged_work_basket.pk}, "
             f"WorkBasket={packaged_work_basket.workbasket.pk}) during envelope "
             f"creation process.",
+        )
+        logger.warning(
+            f"Packaging queue paused due to envelope "
+            f"(Envelope={packaged_work_basket.envelope.pk}) validation failure.",
         )
         return
 
