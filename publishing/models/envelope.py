@@ -53,7 +53,7 @@ class ValidationState(IntegerChoices):
     Envelope validation states.
 
     Failure states directly map to the exceptions that may be raised by
-    validating an envelope using `publishing.util.validate_envelop()`.
+    validating an envelope using `publishing.util.validate_envelope()`.
     """
 
     NOT_VALIDATED = 1, "Not validated"
