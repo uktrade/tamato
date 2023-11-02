@@ -20,5 +20,5 @@ class TaricXMLRenderer(TemplateHTMLRenderer):
 
         context["envelope_id"] = f"{counter_generator()():06}"
         context["message_counter"] = counter_generator()
-        context["counter_generator"] = counter_generator
+        context["counter_generator"] = counter_generator()
         return context
