@@ -678,7 +678,7 @@ def test_workbasket_review_measures_conditions(valid_user_client):
 
 
 @patch("workbaskets.tasks.call_check_workbasket_sync.apply_async")
-def test_run_business_rules(check_workbasket, valid_user_client, session_workbasket):
+def test_run_business_rules(check_workbasket, session_workbasket, valid_user_client):
     """Test that a GET request to the run-business-rules endpoint returns a 302,
     redirecting to the review workbasket page, runs the `check_workbasket` task,
     saves the task id on the workbasket, and deletes pre-existing
@@ -702,7 +702,7 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     }
     session.save()
     url = reverse(
-        "workbaskets:current-workbasket",
+        "workbaskets:workbasket-check-ui-compare",
     )
     response = valid_user_client.post(
         url,
@@ -902,7 +902,7 @@ def test_terminate_rule_check(valid_user_client, session_workbasket):
     session_workbasket.rule_check_task_id = 123
 
     url = reverse(
-        "workbaskets:current-workbasket",
+        "workbaskets:workbasket-checks",
     )
     response = valid_user_client.post(
         url,
@@ -1921,7 +1921,7 @@ def test_workbasket_compare_found_measures(
     assert response2.status_code == 200
     decoded = response2.content.decode(response2.charset)
     soup = BeautifulSoup(decoded, "html.parser")
-    assert "1 matching measure found" in soup.select("h2")[1].text
+    assert "1 matching measure found" in soup.select("h2")[3].text
 
     # previously uploaded data
     assert len(soup.select("tbody")[0].select("tr")) == 2

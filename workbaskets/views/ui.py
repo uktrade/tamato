@@ -958,9 +958,12 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
         else:
             return
         if "." in duty_rate:
-            bdp = duty_rate.split(".")[0]
-            adp = duty_rate.split(".")[1].ljust(3, "0")
-            new_ds = duty_sentence.replace(duty_rate, bdp + "." + adp)
+            before_decimal = duty_rate.split(".")[0]
+            after_decimal = duty_rate.split(".")[1].ljust(3, "0")
+            new_ds = duty_sentence.replace(
+                duty_rate,
+                before_decimal + "." + after_decimal,
+            )
             return new_ds
         else:
             new_ds = duty_sentence.replace(duty_rate, duty_rate + ".000")

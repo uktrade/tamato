@@ -38,21 +38,14 @@
     <p class="govuk-body">Paste your worksheet data below. This must include commodity codes, duty rates and start dates. End dates are optional.</p>
     <p class="govuk-body">If you are pasting both start and end dates, the start dates must appear before the end dates.</p>
     <p class="govuk-body">Duty rates must be to 3 decimal places and dates must be in a DD/MM/YYYY format (e.g. 01/01/2024).</p>
-    
-    <h2 class="govuk-heading-m">Formatted worksheet data</h2>
-    <p class="govuk-body">This is your worksheet data in a table format.</p>
-    
-    <h2 class="govuk-heading-m">{{ matching_measures|length }} matching measures found</h2>
-    <p class="govuk-body">These are measures that are the same across both your worksheet and your workbasket.</p>
-
 
   {% call django_form() %}
     {{ crispy(form) }}
   {% endcall %}
 
   {% if data_upload %}
-    <h2 class="govuk-heading-l">Worksheet data</h2>
-
+    <h2 class="govuk-heading-l">Formatted worksheet data</h2>
+    <p class="govuk-body">This is your worksheet data in a table format.</p>
     {% set table_rows = [] %}
     {% for row in data_upload.serialized %}
       {{ table_rows.append([
@@ -78,6 +71,7 @@
 
   {% if matching_measures %}
     <h2 class="govuk-heading-l">{{ matching_measures|length }} matching measure{{ matching_measures|pluralize }} found</h2>
+    <p class="govuk-body">These are measures that are the same across both your worksheet and your workbasket.</p>
 
     {% set table_rows = [] %}
     {% for measure in matching_measures %}
