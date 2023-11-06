@@ -10,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
+from django.db.models import F
 from django.db.models import Max
 from django.db.models import Min
 from django.db.models import ProtectedError
@@ -683,7 +684,11 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
         form = self.get_form()
         # Handle transaction movement.
         form_action = form.data.get("form-action", "")
-        if form_action.startswith("promote-transaction"):
+        if form_action.startswith("promote-transaction-top"):
+            return self.promote_transaction_to_top(form_action)
+        elif form_action.startswith("demote-transaction-bottom"):
+            return self.demote_transaction_to_bottom(form_action)
+        elif form_action.startswith("promote-transaction"):
             return self.promote_transaction(form_action)
         elif form_action.startswith("demote-transaction"):
             return self.demote_transaction(form_action)
@@ -729,7 +734,7 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
 
         See the `regex_pattern` attribute in this function for valid formats.
         """
-        regex_pattern = "(promote-transaction|demote-transaction)__([0-9]+)"
+        regex_pattern = "(promote-transaction-top|promote-transaction|demote-transaction|demote-transaction-bottom)__([0-9]+)"
         try:
             pk = int(re.search(regex_pattern, form_action).group(2))
         except AttributeError:
@@ -757,9 +762,80 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             return None
 
     @atomic
+    def promote_transaction_to_top(self, form_action):
+        """
+        Set transaction order of the transaction from `form_action` to be first
+        in the workbasket, demoting the transactions that came before it.
+
+        Note that transaction reordering necessitates a new business rules
+        check.
+        """
+        promoted_transaction = self._get_transaction_pk_from_form_action(form_action)
+        top_transaction = self.workbasket_transactions().first()
+
+        if (
+            not promoted_transaction
+            or not top_transaction
+            or promoted_transaction == top_transaction
+        ):
+            return HttpResponseRedirect(self.get_success_url())
+
+        current_position = promoted_transaction.order
+        top_position = top_transaction.order
+
+        self.workbasket_transactions().filter(order__lt=current_position).update(
+            order=F("order") + 1,
+        )
+
+        promoted_transaction.order = top_position
+        promoted_transaction.save(update_fields=["order"])
+
+        self.workbasket.delete_checks()
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    @atomic
+    def demote_transaction_to_bottom(self, form_action):
+        """
+        Set transaction order of the transaction from `form_action` to be last
+        in the workbasket, promoting the transactions that came after it.
+
+        Note that transaction reordering necessitates a new business rules
+        check.
+        """
+        demoted_transaction = self._get_transaction_pk_from_form_action(form_action)
+        bottom_transaction = self.workbasket_transactions().last()
+
+        if (
+            not demoted_transaction
+            or not bottom_transaction
+            or demoted_transaction == bottom_transaction
+        ):
+            return HttpResponseRedirect(self.get_success_url())
+
+        current_position = demoted_transaction.order
+        bottom_position = bottom_transaction.order
+
+        self.workbasket_transactions().filter(order__gt=current_position).update(
+            order=F("order") - 1,
+        )
+
+        demoted_transaction.order = bottom_position
+        demoted_transaction.save(update_fields=["order"])
+
+        self.workbasket.delete_checks()
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    @atomic
     def promote_transaction(self, form_action):
-        """Swap the transaction order of the promoted transaction with the
-        (demoted) transaction above it."""
+        """
+        Swap the transaction order of the promoted transaction with the
+        (demoted) transaction above it.
+
+        Note that transaction reordering necessitates a new business rules
+        check.
+        """
         promoted_transaction = self._get_transaction_pk_from_form_action(form_action)
         demoted_transaction = (
             self.workbasket_transactions()
@@ -780,15 +856,19 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             ["order"],
         )
 
-        # Transaction reordering necessitates a new business rules check
         self.workbasket.delete_checks()
 
         return HttpResponseRedirect(self.get_success_url())
 
     @atomic
     def demote_transaction(self, form_action):
-        """Swap the transaction order of the demoted transaction with the
-        (promoted) transaction below it."""
+        """
+        Swap the transaction order of the demoted transaction with the
+        (promoted) transaction below it.
+
+        Note that transaction reordering necessitates a new business rules
+        check.
+        """
         demoted_transaction = self._get_transaction_pk_from_form_action(form_action)
         promoted_transaction = (
             self.workbasket_transactions()
@@ -809,7 +889,6 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             ["order"],
         )
 
-        # Transaction reordering necessitates a new business rules check
         self.workbasket.delete_checks()
 
         return HttpResponseRedirect(self.get_success_url())

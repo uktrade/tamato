@@ -3,8 +3,15 @@
 
   <div id="transaction-order-actions">
     {% if transaction == first_transaction_in_workbasket or not user_can_delete_items %}
+      <span class="govuk-link disabled promote">Move to top &#9206;</span>
       <span class="govuk-link disabled promote">Move up &#9206;</span>
     {% else %}
+      <button name="form-action"
+        value="promote-transaction-top__{{ transaction.pk }}"
+        class="govuk-link fake-link promote"
+        data-module="govuk-button"
+        >Move to top &#9206;</button>
+
       <button name="form-action"
         value="promote-transaction__{{ transaction.pk }}"
         class="govuk-link fake-link promote"
@@ -14,12 +21,19 @@
 
     {% if transaction == last_transaction_in_workbasket or not user_can_delete_items %}
       <span class="govuk-link disabled demote">Move down &#9207;</span>
+      <span class="govuk-link disabled demote">Move to bottom &#9207;</span>
     {% else %}
       <button name="form-action"
         value="demote-transaction__{{ transaction.pk }}"
         class="govuk-link fake-link demote"
         data-module="govuk-button"
         >Move down &#9207;</button>
+
+      <button name="form-action"
+        value="demote-transaction-bottom__{{ transaction.pk }}"
+        class="govuk-link fake-link demote"
+        data-module="govuk-button"
+        >Move to bottom &#9207;</button>
     {% endif %}
   </div>
 {% endmacro %}
