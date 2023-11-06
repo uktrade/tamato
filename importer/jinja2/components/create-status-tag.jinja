@@ -1,0 +1,8 @@
+
+{% macro create_status_tag(object, status_tag_generator) %}
+  {% if object %}
+    {% set status = status_tag_generator(object)%}
+    <span class="{{status.tag_class}}">{{status.text}}</span>
+  {%endif%}
+
+{% endmacro %}

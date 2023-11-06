@@ -1,9 +1,12 @@
+{% from "components/create-status-tag.jinja" import create_status_tag%}
+
 {% set table_rows = [] %}
 
 {% for object in object_list %}
   {%- set import_status_cell -%}
-    <span class="status-badge">{{status_label(object)}}</span>
+    {{ create_status_tag(object, status_tag_generator) }}
   {%- endset -%}
+
 
   {%- set goods_status_cell -%}
     {% if goods_status(object) == "editable_goods" %}

@@ -108,7 +108,7 @@ class CommodityImportListView(
             context["selected_link"] = "failed"
 
         context["goods_status"] = self.goods_status
-        context["status_label"] = self.status_label
+        context["status_tag_generator"] = self.status_tag_generator
 
         return context
 
@@ -138,35 +138,38 @@ class CommodityImportListView(
             return "empty"
 
     @classmethod
-    def status_label(cls, import_batch: ImportBatchFilter) -> str:
-        """Returns a ui friendly label for an import batch."""
+    def status_tag_generator(cls, import_batch: ImportBatchFilter) -> str:
+        """Returns a dict with text and a css class for a ui friendly label for
+        an import batch."""
         workbasket = import_batch.workbasket
 
         if (
             import_batch.status == ImportBatchStatus.SUCCEEDED
             and workbasket.status == WorkflowStatus.EDITING
         ):
-            return "READY"
+            return {"text": "READY", "tag_class": "govuk-tag govuk-tag--purple"}
         elif (
             import_batch.status == ImportBatchStatus.SUCCEEDED
             and workbasket.status == WorkflowStatus.PUBLISHED
         ):
-            return "PUBLISHED"
+            return {"text": "PUBLISHED", "tag_class": "govuk-tag govuk-tag--green"}
         elif (
             import_batch.status == ImportBatchStatus.SUCCEEDED
             and workbasket.status == WorkflowStatus.ARCHIVED
         ):
-            return "EMPTY"
+            return {"text": "EMPTY", "tag_class": "govuk-tag govuk-tag--grey"}
         elif (
             import_batch.status == ImportBatchStatus.IMPORTING
             and workbasket.status == None
         ):
-            return "IMPORTING"
+            return {"text": "IMPORTING", "tag_class": "govuk-tag govuk-tag--blue"}
         elif (
             import_batch.status == ImportBatchStatus.FAILED
             and workbasket.status == None
         ):
-            return "FAILED"
+            return {"text": "FAILED", "tag_class": "govuk-tag govuk-tag--red"}
+        else:
+            return {"text": "NONE", "tag_class": "govuk-tag govuk-tag--blue"}
 
 
 class CommodityImportCreateView(
