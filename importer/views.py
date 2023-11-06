@@ -91,7 +91,7 @@ class CommodityImportListView(
             import_status == ImportBatchStatus.SUCCEEDED
             and workbasket_status == WorkflowStatus.EDITING
         ):
-            context["selected_link"] = "completed"
+            context["selected_link"] = "ready"
         elif (
             import_status == ImportBatchStatus.SUCCEEDED
             and workbasket_status == WorkflowStatus.PUBLISHED
@@ -138,7 +138,7 @@ class CommodityImportListView(
             return "empty"
 
     @classmethod
-    def status_tag_generator(cls, import_batch: ImportBatchFilter) -> str:
+    def status_tag_generator(cls, import_batch: ImportBatchFilter) -> dict:
         """Returns a dict with text and a css class for a ui friendly label for
         an import batch."""
         workbasket = import_batch.workbasket
@@ -163,10 +163,7 @@ class CommodityImportListView(
             and workbasket.status == None
         ):
             return {"text": "IMPORTING", "tag_class": "govuk-tag govuk-tag--blue"}
-        elif (
-            import_batch.status == ImportBatchStatus.FAILED
-            and workbasket.status == None
-        ):
+        elif import_batch.status == ImportBatchStatus.FAILED:
             return {"text": "FAILED", "tag_class": "govuk-tag govuk-tag--red"}
         else:
             return {"text": "NONE", "tag_class": "govuk-tag govuk-tag--blue"}
