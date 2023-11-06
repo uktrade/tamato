@@ -105,9 +105,10 @@ class CommodityImportListView(
         elif import_status == ImportBatchStatus.IMPORTING and workbasket_status == None:
             context["selected_link"] = "importing"
         elif import_status == ImportBatchStatus.FAILED and workbasket_status == None:
-            context["selected_link"] = "errored"
+            context["selected_link"] = "failed"
 
         context["goods_status"] = self.goods_status
+        context["status_label"] = self.status_label
 
         return context
 
@@ -135,6 +136,37 @@ class CommodityImportListView(
         else:
             # All other statuses are considered empty.
             return "empty"
+
+    @classmethod
+    def status_label(cls, import_batch: ImportBatchFilter) -> str:
+        """Returns a ui friendly label for an import batch."""
+        workbasket = import_batch.workbasket
+
+        if (
+            import_batch.status == ImportBatchStatus.SUCCEEDED
+            and workbasket.status == WorkflowStatus.EDITING
+        ):
+            return "READY"
+        elif (
+            import_batch.status == ImportBatchStatus.SUCCEEDED
+            and workbasket.status == WorkflowStatus.PUBLISHED
+        ):
+            return "PUBLISHED"
+        elif (
+            import_batch.status == ImportBatchStatus.SUCCEEDED
+            and workbasket.status == WorkflowStatus.ARCHIVED
+        ):
+            return "EMPTY"
+        elif (
+            import_batch.status == ImportBatchStatus.IMPORTING
+            and workbasket.status == None
+        ):
+            return "IMPORTING"
+        elif (
+            import_batch.status == ImportBatchStatus.FAILED
+            and workbasket.status == None
+        ):
+            return "FAILED"
 
 
 class CommodityImportCreateView(
