@@ -188,14 +188,6 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
     """Form used to create new instances of ImportBatch via upload of a
     commodity code file."""
 
-    taric_file = forms.FileField(
-        label="Upload a TARIC file",
-        help_text=(
-            "Valid TARIC files contain XML and usually have a .xml file name "
-            "extension. They contain goods nomenclure items and related "
-            "items."
-        ),
-    )
     workbasket_title = forms.CharField(
         max_length=255,
         validators=[tops_jira_number_validator],
@@ -209,6 +201,14 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
             "number. "
         ),
     )
+    taric_file = forms.FileField(
+        label="Upload a TARIC file",
+        help_text=(
+            "Valid TARIC files contain XML and usually have a .xml file name "
+            "extension. They contain goods nomenclure items and related "
+            "items."
+        ),
+    )
     xsd_file = settings.PATH_XSD_COMMODITIES_TARIC
 
     def __init__(self, *args, **kwargs):
@@ -219,8 +219,8 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            "taric_file",
             "workbasket_title",
+            "taric_file",
             Submit(
                 "submit",
                 "Upload",
