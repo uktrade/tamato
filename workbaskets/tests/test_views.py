@@ -678,7 +678,7 @@ def test_workbasket_review_measures_conditions(valid_user_client):
 
 
 @patch("workbaskets.tasks.call_check_workbasket_sync.apply_async")
-def test_run_business_rules(check_workbasket, session_workbasket, valid_user_client):
+def test_run_business_rules(check_workbasket, valid_user_client, session_workbasket):
     """Test that a GET request to the run-business-rules endpoint returns a 302,
     redirecting to the review workbasket page, runs the `check_workbasket` task,
     saves the task id on the workbasket, and deletes pre-existing
@@ -690,9 +690,8 @@ def test_run_business_rules(check_workbasket, session_workbasket, valid_user_cli
         good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
-            transaction_check__successful=True,
             model=good,
-            successful=True,
+            successful=False,
         )
 
     session = valid_user_client.session

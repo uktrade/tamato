@@ -385,6 +385,7 @@ class WorkBasket(TimestampedMixin):
             workbasket=self,
         )
         total = transactions.count()
+
         return num_completed, total
 
     @property
