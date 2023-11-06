@@ -1099,11 +1099,6 @@ class WorkBasketChecksView(FormView):
             self.run_business_rules()
         elif form_action == "terminate-rule-check":
             self.workbasket.terminate_rule_check()
-        elif form_action in ["remove-selected", "remove-all"]:
-            return reverse(
-                "workbaskets:workbasket-ui-changes-delete",
-                kwargs={"pk": self.workbasket.pk},
-            )
         try:
             return self._append_url_page_param(
                 reverse(
@@ -1113,13 +1108,6 @@ class WorkBasketChecksView(FormView):
             )
         except KeyError:
             return reverse("home")
-
-    def get_initial(self):
-        store = SessionStore(
-            self.request,
-            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
-        )
-        return store.data.copy()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

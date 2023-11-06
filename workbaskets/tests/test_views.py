@@ -690,8 +690,9 @@ def test_run_business_rules(check_workbasket, session_workbasket, valid_user_cli
         good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
+            transaction_check__successful=True,
             model=good,
-            successful=False,
+            successful=True,
         )
 
     session = valid_user_client.session
@@ -702,7 +703,7 @@ def test_run_business_rules(check_workbasket, session_workbasket, valid_user_cli
     }
     session.save()
     url = reverse(
-        "workbaskets:workbasket-check-ui-compare",
+        "workbaskets:workbasket-checks",
     )
     response = valid_user_client.post(
         url,
@@ -723,13 +724,11 @@ def test_run_business_rules(check_workbasket, session_workbasket, valid_user_cli
     assert not session_workbasket.tracked_model_checks.exists()
 
 
-def test_workbasket_business_rule_status(valid_user_client):
+def test_workbasket_business_rule_status(valid_user_client, session_empty_workbasket):
     """Testing that the live status of a workbasket resets after an item has
     been updated, created or deleted in the workbasket."""
-    workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.EDITING,
-    )
-    with workbasket.new_transaction() as transaction:
+
+    with session_empty_workbasket.new_transaction() as transaction:
         footnote = factories.FootnoteFactory.create(
             transaction=transaction,
             footnote_type__transaction=transaction,
@@ -739,7 +738,6 @@ def test_workbasket_business_rule_status(valid_user_client):
             model=footnote,
             successful=True,
         )
-    workbasket.save_to_session(valid_user_client.session)
 
     url = reverse("workbaskets:workbasket-checks")
     response = valid_user_client.get(url)
@@ -750,8 +748,8 @@ def test_workbasket_business_rule_status(valid_user_client):
     )
     assert success_banner
 
-    footnote2 = factories.FootnoteFactory.create(
-        transaction=workbasket.new_transaction(),
+    factories.FootnoteFactory.create(
+        transaction=session_empty_workbasket.new_transaction(),
     )
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset))
