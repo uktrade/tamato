@@ -882,7 +882,7 @@ def test_submit_for_packaging_disabled(
             import_batch.save()
 
     response = valid_user_client.get(
-        reverse("workbaskets:current-workbasket"),
+        reverse("workbaskets:workbasket-checks"),
     )
 
     assert response.status_code == 200
