@@ -47,24 +47,49 @@ ui_patterns = [
         name="edit-workbasket",
     ),
     path(
-        f"current/review/",
-        ui_views.ReviewMeasuresWorkbasketView.as_view(),
-        name="review-workbasket",
+        f"<pk>/review-additional-codes/",
+        ui_views.WorkBasketReviewAdditionalCodesView.as_view(),
+        name="workbasket-ui-review-additional-codes",
     ),
     path(
-        f"current/review-goods/",
+        f"<pk>/review-certificates/",
+        ui_views.WorkBasketReviewCertificatesView.as_view(),
+        name="workbasket-ui-review-certificates",
+    ),
+    path(
+        f"<pk>/review-goods/",
         ui_views.WorkbasketReviewGoodsView.as_view(),
         name="workbasket-ui-review-goods",
+    ),
+    path(
+        f"<pk>/review-footnotes/",
+        ui_views.WorkBasketReviewFootnotesView.as_view(),
+        name="workbasket-ui-review-footnotes",
+    ),
+    path(
+        f"<pk>/review-geographical-areas/",
+        ui_views.WorkBasketReviewGeoAreasView.as_view(),
+        name="workbasket-ui-review-geo-areas",
+    ),
+    path(
+        f"<pk>/review-measures/",
+        ui_views.WorkBasketReviewMeasuresView.as_view(),
+        name="workbasket-ui-review-measures",
+    ),
+    path(
+        f"<pk>/review-quotas/",
+        ui_views.WorkBasketReviewQuotasView.as_view(),
+        name="workbasket-ui-review-quotas",
+    ),
+    path(
+        f"<pk>/review-regulations/",
+        ui_views.WorkBasketReviewRegulationsView.as_view(),
+        name="workbasket-ui-review-regulations",
     ),
     path(
         f"current/violations/",
         ui_views.WorkBasketViolations.as_view(),
         name="workbasket-ui-violations",
-    ),
-    path(
-        f"current/delete-changes/",
-        ui_views.WorkBasketDeleteChanges.as_view(),
-        name="workbasket-ui-delete-changes",
     ),
     path(
         f"<pk>/confirm-create/",
@@ -77,19 +102,34 @@ ui_patterns = [
         name="workbasket-ui-confirm-update",
     ),
     path(
-        f"current/delete-changes-done/",
-        ui_views.WorkBasketDeleteChangesDone.as_view(),
-        name="workbasket-ui-delete-changes-done",
-    ),
-    path(
         f"compare/",
         ui_views.WorkBasketCompare.as_view(),
         name="workbasket-ui-compare",
     ),
     path(
+        f"<pk>/",
+        ui_views.WorkBasketDetailView.as_view(),
+        name="workbasket-ui-detail",
+    ),
+    path(
         f"<pk>/changes/",
-        ui_views.WorkBasketChanges.as_view(),
+        ui_views.WorkBasketChangesView.as_view(),
         name="workbasket-ui-changes",
+    ),
+    path(
+        f"<pk>/changes/delete/",
+        ui_views.WorkBasketChangesDelete.as_view(),
+        name="workbasket-ui-changes-delete",
+    ),
+    path(
+        f"<pk>/changes/confirm-delete/",
+        ui_views.WorkBasketChangesConfirmDelete.as_view(),
+        name="workbasket-ui-changes-confirm-delete",
+    ),
+    path(
+        f"<pk>/transaction-order/",
+        ui_views.WorkBasketTransactionOrderView.as_view(),
+        name="workbasket-ui-transaction-order",
     ),
     path(
         f"<wb_pk>/violations/<pk>/",

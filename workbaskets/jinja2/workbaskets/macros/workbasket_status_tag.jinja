@@ -1,0 +1,17 @@
+{% from "components/tag/macro.njk" import govukTag %}
+
+{% set status_to_class_map = ({
+    "EDITING": "govuk-tag--blue",
+    "PUBLISHED": "govuk-tag--green",
+    "QUEUED": "govuk-tag--purple",
+    "ERRORED": "govuk-tag--red",
+    "ARCHIVED": "govuk-tag--grey",
+  })
+%}
+
+{% macro create_workbasket_status_tag(status) %}
+  {{ govukTag({
+    "text": status,
+    "classes": status_to_class_map[status],
+  }) }}
+{% endmacro %}

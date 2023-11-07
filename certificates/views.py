@@ -1,7 +1,10 @@
 from typing import Type
+from urllib.parse import urlencode
 
 from django.db import transaction
 from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.views.generic import ListView
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -10,14 +13,18 @@ from certificates import forms
 from certificates import models
 from certificates.filters import CertificateFilter
 from certificates.filters import CertificateFilterBackend
+from certificates.models import Certificate
 from certificates.serializers import CertificateTypeSerializer
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
-from common.validators import UpdateType
 from common.views import DescriptionDeleteMixin
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from common.views import WithPaginationListMixin
+from measures.models import Measure
+from measures.models import MeasureCondition
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
@@ -79,26 +86,14 @@ class CertificateCreate(CreateTaricCreateView):
     form_class = forms.CertificateCreateForm
 
     @transaction.atomic
-    def form_valid(self, form):
-        transaction = self.get_transaction()
-        transaction.save()
-        self.object = form.save(commit=False)
-        self.object.update_type = UpdateType.CREATE
-        self.object.transaction = transaction
-        self.object.save()
-
-        return super().form_valid(form)
-
-    @transaction.atomic
     def get_result_object(self, form):
-        object = super().get_result_object(form)
+        certificate = super().get_result_object(form)
         description = form.cleaned_data["certificate_description"]
-        description.described_certificate = self.object
-        description.update_type = UpdateType.CREATE
-        description.transaction = object.transaction
+        description.described_certificate = certificate
+        description.update_type = self.update_type
+        description.transaction = certificate.transaction
         description.save()
-
-        return object
+        return certificate
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -133,6 +128,77 @@ class CertificateConfirmCreate(CertificateMixin, TrackedModelDetailView):
 
 class CertificateDetail(CertificateMixin, TrackedModelDetailView):
     template_name = "certificates/detail.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "details"
+        return context
+
+
+class CertificateDetailDescriptions(CertificateDetail):
+    """Displays descriptions for a certificate as a simulated tab on certificate
+    view."""
+
+    template_name = "includes/certificates/tabs/descriptions.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "descriptions"
+        return context
+
+
+class CertificateDetailVersionControl(CertificateDetail):
+    """Displays version history for a certificate as a simulated tab on
+    certificate view."""
+
+    template_name = "includes/certificates/tabs/version_control.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "version-control"
+        return context
+
+
+class CertificateDetailMeasures(SortingMixin, WithPaginationListMixin, ListView):
+    """Displays a pagination list of measures for a certificate as a simulated
+    tab on certificate view."""
+
+    model = Measure
+    template_name = "includes/certificates/tabs/measures.jinja"
+    paginate_by = 20
+    sort_by_fields = ["goods_nomenclature", "geo_area", "start_date"]
+    custom_sorting = {
+        "geo_area": "geographical_area__area_id",
+        "start_date": "valid_between",
+    }
+
+    @property
+    def certificate(self):
+        return Certificate.objects.current().get(
+            sid=self.kwargs["sid"],
+            certificate_type__sid=self.kwargs["certificate_type__sid"],
+        )
+
+    def get_queryset(self):
+        measure_ids = MeasureCondition.objects.filter(
+            required_certificate=self.certificate.trackedmodel_ptr_id,
+        ).values_list("dependent_measure_id", flat=True)
+        queryset = Measure.objects.all().current().filter(id__in=measure_ids)
+        ordering = self.get_ordering()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["object"] = self.certificate
+        context["selected_tab"] = "measures"
+        url_params = urlencode({"certificates": self.certificate.pk})
+        measures_url = f"{reverse('measure-ui-list')}?{url_params}"
+        context["measures_url"] = measures_url
+        return context
 
 
 class CertificateUpdateMixin(

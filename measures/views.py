@@ -26,23 +26,28 @@ from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import viewsets
 from rest_framework.reverse import reverse
 
+from additional_codes.models import AdditionalCode
+from certificates.models import Certificate
+from commodities.models.orm import GoodsNomenclature
 from common.forms import unprefix_formset_data
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
-from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureActionPair
@@ -53,6 +58,8 @@ from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
+from quotas.models import QuotaOrderNumber
+from regulations.models import Regulation
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
@@ -133,23 +140,166 @@ class MeasureSearch(FilterView):
         return HttpResponseRedirect(reverse("measure-ui-list"))
 
 
-class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView):
+class MeasureList(
+    MeasureSelectionMixin,
+    MeasureMixin,
+    SortingMixin,
+    FormView,
+    TamatoListView,
+):
     """UI endpoint for viewing and filtering Measures."""
 
     template_name = "measures/list.jinja"
     filterset_class = MeasureFilter
     form_class = SelectableObjectsForm
+    sort_by_fields = ["sid", "measure_type", "geo_area", "start_date", "end_date"]
+    custom_sorting = {
+        "measure_type": "measure_type__sid",
+        "geo_area": "geographical_area__area_id",
+        "start_date": "valid_between",
+        "end_date": "db_effective_end_date",
+    }
 
     def dispatch(self, *args, **kwargs):
         if not self.request.GET:
             return HttpResponseRedirect(reverse("measure-ui-search"))
         return super().dispatch(*args, **kwargs)
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        ordering = self.get_ordering()
+
+        if ordering:
+            if ordering in "-db_effective_end_date":
+                queryset = queryset.with_effective_valid_between()
+
+            ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+
+        return queryset
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         page = self.paginator.get_page(self.request.GET.get("page", 1))
         kwargs["objects"] = page.object_list
         return kwargs
+
+    def cleaned_query_params(self):
+        # Remove the sort_by and ordered params in order to stop them being duplicated in the base url
+        if "sort_by" and "ordered" in self.filterset.data:
+            cleaned_filterset = self.filterset.data.copy()
+            cleaned_filterset.pop("sort_by")
+            cleaned_filterset.pop("ordered")
+            return cleaned_filterset
+        else:
+            return self.filterset.data
+
+    def selected_filter_formatter(self) -> List[List[str]]:
+        """
+        A function that formats the selected filter choices into nicely written
+        up strings.
+
+        Those strings are then split into nested lists of 7 items to prepare
+        them for template rendering.
+        """
+        selected_filters = {k: v for k, v in self.filterset.data.items() if v}
+        selected_filters_strings = []
+
+        if "goods_nomenclature" in selected_filters:
+            goods = GoodsNomenclature.objects.current().get(
+                id=selected_filters["goods_nomenclature"],
+            )
+            selected_filters_strings.append(
+                f"Commodity Code {goods.autocomplete_label}",
+            )
+
+        if "goods_nomenclature__item_id" in selected_filters:
+            selected_filters_strings.append(
+                f"Commodity Code starting with {selected_filters['goods_nomenclature__item_id']}",
+            )
+
+        if "order_number" in selected_filters:
+            quota = QuotaOrderNumber.objects.current().get(
+                id=selected_filters["order_number"],
+            )
+            selected_filters_strings.append(
+                f"Quota Order Number {quota.structure_code}",
+            )
+
+        if "sid" in selected_filters:
+            measure = Measure.objects.current().get(sid=selected_filters["sid"])
+            selected_filters_strings.append(f"ID {measure.sid}")
+
+        if "additional_code" in selected_filters:
+            code = AdditionalCode.objects.current().get(
+                id=selected_filters["additional_code"],
+            )
+            selected_filters_strings.append(f"Additional Code {code.structure_code}")
+
+        if "certificates" in selected_filters:
+            certificate = Certificate.objects.current().get(
+                id=selected_filters["certificates"],
+            )
+            selected_filters_strings.append(f"Certificate {certificate.structure_code}")
+
+        if "regulation" in selected_filters:
+            regulation = Regulation.objects.current().get(
+                id=selected_filters["regulation"],
+            )
+            selected_filters_strings.append(
+                f"Regulation {regulation.autocomplete_label}",
+            )
+
+        if "measure_type" in selected_filters:
+            measure_type = MeasureType.objects.current().get(
+                id=selected_filters["measure_type"],
+            )
+            selected_filters_strings.append(
+                f"Measure Type {measure_type.autocomplete_label}",
+            )
+
+        if "geographical_area" in selected_filters:
+            area = GeographicalArea.objects.current().get(
+                id=selected_filters["geographical_area"],
+            )
+            selected_filters_strings.append(f"{area.autocomplete_label}")
+
+        if "footnote" in selected_filters:
+            footnote = Footnote.objects.current().get(id=selected_filters["footnote"])
+            selected_filters_strings.append(f"Footnote {footnote.structure_code}")
+
+        if "start_date_0" and "start_date_1" and "start_date_2" in selected_filters:
+            if selected_filters["start_date_modifier"] == "exact":
+                modifier = ""
+            else:
+                modifier = selected_filters["start_date_modifier"]
+            selected_filters_strings.append(
+                f"Start date: {modifier} {selected_filters['start_date_0']}/{selected_filters['start_date_1']}/{selected_filters['start_date_2']}",
+            )
+
+        if "end_date_0" and "end_date_1" and "end_date_2" in selected_filters:
+            if selected_filters["end_date_modifier"] == "exact":
+                modifier = ""
+            else:
+                modifier = selected_filters["end_date_modifier"]
+            selected_filters_strings.append(
+                f"End date: {modifier} {selected_filters['end_date_0']}/{selected_filters['end_date_1']}/{selected_filters['end_date_2']}",
+            )
+
+        if "modc" in selected_filters:
+            selected_filters_strings.append("Include inherited measures")
+
+        if "measure_filters_modifier" in selected_filters:
+            selected_filters_strings.append("Filter by current workbasket")
+
+        # This splits the selected_filter_strings into nested lists of 7 so that the lists can be shown side by side in the template.
+        selected_filters_lists = [
+            selected_filters_strings[x : x + 7]
+            for x in range(0, len(selected_filters_strings), 7)
+        ]
+
+        return selected_filters_lists
 
     @property
     def paginator(self):
@@ -181,6 +331,7 @@ class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView)
                     page.number,
                     page.paginator.num_pages,
                 ),
+                "selected_filter_lists": self.selected_filter_formatter(),
             },
         )
         if context["has_previous_page"]:
@@ -195,6 +346,10 @@ class MeasureList(MeasureSelectionMixin, MeasureMixin, FormView, TamatoListView)
         context["measure_selections"] = Measure.objects.filter(
             pk__in=measure_selections,
         )
+        context["query_params"] = True
+        context[
+            "base_url"
+        ] = f'{reverse("measure-ui-list")}?{urlencode(self.cleaned_query_params())}'
         return context
 
     def get_initial(self):
@@ -505,7 +660,12 @@ class MeasureEditWizard(
             )
         self.session_store.clear()
 
-        return redirect(reverse("workbaskets:review-workbasket"))
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-review-measures",
+                kwargs={"pk": workbasket.pk},
+            ),
+        )
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
@@ -972,20 +1132,20 @@ class MeasureUpdateBase(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        initial = self.request.session.get(
+        context["no_form_tags"] = FormHelper()
+        context["no_form_tags"].form_tag = False
+
+        formset_footnotes = self.request.session.get(
             f"formset_initial_{self.kwargs.get('sid')}",
             [],
         )
         footnotes_formset = forms.MeasureUpdateFootnotesFormSet()
-        footnotes_formset.initial = initial
+        footnotes_formset.initial = formset_footnotes
         footnotes_formset.form_kwargs = {"path": self.request.path}
         context["footnotes_formset"] = footnotes_formset
-        context["no_form_tags"] = FormHelper()
-        context["no_form_tags"].form_tag = False
         context["footnotes"] = self.get_footnotes(context["measure"])
 
         conditions_initial = []
-
         if self.request.POST:
             conditions_initial = unprefix_formset_data(
                 MEASURE_CONDITIONS_FORMSET_PREFIX,
@@ -994,12 +1154,12 @@ class MeasureUpdateBase(
             conditions_formset = forms.MeasureConditionsFormSet(
                 self.request.POST,
                 initial=conditions_initial,
-                prefix="measure-conditions-formset",
+                prefix=MEASURE_CONDITIONS_FORMSET_PREFIX,
             )
         else:
             conditions_formset = forms.MeasureConditionsFormSet(
                 initial=conditions_initial,
-                prefix="measure-conditions-formset",
+                prefix=MEASURE_CONDITIONS_FORMSET_PREFIX,
             )
         conditions = self.get_conditions(context["measure"])
         form_fields = conditions_formset.form.Meta.fields
@@ -1013,7 +1173,7 @@ class MeasureUpdateBase(
                         value = value.pk
                     initial_dict[field] = value
 
-            initial_dict["applicable_duty"] = condition.condition_string
+            initial_dict["applicable_duty"] = condition.duty_sentence
             initial_dict["reference_price"] = condition.reference_price_string
             initial_dict["condition_sid"] = condition.sid
             conditions_formset.initial.append(initial_dict)
@@ -1187,17 +1347,23 @@ class MeasureMultipleDelete(MeasureSelectionQuerysetMixin, TemplateView, ListVie
             # The user has cancelled out of the deletion process.
             return redirect("home")
 
+        workbasket = WorkBasket.current(request)
         object_list = self.get_queryset()
 
         for obj in object_list:
             # make a new version of the object with an update type of delete.
             obj.new_version(
-                workbasket=WorkBasket.current(request),
+                workbasket=workbasket,
                 update_type=UpdateType.DELETE,
             )
         self.session_store.clear()
 
-        return redirect(reverse("workbaskets:review-workbasket"))
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-review-measures",
+                kwargs={"pk": workbasket.pk},
+            ),
+        )
 
 
 class MeasureSelectionUpdate(MeasureSessionStoreMixin, View):

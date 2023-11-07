@@ -116,7 +116,12 @@ def test_quota_detail_views(
 ):
     """Verify that quota detail views are under the url quotas and don't return
     an error."""
-    assert_model_view_renders(view, url_pattern, valid_user_client)
+    assert_model_view_renders(
+        view,
+        url_pattern,
+        valid_user_client,
+        override_models={"quotas.views.QuotaDefinitionCreate": models.QuotaOrderNumber},
+    )
 
 
 def test_quota_detail(valid_user_client, date_ranges, mock_quota_api_no_data):
@@ -565,7 +570,7 @@ def test_quota_definitions_list_sort_by_start_date(
     )
     url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(f"{url}?sort_by=valid_between&order=asc")
+    response = valid_user_client.get(f"{url}?sort_by=valid_between&ordered=asc")
     assert response.status_code == 200
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     definition_sids = [
@@ -574,7 +579,7 @@ def test_quota_definitions_list_sort_by_start_date(
     ]
     assert definition_sids == [definition1.sid, definition2.sid]
 
-    response = valid_user_client.get(f"{url}?sort_by=valid_between&order=desc")
+    response = valid_user_client.get(f"{url}?sort_by=valid_between&ordered=desc")
     assert response.status_code == 200
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     definition_sids = [
@@ -1058,4 +1063,166 @@ def test_quota_create_origin_no_overlapping_origins(
     assert a_tags[0].text == (
         "There may be no overlap in time of two quota order number origins with "
         "the same quota order number SID and geographical area id."
+    )
+
+
+@pytest.mark.django_db
+def test_quota_order_number_and_origin_edit_create_view(
+    valid_user_client, date_ranges, approved_transaction, geo_group1, geo_group2
+):
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    origin = models.QuotaOrderNumberOrigin.objects.last()
+
+    form_data = {
+        "start_date_0": origin.valid_between.lower.day,
+        "start_date_1": origin.valid_between.lower.month,
+        "start_date_2": origin.valid_between.lower.year,
+        "geographical_area": geo_group1.id,
+        "quota-origin-exclusions-formset-__prefix__-exclusion": geo_group2.id,
+        "submit": "Save",
+    }
+
+    response = valid_user_client.post(
+        reverse("quota_order_number_origin-ui-edit-create", kwargs={"sid": origin.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 302
+
+    response = valid_user_client.get(
+        reverse("quota-ui-edit-create", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_quota_order_number_update_view(
+    valid_user_client, date_ranges, approved_transaction, geo_group1, geo_group2
+):
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    origin = models.QuotaOrderNumberOrigin.objects.last()
+
+    form_data = {
+        "start_date_0": origin.valid_between.lower.day,
+        "start_date_1": origin.valid_between.lower.month,
+        "start_date_2": origin.valid_between.lower.year,
+        "geographical_area": geo_group1.id,
+        "quota-origin-exclusions-formset-__prefix__-exclusion": geo_group2.id,
+        "submit": "Save",
+    }
+
+    response = valid_user_client.get(
+        reverse("quota-ui-edit-update", kwargs={"sid": quota.sid}),
+        form_data,
+    )
+
+    assert response.status_code == 200
+
+
+def test_create_new_quota_definition(
+    valid_user_client,
+    approved_transaction,
+    date_ranges,
+    mock_quota_api_no_data,
+):
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    measurement_unit = factories.MeasurementUnitFactory.create()
+
+    form_data = {
+        "start_date_0": date_ranges.later.lower.day,
+        "start_date_1": date_ranges.later.lower.month,
+        "start_date_2": date_ranges.later.lower.year,
+        "description": "Lorem ipsum",
+        "volume": "1000000",
+        "initial_volume": "1000000",
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
+        "order_number": quota.pk,
+        "maximum_precision": "3",
+        "measurement_unit": measurement_unit.pk,
+    }
+
+    # sanity check
+    assert not models.QuotaDefinition.objects.all()
+
+    url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    created_definition = models.QuotaDefinition.objects.last()
+    assert response.url == reverse(
+        "quota_definition-ui-confirm-create",
+        kwargs={"sid": created_definition.sid},
+    )
+
+    # check definition is listed on quota order number's definition tab
+    url = reverse("quota-ui-detail", kwargs={"sid": quota.sid})
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    definitions_tab = soup.find(id="definition-details")
+    details = [
+        dd.text.strip() for dd in definitions_tab.select(".govuk-summary-list dd")
+    ]
+    assert f"{created_definition.sid}" in details
+    assert created_definition.description in details
+    assert created_definition.valid_between.lower.strftime("%d %b %Y") in details
+    assert intcomma(created_definition.initial_volume) in details
+    assert intcomma(created_definition.volume) in details
+    # critical state
+    assert "No" in details
+    assert f"{created_definition.quota_critical_threshold}%" in details
+    assert created_definition.measurement_unit.abbreviation.capitalize() in details
+
+
+def test_create_new_quota_definition_business_rule_violation(
+    valid_user_client,
+    approved_transaction,
+    date_ranges,
+):
+    quota = factories.QuotaOrderNumberFactory.create(
+        valid_between=date_ranges.no_end,
+        transaction=approved_transaction,
+    )
+
+    measurement_unit = factories.MeasurementUnitFactory.create()
+
+    form_data = {
+        "start_date_0": date_ranges.earlier.lower.day,
+        "start_date_1": date_ranges.earlier.lower.month,
+        "start_date_2": date_ranges.earlier.lower.year,
+        "description": "Lorem ipsum",
+        "volume": "1000000",
+        "initial_volume": "1000000",
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
+        "order_number": quota.pk,
+        "maximum_precision": "3",
+        "measurement_unit": measurement_unit.pk,
+    }
+
+    url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    assert soup.select(".govuk-error-summary")
+    errors = [el.text.strip() for el in soup.select(".govuk-error-summary__list li")]
+    assert (
+        "The validity period of the quota definition must be spanned by one of the validity periods of the referenced quota order number."
+        in errors
     )

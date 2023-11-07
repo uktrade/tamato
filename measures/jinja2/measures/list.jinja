@@ -32,7 +32,22 @@
         <p class="govuk-body-l">
             {{ objects_count }} results
         </p>
+        <p class="govuk-body govuk-!-margin-top-2">
+          You are currently viewing {{ objects_count }} results for:
+        </p>
+        <div class="govuk-grid-row">
+          {% for list in selected_filter_lists %}
+              <div class="govuk-grid-column-one-half">
+                <ul class="govuk-list govuk-list--bullet">
+                  {% for item in list %}
+                    <li>{{item}}</li>
+                  {%endfor%}
+                </ul>
+              </div>
+          {%endfor%}
+        </div>
 
+        <hr/>
       {% endif %}
       {% if object_list %}
         {% include list_include %}

@@ -302,6 +302,13 @@ class QuotaUpdate(
     pass
 
 
+class QuotaEditCreate(
+    QuotaUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
 class QuotaEditUpdate(
     QuotaUpdateMixin,
     EditTaricView,
@@ -489,6 +496,23 @@ class QuotaDefinitionUpdate(
     CreateTaricUpdateView,
 ):
     pass
+
+
+class QuotaDefinitionCreate(QuotaDefinitionUpdateMixin, CreateTaricCreateView):
+    template_name = "quota-definitions/create.jinja"
+    form_class = forms.QuotaDefinitionCreateForm
+
+    def form_valid(self, form):
+        quota = models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
+        form.instance.order_number = quota
+        return super().form_valid(form)
+
+
+class QuotaDefinitionConfirmCreate(
+    QuotaDefinitionMixin,
+    TrackedModelDetailView,
+):
+    template_name = "quota-definitions/confirm-create.jinja"
 
 
 class QuotaDefinitionDelete(

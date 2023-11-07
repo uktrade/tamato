@@ -13,8 +13,8 @@ from common.validators import ApplicabilityCode
 from geo_areas import constants
 from geo_areas.validators import AreaCode
 from measures import forms
-from measures.forms import MEASURE_COMMODITIES_FORMSET_PREFIX
-from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
+from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.forms import MeasureConditionsFormSet
 from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
@@ -35,6 +35,7 @@ def test_diff_components_not_called(
     duty_sentence_parser,
 ):
     with override_current_transaction(Transaction.objects.last()):
+        measure_form.request.POST = {}
         measure_form.save(commit=False)
 
     assert diff_components.called == False
@@ -42,6 +43,7 @@ def test_diff_components_not_called(
 
 @patch("measures.forms.diff_components")
 def test_diff_components_called(diff_components, measure_form, duty_sentence_parser):
+    measure_form.request.POST = {}
     measure_form.data.update(duty_sentence="6.000%")
     with override_current_transaction(Transaction.objects.last()):
         measure_form.save(commit=False)
@@ -786,6 +788,7 @@ def test_measure_forms_conditions_form_actions_validation_skipped(
     code,
     valid,
     date_ranges,
+    duty_sentence_parser,
 ):
     """
     Tests that MeasureConditionsForm is valid when actions 1-4 is used and no
@@ -793,14 +796,23 @@ def test_measure_forms_conditions_form_actions_validation_skipped(
 
     Initialised with minimal required fields.
     """
-    code_with_certificate = factories.MeasureConditionCodeFactory()
+    certificate = factories.CertificateFactory.create()
+    code_with_certificate = factories.MeasureConditionCodeFactory(
+        accepts_certificate=True,
+    )
     action = factories.MeasureActionFactory.create(
         code=code,
     )
+    start_date = date_ranges.normal.lower
 
     data = {
         "condition_code": code_with_certificate.pk,
         "action": action.pk,
+        "required_certificate": certificate.pk,
+        "reference_price": "11 GBP / 100 kg",
+        "start_date_0": start_date.day,
+        "start_date_1": start_date.month,
+        "start_date_2": start_date.year,
     }
     # MeasureConditionsForm.__init__ expects prefix kwarg for instantiating crispy forms `Layout` object
     form = forms.MeasureConditionsForm(data, prefix="")

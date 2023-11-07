@@ -11,7 +11,9 @@ from django.db.models import BooleanField
 from django.db.models import CharField
 from django.db.models import DateTimeField
 from django.db.models import FileField
+from django.db.models import IntegerChoices
 from django.db.models import Manager
+from django.db.models import PositiveSmallIntegerField
 from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.transaction import atomic
@@ -42,17 +44,42 @@ class EnvelopeInvalidQueuePosition(Exception):
     pass
 
 
-class EnvelopeNoTransactions(Exception):
-    pass
-
-
 class MultipleEnvelopesGenerated(Exception):
     pass
 
 
+class ValidationState(IntegerChoices):
+    """
+    Envelope validation states.
+
+    Failure states directly map to the exceptions that may be raised by
+    validating an envelope using `publishing.util.validate_envelope()`.
+    """
+
+    NOT_VALIDATED = 1, "Not validated"
+    """Indeterminate validity state / not yet completely validated."""
+
+    SUCCESSFULLY_VALIDATED = 2, "Successfully validated"
+    """Validation has been performed and was Successful."""
+
+    FAILED_DOCUMENT_INVALID = 3, "Document invalid"
+    """Failed validation due to etree.DocumentInvalid exception."""
+
+    FAILED_TARIC_DATA_ASSERTION_ERROR = 4, "TARIC data assertion error"
+    """Failed validation due to TaricDataAssertionError exception."""
+
+    @classmethod
+    def failed_validation_states(cls):
+        """Return all states that represent envelope validation failure."""
+        return (
+            cls.FAILED_DOCUMENT_INVALID,
+            cls.FAILED_TARIC_DATA_ASSERTION_ERROR,
+        )
+
+
 class EnvelopeManager(Manager):
     @atomic
-    def create(self, packaged_work_basket, **kwargs):
+    def create(self, packaged_work_basket: PackagedWorkBasket, **kwargs) -> "Envelope":
         """
         Create a new instance, from the packaged workbasket at the front of the
         queue.
@@ -84,14 +111,14 @@ class EnvelopeManager(Manager):
 
 
 class EnvelopeQuerySet(QuerySet):
-    def deleted(self):
+    def deleted(self) -> "EnvelopeQuerySet":
         """Filter in only those Envelope instances that have either a `deleted`
         attribute of `True` or no valid `xml_file` attribute (i.e. None)."""
         return self.filter(
             Q(deleted=True) | Q(xml_file=""),
         )
 
-    def non_deleted(self):
+    def non_deleted(self) -> "EnvelopeQuerySet":
         """Filter in only those Envelope instances that have both a `deleted`
         attribute of `False` and a valid `xml_file` attribute (i.e. not
         None)."""
@@ -99,7 +126,14 @@ class EnvelopeQuerySet(QuerySet):
             Q(deleted=False) & ~Q(xml_file=""),
         )
 
-    def for_year(self, year: Optional[int] = None):
+    def successfully_validated(self) -> "EnvelopeQuerySet":
+        """Filter in only those Envelope instances against which a successful
+        validation check has been performed."""
+        return self.filter(
+            validation_state=ValidationState.SUCCESSFULLY_VALIDATED,
+        )
+
+    def for_year(self, year: Optional[int] = None) -> "EnvelopeQuerySet":
         """
         Return all envelopes for a year, defaulting to this year.
 
@@ -115,7 +149,17 @@ class EnvelopeQuerySet(QuerySet):
             "envelope_id",
         )
 
-    def processed(self):
+    def last_envelope_for_year(self, year=None) -> "Envelope":
+        """"""
+        return (
+            Envelope.objects.for_year(year)
+            .filter(
+                packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+            )
+            .last()
+        )
+
+    def processed(self) -> "EnvelopeQuerySet":
         return self.filter(
             Q(
                 packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
@@ -125,22 +169,22 @@ class EnvelopeQuerySet(QuerySet):
             ),
         )
 
-    def unprocessed(self):
+    def unprocessed(self) -> "EnvelopeQuerySet":
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.AWAITING_PROCESSING,
         )
 
-    def currently_processing(self):
+    def currently_processing(self) -> "EnvelopeQuerySet":
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.CURRENTLY_PROCESSING,
         )
 
-    def successfully_processed(self):
+    def successfully_processed(self) -> "EnvelopeQuerySet":
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
         )
 
-    def failed_processing(self):
+    def failed_processing(self) -> "EnvelopeQuerySet":
         return self.filter(
             packagedworkbaskets__processing_state=ProcessingState.FAILED_PROCESSING,
         )
@@ -202,17 +246,18 @@ class Envelope(TimestampedMixin):
     )
     """Marks an envelope as deleted within contexts where an instance can not be
     immediately deleted from the DB."""
+    validation_state = PositiveSmallIntegerField(
+        choices=ValidationState.choices,
+        default=ValidationState.NOT_VALIDATED,
+    )
+    """Validation state captured from the result of calling
+    `publishing.util.validate_envelope()` with the Envelope instance's
+    `xml_file` object."""
 
     @classmethod
-    def next_envelope_id(cls):
+    def next_envelope_id(cls) -> str:
         """Get packaged workbaskets where proc state SUCCESS."""
-        envelope = (
-            Envelope.objects.for_year()
-            .filter(
-                packagedworkbaskets__processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
-            )
-            .last()
-        )
+        envelope = Envelope.objects.last_envelope_for_year()
 
         if envelope is None:
             # First envelope of the year.
@@ -268,7 +313,7 @@ class Envelope(TimestampedMixin):
         return len(list(objs)) > 0
 
     @property
-    def xml_file_name(self):
+    def xml_file_name(self) -> str:
         return f"DIT{str(self.envelope_id)}.xml"
 
     @property
@@ -277,30 +322,32 @@ class Envelope(TimestampedMixin):
         workbasket's processing state."""
         return self.packagedworkbaskets.last().get_processing_state_display()
 
-    @atomic
-    def upload_envelope(
-        self,
-        workbasket,
-    ):
-        """
-        Upload Envelope data to the s3 bucket and return artifacts for the
-        database.
+    @property
+    def successfully_validated(self) -> bool:
+        """Return True if the object's envelope has been successfully validated,
+        False otherwise."""
+        return self.validation_state == ValidationState.SUCCESSFULLY_VALIDATED
 
-        Side effects on success: Create Xml file and upload envelope XML to an
-        S3 object.
+    @atomic
+    def upload_envelope(self, workbasket: WorkBasket) -> ValidationState:
+        """
+        This method performs the following in order:
+        - Creates a TARIC3 XML file representation of `workbasket`.
+        - Validates the contents of the XML file.
+        - If validation fails, then the XML file is not saved (since it is
+          invalid).
+        - Else, if validation succeeds, then the XML file is saved to S3 and
+          associated with `Envelope.xml_file`.
+
+        The method returns the validation state of the XML envelope.
         """
 
         # transactions: will be serialized, then added to an envelope for upload.
         workbaskets = WorkBasket.objects.filter(pk=workbasket.pk)
         transactions = workbaskets.ordered_transactions()
 
-        if not transactions:
-            msg = f"transactions to upload:  {transactions.count()} does not contain any transactions."
-            logger.error(msg)
-            raise EnvelopeNoTransactions(msg)
-
-        # Envelope XML is written to temporary files for validation before anything is created
-        # in the database or uploaded to s3.
+        # Envelope XML is written to temporary files for validation before
+        # anything is created in the database or uploaded to s3.
         with tempfile.TemporaryDirectory(prefix="dit-tamato_") as temporary_directory:
             output_file_constructor = dit_file_generator(
                 temporary_directory,
@@ -324,33 +371,51 @@ class Envelope(TimestampedMixin):
             logger.info(f"rendered_envelope {rendered_envelope}")
             envelope_file = rendered_envelope.output
 
-            # Transaction envelope data XML is valid, ready for upload to s3
+            # Validate the XML envelope.
             envelope_file.seek(0, os.SEEK_SET)
             try:
                 validate_envelope(envelope_file, workbaskets)
             except etree.DocumentInvalid:
-                logger.error(f"{envelope_file.name}  is Envelope invalid !")
-                raise
+                logger.error(
+                    f"{envelope_file.name} validation failed with "
+                    f"DocumentInvalid exception!",
+                )
+                self.validation_state = ValidationState.FAILED_DOCUMENT_INVALID
+                self.save()
+                return self.validation_state
             except TaricDataAssertionError:
                 # Logged error in validate_envelope
-                raise
-            else:
-                # If valid upload to s3
-                total_transactions = len(rendered_envelope.transactions)
-                logger.info(
-                    f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid.  {total_transactions} transactions, using {envelope_file.tell()} bytes.",
+                logger.error(
+                    f"{envelope_file.name} validation failed with "
+                    f"TaricDataAssertionError exception!",
                 )
+                self.validation_state = (
+                    ValidationState.FAILED_TARIC_DATA_ASSERTION_ERROR
+                )
+                self.save()
+                return self.validation_state
 
-                envelope_file.seek(0, os.SEEK_SET)
-                content_file = ContentFile(envelope_file.read())
-                self.xml_file = content_file
+            # Transaction envelope data XML is valid, ready for upload to s3
+            self.validation_state = ValidationState.SUCCESSFULLY_VALIDATED
+            self.save()
 
-                envelope_file.seek(0, os.SEEK_SET)
+            total_transactions = len(rendered_envelope.transactions)
+            logger.info(
+                f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML "
+                f"valid. {total_transactions} transactions, using "
+                f"{envelope_file.tell()} bytes.",
+            )
 
-                self.xml_file.save(self.xml_file_name, content_file)
+            envelope_file.seek(0, os.SEEK_SET)
+            content_file = ContentFile(envelope_file.read())
+            self.xml_file = content_file
+            envelope_file.seek(0, os.SEEK_SET)
+            self.xml_file.save(self.xml_file_name, content_file)
 
-                logger.info("Workbasket saved to CDS S3 bucket")
-                logger.debug("Uploaded: %s", self.xml_file_name)
+            logger.info("Workbasket saved to CDS S3 bucket")
+            logger.debug("Uploaded: %s", self.xml_file_name)
 
-    def __repr__(self):
+            return self.validation_state
+
+    def __repr__(self) -> str:
         return f'<Envelope: envelope_id="{self.envelope_id}">'

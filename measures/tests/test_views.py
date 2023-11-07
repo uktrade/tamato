@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 from typing import OrderedDict
 from unittest.mock import patch
+from urllib.parse import urlencode
 
 import pytest
 from bs4 import BeautifulSoup
@@ -26,6 +27,7 @@ from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
+from geo_areas.validators import AreaCode
 from measures.business_rules import ME70
 from measures.constants import START
 from measures.constants import MeasureEditSteps
@@ -591,6 +593,31 @@ def test_measure_update_get_footnotes(session_with_workbasket):
     assert len(footnotes) == 0
 
 
+def test_measure_update_form_creates_footnote_association(
+    measure_form,
+    valid_user_client,
+):
+    """Test that editing a measure to add a new footnote doesn't require
+    pressing "Add another footnote" button before submitting (saving) the
+    form."""
+    footnote = factories.FootnoteFactory.create()
+    measure = measure_form.instance
+    assert not measure.footnotes.exists()
+
+    form_data = {k: v for k, v in measure_form.data.items() if v is not None}
+    # Add footnote to form data and not to "formset_initial" in session data (i.e not pressing "Add another footnote")
+    form_data["form-0-footnote"] = footnote.pk
+
+    url = reverse("measure-ui-edit", kwargs={"sid": measure.sid})
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    assert FootnoteAssociationMeasure.objects.filter(
+        footnoted_measure__sid=measure.sid,
+        associated_footnote=footnote,
+    ).exists()
+
+
 # https://uktrade.atlassian.net/browse/TP2000-340
 def test_measure_update_updates_footnote_association(measure_form, client, valid_user):
     """Tests that when updating a measure with an existing footnote the
@@ -858,6 +885,45 @@ def test_measure_update_remove_conditions(
     assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 0
 
 
+def test_measure_update_negative_condition(
+    client,
+    valid_user,
+    measure_edit_conditions_and_negative_action_data,
+    duty_sentence_parser,
+    erga_omnes,
+):
+    """Tests that html contains appropriate form validation errors after posting
+    to measure edit endpoint with a valid applicable_duty string for the
+    negative action."""
+
+    measure_edit_conditions_and_negative_action_data[
+        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-applicable_duty"
+    ] = "3.5%"
+
+    measure = Measure.objects.first()
+    url = reverse("measure-ui-edit", args=(measure.sid,))
+    client.force_login(valid_user)
+    response = client.post(url, data=measure_edit_conditions_and_negative_action_data)
+
+    assert response.status_code == 302
+
+    tx = Transaction.objects.last()
+    updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
+        sid=measure.sid,
+    )
+
+    assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 2
+
+    condition = updated_measure.conditions.approved_up_to_transaction(tx).last()
+
+    components = condition.components.approved_up_to_transaction(tx).order_by(
+        *MeasureConditionComponent._meta.ordering
+    )
+
+    assert components.count() == 1
+    assert components.first().duty_amount == 3.5
+
+
 def test_measure_update_invalid_conditions(
     client,
     valid_user,
@@ -865,14 +931,9 @@ def test_measure_update_invalid_conditions(
     duty_sentence_parser,
     erga_omnes,
 ):
-    """
-    Tests that html contains appropriate form validation errors after posting to
-    measure edit endpoint with compound reference_price and an invalid
-    applicable_duty string.
-
-    Also tests form validation on negative action code's checking that
-    reference_price, required_certificate & applicable_duty must be empty
-    """
+    """Tests that html contains appropriate form validation errors after posting
+    to measure edit endpoint with compound reference_price and an invalid
+    applicable_duty string."""
     measure_edit_conditions_and_negative_action_data[
         f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price"
     ] = "3.5% + 11 GBP / 100 kg"
@@ -914,12 +975,6 @@ def test_measure_update_invalid_conditions(
     assert (
         a_tags[2].text
         == "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
-    )
-
-    assert a_tags[3].attrs["href"] == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-__all__"
-    assert (
-        a_tags[3].text
-        == "If the action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’."
     )
 
 
@@ -2478,3 +2533,146 @@ def test_measure_list_redirects_to_search_with_no_params(valid_user_client):
 def test_measure_search_200(valid_user_client):
     response = valid_user_client.get(reverse("measure-ui-search"))
     assert response.status_code == 200
+
+
+def test_measures_list_sorting(valid_user_client, date_ranges):
+    # make measure types
+    type1 = factories.MeasureTypeFactory.create(sid="111")
+    type2 = factories.MeasureTypeFactory.create(sid="222")
+    type3 = factories.MeasureTypeFactory.create(sid="333")
+
+    # Make geo_groups
+    # Erga Omnes
+    area_1 = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1011",
+    )
+    # North America
+    area_2 = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="2200",
+    )
+    # European Union
+    area_3 = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1013",
+    )
+
+    # make measures
+    measure1 = factories.MeasureFactory.create(
+        measure_type=type1,
+        geographical_area=area_2,
+        valid_between=date_ranges.no_end,
+    )
+    measure2 = factories.MeasureFactory.create(
+        measure_type=type2,
+        geographical_area=area_3,
+        valid_between=date_ranges.earlier,
+    )
+    measure3 = factories.MeasureFactory.create(
+        measure_type=type3,
+        geographical_area=area_1,
+        valid_between=date_ranges.later,
+    )
+
+    sort_by_list = [
+        "?sort_by=sid&ordered=desc",
+        "?sort_by=sid&ordered=asc",
+        "?sort_by=measure_type&ordered=desc",
+        "?sort_by=measure_type&ordered=asc",
+        "?sort_by=start_date&ordered=desc",
+        "?sort_by=start_date&ordered=asc",
+        "?sort_by=end_date&ordered=desc",
+        "?sort_by=end_date&ordered=asc",
+        "?sort_by=geo_area&ordered=desc",
+        "?sort_by=geo_area&ordered=asc",
+    ]
+
+    expected_order_list = [
+        # sid desc, asc
+        [measure3.sid, measure2.sid, measure1.sid],
+        [measure1.sid, measure2.sid, measure3.sid],
+        # type desc, asc
+        [measure3.sid, measure2.sid, measure1.sid],
+        [measure1.sid, measure2.sid, measure3.sid],
+        # start date desc, asc
+        [measure3.sid, measure1.sid, measure2.sid],
+        [measure2.sid, measure1.sid, measure3.sid],
+        # end date desc, asc
+        [measure1.sid, measure3.sid, measure2.sid],
+        [measure2.sid, measure3.sid, measure1.sid],
+        # geo area desc, asc
+        [measure1.sid, measure2.sid, measure3.sid],
+        [measure3.sid, measure2.sid, measure1.sid],
+    ]
+
+    for index, item in enumerate(sort_by_list):
+        url = reverse("measure-ui-list") + item
+        response = valid_user_client.get(url)
+
+        assert response.status_code == 200
+
+        soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+        measure_sids = [
+            int(el.text) for el in soup.select(".govuk-table tbody tr td:nth-child(2)")
+        ]
+        assert measure_sids == expected_order_list[index]
+
+
+def test_measure_list_results_show_chosen_filters(valid_user_client, date_ranges):
+    # make measure types
+    type1 = factories.MeasureTypeFactory.create(sid="111")
+
+    # Erga Omnes
+    area_1 = factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1011",
+    )
+
+    # make measure
+    measure = factories.MeasureFactory.create(
+        measure_type=type1,
+        geographical_area=area_1,
+        valid_between=date_ranges.later,
+    )
+    url_params = urlencode(
+        {
+            "goods_nomenclature": measure.goods_nomenclature_id,
+            "sid": measure.sid,
+            "regulation": measure.generating_regulation_id,
+            "goods_nomenclature__item_id": measure.goods_nomenclature.item_id[:3],
+            "measure_type": measure.measure_type_id,
+            "geographical_area": measure.geographical_area_id,
+            "start_date_0": measure.valid_between.lower.day,
+            "start_date_1": measure.valid_between.lower.month,
+            "start_date_2": measure.valid_between.lower.year,
+            "end_date_0": measure.valid_between.upper.day,
+            "end_date_1": measure.valid_between.upper.month,
+            "end_date_2": measure.valid_between.upper.year,
+        },
+    )
+    response = valid_user_client.get(f"{reverse('measure-ui-list')}?{url_params}")
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    assert len(soup.find_all("ul", class_="govuk-list--bullet")) == 2
+
+    list = soup.find("ul", {"class": "govuk-list govuk-list--bullet"})
+    items = list.find_all("li")
+
+    current_tranx = Transaction.objects.last()
+    with override_current_transaction(current_tranx):
+        assert (
+            f"Commodity Code {measure.goods_nomenclature.autocomplete_label}"
+            in items[0]
+        )
+        assert (
+            f"Commodity Code starting with {measure.goods_nomenclature.item_id[:3]}"
+            in items[1]
+        )
+        assert f"ID {measure.sid}" in items[2]
+        assert (
+            f"Regulation {measure.generating_regulation.autocomplete_label}" in items[3]
+        )
+        assert f"Measure Type {measure.measure_type.autocomplete_label}" in items[4]

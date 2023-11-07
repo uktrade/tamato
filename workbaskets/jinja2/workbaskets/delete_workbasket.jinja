@@ -67,11 +67,19 @@
           "name": "action",
           "value": "delete"
         }) }}
-        {{ govukButton({
-          "text": "Cancel",
-          "href": url("workbaskets:current-workbasket"),
-          "classes": "govuk-button--secondary"
-        }) }}
+        {% if object.pk == request.session.workbasket["id"] %}
+          {{ govukButton({
+            "text": "Cancel",
+            "href": url("workbaskets:current-workbasket"),
+            "classes": "govuk-button--secondary"
+          }) }}
+        {% else %}
+          {{ govukButton({
+            "text": "Cancel",
+            "href": url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.pk}),
+            "classes": "govuk-button--secondary"
+          }) }}
+        {% endif %}
       </div>
     </form>
   </div>

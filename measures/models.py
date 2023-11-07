@@ -840,36 +840,10 @@ class MeasureCondition(GetTabURLMixin, TrackedModel):
 
         out.append(f"perform action {self.action.code} - {self.action.description}")
 
-        if self.condition_string:
-            out.append(f"\n\nApplicable duty is {self.condition_string}")
+        if self.duty_sentence:
+            out.append(f"\n\nApplicable duty is {self.duty_sentence}")
 
         return " ".join(out)
-
-    @property
-    def condition_string(self) -> str:
-        out: list[str] = []
-
-        components = self.components.latest_approved()
-        measures: set[str] = set()
-        measure_types: set[str] = set()
-        additional_codes: set[str] = set()
-
-        for mcc in components:
-            measures.add(mcc.condition.dependent_measure.sid)
-            measure_types.add(mcc.condition.dependent_measure.measure_type.sid)
-            if mcc.condition.dependent_measure.additional_code:
-                additional_codes.add(
-                    mcc.condition.dependent_measure.additional_code.sid,
-                )
-
-        if (
-            len(measures) == len(measure_types) == len(additional_codes) == 1
-            or len(measure_types) > 1
-            or len(additional_codes) > 1
-        ):
-            out.append(self.duty_sentence)
-
-        return "".join(out)
 
     @property
     def duty_sentence(self) -> str:

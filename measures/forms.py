@@ -45,6 +45,8 @@ from geo_areas.forms import GeoGroupForm
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import models
+from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import MeasureEditSteps
 from measures.models import MeasureExcludedGeographicalArea
 from measures.parsers import DutySentenceParser
@@ -57,9 +59,6 @@ from regulations.models import Regulation
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
-
-MEASURE_CONDITIONS_FORMSET_PREFIX = "measure-conditions-formset"
-MEASURE_COMMODITIES_FORMSET_PREFIX = "measure_commodities_duties_formset"
 
 
 class MeasureGeoAreaInitialDataMixin(FormSetSubmitMixin):
@@ -240,7 +239,6 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         """
         price = cleaned_data.get("reference_price")
         certificate = cleaned_data.get("required_certificate")
-        applicable_duty = cleaned_data.get("applicable_duty")
         action = cleaned_data.get("action")
 
         # Note this is a quick fix & hard coded for now
@@ -253,21 +251,12 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         if (
             not skip_price_and_reference_check
             and not is_negative_action_code
-            and (not price and not certificate)
-            or (price and certificate)
+            and (price and certificate)
         ):
             self.add_error(
                 None,
                 ValidationError(
                     "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’.",
-                ),
-            )
-
-        if is_negative_action_code and (price or certificate or applicable_duty):
-            self.add_error(
-                None,
-                ValidationError(
-                    "If the action code is negative you do not need to enter ‘reference price or quantity’, ‘certificate, licence or document’ or ‘duty’.",
                 ),
             )
 
@@ -379,7 +368,6 @@ class MeasureConditionsBaseFormSet(FormSet):
         Validates formset using validate_conditions_formset which will raise a
         ValidationError if the formset contains errors.
         """
-
         # cleaned_data is only set if forms are all valid
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
@@ -391,7 +379,11 @@ class MeasureConditionsBaseFormSet(FormSet):
                 continue
             cleaned_data += [form.cleaned_data]
 
-        validate_conditions_formset(cleaned_data)
+        actions = [form["action"] for form in cleaned_data]
+        negative_actions = models.MeasureActionPair.objects.filter(
+            negative_action__in=actions,
+        ).values_list("negative_action", flat=True)
+        validate_conditions_formset(cleaned_data, negative_actions)
 
         return cleaned_data
 
@@ -613,10 +605,8 @@ class MeasureForm(
         return cleaned_data
 
     def save(self, commit=True):
-        """Get the measure instance after form submission, get from session
-        storage any footnote pks created via the Footnote formset and any pks
-        not removed from the measure after editing and create footnotes via
-        FootnoteAssociationMeasure."""
+        """Updates a measure instance's geographical area and exclusions,
+        duties, and footnote associations following form submission."""
         instance = super().save(commit=False)
         if commit:
             instance.save()
@@ -692,10 +682,21 @@ class MeasureForm(
                 "component_measure",
             )
 
+        # Footnotes added via "Add another footnote" button
         footnote_pks = [
-            dct["footnote"]
-            for dct in self.request.session.get(f"formset_initial_{sid}", [])
+            form["footnote"]
+            for form in self.request.session.get(f"formset_initial_{sid}", [])
         ]
+
+        # Footnote submitted directly via "Save" button
+        form_footnote = self.request.POST.get(
+            f"form-{len(footnote_pks)}-footnote",
+            None,
+        )
+        if form_footnote:
+            footnote_pks.append(form_footnote)
+
+        # Footnotes already on measure
         footnote_pks.extend(self.request.session.get(f"instance_footnotes_{sid}", []))
 
         self.request.session.pop(f"formset_initial_{sid}", None)
@@ -818,7 +819,7 @@ class MeasureFilterForm(forms.Form):
                             Div(
                                 "modc",
                                 HTML(
-                                    "<h3 class='govuk-body'>To use the 'Include inherited measures' filter, enter a valid commodity code in the 'Select commodity code' filter above</h3>",
+                                    "<h3 class='govuk-body'>To use the 'Include inherited measures' filter, enter a valid commodity code in the 'Specific commodity code' filter above</h3>",
                                 ),
                                 css_class="govuk-grid-column-full form-group-margin-bottom-2",
                             ),

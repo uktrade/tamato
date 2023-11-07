@@ -197,6 +197,8 @@ def test_commodity_measures(url_name, valid_user_client, commodity, measures):
         "commodity-ui-detail-measures-as-defined",
         "commodity-ui-detail-measures-declarable",
         "commodity-ui-detail-hierarchy",
+        "commodity-ui-detail-descriptions",
+        "commodity-ui-detail-indent-history",
     ],
 )
 def test_commodity_views_200(url_name, valid_user_client, commodity, measures):
@@ -245,7 +247,7 @@ def test_commodity_measures_sorting_geo_area(
         url_name,
         kwargs={"sid": commodity.sid},
     )
-    response = valid_user_client.get(f"{url}?sort_by=geo_area&order=desc")
+    response = valid_user_client.get(f"{url}?sort_by=geo_area&ordered=desc")
     assert response.status_code == 200
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
@@ -259,7 +261,7 @@ def test_commodity_measures_sorting_geo_area(
         "commodity-ui-detail-measures-as-defined",
         kwargs={"sid": commodity.sid},
     )
-    response = valid_user_client.get(f"{url}?sort_by=geo_area&order=asc")
+    response = valid_user_client.get(f"{url}?sort_by=geo_area&ordered=asc")
     assert response.status_code == 200
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
@@ -298,7 +300,7 @@ def test_commodity_measures_sorting_start_date(
         url_name,
         kwargs={"sid": commodity.sid},
     )
-    response = valid_user_client.get(f"{url}?sort_by=start_date&order=desc")
+    response = valid_user_client.get(f"{url}?sort_by=start_date&ordered=desc")
     assert response.status_code == 200
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
@@ -311,7 +313,7 @@ def test_commodity_measures_sorting_start_date(
         "commodity-ui-detail-measures-as-defined",
         kwargs={"sid": commodity.sid},
     )
-    response = valid_user_client.get(f"{url}?sort_by=start_date&order=asc")
+    response = valid_user_client.get(f"{url}?sort_by=start_date&ordered=asc")
     assert response.status_code == 200
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
@@ -353,7 +355,7 @@ def test_commodity_measures_sorting_measure_type(
         url_name,
         kwargs={"sid": commodity.sid},
     )
-    response = valid_user_client.get(f"{url}?sort_by=measure_type&order=desc")
+    response = valid_user_client.get(f"{url}?sort_by=measure_type&ordered=desc")
     assert response.status_code == 200
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
@@ -366,7 +368,7 @@ def test_commodity_measures_sorting_measure_type(
         "commodity-ui-detail-measures-as-defined",
         kwargs={"sid": commodity.sid},
     )
-    response = valid_user_client.get(f"{url}?sort_by=measure_type&order=asc")
+    response = valid_user_client.get(f"{url}?sort_by=measure_type&ordered=asc")
     assert response.status_code == 200
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")

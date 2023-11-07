@@ -26,6 +26,24 @@ detail = "<footnote_type_id:footnote_type__footnote_type_id><footnote_id:footnot
 description_detail = "<footnote_type_id:described_footnote__footnote_type__footnote_type_id><footnote_id:described_footnote__footnote_id>/description/<sid:sid>"
 ui_patterns = get_ui_paths(views, detail, description=description_detail)
 
+ui_patterns += [
+    path(
+        f"{detail}/descriptions/",
+        views.FootnoteDetailDescriptions.as_view(),
+        name="footnote-ui-detail-descriptions",
+    ),
+    path(
+        f"{detail}/measures/",
+        views.FootnoteDetailMeasures.as_view(),
+        name="footnote-ui-detail-measures",
+    ),
+    path(
+        f"{detail}/version-control/",
+        views.FootnoteDetailVersionControl.as_view(),
+        name="footnote-ui-detail-version-control",
+    ),
+]
+
 urlpatterns = [
     path("footnotes/", include(ui_patterns)),
     path("api/", include(api_router.urls)),

@@ -1,0 +1,24 @@
+.environment-banner {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-left: 150px solid transparent;
+    border-top: 150px solid green;
+    color: white;
+    text-align: center;
+    font-size: 18px;
+    
+    .text-wrapper {
+        position: absolute;
+        font-weight: 900;
+        text-transform: uppercase;
+        transform: translate(-90%, -325%) rotate(45deg);
+        color: white;
+        background-color: transparent;
+        padding: 4px;
+        white-space: nowrap;
+    }
+}
+

@@ -11,14 +11,30 @@
             <a href="{{ url('workbaskets:workbasket-ui-violations') }}" class="govuk-link">View violations ({{request.session.workbasket.error_count}})</a>
         </li>
         <li class="{% if active_link == 'review' %}active{% endif %}">
-            <a href="{{ url('workbaskets:review-workbasket') }}" class="govuk-link">Review measures ({{request.session.workbasket.measure_count}})</a>
-        </li>
-        <li class="{% if active_link == 'review-goods' %}active{% endif %}">
-            <a href="{{ url('workbaskets:workbasket-ui-review-goods') }}" class="govuk-link">Review goods</a>
+            <a href="{{ url('workbaskets:workbasket-ui-review-measures', args=[request.session.workbasket.id]) }}" class="govuk-link">Review ({{request.session.workbasket.measure_count}})</a>
         </li>
         <li class="{% if active_link == 'compare' %}active{% endif %}">
             <a href="{{ url('workbaskets:workbasket-ui-compare') }}" class="govuk-link">Worksheet check</a>
         </li>
     </ul>
+</nav>
+{% endmacro %}
+
+{% macro create_workbasket_detail_navigation(active_tab) %}
+<nav class="workbasket-navigation govuk-!-margin-bottom-7">
+  <ul class="govuk-list">
+    <li class="{% if active_tab == "details" %}active{% endif %}">
+      <a href="{{ url("workbaskets:workbasket-ui-detail", args=[workbasket.pk]) }}" class="govuk-link">Details</a>
+    </li>
+    <li class="{% if active_tab == "changes" %}active{% endif %}">
+      <a href="{{ url("workbaskets:workbasket-ui-changes", args=[workbasket.pk]) }}" class="govuk-link">Changes</a>
+    </li>
+    <li class="{% if active_tab == "transaction-order" %}active{% endif %}">
+      <a href="{{ url("workbaskets:workbasket-ui-transaction-order", args=[workbasket.pk]) }}" class="govuk-link">Transaction order</a>
+    </li>
+    <li class="{% if active_tab == "review" %}active{% endif %}">
+      <a href="{{ url("workbaskets:workbasket-ui-review-measures", args=[workbasket.pk]) }}" class="govuk-link">Review</a>
+    </li>
+  </ul>
 </nav>
 {% endmacro %}

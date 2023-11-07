@@ -1,23 +1,7 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/details/macro.njk" import govukDetails %}
 {% from "components/table/macro.njk" import govukTable %}
-
-
-{% macro checkbox_item(field) -%}
-  {% set id = field.id_for_label %}
-  {% set name = field.name %}
-  {% set checked = "checked" if field.value() else "" %}
-  <div class="govuk-form-group">
-    <fieldset class="govuk-fieldset">
-      <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
-        <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="{{ id }}" name="{{ name }}" type="checkbox" {{ checked }} data-check-trackedmodel>
-          <label class="govuk-label govuk-checkboxes__label" for="{{ id }}"></label>
-        </div>
-      </div>
-    </fieldset>
-  </div>
-{%- endmacro %}
+{% from "macros/checkbox_item.jinja" import checkbox_item %}
 
 
 {% set checkbox_check_all -%}
