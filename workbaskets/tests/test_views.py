@@ -1522,14 +1522,34 @@ def test_workbasket_transaction_order_view_without_reorder_permission(client):
     assert not move_up_button and not move_down_button
 
 
-def test_workbasket_transaction_order_view_promote_transaction():
-    """Tests that `WorkBasketTransactionOrderView.promote_transaction()` swaps
-    transaction order of the promoted transaction with the (demoted) transaction
-    above it while others remain in place."""
-
+@pytest.mark.parametrize(
+    "form_action",
+    (
+        "promote-transaction",
+        "demote-transaction",
+    ),
+)
+def test_workbasket_transaction_order_view_move_transaction(form_action):
+    """Tests that transactions can be moved up (promoted) and moved down
+    (demoted) and doing so resets the rule check status of the workbasket."""
     workbasket = factories.WorkBasketFactory.create()
+
+    # transaction_1
+    model_1 = factories.TestModel1Factory.create(
+        transaction=workbasket.new_transaction(),
+    )
+
+    TrackedModelCheckFactory.create(
+        transaction_check__transaction=model_1.transaction,
+        model=model_1,
+        successful=True,
+    )
+    assert workbasket.tracked_model_checks.exists()
+
+    # transaction_2
     factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
-    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+
+    # transaction_3
     with workbasket.new_transaction() as transaction:
         factories.TestModel1Factory.create_batch(2, transaction=transaction)
 
@@ -1542,60 +1562,39 @@ def test_workbasket_transaction_order_view_promote_transaction():
         "workbaskets:workbasket-ui-transaction-order",
         kwargs={"pk": workbasket.pk},
     )
-    data = {"form-action": f"promote-transaction__{transaction_2.pk}"}
+    data = {"form-action": f"{form_action}__{transaction_2.pk}"}
     post_request = request.post(url, data=data)
 
     view = ui.WorkBasketTransactionOrderView(
         request=post_request,
         kwargs={"pk": workbasket.pk},
     )
-    view.promote_transaction(form_action=data["form-action"])
+    if form_action == "demote-transaction":
+        # Demoting transaction_2
+        view.demote_transaction(form_action=data["form-action"])
 
-    new_transaction_1, new_transaction_2, new_transaction_3 = list(
-        workbasket.transactions.all().order_by("order"),
-    )
+        new_transaction_1, new_transaction_2, new_transaction_3 = list(
+            workbasket.transactions.all().order_by("order"),
+        )
 
-    assert new_transaction_1 == transaction_2
-    assert new_transaction_2 == transaction_1
-    assert new_transaction_3 == transaction_3
+        assert new_transaction_1 == transaction_1
+        assert new_transaction_2 == transaction_3
+        assert new_transaction_3 == transaction_2
 
+    else:
+        # Promoting transaction_2
+        view.promote_transaction(form_action=data["form-action"])
 
-def test_workbasket_transaction_order_view_demote_transaction():
-    """Tests that `WorkBasketTransactionOrderView.demote_transaction()` swaps
-    transaction order of the demoted transaction with the (promoted) transaction
-    below it while others remain in place."""
+        new_transaction_1, new_transaction_2, new_transaction_3 = list(
+            workbasket.transactions.all().order_by("order"),
+        )
 
-    workbasket = factories.WorkBasketFactory.create()
-    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
-    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
-    with workbasket.new_transaction() as transaction:
-        factories.TestModel1Factory.create_batch(2, transaction=transaction)
+        assert new_transaction_1 == transaction_2
+        assert new_transaction_2 == transaction_1
+        assert new_transaction_3 == transaction_3
 
-    transaction_1, transaction_2, transaction_3 = list(
-        workbasket.transactions.all().order_by("order"),
-    )
-
-    request = RequestFactory()
-    url = reverse(
-        "workbaskets:workbasket-ui-transaction-order",
-        kwargs={"pk": workbasket.pk},
-    )
-    data = {"form-action": f"demote-transaction__{transaction_2.pk}"}
-    post_request = request.post(url, data=data)
-
-    view = ui.WorkBasketTransactionOrderView(
-        request=post_request,
-        kwargs={"pk": workbasket.pk},
-    )
-    view.demote_transaction(form_action=data["form-action"])
-
-    new_transaction_1, new_transaction_2, new_transaction_3 = list(
-        workbasket.transactions.all().order_by("order"),
-    )
-
-    assert new_transaction_1 == transaction_1
-    assert new_transaction_2 == transaction_3
-    assert new_transaction_3 == transaction_2
+    # Verify previous business rule checks are deleted
+    assert not workbasket.tracked_model_checks.exists()
 
 
 @pytest.mark.parametrize(
