@@ -8,6 +8,7 @@ from typing import get_type_hints
 import bs4
 from bs4 import NavigableString
 
+from common import validators
 from common.models import Transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
@@ -128,7 +129,7 @@ class MessageParser:
             bool, indicates if the parsed object can be updated without all children present
         """
 
-        if self.update_type != 3:
+        if self.update_type != validators.UpdateType.CREATE:
             # child objects allowed to be populated from history on updates
             return self.taric_object.__class__.allow_update_without_children
 
@@ -693,7 +694,7 @@ class BaseTaricParser:
         # This is determined by the lack of a parent_parser, if a parent parser is present that means the model will be
         # appended to a parent and should not be saved directly
         if self.parent_parser:
-            if self.update_type == 1:  # update
+            if self.update_type == validators.UpdateType.UPDATE:  # update
                 return True
             return False
         return True

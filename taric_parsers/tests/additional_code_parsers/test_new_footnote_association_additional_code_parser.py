@@ -134,7 +134,10 @@ class TestNewAdditionalCodeTypeParser:
         assert importer.issues() == []
         assert importer.can_save()
         assert FootnoteAssociationAdditionalCode.objects.all().count() == 2
-        assert FootnoteAssociationAdditionalCode.objects.all().last().update_type == 2
+        assert (
+            FootnoteAssociationAdditionalCode.objects.all().last().update_type
+            == UpdateType.DELETE
+        )
 
     def test_import_invalid_footnote(self, superuser):
         importer = preload_import(

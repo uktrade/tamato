@@ -90,4 +90,4 @@ class TestNewCertificateTypeParser:
 
         assert importer.can_save()
         assert CertificateType.objects.all().count() == 2
-        assert CertificateType.objects.all().last().update_type == 2
+        assert CertificateType.objects.all().last().update_type == UpdateType.DELETE

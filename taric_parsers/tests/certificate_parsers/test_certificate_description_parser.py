@@ -102,4 +102,6 @@ class TestNewCertificateDescriptionParser:
         assert importer.issues() == []
         assert importer.can_save()
         assert CertificateDescription.objects.all().count() == 2
-        assert CertificateDescription.objects.all().last().update_type == 2
+        assert (
+            CertificateDescription.objects.all().last().update_type == UpdateType.DELETE
+        )

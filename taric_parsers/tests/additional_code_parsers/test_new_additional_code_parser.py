@@ -108,7 +108,7 @@ class TestNewAdditionalCodeParser:
         assert importer.issues() == []
         assert importer.can_save()
         assert AdditionalCode.objects.all().count() == 2
-        assert AdditionalCode.objects.all().last().update_type == 2
+        assert AdditionalCode.objects.all().last().update_type == UpdateType.DELETE
 
     def test_import_invalid_type(self, superuser):
         importer = preload_import("additional_code_invalid_type_CREATE.xml", __file__)

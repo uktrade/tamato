@@ -118,7 +118,10 @@ class TestNewAdditionalCodeDescriptionParser:
         assert importer.can_save()
         assert importer.issues() == []
         assert AdditionalCodeDescription.objects.all().count() == 2
-        assert AdditionalCodeDescription.objects.all().last().update_type == 2
+        assert (
+            AdditionalCodeDescription.objects.all().last().update_type
+            == UpdateType.DELETE
+        )
 
     def test_import_invalid_additional_code(self, superuser):
         importer = preload_import(

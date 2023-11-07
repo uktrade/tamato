@@ -176,7 +176,7 @@ class TaricImporter:
 
                 if message.taric_object.is_child_object():
                     # We only need the parent to be present for creation, if it's an update it can be applied in isolation
-                    if message.update_type != 1:
+                    if message.update_type != validators.UpdateType.UPDATE:
                         parent = self.find_parent_for_parser_object(
                             message.taric_object,
                         )
@@ -230,7 +230,7 @@ class TaricImporter:
             transaction: (Required) Transaction, The database transaction the changes are being committed to.
         """
         try:
-            if message.update_type == 1:  # Update
+            if message.update_type == validators.UpdateType.UPDATE:  # Update
                 # find model based on identity key
                 model_instance = (
                     message.taric_object.__class__.model.objects.approved_up_to_transaction(
@@ -247,7 +247,7 @@ class TaricImporter:
                     **message.taric_object.model_attributes(transaction),
                 )
 
-            elif message.update_type == 2:  # Delete
+            elif message.update_type == validators.UpdateType.DELETE:  # Delete
                 model_instances = message.taric_object.__class__.model.objects.approved_up_to_transaction(
                     transaction,
                 ).filter(
@@ -275,7 +275,7 @@ class TaricImporter:
                         message=msg,
                     )
 
-            elif message.update_type == 3:  # Create
+            elif message.update_type == validators.UpdateType.CREATE:  # Create
                 message.taric_object.__class__.model.objects.create(
                     transaction=transaction,
                     **message.taric_object.model_attributes(
@@ -540,7 +540,8 @@ class TaricImporter:
         # If the model has been deleted previously in the same envelope : not valid
         elif (
             last_parsed_message_for_model
-            and last_parsed_message_for_model.update_type == 2
+            and last_parsed_message_for_model.update_type
+            == validators.UpdateType.DELETE
         ):
             change_valid = False
             message = (
@@ -641,7 +642,8 @@ class TaricImporter:
         # If the model has been deleted previously in the same envelope : not valid
         elif (
             last_parsed_message_for_model
-            and last_parsed_message_for_model.update_type == 2
+            and last_parsed_message_for_model.update_type
+            == validators.UpdateType.DELETE
         ):
             change_valid = False
             message = (
@@ -724,11 +726,11 @@ class TaricImporter:
                 )
 
     def validate_update_type_for(self, parsed_message, parsed_transaction):
-        if parsed_message.update_type == 3:  # Create
+        if parsed_message.update_type == validators.UpdateType.CREATE:  # Create
             self.validate_update_type_create(parsed_message, parsed_transaction)
-        if parsed_message.update_type == 1:  # Update
+        if parsed_message.update_type == validators.UpdateType.UPDATE:  # Update
             self.validate_update_type_update(parsed_message, parsed_transaction)
-        if parsed_message.update_type == 2:  # Delete
+        if parsed_message.update_type == validators.UpdateType.DELETE:  # Delete
             self.validate_update_type_delete(parsed_message, parsed_transaction)
 
     def issues(self, filter_by_issue_type: str = None) -> list[ImportIssueReportItem]:

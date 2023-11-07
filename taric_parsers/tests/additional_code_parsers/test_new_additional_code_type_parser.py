@@ -99,7 +99,7 @@ class TestNewAdditionalCodeTypeParser:
         assert importer.issues() == []
         assert importer.can_save()
         assert AdditionalCodeType.objects.all().count() == 2
-        assert AdditionalCodeType.objects.all().last().update_type == 2
+        assert AdditionalCodeType.objects.all().last().update_type == UpdateType.DELETE
 
     def test_import_no_description(self, superuser):
         importer = preload_import(
