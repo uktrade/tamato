@@ -624,9 +624,7 @@ class TaricImporter:
                     message.taric_object.model_query_parameters()
                     == parsed_message.taric_object.model_query_parameters()
                 ):
-                    if type(message.taric_object) is type(
-                        parsed_message.taric_object,
-                    ):
+                    if type(message.taric_object) is type(parsed_message.taric_object):
                         # We have a match
                         last_parsed_message_for_model = message
 
