@@ -1491,11 +1491,14 @@ def test_workbasket_transaction_order_view_with_reorder_permission(valid_user_cl
     table_rows = page.select("table > tbody > tr > td.item.first-cell")
     checkboxes = page.select(".govuk-checkboxes__input")
     remove_button = page.find("button", value="remove-selected")
-    move_up_button = page.select("button.promote")
-    move_down_button = page.select("button.demote")
+    move_top_button = page.find("button", string=re.compile(r"Move to top"))
+    move_bottom_button = page.find("button", string=re.compile(r"Move to bottom"))
+    move_up_button = page.find("button", string=re.compile(r"Move up"))
+    move_down_button = page.find("button", string=re.compile(r"Move down"))
 
     assert len(table_rows) == workbasket.tracked_models.count()
     assert checkboxes and remove_button
+    assert move_top_button and move_bottom_button
     assert move_up_button and move_down_button
 
 
@@ -1520,27 +1523,37 @@ def test_workbasket_transaction_order_view_without_reorder_permission(client):
     assert response.status_code == 200
 
     page = BeautifulSoup(response.content, "html.parser")
-    move_up_button = page.select("button.promote")
-    move_down_button = page.select("button.demote")
-    assert not move_up_button and not move_down_button
+    promote_buttons = page.select("button.promote")
+    demote_buttons = page.select("button.demote")
+    assert not promote_buttons and not demote_buttons
 
 
 @pytest.mark.parametrize(
-    "form_action",
-    (
-        "promote-transaction",
-        "demote-transaction",
-    ),
+    ("form_action", "transaction", "new_order"),
+    [
+        # old_order = [0,1,2,3]
+        ("promote-transaction-top", 3, [3, 0, 1, 2]),
+        ("demote-transaction-bottom", 0, [1, 2, 3, 0]),
+        ("promote-transaction", 1, [1, 0, 2, 3]),
+        ("demote-transaction", 1, [0, 2, 1, 3]),
+    ],
 )
-def test_workbasket_transaction_order_view_move_transaction(form_action):
-    """Tests that transactions can be moved up (promoted) and moved down
-    (demoted) and doing so resets the rule check status of the workbasket."""
+def test_workbasket_transaction_order_view_move_transactions(
+    form_action,
+    transaction,
+    new_order,
+    valid_user_client,
+):
+    """Tests that `WorkBasketTransactionOrderView` promotes and demotes
+    transactions in a workbasket, and that doing so resets the rule check status
+    of the workbasket."""
     workbasket = factories.WorkBasketFactory.create()
-
-    # transaction_1
     model_1 = factories.TestModel1Factory.create(
         transaction=workbasket.new_transaction(),
     )
+    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
 
     TrackedModelCheckFactory.create(
         transaction_check__transaction=model_1.transaction,
@@ -1549,54 +1562,23 @@ def test_workbasket_transaction_order_view_move_transaction(form_action):
     )
     assert workbasket.tracked_model_checks.exists()
 
-    # transaction_2
-    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+    transactions = list(workbasket.transactions.all().order_by("order"))
 
-    # transaction_3
-    with workbasket.new_transaction() as transaction:
-        factories.TestModel1Factory.create_batch(2, transaction=transaction)
-
-    transaction_1, transaction_2, transaction_3 = list(
-        workbasket.transactions.all().order_by("order"),
-    )
-
-    request = RequestFactory()
     url = reverse(
         "workbaskets:workbasket-ui-transaction-order",
         kwargs={"pk": workbasket.pk},
     )
-    data = {"form-action": f"{form_action}__{transaction_2.pk}"}
-    post_request = request.post(url, data=data)
+    data = {"form-action": f"{form_action}__{transactions[transaction].pk}"}
 
-    view = ui.WorkBasketTransactionOrderView(
-        request=post_request,
-        kwargs={"pk": workbasket.pk},
-    )
-    if form_action == "demote-transaction":
-        # Demoting transaction_2
-        view.demote_transaction(form_action=data["form-action"])
+    response = valid_user_client.post(url, data=data)
+    assert response.status_code == 302
 
-        new_transaction_1, new_transaction_2, new_transaction_3 = list(
-            workbasket.transactions.all().order_by("order"),
-        )
+    reordered_transactions = list(workbasket.transactions.all().order_by("order"))
+    assert reordered_transactions[0] == transactions[new_order[0]]
+    assert reordered_transactions[1] == transactions[new_order[1]]
+    assert reordered_transactions[2] == transactions[new_order[2]]
+    assert reordered_transactions[3] == transactions[new_order[3]]
 
-        assert new_transaction_1 == transaction_1
-        assert new_transaction_2 == transaction_3
-        assert new_transaction_3 == transaction_2
-
-    else:
-        # Promoting transaction_2
-        view.promote_transaction(form_action=data["form-action"])
-
-        new_transaction_1, new_transaction_2, new_transaction_3 = list(
-            workbasket.transactions.all().order_by("order"),
-        )
-
-        assert new_transaction_1 == transaction_2
-        assert new_transaction_2 == transaction_1
-        assert new_transaction_3 == transaction_3
-
-    # Verify previous business rule checks are deleted
     assert not workbasket.tracked_model_checks.exists()
 
 
