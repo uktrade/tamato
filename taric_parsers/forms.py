@@ -10,10 +10,11 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 
+from importer.models import BatchImportError
 from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
 from taric_parsers.chunker import chunk_taric
-from taric_parsers.management.commands.import_batch import run_batch
+from taric_parsers.importer import run_batch
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
@@ -123,12 +124,26 @@ class UploadTaricForm(NewImportFormMixin, forms.ModelForm):
         else:
             record_group = (None,)
 
-        self.process_file(
+        chunk_count = self.process_file(
             self.files["taric_file"],
             import_batch,
             user,
             record_group=record_group,
             workbasket_id=workbasket.id,
         )
+
+        if chunk_count < 1:
+            import_batch.failed()
+            import_batch.save()
+
+            # Create warning, no items to import
+            BatchImportError.objects.create(
+                batch=import_batch,
+                issue_type="WARNING",
+                description="No data to import, typically this would be because it was a comm code only import and no changes detected that TAP requires or that it was an empty file",
+                taric_change_type="",
+                object_details="",
+                transaction_id="",
+            )
 
         return import_batch

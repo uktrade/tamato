@@ -18,23 +18,14 @@ class TaricImportList(RequiresSuperuserMixin, WithPaginationListView):
         ImportBatch.objects.all()
         .order_by("-created_at")
         .annotate(
-            running_chunks=Count(
-                "chunks",
-                filter=Q(chunks__status=ImporterChunkStatus.RUNNING),
-                distinct=True,
-            ),
-            pending_chunks=Count(
-                "chunks",
-                filter=Q(chunks__status=ImporterChunkStatus.WAITING),
-                distinct=True,
-            ),
-            errored_chunks=Count(
-                "chunks",
-                filter=Q(chunks__status=ImporterChunkStatus.ERRORED),
-                distinct=True,
-            ),
-            import_issues=Count(
+            import_issues_error_count=Count(
                 "issues",
+                filter=Q(issues__issue_type="ERROR"),
+                distinct=True,
+            ),
+            import_issues_warning_count=Count(
+                "issues",
+                filter=Q(issues__issue_type="WARNING"),
                 distinct=True,
             ),
             completed_chunks=Count(

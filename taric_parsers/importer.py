@@ -17,6 +17,7 @@ from taric_parsers.parsers.measure_parser import *  # noqa
 from taric_parsers.parsers.quota_parser import *  # noqa
 from taric_parsers.parsers.regulation_parser import *  # noqa
 from taric_parsers.parsers.taric_parser import *  # noqa
+from taric_parsers.tasks import import_chunk
 from workbaskets.models import WorkBasket
 
 
@@ -751,3 +752,19 @@ class TaricImporter:
                         issues.append(issue)
 
         return issues
+
+
+def run_batch(
+    batch_id: int,
+    partition_scheme_setting: str,
+    username: str,
+    workbasket_id: str = None,
+):
+    import_batch = ImportBatch.objects.get(pk=batch_id)
+
+    import_chunk.delay(
+        chunk_pk=import_batch.chunks.first().pk,
+        workbasket_id=workbasket_id,
+        partition_scheme_setting=partition_scheme_setting,
+        username=username,
+    )

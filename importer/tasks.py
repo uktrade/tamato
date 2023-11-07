@@ -6,7 +6,8 @@ from typing import Optional
 from typing import Sequence
 
 from common.celery import app
-from importer import models
+from importer.models import ImporterChunkStatus
+from importer.models import ImporterXMLChunk
 from importer.taric import process_taric_xml_stream
 from importer.utils import build_dependency_tree
 from taric_parsers.importer import *
@@ -43,7 +44,7 @@ def import_chunk(
     """
 
     partition_scheme = get_partition_scheme(partition_scheme_setting)
-    chunk = models.ImporterXMLChunk.objects.get(pk=chunk_pk)
+    chunk = ImporterXMLChunk.objects.get(pk=chunk_pk)
     batch = chunk.batch
 
     logger.info(
@@ -54,7 +55,7 @@ def import_chunk(
         chunk.chunk_number,
     )
 
-    chunk.status = models.ImporterChunkStatus.RUNNING
+    chunk.status = ImporterChunkStatus.RUNNING
     chunk.save()
 
     try:
@@ -72,15 +73,15 @@ def import_chunk(
         batch.failed()
         batch.save()
 
-        chunk.status = models.ImporterChunkStatus.ERRORED
+        chunk.status = ImporterChunkStatus.ERRORED
         chunk.save()
         raise e
 
-    chunk.status = models.ImporterChunkStatus.DONE
+    chunk.status = ImporterChunkStatus.DONE
     chunk.save()
 
     batch_errored_chunks = batch.chunks.filter(
-        status=models.ImporterChunkStatus.ERRORED,
+        status=ImporterChunkStatus.ERRORED,
     )
     if not batch.ready_chunks.exists():
         if not batch_errored_chunks:
@@ -127,7 +128,7 @@ def setup_chunk_task(
     get_partition_scheme(partition_scheme_setting)
 
     if batch.ready_chunks.filter(
-        record_code=record_code, status=models.ImporterChunkStatus.RUNNING, **kwargs
+        record_code=record_code, status=ImporterChunkStatus.RUNNING, **kwargs
     ).exists():
         return
 
@@ -140,7 +141,7 @@ def setup_chunk_task(
     if not chunk:
         return
 
-    chunk.status = models.ImporterChunkStatus.RUNNING
+    chunk.status = ImporterChunkStatus.RUNNING
     chunk.save()
     import_chunk.delay(
         chunk.pk,
@@ -191,7 +192,7 @@ def find_and_run_next_batch_chunks(
         logger.info(f"BatchImport {batch.pk} finished.")
 
         if (
-            batch.chunks.exclude(status=models.ImporterChunkStatus.DONE)
+            batch.chunks.exclude(status=ImporterChunkStatus.DONE)
             .defer("chunk_text")
             .exists()
         ):
@@ -199,7 +200,7 @@ def find_and_run_next_batch_chunks(
             logger.info("Batch %s errored", batch)
             return
 
-        for dependent_batch in models.ImportBatch.objects.depends_on(
+        for dependent_batch in ImportBatch.objects.depends_on(
             batch,
         ).dependencies_finished():
             logger.info("setting up tasks for %s", dependent_batch)
@@ -227,7 +228,7 @@ def find_and_run_next_batch_chunks(
     dependency_tree = build_dependency_tree()
 
     record_codes = set(
-        batch.chunks.exclude(status=models.ImporterChunkStatus.DONE)
+        batch.chunks.exclude(status=ImporterChunkStatus.DONE)
         .values_list("record_code", flat=True)
         .distinct(),
     )

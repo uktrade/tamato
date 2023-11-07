@@ -45,13 +45,20 @@ def import_chunk(
     workbasket = WorkBasket.objects.get(id=workbasket_id)
 
     try:
-        taric_parsers.importer.TaricImporter(
+        importer = taric_parsers.importer.TaricImporter(
             import_batch=batch,
             taric3_xml_string=chunk.chunk_text,
             workbasket_title=f"Importing {datetime.now()}",
             author_username=username,
             workbasket=workbasket,
         )
+
+        if len(importer.issues(filter_by_issue_type="ERROR")) > 0:
+            chunk.status = ImporterChunkStatus.ERRORED
+        else:
+            chunk.status = ImporterChunkStatus.DONE
+
+        chunk.save()
 
     except Exception as e:
         batch.failed()
@@ -75,9 +82,6 @@ def import_chunk(
         import_error.save()
 
         raise e
-
-    chunk.status = ImporterChunkStatus.DONE
-    chunk.save()
 
     batch_errored_chunks = batch.chunks.filter(
         status=ImporterChunkStatus.ERRORED,

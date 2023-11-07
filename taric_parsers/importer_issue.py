@@ -1,3 +1,6 @@
+import re
+
+
 class ImportIssueReportItem:
     """
     Class for in memory representation if an issue detected on import, the
@@ -47,3 +50,8 @@ class ImportIssueReportItem:
 
     def __repr__(self):
         return self.__str__()
+
+    def missing_object_method_name(self):
+        """Returns a string representing the related object data type (but
+        replaces full stops with underscores for readability."""
+        return re.sub("\\.", "_", self.related_object_type)
