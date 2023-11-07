@@ -147,26 +147,26 @@ class CommodityImportListView(
             import_batch.status == ImportBatchStatus.SUCCEEDED
             and workbasket.status == WorkflowStatus.EDITING
         ):
-            return {"text": "READY", "tag_class": "govuk-tag govuk-tag--purple"}
+            return {"text": "READY", "tag_class": "status-badge-purple"}
         elif (
             import_batch.status == ImportBatchStatus.SUCCEEDED
             and workbasket.status == WorkflowStatus.PUBLISHED
         ):
-            return {"text": "PUBLISHED", "tag_class": "govuk-tag govuk-tag--green"}
+            return {"text": "PUBLISHED", "tag_class": "status-badge-green"}
         elif (
             import_batch.status == ImportBatchStatus.SUCCEEDED
             and workbasket.status == WorkflowStatus.ARCHIVED
         ):
-            return {"text": "EMPTY", "tag_class": "govuk-tag govuk-tag--grey"}
+            return {"text": "EMPTY", "tag_class": "status-badge-grey"}
         elif (
             import_batch.status == ImportBatchStatus.IMPORTING
             and workbasket.status == None
         ):
-            return {"text": "IMPORTING", "tag_class": "govuk-tag govuk-tag--blue"}
+            return {"text": "IMPORTING", "tag_class": "status-badge"}
         elif import_batch.status == ImportBatchStatus.FAILED:
-            return {"text": "FAILED", "tag_class": "govuk-tag govuk-tag--red"}
+            return {"text": "FAILED", "tag_class": "status-badge-red"}
         else:
-            return {"text": "NONE", "tag_class": "govuk-tag govuk-tag--blue"}
+            return {"text": "NONE", "tag_class": "status-badge"}
 
 
 class CommodityImportCreateView(
