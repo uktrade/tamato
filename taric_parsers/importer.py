@@ -731,7 +731,7 @@ class TaricImporter:
         if parsed_message.update_type == validators.UpdateType.DELETE:  # Delete
             self.validate_update_type_delete(parsed_message, parsed_transaction)
 
-    def issues(self, filter_by_issue_type: str = None) -> list[ImportIssueReportItem]:
+    def issues(self, filter_by_issue_type: str = None) -> List[ImportIssueReportItem]:
         """
         Get issues identified during import.
 
