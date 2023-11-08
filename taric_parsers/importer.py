@@ -17,15 +17,16 @@ from taric_parsers.parsers.measure_parser import *  # noqa
 from taric_parsers.parsers.quota_parser import *  # noqa
 from taric_parsers.parsers.regulation_parser import *  # noqa
 from taric_parsers.parsers.taric_parser import *  # noqa
+from taric_parsers.taric_xml_source import TaricXMLSourceBase
 from taric_parsers.tasks import import_chunk
 from workbaskets.models import WorkBasket
 
 
 class TaricImporter:
     """
-    TARIC importer. This class is initialised with either a taric3 file or a
-    taric 3 XML string. Subsequently the XML is parsed and objects in memory are
-    created and validated.
+    TARIC importer. This class is initialised with either a TARIC 3 file or a
+    TARIC 3 XML string. Subsequently, the XML is parsed and objects in memory
+    are created and validated.
 
     If issues with the import are identified, the issues are logged in the
     database against the import report. If the import has no issues the importer
@@ -39,8 +40,7 @@ class TaricImporter:
     def __init__(
         self,
         import_batch: ImportBatch,
-        taric3_file_path: str = None,
-        taric3_xml_string: str = None,
+        taric_xml_source: TaricXMLSourceBase,
         workbasket_title: str = None,
         author_username: str = None,
         workbasket: WorkBasket = None,
@@ -68,24 +68,8 @@ class TaricImporter:
                     "Author username is required when no workbasket is provided",
                 )
 
-        if not taric3_file_path and not taric3_xml_string:
-            raise Exception(
-                "No valid source provided, either taric3_file or taric3_xml_string need to be populated",
-            )
-
-        if taric3_xml_string and taric3_file_path:
-            raise Exception(
-                "Multiple valid source provided, either taric3_file or taric3_xml_string need to be populated, pick one",
-            )
-
         self.parsed_transactions = []
-
-        if taric3_xml_string:
-            self.raw_xml = taric3_xml_string
-        else:
-            # Read xml into string
-            with open(taric3_file_path, "r") as file:
-                self.raw_xml = file.read()
+        self.raw_xml = taric_xml_source.get_xml_string()
 
         # load the taric3 file into memory, via beautiful soup
         self.bs_taric3_file = BeautifulSoup(self.raw_xml, "xml")

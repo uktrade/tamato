@@ -44,6 +44,7 @@ from common.util import TaricDateRange
 from common.util import get_accessor
 from common.util import get_field_tuple
 from taric_parsers.importer import TaricImporter
+from taric_parsers.taric_xml_source import TaricXMLFileSource
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
@@ -949,7 +950,7 @@ def preload_import(file_name, from_file, approve_workbasket=False):
 
     importer = TaricImporter(
         import_batch=import_batch,
-        taric3_file_path=file_to_import,
+        taric_xml_source=TaricXMLFileSource(file_to_import),
         workbasket_title=f"Importing stuff {fuzzy.FuzzyText(length=15)}",
         author_username=user.username,
         workbasket=workbasket,

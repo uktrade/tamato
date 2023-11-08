@@ -1,11 +1,14 @@
+from datetime import datetime
 from logging import getLogger
 from typing import Sequence
 
 import taric_parsers.importer
 from common.celery import app
+from importer.models import BatchImportError
+from importer.models import ImportBatch
 from importer.models import ImporterChunkStatus
 from importer.models import ImporterXMLChunk
-from taric_parsers.importer import *
+from taric_parsers.taric_xml_source import TaricXMLStringSource
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 
@@ -47,7 +50,7 @@ def import_chunk(
     try:
         importer = taric_parsers.importer.TaricImporter(
             import_batch=batch,
-            taric3_xml_string=chunk.chunk_text,
+            taric_xml_source=TaricXMLStringSource(chunk.chunk_text),
             workbasket_title=f"Importing {datetime.now()}",
             author_username=username,
             workbasket=workbasket,
@@ -89,11 +92,11 @@ def import_chunk(
 
     if not batch.ready_chunks.exists():
         if not batch_errored_chunks:
-            # This was batch's last chunk requiring processing and it has no
+            # This was batch's last chunk requiring processing, and it has no
             # chunks with status ERRORED, so transition batch to SUCCEEDED.
             batch.succeeded()
         else:
-            # This was batch's last chunk requiring processing and it did have
+            # This was batch's last chunk requiring processing, and it did have
             # chunks with status ERRORED, so transition batch to ERRORED.
             batch.failed()
         batch.save()
@@ -115,7 +118,7 @@ def setup_new_chunk_task(
     Once a task is made it is important that the task is not duplicated. To stop
     this the system checks the chunk status. If the status is `RUNNING`,
     `ERRORED` or `DONE` the task is not setup. If the status is `WAITING` then
-    the status is updated to `RUNNING` and the task is setup.
+    the status is updated to `RUNNING` and the task is set up.
     """
 
     # Call get_partition_scheme before invoking celery so that it can raise ImproperlyConfigured if
