@@ -15,8 +15,8 @@ from importer.namespaces import make_schema_dataclass
 from importer.namespaces import nsmap
 from importer.namespaces import xsd_schema_paths
 from importer.utils import build_dependency_tree
+from settings import MAX_IMPORT_FILE_SIZE
 
-MAX_FILE_SIZE = 1024 * 1024 * 50  # Will keep chunks roughly close to 50MB
 Tags = make_schema_dataclass(xsd_schema_paths)
 
 logger = getLogger(__name__)
@@ -263,7 +263,7 @@ def write_transaction_to_chunk(
         .replace(b"xmlns:ns1=", b"xmlns:ns2="),
     )
 
-    if chunk.tell() > MAX_FILE_SIZE:
+    if chunk.tell() > MAX_IMPORT_FILE_SIZE:
         key = (record_code, chapter_heading) if chapter_heading else record_code
         close_chunk(chunk, batch, key)
         chunks_in_progress.pop(key)

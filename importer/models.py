@@ -10,7 +10,7 @@ from django_fsm import transition
 
 from common.models import TimestampedMixin
 from importer.storages import CommodityImporterStorage
-from taric_parsers.importer_issue import *
+from taric_parsers.importer_issue import ImportIssueReportItem
 from workbaskets.util import clear_workbasket
 from workbaskets.validators import WorkflowStatus
 

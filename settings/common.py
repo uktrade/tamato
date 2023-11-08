@@ -323,10 +323,13 @@ CACHES = {
     },
 }
 
+# Importer settings
 NURSERY_CACHE_ENGINE = os.getenv(
     "NURSERY_CACHE_ENGINE",
     "importer.cache.memory.MemoryCacheEngine",
 )
+
+MAX_IMPORT_FILE_SIZE = 1024 * 1024 * 50
 
 # Settings about retrying uploads if the bucket or endpoint cannot be contacted.
 # Names correspond to celery settings for retrying tasks:

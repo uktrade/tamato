@@ -6,11 +6,11 @@ from typing import Optional
 from typing import Sequence
 
 from common.celery import app
+from importer.models import ImportBatch
 from importer.models import ImporterChunkStatus
 from importer.models import ImporterXMLChunk
 from importer.taric import process_taric_xml_stream
 from importer.utils import build_dependency_tree
-from taric_parsers.importer import *
 from workbaskets.models import get_partition_scheme
 
 logger = getLogger(__name__)
