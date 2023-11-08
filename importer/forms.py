@@ -19,8 +19,6 @@ from common.util import get_mime_type
 from common.util import parse_xml
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
-
-# from importer.management.commands.run_new_import_batch import new_run_batch
 from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.models import WorkBasket
