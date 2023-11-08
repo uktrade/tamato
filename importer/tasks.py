@@ -13,16 +13,6 @@ from importer.utils import build_dependency_tree
 from taric_parsers.importer import *
 from workbaskets.models import get_partition_scheme
 
-# noinspection PyUnresolvedReferences
-# noinspection PyUnresolvedReferences
-# noinspection PyUnresolvedReferences
-# noinspection PyUnresolvedReferences
-# noinspection PyUnresolvedReferences
-# noinspection PyUnresolvedReferences
-# noinspection PyUnresolvedReferences
-# noinspection PyUnresolvedReferences
-
-
 logger = getLogger(__name__)
 
 

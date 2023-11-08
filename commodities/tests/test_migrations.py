@@ -84,8 +84,6 @@ def test_main_migration_works(migrator, setup_content_types):
         6,
     )
 
-    print("last chance")
-
 
 @pytest.mark.django_db()
 def test_main_migration_ignores_if_no_data(migrator, setup_content_types):
