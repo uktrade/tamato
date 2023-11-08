@@ -24,10 +24,27 @@
 
     {% set rows = [] %}
     {% for row in report_lines %}
-      {% set cells = [] %}
-      {% for cell in row %}
-        {{ cells.append({"text": cell}) or "" }}
-      {% endfor %}
+      {% set item_search_link -%}
+        {% if row["item_id_search_url"] %}
+          <a
+            class="govuk-link govuk-!-font-weight-bold"
+            href="{{ row['item_id_search_url'] }}"
+          >{{ row["item_id"] }}</a>
+        {% else %}
+          ""
+        {% endif %}
+      {%- endset %}
+
+      {% set cells = [
+        {"text": row["update_type"]},
+        {"text": row["record_name"]},
+        {"html": item_search_link},
+        {"text": row["suffix"]},
+        {"text": row["start_date"]},
+        {"text": row["end_date"]},
+        {"text": row["comments"]},
+      ] or "" %}
+
       {{ rows.append(cells) or "" }}
     {% endfor %}
 

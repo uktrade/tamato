@@ -1209,15 +1209,22 @@ class WorkbasketReviewGoodsView(
             goods_report = reporter.create_report()
 
             context["report_lines"] = [
-                [
-                    line.update_type.title(),
-                    line.record_name.title(),
-                    line.goods_nomenclature_item_id,
-                    line.suffix,
-                    line.validity_start_date,
-                    line.validity_end_date,
-                    line.comments,
-                ]
+                {
+                    "update_type": line.update_type.title() if line.update_type else "",
+                    "record_name": line.record_name.title() if line.record_name else "",
+                    "item_id": line.goods_nomenclature_item_id,
+                    "item_id_search_url": (
+                        f"{reverse('commodity-ui-list')}"
+                        f"?item_id={line.goods_nomenclature_item_id}"
+                        f"&active_state=active"
+                        if line.goods_nomenclature_item_id
+                        else ""
+                    ),
+                    "suffix": line.suffix,
+                    "start_date": line.validity_start_date,
+                    "end_date": line.validity_end_date,
+                    "comments": line.comments,
+                }
                 for line in goods_report.report_lines
             ]
             context["import_batch_pk"] = import_batch.pk
