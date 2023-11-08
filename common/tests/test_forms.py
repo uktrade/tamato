@@ -3,6 +3,7 @@ from django import forms
 
 from common.forms import BindNestedFormMixin
 from common.forms import FormSet
+from common.forms import FormSetField
 from common.forms import RadioNested
 from common.forms import formset_add_or_delete
 from common.forms import formset_factory
@@ -314,3 +315,87 @@ def test_unprefix_formset_data(data, exp):
 )
 def test_formset_add_or_delete(data, exp):
     assert formset_add_or_delete(data) == exp
+
+
+class CakesForm(forms.Form):
+    flavour = forms.CharField(
+        required=True,
+        error_messages={"required": ["Add a flavour"]},
+    )
+    frosting = forms.CharField(
+        required=True,
+        error_messages={"required": ["Add a frosting"]},
+    )
+    filling = forms.CharField(
+        required=True,
+        error_messages={"required": ["Add a filling"]},
+    )
+
+
+CakesFormSet = formset_factory(
+    CakesForm,
+    prefix="cakes-formset",
+    formset=FormSet,
+    min_num=1,
+    max_num=10,
+    extra=0,
+    validate_min=True,
+    validate_max=True,
+)
+
+
+class NestedFormSetForm(BindNestedFormMixin, forms.Form):
+    cakes = FormSetField(
+        nested_forms=[CakesFormSet],
+        required=False,
+    )
+    other_field = forms.CharField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.bind_nested_forms(*args, **kwargs)
+
+
+def test_formset_field():
+    form = NestedFormSetForm(
+        {
+            "other_field": "thing",
+            "cakes-formset-0-flavour": "chocolate",
+            "cakes-formset-0-frosting": "chocolate",
+            "cakes-formset-0-filling": "chocolate",
+            "cakes-formset-1-flavour": "strawberry",
+            "cakes-formset-1-frosting": "strawberry",
+            "cakes-formset-1-filling": "strawberry",
+        },
+    )
+    assert form.is_valid() is True
+    assert form.cleaned_data == {
+        "other_field": "thing",
+        "cakes": None,
+        "cakes-formset": [
+            {
+                "flavour": "chocolate",
+                "frosting": "chocolate",
+                "filling": "chocolate",
+            },
+            {
+                "flavour": "strawberry",
+                "frosting": "strawberry",
+                "filling": "strawberry",
+            },
+        ],
+    }
+
+
+def test_formset_field_errors():
+    form = NestedFormSetForm(
+        {
+            "other_field": "",
+            "cakes-formset-0-flavour": "",
+            "cakes-formset-0-frosting": "",
+            "cakes-formset-0-filling": "",
+        },
+    )
+    assert not form.is_valid()
+    assert "Please submit at least 1 form." in form.errors["cakes"]
+    assert "This field is required." in form.errors["other_field"]
