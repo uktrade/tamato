@@ -12,6 +12,7 @@ from taric_parsers.parsers.regulation_parser import *
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.new_importer
 class TestParserHelper:
     def test_get_parser_by_model(self):
         class MadeUpModel:
