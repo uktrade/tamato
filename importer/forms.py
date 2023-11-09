@@ -205,7 +205,7 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
         label="Upload a TARIC file",
         help_text=(
             "Valid TARIC files contain XML and usually have a .xml file name "
-            "extension. They contain goods nomenclure items and related "
+            "extension. They contain goods nomenclature items and related "
             "items."
         ),
     )
