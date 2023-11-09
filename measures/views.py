@@ -85,9 +85,7 @@ class MeasureMixin:
     model: Type[TrackedModel] = Measure
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-
-        return Measure.objects.approved_up_to_transaction(tx)
+        return Measure.objects.current()
 
 
 class MeasureSessionStoreMixin:
