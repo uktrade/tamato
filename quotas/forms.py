@@ -9,6 +9,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
@@ -184,15 +185,61 @@ class QuotaUpdateForm(
         ]
         # if we just submitted the form, overwrite initial with submitted data
         # this prevents newly added origin data being cleared if the form does not pass validation
-        if bool(self.data.get("submit")):
+        if self.data.get("submit"):
             new_data = unprefix_formset_data(
                 QUOTA_ORIGINS_FORMSET_PREFIX,
                 self.data.copy(),
             )
             initial = new_data
-            print(initial)
 
         return initial
+
+    def add_extra_error(self, field, error):
+        """
+        A modification of Django's add_error method that allows us to add data
+        to self._errors under custom keys that are not field names or
+        NON_FIELD_ERRORS.
+
+        Used to pass errors to the React form.
+        """
+        if not isinstance(error, ValidationError):
+            error = ValidationError(error)
+
+        if hasattr(error, "error_dict"):
+            if field is not None:
+                raise TypeError(
+                    "The argument `field` must be `None` when the `error` "
+                    "argument contains errors for multiple fields.",
+                )
+            else:
+                error = error.error_dict
+        else:
+            error = {field or NON_FIELD_ERRORS: error.error_list}
+
+        for field, error_list in error.items():
+            if field not in self.errors:
+                self._errors[field] = self.error_class()
+            self._errors[field].extend(error_list)
+            if field in self.cleaned_data:
+                del self.cleaned_data[field]
+
+    def clean(self):
+        submitted_data = unprefix_formset_data(QUOTA_ORIGINS_FORMSET_PREFIX, self.data)
+
+        for i, origin_data in enumerate(submitted_data):
+            # instantiate a form per origin data to do validation
+            form = QuotaOrderNumberOriginUpdateForm(
+                data=origin_data,
+                initial=origin_data,
+            )
+            if not form.is_valid():
+                for field, e in form.errors.as_data().items():
+                    self.add_extra_error(
+                        f"{QUOTA_ORIGINS_FORMSET_PREFIX}-{i}-{field}",
+                        e,
+                    )
+        # TODO: clean, validate, add to cleaned_data, create origins
+        return super().clean()
 
     def init_layout(self, request):
         self.helper = FormHelper(self)
@@ -206,6 +253,7 @@ class QuotaUpdateForm(
                 "request": request,
                 "geo_area_options": self.geo_area_options,
                 "origins_initial": self.get_origins_initial(),
+                "errors": self.errors,
             },
         )
 

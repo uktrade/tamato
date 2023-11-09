@@ -13,6 +13,11 @@
   </div>
 </div>
 <script nonce="{{ request.csp_nonce }}">
+  var originsErrors = {
+    {% for k, errorlist in errors.as_data().items() %}
+      "{{ k }}": "{% for errors in errorlist %}{% for error in errors %}{{ error|safe }}{% if not loop.last %}\n{% endif %}{% endfor %}{% endfor %}",
+    {% endfor %}
+  };
   var originsData = {{origins_initial|safe}};
   var geoAreasOptions = [
     {"name": "", "value": ""},
