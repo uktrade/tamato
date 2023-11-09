@@ -1,5 +1,6 @@
 import logging
 import re
+from datetime import date
 from functools import cached_property
 
 import boto3
@@ -1207,6 +1208,7 @@ class WorkbasketReviewGoodsView(
         if taric_file:
             reporter = GoodsReporter(import_batch.taric_file)
             goods_report = reporter.create_report()
+            today = date.today()
 
             context["report_lines"] = [
                 {
@@ -1217,6 +1219,16 @@ class WorkbasketReviewGoodsView(
                         f"{reverse('commodity-ui-list')}"
                         f"?item_id={line.goods_nomenclature_item_id}"
                         f"&active_state=active"
+                        if line.goods_nomenclature_item_id
+                        else ""
+                    ),
+                    "measures_search_url": (
+                        f"{reverse('measure-ui-list')}"
+                        f"?goods_nomenclature__item_id={line.goods_nomenclature_item_id}"
+                        f"&end_date_modifier=after"
+                        f"&end_date_0={today.day}"
+                        f"&end_date_1={today.month}"
+                        f"&end_date_2={today.year}"
                         if line.goods_nomenclature_item_id
                         else ""
                     ),

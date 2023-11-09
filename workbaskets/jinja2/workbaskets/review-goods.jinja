@@ -35,10 +35,21 @@
         {% endif %}
       {%- endset %}
 
+      {% set measures_search_link -%}
+        {% if row["measures_search_url"] %}
+          [<a
+            class="govuk-link govuk-!-font-weight-bold"
+            href="{{ row['measures_search_url'] }}"
+          >measures</a>]
+        {% else %}
+          ""
+        {% endif %}
+      {%- endset %}
+
       {% set cells = [
         {"text": row["update_type"]},
         {"text": row["record_name"]},
-        {"html": item_search_link},
+        {"html": item_search_link ~ measures_search_link},
         {"text": row["suffix"]},
         {"text": row["start_date"]},
         {"text": row["end_date"]},
