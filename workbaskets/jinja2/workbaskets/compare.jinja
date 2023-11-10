@@ -19,7 +19,9 @@
       "items": [
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:current-workbasket") }
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:current-workbasket") },
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Checks", "href": url("workbaskets:workbasket-checks") },
+      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Compare" }
     ]})
   }}
 {% endblock %}
@@ -29,7 +31,7 @@
     {{ page_title }}
   </h1>
 
-  {{ navigation(request) }}
+  {{ navigation(request, "check") }}
     <h2 class="govuk-heading-m">Introduction</h2>
     <p class="govuk-body">You can use this checker to compare worksheet measure data (specifically commodity codes, duty rates, start dates and end dates) with measures in your workbasket. It will list all matching measures that are in both your worksheet and workbasket.</p>
     <p class="govuk-body">Currently, it won’t show you any measures that are in your worksheet but not in your workbasket and vice versa. It also won’t check whether you are comparing the same number of worksheet and workbasket measures.</p>
@@ -68,9 +70,8 @@
     }) }}
 
   {% endif %}
-
+  <h2 class="govuk-heading-l">{{ matching_measures|length }} matching measure{{ matching_measures|pluralize }} found</h2>
   {% if matching_measures %}
-    <h2 class="govuk-heading-l">{{ matching_measures|length }} matching measure{{ matching_measures|pluralize }} found</h2>
     <p class="govuk-body">These are measures that are the same across both your worksheet and your workbasket.</p>
 
     {% set table_rows = [] %}

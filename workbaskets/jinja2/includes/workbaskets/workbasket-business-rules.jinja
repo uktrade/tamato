@@ -122,21 +122,17 @@
   {% set rule_check_button %}{% endset %}
   {% set rule_check_block %}{% endset %}
 {% endif %}
-{% block content %}
-<div>
-  {{rule_check_block}}
-    <dl class="govuk-summary-list">
-    <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">
-          Live status
-        </dt>
-        <dd class="govuk-summary-list__value">
-          {{ live_rule_check_status }}
-        </dd>
-        <dd class="govuk-summary-list__actions">
-          {{ rule_check_button }}
-        </dd>
-    </div>
-    </dl>
-</div>
-{% endblock %}
+{{rule_check_block}}
+  <dl class="govuk-summary-list">
+  <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">
+        Live status
+      </dt>
+      <dd class="govuk-summary-list__value">
+        {{ live_rule_check_status }}
+      </dd>
+      <dd class="govuk-summary-list__actions">
+        {{ rule_check_button }}
+      </dd>
+  </div>
+  </dl>

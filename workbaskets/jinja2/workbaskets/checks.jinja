@@ -1,7 +1,6 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/button/macro.njk" import govukButton %}
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
-{% from "macros/fake_tabs.jinja" import fake_tabs %}
 
 {% set page_title %}
   Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Checks

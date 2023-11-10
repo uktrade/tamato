@@ -1124,43 +1124,6 @@ class WorkBasketChecksView(FormView):
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
 
-    @property
-    def paginator(self):
-        return Paginator(
-            self.workbasket.tracked_models.with_transactions_and_models(),
-            per_page=50,
-        )
-
-    @property
-    def latest_upload(self):
-        return Upload.objects.order_by("created_date").last()
-
-    @property
-    def uploaded_envelope_dates(self):
-        """Gets a list of all transactions from the `latest_approved_workbasket`
-        in the order they were updated and returns a dict with the first and
-        last transactions as values for "start" and "end" keys respectively."""
-        if self.latest_upload:
-            transactions = self.latest_upload.envelope.transactions.order_by(
-                "updated_at",
-            )
-            return {
-                "start": transactions.first().updated_at,
-                "end": transactions.last().updated_at,
-            }
-        return None
-
-    def _append_url_page_param(self, url, form_action):
-        """Based upon 'form_action', append a 'page' URL parameter to the given
-        url param and return the result."""
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        page_number = 1
-        if form_action == "page-prev":
-            page_number = page.previous_page_number()
-        elif form_action == "page-next":
-            page_number = page.next_page_number()
-        return f"{url}?page={page_number}"
-
     @atomic
     def run_business_rules(self):
         """Remove old checks, start new checks via a Celery task and save the
@@ -1194,19 +1157,8 @@ class WorkBasketChecksView(FormView):
         except KeyError:
             return reverse("home")
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        kwargs["objects"] = page.object_list
-        return kwargs
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        user_can_delete_workbasket = (
-            self.request.user.is_superuser
-            or self.request.user.has_perm("workbaskets.delete_workbasket")
-        )
         # set to true if there is an associated goods import batch with an unsent notification
         try:
             import_batch = self.workbasket.importbatch
@@ -1223,10 +1175,7 @@ class WorkBasketChecksView(FormView):
         context.update(
             {
                 "workbasket": self.workbasket,
-                "page_obj": page,
-                "uploaded_envelope_dates": self.uploaded_envelope_dates,
                 "rule_check_in_progress": False,
-                "user_can_delete_workbasket": user_can_delete_workbasket,
                 "unsent_notification": unsent_notifcation,
             },
         )
@@ -1245,24 +1194,6 @@ class WorkBasketChecksView(FormView):
             )
 
         return context
-
-    def form_valid(self, form):
-        store = SessionStore(
-            self.request,
-            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
-        )
-        form_action = self.request.POST.get("form-action")
-        store.remove_items(form.cleaned_data)
-        if form_action == "remove-all":
-            object_list = {
-                self.form_class.field_name_for_object(obj): True
-                for obj in self.workbasket.tracked_models
-            }
-            store.add_items(object_list)
-        else:
-            to_add = {key: value for key, value in form.cleaned_data.items() if value}
-            store.add_items(to_add)
-        return super().form_valid(form)
 
 
 class WorkBasketReviewView(PermissionRequiredMixin, WithPaginationListView):
