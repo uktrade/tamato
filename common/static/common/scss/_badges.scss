@@ -35,24 +35,24 @@
 
 .status-badge-purple {
   @extend .status-badge;
-  color: #3d2375;
-  background-color: #dbd5e9;
+  color: govuk-shade(govuk-colour("purple"), 20);
+  background: govuk-tint(govuk-colour("purple"), 80);
 }
 
 .status-badge-grey {
   @extend .status-badge;
-  color: #383f43;
-  background-color: #eeefef;
+  color: govuk-shade(govuk-colour("dark-grey", $legacy: "grey-1"), 30);
+  background: govuk-tint(govuk-colour("dark-grey", $legacy: "grey-1"), 90);
 }
 
 .status-badge-red {
   @extend .status-badge;
-  color: #942514;
-  background-color: #f6d7d2;
+  color: govuk-shade(govuk-colour("red"), 30);
+  background: govuk-tint(govuk-colour("red"), 80);
 }
 
 .status-badge-green {
   @extend .status-badge;
-  color: #005a30;
-  background-color: #cce2d8;
+  color: govuk-shade(govuk-colour("green"), 20);
+  background: govuk-tint(govuk-colour("green"), 80);
 }
