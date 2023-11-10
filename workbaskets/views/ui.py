@@ -1036,24 +1036,6 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
         except DataUpload.DoesNotExist:
             return None
 
-    @staticmethod
-    def format_duty_sentence(duty_sentence):
-        if duty_sentence:
-            duty_rate = re.search("[0-9]+(.[0-9]+)?", duty_sentence).group(0)
-        else:
-            return
-        if "." in duty_rate:
-            before_decimal = duty_rate.split(".")[0]
-            after_decimal = duty_rate.split(".")[1].ljust(3, "0")
-            new_ds = duty_sentence.replace(
-                duty_rate,
-                before_decimal + "." + after_decimal,
-            )
-            return new_ds
-        else:
-            new_ds = duty_sentence.replace(duty_rate, duty_rate + ".000")
-            return new_ds
-
     def form_valid(self, form):
         try:
             existing = DataUpload.objects.get(workbasket=self.workbasket)
@@ -1062,7 +1044,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             for row in form.cleaned_data["data"]:
                 DataRow.objects.create(
                     valid_between=row.valid_between,
-                    duty_sentence=self.format_duty_sentence(row.duty_sentence),
+                    duty_sentence=row.duty_sentence,
                     commodity=row.commodity,
                     data_upload=existing,
                 )
@@ -1075,7 +1057,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             for row in form.cleaned_data["data"]:
                 DataRow.objects.create(
                     valid_between=row.valid_between,
-                    duty_sentence=self.format_duty_sentence(row.duty_sentence),
+                    duty_sentence=row.duty_sentence,
                     commodity=row.commodity,
                     data_upload=data_upload,
                 )
