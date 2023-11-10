@@ -170,7 +170,7 @@ class CommodityImportListView(
                     return {"text": "EMPTY", "tag_class": "status-badge-grey"}
 
             else:
-                return {"text": "NONE", "tag_class": "status-badge"}
+                return {"text": ""}
 
 
 class CommodityImportCreateView(
