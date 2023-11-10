@@ -17,7 +17,7 @@
         <input type="submit" class="button-link" name="submit" value="View Workbasket {{object.workbasket.pk}}">
       </form>
     {% elif goods_status(object) == "no_goods" %}
-      <span>N/A</span>
+      <span>No action</span>
     {%- else -%}
       <span></span>
     {%- endif -%}
