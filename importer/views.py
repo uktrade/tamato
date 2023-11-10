@@ -142,6 +142,7 @@ class CommodityImportListView(
         """Returns a dict with text and a css class for a ui friendly label for
         an import batch."""
         workbasket = import_batch.workbasket
+
         if import_batch.status:
             if import_batch.status == ImportBatchStatus.IMPORTING:
                 return {"text": "IMPORTING", "tag_class": "status-badge"}
@@ -149,7 +150,7 @@ class CommodityImportListView(
             elif import_batch.status == ImportBatchStatus.FAILED:
                 return {"text": "FAILED", "tag_class": "status-badge-red"}
 
-            if workbasket.status:
+            if workbasket:
                 if (
                     import_batch.status == ImportBatchStatus.SUCCEEDED
                     and workbasket.status == WorkflowStatus.EDITING
@@ -168,8 +169,8 @@ class CommodityImportListView(
                 ):
                     return {"text": "EMPTY", "tag_class": "status-badge-grey"}
 
-        else:
-            return {"text": "NONE", "tag_class": "status-badge"}
+            else:
+                return {"text": "NONE", "tag_class": "status-badge"}
 
 
 class CommodityImportCreateView(
