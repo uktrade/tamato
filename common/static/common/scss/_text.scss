@@ -1,34 +1,3 @@
-.status-badge {
-  font-weight: bold;
-  color: govuk-colour("white");
-  background-color: govuk-colour("blue");
-  padding: 0px 10px;
-}
-
-.status-badge-purple {
-  @extend .status-badge;
-  color: #3d2375;
-  background-color: #dbd5e9;
-}
-
-.status-badge-grey {
-  @extend .status-badge;
-  color: #383f43;
-  background-color: #eeefef;
-}
-
-.status-badge-red {
-  @extend .status-badge;
-  color: #942514;
-  background-color: #f6d7d2;
-}
-
-.status-badge-green {
-  @extend .status-badge;
-  color: #005a30;
-  background-color: #cce2d8;
-}
-
 // makes a button or input element look like a hyperlink
 .button-link {
   background: none;
