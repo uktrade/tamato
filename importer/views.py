@@ -142,30 +142,31 @@ class CommodityImportListView(
         """Returns a dict with text and a css class for a ui friendly label for
         an import batch."""
         workbasket = import_batch.workbasket
+        if import_batch.status:
+            if import_batch.status == ImportBatchStatus.IMPORTING:
+                return {"text": "IMPORTING", "tag_class": "status-badge"}
 
-        if (
-            import_batch.status == ImportBatchStatus.SUCCEEDED
-            and workbasket.status == WorkflowStatus.EDITING
-        ):
-            return {"text": "READY", "tag_class": "status-badge-purple"}
+            elif import_batch.status == ImportBatchStatus.FAILED:
+                return {"text": "FAILED", "tag_class": "status-badge-red"}
 
-        elif (
-            import_batch.status == ImportBatchStatus.SUCCEEDED
-            and workbasket.status == WorkflowStatus.PUBLISHED
-        ):
-            return {"text": "PUBLISHED", "tag_class": "status-badge-green"}
+            if workbasket.status:
+                if (
+                    import_batch.status == ImportBatchStatus.SUCCEEDED
+                    and workbasket.status == WorkflowStatus.EDITING
+                ):
+                    return {"text": "READY", "tag_class": "status-badge-purple"}
 
-        elif (
-            import_batch.status == ImportBatchStatus.SUCCEEDED
-            and workbasket.status == WorkflowStatus.ARCHIVED
-        ):
-            return {"text": "EMPTY", "tag_class": "status-badge-grey"}
+                elif (
+                    import_batch.status == ImportBatchStatus.SUCCEEDED
+                    and workbasket.status == WorkflowStatus.PUBLISHED
+                ):
+                    return {"text": "PUBLISHED", "tag_class": "status-badge-green"}
 
-        elif import_batch.status == ImportBatchStatus.IMPORTING:
-            return {"text": "IMPORTING", "tag_class": "status-badge"}
-
-        elif import_batch.status == ImportBatchStatus.FAILED:
-            return {"text": "FAILED", "tag_class": "status-badge-red"}
+                elif (
+                    import_batch.status == ImportBatchStatus.SUCCEEDED
+                    and workbasket.status == WorkflowStatus.ARCHIVED
+                ):
+                    return {"text": "EMPTY", "tag_class": "status-badge-grey"}
 
         else:
             return {"text": "NONE", "tag_class": "status-badge"}
