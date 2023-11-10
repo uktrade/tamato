@@ -1218,7 +1218,6 @@ class WorkbasketReviewGoodsView(
                     "item_id_search_url": (
                         f"{reverse('commodity-ui-list')}"
                         f"?item_id={line.goods_nomenclature_item_id}"
-                        f"&active_state=active"
                         if line.goods_nomenclature_item_id
                         else ""
                     ),
