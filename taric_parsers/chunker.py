@@ -10,11 +10,11 @@ from django.template.loader import render_to_string
 
 from importer import models
 from importer.models import BatchImportError
-from importer.namespaces import make_schema_dataclass
-from importer.namespaces import nsmap
-from importer.namespaces import xsd_schema_paths
-from importer.utils import build_dependency_tree
 from settings import MAX_IMPORT_FILE_SIZE
+from taric_parsers.namespaces import make_schema_dataclass
+from taric_parsers.namespaces import nsmap
+from taric_parsers.namespaces import xsd_schema_paths
+from taric_parsers.utils import build_dependency_tree
 
 Tags = make_schema_dataclass(xsd_schema_paths)
 

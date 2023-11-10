@@ -7,7 +7,6 @@ from unittest import mock
 import pytest
 from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
-from test_namespaces import get_snippet_transaction
 
 from commodities.models.orm import GoodsNomenclature
 from common.tests import factories
@@ -18,10 +17,13 @@ from settings import MAX_IMPORT_FILE_SIZE
 from taric_parsers import chunker
 from taric_parsers.chunker import chunk_taric
 from taric_parsers.chunker import filter_transaction_records
+from taric_parsers.chunker import find_or_create_chunk
 from taric_parsers.chunker import get_chapter_heading
 from taric_parsers.chunker import get_record_code
 from taric_parsers.chunker import sort_comm_code_messages
 from taric_parsers.chunker import write_transaction_to_chunk
+
+from .test_namespaces import get_snippet_transaction
 
 TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
 
@@ -51,14 +53,15 @@ def filter_snippet_transaction(
     return filter_transaction_records(transaction, record_group)
 
 
+@pytest.mark.new_importer
 @mock.patch("importer.chunker.TemporaryFile")
 def test_get_chunk(mock_temp_file: mock.MagicMock):
     """Asserts that the correct chunk is found or created for writing to."""
     mock_temp_file.side_effect = BytesIO
     chunks_in_progress = {}
 
-    chunk1 = chunker.get_chunk(chunks_in_progress, "1")
-    chunk2 = chunker.get_chunk(
+    chunk1 = find_or_create_chunk(chunks_in_progress, "1")
+    chunk2 = find_or_create_chunk(
         chunks_in_progress,
         "2",
         record_code="400",
@@ -73,6 +76,7 @@ def test_get_chunk(mock_temp_file: mock.MagicMock):
     assert chunk2.read() == get_chunk_opener("2")
 
 
+@pytest.mark.new_importer
 def test_close_chunk():
     """Asserts that chunks are properly closed and added to the batch."""
     batch = factories.ImportBatchFactory.create()
@@ -97,6 +101,7 @@ def test_close_chunk():
     )
 
 
+@pytest.mark.new_importer
 def test_filter_transaction_records_positive(
     taric_schema_tags,
     record_group,
@@ -119,6 +124,7 @@ def test_filter_transaction_records_positive(
     assert len(transaction) == 1
 
 
+@pytest.mark.new_importer
 def test_filter_transaction_records_negative(
     taric_schema_tags,
     record_group,
@@ -135,6 +141,7 @@ def test_filter_transaction_records_negative(
     assert transaction is None
 
 
+@pytest.mark.new_importer
 def test_chunk_taric(example_goods_taric_file_location):
     """Tests that the chunker creates an ImporterXMLChunk object in the db from
     the loaded XML file."""
@@ -149,6 +156,7 @@ def test_chunk_taric(example_goods_taric_file_location):
     assert chunk.chunk_text
 
 
+@pytest.mark.new_importer
 @mock.patch("importer.chunker.get_record_code")
 def test_write_transaction_to_chunk_record_code_not_in_tree(
     get_record_code,
@@ -176,6 +184,7 @@ def test_write_transaction_to_chunk_record_code_not_in_tree(
     assert result is None
 
 
+@pytest.mark.new_importer
 def test_get_record_code(envelope_commodity, taric_schema_tags, record_group):
     """Test that get_record_code returns the correct value for GoodsNomenclature
     when passed an xml ElementTree element."""
@@ -189,6 +198,7 @@ def test_get_record_code(envelope_commodity, taric_schema_tags, record_group):
     assert record_code == GoodsNomenclature.record_code
 
 
+@pytest.mark.new_importer
 def test_get_chapter_heading_commodity(
     envelope_commodity,
     taric_schema_tags,
@@ -207,6 +217,7 @@ def test_get_chapter_heading_commodity(
     assert chapter_heading == soup.find("oub:goods.nomenclature.item.id").string[:2]
 
 
+@pytest.mark.new_importer
 def test_get_chapter_heading_measure(envelope_measure, taric_schema_tags):
     """Test that get_chapter_heading accepts an xml ElementTree element and
     returns a string matching the measure's goods nomenclature item_id in the
@@ -218,18 +229,19 @@ def test_get_chapter_heading_measure(envelope_measure, taric_schema_tags):
     assert chapter_heading == soup.find("oub:goods.nomenclature.item.id").string[:2]
 
 
-@mock.patch("importer.chunker.get_chunk")
-@mock.patch("importer.chunker.close_chunk")
+@pytest.mark.new_importer
+@mock.patch("taric_parsers.chunker.find_or_create_chunk")
+@mock.patch("taric_parsers.chunker.close_chunk")
 def test_write_transaction_to_chunk_exceed_max_file_size(
     close_chunk,
-    get_chunk,
+    find_or_create_chunk,
     envelope_commodity,
     taric_schema_tags,
     record_group,
 ):
-    """Tests that write_transaction_to_chunk calls close_chunk when get_chunk
-    returns a chunk bigger than MAX_FILE_SIZE and that this chunk is popped from
-    chunks_in_progress dict."""
+    """Tests that write_transaction_to_chunk calls close_chunk when
+    find_or_create_chunk returns a chunk bigger than MAX_FILE_SIZE and that this
+    chunk is popped from chunks_in_progress dict."""
     transaction = filter_snippet_transaction(
         envelope_commodity,
         taric_schema_tags,
@@ -247,7 +259,7 @@ def test_write_transaction_to_chunk_exceed_max_file_size(
 
         return chunk
 
-    get_chunk.side_effect = side_effect
+    find_or_create_chunk.side_effect = side_effect
     batch = factories.ImportBatchFactory.create(split_job=True)
     write_transaction_to_chunk(transaction, chunks_in_progress, batch, "1")
 
@@ -255,6 +267,7 @@ def test_write_transaction_to_chunk_exceed_max_file_size(
     assert chunks_in_progress == {}
 
 
+@pytest.mark.new_importer
 def test_sort_comm_code_messages_returns_correctly(goods_xml_element_tree):
     """
     Test the behaviour of the sort_comm_code_messages sorting function.
@@ -268,6 +281,7 @@ def test_sort_comm_code_messages_returns_correctly(goods_xml_element_tree):
     assert sorted_result == ("00", "00")
 
 
+@pytest.mark.new_importer
 def test_sort_comm_code_messages_returns_correctly_with_indents(
     goods_indents_xml_element_tree,
 ):
