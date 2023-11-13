@@ -1,9 +1,12 @@
+{% from "components/create-status-tag.jinja" import create_status_tag%}
+
 {% set table_rows = [] %}
 
 {% for object in object_list %}
   {%- set import_status_cell -%}
-    <span class="status-badge">{{object.status}}</a>
+    {{ create_status_tag(object, status_tag_generator) }}
   {%- endset -%}
+
 
   {%- set goods_status_cell -%}
     {% if goods_status(object) == "editable_goods" %}
@@ -11,10 +14,10 @@
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         <input type="hidden" name="workbasket" value="{{ object.workbasket.pk }}">
         <input type="hidden" name="workbasket-tab" value="review-goods">
-        <input type="submit" class="button-link" name="submit" value="Edit/View workbasket">
+        <input type="submit" class="button-link" name="submit" value="View Workbasket {{object.workbasket.pk}}">
       </form>
     {% elif goods_status(object) == "no_goods" %}
-      <span>0 goods items</span>
+      <span>No action</span>
     {%- else -%}
       <span></span>
     {%- endif -%}
@@ -48,8 +51,8 @@
     {"text": "Taric ID number"},
     {"text": "Date added"},
     {"text": "Uploaded by"},
-    {"text": "Importer status"},
-    {"text": ""},
+    {"text": "Status"},
+    {"text": "Action"},
   ],
   "rows": table_rows
 }) }}

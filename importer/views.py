@@ -91,7 +91,7 @@ class CommodityImportListView(
             import_status == ImportBatchStatus.SUCCEEDED
             and workbasket_status == WorkflowStatus.EDITING
         ):
-            context["selected_link"] = "completed"
+            context["selected_link"] = "ready"
         elif (
             import_status == ImportBatchStatus.SUCCEEDED
             and workbasket_status == WorkflowStatus.PUBLISHED
@@ -102,12 +102,13 @@ class CommodityImportListView(
             and workbasket_status == WorkflowStatus.ARCHIVED
         ):
             context["selected_link"] = "empty"
-        elif import_status == ImportBatchStatus.IMPORTING and workbasket_status == None:
+        elif import_status == ImportBatchStatus.IMPORTING:
             context["selected_link"] = "importing"
-        elif import_status == ImportBatchStatus.FAILED and workbasket_status == None:
-            context["selected_link"] = "errored"
+        elif import_status == ImportBatchStatus.FAILED:
+            context["selected_link"] = "failed"
 
         context["goods_status"] = self.goods_status
+        context["status_tag_generator"] = self.status_tag_generator
 
         return context
 
@@ -135,6 +136,41 @@ class CommodityImportListView(
         else:
             # All other statuses are considered empty.
             return "empty"
+
+    @classmethod
+    def status_tag_generator(cls, import_batch: ImportBatchFilter) -> dict:
+        """Returns a dict with text and a css class for a ui friendly label for
+        an import batch."""
+        workbasket = import_batch.workbasket
+
+        if import_batch.status:
+            if import_batch.status == ImportBatchStatus.IMPORTING:
+                return {"text": "IMPORTING", "tag_class": "status-badge"}
+
+            elif import_batch.status == ImportBatchStatus.FAILED:
+                return {"text": "FAILED", "tag_class": "status-badge-red"}
+
+            if workbasket:
+                if (
+                    import_batch.status == ImportBatchStatus.SUCCEEDED
+                    and workbasket.status == WorkflowStatus.EDITING
+                ):
+                    return {"text": "READY", "tag_class": "status-badge-purple"}
+
+                elif (
+                    import_batch.status == ImportBatchStatus.SUCCEEDED
+                    and workbasket.status == WorkflowStatus.PUBLISHED
+                ):
+                    return {"text": "PUBLISHED", "tag_class": "status-badge-green"}
+
+                elif (
+                    import_batch.status == ImportBatchStatus.SUCCEEDED
+                    and workbasket.status == WorkflowStatus.ARCHIVED
+                ):
+                    return {"text": "EMPTY", "tag_class": "status-badge-grey"}
+
+            else:
+                return {"text": ""}
 
 
 class CommodityImportCreateView(
