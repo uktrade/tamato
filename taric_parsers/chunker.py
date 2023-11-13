@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 
 from importer import models
 from importer.models import BatchImportError
+from importer.models import BatchImportErrorIssueType
 from settings import MAX_IMPORT_FILE_SIZE
 from taric_parsers.namespaces import make_schema_dataclass
 from taric_parsers.namespaces import xsd_schema_paths
@@ -244,7 +245,7 @@ def chunk_taric(
             "anything larger than this should be split before attempting import. This importer does not support "
             "split jobs",
             taric_change_type="",
-            issue_type="ERROR",
+            issue_type=BatchImportErrorIssueType.ERROR,
             transaction_id="",
             object_details="",
             related_object_identity_keys="",

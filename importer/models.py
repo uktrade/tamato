@@ -10,6 +10,7 @@ from django_fsm import transition
 
 from common.models import TimestampedMixin
 from importer.storages import CommodityImporterStorage
+from importer.validators import BatchImportErrorIssueType
 from taric_parsers.importer_issue import ImportIssueReportItem
 from workbaskets.util import clear_workbasket
 from workbaskets.validators import WorkflowStatus
@@ -180,25 +181,16 @@ class ImportBatch(TimestampedMixin):
         )
 
 
-class BatchImportErrorIssueType(models.TextChoices):
-    ERROR = "ERROR", "Error"
-    """An error occurred that prevents the processing of the import."""
-
-    WARNING = "WARNING", "warning"
-    """An issue was detected, but not severe enough to prevent import."""
-
-    INFORMATION = "INFORMATION", "Information"
-    """Information about the import that is of note but not effecting the
-    success of the import."""
-
-
 class BatchImportError(TimestampedMixin):
     object_type = models.CharField(max_length=250)
     related_object_type = models.CharField(max_length=250)
 
     related_object_identity_keys = models.CharField(max_length=1000)
     description = models.CharField(max_length=2000)
-    issue_type = models.CharField(max_length=2000)
+    issue_type = models.CharField(
+        max_length=2000,
+        choices=BatchImportErrorIssueType.choices,
+    )
 
     batch = models.ForeignKey(
         ImportBatch,

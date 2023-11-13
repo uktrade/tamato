@@ -1,5 +1,7 @@
 import re
 
+from importer.validators import BatchImportErrorIssueType
+
 
 class ImportIssueReportItem:
     """
@@ -26,7 +28,7 @@ class ImportIssueReportItem:
         related_object_type: str,
         related_object_identity_keys: dict,
         description: str,
-        issue_type: str = "ERROR",
+        issue_type: str = BatchImportErrorIssueType.ERROR,
         taric_change_type: str = "UNDEFINED",
         object_details: str = "UNDEFINED",
         transaction_id: int = 0,

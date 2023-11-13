@@ -20,12 +20,12 @@ class TaricImportList(RequiresSuperuserMixin, WithPaginationListView):
         .annotate(
             import_issues_error_count=Count(
                 "issues",
-                filter=Q(issues__issue_type="ERROR"),
+                filter=Q(issues__issue_type=BatchImportErrorIssueType.ERROR),
                 distinct=True,
             ),
             import_issues_warning_count=Count(
                 "issues",
-                filter=Q(issues__issue_type="WARNING"),
+                filter=Q(issues__issue_type=BatchImportErrorIssueType.WARNING),
                 distinct=True,
             ),
             completed_chunks=Count(
