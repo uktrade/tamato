@@ -175,6 +175,7 @@ class TaricImporter:
     def commit_data(self):
         """Commit the import to the database, iterating through each parsed
         transaction and the parsed objects contained within."""
+
         envelope = Envelope.new_envelope()
 
         transaction_order = 1
@@ -370,15 +371,10 @@ class TaricImporter:
         Returns:
             Parent parser or None
         """
+
         parent = None
-
-        matched_transaction = None
-        for transaction in self.parsed_transactions:
-            # skip once matched transaction is processed
-            if matched_transaction:
-                continue
-
-            for parsed_message in transaction.parsed_messages:
+        for transaction_instance in self.parsed_transactions:
+            for parsed_message in transaction_instance.parsed_messages:
                 potential_parent = parsed_message.taric_object
                 # matching model and not child?
                 if (
@@ -389,8 +385,8 @@ class TaricImporter:
                     if child_parser.is_child_for(potential_parent):
                         parent = potential_parent
 
-            if transaction == up_to_transaction:
-                matched_transaction = transaction
+            if transaction_instance == up_to_transaction:
+                break
 
         return parent
 
