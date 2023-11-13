@@ -541,9 +541,7 @@ class MeasureForm(
         if f"instance_footnotes_{self.instance.sid}" not in self.request.session.keys():
             tx = WorkBasket.get_current_transaction(self.request)
             associations = (
-                models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
-                    tx,
-                ).filter(
+                models.FootnoteAssociationMeasure.objects.current().filter(
                     footnoted_measure__sid=self.instance.sid,
                 )
             )
@@ -717,15 +715,12 @@ class MeasureForm(
 
         for pk in footnote_pks:
             footnote = (
-                Footnote.objects.filter(pk=pk)
-                .approved_up_to_transaction(instance.transaction)
+                Footnote.objects.current().filter(pk=pk)
                 .first()
             )
 
             existing_association = (
-                models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
-                    instance.transaction,
-                )
+                models.FootnoteAssociationMeasure.objects.current()
                 .filter(
                     footnoted_measure__sid=instance.sid,
                     associated_footnote__footnote_id=footnote.footnote_id,

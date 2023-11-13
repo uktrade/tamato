@@ -49,9 +49,7 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
         """
         tx = WorkBasket.get_current_transaction(self.request)
         return (
-            GoodsNomenclature.objects.approved_up_to_transaction(
-                tx,
-            )
+            GoodsNomenclature.objects.current()
             .prefetch_related("descriptions")
             .as_at_and_beyond(date.today())
             .filter(suffix=80)
@@ -69,10 +67,7 @@ class FootnoteAssociationMixin:
     model = FootnoteAssociationGoodsNomenclature
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return FootnoteAssociationGoodsNomenclature.objects.approved_up_to_transaction(
-            tx,
-        )
+        return self.model.objects.current()
 
 
 class CommodityList(CommodityMixin, WithPaginationListView):

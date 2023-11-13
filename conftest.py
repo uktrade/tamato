@@ -835,9 +835,7 @@ def run_xml_import(import_xml, settings):
         assert workbasket is not None
 
         try:
-            imported = model_class.objects.approved_up_to_transaction(
-                workbasket.current_transaction,
-            ).get(**db_kwargs)
+            imported = model_class.objects.current().get(**db_kwargs)
         except model_class.DoesNotExist:
             if model.update_type == UpdateType.DELETE:
                 imported = (

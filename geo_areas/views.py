@@ -57,7 +57,7 @@ class GeoAreaMixin:
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
-        return GeographicalArea.objects.approved_up_to_transaction(tx)
+        return GeographicalArea.objects.current()
 
 
 class GeoAreaDescriptionMixin:
@@ -65,7 +65,7 @@ class GeoAreaDescriptionMixin:
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
-        return GeographicalAreaDescription.objects.approved_up_to_transaction(tx)
+        return GeographicalAreaDescription.objects.current()
 
 
 class GeoAreaCreateDescriptionMixin:

@@ -76,7 +76,7 @@ class CommodityFootnoteForm(ValidityPeriodForm, forms.ModelForm):
         ].help_text = "Leave empty if the footnote is needed for an unlimited time"
         self.fields[
             "associated_footnote"
-        ].queryset = Footnote.objects.approved_up_to_transaction(self.tx).filter(
+        ].queryset = Footnote.objects.current().filter(
             footnote_type__application_code__in=[1, 2],
         )
         self.fields[

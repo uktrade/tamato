@@ -540,10 +540,10 @@ def test_measure_update_duty_sentence(
 
     if update_data:
         tx = Transaction.objects.last()
-        measure = Measure.objects.approved_up_to_transaction(tx).get(
+        measure = Measure.objects.current().get(
             sid=measure_form.instance.sid,
         )
-        components = measure.components.approved_up_to_transaction(tx).filter(
+        components = measure.components.current().filter(
             component_measure__sid=measure_form.instance.sid,
         )
 
@@ -701,13 +701,13 @@ def test_measure_update_create_conditions(
     assert response.url == reverse("measure-ui-confirm-update", args=(measure.sid,))
 
     tx = Transaction.objects.last()
-    updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
+    updated_measure = Measure.objects.current().get(
         sid=measure.sid,
     )
 
-    assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 1
+    assert updated_measure.conditions.current().count() == 1
 
-    condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
+    condition = updated_measure.conditions.current().first()
 
     assert (
         condition.condition_code.pk
@@ -727,7 +727,7 @@ def test_measure_update_create_conditions(
     )
     assert condition.update_type == UpdateType.CREATE
 
-    components = condition.components.approved_up_to_transaction(tx).order_by(
+    components = condition.components.current().order_by(
         *MeasureConditionComponent._meta.ordering
     )
 
@@ -757,7 +757,7 @@ def test_measure_update_edit_conditions(
     client.post(url, data=measure_edit_conditions_data)
     transaction_count = Transaction.objects.count()
     tx = Transaction.objects.last()
-    measure_with_condition = Measure.objects.approved_up_to_transaction(tx).get(
+    measure_with_condition = Measure.objects.current().get(
         sid=measure.sid,
     )
     previous_condition = measure_with_condition.conditions.last()
@@ -772,15 +772,15 @@ def test_measure_update_edit_conditions(
     ] = "10 GBP / 100 kg"
     client.post(url, data=measure_edit_conditions_data)
     tx = Transaction.objects.last()
-    updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
+    updated_measure = Measure.objects.current().get(
         sid=measure.sid,
     )
 
     # We expect one transaction for updating the measure and updating the condition, one for deleting a component and updating a component
     assert Transaction.objects.count() == transaction_count + 2
-    assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 1
+    assert updated_measure.conditions.current().count() == 1
 
-    condition = updated_measure.conditions.approved_up_to_transaction(tx).first()
+    condition = updated_measure.conditions.current().first()
 
     assert condition.pk != previous_condition.pk
     assert condition.required_certificate == None
@@ -788,7 +788,7 @@ def test_measure_update_edit_conditions(
     assert condition.update_type == UpdateType.UPDATE
     assert condition.sid == previous_condition.sid
 
-    components = condition.components.approved_up_to_transaction(tx).all()
+    components = condition.components.current().all()
 
     assert components.count() == 1
 
@@ -878,11 +878,11 @@ def test_measure_update_remove_conditions(
     assert Transaction.objects.count() == transaction_count + 1
 
     tx = Transaction.objects.last()
-    updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
+    updated_measure = Measure.objects.current().get(
         sid=measure.sid,
     )
 
-    assert updated_measure.conditions.approved_up_to_transaction(tx).count() == 0
+    assert updated_measure.conditions.current().count() == 0
 
 
 def test_measure_update_negative_condition(
@@ -1059,15 +1059,11 @@ def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
         },
     )
 
-    assert not MeasureExcludedGeographicalArea.objects.approved_up_to_transaction(
-        Transaction.objects.last(),
-    ).exists()
+    assert not MeasureExcludedGeographicalArea.objects.current().exists()
 
     client.post(url, data=data)
     measure_area_exclusions = (
-        MeasureExcludedGeographicalArea.objects.approved_up_to_transaction(
-            Transaction.objects.last(),
-        )
+        MeasureExcludedGeographicalArea.objects.current()
     )
 
     assert measure_area_exclusions.count() == 2

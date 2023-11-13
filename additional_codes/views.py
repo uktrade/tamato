@@ -45,9 +45,8 @@ class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [AdditionalCodeFilterBackend]
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
         return (
-            AdditionalCode.objects.approved_up_to_transaction(tx)
+            AdditionalCode.objects.current()
             .select_related("type")
             .prefetch_related("descriptions")
         )
@@ -65,8 +64,7 @@ class AdditionalCodeMixin:
     model: Type[TrackedModel] = AdditionalCode
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return AdditionalCode.objects.approved_up_to_transaction(tx).select_related(
+        return AdditionalCode.objects.current().select_related(
             "type",
         )
 
@@ -208,8 +206,7 @@ class AdditionalCodeDescriptionMixin:
     model: Type[TrackedModel] = AdditionalCodeDescription
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return AdditionalCodeDescription.objects.approved_up_to_transaction(tx)
+        return AdditionalCodeDescription.objects.current()
 
 
 class AdditionalCodeDescriptionCreate(

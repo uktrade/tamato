@@ -155,13 +155,11 @@ class AdditionalCodeCreateForm(AdditionalCodeCreateBaseForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-        tx = WorkBasket.get_current_transaction(self.request)
-
         highest_sid = (
-            models.AdditionalCode.objects.approved_up_to_transaction(tx).aggregate(
-                Max("sid"),
-            )["sid__max"]
-        ) or 0
+                          models.AdditionalCode.objects.current().aggregate(
+                              Max("sid"),
+                          )["sid__max"]
+                      ) or 0
         instance.sid = highest_sid + 1
 
         if commit:

@@ -66,7 +66,7 @@ class ValidityQuerySet(QuerySet):
         :param transaction Transaction: The transaction to limit versions to.
         :rtype QuerySet:
         """
-        current = self.approved_up_to_transaction(asof_transaction)
+        current = self.current()
 
         return self.difference(current)
 

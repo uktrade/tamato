@@ -36,7 +36,7 @@ class RegulationViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
-        return Regulation.objects.approved_up_to_transaction(tx).select_related(
+        return Regulation.objects.current().select_related(
             "regulation_group",
         )
 
@@ -55,7 +55,7 @@ class RegulationMixin:
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
-        return Regulation.objects.approved_up_to_transaction(tx).select_related(
+        return Regulation.objects.current().select_related(
             "regulation_group",
         )
 
@@ -180,7 +180,7 @@ class RegulationConfirmCreate(TrackedModelDetailView):
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
-        return Regulation.objects.approved_up_to_transaction(tx)
+        return Regulation.objects.current()
 
 
 class RegulationUpdate(

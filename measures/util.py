@@ -55,9 +55,7 @@ def diff_components(
     )
 
     new_components = parser.parse(duty_sentence)
-    old_components = instance.components.approved_up_to_transaction(
-        workbasket.current_transaction,
-    )
+    old_components = instance.components.current()
     new_by_id = {c.duty_expression.id: c for c in new_components}
     old_by_id = {c.duty_expression.id: c for c in old_components}
     all_ids = set(new_by_id.keys()) | set(old_by_id.keys())

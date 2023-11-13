@@ -329,7 +329,7 @@ class GeographicalMembershipEditForm(
 
         if membership and action == GeoMembershipAction.DELETE:
             tx = WorkBasket.get_current_transaction(self.request)
-            if membership.member_used_in_measure_exclusion(transaction=tx):
+            if membership.member_used_in_measure_exclusion():
                 self.add_error(
                     "membership",
                     f"{membership.member.structure_description} is referenced as an excluded geographical area in a measure and cannot be deleted as a member of the area group.",

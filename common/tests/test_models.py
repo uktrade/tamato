@@ -310,7 +310,7 @@ def test_current_as_of(sample_model):
 
     assert models.TestModel1.objects.latest_approved().get().pk == sample_model.pk
     assert (
-        models.TestModel1.objects.approved_up_to_transaction(transaction).get().pk
+        models.TestModel1.objects.current().get().pk
         == unapproved_version.pk
     )
 

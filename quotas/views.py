@@ -50,8 +50,7 @@ class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
     filter_backends = [OrderNumberFilterBackend]
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        return models.QuotaOrderNumber.objects.current()
 
 
 class QuotaOrderNumberOriginViewset(viewsets.ReadOnlyModelViewSet):
@@ -101,8 +100,7 @@ class QuotaOrderNumberMixin:
     model = models.QuotaOrderNumber
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        return models.QuotaOrderNumber.objects.current()
 
 
 class QuotaList(QuotaOrderNumberMixin, TamatoListView):
@@ -277,9 +275,7 @@ class QuotaUpdateMixin(
         object = super().get_result_object(form)
 
         existing_origins = (
-            models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
-                object.transaction,
-            ).filter(
+            models.QuotaOrderNumberOrigin.objects.current().filter(
                 order_number__sid=object.sid,
             )
         )
@@ -325,7 +321,7 @@ class QuotaOrderNumberOriginMixin:
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
-        return models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(tx)
+        return models.QuotaOrderNumberOrigin.objects.current()
 
 
 class QuotaOrderNumberOriginUpdateMixin(
@@ -465,7 +461,7 @@ class QuotaDefinitionMixin:
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
-        return models.QuotaDefinition.objects.approved_up_to_transaction(tx)
+        return models.QuotaDefinition.objects.current()
 
 
 class QuotaDefinitionUpdateMixin(

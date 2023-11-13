@@ -50,8 +50,7 @@ class CertificateCreateBaseForm(ValidityPeriodForm):
 
     def filter_certificates_for_sid(self, sid):
         certificate_type = self.cleaned_data["certificate_type"]
-        tx = WorkBasket.get_current_transaction(self.request)
-        return models.Certificate.objects.approved_up_to_transaction(tx).filter(
+        return models.Certificate.objects.current().filter(
             sid=sid,
             certificate_type=certificate_type,
         )
@@ -64,14 +63,13 @@ class CertificateCreateBaseForm(ValidityPeriodForm):
         form's save() method (with its commit param set either to True or
         False).
         """
-        current_transaction = WorkBasket.get_current_transaction(self.request)
         # Filter certificate by type and find the highest sid, using regex to
         # ignore legacy, non-numeric identifiers
         return get_next_id(
-            models.Certificate.objects.filter(
+            models.Certificate.objects.current().filter(
                 sid__regex=r"^[0-9]*$",
                 certificate_type__sid=instance.certificate_type.sid,
-            ).approved_up_to_transaction(current_transaction),
+            ),
             instance._meta.get_field("sid"),
             max_len=3,
         )

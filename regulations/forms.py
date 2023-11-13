@@ -178,11 +178,10 @@ class RegulationFormBase(ValidityPeriodForm):
         RegulationCreateForm._make_partial_regulation_id())."""
         tx = WorkBasket.get_current_transaction(self.request)
         last_matching_regulation = (
-            Regulation.objects.filter(
+            Regulation.objects.current().filter(
                 regulation_id__startswith=partial_regulation_id,
                 role_type=FIXED_ROLE_TYPE,
             )
-            .approved_up_to_transaction(tx)
             .order_by("-regulation_id")
             .first()
         )
