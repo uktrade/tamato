@@ -1129,15 +1129,7 @@ class WorkBasketChecksView(FormView):
             self.run_business_rules()
         elif form_action == "terminate-rule-check":
             self.workbasket.terminate_rule_check()
-        try:
-            return self._append_url_page_param(
-                reverse(
-                    self.action_success_url_names[form_action],
-                ),
-                form_action,
-            )
-        except KeyError:
-            return reverse("home")
+        return reverse("workbaskets:workbasket-checks")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
