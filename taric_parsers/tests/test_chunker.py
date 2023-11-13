@@ -5,23 +5,15 @@ from typing import Sequence
 from unittest import mock
 
 import pytest
-from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from commodities.models.orm import GoodsNomenclature
 from common.tests import factories
 from importer.models import ImporterXMLChunk
-from importer.namespaces import TTags
-from importer.namespaces import nsmap
-from settings import MAX_IMPORT_FILE_SIZE
 from taric_parsers import chunker
 from taric_parsers.chunker import chunk_taric
 from taric_parsers.chunker import filter_transaction_records
 from taric_parsers.chunker import find_or_create_chunk
-from taric_parsers.chunker import get_chapter_heading
-from taric_parsers.chunker import get_record_code
-from taric_parsers.chunker import sort_comm_code_messages
-from taric_parsers.chunker import write_transaction_to_chunk
+from taric_parsers.namespaces import TTags
 
 from .test_namespaces import get_snippet_transaction
 
@@ -54,7 +46,7 @@ def filter_snippet_transaction(
 
 
 @pytest.mark.new_importer
-@mock.patch("importer.chunker.TemporaryFile")
+@mock.patch("taric_parsers.chunker.TemporaryFile")
 def test_get_chunk(mock_temp_file: mock.MagicMock):
     """Asserts that the correct chunk is found or created for writing to."""
     mock_temp_file.side_effect = BytesIO
@@ -157,140 +149,19 @@ def test_chunk_taric(example_goods_taric_file_location):
 
 
 @pytest.mark.new_importer
-@mock.patch("importer.chunker.get_record_code")
-def test_write_transaction_to_chunk_record_code_not_in_tree(
-    get_record_code,
-    envelope_commodity,
-    taric_schema_tags,
-    record_group,
-):
-    """Test that write_transaction_to_chunk returns None when record_code not
-    found in dependency tree."""
-    get_record_code.return_value = "rubbish"
-    transaction = filter_snippet_transaction(
-        envelope_commodity,
-        taric_schema_tags,
-        record_group,
-    )
-    transactions_in_progress = {}
+def test_chunk_taric_fails_with_split_job(example_goods_taric_file_location):
+    """Tests that the chunker creates an ImporterXMLChunk object in the db from
+    the loaded XML file."""
+    assert not ImporterXMLChunk.objects.count()
+    with open(f"{example_goods_taric_file_location}", "rb") as f:
+        content = f.read()
+    taric_file = SimpleUploadedFile("goods.xml", content, content_type="text/xml")
     batch = factories.ImportBatchFactory.create(split_job=True)
-    result = write_transaction_to_chunk(
-        transaction,
-        transactions_in_progress,
-        batch,
-        "1",
+    with pytest.raises(Exception) as e:
+        chunk_taric(taric_file, batch)
+
+    assert (
+        "Unexpected split job, split jobs are not compatible with importer v2. "
+        in str(e)
     )
-
-    assert result is None
-
-
-@pytest.mark.new_importer
-def test_get_record_code(envelope_commodity, taric_schema_tags, record_group):
-    """Test that get_record_code returns the correct value for GoodsNomenclature
-    when passed an xml ElementTree element."""
-    transaction = filter_snippet_transaction(
-        envelope_commodity,
-        taric_schema_tags,
-        record_group,
-    )
-    record_code = get_record_code(transaction)
-
-    assert record_code == GoodsNomenclature.record_code
-
-
-@pytest.mark.new_importer
-def test_get_chapter_heading_commodity(
-    envelope_commodity,
-    taric_schema_tags,
-    record_group,
-):
-    """Test that get_chapter_heading accepts an xml ElementTree element and
-    returns a string matching the goods nomenclature item_id in the xml."""
-    transaction = filter_snippet_transaction(
-        envelope_commodity,
-        taric_schema_tags,
-        record_group,
-    )
-    chapter_heading = get_chapter_heading(transaction)
-    soup = BeautifulSoup(envelope_commodity)
-
-    assert chapter_heading == soup.find("oub:goods.nomenclature.item.id").string[:2]
-
-
-@pytest.mark.new_importer
-def test_get_chapter_heading_measure(envelope_measure, taric_schema_tags):
-    """Test that get_chapter_heading accepts an xml ElementTree element and
-    returns a string matching the measure's goods nomenclature item_id in the
-    xml."""
-    transaction = get_snippet_transaction(envelope_measure, taric_schema_tags)
-    chapter_heading = get_chapter_heading(transaction)
-    soup = BeautifulSoup(envelope_measure)
-
-    assert chapter_heading == soup.find("oub:goods.nomenclature.item.id").string[:2]
-
-
-@pytest.mark.new_importer
-@mock.patch("taric_parsers.chunker.find_or_create_chunk")
-@mock.patch("taric_parsers.chunker.close_chunk")
-def test_write_transaction_to_chunk_exceed_max_file_size(
-    close_chunk,
-    find_or_create_chunk,
-    envelope_commodity,
-    taric_schema_tags,
-    record_group,
-):
-    """Tests that write_transaction_to_chunk calls close_chunk when
-    find_or_create_chunk returns a chunk bigger than MAX_FILE_SIZE and that this
-    chunk is popped from chunks_in_progress dict."""
-    transaction = filter_snippet_transaction(
-        envelope_commodity,
-        taric_schema_tags,
-        record_group,
-    )
-    chunks_in_progress = {}
-    chunk = BytesIO()
-    chunk.seek(MAX_IMPORT_FILE_SIZE + 1)
-    record_code = get_record_code(transaction)
-    chapter_heading = get_chapter_heading(transaction)
-    key = (record_code, chapter_heading)
-
-    def side_effect(in_progress, envelope_id, record_code=None, chapter_heading=None):
-        chunks_in_progress[key] = chunk
-
-        return chunk
-
-    find_or_create_chunk.side_effect = side_effect
-    batch = factories.ImportBatchFactory.create(split_job=True)
-    write_transaction_to_chunk(transaction, chunks_in_progress, batch, "1")
-
-    close_chunk.assert_called_with(chunk, batch, key)
-    assert chunks_in_progress == {}
-
-
-@pytest.mark.new_importer
-def test_sort_comm_code_messages_returns_correctly(goods_xml_element_tree):
-    """
-    Test the behaviour of the sort_comm_code_messages sorting function.
-
-    In this scenario the subrecord.code is 00 and there is no number.indents so
-    the expected value is ('00', '00')
-    """
-    # get first transaction
-    transaction = goods_xml_element_tree.find("*/env:app.message", nsmap)
-    sorted_result = sort_comm_code_messages(transaction)
-    assert sorted_result == ("00", "00")
-
-
-@pytest.mark.new_importer
-def test_sort_comm_code_messages_returns_correctly_with_indents(
-    goods_indents_xml_element_tree,
-):
-    """
-    Test the behaviour of the sort_comm_code_messages sorting function.
-
-    In this scenario the subrecord.code is 05 and the number.indents is 04
-    """
-    # get first transaction
-    transaction = goods_indents_xml_element_tree.find("*/env:app.message", nsmap)
-    sorted_result = sort_comm_code_messages(transaction)
-    assert sorted_result == ("05", "04")
+    assert "Please split files up before importing." in str(e)

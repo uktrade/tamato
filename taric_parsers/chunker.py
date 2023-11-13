@@ -12,9 +12,7 @@ from importer import models
 from importer.models import BatchImportError
 from settings import MAX_IMPORT_FILE_SIZE
 from taric_parsers.namespaces import make_schema_dataclass
-from taric_parsers.namespaces import nsmap
 from taric_parsers.namespaces import xsd_schema_paths
-from taric_parsers.utils import build_dependency_tree
 
 Tags = make_schema_dataclass(xsd_schema_paths)
 
@@ -92,42 +90,6 @@ def close_chunk(chunk: TemporaryFile, batch: models.ImportBatch, key):
     )
 
 
-def sort_comm_code_messages(message):
-    """
-    Sort the messages within a commodity code transaction.
-
-    On top of commodity code transactions being unsorted at times the messages
-    within the transaction are also out of order. This can mean indents are
-    given before the codes they are indenting and other similar issues. In this
-    case the messages only need to be sorted by subrecord code and indent to
-    produce the correct order.
-    """
-    code = message.find("*/*/ns2:subrecord.code", nsmap).text
-    indent = message.find("*/*/*/ns2:number.indents", nsmap)
-
-    # If no indent found then sort the message to the front by giving the indent "00"
-    # This guarantees objects not related to indents get done first (as nothing has
-    # a relationship to indents).
-    indent = indent.text if indent is not None else "00"
-    return code, indent
-
-
-def get_record_code(transaction: ET.Element) -> str:
-    return max(
-        code.text for code in transaction.findall("*/*/*/ns2:record.code", nsmap)
-    )
-
-
-def get_chapter_heading(transaction: ET.Element) -> str:
-    item_ids = transaction.findall(
-        "*/*/*/*/ns2:goods.nomenclature.item.id",
-        nsmap,
-    )
-    chapter_heading = item_ids[0].text[:2] if item_ids else "00"
-
-    return chapter_heading
-
-
 def write_transaction_to_chunk(
     transaction: ET.Element,
     chunks_in_progress: dict,
@@ -145,20 +107,7 @@ def write_transaction_to_chunk(
     new chunk started.
     """
     chapter_heading = None
-
-    if batch.split_job:
-        record_code = get_record_code(transaction)
-
-        dependency_tree = build_dependency_tree()
-        if record_code not in dependency_tree:
-            return
-
-        # Commodities and measures are special cases which can be split on chapter heading as well.
-        if record_code in {"400", "430"}:
-            chapter_heading = get_chapter_heading(transaction)
-
-    else:
-        record_code = None
+    record_code = None
 
     chunk = find_or_create_chunk(
         chunks_in_progress,
@@ -301,6 +250,8 @@ def chunk_taric(
             related_object_identity_keys="",
             object_type="",
         )
-        raise Exception("Unexpected split job, could be ")
+        raise Exception(
+            "Unexpected split job, split jobs are not compatible with importer v2. Please split files up before importing.",
+        )
 
     return chunk_count
