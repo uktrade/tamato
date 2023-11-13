@@ -1120,9 +1120,7 @@ class MeasureUpdateBase(
         return [a.associated_footnote for a in associations]
 
     def get_conditions(self, measure):
-        return (
-            measure.conditions.with_reference_price_string().current()
-        )
+        return measure.conditions.with_reference_price_string().current()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

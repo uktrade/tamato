@@ -274,10 +274,8 @@ class QuotaUpdateMixin(
     def get_result_object(self, form):
         object = super().get_result_object(form)
 
-        existing_origins = (
-            models.QuotaOrderNumberOrigin.objects.current().filter(
-                order_number__sid=object.sid,
-            )
+        existing_origins = models.QuotaOrderNumberOrigin.objects.current().filter(
+            order_number__sid=object.sid,
         )
 
         # this will be needed even if origins have not been edited in the form

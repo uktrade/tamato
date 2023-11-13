@@ -278,7 +278,8 @@ class UniqueIdentifyingFields(BusinessRule):
 
         if (
             type(model)
-            .objects.current().filter(**query)
+            .objects.current()
+            .filter(**query)
             .exclude(version_group=model.version_group)
             .exists()
         ):
@@ -304,7 +305,8 @@ class NoOverlapping(BusinessRule):
         query["valid_between__overlap"] = model.valid_between
 
         if (
-            model.__class__.objects.current().filter(**query)
+            model.__class__.objects.current()
+            .filter(**query)
             .exclude(version_group=model.version_group)
             .exists()
         ):

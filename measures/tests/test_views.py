@@ -1062,9 +1062,7 @@ def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
     assert not MeasureExcludedGeographicalArea.objects.current().exists()
 
     client.post(url, data=data)
-    measure_area_exclusions = (
-        MeasureExcludedGeographicalArea.objects.current()
-    )
+    measure_area_exclusions = MeasureExcludedGeographicalArea.objects.current()
 
     assert measure_area_exclusions.count() == 2
 

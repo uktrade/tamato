@@ -852,8 +852,7 @@ class CommodityCollection(CommodityTreeBase):
         that match the latest_version goods.
         """
         item_ids = {c.item_id for c in self.commodities if c.obj}
-        goods = GoodsNomenclature.objects.current(
-        ).filter(
+        goods = GoodsNomenclature.objects.current().filter(
             item_id__in=item_ids,
             valid_between__contains=snapshot_date,
         )

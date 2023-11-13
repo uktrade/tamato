@@ -70,10 +70,7 @@ class ON4(BusinessRule):
         order_number_versions = order_number.get_versions()
         origin_exists = False
         for order_number_version in order_number_versions:
-            if (
-                order_number_version.origins.current().count()
-                > 0
-            ):
+            if order_number_version.origins.current().count() > 0:
                 origin_exists = True
                 break
 

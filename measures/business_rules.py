@@ -212,7 +212,8 @@ class ME88(BusinessRule):
 
         goods = (
             type(measure.goods_nomenclature)
-            .objects.current().filter(
+            .objects.current()
+            .filter(
                 sid=measure.goods_nomenclature.sid,
                 valid_between__overlap=measure.effective_valid_between,
             )
@@ -613,8 +614,7 @@ class ME12(BusinessRule):
         )
         if (
             measure.additional_code
-            and not AdditionalCodeTypeMeasureType.objects.current(
-            )
+            and not AdditionalCodeTypeMeasureType.objects.current()
             .filter(
                 additional_code_type__sid=measure.additional_code.type.sid,
                 measure_type__sid=measure.measure_type.sid,
@@ -887,11 +887,7 @@ class ComponentApplicability(BusinessRule):
                     == ApplicabilityCode.MANDATORY,
                 }
             )
-            if (
-                components.filter(inapplicable)
-                .current()
-                .exists()
-            ):
+            if components.filter(inapplicable).current().exists():
                 raise self.violation(measure, self.messages[code].format(self))
 
 
