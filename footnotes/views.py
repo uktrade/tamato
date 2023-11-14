@@ -44,7 +44,6 @@ class FootnoteViewSet(viewsets.ReadOnlyModelViewSet):
     ]
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
         return (
             models.Footnote.objects.current()
             .select_related("footnote_type")
@@ -67,7 +66,6 @@ class FootnoteMixin:
     model: Type[TrackedModel] = models.Footnote
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
         return models.Footnote.objects.current().select_related(
             "footnote_type",
         )
@@ -77,7 +75,6 @@ class FootnoteDescriptionMixin:
     model: Type[TrackedModel] = models.FootnoteDescription
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
         return models.FootnoteDescription.objects.current()
 
 

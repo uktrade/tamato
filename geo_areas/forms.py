@@ -328,7 +328,6 @@ class GeographicalMembershipEditForm(
             )
 
         if membership and action == GeoMembershipAction.DELETE:
-            tx = WorkBasket.get_current_transaction(self.request)
             if membership.member_used_in_measure_exclusion():
                 self.add_error(
                     "membership",

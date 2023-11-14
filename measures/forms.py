@@ -520,8 +520,6 @@ class MeasureForm(
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        tx = WorkBasket.get_current_transaction(self.request)
-
         self.initial["duty_sentence"] = self.instance.duty_sentence
         self.request.session[
             f"instance_duty_sentence_{self.instance.sid}"

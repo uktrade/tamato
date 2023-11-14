@@ -212,11 +212,11 @@ class ME88(BusinessRule):
 
         goods = (
             type(measure.goods_nomenclature)
-            .objects.current()
-            .filter(
+            .objects.filter(
                 sid=measure.goods_nomenclature.sid,
                 valid_between__overlap=measure.effective_valid_between,
             )
+            .current()
         )
 
         explosion_level = measure.measure_type.measure_explosion_level

@@ -539,7 +539,6 @@ def test_measure_update_duty_sentence(
     assert response.status_code == 302
 
     if update_data:
-        tx = Transaction.objects.last()
         measure = Measure.objects.current().get(
             sid=measure_form.instance.sid,
         )
@@ -700,7 +699,6 @@ def test_measure_update_create_conditions(
     assert response.status_code == 302
     assert response.url == reverse("measure-ui-confirm-update", args=(measure.sid,))
 
-    tx = Transaction.objects.last()
     updated_measure = Measure.objects.current().get(
         sid=measure.sid,
     )
@@ -756,7 +754,6 @@ def test_measure_update_edit_conditions(
     client.force_login(valid_user)
     client.post(url, data=measure_edit_conditions_data)
     transaction_count = Transaction.objects.count()
-    tx = Transaction.objects.last()
     measure_with_condition = Measure.objects.current().get(
         sid=measure.sid,
     )
@@ -771,7 +768,6 @@ def test_measure_update_edit_conditions(
         f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty"
     ] = "10 GBP / 100 kg"
     client.post(url, data=measure_edit_conditions_data)
-    tx = Transaction.objects.last()
     updated_measure = Measure.objects.current().get(
         sid=measure.sid,
     )
@@ -877,7 +873,6 @@ def test_measure_update_remove_conditions(
     # We expect one transaction for the measure update and condition deletion
     assert Transaction.objects.count() == transaction_count + 1
 
-    tx = Transaction.objects.last()
     updated_measure = Measure.objects.current().get(
         sid=measure.sid,
     )

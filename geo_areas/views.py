@@ -56,7 +56,6 @@ class GeoAreaMixin:
     model: Type[TrackedModel] = GeographicalArea
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
         return GeographicalArea.objects.current()
 
 
@@ -64,7 +63,6 @@ class GeoAreaDescriptionMixin:
     model: Type[TrackedModel] = GeographicalAreaDescription
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
         return GeographicalAreaDescription.objects.current()
 
 

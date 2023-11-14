@@ -75,7 +75,6 @@ class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [MeasureTypeFilterBackend]
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
         return MeasureType.objects.current().order_by(
             "description",
         )
@@ -85,7 +84,6 @@ class MeasureMixin:
     model: Type[TrackedModel] = Measure
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
 
         return Measure.objects.current()
 
@@ -1061,7 +1059,6 @@ class MeasureCreateWizard(
 
     def get_form(self, step=None, data=None, files=None):
         form = super().get_form(step, data, files)
-        tx = WorkBasket.get_current_transaction(self.request)
         forms = [form]
         if hasattr(form, "forms"):
             forms = form.forms
@@ -1103,7 +1100,6 @@ class MeasureUpdateBase(
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class=form_class)
-        tx = WorkBasket.get_current_transaction(self.request)
 
         if hasattr(form, "field"):
             for field in form.fields.values():
