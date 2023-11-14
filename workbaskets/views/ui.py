@@ -490,10 +490,26 @@ class WorkBasketDetailView(PermissionRequiredMixin, DetailView):
     permission_required = "workbaskets.view_workbasket"
 
 
-class WorkBasketChangesMixin(PermissionRequiredMixin, FormView):
+class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
+    """UI endpoint for viewing changes in a workbasket."""
+
     permission_required = "workbaskets.view_workbasket"
+    template_name = "workbaskets/changes.jinja"
     form_class = forms.SelectableObjectsForm
     paginate_by = 50
+
+    sort_by_fields = ["component", "action", "activity_date"]
+    custom_sorting = {
+        "component": "polymorphic_ctype",
+        "action": "update_type",
+        "activity_date": "transaction__updated_at",
+    }
+    form_action_redirect_map = {
+        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
+        "remove-all": "workbaskets:workbasket-ui-changes-delete",
+        "page-prev": "workbaskets:workbasket-ui-changes",
+        "page-next": "workbaskets:workbasket-ui-changes",
+    }
 
     @cached_property
     def workbasket(self):
@@ -508,6 +524,18 @@ class WorkBasketChangesMixin(PermissionRequiredMixin, FormView):
             ),
             per_page=self.paginate_by,
         )
+
+    def get_queryset(self):
+        queryset = self.paginator.object_list
+        page_number = int(self.request.GET.get("page", 1))
+        items_per_page = page_number * self.paginate_by
+
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering, "transaction")
+            return queryset.order_by(*ordering)[:items_per_page]
+        else:
+            return queryset[:items_per_page]
 
     def get_initial(self):
         store = SessionStore(
@@ -593,36 +621,6 @@ class WorkBasketChangesMixin(PermissionRequiredMixin, FormView):
                 "workbaskets:workbasket-ui-detail",
                 kwargs={"pk": self.workbasket.pk},
             )
-
-
-class WorkBasketChangesView(SortingMixin, WorkBasketChangesMixin):
-    """UI endpoint for viewing changes in a workbasket."""
-
-    template_name = "workbaskets/changes.jinja"
-    sort_by_fields = ["component", "action", "activity_date"]
-    custom_sorting = {
-        "component": "polymorphic_ctype",
-        "action": "update_type",
-        "activity_date": "transaction__updated_at",
-    }
-    form_action_redirect_map = {
-        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
-        "remove-all": "workbaskets:workbasket-ui-changes-delete",
-        "page-prev": "workbaskets:workbasket-ui-changes",
-        "page-next": "workbaskets:workbasket-ui-changes",
-    }
-
-    def get_queryset(self):
-        queryset = self.paginator.object_list
-        page_number = int(self.request.GET.get("page", 1))
-        items_per_page = page_number * self.paginate_by
-
-        ordering = self.get_ordering()
-        if ordering:
-            ordering = (ordering, "transaction")
-            return queryset.order_by(*ordering)[:items_per_page]
-        else:
-            return queryset[:items_per_page]
 
 
 class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
