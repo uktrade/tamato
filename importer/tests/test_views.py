@@ -98,7 +98,8 @@ def test_commodity_import_list_view_renders(superuser_client):
     assert page.find("thead").find("th", text="Taric ID number")
     assert page.find("thead").find("th", text="Date added")
     assert page.find("thead").find("th", text="Uploaded by")
-    assert page.find("thead").find("th", text="Importer status")
+    assert page.find("thead").find("th", text="Status")
+    assert page.find("thead").find("th", text="Action")
 
     assert len(page.find_all("tr", class_="govuk-table__row")) == 3
     assert len(page.find_all("span", class_="status-badge")) == 2
@@ -207,7 +208,10 @@ def test_commodity_importer_import_new_failure(file_name, error_msg, valid_user_
     with open(f"{TEST_FILES_PATH}/{file_name}", "rb") as f:
         content = f.read()
     taric_file = SimpleUploadedFile("taric_file.xml", content, content_type="text/xml")
-    response = valid_user_client.post(url, {"taric_file": taric_file})
+    response = valid_user_client.post(
+        url,
+        {"workbasket_title": "12345", "taric_file": taric_file},
+    )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
     assert error_msg in soup.select(".govuk-error-message")[0].text
@@ -235,32 +239,37 @@ def test_taric_import_list_filters_render(superuser_client):
 
 
 @pytest.mark.parametrize(
-    "import_batch,filter_url,expected_status_text",
+    "import_batch,filter_url,expected_status_class,expected_status_text",
     [
         (
             "importing_goods_import_batch",
             "IMPORTING",
+            "status-badge",
             "IMPORTING",
         ),
         (
             "failed_goods_import_batch",
             "FAILED",
+            "status-badge-red",
             "FAILED",
         ),
         (
             "completed_goods_import_batch",
             "SUCCEEDED&workbasket__status=EDITING",
-            "SUCCEEDED",
+            "status-badge-purple",
+            "READY",
         ),
         (
             "published_goods_import_batch",
             "SUCCEEDED&workbasket__status=PUBLISHED",
-            "SUCCEEDED",
+            "status-badge-green",
+            "PUBLISHED",
         ),
         (
             "empty_goods_import_batch",
             "SUCCEEDED&workbasket__status=ARCHIVED",
-            "SUCCEEDED",
+            "status-badge-grey",
+            "EMPTY",
         ),
     ],
 )
@@ -269,6 +278,7 @@ def test_import_list_filters_return_correct_imports(
     import_batch,
     request,
     filter_url,
+    expected_status_class,
     expected_status_text,
 ):
     import_batch = request.getfixturevalue(import_batch)
@@ -280,8 +290,8 @@ def test_import_list_filters_return_correct_imports(
     page = BeautifulSoup(str(response.content), "html.parser")
 
     assert len(page.find_all("tr", class_="govuk-table__row")) == 2
-    assert len(page.find_all(class_="status-badge")) == 1
-    assert page.find(class_="status-badge", text=expected_status_text)
+    assert len(page.find_all(class_=expected_status_class)) == 1
+    assert page.find(class_=expected_status_class, text=expected_status_text)
     assert page.find("tbody").find("td", text=import_batch.name)
 
 

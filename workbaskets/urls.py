@@ -47,6 +47,11 @@ ui_patterns = [
         name="edit-workbasket",
     ),
     path(
+        f"current/checks/",
+        ui_views.WorkBasketChecksView.as_view(),
+        name="workbasket-checks",
+    ),
+    path(
         f"<pk>/review-additional-codes/",
         ui_views.WorkBasketReviewAdditionalCodesView.as_view(),
         name="workbasket-ui-review-additional-codes",
@@ -104,7 +109,7 @@ ui_patterns = [
     path(
         f"compare/",
         ui_views.WorkBasketCompare.as_view(),
-        name="workbasket-ui-compare",
+        name="workbasket-check-ui-compare",
     ),
     path(
         f"<pk>/",

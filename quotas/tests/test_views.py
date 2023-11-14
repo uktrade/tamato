@@ -1068,7 +1068,11 @@ def test_quota_create_origin_no_overlapping_origins(
 
 @pytest.mark.django_db
 def test_quota_order_number_and_origin_edit_create_view(
-    valid_user_client, date_ranges, approved_transaction, geo_group1, geo_group2
+    valid_user_client,
+    date_ranges,
+    approved_transaction,
+    geo_group1,
+    geo_group2,
 ):
     quota = factories.QuotaOrderNumberFactory.create(
         valid_between=date_ranges.no_end,
@@ -1103,7 +1107,11 @@ def test_quota_order_number_and_origin_edit_create_view(
 
 @pytest.mark.django_db
 def test_quota_order_number_update_view(
-    valid_user_client, date_ranges, approved_transaction, geo_group1, geo_group2
+    valid_user_client,
+    date_ranges,
+    approved_transaction,
+    geo_group1,
+    geo_group2,
 ):
     quota = factories.QuotaOrderNumberFactory.create(
         valid_between=date_ranges.no_end,
@@ -1216,6 +1224,7 @@ def test_create_new_quota_definition_business_rule_violation(
 
     url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
     response = valid_user_client.post(url, form_data)
+
     assert response.status_code == 200
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
@@ -1225,4 +1234,119 @@ def test_create_new_quota_definition_business_rule_violation(
     assert (
         "The validity period of the quota definition must be spanned by one of the validity periods of the referenced quota order number."
         in errors
+    )
+
+
+@pytest.mark.django_db
+def test_quota_order_number_create_200(
+    valid_user_client,
+):
+    response = valid_user_client.get(reverse("quota-ui-create"))
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_quota_order_number_create_errors_required(
+    valid_user_client,
+):
+    form_data = {
+        "submit": "Save",
+    }
+    response = valid_user_client.post(reverse("quota-ui-create"), form_data)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    errors = {e.text for e in soup.select(".govuk-error-summary__list li a")}
+
+    assert {
+        "Enter the order number",
+        "Choose the category",
+        "Choose the mechanism",
+        "Enter the day, month and year",
+    } == errors
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "order_number,category,mechanism,exp_error",
+    [
+        (
+            "050000",
+            validators.QuotaCategory.SAFEGUARD.value,
+            validators.AdministrationMechanism.LICENSED.value,
+            "Mechanism cannot be set to licensed for safeguard quotas",
+        ),
+        (
+            "050000",
+            validators.QuotaCategory.WTO.value,
+            validators.AdministrationMechanism.LICENSED.value,
+            "The order number for licensed quotas must begin with 054",
+        ),
+        (
+            "050000",
+            validators.QuotaCategory.SAFEGUARD.value,
+            validators.AdministrationMechanism.FCFS.value,
+            "The order number for safeguard quotas must begin with 058",
+        ),
+    ],
+)
+def test_quota_order_number_create_validation(
+    order_number,
+    mechanism,
+    category,
+    exp_error,
+    valid_user_client,
+    date_ranges,
+):
+    form_data = {
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "order_number": order_number,
+        "mechanism": mechanism,
+        "category": category,
+        "submit": "Save",
+    }
+    response = valid_user_client.post(reverse("quota-ui-create"), form_data)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    errors = {e.text for e in soup.select(".govuk-error-summary__list li a")}
+
+    assert exp_error in errors
+
+
+@pytest.mark.django_db
+def test_quota_order_number_create_success(
+    valid_user_client,
+    date_ranges,
+):
+    form_data = {
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "order_number": "054000",
+        "mechanism": validators.AdministrationMechanism.LICENSED.value,
+        "category": validators.QuotaCategory.WTO.value,
+        "submit": "Save",
+    }
+    response = valid_user_client.post(reverse("quota-ui-create"), form_data)
+
+    assert response.status_code == 302
+
+    quota = models.QuotaOrderNumber.objects.last()
+
+    assert response.url == reverse("quota-ui-confirm-create", kwargs={"sid": quota.sid})
+
+    response2 = valid_user_client.get(response.url)
+
+    soup = BeautifulSoup(response2.content.decode(response2.charset), "html.parser")
+
+    assert (
+        soup.find("h1").text.strip() == f"Quota {quota.order_number} has been created"
     )
