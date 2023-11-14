@@ -1,4 +1,3 @@
-
 .tamato-badge {
   display: inline-block;
   padding: 0.2rem 0.4rem;
@@ -8,7 +7,7 @@
 
 .tamato-badge-light-grey {
   @extend .tamato-badge;
-  background-color: rgb(200, 200, 200,);
+  background-color: rgb(200, 200, 200);
   color: rgb(80, 80, 80);
 }
 .tamato-badge-light-purple {
@@ -25,4 +24,35 @@
   @extend .tamato-badge;
   background-color: rgb(237, 192, 204);
   color: rgb(146, 53, 80);
+}
+
+.status-badge {
+  font-weight: bold;
+  color: govuk-colour("white");
+  background-color: govuk-colour("blue");
+  padding: 0px 10px;
+}
+
+.status-badge-purple {
+  @extend .status-badge;
+  color: govuk-shade(govuk-colour("purple"), 20);
+  background: govuk-tint(govuk-colour("purple"), 80);
+}
+
+.status-badge-grey {
+  @extend .status-badge;
+  color: govuk-shade(govuk-colour("dark-grey", $legacy: "grey-1"), 30);
+  background: govuk-tint(govuk-colour("dark-grey", $legacy: "grey-1"), 90);
+}
+
+.status-badge-red {
+  @extend .status-badge;
+  color: govuk-shade(govuk-colour("red"), 30);
+  background: govuk-tint(govuk-colour("red"), 80);
+}
+
+.status-badge-green {
+  @extend .status-badge;
+  color: govuk-shade(govuk-colour("green"), 20);
+  background: govuk-tint(govuk-colour("green"), 80);
 }
