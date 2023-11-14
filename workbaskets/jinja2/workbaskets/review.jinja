@@ -5,7 +5,7 @@
 {% from "macros/fake_tabs.jinja" import fake_tabs %}
 
 {% if workbasket == session_workbasket %}
-  {% set page_title %}Workbasket {{ workbasket.id }} - Review{% endset %}
+  {% set page_title %}Workbasket {{ workbasket.id }} - Review changes{% endset %}
 {% else %}
   {% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
 {% endif %}

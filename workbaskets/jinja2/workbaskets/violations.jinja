@@ -24,7 +24,7 @@
     <a class="govuk-link" href="{{ url('workbaskets:workbasket-ui-violation-detail', kwargs={'wb_pk': workbasket.pk, 'pk': check.pk }) }}">{{ check.pk }}</a>
   {%- endset %}
   {{ table_rows.append([
-      {"html": check_link, },
+      {"html": check_link },
       {"text": check.model._meta.verbose_name.title()},
       {"text": check.rule_code},
       {"text": check.message},
@@ -51,7 +51,8 @@
     {"text": "Item ID"},
     {"html": item},
     {"text": violation},
-    {"text": "Description"},
+    {"text": "Description",
+    "classes": "govuk-!-width-one-half"},
     {"text": activity_date},
   ],
   "rows": table_rows

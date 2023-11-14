@@ -326,8 +326,6 @@ class CurrentWorkBasket(FormView):
     # Form action mappings to URL names.
     action_success_url_names = {
         "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
-        "run-business-rules": "workbaskets:current-workbasket",
-        "terminate-rule-check": "workbaskets:current-workbasket",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
         "compare-data": "workbaskets:current-workbasket",
@@ -376,30 +374,9 @@ class CurrentWorkBasket(FormView):
             page_number = page.next_page_number()
         return f"{url}?page={page_number}"
 
-    @atomic
-    def run_business_rules(self):
-        """Remove old checks, start new checks via a Celery task and save the
-        newly created task's ID on the workbasket."""
-        workbasket = self.workbasket
-        workbasket.delete_checks()
-        task = call_check_workbasket_sync.apply_async(
-            (workbasket.pk,),
-            countdown=1,
-        )
-        logger.info(
-            f"Started rule check against workbasket.id={workbasket.pk} "
-            f"on task.id={task.id}",
-        )
-        workbasket.rule_check_task_id = task.id
-        workbasket.save()
-
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
-        if form_action == "run-business-rules":
-            self.run_business_rules()
-        elif form_action == "terminate-rule-check":
-            self.workbasket.terminate_rule_check()
-        elif form_action in ["remove-selected", "remove-all"]:
+        if form_action in ["remove-selected", "remove-all"]:
             return reverse(
                 "workbaskets:workbasket-ui-changes-delete",
                 kwargs={"pk": self.workbasket.pk},
@@ -1044,7 +1021,7 @@ class WorkBasketDeleteDone(TemplateView):
 
 
 class WorkBasketCompare(WithCurrentWorkBasket, FormView):
-    success_url = reverse_lazy("workbaskets:workbasket-ui-compare")
+    success_url = reverse_lazy("workbaskets:workbasket-check-ui-compare")
     template_name = "workbaskets/compare.jinja"
     form_class = forms.WorkbasketCompareForm
 
@@ -1111,6 +1088,86 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             *args,
             **kwargs,
         )
+
+
+class WorkBasketChecksView(FormView):
+    template_name = "workbaskets/checks.jinja"
+    form_class = forms.SelectableObjectsForm
+
+    # Form action mappings to URL names.
+    action_success_url_names = {
+        "run-business-rules": "workbaskets:workbasket-checks",
+        "terminate-rule-check": "workbaskets:workbasket-checks",
+        "page-prev": "workbaskets:workbasket-checks",
+        "page-next": "workbaskets:workbasket-checks",
+    }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    @atomic
+    def run_business_rules(self):
+        """Remove old checks, start new checks via a Celery task and save the
+        newly created task's ID on the workbasket."""
+        workbasket = self.workbasket
+        workbasket.delete_checks()
+        task = call_check_workbasket_sync.apply_async(
+            (workbasket.pk,),
+            countdown=1,
+        )
+        logger.info(
+            f"Started rule check against workbasket.id={workbasket.pk} "
+            f"on task.id={task.id}",
+        )
+        workbasket.rule_check_task_id = task.id
+        workbasket.save()
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        if form_action == "run-business-rules":
+            self.run_business_rules()
+        elif form_action == "terminate-rule-check":
+            self.workbasket.terminate_rule_check()
+        return reverse("workbaskets:workbasket-checks")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # set to true if there is an associated goods import batch with an unsent notification
+        try:
+            import_batch = self.workbasket.importbatch
+            unsent_notifcation = (
+                import_batch
+                and import_batch.goods_import
+                and not Notification.objects.filter(
+                    notified_object_pk=import_batch.pk,
+                    notification_type=NotificationTypeChoices.GOODS_REPORT,
+                ).exists()
+            )
+        except ObjectDoesNotExist:
+            unsent_notifcation = False
+        context.update(
+            {
+                "workbasket": self.workbasket,
+                "rule_check_in_progress": False,
+                "unsent_notification": unsent_notifcation,
+            },
+        )
+        if self.workbasket.rule_check_task_id:
+            result = AsyncResult(self.workbasket.rule_check_task_id)
+            if result.status != "SUCCESS":
+                context.update({"rule_check_in_progress": True})
+            else:
+                self.workbasket.save_to_session(self.request.session)
+
+            num_completed, total = self.workbasket.rule_check_progress()
+            context.update(
+                {
+                    "rule_check_progress": f"Completed {num_completed} out of {total} checks",
+                },
+            )
+
+        return context
 
 
 class WorkBasketReviewView(PermissionRequiredMixin, WithPaginationListView):

@@ -202,7 +202,7 @@ def test_review_workbasket_displays_rule_violation_summary(
 
     response = valid_user_client.get(
         reverse(
-            "workbaskets:current-workbasket",
+            "workbaskets:workbasket-checks",
         ),
     )
     page = BeautifulSoup(
@@ -702,7 +702,7 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     }
     session.save()
     url = reverse(
-        "workbaskets:current-workbasket",
+        "workbaskets:workbasket-checks",
     )
     response = valid_user_client.post(
         url,
@@ -723,13 +723,11 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     assert not session_workbasket.tracked_model_checks.exists()
 
 
-def test_workbasket_business_rule_status(valid_user_client):
+def test_workbasket_business_rule_status(valid_user_client, session_empty_workbasket):
     """Testing that the live status of a workbasket resets after an item has
     been updated, created or deleted in the workbasket."""
-    workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.EDITING,
-    )
-    with workbasket.new_transaction() as transaction:
+
+    with session_empty_workbasket.new_transaction() as transaction:
         footnote = factories.FootnoteFactory.create(
             transaction=transaction,
             footnote_type__transaction=transaction,
@@ -739,9 +737,8 @@ def test_workbasket_business_rule_status(valid_user_client):
             model=footnote,
             successful=True,
         )
-    workbasket.save_to_session(valid_user_client.session)
 
-    url = reverse("workbaskets:current-workbasket")
+    url = reverse("workbaskets:workbasket-checks")
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset))
     success_banner = page.find(
@@ -750,8 +747,8 @@ def test_workbasket_business_rule_status(valid_user_client):
     )
     assert success_banner
 
-    footnote2 = factories.FootnoteFactory.create(
-        transaction=workbasket.new_transaction(),
+    factories.FootnoteFactory.create(
+        transaction=session_empty_workbasket.new_transaction(),
     )
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset))
@@ -884,7 +881,7 @@ def test_submit_for_packaging_disabled(
             import_batch.save()
 
     response = valid_user_client.get(
-        reverse("workbaskets:current-workbasket"),
+        reverse("workbaskets:workbasket-checks"),
     )
 
     assert response.status_code == 200
@@ -902,7 +899,7 @@ def test_terminate_rule_check(valid_user_client, session_workbasket):
     session_workbasket.rule_check_task_id = 123
 
     url = reverse(
-        "workbaskets:current-workbasket",
+        "workbaskets:workbasket-checks",
     )
     response = valid_user_client.post(
         url,
@@ -1817,7 +1814,7 @@ def test_application_access_after_workbasket_delete(
 
 
 def test_workbasket_compare_200(valid_user_client, session_workbasket):
-    url = reverse("workbaskets:workbasket-ui-compare")
+    url = reverse("workbaskets:workbasket-check-ui-compare")
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
@@ -1826,7 +1823,7 @@ def test_workbasket_compare_prev_uploaded(valid_user_client, session_workbasket)
     factories.GoodsNomenclatureFactory()
     factories.GoodsNomenclatureFactory()
     factories.DataUploadFactory(workbasket=session_workbasket)
-    url = reverse("workbaskets:workbasket-ui-compare")
+    url = reverse("workbaskets:workbasket-check-ui-compare")
     response = valid_user_client.get(url)
     assert "Worksheet data" in response.content.decode(response.charset)
 
@@ -1835,7 +1832,7 @@ def test_workbasket_update_prev_uploaded(valid_user_client, session_workbasket):
     factories.GoodsNomenclatureFactory()
     factories.GoodsNomenclatureFactory()
     data_upload = factories.DataUploadFactory(workbasket=session_workbasket)
-    url = reverse("workbaskets:workbasket-ui-compare")
+    url = reverse("workbaskets:workbasket-check-ui-compare")
     data = {
         "data": (
             "0000000001\t1.000%\t20/05/2021\t31/08/2024\n"
@@ -1849,7 +1846,7 @@ def test_workbasket_update_prev_uploaded(valid_user_client, session_workbasket):
 
 
 def test_workbasket_compare_form_submit_302(valid_user_client, session_workbasket):
-    url = reverse("workbaskets:workbasket-ui-compare")
+    url = reverse("workbaskets:workbasket-check-ui-compare")
     data = {
         "data": (
             "0000000001\t1.000%\t20/05/2021\t31/08/2024\n"
@@ -1885,7 +1882,7 @@ def test_workbasket_compare_found_measures(
             component_measurement=None,
         )
 
-    url = reverse("workbaskets:workbasket-ui-compare")
+    url = reverse("workbaskets:workbasket-check-ui-compare")
     data = {
         "data": (
             # this first line should match the measure in the workbasket
@@ -1902,7 +1899,7 @@ def test_workbasket_compare_found_measures(
     assert response2.status_code == 200
     decoded = response2.content.decode(response2.charset)
     soup = BeautifulSoup(decoded, "html.parser")
-    assert "1 matching measure found" in soup.select("h2")[1].text
+    assert "1 matching measure found" in soup.select("h2")[3].text
 
     # previously uploaded data
     assert len(soup.select("tbody")[0].select("tr")) == 2
