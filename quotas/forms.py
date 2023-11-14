@@ -241,11 +241,7 @@ class QuotaOrderNumberCreateForm(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.init_fields()
-        self.set_initial_data(*args, **kwargs)
         self.init_layout()
-
-    def set_initial_data(self, *args, **kwargs):
-        self.fields["category"].initial = self.instance.category
 
     def init_fields(self):
         self.fields["start_date"].help_text = START_DATE_HELP_TEXT

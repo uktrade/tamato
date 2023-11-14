@@ -109,6 +109,18 @@ class QuotaCreate(QuotaOrderNumberMixin, CreateTaricCreateView):
     form_class = forms.QuotaOrderNumberCreateForm
     template_name = "layouts/create.jinja"
 
+    permission_required = ["common.add_trackedmodel"]
+
+    validate_business_rules = (
+        business_rules.ON1,
+        business_rules.ON2,
+        business_rules.ON4,
+        business_rules.ON9,
+        business_rules.ON11,
+        UniqueIdentifyingFields,
+        UpdateValidity,
+    )
+
     def get_context_data(self, **kwargs):
         return super().get_context_data(
             page_title="Create a new quota order number", **kwargs
