@@ -1,6 +1,6 @@
 class TaricXMLSourceBase:
     def get_xml_string(self):
-        raise Exception("Implement on child class")
+        raise NotImplementedError("Implement on child class")
 
 
 class TaricXMLFileSource(TaricXMLSourceBase):
