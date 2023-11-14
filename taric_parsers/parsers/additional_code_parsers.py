@@ -18,7 +18,6 @@ class NewAdditionalCodeTypeParser(ValidityMixin, Writable, BaseTaricParser):
     model_links = []
 
     value_mapping = {
-        # "certificate_type_code": "certificate_type_sid",
         "additional_code_type_id": "sid",
         "validity_start_date": "valid_between_lower",
         "validity_end_date": "valid_between_upper",
@@ -38,7 +37,6 @@ class NewAdditionalCodeTypeParser(ValidityMixin, Writable, BaseTaricParser):
     allow_update_without_children = True
 
 
-# This gets joined to AdditionalCodeType as description column
 class NewAdditionalCodeTypeDescriptionParser(Writable, BaseTaricParser):
     model = AdditionalCodeType
     parent_parser = NewAdditionalCodeTypeParser
@@ -73,7 +71,6 @@ class NewAdditionalCodeTypeDescriptionParser(Writable, BaseTaricParser):
 class NewAdditionalCodeParser(Writable, BaseTaricParser):
     model = AdditionalCode
 
-    # create dependency to QuotaDefinition
     model_links = [
         ModelLink(
             AdditionalCodeType,
@@ -109,7 +106,6 @@ class NewAdditionalCodeParser(Writable, BaseTaricParser):
 class NewAdditionalCodeDescriptionParser(Writable, BaseTaricParser):
     model = AdditionalCodeDescription
 
-    # create dependency to QuotaDefinition
     model_links = [
         ModelLink(
             AdditionalCode,

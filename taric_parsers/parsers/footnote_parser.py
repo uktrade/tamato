@@ -135,7 +135,6 @@ class NewFootnoteDescriptionParser(Writable, BaseTaricParser):
     allow_update_without_children = True
 
     sid: int = None
-    # language_id: str = None
     described_footnote__footnote_type__footnote_type_id: str = None
     described_footnote__footnote_id: str = None
     description: str = None

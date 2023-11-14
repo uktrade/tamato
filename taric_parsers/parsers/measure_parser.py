@@ -90,7 +90,6 @@ class NewMeasureTypeSeriesDescriptionParser(Writable, BaseTaricParser):
 
 
 class NewMeasurementUnitParser(ValidityMixin, Writable, BaseTaricParser):
-    # handler = MeasurementUnitHandler
     model = MeasurementUnit
     record_code = "210"
     subrecord_code = "00"
@@ -142,7 +141,6 @@ class NewMeasurementUnitDescriptionParser(Writable, BaseTaricParser):
     ]
 
     code: str = None
-    # language_id: str = None
     description: str = None
 
 
@@ -204,7 +202,6 @@ class NewMeasurementUnitQualifierDescriptionParser(Writable, BaseTaricParser):
 
     deletes_allowed = False
     code: str = None
-    # language_id: str = None
     description: str = None
 
 
@@ -307,7 +304,6 @@ class NewMonetaryUnitDescriptionParser(Writable, BaseTaricParser):
     deletes_allowed = False
 
     code: str = None
-    # language_id: str = None
     description: str = None
 
 
@@ -372,12 +368,10 @@ class NewDutyExpressionDescriptionParser(Writable, BaseTaricParser):
 
     deletes_allowed = False
     sid: int = None
-    # language_id: str = None
     description: str = None
 
 
 class NewMeasureTypeParser(ValidityMixin, Writable, BaseTaricParser):
-    # handler = MeasureTypeHandler
     model = MeasureType
     model_links = [
         ModelLink(
@@ -450,7 +444,6 @@ class NewMeasureTypeDescriptionParser(Writable, BaseTaricParser):
 
     deletes_allowed = False
     sid: str = None
-    # language_id: str = None
     description: str = None
 
 
@@ -459,7 +452,6 @@ class NewAdditionalCodeTypeMeasureTypeParser(
     Writable,
     BaseTaricParser,
 ):
-    # handler = AdditionalCodeTypeMeasureTypeHandler
     model = AdditionalCodeTypeMeasureType
     model_links = [
         ModelLink(
@@ -502,7 +494,6 @@ class NewAdditionalCodeTypeMeasureTypeParser(
 
 
 class NewMeasureConditionCodeParser(ValidityMixin, Writable, BaseTaricParser):
-    # handler = MeasureConditionCodeHandler
     model = MeasureConditionCode
     record_code = "350"
     subrecord_code = "00"
@@ -555,12 +546,10 @@ class NewMeasureConditionCodeDescriptionParser(Writable, BaseTaricParser):
 
     deletes_allowed = False
     code: str = None
-    # language_id: str = None
     description: str = None
 
 
 class NewMeasureActionParser(ValidityMixin, Writable, BaseTaricParser):
-    # handler = MeasureActionHandler
     model = MeasureAction
 
     model_links = []
@@ -616,12 +605,10 @@ class NewMeasureActionDescriptionParser(Writable, BaseTaricParser):
 
     deletes_allowed = False
     code: str = None
-    # language_id: str = None
     description: str = None
 
 
 class NewMeasureParser(ValidityMixin, Writable, BaseTaricParser):
-    # handler = MeasureHandler
     model = Measure
     model_links = [
         ModelLink(
@@ -737,7 +724,6 @@ class NewMeasureParser(ValidityMixin, Writable, BaseTaricParser):
 
 
 class NewMeasureComponentParser(Writable, BaseTaricParser):
-    # handler = MeasureComponentHandler
     model = MeasureComponent
     model_links = [
         ModelLink(
@@ -807,7 +793,6 @@ class NewMeasureComponentParser(Writable, BaseTaricParser):
 
 
 class NewMeasureConditionParser(Writable, BaseTaricParser):
-    # handler = MeasureConditionHandler
     model = MeasureCondition
     model_links = [
         ModelLink(
@@ -901,7 +886,6 @@ class NewMeasureConditionParser(Writable, BaseTaricParser):
 
 
 class NewMeasureConditionComponentParser(Writable, BaseTaricParser):
-    # handler = MeasureConditionComponentHandler
     model = MeasureConditionComponent
     model_links = [
         ModelLink(
@@ -969,7 +953,6 @@ class NewMeasureConditionComponentParser(Writable, BaseTaricParser):
 
 
 class NewMeasureExcludedGeographicalAreaParser(Writable, BaseTaricParser):
-    # handler = MeasureExcludedGeographicalAreaHandler
     model = MeasureExcludedGeographicalArea
     model_links = [
         ModelLink(
@@ -1011,7 +994,6 @@ class NewMeasureExcludedGeographicalAreaParser(Writable, BaseTaricParser):
 
 
 class NewFootnoteAssociationMeasureParser(Writable, BaseTaricParser):
-    # handler = FootnoteAssociationMeasureHandler
     model = FootnoteAssociationMeasure
     model_links = [
         ModelLink(

@@ -44,7 +44,6 @@ class NewGoodsNomenclatureParser(Writable, BaseTaricParser):
 
 
 class NewGoodsNomenclatureOriginParser(Writable, BaseTaricParser):
-    # handler = GoodsNomenclatureOriginHandler
     model = GoodsNomenclatureOrigin
 
     model_links = [

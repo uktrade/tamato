@@ -105,7 +105,6 @@ class NewQuotaOrderNumberOriginExclusionParser(BaseTaricParser):
     model = QuotaOrderNumberOriginExclusion
 
     model_links = [
-        # create dependency to quota order number origin
         ModelLink(
             QuotaOrderNumberOrigin,
             [
@@ -113,7 +112,6 @@ class NewQuotaOrderNumberOriginExclusionParser(BaseTaricParser):
             ],
             "quota.order.number.origin",
         ),
-        # create dependency to geographical area
         ModelLink(
             GeographicalArea,
             [
@@ -145,7 +143,6 @@ class NewQuotaDefinitionParser(BaseTaricParser):
     model = QuotaDefinition
 
     model_links = [
-        # create dependency to quota order number
         ModelLink(
             QuotaOrderNumber,
             [
@@ -162,7 +159,6 @@ class NewQuotaDefinitionParser(BaseTaricParser):
             "monetary.unit",
             True,  # optional
         ),
-        # create optional dependency to MeasurementUnit
         ModelLink(
             MeasurementUnit,
             [
@@ -222,7 +218,6 @@ class NewQuotaDefinitionParser(BaseTaricParser):
 class NewQuotaAssociationParser(BaseTaricParser):
     model = QuotaAssociation
     model_links = [
-        # create dependency to QuotaDefinition (main quota)
         ModelLink(
             QuotaDefinition,
             [
@@ -230,7 +225,6 @@ class NewQuotaAssociationParser(BaseTaricParser):
             ],
             "quota.definition",
         ),
-        # create dependency to QuotaDefinition (sub quota)
         ModelLink(
             QuotaDefinition,
             [
@@ -353,7 +347,7 @@ class NewQuotaEventParser(BaseTaricParser):
     record_code = "375"
     subrecord_code = "subrecord_code"
 
-    xml_object_tag = "parent.quota.event"  # parent to all quota events - should never match anything directly
+    xml_object_tag = "parent.quota.event"
 
     identity_fields = [
         "quota_definition__sid",
