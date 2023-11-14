@@ -116,6 +116,7 @@ class MessageParser:
         for update_type in UpdateType:
             if update_type.value == self.update_type:
                 self.update_type_name = update_type.name.lower()
+                break
 
         self._populate_data_dict(self.update_type, self.update_type_name)
         self.taric_object = self._construct_taric_object()
