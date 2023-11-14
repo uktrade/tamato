@@ -11,8 +11,6 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db.models import F
-from django.db.models import Max
-from django.db.models import Min
 from django.db.models import ProtectedError
 from django.db.transaction import atomic
 from django.http import Http404
@@ -627,17 +625,30 @@ class WorkBasketChangesView(SortingMixin, WorkBasketChangesMixin):
             return queryset[:items_per_page]
 
 
-class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
+class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
     """UI endpoint for reordering transactions in a workbasket."""
 
+    permission_required = "workbaskets.view_workbasket"
     template_name = "workbaskets/transaction_order.jinja"
+    form_class = forms.SelectableObjectsForm
+    paginate_by = 20
 
     form_action_redirect_map = {
-        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
         "page-prev": "workbaskets:workbasket-ui-transaction-order",
         "page-next": "workbaskets:workbasket-ui-transaction-order",
         "move-transaction": "workbaskets:workbasket-ui-transaction-order",
     }
+
+    @cached_property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    @property
+    def paginator(self):
+        return Paginator(
+            self.workbasket.transactions.prefetch_related("tracked_models"),
+            per_page=self.paginate_by,
+        )
 
     def get_queryset(self):
         queryset = self.paginator.object_list
@@ -645,14 +656,25 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
         items_per_page = page_number * self.paginate_by
         return queryset[:items_per_page]
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["objects"] = self.get_queryset()
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        user_can_move_transactions = (
+            self.request.user.is_superuser
+            or self.request.user.has_perm("workbaskets.change_workbasket")
+        )
         context.update(
             {
+                "workbasket": self.workbasket,
+                "page_obj": page,
+                "user_can_move_transactions": user_can_move_transactions,
                 "first_transaction_in_workbasket": self.first_transaction_in_workbasket,
                 "last_transaction_in_workbasket": self.last_transaction_in_workbasket,
-                "tracked_models_first_in_transactions": self.tracked_models_first_in_transactions,
-                "tracked_models_last_in_transactions": self.tracked_models_last_in_transactions,
             },
         )
         return context
@@ -670,7 +692,6 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
         elif form_action.startswith("demote-transaction"):
             return self.demote_transaction(form_action)
 
-        # Handle TrackedModel removal.
         if form.is_valid():
             return self.form_valid(form)
         else:
@@ -683,7 +704,7 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
         ):
             form_action = "move-transaction"
         try:
-            return self._append_url_params(
+            return self._append_page_url_param(
                 reverse(
                     self.form_action_redirect_map[form_action],
                     kwargs={"pk": self.workbasket.pk},
@@ -695,6 +716,16 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
                 "workbaskets:workbasket-ui-detail",
                 kwargs={"pk": self.workbasket.pk},
             )
+
+    def _append_page_url_param(self, url, form_action):
+        """Append a page number parameter to the URL."""
+        page_number = int(self.request.GET.get("page", 1))
+        page = self.paginator.get_page(page_number)
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+        return f"{url}?page={page_number}"
 
     def workbasket_transactions(self):
         """Returns the current workbasket's transactions ordered by `order`,
@@ -877,22 +908,6 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
     @cached_property
     def last_transaction_in_workbasket(self):
         return self.workbasket_transactions().last()
-
-    @property
-    def tracked_models_first_in_transactions(self):
-        """Returns a list of pks of tracked models that are first in their
-        parent transaction."""
-        return self.workbasket.transactions.annotate(
-            first_tracked_models=Min("tracked_models__pk"),
-        ).values_list("first_tracked_models", flat=True)
-
-    @property
-    def tracked_models_last_in_transactions(self):
-        """Returns a list of pks of tracked models that are last in their parent
-        transaction."""
-        return self.workbasket.transactions.annotate(
-            last_tracked_models=Max("tracked_models__pk"),
-        ).values_list("last_tracked_models", flat=True)
 
 
 class WorkBasketViolations(SortingMixin, WithPaginationListView):

@@ -17,10 +17,6 @@
   }}
 {% endblock %}
 
-{% set checkbox_check_all %}
-  <div id="check-all-checkbox"></div>
-{% endset %}
-
 {% set base_url = url("workbaskets:workbasket-ui-transaction-order", args=[workbasket.pk]) ~ "?page=" ~ page_obj.number %}
 
 {% set current_count = page_obj|length + ((page_obj.number - 1) * view.paginate_by) %}
@@ -36,66 +32,67 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
 
-    {% if not workbasket.tracked_models.count() %}
+    {% if not workbasket.transactions.exists() %}
       <p class="govuk-body">There are no transactions in the workbasket.</p>
 
-    {% elif workbasket.status == "EDITING" and user_can_delete_items %}
-      <p class="govuk-body">Select to remove or click on the ID link to edit:</p>
+    {% elif workbasket.status == "EDITING" and user_can_move_transactions %}
+      <p class="govuk-body">Select one or more transactions to move.</p>
       <form method="post">
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         {% if form.fields %}
           {% set table_rows = [] %}
           {% for field in form %}
             {% set checkbox = checkbox_item(field) %}
-            {% set obj = field.field.obj %}
-            {% set object_link %}
-              <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
-                {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
-              </a>
-            {% endset %}
-            {% set object_description -%}
-              {{ obj.structure_description if obj.structure_description else "-" }}
-            {% endset %}
+            {% set transaction = field.field.obj %}
 
-            {# Above each transaction add transaction info and actions. #}
-            {% if loop.first or obj.pk in tracked_models_first_in_transactions %}
-              {{ table_rows.append([
-                { "text": "", "classes": "transaction-start first-cell"},
-                {
-                  "html": transaction_details(obj.transaction),
-                  "colspan": 7,
-                  "classes": "transaction-start last-cell",
-                },
-              ]) or "" }}
-            {% endif %}
-
-            {# TrackedModel instance. #}
+            {# Transaction info and actions. #}
             {{ table_rows.append([
-              {"text": "", "classes": "item first-cell"},
-              {"html": checkbox},
-              {"html": object_link, "classes": "govuk-!-width-one-quarter"},
-              {"text": obj._meta.verbose_name.title()},
-              {"text": obj.update_type_str},
-              {"html": object_description, "classes": "govuk-!-width-one-quarter"},
-              {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter item last-cell"},
+              {
+                "html": checkbox,
+                "classes": "transaction-start first-cell"
+              },
+              {
+                "html": transaction_details(transaction),
+                "colspan": 5,
+                "classes": "transaction-start last-cell",
+              },
             ]) or "" }}
 
+            {# Tracked models within transaction. #}
+            {% for tracked_model in transaction.tracked_models.all() %}
+              {% set tracked_model_link %}
+                <a class="govuk-link" href="{{ tracked_model.get_url() or "#" }}">
+                  {{ tracked_model.get_described_object() if tracked_model.get_described_object else tracked_model.structure_code }}
+                </a>
+              {% endset %}
+              {% set tracked_model_description -%}
+                {{ tracked_model.structure_description if tracked_model.structure_description else "-" }}
+              {% endset %}
+              {{ table_rows.append([
+                {"text": "", "classes": "item first-cell"},
+                {"html": tracked_model_link, "classes": "govuk-!-width-one-quarter"},
+                {"text": tracked_model._meta.verbose_name.title()},
+                {"text": tracked_model.update_type_str},
+                {"html": tracked_model_description},
+                {"text": "{:%d %b %Y}".format(transaction.updated_at), "classes": "item last-cell"},
+              ]) or "" }}
+            {% endfor %}
+
             {# Below each transaction add a spacer line. #}
-            {% if not loop.last and obj.pk in tracked_models_last_in_transactions %}
+            {% if not loop.last %}
               {{ table_rows.append([
                 {
                   "text": "",
-                  "colspan": 7,
+                  "colspan": 6,
                   "classes": "transaction-end",
                 },
               ]) or "" }}
-            {% endif  %}
+            {% endif %}
           {% endfor %}
 
           {{ govukTable({
             "head": [
-              {"text": ""},
-              {"html": checkbox_check_all},
+              {"text": "Checkbox", "classes": "govuk-visually-hidden"},
               {"text": "ID"},
               {"text": "Component"},
               {"text": "Action"},
@@ -107,60 +104,66 @@
           }) }}
         {% endif %}
 
-        <div class="govuk-button-group">
-          <button value="remove-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Remove</button>
+        <div class="govuk-button-group govuk-!-margin-bottom-5">
+          <button value="promote-transactions-top" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Move to top</button>
+          <button value="promote-transactions" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Move up</button>
+          <button value="demote-transactions" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Move down</button>
+          <button value="demote-transactions-bottom" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Move to bottom</button>
         </div>
 
-        {{ load_more_pagination(current_count, total_count) }}
+        {{ load_more_pagination(current_count, total_count, "transaction") }}
       </form>
 
     {% else %}
       {% set table_rows = [] %}
-      {% for obj in view.get_queryset() %}
-        {% set object_link %}
-          <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
-            {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
-          </a>
-        {% endset %}
-        {% set object_description -%}
-          {{ obj.structure_description if obj.structure_description else "-" }}
-        {% endset %}
+      {% for transaction in view.get_queryset() %}
         {% set transaction_detail %}
-          <span class="details">Transaction: {{ obj.transaction.pk }}</span>
+          <span class="details">Transaction: {{ transaction.pk }}</span>
         {% endset %}
 
-        {# Above each transaction add transaction info. #}
-        {% if loop.first or obj.pk in tracked_models_first_in_transactions %}
-          {{ table_rows.append([
-            {"text": "", "classes": "transaction-start first-cell"},
-            {
-              "html": transaction_detail,
-              "colspan": 7,
-              "classes": "transaction-start last-cell",
-            },
-           ]) or "" }}
-        {% endif %}
-
-        {# TrackedModel instance. #}
+        {# Transaction info and actions. #}
         {{ table_rows.append([
-          {"text": "", "classes": "item first-cell"},
-          {"html": object_link},
-          {"text": obj._meta.verbose_name.title()},
-          {"text": obj.update_type_str},
-          {"text": object_description, "classes": "govuk-!-width-one-third"},
-          {"text": "{:%d %b %Y}".format(obj.transaction.updated_at), "classes": "govuk-!-width-one-quarter item last-cell"},
+          {
+            "text": "",
+            "classes": "transaction-start first-cell",
+          },
+          {
+            "html": transaction_detail,
+            "colspan": 5,
+            "classes": "transaction-start last-cell",
+          },
         ]) or "" }}
 
+        {# Tracked models within transaction. #}
+        {% for tracked_model in transaction.tracked_models.all() %}
+          {% set tracked_model_link %}
+            <a class="govuk-link" href="{{ tracked_model.get_url() or "#" }}">
+              {{ tracked_model.get_described_object() if tracked_model.get_described_object else tracked_model.structure_code }}
+            </a>
+          {% endset %}
+          {% set tracked_model_description -%}
+            {{ tracked_model.structure_description if tracked_model.structure_description else "-" }}
+          {% endset %}
+          {{ table_rows.append([
+            {"text": "", "classes": "item first-cell"},
+            {"html": tracked_model_link, "classes": "govuk-!-width-one-quarter"},
+            {"text": tracked_model._meta.verbose_name.title()},
+            {"text": tracked_model.update_type_str},
+            {"html": tracked_model_description},
+            {"text": "{:%d %b %Y}".format(transaction.updated_at), "classes": "item last-cell"},
+          ]) or "" }}
+        {% endfor %}
+
         {# Below each transaction add a spacer line. #}
-        {% if not loop.last and obj.pk in tracked_models_last_in_transactions %}
+        {% if not loop.last %}
           {{ table_rows.append([
             {
               "text": "",
-              "colspan": 7,
+              "colspan": 6,
               "classes": "transaction-end",
             },
           ]) or "" }}
-        {% endif  %}
+        {% endif %}
       {% endfor %}
 
       <form method="post">
@@ -178,7 +181,7 @@
           "classes": "workbasket-items",
         }) }}
 
-        {{ load_more_pagination(current_count, total_count) }}
+        {{ load_more_pagination(current_count, total_count, "transaction") }}
 
       </form>
     {% endif %}

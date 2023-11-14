@@ -43,8 +43,18 @@ table.workbasket-items tbody {
     }
   }
 
+  .transaction-start.first-cell {
+    padding-right: 0px;
+    padding-left: govuk-spacing(3);
+    padding-bottom: 0px;
+  }
+  .transaction-start.last-cell {
+    vertical-align: middle;
+  }
+
   .transaction-start.first-cell,
   .item.first-cell {
+    border-top: 1px solid govuk-colour("mid-grey");
     border-left: 1px solid govuk-colour("mid-grey");
   }
 
