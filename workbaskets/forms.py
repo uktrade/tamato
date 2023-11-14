@@ -156,7 +156,9 @@ class SelectableObjectsForm(forms.Form):
 class WorkbasketCompareForm(forms.Form):
     data = forms.CharField(
         label="Compare worksheet data against the measures in this workbasket",
-        widget=forms.Textarea(),
+        widget=forms.Textarea(
+            attrs={"placeholder": "Add your worksheet data here"},
+        ),
         validators=[SymbolValidator],
     )
 
