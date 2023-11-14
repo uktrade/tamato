@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 
 from common.tests.util import preload_import
+from common.validators import UpdateType
 from taric_parsers.parsers.additional_code_parsers import *
 
 pytestmark = pytest.mark.django_db

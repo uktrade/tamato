@@ -4,6 +4,7 @@ import pytest
 
 from additional_codes.models import *
 from common.tests.util import preload_import
+from common.validators import UpdateType
 from taric_parsers.parsers.additional_code_parsers import *
 from taric_parsers.parsers.footnote_parser import *
 

@@ -14,7 +14,7 @@ from common.util import TaricDateRange
 from common.validators import UpdateType
 from quotas.models import QuotaEvent
 from taric_parsers.importer_issue import ImportIssueReportItem
-from taric_parsers.parser_model_link import *
+from taric_parsers.parser_model_link import ModelLink
 
 # import all parsers
 EXCLUDED_PARSER_PROPERTIES = [

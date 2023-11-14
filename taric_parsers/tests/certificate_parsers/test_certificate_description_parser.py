@@ -1,6 +1,7 @@
 import pytest
 
 from common.tests.util import preload_import
+from common.validators import UpdateType
 
 # note : need to import these objects to make them available to the parser
 from taric_parsers.parsers.certificate_parser import *

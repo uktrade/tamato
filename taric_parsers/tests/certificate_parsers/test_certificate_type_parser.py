@@ -4,6 +4,7 @@ import pytest
 
 from certificates.models import CertificateType
 from common.tests.util import preload_import
+from common.validators import UpdateType
 from taric_parsers.parsers.certificate_parser import *
 
 pytestmark = pytest.mark.django_db

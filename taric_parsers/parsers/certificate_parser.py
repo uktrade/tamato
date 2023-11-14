@@ -1,7 +1,14 @@
-from certificates.models import *
-from taric_parsers.parser_model_link import *
-from taric_parsers.parsers.mixins import *
-from taric_parsers.parsers.taric_parser import *
+from datetime import date
+
+from certificates.models import Certificate
+from certificates.models import CertificateDescription
+from certificates.models import CertificateType
+from taric_parsers.parser_model_link import ModelLink
+from taric_parsers.parser_model_link import ModelLinkField
+from taric_parsers.parsers.mixins import ChildPeriod
+from taric_parsers.parsers.mixins import ValidityMixin
+from taric_parsers.parsers.mixins import Writable
+from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
 class NewCertificateTypeParser(ValidityMixin, Writable, BaseTaricParser):

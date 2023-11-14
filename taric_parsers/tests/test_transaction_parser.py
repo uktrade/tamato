@@ -15,7 +15,6 @@ from taric_parsers.parsers.additional_code_parsers import (  # noqa
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
     NewFootnoteAssociationAdditionalCodeParser,
 )
-from taric_parsers.parsers.additional_code_parsers import ParserHelper  # noqa
 from taric_parsers.parsers.taric_parser import TransactionParser
 
 pytestmark = pytest.mark.django_db

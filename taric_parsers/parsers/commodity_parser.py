@@ -1,10 +1,18 @@
 from datetime import date
 
-from commodities.models import *
-from footnotes.models import *
-from taric_parsers.parser_model_link import *
-from taric_parsers.parsers.mixins import *
-from taric_parsers.parsers.taric_parser import *
+from commodities.models import FootnoteAssociationGoodsNomenclature
+from commodities.models import GoodsNomenclature
+from commodities.models import GoodsNomenclatureDescription
+from commodities.models import GoodsNomenclatureIndent
+from commodities.models import GoodsNomenclatureOrigin
+from commodities.models import GoodsNomenclatureSuccessor
+from footnotes.models import Footnote
+from taric_parsers.parser_model_link import ModelLink
+from taric_parsers.parser_model_link import ModelLinkField
+from taric_parsers.parsers.mixins import ChildPeriod
+from taric_parsers.parsers.mixins import ValidityMixin
+from taric_parsers.parsers.mixins import Writable
+from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
 class NewGoodsNomenclatureParser(Writable, BaseTaricParser):

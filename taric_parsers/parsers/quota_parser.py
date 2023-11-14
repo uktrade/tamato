@@ -1,10 +1,22 @@
 import json
+from datetime import date
+from datetime import datetime
 
-from geo_areas.models import *
-from measures.models import *
-from quotas.models import *
-from taric_parsers.parser_model_link import *
-from taric_parsers.parsers.taric_parser import *
+from geo_areas.models import GeographicalArea
+from measures.models import MeasurementUnit
+from measures.models import MeasurementUnitQualifier
+from measures.models import MonetaryUnit
+from quotas.models import QuotaAssociation
+from quotas.models import QuotaBlocking
+from quotas.models import QuotaDefinition
+from quotas.models import QuotaEvent
+from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaOrderNumberOrigin
+from quotas.models import QuotaOrderNumberOriginExclusion
+from quotas.models import QuotaSuspension
+from taric_parsers.parser_model_link import ModelLink
+from taric_parsers.parser_model_link import ModelLinkField
+from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
 class NewQuotaOrderNumberParser(BaseTaricParser):

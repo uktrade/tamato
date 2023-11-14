@@ -1,7 +1,15 @@
-from regulations.models import *
-from taric_parsers.parser_model_link import *
-from taric_parsers.parsers.mixins import *
-from taric_parsers.parsers.taric_parser import *
+from datetime import date
+
+from regulations.models import Amendment
+from regulations.models import Group
+from regulations.models import Regulation
+from regulations.models import Replacement
+from regulations.models import Suspension
+from taric_parsers.parser_model_link import ModelLink
+from taric_parsers.parser_model_link import ModelLinkField
+from taric_parsers.parsers.mixins import ValidityMixin
+from taric_parsers.parsers.mixins import Writable
+from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
 class NewRegulationGroupParser(ValidityMixin, Writable, BaseTaricParser):
