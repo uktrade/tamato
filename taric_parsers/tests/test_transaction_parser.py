@@ -3,8 +3,20 @@ import os
 import pytest
 from bs4 import BeautifulSoup
 
-from taric_parsers.parsers.additional_code_parsers import *
-from taric_parsers.parsers.taric_parser import *
+from taric_parsers.parsers.additional_code_parsers import (  # noqa
+    NewAdditionalCodeDescriptionParser,
+)
+from taric_parsers.parsers.additional_code_parsers import (  # noqa
+    NewAdditionalCodeParser,
+)
+from taric_parsers.parsers.additional_code_parsers import (  # noqa
+    NewAdditionalCodeTypeParser,
+)
+from taric_parsers.parsers.additional_code_parsers import (  # noqa
+    NewFootnoteAssociationAdditionalCodeParser,
+)
+from taric_parsers.parsers.additional_code_parsers import ParserHelper  # noqa
+from taric_parsers.parsers.taric_parser import TransactionParser
 
 pytestmark = pytest.mark.django_db
 

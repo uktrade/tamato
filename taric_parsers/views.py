@@ -9,7 +9,9 @@ from django.views.generic import FormView
 from common.views import RequiresSuperuserMixin
 from common.views import WithPaginationListView
 from importer.filters import ImportBatchFilter
-from importer.models import *
+from importer.models import BatchImportErrorIssueType
+from importer.models import ImportBatch
+from importer.models import ImporterChunkStatus
 from taric_parsers import forms
 
 
