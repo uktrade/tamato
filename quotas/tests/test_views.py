@@ -1350,3 +1350,60 @@ def test_quota_order_number_create_success(
     assert (
         soup.find("h1").text.strip() == f"Quota {quota.order_number} has been created"
     )
+
+
+def test_quota_update_origins(valid_user_client, date_ranges):
+    quota = factories.QuotaOrderNumberFactory.create(
+        category=0,
+        valid_between=date_ranges.big_no_end,
+    )
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+
+    # sanity check
+    assert quota.origins.count() == 1
+
+    data = {
+        "start_date_0": date_ranges.big_no_end.lower.day,
+        "start_date_1": date_ranges.big_no_end.lower.month,
+        "start_date_2": date_ranges.big_no_end.lower.year,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
+        "category": "1",  # update category
+        # keep first origin data the same
+        "origins-0-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-0-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-0-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-0-end_date_0": "",
+        "origins-0-end_date_1": "",
+        "origins-0-end_date_2": "",
+        "origins-0-geographical_area": geo_area1.pk,
+        # add a new origin
+        "origins-1-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-1-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-1-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-1-end_date_0": "",
+        "origins-1-end_date_1": "",
+        "origins-1-end_date_2": "",
+        "origins-1-geographical_area": geo_area2.pk,
+        "submit": "Save",
+    }
+    url = reverse("quota-ui-edit", kwargs={"sid": quota.sid})
+    response = valid_user_client.post(url, data)
+    assert response.status_code == 302
+    assert response.url == reverse("quota-ui-confirm-update", kwargs={"sid": quota.sid})
+
+    tx = Transaction.objects.last()
+    updated_quota = (
+        models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        .filter(sid=quota.sid)
+        .first()
+    )
+    assert updated_quota.category == 1
+
+    assert updated_quota.origins.approved_up_to_transaction(tx).count() == 2
+    assert {o.sid for o in updated_quota.origins.approved_up_to_transaction(tx)} == {
+        geo_area1.sid,
+        geo_area2.sid,
+    }

@@ -299,7 +299,6 @@ class QuotaUpdateMixin(
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
-        kwargs["request"] = self.request
         kwargs["geo_area_options"] = (
             GeographicalArea.objects.current()
             .prefetch_related("descriptions")
@@ -312,25 +311,56 @@ class QuotaUpdateMixin(
 
     @transaction.atomic
     def get_result_object(self, form):
-        object = super().get_result_object(form)
+        instance = super().get_result_object(form)
 
-        existing_origins = (
-            models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
-                object.transaction,
-            ).filter(
-                order_number__sid=object.sid,
+        form_origins = form.cleaned_data["origins"]
+
+        for origin in form_origins:
+            existing_origin = (
+                instance.quotaordernumberorigin_set.filter(
+                    geographical_area__pk=origin["geographical_area"],
+                )
+                .current()
+                .first()
             )
-        )
 
-        # this will be needed even if origins have not been edited in the form
-        for origin in existing_origins:
-            origin.new_version(
+            if existing_origin:
+                existing_origin.new_version(
+                    workbasket=WorkBasket.current(self.request),
+                    transaction=instance.transaction,
+                    order_number=instance,
+                )
+            else:
+                models.QuotaOrderNumberOrigin.objects.create(
+                    order_number=instance,
+                    valid_between=origin["valid_between"],
+                    geographical_area=origin["geographical_area"],
+                    update_type=UpdateType.CREATE,
+                    transaction=instance.transaction,
+                )
+
+        form_geo_areas = {o["geographical_area"] for o in form_origins}
+
+        removed_geo_areas = {
+            existing_origin.geographical_area
+            for existing_origin in instance.quotaordernumberorigin_set.current()
+        }.difference(form_geo_areas)
+
+        removed_origins = [
+            instance.quotaordernumberorigin_set.current().get(
+                geographical_area=geo_area,
+            )
+            for geo_area in removed_geo_areas
+        ]
+
+        for removed in removed_origins:
+            removed.new_version(
+                update_type=UpdateType.DELETE,
                 workbasket=WorkBasket.current(self.request),
-                transaction=object.transaction,
-                order_number=object,
+                transaction=instance.transaction,
             )
 
-        return object
+        return instance
 
 
 class QuotaUpdate(

@@ -139,13 +139,13 @@ class QuotaUpdateForm(
     )
 
     def __init__(self, *args, **kwargs):
-        request = kwargs.pop("request")
+        self.request = kwargs.pop("request")
         self.geo_area_options = kwargs.pop("geo_area_options")
         self.existing_origins = kwargs.pop("existing_origins")
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.set_initial_data(*args, **kwargs)
-        self.init_layout(request)
+        self.init_layout(self.request)
 
     def set_initial_data(self, *args, **kwargs):
         self.fields["category"].initial = self.instance.category
@@ -225,6 +225,7 @@ class QuotaUpdateForm(
 
     def clean(self):
         submitted_data = unprefix_formset_data(QUOTA_ORIGINS_FORMSET_PREFIX, self.data)
+        self.cleaned_data["origins"] = []
 
         for i, origin_data in enumerate(submitted_data):
             # instantiate a form per origin data to do validation
@@ -238,7 +239,8 @@ class QuotaUpdateForm(
                         f"{QUOTA_ORIGINS_FORMSET_PREFIX}-{i}-{field}",
                         e,
                     )
-        # TODO: clean, validate, add to cleaned_data, create origins
+            else:
+                self.cleaned_data["origins"].append(form.cleaned_data)
         return super().clean()
 
     def init_layout(self, request):
