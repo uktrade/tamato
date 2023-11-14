@@ -1,0 +1,41 @@
+{% extends "common/confirm_create.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% block next_steps %}
+  {{ govukWarningText({
+    "text": "Before you can associate this quota order number with a measure you will need to create a quota origin."
+  }) }}
+{% endblock%}
+
+{% block main_button %}
+<div>
+{{ govukButton({
+  "text": "Create a quota origin",
+  "href": url('quota_order_number_origin-ui-create', args=[object.sid]),
+  "classes": "govuk-button--primary"
+}) }}
+</div>
+<div>
+{{ govukButton({
+  "text": "Create another quota order number",
+  "href": object.get_url('create'),
+  "classes": "govuk-button--secondary"
+}) }}
+</div>
+{% endblock%}
+
+{% block actions %}
+<li><a class="govuk-link" href="{{ object.get_url() }}">View this quota order number</a></li>
+<li><a href="{{ object.get_url('list') }}">Find and edit quotas</a></li>
+{% endblock %}

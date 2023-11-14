@@ -6,6 +6,7 @@ from itertools import product
 
 import factory
 from factory.fuzzy import FuzzyChoice
+from factory.fuzzy import FuzzyText
 from faker import Faker
 
 from common.models import TrackedModel
@@ -745,7 +746,7 @@ class QuotaOrderNumberFactory(TrackedModelMixin, ValidityFactoryMixin):
         model = "quotas.QuotaOrderNumber"
 
     sid = numeric_sid()
-    order_number = string_sequence(6, characters=string.digits)
+    order_number = FuzzyText(length=4, chars=string.digits, prefix="05")
     mechanism = 0
     category = 1
     valid_between = date_ranges("big_no_end")
