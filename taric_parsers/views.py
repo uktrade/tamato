@@ -1,3 +1,5 @@
+from xml.etree.ElementTree import ParseError
+
 from django.db.models import Count
 from django.db.models import Q
 from django.urls import reverse_lazy
@@ -47,7 +49,15 @@ class TaricImportUpload(RequiresSuperuserMixin, FormView):
     template_name = "taric_parser/create.jinja"
 
     def form_valid(self, form):
-        form.save(user=self.request.user)
+        try:
+            form.save(user=self.request.user)
+        except ParseError:
+            form.add_error(
+                "taric_file",
+                "The selected file could not be processed, please check the file and try again.",
+            )
+            return super().form_invalid(form)
+
         return super().form_valid(form)
 
 
