@@ -21,7 +21,7 @@ function QuotaOrigins({ data, options }) {
 
     const addEmptyOrigin = (e) => {
         e.preventDefault();
-        setOrigins([...origins, { ...emptyOrigin }])
+        setOrigins([...origins, { ...emptyOrigin }]);
     }
 
     function removeOrigin(origin, e) {
@@ -35,7 +35,7 @@ function QuotaOrigins({ data, options }) {
     }
 
     return (
-        <div>
+        <div aria-live="polite">
             {origins.map((origin, i) =>
                 <QuotaOriginForm origin={origin} options={options} index={i} removeOrigin={removeOrigin} />
             )}
