@@ -17,11 +17,6 @@
   </div>
 
   {% if report_lines %}
-    {% set headings = [] %}
-    {% for heading in column_headings %}
-      {{ headings.append({"text": heading}) or "" }}
-    {% endfor %}
-
     {% set rows = [] %}
     {% for row in report_lines %}
       {% set item_search_link -%}
@@ -37,10 +32,10 @@
 
       {% set measures_search_link -%}
         {% if row["measures_search_url"] %}
-          [<a
+          <a
             class="govuk-link govuk-!-font-weight-bold"
             href="{{ row['measures_search_url'] }}"
-          >measures</a>]
+          >measures</a>
         {% else %}
           ""
         {% endif %}
@@ -49,7 +44,8 @@
       {% set cells = [
         {"text": row["update_type"]},
         {"text": row["record_name"]},
-        {"html": item_search_link ~ measures_search_link},
+        {"html": item_search_link},
+        {"html": measures_search_link},
         {"text": row["suffix"]},
         {"text": row["start_date"]},
         {"text": row["end_date"]},
@@ -60,7 +56,16 @@
     {% endfor %}
 
     {{ govukTable({
-      "head": headings,
+      "head": [
+        {"text": "Update type"},
+        {"text": "What's being updated"},
+        {"html": "Commodity code"},
+        {"html": "Measures"},
+        {"text": "Suffix"},
+        {"text": "Validity start date"},
+        {"text": "Validity end date"},
+        {"text": "Comments"},
+      ],
       "rows": rows,
     }) }}
   {% endif %}

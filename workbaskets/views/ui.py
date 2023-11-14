@@ -43,7 +43,6 @@ from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.goods_report import GoodsReporter
-from importer.goods_report import GoodsReportLine
 from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
@@ -1237,15 +1236,6 @@ class WorkbasketReviewGoodsView(
         context["selected_tab"] = "commodities"
         context["session_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
-
-        # Default values should there be no ImportBatch instance associated with
-        # the workbasket.
-        context["column_headings"] = [
-            description
-            for description in GoodsReportLine.COLUMN_DESCRIPTIONS
-            if description != "Containing transaction ID"
-            and description != "Containing message ID"
-        ]
         context["report_lines"] = []
         context["import_batch_pk"] = None
 
