@@ -8,11 +8,15 @@
     change{{ report_lines|pluralize }} available to review.
 
     {% if import_batch_pk %}
-      <a href="{{ url("goods-report-ui-download", kwargs={"pk": import_batch_pk}) }}" class="govuk-link fake-link align-right govuk-!-margin-left-5">Download as Excel <span class="down-arrow">&#9660;</span></a>
+      <a href="{{ url("goods-report-ui-download", kwargs={"pk": import_batch_pk}) }}"
+        class="govuk-link fake-link align-right govuk-!-margin-left-5"
+      >Download as Excel <span class="down-arrow">&#9660;</span></a>
     {% endif %}
 
     {% if unsent_notification %}
-      <a href="{{ url("goods-report-notify", kwargs={"pk": import_batch_pk}) }}" class="govuk-link fake-link align-right">Notify Channel Islands <span class="right-arrow">&#9654;</span></a>
+      <a href="{{ url("goods-report-notify", kwargs={"pk": import_batch_pk}) }}"
+        class="govuk-link fake-link align-right"
+      >Notify Channel Islands <span class="right-arrow">&#9654;</span></a>
     {% endif %}
   </div>
 
@@ -58,7 +62,7 @@
     {{ govukTable({
       "head": [
         {"text": "Update type"},
-        {"text": "What's being updated"},
+        {"text": "Update"},
         {"html": "Commodity code"},
         {"html": "Measures"},
         {"text": "Suffix"},
