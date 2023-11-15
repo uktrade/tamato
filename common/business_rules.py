@@ -144,7 +144,7 @@ class BusinessRule(metaclass=BusinessRuleBase):
                     related_instances = [getattr(model, field.name)]
                 for instance in related_instances:
                     try:
-                        yield instance.version_at()
+                        yield instance.version_at(transaction)
                     except TrackedModel.DoesNotExist:
                         # `related_instances` will contain all instances, even
                         # deleted ones, and `version_at` will return
@@ -278,8 +278,8 @@ class UniqueIdentifyingFields(BusinessRule):
 
         if (
             type(model)
-            .objects.current()
-            .filter(**query)
+            .objects.filter(**query)
+            .approved_up_to_transaction(self.transaction)
             .exclude(version_group=model.version_group)
             .exists()
         ):
@@ -305,8 +305,8 @@ class NoOverlapping(BusinessRule):
         query["valid_between__overlap"] = model.valid_between
 
         if (
-            model.__class__.objects.current()
-            .filter(**query)
+            model.__class__.objects.filter(**query)
+            .approved_up_to_transaction(self.transaction)
             .exclude(version_group=model.version_group)
             .exists()
         ):
@@ -573,7 +573,7 @@ class ExclusionMembership(BusinessRule):
         Membership = geo_group._meta.get_field("members").related_model
 
         if (
-            not Membership.objects.current()
+            not Membership.objects.approved_up_to_transaction(self.transaction)
             .filter(
                 geo_group__sid=geo_group.sid,
                 member__sid=exclusion.excluded_geographical_area.sid,

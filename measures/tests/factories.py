@@ -40,7 +40,7 @@ class MeasureSheetRowFactory(factory.Factory):
     excluded_origin_descriptions = factory.LazyAttribute(
         lambda m: random.choice(MeasureSheetRow.separators).join(
             e.excluded_geographical_area.descriptions.approved_up_to_transaction(
-                transaction=e.excluded_geographical_area
+                transaction=e.excluded_geographical_area.transaction,
             )
             .last()
             .description
