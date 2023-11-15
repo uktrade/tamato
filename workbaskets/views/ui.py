@@ -37,6 +37,7 @@ from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
+from common.util import format_date_string
 from common.views import SortingMixin
 from common.views import WithPaginationListView
 from exporter.models import Upload
@@ -1279,8 +1280,14 @@ class WorkbasketReviewGoodsView(
                         else ""
                     ),
                     "suffix": line.suffix,
-                    "start_date": line.validity_start_date,
-                    "end_date": line.validity_end_date,
+                    "start_date": format_date_string(
+                        line.validity_start_date,
+                        short_format=True,
+                    ),
+                    "end_date": format_date_string(
+                        line.validity_end_date,
+                        short_format=True,
+                    ),
                     "comments": line.comments,
                 }
                 for line in goods_report.report_lines
