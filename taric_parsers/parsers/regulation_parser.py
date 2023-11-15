@@ -68,7 +68,6 @@ class NewRegulationGroupDescriptionParser(Writable, BaseTaricParser):
 
     deletes_allowed = False
     group_id: str = None
-    # language_id: str = None
     description: str = None
 
 
