@@ -101,6 +101,19 @@ class TaricImporter:
 
         return
 
+    def ordered_transactions_and_messages(self, up_to_transaction=None):
+        up_to_transaction_matched = False
+
+        for parsed_transaction in self.parsed_transactions:
+            if up_to_transaction is not None and up_to_transaction_matched:
+                break
+
+            for message in parsed_transaction.parsed_messages:
+                yield transaction, message
+
+            if transaction == up_to_transaction:
+                up_to_transaction_matched = True
+
     def find_parent_for_parser_object(self, taric_object: BaseTaricParser):
         """
         Finds a parent object within the same import, matching the key identity
@@ -118,30 +131,30 @@ class TaricImporter:
         if not taric_object.is_child_object():
             raise Exception(f"Only call this method on child objects")
 
-        for parsed_transaction in self.parsed_transactions:
-            for message in parsed_transaction.parsed_messages:
-                possible_parent_taric_object = message.taric_object
-                if (
-                    not possible_parent_taric_object.is_child_object()
-                    and possible_parent_taric_object.__class__.model
-                    == taric_object.__class__.model
-                ):
-                    match = True
+        for (
+            parsed_transaction,
+            parsed_message,
+        ) in self.ordered_transactions_and_messages():
+            possible_parent_taric_object = parsed_message.taric_object
+            if (
+                not possible_parent_taric_object.is_child_object()
+                and possible_parent_taric_object.__class__.model
+                == taric_object.__class__.model
+            ):
+                match = True
 
-                    for (
-                        key,
-                        value,
-                    ) in (
-                        taric_object.get_identity_fields_and_values_for_parent().items()
+                for (
+                    key,
+                    value,
+                ) in taric_object.get_identity_fields_and_values_for_parent().items():
+                    if (
+                        hasattr(possible_parent_taric_object, key)
+                        and getattr(possible_parent_taric_object, key) != value
                     ):
-                        if (
-                            hasattr(possible_parent_taric_object, key)
-                            and getattr(possible_parent_taric_object, key) != value
-                        ):
-                            match = False
+                        match = False
 
-                    if match:
-                        return possible_parent_taric_object
+                if match:
+                    return possible_parent_taric_object
 
         raise Exception(f"No parent matched for {taric_object.__class__.__name__}")
 
@@ -155,24 +168,26 @@ class TaricImporter:
             None, changes are applied to the instances of parser classes stored in memory.
         """
         # need to copy all child attributes to parent objects within the import only
-        for parsed_transaction in self.parsed_transactions:
-            for message in parsed_transaction.parsed_messages:
-                # skip if the update has been flagged as not to import changes
-                if not message.taric_object.import_changes:
-                    continue
+        for (
+            parsed_transaction,
+            parsed_message,
+        ) in self.ordered_transactions_and_messages():
+            # skip if the update has been flagged as not to import changes
+            if not parsed_message.taric_object.import_changes:
+                continue
 
-                if message.taric_object.is_child_object():
-                    # We only need the parent to be present for creation, if it's an update it can be applied in isolation
-                    if message.update_type != validators.UpdateType.UPDATE:
-                        parent = self.find_parent_for_parser_object(
-                            message.taric_object,
-                        )
-                        attributes = message.taric_object.model_attributes(
-                            self.workbasket.transactions.last(),
-                            False,
-                        )
-                        for attribute_key in attributes.keys():
-                            setattr(parent, attribute_key, attributes[attribute_key])
+            if parsed_message.taric_object.is_child_object():
+                # We only need the parent to be present for creation, if it's an update it can be applied in isolation
+                if parsed_message.update_type != validators.UpdateType.UPDATE:
+                    parent = self.find_parent_for_parser_object(
+                        parsed_message.taric_object,
+                    )
+                    attributes = parsed_message.taric_object.model_attributes(
+                        self.workbasket.transactions.last(),
+                        False,
+                    )
+                    for attribute_key in attributes.keys():
+                        setattr(parent, attribute_key, attributes[attribute_key])
 
     @transaction.atomic
     def commit_data(self):
@@ -182,6 +197,7 @@ class TaricImporter:
         envelope = Envelope.new_envelope()
 
         transaction_order = 1
+
         for parsed_transaction in self.parsed_transactions:
             # create transaction
             transaction_inst = Transaction.objects.create(
@@ -341,19 +357,14 @@ class TaricImporter:
         """
         result = []
 
-        processed_last_transaction = False
-        for parsed_transaction in self.parsed_transactions:
-            if processed_last_transaction:
-                break
-
-            for parsed_message in parsed_transaction.parsed_messages:
-                if isinstance(parsed_message.taric_object, child_parser_class):
-                    # check identity fields
-                    if parsed_message.taric_object.is_child_for(parent):
-                        result.append(parsed_message.taric_object)
-
-            if transaction == last_transaction:
-                processed_last_transaction = True
+        for (
+            parsed_transaction,
+            parsed_message,
+        ) in self.ordered_transactions_and_messages(last_transaction):
+            if isinstance(parsed_message.taric_object, child_parser_class):
+                # check identity fields
+                if parsed_message.taric_object.is_child_for(parent):
+                    result.append(parsed_message.taric_object)
 
         return result
 
@@ -376,20 +387,19 @@ class TaricImporter:
         """
 
         parent = None
-        for transaction_instance in self.parsed_transactions:
-            for parsed_message in transaction_instance.parsed_messages:
-                potential_parent = parsed_message.taric_object
-                # matching model and not child?
-                if (
-                    not potential_parent.is_child_object()
-                    and potential_parent.model == child_parser.model
-                ):
-                    # check key fields
-                    if child_parser.is_child_for(potential_parent):
-                        parent = potential_parent
-
-            if transaction_instance == up_to_transaction:
-                break
+        for (
+            parsed_transaction,
+            parsed_message,
+        ) in self.ordered_transactions_and_messages(up_to_transaction):
+            potential_parent = parsed_message.taric_object
+            # matching model and not child?
+            if (
+                not potential_parent.is_child_object()
+                and potential_parent.model == child_parser.model
+            ):
+                # check key fields
+                if child_parser.is_child_for(potential_parent):
+                    parent = potential_parent
 
         return parent
 
