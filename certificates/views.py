@@ -40,9 +40,8 @@ class CertificatesViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
         return (
-            models.Certificate.objects.approved_up_to_transaction(tx)
+            models.Certificate.objects.current()
             .select_related("certificate_type")
             .prefetch_related("descriptions")
         )
@@ -60,8 +59,7 @@ class CertificateMixin:
     model: Type[TrackedModel] = models.Certificate
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return models.Certificate.objects.approved_up_to_transaction(tx).select_related(
+        return models.Certificate.objects.current().select_related(
             "certificate_type",
         )
 
@@ -237,8 +235,7 @@ class CertificateDescriptionMixin:
     model: Type[TrackedModel] = models.CertificateDescription
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return models.CertificateDescription.objects.approved_up_to_transaction(tx)
+        return models.CertificateDescription.objects.current()
 
 
 class CertificateCreateDescriptionMixin:

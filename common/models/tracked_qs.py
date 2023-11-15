@@ -69,7 +69,8 @@ class TrackedModelQuerySet(
         )
 
     def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:
-        """Get the approved versions of the model being queried, unless there
+        """This function is called using the current() function instead of directly calling it on model queries.
+        Get the approved versions of the model being queried, unless there
         exists a version of the model in a draft state within a transaction
         preceding (and including) the given transaction in the workbasket of the
         given transaction."""

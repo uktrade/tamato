@@ -726,14 +726,10 @@ def test_quota_edit_origin_new_versions(valid_user_client):
         form_data,
     )
 
-    tx = Transaction.objects.last()
-
-    quota = models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).get(
+    quota = models.QuotaOrderNumber.objects.current().get(
         sid=quota.sid,
     )
-    origins = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
-        tx,
-    ).filter(
+    origins = models.QuotaOrderNumberOrigin.objects.current().filter(
         order_number=quota,
     )
 
@@ -777,9 +773,7 @@ def test_quota_edit_origin_exclusions(
 
     assert response.status_code == 302
 
-    tx = Transaction.objects.last()
-
-    origin = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(tx).get(
+    origin = models.QuotaOrderNumberOrigin.objects.current().get(
         sid=origin.sid,
     )
 
@@ -835,28 +829,14 @@ def test_quota_edit_origin_exclusions_remove(
 
     assert response.status_code == 302
 
-    tx = Transaction.objects.last()
-
-    updated_quota = models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).get(
+    updated_quota = models.QuotaOrderNumber.objects.current().get(
         sid=quota.sid,
     )
-    updated_origin = (
-        updated_quota.quotaordernumberorigin_set.approved_up_to_transaction(tx)
-    ).first()
+    updated_origin = (updated_quota.quotaordernumberorigin_set.current()).first()
 
-    assert (
-        updated_origin.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
-            tx,
-        ).count()
-        == 0
-    )
+    assert updated_origin.quotaordernumberoriginexclusion_set.current().count() == 0
 
-    assert (
-        country1
-        not in updated_origin.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
-            tx,
-        )
-    )
+    assert country1 not in updated_origin.quotaordernumberoriginexclusion_set.current()
 
 
 def test_update_quota_definition_page_200(valid_user_client):
@@ -896,11 +876,7 @@ def test_update_quota_definition(valid_user_client, date_ranges):
         kwargs={"sid": quota_definition.sid},
     )
 
-    tx = Transaction.objects.last()
-
-    updated_definition = models.QuotaDefinition.objects.approved_up_to_transaction(
-        tx,
-    ).get(
+    updated_definition = models.QuotaDefinition.objects.current().get(
         sid=quota_definition.sid,
     )
 
@@ -978,8 +954,7 @@ def test_quota_create_origin(
 
     assert response.status_code == 302
 
-    tx = Transaction.objects.last()
-    origin = models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(tx).get(
+    origin = models.QuotaOrderNumberOrigin.objects.current().get(
         sid=response.url.split("/")[2],
     )
 

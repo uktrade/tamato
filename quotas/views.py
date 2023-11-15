@@ -50,8 +50,7 @@ class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
     filter_backends = [OrderNumberFilterBackend]
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        return models.QuotaOrderNumber.objects.current()
 
 
 class QuotaOrderNumberOriginViewset(viewsets.ReadOnlyModelViewSet):
@@ -101,8 +100,7 @@ class QuotaOrderNumberMixin:
     model = models.QuotaOrderNumber
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        return models.QuotaOrderNumber.objects.current()
 
 
 class QuotaCreate(QuotaOrderNumberMixin, CreateTaricCreateView):
@@ -299,12 +297,8 @@ class QuotaUpdateMixin(
     def get_result_object(self, form):
         object = super().get_result_object(form)
 
-        existing_origins = (
-            models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
-                object.transaction,
-            ).filter(
-                order_number__sid=object.sid,
-            )
+        existing_origins = models.QuotaOrderNumberOrigin.objects.current().filter(
+            order_number__sid=object.sid,
         )
 
         # this will be needed even if origins have not been edited in the form
@@ -347,8 +341,7 @@ class QuotaOrderNumberOriginMixin:
     model = models.QuotaOrderNumberOrigin
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(tx)
+        return models.QuotaOrderNumberOrigin.objects.current()
 
 
 class QuotaOrderNumberOriginUpdateMixin(
@@ -487,8 +480,7 @@ class QuotaDefinitionMixin:
     model = models.QuotaDefinition
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return models.QuotaDefinition.objects.approved_up_to_transaction(tx)
+        return models.QuotaDefinition.objects.current()
 
 
 class QuotaDefinitionUpdateMixin(

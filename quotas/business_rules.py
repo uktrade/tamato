@@ -34,9 +34,7 @@ class PreventDeletingLinkedQuotaDefinitions(BusinessRule):
         related_model = self.get_relation_model(quota_definition)
         if quota_definition.update_type == UpdateType.DELETE:
             kwargs = {f"{self.sid_prefix}sid": quota_definition.sid}
-            if related_model.objects.approved_up_to_transaction(
-                transaction=quota_definition.transaction,
-            ).filter(**kwargs):
+            if related_model.objects.current().filter(**kwargs):
                 raise self.violation(quota_definition)
 
 
@@ -53,7 +51,7 @@ class ON2(BusinessRule):
     def validate(self, order_number):
         if (
             type(order_number)
-            .objects.approved_up_to_transaction(order_number.transaction)
+            .objects.approved_up_to_transaction(transaction=order_number.transaction)
             .filter(
                 order_number=order_number.order_number,
                 valid_between__overlap=order_number.valid_between,
@@ -74,7 +72,7 @@ class ON4(BusinessRule):
         for order_number_version in order_number_versions:
             if (
                 order_number_version.origins.approved_up_to_transaction(
-                    order_number.transaction,
+                    transaction=order_number.transaction
                 ).count()
                 > 0
             ):
@@ -92,7 +90,7 @@ class ON5(BusinessRule):
     def validate(self, origin):
         if (
             type(origin)
-            .objects.approved_up_to_transaction(origin.transaction)
+            .objects.approved_up_to_transaction(transaction=origin.transaction)
             .filter(
                 order_number__sid=origin.order_number.sid,
                 geographical_area__sid=origin.geographical_area.sid,
@@ -187,7 +185,7 @@ class ON12(BusinessRule):
         """
 
         measures = measures_models.Measure.objects.approved_up_to_transaction(
-            order_number_origin.transaction,
+            transaction=order_number_origin.transaction
         )
 
         if not measures.exists():
@@ -327,7 +325,7 @@ class OverlappingQuotaDefinition(BusinessRule):
         potential_quota_definition_matches = (
             type(quota_definition)
             .objects.approved_up_to_transaction(
-                quota_definition.transaction,
+                transaction=quota_definition.transaction
             )
             .filter(
                 order_number=quota_definition.order_number,
@@ -359,7 +357,7 @@ class VolumeAndInitialVolumeMustMatch(BusinessRule):
             return True
 
         if quota_definition.sub_quota_associations.approved_up_to_transaction(
-            self.transaction,
+            transaction=self.transaction
         ).exists():
             return True
 
@@ -472,7 +470,7 @@ class QA6(BusinessRule):
     def validate(self, association):
         if (
             association.main_quota.sub_quota_associations.approved_up_to_transaction(
-                association.transaction,
+                transaction=association.transaction
             )
             .values(
                 "sub_quota_relation_type",

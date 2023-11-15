@@ -32,7 +32,7 @@ class MeasureSheetRowFactory(factory.Factory):
     duty_sentence = factory.sequence(lambda n: f"{n}.00%")
     origin_description = factory.LazyAttribute(
         lambda m: m.measure.geographical_area.descriptions.approved_up_to_transaction(
-            transaction=m.measure.geographical_area.transaction,
+            transaction=m.measure.geographical_area.transaction
         )
         .last()
         .description,
@@ -40,7 +40,7 @@ class MeasureSheetRowFactory(factory.Factory):
     excluded_origin_descriptions = factory.LazyAttribute(
         lambda m: random.choice(MeasureSheetRow.separators).join(
             e.excluded_geographical_area.descriptions.approved_up_to_transaction(
-                transaction=e.excluded_geographical_area.transaction,
+                transaction=e.excluded_geographical_area
             )
             .last()
             .description

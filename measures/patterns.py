@@ -517,7 +517,7 @@ class SuspensionViaAdditionalCodePattern:
         date."""
         return (
             Measure.objects.with_validity_field()
-            .approved_up_to_transaction(self.workbasket.transactions.last())
+            .current()
             .as_at(as_at)
             .filter(goods_nomenclature__sid=code.sid)
         )

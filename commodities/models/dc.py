@@ -502,7 +502,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         measure_qs = Measure.objects.filter(goods_sid_query)
 
         if self.moment.clock_type.is_transaction_clock:
-            measure_qs = measure_qs.approved_up_to_transaction(self.moment.transaction)
+            measure_qs = measure_qs.current()
         else:
             measure_qs = measure_qs.latest_approved()
 
@@ -823,7 +823,7 @@ class CommodityCollection(CommodityTreeBase):
             date=snapshot_date,
         )
 
-        commodities = self._get_snapshot_commodities(transaction, snapshot_date)
+        commodities = self._get_snapshot_commodities(snapshot_date)
 
         return CommodityTreeSnapshot(
             moment=moment,
@@ -832,7 +832,6 @@ class CommodityCollection(CommodityTreeBase):
 
     def _get_snapshot_commodities(
         self,
-        transaction: Transaction,
         snapshot_date: date,
     ) -> List[Commodity]:
         """
@@ -853,12 +852,10 @@ class CommodityCollection(CommodityTreeBase):
         that match the latest_version goods.
         """
         item_ids = {c.item_id for c in self.commodities if c.obj}
-        goods = GoodsNomenclature.objects.approved_up_to_transaction(
-            transaction,
-        ).filter(
+        goods = GoodsNomenclature.objects.filter(
             item_id__in=item_ids,
             valid_between__contains=snapshot_date,
-        )
+        ).current()
 
         latest_versions = get_latest_versions(goods)
         pks = {good.pk for good in latest_versions}

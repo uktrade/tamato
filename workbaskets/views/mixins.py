@@ -10,9 +10,5 @@ class WithCurrentWorkBasket:
 
     def get_queryset(self):
         qs = super().get_queryset()
-        transaction = None
-        current = self.workbasket
-        if current:
-            transaction = current.transactions.last()
 
-        return qs.approved_up_to_transaction(transaction)
+        return qs.current()

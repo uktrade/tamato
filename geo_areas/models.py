@@ -224,8 +224,8 @@ class GeographicalMembership(GetTabURLMixin, TrackedModel, ValidityMixin):
         else:
             raise ValueError(f"{area} is not part of membership {self}")
 
-    def member_used_in_measure_exclusion(self, transaction):
-        return self.member.in_use(transaction, "measureexcludedgeographicalarea")
+    def member_used_in_measure_exclusion(self):
+        return self.member.in_use("measureexcludedgeographicalarea")
 
 
 class GeographicalAreaDescription(DescriptionMixin, TrackedModel):

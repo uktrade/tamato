@@ -520,8 +520,6 @@ class MeasureForm(
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        tx = WorkBasket.get_current_transaction(self.request)
-
         self.initial["duty_sentence"] = self.instance.duty_sentence
         self.request.session[
             f"instance_duty_sentence_{self.instance.sid}"
@@ -539,13 +537,8 @@ class MeasureForm(
         # If no footnote keys are stored in the session for a measure,
         # store all the pks of a measure's footnotes on the session, using the measure sid as key
         if f"instance_footnotes_{self.instance.sid}" not in self.request.session.keys():
-            tx = WorkBasket.get_current_transaction(self.request)
-            associations = (
-                models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
-                    tx,
-                ).filter(
-                    footnoted_measure__sid=self.instance.sid,
-                )
+            associations = models.FootnoteAssociationMeasure.objects.current().filter(
+                footnoted_measure__sid=self.instance.sid,
             )
             self.request.session[f"instance_footnotes_{self.instance.sid}"] = [
                 a.associated_footnote.pk for a in associations
@@ -716,16 +709,10 @@ class MeasureForm(
             )
 
         for pk in footnote_pks:
-            footnote = (
-                Footnote.objects.filter(pk=pk)
-                .approved_up_to_transaction(instance.transaction)
-                .first()
-            )
+            footnote = Footnote.objects.current().filter(pk=pk).first()
 
             existing_association = (
-                models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
-                    instance.transaction,
-                )
+                models.FootnoteAssociationMeasure.objects.current()
                 .filter(
                     footnoted_measure__sid=instance.sid,
                     associated_footnote__footnote_id=footnote.footnote_id,

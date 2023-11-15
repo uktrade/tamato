@@ -342,7 +342,7 @@ class TrackedModel(PolymorphicModel):
             raise self.__class__.DoesNotExist("Object has no current version")
         return current_version
 
-    def version_at(self: Cls, transaction) -> Cls:
+    def version_at(self: Cls) -> Cls:
         """
         The latest version of this model that was approved as of the given
         transaction.
@@ -350,7 +350,7 @@ class TrackedModel(PolymorphicModel):
         :param transaction Transaction: Limit versions to this transaction
         :rtype TrackedModel:
         """
-        return self.get_versions().approved_up_to_transaction(transaction).get()
+        return self.get_versions().current().get()
 
     @classproperty
     def copyable_fields(cls):
@@ -504,12 +504,12 @@ class TrackedModel(PolymorphicModel):
             kwargs.update(nested_fields)
 
             if not ignore:
-                for model in queryset.approved_up_to_transaction(transaction):
+                for model in queryset.current():
                     model.copy(transaction, **kwargs)
 
         return new_object
 
-    def in_use_by(self, via_relation: str, transaction=None) -> QuerySet[TrackedModel]:
+    def in_use_by(self, via_relation: str) -> QuerySet[TrackedModel]:
         """
         Returns all of the models that are referencing this one via the
         specified relation and exist as of the passed transaction.
@@ -526,7 +526,7 @@ class TrackedModel(PolymorphicModel):
 
         return remote_model.objects.filter(
             **{f"{remote_field_name}__version_group": self.version_group}
-        ).approved_up_to_transaction(transaction)
+        ).current()
 
     def in_use(self, transaction=None, *relations: str) -> bool:
         """
@@ -572,7 +572,7 @@ class TrackedModel(PolymorphicModel):
 
         # If we find any objects for any relation, then the model is in use.
         for relation_name in using_models:
-            relation_queryset = self.in_use_by(relation_name, transaction)
+            relation_queryset = self.in_use_by(relation_name)
             if relation_queryset.exists():
                 return True
 

@@ -68,7 +68,7 @@ def test_commodity_list_queryset():
     good_1 = factories.SimpleGoodsNomenclatureFactory.create(item_id="1010000000")
     good_2 = factories.SimpleGoodsNomenclatureFactory.create(item_id="1000000000")
     tx = Transaction.objects.last()
-    commodity_count = GoodsNomenclature.objects.approved_up_to_transaction(tx).count()
+    commodity_count = GoodsNomenclature.objects.current().count()
     with override_current_transaction(tx):
         qs = view.get_queryset()
 
@@ -522,12 +522,7 @@ def test_commodity_footnote_update_success(valid_user_client, date_ranges):
         "end_date": "",
     }
     response = valid_user_client.post(url, data)
-    tx = Transaction.objects.last()
-    updated_association = (
-        FootnoteAssociationGoodsNomenclature.objects.approved_up_to_transaction(
-            tx,
-        ).first()
-    )
+    updated_association = FootnoteAssociationGoodsNomenclature.objects.current().first()
     assert response.status_code == 302
     assert response.url == updated_association.get_url("confirm-update")
 

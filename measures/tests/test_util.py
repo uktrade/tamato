@@ -40,9 +40,7 @@ def test_diff_components_update(
         MeasureComponent,
         "component_measure",
     )
-    components = new_measure.components.approved_up_to_transaction(
-        workbasket.current_transaction,
-    )
+    components = new_measure.components.current()
 
     assert components.count() == 1
 
@@ -86,9 +84,7 @@ def test_diff_components_update_multiple(
         MeasureComponent,
         "component_measure",
     )
-    components = component_1.component_measure.components.approved_up_to_transaction(
-        workbasket.current_transaction,
-    )
+    components = component_1.component_measure.components.current()
 
     assert components.count() == 2
 
@@ -116,9 +112,7 @@ def test_diff_components_create(workbasket, duty_sentence_parser):
         MeasureComponent,
         "component_measure",
     )
-    components = measure.components.approved_up_to_transaction(
-        workbasket.current_transaction,
-    )
+    components = measure.components.current()
 
     assert components.count() == 1
 
@@ -151,9 +145,7 @@ def test_diff_components_delete(
         MeasureComponent,
         "component_measure",
     )
-    components = component.component_measure.components.approved_up_to_transaction(
-        workbasket.current_transaction,
-    )
+    components = component.component_measure.components.current()
 
     assert components.count() == 0
 

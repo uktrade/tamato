@@ -170,8 +170,8 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
         UpdateValidity,
     )
 
-    def order_number_in_use(self, transaction):
-        return self.order_number.in_use(transaction)
+    def order_number_in_use(self):
+        return self.order_number.in_use()
 
     @property
     def structure_description(self):
