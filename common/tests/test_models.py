@@ -308,10 +308,10 @@ def test_current_as_of(sample_model):
             version_group=sample_model.version_group,
         )
 
-    assert models.TestModel1.objects.latest_approved().get().pk == sample_model.pk
+    assert models.TestModel1.objects.latest_approved().get() == sample_model
     assert (
-        models.TestModel1.objects.current().get().pk
-        == unapproved_version.pk
+        models.TestModel1.objects.current().get()
+        == unapproved_version
     )
 
 
