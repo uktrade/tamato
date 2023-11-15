@@ -74,3 +74,11 @@ def test_quota_definition_validation(date_ranges):
             form.errors["__all__"][0]
             == "Current volume cannot be higher than initial volume"
         )
+
+    with override_current_transaction(tx):
+        form = forms.QuotaDefinitionCreateForm(data=data)
+        assert not form.is_valid()
+        assert (
+            form.errors["__all__"][0]
+            == "Current volume cannot be higher than initial volume"
+        )

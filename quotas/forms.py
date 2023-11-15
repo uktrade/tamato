@@ -565,6 +565,11 @@ class QuotaDefinitionCreateForm(
         self.init_layout()
         self.init_fields()
 
+    def clean(self):
+        if self.cleaned_data["volume"] > self.cleaned_data["initial_volume"]:
+            raise ValidationError("Current volume cannot be higher than initial volume")
+        return super().clean()
+
     def init_fields(self):
         # This is always set to 3 for current definitions
         # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
