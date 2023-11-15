@@ -438,6 +438,11 @@ class QuotaDefinitionUpdateForm(
         self.init_layout()
         self.init_fields()
 
+    def clean(self):
+        if self.cleaned_data["volume"] > self.cleaned_data["initial_volume"]:
+            raise ValidationError("Current volume cannot be higher than initial volume")
+        return super().clean()
+
     def init_fields(self):
         self.fields["measurement_unit"].queryset = self.fields[
             "measurement_unit"
