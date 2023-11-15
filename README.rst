@@ -296,24 +296,14 @@ This command is broken into two stages:
 
       $ python manage.py run_import_batch
 
-Using the new TARIC parser (new importer)
+Using the TARIC parser (currently referenced importer v2)
 -----------------------------------------
 
-The new importer addresses issues with the existing importer.
+There are no command line tools available for this tool.
 
-Initially this new importer will be added as an additional option within the footer menu,
-under "New TARIC parser" allowing the existing process to proceed as it did before, but
-allow the new importer to be employed. This will be for a time until confidence grows
-and its agreed that the new importer should replace the existing one for comm code import
-capability.
+This tool is available as an importer alternative found within the web front end in the footer menu under "New TARIC parser".
 
-* Removed the use of caching, which has been a cause if multiple issues where changes leaked into future imports, and at times imports would stop all together.
-* Writen in a more linear way, leading to better developer understanding and easier improvements to existing behaviour.
-* Better child objects handling (where a TARIC record is appended to a parent table), Where before changes would be lost or could not be processed correctly, now a more robust process around handling this type of update.
-* Very high test coverage for all TARIC types, and update types
-* Reporting on import issues in the UI, when an invalid scenario occurs, and data cant import correctly for one reason or another, there will be an error created against the import. If an issue is detected that can be negated, the importer will create a warning but will allow the import to complete.
-
-
+This tool addresses several short falls that the current importer has.
 
 Using the exporter
 ------------------
