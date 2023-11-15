@@ -360,8 +360,8 @@ class BaseTaricParser:
         child values."""
         result = {}
 
-        for field in self.identity_fields_for_parent():
-            result[self.identity_fields_for_parent()[field]] = getattr(self, field)
+        for value in self.identity_fields_for_parent().values():
+            result[value] = getattr(self, value)
 
         return result
 
@@ -685,15 +685,13 @@ class BaseTaricParser:
         """
         Can the model be saved to the database.
 
-        This method checks that the parser that represents a TARIC object can be saved to a TAP model by checking associated issues recorded during validation
+        This method checks that the parser that represents a TARIC object can be saved to a TAP model, checking parent_parser and update type.
+
+        A child parser can be saved directly to the parent as an update. Creates and deletes need the accompanying parent to action.
 
         Returns:
             bool, value indicating if the model can be saved
         """
-        # This method checks that the parser represents an object that can be saved to a TAP model, and not a child
-        # object that simply holds attributes.
-        # This is determined by the lack of a parent_parser, if a parent parser is present that means the model will be
-        # appended to a parent and should not be saved directly
         if self.parent_parser:
             if self.update_type == validators.UpdateType.UPDATE:  # update
                 return True

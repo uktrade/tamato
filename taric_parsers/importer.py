@@ -118,23 +118,25 @@ class TaricImporter:
         if not taric_object.is_child_object():
             raise Exception(f"Only call this method on child objects")
 
-        fields = taric_object.get_identity_fields_and_values_for_parent()
-        model = taric_object.__class__.model
-
         for parsed_transaction in self.parsed_transactions:
             for message in parsed_transaction.parsed_messages:
                 possible_parent_taric_object = message.taric_object
                 if (
                     not possible_parent_taric_object.is_child_object()
-                    and possible_parent_taric_object.__class__.model == model
+                    and possible_parent_taric_object.__class__.model
+                    == taric_object.__class__.model
                 ):
                     match = True
 
-                    for field in fields:
+                    for (
+                        key,
+                        value,
+                    ) in (
+                        taric_object.get_identity_fields_and_values_for_parent().items()
+                    ):
                         if (
-                            hasattr(possible_parent_taric_object, field)
-                            and getattr(possible_parent_taric_object, field)
-                            != fields[field]
+                            hasattr(possible_parent_taric_object, key)
+                            and getattr(possible_parent_taric_object, key) != value
                         ):
                             match = False
 

@@ -85,7 +85,6 @@ class NewMeasureTypeSeriesDescriptionParser(Writable, BaseTaricParser):
 
     deletes_allowed = False
     sid: str = None
-    # language_id: str = None
     description: str = None
 
 
