@@ -9,6 +9,7 @@ from dataclasses import make_dataclass
 from typing import Dict
 from typing import Iterator
 from typing import Sequence
+from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
@@ -20,9 +21,10 @@ from settings.common import PATH_XSD_TARIC
 TTag = TypeVar("TTag", bound="Tag")
 TTags = TypeVar("TTags", bound="SchemaTagsBase")
 
+# pattern used to identify a string as a regex or regular string
 RE_PATTERN_TEST = re.compile(r"[^A-Za-z\.\_]")
 
-xsd_schema_paths: Dict[str, str] = (
+xsd_schema_paths: Tuple[Tuple[str, any], Tuple[str, any]] = (
     ("env", PATH_XSD_ENVELOPE),
     ("oub", PATH_XSD_TARIC),
 )
