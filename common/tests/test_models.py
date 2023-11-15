@@ -309,10 +309,7 @@ def test_current_as_of(sample_model):
         )
 
     assert models.TestModel1.objects.latest_approved().get() == sample_model
-    assert (
-        models.TestModel1.objects.current().get()
-        == unapproved_version
-    )
+    assert models.TestModel1.objects.current().get() == unapproved_version
 
 
 def test_create_with_description():

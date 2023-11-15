@@ -120,10 +120,6 @@ class FootnoteCreateBaseForm(ValidityPeriodForm):
         form's save() method (with its commit param set either to True or
         False).
         """
-        workbasket = WorkBasket.current(self.request)
-        tx = None
-        if workbasket:
-            tx = workbasket.transactions.order_by("order").last()
 
         return get_next_id(
             models.Footnote.objects.filter(

@@ -47,7 +47,6 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
 
         Only return valid names that are products (suffix=80)
         """
-        tx = WorkBasket.get_current_transaction(self.request)
         return (
             GoodsNomenclature.objects.current()
             .prefetch_related("descriptions")

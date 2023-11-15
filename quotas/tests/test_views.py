@@ -726,8 +726,6 @@ def test_quota_edit_origin_new_versions(valid_user_client):
         form_data,
     )
 
-    tx = Transaction.objects.last()
-
     quota = models.QuotaOrderNumber.objects.current().get(
         sid=quota.sid,
     )
@@ -774,8 +772,6 @@ def test_quota_edit_origin_exclusions(
     )
 
     assert response.status_code == 302
-
-    tx = Transaction.objects.last()
 
     origin = models.QuotaOrderNumberOrigin.objects.current().get(
         sid=origin.sid,
@@ -832,8 +828,6 @@ def test_quota_edit_origin_exclusions_remove(
     )
 
     assert response.status_code == 302
-
-    tx = Transaction.objects.last()
 
     updated_quota = models.QuotaOrderNumber.objects.current().get(
         sid=quota.sid,

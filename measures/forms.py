@@ -537,7 +537,6 @@ class MeasureForm(
         # If no footnote keys are stored in the session for a measure,
         # store all the pks of a measure's footnotes on the session, using the measure sid as key
         if f"instance_footnotes_{self.instance.sid}" not in self.request.session.keys():
-            tx = WorkBasket.get_current_transaction(self.request)
             associations = models.FootnoteAssociationMeasure.objects.current().filter(
                 footnoted_measure__sid=self.instance.sid,
             )

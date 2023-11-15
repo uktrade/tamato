@@ -106,7 +106,7 @@ that is not draft is considered to be "current".
 There are a number of convenience methods for finding "current" models.
 
 .. autoclass:: common.models.trackedmodel.TrackedModelQuerySet
-  :members: latest_approved, current
+  :members: latest_approved, current, approved_up_to_transaction
 
 
 Workbaskets

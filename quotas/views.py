@@ -318,7 +318,6 @@ class QuotaOrderNumberOriginMixin:
     model = models.QuotaOrderNumberOrigin
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
         return models.QuotaOrderNumberOrigin.objects.current()
 
 
@@ -458,7 +457,6 @@ class QuotaDefinitionMixin:
     model = models.QuotaDefinition
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
         return models.QuotaDefinition.objects.current()
 
 

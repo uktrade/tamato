@@ -43,8 +43,12 @@ class NIG2(BusinessRule):
         self.logger = logging.getLogger(type(self).__name__)
 
     def parent_spans_child(self, parent, child) -> bool:
-        parent_validity = parent.indented_goods_nomenclature.version_at().valid_between
-        child_validity = child.indented_goods_nomenclature.version_at().valid_between
+        parent_validity = parent.indented_goods_nomenclature.version_at(
+            self.transaction
+        ).valid_between
+        child_validity = child.indented_goods_nomenclature.version_at(
+            self.transaction
+        ).valid_between
         return validity_range_contains_range(parent_validity, child_validity)
 
     def parents_span_childs_future(self, parents, child):
@@ -55,13 +59,17 @@ class NIG2(BusinessRule):
         parents_validity = []
         for parent in parents:
             parents_validity.append(
-                parent.indented_goods_nomenclature.version_at().valid_between,
+                parent.indented_goods_nomenclature.version_at(
+                    self.transaction
+                ).valid_between,
             )
 
         # sort by start date so any gaps will be obvious
         parents_validity.sort(key=lambda daterange: daterange.lower)
 
-        child_validity = child.indented_goods_nomenclature.version_at().valid_between
+        child_validity = child.indented_goods_nomenclature.version_at(
+            self.transaction
+        ).valid_between
 
         if (
             not child_validity.upper_inf
@@ -100,7 +108,7 @@ class NIG2(BusinessRule):
         from commodities.models.dc import get_chapter_collection
 
         try:
-            good = indent.indented_goods_nomenclature.version_at()
+            good = indent.indented_goods_nomenclature.version_at(self.transaction)
         except TrackedModel.DoesNotExist:
             self.logger.warning(
                 "Goods nomenclature %s no longer exists at transaction %s "

@@ -84,7 +84,6 @@ class MeasureMixin:
     model: Type[TrackedModel] = Measure
 
     def get_queryset(self):
-
         return Measure.objects.current()
 
 

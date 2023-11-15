@@ -656,14 +656,14 @@ class Measure(TrackedModel, ValidityMixin):
 
     def has_components(self, transaction):
         return (
-            MeasureComponent.objects.current(transaction=transaction)
+            MeasureComponent.objects.approved_up_to_transaction(transaction)
             .filter(component_measure__sid=self.sid)
             .exists()
         )
 
     def has_condition_components(self, transaction):
         return (
-            MeasureConditionComponent.objects.current(transaction=transaction)
+            MeasureConditionComponent.objects.approved_up_to_transaction(transaction)
             .filter(condition__dependent_measure__sid=self.sid)
             .exists()
         )

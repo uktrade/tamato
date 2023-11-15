@@ -47,7 +47,7 @@ class TrackedModelQuerySet(
             update_type=UpdateType.DELETE,
         )
 
-    def current(self, transaction=None) -> TrackedModelQuerySet:
+    def current(self) -> TrackedModelQuerySet:
         """
         Returns a queryset of approved versions of the model up to the globally
         defined current transaction (see ``common.models.utils`` for details of
@@ -64,12 +64,9 @@ class TrackedModelQuerySet(
         (see ``set_current_transaction()`` and ``override_current_transaction()``
         in ``common.models.utils``).
         """
-        if transaction:
-            return self.approved_up_to_transaction(transaction)
-        else:
-            return self.approved_up_to_transaction(
-                LazyTransaction(get_value=get_current_transaction),
-            )
+        return self.approved_up_to_transaction(
+            LazyTransaction(get_value=get_current_transaction),
+        )
 
     def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:
         """This function is called using the current() function instead of directly calling it on model queries.
