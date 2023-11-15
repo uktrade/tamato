@@ -158,7 +158,8 @@ class NIG5(BusinessRule):
 
         if not (
             good.code.is_chapter
-            or GoodsNomenclatureOrigin.objects.current().filter(
+            or GoodsNomenclatureOrigin.objects.current()
+            .filter(
                 new_goods_nomenclature__sid=good.sid,
             )
             .exists()

@@ -51,7 +51,7 @@ class ON2(BusinessRule):
     def validate(self, order_number):
         if (
             type(order_number)
-            .objects.current()
+            .objects.current(transaction=order_number.transaction)
             .filter(
                 order_number=order_number.order_number,
                 valid_between__overlap=order_number.valid_between,
@@ -71,7 +71,9 @@ class ON4(BusinessRule):
         origin_exists = False
         for order_number_version in order_number_versions:
             if (
-                order_number_version.origins.current().count()
+                order_number_version.origins.current(
+                    transaction=order_number.transaction
+                ).count()
                 > 0
             ):
                 origin_exists = True
@@ -88,7 +90,7 @@ class ON5(BusinessRule):
     def validate(self, origin):
         if (
             type(origin)
-            .objects.current()
+            .objects.current(transaction=origin.transaction)
             .filter(
                 order_number__sid=origin.order_number.sid,
                 geographical_area__sid=origin.geographical_area.sid,
@@ -182,7 +184,9 @@ class ON12(BusinessRule):
         check that there are no measures linked to the origin .
         """
 
-        measures = measures_models.Measure.objects.current()
+        measures = measures_models.Measure.objects.current(
+            transaction=order_number_origin.transaction
+        )
 
         if not measures.exists():
             return
@@ -320,7 +324,7 @@ class OverlappingQuotaDefinition(BusinessRule):
     def validate(self, quota_definition):
         potential_quota_definition_matches = (
             type(quota_definition)
-            .objects.current()
+            .objects.current(transaction=quota_definition.transaction)
             .filter(
                 order_number=quota_definition.order_number,
                 valid_between__overlap=quota_definition.valid_between,
@@ -350,7 +354,9 @@ class VolumeAndInitialVolumeMustMatch(BusinessRule):
         if quota_definition.valid_between.lower < datetime.date.today():
             return True
 
-        if quota_definition.sub_quota_associations.current().exists():
+        if quota_definition.sub_quota_associations.current(
+            transaction=self.transaction
+        ).exists():
             return True
 
         if quota_definition.volume != quota_definition.initial_volume:
@@ -461,7 +467,9 @@ class QA6(BusinessRule):
 
     def validate(self, association):
         if (
-            association.main_quota.sub_quota_associations.current()
+            association.main_quota.sub_quota_associations.current(
+                transaction=association.transaction
+            )
             .values(
                 "sub_quota_relation_type",
             )

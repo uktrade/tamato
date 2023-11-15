@@ -838,19 +838,11 @@ def test_quota_edit_origin_exclusions_remove(
     updated_quota = models.QuotaOrderNumber.objects.current().get(
         sid=quota.sid,
     )
-    updated_origin = (
-        updated_quota.quotaordernumberorigin_set.current()
-    ).first()
+    updated_origin = (updated_quota.quotaordernumberorigin_set.current()).first()
 
-    assert (
-        updated_origin.quotaordernumberoriginexclusion_set.current().count()
-        == 0
-    )
+    assert updated_origin.quotaordernumberoriginexclusion_set.current().count() == 0
 
-    assert (
-        country1
-        not in updated_origin.quotaordernumberoriginexclusion_set.current()
-    )
+    assert country1 not in updated_origin.quotaordernumberoriginexclusion_set.current()
 
 
 def test_update_quota_definition_page_200(valid_user_client):
@@ -889,7 +881,6 @@ def test_update_quota_definition(valid_user_client, date_ranges):
         "quota_definition-ui-confirm-update",
         kwargs={"sid": quota_definition.sid},
     )
-
 
     updated_definition = models.QuotaDefinition.objects.current().get(
         sid=quota_definition.sid,

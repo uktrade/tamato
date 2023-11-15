@@ -156,10 +156,10 @@ class AdditionalCodeCreateForm(AdditionalCodeCreateBaseForm):
         instance = super().save(commit=False)
 
         highest_sid = (
-                          models.AdditionalCode.objects.current().aggregate(
-                              Max("sid"),
-                          )["sid__max"]
-                      ) or 0
+            models.AdditionalCode.objects.current().aggregate(
+                Max("sid"),
+            )["sid__max"]
+        ) or 0
         instance.sid = highest_sid + 1
 
         if commit:

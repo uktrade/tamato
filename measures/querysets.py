@@ -94,7 +94,9 @@ class ComponentQuerySet(TrackedModelQuerySet):
 
         # Components with the greatest transaction_id that is less than
         # or equal to component_parent's transaction_id, are considered 'current'.
-        component_qs = component_parent.components.current()
+        component_qs = component_parent.components.current(
+            transaction=component_parent.transaction
+        )
         if not component_qs:
             return ""
         latest_transaction_id = component_qs.aggregate(

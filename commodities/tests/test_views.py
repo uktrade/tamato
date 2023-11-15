@@ -522,9 +522,7 @@ def test_commodity_footnote_update_success(valid_user_client, date_ranges):
         "end_date": "",
     }
     response = valid_user_client.post(url, data)
-    updated_association = (
-        FootnoteAssociationGoodsNomenclature.objects.current().first()
-    )
+    updated_association = FootnoteAssociationGoodsNomenclature.objects.current().first()
     assert response.status_code == 302
     assert response.url == updated_association.get_url("confirm-update")
 
