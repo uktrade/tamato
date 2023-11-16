@@ -924,6 +924,13 @@ class WorkBasketViolations(SortingMixin, WithPaginationListView):
         )
         return super().get_queryset()
 
+    @property
+    def paginator(self):
+        return Paginator(
+            self.get_queryset(),
+            per_page=50,
+        )
+
 
 class WorkBasketViolationDetail(DetailView):
     """UI endpoint for viewing a specified workbasket's business rule
