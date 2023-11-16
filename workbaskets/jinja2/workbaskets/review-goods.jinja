@@ -24,11 +24,11 @@
     {% set rows = [] %}
     {% for row in report_lines %}
       {% set item_search_link -%}
-        {% if row["item_id_search_url"] %}
+        {% if row.item_id_search_url %}
           <a
             class="govuk-link govuk-!-font-weight-bold"
             href="{{ row['item_id_search_url'] }}"
-          >{{ row["item_id"] }}</a>
+          >{{ row.item_id }}</a>
         {% else %}
           ""
         {% endif %}
@@ -46,14 +46,14 @@
       {%- endset %}
 
       {% set cells = [
-        {"text": row["update_type"]},
-        {"text": row["record_name"]},
+        {"text": row.update_type},
+        {"text": row.record_name},
         {"html": item_search_link},
         {"html": measures_search_link},
-        {"text": row["suffix"]},
-        {"text": row["start_date"]},
-        {"text": row["end_date"]},
-        {"text": row["comments"]},
+        {"text": row.suffix},
+        {"text": row.start_date},
+        {"text": row.end_date},
+        {"text": row.comments},
       ] or "" %}
 
       {{ rows.append(cells) or "" }}
