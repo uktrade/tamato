@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import date
 from functools import cached_property
+from urllib.parse import urlencode
 
 import boto3
 from botocore.client import Config
@@ -1264,18 +1265,24 @@ class WorkbasketReviewGoodsView(
                     "record_name": line.record_name.title() if line.record_name else "",
                     "item_id": line.goods_nomenclature_item_id,
                     "item_id_search_url": (
-                        f"{reverse('commodity-ui-list')}"
-                        f"?item_id={line.goods_nomenclature_item_id}"
+                        reverse("commodity-ui-list")
+                        + "?"
+                        + urlencode({"item_id": line.goods_nomenclature_item_id})
                         if line.goods_nomenclature_item_id
                         else ""
                     ),
                     "measures_search_url": (
-                        f"{reverse('measure-ui-list')}"
-                        f"?goods_nomenclature__item_id={line.goods_nomenclature_item_id}"
-                        f"&end_date_modifier=after"
-                        f"&end_date_0={today.day}"
-                        f"&end_date_1={today.month}"
-                        f"&end_date_2={today.year}"
+                        reverse("measure-ui-list")
+                        + "?"
+                        + urlencode(
+                            {
+                                "goods_nomenclature__item_id": line.goods_nomenclature_item_id,
+                                "end_date_modifier": "after",
+                                "end_date_0": today.day,
+                                "end_date_1": today.month,
+                                "end_date_2": today.year,
+                            },
+                        )
                         if line.goods_nomenclature_item_id
                         else ""
                     ),
