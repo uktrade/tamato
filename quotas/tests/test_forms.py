@@ -43,7 +43,50 @@ def test_update_quota_form_safeguard_disabled(valid_user_client):
     assert "disabled" in soup.find(id="id_category").attrs.keys()
 
 
-def test_quota_definition_validation(date_ranges):
+def test_quota_definition_errors(date_ranges):
+    quota_definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.big_no_end,
+    )
+    measurement_unit = factories.MeasurementUnitFactory()
+
+    data = {
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "description": "Lorem ipsum.",
+        "volume": "foo",
+        "initial_volume": "bar",
+        "measurement_unit": measurement_unit.pk,
+        "measurement_unit_qualifier": "",
+        "quota_critical_threshold": "foo",
+        "quota_critical": "",
+    }
+
+    tx = Transaction.objects.last()
+
+    def check_error_messages(form):
+        assert not form.is_valid()
+        assert form.errors["volume"][0] == "Volume must be a number"
+        assert form.errors["initial_volume"][0] == "Initial volume must be a number"
+        assert (
+            form.errors["quota_critical_threshold"][0]
+            == "Critical threshold must be a number"
+        )
+        assert form.errors["quota_critical"][0] == "Critical state must be set"
+
+    with override_current_transaction(tx):
+        form = forms.QuotaDefinitionUpdateForm(data=data, instance=quota_definition)
+        check_error_messages(form)
+
+    with override_current_transaction(tx):
+        form = forms.QuotaDefinitionCreateForm(data=data)
+        check_error_messages(form)
+
+
+def test_quota_definition_volume_validation(date_ranges):
     quota_definition = factories.QuotaDefinitionFactory.create(
         valid_between=date_ranges.big_no_end,
     )

@@ -439,8 +439,7 @@ class QuotaDefinitionUpdateForm(
         self.init_fields()
 
     def clean(self):
-        if self.cleaned_data["volume"] > self.cleaned_data["initial_volume"]:
-            raise ValidationError("Current volume cannot be higher than initial volume")
+        validators.validate_quota_volume(self.cleaned_data)
         return super().clean()
 
     def init_fields(self):
@@ -566,8 +565,7 @@ class QuotaDefinitionCreateForm(
         self.init_fields()
 
     def clean(self):
-        if self.cleaned_data["volume"] > self.cleaned_data["initial_volume"]:
-            raise ValidationError("Current volume cannot be higher than initial volume")
+        validators.validate_quota_volume(self.cleaned_data)
         return super().clean()
 
     def init_fields(self):
