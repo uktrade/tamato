@@ -90,3 +90,12 @@ def validate_coefficient(value):
         raise ValidationError(
             "Whenever a sub-quota receives a coefficient, this has to be a strictly positive decimal number.",
         )
+
+
+def validate_quota_volume(data):
+    volume = data.get("volume")
+    initial_volume = data.get("initial_volume")
+
+    if volume and initial_volume:
+        if volume > initial_volume:
+            raise ValidationError("Current volume cannot be higher than initial volume")
