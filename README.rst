@@ -145,6 +145,10 @@ Prerequisites:
     - A local instance of the tool can be run using `Docker <https://www.docker.com/>`__.
     - A database dump - contact the TAP team for a database snapshot.
 
+Guidance for running tamato via docker in Pycharm (follow initial set up below first)
+`Docker in PyCharm https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html#run`__.
+
+https://testdriven.io/blog/django-debugging-pycharm/
 
 Download the codebase:
 
@@ -161,7 +165,7 @@ Build and Run for the first time:
         # Not used will be used for specific local docker stuff
         # cp docker-compose.override.yml.example docker-compose.override.yml
 
-    # to overwrite default db dump name pass in DUMP_FILE=db_dump.sql
+    # to overwrite default db dump name pass in DB_DUMP=tamato_db.sql
     $ make docker-first-use
         # take a tea break to import the db dump then
         # enter super user details when prompted 
@@ -180,9 +184,18 @@ Import from a dump of the database:
 
 .. code:: sh
 
-    # to overwrite default db dump name pass in DUMP_FILE=tamato_db.sql
+    # to overwrite defaults
+    #   DB_DUMP=tamato_db.sql
+    #   DB_NAME=tamato
+    #   DB_USER=postgres
+    #   TEMPLATE_NAME={DB_NAME}_{DATE}
     # this overwrites the default file set in the makefile variable
-    $ make docker-db-dump
+    # docker-import-new-db will create a new template with the provided DB dump
+    # can override the name of the template at TEMPLATE_NAME
+    $ make docker-import-new-db
+
+    # Will restore the db DB_NAME with the provided TEMPLATE_NAME 
+    $ make docker-restore-db
 
 Sometimes docker gets clogged up and we need to clean it:
 
