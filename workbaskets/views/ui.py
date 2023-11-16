@@ -324,7 +324,6 @@ class CurrentWorkBasket(TemplateView):
 
     # Form action mappings to URL names.
     action_success_url_names = {
-        "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
         "compare-data": "workbaskets:current-workbasket",
