@@ -105,6 +105,29 @@ class QuotaOrderNumberMixin:
         return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
 
 
+class QuotaCreate(QuotaOrderNumberMixin, CreateTaricCreateView):
+    form_class = forms.QuotaOrderNumberCreateForm
+    template_name = "layouts/create.jinja"
+
+    permission_required = ["common.add_trackedmodel"]
+
+    validate_business_rules = (
+        business_rules.ON1,
+        business_rules.ON2,
+        UniqueIdentifyingFields,
+        UpdateValidity,
+    )
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            page_title="Create a new quota order number", **kwargs
+        )
+
+
+class QuotaConfirmCreate(QuotaOrderNumberMixin, TrackedModelDetailView):
+    template_name = "quotas/confirm-create.jinja"
+
+
 class QuotaList(QuotaOrderNumberMixin, TamatoListView):
     """Returns a list of QuotaOrderNumber objects."""
 
