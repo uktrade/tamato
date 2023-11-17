@@ -700,40 +700,6 @@ def test_workbasket_business_rule_status(valid_user_client, session_empty_workba
     assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
 
 
-def test_submit_for_packaging(valid_user_client, session_empty_workbasket):
-    """Test that a link to the publishing/create url shows following a
-    successful rule check."""
-    with session_empty_workbasket.new_transaction() as transaction:
-        good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
-        measure = factories.MeasureFactory.create(transaction=transaction)
-        geo_area = factories.GeographicalAreaFactory.create(transaction=transaction)
-        objects = [good, measure, geo_area]
-        for obj in objects:
-            TrackedModelCheckFactory.create(
-                transaction_check__transaction=transaction,
-                model=obj,
-                successful=True,
-            )
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_empty_workbasket.pk,
-        "status": session_empty_workbasket.status,
-        "title": session_empty_workbasket.title,
-        "error_count": session_empty_workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
-
-    response = valid_user_client.get(
-        reverse("workbaskets:workbasket-checks"),
-    )
-
-    assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
-    assert 0
-
-    assert soup.find("a", href="/publishing/create/")
-
-
 @pytest.fixture
 def successful_business_rules_setup(session_workbasket, valid_user_client):
     """Sets up data and runs business rules."""
@@ -821,7 +787,13 @@ def test_submit_for_packaging_disabled(
         import_batch.workbasket_id = session_workbasket.id
         if isinstance(import_batch, ImportBatch):
             import_batch.save()
-
+    url = reverse(
+        "workbaskets:workbasket-checks",
+    )
+    response = valid_user_client.post(
+        url,
+        {"form-action": "run-rule-check"},
+    )
     response = valid_user_client.get(
         reverse("workbaskets:workbasket-checks"),
     )
@@ -835,6 +807,38 @@ def test_submit_for_packaging_disabled(
         assert packaging_button.has_attr("disabled")
     else:
         assert not packaging_button.has_attr("disabled")
+
+
+def test_submit_for_packaging(
+    successful_business_rules_setup,
+    valid_user_client,
+    session_workbasket,
+):
+    """Test that a link to the publishing/create url shows following a
+    successful rule check."""
+    import_batch = factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        goods_import=True,
+    )
+
+    import_batch.workbasket_id = session_workbasket.id
+    if isinstance(import_batch, ImportBatch):
+        import_batch.save()
+    url = reverse(
+        "workbaskets:workbasket-checks",
+    )
+    valid_user_client.post(
+        url,
+        {"form-action": "run-rule-check"},
+    )
+    response = valid_user_client.get(
+        reverse("workbaskets:workbasket-checks"),
+    )
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    assert soup.find("a", href="/publishing/create/")
 
 
 def test_terminate_rule_check(valid_user_client, session_workbasket):
