@@ -15,7 +15,7 @@
       }) }}
     {% endif %}
 
-    {% if not unsent_notification %}
+    {% if unsent_notification %}
       {{ govukButton({
         "html": "Notify Channel Islands",
         "href": url("goods-report-notify", kwargs={"pk": import_batch_pk}),
