@@ -951,6 +951,47 @@ def test_workbasket_violations(valid_user_client, session_workbasket):
     assert cells[4].text == f"{check.transaction_check.transaction.created_at:%d %b %Y}"
 
 
+def test_workbasket_violations_summary_pagination(
+    valid_user_client,
+    session_workbasket,
+):
+    """Tests that the violations page paginates if there are more than 50
+    violations."""
+
+    url = reverse("workbaskets:workbasket-ui-violations")
+
+    with session_workbasket.new_transaction() as transaction:
+        measures = factories.MeasureFactory.create_batch(
+            59,
+            transaction=transaction,
+        )
+        for measure in measures:
+            TrackedModelCheckFactory.create(
+                transaction_check__transaction=transaction,
+                model=measure,
+                successful=False,
+            )
+    session = valid_user_client.session
+    session["workbasket"] = {
+        "id": session_workbasket.pk,
+        "status": session_workbasket.status,
+        "title": session_workbasket.title,
+        "error_count": session_workbasket.tracked_model_check_errors.count(),
+    }
+    session.save()
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    warning_text = soup.select(".govuk-warning-text")
+    rows = soup.select("tbody > tr")
+    pagination_div_text = soup.select(".pagination > div")[0].text.replace("\\n", "")
+    assert "Number of business rule violations: 59" in warning_text[0].text
+    assert len(rows) == 50
+    assert "Showing 50 of 59" in pagination_div_text
+
+
 def test_violation_detail_page(valid_user_client, session_workbasket):
     with session_workbasket.new_transaction() as transaction:
         good = factories.GoodsNomenclatureFactory.create(transaction=transaction)

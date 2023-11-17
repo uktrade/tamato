@@ -438,6 +438,10 @@ class QuotaDefinitionUpdateForm(
         self.init_layout()
         self.init_fields()
 
+    def clean(self):
+        validators.validate_quota_volume(self.cleaned_data)
+        return super().clean()
+
     def init_fields(self):
         self.fields["measurement_unit"].queryset = self.fields[
             "measurement_unit"
@@ -559,6 +563,10 @@ class QuotaDefinitionCreateForm(
         super().__init__(*args, **kwargs)
         self.init_layout()
         self.init_fields()
+
+    def clean(self):
+        validators.validate_quota_volume(self.cleaned_data)
+        return super().clean()
 
     def init_fields(self):
         # This is always set to 3 for current definitions
