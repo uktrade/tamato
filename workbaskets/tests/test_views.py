@@ -1485,7 +1485,7 @@ def test_workbasket_transaction_order_view_with_reorder_permission(valid_user_cl
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
-    table_rows = page.select("table > tbody > tr > td.item.first-cell")
+    table_rows = page.select("table > tbody > tr > td.item:first-child")
     checkboxes = page.select(".govuk-checkboxes__input")
     move_top_button = page.find("button", string=re.compile(r"Move to top"))
     move_bottom_button = page.find("button", string=re.compile(r"Move to bottom"))

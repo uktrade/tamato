@@ -49,12 +49,12 @@
             {{ table_rows.append([
               {
                 "html": checkbox,
-                "classes": "transaction-start first-cell"
+                "classes": "transaction-start"
               },
               {
                 "html": transaction_details(transaction),
                 "colspan": 5,
-                "classes": "transaction-start last-cell",
+                "classes": "transaction-start",
               },
             ]) or "" }}
 
@@ -69,12 +69,12 @@
                 {{ tracked_model.structure_description if tracked_model.structure_description else "-" }}
               {% endset %}
               {{ table_rows.append([
-                {"text": "", "classes": "item first-cell"},
+                {"text": "", "classes": "item"},
                 {"html": tracked_model_link, "classes": "govuk-!-width-one-quarter"},
                 {"text": tracked_model._meta.verbose_name.title()},
                 {"text": tracked_model.update_type_str},
                 {"html": tracked_model_description},
-                {"text": "{:%d %b %Y}".format(transaction.updated_at), "classes": "item last-cell"},
+                {"text": "{:%d %b %Y}".format(transaction.updated_at), "classes": "item"},
               ]) or "" }}
             {% endfor %}
 
@@ -100,7 +100,7 @@
               {"text": "Activity date"},
             ],
             "rows": table_rows,
-            "classes": "workbasket-items",
+            "classes": "workbasket-transactions",
           }) }}
         {% endif %}
 
@@ -125,12 +125,12 @@
         {{ table_rows.append([
           {
             "text": "",
-            "classes": "transaction-start first-cell",
+            "classes": "transaction-start",
           },
           {
             "html": transaction_detail,
             "colspan": 5,
-            "classes": "transaction-start last-cell",
+            "classes": "transaction-start",
           },
         ]) or "" }}
 
@@ -145,12 +145,12 @@
             {{ tracked_model.structure_description if tracked_model.structure_description else "-" }}
           {% endset %}
           {{ table_rows.append([
-            {"text": "", "classes": "item first-cell"},
+            {"text": "", "classes": "item"},
             {"html": tracked_model_link, "classes": "govuk-!-width-one-quarter"},
             {"text": tracked_model._meta.verbose_name.title()},
             {"text": tracked_model.update_type_str},
             {"html": tracked_model_description},
-            {"text": "{:%d %b %Y}".format(transaction.updated_at), "classes": "item last-cell"},
+            {"text": "{:%d %b %Y}".format(transaction.updated_at), "classes": "item"},
           ]) or "" }}
         {% endfor %}
 
@@ -178,7 +178,7 @@
             {"text": "Activity date"},
           ],
           "rows": table_rows,
-          "classes": "workbasket-items",
+          "classes": "workbasket-transactions",
         }) }}
 
         {{ load_more_pagination(current_count, total_count, "transaction") }}
