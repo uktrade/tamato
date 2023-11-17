@@ -269,6 +269,9 @@ developement environment, then you may wish to create a
 </ul>
 </dd>
 </dl>
+<p>Guidance for running tamato via docker in Pycharm (follow initial set up below first)
+<a href="#id2"><span class="problematic" id="id3">`Docker in PyCharm https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html#run`__</span></a>.</p>
+<p><a class="reference external" href="https://testdriven.io/blog/django-debugging-pycharm/">https://testdriven.io/blog/django-debugging-pycharm/</a></p>
 <p>Download the codebase:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:uktrade/tamato
 $<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tamato
@@ -279,7 +282,7 @@ $<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tamat
 <span class="w">    </span><span class="c1"># Not used will be used for specific local docker stuff</span>
 <span class="w">    </span><span class="c1"># cp docker-compose.override.yml.example docker-compose.override.yml</span>
 
-<span class="c1"># to overwrite default db dump name pass in DUMP_FILE=db_dump.sql</span>
+<span class="c1"># to overwrite default db dump name pass in DB_DUMP=tamato_db.sql</span>
 $<span class="w"> </span>make<span class="w"> </span>docker-first-use
 <span class="w">    </span><span class="c1"># take a tea break to import the db dump then</span>
 <span class="w">    </span><span class="c1"># enter super user details when prompted</span>
@@ -295,9 +298,18 @@ $<span class="w"> </span>make<span class="w"> </span>docker-up
 </div></blockquote>
 <p>Go to <a class="reference external" href="http://localhost:8000/">http://localhost:8000/</a> in your web browser to view the app</p>
 <p>Import from a dump of the database:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># to overwrite default db dump name pass in DUMP_FILE=tamato_db.sql</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># to overwrite defaults</span>
+<span class="c1">#   DB_DUMP=tamato_db.sql</span>
+<span class="c1">#   DB_NAME=tamato</span>
+<span class="c1">#   DB_USER=postgres</span>
+<span class="c1">#   TEMPLATE_NAME={DB_NAME}_{DATE}</span>
 <span class="c1"># this overwrites the default file set in the makefile variable</span>
-$<span class="w"> </span>make<span class="w"> </span>docker-db-dump
+<span class="c1"># docker-import-new-db will create a new template with the provided DB dump</span>
+<span class="c1"># can override the name of the template at TEMPLATE_NAME</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-import-new-db
+
+<span class="c1"># Will restore the db DB_NAME with the provided TEMPLATE_NAME</span>
+$<span class="w"> </span>make<span class="w"> </span>docker-restore-db
 </pre></div>
 </div>
 <p>Sometimes docker gets clogged up and we need to clean it:</p>
