@@ -105,10 +105,33 @@
         {% endif %}
 
         <div class="govuk-button-group govuk-!-margin-bottom-5">
-          <button value="promote-transactions-top" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Move to top</button>
-          <button value="promote-transactions" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Move up</button>
-          <button value="demote-transactions" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Move down</button>
-          <button value="demote-transactions-bottom" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Move to bottom</button>
+          <button value="promote-transactions-top"
+            name="form-action"
+            class="govuk-button govuk-button--secondary"
+            data-module="govuk-button"
+            data-prevent-double-click="true"
+          >Move to top</button>
+
+          <button value="promote-transactions"
+            name="form-action"
+            class="govuk-button govuk-button--secondary"
+            data-module="govuk-button"
+            data-prevent-double-click="true"
+          >Move up</button>
+
+          <button value="demote-transactions"
+            name="form-action"
+            class="govuk-button govuk-button--secondary"
+            data-module="govuk-button"
+            data-prevent-double-click="true"
+          >Move down</button>
+
+          <button value="demote-transactions-bottom"
+            name="form-action"
+            class="govuk-button govuk-button--secondary"
+            data-module="govuk-button"
+            data-prevent-double-click="true"
+          >Move to bottom</button>
         </div>
 
         {{ load_more_pagination(current_count, total_count, "transaction") }}
