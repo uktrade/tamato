@@ -1,6 +1,8 @@
 import logging
 import re
+from datetime import date
 from functools import cached_property
+from urllib.parse import urlencode
 
 import boto3
 from botocore.client import Config
@@ -36,13 +38,13 @@ from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
+from common.util import format_date_string
 from common.views import SortingMixin
 from common.views import WithPaginationListView
 from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from importer.goods_report import GoodsReporter
-from importer.goods_report import GoodsReportLine
 from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
@@ -1243,15 +1245,6 @@ class WorkbasketReviewGoodsView(
         context["selected_tab"] = "commodities"
         context["session_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
-
-        # Default values should there be no ImportBatch instance associated with
-        # the workbasket.
-        context["column_headings"] = [
-            description
-            for description in GoodsReportLine.COLUMN_DESCRIPTIONS
-            if description != "Containing transaction ID"
-            and description != "Containing message ID"
-        ]
         context["report_lines"] = []
         context["import_batch_pk"] = None
 
@@ -1271,17 +1264,46 @@ class WorkbasketReviewGoodsView(
         if taric_file:
             reporter = GoodsReporter(import_batch.taric_file)
             goods_report = reporter.create_report()
+            today = date.today()
 
             context["report_lines"] = [
-                [
-                    line.update_type.title(),
-                    line.record_name.title(),
-                    line.goods_nomenclature_item_id,
-                    line.suffix,
-                    line.validity_start_date,
-                    line.validity_end_date,
-                    line.comments,
-                ]
+                {
+                    "update_type": line.update_type.title() if line.update_type else "",
+                    "record_name": line.record_name.title() if line.record_name else "",
+                    "item_id": line.goods_nomenclature_item_id,
+                    "item_id_search_url": (
+                        reverse("commodity-ui-list")
+                        + "?"
+                        + urlencode({"item_id": line.goods_nomenclature_item_id})
+                        if line.goods_nomenclature_item_id
+                        else ""
+                    ),
+                    "measures_search_url": (
+                        reverse("measure-ui-list")
+                        + "?"
+                        + urlencode(
+                            {
+                                "goods_nomenclature__item_id": line.goods_nomenclature_item_id,
+                                "end_date_modifier": "after",
+                                "end_date_0": today.day,
+                                "end_date_1": today.month,
+                                "end_date_2": today.year,
+                            },
+                        )
+                        if line.goods_nomenclature_item_id
+                        else ""
+                    ),
+                    "suffix": line.suffix,
+                    "start_date": format_date_string(
+                        line.validity_start_date,
+                        short_format=True,
+                    ),
+                    "end_date": format_date_string(
+                        line.validity_end_date,
+                        short_format=True,
+                    ),
+                    "comments": line.comments,
+                }
                 for line in goods_report.report_lines
             ]
             context["import_batch_pk"] = import_batch.pk

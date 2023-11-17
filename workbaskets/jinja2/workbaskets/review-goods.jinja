@@ -8,31 +8,72 @@
     change{{ report_lines|pluralize }} available to review.
 
     {% if import_batch_pk %}
-      <a href="{{ url("goods-report-ui-download", kwargs={"pk": import_batch_pk}) }}" class="govuk-link fake-link align-right govuk-!-margin-left-5">Download as Excel <span class="down-arrow">&#9660;</span></a>
+      {{ govukButton({
+        "html": "Download as Excel",
+        "href": url("goods-report-ui-download", kwargs={"pk": import_batch_pk}),
+        "classes": "govuk-button--primary align-right govuk-!-margin-left-5"
+      }) }}
     {% endif %}
 
     {% if unsent_notification %}
-      <a href="{{ url("goods-report-notify", kwargs={"pk": import_batch_pk}) }}" class="govuk-link fake-link align-right">Notify Channel Islands <span class="right-arrow">&#9654;</span></a>
+      {{ govukButton({
+        "html": "Notify Channel Islands",
+        "href": url("goods-report-notify", kwargs={"pk": import_batch_pk}),
+        "classes": "govuk-button--primary align-right"
+      }) }}
     {% endif %}
   </div>
 
   {% if report_lines %}
-    {% set headings = [] %}
-    {% for heading in column_headings %}
-      {{ headings.append({"text": heading}) or "" }}
-    {% endfor %}
-
     {% set rows = [] %}
     {% for row in report_lines %}
-      {% set cells = [] %}
-      {% for cell in row %}
-        {{ cells.append({"text": cell}) or "" }}
-      {% endfor %}
+      {% set item_search_link -%}
+        {% if row.item_id_search_url %}
+          <a
+            class="govuk-link govuk-!-font-weight-bold"
+            href="{{ row.item_id_search_url }}"
+          >{{ row.item_id }}</a>
+        {% else %}
+          ""
+        {% endif %}
+      {%- endset %}
+
+      {% set measures_search_link -%}
+        {% if row.measures_search_url %}
+          <a
+            class="govuk-link govuk-!-font-weight-bold"
+            href="{{ row.measures_search_url }}"
+          >Measures</a>
+        {% else %}
+          ""
+        {% endif %}
+      {%- endset %}
+
+      {% set cells = [
+        {"text": row.update_type},
+        {"text": row.record_name},
+        {"html": item_search_link},
+        {"html": measures_search_link},
+        {"text": row.suffix},
+        {"text": row.start_date},
+        {"text": row.end_date},
+        {"text": row.comments},
+      ] or "" %}
+
       {{ rows.append(cells) or "" }}
     {% endfor %}
 
     {{ govukTable({
-      "head": headings,
+      "head": [
+        {"text": "Action"},
+        {"text": "Update"},
+        {"html": "Commodity code"},
+        {"html": "Measures"},
+        {"text": "Suffix"},
+        {"text": "Start date"},
+        {"text": "End date"},
+        {"text": "Comments"},
+      ],
       "rows": rows,
     }) }}
   {% endif %}
