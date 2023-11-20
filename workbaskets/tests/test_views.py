@@ -790,7 +790,7 @@ def test_submit_for_packaging_disabled(
     url = reverse(
         "workbaskets:workbasket-checks",
     )
-    response = valid_user_client.post(
+    valid_user_client.post(
         url,
         {"form-action": "run-rule-check"},
     )
