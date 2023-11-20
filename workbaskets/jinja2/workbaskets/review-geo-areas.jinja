@@ -1,0 +1,20 @@
+{% extends "workbaskets/review.jinja" %}
+
+{% set nested_tab_links = [
+  {
+    "text": "Geographical areas",
+    "href": url("workbaskets:workbasket-ui-review-geo-areas", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "geographical-areas",
+  },
+  {
+    "text": "Geographical area group memberships",
+    "href": url("workbaskets:workbasket-ui-review-geo-memberships", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "geographical-memberships",
+  },
+  ]
+%}
+
+{% block review_tabs %}
+  {{ super() }}
+  {{ fake_tabs(nested_tab_links) }}
+{% endblock %}

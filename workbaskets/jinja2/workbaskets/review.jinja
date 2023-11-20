@@ -10,7 +10,7 @@
   {% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
 {% endif %}
 
-{% set links = [
+{% set main_tab_links = [
   {
     "text": "Additional codes",
     "href": url("workbaskets:workbasket-ui-review-additional-codes", kwargs={"pk": workbasket.pk}),
@@ -82,7 +82,9 @@
   {% endif %}
 
   <div id="workbasket-review-tabs">
-    {{ fake_tabs(links) }}
+    {% block review_tabs %}
+      {{ fake_tabs(main_tab_links) }}
+    {% endblock %}
   </div>
 
   <div class="govuk-tabs__panel {% block content_class %}{% endblock %}">
@@ -110,7 +112,7 @@
       {% if object_list %}
         {% include tab_template %}
       {% else %}
-        <p class="govuk-body govuk-!-margin-top-5">0 {{ selected_tab|replace("-", " ") }} available to review.</p>
+        <p class="govuk-body govuk-!-margin-top-5">0 {{ view.model._meta.verbose_name_plural }} available to review.</p>
       {% endif %}
       {% include "includes/common/pagination.jinja" %}
     {% endblock %}

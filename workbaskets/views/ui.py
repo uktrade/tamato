@@ -44,6 +44,7 @@ from common.views import WithPaginationListView
 from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalMembership
 from importer.goods_report import GoodsReporter
 from measures.models import Measure
 from notifications.models import Notification
@@ -1337,11 +1338,28 @@ class WorkBasketReviewGeoAreasView(WorkBasketReviewView):
     """UI endpoint for reviewing geographical area changes in a workbasket."""
 
     model = GeographicalArea
+    template_name = "workbaskets/review-geo-areas.jinja"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["selected_tab"] = "geographical-areas"
+        context["selected_nested_tab"] = "geographical-areas"
         context["tab_template"] = "includes/geo_areas/list.jinja"
+        return context
+
+
+class WorkBasketReviewGeoMembershipsView(WorkBasketReviewView):
+    """UI endpoint for reviewing geographical membership changes in a
+    workbasket."""
+
+    model = GeographicalMembership
+    template_name = "workbaskets/review-geo-areas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "geographical-areas"
+        context["selected_nested_tab"] = "geographical-memberships"
+        context["tab_template"] = "includes/workbaskets/review-geo-memberships.jinja"
         return context
 
 
