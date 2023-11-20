@@ -92,6 +92,11 @@ ui_patterns = [
         name="workbasket-ui-review-quotas",
     ),
     path(
+        f"<pk>/review-quota-definitions/",
+        ui_views.WorkBasketReviewQuotaDefinitionsView.as_view(),
+        name="workbasket-ui-review-quota-definitions",
+    ),
+    path(
         f"<pk>/review-regulations/",
         ui_views.WorkBasketReviewRegulationsView.as_view(),
         name="workbasket-ui-review-regulations",

@@ -49,6 +49,7 @@ from importer.goods_report import GoodsReporter
 from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
+from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets import forms
@@ -1394,11 +1395,28 @@ class WorkBasketReviewQuotasView(WorkBasketReviewView):
     """UI endpoint for reviewing quota changes in a workbasket."""
 
     model = QuotaOrderNumber
+    template_name = "workbaskets/review-quotas.jinja"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "quotas"
         context["tab_template"] = "includes/quotas/list.jinja"
+        return context
+
+
+class WorkBasketReviewQuotaDefinitionsView(WorkBasketReviewView):
+    """UI endpoint for reviewing quota definition period changes in a
+    workbasket."""
+
+    model = QuotaDefinition
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "quota-definitions"
+        context["tab_template"] = "includes/workbaskets/review-quota-definitions.jinja"
         return context
 
 

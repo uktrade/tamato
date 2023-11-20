@@ -1,0 +1,20 @@
+{% extends "workbaskets/review.jinja" %}
+
+{% set nested_tab_links = [
+  {
+    "text": "Quota order numbers",
+    "href": url("workbaskets:workbasket-ui-review-quotas", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "quotas",
+  },
+  {
+    "text": "Quota definition periods",
+    "href": url("workbaskets:workbasket-ui-review-quota-definitions", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "quota-definitions",
+  },
+  ]
+%}
+
+{% block review_tabs %}
+  {{ super() }}
+  {{ fake_tabs(nested_tab_links) }}
+{% endblock %}
