@@ -489,6 +489,11 @@ def test_workbasket_review_tabs_without_permission(url, client):
             6,
         ),
         (
+            "workbaskets:workbasket-ui-review-geo-memberships",
+            lambda: factories.GeographicalMembershipFactory.create(),
+            6,
+        ),
+        (
             "workbaskets:workbasket-ui-review-measures",
             lambda: factories.MeasureFactory.create(),
             11,
@@ -497,6 +502,11 @@ def test_workbasket_review_tabs_without_permission(url, client):
             "workbaskets:workbasket-ui-review-quotas",
             lambda: factories.QuotaOrderNumberFactory.create(),
             6,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-quota-definitions",
+            lambda: factories.QuotaDefinitionFactory.create(),
+            10,
         ),
         (
             "workbaskets:workbasket-ui-review-regulations",
