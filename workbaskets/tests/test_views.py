@@ -1472,16 +1472,15 @@ def test_workbasket_transaction_order_view_with_reorder_permission(valid_user_cl
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
-    table_rows = page.select("table > tbody > tr > td.item.first-cell")
+    table_rows = page.select("table > tbody > tr > td.item:first-child")
     checkboxes = page.select(".govuk-checkboxes__input")
-    remove_button = page.find("button", value="remove-selected")
     move_top_button = page.find("button", string=re.compile(r"Move to top"))
     move_bottom_button = page.find("button", string=re.compile(r"Move to bottom"))
     move_up_button = page.find("button", string=re.compile(r"Move up"))
     move_down_button = page.find("button", string=re.compile(r"Move down"))
 
     assert len(table_rows) == workbasket.tracked_models.count()
-    assert checkboxes and remove_button
+    assert checkboxes
     assert move_top_button and move_bottom_button
     assert move_up_button and move_down_button
 
@@ -1507,8 +1506,46 @@ def test_workbasket_transaction_order_view_without_reorder_permission(client):
     assert response.status_code == 200
 
     page = BeautifulSoup(response.content, "html.parser")
+    checkboxes = page.select(".govuk-checkboxes__input")
     promote_buttons = page.select("button.promote")
     demote_buttons = page.select("button.demote")
+    assert not checkboxes
+    assert not promote_buttons and not demote_buttons
+
+
+@pytest.mark.parametrize(
+    "workbasket_status,",
+    (
+        WorkflowStatus.ARCHIVED,
+        WorkflowStatus.ERRORED,
+        WorkflowStatus.PUBLISHED,
+        WorkflowStatus.QUEUED,
+    ),
+)
+def test_workbasket_transaction_order_view_non_editing_status(
+    workbasket_status,
+    valid_user_client,
+):
+    """Test that `WorkBasketTransactionOrderView` does not display selection
+    checkboxes and move buttons for workbaskets with a non-editing status."""
+
+    workbasket = factories.WorkBasketFactory.create(status=workbasket_status)
+    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+
+    url = reverse(
+        "workbaskets:workbasket-ui-transaction-order",
+        kwargs={"pk": workbasket.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content, "html.parser")
+    checkboxes = page.select(".govuk-checkboxes__input")
+    promote_buttons = page.select("button.promote")
+    demote_buttons = page.select("button.demote")
+    assert not checkboxes
     assert not promote_buttons and not demote_buttons
 
 
@@ -1522,15 +1559,15 @@ def test_workbasket_transaction_order_view_without_reorder_permission(client):
         ("demote-transaction", 1, [0, 2, 1, 3]),
     ],
 )
-def test_workbasket_transaction_order_view_move_transactions(
+def test_workbasket_transaction_order_view_move_transaction(
     form_action,
     transaction,
     new_order,
     valid_user_client,
 ):
     """Tests that `WorkBasketTransactionOrderView` promotes and demotes
-    transactions in a workbasket, and that doing so resets the rule check status
-    of the workbasket."""
+    individual transactions in a workbasket, and that doing so resets the rule
+    check status of the workbasket."""
     workbasket = factories.WorkBasketFactory.create()
     model_1 = factories.TestModel1Factory.create(
         transaction=workbasket.new_transaction(),
@@ -1558,51 +1595,67 @@ def test_workbasket_transaction_order_view_move_transactions(
     assert response.status_code == 302
 
     reordered_transactions = list(workbasket.transactions.all().order_by("order"))
-    assert reordered_transactions[0] == transactions[new_order[0]]
-    assert reordered_transactions[1] == transactions[new_order[1]]
-    assert reordered_transactions[2] == transactions[new_order[2]]
-    assert reordered_transactions[3] == transactions[new_order[3]]
+    for i, transaction in enumerate(reordered_transactions):
+        assert transaction == transactions[new_order[i]]
 
     assert not workbasket.tracked_model_checks.exists()
 
 
 @pytest.mark.parametrize(
-    "form_action, redirect_url, page_param",
+    ("form_action", "transaction", "new_order"),
     [
-        ("remove-selected", "workbaskets:workbasket-ui-changes-delete", False),
-        ("move-transaction", "workbaskets:workbasket-ui-transaction-order", True),
+        # old_order = [0, 1, 2, 3, 4]
+        ("promote-transactions-top", [3, 4], [3, 4, 0, 1, 2]),
+        ("demote-transactions-bottom", [0, 1], [2, 3, 4, 0, 1]),
+        ("promote-transactions", [1, 3], [1, 0, 3, 2, 4]),
+        ("demote-transactions", [1, 2], [0, 3, 1, 2, 4]),
     ],
 )
-def test_workbasket_transaction_order_form_action_redirect(
+def test_workbasket_transaction_order_view_move_selected_transactions(
     form_action,
-    redirect_url,
-    page_param,
-    session_workbasket,
+    transaction,
+    new_order,
+    valid_user_client,
 ):
-    """Tests that `WorkBasketTransactionOrderView.get_success_url()` maps
-    `form_action` to its corresponding redirect URL."""
-    request = RequestFactory()
-    view_url = reverse(
-        "workbaskets:workbasket-ui-transaction-order",
-        kwargs={"pk": session_workbasket.pk},
+    """Tests that `WorkBasketTransactionOrderView` promotes and demotes selected
+    transactions in a workbasket, and that doing so resets the rule check status
+    of the workbasket."""
+    workbasket = factories.WorkBasketFactory.create()
+    model_1 = factories.TestModel1Factory.create(
+        transaction=workbasket.new_transaction(),
     )
-    data = {"form-action": form_action}
-    post_request = request.post(view_url, data)
+    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
+    factories.TestModel1Factory.create(transaction=workbasket.new_transaction())
 
-    view = ui.WorkBasketTransactionOrderView(
-        request=post_request,
-        kwargs={"pk": session_workbasket.pk},
+    TrackedModelCheckFactory.create(
+        transaction_check__transaction=model_1.transaction,
+        model=model_1,
+        successful=True,
     )
-    if not page_param:
-        assert view.get_success_url() == reverse(
-            redirect_url,
-            kwargs={"pk": session_workbasket.pk},
-        )
-    else:
-        assert (
-            view.get_success_url()
-            == reverse(redirect_url, kwargs={"pk": session_workbasket.pk}) + "?page=1"
-        )
+    assert workbasket.tracked_model_checks.exists()
+
+    transactions = list(workbasket.transactions.all().order_by("order"))
+
+    url = reverse(
+        "workbaskets:workbasket-ui-transaction-order",
+        kwargs={"pk": workbasket.pk},
+    )
+    form_data = {
+        "form-action": f"{form_action}",
+        f"selectableobject_{transactions[transaction[0]].pk}": True,
+        f"selectableobject_{transactions[transaction[1]].pk}": True,
+    }
+
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    reordered_transactions = list(workbasket.transactions.all().order_by("order"))
+    for i, transaction in enumerate(reordered_transactions):
+        assert transaction == transactions[new_order[i]]
+
+    assert not workbasket.tracked_model_checks.exists()
 
 
 def test_workbasket_transaction_order_first_or_last_transaction_in_workbasket():
@@ -1633,35 +1686,6 @@ def test_workbasket_transaction_order_first_or_last_transaction_in_workbasket():
 
     assert view.last_transaction_in_workbasket == model_2.transaction
     assert view.last_transaction_in_workbasket != model_1.transaction
-
-
-def test_workbasket_transaction_order_tracked_models_first_or_last_in_transactions():
-    """Tests that `WorkBasketTransactionOrderView`'s
-    `tracked_models_first_in_transactions` and
-    `tracked_models_last_in_transactions` return the expected tracked models."""
-    workbasket = factories.WorkBasketFactory.create()
-    with workbasket.new_transaction() as transaction:
-        model_1, model_2 = factories.TestModel1Factory.create_batch(
-            2,
-            transaction=transaction,
-        )
-
-    request = RequestFactory()
-    url = reverse(
-        "workbaskets:workbasket-ui-transaction-order",
-        kwargs={"pk": workbasket.pk},
-    )
-    request = request.get(url)
-    view = ui.WorkBasketTransactionOrderView(
-        request=request,
-        kwargs={"pk": workbasket.pk},
-    )
-
-    assert model_1.pk in view.tracked_models_first_in_transactions
-    assert model_2.pk not in view.tracked_models_first_in_transactions
-
-    assert model_2.pk in view.tracked_models_last_in_transactions
-    assert model_1.pk not in view.tracked_models_last_in_transactions
 
 
 def test_successfully_delete_workbasket(
