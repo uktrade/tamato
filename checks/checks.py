@@ -1,3 +1,4 @@
+import time
 from functools import cached_property
 from typing import Collection
 from typing import Dict
@@ -71,7 +72,7 @@ class Checker:
 
     def apply(self, model: TrackedModel, context: TransactionCheck):
         """Applies the check to the model and records success."""
-
+        start_time = time.time()
         success, message = False, None
         try:
             with override_current_transaction(context.transaction):
@@ -84,12 +85,14 @@ class Checker:
                 INTERNAL_ERROR_MESSAGE + " : " + str(e),
             )
         finally:
+            elapsed_time = time.time() - start_time
             return TrackedModelCheck.objects.create(
                 model=model,
                 transaction_check=context,
                 check_name=self.name,
                 successful=success,
                 message=message,
+                processing_time=elapsed_time,
             )
 
 
@@ -162,7 +165,9 @@ class BusinessRuleChecker(Checker):
 
     def run(self, model: TrackedModel) -> CheckResult:
         """
-        :return CheckResult, a Tuple(rule_passed: str, violation_reason: Optional[str]).
+        :return CheckResult, a Tuple(rule_passed: str, violation_reason:
+
+        Optional[str]).
         """
         transaction = get_current_transaction()
         try:

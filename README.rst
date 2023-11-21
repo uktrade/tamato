@@ -334,7 +334,6 @@ To monitor celery workers or individual tasks run:
 
 See `flower docs <https://flower.readthedocs.io/en/latest/>`_ for more details
 
-
 Manually trigger the upload to s3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
