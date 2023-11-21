@@ -21,7 +21,6 @@ from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from measures.models import Measure
 from workbaskets import models
-from workbaskets.forms import SelectableObjectsForm
 from workbaskets.tasks import check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views import ui
@@ -161,30 +160,6 @@ def test_download(
         assert expected_url in response.url
 
 
-def test_review_workbasket_displays_objects_in_current_workbasket(
-    valid_user_client,
-    session_workbasket,
-):
-    """Verify that changes in the current workbasket are displayed on the bulk
-    selection form of the review workbasket page."""
-
-    with session_workbasket.new_transaction():
-        factories.GoodsNomenclatureFactory.create()
-
-    response = valid_user_client.get(
-        reverse(
-            "workbaskets:current-workbasket",
-        ),
-    )
-    page = BeautifulSoup(
-        response.content.decode(response.charset),
-        features="lxml",
-    )
-    for obj in session_workbasket.tracked_models.all():
-        field_name = SelectableObjectsForm.field_name_for_object(obj)
-        assert page.find("input", {"name": field_name})
-
-
 def test_review_workbasket_displays_rule_violation_summary(
     valid_user_client,
     session_workbasket,
@@ -320,36 +295,6 @@ def test_select_workbasket_redirects_to_tab(
         assert response.url == reverse(expected_url, kwargs={"pk": workbasket.pk})
     else:
         assert response.url == reverse(expected_url)
-
-
-@pytest.mark.parametrize(
-    "form_action, url_name",
-    [
-        ("page-prev", "workbaskets:current-workbasket"),
-        ("page-next", "workbaskets:current-workbasket"),
-    ],
-)
-def test_review_workbasket_redirects(
-    form_action,
-    url_name,
-    valid_user_client,
-):
-    workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.EDITING,
-    )
-    with workbasket.new_transaction() as tx:
-        factories.FootnoteTypeFactory.create_batch(150, transaction=tx)
-    url = reverse("workbaskets:current-workbasket")
-    data = {"form-action": form_action}
-    response = valid_user_client.post(f"{url}?page=2", data)
-    assert response.status_code == 302
-    assert reverse(url_name) in response.url
-
-    if form_action == "page-prev":
-        assert "?page=1" in response.url
-
-    elif form_action == "page-next":
-        assert "?page=3" in response.url
 
 
 @pytest.mark.parametrize(
@@ -755,43 +700,6 @@ def test_workbasket_business_rule_status(valid_user_client, session_empty_workba
     assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
 
 
-def test_submit_for_packaging(valid_user_client, session_workbasket):
-    """Test that a GET request to the submit-for-packaging endpoint returns a
-    302, redirecting to the create packaged workbasket page."""
-    with session_workbasket.new_transaction() as transaction:
-        good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
-        measure = factories.MeasureFactory.create(transaction=transaction)
-        geo_area = factories.GeographicalAreaFactory.create(transaction=transaction)
-        objects = [good, measure, geo_area]
-        for obj in objects:
-            TrackedModelCheckFactory.create(
-                transaction_check__transaction=transaction,
-                model=obj,
-                successful=True,
-            )
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "error_count": session_workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
-
-    url = reverse(
-        "workbaskets:current-workbasket",
-    )
-    response = valid_user_client.post(
-        url,
-        {"form-action": "submit-for-packaging"},
-    )
-
-    assert response.status_code == 302
-    response_url = f"/publishing/create/"
-    # Only compare the response URL up to the query string.
-    assert response.url[: len(response_url)] == response_url
-
-
 @pytest.fixture
 def successful_business_rules_setup(session_workbasket, valid_user_client):
     """Sets up data and runs business rules."""
@@ -879,7 +787,13 @@ def test_submit_for_packaging_disabled(
         import_batch.workbasket_id = session_workbasket.id
         if isinstance(import_batch, ImportBatch):
             import_batch.save()
-
+    url = reverse(
+        "workbaskets:workbasket-checks",
+    )
+    valid_user_client.post(
+        url,
+        {"form-action": "run-rule-check"},
+    )
     response = valid_user_client.get(
         reverse("workbaskets:workbasket-checks"),
     )
@@ -893,6 +807,38 @@ def test_submit_for_packaging_disabled(
         assert packaging_button.has_attr("disabled")
     else:
         assert not packaging_button.has_attr("disabled")
+
+
+def test_submit_for_packaging(
+    successful_business_rules_setup,
+    valid_user_client,
+    session_workbasket,
+):
+    """Test that a link to the publishing/create url shows following a
+    successful rule check."""
+    import_batch = factories.ImportBatchFactory.create(
+        status=ImportBatchStatus.SUCCEEDED,
+        goods_import=True,
+    )
+
+    import_batch.workbasket_id = session_workbasket.id
+    if isinstance(import_batch, ImportBatch):
+        import_batch.save()
+    url = reverse(
+        "workbaskets:workbasket-checks",
+    )
+    valid_user_client.post(
+        url,
+        {"form-action": "run-rule-check"},
+    )
+    response = valid_user_client.get(
+        reverse("workbaskets:workbasket-checks"),
+    )
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    assert soup.find("a", href="/publishing/create/")
 
 
 def test_terminate_rule_check(valid_user_client, session_workbasket):
