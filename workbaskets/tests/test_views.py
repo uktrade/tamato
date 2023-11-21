@@ -1649,10 +1649,8 @@ def test_workbasket_transaction_order_view_move_transaction(
     assert response.status_code == 302
 
     reordered_transactions = list(workbasket.transactions.all().order_by("order"))
-    assert reordered_transactions[0] == transactions[new_order[0]]
-    assert reordered_transactions[1] == transactions[new_order[1]]
-    assert reordered_transactions[2] == transactions[new_order[2]]
-    assert reordered_transactions[3] == transactions[new_order[3]]
+    for i, transaction in enumerate(reordered_transactions):
+        assert transaction == transactions[new_order[i]]
 
     assert not workbasket.tracked_model_checks.exists()
 
@@ -1708,11 +1706,8 @@ def test_workbasket_transaction_order_view_move_selected_transactions(
     assert response.status_code == 302
 
     reordered_transactions = list(workbasket.transactions.all().order_by("order"))
-    assert reordered_transactions[0] == transactions[new_order[0]]
-    assert reordered_transactions[1] == transactions[new_order[1]]
-    assert reordered_transactions[2] == transactions[new_order[2]]
-    assert reordered_transactions[3] == transactions[new_order[3]]
-    assert reordered_transactions[4] == transactions[new_order[4]]
+    for i, transaction in enumerate(reordered_transactions):
+        assert transaction == transactions[new_order[i]]
 
     assert not workbasket.tracked_model_checks.exists()
 
