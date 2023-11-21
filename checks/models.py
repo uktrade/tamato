@@ -144,7 +144,7 @@ class TrackedModelCheck(TimestampedMixin):
     """The text content returned by the check, if any."""
 
     processing_time = fields.DecimalField(null=True, decimal_places=4, max_digits=6)
-    """Added processing_time, a field that records the rtime taken to process a
+    """Added processing_time, a field that records the time taken to process a
     rule in seconds."""
 
     @property
