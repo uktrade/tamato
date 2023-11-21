@@ -822,21 +822,12 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
             form_action == "promote-transactions-top"
             or form_action == "demote-transactions"
         ):
-            # reversed to keep the transaction's order relative to the other selected transactions
-            for pk in reversed(transaction_pks):
-                selected_transaction = (
-                    self.workbasket_transactions().filter(pk=pk).last()
-                )
-                self.form_action_mapping[form_action](selected_transaction)
-        elif (
-            form_action == "promote-transactions"
-            or form_action == "demote-transactions-bottom"
-        ):
-            for pk in transaction_pks:
-                selected_transaction = (
-                    self.workbasket_transactions().filter(pk=pk).last()
-                )
-                self.form_action_mapping[form_action](selected_transaction)
+            # Reverse to keep the selected transactions in their relative order in the final reordering.
+            transaction_pks.reverse()
+
+        for pk in transaction_pks:
+            selected_transaction = self.workbasket_transactions().filter(pk=pk).last()
+            self.form_action_mapping[form_action](selected_transaction)
 
         self.workbasket.delete_checks()
 
