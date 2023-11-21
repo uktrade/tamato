@@ -637,6 +637,23 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
         "move-transaction": "workbaskets:workbasket-ui-transaction-order",
     }
 
+    @property
+    def form_action_mapping(self):
+        """A dictionary mapping form actions to transaction reordering
+        functions."""
+        return {
+            # Selected transactions
+            "promote-transactions-top": self.promote_transaction_to_top,
+            "demote-transactions-bottom": self.demote_transaction_to_bottom,
+            "promote-transactions": self.promote_transaction,
+            "demote-transactions": self.demote_transaction,
+            # Individual transaction
+            "promote-transaction-top": self.promote_transaction_to_top,
+            "demote-transaction-bottom": self.demote_transaction_to_bottom,
+            "promote-transaction": self.promote_transaction,
+            "demote-transaction": self.demote_transaction,
+        }
+
     @cached_property
     def workbasket(self):
         return WorkBasket.objects.get(pk=self.kwargs["pk"])
@@ -799,30 +816,25 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
         ]
         self.session_store.clear()
 
-        if form_action == "promote-transactions-top":
+        if (
+            form_action == "promote-transactions-top"
+            or form_action == "demote-transactions"
+        ):
+            # reversed to keep the transaction's order relative to the other selected transactions
             for pk in reversed(transaction_pks):
                 selected_transaction = (
                     self.workbasket_transactions().filter(pk=pk).last()
                 )
-                self.promote_transaction_to_top(selected_transaction)
-        elif form_action == "demote-transactions-bottom":
+                self.form_action_mapping[form_action](selected_transaction)
+        elif (
+            form_action == "promote-transactions"
+            or form_action == "demote-transactions-bottom"
+        ):
             for pk in transaction_pks:
                 selected_transaction = (
                     self.workbasket_transactions().filter(pk=pk).last()
                 )
-                self.demote_transaction_to_bottom(selected_transaction)
-        elif form_action == "promote-transactions":
-            for pk in transaction_pks:
-                selected_transaction = (
-                    self.workbasket_transactions().filter(pk=pk).last()
-                )
-                self.promote_transaction(selected_transaction)
-        elif form_action == "demote-transactions":
-            for pk in reversed(transaction_pks):
-                selected_transaction = (
-                    self.workbasket_transactions().filter(pk=pk).last()
-                )
-                self.demote_transaction(selected_transaction)
+                self.form_action_mapping[form_action](selected_transaction)
 
         self.workbasket.delete_checks()
 
@@ -838,18 +850,9 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
         """
 
         self.session_store.clear()
-
         transaction = self._get_transaction_pk_from_form_action(form_action)
-
-        if form_action.startswith("promote-transaction-top"):
-            self.promote_transaction_to_top(transaction)
-        elif form_action.startswith("demote-transaction-bottom"):
-            self.demote_transaction_to_bottom(transaction)
-        elif form_action.startswith("promote-transaction"):
-            self.promote_transaction(transaction)
-        elif form_action.startswith("demote-transaction"):
-            self.demote_transaction(transaction)
-
+        form_action = form_action.split("__")[0]
+        self.form_action_mapping[form_action](transaction)
         self.workbasket.delete_checks()
 
         return HttpResponseRedirect(self.get_success_url())
