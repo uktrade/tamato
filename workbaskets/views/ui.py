@@ -604,7 +604,7 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
     permission_required = "workbaskets.view_workbasket"
     template_name = "workbaskets/transaction_order.jinja"
     form_class = forms.SelectableObjectsForm
-    paginate_by = 20
+    paginate_by = 100
 
     form_action_redirect_map = {
         "page-prev": "workbaskets:workbasket-ui-transaction-order",
