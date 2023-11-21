@@ -319,13 +319,11 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class CurrentWorkBasket(FormView):
+class CurrentWorkBasket(TemplateView):
     template_name = "workbaskets/summary-workbasket.jinja"
-    form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.
     action_success_url_names = {
-        "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
         "compare-data": "workbaskets:current-workbasket",
@@ -391,13 +389,6 @@ class CurrentWorkBasket(FormView):
         except KeyError:
             return reverse("home")
 
-    def get_initial(self):
-        store = SessionStore(
-            self.request,
-            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
-        )
-        return store.data.copy()
-
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         page = self.paginator.get_page(self.request.GET.get("page", 1))
@@ -449,24 +440,6 @@ class CurrentWorkBasket(FormView):
             )
 
         return context
-
-    def form_valid(self, form):
-        store = SessionStore(
-            self.request,
-            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
-        )
-        form_action = self.request.POST.get("form-action")
-        store.remove_items(form.cleaned_data)
-        if form_action == "remove-all":
-            object_list = {
-                self.form_class.field_name_for_object(obj): True
-                for obj in self.workbasket.tracked_models
-            }
-            store.add_items(object_list)
-        else:
-            to_add = {key: value for key, value in form.cleaned_data.items() if value}
-            store.add_items(to_add)
-        return super().form_valid(form)
 
 
 class WorkBasketList(PermissionRequiredMixin, WithPaginationListView):
