@@ -99,12 +99,12 @@ class GoodsReportLine:
     """Report lines for specific types of record."""
 
     COLUMNS = {
-        "update_type": "Update type",
+        "update_type": "Action",
         "whats_being_updated": "What's being updated",
         "commodity_code": "Commodity code",
         "suffix": "Suffix",
-        "validity_start_date": "Validity start date",
-        "validity_end_date": "Validity end date",
+        "validity_start_date": "Start date",
+        "validity_end_date": "End date",
         "comments": "Comments",
         "containing_transaction_id": "Containing transaction ID",
         "containing_message_id": "Containing message ID",

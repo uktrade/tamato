@@ -6,7 +6,11 @@ DEV=true
 #default run can be replaced with exec
 DOCKER_RUN?=run --rm
 #db import file name
-DUMP_FILE?=tamato_db.sql
+DB_DUMP?=${PROJECT}_db.sql
+DB_NAME?=${PROJECT}
+DB_USER?=postgres
+DATE=$(shell date '+%Y_%m_%d')
+TEMPLATE_NAME?="${DB_NAME}_${DATE}" 
 
 -include .env
 export
@@ -16,7 +20,7 @@ SPHINXOPTS    ?=
 .PHONY: help clean clean-bytecode clean-static collectstatic compilescss dependencies \
 	 docker-clean docker-deep-clean docker-down docker-up-db docker-down docker-image \
 	 docker-db-dump docker-test node_modules run test test-fast docker-makemigrations \
-	 docker-checkmigrations docker-migrate build-docs 
+	 docker-checkmigrations docker-migrate build-docs docker-restore-db docker-import-new-db 
 
 
 
@@ -157,14 +161,28 @@ docker-up-db:
 	@sleep 15; 
 	@echo "Database Ready for connections!"
 
+## docker-import-new-db: Import new db DB_DUMP into new TEMPLATE_NAME in Docker container db must be running 
+docker-import-new-db: docker-up-db
+	@${COMPOSE_LOCAL} exec -u ${DB_USER} db psql -c "DROP DATABASE ${TEMPLATE_NAME}" || true  
+	@${COMPOSE_LOCAL} exec -u ${DB_USER} db psql -c "CREATE DATABASE ${TEMPLATE_NAME} TEMPLATE template0"  
+	@echo "> Running db dump: ${DB_DUMP}  in docker..."
+	@cat ${DB_DUMP} | ${COMPOSE_LOCAL} exec -T db psql  -U ${DB_USER} -d ${TEMPLATE_NAME} 	
+	@sleep 5; 
+
+## docker-restore-db: Resotre db in Docker container set DB_NAME to rename db must be running  
+docker-restore-db: docker-down docker-up-db
+	@${COMPOSE_LOCAL} exec -u ${DB_USER} db psql -c "DROP DATABASE ${DB_NAME}" || true  
+	@${COMPOSE_LOCAL} exec -u ${DB_USER} db psql -c "CREATE DATABASE ${DB_NAME} TEMPLATE ${TEMPLATE_NAME}"  
+	@sleep 5;
+
 ## docker-db-dump: Run db dump to import data into Docker
 docker-db-dump: docker-up-db
 	@echo "> Running db dump in docker..."
-	@cat ${DUMP_FILE} | ${COMPOSE_LOCAL} exec -T db psql -U postgres 
+	@cat ${DB_DUMP} | ${COMPOSE_LOCAL} exec -T db psql -U ${DB_USER} -d ${DB_NAME} 	
 
 ## docker-first-use: Run application for first time in Docker 
-docker-first-use: docker-down docker-clean node_modules compilescss docker-build docker-db-dump \
-	docker-migrate docker-superuser docker-up 
+docker-first-use: docker-down docker-clean node_modules compilescss docker-build docker-import-new-db \
+	docker-restore-db docker-migrate docker-superuser docker-up 
 
 ## docker-makemigrations: Run django makemigrations in Docker
 docker-makemigrations: 

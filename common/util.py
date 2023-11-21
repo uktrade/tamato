@@ -20,6 +20,7 @@ from typing import Union
 import magic
 import wrapt
 from defusedxml.common import DTDForbidden
+from django.conf import settings
 from django.db import transaction
 from django.db.models import F
 from django.db.models import Func
@@ -154,7 +155,8 @@ class TaricDateRange(DateRange):
         """
         Checks whether this date range ends after the specified date range.
 
-        :param compared_date_range TaricDateRange: The date range to compare against
+        :param compared_date_range TaricDateRange: The date range to compare
+            against
         :rtype: bool
         """
         if self.upper_inf and not compared_date_range.upper_inf:
@@ -362,12 +364,14 @@ def get_field_tuple(model: Model, field_name: str) -> Tuple[str, Any]:
     """
     Get the value of the named field of the specified model.
 
-    Follows field lookups that span relations, eg: "footnote_type__application_code"
+    Follows field lookups that span relations, eg:
+    "footnote_type__application_code"
 
     Handles special case for "valid_between__lower".
 
     :param model django.db.models.Model: The model to fetch the field value from
-    :param field str: The name of the field (including relation spanning lookups) to fetch
+    :param field str: The name of the field (including relation spanning
+        lookups) to fetch
     :rtype: Any
     """
 
@@ -520,12 +524,12 @@ def get_latest_versions(qs):
     """
     Yields only the latest versions of each model within the provided queryset.
 
-    These may not be the current versions of each model,
-    e.g. because the queryset may be filtered as of a given transaction.
+    These may not be the current versions of each model, e.g. because the
+    queryset may be filtered as of a given transaction.
 
     But if there are two versions of the same tracked model in the queryset,
-    only the one with the one with the latest transaction order
-    (which should be latest version) is yielded.
+    only the one with the one with the latest transaction order (which should be
+    latest version) is yielded.
     """
     keys = set()
 
@@ -581,3 +585,24 @@ def as_date(date_or_datetime: Union(date, datetime)) -> date:
     if type(date_or_datetime) is datetime:
         return date_or_datetime.date()
     return date_or_datetime
+
+
+def format_date_string(date_string: str, short_format=False) -> str:
+    """
+    Format and return a string representation of a date using the application's
+    standard format. If the format of `date_string` could not be parsed, then
+    the empty string is returned.
+
+    If the `short_format` parameter is False, then the
+    `settings.DATE_FORMAT` is applied, otherwise, the
+    `settings.DATE_FORMAT_SHORT` is applied.
+    """
+    from dateutil import parser as date_parser
+
+    try:
+        if short_format:
+            return date_parser.parse(date_string).strftime(settings.DATE_FORMAT_SHORT)
+        else:
+            return date_parser.parse(date_string).strftime(settings.DATE_FORMAT)
+    except:
+        return ""
