@@ -1212,6 +1212,7 @@ class WorkBasketReviewAdditionalCodesView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review additional codes"
         context["selected_tab"] = "additional-codes"
         context["tab_template"] = "includes/additional_codes/list.jinja"
         return context
@@ -1224,6 +1225,7 @@ class WorkBasketReviewCertificatesView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review certificates"
         context["selected_tab"] = "certificates"
         context["tab_template"] = "includes/certificates/list.jinja"
         return context
@@ -1244,6 +1246,7 @@ class WorkbasketReviewGoodsView(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodities"
         context["selected_tab"] = "commodities"
         context["session_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
@@ -1330,6 +1333,7 @@ class WorkBasketReviewFootnotesView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review footnotes"
         context["selected_tab"] = "footnotes"
         context["tab_template"] = "includes/footnotes/list.jinja"
         return context
@@ -1343,6 +1347,7 @@ class WorkBasketReviewGeoAreasView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review geographical areas"
         context["selected_tab"] = "geographical-areas"
         context["selected_nested_tab"] = "geographical-areas"
         context["tab_template"] = "includes/geo_areas/list.jinja"
@@ -1358,6 +1363,7 @@ class WorkBasketReviewGeoMembershipsView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review geographical area group memberships"
         context["selected_tab"] = "geographical-areas"
         context["selected_nested_tab"] = "geographical-memberships"
         context["tab_template"] = "includes/workbaskets/review-geo-memberships.jinja"
@@ -1386,6 +1392,7 @@ class WorkBasketReviewMeasuresView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review measures"
         context["selected_tab"] = "measures"
         context["tab_template"] = "includes/measures/workbasket-measures.jinja"
         return context
@@ -1399,6 +1406,7 @@ class WorkBasketReviewQuotasView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota order numbers"
         context["selected_tab"] = "quotas"
         context["selected_nested_tab"] = "quotas"
         context["tab_template"] = "includes/quotas/list.jinja"
@@ -1414,6 +1422,7 @@ class WorkBasketReviewQuotaDefinitionsView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota definition periods"
         context["selected_tab"] = "quotas"
         context["selected_nested_tab"] = "quota-definitions"
         context["tab_template"] = "includes/workbaskets/review-quota-definitions.jinja"
@@ -1427,6 +1436,7 @@ class WorkBasketReviewRegulationsView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review regulations"
         context["selected_tab"] = "regulations"
         context["tab_template"] = "includes/regulations/list.jinja"
         return context
