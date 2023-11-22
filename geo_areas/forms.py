@@ -225,7 +225,7 @@ class GeographicalMembershipAddForm(
         start_date = cleaned_data["new_membership_valid_between"].lower
         end_date = cleaned_data["new_membership_valid_between"].upper
 
-        if area_group and member:
+        if area_group and member and start_date:
             # Check if membership already exists
             is_member = (
                 GeographicalMembership.objects.filter(
@@ -254,22 +254,22 @@ class GeographicalMembershipAddForm(
                     "The selected area group already has this country or region as a member.",
                 )
 
-            if not start_date:
-                self.add_error(
-                    "new_membership_start_date",
-                    "A start date is required.",
-                )
-            self.validate_dates(
-                field="new_membership_start_date",
-                start_date=start_date,
-                container_start_date=area_group.valid_between.lower,
+        if not start_date:
+            self.add_error(
+                "new_membership_start_date",
+                "A start date is required.",
             )
-            self.validate_dates(
-                field="new_membership_end_date",
-                start_date=start_date,
-                end_date=end_date,
-                container_end_date=area_group.valid_between.upper,
-            )
+        self.validate_dates(
+            field="new_membership_start_date",
+            start_date=start_date,
+            container_start_date=area_group.valid_between.lower,
+        )
+        self.validate_dates(
+            field="new_membership_end_date",
+            start_date=start_date,
+            end_date=end_date,
+            container_end_date=area_group.valid_between.upper,
+        )
 
         return cleaned_data
 
