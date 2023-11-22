@@ -227,13 +227,21 @@ class GeographicalMembershipAddForm(
 
         if area_group and member:
             # Check if membership already exists
-            is_member = GeographicalMembership.objects.filter(
-                geo_group=self.instance,
-                member=member,
+            is_member = (
+                GeographicalMembership.objects.filter(
+                    geo_group=self.instance,
+                    member=member,
+                )
+                .current()
+                .as_at_and_beyond(start_date)
             )
-            has_member = GeographicalMembership.objects.filter(
-                geo_group=area_group,
-                member=self.instance,
+            has_member = (
+                GeographicalMembership.objects.filter(
+                    geo_group=area_group,
+                    member=self.instance,
+                )
+                .current()
+                .as_at_and_beyond(start_date)
             )
             if is_member:
                 self.add_error(
