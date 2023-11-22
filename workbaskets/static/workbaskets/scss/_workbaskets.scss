@@ -27,7 +27,7 @@ nav#workbasket-items {
   }
 }
 
-table.workbasket-items tbody {
+table.workbasket-transactions tbody {
   .transaction-start {
     font-size: 1rem;
     background-color: govuk-colour("light-grey");
@@ -43,28 +43,35 @@ table.workbasket-items tbody {
     }
   }
 
-  .transaction-start.first-cell,
-  .item.first-cell {
+  .transaction-start:first-child {
+    padding-right: 0px;
+    padding-left: govuk-spacing(3);
+    padding-bottom: 0px;
+  }
+
+  .transaction-start:first-child,
+  .item:first-child {
+    border-top: 1px solid govuk-colour("mid-grey");
     border-left: 1px solid govuk-colour("mid-grey");
   }
 
-  .transaction-start.last-cell{
+  .transaction-start:last-child {
+    vertical-align: middle;
+  }
+
+  .transaction-start:last-child{
     #transaction-order-actions{
       float: right;
       margin-right: govuk-spacing(3);
     }
   }
 
-  .transaction-start.last-cell,
-  .item.last-cell {
+  .transaction-start:last-child,
+  .item:last-child {
     border-right: 1px solid govuk-colour("mid-grey");
   }
 
   .transaction-end {
     height: 1.5rem;
-  }
-
-  .govuk-link.disabled {
-    color: govuk-colour("mid-grey");
   }
 }
