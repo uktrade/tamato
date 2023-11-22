@@ -305,9 +305,9 @@ class GeographicalMembershipEditForm(
         self.fields["membership"].queryset = self.instance.get_current_memberships()
 
         self.fields["membership"].label_from_instance = (
-            lambda obj: f"{obj.member.area_id} - {obj.member.structure_description}"
+            lambda obj: f"{obj.member.area_id} - {obj.member.structure_description} ({obj.valid_between.lower} - {obj.valid_between.upper})"
             if self.instance.is_group()
-            else f"{obj.geo_group.area_id} - {obj.geo_group.structure_description}"
+            else f"{obj.geo_group.area_id} - {obj.geo_group.structure_description} ({obj.valid_between.lower} - {obj.valid_between.upper})"
         )
 
         self.fields["membership"].help_text = (
