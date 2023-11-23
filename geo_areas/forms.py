@@ -225,15 +225,29 @@ class GeographicalMembershipAddForm(
         start_date = cleaned_data["new_membership_valid_between"].lower
         end_date = cleaned_data["new_membership_valid_between"].upper
 
-        if area_group and member:
-            # Check if membership already exists
-            is_member = GeographicalMembership.objects.filter(
-                geo_group=self.instance,
-                member=member,
+        if not start_date and area_group and member:
+            self.add_error(
+                "new_membership_start_date",
+                "A start date is required.",
             )
-            has_member = GeographicalMembership.objects.filter(
-                geo_group=area_group,
-                member=self.instance,
+
+        if area_group and member and start_date:
+            # Check if membership already exists
+            is_member = (
+                GeographicalMembership.objects.filter(
+                    geo_group=self.instance,
+                    member=member,
+                )
+                .current()
+                .as_at_and_beyond(start_date)
+            )
+            has_member = (
+                GeographicalMembership.objects.filter(
+                    geo_group=area_group,
+                    member=self.instance,
+                )
+                .current()
+                .as_at_and_beyond(start_date)
             )
             if is_member:
                 self.add_error(
@@ -246,11 +260,6 @@ class GeographicalMembershipAddForm(
                     "The selected area group already has this country or region as a member.",
                 )
 
-            if not start_date:
-                self.add_error(
-                    "new_membership_start_date",
-                    "A start date is required.",
-                )
             self.validate_dates(
                 field="new_membership_start_date",
                 start_date=start_date,
@@ -296,17 +305,21 @@ class GeographicalMembershipEditForm(
 
         self.fields["membership"].queryset = self.instance.get_current_memberships()
 
-        self.fields["membership"].label_from_instance = (
-            lambda obj: f"{obj.member.area_id} - {obj.member.structure_description}"
-            if self.instance.is_group()
-            else f"{obj.geo_group.area_id} - {obj.geo_group.structure_description}"
-        )
+        self.fields["membership"].label_from_instance = self.label_from_instance
 
         self.fields["membership"].help_text = (
             "Select a country or region from the dropdown to edit the membership of this area group."
             if self.instance.is_group()
             else "Select an area group from the dropdown to edit the membership of this country or region."
         )
+
+    def label_from_instance(self, obj):
+        validity_period = f" ({obj.valid_between.lower} - {obj.valid_between.upper})"
+        if self.instance.is_group():
+            label = f"{obj.member.area_id} - {obj.member.structure_description}"
+        else:
+            label = f"{obj.geo_group.area_id} - {obj.geo_group.structure_description}"
+        return label + validity_period
 
     def clean(self):
         cleaned_data = super().clean()

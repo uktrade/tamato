@@ -130,14 +130,20 @@ def test_geographical_membership_add_form_invalid_dates(date_ranges):
     form_data = {
         "member": "COUNTRY",
         "country": country.pk,
-        "new_membership_end_date_0": area_group.valid_between.upper.day + 1,
-        "new_membership_end_date_1": area_group.valid_between.upper.month + 1,
+        "new_membership_start_date_0": area_group.valid_between.lower.day,
+        "new_membership_start_date_1": area_group.valid_between.lower.month,
+        "new_membership_start_date_2": area_group.valid_between.lower.year - 1,
+        "new_membership_end_date_0": area_group.valid_between.upper.day,
+        "new_membership_end_date_1": area_group.valid_between.upper.month,
         "new_membership_end_date_2": area_group.valid_between.upper.year + 1,
     }
     with override_current_transaction(Transaction.objects.last()):
         form = forms.GeographicalAreaEditForm(data=form_data, instance=area_group)
         assert not form.is_valid()
-        assert "A start date is required." in form.errors["new_membership_start_date"]
+        assert (
+            "The start date must be the same as or after the area group's start date."
+            in form.errors["new_membership_start_date"]
+        )
         assert (
             "The end date must be the same as or before the area group's end date."
             in form.errors["new_membership_end_date"]
@@ -150,14 +156,21 @@ def test_geographical_membership_add_form_invalid_selection(date_ranges):
     membership = factories.GeographicalMembershipFactory.create(
         geo_group=area_group,
         member=country,
+        valid_between=date_ranges.normal,
     )
 
     country_form_data = {
         "member": "COUNTRY",
         "country": country.pk,
+        "new_membership_start_date_0": membership.valid_between.lower.day,
+        "new_membership_start_date_1": membership.valid_between.lower.month,
+        "new_membership_start_date_2": membership.valid_between.lower.year,
     }
     group_form_data = {
         "geo_group": area_group.pk,
+        "new_membership_start_date_0": membership.valid_between.lower.day,
+        "new_membership_start_date_1": membership.valid_between.lower.month,
+        "new_membership_start_date_2": membership.valid_between.lower.year,
     }
 
     with override_current_transaction(Transaction.objects.last()):
