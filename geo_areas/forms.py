@@ -316,15 +316,10 @@ class GeographicalMembershipEditForm(
     def label_from_instance(self, obj):
         validity_period = f" ({obj.valid_between.lower} - {obj.valid_between.upper})"
         if self.instance.is_group():
-            return (
-                f"{obj.member.area_id} - {obj.member.structure_description}"
-                + validity_period
-            )
+            label = f"{obj.member.area_id} - {obj.member.structure_description}"
         else:
-            return (
-                f"{obj.geo_group.area_id} - {obj.geo_group.structure_description}"
-                + validity_period
-            )
+            label = f"{obj.geo_group.area_id} - {obj.geo_group.structure_description}"
+        return label + validity_period
 
     def clean(self):
         cleaned_data = super().clean()
