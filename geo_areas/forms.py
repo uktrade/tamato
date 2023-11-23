@@ -305,17 +305,26 @@ class GeographicalMembershipEditForm(
 
         self.fields["membership"].queryset = self.instance.get_current_memberships()
 
-        self.fields["membership"].label_from_instance = (
-            lambda obj: f"{obj.member.area_id} - {obj.member.structure_description} ({obj.valid_between.lower} - {obj.valid_between.upper})"
-            if self.instance.is_group()
-            else f"{obj.geo_group.area_id} - {obj.geo_group.structure_description} ({obj.valid_between.lower} - {obj.valid_between.upper})"
-        )
+        self.fields["membership"].label_from_instance = self.label_from_instance
 
         self.fields["membership"].help_text = (
             "Select a country or region from the dropdown to edit the membership of this area group."
             if self.instance.is_group()
             else "Select an area group from the dropdown to edit the membership of this country or region."
         )
+
+    def label_from_instance(self, obj):
+        validity_period = f" ({obj.valid_between.lower} - {obj.valid_between.upper})"
+        if self.instance.is_group():
+            return (
+                f"{obj.member.area_id} - {obj.member.structure_description}"
+                + validity_period
+            )
+        else:
+            return (
+                f"{obj.geo_group.area_id} - {obj.geo_group.structure_description}"
+                + validity_period
+            )
 
     def clean(self):
         cleaned_data = super().clean()
