@@ -21,7 +21,7 @@ def test_init(seed_database_with_indented_goods):
     moment = SnapshotMoment(transaction, sn_date)
 
     # used the loader to simplify the commodities list generation
-    ccl = CommodityCollectionLoader(prefix="29")
+    ccl = CommodityCollectionLoader(prefix="2903")
     commodities = ccl.load().commodities
     edges = {}
     ancestors = {}
@@ -67,7 +67,7 @@ def test_get_branch_measures(seed_database_with_indented_goods):
     moment = SnapshotMoment(draft_transaction, sn_date)
 
     # used the loader to simplify the commodities list generation
-    ccl = CommodityCollectionLoader(prefix="29")
+    ccl = CommodityCollectionLoader(prefix="2903")
     commodities = ccl.load().commodities
     edges = {}
     ancestors = {}
