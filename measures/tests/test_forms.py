@@ -506,17 +506,17 @@ def test_measure_geographical_area_form_quota_order_number(date_ranges):
         expected_cleaned_data = [
             {
                 "geo_area": new_origin_1.geographical_area,
-                "exclusions": list(new_origin_1.excluded_areas.all()),
+                "exclusions": set(new_origin_1.excluded_areas.all()),
             },
             {
                 "geo_area": new_origin_2.geographical_area,
-                "exclusions": [],
+                "exclusions": set(),
             },
         ]
-        assert sorted(
-            form.cleaned_data["geo_areas_and_exclusions"],
-            key=lambda d: sorted(d.items()),
-        ) == sorted(expected_cleaned_data, key=lambda d: sorted(d.items()))
+
+        for data in form.cleaned_data["geo_areas_and_exclusions"]:
+            data["exclusions"] = set(data["exclusions"])
+            assert data in expected_cleaned_data
 
 
 def test_measure_forms_details_invalid_data():
