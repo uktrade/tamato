@@ -15,12 +15,6 @@ from measures.snapshots import MeasureSnapshot
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def related_measure_dates(request, date_ranges):
-    callable, date_overlap = request.param
-    return callable(date_ranges), date_overlap
-
-
 def test_init(seed_database_with_indented_goods):
     transaction = Transaction.objects.last()
     sn_date = date(2023, 1, 1)
