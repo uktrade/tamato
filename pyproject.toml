@@ -97,6 +97,6 @@ norecursedirs = [
     "venv",
 ]
 markers = [
-    "new_importer"
+    "importer_v2"
 ]
 #addopts = "-n=auto"

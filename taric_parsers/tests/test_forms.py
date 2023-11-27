@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 TEST_FILES_PATH = path.join(path.dirname(__file__), "support")
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 def test_upload_taric_form_valid_envelope_id():
     with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as upload_file:
         data = {
@@ -29,7 +29,7 @@ def test_upload_taric_form_valid_envelope_id():
         assert form.is_valid()
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 @patch("taric_parsers.forms.chunk_taric")
 @patch("taric_parsers.forms.run_batch")
 def test_upload_taric_form_save(run_batch, chunk_taric, superuser):

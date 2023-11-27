@@ -16,7 +16,7 @@ pytestmark = pytest.mark.django_db
 TEST_FILES_PATH = path.join(path.dirname(__file__), "support")
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 @pytest.mark.parametrize(
     "url_name",
     [
@@ -54,7 +54,7 @@ def test_import_urls_requires_superuser(
     assert good_response.request["PATH_INFO"] == url
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 @patch("taric_parsers.forms.UploadTaricForm.save")
 def test_import_success_redirect(mock_save, superuser_client):
     mock_save.return_value = factories.ImportBatchFactory.create()
@@ -71,7 +71,7 @@ def test_import_success_redirect(mock_save, superuser_client):
     assert response.url == redirect_url
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 @pytest.mark.parametrize(
     "file_name,error_msg",
     [

@@ -6,7 +6,7 @@ from taric_parsers.parsers.additional_code_parsers import *
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 class TestNewAdditionalCodeTypeDescriptionParser:
     """
     Example XML:

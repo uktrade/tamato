@@ -45,7 +45,7 @@ def filter_snippet_transaction(
     return filter_transaction_records(transaction, record_group)
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 @mock.patch("taric_parsers.chunker.TemporaryFile")
 def test_get_chunk(mock_temp_file: mock.MagicMock):
     """Asserts that the correct chunk is found or created for writing to."""
@@ -68,7 +68,7 @@ def test_get_chunk(mock_temp_file: mock.MagicMock):
     assert chunk2.read() == get_chunk_opener("2")
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 def test_close_chunk():
     """Asserts that chunks are properly closed and added to the batch."""
     batch = factories.ImportBatchFactory.create()
@@ -93,7 +93,7 @@ def test_close_chunk():
     )
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 def test_filter_transaction_records_positive(
     taric_schema_tags,
     record_group,
@@ -116,7 +116,7 @@ def test_filter_transaction_records_positive(
     assert len(transaction) == 1
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 def test_filter_transaction_records_negative(
     taric_schema_tags,
     record_group,
@@ -133,7 +133,7 @@ def test_filter_transaction_records_negative(
     assert transaction is None
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 def test_chunk_taric(example_goods_taric_file_location):
     """Tests that the chunker creates an ImporterXMLChunk object in the db from
     the loaded XML file."""
@@ -148,7 +148,7 @@ def test_chunk_taric(example_goods_taric_file_location):
     assert chunk.chunk_text
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 def test_chunk_taric_fails_with_split_job(example_goods_taric_file_location):
     """Tests that the chunker creates an ImporterXMLChunk object in the db from
     the loaded XML file."""

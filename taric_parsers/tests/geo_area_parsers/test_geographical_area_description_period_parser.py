@@ -10,7 +10,7 @@ from taric_parsers.parsers.geo_area_parser import *
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 class TestNewGeographicalAreaDescriptionPeriodParser:
     """
     Example XML:

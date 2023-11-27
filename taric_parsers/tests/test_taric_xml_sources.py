@@ -9,7 +9,7 @@ from taric_parsers.taric_xml_source import TaricXMLStringSource
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 class TestTaricXMLSourceBase:
     def test_init(self):
         assert isinstance(TaricXMLSourceBase(), TaricXMLSourceBase)
@@ -22,7 +22,7 @@ class TestTaricXMLSourceBase:
         assert "Implement on child class" in str(e)
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 class TestTaricXMLStringSource:
     def test_init(self):
         assert isinstance(TaricXMLStringSource("xml"), TaricXMLStringSource)
@@ -32,7 +32,7 @@ class TestTaricXMLStringSource:
         assert target_inst.get_xml_string() == "xml"
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 class TestTaricXMLFileSource:
     def get_xml_file_path(self):
         path_to_current_file = os.path.realpath(__file__)

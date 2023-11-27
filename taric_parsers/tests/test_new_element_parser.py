@@ -165,7 +165,7 @@ from taric_parsers.parsers.taric_parser import ParserHelper
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 class TestNewElementParser:
     def test_init_defaults(self):
         target = BaseTaricParser

@@ -203,7 +203,7 @@ from taric_parsers.parsers.regulation_parser import (  # noqa
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 @pytest.mark.parametrize(
     (
         "parser_class",

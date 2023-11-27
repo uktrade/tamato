@@ -5,7 +5,7 @@ from common.tests.util import preload_import
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 class TestForGenericImportErrors:
     def test_correctly_raises_error_when_create_for_existing_sid(self):
         preload_import("additional_code_CREATE.xml", __file__, True)

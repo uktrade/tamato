@@ -26,7 +26,7 @@ def get_test_xml_file(file_name):
     return os.path.join(current_directory, "support", file_name)
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 class TestTransactionParser:
     def test_init(self):
         taric3_file = get_test_xml_file("additional_code_CREATE.xml")

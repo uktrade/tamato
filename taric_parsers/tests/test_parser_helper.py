@@ -162,7 +162,7 @@ from taric_parsers.parsers.taric_parser import ParserHelper
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.new_importer
+@pytest.mark.importer_v2
 class TestParserHelper:
     def test_get_parser_by_model(self):
         class MadeUpModel:
