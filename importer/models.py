@@ -246,7 +246,7 @@ class BatchImportError(TimestampedMixin):
     )
     transaction_id = models.CharField(max_length=50, default=None)
 
-    @staticmethod
+    @classmethod
     def create_from_import_issue_report_item(
         issue: ImportIssueReportItem,
         import_batch: ImportBatch,
