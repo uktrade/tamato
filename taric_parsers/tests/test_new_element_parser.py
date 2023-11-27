@@ -741,7 +741,7 @@ class TestNewElementParser:
             in str(e)
         )
 
-    def test_model_attributes_returns_expected(self, mocker):
+    def test_model_attributes_returns_expected(self):
         add_code_type = factories.AdditionalCodeTypeFactory.create(sid="A")
 
         class MadeUpModel:
