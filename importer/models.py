@@ -192,13 +192,17 @@ class BatchImportError(TimestampedMixin):
 
     This class has a *-1 relationship with ImportBatch
 
-    This object is used at the end of an import to iterate through found issues and persist them, there are other examples of issues being created outside the TARIC parsing process, a bad file for example but the main use is to persist detaied information for the user to review.
+    This object is used at the end of an import to iterate through found issues and persist them, there are other examples of
+    issues being created outside the TARIC parsing process, a bad file for example but the main use is to persist detaied information for the user
+    to review.
 
     Attributes:
          object_type: str
-            the XML tag of an object, if required. Could be empty if an issue is related to a more generic error or the object type cant be determined
+            the XML tag of an object, if required. Could be empty if an issue is related to a more generic error or the object type cant be
+            determined
          related_object_type: str
-            the XML tag of a related object, if required. Could be empty if an issue is related to a more generic error or the object type cant be determined or there is no related object to the object type
+            the XML tag of a related object, if required. Could be empty if an issue is related to a more generic error or the object
+            type cant be determined or there is no related object to the object type
          related_object_identity_keys: str
             A string representation of a dictionary containing identity fields for the object (object type) the error is being reported
          description: str
@@ -210,7 +214,8 @@ class BatchImportError(TimestampedMixin):
          object_details: str
             A dictionary of the values for the object where applicable. This field will be blank for generic errors not related to an object.
          object_update_type: int
-            Update type in the TARIC entry that the issue relates to, this can be null for issues relating to the import and not a specific record but typically will be populated with the numeric value relating to the update type
+            Update type in the TARIC entry that the issue relates to, this can be null for issues relating to the import and not a specific
+            record but typically will be populated with the numeric value relating to the update type
          transaction_id: str
             If this is related to a transaction, the transaction ID will be recorded here. This will be the ID in the XML.
 
