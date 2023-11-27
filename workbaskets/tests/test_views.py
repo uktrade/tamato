@@ -1824,6 +1824,36 @@ def test_application_access_after_workbasket_delete(
     assert not page.select("header nav a.workbasket-link")
 
 
+def test_workbasket_delete_previously_queued_workbasket(
+    valid_user_client,
+    valid_user,
+):
+    """Tests that an empty, previously queued workbasket transitions to ARCHIVED
+    status when a user attempts to delete the workbasket."""
+
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="delete_workbasket"),
+    )
+    packaged_workbasket = factories.QueuedPackagedWorkBasketFactory.create()
+
+    workbasket = packaged_workbasket.workbasket
+    workbasket.transactions.all().delete()
+
+    url = reverse(
+        "workbaskets:workbasket-ui-delete",
+        kwargs={"pk": workbasket.pk},
+    )
+    response = valid_user_client.post(url, {})
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "workbaskets:workbasket-ui-delete-done",
+        kwargs={"deleted_pk": workbasket.pk},
+    )
+
+    workbasket.refresh_from_db()
+    assert workbasket.status == WorkflowStatus.ARCHIVED
+
+
 def test_workbasket_compare_200(valid_user_client, session_workbasket):
     url = reverse("workbaskets:workbasket-check-ui-compare")
     response = valid_user_client.get(url)
