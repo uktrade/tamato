@@ -29,7 +29,7 @@ class ImportIssueReportItem:
         related_object_identity_keys: dict,
         description: str,
         issue_type: str = BatchImportErrorIssueType.ERROR,
-        taric_change_type: str = "UNDEFINED",
+        object_update_type: int = None,
         object_details: str = "UNDEFINED",
         transaction_id: int = 0,
     ):
@@ -38,7 +38,7 @@ class ImportIssueReportItem:
         self.related_object_identity_keys = related_object_identity_keys
         self.description = description
         self.issue_type = issue_type
-        self.taric_change_type = taric_change_type
+        self.object_update_type = object_update_type
         self.object_details = (object_details,)
         self.transaction_id = transaction_id
 
