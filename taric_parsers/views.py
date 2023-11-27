@@ -9,9 +9,9 @@ from django.views.generic import FormView
 from common.views import RequiresSuperuserMixin
 from common.views import WithPaginationListView
 from importer.filters import ImportBatchFilter
-from importer.models import BatchImportErrorIssueType
 from importer.models import ImportBatch
 from importer.models import ImporterChunkStatus
+from importer.models import ImportIssueType
 from taric_parsers import forms
 
 
@@ -24,12 +24,12 @@ class TaricImportList(RequiresSuperuserMixin, WithPaginationListView):
         .annotate(
             import_issues_error_count=Count(
                 "issues",
-                filter=Q(issues__issue_type=BatchImportErrorIssueType.ERROR),
+                filter=Q(issues__issue_type=ImportIssueType.ERROR),
                 distinct=True,
             ),
             import_issues_warning_count=Count(
                 "issues",
-                filter=Q(issues__issue_type=BatchImportErrorIssueType.WARNING),
+                filter=Q(issues__issue_type=ImportIssueType.WARNING),
                 distinct=True,
             ),
             completed_chunks=Count(

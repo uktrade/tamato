@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class BatchImportErrorIssueType(models.TextChoices):
+class ImportIssueType(models.TextChoices):
     ERROR = "ERROR", "Error"
     """An error occurred that prevents the processing of the import."""
 

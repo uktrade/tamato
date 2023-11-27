@@ -635,7 +635,7 @@ class BaseTaricParser:
                     ParserHelper.get_parser_by_model(link.model).xml_object_tag,
                     fields_and_values,
                     f"Missing expected linked object {ParserHelper.get_parser_by_model(link.model).__name__}",
-                    taric_change_type=self.update_type_name,
+                    object_update_type=self.update_type,
                     object_details=str(self),
                     transaction_id=self.transaction_id,
                 )

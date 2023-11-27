@@ -5,10 +5,10 @@ from typing import Sequence
 import taric_parsers.importer
 from common.celery import app
 from importer.models import BatchImportError
-from importer.models import BatchImportErrorIssueType
 from importer.models import ImportBatch
 from importer.models import ImporterChunkStatus
 from importer.models import ImporterXMLChunk
+from importer.models import ImportIssueType
 from taric_parsers.taric_xml_source import TaricXMLStringSource
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
@@ -57,10 +57,7 @@ def import_chunk(
             workbasket=workbasket,
         )
 
-        if (
-            len(importer.issues(filter_by_issue_type=BatchImportErrorIssueType.ERROR))
-            > 0
-        ):
+        if len(importer.issues(filter_by_issue_type=ImportIssueType.ERROR)) > 0:
             chunk.status = ImporterChunkStatus.ERRORED
         else:
             chunk.status = ImporterChunkStatus.DONE
@@ -83,7 +80,7 @@ def import_chunk(
             taric_change_type="",
             object_details="",
             transaction_id=0,
-            issue_type=BatchImportErrorIssueType.ERROR,
+            issue_type=ImportIssueType.ERROR,
         )
 
         import_error.save()

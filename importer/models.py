@@ -11,7 +11,7 @@ from django_fsm import transition
 from common import validators
 from common.models import TimestampedMixin
 from importer.storages import CommodityImporterStorage
-from importer.validators import BatchImportErrorIssueType
+from importer.validators import ImportIssueType
 from taric_parsers.importer_issue import ImportIssueReportItem
 from workbaskets.util import clear_workbasket
 from workbaskets.validators import WorkflowStatus
@@ -208,7 +208,7 @@ class BatchImportError(TimestampedMixin):
          description: str
             Text description of the encountered issue
          issue_type: str
-            Issue type, either ERROR, WARNING or INFO
+            Issue type, either ERROR, WARNING or INFO (from ImportIssueType choices)
          batch: BatchImport
             The related batch import
          object_details: str
@@ -230,7 +230,7 @@ class BatchImportError(TimestampedMixin):
     description = models.CharField(max_length=2000)
     issue_type = models.CharField(
         max_length=50,
-        choices=BatchImportErrorIssueType.choices,
+        choices=ImportIssueType.choices,
     )
     batch = models.ForeignKey(
         ImportBatch,
@@ -248,6 +248,7 @@ class BatchImportError(TimestampedMixin):
 
     @classmethod
     def create_from_import_issue_report_item(
+        cls,
         issue: ImportIssueReportItem,
         import_batch: ImportBatch,
     ):
@@ -262,7 +263,7 @@ class BatchImportError(TimestampedMixin):
         Returns:
             None
         """
-        BatchImportError.objects.create(
+        cls.objects.create(
             batch=import_batch,
             object_type=issue.object_type,
             related_object_type=issue.related_object_type,

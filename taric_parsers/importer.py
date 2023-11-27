@@ -6,8 +6,8 @@ from django.db import IntegrityError
 from django.db import transaction
 
 from importer.models import BatchImportError
-from importer.models import BatchImportErrorIssueType
 from importer.models import ImportBatch
+from importer.models import ImportIssueType
 from taric.models import Envelope
 from taric_parsers.parsers.additional_code_parsers import *  # noqa
 from taric_parsers.parsers.certificate_parser import *  # noqa
@@ -218,7 +218,7 @@ class TaricImporter:
 
             transaction_order += 1
 
-        if len(self.issues(BatchImportErrorIssueType.ERROR)) > 0:
+        if len(self.issues(ImportIssueType.ERROR)) > 0:
             transaction.set_rollback(True)
 
     def commit_changes_from_message(
@@ -275,7 +275,7 @@ class TaricImporter:
                         message,
                         related_tag="self",
                         related_identity_keys=message.taric_object.model_query_parameters(),
-                        issue_type=BatchImportErrorIssueType.ERROR,
+                        issue_type=ImportIssueType.ERROR,
                         message=msg,
                     )
 
@@ -307,9 +307,9 @@ class TaricImporter:
             - COMPLETED_WITH_WARNINGS : Successful import, but with warnings
             - FAILED : failed import, no data committed to the database. Issues recorded against the import.
         """
-        if len(self.issues(BatchImportErrorIssueType.ERROR)) > 0:
+        if len(self.issues(ImportIssueType.ERROR)) > 0:
             return "FAILED"
-        elif len(self.issues(BatchImportErrorIssueType.WARNING)) > 0:
+        elif len(self.issues(ImportIssueType.WARNING)) > 0:
             return "COMPLETED_WITH_WARNINGS"
         else:
             return "COMPLETED"
@@ -409,7 +409,7 @@ class TaricImporter:
         related_tag="",
         related_identity_keys=None,
         message="",
-        issue_type=BatchImportErrorIssueType.ERROR,
+        issue_type=ImportIssueType.ERROR,
     ):
         """
         Creates an import issue that will be recorded against the database at
@@ -431,7 +431,7 @@ class TaricImporter:
             related_tag,
             related_identity_keys,
             message,
-            taric_change_type=parsed_message.update_type_name,
+            object_update_type=parsed_message.update_type,
             object_details=str(parsed_message.taric_object),
             transaction_id=parsed_message.transaction_id,
             issue_type=issue_type,
@@ -588,10 +588,10 @@ class TaricImporter:
                 parsed_message.taric_object.import_changes = False
 
                 msg = f"Children of Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be deleted directly. This change will not be imported."
-                issue_type = BatchImportErrorIssueType.WARNING
+                issue_type = ImportIssueType.WARNING
             else:
                 msg = f"Taric objects of type {parsed_message.taric_object.__class__.model.__name__} can't be deleted"
-                issue_type = BatchImportErrorIssueType.ERROR
+                issue_type = ImportIssueType.ERROR
 
             self.create_import_issue(
                 parsed_message,
