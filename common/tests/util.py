@@ -953,6 +953,8 @@ def preload_import(file_name, from_file, approve_workbasket=False):
         workbasket=workbasket,
     )
 
+    importer.process_import()
+
     if importer.can_save() and approve_workbasket:
         # force publish workbasket
         queue_workbasket_for_test(workbasket.id)

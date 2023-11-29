@@ -214,9 +214,8 @@ class TaricImporter:
         self.bs_taric3_file = BeautifulSoup(self.raw_xml, "xml")
         self.workbasket = workbasket
         self.import_batch = import_batch
-        self.__process_import()
 
-    def __process_import(self):
+    def process_import(self):
         # parse transactions
         self.parse()
 
@@ -233,6 +232,8 @@ class TaricImporter:
                 issue,
                 self.import_batch,
             )
+
+        return self.status
 
     def ordered_transactions_and_messages(
         self,
