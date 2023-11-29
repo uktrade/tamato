@@ -1,5 +1,6 @@
 from typing import Generator
 from typing import List
+from typing import Optional
 
 from bs4 import BeautifulSoup
 from django.db import IntegrityError
@@ -195,32 +196,32 @@ class TaricImporter:
         workbasket: WorkBasket,
     ):
         """
-        TaricImpoter initialiser. This class imports TARIC data into the TAP
+        TaricImporter initializer. This class imports TARIC data into the TAP
         database, or reports on data issues encountered.
 
         Args:
-            import_batch: (required) ImportBatch, This object is used to link instances of ImportIssueReportItem
-            taric3_file_path: (required if taric3_xml_string not provided) str, Path to a local xml file that should be imported.
-            taric3_xml_string: (required if taric3_file_path not provided) str, string containing the Taric3 XML.
-            workbasket: Workbasket, If importing to an existing workbasket this variable will be used, else a new workbasket will be created.
+            import_batch: ImportBatch
+                This object is used to link instances of ImportIssueReportItem
+            taric_xml_source: TaricXMLSourceBase
+                Path to a local xml file that should be imported.
+            workbasket: Workbasket
+                If importing to an existing workbasket this variable will be used, else a new workbasket will be created.
         """
 
         self.parsed_transactions = []
         self.raw_xml = taric_xml_source.get_xml_string()
 
-        # load the taric3 file into memory, via beautiful soup
         self.bs_taric3_file = BeautifulSoup(self.raw_xml, "xml")
-
-        # if all good, commit to workbasket
         self.workbasket = workbasket
+        self.import_batch = import_batch
+        self.__process_import()
 
+    def __process_import(self):
         # parse transactions
         self.parse()
 
         # validate, check dependencies and data
         self.validate()
-
-        # reorder models within a transaction to process the children
 
         if self.can_save():
             self.populate_parent_attributes()
@@ -228,7 +229,10 @@ class TaricImporter:
 
         # Store issues against import
         for issue in self.issues():
-            BatchImportError.create_from_import_issue_report_item(issue, import_batch)
+            BatchImportError.create_from_import_issue_report_item(
+                issue,
+                self.import_batch,
+            )
 
     def ordered_transactions_and_messages(
         self,
@@ -330,8 +334,13 @@ class TaricImporter:
 
     @transaction.atomic
     def commit_data(self):
-        """Commit the import to the database, iterating through each parsed
-        transaction and the parsed objects contained within."""
+        """
+        Commit the import to the database, iterating through each parsed
+        transaction and the parsed objects contained within.
+
+        Returns:
+            None
+        """
 
         envelope = Envelope.new_envelope()
 
@@ -371,6 +380,9 @@ class TaricImporter:
         Args:
             message: (Required) MessageParser, The message being committed to the database.
             transaction: (Required) Transaction, The database transaction the changes are being committed to.
+
+        Returns:
+            None
         """
         try:
             if message.update_type == validators.UpdateType.UPDATE:  # Update
@@ -461,6 +473,7 @@ class TaricImporter:
         Returns:
             boolean, indicating the state of the import, and its ability to save due to no issues being recorded.
         """
+
         if self.status != "FAILED":
             return True
         return False
@@ -632,6 +645,21 @@ class TaricImporter:
                             )
 
     def validate_update_type_update(self, parsed_message, parsed_transaction):
+        """
+        Validates a single parsed message that is an UPDATE to a taric object,
+        within a transaction and adds any detected issues as import issues
+        (ImportIssueReportItem) that are later stored in BatchImportError
+        objects, adn committed to the database.
+
+        Args:
+            parsed_message: MessageParser
+                The message that requires validation
+            parsed_transaction: TransactionParser
+                The transaction that contains the message that requires validation
+
+        Returns:
+            None
+        """
         if not parsed_message.taric_object.__class__.updates_allowed:
             self.create_import_issue(
                 parsed_message,
@@ -689,12 +717,28 @@ class TaricImporter:
                 message,
             )
 
+    @staticmethod
     def find_change_in_parsed_transaction(
-        self,
         parsed_transaction,
         parser_class,
         identity_fields,
-    ):
+    ) -> Optional[BaseTaricParser]:
+        """
+        Finds any changes to an object based on the parser class and the
+        identity fields provided.
+
+        Args:
+            parsed_transaction: TransactionParser
+                The parsed transaction containing messages to check
+            parser_class:
+                The class (child of BaseTaricParser) that we are searching for
+            identity_fields: dict
+                A dictionary of keys and values that are used to identify a parsed message of type (parser_clas)
+
+        Returns:
+            BaseTaricParser or child of : When a match is found
+            None : When no match is found
+        """
         for parsed_message in parsed_transaction.parsed_messages:
             if parsed_message.taric_object is parser_class:
                 match = True
@@ -712,6 +756,21 @@ class TaricImporter:
         return None
 
     def validate_update_type_delete(self, parsed_message, parsed_transaction):
+        """
+        Validates a single parsed message that is an DELETE to a taric object,
+        within a transaction and adds any detected issues as import issues
+        (ImportIssueReportItem) that are later stored in BatchImportError
+        objects, adn committed to the database.
+
+        Args:
+            parsed_message: MessageParser
+                The message that requires validation
+            parsed_transaction: TransactionParser
+                The transaction that contains the message that requires validation
+
+        Returns:
+            None
+        """
         if not parsed_message.taric_object.__class__.deletes_allowed:
             if parsed_message.taric_object.is_child_object:
                 # is the parent being deleted in the same transaction?
@@ -790,6 +849,21 @@ class TaricImporter:
             )
 
     def validate_update_type_create(self, parsed_message, parsed_transaction):
+        """
+        Validates a single parsed message that is an CREATE to a taric object,
+        within a transaction and adds any detected issues as import issues
+        (ImportIssueReportItem) that are later stored in BatchImportError
+        objects, adn committed to the database.
+
+        Args:
+            parsed_message: MessageParser
+                The message that requires validation
+            parsed_transaction: TransactionParser
+                The transaction that contains the message that requires validation
+
+        Returns:
+            None
+        """
         if parsed_message.taric_object.is_child_object():
             parent_parser_class = ParserHelper.get_parser_by_model(
                 parsed_message.taric_object.__class__.model,
@@ -857,6 +931,19 @@ class TaricImporter:
                 )
 
     def validate_update_type_for(self, parsed_message, parsed_transaction):
+        """
+        Determines the appropriate method to apply validation for a
+        MessageParser instance.
+
+        Args:
+            parsed_message: MessageParser
+                The instance we want to validate
+            parsed_transaction: TransactionParser
+                The transaction that contains the MessageParser instance
+
+        Returns:
+            None
+        """
         if parsed_message.update_type == validators.UpdateType.CREATE:  # Create
             self.validate_update_type_create(parsed_message, parsed_transaction)
         if parsed_message.update_type == validators.UpdateType.UPDATE:  # Update
