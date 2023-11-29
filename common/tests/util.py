@@ -27,7 +27,6 @@ from django.template.loader import render_to_string
 from django.urls import get_resolver
 from django.urls import reverse
 from django_filters.views import FilterView
-from factory import fuzzy
 from freezegun import freeze_time
 from lxml import etree
 from pytz import timezone
@@ -946,13 +945,11 @@ def preload_import(file_name, from_file, approve_workbasket=False):
 
     workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
     import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
-    user = factories.UserFactory.create()
+    factories.UserFactory.create()
 
     importer = TaricImporter(
         import_batch=import_batch,
         taric_xml_source=TaricXMLFileSource(file_to_import),
-        workbasket_title=f"Importing stuff {fuzzy.FuzzyText(length=15)}",
-        author_username=user.username,
         workbasket=workbasket,
     )
 

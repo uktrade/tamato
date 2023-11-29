@@ -2,7 +2,6 @@ from typing import Generator
 from typing import List
 
 from bs4 import BeautifulSoup
-from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.db import transaction
 
@@ -193,9 +192,7 @@ class TaricImporter:
         self,
         import_batch: ImportBatch,
         taric_xml_source: TaricXMLSourceBase,
-        workbasket_title: str = None,
-        author_username: str = None,
-        workbasket: WorkBasket = None,
+        workbasket: WorkBasket,
     ):
         """
         TaricImpoter initialiser. This class imports TARIC data into the TAP
@@ -205,20 +202,8 @@ class TaricImporter:
             import_batch: (required) ImportBatch, This object is used to link instances of ImportIssueReportItem
             taric3_file_path: (required if taric3_xml_string not provided) str, Path to a local xml file that should be imported.
             taric3_xml_string: (required if taric3_file_path not provided) str, string containing the Taric3 XML.
-            workbasket_title: (required) str, Title used to create the workbasket
-            author_username: (required) str, Username used to associate an import with a user.
-            workbasket: (optional) Workbasket, If importing to an existing workbasket this variable will be used, else a new workbasket will be created.
+            workbasket: Workbasket, If importing to an existing workbasket this variable will be used, else a new workbasket will be created.
         """
-        # Guard Clauses
-        if not workbasket:
-            if not workbasket_title:
-                raise Exception(
-                    "Import title is required when no workbasket is provided",
-                )
-            elif not author_username:
-                raise Exception(
-                    "Author username is required when no workbasket is provided",
-                )
 
         self.parsed_transactions = []
         self.raw_xml = taric_xml_source.get_xml_string()
@@ -227,12 +212,7 @@ class TaricImporter:
         self.bs_taric3_file = BeautifulSoup(self.raw_xml, "xml")
 
         # if all good, commit to workbasket
-        if workbasket is None:
-            author = User.objects.get(username=author_username)
-            self.workbasket = WorkBasket(title=workbasket_title, author=author)
-            self.workbasket.save()
-        else:
-            self.workbasket = workbasket
+        self.workbasket = workbasket
 
         # parse transactions
         self.parse()
