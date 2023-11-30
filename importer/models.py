@@ -197,7 +197,7 @@ class BatchImportError(TimestampedMixin):
     This object is used at the end of an import to iterate through found issues
     and persist them, there are other examples of issues being created outside
     the TARIC parsing process, a bad file for example but the main use is to
-    persist detaied information for the user to review.
+    persist detailed information for the user to review.
     """
 
     # the XML tag of an object, if required. Could be empty if an issue is related to a more generic error or the object type cant be determined
@@ -207,8 +207,9 @@ class BatchImportError(TimestampedMixin):
     # type cant be determined or there is no related object to the object type
     related_object_type = models.CharField(max_length=250)
 
-    # A string representation of a dictionary containing identity fields for the object (object type) the error is being reported
-    related_object_identity_keys = models.CharField(max_length=1000)
+    # A dictionary containing identity fields and values for an object related to the object being imported. This field will be populated typically if
+    # an issue was identified where the related object expected by the import does not exist.
+    related_object_identity_keys = models.JSONField(default=None)
 
     # Text description of the encountered issue
     description = models.CharField(max_length=2000)
