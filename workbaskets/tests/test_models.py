@@ -360,6 +360,18 @@ def test_workbasket_transition_methods(method, source, target):
     assert wb.status == getattr(WorkflowStatus, target)
 
 
+def test_workbasket_transition_archive_not_empty():
+    """Tests that a non-empty workbasket cannot be transitioned to ARCHIVED
+    status."""
+    workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    footnote = factories.FootnoteFactory.create(
+        transaction=workbasket.new_transaction(),
+    )
+    with pytest.raises(TransitionNotAllowed):
+        workbasket.archive()
+        assert workbasket.status == WorkflowStatus.EDITING
+
+
 def test_queue(valid_user, unapproved_checked_transaction):
     """Test that approve transitions workbasket from EDITING to QUEUED, setting
     approver and shifting transaction from DRAFT to REVISION partition."""

@@ -395,10 +395,15 @@ class WorkBasket(TimestampedMixin):
     def __str__(self):
         return f"({self.pk}) [{self.status}]"
 
+    def archive_workbasket_condition_is_empty(self) -> bool:
+        """Django FSM condition: workbasket must be empty (no tracked models and no transactions) to transition to ARCHIVED status."""
+        return not self.tracked_models.exists() and not self.transactions.exists()
+
     @transition(
         field=status,
         source=WorkflowStatus.EDITING,
         target=WorkflowStatus.ARCHIVED,
+        conditions=[archive_workbasket_condition_is_empty],
         custom={"label": "Archive"},
     )
     def archive(self):
