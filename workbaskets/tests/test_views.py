@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from unittest.mock import mock_open
 from unittest.mock import patch
 
+import factory
 import pytest
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
@@ -1835,7 +1836,11 @@ def test_workbasket_delete_previously_queued_workbasket(
         Permission.objects.get(codename="delete_workbasket"),
     )
 
-    packaged_workbasket = factories.QueuedPackagedWorkBasketFactory.create()
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        packaged_workbasket = factories.QueuedPackagedWorkBasketFactory.create()
     packaged_workbasket.abandon()
 
     workbasket = packaged_workbasket.workbasket
