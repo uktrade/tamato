@@ -201,7 +201,6 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
             "number. "
         ),
     )
-
     taric_file = forms.FileField(
         label="Upload a TARIC file",
         help_text=(

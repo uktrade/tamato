@@ -19,8 +19,8 @@ from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 
-class NewImportFormMixin:
-    """Mixin for importer forms, providing common taric_file clean and
+class TaricParserFormMixin:
+    """Mixin for taric parser forms, providing common taric_file clean and
     processing support."""
 
     def process_file(
@@ -57,7 +57,7 @@ class NewImportFormMixin:
         return chunk_count
 
 
-class UploadTaricForm(NewImportFormMixin, forms.ModelForm):
+class UploadTaricForm(TaricParserFormMixin, forms.ModelForm):
     """
     Generic TARIC file import form, used to import TARIC files containing any.
 

@@ -170,8 +170,7 @@ from taric_parsers.parsers.taric_parser import MessageParser  # noqa
 from taric_parsers.parsers.taric_parser import ParserHelper  # noqa
 from taric_parsers.parsers.taric_parser import TransactionParser  # noqa
 from taric_parsers.taric_xml_source import TaricXMLSourceBase
-from taric_parsers.tasks import import_chunk
-from workbaskets.models import WorkBasket
+from taric_parsers.tasks import parse_and_import
 
 
 class TaricImporter:
@@ -193,7 +192,6 @@ class TaricImporter:
         self,
         import_batch: ImportBatch,
         taric_xml_source: TaricXMLSourceBase,
-        workbasket: WorkBasket,
     ):
         """
         TaricImporter initializer. This class imports TARIC data into the TAP
@@ -204,36 +202,35 @@ class TaricImporter:
                 This object is used to link instances of ImportIssueReportItem
             taric_xml_source: TaricXMLSourceBase
                 Path to a local xml file that should be imported.
-            workbasket: Workbasket
-                If importing to an existing workbasket this variable will be used, else a new workbasket will be created.
         """
 
         self.parsed_transactions = []
         self.raw_xml = taric_xml_source.get_xml_string()
 
         self.bs_taric3_file = BeautifulSoup(self.raw_xml, "xml")
-        self.workbasket = workbasket
+
         self.import_batch = import_batch
-
-    def process_import(self):
-        # parse transactions
+        self.workbasket = None
         self.parse()
-
-        # validate, check dependencies and data
         self.validate()
+
+    def process_and_save_if_valid(self, workbasket):
+        self.workbasket = workbasket
+        # validate: check dependencies and data
 
         if self.can_save():
             self.populate_parent_attributes()
             self.commit_data()
 
+        return self.status
+
+    def commit_issues(self):
         # Store issues against import
         for issue in self.issues():
             BatchImportError.create_from_import_issue_report_item(
                 issue,
                 self.import_batch,
             )
-
-        return self.status
 
     def ordered_transactions_and_messages(
         self,
@@ -983,7 +980,7 @@ def run_batch(
 ):
     import_batch = ImportBatch.objects.get(pk=batch_id)
 
-    import_chunk.delay(
+    parse_and_import.delay(
         chunk_pk=import_batch.chunks.first().pk,
         workbasket_id=workbasket_id,
         partition_scheme_setting=partition_scheme_setting,

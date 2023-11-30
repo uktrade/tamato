@@ -186,64 +186,59 @@ class BatchImportError(TimestampedMixin):
     """
     Batch Import Error.
 
-    This class is used to represent an error on import, and should be used to inform and assist to the import process when things go wrong.
+    This class is used to represent an error on import, and should be used to
+    inform and assist to the import process when things go wrong.
 
-    Most of the fields are populated with data read from the XML on import attempt, and are populated when a record cant be created or has issues.
+    Most of the fields are populated with data read from the XML on import
+    attempt, and are populated when a record cant be created or has issues.
 
     This class has a *-1 relationship with ImportBatch
 
-    This object is used at the end of an import to iterate through found issues and persist them, there are other examples of
-    issues being created outside the TARIC parsing process, a bad file for example but the main use is to persist detaied information for the user
-    to review.
-
-    Attributes:
-         object_type: str
-            the XML tag of an object, if required. Could be empty if an issue is related to a more generic error or the object type cant be
-            determined
-         related_object_type: str
-            the XML tag of a related object, if required. Could be empty if an issue is related to a more generic error or the object
-            type cant be determined or there is no related object to the object type
-         related_object_identity_keys: str
-            A string representation of a dictionary containing identity fields for the object (object type) the error is being reported
-         description: str
-            Text description of the encountered issue
-         issue_type: str
-            Issue type, either ERROR, WARNING or INFO (from ImportIssueType choices)
-         batch: BatchImport
-            The related batch import
-         object_details: str
-            A dictionary of the values for the object where applicable. This field will be blank for generic errors not related to an object.
-         object_update_type: int
-            Update type in the TARIC entry that the issue relates to, this can be null for issues relating to the import and not a specific
-            record but typically will be populated with the numeric value relating to the update type
-         transaction_id: str
-            If this is related to a transaction, the transaction ID will be recorded here. This will be the ID in the XML.
-
-    Methods:
-        create_from_import_issue_report_item(issue: ImportIssueReportItem, import_batch: ImportBatch)
-            Creates a BatchImportError instance from the provided information, committed to the database.
+    This object is used at the end of an import to iterate through found issues
+    and persist them, there are other examples of issues being created outside
+    the TARIC parsing process, a bad file for example but the main use is to
+    persist detaied information for the user to review.
     """
 
+    # the XML tag of an object, if required. Could be empty if an issue is related to a more generic error or the object type cant be determined
     object_type = models.CharField(max_length=250)
+
+    # the XML tag of a related object, if required. Could be empty if an issue is related to a more generic error or the object
+    # type cant be determined or there is no related object to the object type
     related_object_type = models.CharField(max_length=250)
+
+    # A string representation of a dictionary containing identity fields for the object (object type) the error is being reported
     related_object_identity_keys = models.CharField(max_length=1000)
+
+    # Text description of the encountered issue
     description = models.CharField(max_length=2000)
+
+    # Issue type, either ERROR, WARNING or INFO (from ImportIssueType choices)
     issue_type = models.CharField(
         max_length=50,
         choices=ImportIssueType.choices,
     )
+
+    # The BatchImport the BatchImportError relates to
     batch = models.ForeignKey(
         ImportBatch,
         on_delete=models.PROTECT,
         related_name="issues",
     )
-    object_details = models.TextField(default=None)
+
+    # A dictionary of the values for the object where applicable. This field will be blank for generic errors not related to an object.
+    object_details = models.JSONField(default=None)
+
+    # Update type in the TARIC entry that the issue relates to, this can be null for issues relating to the import and not a specific
+    # record but typically will be populated with the numeric value relating to the update type
     object_update_type: validators.UpdateType = models.PositiveSmallIntegerField(
         choices=validators.UpdateType.choices,
         db_index=True,
         blank=True,
         null=True,
     )
+
+    # If this is related to a transaction, the transaction ID will be recorded here. This will be the ID in the XML.
     transaction_id = models.CharField(max_length=50, default=None)
 
     @classmethod
@@ -251,7 +246,7 @@ class BatchImportError(TimestampedMixin):
         cls,
         issue: ImportIssueReportItem,
         import_batch: ImportBatch,
-    ):
+    ) -> None:
         """
         Creates a BatchImportError instance from the provided information,
         committed to the database.

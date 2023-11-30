@@ -950,10 +950,9 @@ def preload_import(file_name, from_file, approve_workbasket=False):
     importer = TaricImporter(
         import_batch=import_batch,
         taric_xml_source=TaricXMLFileSource(file_to_import),
-        workbasket=workbasket,
     )
 
-    importer.process_import()
+    importer.process_and_save_if_valid(workbasket)
 
     if importer.can_save() and approve_workbasket:
         # force publish workbasket

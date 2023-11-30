@@ -1,6 +1,7 @@
-from datetime import datetime
 from logging import getLogger
 from typing import Sequence
+
+from django.contrib.auth.models import User
 
 import taric_parsers.importer
 from common.celery import app
@@ -17,11 +18,11 @@ logger = getLogger(__name__)
 
 
 @app.task
-def import_chunk(
+def parse_and_import(
     chunk_pk: int,
-    workbasket_id: str,
     partition_scheme_setting: str,
     username: str,
+    workbasket_title: str,
 ):
     """
     Task for importing an XML chunk into the database.
@@ -46,16 +47,21 @@ def import_chunk(
     chunk.status = ImporterChunkStatus.RUNNING
     chunk.save()
 
-    workbasket = WorkBasket.objects.get(id=workbasket_id)
-
     try:
         importer = taric_parsers.importer.TaricImporter(
             import_batch=batch,
             taric_xml_source=TaricXMLStringSource(chunk.chunk_text),
-            workbasket_title=f"Importing {datetime.now()}",
-            author_username=username,
-            workbasket=workbasket,
         )
+
+        if importer.can_save():
+            # at this point we can create the workbasket and have a high degree of confidence that the import will complete.
+            import_user = User.objects.all().get(username=username, is_active=True)
+            workbasket = WorkBasket.objects.create(
+                title=workbasket_title,
+                author=import_user,
+            )
+
+            importer.process_and_save_if_valid(workbasket)
 
         if len(importer.issues(filter_by_issue_type=ImportIssueType.ERROR)) > 0:
             chunk.status = ImporterChunkStatus.ERRORED
