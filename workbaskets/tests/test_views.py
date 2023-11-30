@@ -1834,7 +1834,9 @@ def test_workbasket_delete_previously_queued_workbasket(
     valid_user.user_permissions.add(
         Permission.objects.get(codename="delete_workbasket"),
     )
+
     packaged_workbasket = factories.QueuedPackagedWorkBasketFactory.create()
+    packaged_workbasket.abandon()
 
     workbasket = packaged_workbasket.workbasket
     workbasket.transactions.all().delete()

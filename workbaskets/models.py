@@ -401,7 +401,7 @@ class WorkBasket(TimestampedMixin):
 
     @transition(
         field=status,
-        source=[WorkflowStatus.EDITING, WorkflowStatus.QUEUED],
+        source=WorkflowStatus.EDITING,
         target=WorkflowStatus.ARCHIVED,
         conditions=[archive_workbasket_condition_is_empty],
         custom={"label": "Archive"},
