@@ -134,6 +134,92 @@ To run tests use the following command:
 
 For more detailed information on running tests, see :doc:`testing`
 
+Pre-commit hooks
+----------------
+
+This project uses pre-commit hooks to update formatting and identify potential sensitive data before
+it is committed to the public repo.
+
+note: The python package pre-commit is a requirement within requirements-dev.txt and should be installed
+to meet development requirements
+
+.. _pre-commit-install:
+Install
+~~~~~~~
+
+To initially setup the pre-commit hooks you can run the following command.
+
+.. code:: sh
+
+    $ pre-commit install
+
+Once installed, when committing it will first run all the predefined processes to clean up code formatting
+and notify about any detected sensitive strings found that are not in pii exclude files.
+
+Note: the first commit or run of the pre-commit hooks after installing may take a few minutes for setup the
+dependent packages for the first time. This is normal, and will be faster on subsequent commits.
+
+.. _pre-commit-update:
+Update
+~~~~~~
+
+The packages used to perform the pre-commit process are regularly updated. Periodically its advised
+you run the following command to keep the dependencies updated.
+
+.. code:: sh
+
+    $ pre-commit autoupdate
+
+This will verify that the dependencies are updated based on requirements.
+
+.. _pre-commit-uninstall:
+Uninstall
+~~~~~~~~~
+
+The pre-commit hooks can be uninstalled with the following command
+
+.. code:: sh
+
+    $ pre-commit uninstall
+
+.. _pre-commit-run:
+Run the hooks without committing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You may at times want to run the pre-commit hooks before committing. This can be done with
+the following command. This command will run the hooks on all changed files.
+
+.. code:: sh
+
+    $ pre-commit run
+
+If you would like to run the hooks over all files you can run the following command
+
+.. code:: sh
+
+    $ pre-commit run -a
+
+or
+
+.. code:: sh
+
+    $ pre-commit run --all-files
+
+.. _pre-commit-troubleshooting:
+Troubleshooting
+~~~~~~~~~~~~~~~
+
+If you encounter issues with the pre-commit hooks there are a number of things you can try.
+
+clear the cached pre-committed files
+
+.. code:: sh
+
+    $ pre-commit clean
+
+if that fails you can try updating the dependencies for thew hooks (see above)
+
+if the above fails, :ref:`uninstall <my-reference-label>` uninstall and then install
 
 Dockerisation
 -------------
