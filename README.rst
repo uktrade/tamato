@@ -143,7 +143,6 @@ it is committed to the public repo.
 note: The python package pre-commit is a requirement within requirements-dev.txt and should be installed
 to meet development requirements
 
-.. _pre-commit-install:
 Install
 ~~~~~~~
 
@@ -159,7 +158,6 @@ and notify about any detected sensitive strings found that are not in pii exclud
 Note: the first commit or run of the pre-commit hooks after installing may take a few minutes for setup the
 dependent packages for the first time. This is normal, and will be faster on subsequent commits.
 
-.. _pre-commit-update:
 Update
 ~~~~~~
 
@@ -172,7 +170,6 @@ you run the following command to keep the dependencies updated.
 
 This will verify that the dependencies are updated based on requirements.
 
-.. _pre-commit-uninstall:
 Uninstall
 ~~~~~~~~~
 
@@ -182,7 +179,6 @@ The pre-commit hooks can be uninstalled with the following command
 
     $ pre-commit uninstall
 
-.. _pre-commit-run:
 Run the hooks without committing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -205,7 +201,6 @@ or
 
     $ pre-commit run --all-files
 
-.. _pre-commit-troubleshooting:
 Troubleshooting
 ~~~~~~~~~~~~~~~
 
@@ -216,9 +211,9 @@ clear the cached pre-committed files using this command:
 
     $ pre-commit clean
 
-If that fails you can try `updating <pre-commit-update>`_ the dependencies for the hooks
+If that fails you can try updating the dependencies for the hooks
 
-If the above fails, `uninstall <pre-commit-uninstall>`_ and then `install <pre-commit-install>`_ again (see the respective sections above).
+If the above fails, uninstall and then install again.
 
 Dockerisation
 -------------
