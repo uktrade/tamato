@@ -209,17 +209,16 @@ or
 Troubleshooting
 ~~~~~~~~~~~~~~~
 
-If you encounter issues with the pre-commit hooks there are a number of things you can try.
-
-clear the cached pre-committed files
+If you encounter issues with the pre-commit hooks there are a number of things you can
+clear the cached pre-committed files using this command:
 
 .. code:: sh
 
     $ pre-commit clean
 
-if that fails you can try updating the dependencies for thew hooks (see above)
+If that fails you can try `updating <pre-commit-update>`_ the dependencies for the hooks
 
-if the above fails, `dfgdfgdfg <pre-commit-uninstall_>` uninstall and then install
+If the above fails, `uninstall <pre-commit-uninstall>`_ and then `install <pre-commit-install>`_ again (see the respective sections above).
 
 Dockerisation
 -------------
