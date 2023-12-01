@@ -15,8 +15,6 @@ from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
 from taric_parsers.chunker import chunk_taric
 from taric_parsers.importer import run_batch
-from workbaskets.models import WorkBasket
-from workbaskets.validators import WorkflowStatus
 
 
 class TaricParserFormMixin:
@@ -28,14 +26,12 @@ class TaricParserFormMixin:
         file: InMemoryUploadedFile,
         batch,
         user,
+        workbasket_title: str,
         record_group: Sequence[str] = None,
-        partition_scheme_setting=settings.TRANSACTION_SCHEMA,
-        workbasket_id=None,
     ):
         """
-        Split the uploaded file into chunks, associate with `batch`, and
-        schedule parser execution against `batch` conditional upon chunks having
-        been created.
+        Create ImporterXmlChunk associate with `batch`, and schedule parser
+        execution against `batch` conditional upon a chunk havinfg been created.
 
         The function returns the number of chunks created by the chunker.
 
@@ -50,9 +46,8 @@ class TaricParserFormMixin:
         if chunk_count:
             run_batch(
                 batch_id=batch.pk,
-                partition_scheme_setting=partition_scheme_setting,
                 username=user.username,
-                workbasket_id=workbasket_id,
+                workbasket_title=workbasket_title,
             )
         return chunk_count
 
@@ -106,17 +101,9 @@ class UploadTaricForm(TaricParserFormMixin, forms.ModelForm):
 
     @transaction.atomic
     def save(self, user: User):
-        workbasket = WorkBasket.objects.create(
-            title=f"Data Import {self.cleaned_data['name']}",
-            author=user,
-            approver=user,
-            status=WorkflowStatus.EDITING,
-        )
-
         import_batch = super().save(commit=False)
         import_batch.goods_import = False
         import_batch.author = user
-        import_batch.workbasket = workbasket
         import_batch.save()
 
         if self.cleaned_data["commodities_only"]:
@@ -129,7 +116,7 @@ class UploadTaricForm(TaricParserFormMixin, forms.ModelForm):
             import_batch,
             user,
             record_group=record_group,
-            workbasket_id=workbasket.id,
+            workbasket_title=f"Data Import {self.cleaned_data['name']}",
         )
 
         if chunk_count < 1:

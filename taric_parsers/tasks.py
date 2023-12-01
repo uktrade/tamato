@@ -20,7 +20,6 @@ logger = getLogger(__name__)
 @app.task
 def parse_and_import(
     chunk_pk: int,
-    partition_scheme_setting: str,
     username: str,
     workbasket_title: str,
 ):
@@ -32,7 +31,6 @@ def parse_and_import(
     is also responsible for finding and setting up the next chunk tasks.
     """
 
-    get_partition_scheme(partition_scheme_setting)
     chunk = ImporterXMLChunk.objects.get(pk=chunk_pk)
     batch = chunk.batch
 
@@ -60,6 +58,10 @@ def parse_and_import(
                 title=workbasket_title,
                 author=import_user,
             )
+
+            # need to associate workbasket with the ImportBatch
+            batch.workbasket = workbasket
+            batch.save()
 
             importer.process_and_save_if_valid(workbasket)
 

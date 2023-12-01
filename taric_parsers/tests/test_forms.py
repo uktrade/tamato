@@ -53,7 +53,8 @@ def test_upload_taric_form_save(run_batch, chunk_taric, superuser):
         assert batch.name == "test_upload"
         assert batch.goods_import is False
         assert batch.split_job is False
-        assert batch.workbasket
+        # workbasket will not be created / associated until the background task has been run
+        assert batch.workbasket is None
 
         run_batch.assert_called_once()
         chunk_taric.assert_called_once()

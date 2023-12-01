@@ -974,15 +974,13 @@ class TaricImporter:
 
 def run_batch(
     batch_id: int,
-    partition_scheme_setting: str,
     username: str,
-    workbasket_id: str = None,
+    workbasket_title: str,
 ):
     import_batch = ImportBatch.objects.get(pk=batch_id)
 
     parse_and_import.delay(
         chunk_pk=import_batch.chunks.first().pk,
-        workbasket_id=workbasket_id,
-        partition_scheme_setting=partition_scheme_setting,
+        workbasket_title="",
         username=username,
     )
