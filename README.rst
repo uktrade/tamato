@@ -219,7 +219,7 @@ clear the cached pre-committed files
 
 if that fails you can try updating the dependencies for thew hooks (see above)
 
-if the above fails, :ref:`uninstall <my-reference-label>` uninstall and then install
+if the above fails, `dfgdfgdfg <pre-commit-uninstall_>` uninstall and then install
 
 Dockerisation
 -------------
