@@ -1,3 +1,37 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "View reference documents" %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  {%- set table_rows = [] -%}
+    {% for ref_doc in object_list %}
+          {% set ref_doc_link -%}
+            <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("reference_documents-ui-detail") }}">{{ ref_doc.name }}</a>
+          {%- endset %}
+          {{ table_rows.append([
+                {"html": ref_doc_link},
+                {"text": ref_doc.version},
+                {"text": ref_doc.date_published},
+                {"text": ref_doc.regulation_id },
+                {"text": ref_doc.geo_area_id },
+          ]) or "" }}
+    {% endfor %}
 
 
-<h1>hello!</h1>
+
+  {{ govukTable({
+  "head": [
+    {"text": "Reference document"},
+    {"text": "Version"},
+    {"text": "Date published"},
+    {"text": "Regulation ID"},
+    {"text": "Geo area ID"},
+  ],
+  "rows": table_rows
+}) }}
+ 
+{% endblock %}

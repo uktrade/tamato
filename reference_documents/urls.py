@@ -8,4 +8,9 @@ urlpatterns = [
         views.ReferenceDocumentsListView.as_view(),
         name="reference_documents-ui-list",
     ),
+    path(
+        f"reference-documents/albania/",
+        views.ReferenceDocumentsDetailView.as_view(),
+        name="reference_documents-ui-detail",
+    ),
 ]
