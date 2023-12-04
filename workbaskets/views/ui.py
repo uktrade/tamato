@@ -47,6 +47,7 @@ from importer.goods_report import GoodsReporter
 from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
+from publishing.models import PackagedWorkBasket
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -1041,7 +1042,11 @@ class WorkBasketDelete(PermissionRequiredMixin, FormMixin, DeleteView):
             return self.form_invalid(form)
 
     def form_valid(self, form):
-        self.object.delete()
+        if not PackagedWorkBasket.objects.filter(workbasket=self.object).exists():
+            self.object.delete()
+        else:
+            self.object.archive()
+            self.object.save()
         return redirect(self.get_success_url())
 
 
