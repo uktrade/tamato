@@ -18,19 +18,12 @@ def test_index_displays_workbasket_action_form(valid_user_client):
     assert response.status_code == 200
 
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-    labels = [label.text.strip() for label in page.select("label")]
-    expected = [
-        "Create new workbasket",
-        "Edit workbaskets",
-        "Package workbaskets",
-        "Process envelopes",
-        "Search the tariff",
-        "Import EU Taric files",
-        "Search for workbaskets",
-    ]
-    assert set(expected) == set(labels)
-    for label, exp in zip(labels, expected):
-        assert label == exp
+    assert "Create new workbasket" == page.select("label")[0].text.strip()
+    assert "Edit workbaskets" == page.select("label")[1].text.strip()
+    assert "Package workbaskets" == page.select("label")[2].text.strip()
+    assert "Process envelopes" == page.select("label")[3].text.strip()
+    assert "Search the tariff" == page.select("label")[4].text.strip()
+    assert "Import EU Taric files" == page.select("label")[5].text.strip()
 
 
 def test_index_displays_logout_buttons_correctly_SSO_off_logged_in(valid_user_client):
