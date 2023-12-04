@@ -28,6 +28,7 @@ def test_index_displays_workbasket_action_form(valid_user_client):
         "Import EU Taric files",
         "Search for workbaskets",
     ]
+    assert set(expected) == set(labels)
     for label, exp in zip(labels, expected):
         assert label == exp
 
