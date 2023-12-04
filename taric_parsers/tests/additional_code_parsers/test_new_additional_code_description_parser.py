@@ -151,11 +151,14 @@ class TestNewAdditionalCodeDescriptionParser:
         assert target_taric_object.described_additionalcode__code == "111"
         assert target_taric_object.description == "some description"
 
-        issue_1 = target_taric_object.issues[0]
+        assert len(importer.issues()) == 1
 
         assert (
-            str(issue_1)
-            == "ERROR: Missing expected child object NewAdditionalCodeDescriptionPeriodParser\n"
-            "  additional.code.description > additional.code.description.period\n"
-            "  link_data: {}"
+            "ERROR: Missing expected child object NewAdditionalCodeDescriptionPeriodParser"
+            in str(importer.issues()[0])
         )
+        assert (
+            "additional.code.description > additional.code.description.period"
+            in str(importer.issues()[0])
+        )
+        assert "link_data: {}" in str(importer.issues()[0])

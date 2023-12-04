@@ -128,8 +128,7 @@ class UploadTaricForm(TaricParserFormMixin, forms.ModelForm):
                 batch=import_batch,
                 issue_type="WARNING",
                 description="No data to import, typically this would be because it was a comm code only import and no changes detected that TAP requires or that it was an empty file",
-                taric_change_type="",
-                object_details="",
+                object_update_type=None,
                 transaction_id="",
             )
 

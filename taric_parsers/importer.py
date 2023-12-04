@@ -404,7 +404,7 @@ class TaricImporter:
                 model_instances = message.taric_object.__class__.model.objects.approved_up_to_transaction(
                     transaction,
                 ).filter(
-                    **message.taric_object.model_query_parameters()
+                    **message.taric_object.model_query_parameters(),
                 )
 
                 if model_instances.count() == 1:
@@ -582,7 +582,11 @@ class TaricImporter:
             related_identity_keys,
             message,
             object_update_type=parsed_message.update_type,
-            object_details=str(parsed_message.taric_object),
+            object_data=parsed_message.taric_object.model_attributes(
+                Transaction.objects.approved().last(),
+                raise_import_issue_if_no_match=False,
+                json_compatible=True,
+            ),
             transaction_id=parsed_message.transaction_id,
             issue_type=issue_type,
         )
@@ -668,7 +672,7 @@ class TaricImporter:
 
         # Check if updated, deleted object exists, else raise issue
         model_instances = parsed_message.taric_object.__class__.model.objects.latest_approved().filter(
-            **parsed_message.taric_object.model_query_parameters()
+            **parsed_message.taric_object.model_query_parameters(),
         )
 
         last_parsed_message_for_model = None
@@ -799,7 +803,7 @@ class TaricImporter:
 
         # Check if updated, deleted object exists, else raise issue
         model_instances = parsed_message.taric_object.__class__.model.objects.latest_approved().filter(
-            **parsed_message.taric_object.model_query_parameters()
+            **parsed_message.taric_object.model_query_parameters(),
         )
 
         last_parsed_message_for_model = None
@@ -902,7 +906,7 @@ class TaricImporter:
         # Check if record exists for identity keys
         model_instances = (
             parsed_message.taric_object.__class__.model.objects.all().filter(
-                **parsed_message.taric_object.model_query_parameters()
+                **parsed_message.taric_object.model_query_parameters(),
             )
         )
 
@@ -924,7 +928,11 @@ class TaricImporter:
                 self.create_import_issue(
                     parsed_message,
                     "",
-                    parsed_message.taric_object.model_query_parameters(),
+                    parsed_message.taric_object.model_attributes(
+                        Transaction.objects.approved().last(),
+                        raise_import_issue_if_no_match=False,
+                        json_compatible=True,
+                    ),
                     f"Identity keys match existing non-deleted object in database (checking all published and unpublished data)",
                 )
 

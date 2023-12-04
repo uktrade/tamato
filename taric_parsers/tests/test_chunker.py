@@ -161,7 +161,7 @@ def test_chunk_taric_fails_with_split_job(example_goods_taric_file_location):
         chunk_taric(taric_file, batch)
 
     assert (
-        "Unexpected split job, split jobs are not compatible with importer v2. "
+        "Unexpected split job, split jobs are not compatible with importer v2."
         in str(e)
     )
     assert "Please split files up before importing." in str(e)

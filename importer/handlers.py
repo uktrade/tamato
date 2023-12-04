@@ -345,7 +345,7 @@ class BaseHandler(metaclass=BaseHandlerMeta):
             dependencies.update(set(dependency.dependency_keys) - resolved_dependencies)
         return True
 
-    def _get_missing_dependencies(self) -> list:
+    def _get_missing_dependencies(self) -> list[str]:
         """
         Returns a list of dependencies that are not in the cache.
 
@@ -516,27 +516,27 @@ class BaseHandler(metaclass=BaseHandlerMeta):
         if not self.resolve_dependencies():
             # generic error - can do better to resolve later
 
-            dep_missing_details = ""
+            dep_missing_details_dict = {}
 
             for key in self._get_missing_dependencies():
                 missing_dependency_data = self._get_dependency_key_data(key)
 
-                dep_missing_details += f" type: {missing_dependency_data.tag}, "
+                dep_missing_details = (
+                    f"dependency missing of type {missing_dependency_data.tag}, "
+                )
 
                 for index, field in enumerate(
                     missing_dependency_data.identifying_fields,
                 ):
-                    dep_missing_details += (
-                        f"{field}:{missing_dependency_data.data[field]} "
-                    )
-
-                dep_missing_details += "."
+                    dep_missing_details_dict[field] = missing_dependency_data.data[
+                        field
+                    ]
 
                 self.import_issues.append(
                     ImportIssueReportItem(
                         self.tag,
                         missing_dependency_data.tag,
-                        missing_dependency_data.identifying_fields,
+                        dep_missing_details_dict,
                         key,
                         dep_missing_details,
                     ),

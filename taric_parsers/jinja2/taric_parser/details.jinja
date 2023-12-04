@@ -19,18 +19,20 @@
         {{ table_rows.append([
             {"text": issue.issue_type},
             {"text": issue.object_type},
+            {"text": issue.object_update_type_name},
             {"text": issue.related_object_type},
+            {"text": issue.object_data_to_str},
             {"text": issue.description},
-            {"text": issue.related_object_identity_keys},
           ]) or "" }}
         {% endfor %}
         {{ govukTable({
           "head": [
             {"text": "Severity"},
             {"text": "Object"},
+            {"text": "Update Type"},
             {"text": "Related Object"},
+            {"text": "Object Data"},
             {"text": "Description"},
-            {"text": "Identity Data"},
           ],
           "rows": table_rows
         }) }}

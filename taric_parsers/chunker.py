@@ -247,8 +247,6 @@ def chunk_taric(
             object_update_type=None,
             issue_type=ImportIssueType.ERROR,
             transaction_id="",
-            object_details="",
-            related_object_identity_keys="",
             object_type="",
         )
         raise Exception(

@@ -124,17 +124,22 @@ class ImportBatch(TimestampedMixin):
         """The import process completed and was successful."""
         logger.info(f"Transitioning status of import pk={self.pk} to SUCCEEDED.")
 
-        if (
-            not self.workbasket.tracked_models.exists()
-            and self.workbasket.status == WorkflowStatus.EDITING
-        ):
-            # Successful imports with an empty workbasket are archived.
+        if self.workbasket:
+            if (
+                not self.workbasket.tracked_models.exists()
+                and self.workbasket.status == WorkflowStatus.EDITING
+            ):
+                # Successful imports with an empty workbasket are archived.
+                logger.info(
+                    f"Archiving empty workbasket pk={self.workbasket.pk} "
+                    f"associated with SUCCEEDED import pk={self.pk}.",
+                )
+                self.workbasket.archive()
+                self.workbasket.save()
+        else:
             logger.info(
-                f"Archiving empty workbasket pk={self.workbasket.pk} "
-                f"associated with SUCCEEDED import pk={self.pk}.",
+                f"No workbasket associated with import pk={self.pk}.",
             )
-            self.workbasket.archive()
-            self.workbasket.save()
 
     @transition(
         field=status,
@@ -145,21 +150,25 @@ class ImportBatch(TimestampedMixin):
     def failed(self):
         """The import process completed with an error condition."""
         logger.info(f"Transitioning status of import pk={self.pk} to FAILED.")
+        if self.workbasket:
+            if self.workbasket.tracked_models.exists():
+                logger.info(
+                    f"Clearing workbasket pk={self.workbasket.pk} contents "
+                    f"associated with FAILED import pk={self.pk}.",
+                )
+                clear_workbasket(self.workbasket)
 
-        if self.workbasket.tracked_models.exists():
+            if self.workbasket.status == WorkflowStatus.EDITING:
+                logger.info(
+                    f"Archiving workbasket pk={self.workbasket.pk} "
+                    f"associated with FAILED import pk={self.pk}.",
+                )
+                self.workbasket.archive()
+                self.workbasket.save()
+        else:
             logger.info(
-                f"Clearing workbasket pk={self.workbasket.pk} contents "
-                f"associated with FAILED import pk={self.pk}.",
+                f"FAILED import pk={self.pk}.",
             )
-            clear_workbasket(self.workbasket)
-
-        if self.workbasket.status == WorkflowStatus.EDITING:
-            logger.info(
-                f"Archiving workbasket pk={self.workbasket.pk} "
-                f"associated with FAILED import pk={self.pk}.",
-            )
-            self.workbasket.archive()
-            self.workbasket.save()
 
     @property
     def ready_chunks(self):
@@ -209,7 +218,7 @@ class BatchImportError(TimestampedMixin):
 
     # A dictionary containing identity fields and values for an object related to the object being imported. This field will be populated typically if
     # an issue was identified where the related object expected by the import does not exist.
-    related_object_identity_keys = models.JSONField(default=None)
+    related_object_identity_keys = models.JSONField(default=None, null=True)
 
     # Text description of the encountered issue
     description = models.CharField(max_length=2000)
@@ -228,7 +237,7 @@ class BatchImportError(TimestampedMixin):
     )
 
     # A dictionary of the values for the object where applicable. This field will be blank for generic errors not related to an object.
-    object_details = models.JSONField(default=None)
+    object_data = models.JSONField(default=None, null=True)
 
     # Update type in the TARIC entry that the issue relates to, this can be null for issues relating to the import and not a specific
     # record but typically will be populated with the numeric value relating to the update type
@@ -241,6 +250,23 @@ class BatchImportError(TimestampedMixin):
 
     # If this is related to a transaction, the transaction ID will be recorded here. This will be the ID in the XML.
     transaction_id = models.CharField(max_length=50, default=None)
+
+    @property
+    def object_update_type_name(self):
+        if self.object_update_type:
+            for update_type, update_type_name in validators.UpdateType.choices:
+                if update_type == self.object_update_type:
+                    return update_type_name
+        return ""
+
+    @property
+    def object_data_to_str(self):
+        str = ""
+        if self.object_data:
+            for key, value in self.object_data.items():
+                str += f"{key}: {value}\n"
+
+        return str
 
     @classmethod
     def create_from_import_issue_report_item(
@@ -267,7 +293,7 @@ class BatchImportError(TimestampedMixin):
             description=issue.description,
             issue_type=issue.issue_type,
             object_update_type=issue.object_update_type,
-            object_details=issue.object_details,
+            object_data=issue.object_data,
             transaction_id=issue.transaction_id,
         )
 

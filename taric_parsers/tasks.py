@@ -64,6 +64,8 @@ def parse_and_import(
             batch.save()
 
             importer.process_and_save_if_valid(workbasket)
+        else:
+            importer.commit_issues()
 
         if len(importer.issues(filter_by_issue_type=ImportIssueType.ERROR)) > 0:
             chunk.status = ImporterChunkStatus.ERRORED
@@ -85,8 +87,8 @@ def parse_and_import(
             related_object_identity_keys="",
             description=str(e),
             batch=batch,
-            taric_change_type="",
-            object_details="",
+            object_update_type=None,
+            object_data=None,
             transaction_id=0,
             issue_type=ImportIssueType.ERROR,
         )
@@ -136,7 +138,9 @@ def setup_new_chunk_task(
     get_partition_scheme(partition_scheme_setting)
 
     if batch.ready_chunks.filter(
-        record_code=record_code, status=ImporterChunkStatus.RUNNING, **kwargs
+        record_code=record_code,
+        status=ImporterChunkStatus.RUNNING,
+        **kwargs,
     ).exists():
         return
 
@@ -151,7 +155,7 @@ def setup_new_chunk_task(
 
     chunk.status = ImporterChunkStatus.RUNNING
     chunk.save()
-    import_chunk.delay(
+    parse_and_import.delay(
         chunk.pk,
         workbasket_id,
         workbasket_status,

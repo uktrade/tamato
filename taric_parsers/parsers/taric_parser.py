@@ -33,6 +33,7 @@ EXCLUDED_PARSER_PROPERTIES = [
     "update_type_name",
     "links_valid",
     "transaction_id",
+    "import_changes",
 ]
 
 EXCLUDED_FIELDS_FOR_POPULATION = [
@@ -538,7 +539,7 @@ class BaseTaricParser:
             When multiple models are matched which is invalid and should not happen normally
         """
         models = related_model.objects.approved_up_to_transaction(transaction).filter(
-            **fields_and_values
+            **fields_and_values,
         )
 
         if models.count() == 1:
@@ -573,20 +574,22 @@ class BaseTaricParser:
     def model_attributes(
         self,
         transaction: Transaction,
-        raise_error_if_no_match=True,
+        raise_import_issue_if_no_match=True,
         include_non_taric_attributes=False,
+        json_compatible=False,
     ) -> dict:
         """
-        Returns a dictionary of model attributes, for use iun populating
-        database models, and other uses.
+        Returns a dictionary of model attributes, for use in populating database
+        models, and other uses.
 
         Args:
             transaction: (required) Transaction, The transaction used to search the database up to for models
-            raise_error_if_no_match: (optional) bool, Flag to indicate if an exception should be raised if a related model cant be matched.
+            raise_import_issue_if_no_match: (optional) bool, Flag to indicate if an import issue should be created if a related model cant be matched.
             include_non_taric_attributes: (optional) bool, flag to indicate if output should include non TARIC attributes. There are some edge cases where this is needed.
+            json_compatible: (optional) bool, flat to indicate if the output should be JSON serializable
 
         Returns:
-            dict, Dictionary of populated attributes for the mdoel
+            dict, Dictionary of populated attributes for the model
         """
         additional_excluded_variable_names = []
 
@@ -627,16 +630,19 @@ class BaseTaricParser:
             if linked_model:
                 # There are cases where this will not return a value, which is fine when the linked
                 # model is also in the same transaction
+                if json_compatible:
+                    model_attributes[property_list[0]] = str(linked_model)
+                else:
+                    model_attributes[property_list[0]] = linked_model
 
-                model_attributes[property_list[0]] = linked_model
-            elif raise_error_if_no_match and not link.optional:
+            elif raise_import_issue_if_no_match and not link.optional:
                 report_item = ImportIssueReportItem(
                     self.xml_object_tag,
                     ParserHelper.get_parser_by_model(link.model).xml_object_tag,
                     fields_and_values,
                     f"Missing expected linked object {ParserHelper.get_parser_by_model(link.model).__name__}",
                     object_update_type=self.update_type,
-                    object_details=str(self),
+                    object_data={},
                     transaction_id=self.transaction_id,
                 )
 
@@ -653,7 +659,21 @@ class BaseTaricParser:
             # column in json format - mainly used for quota events
             if model_field not in self.data_fields:
                 if hasattr(self.__class__.model, model_field):
-                    model_attributes[model_field] = getattr(self, model_field)
+                    # if we are storing attributes to a JSON field, we need to break apart the TaricDateRange as it's not JSON serializable as it is
+                    if json_compatible:
+                        if isinstance(getattr(self, model_field), TaricDateRange):
+                            model_attributes[model_field] = {
+                                "start": str(getattr(self, model_field).lower),
+                                "end": str(getattr(self, model_field).upper),
+                            }
+                        elif isinstance(getattr(self, model_field), date):
+                            model_attributes[model_field] = str(
+                                getattr(self, model_field),
+                            )
+                        else:
+                            model_attributes[model_field] = getattr(self, model_field)
+                    else:
+                        model_attributes[model_field] = getattr(self, model_field)
                 else:
                     raise Exception(
                         f"Error creating model {self.__class__.model.__name__}, model does not have an attribute {model_field}",

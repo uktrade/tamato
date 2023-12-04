@@ -26,11 +26,11 @@ class ImportIssueReportItem:
         self,
         object_type: str,
         related_object_type: str,
-        related_object_identity_keys: dict,
-        description: str,
+        related_object_identity_keys: dict = None,
+        description: str = None,
         issue_type: str = ImportIssueType.ERROR,
         object_update_type: int = None,
-        object_details: str = "UNDEFINED",
+        object_data: dict = None,
         transaction_id: int = 0,
     ):
         self.object_type = object_type
@@ -39,7 +39,7 @@ class ImportIssueReportItem:
         self.description = description
         self.issue_type = issue_type
         self.object_update_type = object_update_type
-        self.object_details = (object_details,)
+        self.object_data = object_data
         self.transaction_id = transaction_id
 
     def __str__(self):
