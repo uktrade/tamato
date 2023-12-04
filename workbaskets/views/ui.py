@@ -42,11 +42,13 @@ from common.views import WithPaginationListView
 from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalMembership
 from importer.goods_report import GoodsReporter
 from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
 from publishing.models import PackagedWorkBasket
+from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets import forms
@@ -1246,6 +1248,7 @@ class WorkBasketReviewAdditionalCodesView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review additional codes"
         context["selected_tab"] = "additional-codes"
         context["tab_template"] = "includes/additional_codes/list.jinja"
         return context
@@ -1258,6 +1261,7 @@ class WorkBasketReviewCertificatesView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review certificates"
         context["selected_tab"] = "certificates"
         context["tab_template"] = "includes/certificates/list.jinja"
         return context
@@ -1278,6 +1282,7 @@ class WorkbasketReviewGoodsView(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodities"
         context["selected_tab"] = "commodities"
         context["session_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
@@ -1364,6 +1369,7 @@ class WorkBasketReviewFootnotesView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review footnotes"
         context["selected_tab"] = "footnotes"
         context["tab_template"] = "includes/footnotes/list.jinja"
         return context
@@ -1373,11 +1379,30 @@ class WorkBasketReviewGeoAreasView(WorkBasketReviewView):
     """UI endpoint for reviewing geographical area changes in a workbasket."""
 
     model = GeographicalArea
+    template_name = "workbaskets/review-geo-areas.jinja"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review geographical areas"
         context["selected_tab"] = "geographical-areas"
+        context["selected_nested_tab"] = "geographical-areas"
         context["tab_template"] = "includes/geo_areas/list.jinja"
+        return context
+
+
+class WorkBasketReviewGeoMembershipsView(WorkBasketReviewView):
+    """UI endpoint for reviewing geographical membership changes in a
+    workbasket."""
+
+    model = GeographicalMembership
+    template_name = "workbaskets/review-geo-areas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review geographical area group memberships"
+        context["selected_tab"] = "geographical-areas"
+        context["selected_nested_tab"] = "geographical-memberships"
+        context["tab_template"] = "includes/workbaskets/review-geo-memberships.jinja"
         return context
 
 
@@ -1403,6 +1428,7 @@ class WorkBasketReviewMeasuresView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review measures"
         context["selected_tab"] = "measures"
         context["tab_template"] = "includes/measures/workbasket-measures.jinja"
         return context
@@ -1412,11 +1438,30 @@ class WorkBasketReviewQuotasView(WorkBasketReviewView):
     """UI endpoint for reviewing quota changes in a workbasket."""
 
     model = QuotaOrderNumber
+    template_name = "workbaskets/review-quotas.jinja"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota order numbers"
         context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "quotas"
         context["tab_template"] = "includes/quotas/list.jinja"
+        return context
+
+
+class WorkBasketReviewQuotaDefinitionsView(WorkBasketReviewView):
+    """UI endpoint for reviewing quota definition period changes in a
+    workbasket."""
+
+    model = QuotaDefinition
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota definition periods"
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "quota-definitions"
+        context["tab_template"] = "includes/workbaskets/review-quota-definitions.jinja"
         return context
 
 
@@ -1427,6 +1472,7 @@ class WorkBasketReviewRegulationsView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review regulations"
         context["selected_tab"] = "regulations"
         context["tab_template"] = "includes/regulations/list.jinja"
         return context
