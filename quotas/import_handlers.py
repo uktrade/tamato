@@ -93,7 +93,6 @@ class QuotaBlockingHandler(BaseHandler):
             "name": "quota_definition",
         },
     )
-
     serializer_class = serializers.QuotaBlockingSerializer
     tag = parsers.QuotaBlockingParser.tag.name
 
