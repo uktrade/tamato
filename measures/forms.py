@@ -55,7 +55,9 @@ from measures.validators import validate_components_applicability
 from measures.validators import validate_conditions_formset
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaOrderNumberOrigin
 from regulations.models import Regulation
+from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
@@ -1019,6 +1021,27 @@ class MeasureQuotaOrderNumberForm(forms.Form):
                 data_prevent_double_click="true",
             ),
         )
+
+
+class MeasureQuotaOriginsForm(SelectableObjectsForm):
+    def clean(self):
+        cleaned_data = super().clean()
+
+        selected_origins = {key: value for key, value in cleaned_data.items() if value}
+        if not selected_origins:
+            raise ValidationError("Select one or more quota origins")
+
+        origin_pks = [self.object_id_from_field_name(key) for key in selected_origins]
+        origins = QuotaOrderNumberOrigin.objects.filter(pk__in=origin_pks).current()
+
+        cleaned_data["geo_areas_and_exclusions"] = [
+            {
+                "geo_area": origin.geographical_area,
+                "exclusions": list(origin.excluded_areas.current()),
+            }
+            for origin in origins
+        ]
+        return cleaned_data
 
 
 class MeasureGeographicalAreaForm(

@@ -52,6 +52,21 @@
   {{ govukSummaryList({"rows": row_data, "classes": "govuk-!-margin-bottom-9"}) }}
 {% endmacro %}
 
+{% macro display_geographical_data(rows, data) %}
+  {% for geo_data in data.geo_areas_and_exclusions %}
+    {{ rows.extend([
+      ("Geographical area", geo_data["geo_area"].get_description().description|safe),
+    ]) }}
+    {% if geo_data.get("exclusions") %}
+      {% for exclusion in geo_data["exclusions"] %}
+        {{ rows.extend([
+          ("Excluded geographical area", exclusion.get_description().description|safe),
+        ]) }}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+
 {% block form %}
   {% call(rows, data) review_step("measure_details") %}
     {{ rows.extend([
@@ -73,20 +88,15 @@
     ]) }}
   {% endcall %}
 
-  {% call(rows, data) review_step("geographical_area") %}
-    {% for geo_data in data.geo_areas_and_exclusions %}
-      {{ rows.extend([
-        ("Geographical area", geo_data["geo_area"].get_description().description|safe),
-      ]) }}
-      {% if geo_data.get("exclusions") %}
-        {% for exclusion in geo_data["exclusions"] %}
-          {{ rows.extend([
-            ("Excluded geographical area", exclusion.get_description().description|safe),
-          ]) }}
-        {% endfor %}
-      {% endif %}
-    {% endfor %}
-  {% endcall %}
+  {% if view.get_cleaned_data_for_step("quota_origins") %}
+    {% call(rows, data) review_step("quota_origins") %}
+      {{ display_geographical_data(rows, data) }}
+    {% endcall %}
+  {% else %}
+    {% call(rows, data) review_step("geographical_area") %}
+      {{ display_geographical_data(rows, data) }}
+    {% endcall %}
+  {% endif %}
 
   {% call(rows, data) review_step("commodities") %}
     {% for item in data %}
