@@ -7,7 +7,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewAdditionalCodeTypeDescriptionParser:
+class TestAdditionalCodeTypeDescriptionParserV2:
     """
     Example XML:
 
@@ -24,7 +24,7 @@ class TestNewAdditionalCodeTypeDescriptionParser:
         </xs:element>
     """
 
-    target_parser_class = NewAdditionalCodeTypeDescriptionParser
+    target_parser_class = AdditionalCodeTypeDescriptionParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
@@ -115,14 +115,14 @@ class TestNewAdditionalCodeTypeDescriptionParser:
         target_message = importer.parsed_transactions[0].parsed_messages[0]
         assert (
             target_message.record_code
-            == NewAdditionalCodeTypeDescriptionParser.record_code
+            == AdditionalCodeTypeDescriptionParserV2.record_code
         )
         assert (
             target_message.subrecord_code
-            == NewAdditionalCodeTypeDescriptionParser.subrecord_code
+            == AdditionalCodeTypeDescriptionParserV2.subrecord_code
         )
         assert (
-            type(target_message.taric_object) == NewAdditionalCodeTypeDescriptionParser
+            type(target_message.taric_object) == AdditionalCodeTypeDescriptionParserV2
         )
 
         target_taric_object = target_message.taric_object
@@ -132,7 +132,7 @@ class TestNewAdditionalCodeTypeDescriptionParser:
         assert len(importer.issues()) == 1
         assert (
             str(target_taric_object.issues[0])
-            == "ERROR: Missing expected parent object NewAdditionalCodeTypeParser\n"
+            == "ERROR: Missing expected parent object AdditionalCodeTypeParserV2\n"
             "  additional.code.type.description > additional.code.type\n"
             "  link_data: {'sid': '12'}"
         )
