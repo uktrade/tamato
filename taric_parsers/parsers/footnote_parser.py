@@ -11,7 +11,7 @@ from taric_parsers.parsers.mixins import Writable
 from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
-class NewFootnoteTypeParser(Writable, BaseTaricParser):
+class FootnoteTypeParserV2(Writable, BaseTaricParser):
     model = FootnoteType
 
     model_links = []
@@ -37,9 +37,9 @@ class NewFootnoteTypeParser(Writable, BaseTaricParser):
     application_code: str = None
 
 
-class NewFootnoteTypeDescriptionParser(Writable, BaseTaricParser):
+class FootnoteTypeDescriptionParserV2(Writable, BaseTaricParser):
     model = FootnoteType
-    parent_parser = NewFootnoteTypeParser
+    parent_parser = FootnoteTypeParserV2
 
     model_links = [
         ModelLink(
@@ -65,7 +65,7 @@ class NewFootnoteTypeDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewFootnoteParser(ValidityMixin, Writable, BaseTaricParser):
+class FootnoteParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = Footnote
 
     model_links = [
@@ -99,7 +99,7 @@ class NewFootnoteParser(ValidityMixin, Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewFootnoteDescriptionParser(Writable, BaseTaricParser):
+class FootnoteDescriptionParserV2(Writable, BaseTaricParser):
     model = FootnoteDescription
 
     model_links = [
@@ -140,9 +140,9 @@ class NewFootnoteDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewFootnoteDescriptionPeriodParser(Writable, BaseTaricParser, ChildPeriod):
+class FootnoteDescriptionPeriodParserV2(Writable, BaseTaricParser, ChildPeriod):
     model = FootnoteDescription
-    parent_parser = NewFootnoteDescriptionParser
+    parent_parser = FootnoteDescriptionParserV2
 
     model_links = [
         ModelLink(

@@ -4,16 +4,14 @@ import pytest
 from bs4 import BeautifulSoup
 
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeDescriptionParser,
+    AdditionalCodeDescriptionParserV2,
+)
+from taric_parsers.parsers.additional_code_parsers import AdditionalCodeParserV2  # noqa
+from taric_parsers.parsers.additional_code_parsers import (  # noqa
+    AdditionalCodeTypeParserV2,
 )
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeParser,
-)
-from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeTypeParser,
-)
-from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewFootnoteAssociationAdditionalCodeParser,
+    FootnoteAssociationAdditionalCodeParserV2,
 )
 from taric_parsers.parsers.taric_parser import TransactionParser
 

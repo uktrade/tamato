@@ -15,7 +15,7 @@ from taric_parsers.parsers.mixins import Writable
 from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
-class NewGoodsNomenclatureParser(Writable, BaseTaricParser):
+class GoodsNomenclatureParserV2(Writable, BaseTaricParser):
     model = GoodsNomenclature
 
     model_links = []
@@ -43,7 +43,7 @@ class NewGoodsNomenclatureParser(Writable, BaseTaricParser):
     statistical: int = None
 
 
-class NewGoodsNomenclatureOriginParser(Writable, BaseTaricParser):
+class GoodsNomenclatureOriginParserV2(Writable, BaseTaricParser):
     model = GoodsNomenclatureOrigin
 
     model_links = [
@@ -97,7 +97,7 @@ class NewGoodsNomenclatureOriginParser(Writable, BaseTaricParser):
     derived_from_goods_nomenclature__suffix: int = None
 
 
-class NewGoodsNomenclatureSuccessorParser(Writable, BaseTaricParser):
+class GoodsNomenclatureSuccessorParserV2(Writable, BaseTaricParser):
     model = GoodsNomenclatureSuccessor
 
     model_links = [
@@ -150,7 +150,7 @@ class NewGoodsNomenclatureSuccessorParser(Writable, BaseTaricParser):
     absorbed_into_goods_nomenclature__suffix: int = None
 
 
-class NewGoodsNomenclatureDescriptionParser(Writable, BaseTaricParser):
+class GoodsNomenclatureDescriptionParserV2(Writable, BaseTaricParser):
     model = GoodsNomenclatureDescription
 
     model_links = [
@@ -194,13 +194,13 @@ class NewGoodsNomenclatureDescriptionParser(Writable, BaseTaricParser):
     skip_identity_check = True
 
 
-class NewGoodsNomenclatureDescriptionPeriodParser(
+class GoodsNomenclatureDescriptionPeriodParserV2(
     Writable,
     BaseTaricParser,
     ChildPeriod,
 ):
     model = GoodsNomenclatureDescription
-    parent_parser = NewGoodsNomenclatureDescriptionParser
+    parent_parser = GoodsNomenclatureDescriptionParserV2
 
     model_links = [
         ModelLink(
@@ -245,7 +245,7 @@ class NewGoodsNomenclatureDescriptionPeriodParser(
     validity_start: date = None
 
 
-class NewGoodsNomenclatureIndentParser(Writable, BaseTaricParser):
+class GoodsNomenclatureIndentParserV2(Writable, BaseTaricParser):
     model = GoodsNomenclatureIndent
 
     model_links = [
@@ -284,7 +284,7 @@ class NewGoodsNomenclatureIndentParser(Writable, BaseTaricParser):
     indent: int = None
 
 
-class NewFootnoteAssociationGoodsNomenclatureParser(
+class FootnoteAssociationGoodsNomenclatureParserV2(
     ValidityMixin,
     Writable,
     BaseTaricParser,

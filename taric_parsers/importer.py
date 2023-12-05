@@ -14,155 +14,149 @@ from importer.models import ImportBatch
 from importer.models import ImportIssueType
 from taric.models import Envelope
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeDescriptionParser,
+    AdditionalCodeDescriptionParserV2,
 )
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeDescriptionPeriodParser,
+    AdditionalCodeDescriptionPeriodParserV2,
+)
+from taric_parsers.parsers.additional_code_parsers import AdditionalCodeParserV2  # noqa
+from taric_parsers.parsers.additional_code_parsers import (  # noqa
+    AdditionalCodeTypeDescriptionParserV2,
 )
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeParser,
+    AdditionalCodeTypeParserV2,
 )
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeTypeDescriptionParser,
-)
-from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeTypeParser,
-)
-from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewFootnoteAssociationAdditionalCodeParser,
+    FootnoteAssociationAdditionalCodeParserV2,
 )
 from taric_parsers.parsers.certificate_parser import (  # noqa
-    NewCertificateDescriptionParser,
+    CertificateDescriptionParserV2,
 )
 from taric_parsers.parsers.certificate_parser import (  # noqa
-    NewCertificateDescriptionPeriodParser,
+    CertificateDescriptionPeriodParserV2,
 )
-from taric_parsers.parsers.certificate_parser import NewCertificateParser  # noqa
+from taric_parsers.parsers.certificate_parser import CertificateParserV2  # noqa
 from taric_parsers.parsers.certificate_parser import (  # noqa
-    NewCertificateTypeDescriptionParser,
+    CertificateTypeDescriptionParserV2,
 )
-from taric_parsers.parsers.certificate_parser import NewCertificateTypeParser  # noqa
+from taric_parsers.parsers.certificate_parser import CertificateTypeParserV2  # noqa
 from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewFootnoteAssociationGoodsNomenclatureParser,
-)
-from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewGoodsNomenclatureDescriptionParser,
+    FootnoteAssociationGoodsNomenclatureParserV2,
 )
 from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewGoodsNomenclatureDescriptionPeriodParser,
+    GoodsNomenclatureDescriptionParserV2,
 )
 from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewGoodsNomenclatureIndentParser,
+    GoodsNomenclatureDescriptionPeriodParserV2,
 )
 from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewGoodsNomenclatureOriginParser,
+    GoodsNomenclatureIndentParserV2,
 )
-from taric_parsers.parsers.commodity_parser import NewGoodsNomenclatureParser  # noqa
 from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewGoodsNomenclatureSuccessorParser,
+    GoodsNomenclatureOriginParserV2,
 )
-from taric_parsers.parsers.footnote_parser import NewFootnoteDescriptionParser  # noqa
+from taric_parsers.parsers.commodity_parser import GoodsNomenclatureParserV2  # noqa
+from taric_parsers.parsers.commodity_parser import (  # noqa
+    GoodsNomenclatureSuccessorParserV2,
+)
+from taric_parsers.parsers.footnote_parser import FootnoteDescriptionParserV2  # noqa
 from taric_parsers.parsers.footnote_parser import (  # noqa
-    NewFootnoteDescriptionPeriodParser,
+    FootnoteDescriptionPeriodParserV2,
 )
-from taric_parsers.parsers.footnote_parser import NewFootnoteParser  # noqa
+from taric_parsers.parsers.footnote_parser import FootnoteParserV2  # noqa
 from taric_parsers.parsers.footnote_parser import (  # noqa
-    NewFootnoteTypeDescriptionParser,
+    FootnoteTypeDescriptionParserV2,
 )
-from taric_parsers.parsers.footnote_parser import NewFootnoteTypeParser  # noqa
+from taric_parsers.parsers.footnote_parser import FootnoteTypeParserV2  # noqa
 from taric_parsers.parsers.geo_area_parser import (  # noqa
-    NewGeographicalAreaDescriptionParser,
+    GeographicalAreaDescriptionParserV2,
 )
 from taric_parsers.parsers.geo_area_parser import (  # noqa
-    NewGeographicalAreaDescriptionPeriodParser,
+    GeographicalAreaDescriptionPeriodParserV2,
 )
-from taric_parsers.parsers.geo_area_parser import NewGeographicalAreaParser  # noqa
-from taric_parsers.parsers.geo_area_parser import (  # noqa
-    NewGeographicalMembershipParser,
+from taric_parsers.parsers.geo_area_parser import GeographicalAreaParserV2  # noqa
+from taric_parsers.parsers.geo_area_parser import GeographicalMembershipParserV2  # noqa
+from taric_parsers.parsers.measure_parser import (  # noqa
+    AdditionalCodeTypeMeasureTypeParserV2,
 )
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewAdditionalCodeTypeMeasureTypeParser,
+    DutyExpressionDescriptionParserV2,
+)
+from taric_parsers.parsers.measure_parser import DutyExpressionParserV2  # noqa
+from taric_parsers.parsers.measure_parser import (  # noqa
+    FootnoteAssociationMeasureParserV2,
 )
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewDutyExpressionDescriptionParser,
+    MeasureActionDescriptionParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewDutyExpressionParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasureActionParserV2  # noqa
+from taric_parsers.parsers.measure_parser import MeasureComponentParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewFootnoteAssociationMeasureParser,
+    MeasureConditionCodeDescriptionParserV2,
 )
+from taric_parsers.parsers.measure_parser import MeasureConditionCodeParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasureActionDescriptionParser,
+    MeasureConditionComponentParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewMeasureActionParser  # noqa
-from taric_parsers.parsers.measure_parser import NewMeasureComponentParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasureConditionParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasureConditionCodeDescriptionParser,
+    MeasureExcludedGeographicalAreaParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewMeasureConditionCodeParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasurementParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasureConditionComponentParser,
+    MeasurementUnitDescriptionParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewMeasureConditionParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasurementUnitParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasureExcludedGeographicalAreaParser,
-)
-from taric_parsers.parsers.measure_parser import NewMeasurementParser  # noqa
-from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasurementUnitDescriptionParser,
-)
-from taric_parsers.parsers.measure_parser import NewMeasurementUnitParser  # noqa
-from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasurementUnitQualifierDescriptionParser,
+    MeasurementUnitQualifierDescriptionParserV2,
 )
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasurementUnitQualifierParser,
+    MeasurementUnitQualifierParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewMeasureParser  # noqa
-from taric_parsers.parsers.measure_parser import NewMeasureTypeDescriptionParser  # noqa
-from taric_parsers.parsers.measure_parser import NewMeasureTypeParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasureParserV2  # noqa
+from taric_parsers.parsers.measure_parser import MeasureTypeDescriptionParserV2  # noqa
+from taric_parsers.parsers.measure_parser import MeasureTypeParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasureTypeSeriesDescriptionParser,
+    MeasureTypeSeriesDescriptionParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewMeasureTypeSeriesParser  # noqa
-from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMonetaryUnitDescriptionParser,
-)
-from taric_parsers.parsers.measure_parser import NewMonetaryUnitParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaAssociationParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaBalanceEventParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaBlockingParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasureTypeSeriesParserV2  # noqa
+from taric_parsers.parsers.measure_parser import MonetaryUnitDescriptionParserV2  # noqa
+from taric_parsers.parsers.measure_parser import MonetaryUnitParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaAssociationParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaBalanceEventParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaBlockingParserV2  # noqa
 from taric_parsers.parsers.quota_parser import (  # noqa
-    NewQuotaClosedAndTransferredEventParser,
+    QuotaClosedAndTransferredEventParserV2,
 )
-from taric_parsers.parsers.quota_parser import NewQuotaCriticalEventParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaDefinitionParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaEventParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaExhaustionEventParser  # noqa
+from taric_parsers.parsers.quota_parser import QuotaCriticalEventParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaDefinitionParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaEventParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaExhaustionEventParserV2  # noqa
 from taric_parsers.parsers.quota_parser import (  # noqa
-    NewQuotaOrderNumberOriginExclusionParser,
+    QuotaOrderNumberOriginExclusionParserV2,
 )
-from taric_parsers.parsers.quota_parser import NewQuotaOrderNumberOriginParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaOrderNumberParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaReopeningEventParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaSuspensionParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaUnblockingEventParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaUnsuspensionEventParser  # noqa
-from taric_parsers.parsers.regulation_parser import NewBaseRegulationParser  # noqa
+from taric_parsers.parsers.quota_parser import QuotaOrderNumberOriginParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaOrderNumberParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaReopeningEventParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaSuspensionParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaUnblockingEventParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaUnsuspensionEventParserV2  # noqa
+from taric_parsers.parsers.regulation_parser import BaseRegulationParserV2  # noqa
 from taric_parsers.parsers.regulation_parser import (  # noqa
-    NewFullTemporaryStopActionParser,
-)
-from taric_parsers.parsers.regulation_parser import (  # noqa
-    NewFullTemporaryStopRegulationParser,
+    FullTemporaryStopActionParserV2,
 )
 from taric_parsers.parsers.regulation_parser import (  # noqa
-    NewModificationRegulationParser,
+    FullTemporaryStopRegulationParserV2,
 )
 from taric_parsers.parsers.regulation_parser import (  # noqa
-    NewRegulationGroupDescriptionParser,
+    ModificationRegulationParserV2,
 )
-from taric_parsers.parsers.regulation_parser import NewRegulationGroupParser  # noqa
 from taric_parsers.parsers.regulation_parser import (  # noqa
-    NewRegulationReplacementParser,
+    RegulationGroupDescriptionParserV2,
+)
+from taric_parsers.parsers.regulation_parser import RegulationGroupParserV2  # noqa
+from taric_parsers.parsers.regulation_parser import (  # noqa
+    RegulationReplacementParserV2,
 )
 from taric_parsers.parsers.taric_parser import BaseTaricParser  # noqa
 from taric_parsers.parsers.taric_parser import ImportIssueReportItem  # noqa
@@ -171,6 +165,7 @@ from taric_parsers.parsers.taric_parser import ParserHelper  # noqa
 from taric_parsers.parsers.taric_parser import TransactionParser  # noqa
 from taric_parsers.taric_xml_source import TaricXMLSourceBase
 from taric_parsers.tasks import parse_and_import
+from taric_parsers.validators import ImportStatus
 
 
 class TaricImporter:
@@ -457,11 +452,11 @@ class TaricImporter:
             - FAILED : failed import, no data committed to the database. Issues recorded against the import.
         """
         if len(self.issues(ImportIssueType.ERROR)) > 0:
-            return "FAILED"
+            return ImportStatus.FAILED
         elif len(self.issues(ImportIssueType.WARNING)) > 0:
-            return "COMPLETED_WITH_WARNINGS"
+            return ImportStatus.COMPLETED_WITH_WARNINGS
         else:
-            return "COMPLETED"
+            return ImportStatus.COMPLETED
 
     def can_save(self):
         """
@@ -472,7 +467,7 @@ class TaricImporter:
             boolean, indicating the state of the import, and its ability to save due to no issues being recorded.
         """
 
-        if self.status != "FAILED":
+        if self.status != ImportStatus.FAILED:
             return True
         return False
 

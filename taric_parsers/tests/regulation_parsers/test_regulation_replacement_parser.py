@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewRegulationReplacementParser:
+class TestRegulationReplacementParserV2:
     """
     Example XML:
 
@@ -33,7 +33,7 @@ class TestNewRegulationReplacementParser:
         </xs:element>
     """
 
-    target_parser_class = NewRegulationReplacementParser
+    target_parser_class = RegulationReplacementParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

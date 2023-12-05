@@ -11,7 +11,7 @@ from taric_parsers.parsers.mixins import Writable
 from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
-class NewCertificateTypeParser(ValidityMixin, Writable, BaseTaricParser):
+class CertificateTypeParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = CertificateType
     record_code = "110"
     subrecord_code = "00"
@@ -34,9 +34,9 @@ class NewCertificateTypeParser(ValidityMixin, Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewCertificateTypeDescriptionParser(Writable, BaseTaricParser):
+class CertificateTypeDescriptionParserV2(Writable, BaseTaricParser):
     model = CertificateType
-    parent_parser = NewCertificateTypeParser
+    parent_parser = CertificateTypeParserV2
 
     model_links = [
         ModelLink(
@@ -65,7 +65,7 @@ class NewCertificateTypeDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewCertificateParser(ValidityMixin, Writable, BaseTaricParser):
+class CertificateParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = Certificate
 
     model_links = [
@@ -98,7 +98,7 @@ class NewCertificateParser(ValidityMixin, Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewCertificateDescriptionParser(Writable, BaseTaricParser):
+class CertificateDescriptionParserV2(Writable, BaseTaricParser):
     model = CertificateDescription
     allow_update_without_children = True
     model_links = [
@@ -137,13 +137,13 @@ class NewCertificateDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewCertificateDescriptionPeriodParser(
+class CertificateDescriptionPeriodParserV2(
     Writable,
     BaseTaricParser,
     ChildPeriod,
 ):
     model = CertificateDescription
-    parent_parser = NewCertificateDescriptionParser
+    parent_parser = CertificateDescriptionParserV2
 
     model_links = [
         ModelLink(

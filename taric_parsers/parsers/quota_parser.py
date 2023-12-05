@@ -19,7 +19,7 @@ from taric_parsers.parser_model_link import ModelLinkField
 from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
-class NewQuotaOrderNumberParser(BaseTaricParser):
+class QuotaOrderNumberParserV2(BaseTaricParser):
     model = QuotaOrderNumber
 
     value_mapping = {
@@ -55,7 +55,7 @@ class NewQuotaOrderNumberParser(BaseTaricParser):
     category: int = 1  # default
 
 
-class NewQuotaOrderNumberOriginParser(BaseTaricParser):
+class QuotaOrderNumberOriginParserV2(BaseTaricParser):
     model = QuotaOrderNumberOrigin
 
     value_mapping = {
@@ -101,7 +101,7 @@ class NewQuotaOrderNumberOriginParser(BaseTaricParser):
     geographical_area__sid: int = None
 
 
-class NewQuotaOrderNumberOriginExclusionParser(BaseTaricParser):
+class QuotaOrderNumberOriginExclusionParserV2(BaseTaricParser):
     model = QuotaOrderNumberOriginExclusion
 
     model_links = [
@@ -139,7 +139,7 @@ class NewQuotaOrderNumberOriginExclusionParser(BaseTaricParser):
     excluded_geographical_area__sid: int = None
 
 
-class NewQuotaDefinitionParser(BaseTaricParser):
+class QuotaDefinitionParserV2(BaseTaricParser):
     model = QuotaDefinition
 
     model_links = [
@@ -215,7 +215,7 @@ class NewQuotaDefinitionParser(BaseTaricParser):
     description: str = None
 
 
-class NewQuotaAssociationParser(BaseTaricParser):
+class QuotaAssociationParserV2(BaseTaricParser):
     model = QuotaAssociation
     model_links = [
         ModelLink(
@@ -257,7 +257,7 @@ class NewQuotaAssociationParser(BaseTaricParser):
     coefficient: float = None
 
 
-class NewQuotaSuspensionParser(BaseTaricParser):
+class QuotaSuspensionParserV2(BaseTaricParser):
     model = QuotaSuspension
 
     model_links = [
@@ -293,7 +293,7 @@ class NewQuotaSuspensionParser(BaseTaricParser):
     description: str = None
 
 
-class NewQuotaBlockingParser(BaseTaricParser):
+class QuotaBlockingParserV2(BaseTaricParser):
     model = QuotaBlocking
 
     xml_object_tag = "quota.blocking.period"
@@ -329,7 +329,7 @@ class NewQuotaBlockingParser(BaseTaricParser):
     description: str = None
 
 
-class NewQuotaEventParser(BaseTaricParser):
+class QuotaEventParserV2(BaseTaricParser):
     model = QuotaEvent
 
     model_links = [
@@ -366,7 +366,7 @@ class NewQuotaEventParser(BaseTaricParser):
         return json.dumps(data_result)
 
 
-class NewQuotaBalanceEventParser(NewQuotaEventParser):
+class QuotaBalanceEventParserV2(QuotaEventParserV2):
     xml_object_tag = "quota.balance.event"
     subrecord_code = "00"
 
@@ -399,7 +399,7 @@ class NewQuotaBalanceEventParser(NewQuotaEventParser):
     occurrence_timestamp: datetime = None
 
 
-class NewQuotaUnblockingEventParser(NewQuotaEventParser):
+class QuotaUnblockingEventParserV2(QuotaEventParserV2):
     subrecord_code = "05"
 
     value_mapping = {
@@ -427,7 +427,7 @@ class NewQuotaUnblockingEventParser(NewQuotaEventParser):
     occurrence_timestamp: datetime = None
 
 
-class NewQuotaCriticalEventParser(NewQuotaEventParser):
+class QuotaCriticalEventParserV2(QuotaEventParserV2):
     subrecord_code = "10"
 
     value_mapping = {
@@ -457,7 +457,7 @@ class NewQuotaCriticalEventParser(NewQuotaEventParser):
     occurrence_timestamp: datetime = None
 
 
-class NewQuotaExhaustionEventParser(NewQuotaEventParser):
+class QuotaExhaustionEventParserV2(QuotaEventParserV2):
     subrecord_code = "15"
 
     value_mapping = {
@@ -485,7 +485,7 @@ class NewQuotaExhaustionEventParser(NewQuotaEventParser):
     occurrence_timestamp: datetime = None
 
 
-class NewQuotaReopeningEventParser(NewQuotaEventParser):
+class QuotaReopeningEventParserV2(QuotaEventParserV2):
     subrecord_code = "20"
 
     value_mapping = {
@@ -513,7 +513,7 @@ class NewQuotaReopeningEventParser(NewQuotaEventParser):
     occurrence_timestamp: datetime = None
 
 
-class NewQuotaUnsuspensionEventParser(NewQuotaEventParser):
+class QuotaUnsuspensionEventParserV2(QuotaEventParserV2):
     subrecord_code = "25"
 
     value_mapping = {
@@ -541,7 +541,7 @@ class NewQuotaUnsuspensionEventParser(NewQuotaEventParser):
     occurrence_timestamp: datetime = None
 
 
-class NewQuotaClosedAndTransferredEventParser(NewQuotaEventParser):
+class QuotaClosedAndTransferredEventParserV2(QuotaEventParserV2):
     subrecord_code = "30"
 
     value_mapping = {

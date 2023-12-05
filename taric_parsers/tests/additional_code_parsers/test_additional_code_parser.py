@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewAdditionalCodeParser:
+class TestAdditionalCodeParserV2:
     """
     Example XML:
 
@@ -30,7 +30,7 @@ class TestNewAdditionalCodeParser:
         </xs:element>
     """
 
-    target_parser_class = NewAdditionalCodeParser
+    target_parser_class = AdditionalCodeParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
@@ -118,15 +118,15 @@ class TestNewAdditionalCodeParser:
         assert len(importer.parsed_transactions[0].parsed_messages) == 1
         assert (
             importer.parsed_transactions[0].parsed_messages[0].record_code
-            == NewAdditionalCodeParser.record_code
+            == AdditionalCodeParserV2.record_code
         )
         assert (
             importer.parsed_transactions[0].parsed_messages[0].subrecord_code
-            == NewAdditionalCodeTypeParser.subrecord_code
+            == AdditionalCodeTypeParserV2.subrecord_code
         )
         assert (
             type(importer.parsed_transactions[0].parsed_messages[0].taric_object)
-            == NewAdditionalCodeParser
+            == AdditionalCodeParserV2
         )
 
         taric_object = importer.parsed_transactions[0].parsed_messages[0].taric_object

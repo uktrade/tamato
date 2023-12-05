@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewQuotaSuspensionParser:
+class TestQuotaSuspensionParserV2:
     """
     Example XML:
 
@@ -31,7 +31,7 @@ class TestNewQuotaSuspensionParser:
         </xs:element>
     """
 
-    target_parser_class = NewQuotaSuspensionParser
+    target_parser_class = QuotaSuspensionParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewGoodsNomenclatureIndentParser:
+class TestGoodsNomenclatureIndentParserV2:
     """
     Example XML:
 
@@ -31,7 +31,7 @@ class TestNewGoodsNomenclatureIndentParser:
         </xs:element>
     """
 
-    target_parser_class = NewGoodsNomenclatureIndentParser
+    target_parser_class = GoodsNomenclatureIndentParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

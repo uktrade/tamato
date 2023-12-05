@@ -31,7 +31,7 @@ from taric_parsers.parsers.mixins import Writable
 from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
-class NewMeasureTypeSeriesParser(ValidityMixin, Writable, BaseTaricParser):
+class MeasureTypeSeriesParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = MeasureTypeSeries
     record_code = "140"
     subrecord_code = "00"
@@ -58,9 +58,9 @@ class NewMeasureTypeSeriesParser(ValidityMixin, Writable, BaseTaricParser):
     measure_type_combination: int = None
 
 
-class NewMeasureTypeSeriesDescriptionParser(Writable, BaseTaricParser):
+class MeasureTypeSeriesDescriptionParserV2(Writable, BaseTaricParser):
     model = MeasureTypeSeries
-    parent_parser = NewMeasureTypeSeriesParser
+    parent_parser = MeasureTypeSeriesParserV2
 
     model_links = [
         ModelLink(
@@ -88,7 +88,7 @@ class NewMeasureTypeSeriesDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewMeasurementUnitParser(ValidityMixin, Writable, BaseTaricParser):
+class MeasurementUnitParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = MeasurementUnit
     record_code = "210"
     subrecord_code = "00"
@@ -112,9 +112,9 @@ class NewMeasurementUnitParser(ValidityMixin, Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewMeasurementUnitDescriptionParser(Writable, BaseTaricParser):
+class MeasurementUnitDescriptionParserV2(Writable, BaseTaricParser):
     model = MeasurementUnit
-    parent_parser = NewMeasurementUnitParser
+    parent_parser = MeasurementUnitParserV2
 
     model_links = [
         ModelLink(
@@ -143,7 +143,7 @@ class NewMeasurementUnitDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewMeasurementUnitQualifierParser(
+class MeasurementUnitQualifierParserV2(
     ValidityMixin,
     Writable,
     BaseTaricParser,
@@ -172,9 +172,9 @@ class NewMeasurementUnitQualifierParser(
     valid_between_upper: date = None
 
 
-class NewMeasurementUnitQualifierDescriptionParser(Writable, BaseTaricParser):
+class MeasurementUnitQualifierDescriptionParserV2(Writable, BaseTaricParser):
     model = MeasurementUnitQualifier
-    parent_parser = NewMeasurementUnitQualifierParser
+    parent_parser = MeasurementUnitQualifierParserV2
 
     model_links = [
         ModelLink(
@@ -204,7 +204,7 @@ class NewMeasurementUnitQualifierDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewMeasurementParser(ValidityMixin, Writable, BaseTaricParser):
+class MeasurementParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = Measurement
 
     model_links = [
@@ -247,7 +247,7 @@ class NewMeasurementParser(ValidityMixin, Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewMonetaryUnitParser(ValidityMixin, Writable, BaseTaricParser):
+class MonetaryUnitParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = MonetaryUnit
     record_code = "225"
     subrecord_code = "00"
@@ -273,9 +273,9 @@ class NewMonetaryUnitParser(ValidityMixin, Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewMonetaryUnitDescriptionParser(Writable, BaseTaricParser):
+class MonetaryUnitDescriptionParserV2(Writable, BaseTaricParser):
     model = MonetaryUnit
-    parent_parser = NewMonetaryUnitParser
+    parent_parser = MonetaryUnitParserV2
 
     model_links = [
         ModelLink(
@@ -306,7 +306,7 @@ class NewMonetaryUnitDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewDutyExpressionParser(ValidityMixin, Writable, BaseTaricParser):
+class DutyExpressionParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = DutyExpression
 
     record_code = "230"
@@ -338,9 +338,9 @@ class NewDutyExpressionParser(ValidityMixin, Writable, BaseTaricParser):
     monetary_unit_applicability_code: int = None
 
 
-class NewDutyExpressionDescriptionParser(Writable, BaseTaricParser):
+class DutyExpressionDescriptionParserV2(Writable, BaseTaricParser):
     model = DutyExpression
-    parent_parser = NewDutyExpressionParser
+    parent_parser = DutyExpressionParserV2
 
     model_links = [
         ModelLink(
@@ -370,7 +370,7 @@ class NewDutyExpressionDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewMeasureTypeParser(ValidityMixin, Writable, BaseTaricParser):
+class MeasureTypeParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = MeasureType
     model_links = [
         ModelLink(
@@ -414,9 +414,9 @@ class NewMeasureTypeParser(ValidityMixin, Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewMeasureTypeDescriptionParser(Writable, BaseTaricParser):
+class MeasureTypeDescriptionParserV2(Writable, BaseTaricParser):
     model = MeasureType
-    parent_parser = NewMeasureTypeParser
+    parent_parser = MeasureTypeParserV2
 
     model_links = [
         ModelLink(
@@ -446,7 +446,7 @@ class NewMeasureTypeDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewAdditionalCodeTypeMeasureTypeParser(
+class AdditionalCodeTypeMeasureTypeParserV2(
     ValidityMixin,
     Writable,
     BaseTaricParser,
@@ -492,7 +492,7 @@ class NewAdditionalCodeTypeMeasureTypeParser(
     valid_between_upper: date = None
 
 
-class NewMeasureConditionCodeParser(ValidityMixin, Writable, BaseTaricParser):
+class MeasureConditionCodeParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = MeasureConditionCode
     record_code = "350"
     subrecord_code = "00"
@@ -516,9 +516,9 @@ class NewMeasureConditionCodeParser(ValidityMixin, Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewMeasureConditionCodeDescriptionParser(Writable, BaseTaricParser):
+class MeasureConditionCodeDescriptionParserV2(Writable, BaseTaricParser):
     model = MeasureConditionCode
-    parent_parser = NewMeasureConditionCodeParser
+    parent_parser = MeasureConditionCodeParserV2
 
     model_links = [
         ModelLink(
@@ -548,7 +548,7 @@ class NewMeasureConditionCodeDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewMeasureActionParser(ValidityMixin, Writable, BaseTaricParser):
+class MeasureActionParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = MeasureAction
 
     model_links = []
@@ -575,9 +575,9 @@ class NewMeasureActionParser(ValidityMixin, Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewMeasureActionDescriptionParser(Writable, BaseTaricParser):
+class MeasureActionDescriptionParserV2(Writable, BaseTaricParser):
     model = MeasureAction
-    parent_parser = NewMeasureActionParser
+    parent_parser = MeasureActionParserV2
 
     model_links = [
         ModelLink(
@@ -607,7 +607,7 @@ class NewMeasureActionDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewMeasureParser(ValidityMixin, Writable, BaseTaricParser):
+class MeasureParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = Measure
     model_links = [
         ModelLink(
@@ -722,7 +722,7 @@ class NewMeasureParser(ValidityMixin, Writable, BaseTaricParser):
     stopped: bool = None
 
 
-class NewMeasureComponentParser(Writable, BaseTaricParser):
+class MeasureComponentParserV2(Writable, BaseTaricParser):
     model = MeasureComponent
     model_links = [
         ModelLink(
@@ -791,7 +791,7 @@ class NewMeasureComponentParser(Writable, BaseTaricParser):
     component_measurement__measurement_unit_qualifier__code: str = None
 
 
-class NewMeasureConditionParser(Writable, BaseTaricParser):
+class MeasureConditionParserV2(Writable, BaseTaricParser):
     model = MeasureCondition
     model_links = [
         ModelLink(
@@ -884,7 +884,7 @@ class NewMeasureConditionParser(Writable, BaseTaricParser):
     required_certificate__sid: str = None
 
 
-class NewMeasureConditionComponentParser(Writable, BaseTaricParser):
+class MeasureConditionComponentParserV2(Writable, BaseTaricParser):
     model = MeasureConditionComponent
     model_links = [
         ModelLink(
@@ -951,7 +951,7 @@ class NewMeasureConditionComponentParser(Writable, BaseTaricParser):
     component_measurement__measurement_unit_qualifier__code: str = None
 
 
-class NewMeasureExcludedGeographicalAreaParser(Writable, BaseTaricParser):
+class MeasureExcludedGeographicalAreaParserV2(Writable, BaseTaricParser):
     model = MeasureExcludedGeographicalArea
     model_links = [
         ModelLink(
@@ -992,7 +992,7 @@ class NewMeasureExcludedGeographicalAreaParser(Writable, BaseTaricParser):
     excluded_geographical_area__sid: int = None
 
 
-class NewFootnoteAssociationMeasureParser(Writable, BaseTaricParser):
+class FootnoteAssociationMeasureParserV2(Writable, BaseTaricParser):
     model = FootnoteAssociationMeasure
     model_links = [
         ModelLink(

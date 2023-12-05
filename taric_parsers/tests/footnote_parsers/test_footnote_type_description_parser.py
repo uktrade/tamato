@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewFootnoteTypeDescriptionParser:
+class TestFootnoteTypeDescriptionParserV2:
     """
     Example XML:
 
@@ -26,7 +26,7 @@ class TestNewFootnoteTypeDescriptionParser:
         </xs:element>
     """
 
-    target_parser_class = NewFootnoteTypeDescriptionParser
+    target_parser_class = FootnoteTypeDescriptionParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

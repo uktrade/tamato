@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewAdditionalCodeDescriptionParser:
+class TestAdditionalCodeDescriptionParserV2:
     """
     Example XML:
 
@@ -30,7 +30,7 @@ class TestNewAdditionalCodeDescriptionParser:
         </xs:element>
     """
 
-    target_parser_class = NewAdditionalCodeDescriptionParser
+    target_parser_class = AdditionalCodeDescriptionParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
@@ -80,7 +80,7 @@ class TestNewAdditionalCodeDescriptionParser:
         assert AdditionalCodeDescription.objects.all().count() == 1
 
         assert importer.can_save()
-        assert type(target_taric_object) == NewAdditionalCodeDescriptionParser
+        assert type(target_taric_object) == AdditionalCodeDescriptionParserV2
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
         assert target_taric_object.described_additionalcode__type__sid == "9"
@@ -98,7 +98,7 @@ class TestNewAdditionalCodeDescriptionParser:
         target_taric_object = target_message.taric_object
 
         assert importer.can_save()
-        assert type(target_taric_object) == NewAdditionalCodeDescriptionParser
+        assert type(target_taric_object) == AdditionalCodeDescriptionParserV2
         assert target_taric_object.sid == 5
         assert target_taric_object.described_additionalcode__sid == 1
         assert target_taric_object.described_additionalcode__type__sid == "9"
@@ -136,13 +136,13 @@ class TestNewAdditionalCodeDescriptionParser:
         target_message = importer.parsed_transactions[0].parsed_messages[0]
 
         assert (
-            target_message.record_code == NewAdditionalCodeDescriptionParser.record_code
+            target_message.record_code == AdditionalCodeDescriptionParserV2.record_code
         )
         assert (
             target_message.subrecord_code
-            == NewAdditionalCodeDescriptionParser.subrecord_code
+            == AdditionalCodeDescriptionParserV2.subrecord_code
         )
-        assert type(target_message.taric_object) == NewAdditionalCodeDescriptionParser
+        assert type(target_message.taric_object) == AdditionalCodeDescriptionParserV2
 
         target_taric_object = target_message.taric_object
         assert target_taric_object.sid == 5
@@ -154,7 +154,7 @@ class TestNewAdditionalCodeDescriptionParser:
         assert len(importer.issues()) == 1
 
         assert (
-            "ERROR: Missing expected child object NewAdditionalCodeDescriptionPeriodParser"
+            "ERROR: Missing expected child object AdditionalCodeDescriptionPeriodParserV2"
             in str(importer.issues()[0])
         )
         assert (

@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewMeasureExcludedGeographicalAreaParser:
+class TestMeasureExcludedGeographicalAreaParserV2:
     """
     Example XML:
 
@@ -26,7 +26,7 @@ class TestNewMeasureExcludedGeographicalAreaParser:
         </xs:element>
     """
 
-    target_parser_class = NewMeasureExcludedGeographicalAreaParser
+    target_parser_class = MeasureExcludedGeographicalAreaParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewQuotaClosedAndTransferredEventParser:
+class TestQuotaClosedAndTransferredEventParserV2:
     """
     Could be one of any of the below:
 
@@ -34,7 +34,7 @@ class TestNewQuotaClosedAndTransferredEventParser:
         </xs:element>
     """
 
-    target_parser_class = NewQuotaClosedAndTransferredEventParser
+    target_parser_class = QuotaClosedAndTransferredEventParserV2
 
     def test_it_handles_population_from_expected_data_structure_quota_balance_event(
         self,

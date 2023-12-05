@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewGoodsNomenclatureOriginParser:
+class TestGoodsNomenclatureOriginParserV2:
     """
     Example XML:
 
@@ -28,7 +28,7 @@ class TestNewGoodsNomenclatureOriginParser:
         </xs:element>
     """
 
-    target_parser_class = NewGoodsNomenclatureOriginParser
+    target_parser_class = GoodsNomenclatureOriginParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

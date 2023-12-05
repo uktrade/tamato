@@ -13,7 +13,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewFootnoteAssociationGoodsNomenclatureParser:
+class TestFootnoteAssociationGoodsNomenclatureParserV2:
     """
     Example XML:
 
@@ -34,7 +34,7 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
         </xs:element>
     """
 
-    target_parser_class = NewFootnoteAssociationGoodsNomenclatureParser
+    target_parser_class = FootnoteAssociationGoodsNomenclatureParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
@@ -156,7 +156,7 @@ class TestNewFootnoteAssociationGoodsNomenclatureParser:
         assert type(target_message.taric_object) == self.target_parser_class
 
         assert len(importer.issues()) == 2
-        assert "ERROR: Missing expected linked object NewFootnoteParser\n" in str(
+        assert "ERROR: Missing expected linked object FootnoteParserV2\n" in str(
             importer.issues()[0],
         )
         assert (

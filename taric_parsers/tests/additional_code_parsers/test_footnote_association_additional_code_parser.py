@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewAdditionalCodeTypeParser:
+class TestAdditionalCodeTypeParserV2:
     """
     Example XML:
 
@@ -33,7 +33,7 @@ class TestNewAdditionalCodeTypeParser:
         </xs:element>
     """
 
-    target_parser_class = NewFootnoteAssociationAdditionalCodeParser
+    target_parser_class = FootnoteAssociationAdditionalCodeParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
@@ -149,13 +149,13 @@ class TestNewAdditionalCodeTypeParser:
         assert len(importer.issues()) == 2
         assert (
             str(importer.issues()[0])
-            == "ERROR: Missing expected child object NewAdditionalCodeTypeDescriptionParser\n"
+            == "ERROR: Missing expected child object AdditionalCodeTypeDescriptionParserV2\n"
             "  additional.code.type > additional.code.type.description\n"
             "  link_data: {}"
         )
         assert (
             str(importer.issues()[1])
-            == "ERROR: Missing expected child object NewFootnoteTypeDescriptionParser\n"
+            == "ERROR: Missing expected child object FootnoteTypeDescriptionParserV2\n"
             "  footnote.type > footnote.type.description\n"
             "  link_data: {}"
         )

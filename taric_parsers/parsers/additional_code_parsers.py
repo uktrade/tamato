@@ -13,7 +13,7 @@ from taric_parsers.parsers.mixins import Writable
 from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
-class NewAdditionalCodeTypeParser(ValidityMixin, Writable, BaseTaricParser):
+class AdditionalCodeTypeParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = AdditionalCodeType
     model_links = []
 
@@ -37,9 +37,9 @@ class NewAdditionalCodeTypeParser(ValidityMixin, Writable, BaseTaricParser):
     allow_update_without_children = True
 
 
-class NewAdditionalCodeTypeDescriptionParser(Writable, BaseTaricParser):
+class AdditionalCodeTypeDescriptionParserV2(Writable, BaseTaricParser):
     model = AdditionalCodeType
-    parent_parser = NewAdditionalCodeTypeParser
+    parent_parser = AdditionalCodeTypeParserV2
 
     model_links = [
         ModelLink(
@@ -68,7 +68,7 @@ class NewAdditionalCodeTypeDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewAdditionalCodeParser(Writable, BaseTaricParser):
+class AdditionalCodeParserV2(Writable, BaseTaricParser):
     model = AdditionalCode
 
     model_links = [
@@ -103,7 +103,7 @@ class NewAdditionalCodeParser(Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewAdditionalCodeDescriptionParser(Writable, BaseTaricParser):
+class AdditionalCodeDescriptionParserV2(Writable, BaseTaricParser):
     model = AdditionalCodeDescription
 
     model_links = [
@@ -147,13 +147,13 @@ class NewAdditionalCodeDescriptionParser(Writable, BaseTaricParser):
     allow_update_without_children = True
 
 
-class NewAdditionalCodeDescriptionPeriodParser(
+class AdditionalCodeDescriptionPeriodParserV2(
     Writable,
     BaseTaricParser,
     ChildPeriod,
 ):
     model = AdditionalCodeDescription
-    parent_parser = NewAdditionalCodeDescriptionParser
+    parent_parser = AdditionalCodeDescriptionParserV2
 
     model_links = [
         ModelLink(
@@ -198,7 +198,7 @@ class NewAdditionalCodeDescriptionPeriodParser(
     validity_start: date = None
 
 
-class NewFootnoteAssociationAdditionalCodeParser(
+class FootnoteAssociationAdditionalCodeParserV2(
     ValidityMixin,
     Writable,
     BaseTaricParser,

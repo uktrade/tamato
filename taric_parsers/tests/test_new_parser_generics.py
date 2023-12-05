@@ -49,155 +49,149 @@ from regulations.models import Regulation
 from regulations.models import Replacement
 from regulations.models import Suspension
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeDescriptionParser,
+    AdditionalCodeDescriptionParserV2,
 )
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeDescriptionPeriodParser,
+    AdditionalCodeDescriptionPeriodParserV2,
+)
+from taric_parsers.parsers.additional_code_parsers import AdditionalCodeParserV2  # noqa
+from taric_parsers.parsers.additional_code_parsers import (  # noqa
+    AdditionalCodeTypeDescriptionParserV2,
 )
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeParser,
+    AdditionalCodeTypeParserV2,
 )
 from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeTypeDescriptionParser,
-)
-from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewAdditionalCodeTypeParser,
-)
-from taric_parsers.parsers.additional_code_parsers import (  # noqa
-    NewFootnoteAssociationAdditionalCodeParser,
+    FootnoteAssociationAdditionalCodeParserV2,
 )
 from taric_parsers.parsers.certificate_parser import (  # noqa
-    NewCertificateDescriptionParser,
+    CertificateDescriptionParserV2,
 )
 from taric_parsers.parsers.certificate_parser import (  # noqa
-    NewCertificateDescriptionPeriodParser,
+    CertificateDescriptionPeriodParserV2,
 )
-from taric_parsers.parsers.certificate_parser import NewCertificateParser  # noqa
+from taric_parsers.parsers.certificate_parser import CertificateParserV2  # noqa
 from taric_parsers.parsers.certificate_parser import (  # noqa
-    NewCertificateTypeDescriptionParser,
+    CertificateTypeDescriptionParserV2,
 )
-from taric_parsers.parsers.certificate_parser import NewCertificateTypeParser  # noqa
+from taric_parsers.parsers.certificate_parser import CertificateTypeParserV2  # noqa
 from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewFootnoteAssociationGoodsNomenclatureParser,
-)
-from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewGoodsNomenclatureDescriptionParser,
+    FootnoteAssociationGoodsNomenclatureParserV2,
 )
 from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewGoodsNomenclatureDescriptionPeriodParser,
+    GoodsNomenclatureDescriptionParserV2,
 )
 from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewGoodsNomenclatureIndentParser,
+    GoodsNomenclatureDescriptionPeriodParserV2,
 )
 from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewGoodsNomenclatureOriginParser,
+    GoodsNomenclatureIndentParserV2,
 )
-from taric_parsers.parsers.commodity_parser import NewGoodsNomenclatureParser  # noqa
 from taric_parsers.parsers.commodity_parser import (  # noqa
-    NewGoodsNomenclatureSuccessorParser,
+    GoodsNomenclatureOriginParserV2,
 )
-from taric_parsers.parsers.footnote_parser import NewFootnoteDescriptionParser  # noqa
+from taric_parsers.parsers.commodity_parser import GoodsNomenclatureParserV2  # noqa
+from taric_parsers.parsers.commodity_parser import (  # noqa
+    GoodsNomenclatureSuccessorParserV2,
+)
+from taric_parsers.parsers.footnote_parser import FootnoteDescriptionParserV2  # noqa
 from taric_parsers.parsers.footnote_parser import (  # noqa
-    NewFootnoteDescriptionPeriodParser,
+    FootnoteDescriptionPeriodParserV2,
 )
-from taric_parsers.parsers.footnote_parser import NewFootnoteParser  # noqa
+from taric_parsers.parsers.footnote_parser import FootnoteParserV2  # noqa
 from taric_parsers.parsers.footnote_parser import (  # noqa
-    NewFootnoteTypeDescriptionParser,
+    FootnoteTypeDescriptionParserV2,
 )
-from taric_parsers.parsers.footnote_parser import NewFootnoteTypeParser  # noqa
+from taric_parsers.parsers.footnote_parser import FootnoteTypeParserV2  # noqa
 from taric_parsers.parsers.geo_area_parser import (  # noqa
-    NewGeographicalAreaDescriptionParser,
+    GeographicalAreaDescriptionParserV2,
 )
 from taric_parsers.parsers.geo_area_parser import (  # noqa
-    NewGeographicalAreaDescriptionPeriodParser,
+    GeographicalAreaDescriptionPeriodParserV2,
 )
-from taric_parsers.parsers.geo_area_parser import NewGeographicalAreaParser  # noqa
-from taric_parsers.parsers.geo_area_parser import (  # noqa
-    NewGeographicalMembershipParser,
+from taric_parsers.parsers.geo_area_parser import GeographicalAreaParserV2  # noqa
+from taric_parsers.parsers.geo_area_parser import GeographicalMembershipParserV2  # noqa
+from taric_parsers.parsers.measure_parser import (  # noqa
+    AdditionalCodeTypeMeasureTypeParserV2,
 )
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewAdditionalCodeTypeMeasureTypeParser,
+    DutyExpressionDescriptionParserV2,
+)
+from taric_parsers.parsers.measure_parser import DutyExpressionParserV2  # noqa
+from taric_parsers.parsers.measure_parser import (  # noqa
+    FootnoteAssociationMeasureParserV2,
 )
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewDutyExpressionDescriptionParser,
+    MeasureActionDescriptionParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewDutyExpressionParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasureActionParserV2  # noqa
+from taric_parsers.parsers.measure_parser import MeasureComponentParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewFootnoteAssociationMeasureParser,
+    MeasureConditionCodeDescriptionParserV2,
 )
+from taric_parsers.parsers.measure_parser import MeasureConditionCodeParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasureActionDescriptionParser,
+    MeasureConditionComponentParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewMeasureActionParser  # noqa
-from taric_parsers.parsers.measure_parser import NewMeasureComponentParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasureConditionParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasureConditionCodeDescriptionParser,
+    MeasureExcludedGeographicalAreaParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewMeasureConditionCodeParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasurementParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasureConditionComponentParser,
+    MeasurementUnitDescriptionParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewMeasureConditionParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasurementUnitParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasureExcludedGeographicalAreaParser,
-)
-from taric_parsers.parsers.measure_parser import NewMeasurementParser  # noqa
-from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasurementUnitDescriptionParser,
-)
-from taric_parsers.parsers.measure_parser import NewMeasurementUnitParser  # noqa
-from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasurementUnitQualifierDescriptionParser,
+    MeasurementUnitQualifierDescriptionParserV2,
 )
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasurementUnitQualifierParser,
+    MeasurementUnitQualifierParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewMeasureParser  # noqa
-from taric_parsers.parsers.measure_parser import NewMeasureTypeDescriptionParser  # noqa
-from taric_parsers.parsers.measure_parser import NewMeasureTypeParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasureParserV2  # noqa
+from taric_parsers.parsers.measure_parser import MeasureTypeDescriptionParserV2  # noqa
+from taric_parsers.parsers.measure_parser import MeasureTypeParserV2  # noqa
 from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMeasureTypeSeriesDescriptionParser,
+    MeasureTypeSeriesDescriptionParserV2,
 )
-from taric_parsers.parsers.measure_parser import NewMeasureTypeSeriesParser  # noqa
-from taric_parsers.parsers.measure_parser import (  # noqa
-    NewMonetaryUnitDescriptionParser,
-)
-from taric_parsers.parsers.measure_parser import NewMonetaryUnitParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaAssociationParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaBalanceEventParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaBlockingParser  # noqa
+from taric_parsers.parsers.measure_parser import MeasureTypeSeriesParserV2  # noqa
+from taric_parsers.parsers.measure_parser import MonetaryUnitDescriptionParserV2  # noqa
+from taric_parsers.parsers.measure_parser import MonetaryUnitParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaAssociationParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaBalanceEventParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaBlockingParserV2  # noqa
 from taric_parsers.parsers.quota_parser import (  # noqa
-    NewQuotaClosedAndTransferredEventParser,
+    QuotaClosedAndTransferredEventParserV2,
 )
-from taric_parsers.parsers.quota_parser import NewQuotaCriticalEventParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaDefinitionParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaEventParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaExhaustionEventParser  # noqa
+from taric_parsers.parsers.quota_parser import QuotaCriticalEventParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaDefinitionParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaEventParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaExhaustionEventParserV2  # noqa
 from taric_parsers.parsers.quota_parser import (  # noqa
-    NewQuotaOrderNumberOriginExclusionParser,
+    QuotaOrderNumberOriginExclusionParserV2,
 )
-from taric_parsers.parsers.quota_parser import NewQuotaOrderNumberOriginParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaOrderNumberParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaReopeningEventParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaSuspensionParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaUnblockingEventParser  # noqa
-from taric_parsers.parsers.quota_parser import NewQuotaUnsuspensionEventParser  # noqa
-from taric_parsers.parsers.regulation_parser import NewBaseRegulationParser  # noqa
+from taric_parsers.parsers.quota_parser import QuotaOrderNumberOriginParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaOrderNumberParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaReopeningEventParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaSuspensionParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaUnblockingEventParserV2  # noqa
+from taric_parsers.parsers.quota_parser import QuotaUnsuspensionEventParserV2  # noqa
+from taric_parsers.parsers.regulation_parser import BaseRegulationParserV2  # noqa
 from taric_parsers.parsers.regulation_parser import (  # noqa
-    NewFullTemporaryStopActionParser,
-)
-from taric_parsers.parsers.regulation_parser import (  # noqa
-    NewFullTemporaryStopRegulationParser,
+    FullTemporaryStopActionParserV2,
 )
 from taric_parsers.parsers.regulation_parser import (  # noqa
-    NewModificationRegulationParser,
+    FullTemporaryStopRegulationParserV2,
 )
 from taric_parsers.parsers.regulation_parser import (  # noqa
-    NewRegulationGroupDescriptionParser,
+    ModificationRegulationParserV2,
 )
-from taric_parsers.parsers.regulation_parser import NewRegulationGroupParser  # noqa
 from taric_parsers.parsers.regulation_parser import (  # noqa
-    NewRegulationReplacementParser,
+    RegulationGroupDescriptionParserV2,
+)
+from taric_parsers.parsers.regulation_parser import RegulationGroupParserV2  # noqa
+from taric_parsers.parsers.regulation_parser import (  # noqa
+    RegulationReplacementParserV2,
 )
 
 pytestmark = pytest.mark.django_db
@@ -215,42 +209,42 @@ pytestmark = pytest.mark.django_db
     (
         # Additional Codes
         (
-            NewAdditionalCodeTypeParser,
+            AdditionalCodeTypeParserV2,
             AdditionalCodeType,
             "additional.code.type",
             [],
             False,
         ),
         (
-            NewAdditionalCodeTypeDescriptionParser,
+            AdditionalCodeTypeDescriptionParserV2,
             AdditionalCodeType,
             "additional.code.type.description",
             [],
             True,
         ),
         (
-            NewAdditionalCodeParser,
+            AdditionalCodeParserV2,
             AdditionalCode,
             "additional.code",
             [AdditionalCodeType],
             False,
         ),
         (
-            NewAdditionalCodeDescriptionPeriodParser,
+            AdditionalCodeDescriptionPeriodParserV2,
             AdditionalCodeDescription,
             "additional.code.description.period",
             [AdditionalCode],
             True,
         ),
         (
-            NewAdditionalCodeDescriptionParser,
+            AdditionalCodeDescriptionParserV2,
             AdditionalCodeDescription,
             "additional.code.description",
             [AdditionalCode],
             False,
         ),
         (
-            NewFootnoteAssociationAdditionalCodeParser,
+            FootnoteAssociationAdditionalCodeParserV2,
             FootnoteAssociationAdditionalCode,
             "footnote.association.additional.code",
             [Footnote, AdditionalCodeType, AdditionalCode],
@@ -258,35 +252,35 @@ pytestmark = pytest.mark.django_db
         ),
         # Certificates
         (
-            NewCertificateTypeParser,
+            CertificateTypeParserV2,
             CertificateType,
             "certificate.type",
             [],
             False,
         ),
         (
-            NewCertificateTypeDescriptionParser,
+            CertificateTypeDescriptionParserV2,
             CertificateType,
             "certificate.type.description",
             [],
             True,
         ),
         (
-            NewCertificateParser,
+            CertificateParserV2,
             Certificate,
             "certificate",
             [CertificateType],
             False,
         ),
         (
-            NewCertificateDescriptionParser,
+            CertificateDescriptionParserV2,
             CertificateDescription,
             "certificate.description",
             [CertificateType, Certificate],
             False,
         ),
         (
-            NewCertificateDescriptionPeriodParser,
+            CertificateDescriptionPeriodParserV2,
             CertificateDescription,
             "certificate.description.period",
             [CertificateType, Certificate],
@@ -294,49 +288,49 @@ pytestmark = pytest.mark.django_db
         ),
         # Commodities
         (
-            NewGoodsNomenclatureParser,
+            GoodsNomenclatureParserV2,
             GoodsNomenclature,
             "goods.nomenclature",
             [],
             False,
         ),
         (
-            NewGoodsNomenclatureOriginParser,
+            GoodsNomenclatureOriginParserV2,
             GoodsNomenclatureOrigin,
             "goods.nomenclature.origin",
             [GoodsNomenclature],
             False,
         ),
         (
-            NewGoodsNomenclatureSuccessorParser,
+            GoodsNomenclatureSuccessorParserV2,
             GoodsNomenclatureSuccessor,
             "goods.nomenclature.successor",
             [GoodsNomenclature],
             False,
         ),
         (
-            NewGoodsNomenclatureDescriptionParser,
+            GoodsNomenclatureDescriptionParserV2,
             GoodsNomenclatureDescription,
             "goods.nomenclature.description",
             [GoodsNomenclature],
             False,
         ),
         (
-            NewGoodsNomenclatureDescriptionPeriodParser,
+            GoodsNomenclatureDescriptionPeriodParserV2,
             GoodsNomenclatureDescription,
             "goods.nomenclature.description.period",
             [GoodsNomenclature],
             True,
         ),
         (
-            NewGoodsNomenclatureIndentParser,
+            GoodsNomenclatureIndentParserV2,
             GoodsNomenclatureIndent,
             "goods.nomenclature.indents",
             [GoodsNomenclature],
             False,
         ),
         (
-            NewFootnoteAssociationGoodsNomenclatureParser,
+            FootnoteAssociationGoodsNomenclatureParserV2,
             FootnoteAssociationGoodsNomenclature,
             "footnote.association.goods.nomenclature",
             [GoodsNomenclature, Footnote],
@@ -344,35 +338,35 @@ pytestmark = pytest.mark.django_db
         ),
         # Footnotes
         (
-            NewFootnoteTypeParser,
+            FootnoteTypeParserV2,
             FootnoteType,
             "footnote.type",
             [],
             False,
         ),
         (
-            NewFootnoteTypeDescriptionParser,
+            FootnoteTypeDescriptionParserV2,
             FootnoteType,
             "footnote.type.description",
             [FootnoteType],
             True,
         ),
         (
-            NewFootnoteParser,
+            FootnoteParserV2,
             Footnote,
             "footnote",
             [FootnoteType],
             False,
         ),
         (
-            NewFootnoteDescriptionParser,
+            FootnoteDescriptionParserV2,
             FootnoteDescription,
             "footnote.description",
             [Footnote],
             False,
         ),
         (
-            NewFootnoteDescriptionPeriodParser,
+            FootnoteDescriptionPeriodParserV2,
             FootnoteDescription,
             "footnote.description.period",
             [Footnote],
@@ -380,28 +374,28 @@ pytestmark = pytest.mark.django_db
         ),
         # Geo Areas
         (
-            NewGeographicalAreaParser,
+            GeographicalAreaParserV2,
             GeographicalArea,
             "geographical.area",
             [GeographicalArea],
             False,
         ),
         (
-            NewGeographicalAreaDescriptionParser,
+            GeographicalAreaDescriptionParserV2,
             GeographicalAreaDescription,
             "geographical.area.description",
             [GeographicalArea],
             False,
         ),
         (
-            NewGeographicalAreaDescriptionPeriodParser,
+            GeographicalAreaDescriptionPeriodParserV2,
             GeographicalAreaDescription,
             "geographical.area.description.period",
             [GeographicalArea],
             True,
         ),
         (
-            NewGeographicalMembershipParser,
+            GeographicalMembershipParserV2,
             GeographicalMembership,
             "geographical.membership",
             [GeographicalArea],
@@ -409,133 +403,133 @@ pytestmark = pytest.mark.django_db
         ),
         # Measures
         (
-            NewMeasureTypeSeriesParser,
+            MeasureTypeSeriesParserV2,
             MeasureTypeSeries,
             "measure.type.series",
             [],
             False,
         ),
         (
-            NewMeasureTypeSeriesDescriptionParser,
+            MeasureTypeSeriesDescriptionParserV2,
             MeasureTypeSeries,
             "measure.type.series.description",
             [],
             True,
         ),
         (
-            NewMeasurementUnitParser,
+            MeasurementUnitParserV2,
             MeasurementUnit,
             "measurement.unit",
             [],
             False,
         ),
         (
-            NewMeasurementUnitDescriptionParser,
+            MeasurementUnitDescriptionParserV2,
             MeasurementUnit,
             "measurement.unit.description",
             [],
             True,
         ),
         (
-            NewMeasurementUnitQualifierParser,
+            MeasurementUnitQualifierParserV2,
             MeasurementUnitQualifier,
             "measurement.unit.qualifier",
             [],
             False,
         ),
         (
-            NewMeasurementUnitQualifierDescriptionParser,
+            MeasurementUnitQualifierDescriptionParserV2,
             MeasurementUnitQualifier,
             "measurement.unit.qualifier.description",
             [],
             True,
         ),
         (
-            NewMeasurementParser,
+            MeasurementParserV2,
             Measurement,
             "measurement",
             [MeasurementUnit, MeasurementUnitQualifier],
             False,
         ),
         (
-            NewMonetaryUnitParser,
+            MonetaryUnitParserV2,
             MonetaryUnit,
             "monetary.unit",
             [],
             False,
         ),
         (
-            NewMonetaryUnitDescriptionParser,
+            MonetaryUnitDescriptionParserV2,
             MonetaryUnit,
             "monetary.unit.description",
             [],
             True,
         ),
         (
-            NewDutyExpressionParser,
+            DutyExpressionParserV2,
             DutyExpression,
             "duty.expression",
             [],
             False,
         ),
         (
-            NewDutyExpressionDescriptionParser,
+            DutyExpressionDescriptionParserV2,
             DutyExpression,
             "duty.expression.description",
             [],
             True,
         ),
         (
-            NewMeasureTypeParser,
+            MeasureTypeParserV2,
             MeasureType,
             "measure.type",
             [],
             False,
         ),
         (
-            NewMeasureTypeDescriptionParser,
+            MeasureTypeDescriptionParserV2,
             MeasureType,
             "measure.type.description",
             [],
             True,
         ),
         (
-            NewAdditionalCodeTypeMeasureTypeParser,
+            AdditionalCodeTypeMeasureTypeParserV2,
             AdditionalCodeTypeMeasureType,
             "additional.code.type.measure.type",
             [MeasureType, AdditionalCodeType],
             False,
         ),
         (
-            NewMeasureConditionCodeParser,
+            MeasureConditionCodeParserV2,
             MeasureConditionCode,
             "measure.condition.code",
             [],
             False,
         ),
         (
-            NewMeasureConditionCodeDescriptionParser,
+            MeasureConditionCodeDescriptionParserV2,
             MeasureConditionCode,
             "measure.condition.code.description",
             [],
             True,
         ),
         (
-            NewMeasureActionParser,
+            MeasureActionParserV2,
             MeasureAction,
             "measure.action",
             [],
             False,
         ),
         (
-            NewMeasureActionDescriptionParser,
+            MeasureActionDescriptionParserV2,
             MeasureAction,
             "measure.action.description",
             [],
             True,
         ),
         (
-            NewMeasureParser,
+            MeasureParserV2,
             Measure,
             "measure",
             [
@@ -549,7 +543,7 @@ pytestmark = pytest.mark.django_db
             False,
         ),
         (
-            NewMeasureComponentParser,
+            MeasureComponentParserV2,
             MeasureComponent,
             "measure.component",
             [
@@ -561,7 +555,7 @@ pytestmark = pytest.mark.django_db
             False,
         ),
         (
-            NewMeasureConditionParser,
+            MeasureConditionParserV2,
             MeasureCondition,
             "measure.condition",
             [
@@ -575,7 +569,7 @@ pytestmark = pytest.mark.django_db
             False,
         ),
         (
-            NewMeasureConditionComponentParser,
+            MeasureConditionComponentParserV2,
             MeasureConditionComponent,
             "measure.condition.component",
             [
@@ -587,14 +581,14 @@ pytestmark = pytest.mark.django_db
             False,
         ),
         (
-            NewMeasureExcludedGeographicalAreaParser,
+            MeasureExcludedGeographicalAreaParserV2,
             MeasureExcludedGeographicalArea,
             "measure.excluded.geographical.area",
             [Measure, GeographicalArea],
             False,
         ),
         (
-            NewFootnoteAssociationMeasureParser,
+            FootnoteAssociationMeasureParserV2,
             FootnoteAssociationMeasure,
             "footnote.association.measure",
             [Measure, Footnote],
@@ -602,105 +596,105 @@ pytestmark = pytest.mark.django_db
         ),
         # Quotas
         (
-            NewQuotaOrderNumberParser,
+            QuotaOrderNumberParserV2,
             QuotaOrderNumber,
             "quota.order.number",
             [],
             False,
         ),
         (
-            NewQuotaOrderNumberOriginParser,
+            QuotaOrderNumberOriginParserV2,
             QuotaOrderNumberOrigin,
             "quota.order.number.origin",
             [QuotaOrderNumber, GeographicalArea],
             False,
         ),
         (
-            NewQuotaOrderNumberOriginExclusionParser,
+            QuotaOrderNumberOriginExclusionParserV2,
             QuotaOrderNumberOriginExclusion,
             "quota.order.number.origin.exclusions",
             [QuotaOrderNumberOrigin, GeographicalArea],
             False,
         ),
         (
-            NewQuotaDefinitionParser,
+            QuotaDefinitionParserV2,
             QuotaDefinition,
             "quota.definition",
             [QuotaOrderNumber, MonetaryUnit, MeasurementUnit, MeasurementUnitQualifier],
             False,
         ),
         (
-            NewQuotaAssociationParser,
+            QuotaAssociationParserV2,
             QuotaAssociation,
             "quota.association",
             [QuotaDefinition],
             False,
         ),
         (
-            NewQuotaSuspensionParser,
+            QuotaSuspensionParserV2,
             QuotaSuspension,
             "quota.suspension.period",
             [QuotaDefinition],
             False,
         ),
         (
-            NewQuotaBlockingParser,
+            QuotaBlockingParserV2,
             QuotaBlocking,
             "quota.blocking.period",
             [QuotaDefinition],
             False,
         ),
         (
-            NewQuotaEventParser,
+            QuotaEventParserV2,
             QuotaEvent,
             "parent.quota.event",
             [QuotaDefinition],
             False,
         ),
         (
-            NewQuotaBalanceEventParser,
+            QuotaBalanceEventParserV2,
             QuotaEvent,
             "quota.balance.event",
             [QuotaDefinition],
             False,
         ),
         (
-            NewQuotaClosedAndTransferredEventParser,
+            QuotaClosedAndTransferredEventParserV2,
             QuotaEvent,
             "quota.closed.and.transferred.event",
             [QuotaDefinition],
             False,
         ),
         (
-            NewQuotaCriticalEventParser,
+            QuotaCriticalEventParserV2,
             QuotaEvent,
             "quota.critical.event",
             [QuotaDefinition],
             False,
         ),
         (
-            NewQuotaExhaustionEventParser,
+            QuotaExhaustionEventParserV2,
             QuotaEvent,
             "quota.exhaustion.event",
             [QuotaDefinition],
             False,
         ),
         (
-            NewQuotaReopeningEventParser,
+            QuotaReopeningEventParserV2,
             QuotaEvent,
             "quota.reopening.event",
             [QuotaDefinition],
             False,
         ),
         (
-            NewQuotaUnblockingEventParser,
+            QuotaUnblockingEventParserV2,
             QuotaEvent,
             "quota.unblocking.event",
             [QuotaDefinition],
             False,
         ),
         (
-            NewQuotaUnsuspensionEventParser,
+            QuotaUnsuspensionEventParserV2,
             QuotaEvent,
             "quota.unsuspension.event",
             [QuotaDefinition],
@@ -708,49 +702,49 @@ pytestmark = pytest.mark.django_db
         ),
         # Regulations
         (
-            NewRegulationGroupParser,
+            RegulationGroupParserV2,
             Group,
             "regulation.group",
             [],
             False,
         ),
         (
-            NewRegulationGroupDescriptionParser,
+            RegulationGroupDescriptionParserV2,
             Group,
             "regulation.group.description",
             [],
             True,
         ),
         (
-            NewBaseRegulationParser,
+            BaseRegulationParserV2,
             Regulation,
             "base.regulation",
             [],
             False,
         ),
         (
-            NewModificationRegulationParser,
+            ModificationRegulationParserV2,
             Amendment,
             "modification.regulation",
             [],
             False,
         ),
         (
-            NewFullTemporaryStopRegulationParser,
+            FullTemporaryStopRegulationParserV2,
             Suspension,
             "full.temporary.stop.regulation",
             [],
             False,
         ),
         (
-            NewFullTemporaryStopActionParser,
+            FullTemporaryStopActionParserV2,
             Suspension,
             "fts.regulation.action",
             [],
             False,
         ),
         (
-            NewRegulationReplacementParser,
+            RegulationReplacementParserV2,
             Replacement,
             "regulation.replacement",
             [],

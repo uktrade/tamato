@@ -11,7 +11,7 @@ from taric_parsers.parsers.mixins import Writable
 from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
-class NewGeographicalAreaParser(ValidityMixin, Writable, BaseTaricParser):
+class GeographicalAreaParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = GeographicalArea
 
     model_links = [
@@ -51,7 +51,7 @@ class NewGeographicalAreaParser(ValidityMixin, Writable, BaseTaricParser):
     parent__sid: int = None
 
 
-class NewGeographicalAreaDescriptionParser(Writable, BaseTaricParser):
+class GeographicalAreaDescriptionParserV2(Writable, BaseTaricParser):
     model = GeographicalAreaDescription
 
     model_links = [
@@ -90,13 +90,13 @@ class NewGeographicalAreaDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewGeographicalAreaDescriptionPeriodParser(
+class GeographicalAreaDescriptionPeriodParserV2(
     Writable,
     BaseTaricParser,
     ChildPeriod,
 ):
     model = GeographicalAreaDescription
-    parent_parser = NewGeographicalAreaDescriptionParser
+    parent_parser = GeographicalAreaDescriptionParserV2
 
     model_links = [
         ModelLink(
@@ -139,7 +139,7 @@ class NewGeographicalAreaDescriptionPeriodParser(
     validity_start: date = None
 
 
-class NewGeographicalMembershipParser(ValidityMixin, Writable, BaseTaricParser):
+class GeographicalMembershipParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = GeographicalMembership
 
     model_links = [

@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewCertificateDescriptionPeriodParser:
+class TestCertificateDescriptionPeriodParserV2:
     """
     Example XML:
 
@@ -30,7 +30,7 @@ class TestNewCertificateDescriptionPeriodParser:
         </xs:element>
     """
 
-    target_parser_class = NewCertificateDescriptionPeriodParser
+    target_parser_class = CertificateDescriptionPeriodParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

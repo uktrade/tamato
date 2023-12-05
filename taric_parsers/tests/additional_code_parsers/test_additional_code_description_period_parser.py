@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewAdditionalCodeDescriptionPeriodParser:
+class TestAdditionalCodeDescriptionPeriodParserV2:
     """
     Example XML:
 
@@ -29,7 +29,7 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
         </xs:element>
     """
 
-    target_parser_class = NewAdditionalCodeDescriptionPeriodParser
+    target_parser_class = AdditionalCodeDescriptionPeriodParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
@@ -132,15 +132,14 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
 
         assert (
             target_message.record_code
-            == NewAdditionalCodeDescriptionPeriodParser.record_code
+            == AdditionalCodeDescriptionPeriodParserV2.record_code
         )
         assert (
             target_message.subrecord_code
-            == NewAdditionalCodeDescriptionPeriodParser.subrecord_code
+            == AdditionalCodeDescriptionPeriodParserV2.subrecord_code
         )
         assert (
-            type(target_message.taric_object)
-            == NewAdditionalCodeDescriptionPeriodParser
+            type(target_message.taric_object) == AdditionalCodeDescriptionPeriodParserV2
         )
 
         target = target_message.taric_object
@@ -154,14 +153,14 @@ class TestNewAdditionalCodeDescriptionPeriodParser:
 
         assert (
             str(importer.issues()[0])
-            == "ERROR: Missing expected child object NewAdditionalCodeTypeDescriptionParser\n  "
+            == "ERROR: Missing expected child object AdditionalCodeTypeDescriptionParserV2\n  "
             "additional.code.type > additional.code.type.description\n  "
             "link_data: {}"
         )
 
         assert (
             str(importer.issues()[1])
-            == "ERROR: Missing expected parent object NewAdditionalCodeDescriptionParser\n"
+            == "ERROR: Missing expected parent object AdditionalCodeDescriptionParserV2\n"
             "  additional.code.description.period > additional.code.description\n"
             "  link_data: {'sid': 5}"
         )

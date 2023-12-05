@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewQuotaOrderNumberOriginExclusionParser:
+class TestQuotaOrderNumberOriginExclusionParserV2:
     """
     Example XML:
 
@@ -26,7 +26,7 @@ class TestNewQuotaOrderNumberOriginExclusionParser:
         </xs:element>
     """
 
-    target_parser_class = NewQuotaOrderNumberOriginExclusionParser
+    target_parser_class = QuotaOrderNumberOriginExclusionParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

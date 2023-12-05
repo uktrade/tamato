@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewGoodsNomenclatureDescriptionParser:
+class TestGoodsNomenclatureDescriptionParserV2:
     """
     Example XML:
 
@@ -32,7 +32,7 @@ class TestNewGoodsNomenclatureDescriptionParser:
         </xs:element>
     """
 
-    target_parser_class = NewGoodsNomenclatureDescriptionParser
+    target_parser_class = GoodsNomenclatureDescriptionParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
@@ -155,7 +155,7 @@ class TestNewGoodsNomenclatureDescriptionParser:
 
         assert len(importer.issues()) == 1
         assert (
-            "Missing expected child object NewGoodsNomenclatureDescriptionPeriodParser"
+            "Missing expected child object GoodsNomenclatureDescriptionPeriodParserV2"
             in str(importer.issues()[0])
         )
         assert (

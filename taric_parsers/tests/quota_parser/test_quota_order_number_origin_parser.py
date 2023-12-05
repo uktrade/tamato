@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewQuotaOrderNumberOriginParser:
+class TestQuotaOrderNumberOriginParserV2:
     """
     Example XML:
 
@@ -32,7 +32,7 @@ class TestNewQuotaOrderNumberOriginParser:
         </xs:element>
     """
 
-    target_parser_class = NewQuotaOrderNumberOriginParser
+    target_parser_class = QuotaOrderNumberOriginParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

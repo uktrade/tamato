@@ -12,7 +12,7 @@ from taric_parsers.parsers.mixins import Writable
 from taric_parsers.parsers.taric_parser import BaseTaricParser
 
 
-class NewRegulationGroupParser(ValidityMixin, Writable, BaseTaricParser):
+class RegulationGroupParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = Group
 
     record_code = "150"
@@ -39,9 +39,9 @@ class NewRegulationGroupParser(ValidityMixin, Writable, BaseTaricParser):
     valid_between_upper: date = None
 
 
-class NewRegulationGroupDescriptionParser(Writable, BaseTaricParser):
+class RegulationGroupDescriptionParserV2(Writable, BaseTaricParser):
     model = Group
-    parent_parser = NewRegulationGroupParser
+    parent_parser = RegulationGroupParserV2
 
     model_links = [
         ModelLink(
@@ -71,7 +71,7 @@ class NewRegulationGroupDescriptionParser(Writable, BaseTaricParser):
     description: str = None
 
 
-class NewBaseRegulationParser(ValidityMixin, Writable, BaseTaricParser):
+class BaseRegulationParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = Regulation
 
     model_links = [
@@ -123,7 +123,7 @@ class NewBaseRegulationParser(ValidityMixin, Writable, BaseTaricParser):
     approved: bool = None
 
 
-class NewModificationRegulationParser(ValidityMixin, Writable, BaseTaricParser):
+class ModificationRegulationParserV2(ValidityMixin, Writable, BaseTaricParser):
     model = Amendment
 
     record_code = "290"
@@ -171,7 +171,7 @@ class NewModificationRegulationParser(ValidityMixin, Writable, BaseTaricParser):
     enacting_regulation__approved: bool = None
 
 
-class NewFullTemporaryStopRegulationParser(
+class FullTemporaryStopRegulationParserV2(
     ValidityMixin,
     Writable,
     BaseTaricParser,
@@ -217,7 +217,7 @@ class NewFullTemporaryStopRegulationParser(
     enacting_regulation__approved: bool = None
 
 
-class NewFullTemporaryStopActionParser(Writable, BaseTaricParser):
+class FullTemporaryStopActionParserV2(Writable, BaseTaricParser):
     model = Suspension
 
     model_links = [
@@ -264,7 +264,7 @@ class NewFullTemporaryStopActionParser(Writable, BaseTaricParser):
     target_regulation__regulation_id: str = None
 
 
-class NewRegulationReplacementParser(Writable, BaseTaricParser):
+class RegulationReplacementParserV2(Writable, BaseTaricParser):
     model = Replacement
 
     model_links = [

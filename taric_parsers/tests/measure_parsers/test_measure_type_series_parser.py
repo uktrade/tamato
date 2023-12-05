@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewMeasureTypeSeriesParser:
+class TestMeasureTypeSeriesParserV2:
     """
     Example XML:
 
@@ -28,7 +28,7 @@ class TestNewMeasureTypeSeriesParser:
         </xs:element>
     """
 
-    target_parser_class = NewMeasureTypeSeriesParser
+    target_parser_class = MeasureTypeSeriesParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
@@ -123,7 +123,7 @@ class TestNewMeasureTypeSeriesParser:
         issue_error_str = str(importer.issues()[0])
 
         assert (
-            "ERROR: Missing expected child object NewMeasureTypeSeriesDescriptionParser"
+            "ERROR: Missing expected child object MeasureTypeSeriesDescriptionParserV2"
             in issue_error_str
         )
         assert (

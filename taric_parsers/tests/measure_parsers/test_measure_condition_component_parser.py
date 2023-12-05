@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewMeasureConditionComponentParser:
+class TestMeasureConditionComponentParserV2:
     """
     Example XML:
 
@@ -29,7 +29,7 @@ class TestNewMeasureConditionComponentParser:
         </xs:element>
     """
 
-    target_parser_class = NewMeasureConditionComponentParser
+    target_parser_class = MeasureConditionComponentParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

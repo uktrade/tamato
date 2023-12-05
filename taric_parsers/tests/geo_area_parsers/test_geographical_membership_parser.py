@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewGeographicalMembershipParser:
+class TestGeographicalMembershipParserV2:
     """
     Example XML:
 
@@ -29,7 +29,7 @@ class TestNewGeographicalMembershipParser:
         </xs:element>
     """
 
-    target_parser_class = NewGeographicalMembershipParser
+    target_parser_class = GeographicalMembershipParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

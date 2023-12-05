@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewMeasureActionDescriptionParser:
+class TestMeasureActionDescriptionParserV2:
     """
     Example XML:
 
@@ -26,7 +26,7 @@ class TestNewMeasureActionDescriptionParser:
         </xs:element>
     """
 
-    target_parser_class = NewMeasureActionDescriptionParser
+    target_parser_class = MeasureActionDescriptionParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {

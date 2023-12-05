@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-class TestNewFullTemporaryStopActionParser:
+class TestFullTemporaryStopActionParserV2:
     """
     Example XML:
 
@@ -27,7 +27,7 @@ class TestNewFullTemporaryStopActionParser:
         </xs:element>
     """
 
-    target_parser_class = NewFullTemporaryStopActionParser
+    target_parser_class = FullTemporaryStopActionParserV2
 
     def test_it_handles_population_from_expected_data_structure(self):
         expected_data_example = {
