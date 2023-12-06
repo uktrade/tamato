@@ -984,6 +984,6 @@ def run_batch(
 
     parse_and_import.delay(
         chunk_pk=import_batch.chunks.first().pk,
-        workbasket_title="",
+        workbasket_title=workbasket_title,
         username=username,
     )

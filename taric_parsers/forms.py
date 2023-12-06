@@ -116,7 +116,7 @@ class UploadTaricForm(TaricParserFormMixin, forms.ModelForm):
             import_batch,
             user,
             record_group=record_group,
-            workbasket_title=f"Data Import {self.cleaned_data['name']}",
+            workbasket_title=f"Import for {self.cleaned_data['name']}",
         )
 
         if chunk_count < 1:
