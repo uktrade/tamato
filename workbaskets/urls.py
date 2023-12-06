@@ -77,6 +77,11 @@ ui_patterns = [
         name="workbasket-ui-review-geo-areas",
     ),
     path(
+        f"<pk>/review-geographical-memberships/",
+        ui_views.WorkBasketReviewGeoMembershipsView.as_view(),
+        name="workbasket-ui-review-geo-memberships",
+    ),
+    path(
         f"<pk>/review-measures/",
         ui_views.WorkBasketReviewMeasuresView.as_view(),
         name="workbasket-ui-review-measures",
@@ -85,6 +90,11 @@ ui_patterns = [
         f"<pk>/review-quotas/",
         ui_views.WorkBasketReviewQuotasView.as_view(),
         name="workbasket-ui-review-quotas",
+    ),
+    path(
+        f"<pk>/review-quota-definitions/",
+        ui_views.WorkBasketReviewQuotaDefinitionsView.as_view(),
+        name="workbasket-ui-review-quota-definitions",
     ),
     path(
         f"<pk>/review-regulations/",

@@ -1,0 +1,45 @@
+{% set table_rows = [] %}
+{% for obj in object_list %}
+  {% set definition_link %}
+    <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
+      {{ obj.sid }}
+    </a>
+  {% endset %}
+
+  {% set order_number_link %}
+    <a class="govuk-link" href="{{ obj.order_number.get_url() or "#" }}">
+      {{ obj.order_number.order_number }}
+    </a>
+  {% endset %}
+
+  {{ table_rows.append([
+    {"html": definition_link},
+    {"text": obj.description if obj.description else "-"},
+    {"text": intcomma(obj.initial_volume)},
+    {"text": intcomma(obj.volume)},
+    {"text": obj.measurement_unit.abbreviation|title},
+    {"text": obj.quota_critical_threshold ~ "%"},
+    {"text": "Yes" if obj.quota_critical else "No"},
+    {"html": order_number_link},
+    {"text": "{:%d %b %Y}".format(obj.valid_between.lower)},
+    {"text": "{:%d %b %Y}".format(obj.valid_between.upper) if obj.valid_between.upper else "-"},
+    {"text": workbasket.get_status_display()},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "ID"},
+    {"text": "Description"},
+    {"text": "Initial volume"},
+    {"text": "Volume"},
+    {"text": "Measurement unit"},
+    {"text": "Critical threshold"},
+    {"text": "Critical state"},
+    {"text": "Order number"},
+    {"text": "Start date"},
+    {"text": "End date"},
+    {"text": "Status"}
+  ],
+  "rows": table_rows
+}) }}
