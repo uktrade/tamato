@@ -89,8 +89,8 @@ class AdditionalCodeCreateBaseForm(ValidityPeriodForm):
     type = forms.ModelChoiceField(
         label="Additional code type",
         help_text=(
-            "Selecting the right additional code type will determine whether "
-            "it can be associated with measures, commodity codes, or both"
+            "The additional code type will determine whether it can be "
+            "associated with measures, commodity codes, or both."
         ),
         queryset=models.AdditionalCodeType.objects.latest_approved(),
         empty_label="Select an additional code type",
@@ -98,8 +98,8 @@ class AdditionalCodeCreateBaseForm(ValidityPeriodForm):
     code = forms.CharField(
         label="Additional code ID",
         help_text=(
-            "Must be 3 numeric characters and form a unique combination with "
-            "the additional code type"
+            "The ID must be 3 numeric characters which form a unique combination with "
+            "the additional code type."
         ),
         validators=[additional_code_validator],
     )
@@ -121,8 +121,8 @@ class AdditionalCodeCreateForm(AdditionalCodeCreateBaseForm):
     description = forms.CharField(
         label="Additional code description",
         help_text=(
-            "You may enter HTML formatting if required. See the guide below "
-            "for more information."
+            "You can use HTML formatting if required. See the help text "
+            "below for more information."
         ),
         widget=forms.Textarea,
     )
