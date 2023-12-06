@@ -468,20 +468,14 @@ class WorkBasketDetailView(PermissionRequiredMixin, DetailView):
     permission_required = "workbaskets.view_workbasket"
 
 
-class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
+class WorkBasketChangesView(PermissionRequiredMixin, FormView):
     """UI endpoint for viewing changes in a workbasket."""
 
     permission_required = "workbaskets.view_workbasket"
     template_name = "workbaskets/changes.jinja"
     form_class = forms.SelectableObjectsForm
-    paginate_by = 50
+    paginate_by = 100
 
-    sort_by_fields = ["component", "action", "activity_date"]
-    custom_sorting = {
-        "component": "polymorphic_ctype",
-        "action": "update_type",
-        "activity_date": "transaction__updated_at",
-    }
     form_action_redirect_map = {
         "remove-selected": "workbaskets:workbasket-ui-changes-delete",
         "remove-all": "workbaskets:workbasket-ui-changes-delete",
@@ -504,16 +498,9 @@ class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
         )
 
     def get_queryset(self):
-        queryset = self.paginator.object_list
-        page_number = int(self.request.GET.get("page", 1))
-        items_per_page = page_number * self.paginate_by
-
-        ordering = self.get_ordering()
-        if ordering:
-            ordering = (ordering, "transaction")
-            return queryset.order_by(*ordering)[:items_per_page]
-        else:
-            return queryset[:items_per_page]
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        queryset = page.object_list
+        return queryset
 
     def get_initial(self):
         store = SessionStore(
@@ -542,6 +529,7 @@ class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "paginator": self.paginator,
                 "user_can_delete_items": user_can_delete_items,
                 "user_can_delete_workbasket": user_can_delete_workbasket,
             },
@@ -559,12 +547,7 @@ class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
         elif form_action == "page-next":
             page_number = page.next_page_number()
 
-        sort_by = self.request.GET.get("sort_by", None)
-        ordered = self.request.GET.get("ordered", None)
-        if sort_by and ordered:
-            return f"{url}?page={page_number}&sort_by={sort_by}&ordered={ordered}"
-        else:
-            return f"{url}?page={page_number}"
+        return f"{url}?page={page_number}"
 
     def form_valid(self, form):
         store = SessionStore(
@@ -660,10 +643,9 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
         session_store.add_items(to_add)
 
     def get_queryset(self):
-        queryset = self.paginator.object_list
-        page_number = int(self.request.GET.get("page", 1))
-        items_per_page = page_number * self.paginate_by
-        return queryset[:items_per_page]
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        queryset = page.object_list
+        return queryset
 
     def get_initial(self):
         return self.session_store.data.copy()
@@ -684,6 +666,7 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "paginator": self.paginator,
                 "user_can_move_transactions": user_can_move_transactions,
                 "first_transaction_in_workbasket": self.first_transaction_in_workbasket,
                 "last_transaction_in_workbasket": self.last_transaction_in_workbasket,
