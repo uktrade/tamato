@@ -13,13 +13,14 @@
   </div>
 </div>
 <script nonce="{{ request.csp_nonce }}">
-  var originsErrors = {
+  {# data used by react form component: common/static/common/js/components/QuotaOriginFormset/index.js #}
+  const originsErrors = {
     {% for k, errorlist in errors.as_data().items() %}
       "{{ k }}": "{% for errors in errorlist %}{% for error in errors %}{{ error|safe }}{% if not loop.last %}\n{% endif %}{% endfor %}{% endfor %}",
     {% endfor %}
   };
-  var originsData = {{origins_initial|safe}};
-  var geoAreasOptions = [
+  const originsData = {{origins_initial|safe}};
+  const geoAreasOptions = [
     {"name": "", "value": ""},
     {% for geo_area in geo_area_options %}
     {

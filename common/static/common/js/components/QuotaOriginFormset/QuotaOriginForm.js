@@ -6,6 +6,8 @@ import { DateField, Fieldset, Select } from 'govuk-react'
 function QuotaOriginForm({ origin, options, index, removeOrigin }) {
     const [data, setData] = useState({ ...origin });
 
+    // originsErrors are errors raised by django. see template quotas/jinja2/includes/quotas/quota-edit-origins.jinja
+
     return (
         <div>
             <h3 className="govuk-heading-m">Origin {index + 1}</h3>

@@ -4,7 +4,7 @@ import React from 'react';
 import { QuotaOriginForm } from './QuotaOriginForm'
 
 
-function QuotaOrigins({ data, options }) {
+function QuotaOriginFormset({ data, options }) {
     const [origins, setOrigins] = useState([...data]);
     const emptyOrigin = {
         "exclusions": [
@@ -48,14 +48,15 @@ function init() {
     const originsContainer = document.getElementById("quota_origins");
     const root = createRoot(originsContainer);
     const origins = [...originsData];
+    // originsData and geoAreasOptions come from template quotas/jinja2/includes/quotas/quota-edit-origins.jinja
     console.log(origins)
     root.render(
-        <QuotaOrigins data={origins} options={geoAreasOptions} />
+        <QuotaOriginFormset data={origins} options={geoAreasOptions} />
     );
 }
 
-function setupQuotaUpdateForm() {
+function setupQuotaOriginFormset() {
     document.addEventListener('DOMContentLoaded', init())
 }
 
-export { setupQuotaUpdateForm };
+export { setupQuotaOriginFormset };

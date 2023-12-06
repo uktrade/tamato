@@ -13,7 +13,7 @@ import initConditionalMeasureConditions from './conditionalMeasureConditions';
 import initFilterDisabledToggleForComCode from './conditionalDisablingFilters'
 import initOpenCloseAccordionSection from './openCloseAccordion';
 import initTapDebounce from './buttonDebounce';
-import { setupQuotaUpdateForm } from './quotaUpdateForm';
+import { setupQuotaOriginFormset } from './components/QuotaOriginFormset/index';
 
 
 showHideCheckboxes();
@@ -30,4 +30,4 @@ initAutocompleteProgressiveEnhancement();
 initFilterDisabledToggleForComCode();
 initOpenCloseAccordionSection();
 initTapDebounce();
-setupQuotaUpdateForm();
+setupQuotaOriginFormset();
