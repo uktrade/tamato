@@ -473,50 +473,78 @@ def test_measure_forms_geo_area_invalid_data_error_messages(data, error, erga_om
         assert error in form.errors["geo_area"]
 
 
-def test_measure_geographical_area_form_quota_order_number(date_ranges):
-    """Tests that `MeasureGeographicalAreaForm` sets `cleaned_data` with
-    geographical data from quota order number if one is passed in `kwargs`."""
+def test_measure_quota_origins_form_cleaned_data(date_ranges):
+    """Tests that `MeasureQuotaOriginsForm` uses geographical data from selected
+    quota origins to set cleaned_data."""
+
     old_origin = factories.QuotaOrderNumberOriginFactory.create(
         valid_between=date_ranges.earlier,
     )
+
     order_number = old_origin.order_number
 
-    new_origin_1 = factories.QuotaOrderNumberOriginFactory.create(
+    active_origin = factories.QuotaOrderNumberOriginFactory.create(
         order_number=order_number,
+        valid_between=date_ranges.normal,
     )
-    new_origin_2 = factories.QuotaOrderNumberOriginFactory.create(
+
+    future_origin = factories.QuotaOrderNumberOriginFactory.create(
         order_number=order_number,
+        valid_between=date_ranges.later,
     )
-    new_origin_1_exclusions = (
+    future_origin_exclusions = (
         factories.QuotaOrderNumberOriginExclusionFactory.create_batch(
             2,
-            origin=new_origin_1,
+            origin=future_origin,
         )
     )
 
+    form_data = {
+        f"selectableobject_{old_origin.pk}": False,
+        f"selectableobject_{active_origin.pk}": True,
+        f"selectableobject_{future_origin.pk}": True,
+    }
+
     with override_current_transaction(Transaction.objects.last()):
-        form = forms.MeasureGeographicalAreaForm(
-            data={},
-            initial={},
-            order_number=order_number,
-            prefix=GEO_AREA_FORM_PREFIX,
+        form = forms.MeasureQuotaOriginsForm(
+            objects=[old_origin, active_origin, future_origin],
+            data=form_data,
         )
         assert form.is_valid()
 
         expected_cleaned_data = [
             {
-                "geo_area": new_origin_1.geographical_area,
-                "exclusions": set(new_origin_1.excluded_areas.all()),
+                "geo_area": active_origin.geographical_area,
+                "exclusions": set(),
             },
             {
-                "geo_area": new_origin_2.geographical_area,
-                "exclusions": set(),
+                "geo_area": future_origin.geographical_area,
+                "exclusions": set(future_origin.excluded_areas.all()),
             },
         ]
 
         for data in form.cleaned_data["geo_areas_and_exclusions"]:
             data["exclusions"] = set(data["exclusions"])
             assert data in expected_cleaned_data
+
+
+def test_measure_quota_origins_form_selection_required():
+    """Tests that `MeasureQuotaOriginsForm` requires at least one or more quota
+    origins to be selected."""
+
+    origin = factories.QuotaOrderNumberOriginFactory.create()
+
+    form_data = {
+        f"selectableobject_{origin.pk}": False,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureQuotaOriginsForm(
+            objects=[origin],
+            data=form_data,
+        )
+        assert not form.is_valid()
+        assert "Select one or more quota origins" in form.errors["__all__"]
 
 
 def test_measure_forms_details_invalid_data():
