@@ -39,6 +39,7 @@ from common.models.transactions import TransactionPartition
 from common.util import format_date_string
 from common.views import SortingMixin
 from common.views import WithPaginationListView
+from common.views import build_pagination_list
 from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -531,6 +532,10 @@ class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
         user_can_delete_items = (
             self.request.user.is_superuser
             or self.request.user.has_perm("workbaskets.change_workbasket")
@@ -543,6 +548,7 @@ class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "page_links": page_links,
                 "paginator": self.paginator,
                 "user_can_delete_items": user_can_delete_items,
                 "user_can_delete_workbasket": user_can_delete_workbasket,
@@ -677,6 +683,10 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
         user_can_move_transactions = (
             self.request.user.is_superuser
             or self.request.user.has_perm("workbaskets.change_workbasket")
@@ -685,6 +695,7 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "page_links": page_links,
                 "paginator": self.paginator,
                 "user_can_move_transactions": user_can_move_transactions,
                 "first_transaction_in_workbasket": self.first_transaction_in_workbasket,
