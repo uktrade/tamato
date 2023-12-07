@@ -3,8 +3,6 @@ from typing import Optional
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import OuterRef
-from django.db.models import Subquery
 from django.urls import NoReverseMatch
 from django.urls import reverse
 from polymorphic.managers import PolymorphicManager
@@ -17,75 +15,12 @@ from common.fields import SignedIntSID
 from common.models import TrackedModel
 from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
-from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.utils import GetTabURLMixin
 from common.validators import UpdateType
 from quotas import business_rules
 from quotas import querysets
 from quotas import validators
 from workbaskets.validators import WorkflowStatus
-
-
-class QuotaOrderNumberOriginQuerySet(TrackedModelQuerySet):
-    def with_latest_geo_area_description(qs):
-        """
-        Returns a QuotaOrderNumberOrigin queryset annotated with the latest
-        result of a GeographicalAreaDescription subquery's description value,
-        linking these two queries on version_group field.
-
-        Where an area has multiple current descriptions, the description with
-        the latest validity_start date is used.
-
-        See also with_latest_geo_area_description method on
-        GeographicalAreaQuerySet
-        """
-        from geo_areas.models import GeographicalAreaDescription
-
-        current_descriptions = (
-            GeographicalAreaDescription.objects.current()
-            .filter(
-                described_geographicalarea__version_group=OuterRef(
-                    "geographical_area__version_group",
-                ),
-            )
-            .order_by("-validity_start")
-        )
-        return qs.annotate(
-            geo_area_description=Subquery(
-                current_descriptions.values("description")[:1],
-            ),
-        )
-
-
-class QuotaOrderNumberOriginExclusionQuerySet(TrackedModelQuerySet):
-    def with_latest_geo_area_description(qs):
-        """
-        Returns a QuotaOrderNumberOriginExclusion queryset annotated with the
-        latest result of a GeographicalAreaDescription subquery's description
-        value, linking these two queries on version_group field.
-
-        Where an area has multiple current descriptions, the description with
-        the latest validity_start date is used.
-
-        See also with_latest_geo_area_description method on
-        GeographicalAreaQuerySet
-        """
-        from geo_areas.models import GeographicalAreaDescription
-
-        current_descriptions = (
-            GeographicalAreaDescription.objects.current()
-            .filter(
-                described_geographicalarea__version_group=OuterRef(
-                    "excluded_geographical_area__version_group",
-                ),
-            )
-            .order_by("-validity_start")
-        )
-        return qs.annotate(
-            geo_area_description=Subquery(
-                current_descriptions.values("description")[:1],
-            ),
-        )
 
 
 class QuotaOrderNumber(TrackedModel, ValidityMixin):
@@ -209,7 +144,9 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     url_suffix = ""
     url_relation_field = "order_number"
 
-    objects = PolymorphicManager.from_queryset(QuotaOrderNumberOriginQuerySet)()
+    objects = PolymorphicManager.from_queryset(
+        querysets.QuotaOrderNumberOriginQuerySet,
+    )()
 
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
@@ -304,7 +241,7 @@ class QuotaOrderNumberOriginExclusion(GetTabURLMixin, TrackedModel):
     subrecord_code = "15"
 
     objects = PolymorphicManager.from_queryset(
-        QuotaOrderNumberOriginExclusionQuerySet,
+        querysets.QuotaOrderNumberOriginExclusionQuerySet,
     )()
 
     origin = models.ForeignKey(QuotaOrderNumberOrigin, on_delete=models.PROTECT)
