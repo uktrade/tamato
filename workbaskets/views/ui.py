@@ -468,7 +468,7 @@ class WorkBasketDetailView(PermissionRequiredMixin, DetailView):
     permission_required = "workbaskets.view_workbasket"
 
 
-class WorkBasketChangesView(PermissionRequiredMixin, FormView):
+class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
     """UI endpoint for viewing changes in a workbasket."""
 
     permission_required = "workbaskets.view_workbasket"
@@ -483,6 +483,13 @@ class WorkBasketChangesView(PermissionRequiredMixin, FormView):
         "page-next": "workbaskets:workbasket-ui-changes",
     }
 
+    sort_by_fields = ["component", "action", "activity_date"]
+    custom_sorting = {
+        "component": "polymorphic_ctype",
+        "action": "update_type",
+        "activity_date": "transaction__updated_at",
+    }
+
     @cached_property
     def workbasket(self):
         return WorkBasket.objects.get(pk=self.kwargs["pk"])
@@ -490,17 +497,23 @@ class WorkBasketChangesView(PermissionRequiredMixin, FormView):
     @property
     def paginator(self):
         return Paginator(
-            self.workbasket.tracked_models.with_transactions_and_models().order_by(
-                "transaction__order",
-                "pk",
-            ),
+            self.get_queryset(),
             per_page=self.paginate_by,
         )
 
     def get_queryset(self):
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        queryset = page.object_list
-        return queryset
+        queryset = (
+            self.workbasket.tracked_models.with_transactions_and_models().order_by(
+                "transaction__order",
+                "pk",
+            )
+        )
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering, "transaction")
+            return queryset.order_by(*ordering)
+        else:
+            return queryset
 
     def get_initial(self):
         store = SessionStore(
@@ -511,7 +524,8 @@ class WorkBasketChangesView(PermissionRequiredMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["objects"] = self.get_queryset()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -547,7 +561,12 @@ class WorkBasketChangesView(PermissionRequiredMixin, FormView):
         elif form_action == "page-next":
             page_number = page.next_page_number()
 
-        return f"{url}?page={page_number}"
+        sort_by = self.request.GET.get("sort_by", None)
+        ordered = self.request.GET.get("ordered", None)
+        if sort_by and ordered:
+            return f"{url}?page={page_number}&sort_by={sort_by}&ordered={ordered}"
+        else:
+            return f"{url}?page={page_number}"
 
     def form_valid(self, form):
         store = SessionStore(

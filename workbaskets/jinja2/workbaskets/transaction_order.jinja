@@ -133,7 +133,7 @@
 
     {% else %}
       {% set table_rows = [] %}
-      {% for transaction in view.get_queryset() %}
+      {% for transaction in page_obj.object_list %}
         {% set transaction_detail %}
           <span class="details">Transaction: {{ transaction.pk }}</span>
         {% endset %}
