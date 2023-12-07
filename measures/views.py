@@ -745,7 +745,7 @@ class MeasureCreateWizard(
             "link_text": "Quota order number",
         },
         QUOTA_ORIGINS: {
-            "title": "Select the quota origin",
+            "title": "Select the quota origins",
             "link_text": "Quota origins",
         },
         GEOGRAPHICAL_AREA: {

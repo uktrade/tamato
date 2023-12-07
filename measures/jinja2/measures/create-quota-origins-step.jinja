@@ -9,6 +9,8 @@
     "text": "The geographical areas are determined by the quota you entered on the previous page. If the geographical areas are incorrect, you will need to edit the quota. You will then need to re-enter the quota to reflect the changes."
   }) }}
 
+  <p class="govuk-body">Select the quota origins that apply to the measure.</p>
+
   {% set table_rows = [] %}
   {% for field in form %}
     {% set checkbox = checkbox_item(field) %}
@@ -24,8 +26,7 @@
 
     {% set exclusions %}
       {% for exclusion in origin.excluded_areas.current() %}
-        {{ exclusion.area_id }} - {{ exclusion.get_description().description }}
-        {% if not loop.last %}, {% endif %}
+        {{ exclusion.area_id }} - {{ exclusion.get_description().description }}{% if not loop.last %}, {% endif %}
       {% endfor %}
     {% endset %}
 
@@ -40,13 +41,11 @@
   {% endfor %}
 
   {{ govukTable({
-    "caption": "Quota origins",
-    "captionClasses": "govuk-table__caption--m",
     "head": [
       {"text": "Checkbox", "classes": "govuk-visually-hidden"},
       {"text": "Quota ID"},
       {"text": "Geographical area"},
-      {"text": "Geographical area exclusions"},
+      {"text": "Geographical area exclusions", "classes": "govuk-!-width-one-third"},
       {"text": "Start date"},
       {"text": "End date"},
     ],
