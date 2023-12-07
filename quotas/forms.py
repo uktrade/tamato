@@ -167,6 +167,7 @@ class QuotaUpdateForm(
     def get_origins_initial(self):
         initial = [
             {
+                "id": o.pk,
                 "geographical_area": o.geographical_area.pk,
                 "start_date_0": o.valid_between.lower.day,
                 "start_date_1": o.valid_between.lower.month,

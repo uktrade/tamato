@@ -37,7 +37,7 @@ function QuotaOriginFormset({ data, options }) {
     return (
         <div aria-live="polite">
             {origins.map((origin, i) =>
-                <QuotaOriginForm origin={origin} options={options} index={i} removeOrigin={removeOrigin} />
+                <QuotaOriginForm origin={origin} key={origin.id} options={options} index={i} removeOrigin={removeOrigin} />
             )}
             <button onClick={addEmptyOrigin.bind(this)} className="govuk-button govuk-button--secondary">Add another</button>
         </div>
@@ -49,7 +49,6 @@ function init() {
     const root = createRoot(originsContainer);
     const origins = [...originsData];
     // originsData and geoAreasOptions come from template quotas/jinja2/includes/quotas/quota-edit-origins.jinja
-    console.log(origins)
     root.render(
         <QuotaOriginFormset data={origins} options={geoAreasOptions} />
     );
