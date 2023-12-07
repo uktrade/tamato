@@ -477,7 +477,7 @@ def test_measure_quota_origins_form_cleaned_data(date_ranges):
     """Tests that `MeasureQuotaOriginsForm` uses geographical data from selected
     quota origins to set cleaned_data."""
 
-    old_origin = active_origin = factories.QuotaOrderNumberOriginFactory.create(
+    old_origin = factories.QuotaOrderNumberOriginFactory.create(
         valid_between=date_ranges.earlier,
     )
 
