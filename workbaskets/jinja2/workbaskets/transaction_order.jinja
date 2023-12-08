@@ -8,6 +8,8 @@
 
 {% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
 
+{% set items_name = "transactions" %}
+
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
       {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
@@ -133,7 +135,7 @@
 
     {% else %}
       {% set table_rows = [] %}
-      {% for transaction in view.get_queryset() %}
+      {% for transaction in page_obj.object_list %}
         {% set transaction_detail %}
           <span class="details">Transaction: {{ transaction.pk }}</span>
         {% endset %}

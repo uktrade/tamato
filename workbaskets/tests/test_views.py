@@ -1365,6 +1365,46 @@ def test_workbasket_changes_view_pagination(
         assert len(rows) == expected_item_count
 
 
+@pytest.mark.parametrize(
+    ("ordering_param", "expected_ordering"),
+    [
+        ("?sort_by=component&ordered=asc", "polymorphic_ctype"),
+        ("?sort_by=component&ordered=desc", "-polymorphic_ctype"),
+        ("?sort_by=action&ordered=asc", "update_type"),
+        ("?sort_by=action&ordered=desc", "-update_type"),
+        ("?sort_by=activity_date&ordered=asc", "transaction__updated_up"),
+        ("?sort_by=activity_date&ordered=desc", "-transaction__updated_up"),
+    ],
+)
+def test_workbasket_changes_view_sort_by_queryset(ordering_param, expected_ordering):
+    """Tests that `WorkBasketChangesView` orders queryset according to `sort_by`
+    and `ordered` GET request URL params."""
+
+    additional_code_type = factories.AdditionalCodeTypeFactory.create()
+    workbasket = factories.WorkBasketFactory.create()
+    additional_code = factories.AdditionalCodeFactory.create(
+        type=additional_code_type,
+        transaction=workbasket.new_transaction(),
+    )
+    additional_code_description = factories.AdditionalCodeDescriptionFactory.create(
+        described_additionalcode=additional_code,
+        transaction=workbasket.new_transaction(),
+    )
+    additional_code.new_version(
+        update_type=UpdateType.DELETE,
+        workbasket=workbasket,
+        transaction=workbasket.new_transaction(),
+    )
+
+    request = RequestFactory()
+    url = reverse("workbaskets:workbasket-ui-changes", kwargs={"pk": workbasket.pk})
+    get_request = request.get(url + ordering_param)
+    view = ui.WorkBasketChangesView(request=get_request, kwargs={"pk": workbasket.pk})
+    assert list(view.get_queryset()) == list(
+        workbasket.tracked_models.order_by(expected_ordering, "transaction"),
+    )
+
+
 def test_workbasket_changes_view_remove_selected(valid_user_client):
     """Tests that items in a workbasket can be selected and removed on
     `WorkBasketChangesView`."""

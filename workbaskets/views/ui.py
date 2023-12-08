@@ -39,6 +39,7 @@ from common.models.transactions import TransactionPartition
 from common.util import format_date_string
 from common.views import SortingMixin
 from common.views import WithPaginationListView
+from common.views import build_pagination_list
 from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -468,7 +469,7 @@ class WorkBasketDetailView(PermissionRequiredMixin, DetailView):
     permission_required = "workbaskets.view_workbasket"
 
 
-class WorkBasketChangesView(PermissionRequiredMixin, FormView):
+class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
     """UI endpoint for viewing changes in a workbasket."""
 
     permission_required = "workbaskets.view_workbasket"
@@ -483,6 +484,13 @@ class WorkBasketChangesView(PermissionRequiredMixin, FormView):
         "page-next": "workbaskets:workbasket-ui-changes",
     }
 
+    sort_by_fields = ["component", "action", "activity_date"]
+    custom_sorting = {
+        "component": "polymorphic_ctype",
+        "action": "update_type",
+        "activity_date": "transaction__updated_at",
+    }
+
     @cached_property
     def workbasket(self):
         return WorkBasket.objects.get(pk=self.kwargs["pk"])
@@ -490,17 +498,23 @@ class WorkBasketChangesView(PermissionRequiredMixin, FormView):
     @property
     def paginator(self):
         return Paginator(
-            self.workbasket.tracked_models.with_transactions_and_models().order_by(
-                "transaction__order",
-                "pk",
-            ),
+            self.get_queryset(),
             per_page=self.paginate_by,
         )
 
     def get_queryset(self):
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        queryset = page.object_list
-        return queryset
+        queryset = (
+            self.workbasket.tracked_models.with_transactions_and_models().order_by(
+                "transaction__order",
+                "pk",
+            )
+        )
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering, "transaction")
+            return queryset.order_by(*ordering)
+        else:
+            return queryset
 
     def get_initial(self):
         store = SessionStore(
@@ -511,12 +525,17 @@ class WorkBasketChangesView(PermissionRequiredMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["objects"] = self.get_queryset()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
         user_can_delete_items = (
             self.request.user.is_superuser
             or self.request.user.has_perm("workbaskets.change_workbasket")
@@ -529,6 +548,7 @@ class WorkBasketChangesView(PermissionRequiredMixin, FormView):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "page_links": page_links,
                 "paginator": self.paginator,
                 "user_can_delete_items": user_can_delete_items,
                 "user_can_delete_workbasket": user_can_delete_workbasket,
@@ -547,7 +567,12 @@ class WorkBasketChangesView(PermissionRequiredMixin, FormView):
         elif form_action == "page-next":
             page_number = page.next_page_number()
 
-        return f"{url}?page={page_number}"
+        sort_by = self.request.GET.get("sort_by", None)
+        ordered = self.request.GET.get("ordered", None)
+        if sort_by and ordered:
+            return f"{url}?page={page_number}&sort_by={sort_by}&ordered={ordered}"
+        else:
+            return f"{url}?page={page_number}"
 
     def form_valid(self, form):
         store = SessionStore(
@@ -658,6 +683,10 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
         user_can_move_transactions = (
             self.request.user.is_superuser
             or self.request.user.has_perm("workbaskets.change_workbasket")
@@ -666,6 +695,7 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "page_links": page_links,
                 "paginator": self.paginator,
                 "user_can_move_transactions": user_can_move_transactions,
                 "first_transaction_in_workbasket": self.first_transaction_in_workbasket,
