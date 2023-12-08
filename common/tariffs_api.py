@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 
 import aiohttp
 import requests
+from asgiref.sync import async_to_sync
 
 
 class URLs(Enum):
@@ -104,6 +105,6 @@ def get_quota_definitions_data(order_number, object_list):
 
     urls = build_quota_definition_urls(order_number, object_list)
 
-    data = asyncio.run(async_get_all(urls))
+    data = async_to_sync(async_get_all)(urls)
 
     return serialize_quota_data(data)
