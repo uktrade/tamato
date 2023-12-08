@@ -43,6 +43,8 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
+from measures.conditions import show_step_geographical_area
+from measures.conditions import show_step_quota_origins
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import START
 from measures.constants import MeasureEditSteps
@@ -687,6 +689,7 @@ class MeasureCreateWizard(
     MEASURE_DETAILS = "measure_details"
     REGULATION_ID = "regulation_id"
     QUOTA_ORDER_NUMBER = "quota_order_number"
+    QUOTA_ORIGINS = "quota_origins"
     GEOGRAPHICAL_AREA = "geographical_area"
     COMMODITIES = "commodities"
     ADDITIONAL_CODE = "additional_code"
@@ -700,6 +703,7 @@ class MeasureCreateWizard(
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
         (REGULATION_ID, forms.MeasureRegulationIdForm),
         (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
+        (QUOTA_ORIGINS, forms.MeasureQuotaOriginsForm),
         (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
         (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
@@ -713,7 +717,8 @@ class MeasureCreateWizard(
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
         REGULATION_ID: "measures/create-wizard-step.jinja",
         QUOTA_ORDER_NUMBER: "measures/create-wizard-step.jinja",
-        GEOGRAPHICAL_AREA: "measures/create-geo-areas-formset.jinja",
+        QUOTA_ORIGINS: "measures/create-quota-origins-step.jinja",
+        GEOGRAPHICAL_AREA: "measures/create-wizard-step.jinja",
         COMMODITIES: "measures/create-comm-codes-formset.jinja",
         ADDITIONAL_CODE: "measures/create-wizard-step.jinja",
         CONDITIONS: "measures/create-formset.jinja",
@@ -738,6 +743,10 @@ class MeasureCreateWizard(
         QUOTA_ORDER_NUMBER: {
             "title": "Enter a quota order number (optional)",
             "link_text": "Quota order number",
+        },
+        QUOTA_ORIGINS: {
+            "title": "Select the quota origins",
+            "link_text": "Quota origins",
         },
         GEOGRAPHICAL_AREA: {
             "title": "Select the geographical area",
@@ -770,6 +779,11 @@ class MeasureCreateWizard(
             "title": "Finished",
             "link_text": "Success",
         },
+    }
+
+    condition_dict = {
+        QUOTA_ORIGINS: show_step_quota_origins,
+        GEOGRAPHICAL_AREA: show_step_geographical_area,
     }
 
     @property
@@ -972,6 +986,20 @@ class MeasureCreateWizard(
         return self.cleaned_data[step]
 
     @property
+    def measure_start_date(self):
+        cleaned_data = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
+        measure_start_date = (
+            cleaned_data.get("valid_between").lower if cleaned_data else None
+        )
+        return measure_start_date
+
+    @property
+    def measure_type(self):
+        cleaned_data = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
+        measure_type = cleaned_data.get("measure_type") if cleaned_data else None
+        return measure_type
+
+    @property
     def quota_order_number(self):
         cleaned_data = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBER)
         order_number = cleaned_data.get("order_number") if cleaned_data else None
@@ -984,72 +1012,44 @@ class MeasureCreateWizard(
             context["form"].is_bound = False
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
-
-        if self.steps.current == self.GEOGRAPHICAL_AREA:
-            origins_and_exclusions = None
-            if self.quota_order_number:
-                origins_and_exclusions = [
-                    {
-                        "origin": origin.geographical_area,
-                        "exclusions": list(origin.excluded_areas.current()),
-                    }
-                    for origin in self.quota_order_number.quotaordernumberorigin_set.current().as_at_today_and_beyond()
-                ]
-            context.update(
-                {
-                    "order_number": self.quota_order_number,
-                    "origins_and_exclusions": origins_and_exclusions,
-                },
-            )
-
         return context
 
     def get_form_kwargs(self, step):
         kwargs = {}
-        if step == self.GEOGRAPHICAL_AREA:
-            kwargs["order_number"] = self.quota_order_number
+
+        if step == self.QUOTA_ORIGINS and self.quota_order_number:
+            origins = (
+                self.quota_order_number.quotaordernumberorigin_set.current().as_at_today_and_beyond()
+            )
+            kwargs["objects"] = origins
 
         elif step == self.COMMODITIES:
-            measure_start_date = None
-            measure_type = None
             min_commodity_count = 0
             measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
             if measure_details:
-                measure_start_date = measure_details.get("valid_between").lower
-                measure_type = measure_type = measure_details.get("measure_type")
                 min_commodity_count = measure_details.get("min_commodity_count")
             # Kwargs expected by formset
             kwargs.update(
                 {
                     "min_commodity_count": min_commodity_count,
-                    "measure_start_date": measure_start_date,
+                    "measure_start_date": self.measure_start_date,
                 },
             )
             # Kwargs expected by forms in formset
             kwargs["form_kwargs"] = {
-                "measure_type": measure_type,
+                "measure_type": self.measure_type,
             }
 
         elif step == self.CONDITIONS:
-            measure_start_date = None
-            measure_type = None
-            measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
-            if measure_details:
-                measure_start_date = measure_details.get("valid_between").lower
-                measure_type = measure_details.get("measure_type")
             kwargs["form_kwargs"] = {
-                "measure_start_date": measure_start_date,
-                "measure_type": measure_type,
+                "measure_start_date": self.measure_start_date,
+                "measure_type": self.measure_type,
             }
 
         elif step == self.SUMMARY:
-            measure_details = self.get_cleaned_data_for_step(self.MEASURE_DETAILS)
-            measure_type = (
-                measure_details.get("measure_type") if measure_details else None
-            )
             kwargs.update(
                 {
-                    "measure_type": measure_type,
+                    "measure_type": self.measure_type,
                     "commodities_data": self.get_cleaned_data_for_step(
                         self.COMMODITIES,
                     ),

@@ -3,20 +3,22 @@
 
 {% set description_html %}
   <p class="govuk-body">
-    It is possible to use HTML when defining descriptions. The table below shows 
-    a few examples of useful codes that you may want to use. Please use HTML sparingly and only where 
+    HTML formatting can be used to display a link or other formatted text in downstream applications
+    such as the Online Tariff Tool.
+    The table below shows
+    a few examples of HTML tags that you may want to use. Please use HTML sparingly and only where
     absolutely necessary.
   </p>
   {{ govukTable({
     "head": [
-      {"text": "Code(s)"},
+      {"text": "HTML tag"},
       {"text": "Usage"},
       {"text": "Example", "classes": "govuk-!-width-one-third"},
     ],
     "rows": [[
       {"text": "<b></b>"},
       {"text": "Make a piece of content bold. It is preferable to use the tag pair <strong></strong> instead of <b></b>, however many of the Taric descriptions already use standard bold tags."},
-      {"html": "This is " ~ '<b>bold</b>'|e ~ " content <br> becomes <br> This is <b>bold<b> content"},
+      {"html": "This is " ~ '<b>bold</b>'|e ~ " content <br> becomes <br> This is <b>bold</b> content"},
     ], 
     [
       {"text": "<em></em>"},

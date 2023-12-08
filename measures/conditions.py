@@ -22,6 +22,17 @@ def show_step_quota_order_number(wizard):
         )
 
 
+def show_step_quota_origins(wizard):
+    cleaned_data = wizard.get_cleaned_data_for_step(wizard.QUOTA_ORDER_NUMBER)
+    if cleaned_data:
+        return True if cleaned_data.get("order_number") else False
+
+
+def show_step_geographical_area(wizard):
+    cleaned_data = wizard.get_cleaned_data_for_step(wizard.QUOTA_ORIGINS)
+    return False if cleaned_data else True
+
+
 def show_step_regulation(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step(START)
     if cleaned_data:
