@@ -1,9 +1,11 @@
 import asyncio
 from enum import Enum
+from typing import Dict
+from typing import List
 from urllib.parse import urlencode
 
-import aiohttp
 import requests
+from aiohttp import ClientSession
 from asgiref.sync import async_to_sync
 
 
@@ -51,21 +53,21 @@ def get_quota_data(params):
     return parse_response(requests.get(url))
 
 
-async def async_get(url, session):
-    async with session.get(url=url) as response:
-        try:
-            assert response.status == 200
-        except AssertionError:
+async def async_get(url: str, client_session: ClientSession) -> str:
+    async with client_session.get(url=url) as response:
+        if response.status != 200:
             return None
         return await response.json()
 
 
-async def async_get_all(urls):
-    async with aiohttp.ClientSession() as session:
-        return await asyncio.gather(*[async_get(url, session) for url in urls])
+async def async_get_all(urls: List[str]):
+    async with ClientSession() as client_session:
+        return await asyncio.gather(
+            *[async_get(url, client_session) for url in urls],
+        )
 
 
-def build_quota_definition_urls(order_number, object_list):
+def build_quota_definition_urls(order_number, object_list) -> List[str]:
     params = [
         {
             "order_number": order_number,
@@ -78,7 +80,7 @@ def build_quota_definition_urls(order_number, object_list):
     return [f"{Endpoints.QUOTAS.value}?{urlencode(p)}" for p in params]
 
 
-def serialize_quota_data(data):
+def serialize_quota_data(data) -> Dict:
     json_data = [
         json["data"][0]["attributes"] for json in data if json and json["data"]
     ]
