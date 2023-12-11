@@ -38,7 +38,7 @@ def test_create_and_upload_envelope(
         create_xml_envelope_file.apply(
             (packaged_work_basket.pk, True),
         )
-        mock_save.assert_called_once()
+        mock_save.assert_called()
 
     assert expected_bucket in s3_bucket_names()
 

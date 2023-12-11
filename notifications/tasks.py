@@ -1,12 +1,20 @@
 import logging
 
 from celery import shared_task
+from django.conf import settings
 from django.db.transaction import atomic
 
 logger = logging.getLogger(__name__)
 
 
-@shared_task
+@shared_task(
+    default_retry_delay=settings.NOTIFICATIONS_DEFAULT_RETRY_DELAY,
+    max_retries=settings.NOTIFICATIONS_MAX_RETRIES,
+    retry_backoff=True,
+    retry_backoff_max=settings.NOTIFICATIONS_RETRY_BACKOFF_MAX,
+    retry_jitter=True,
+    autoretry_for=(Exception,),
+)
 @atomic
 def send_emails_task(notification_pk: int):
     """Task for emailing all users signed up to receive packaging updates and
