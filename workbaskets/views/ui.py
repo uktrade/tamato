@@ -450,7 +450,7 @@ class WorkBasketList(PermissionRequiredMixin, WithPaginationListView):
     """UI endpoint for viewing and filtering workbaskets."""
 
     template_name = "workbaskets/list.jinja"
-    permission_required = "workbaskets.change_workbasket"
+    permission_required = "workbaskets.view_workbasket"
     filterset_class = WorkBasketFilter
     search_fields = [
         "title",
