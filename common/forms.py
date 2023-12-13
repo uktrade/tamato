@@ -251,6 +251,7 @@ class HMRCCDSManagerActions(TextChoices):
 class CommonUserActions(TextChoices):
     SEARCH = "SEARCH", "Search the tariff"
     # Change this to be dependent on permissions later
+    VIEW_REF_DOCS = "VIEW_REF_DOCS", "View reference documents"
 
 
 class ImportUserActions(TextChoices):
@@ -276,7 +277,7 @@ class HomeForm(forms.Form):
         choices += CommonUserActions.choices
 
         if self.user.has_perm("common.add_trackedmodel") or self.user.has_perm(
-            "common.change_trackedmodel"
+            "common.change_trackedmodel",
         ):
             choices += ImportUserActions.choices
 

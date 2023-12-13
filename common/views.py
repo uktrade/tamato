@@ -69,6 +69,8 @@ class HomeView(FormView, View):
             return redirect(reverse("search-page"))
         elif form.cleaned_data["workbasket_action"] == "IMPORT":
             return redirect(reverse("commodity_importer-ui-list"))
+        elif form.cleaned_data["workbasket_action"] == "VIEW_REF_DOCS":
+            return redirect(reverse("reference_documents-ui-list"))
 
 
 class SearchPageView(TemplateView):
