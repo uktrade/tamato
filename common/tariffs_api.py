@@ -70,7 +70,7 @@ async def async_get_all(urls: List[str]):
         )
 
 
-def get_json_from_endpoint(url: str) -> str:
+def get_from_endpoint(url: str) -> str:
     """
     Query a HTTP API endpoint, given by `url`, extract JSON content from the
     response payload and return to the caller.
@@ -99,7 +99,7 @@ def get_json_from_endpoint(url: str) -> str:
         return None
 
 
-def get_all_endpoints(urls: List[str]) -> Generator[str, None, None]:
+def get_from_all_endpoints(urls: List[str]) -> Generator[str, None, None]:
     """
     Generator function yielding the JSON content from a list of HTTP API
     endpoints given by `urls`.
@@ -107,7 +107,7 @@ def get_all_endpoints(urls: List[str]) -> Generator[str, None, None]:
     If network, service or content errors are encountered, then None is yielded.
     """
     for url in urls:
-        yield get_json_from_endpoint(url)
+        yield get_from_endpoint(url)
 
 
 def build_quota_definition_urls(order_number, object_list) -> List[str]:
@@ -161,6 +161,8 @@ def get_quota_definitions_data(order_number, object_list):
 
     # 2. The simplest though slowest approach to querying a list of endpoints is
     #    to do so in serally. No threading or synchronisation issues.
-    data = [json_content for json_content in get_all_endpoints(urls) if json_content]
+    data = [
+        json_content for json_content in get_from_all_endpoints(urls) if json_content
+    ]
 
     return deserialize_quota_data(data)
