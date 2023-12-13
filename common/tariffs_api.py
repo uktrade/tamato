@@ -99,7 +99,7 @@ def get_json_from_endpoint(url: str) -> str:
         return None
 
 
-def get_json_from_all_endpoints(urls: List[str]) -> Generator[str, None, None]:
+def get_all_endpoints(urls: List[str]) -> Generator[str, None, None]:
     """
     Generator function yielding the JSON content from a list of HTTP API
     endpoints given by `urls`.
@@ -152,11 +152,15 @@ def get_quota_definitions_data(order_number, object_list):
 
     urls = build_quota_definition_urls(order_number, object_list)
 
+    # 1. Using Python's async to concurrently retrieve data from a list of
+    #    APIs is not permitted when running Django in a synchronous manner. This
+    #    is mainly a concern with database access. For details, see
+    #    https://docs.djangoproject.com/en/dev/topics/async/#async-safety
+    # from asgiref.sync import async_to_sync
     # data = async_to_sync(async_get_all)(urls)
-    data = [
-        json_content
-        for json_content in get_json_from_all_endpoints(urls)
-        if json_content
-    ]
+
+    # 2. The simplest though slowest approach to querying a list of endpoints is
+    #    to do so in serally. No threading or synchronisation issues.
+    data = [json_content for json_content in get_all_endpoints(urls) if json_content]
 
     return deserialize_quota_data(data)
