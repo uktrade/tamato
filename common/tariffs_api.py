@@ -1,12 +1,15 @@
 import asyncio
+import logging
 from enum import Enum
 from typing import Dict
+from typing import Generator
 from typing import List
 from urllib.parse import urlencode
 
 import requests
 from aiohttp import ClientSession
-from asgiref.sync import async_to_sync
+
+logger = logging.getLogger(__name__)
 
 
 class URLs(Enum):
@@ -67,6 +70,46 @@ async def async_get_all(urls: List[str]):
         )
 
 
+def get_json_from_endpoint(url: str) -> str:
+    """
+    Query a HTTP API endpoint, given by `url`, extract JSON content from the
+    response payload and return to the caller.
+
+    If network, service or content errors are encountered, then None is
+    returned.
+    """
+    response = requests.get(url)
+    try:
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.ConnectionError:
+        logger.error(f"Unable to establish connection during HTTP GET {url}")
+        return None
+    except requests.exceptions.JSONDecodeError:
+        logger.error(f"Can't get JSON content from response to HTTP GET {url}")
+        return None
+    except requests.exceptions.HTTPError:
+        logger.error(
+            f"Received error {response.status_code} response to HTTP GET {url}",
+        )
+        return None
+    except Exception as e:
+        logger.error(f"Exception encountered while performing HTTP GET {url}")
+        logger.error(f"{e}")
+        return None
+
+
+def get_json_from_all_endpoints(urls: List[str]) -> Generator[str, None, None]:
+    """
+    Generator function yielding the JSON content from a list of HTTP API
+    endpoints given by `urls`.
+
+    If network, service or content errors are encountered, then None is yielded.
+    """
+    for url in urls:
+        yield get_json_from_endpoint(url)
+
+
 def build_quota_definition_urls(order_number, object_list) -> List[str]:
     params = [
         {
@@ -80,12 +123,14 @@ def build_quota_definition_urls(order_number, object_list) -> List[str]:
     return [f"{Endpoints.QUOTAS.value}?{urlencode(p)}" for p in params]
 
 
-def serialize_quota_data(data) -> Dict:
+def deserialize_quota_data(data: str) -> Dict:
+    """Deserialise JSON formatted data into native Python dictionary format and
+    return the result."""
     json_data = [
         json["data"][0]["attributes"] for json in data if json and json["data"]
     ]
 
-    serialized = {
+    deserialized = {
         json["quota_definition_sid"]: {
             "status": json["status"],
             "balance": json["balance"],
@@ -93,7 +138,7 @@ def serialize_quota_data(data) -> Dict:
         for json in json_data
     }
 
-    return serialized
+    return deserialized
 
 
 def get_quota_definitions_data(order_number, object_list):
@@ -107,6 +152,11 @@ def get_quota_definitions_data(order_number, object_list):
 
     urls = build_quota_definition_urls(order_number, object_list)
 
-    data = async_to_sync(async_get_all)(urls)
+    # data = async_to_sync(async_get_all)(urls)
+    data = [
+        json_content
+        for json_content in get_json_from_all_endpoints(urls)
+        if json_content
+    ]
 
-    return serialize_quota_data(data)
+    return deserialize_quota_data(data)
