@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from typing import Dict
 from typing import Generator
@@ -9,6 +11,7 @@ from urllib.parse import urlencode
 import requests
 from aiohttp import ClientSession
 
+thread_local = threading.local()
 logger = logging.getLogger(__name__)
 
 
@@ -161,8 +164,58 @@ def get_quota_definitions_data(order_number, object_list):
 
     # 2. The simplest though slowest approach to querying a list of endpoints is
     #    to do so serially - no threading or synchronisation issues.
+    # data = [
+    #    json_content for json_content in get_from_all_endpoints(urls) if json_content
+    # ]
+
+    # 3. Using Python's threading to concurrently retrieve data from a list of
+    #    endpoints.
     data = [
-        json_content for json_content in get_from_all_endpoints(urls) if json_content
+        json_content
+        for json_content in threaded_get_from_all_endpoints(urls)
+        if json_content
     ]
 
     return deserialize_quota_data(data)
+
+
+def get_requests_session():
+    if not hasattr(thread_local, "requests_session"):
+        thread_local.requests_session = requests.Session()
+    return thread_local.requests_session
+
+
+def threaded_get_from_endpoint(url: str):
+    """
+    Using a requests Session instance to safely manage a threaded get call,
+    query a HTTP API endpoint, given by `url`, extract JSON content from the
+    response payload and return to the caller.
+
+    If network, service or content errors are encountered, then None is
+    returned.
+    """
+    session = get_requests_session()
+    try:
+        with session.get(url) as response:
+            response.raise_for_status()
+            return response.json()
+    except requests.exceptions.ConnectionError:
+        logger.error(f"Unable to establish connection during HTTP GET {url}")
+        return None
+    except requests.exceptions.JSONDecodeError:
+        logger.error(f"Can't get JSON content from response to HTTP GET {url}")
+        return None
+    except requests.exceptions.HTTPError:
+        logger.error(
+            f"Received error {response.status_code} response to HTTP GET {url}",
+        )
+        return None
+    except Exception as e:
+        logger.error(f"Exception encountered while performing HTTP GET {url}")
+        logger.error(f"{e}")
+        return None
+
+
+def threaded_get_from_all_endpoints(urls: List[str]) -> List:
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        return executor.map(threaded_get_from_endpoint, urls)
