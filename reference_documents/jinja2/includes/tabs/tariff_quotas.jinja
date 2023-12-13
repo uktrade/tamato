@@ -1,0 +1,43 @@
+{% from "components/table/macro.njk" import govukTable %}
+{% from 'macros/create_link.jinja' import create_link %}
+
+{%- set table_rows = [] -%}
+{% for quota in ref_doc.quotas %}
+    {{ table_rows.append([
+        {"text": quota["order_number"].structure_code},
+        {"text": quota["order_number"].is_origin_quota},
+        {"text": quota["comm_codes"]},
+        {"text": "-"},
+        {"text": quota["definition"].volume},
+        {"text": quota["definition"].valid_between.upper},
+        {"text": quota["definition"]["measurement_unit"].description},
+        
+    ]) or "" }}
+{% endfor %}
+
+<div class="quota__core-data govuk-grid-row">
+    <div class="quota__core-data__content govuk-grid-column-three-quarters">
+        {{ govukTable({
+        "head": [
+            {"text": "Quota order no."},
+            {"text": "Origin quota"},
+            {"text": "Commodity codes"},
+            {"text": "Quote duty rate"},
+            {"text": "Volume"},
+            {"text": "Quote period closed"},
+            {"text": "Unit"},
+
+        ],
+        "rows": table_rows
+        }) }}
+    </div>
+
+    <div class="govuk-grid-column-one-quarter">
+        <div class="app-related-items" role="complementary">
+            <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
+            <ul class="govuk-list govuk-!-font-size-16">
+                <li><a class="govuk-link" href="{{TBC}}">Copy table data</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
