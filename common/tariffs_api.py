@@ -160,7 +160,7 @@ def get_quota_definitions_data(order_number, object_list):
     # data = async_to_sync(async_get_all)(urls)
 
     # 2. The simplest though slowest approach to querying a list of endpoints is
-    #    to do so in serally. No threading or synchronisation issues.
+    #    to do so serially - no threading or synchronisation issues.
     data = [
         json_content for json_content in get_from_all_endpoints(urls) if json_content
     ]
