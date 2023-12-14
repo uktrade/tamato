@@ -151,8 +151,10 @@ def get_quota_definitions_data(
 
     urls = build_quota_definition_urls(order_number, object_list)
 
-    # For quota data, there's normally a maximum of four time periods over
-    # which order data applies - i.e.
+    # There's normally a maximum of four time periods over which quota data
+    # applies - i.e. `object_list` normally contains no more than four
+    # QuotaDefinition instances. Therefore use four threads (the default) to
+    # retrieve the quota data.
     data = [
         json_content
         for json_content in threaded_get_from_all_endpoints(urls=urls)
