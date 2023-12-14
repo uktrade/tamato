@@ -9,6 +9,8 @@ from urllib.parse import urlencode
 
 import requests
 
+from quotas.models import QuotaDefinition
+
 _thread_locals = threading.local()
 logger = logging.getLogger(__name__)
 
@@ -57,7 +59,10 @@ def get_quota_data(params):
     return parse_response(requests.get(url))
 
 
-def build_quota_definition_urls(order_number, object_list) -> List[str]:
+def build_quota_definition_urls(
+    order_number: str,
+    object_list: List[QuotaDefinition],
+) -> List[str]:
     params = [
         {
             "order_number": order_number,
@@ -125,14 +130,17 @@ def threaded_get_from_endpoint(url: str) -> str:
         return None
 
 
-def threaded_get_from_all_endpoints(urls: List[str]) -> Iterator:
+def threaded_get_from_all_endpoints(urls: List[str], max_threads: int = 4) -> Iterator:
     """Return an iterator that can be used to retrieve the JSON content returned
     from each of the endpoints referenced via the URLs in `urls`."""
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=max_threads) as executor:
         return executor.map(threaded_get_from_endpoint, urls)
 
 
-def get_quota_definitions_data(order_number, object_list) -> List[Dict]:
+def get_quota_definitions_data(
+    order_number: str,
+    object_list: List[QuotaDefinition],
+) -> List[Dict]:
     """
     Since the API does not return all definition periods past and future from
     one endpoint we need to make multiple requests with different params.
@@ -143,9 +151,11 @@ def get_quota_definitions_data(order_number, object_list) -> List[Dict]:
 
     urls = build_quota_definition_urls(order_number, object_list)
 
+    # For quota data, there's normally a maximum of four time periods over
+    # which order data applies - i.e.
     data = [
         json_content
-        for json_content in threaded_get_from_all_endpoints(urls)
+        for json_content in threaded_get_from_all_endpoints(urls=urls)
         if json_content
     ]
 
