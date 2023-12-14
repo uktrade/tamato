@@ -94,8 +94,8 @@ def deserialize_quota_data(data: str) -> Dict:
     return deserialized
 
 
-def get_thread_local_request_session():
-    """Return a requests Session instances scoped to the current thread."""
+def get_thread_local_request_session() -> requests.Session:
+    """Return a requests.Session instance scoped to the current thread."""
 
     if not hasattr(_thread_locals, "requests_session"):
         _thread_locals.requests_session = requests.Session()
