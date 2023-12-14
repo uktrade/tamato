@@ -94,6 +94,14 @@ def deserialize_quota_data(data: str) -> Dict:
     return deserialized
 
 
+def get_thread_local_request_session():
+    """Return a requests Session instances scoped to the current thread."""
+
+    if not hasattr(_thread_locals, "requests_session"):
+        _thread_locals.requests_session = requests.Session()
+    return _thread_locals.requests_session
+
+
 def threaded_get_from_endpoint(url: str) -> str:
     """
     Using a `requests.Session` instance per thread, call
@@ -104,13 +112,9 @@ def threaded_get_from_endpoint(url: str) -> str:
     returned.
     """
 
-    if not hasattr(_thread_locals, "requests_session"):
-        # Scope requests Session instances to the thread on which the get
-        # request is being handled.
-        _thread_locals.requests_session = requests.Session()
-
+    requests_session = get_thread_local_request_session()
     try:
-        with _thread_locals.requests_session.get(url) as response:
+        with requests_session.get(url) as response:
             response.raise_for_status()
             return response.json()
     except requests.exceptions.ConnectionError:
