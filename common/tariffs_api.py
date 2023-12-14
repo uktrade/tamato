@@ -1,17 +1,15 @@
-import asyncio
 import logging
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from typing import Dict
-from typing import Generator
+from typing import Iterator
 from typing import List
 from urllib.parse import urlencode
 
 import requests
-from aiohttp import ClientSession
 
-thread_local = threading.local()
+_thread_locals = threading.local()
 logger = logging.getLogger(__name__)
 
 
@@ -59,60 +57,6 @@ def get_quota_data(params):
     return parse_response(requests.get(url))
 
 
-async def async_get(url: str, client_session: ClientSession) -> str:
-    async with client_session.get(url=url) as response:
-        if response.status != 200:
-            return None
-        return await response.json()
-
-
-async def async_get_all(urls: List[str]):
-    async with ClientSession() as client_session:
-        return await asyncio.gather(
-            *[async_get(url, client_session) for url in urls],
-        )
-
-
-def get_from_endpoint(url: str) -> str:
-    """
-    Query a HTTP API endpoint, given by `url`, extract JSON content from the
-    response payload and return to the caller.
-
-    If network, service or content errors are encountered, then None is
-    returned.
-    """
-    response = requests.get(url)
-    try:
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.ConnectionError:
-        logger.error(f"Unable to establish connection during HTTP GET {url}")
-        return None
-    except requests.exceptions.JSONDecodeError:
-        logger.error(f"Can't get JSON content from response to HTTP GET {url}")
-        return None
-    except requests.exceptions.HTTPError:
-        logger.error(
-            f"Received error {response.status_code} response to HTTP GET {url}",
-        )
-        return None
-    except Exception as e:
-        logger.error(f"Exception encountered while performing HTTP GET {url}")
-        logger.error(f"{e}")
-        return None
-
-
-def get_from_all_endpoints(urls: List[str]) -> Generator[str, None, None]:
-    """
-    Generator function yielding the JSON content from a list of HTTP API
-    endpoints given by `urls`.
-
-    If network, service or content errors are encountered, then None is yielded.
-    """
-    for url in urls:
-        yield get_from_endpoint(url)
-
-
 def build_quota_definition_urls(order_number, object_list) -> List[str]:
     params = [
         {
@@ -129,6 +73,7 @@ def build_quota_definition_urls(order_number, object_list) -> List[str]:
 def deserialize_quota_data(data: str) -> Dict:
     """Deserialise JSON formatted data into native Python dictionary format and
     return the result."""
+
     json_data = [
         json["data"][0]["attributes"] for json in data if json and json["data"]
     ]
@@ -144,59 +89,23 @@ def deserialize_quota_data(data: str) -> Dict:
     return deserialized
 
 
-def get_quota_definitions_data(order_number, object_list):
+def threaded_get_from_endpoint(url: str) -> str:
     """
-    Since the API does not return all definition periods past and future from
-    one endpoint we need to make multiple requests with different params.
-
-    We use the quota order number and start date of each of its definition
-    periods to build urls to get the data for all of them.
-    """
-
-    urls = build_quota_definition_urls(order_number, object_list)
-
-    # 1. Using Python's async to concurrently retrieve data from a list of
-    #    APIs is not permitted when running Django in a synchronous manner. This
-    #    is mainly a concern with database access. For details, see
-    #    https://docs.djangoproject.com/en/dev/topics/async/#async-safety
-    # from asgiref.sync import async_to_sync
-    # data = async_to_sync(async_get_all)(urls)
-
-    # 2. The simplest though slowest approach to querying a list of endpoints is
-    #    to do so serially - no threading or synchronisation issues.
-    # data = [
-    #    json_content for json_content in get_from_all_endpoints(urls) if json_content
-    # ]
-
-    # 3. Using Python's threading to concurrently retrieve data from a list of
-    #    endpoints.
-    data = [
-        json_content
-        for json_content in threaded_get_from_all_endpoints(urls)
-        if json_content
-    ]
-
-    return deserialize_quota_data(data)
-
-
-def get_requests_session():
-    if not hasattr(thread_local, "requests_session"):
-        thread_local.requests_session = requests.Session()
-    return thread_local.requests_session
-
-
-def threaded_get_from_endpoint(url: str):
-    """
-    Using a requests Session instance to safely manage a threaded get call,
-    query a HTTP API endpoint, given by `url`, extract JSON content from the
-    response payload and return to the caller.
+    Using a `requests.Session` instance per thread, call
+    `requests.Session.get()` to query a HTTP API endpoint, given by `url`. JSON
+    content is extracted from the response payload and return to the caller.
 
     If network, service or content errors are encountered, then None is
     returned.
     """
-    session = get_requests_session()
+
+    if not hasattr(_thread_locals, "requests_session"):
+        # Scope requests Session instances to the thread on which the get
+        # request is being handled.
+        _thread_locals.requests_session = requests.Session()
+
     try:
-        with session.get(url) as response:
+        with _thread_locals.requests_session.get(url) as response:
             response.raise_for_status()
             return response.json()
     except requests.exceptions.ConnectionError:
@@ -216,6 +125,28 @@ def threaded_get_from_endpoint(url: str):
         return None
 
 
-def threaded_get_from_all_endpoints(urls: List[str]) -> List:
+def threaded_get_from_all_endpoints(urls: List[str]) -> Iterator:
+    """Return an iterator that can be used to retrieve the JSON content returned
+    from each of the endpoints referenced via the URLs in `urls`."""
     with ThreadPoolExecutor(max_workers=4) as executor:
         return executor.map(threaded_get_from_endpoint, urls)
+
+
+def get_quota_definitions_data(order_number, object_list) -> List[Dict]:
+    """
+    Since the API does not return all definition periods past and future from
+    one endpoint we need to make multiple requests with different params.
+
+    We use the quota order number and start date of each of its definition
+    periods to build urls to get the data for all of them.
+    """
+
+    urls = build_quota_definition_urls(order_number, object_list)
+
+    data = [
+        json_content
+        for json_content in threaded_get_from_all_endpoints(urls)
+        if json_content
+    ]
+
+    return deserialize_quota_data(data)
