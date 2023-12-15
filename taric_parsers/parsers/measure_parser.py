@@ -779,8 +779,7 @@ class MeasureComponentParserV2(Writable, BaseTaricParser):
 
     identity_fields = [
         "component_measure__sid",
-        "component_measurement__measurement_unit__code",
-        "component_measurement__measurement_unit_qualifier__code",
+        "duty_expression__sid",
     ]
 
     component_measure__sid: int = None

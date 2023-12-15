@@ -271,7 +271,7 @@ class BaseTaricParser:
 
             if query_arg_value is None or query_arg_value == "":
                 raise Exception(
-                    f"No value for identity field {query_arg_value} for object : {self.__class__.__name__}",
+                    f"No value for identity field {identity_field} for object : {self.__class__.__name__}",
                 )
 
             query_args[identity_field] = query_arg_value

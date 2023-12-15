@@ -18,6 +18,7 @@ from importer import models
 from importer.filters import ImportBatchFilter
 from importer.filters import TaricImportFilter
 from importer.goods_report import GoodsReporter
+from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from notifications.models import GoodsSuccessfulImportNotification
 from workbaskets.validators import WorkflowStatus
@@ -206,6 +207,20 @@ class CommodityImportCreateView(
                 kwargs={"pk": self.object.pk},
             ),
         )
+
+
+class CommodityImportDetails(RequiresSuperuserMixin, DetailView):
+    """UI endpoint for viewing details of a TARIC parser import, and view
+    failures and errors."""
+
+    model = ImportBatch
+    queryset = ImportBatch.objects.all()
+    template_name = "eu-importer/details.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["issues"] = context["object"].issues.all()
+        return context
 
 
 class CommodityImportCreateSuccessView(DetailView):

@@ -19,8 +19,10 @@ from common.util import get_mime_type
 from common.util import parse_xml
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
+from importer.models import BatchImportError
 from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
+from taric_parsers.forms import TaricParserFormMixin
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 from workbaskets.validators import tops_jira_number_validator
@@ -184,7 +186,7 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
         return batch
 
 
-class CommodityImportForm(ImportFormMixin, forms.Form):
+class CommodityImportForm(TaricParserFormMixin, forms.Form):
     """Form used to create new instances of ImportBatch via upload of a
     commodity code file."""
 
@@ -266,37 +268,40 @@ class CommodityImportForm(ImportFormMixin, forms.Form):
         """
         file_name = os.path.splitext(self.cleaned_data["name"])[0]
         description = f"TARIC {file_name} commodity code changes"
-        workbasket = WorkBasket.objects.create(
-            title=self.cleaned_data["workbasket_title"],
-            reason=description,
-            author=self.request.user,
-        )
-        workbasket.save()
 
-        batch = ImportBatch(
+        import_batch = ImportBatch(
             author=self.request.user,
             name=self.cleaned_data["name"],
             goods_import=True,
-            workbasket=workbasket,
         )
-        # ensure at the start of the file stream
+
         self.files["taric_file"].seek(0, os.SEEK_SET)
-        batch.taric_file.save(
+        import_batch.taric_file.save(
             self.files["taric_file"].name,
             ContentFile(self.files["taric_file"].read()),
         )
-        batch.save()
+
+        import_batch.save()
 
         chunk_count = self.process_file(
             self.files["taric_file"],
-            batch,
+            import_batch,
             self.request.user,
-            workbasket_id=batch.workbasket.id,
+            workbasket_title=description,
+            record_group=list(TARIC_RECORD_GROUPS["commodities"]),
         )
-        if not chunk_count:
-            # No chunks to process so the import is considered done and
-            # succeeded.
-            batch.succeeded()
-            batch.save()
 
-        return batch
+        if chunk_count < 1:
+            import_batch.failed()
+            import_batch.save()
+
+            # Create warning, no items to import
+            BatchImportError.objects.create(
+                batch=import_batch,
+                issue_type="WARNING",
+                description="No data to import, typically this would be because it was a comm code only import and no changes detected that TAP requires or that it was an empty file",
+                object_update_type=None,
+                transaction_id="",
+            )
+
+        return import_batch
