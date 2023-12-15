@@ -464,5 +464,12 @@ def handler500(request, *args, **kwargs):
     return TemplateResponse(request=request, template="common/500.jinja", status=500)
 
 
+def workbasket_not_active(request, *args, **kwargs):
+    return TemplateResponse(
+        request=request,
+        template="common/workbasket_status_change.jinja",
+    )
+
+
 class AccessibilityStatementView(TemplateView):
     template_name = "common/accessibility.jinja"
