@@ -73,7 +73,7 @@ class ReferenceDocumentsDetailView(TemplateView):
             comm_codes = []
             for measure in albanian_measures:
                 if measure.order_number == order_number:
-                    comm_codes.append(measure.goods_nomenclature.id)
+                    comm_codes.append(measure.goods_nomenclature)
 
             quotas.append({"order_number": order_number, "comm_codes": comm_codes})
 

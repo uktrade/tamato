@@ -3,13 +3,22 @@
 
 {%- set table_rows = [] -%}
 {% for quota in ref_doc.quotas %}
+    {% set commodity_codes -%}
+        <ul class="govuk-list govuk-list--bullet">
+            {% for commodity in quota["comm_codes"]%}
+            <li>
+                <a class="govuk-link" href="{{ commodity.get_url() }}">{{ commodity.structure_code}}</a>
+            </li>
+            {%endfor%}
+        </ul>
+    {%- endset %}
     {{ table_rows.append([
-        {"text": quota["order_number"].structure_code},
-        {"text": quota["order_number"].is_origin_quota},
-        {"text": quota["comm_codes"]},
+        {"text": create_link(url("quota-ui-detail", kwargs={"sid": quota["order_number"].sid}), quota["order_number"].structure_code) if quota["order_number"].structure_code else '-'},
+        {"text": "Yes" if quota["order_number"].is_origin_quota else "No"},
+        {"html": commodity_codes},
         {"text": "-"},
-        {"text": quota["definition"].volume},
-        {"text": quota["definition"].valid_between.upper},
+        {"text": "{:.2f}".format(quota["definition"].volume)},
+        {"text": quota["definition"].valid_between.upper.strftime("%d %b %Y")},
         {"text": quota["definition"]["measurement_unit"].description},
         
     ]) or "" }}
