@@ -49,22 +49,57 @@ def test_threaded_get_from_endpoint(
     has_json_payload,
     response_status,
 ):
+    """Test that threaded_get_from_endpoint correctly handles HTTP responses and
+    JSON payloads."""
+
+    url = Endpoints.QUOTAS.value
+
     # Create a requests.Session instance and associate it with our
     # requests_mock.Mocker instance, allowing requests mock to associate it
     # as part of its transport replacement when handling requests API calls.
     session = requests.Session()
+
     with requests_mock.Mocker(session=session) as requests_mocker:
         get_thread_request_session_mock.return_value = session
         requests_mocker.get(
-            url=Endpoints.QUOTAS.value,
+            url=url,
             json=quotas_json if has_json_payload else None,
             status_code=response_status,
         )
 
-        returned_json = threaded_get_from_endpoint(Endpoints.QUOTAS.value)
+        returned_json = threaded_get_from_endpoint(url)
         expected_json = quotas_json if has_json_payload else None
 
         assert returned_json == expected_json
+
+
+@patch("common.tariffs_api.threaded_get_request_session")
+def test_threaded_get_from_endpoint_network_error(
+    get_thread_request_session_mock,
+):
+    """Test that threaded_get_from_endpoint correctly handles a network
+    error."""
+
+    url = Endpoints.QUOTAS.value
+
+    # Create a requests.Session instance and associate it with our
+    # requests_mock.Mocker instance, allowing requests mock to associate it
+    # as part of its transport replacement when handling requests API calls.
+    session = requests.Session()
+
+    # Create an adapter, register url with an associated connection error status
+    # against it and mount it on the session.
+    adapter = requests_mock.Adapter()
+    adapter.register_uri("GET", url, exc=requests.exceptions.ConnectTimeout)
+    session.mount(url, adapter=adapter)
+
+    with requests_mock.Mocker(session=session) as requests_mocker:
+        get_thread_request_session_mock.return_value = session
+        requests_mocker.get(url=url)
+
+        returned_json = threaded_get_from_endpoint(url)
+
+        assert returned_json == None
 
 
 def test_build_quota_definition_urls(quota_order_number, quota_definitions):
