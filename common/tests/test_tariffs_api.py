@@ -34,10 +34,20 @@ async def test_get_quota_data_ok(quota_order_number, requests_mock, quotas_json)
     assert data == quotas_json
 
 
+@pytest.mark.parametrize(
+    "has_json_payload, response_status",
+    [
+        (True, 200),
+        (False, 200),
+        (False, 404),
+    ],
+)
 @patch("common.tariffs_api.threaded_get_request_session")
 def test_threaded_get_from_endpoint(
     get_thread_request_session_mock,
     quotas_json,
+    has_json_payload,
+    response_status,
 ):
     # Create a requests.Session instance and associate it with our
     # requests_mock.Mocker instance, allowing requests mock to associate it
@@ -47,12 +57,14 @@ def test_threaded_get_from_endpoint(
         get_thread_request_session_mock.return_value = session
         requests_mocker.get(
             url=Endpoints.QUOTAS.value,
-            json=quotas_json,
-            status_code=200,
+            json=quotas_json if has_json_payload else None,
+            status_code=response_status,
         )
 
-        json_content = threaded_get_from_endpoint(Endpoints.QUOTAS.value)
-        assert json_content == quotas_json
+        returned_json = threaded_get_from_endpoint(Endpoints.QUOTAS.value)
+        expected_json = quotas_json if has_json_payload else None
+
+        assert returned_json == expected_json
 
 
 def test_build_quota_definition_urls(quota_order_number, quota_definitions):
