@@ -28,7 +28,7 @@ def test_get_quota_data_error(quota_order_number, requests_mock):
     assert data is None
 
 
-async def test_get_quota_data_ok(quota_order_number, requests_mock, quotas_json):
+def test_get_quota_data_ok(quota_order_number, requests_mock, quotas_json):
     requests_mock.get(url=Endpoints.QUOTAS.value, json=quotas_json, status_code=200)
     data = get_quota_data({"order_number": quota_order_number.id})
     assert data == quotas_json
