@@ -1,10 +1,14 @@
+from unittest.mock import patch
+
 import pytest
+import requests
+import requests_mock
 
 from common.tariffs_api import Endpoints
-from common.tariffs_api import async_get_all
 from common.tariffs_api import build_quota_definition_urls
+from common.tariffs_api import deserialize_quota_data
 from common.tariffs_api import get_quota_data
-from common.tariffs_api import serialize_quota_data
+from common.tariffs_api import threaded_get_from_endpoint
 from common.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -30,42 +34,25 @@ async def test_get_quota_data_ok(quota_order_number, requests_mock, quotas_json)
     assert data == quotas_json
 
 
-@pytest.mark.asyncio
-async def test_async_get_all(
-    mock_aioresponse,
-    quota_order_number,
-    quota_definitions,
+@patch("common.tariffs_api.threaded_get_request_session")
+def test_threaded_get_from_endpoint(
+    get_thread_request_session_mock,
     quotas_json,
 ):
-    urls = build_quota_definition_urls(
-        quota_order_number.order_number,
-        quota_definitions,
-    )
-    for url in urls:
-        mock_aioresponse.get(url, status=200, payload=quotas_json)
-    data = await async_get_all(urls)
-    assert data
-    for d in data:
-        assert d == quotas_json
+    # Create a requests.Session instance and associate it with our
+    # requests_mock.Mocker instance, allowing requests mock to associate it
+    # as part of its transport replacement when handling requests API calls.
+    session = requests.Session()
+    with requests_mock.Mocker(session=session) as requests_mocker:
+        get_thread_request_session_mock.return_value = session
+        requests_mocker.get(
+            url=Endpoints.QUOTAS.value,
+            json=quotas_json,
+            status_code=200,
+        )
 
-
-@pytest.mark.asyncio
-async def test_async_get_all_failure(
-    mock_aioresponse,
-    quota_order_number,
-    quota_definitions,
-    quotas_json,
-):
-    urls = build_quota_definition_urls(
-        quota_order_number.order_number,
-        quota_definitions,
-    )
-    for url in urls:
-        mock_aioresponse.get(url, status=400, payload=quotas_json)
-    data = await async_get_all(urls)
-    assert data
-    for d in data:
-        assert d == None
+        json_content = threaded_get_from_endpoint(Endpoints.QUOTAS.value)
+        assert json_content == quotas_json
 
 
 def test_build_quota_definition_urls(quota_order_number, quota_definitions):
@@ -193,12 +180,12 @@ def test_serialize_quota_data():
         },
         None,
     ]
-    serialized = serialize_quota_data(data)
-    assert len(serialized) == 3
-    assert not set(serialized.keys()).difference({"1111", "2222", "3333"})
-    assert serialized["1111"]["status"] == "Open"
-    assert serialized["1111"]["balance"] == "80601000.0"
-    assert serialized["2222"]["status"] == "Open"
-    assert serialized["2222"]["balance"] == "23401000.0"
-    assert serialized["3333"]["status"] == "Open"
-    assert serialized["3333"]["balance"] == "78849000.0"
+    deserialized = deserialize_quota_data(data)
+    assert len(deserialized) == 3
+    assert not set(deserialized.keys()).difference({"1111", "2222", "3333"})
+    assert deserialized["1111"]["status"] == "Open"
+    assert deserialized["1111"]["balance"] == "80601000.0"
+    assert deserialized["2222"]["status"] == "Open"
+    assert deserialized["2222"]["balance"] == "23401000.0"
+    assert deserialized["3333"]["status"] == "Open"
+    assert deserialized["3333"]["balance"] == "78849000.0"
