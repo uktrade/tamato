@@ -1,9 +1,19 @@
-import asyncio
+import logging
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
+from typing import Dict
+from typing import Iterator
+from typing import List
+from typing import Optional
 from urllib.parse import urlencode
 
-import aiohttp
 import requests
+
+from quotas.models import QuotaDefinition
+
+_thread_locals = threading.local()
+logger = logging.getLogger(__name__)
 
 
 class URLs(Enum):
@@ -50,21 +60,10 @@ def get_quota_data(params):
     return parse_response(requests.get(url))
 
 
-async def async_get(url, session):
-    async with session.get(url=url) as response:
-        try:
-            assert response.status == 200
-        except AssertionError:
-            return None
-        return await response.json()
-
-
-async def async_get_all(urls):
-    async with aiohttp.ClientSession() as session:
-        return await asyncio.gather(*[async_get(url, session) for url in urls])
-
-
-def build_quota_definition_urls(order_number, object_list):
+def build_quota_definition_urls(
+    order_number: str,
+    object_list: List[QuotaDefinition],
+) -> List[str]:
     params = [
         {
             "order_number": order_number,
@@ -77,12 +76,15 @@ def build_quota_definition_urls(order_number, object_list):
     return [f"{Endpoints.QUOTAS.value}?{urlencode(p)}" for p in params]
 
 
-def serialize_quota_data(data):
+def deserialize_quota_data(data: str) -> Dict:
+    """Deserialise JSON formatted data into native Python dictionary format and
+    return the result."""
+
     json_data = [
         json["data"][0]["attributes"] for json in data if json and json["data"]
     ]
 
-    serialized = {
+    deserialized = {
         json["quota_definition_sid"]: {
             "status": json["status"],
             "balance": json["balance"],
@@ -90,10 +92,57 @@ def serialize_quota_data(data):
         for json in json_data
     }
 
-    return serialized
+    return deserialized
 
 
-def get_quota_definitions_data(order_number, object_list):
+def threaded_get_request_session() -> requests.Session:
+    """Return a requests.Session instance scoped to the current thread."""
+
+    if not hasattr(_thread_locals, "requests_session"):
+        _thread_locals.requests_session = requests.Session()
+    return _thread_locals.requests_session
+
+
+def threaded_get_from_endpoint(url: str) -> Optional[str]:
+    """
+    Using a `requests.Session` instance per thread, call
+    `requests.Session.get()` to query a HTTP API endpoint, given by `url`. JSON
+    content is extracted from the response payload and return to the caller.
+
+    If network, service or content errors are encountered, then None is
+    returned.
+    """
+
+    requests_session = threaded_get_request_session()
+    try:
+        with requests_session.get(url) as response:
+            response.raise_for_status()
+            return response.json()
+    except requests.exceptions.ConnectionError:
+        logger.error(f"Unable to establish connection during HTTP GET {url}")
+    except requests.exceptions.JSONDecodeError:
+        logger.error(f"Can't get JSON content from response to HTTP GET {url}")
+    except requests.exceptions.HTTPError:
+        logger.error(
+            f"Received error {response.status_code} response to HTTP GET {url}",
+        )
+    except Exception as e:
+        logger.error(f"Exception encountered while performing HTTP GET {url}")
+        logger.error(f"Exception: {e}")
+    return None
+
+
+def threaded_get_from_all_endpoints(urls: List[str], max_threads: int = 4) -> Iterator:
+    """Return an iterator that can be used to retrieve the JSON content returned
+    from each of the endpoints referenced via the URLs in `urls`."""
+    with ThreadPoolExecutor(max_workers=max_threads) as executor:
+        return executor.map(threaded_get_from_endpoint, urls)
+
+
+def get_quota_definitions_data(
+    order_number: str,
+    object_list: List[QuotaDefinition],
+) -> List[Dict]:
     """
     Since the API does not return all definition periods past and future from
     one endpoint we need to make multiple requests with different params.
@@ -104,6 +153,14 @@ def get_quota_definitions_data(order_number, object_list):
 
     urls = build_quota_definition_urls(order_number, object_list)
 
-    data = asyncio.run(async_get_all(urls))
+    # There's normally a maximum of four time periods over which quota data
+    # applies - i.e. `object_list` normally contains no more than four
+    # QuotaDefinition instances. Therefore use four threads (the default) to
+    # retrieve the quota data.
+    data = [
+        json_content
+        for json_content in threaded_get_from_all_endpoints(urls=urls)
+        if json_content
+    ]
 
-    return serialize_quota_data(data)
+    return deserialize_quota_data(data)
