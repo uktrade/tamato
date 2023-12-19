@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Optional
 from urllib.parse import urlencode
 
 import requests
@@ -102,7 +103,7 @@ def threaded_get_request_session() -> requests.Session:
     return _thread_locals.requests_session
 
 
-def threaded_get_from_endpoint(url: str) -> str:
+def threaded_get_from_endpoint(url: str) -> Optional[str]:
     """
     Using a `requests.Session` instance per thread, call
     `requests.Session.get()` to query a HTTP API endpoint, given by `url`. JSON
