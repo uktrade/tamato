@@ -967,3 +967,10 @@ class FootnoteAssociationMeasure(TrackedModel):
         business_rules.ME73,
         UpdateValidity,
     )
+
+
+class CreateMeasures(models.Model):
+    # move bulk measure creation here
+
+    cleaned_data = models.JSONField()
+    # cleaned_data = {}

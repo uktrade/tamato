@@ -66,6 +66,23 @@ services:
     tty: true
     depends_on:
       - celery-redis
+  
+  bulk-create-measures-celery:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
+    volumes:
+      - ./:/app/
+    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "bulk-create-measures"]
+    env_file: 
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stdin_open: true
+    tty: true
+    depends_on:
+      - celery-redis
 
   importer-celery:
     build:

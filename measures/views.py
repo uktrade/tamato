@@ -43,6 +43,7 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
+from measures.bulk_handling import bulk_create_measures
 from measures.conditions import show_step_geographical_area
 from measures.conditions import show_step_quota_origins
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
@@ -50,6 +51,7 @@ from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
+from measures.models import CreateMeasures
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureActionPair
@@ -59,6 +61,7 @@ from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
+from measures.serializers import CreateMeasuresFormSerializer
 from measures.util import diff_components
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -933,10 +936,21 @@ class MeasureCreateWizard(
 
         return created_measures
 
+    ########################################################################################################################################################################################
+    ########################################################################################################################################################################################
+    ########################################################################################################################################################################################
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
 
+        serialized_clean_data = CreateMeasuresFormSerializer(cleaned_data)
+
+        new_create_measures = CreateMeasures.objects.create(
+            cleaned_data=str(serialized_clean_data),
+        )
+        bulk_create_measures.delay(new_create_measures.pk)
+
         created_measures = self.create_measures(cleaned_data)
+
         created_measures[0].transaction.workbasket.save_to_session(self.request.session)
 
         context = self.get_context_data(
@@ -946,6 +960,10 @@ class MeasureCreateWizard(
         )
 
         return render(self.request, "measures/confirm-create-multiple.jinja", context)
+
+    ########################################################################################################################################################################################
+    ########################################################################################################################################################################################
+    ########################################################################################################################################################################################
 
     def get_all_cleaned_data(self):
         """

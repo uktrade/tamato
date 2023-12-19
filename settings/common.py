@@ -556,6 +556,9 @@ CELERY_ROUTES = {
     re.compile(r"(exporter|notifications|publishing)\.tasks\..*"): {
         "queue": "standard",
     },
+    "measures.bulk_handling.bulk_create_measures": {
+        "queue": "bulk-create-measures",
+    },
 }
 
 SQLITE_EXCLUDED_APPS = [
