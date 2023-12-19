@@ -120,19 +120,16 @@ def threaded_get_from_endpoint(url: str) -> Optional[str]:
             return response.json()
     except requests.exceptions.ConnectionError:
         logger.error(f"Unable to establish connection during HTTP GET {url}")
-        return None
     except requests.exceptions.JSONDecodeError:
         logger.error(f"Can't get JSON content from response to HTTP GET {url}")
-        return None
     except requests.exceptions.HTTPError:
         logger.error(
             f"Received error {response.status_code} response to HTTP GET {url}",
         )
-        return None
     except Exception as e:
         logger.error(f"Exception encountered while performing HTTP GET {url}")
         logger.error(f"Exception: {e}")
-        return None
+    return None
 
 
 def threaded_get_from_all_endpoints(urls: List[str], max_threads: int = 4) -> Iterator:
