@@ -216,7 +216,7 @@ class ME88(BusinessRule):
                 sid=measure.goods_nomenclature.sid,
                 valid_between__overlap=measure.effective_valid_between,
             )
-            .approved_up_to_transaction(measure.transaction)
+            .current()
         )
 
         explosion_level = measure.measure_type.measure_explosion_level
@@ -614,9 +614,7 @@ class ME12(BusinessRule):
         )
         if (
             measure.additional_code
-            and not AdditionalCodeTypeMeasureType.objects.approved_up_to_transaction(
-                self.transaction,
-            )
+            and not AdditionalCodeTypeMeasureType.objects.current()
             .filter(
                 additional_code_type__sid=measure.additional_code.type.sid,
                 measure_type__sid=measure.measure_type.sid,
@@ -841,7 +839,7 @@ class ME43(BusinessRule):
     def validate(self, measure_component):
         duty_expressions_used = (
             type(measure_component)
-            .objects.approved_up_to_transaction(measure_component.transaction)
+            .objects.current()
             .exclude(pk=measure_component.pk if measure_component.pk else None)
             .excluding_versions_of(version_group=measure_component.version_group)
             .filter(
@@ -889,11 +887,7 @@ class ComponentApplicability(BusinessRule):
                     == ApplicabilityCode.MANDATORY,
                 }
             )
-            if (
-                components.filter(inapplicable)
-                .approved_up_to_transaction(self.transaction)
-                .exists()
-            ):
+            if components.filter(inapplicable).current().exists():
                 raise self.violation(measure, self.messages[code].format(self))
 
 
@@ -1028,7 +1022,7 @@ class ME58(BusinessRule):
                 version_group=measure_condition.version_group,
             )
             .filter(**kwargs)
-            .approved_up_to_transaction(self.transaction)
+            .current()
             .exists()
         ):
             raise self.violation(measure_condition)
@@ -1103,7 +1097,7 @@ class ME108(BusinessRule):
     def validate(self, component):
         if (
             type(component)
-            .objects.approved_up_to_transaction(component.transaction)
+            .objects.current()
             .exclude(pk=component.pk or None)
             .excluding_versions_of(version_group=component.version_group)
             .filter(
@@ -1145,7 +1139,7 @@ class ActionRequiresDuty(BusinessRule):
     condition component must be created with a duty amount."""
 
     def validate(self, condition):
-        components = condition.components.approved_up_to_transaction(self.transaction)
+        components = condition.components.current()
         components_have_duty = any([c.duty_amount is not None for c in components])
         if condition.action.requires_duty and not components_have_duty:
             raise self.violation(
@@ -1245,7 +1239,7 @@ class ME67(BusinessRule):
         from measures.models import Measure
 
         # Need to get latest version of measure
-        measures = Measure.objects.approved_up_to_transaction(self.transaction).filter(
+        measures = Measure.objects.current().filter(
             sid=exclusion.modified_measure.sid,
         )
 
@@ -1255,9 +1249,7 @@ class ME67(BusinessRule):
         if measures.exists():
             measure = measures.last()
             geo_area = measure.geographical_area
-            members = geo_area.members.approved_up_to_transaction(
-                self.transaction,
-            )
+            members = geo_area.members.current()
 
             matching_members_to_exclusion_period = members.filter(
                 Q(
@@ -1324,7 +1316,7 @@ class ME70(BusinessRule):
     def validate(self, association):
         if (
             type(association)
-            .objects.approved_up_to_transaction(association.transaction)
+            .objects.current()
             .exclude(pk=association.pk or None)
             .excluding_versions_of(version_group=association.version_group)
             .filter(

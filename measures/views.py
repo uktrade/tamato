@@ -77,8 +77,7 @@ class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [MeasureTypeFilterBackend]
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return MeasureType.objects.approved_up_to_transaction(tx).order_by(
+        return MeasureType.objects.current().order_by(
             "description",
         )
 
@@ -87,9 +86,7 @@ class MeasureMixin:
     model: Type[TrackedModel] = Measure
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-
-        return Measure.objects.approved_up_to_transaction(tx)
+        return Measure.objects.current()
 
 
 class MeasureSessionStoreMixin:
@@ -1061,7 +1058,6 @@ class MeasureCreateWizard(
 
     def get_form(self, step=None, data=None, files=None):
         form = super().get_form(step, data, files)
-        tx = WorkBasket.get_current_transaction(self.request)
         forms = [form]
         if hasattr(form, "forms"):
             forms = form.forms
@@ -1069,7 +1065,7 @@ class MeasureCreateWizard(
             if hasattr(f, "fields"):
                 for field in f.fields.values():
                     if hasattr(field, "queryset"):
-                        field.queryset = field.queryset.approved_up_to_transaction(tx)
+                        field.queryset = field.queryset.current()
 
         form.is_valid()
         if hasattr(form, "cleaned_data"):
@@ -1103,32 +1099,23 @@ class MeasureUpdateBase(
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class=form_class)
-        tx = WorkBasket.get_current_transaction(self.request)
 
         if hasattr(form, "field"):
             for field in form.fields.values():
                 if hasattr(field, "queryset"):
-                    field.queryset = field.queryset.approved_up_to_transaction(tx)
+                    field.queryset = field.queryset.current()
 
         return form
 
     def get_footnotes(self, measure):
-        tx = WorkBasket.get_current_transaction(self.request)
-        associations = FootnoteAssociationMeasure.objects.approved_up_to_transaction(
-            tx,
-        ).filter(
+        associations = FootnoteAssociationMeasure.objects.current().filter(
             footnoted_measure__sid=measure.sid,
         )
 
         return [a.associated_footnote for a in associations]
 
     def get_conditions(self, measure):
-        tx = WorkBasket.get_current_transaction(self.request)
-        return (
-            measure.conditions.with_reference_price_string().approved_up_to_transaction(
-                tx,
-            )
-        )
+        return measure.conditions.with_reference_price_string().current()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1194,10 +1181,7 @@ class MeasureUpdateBase(
         formset = self.get_context_data()["conditions_formset"]
         excluded_sids = []
         conditions_data = []
-        workbasket = WorkBasket.current(self.request)
-        existing_conditions = obj.conditions.approved_up_to_transaction(
-            workbasket.get_current_transaction(self.request),
-        )
+        existing_conditions = obj.conditions.current()
 
         for f in formset.forms:
             f.is_valid()

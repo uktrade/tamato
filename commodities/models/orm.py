@@ -111,9 +111,9 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
         return reverse("commodity-ui-detail", kwargs={"sid": self.sid})
 
     def get_dependent_measures(self, transaction=None):
-        return self.measures.model.objects.filter(
+        return self.measures.model.objects.current().filter(
             goods_nomenclature__sid=self.sid,
-        ).approved_up_to_transaction(transaction)
+        )
 
     @property
     def is_taric_code(self) -> bool:
@@ -200,7 +200,7 @@ class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     ) -> QuerySet:
         """Return the related goods indents based on approval status."""
         good = self.indented_goods_nomenclature
-        return good.indents.approved_up_to_transaction(
+        return good.indents.current(
             as_of_transaction or self.transaction,
         )
 

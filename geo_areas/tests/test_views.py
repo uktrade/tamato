@@ -444,7 +444,7 @@ def test_geo_area_edit_create_view(
         area_code=AreaCode.REGION,
         area_id="TR",
         valid_between=date_ranges.no_end,
-        transaction=session_workbasket.new_transaction(),
+        transaction__workbasket=session_workbasket,
     )
 
     data_changes = {**date_post_data("end_date", date_ranges.normal.upper)}

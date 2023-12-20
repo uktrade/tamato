@@ -44,10 +44,10 @@ class NIG2(BusinessRule):
 
     def parent_spans_child(self, parent, child) -> bool:
         parent_validity = parent.indented_goods_nomenclature.version_at(
-            self.transaction,
+            self.transaction
         ).valid_between
         child_validity = child.indented_goods_nomenclature.version_at(
-            self.transaction,
+            self.transaction
         ).valid_between
         return validity_range_contains_range(parent_validity, child_validity)
 
@@ -60,7 +60,7 @@ class NIG2(BusinessRule):
         for parent in parents:
             parents_validity.append(
                 parent.indented_goods_nomenclature.version_at(
-                    self.transaction,
+                    self.transaction
                 ).valid_between,
             )
 
@@ -68,7 +68,7 @@ class NIG2(BusinessRule):
         parents_validity.sort(key=lambda daterange: daterange.lower)
 
         child_validity = child.indented_goods_nomenclature.version_at(
-            self.transaction,
+            self.transaction
         ).valid_between
 
         if (
@@ -166,10 +166,10 @@ class NIG5(BusinessRule):
 
         if not (
             good.code.is_chapter
-            or GoodsNomenclatureOrigin.objects.filter(
+            or GoodsNomenclatureOrigin.objects.current()
+            .filter(
                 new_goods_nomenclature__sid=good.sid,
             )
-            .approved_up_to_transaction(good.transaction)
             .exists()
         ):
             raise self.violation(
@@ -252,9 +252,9 @@ class NIG11(ValidityStartDateRules):
     def get_objects(self, good):
         GoodsNomenclatureIndent = good.indents.model
 
-        return GoodsNomenclatureIndent.objects.filter(
+        return GoodsNomenclatureIndent.objects.current().filter(
             indented_goods_nomenclature__sid=good.sid,
-        ).approved_up_to_transaction(self.transaction)
+        )
 
 
 class NIG12(DescriptionsRules):
@@ -305,7 +305,7 @@ class NIG24(BusinessRule):
                 goods_nomenclature__sid=association.goods_nomenclature.sid,
                 valid_between__overlap=association.valid_between,
             )
-            .approved_up_to_transaction(association.transaction)
+            .current()
             .exclude(
                 id=association.pk,
             )
@@ -351,9 +351,7 @@ class NIG35(BusinessRule):
                 goods_nomenclature__sid=good.sid,
                 additional_code__isnull=False,
             )
-            .approved_up_to_transaction(
-                self.transaction,
-            )
+            .current()
             .exists()
         )
 

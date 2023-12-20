@@ -172,7 +172,7 @@ class GA18(BusinessRule):
                 member__version_group=membership.member.version_group,
                 valid_between__overlap=membership.valid_between,
             )
-            .approved_up_to_transaction(membership.transaction)
+            .current()
             .exclude(
                 id=membership.id,
             )
@@ -209,7 +209,7 @@ class GA20(BusinessRule):
             parent.members.filter(
                 member__sid=membership.member.sid,
             )
-            .approved_up_to_transaction(membership.transaction)
+            .current()
             .exclude(
                 valid_between__contains=membership.valid_between,
             )

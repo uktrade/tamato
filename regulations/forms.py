@@ -176,13 +176,12 @@ class RegulationFormBase(ValidityPeriodForm):
         """Get the next available part value that can be appended to a partial
         regulation_id (see
         RegulationCreateForm._make_partial_regulation_id())."""
-        tx = WorkBasket.get_current_transaction(self.request)
         last_matching_regulation = (
             Regulation.objects.filter(
                 regulation_id__startswith=partial_regulation_id,
                 role_type=FIXED_ROLE_TYPE,
             )
-            .approved_up_to_transaction(tx)
+            .current()
             .order_by("-regulation_id")
             .first()
         )
