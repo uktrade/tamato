@@ -10,3 +10,6 @@ class ImportStatus(models.TextChoices):
 
     COMPLETED = "COMPLETED", "Completed"
     """Import completed without any issues."""
+
+    EMPTY = "EMPTY", "Empty"
+    """No data to import."""

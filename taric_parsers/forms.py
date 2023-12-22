@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 
-from importer.models import BatchImportError
 from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
 from taric_parsers.chunker import chunk_taric
@@ -120,16 +119,7 @@ class UploadTaricForm(TaricParserFormMixin, forms.ModelForm):
         )
 
         if chunk_count < 1:
-            import_batch.failed()
+            import_batch.failed_empty()
             import_batch.save()
-
-            # Create warning, no items to import
-            BatchImportError.objects.create(
-                batch=import_batch,
-                issue_type="WARNING",
-                description="No data to import, typically this would be because it was a comm code only import and no changes detected that TAP requires or that it was an empty file",
-                object_update_type=None,
-                transaction_id="",
-            )
 
         return import_batch

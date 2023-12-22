@@ -227,6 +227,12 @@ class TaricImporter:
                 self.import_batch,
             )
 
+    def clear_issues(self):
+        # clears issues against import
+        for parsed_transaction in self.parsed_transactions:
+            for message in parsed_transaction.parsed_messages:
+                message.taric_object.issues = []
+
     def ordered_transactions_and_messages(
         self,
         up_to_transaction=None,
@@ -467,9 +473,19 @@ class TaricImporter:
             boolean, indicating the state of the import, and its ability to save due to no issues being recorded.
         """
 
-        if self.status != ImportStatus.FAILED:
+        if self.status not in [ImportStatus.FAILED, ImportStatus.EMPTY]:
             return True
         return False
+
+    def is_empty(self):
+        """
+        Indicates if the current import is empty.
+
+        Returns:
+            boolean, indicating the emptiness of the import.
+        """
+
+        return self.status == ImportStatus.EMPTY
 
     def parse(self):
         """

@@ -150,6 +150,8 @@ class CommodityImportListView(
 
             elif import_batch.status == ImportBatchStatus.FAILED:
                 return {"text": "FAILED", "tag_class": "status-badge-red"}
+            elif import_batch.status == ImportBatchStatus.FAILED_EMPTY:
+                return {"text": "EMPTY", "tag_class": "status-badge-grey"}
 
             if workbasket:
                 if (

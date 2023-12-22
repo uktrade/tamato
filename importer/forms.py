@@ -19,7 +19,6 @@ from common.util import get_mime_type
 from common.util import parse_xml
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
-from importer.models import BatchImportError
 from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
 from taric_parsers.forms import TaricParserFormMixin
@@ -292,16 +291,7 @@ class CommodityImportForm(TaricParserFormMixin, forms.Form):
         )
 
         if chunk_count < 1:
-            import_batch.failed()
+            import_batch.failed_empty()
             import_batch.save()
-
-            # Create warning, no items to import
-            BatchImportError.objects.create(
-                batch=import_batch,
-                issue_type="WARNING",
-                description="No data to import, typically this would be because it was a comm code only import and no changes detected that TAP requires or that it was an empty file",
-                object_update_type=None,
-                transaction_id="",
-            )
 
         return import_batch

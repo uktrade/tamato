@@ -64,6 +64,8 @@ def parse_and_import(
             batch.save()
 
             importer.process_and_save_if_valid(workbasket)
+        elif importer.is_empty():
+            importer.clear_issues()
         else:
             importer.commit_issues()
 
@@ -103,9 +105,14 @@ def parse_and_import(
 
     if not batch.ready_chunks.exists():
         if not batch_errored_chunks:
-            # This was batch's last chunk requiring processing, and it has no
-            # chunks with status ERRORED, so transition batch to SUCCEEDED.
-            batch.succeeded()
+            if len(batch.chunks) == 0:
+                # This indicates that there was not any data to import. The batch should.
+                # be flagged with status FAILED_EMPTY.
+                batch.failed_empty()
+            else:
+                # This was batch's last chunk requiring processing, and it has no
+                # chunks with status ERRORED, so transition batch to SUCCEEDED.
+                batch.succeeded()
         else:
             # This was batch's last chunk requiring processing, and it did have
             # chunks with status ERRORED, so transition batch to ERRORED.

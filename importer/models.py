@@ -57,6 +57,9 @@ class ImportBatchStatus(models.TextChoices):
     FAILED = "FAILED", "Failed"
     """The import process completed / terminated but finished in some error
     state."""
+    FAILED_EMPTY = "FAILED_EMPTY", "Failed Empty"
+    """The import was not able to complete, because there were no changes to
+    import."""
 
 
 class ImportBatch(TimestampedMixin):
@@ -169,6 +172,38 @@ class ImportBatch(TimestampedMixin):
             logger.info(
                 f"FAILED import pk={self.pk}.",
             )
+
+    def can_transition_to_failed_empty(self):
+        """
+        This check is used in the transition to failed empty, which should only
+        be used before a workbasket is created.
+
+        This is in support of the importerV2 which runs validation before
+        committing anything to the database can can be used to indicate the
+        import did not error but failed due to lack of content. The importerV1
+        does not have this same behaviour, and will create a workbasket
+        regardless, so use the failed transition in this case.
+        """
+
+        if self.workbasket:
+            return False
+        return True
+
+    @transition(
+        field=status,
+        source=ImportBatchStatus.IMPORTING,
+        target=ImportBatchStatus.FAILED_EMPTY,
+        on_error=ImportBatchStatus.FAILED,
+        conditions=[can_transition_to_failed_empty],
+        custom={"label": "Failed Empty"},
+    )
+    def failed_empty(self):
+        """The import process did not find any changes to import."""
+        logger.info(f"Transitioning status of import pk={self.pk} to FAILED_EMPTY.")
+
+        logger.info(
+            f"FAILED_EMPTY import pk={self.pk}.",
+        )
 
     @property
     def ready_chunks(self):
