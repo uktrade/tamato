@@ -355,13 +355,17 @@ class FootnoteAssociationMeasureSerializer(TrackedModelSerializerMixin):
 
 
 class MeasureDetailsFormSerializer(serializers.Serializer):
-    # measure_type
-    measure_type = MeasureTypeSerializer(partial=True)
-    # valid_between = ValiditySerializerMixin() --> {'valid_between': {'non_field_errors': [ErrorDetail(string='Invalid data. Expected a dictionary, but got TaricDateRange.', code='invalid')]}}
+    # measure_type - returns non_field_error, expected dict, got MeasureType
+    # measure_type = MeasureTypeSerializer(partial=True)
 
-    valid_between = TARIC3DateRangeField()
-    # min_commodity_count WORKING
-    min_commodity_count = serializers.IntegerField(min_value=1, max_value=99)
+    # valid_between = ValiditySerializerMixin() --> {'valid_between': {'non_field_errors': [ErrorDetail(string='Invalid data. Expected a dictionary, but got TaricDateRange.', code='invalid')]}}
+    # TARIC3DateRangeField IS NOT A SERIALIZER!
+    # needs to be decomposed into start/end date.
+    valid_between = {
+        "start_date": serializers.DateTimeField(),
+        "end_date": serializers.DateTimeField() or None,
+    }
+    # min_commodity_count WORKING - removed as unnecessary.
 
 
 # class MeasureRegulationIdFormSerializer(serializers.Serializer):
@@ -392,6 +396,12 @@ class MeasureGeographicalAreaFormSerializer(serializers.Serializer):
 # footnote
 
 # class MeasureReviewFormSerializer(serializers.Serializer):
+
+
+class ValidBetweenSerializer(serializers.Serializer):
+    valid_between = TARIC3DateRangeField()
+    start_date = serializers.SerializerMethodField()
+    end_date = serializers.SerializerMethodField(required=False)
 
 
 class CreateMeasuresFormSerializer(serializers.Serializer):
