@@ -15,7 +15,6 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import redirect
-from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic.base import TemplateView
@@ -934,18 +933,58 @@ class MeasureCreateWizard(
         return created_measures
 
     def done(self, form_list, **kwargs):
-        cleaned_data = self.get_all_cleaned_data()
+        serialized_cleaned_data = self.get_all_serialized_cleaned_data()
 
-        created_measures = self.create_measures(cleaned_data)
-        created_measures[0].transaction.workbasket.save_to_session(self.request.session)
+        import json
 
-        context = self.get_context_data(
-            form=None,
-            created_measures=created_measures,
-            **kwargs,
-        )
+        print()
+        print("*** serialized_cleaned_data:")
+        print(json.dumps(serialized_cleaned_data, indent=4))
+        print()
+        raise Exception("Go no further!")
 
-        return render(self.request, "measures/confirm-create-multiple.jinja", context)
+    # def done(self, form_list, **kwargs):
+    #    created_measures = self.create_measures(cleaned_data)
+    #    created_measures[0].transaction.workbasket.save_to_session(self.request.session)
+    #
+    #    context = self.get_context_data(
+    #        form=None,
+    #        created_measures=created_measures,
+    #        **kwargs,
+    #    )
+    #
+    #    # TODO: this should probably be a redirect to the summary page.
+    #    return render(self.request, "measures/confirm-create-multiple.jinja", context)
+    #    # Something like so:
+    #    #return redirect(
+    #    #    "confirm-queued-create-measures",
+    #    #    kwargs={"create_measures_pk": create_measures_pk},
+    #    #)
+
+    def get_all_serialized_cleaned_data(self):
+        """
+        Returns a merged dictionary of all step cleaned_data. If a step contains
+        a `FormSet`, the key will be prefixed with 'formset-' and contain a list
+        of the formset cleaned_data dictionaries, as expected in
+        `create_measures()`.
+
+        Note: This patched version of `super().get_all_cleaned_data()` takes advantage of retrieving previously-saved
+        cleaned_data by summary page to avoid revalidating forms unnecessarily.
+        """
+        all_cleaned_data = {}
+        # for form_key in self.get_form_list():
+        # cleaned_data = self.get_cleaned_data_for_step(form_key)
+        for form_key in [self.MEASURE_DETAILS]:
+            cleaned_data = self.get_serialized_cleaned_data_for_step(form_key)
+            if isinstance(cleaned_data, (tuple, list)):
+                all_cleaned_data.update(
+                    {
+                        f"formset-{form_key}": cleaned_data,
+                    },
+                )
+            else:
+                all_cleaned_data.update(cleaned_data)
+        return all_cleaned_data
 
     def get_all_cleaned_data(self):
         """
@@ -969,6 +1008,25 @@ class MeasureCreateWizard(
             else:
                 all_cleaned_data.update(cleaned_data)
         return all_cleaned_data
+
+    def get_serialized_cleaned_data_for_step(self, step):
+        """
+        Returns the serialized cleaned data for a given `step`.
+
+        Before returning the cleaned data, the stored values are revalidated
+        through the form. If the data doesn't validate, None will be returned.
+        """
+        if step in self.form_list:
+            form_obj = self.get_form(
+                step=step,
+                data=self.storage.get_step_data(step),
+                files=self.storage.get_step_files(step),
+            )
+            # if form_obj.is_valid():
+            #    return form_obj.cleaned_data
+            if form_obj.is_valid():
+                return form_obj.serializable_cleaned_data()
+        return None
 
     def get_cleaned_data_for_step(self, step):
         """
