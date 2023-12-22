@@ -1,6 +1,8 @@
 import datetime
 import logging
 from itertools import groupby
+from typing import Dict
+from typing import Optional
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -874,11 +876,48 @@ class MeasureFilterForm(forms.Form):
         )
 
 
+class SerializableFormMixin:
+    """Form whose form data can be serialized."""
+
+    DATE_STRING_FORMAT = "%Y-%m-%d"
+
+    def serialize_date(self, date: Optional[datetime.date]) -> Optional[str]:
+        """
+        " Serialize a date instance, which may be None, to a string
+        representation whose format is DATE_STRING_FORMAT.
+
+        If date is None, then None is returned
+        """
+        if isinstance(date, datetime.date):
+            return date.strftime(self.DATE_STRING_FORMAT)
+        return None
+
+    def serializable_cleaned_data(self) -> Dict:
+        """
+        Return a serializable version of cleaned_data that may be rendered to
+        JSON format.
+
+        The caller is responsible for ensuring that cleaned_data is valid.
+        """
+        raise NotImplementedError
+
+    # ???? We may need to remove the output type hinting/casting to allow for reusability with other forms.
+    @classmethod
+    def create_from_serialized_cleaned_data(
+        cls,
+        serializable_cleaned: Dict,
+    ) -> "MeasureDetailsForm":
+        """Given a serialized representation of this Forms data, create a new
+        instance and return it."""
+        raise NotImplementedError
+
+
 class MeasureCreateStartForm(forms.Form):
     pass
 
 
 class MeasureDetailsForm(
+    SerializableFormMixin,
     ValidityPeriodForm,
     forms.Form,
 ):
@@ -948,6 +987,26 @@ class MeasureDetailsForm(
                 )
 
         return cleaned_data
+
+    def serializable_cleaned_data(self) -> Dict:
+        cleaned_data = dict()
+        # TODO: Guard against KeyError exceptions and referencing attrs on None. try/except?
+        cleaned_data["measure_type"] = self.cleaned_data["measure_type"].pk
+        cleaned_data["valid_between_lower"] = self.serialize_date(
+            self.cleaned_data["valid_between"].lower,
+        )
+        cleaned_data["valid_between_upper"] = self.serialize_date(
+            self.cleaned_data["valid_between"].upper,
+        )
+        return cleaned_data
+
+    @classmethod
+    def create_from_serializable_cleaned_data(
+        cls,
+        serializable_cleaned: Dict,
+    ) -> "MeasureDetailsForm":
+        obj = cls()
+        return obj
 
 
 class MeasureRegulationIdForm(forms.Form):
