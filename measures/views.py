@@ -944,6 +944,7 @@ class MeasureCreateWizard(
         print("*" * 80, "serialized_cleaned_data:")
         print(json.dumps(serialized_cleaned_data, indent=4))
         print()
+        print("*" * 80)
         raise Exception("You shall not pass!!")
 
         # cleaned_data = self.get_all_cleaned_data()

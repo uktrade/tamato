@@ -4,7 +4,6 @@ from additional_codes.serializers import AdditionalCodeSerializer
 from additional_codes.serializers import AdditionalCodeTypeSerializer
 from certificates.serializers import CertificateSerializer
 from commodities.serializers import GoodsNomenclatureSerializer
-from common.serializers import TARIC3DateRangeField
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
@@ -348,68 +347,3 @@ class FootnoteAssociationMeasureSerializer(TrackedModelSerializerMixin):
             "subrecord_code",
             "taric_template",
         ]
-
-
-# class MeasureCreateStartFormSerializer(serializers.Serializer):
-# I think this is just 'start the measure create journey'
-
-
-class MeasureDetailsFormSerializer(serializers.Serializer):
-    # measure_type - returns non_field_error, expected dict, got MeasureType
-    # measure_type = MeasureTypeSerializer(partial=True)
-
-    # valid_between = ValiditySerializerMixin() --> {'valid_between': {'non_field_errors': [ErrorDetail(string='Invalid data. Expected a dictionary, but got TaricDateRange.', code='invalid')]}}
-    # TARIC3DateRangeField IS NOT A SERIALIZER!
-    # needs to be decomposed into start/end date.
-    valid_between = {
-        "start_date": serializers.DateTimeField(),
-        "end_date": serializers.DateTimeField() or None,
-    }
-    # min_commodity_count WORKING - removed as unnecessary.
-
-
-# class MeasureRegulationIdFormSerializer(serializers.Serializer):
-# only the regulation id but linked to the generating_regulation
-
-# class MeasureQuotaOrderNumberFormSerializer(serializers.Serializer):
-# order_number (optional)
-
-
-class MeasureGeographicalAreaFormSerializer(serializers.Serializer):
-    geo_area = serializers.CharField()
-
-
-# class MeasureCommodityAndDutiesFormSetSerializer(serializers.Serializer):
-# commodity - auto complete on GoodsNomenclature
-# duties - charfield
-
-# class MeasureAdditionalCodeFormSerializer(serializers.Serializer):
-# additional_code - auto complete on AdditionalCode object
-
-# class MeasureQuotaOriginsFormSerializer(serializers.Serializer):
-# ???
-
-# class MeasureConditionsWizardStepFormSetSerializer(serializers.Serializer):
-# Messy
-
-# class MeasureFootnotesFormSetSerializer(serializers.Serializer):
-# footnote
-
-# class MeasureReviewFormSerializer(serializers.Serializer):
-
-
-class ValidBetweenSerializer(serializers.Serializer):
-    valid_between = TARIC3DateRangeField()
-    start_date = serializers.SerializerMethodField()
-    end_date = serializers.SerializerMethodField(required=False)
-
-
-class CreateMeasuresFormSerializer(serializers.Serializer):
-    pass
-    # TODO: READ THE DOCS!
-    # 'measure_type': <MeasureType: 695>, 'valid_between': TaricDateRange(datet...one, '[)'), 'min_commodity_count': 1, 'generating_regulation': <Regulation: R9612562>, 'order_number': None, 'geo_area': 'ERGA_OMNES', 'erga_omnes_exclusions_formset': [], 'geo_group_exclusions_formset': [], 'geo_areas_and_exclusions': [{...}], 'formset-commodities': [{...}], 'additional_code': None, 'formset-conditions': [], 'formset-footnotes': []
-    # TODO: Create child serializer for each form in the create measure journey
-    # see measures/views.py#493
-    # TODO: Combine serializers here into single parent serializer
-
-    # # Overcooked! Serialize form input, don't apply class.
