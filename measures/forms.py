@@ -1133,6 +1133,34 @@ class MeasureQuotaOriginsForm(SelectableObjectsForm):
         ]
         return cleaned_data
 
+    def serializable_cleaned_data(self) -> Dict:
+        cleaned_data = []
+        if self.cleaned_data["geo_areas_and_exclusions"] is not None:
+            for i in self.cleaned_data["geo_areas_and_exclusions"]:
+                # Each geo area contains a list which may contain an array of 0 or more exclusions.
+                exclusions = []
+                if i["exclusions"] is not None:
+                    for exclusion in i["exclusions"]:
+                        exclusions.append(exclusion.pk)
+
+                cleaned_data.append(
+                    {
+                        "geo_area": i["geo_area"].pk,
+                        "exclusions": exclusions,
+                    },
+                )
+
+        return cleaned_data
+
+    @classmethod
+    def create_from_serializable_cleaned_data(
+        cls,
+        serializable_cleaned: Dict,
+    ) -> "MeasureQuotaOriginsForm":
+        obj = cls()
+
+        return obj
+
 
 class MeasureGeographicalAreaForm(
     MeasureGeoAreaInitialDataMixin,
