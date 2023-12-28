@@ -7,6 +7,7 @@ from unittest.mock import patch
 import factory
 import pytest
 from bs4 import BeautifulSoup
+from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.test.client import RequestFactory
 from django.urls import reverse
@@ -14,6 +15,7 @@ from django.utils.timezone import localtime
 
 from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
+from checks.tests.factories import TransactionCheckFactory
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.validators import UpdateType
@@ -2035,3 +2037,52 @@ def test_review_goods_notification_button(
         assert notify_button
     else:
         assert not notify_button
+
+
+def test_deleted_workbasket_notifies_user(
+    valid_user_client,
+    session_empty_workbasket,
+):
+    """Test that when a user's active workbasket is deleted, the user is
+    redirected to the error page to say the workbasket is no longer active."""
+    session = valid_user_client.session
+    session["workbasket"] = {"id": session_empty_workbasket.pk}
+    session.save()
+
+    response = valid_user_client.get(reverse("quota-ui-create"))
+    assert response.status_code == 200
+
+    session_empty_workbasket.delete()
+    response = valid_user_client.get(reverse("quota-ui-create"))
+    assert response.status_code == 302
+    assert response.url == reverse("workbaskets:workbasket-not-active")
+
+
+def test_queued_workbasket_notifies_user(
+    valid_user,
+    valid_user_client,
+):
+    """Test that when a user's active workbasket is queued, the user is
+    redirected to the error page to say the workbasket is no longer active."""
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    with workbasket.new_transaction() as transaction:
+        TransactionCheckFactory.create(
+            transaction=transaction,
+            successful=True,
+            completed=True,
+        )
+
+    session = valid_user_client.session
+    session["workbasket"] = {"id": workbasket.pk}
+    session.save()
+
+    response = valid_user_client.get(reverse("quota-ui-create"))
+    assert response.status_code == 200
+
+    workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
+    workbasket.save()
+    response = valid_user_client.get(reverse("quota-ui-create"))
+    assert response.status_code == 302
+    assert response.url == reverse("workbaskets:workbasket-not-active")
