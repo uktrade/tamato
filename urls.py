@@ -46,11 +46,6 @@ if settings.DEBUG:
     urlpatterns += [
         path("403/", common.views.handler403, name="handler403"),
         path("500/", common.views.handler500, name="handler500"),
-        path(
-            "workbasket-not-active/",
-            common.views.workbasket_not_active,
-            name="workbasket-not-active",
-        ),
     ]
 
 if settings.SSO_ENABLED:

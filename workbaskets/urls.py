@@ -122,6 +122,11 @@ ui_patterns = [
         name="workbasket-check-ui-compare",
     ),
     path(
+        "workbasket-not-active/",
+        ui_views.workbasket_not_active,
+        name="workbasket-not-active",
+    ),
+    path(
         f"<pk>/",
         ui_views.WorkBasketDetailView.as_view(),
         name="workbasket-ui-detail",

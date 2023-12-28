@@ -2,7 +2,7 @@
 
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Your current workbasket is no longer active" %}
+{% set page_title = "You need an active workbasket to access this page" %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -11,19 +11,27 @@
   <main class="govuk-main-wrapper govuk-main-wrapper--l" id="main-content" role="main">
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-        <h1 class="govuk-heading-l">Your current workbasket is no longer active</h1>
+        <h1 class="govuk-heading-l">You need an active workbasket to access this page</h1>
         <p class="govuk-body">
-            The workbasket is no longer in the editing state. Since you last edited it, it may have been
-            archived, queued, published or deleted.
+            You either do not have a workbasket or your previous workbasket was no longer in the editing state. Since
+            you last edited it, it may have been archived, queued, published or deleted.
         </p>
         <p class="govuk-body">Ensure you are in the correct workbasket before continuing.</p>
       </div>
     </div>
   </main>
 </div>
+<div class="govuk-button-group">
+{{ govukButton({
+    "text": "Select a new workbasket",
+    "href": url("workbaskets:workbasket-ui-list"),
+    "classes": "govuk-button",
+  }) }}
+
 {{ govukButton({
     "text": "Return to homepage",
     "href": url("home"),
     "classes": "govuk-button--secondary",
   }) }}
 {% endblock %}
+</div>

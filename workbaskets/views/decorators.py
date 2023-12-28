@@ -15,8 +15,8 @@ def require_current_workbasket(view_func):
         try:
             if WorkBasket.current(request):
                 return view_func(request, *args, **kwargs)
-            return HttpResponseRedirect(reverse("workbasket-not-active"))
+            return HttpResponseRedirect(reverse("workbaskets:workbasket-not-active"))
         except WorkBasket.DoesNotExist:
-            return HttpResponseRedirect(reverse("workbasket-not-active"))
+            return HttpResponseRedirect(reverse("workbaskets:workbasket-not-active"))
 
     return check_for_current_workbasket

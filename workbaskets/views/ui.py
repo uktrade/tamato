@@ -18,6 +18,7 @@ from django.db.transaction import atomic
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -1489,3 +1490,10 @@ class WorkBasketReviewRegulationsView(WorkBasketReviewView):
         context["selected_tab"] = "regulations"
         context["tab_template"] = "includes/regulations/list.jinja"
         return context
+
+
+def workbasket_not_active(request, *args, **kwargs):
+    return TemplateResponse(
+        request=request,
+        template="common/workbasket_status_change.jinja",
+    )
