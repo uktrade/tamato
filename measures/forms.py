@@ -1107,6 +1107,7 @@ class MeasureGeographicalAreaForm(
     MeasureGeoAreaInitialDataMixin,
     BindNestedFormMixin,
     forms.Form,
+    SerializableFormMixin,
 ):
     """
     Used in the MeasureCreateWizard.
@@ -1259,8 +1260,24 @@ class MeasureGeographicalAreaForm(
 
         return cleaned_data
 
+    def serializable_cleaned_data(self) -> Dict:
+        cleaned_data = dict()
 
-class MeasureAdditionalCodeForm(forms.ModelForm):
+        cleaned_data["geo_area"] = self.cleaned_data["geo_area"]
+
+        return cleaned_data
+
+    @classmethod
+    def create_from_serialized_cleaned_data(
+        cls,
+        serializable_cleaned: Dict,
+    ) -> "MeasureGeographicalAreaForm":
+        # TODO
+        obj = cls()
+        return obj
+
+
+class MeasureAdditionalCodeForm(forms.ModelForm, SerializableFormMixin):
     class Meta:
         model = models.Measure
         fields = [
@@ -1290,6 +1307,21 @@ class MeasureAdditionalCodeForm(forms.ModelForm):
                 data_prevent_double_click="true",
             ),
         )
+
+    def serializable_cleaned_data(self) -> Dict:
+        cleaned_data = {}
+        if self.cleaned_data["additional_code"] != None:
+            cleaned_data["additional_code"] = self.cleaned_data["additional_code"].pk
+        return cleaned_data
+
+    @classmethod
+    def create_from_serializable_cleaned_data(
+        cls,
+        serializeable_cleaned: Dict,
+    ) -> "MeasureAdditionalCodeForm":
+        obj = cls()
+
+        return obj
 
 
 class MeasureCommodityAndDutiesForm(forms.Form):
@@ -1382,7 +1414,10 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
 )
 
 
-class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
+class MeasureCommodityAndDutiesFormSet(
+    MeasureCommodityAndDutiesBaseFormSet,
+    SerializableFormMixin,
+):
     def __init__(self, *args, **kwargs):
         min_commodity_count = kwargs.pop("min_commodity_count", 2)
         self.measure_start_date = kwargs.pop("measure_start_date", None)
@@ -1420,6 +1455,19 @@ class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
                     f'"{duty[error_index:]}" is an invalid duty expression',
                 )
 
+        return cleaned_data
+
+    def serializable_cleaned_data(self) -> Dict:
+        cleaned_data = []
+
+        for i in self.cleaned_data:
+            cleaned_data.append(
+                {
+                    "commodity": i["commodity"].pk,
+                    "duties": i["duties"],
+                    "form_prefix": i["form_prefix"],
+                },
+            )
         return cleaned_data
 
 

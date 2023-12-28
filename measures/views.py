@@ -982,7 +982,12 @@ class MeasureCreateWizard(
         all_cleaned_data = {}
         # for form_key in self.get_form_list():
         # cleaned_data = self.get_cleaned_data_for_step(form_key)
-        for form_key in [self.MEASURE_DETAILS]:
+        for form_key in [
+            self.MEASURE_DETAILS,
+            self.GEOGRAPHICAL_AREA,
+            self.COMMODITIES,
+            self.ADDITIONAL_CODE,
+        ]:
             cleaned_data = self.get_serialized_cleaned_data_for_step(form_key)
             if isinstance(cleaned_data, (tuple, list)):
                 all_cleaned_data.update(
