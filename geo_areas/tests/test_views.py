@@ -49,7 +49,10 @@ def test_geo_area_description_delete_form(use_delete_form):
         )
 
 
-def test_geographical_area_description_create(valid_user_client, date_ranges):
+def test_geographical_area_description_create(
+    valid_user_client_workbasket,
+    date_ranges,
+):
     """Tests that a geographical area description can be created."""
 
     geo_area = factories.GeographicalAreaFactory.create(
@@ -71,13 +74,13 @@ def test_geographical_area_description_create(valid_user_client, date_ranges):
         "geo_area-ui-description-create",
         kwargs={"sid": current_geo_area.sid},
     )
-    response = valid_user_client.post(url, form_data)
+    response = valid_user_client_workbasket.post(url, form_data)
     assert response.status_code == 302
 
     with override_current_transaction(Transaction.objects.last()):
-        new_desciption = current_geo_area.get_description()
-        assert new_desciption.description == form_data["description"]
-        assert new_desciption.validity_start == date_ranges.future.lower
+        new_description = current_geo_area.get_description()
+        assert new_description.description == form_data["description"]
+        assert new_description.validity_start == date_ranges.future.lower
 
 
 @pytest.mark.parametrize(
@@ -173,23 +176,23 @@ def test_geo_area_api_list_view(valid_user_client):
     )
 
 
-def test_geo_area_update_view_200(valid_user_client):
+def test_geo_area_update_view_200(valid_user_client_workbasket):
     geo_area = factories.GeographicalAreaFactory.create()
     url = reverse(
         "geo_area-ui-edit",
         kwargs={"sid": geo_area.sid},
     )
-    response = valid_user_client.get(url)
+    response = valid_user_client_workbasket.get(url)
     assert response.status_code == 200
 
 
-def test_geo_area_edit_update_view_200(valid_user_client):
+def test_geo_area_edit_update_view_200(valid_user_client_workbasket):
     geo_area = factories.GeographicalAreaFactory.create()
     url = reverse(
         "geo_area-ui-edit-update",
         kwargs={"sid": geo_area.sid},
     )
-    response = valid_user_client.get(url)
+    response = valid_user_client_workbasket.get(url)
     assert response.status_code == 200
 
 
@@ -434,17 +437,16 @@ def test_geo_area_create_view(valid_user_client, session_workbasket, date_ranges
 
 
 def test_geo_area_edit_create_view(
-    valid_user_client,
-    session_workbasket,
-    date_ranges,
     use_edit_view,
+    workbasket,
+    date_ranges,
 ):
     """Tests that geographical area CREATE instances can be edited."""
     geo_area = factories.GeographicalAreaFactory.create(
         area_code=AreaCode.REGION,
         area_id="TR",
         valid_between=date_ranges.no_end,
-        transaction=session_workbasket.new_transaction(),
+        transaction=workbasket.new_transaction(),
     )
 
     data_changes = {**date_post_data("end_date", date_ranges.normal.upper)}

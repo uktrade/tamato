@@ -353,7 +353,10 @@ def test_regulation_api_list_view(valid_user_client, date_ranges):
     )
 
 
-def test_regulation_update_view_new_regulation_id(date_ranges, valid_user_client):
+def test_regulation_update_view_new_regulation_id(
+    date_ranges,
+    valid_user_client_workbasket,
+):
     """Test that an update to a regulation's `regulation_id` creates a new
     regulation, updates associated measures, and deletes old one."""
     regulation = factories.UIDraftRegulationFactory.create()
@@ -387,7 +390,7 @@ def test_regulation_update_view_new_regulation_id(date_ranges, valid_user_client
             "regulation_id": regulation.regulation_id,
         },
     )
-    response = valid_user_client.post(url, form_data)
+    response = valid_user_client_workbasket.post(url, form_data)
     assert response.status_code == 302
 
     new_regulation = Regulation.objects.get(regulation_id=new_regulation_id)
