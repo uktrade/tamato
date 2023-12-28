@@ -4,10 +4,11 @@
 {% from "components/table/macro.njk" import govukTable %}
 {% from "includes/workbaskets/navigation.jinja" import create_workbasket_detail_navigation with context %}
 {% from "macros/checkbox_item.jinja" import checkbox_item %}
-{% from "workbaskets/macros/load_more_pagination.jinja" import load_more_pagination with context %}
 {% from "workbaskets/macros/transaction_details.jinja" import transaction_details with context %}
 
 {% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
+
+{% set items_name = "transactions" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
@@ -16,11 +17,6 @@
     ])
   }}
 {% endblock %}
-
-{% set base_url = url("workbaskets:workbasket-ui-transaction-order", args=[workbasket.pk]) ~ "?page=" ~ page_obj.number %}
-
-{% set current_count = page_obj|length + ((page_obj.number - 1) * view.paginate_by) %}
-{% set total_count = page_obj.paginator.count %}
 
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
@@ -134,12 +130,12 @@
           >Move to bottom</button>
         </div>
 
-        {{ load_more_pagination(current_count, total_count, "transaction") }}
+        {% include "includes/common/pagination.jinja" %}
       </form>
 
     {% else %}
       {% set table_rows = [] %}
-      {% for transaction in view.get_queryset() %}
+      {% for transaction in page_obj.object_list %}
         {% set transaction_detail %}
           <span class="details">Transaction: {{ transaction.pk }}</span>
         {% endset %}
@@ -204,7 +200,7 @@
           "classes": "workbasket-transactions",
         }) }}
 
-        {{ load_more_pagination(current_count, total_count, "transaction") }}
+        {% include "includes/common/pagination.jinja" %}
 
       </form>
     {% endif %}

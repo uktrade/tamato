@@ -55,7 +55,9 @@ from measures.validators import validate_components_applicability
 from measures.validators import validate_conditions_formset
 from measures.validators import validate_duties
 from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaOrderNumberOrigin
 from regulations.models import Regulation
+from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
@@ -1021,6 +1023,27 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         )
 
 
+class MeasureQuotaOriginsForm(SelectableObjectsForm):
+    def clean(self):
+        cleaned_data = super().clean()
+
+        selected_origins = {key: value for key, value in cleaned_data.items() if value}
+        if not selected_origins:
+            raise ValidationError("Select one or more quota origins")
+
+        origin_pks = [self.object_id_from_field_name(key) for key in selected_origins]
+        origins = QuotaOrderNumberOrigin.objects.filter(pk__in=origin_pks).current()
+
+        cleaned_data["geo_areas_and_exclusions"] = [
+            {
+                "geo_area": origin.geographical_area,
+                "exclusions": list(origin.excluded_areas.current()),
+            }
+            for origin in origins
+        ]
+        return cleaned_data
+
+
 class MeasureGeographicalAreaForm(
     MeasureGeoAreaInitialDataMixin,
     BindNestedFormMixin,
@@ -1111,16 +1134,6 @@ class MeasureGeographicalAreaForm(
 
         return nested_forms_initial
 
-    def init_fields(self):
-        if (
-            self.order_number
-            and self.order_number.quotaordernumberorigin_set.current()
-            .as_at_today_and_beyond()
-            .exists()
-        ):
-            self.fields["geo_area"].required = False
-            self.fields["geo_area"].disabled = True
-
     def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -1136,10 +1149,8 @@ class MeasureGeographicalAreaForm(
         )
 
     def __init__(self, *args, **kwargs):
-        self.order_number = kwargs.pop("order_number", None)
         super().__init__(*args, **kwargs)
-        self.init_fields()
-        nested_forms_initial = self.get_initial_data() if not self.order_number else {}
+        nested_forms_initial = self.get_initial_data()
         kwargs.pop("initial", None)
         self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
         self.init_layout()
@@ -1147,21 +1158,6 @@ class MeasureGeographicalAreaForm(
     def clean(self):
         cleaned_data = super().clean()
 
-        # Use quota order number origins and exclusions to set cleaned_data
-        if self.order_number:
-            origins = (
-                self.order_number.quotaordernumberorigin_set.current().as_at_today_and_beyond()
-            )
-            cleaned_data["geo_areas_and_exclusions"] = [
-                {
-                    "geo_area": origin.geographical_area,
-                    "exclusions": list(origin.excluded_areas.current()),
-                }
-                for origin in origins
-            ]
-            return cleaned_data
-
-        # Otherwise take geographical data from form
         geo_area_choice = self.cleaned_data.get("geo_area")
 
         geographical_area_fields = {

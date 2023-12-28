@@ -39,6 +39,7 @@ from common.models.transactions import TransactionPartition
 from common.util import format_date_string
 from common.views import SortingMixin
 from common.views import WithPaginationListView
+from common.views import build_pagination_list
 from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -449,7 +450,7 @@ class WorkBasketList(PermissionRequiredMixin, WithPaginationListView):
     """UI endpoint for viewing and filtering workbaskets."""
 
     template_name = "workbaskets/list.jinja"
-    permission_required = "workbaskets.change_workbasket"
+    permission_required = "workbaskets.view_workbasket"
     filterset_class = WorkBasketFilter
     search_fields = [
         "title",
@@ -474,19 +475,20 @@ class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
     permission_required = "workbaskets.view_workbasket"
     template_name = "workbaskets/changes.jinja"
     form_class = forms.SelectableObjectsForm
-    paginate_by = 50
+    paginate_by = 100
+
+    form_action_redirect_map = {
+        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
+        "remove-all": "workbaskets:workbasket-ui-changes-delete",
+        "page-prev": "workbaskets:workbasket-ui-changes",
+        "page-next": "workbaskets:workbasket-ui-changes",
+    }
 
     sort_by_fields = ["component", "action", "activity_date"]
     custom_sorting = {
         "component": "polymorphic_ctype",
         "action": "update_type",
         "activity_date": "transaction__updated_at",
-    }
-    form_action_redirect_map = {
-        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
-        "remove-all": "workbaskets:workbasket-ui-changes-delete",
-        "page-prev": "workbaskets:workbasket-ui-changes",
-        "page-next": "workbaskets:workbasket-ui-changes",
     }
 
     @cached_property
@@ -496,24 +498,23 @@ class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
     @property
     def paginator(self):
         return Paginator(
-            self.workbasket.tracked_models.with_transactions_and_models().order_by(
-                "transaction__order",
-                "pk",
-            ),
+            self.get_queryset(),
             per_page=self.paginate_by,
         )
 
     def get_queryset(self):
-        queryset = self.paginator.object_list
-        page_number = int(self.request.GET.get("page", 1))
-        items_per_page = page_number * self.paginate_by
-
+        queryset = (
+            self.workbasket.tracked_models.with_transactions_and_models().order_by(
+                "transaction__order",
+                "pk",
+            )
+        )
         ordering = self.get_ordering()
         if ordering:
             ordering = (ordering, "transaction")
-            return queryset.order_by(*ordering)[:items_per_page]
+            return queryset.order_by(*ordering)
         else:
-            return queryset[:items_per_page]
+            return queryset
 
     def get_initial(self):
         store = SessionStore(
@@ -524,12 +525,17 @@ class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["objects"] = self.get_queryset()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
         user_can_delete_items = (
             self.request.user.is_superuser
             or self.request.user.has_perm("workbaskets.change_workbasket")
@@ -542,6 +548,8 @@ class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "page_links": page_links,
+                "paginator": self.paginator,
                 "user_can_delete_items": user_can_delete_items,
                 "user_can_delete_workbasket": user_can_delete_workbasket,
             },
@@ -660,10 +668,9 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
         session_store.add_items(to_add)
 
     def get_queryset(self):
-        queryset = self.paginator.object_list
-        page_number = int(self.request.GET.get("page", 1))
-        items_per_page = page_number * self.paginate_by
-        return queryset[:items_per_page]
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        queryset = page.object_list
+        return queryset
 
     def get_initial(self):
         return self.session_store.data.copy()
@@ -676,6 +683,10 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
         user_can_move_transactions = (
             self.request.user.is_superuser
             or self.request.user.has_perm("workbaskets.change_workbasket")
@@ -684,6 +695,8 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "page_links": page_links,
+                "paginator": self.paginator,
                 "user_can_move_transactions": user_can_move_transactions,
                 "first_transaction_in_workbasket": self.first_transaction_in_workbasket,
                 "last_transaction_in_workbasket": self.last_transaction_in_workbasket,

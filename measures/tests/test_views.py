@@ -1165,7 +1165,6 @@ def test_measure_form_wizard_finish(
     mock_duty_sentence_parser,
     valid_user_client,
     regulation,
-    quota_order_number,
     duty_sentence_parser,
     erga_omnes,
 ):
@@ -1204,7 +1203,7 @@ def test_measure_form_wizard_finish(
         {
             "data": {
                 "measure_create_wizard-current_step": "quota_order_number",
-                "quota_order_number-order_number": quota_order_number.pk,
+                "quota_order_number-order_number": "",
             },
             "next_step": "geographical_area",
         },
@@ -1654,7 +1653,7 @@ def test_measure_form_wizard_create_measures_with_tariff_suspension_action(
     )
 
 
-@pytest.mark.parametrize("step", ["geographical_area", "commodities", "conditions"])
+@pytest.mark.parametrize("step", ["quota_origins", "commodities", "conditions"])
 def test_measure_create_wizard_get_form_kwargs(
     step,
     session_request,
@@ -1683,18 +1682,21 @@ def test_measure_create_wizard_get_form_kwargs(
         instance_dict={"measure_details": None},
     )
     wizard.form_list = OrderedDict(wizard.form_list)
-    form_kwargs = wizard.get_form_kwargs(step)
 
-    if step == "geographical_area":
-        assert form_kwargs["order_number"] == quota_order_number
-    elif step == "commodities":
-        assert form_kwargs["measure_start_date"] == date(2021, 4, 2)
-        assert form_kwargs["min_commodity_count"] == 2
-        assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
-    else:
-        # conditions
-        assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
-        assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+    with override_current_transaction(Transaction.objects.last()):
+        form_kwargs = wizard.get_form_kwargs(step)
+
+        if step == "quota_origins":
+            origins = quota_order_number.quotaordernumberorigin_set.all()
+            assert set(form_kwargs["objects"]) == set(origins)
+        elif step == "commodities":
+            assert form_kwargs["measure_start_date"] == date(2021, 4, 2)
+            assert form_kwargs["min_commodity_count"] == 2
+            assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
+        else:
+            # conditions
+            assert form_kwargs["form_kwargs"]["measure_start_date"] == date(2021, 4, 2)
+            assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
 
 
 def test_measure_create_wizard_get_cleaned_data_for_step(session_request, measure_type):
@@ -1720,6 +1722,60 @@ def test_measure_create_wizard_get_cleaned_data_for_step(session_request, measur
     assert cleaned_data["measure_type"] == measure_type
     assert cleaned_data["min_commodity_count"] == 2
     assert cleaned_data["valid_between"] == TaricDateRange(date(2021, 4, 2), None, "[)")
+
+
+def test_measure_create_wizard_quota_origins_conditional_step(
+    valid_user_client,
+    quota_order_number,
+):
+    """
+    Tests that the next step is quota origins if a quota order number has been
+    selected.
+
+    Otherwise the next step should be geographical area.
+    """
+
+    origin = quota_order_number.quotaordernumberorigin_set.first()
+
+    wizard_data = [
+        {
+            "data": {
+                "measure_create_wizard-current_step": "quota_order_number",
+                "quota_order_number-order_number": "",
+            },
+            "next_step": "geographical_area",
+        },
+        {
+            "data": {
+                "measure_create_wizard-current_step": "quota_order_number",
+                "quota_order_number-order_number": quota_order_number.pk,
+            },
+            "next_step": "quota_origins",
+        },
+        {
+            "data": {
+                "measure_create_wizard-current_step": "quota_origins",
+                f"quota_origins-selectableobject_{origin.pk}": True,
+            },
+            "next_step": "commodities",
+        },
+    ]
+
+    for step_data in wizard_data:
+        url = reverse(
+            "measure-ui-create",
+            kwargs={"step": step_data["data"]["measure_create_wizard-current_step"]},
+        )
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        response = valid_user_client.post(url, step_data["data"])
+        assert response.status_code == 302
+
+        assert response.url == reverse(
+            "measure-ui-create",
+            kwargs={"step": step_data["next_step"]},
+        )
 
 
 def test_measure_form_creates_exclusions(
