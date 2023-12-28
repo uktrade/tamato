@@ -987,6 +987,8 @@ class MeasureCreateWizard(
             self.GEOGRAPHICAL_AREA,
             self.COMMODITIES,
             self.ADDITIONAL_CODE,
+            self.QUOTA_ORDER_NUMBER,
+            self.REGULATION_ID,
         ]:
             cleaned_data = self.get_serialized_cleaned_data_for_step(form_key)
             if isinstance(cleaned_data, (tuple, list)):

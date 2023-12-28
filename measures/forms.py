@@ -1009,7 +1009,7 @@ class MeasureDetailsForm(
         return obj
 
 
-class MeasureRegulationIdForm(forms.Form):
+class MeasureRegulationIdForm(forms.Form, SerializableFormMixin):
     class Meta:
         model = models.Measure
         fields = [
@@ -1042,8 +1042,24 @@ class MeasureRegulationIdForm(forms.Form):
             ),
         )
 
+    def serializable_cleaned_data(self) -> Dict:
+        cleaned_data = {}
+        if self.cleaned_data["generating_regulation"] is not None:
+            cleaned_data["generating_regulation"] = self.cleaned_data[
+                "generating_regulation"
+            ].pk
+        return cleaned_data
 
-class MeasureQuotaOrderNumberForm(forms.Form):
+    @classmethod
+    def create_from_serializable_cleaned_data(
+        cls,
+        serializable_cleaned: Dict,
+    ) -> "MeasureRegulationIdForm":
+        obj = cls()
+        return obj
+
+
+class MeasureQuotaOrderNumberForm(forms.Form, SerializableFormMixin):
     class Meta:
         model = models.Measure
         fields = [
@@ -1080,6 +1096,21 @@ class MeasureQuotaOrderNumberForm(forms.Form):
                 data_prevent_double_click="true",
             ),
         )
+
+    def serializable_cleaned_data(self) -> Dict:
+        cleaned_data = {}
+        if self.cleaned_data["order_number"] is not None:
+            cleaned_data["order_number"] = self.cleaned_data["order_number"].pk
+        return cleaned_data
+
+    @classmethod
+    def create_from_serializable_cleaned_data(
+        cls,
+        serializable_cleaned: Dict,
+    ) -> "MeasureQuotaOrderNumberForm":
+        obj = cls()
+
+        return obj
 
 
 class MeasureQuotaOriginsForm(SelectableObjectsForm):
@@ -1310,7 +1341,7 @@ class MeasureAdditionalCodeForm(forms.ModelForm, SerializableFormMixin):
 
     def serializable_cleaned_data(self) -> Dict:
         cleaned_data = {}
-        if self.cleaned_data["additional_code"] != None:
+        if self.cleaned_data["additional_code"] is not None:
             cleaned_data["additional_code"] = self.cleaned_data["additional_code"].pk
         return cleaned_data
 
@@ -1469,6 +1500,15 @@ class MeasureCommodityAndDutiesFormSet(
                 },
             )
         return cleaned_data
+
+    @classmethod
+    def create_from_serializable_cleaned_data(
+        cls,
+        serializable_cleaned: Dict,
+    ) -> "MeasureCommodityAndDutiesFormSet":
+        obj = cls()
+
+        return obj
 
 
 class MeasureFootnotesForm(forms.Form):
