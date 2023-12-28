@@ -105,7 +105,7 @@ def parse_and_import(
 
     if not batch.ready_chunks.exists():
         if not batch_errored_chunks:
-            if len(batch.chunks) == 0:
+            if batch.chunks.count() == 0:
                 # This indicates that there was not any data to import. The batch should.
                 # be flagged with status FAILED_EMPTY.
                 batch.failed_empty()
