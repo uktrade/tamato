@@ -16,7 +16,6 @@ from unittest.mock import patch
 import boto3
 import factory
 import pytest
-from aioresponses import aioresponses
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -1573,12 +1572,6 @@ def quotas_json():
         ],
         "meta": {"pagination": {"page": 1, "per_page": 5, "total_count": 1}},
     }
-
-
-@pytest.fixture
-def mock_aioresponse():
-    with aioresponses() as m:
-        yield m
 
 
 @pytest.fixture

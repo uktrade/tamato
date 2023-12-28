@@ -6,7 +6,7 @@
 {% block head %}
   {% if settings.GOOGLE_ANALYTICS_ID %}
     <!-- Google tag (gtag.js) -->
-      <script nonce="{{ request.csp_nonce }}" async 
+      <script nonce="{{ request.csp_nonce }}" async
       src=https://www.googletagmanager.com/gtag/js?id={{ settings.GOOGLE_ANALYTICS_APP_ID }}></script>
       <script nonce="{{ request.csp_nonce }}">
         window.dataLayer = window.dataLayer || [];
