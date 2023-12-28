@@ -4,7 +4,6 @@ from typing import FrozenSet
 
 import wrapt
 from django.db.models import Value
-from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 _thread_locals = threading.local()
@@ -109,21 +108,6 @@ def is_session_workbasket_valid(request):
         return False
 
 
-def has_workbasket_status_changed(request):
-    """Returns True if there is a workbasket in the session which is not in
-    EDITING."""
-    from workbaskets.models import WorkBasket
-    from workbaskets.validators import WorkflowStatus
-
-    if "workbasket" in request.session:
-        print("workbasket found in session data")
-        workbasket = WorkBasket.load_from_session(request.session)
-        print("able to load workbasket from session")
-        if workbasket.status != WorkflowStatus.EDITING:
-            return True
-    return False
-
-
 class ValidateSessionWorkBasketMiddleware:
     """
     WorkBasket middleware that:
@@ -146,9 +130,6 @@ class ValidateSessionWorkBasketMiddleware:
         # current transaction (below), so abandon this middleware's action and
         # return early if there is no current editable workbasket in the
         # session.
-        if has_workbasket_status_changed(request):
-            WorkBasket.remove_current_from_session(request.session)
-            return HttpResponseRedirect(reverse("workbasket-not-active"))
 
         if not is_session_workbasket_valid(request):
             WorkBasket.remove_current_from_session(request.session)
