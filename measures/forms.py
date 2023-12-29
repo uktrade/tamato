@@ -443,9 +443,45 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
 
         return self.conditions_clean(cleaned_data, self.measure_start_date)
 
+    # def serializable_cleaned_data(self) -> Dict:
+    #     cleaned_data = {}
+    #     return cleaned_data
+
+    # @classmethod
+    # def create_from_serializable_cleaned_data(cls, serializable_cleaned: Dict) -> "MeasureConditionsBaseFormSet":
+    #     obj = cls()
+
+    #     return obj
+
 
 class MeasureConditionsWizardStepFormSet(MeasureConditionsBaseFormSet):
     form = MeasureConditionsWizardStepForm
+
+    def serializable_cleaned_data(self) -> Dict:
+        cleaned_data = []
+        for condition in self.cleaned_data:
+            cleaned_data.append(
+                {
+                    "condition_code": condition["condition_code"].pk,
+                    "duty_amount": condition["duty_amount"],
+                    "monetary_unit": condition["monetary_unit"],
+                    "condition_measurement": condition["condition_measurement"],
+                    "required_certificate": condition["required_certificate"].pk,
+                    "action": condition["action"].pk,
+                    "applicable_duty": condition["applicable_duty"] or None,
+                    "condition_sid": condition["condition_sid"] or None,
+                    "reference_price": condition["reference_price"],
+                },
+            )
+        return cleaned_data
+
+    @classmethod
+    def create_from_serializable_cleaned_data(
+        cls,
+        serializable_cleaned: Dict,
+    ) -> "MeasureConditionsWizardStepFormSet":
+        obj = cls()
+        return obj
 
 
 class MeasureForm(
@@ -1567,7 +1603,7 @@ class MeasureFootnotesForm(forms.Form):
         )
 
 
-class MeasureFootnotesFormSet(FormSet):
+class MeasureFootnotesFormSet(FormSet, SerializableFormMixin):
     form = MeasureFootnotesForm
 
     def clean(self):
@@ -1584,6 +1620,20 @@ class MeasureFootnotesFormSet(FormSet):
         if len(footnotes) != num_unique:
             raise ValidationError("The same footnote cannot be added more than once")
         return cleaned_data
+
+    def serializable_cleaned_data(self) -> Dict:
+        cleaned_data = []
+        for i in self.cleaned_data:
+            cleaned_data.append(i["footnote"].pk)
+        return cleaned_data
+
+    @classmethod
+    def create_from_serialized_cleaned_data(
+        cls,
+        serializable_cleaned: Dict,
+    ) -> "MeasureFootnotesFormSet":
+        obj = cls()
+        return obj
 
 
 class MeasureUpdateFootnotesForm(MeasureFootnotesForm):
