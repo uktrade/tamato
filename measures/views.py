@@ -42,6 +42,7 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
+from measures.bulk_handling import bulk_create_measures
 from measures.conditions import show_step_geographical_area
 from measures.conditions import show_step_quota_origins
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
@@ -49,6 +50,7 @@ from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
+from measures.models import CreateMeasures
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureActionPair
@@ -936,20 +938,25 @@ class MeasureCreateWizard(
     ########################################################################################################################################################################################
     ########################################################################################################################################################################################
     def done(self, form_list, **kwargs):
-        serialized_cleaned_data = self.get_all_serialized_cleaned_data()
-
         import json
 
-        print()
+        serialized_cleaned_data = self.get_all_serialized_cleaned_data()
+
+        # Add the serialized data to the CreateMeasures table
+        new_create_measures = CreateMeasures.objects.create(
+            cleaned_data=serialized_cleaned_data,
+        )
+        new_create_measures.save()
+        # initiate celery task with the primary key of the new CreateMeasures object.
+        bulk_create_measures.delay(new_create_measures.pk)
+
         print("*" * 80, "serialized_cleaned_data:")
+        print()
         print(json.dumps(serialized_cleaned_data, indent=4))
         print()
         print("*" * 80)
+
         raise Exception("You shall not pass!!")
-
-        # cleaned_data = self.get_all_cleaned_data()
-
-        # serialized_clean_data = CreateMeasuresFormSerializer(cleaned_data)
 
         # new_create_measures = CreateMeasures.objects.create(
         #     cleaned_data=str(serialized_clean_data),

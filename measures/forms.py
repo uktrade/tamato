@@ -443,16 +443,6 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
 
         return self.conditions_clean(cleaned_data, self.measure_start_date)
 
-    # def serializable_cleaned_data(self) -> Dict:
-    #     cleaned_data = {}
-    #     return cleaned_data
-
-    # @classmethod
-    # def create_from_serializable_cleaned_data(cls, serializable_cleaned: Dict) -> "MeasureConditionsBaseFormSet":
-    #     obj = cls()
-
-    #     return obj
-
 
 class MeasureConditionsWizardStepFormSet(MeasureConditionsBaseFormSet):
     form = MeasureConditionsWizardStepForm

@@ -83,6 +83,7 @@ services:
     tty: true
     depends_on:
       - celery-redis
+      - db
 
   importer-celery:
     build:
