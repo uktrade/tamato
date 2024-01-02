@@ -1,7 +1,7 @@
 from typing import List
 from typing import Sequence
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand
 
 from importer.management.commands.chunk_taric import chunk_taric
@@ -11,6 +11,8 @@ from importer.management.util import ImporterCommandMixin
 from importer.namespaces import TARIC_RECORD_GROUPS
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
 from workbaskets.validators import WorkflowStatus
+
+User = get_user_model()
 
 
 def import_taric(

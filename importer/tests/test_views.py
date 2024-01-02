@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from bs4 import BeautifulSoup
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.urls import reverse
@@ -17,6 +17,8 @@ from workbaskets.validators import WorkflowStatus
 TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
 
 pytestmark = pytest.mark.django_db
+
+User = get_user_model()
 
 
 @pytest.mark.parametrize("url_name", ["import_batch-ui-list", "import_batch-ui-create"])
