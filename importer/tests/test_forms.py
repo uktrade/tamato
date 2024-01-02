@@ -116,6 +116,7 @@ def test_commodity_import_form_valid_envelope(
     superuser,
     importer_storage,
 ):
+    chunk_taric.return_value = 1
     """Test that form is valid when given valid xml file."""
     mock_request = MagicMock()
 
@@ -168,7 +169,7 @@ def test_commodity_import_form_invalid_envelope(capture_exception, file_name, se
                 content_type="text/xml",
             ),
         }
-        form = forms.CommodityImportForm({}, file_data)
+        form = forms.CommodityImportForm({"workbasket_title": "12345"}, file_data)
 
         assert not form.is_valid()
 

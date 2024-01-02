@@ -236,6 +236,7 @@ class NIG10(BusinessRule):
             )
 
 
+@skip_when_deleted
 class NIG11(ValidityStartDateRules):
     """
     At least one indent record is mandatory.
