@@ -948,10 +948,11 @@ class MeasureCreateWizard(
         )
         new_create_measures.save()
         # initiate celery task with the primary key of the new CreateMeasures object.
-        bulk_create_measures.delay(new_create_measures.pk)
+        bulk_create_measures.delay(pk=new_create_measures.pk)
 
         print("*" * 80, "serialized_cleaned_data:")
         print()
+        print(f"{new_create_measures.pk=}")
         print(json.dumps(serialized_cleaned_data, indent=4))
         print()
         print("*" * 80)
