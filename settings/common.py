@@ -242,6 +242,8 @@ if SSO_ENABLED:
         "authbroker_client.backends.AuthbrokerBackend",
     ]
 
+AUTH_USER_MODEL = "workbaskets.User"
+
 # -- Security
 SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")
 

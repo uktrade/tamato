@@ -8,6 +8,7 @@ from typing import Tuple
 
 from celery.result import AsyncResult
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -664,4 +665,14 @@ class DataRow(ValidityMixin, models.Model):
         max_length=255,
         null=True,
         blank=True,
+    )
+
+
+class User(AbstractUser):
+    """Custom user model."""
+
+    current_workbasket = models.ForeignKey(
+        WorkBasket,
+        on_delete=models.SET_NULL,
+        null=True,
     )
