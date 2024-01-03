@@ -130,7 +130,6 @@ class ValidateSessionWorkBasketMiddleware:
         # current transaction (below), so abandon this middleware's action and
         # return early if there is no current editable workbasket in the
         # session.
-
         if not is_session_workbasket_valid(request):
             WorkBasket.remove_current_from_session(request.session)
         return self.get_response(request)

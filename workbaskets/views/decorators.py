@@ -1,7 +1,6 @@
 from functools import wraps
 
-from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.shortcuts import redirect
 
 from workbaskets.models import WorkBasket
 
@@ -15,8 +14,8 @@ def require_current_workbasket(view_func):
         try:
             if WorkBasket.current(request):
                 return view_func(request, *args, **kwargs)
-            return HttpResponseRedirect(reverse("workbaskets:workbasket-not-active"))
+            return redirect("workbaskets:no-active-workbasket")
         except WorkBasket.DoesNotExist:
-            return HttpResponseRedirect(reverse("workbaskets:workbasket-not-active"))
+            return redirect("workbaskets:no-active-workbasket")
 
     return check_for_current_workbasket

@@ -514,7 +514,7 @@ def test_duties_validator(
 )
 def test_measure_update_duty_sentence(
     update_data,
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     measure_form,
     duty_sentence_parser,
 ):
@@ -532,7 +532,7 @@ def test_measure_update_duty_sentence(
     post_data.update(update_data)
     post_data["update_type"] = UpdateType.UPDATE
     url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
-    response = valid_user_client_workbasket.post(url, data=post_data)
+    response = client_with_current_workbasket.post(url, data=post_data)
 
     assert response.status_code == 302
 
@@ -554,7 +554,7 @@ def test_measure_update_duty_sentence(
 @patch("measures.forms.MeasureForm.save")
 def test_measure_form_save_called_on_measure_update(
     save,
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     measure_form,
 ):
     """Until work is done to make `TrackedModel` call new_version in save() we
@@ -566,7 +566,7 @@ def test_measure_form_save_called_on_measure_update(
     post_data = {k: v for k, v in post_data.items() if v is not None}
     post_data["update_type"] = UpdateType.UPDATE
     url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
-    valid_user_client_workbasket.post(url, data=post_data)
+    client_with_current_workbasket.post(url, data=post_data)
 
     save.assert_called_with(commit=False)
 
@@ -590,7 +590,7 @@ def test_measure_update_get_footnotes(session_with_workbasket):
 
 def test_measure_update_form_creates_footnote_association(
     measure_form,
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
 ):
     """Test that editing a measure to add a new footnote doesn't require
     pressing "Add another footnote" button before submitting (saving) the
@@ -604,7 +604,7 @@ def test_measure_update_form_creates_footnote_association(
     form_data["form-0-footnote"] = footnote.pk
 
     url = reverse("measure-ui-edit", kwargs={"sid": measure.sid})
-    response = valid_user_client_workbasket.post(url, form_data)
+    response = client_with_current_workbasket.post(url, form_data)
     assert response.status_code == 302
 
     assert FootnoteAssociationMeasure.objects.filter(
@@ -616,7 +616,7 @@ def test_measure_update_form_creates_footnote_association(
 # https://uktrade.atlassian.net/browse/TP2000-340
 def test_measure_update_updates_footnote_association(
     measure_form,
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
 ):
     """Tests that when updating a measure with an existing footnote the
     MeasureFootnoteAssociation linking the measure and footnote is updated to
@@ -628,7 +628,7 @@ def test_measure_update_updates_footnote_association(
         footnoted_measure=measure_form.instance,
     )
     url = reverse("measure-ui-edit", args=(measure_form.instance.sid,))
-    valid_user_client_workbasket.post(url, data=post_data)
+    client_with_current_workbasket.post(url, data=post_data)
     new_assoc = FootnoteAssociationMeasure.objects.last()
 
     ME70(new_assoc.transaction).validate(new_assoc)
@@ -637,7 +637,7 @@ def test_measure_update_updates_footnote_association(
 
 
 def test_measure_update_removes_footnote_association(
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     measure_form,
 ):
     """Test that when editing a measure to remove a footnote, the
@@ -658,15 +658,15 @@ def test_measure_update_removes_footnote_association(
 
     # Form stores data of footnotes on a measure in the session
     url = reverse("measure-ui-edit", kwargs={"sid": measure.sid})
-    response = valid_user_client_workbasket.get(url)
+    response = client_with_current_workbasket.get(url)
     assert response.status_code == 200
 
     # Remove footnote2 from session to indicate its removal on form
-    session = valid_user_client_workbasket.session
+    session = client_with_current_workbasket.session
     session[f"instance_footnotes_{measure.sid}"].remove(footnote2.pk)
     session.save()
 
-    response = valid_user_client_workbasket.post(url, data=form_data)
+    response = client_with_current_workbasket.post(url, data=form_data)
     assert response.status_code == 302
 
     with override_current_transaction(Transaction.objects.last()):
@@ -680,7 +680,7 @@ def test_measure_update_removes_footnote_association(
 
 
 def test_measure_update_create_conditions(
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     measure_edit_conditions_data,
     duty_sentence_parser,
     erga_omnes,
@@ -695,7 +695,10 @@ def test_measure_update_create_conditions(
     """
     measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
-    response = valid_user_client_workbasket.post(url, data=measure_edit_conditions_data)
+    response = client_with_current_workbasket.post(
+        url,
+        data=measure_edit_conditions_data,
+    )
 
     assert response.status_code == 302
     assert response.url == reverse("measure-ui-confirm-update", args=(measure.sid,))
@@ -737,7 +740,7 @@ def test_measure_update_create_conditions(
 
 
 def test_measure_update_edit_conditions(
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     measure_edit_conditions_data,
     duty_sentence_parser,
     erga_omnes,
@@ -752,7 +755,7 @@ def test_measure_update_edit_conditions(
     """
     measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
-    valid_user_client_workbasket.post(url, data=measure_edit_conditions_data)
+    client_with_current_workbasket.post(url, data=measure_edit_conditions_data)
     transaction_count = Transaction.objects.count()
     tx = Transaction.objects.last()
     measure_with_condition = Measure.objects.approved_up_to_transaction(tx).get(
@@ -768,7 +771,7 @@ def test_measure_update_edit_conditions(
     measure_edit_conditions_data[
         f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty"
     ] = "10 GBP / 100 kg"
-    valid_user_client_workbasket.post(url, data=measure_edit_conditions_data)
+    client_with_current_workbasket.post(url, data=measure_edit_conditions_data)
     tx = Transaction.objects.last()
     updated_measure = Measure.objects.approved_up_to_transaction(tx).get(
         sid=measure.sid,
@@ -829,7 +832,7 @@ def test_measure_update_edit_conditions(
 
 
 def test_measure_update_remove_conditions(
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     measure_edit_conditions_data,
     duty_sentence_parser,
     erga_omnes,
@@ -844,10 +847,13 @@ def test_measure_update_remove_conditions(
     """
     measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
-    valid_user_client_workbasket.post(url, data=measure_edit_conditions_data)
+    client_with_current_workbasket.post(url, data=measure_edit_conditions_data)
 
     measure_edit_conditions_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-DELETE"] = 1
-    response = valid_user_client_workbasket.post(url, data=measure_edit_conditions_data)
+    response = client_with_current_workbasket.post(
+        url,
+        data=measure_edit_conditions_data,
+    )
 
     assert response.status_code == 200
 
@@ -867,7 +873,10 @@ def test_measure_update_remove_conditions(
     ] = ""
     del measure_edit_conditions_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-DELETE"]
     transaction_count = Transaction.objects.count()
-    response = valid_user_client_workbasket.post(url, data=measure_edit_conditions_data)
+    response = client_with_current_workbasket.post(
+        url,
+        data=measure_edit_conditions_data,
+    )
 
     assert response.status_code == 302
     # We expect one transaction for the measure update and condition deletion
@@ -882,7 +891,7 @@ def test_measure_update_remove_conditions(
 
 
 def test_measure_update_negative_condition(
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     measure_edit_conditions_and_negative_action_data,
     duty_sentence_parser,
     erga_omnes,
@@ -897,7 +906,7 @@ def test_measure_update_negative_condition(
 
     measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
-    response = valid_user_client_workbasket.post(
+    response = client_with_current_workbasket.post(
         url,
         data=measure_edit_conditions_and_negative_action_data,
     )
@@ -922,7 +931,7 @@ def test_measure_update_negative_condition(
 
 
 def test_measure_update_invalid_conditions(
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     measure_edit_conditions_and_negative_action_data,
     duty_sentence_parser,
     erga_omnes,
@@ -942,7 +951,7 @@ def test_measure_update_invalid_conditions(
 
     measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
-    response = valid_user_client_workbasket.post(
+    response = client_with_current_workbasket.post(
         url,
         data=measure_edit_conditions_and_negative_action_data,
     )
@@ -977,7 +986,7 @@ def test_measure_update_invalid_conditions(
 
 
 def test_measure_update_invalid_conditions_invalid_actions(
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     measure_edit_conditions_and_negative_action_data,
     duty_sentence_parser,
     erga_omnes,
@@ -1007,7 +1016,7 @@ def test_measure_update_invalid_conditions_invalid_actions(
 
     measure = Measure.objects.first()
     url = reverse("measure-ui-edit", args=(measure.sid,))
-    response = valid_user_client_workbasket.post(
+    response = client_with_current_workbasket.post(
         url,
         data=measure_edit_conditions_and_negative_action_data,
     )
@@ -1026,7 +1035,7 @@ def test_measure_update_invalid_conditions_invalid_actions(
     )
 
 
-def test_measure_update_group_exclusion(valid_user_client_workbasket, erga_omnes):
+def test_measure_update_group_exclusion(client_with_current_workbasket, erga_omnes):
     """
     Tests that measure edit view handles exclusion of one group from another
     group.
@@ -1061,7 +1070,7 @@ def test_measure_update_group_exclusion(valid_user_client_workbasket, erga_omnes
         Transaction.objects.last(),
     ).exists()
 
-    valid_user_client_workbasket.post(url, data=data)
+    client_with_current_workbasket.post(url, data=data)
     measure_area_exclusions = (
         MeasureExcludedGeographicalArea.objects.approved_up_to_transaction(
             Transaction.objects.last(),
@@ -1081,14 +1090,14 @@ def test_measure_update_group_exclusion(valid_user_client_workbasket, erga_omnes
     assert area_2.sid in area_sids
 
 
-def test_measure_edit_update_view(valid_user_client_workbasket, erga_omnes):
+def test_measure_edit_update_view(client_with_current_workbasket, erga_omnes):
     """Test that a measure UPDATE instance can be edited."""
     measure = factories.MeasureFactory.create(
         update_type=UpdateType.UPDATE,
     )
     geo_area = factories.GeoGroupFactory.create()
     url = reverse("measure-ui-edit-update", kwargs={"sid": measure.sid})
-    response = valid_user_client_workbasket.get(url)
+    response = client_with_current_workbasket.get(url)
     assert response.status_code == 200
 
     data = model_to_dict(measure)
@@ -1104,7 +1113,7 @@ def test_measure_edit_update_view(valid_user_client_workbasket, erga_omnes):
             "submit": "submit",
         },
     )
-    response = valid_user_client_workbasket.post(url, data=data)
+    response = client_with_current_workbasket.post(url, data=data)
     assert response.status_code == 302
 
     with override_current_transaction(Transaction.objects.last()):
@@ -1114,7 +1123,7 @@ def test_measure_edit_update_view(valid_user_client_workbasket, erga_omnes):
 
 
 def test_measure_edit_create_view(
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     duty_sentence_parser,
     erga_omnes,
 ):
@@ -1125,7 +1134,7 @@ def test_measure_edit_create_view(
     geo_area = factories.CountryFactory.create()
 
     url = reverse("measure-ui-edit-create", kwargs={"sid": measure.sid})
-    response = valid_user_client_workbasket.get(url)
+    response = client_with_current_workbasket.get(url)
     assert response.status_code == 200
 
     data = model_to_dict(measure)
@@ -1143,7 +1152,7 @@ def test_measure_edit_create_view(
             "submit": "submit",
         },
     )
-    response = valid_user_client_workbasket.post(url, data=data)
+    response = client_with_current_workbasket.post(url, data=data)
     assert response.status_code == 302
 
     with override_current_transaction(Transaction.objects.last()):
@@ -1153,16 +1162,16 @@ def test_measure_edit_create_view(
 
 
 @pytest.mark.django_db
-def test_measure_form_wizard_start(valid_user_client_workbasket):
+def test_measure_form_wizard_start(client_with_current_workbasket):
     url = reverse("measure-ui-create", kwargs={"step": "start"})
-    response = valid_user_client_workbasket.get(url)
+    response = client_with_current_workbasket.get(url)
     assert response.status_code == 200
 
 
 @unittest.mock.patch("measures.parsers.DutySentenceParser")
 def test_measure_form_wizard_finish(
     mock_duty_sentence_parser,
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     regulation,
     duty_sentence_parser,
     erga_omnes,
@@ -1248,10 +1257,10 @@ def test_measure_form_wizard_finish(
             "measure-ui-create",
             kwargs={"step": step_data["data"]["measure_create_wizard-current_step"]},
         )
-        response = valid_user_client_workbasket.get(url)
+        response = client_with_current_workbasket.get(url)
         assert response.status_code == 200
 
-        response = valid_user_client_workbasket.post(url, step_data["data"])
+        response = client_with_current_workbasket.post(url, step_data["data"])
         assert response.status_code == 302
 
         assert response.url == reverse(
@@ -1259,7 +1268,7 @@ def test_measure_form_wizard_finish(
             kwargs={"step": step_data["next_step"]},
         )
 
-    complete_response = valid_user_client_workbasket.get(response.url)
+    complete_response = client_with_current_workbasket.get(response.url)
 
     assert complete_response.status_code == 200
 
@@ -1724,7 +1733,7 @@ def test_measure_create_wizard_get_cleaned_data_for_step(session_request, measur
 
 
 def test_measure_create_wizard_quota_origins_conditional_step(
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     quota_order_number,
 ):
     """
@@ -1765,10 +1774,10 @@ def test_measure_create_wizard_quota_origins_conditional_step(
             "measure-ui-create",
             kwargs={"step": step_data["data"]["measure_create_wizard-current_step"]},
         )
-        response = valid_user_client_workbasket.get(url)
+        response = client_with_current_workbasket.get(url)
         assert response.status_code == 200
 
-        response = valid_user_client_workbasket.post(url, step_data["data"])
+        response = client_with_current_workbasket.post(url, step_data["data"])
         assert response.status_code == 302
 
         assert response.url == reverse(
@@ -1779,7 +1788,7 @@ def test_measure_create_wizard_quota_origins_conditional_step(
 
 def test_measure_form_creates_exclusions(
     erga_omnes,
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
 ):
     excluded_country1 = factories.GeographicalAreaFactory.create()
     excluded_country2 = factories.GeographicalAreaFactory.create()
@@ -1805,7 +1814,7 @@ def test_measure_form_creates_exclusions(
     }
     data.update(exclusions_data)
     url = reverse("measure-ui-edit", args=(measure.sid,))
-    response = valid_user_client_workbasket.post(url, data)
+    response = client_with_current_workbasket.post(url, data)
     assert response.status_code == 302
     assert measure.exclusions.all().count() == 2
     assert not set(

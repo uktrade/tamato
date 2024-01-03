@@ -46,7 +46,7 @@ def test_certificate_description_delete_form(use_delete_form):
 
 
 def test_certificate_create_form_creates_certificate_description_object(
-    valid_user_api_client_workbasket,
+    api_client_with_current_workbasket,
 ):
     # Post a form
     create_url = reverse("certificate-ui-create")
@@ -60,7 +60,7 @@ def test_certificate_create_form_creates_certificate_description_object(
         "description": "A participation certificate",
     }
 
-    valid_user_api_client_workbasket.post(create_url, form_data)
+    api_client_with_current_workbasket.post(create_url, form_data)
     #  get the certificate we have made, and the certificate description matching our description on the form
     certificate = models.Certificate.objects.all()[0]
     certificate_description = models.CertificateDescription.objects.filter(
@@ -128,7 +128,7 @@ def test_description_create_get_initial():
         assert initial["described_certificate"] == new_version
 
 
-def test_description_create_get_context_data(valid_user_api_client_workbasket):
+def test_description_create_get_context_data(api_client_with_current_workbasket):
     """Test that posting to certificate create endpoint with valid data returns
     a 302 and creates new description matching certificate."""
     certificate = factories.CertificateFactory.create(description=None)
@@ -145,7 +145,7 @@ def test_description_create_get_context_data(valid_user_api_client_workbasket):
         "validity_start_2": 2022,
     }
     assert not models.CertificateDescription.objects.exists()
-    response = valid_user_api_client_workbasket.post(url, post_data)
+    response = api_client_with_current_workbasket.post(url, post_data)
 
     assert response.status_code == 302
     assert models.CertificateDescription.objects.filter(

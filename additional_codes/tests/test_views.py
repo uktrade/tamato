@@ -228,7 +228,7 @@ def test_additional_code_details_list_no_measures(valid_user_client):
     assert num_measures == 0
 
 
-def test_additional_code_description_create(valid_user_client_workbasket):
+def test_additional_code_description_create(client_with_current_workbasket):
     """Tests that `AdditionalCodeDescriptionCreate` view returns 200 and creates
     a description for the current version of an additional code."""
     additional_code = factories.AdditionalCodeFactory.create()
@@ -250,10 +250,10 @@ def test_additional_code_description_create(valid_user_client_workbasket):
     }
 
     with override_current_transaction(Transaction.objects.last()):
-        get_response = valid_user_client_workbasket.get(url)
+        get_response = client_with_current_workbasket.get(url)
         assert get_response.status_code == 200
 
-        post_response = valid_user_client_workbasket.post(url, data)
+        post_response = client_with_current_workbasket.post(url, data)
         assert post_response.status_code == 302
 
     assert AdditionalCodeDescription.objects.filter(

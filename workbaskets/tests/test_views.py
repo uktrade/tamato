@@ -2055,7 +2055,7 @@ def test_deleted_workbasket_notifies_user(
     session_empty_workbasket.delete()
     response = valid_user_client.get(reverse("quota-ui-create"))
     assert response.status_code == 302
-    assert response.url == reverse("workbaskets:workbasket-not-active")
+    assert response.url == reverse("workbaskets:no-active-workbasket")
 
 
 def test_queued_workbasket_notifies_user(
@@ -2085,4 +2085,6 @@ def test_queued_workbasket_notifies_user(
     workbasket.save()
     response = valid_user_client.get(reverse("quota-ui-create"))
     assert response.status_code == 302
-    assert response.url == reverse("workbaskets:workbasket-not-active")
+    assert response.url == reverse("workbaskets:no-active-workbasket")
+    response = valid_user_client.get(response.url)
+    assert "You need an active workbasket to access this page" in str(response.content)

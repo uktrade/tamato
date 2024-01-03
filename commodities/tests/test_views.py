@@ -378,7 +378,7 @@ def test_commodity_measures_sorting_measure_type(
     assert measure_sids == [measure1.sid, measure2.sid, measure3.sid]
 
 
-def test_add_commodity_footnote(valid_user_client_workbasket, date_ranges):
+def test_add_commodity_footnote(client_with_current_workbasket, date_ranges):
     commodity = factories.GoodsNomenclatureFactory.create(
         valid_between=date_ranges.big_no_end,
     )
@@ -396,7 +396,7 @@ def test_add_commodity_footnote(valid_user_client_workbasket, date_ranges):
     # sanity check
     assert commodity.footnote_associations.count() == 0
 
-    response = valid_user_client_workbasket.post(url, data)
+    response = client_with_current_workbasket.post(url, data)
 
     assert response.status_code == 302
     assert commodity.footnote_associations.count() == 1
@@ -412,7 +412,7 @@ def test_add_commodity_footnote(valid_user_client_workbasket, date_ranges):
 
 
 def test_add_commodity_footnote_NIG22_failure(
-    valid_user_client_workbasket,
+    client_with_current_workbasket,
     date_ranges,
 ):
     """
@@ -436,7 +436,7 @@ def test_add_commodity_footnote_NIG22_failure(
         "end_date": "",
     }
 
-    response = valid_user_client_workbasket.post(url, data)
+    response = client_with_current_workbasket.post(url, data)
 
     assert response.status_code == 200
 
@@ -446,12 +446,12 @@ def test_add_commodity_footnote_NIG22_failure(
     )
 
 
-def test_add_commodity_footnote_form_page(valid_user_client_workbasket, date_ranges):
+def test_add_commodity_footnote_form_page(client_with_current_workbasket, date_ranges):
     commodity = factories.GoodsNomenclatureFactory.create(
         valid_between=date_ranges.big_no_end,
     )
     url = reverse("commodity-ui-add-footnote", kwargs={"sid": commodity.sid})
-    response = valid_user_client_workbasket.get(url)
+    response = client_with_current_workbasket.get(url)
 
     assert response.status_code == 200
 
@@ -508,7 +508,7 @@ def test_commodity_footnotes_page(valid_user_client):
     assert not footnote_descriptions.difference(page_footnote_descriptions)
 
 
-def test_commodity_footnote_update_success(valid_user_client_workbasket, date_ranges):
+def test_commodity_footnote_update_success(client_with_current_workbasket, date_ranges):
     commodity = factories.GoodsNomenclatureFactory.create()
     footnote1 = factories.FootnoteFactory.create()
     association1 = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
@@ -524,7 +524,7 @@ def test_commodity_footnote_update_success(valid_user_client_workbasket, date_ra
         "start_date_2": date_ranges.later.lower.year,
         "end_date": "",
     }
-    response = valid_user_client_workbasket.post(url, data)
+    response = client_with_current_workbasket.post(url, data)
     tx = Transaction.objects.last()
     updated_association = (
         FootnoteAssociationGoodsNomenclature.objects.approved_up_to_transaction(
@@ -535,7 +535,7 @@ def test_commodity_footnote_update_success(valid_user_client_workbasket, date_ra
     assert response.url == updated_association.get_url("confirm-update")
 
 
-def test_footnote_association_delete(valid_user_client_workbasket):
+def test_footnote_association_delete(client_with_current_workbasket):
     commodity = factories.GoodsNomenclatureFactory.create()
     footnote1 = factories.FootnoteFactory.create()
     association1 = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
@@ -543,7 +543,7 @@ def test_footnote_association_delete(valid_user_client_workbasket):
         goods_nomenclature=commodity,
     )
     url = association1.get_url("delete")
-    response = valid_user_client_workbasket.post(url, {"submit": "Delete"})
+    response = client_with_current_workbasket.post(url, {"submit": "Delete"})
 
     assert response.status_code == 302
     assert response.url == reverse(
@@ -557,7 +557,7 @@ def test_footnote_association_delete(valid_user_client_workbasket):
     assert tx.workbasket.tracked_models.first().goods_nomenclature == commodity
     assert tx.workbasket.tracked_models.first().update_type == UpdateType.DELETE
 
-    confirm_response = valid_user_client_workbasket.get(response.url)
+    confirm_response = client_with_current_workbasket.get(response.url)
     soup = BeautifulSoup(
         confirm_response.content.decode(response.charset),
         "html.parser",

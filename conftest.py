@@ -156,7 +156,8 @@ def tap_migrator_factory(migrator_factory):
     its migration unit testing, continues to cause problems in migration unit
     tests. A couple of examples of the reported issue:
     https://code.djangoproject.com/ticket/10827
-    /PS-IGNOREhttps://github.com/wemake-services/django-test-migrations/blob/93db540c00a830767eeab5f90e2eef1747c940d4/django_test_migrations/migrator.py#L73
+    /PS-IGNORE---https://github.com/wemake-services/django-test-migrations/blob/93db540c00a830767eeab5f90e2eef1747c940d4/django_test_migrations/migrator.py#L73
+
 
     An initial migration must reference ContentType instances (in the DB).
     This can occur when inserting Permission objects during
@@ -322,7 +323,7 @@ def valid_user_client(client, valid_user):
 
 
 @pytest.fixture
-def valid_user_client_workbasket(client, valid_user):
+def client_with_current_workbasket(client, valid_user):
     client.force_login(valid_user)
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
@@ -373,7 +374,7 @@ def valid_user_api_client(api_client, valid_user) -> APIClient:
 
 
 @pytest.fixture
-def valid_user_api_client_workbasket(api_client, valid_user) -> APIClient:
+def api_client_with_current_workbasket(api_client, valid_user) -> APIClient:
     api_client.force_login(valid_user)
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
@@ -555,7 +556,7 @@ def description_factory(request):
 
 
 @pytest.fixture
-def use_create_form(valid_user_api_client_workbasket: APIClient):
+def use_create_form(api_client_with_current_workbasket):
     """
     use_create_form, ported from use_update_form.
 
@@ -584,7 +585,7 @@ def use_create_form(valid_user_api_client_workbasket: APIClient):
         assert create_url, f"No create page found for {Model}"
 
         # Initial rendering of url
-        response = valid_user_api_client_workbasket.get(create_url)
+        response = api_client_with_current_workbasket.get(create_url)
         assert response.status_code == 200
 
         initial_form = response.context_data["form"]
@@ -600,7 +601,7 @@ def use_create_form(valid_user_api_client_workbasket: APIClient):
             k: data.get(k) for k in Model.identifying_fields if "__" not in k
         }
 
-        response = valid_user_api_client_workbasket.post(create_url, data)
+        response = api_client_with_current_workbasket.post(create_url, data)
 
         # Check that if we expect failure that the new data was not persisted
         if response.status_code not in (301, 302):
@@ -621,7 +622,7 @@ def use_create_form(valid_user_api_client_workbasket: APIClient):
 
 
 @pytest.fixture
-def use_edit_view(valid_user_api_client_workbasket: APIClient):
+def use_edit_view(api_client_with_current_workbasket):
     """
     Uses the default edit form and view for a model in a workbasket with EDITING
     status.
@@ -641,14 +642,14 @@ def use_edit_view(valid_user_api_client_workbasket: APIClient):
         url = obj.get_url("edit")
 
         # Check initial form rendering.
-        get_response = valid_user_api_client_workbasket.get(url)
+        get_response = api_client_with_current_workbasket.get(url)
         assert get_response.status_code == 200
 
         # Edit and submit the data.
         initial_form = get_response.context_data["form"]
         form_data = get_form_data(initial_form)
         form_data.update(data_changes)
-        post_response = valid_user_api_client_workbasket.post(url, form_data)
+        post_response = api_client_with_current_workbasket.post(url, form_data)
 
         # POSTing a real edits form should never create new object instances.
         assert Model.objects.filter(**obj.get_identifying_fields()).count() == obj_count
@@ -661,7 +662,7 @@ def use_edit_view(valid_user_api_client_workbasket: APIClient):
 
 
 @pytest.fixture
-def use_update_form(valid_user_api_client_workbasket: APIClient):
+def use_update_form(api_client_with_current_workbasket):
     """
     Uses the default create form and view for a model with update_type=UPDATE.
 
@@ -686,7 +687,7 @@ def use_update_form(valid_user_api_client_workbasket: APIClient):
         # Visit the edit page and ensure it is a success
         edit_url = object.get_url("edit")
         assert edit_url, f"No edit page found for {object}"
-        response = valid_user_api_client_workbasket.get(edit_url)
+        response = api_client_with_current_workbasket.get(edit_url)
         assert response.status_code == 200
 
         # Get the data out of the edit page
@@ -697,7 +698,7 @@ def use_update_form(valid_user_api_client_workbasket: APIClient):
         realised_data = new_data(object)
         assert set(realised_data.keys()).issubset(data.keys())
         data.update(realised_data)
-        response = valid_user_api_client_workbasket.post(edit_url, data)
+        response = api_client_with_current_workbasket.post(edit_url, data)
 
         # Check that if we expect failure that the new data was not persisted
         if response.status_code not in (301, 302):
@@ -715,7 +716,7 @@ def use_update_form(valid_user_api_client_workbasket: APIClient):
             )
 
         # Check that what we asked to be changed has been persisted
-        response = valid_user_api_client_workbasket.get(edit_url)
+        response = api_client_with_current_workbasket.get(edit_url)
         assert response.status_code == 200
         data = get_form_data(response.context_data["form"])
         for key in realised_data:
@@ -737,7 +738,7 @@ def use_update_form(valid_user_api_client_workbasket: APIClient):
 
 
 @pytest.fixture
-def use_delete_form(valid_user_api_client_workbasket: APIClient):
+def use_delete_form(api_client_with_current_workbasket):
     """
     Uses the default delete form and view for a model to delete an object, and
     returns the deleted version of the object.
@@ -758,12 +759,12 @@ def use_delete_form(valid_user_api_client_workbasket: APIClient):
         # Visit the delete page and ensure it is a success
         delete_url = object.get_url("delete")
         assert delete_url, f"No delete page found for {object}"
-        response = valid_user_api_client_workbasket.get(delete_url)
+        response = api_client_with_current_workbasket.get(delete_url)
         assert response.status_code == 200
 
         # Get the data out of the delete page
         data = get_form_data(response.context_data["form"])
-        response = valid_user_api_client_workbasket.post(delete_url, data)
+        response = api_client_with_current_workbasket.post(delete_url, data)
 
         # Check that if we expect failure that the new data was not persisted
         if response.status_code not in (301, 302):
@@ -781,7 +782,7 @@ def use_delete_form(valid_user_api_client_workbasket: APIClient):
             )
 
         # Check that the delete persisted and we can't delete again
-        response = valid_user_api_client_workbasket.get(delete_url)
+        response = api_client_with_current_workbasket.get(delete_url)
         assert response.status_code == 404
 
         # Check that if success was expected that the new version was persisted
