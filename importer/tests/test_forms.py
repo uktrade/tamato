@@ -37,7 +37,7 @@ def test_upload_taric_form_valid_envelope_id():
 @patch("importer.forms.capture_exception")
 def test_upload_taric_form_invalid_envelope(capture_exception, file_name, settings):
     """Test that form returns generic validation error and sentry captures
-    exception when given xml file with invalid id or document type
+    xception when given xml file with invalid id or document type
     declaration."""
     settings.SENTRY_ENABLED = True
     with open(f"{TEST_FILES_PATH}/{file_name}.xml", "rb") as upload_file:
@@ -169,7 +169,10 @@ def test_commodity_import_form_invalid_envelope(capture_exception, file_name, se
                 content_type="text/xml",
             ),
         }
-        form = forms.CommodityImportForm({"workbasket_title": "12345"}, file_data)
+
+        form = forms.CommodityImportForm(
+            {"workbasket_title": "12345", "taric_file": file_data},
+        )
 
         assert not form.is_valid()
 
