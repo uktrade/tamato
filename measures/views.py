@@ -938,7 +938,7 @@ class MeasureCreateWizard(
     ########################################################################################################################################################################################
     ########################################################################################################################################################################################
     def done(self, form_list, **kwargs):
-        import json
+        pass
 
         serialized_cleaned_data = self.get_all_serialized_cleaned_data()
 
@@ -948,21 +948,9 @@ class MeasureCreateWizard(
         )
         new_create_measures.save()
         # initiate celery task with the primary key of the new CreateMeasures object.
-        bulk_create_measures.delay(pk=new_create_measures.pk)
-
-        print("*" * 80, "serialized_cleaned_data:")
-        print()
-        print(f"{new_create_measures.pk=}")
-        print(json.dumps(serialized_cleaned_data, indent=4))
-        print()
-        print("*" * 80)
+        bulk_create_measures(create_measures_pk=new_create_measures.pk)
 
         raise Exception("You shall not pass!!")
-
-        # new_create_measures = CreateMeasures.objects.create(
-        #     cleaned_data=str(serialized_clean_data),
-        # )
-        # bulk_create_measures.delay(new_create_measures.pk)
 
         # created_measures = self.create_measures(cleaned_data)
 

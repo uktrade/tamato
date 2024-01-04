@@ -927,7 +927,6 @@ class SerializableFormMixin:
         """
         raise NotImplementedError
 
-    # ???? We may need to remove the output type hinting/casting to allow for reusability with other forms.
     @classmethod
     def create_from_serialized_cleaned_data(
         cls,
@@ -935,7 +934,9 @@ class SerializableFormMixin:
     ) -> "MeasureDetailsForm":
         """Given a serialized representation of this Forms data, create a new
         instance and return it."""
-        raise NotImplementedError
+        obj = cls()
+        return obj
+        # raise NotImplementedError
 
 
 class MeasureCreateStartForm(forms.Form):
@@ -1027,11 +1028,31 @@ class MeasureDetailsForm(
         return cleaned_data
 
     @classmethod
-    def create_from_serializable_cleaned_data(
+    def create_from_serialized_cleaned_data(
         cls,
         serializable_cleaned: Dict,
     ) -> "MeasureDetailsForm":
         obj = cls()
+        DATE_STRING_FORMAT = "%Y-%m-%d"
+        measure_type = models.MeasureType.objects.get(
+            pk=serializable_cleaned["measure_type"],
+        )
+        valid_between_lower = datetime.datetime.strptime(
+            serializable_cleaned["valid_between_lower"],
+            DATE_STRING_FORMAT,
+        ).date()
+        if serializable_cleaned["valid_between_upper"]:
+            valid_between_upper = datetime.datetime.strptime(
+                serializable_cleaned["valid_between_upper"],
+                DATE_STRING_FORMAT,
+            ).date()
+        else:
+            valid_between_upper = None
+
+        setattr(MeasureDetailsForm, "measure_type", measure_type)
+        setattr(MeasureDetailsForm, "valid_bevalid_between_lower", valid_between_lower)
+        setattr(MeasureDetailsForm, "valid_valid_between_upper", valid_between_upper)
+
         return obj
 
 

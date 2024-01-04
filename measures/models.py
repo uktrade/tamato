@@ -970,7 +970,23 @@ class FootnoteAssociationMeasure(TrackedModel):
 
 
 class CreateMeasures(models.Model):
-    # move bulk measure creation here
-
     cleaned_data = models.JSONField()
-    # cleaned_data = {}
+    # each form has a function called create_from_serialized_cleaned_data()
+    # TODO:
+    # loop through forms and call this function, passing in cleaned_data
+    # see get_all_serialized_cleaned_data
+    # NOTE: self.cleaned_data is a dictionary, not a json object
+    # NOTE: PKs can't be used to re-link to an object: ValueError: Cannot assign "1107": "Measure.measure_type" must be a "MeasureType" instance.
+    # NOTE: calling method on form directly results in circular import error
+
+    def create_measures(self):
+        # import inside method resolves circular import error
+        from measures import forms
+
+        for form in [
+            forms.MeasureDetailsForm,
+        ]:
+            # jsonified data is self.data
+            form = form.create_from_serialized_cleaned_data(self.cleaned_data)
+
+    # check each form returns the object expected
