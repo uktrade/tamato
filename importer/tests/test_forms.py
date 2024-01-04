@@ -171,7 +171,8 @@ def test_commodity_import_form_invalid_envelope(capture_exception, file_name, se
         }
 
         form = forms.CommodityImportForm(
-            {"workbasket_title": "12345", "taric_file": file_data},
+            {"workbasket_title": "12345"},
+            file_data,
         )
 
         assert not form.is_valid()
