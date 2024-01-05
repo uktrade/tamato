@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import PROTECT
 from django.db.models import SET_NULL
@@ -406,7 +407,7 @@ class PackagedWorkBasket(TimestampedMixin):
         """
 
         previous_id = PackagedWorkBasket.objects.last_unpublished_envelope_id()
-        if self.envelope.envelope_id[2:] == "0001":
+        if self.envelope.envelope_id[2:] == settings.HMRC_PACKAGING_SEED_ENVELOPE_ID:
             year = int(self.envelope.envelope_id[:2])
             last_envelope = publishing_models.Envelope.objects.for_year(
                 year=year - 1,
