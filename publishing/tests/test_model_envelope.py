@@ -1,3 +1,4 @@
+from datetime import date
 from unittest import mock
 
 import freezegun
@@ -117,12 +118,12 @@ def test_queryset_for_year(successful_envelope_factory, settings):
     # unit testing envelope not notification integration
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
-    with freeze_time("2022-01-01"):
+    with freeze_time(f"{str(date.today().year - 1)}-01-01"):
         envelope = successful_envelope_factory()
-    with freeze_time("2023-01-01"):
+    with freeze_time(f"{str(date.today().year)}-01-01"):
         envelope2 = successful_envelope_factory()
     current_year_envelopes = Envelope.objects.for_year()
-    previous_year_envelopes = Envelope.objects.for_year(2022)
+    previous_year_envelopes = Envelope.objects.for_year(int(date.today().year) - 1)
 
     assert envelope not in current_year_envelopes
     assert envelope in previous_year_envelopes
@@ -194,7 +195,7 @@ def test_next_envelope_id(successful_envelope_factory, settings):
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
     successful_envelope_factory()
-    assert Envelope.next_envelope_id() == "230002"
+    assert Envelope.next_envelope_id() == f"{str(date.today().year)[2:]}0002"
 
 
 def test_upload_envelope_handles_validate_envelope(packaged_workbasket_factory):
