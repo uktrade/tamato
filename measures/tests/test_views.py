@@ -1725,6 +1725,42 @@ def test_measure_create_wizard_get_cleaned_data_for_step(session_request, measur
     assert cleaned_data["valid_between"] == TaricDateRange(date(2021, 4, 2), None, "[)")
 
 
+# @pytest.fixture
+# def mock_celery_task():
+#     with unittest.mock.patch("measures.bulk_handling.bulk_create_measures") as task:
+#         yield task
+
+
+def test_measure_create_wizard_get_serialized_cleaned_data_for_step(
+    session_request,
+    measure_type,
+):
+    details_data = {
+        "measure_create_wizard-current_step": "measure_details",
+        "measure_details-measure_type": [measure_type.pk],
+        "measure_details-start_date_0": [2],
+        "measure_details-start_date_1": [4],
+        "measure_details-start_date_2": [2021],
+        "measure_details-min_commodity_count": [2],
+    }
+    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+    storage.set_step_data("measure_details", details_data)
+    storage._set_current_step("measure_details")
+    wizard = MeasureCreateWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"measure_details": {}},
+        instance_dict={"measure_details": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+
+    serialized_data = wizard.get_serialized_cleaned_data_for_step(storage.current_step)
+    assert type(serialized_data) is dict
+    assert serialized_data["measure_type"] == measure_type.pk
+    assert serialized_data["valid_between_lower"] == "2021-04-02"
+    assert serialized_data["min_commodity_count"] == 2
+
+
 def test_measure_create_wizard_quota_origins_conditional_step(
     valid_user_client,
     quota_order_number,
