@@ -293,18 +293,70 @@
 
         <span class="kn">from</span> <span class="nn">commodities.models.orm</span> <span class="kn">import</span> <span class="n">GoodsNomenclatureOrigin</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-            <span class="n">good</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">is_chapter</span>
-            <span class="ow">or</span> <span class="n">GoodsNomenclatureOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">new_goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">good</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">good</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">is_chapter</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">GoodsNomenclatureOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">new_goods_nomenclature__sid</span><span class="o">=</span><span class="n">good</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Non top-level goods must have an origin specified.&quot;</span><span class="p">,</span>
-            <span class="p">)</span></div></div>
+            <span class="k">return</span>
+
+        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">good</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Non top-level goods must have an origin specified.&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NIG5_origin"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG5_origin">[docs]</a><span class="nd">@skip_when_not_deleted</span>
+<span class="k">class</span> <span class="nc">NIG5_origin</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    related to NIG5:</span>
+
+<span class="sd">    MIG5 text:</span>
+<span class="sd">        When creating a goods nomenclature code, an origin must exist.</span>
+<span class="sd">        This rule is only applicable to update extractions.</span>
+
+<span class="sd">    When an origin is deleted, the goods nomenclature should be validated, if it has not been deleted</span>
+<span class="sd">    then it should have an origin, provided it&#39;s not a chapter and was created after 1/1/2010</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NIG5_origin.validate"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG5_origin.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Only used when deleting an origin.</span>
+
+<span class="sd">        Verify:</span>
+<span class="sd">            * It has an origin after deletion of this origin</span>
+<span class="sd">            * or that the goods code is a chapter</span>
+<span class="sd">            * or it was created before 1/1/2010</span>
+<span class="sd">            * or the code was deleted in same or previous transaction</span>
+
+<span class="sd">        If it does not meet these criteria it&#39;s a validation fail</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="kn">from</span> <span class="nn">commodities.models.orm</span> <span class="kn">import</span> <span class="n">GoodsNomenclatureOrigin</span>
+
+        <span class="k">if</span> <span class="n">origin</span><span class="o">.</span><span class="n">new_goods_nomenclature</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&lt;</span> <span class="n">date</span><span class="p">(</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c1"># is it a chapter?</span>
+        <span class="k">if</span> <span class="n">origin</span><span class="o">.</span><span class="n">new_goods_nomenclature</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">is_chapter</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">GoodsNomenclatureOrigin</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+                <span class="n">origin</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">new_goods_nomenclature__sid</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">new_goods_nomenclature</span><span class="o">.</span><span class="n">sid</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">origin</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Non top-level goods must have an origin specified. None remain if this origin is deleted&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="NIG7"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG7">[docs]</a><span class="k">class</span> <span class="nc">NIG7</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
@@ -365,7 +417,8 @@
             <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="NIG11"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG11">[docs]</a><span class="k">class</span> <span class="nc">NIG11</span><span class="p">(</span><span class="n">ValidityStartDateRules</span><span class="p">):</span>
+<div class="viewcode-block" id="NIG11"><a class="viewcode-back" href="../../business_rules/commodities.html#commodities.business_rules.NIG11">[docs]</a><span class="nd">@skip_when_deleted</span>
+<span class="k">class</span> <span class="nc">NIG11</span><span class="p">(</span><span class="n">ValidityStartDateRules</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    At least one indent record is mandatory.</span>
 

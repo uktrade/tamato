@@ -200,6 +200,17 @@ date. The start date must be less than or equal to the end date of the
 nomenclature.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="commodities.business_rules.NIG11.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#commodities.business_rules.NIG11.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform business rule validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Must be overridden by subclasses</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -409,6 +420,48 @@ scenarios:</p>
 </ol>
 </div></blockquote>
 <p>Therefore check for these two conditions, and if neither are met ensure an origin exists.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="commodities.business_rules.NIG5_origin">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">commodities.business_rules.</span></span><span class="sig-name descname"><span class="pre">NIG5_origin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/commodities/business_rules.html#NIG5_origin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#commodities.business_rules.NIG5_origin" title="Permalink to this definition">¶</a></dt>
+<dd><p>related to NIG5:</p>
+<dl class="simple">
+<dt>MIG5 text:</dt><dd><p>When creating a goods nomenclature code, an origin must exist.
+This rule is only applicable to update extractions.</p>
+</dd>
+</dl>
+<p>When an origin is deleted, the goods nomenclature should be validated, if it has not been deleted
+then it should have an origin, provided it’s not a chapter and was created after 1/1/2010</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="commodities.business_rules.NIG5_origin.Violation">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-name descname"><span class="pre">Violation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.trackedmodel.TrackedModel"><span class="pre">common.models.trackedmodel.TrackedModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#commodities.business_rules.NIG5_origin.Violation" title="Permalink to this definition">¶</a></dt>
+<dd><p>related to NIG5:</p>
+<dl class="simple">
+<dt>MIG5 text:</dt><dd><p>When creating a goods nomenclature code, an origin must exist.
+This rule is only applicable to update extractions.</p>
+</dd>
+</dl>
+<p>When an origin is deleted, the goods nomenclature should be validated, if it has not been deleted
+then it should have an origin, provided it’s not a chapter and was created after 1/1/2010</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="commodities.business_rules.NIG5_origin.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">origin</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/commodities/business_rules.html#NIG5_origin.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#commodities.business_rules.NIG5_origin.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only used when deleting an origin.</p>
+<dl class="simple">
+<dt>Verify:</dt><dd><ul class="simple">
+<li><p>It has an origin after deletion of this origin</p></li>
+<li><p>or that the goods code is a chapter</p></li>
+<li><p>or it was created before 1/1/2010</p></li>
+<li><p>or the code was deleted in same or previous transaction</p></li>
+</ul>
+</dd>
+</dl>
+<p>If it does not meet these criteria it’s a validation fail</p>
 </dd></dl>
 
 </dd></dl>
