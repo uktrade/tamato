@@ -1035,29 +1035,25 @@ class MeasureDetailsForm(
     ) -> "MeasureDetailsForm":
         obj = cls()
         DATE_STRING_FORMAT = "%Y-%m-%d"
-        measure_type = models.MeasureType.objects.get(
-            pk=serializable_cleaned["measure_type"],
-        )
-        valid_between_lower = datetime.datetime.strptime(
-            serializable_cleaned["valid_between_lower"],
-            DATE_STRING_FORMAT,
-        ).date()
-        if serializable_cleaned["valid_between_upper"]:
-            valid_between_upper = datetime.datetime.strptime(
+
+        values = {
+            "measure_type": models.MeasureType.objects.get(
+                pk=serializable_cleaned["measure_type"],
+            ),
+            "valid_between_lower": datetime.datetime.strptime(
+                serializable_cleaned["valid_between_lower"],
+                DATE_STRING_FORMAT,
+            ).date(),
+            "valid_between_upper": datetime.datetime.strptime(
                 serializable_cleaned["valid_between_upper"],
                 DATE_STRING_FORMAT,
             ).date()
-        else:
-            valid_between_upper = None
-
-        setattr(MeasureDetailsForm, "measure_type", measure_type)
-        setattr(MeasureDetailsForm, "valid_bevalid_between_lower", valid_between_lower)
-        setattr(MeasureDetailsForm, "valid_valid_between_upper", valid_between_upper)
-        setattr(
-            MeasureDetailsForm,
-            "min_commodity_count",
-            serializable_cleaned["min_commodity_count"],
-        )
+            if serializable_cleaned["valid_between_upper"]
+            else None,
+            "min_commodity_count": serializable_cleaned["min_commodity_count"],
+        }
+        for k, v in values.items():
+            setattr(obj, k, v)
 
         return obj
 
