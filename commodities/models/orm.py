@@ -297,8 +297,7 @@ class GoodsNomenclatureOrigin(TrackedModel):
         "derived_from_goods_nomenclature__sid",
     )
 
-    indirect_business_rules = (business_rules.NIG5,)
-    business_rules = (business_rules.NIG7, UpdateValidity)
+    business_rules = (business_rules.NIG7, UpdateValidity, business_rules.NIG5_origin)
 
     def __str__(self):
         return (

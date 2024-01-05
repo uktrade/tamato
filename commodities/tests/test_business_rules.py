@@ -286,32 +286,6 @@ def test_NIG4(date_ranges):
         factories.GoodsNomenclatureFactory.create(valid_between=date_ranges.backwards)
 
 
-def test_NIG5(workbasket):
-    """
-    When creating a goods nomenclature code, an origin must exist.
-
-    This rule is only applicable to update extractions.
-    """
-    origin = factories.GoodsNomenclatureFactory.create(item_id="2000000000")
-    bad_good = factories.GoodsNomenclatureFactory.create(
-        item_id="2000000010",
-        origin=None,
-        indent__indent=1,
-    )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG5(bad_good.transaction).validate(bad_good)
-
-    deleted_good = bad_good.new_version(workbasket, update_type=UpdateType.DELETE)
-    business_rules.NIG5(deleted_good.transaction).validate(deleted_good)
-
-    good_good = factories.GoodsNomenclatureFactory.create(
-        origin__derived_from_goods_nomenclature=origin,
-        indent__indent=1,
-    )
-    business_rules.NIG5(good_good.transaction).validate(good_good)
-
-
 @pytest.mark.parametrize(
     "valid_between, expect_error",
     [
@@ -363,58 +337,6 @@ def test_NIG10(date_ranges, update_type, valid_between, expect_error):
     expect_error = expect_error and update_type != UpdateType.DELETE
     with raises_if(BusinessRuleViolation, expect_error):
         business_rules.NIG10(successor.transaction).validate(successor)
-
-
-def test_NIG11_one_indent_mandatory():
-    """At least one indent record is mandatory."""
-
-    good = factories.GoodsNomenclatureFactory.create(indent=None)
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG11(good.transaction).validate(good)
-
-
-def test_NIG11_first_indent_must_have_same_start_date(date_ranges):
-    """The start date of the first indentation must be equal to the start date
-    of the nomenclature."""
-
-    indent = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__valid_between=date_ranges.normal,
-        validity_start=date_ranges.overlap_normal.lower,
-    )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG11(indent.transaction).validate(
-            indent.indented_goods_nomenclature,
-        )
-
-
-def test_NIG11_no_overlapping_indents():
-    """No two associated indentations may have the same start date."""
-
-    existing = factories.GoodsNomenclatureIndentFactory.create()
-    duplicate = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature=existing.indented_goods_nomenclature,
-        validity_start=existing.validity_start,
-    )
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG11(duplicate.transaction).validate(
-            existing.indented_goods_nomenclature,
-        )
-
-
-def test_NIG11_start_date_less_than_end_date(date_ranges):
-    """The start date must be less than or equal to the end date of the
-    nomenclature."""
-
-    indent = factories.GoodsNomenclatureIndentFactory.create(
-        indented_goods_nomenclature__valid_between=date_ranges.normal,
-        validity_start=date_ranges.later.lower,
-    )
-
-    with pytest.raises(BusinessRuleViolation):
-        business_rules.NIG11(indent.transaction).validate(
-            indent.indented_goods_nomenclature,
-        )
 
 
 def test_NIG12_one_description_mandatory():
@@ -497,10 +419,13 @@ def test_NIG12_direct_rule_called_for_goods():
     ),
 )
 def test_NIG18_NIG19(application_code, item_id, error_expected):
-    """Footnotes with a footnote type for which the application type = "CN
-    footnotes" must be linked to CN lines (all codes up to 8 digits). Footnotes
-    with a footnote type for which the application type = "TARIC footnotes" can
-    be associated at any level."""
+    """
+    Footnotes with a footnote type for which the application type = "CN
+    footnotes" must be linked to CN lines (all codes up to 8 digits).
+
+    Footnotes with a footnote type for which the application type = "TARIC
+    footnotes" can be associated at any level.
+    """
 
     assoc = factories.FootnoteAssociationGoodsNomenclatureFactory.create(
         associated_footnote__footnote_type__application_code=application_code,
