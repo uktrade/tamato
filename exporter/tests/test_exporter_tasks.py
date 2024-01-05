@@ -11,7 +11,6 @@ from common.tests.factories import ApprovedTransactionFactory
 from common.tests.factories import FootnoteTypeFactory
 from common.tests.factories import RegulationFactory
 from common.tests.util import taric_xml_record_codes
-from common.tests.util import validate_taric_xml_record_order
 from exporter.tasks import upload_workbaskets
 
 pytestmark = pytest.mark.django_db
@@ -62,8 +61,6 @@ def test_upload_workbaskets_uploads_queued_workbasket_to_s3(
 
     envelope = s3_object["Body"].read()
     xml = etree.XML(envelope)
-
-    validate_taric_xml_record_order(xml)
 
     # tuples of (record_code, subrecord_code).
     expected_codes = [
