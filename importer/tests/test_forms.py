@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import HttpRequest
 
 from importer import forms
 from workbaskets.validators import WorkflowStatus
@@ -175,8 +176,6 @@ def test_commodity_import_form_invalid_envelope(capture_exception, file_name, se
             file_data,
         )
 
-        assert not form.is_valid()
-
         error_message = "The selected file could not be uploaded - try again"
 
         assert error_message in form.errors["taric_file"]
@@ -188,6 +187,7 @@ def test_commodity_import_form_non_xml_file():
     """Test that form returns incorrect file type validation error when passed a
     text file instead of xml."""
     with open(f"{TEST_FILES_PATH}/invalid_type.txt", "rb") as upload_file:
+        form_req = HttpRequest()
         file_data = {
             "taric_file": SimpleUploadedFile(
                 upload_file.name,
@@ -195,7 +195,8 @@ def test_commodity_import_form_non_xml_file():
                 content_type="text",
             ),
         }
-        form = forms.CommodityImportForm({}, file_data)
+
+        form = forms.CommodityImportForm(*file_data, request=form_req)
 
         assert not form.is_valid()
         assert "The selected file must be XML" in form.errors["taric_file"]
