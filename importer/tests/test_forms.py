@@ -155,25 +155,26 @@ def test_commodity_import_form_valid_envelope(
         chunk_taric.assert_called_once()
 
 
+@pytest.mark.importer_v2
 @pytest.mark.parametrize("file_name,", ("invalid_id", "dtd"))
 @patch("importer.forms.capture_exception")
-@pytest.mark.importer_v2
 def test_commodity_import_form_invalid_envelope(capture_exception, file_name, settings):
     """Test that form returns generic validation error and sentry captures
     exception when given xml file with invalid id."""
     settings.SENTRY_ENABLED = True
     with open(f"{TEST_FILES_PATH}/{file_name}.xml", "rb") as upload_file:
         file_data = {
+            "workbasket_title": "12345",
             "taric_file": SimpleUploadedFile(
                 upload_file.name,
                 upload_file.read(),
                 content_type="text/xml",
             ),
+            "request": HttpRequest(),
         }
 
         form = forms.CommodityImportForm(
-            {"workbasket_title": "12345"},
-            file_data,
+            **file_data,
         )
 
         error_message = "The selected file could not be uploaded - try again"
