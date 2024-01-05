@@ -99,7 +99,7 @@ class WorkBasketCreate(PermissionRequiredMixin, CreateView):
         self.object = form.save(commit=False)
         self.object.author = user
         self.object.save()
-        self.object.save_to_session(self.request.session)
+        self.object.assign_to_user(self.request.user)
         return redirect(
             reverse(
                 "workbaskets:workbasket-ui-confirm-create",
@@ -184,7 +184,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
                 workbasket.restore()
                 workbasket.save()
 
-            workbasket.save_to_session(request.session)
+            workbasket.assign_to_user(request.user)
 
             if workbasket_tab:
                 view = workbasket_tab_map[workbasket_tab]
@@ -434,7 +434,7 @@ class CurrentWorkBasket(TemplateView):
             if result.status != "SUCCESS":
                 context.update({"rule_check_in_progress": True})
             else:
-                self.workbasket.save_to_session(self.request.session)
+                self.workbasket.assign_to_user(self.request.user)
 
             num_completed, total = self.workbasket.rule_check_progress()
             context.update(
@@ -1218,7 +1218,7 @@ class WorkBasketChecksView(FormView):
             if result.status != "SUCCESS":
                 context.update({"rule_check_in_progress": True})
             else:
-                self.workbasket.save_to_session(self.request.session)
+                self.workbasket.assign_to_user(self.request.user)
 
             num_completed, total = self.workbasket.rule_check_progress()
             context.update(

@@ -11,7 +11,7 @@
             <a href="{{ url('workbaskets:workbasket-checks') }}" class="govuk-link">Check workbasket</a>
         </li>
         <li class="{% if active_link == 'review' %}active{% endif %}">
-            <a href="{{ url('workbaskets:workbasket-ui-review-measures', args=[request.session.workbasket.id]) }}" class="govuk-link">Review changes</a>
+            <a href="{{ url('workbaskets:workbasket-ui-review-measures', args=[request.user.current_workbasket.id]) }}" class="govuk-link">Review changes</a>
         </li>
     </ul>
 </nav>

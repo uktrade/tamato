@@ -131,7 +131,7 @@ class ValidateSessionWorkBasketMiddleware:
         # return early if there is no current editable workbasket in the
         # session.
         if not is_session_workbasket_valid(request):
-            WorkBasket.remove_current_from_session(request.session)
+            WorkBasket.remove_users_current_workbasket(request)
         return self.get_response(request)
 
 
