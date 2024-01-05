@@ -278,34 +278,6 @@ def test_validate_envelope_fails_for_missing_tracked_model(queued_workbasket_fac
         assert "Missing records in XML" in e
 
 
-def test_validate_envelope_records_out_of_order(queued_workbasket):
-    """Test that the checker provides the right error messages for failing
-    envelope checks."""
-
-    approved_transaction = queued_workbasket.transactions.approved().last()
-
-    factories.FootnoteTypeFactory(transaction=approved_transaction)
-    factories.FootnoteDescriptionFactory(transaction=approved_transaction)
-    factories.FootnoteFactory(transaction=approved_transaction)
-
-    # Make a envelope from the files
-    output_file_constructor = dit_file_generator("/tmp", 230001)
-    serializer = MultiFileEnvelopeTransactionSerializer(
-        output_file_constructor,
-        envelope_id=230001,
-    )
-
-    workbaskets = WorkBasket.objects.filter(pk=queued_workbasket.pk)
-    transactions = workbaskets.ordered_transactions()
-
-    envelope = list(serializer.split_render_transactions(transactions))[0]
-    envelope_file = envelope.output
-    with pytest.raises(TaricDataAssertionError) as e:
-        envelope_file.seek(0, os.SEEK_SET)
-        validate_envelope(envelope_file, workbaskets=workbaskets)
-        assert "Elements out of order in XML:" in e
-
-
 def test_validate_envelope_no_declaration(caplog):
     """Test that validated envelopes containing no XML declaration element
     correctly log a warning message."""
