@@ -1025,6 +1025,7 @@ class MeasureDetailsForm(
         cleaned_data["valid_between_upper"] = self.serialize_date(
             self.cleaned_data["valid_between"].upper,
         )
+        cleaned_data["min_commodity_count"] = self.cleaned_data["min_commodity_count"]
         return cleaned_data
 
     @classmethod
@@ -1052,6 +1053,11 @@ class MeasureDetailsForm(
         setattr(MeasureDetailsForm, "measure_type", measure_type)
         setattr(MeasureDetailsForm, "valid_bevalid_between_lower", valid_between_lower)
         setattr(MeasureDetailsForm, "valid_valid_between_upper", valid_between_upper)
+        setattr(
+            MeasureDetailsForm,
+            "min_commodity_count",
+            serializable_cleaned["min_commodity_count"],
+        )
 
         return obj
 
