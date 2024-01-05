@@ -60,7 +60,7 @@ def test_regulation_detail_views(
     view,
     url_pattern,
     valid_user_client,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Verify that regulation detail views are under the url regulations/ and
     don't return an error."""
@@ -284,7 +284,7 @@ def test_regulation_list_view(
     view,
     url_pattern,
     valid_user_client,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Verify that regulation list view is under the url regulations/ and
     doesn't return an error."""

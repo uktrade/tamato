@@ -111,7 +111,7 @@ def test_commodities_detail_views(
     url_pattern,
     valid_user_client,
     requests_mock,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Verify that commodity detail views are under the url commodities/ and
     don't return an error."""

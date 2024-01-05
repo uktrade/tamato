@@ -129,7 +129,7 @@ def test_footnote_detail_views(
     view,
     url_pattern,
     valid_user_client,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Verify that measure detail views are under the url footnotes/ and don't
     return an error."""

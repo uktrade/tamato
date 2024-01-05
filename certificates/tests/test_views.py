@@ -84,7 +84,7 @@ def test_certificate_detail_views(
     view,
     url_pattern,
     valid_user_client,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Verify that certificate detail views are under the url certificates/ and
     don't return an error."""

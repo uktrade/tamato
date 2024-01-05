@@ -328,9 +328,7 @@ def client_with_current_workbasket(client, valid_user):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    session = client.session
-    workbasket.save_to_session(session)
-    session.save()
+    workbasket.assign_to_user(valid_user)
     return client
 
 
@@ -379,9 +377,7 @@ def api_client_with_current_workbasket(api_client, valid_user) -> APIClient:
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    session = api_client.session
-    workbasket.save_to_session(session)
-    session.save()
+    workbasket.assign_to_user(valid_user)
     return api_client
 
 
@@ -430,25 +426,21 @@ def published_footnote_type(queued_workbasket):
 
 @pytest.fixture
 @given("there is a current workbasket")
-def session_workbasket(client, new_workbasket) -> WorkBasket:
-    # The valid_user_client.session property returns a new session instance on
-    # each reference, so first get a single session instance via the property.
-    session = client.session
-    new_workbasket.save_to_session(session)
-    session.save()
+def user_workbasket(client, valid_user, new_workbasket) -> WorkBasket:
+    """Returns a workbasket which has been assigned to a valid logged-in
+    user."""
+    client.force_login(valid_user)
+    new_workbasket.assign_to_user(valid_user)
     return new_workbasket
 
 
 @pytest.fixture
-def session_empty_workbasket(valid_user_client) -> WorkBasket:
+def user_empty_workbasket(client, valid_user) -> WorkBasket:
+    client.force_login(valid_user)
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    # The valid_user_client.session property returns a new session instance on
-    # each reference, so first get a single session instance via the property.
-    session = valid_user_client.session
-    workbasket.save_to_session(session)
-    session.save()
+    workbasket.assign_to_user(valid_user)
     return workbasket
 
 
@@ -1461,19 +1453,35 @@ def unordered_transactions():
 
 
 @pytest.fixture
-def session_request(client):
+def session_request(client, valid_user):
     session = client.session
     session.save()
     request = RequestFactory()
     request.session = session
+    request.user = valid_user
 
     return request
 
 
 @pytest.fixture
-def session_with_workbasket(session_request, workbasket):
-    session_request.session.update({"workbasket": {"id": workbasket.pk}})
-    return session_request
+def session_request_with_workbasket(client, valid_user):
+    """
+    Returns a request object which has a valid user and session associated.
+
+    The valid user has a current workbasket.
+    """
+    client.force_login(valid_user)
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    workbasket.assign_to_user(valid_user)
+
+    session = client.session
+    session.save()
+    request = RequestFactory()
+    request.session = session
+    request.user = valid_user
+    return request
 
 
 @pytest.fixture
