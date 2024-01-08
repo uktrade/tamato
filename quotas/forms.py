@@ -168,6 +168,10 @@ class QuotaUpdateForm(
         initial = [
             {
                 "id": o.pk,
+                "exclusions": [
+                    {"id": e.excluded_geographical_area.pk}
+                    for e in o.quotaordernumberoriginexclusion_set.current()
+                ],
                 "geographical_area": o.geographical_area.pk,
                 "start_date_0": o.valid_between.lower.day,
                 "start_date_1": o.valid_between.lower.month,

@@ -4,9 +4,10 @@ import React from 'react';
 import { QuotaOriginForm } from './QuotaOriginForm'
 
 
-function QuotaOriginFormset({ data, options }) {
+function QuotaOriginFormset({ data, options, errors }) {
     const [origins, setOrigins] = useState([...data]);
     const emptyOrigin = {
+        "id": "",
         "exclusions": [
         ],
         "geo_area_name": "",
@@ -21,7 +22,9 @@ function QuotaOriginFormset({ data, options }) {
 
     const addEmptyOrigin = (e) => {
         e.preventDefault();
-        setOrigins([...origins, { ...emptyOrigin }]);
+        const newEmptyOrigin = { ...emptyOrigin }
+        newEmptyOrigin.id = Date.now()
+        setOrigins([...origins, { ...newEmptyOrigin }]);
     }
 
     function removeOrigin(origin, e) {
@@ -37,9 +40,9 @@ function QuotaOriginFormset({ data, options }) {
     return (
         <div aria-live="polite">
             {origins.map((origin, i) =>
-                <QuotaOriginForm origin={origin} key={origin.id} options={options} index={i} removeOrigin={removeOrigin} />
+                <QuotaOriginForm origin={origin} key={i} options={options} index={i} removeOrigin={removeOrigin} errors={errors} />
             )}
-            <button onClick={addEmptyOrigin.bind(this)} className="govuk-button govuk-button--secondary">Add another</button>
+            <button onClick={addEmptyOrigin.bind(this)} className="govuk-button govuk-button--secondary">Add another origin</button>
         </div>
     )
 }
@@ -49,8 +52,9 @@ function init() {
     const root = createRoot(originsContainer);
     const origins = [...originsData];
     // originsData and geoAreasOptions come from template quotas/jinja2/includes/quotas/quota-edit-origins.jinja
+    // originsErrors are errors raised by django. see template quotas/jinja2/includes/quotas/quota-edit-origins.jinja
     root.render(
-        <QuotaOriginFormset data={origins} options={geoAreasOptions} />
+        <QuotaOriginFormset data={origins} options={geoAreasOptions} errors={originsErrors} />
     );
 }
 
@@ -58,4 +62,4 @@ function setupQuotaOriginFormset() {
     document.addEventListener('DOMContentLoaded', init())
 }
 
-export { setupQuotaOriginFormset };
+export { setupQuotaOriginFormset, QuotaOriginFormset };

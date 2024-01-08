@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import React from 'react';
 import { DateField, Fieldset, Select } from 'govuk-react'
+import { QuotaOriginExclusionFormset } from './QuotaOriginExclusionFormset'
+import { DeleteButton } from './DeleteButton'
 
 
-function QuotaOriginForm({ origin, options, index, removeOrigin }) {
+function QuotaOriginForm({ origin, options, index, removeOrigin, errors }) {
     const [data, setData] = useState({ ...origin });
-
-    // originsErrors are errors raised by django. see template quotas/jinja2/includes/quotas/quota-edit-origins.jinja
 
     return (
         <div>
@@ -28,7 +28,7 @@ function QuotaOriginForm({ origin, options, index, removeOrigin }) {
                         month: data.start_date_1,
                         year: data.start_date_2,
                     }}
-                    errorText={originsErrors[`origins-${index}-start_date`]}
+                    errorText={errors[`origins-${index}-start_date`]}
                 >
                     <Fieldset.Legend size="S">
                         Start date
@@ -52,7 +52,7 @@ function QuotaOriginForm({ origin, options, index, removeOrigin }) {
                         month: data.end_date_1,
                         year: data.end_date_2,
                     }}
-                    errorText={originsErrors[`origins-${index}-end_date`]}
+                    errorText={errors[`origins-${index}-end_date`]}
                     hintText="Leave empty if a quota order number origin is needed for an unlimited time"
                 >
                     <Fieldset.Legend size="S">
@@ -64,14 +64,14 @@ function QuotaOriginForm({ origin, options, index, removeOrigin }) {
                 <Select
                     input={{
                         name: `origins-${index}-geographical_area`,
-                        onChange: function noRefCheck() { },
+                        onChange: setData.bind(this, { ...data }),
                         defaultValue: data.geographical_area
                     }}
                     label="Geographical area"
                     defaultValue={data.geographical_area}
                     meta={{
-                        error: originsErrors[`origins-${index}-geographical_area`],
-                        touched: Boolean(originsErrors[`origins-${index}-geographical_area`])
+                        error: errors[`origins-${index}-geographical_area`],
+                        touched: Boolean(errors[`origins-${index}-geographical_area`])
                     }}
                 >
                     {options.map(geoArea =>
@@ -79,7 +79,11 @@ function QuotaOriginForm({ origin, options, index, removeOrigin }) {
                     )}
                 </Select>
             </div>
-            <button onClick={removeOrigin.bind(this, origin)} className="govuk-button govuk-button--secondary">Delete</button>
+            <div className="govuk-form-group">
+                <h4 className="govuk-heading-s">Geographical exclusions</h4>
+                <QuotaOriginExclusionFormset data={data.exclusions} options={options} errors={errors} />
+            </div>
+            <DeleteButton index={index} name={"origin"} func={removeOrigin} item={origin} />
             <hr className="govuk-!-margin-top-3" />
         </div>)
 }
