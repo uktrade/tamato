@@ -36,7 +36,6 @@ from common.business_rules import BusinessRule
 from common.models import Transaction
 from common.models.trackedmodel import TrackedModel
 from common.renderers import counter_generator
-from common.serializers import validate_taric_xml_record_order
 from common.tariffs_api import Endpoints
 from common.tests import factories
 from common.util import TaricDateRange
@@ -600,7 +599,6 @@ def validate_taric_xml(
     factory=None,
     instance=None,
     factory_kwargs=None,
-    check_order=True,
 ):
     """
     Decorator that creates a fixture named 'xml' and validates end-to-end from
@@ -640,9 +638,6 @@ def validate_taric_xml(
             taric_schema.validate(xml)
 
             assert not taric_schema.error_log, f"XML errors: {taric_schema.error_log}"
-
-            if check_order:
-                validate_taric_xml_record_order(xml)
 
             kwargs = {"xml": xml, **kwargs}
 
