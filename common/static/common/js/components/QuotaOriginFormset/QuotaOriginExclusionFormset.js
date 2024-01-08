@@ -8,7 +8,8 @@ function QuotaOriginExclusionFormset({ data, options, errors }) {
         "id": "",
         "pk": "",
     }
-    const [exclusions, setExclusions] = useState([...data]);
+    const initialData = data || []
+    const [exclusions, setExclusions] = useState([...initialData]);
 
     const addEmptyExclusion = (e) => {
         e.preventDefault();
