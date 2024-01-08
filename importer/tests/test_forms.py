@@ -163,19 +163,34 @@ def test_commodity_import_form_invalid_envelope(capture_exception, file_name, se
     exception when given xml file with invalid id."""
     settings.SENTRY_ENABLED = True
     with open(f"{TEST_FILES_PATH}/{file_name}.xml", "rb") as upload_file:
+        # http_req = HttpRequest()
+        # form_data = {
+        #     "taric_file": SimpleUploadedFile(
+        #         upload_file.name,
+        #         upload_file.read(),
+        #         content_type="text/xml"
+        #     )
+        # }
+        #
+        # http_req.FILES = {
+        #     "taric_file": SimpleUploadedFile(
+        #         upload_file.name,
+        #         upload_file.read(),
+        #         content_type="text/xml"
+        #     ),
+        #
+        # }
+
         file_data = {
-            "workbasket_title": "12345",
             "taric_file": SimpleUploadedFile(
                 upload_file.name,
                 upload_file.read(),
                 content_type="text/xml",
             ),
-            "request": HttpRequest(),
         }
+        form = forms.CommodityImportForm({}, file_data)
 
-        form = forms.CommodityImportForm(
-            **file_data,
-        )
+        assert not form.is_valid()
 
         error_message = "The selected file could not be uploaded - try again"
 

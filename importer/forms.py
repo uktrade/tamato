@@ -1,4 +1,5 @@
 import os
+from typing import Sequence
 
 import lxml
 from crispy_forms_gds.helper import FormHelper
@@ -21,10 +22,77 @@ from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
 from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
-from taric_parsers.forms import TaricParserFormMixin
+from taric_parsers.importer import run_batch as run_batch_v2
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 from workbaskets.validators import tops_jira_number_validator
+
+
+class ImporterV2FormMixin:
+    """Mixin for taric parser forms, providing common taric_file clean and
+    processing support."""
+
+    def process_file(
+        self,
+        file: InMemoryUploadedFile,
+        batch,
+        user,
+        workbasket_title: str,
+        record_group: Sequence[str] = None,
+    ):
+        """
+        Create ImporterXmlChunk associate with `batch`, and schedule parser
+        execution against `batch` conditional upon a chunk havinfg been created.
+
+        The function returns the number of chunks created by the chunker.
+
+        Note that a zero chunk count can result, for instance, when an imported
+        file contains no entities of interest, as can happen when a TGB file
+        contains only non-400 record code elements. A value of 0 (zero) is
+        returned by this function in such cases.
+        """
+
+        chunk_count = chunk_taric(file, batch, record_group=record_group)
+
+        if chunk_count:
+            run_batch_v2(
+                batch_id=batch.pk,
+                username=user.username,
+                workbasket_title=workbasket_title,
+            )
+        return chunk_count
+
+    def clean_taric_file(self):
+        """Perform validation checks against the uploaded file."""
+        uploaded_taric_file = self.cleaned_data["taric_file"]
+        generic_error_message = "The selected file could not be uploaded - try again"
+
+        mime_type = get_mime_type(uploaded_taric_file)
+        if mime_type not in ["text/xml", "application/xml"]:
+            raise ValidationError("The selected file must be XML")
+
+        try:
+            xml_file = parse_xml(uploaded_taric_file)
+        except (lxml.etree.XMLSyntaxError, DTDForbidden) as e:
+            if settings.SENTRY_ENABLED:
+                capture_exception(e)
+            raise ValidationError(generic_error_message)
+
+        with open(self.xsd_file) as xsd_file:
+            xmlschema = lxml.etree.XMLSchema(file=xsd_file)
+
+        try:
+            xmlschema.assertValid(xml_file)
+        except lxml.etree.DocumentInvalid as e:
+            if settings.SENTRY_ENABLED:
+                capture_exception(e)
+            raise ValidationError(generic_error_message)
+
+        # read() in an InMemoryUploadedFile returns an empty string the second time it is called
+        # calling seek(0) again fixes this
+        # https://code.djangoproject.com/ticket/7812
+        uploaded_taric_file.seek(0)
+        return uploaded_taric_file
 
 
 class ImportFormMixin:
@@ -185,7 +253,7 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
         return batch
 
 
-class CommodityImportForm(TaricParserFormMixin, forms.Form):
+class CommodityImportForm(ImporterV2FormMixin, forms.Form):
     """Form used to create new instances of ImportBatch via upload of a
     commodity code file."""
 
