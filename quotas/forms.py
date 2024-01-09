@@ -371,6 +371,7 @@ class QuotaOrderNumberOriginForm(
             GeographicalArea.objects.current()
             .with_latest_description()
             .as_at_today_and_beyond()
+            .prefetch_related("descriptions")
             .order_by("description")
         )
         self.fields[

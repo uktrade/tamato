@@ -1,7 +1,7 @@
 {% from "quota-origins/macros/origin_display.jinja" import origin_display %}
 
 <div class="govuk-grid-row">
-  {% for origin in object.quotaordernumberorigin_set.current() %}
+  {% for origin in object.quotaordernumberorigin_set.current().with_latest_geo_area_description()%}
   <div class="govuk-grid-column-three-quarters">
     {{ origin_display(origin) }}
   </div>
