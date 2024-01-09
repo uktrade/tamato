@@ -1,11 +1,9 @@
-import { useState } from 'react';
 import React from 'react';
-import { DateField, Fieldset, Select } from 'govuk-react'
+import { Select } from 'govuk-react'
 import { DeleteButton } from './DeleteButton'
 
 
-function QuotaOriginExclusionForm({ exclusion, options, index, removeExclusion, errors }) {
-    const [data, setData] = useState({ ...exclusion });
+function QuotaOriginExclusionForm({ exclusion, origin, options, index, removeExclusion, errors }) {
 
     return (
         <div>
@@ -14,11 +12,11 @@ function QuotaOriginExclusionForm({ exclusion, options, index, removeExclusion, 
                 <Select
                     input={{
                         name: `exclusions-${index}-geographical_area`,
-                        onChange: setData.bind(this, { ...data }),
-                        defaultValue: data
+                        onChange: function noRefCheck() { },
+                        defaultValue: exclusion
                     }}
                     label="Geographical area"
-                    defaultValue={data}
+                    defaultValue={exclusion}
                     meta={{
                         error: errors[`exclusions-${index}-geographical_area`],
                         touched: Boolean(errors[`exclusions-${index}-geographical_area`])
@@ -30,7 +28,7 @@ function QuotaOriginExclusionForm({ exclusion, options, index, removeExclusion, 
                 </Select>
             </div>
             <div className="govuk-form-group">
-                <DeleteButton index={index} name={"exclusion"} func={removeExclusion} item={data} />
+                <DeleteButton index={index} name={"exclusion"} func={removeExclusion} item={exclusion} parent={origin} />
             </div>
         </div>)
 }

@@ -1,12 +1,10 @@
-import { useState } from 'react';
 import React from 'react';
 import { DateField, Fieldset, Select } from 'govuk-react'
 import { QuotaOriginExclusionFormset } from './QuotaOriginExclusionFormset'
 import { DeleteButton } from './DeleteButton'
 
 
-function QuotaOriginForm({ origin, options, index, removeOrigin, errors }) {
-    const [data, setData] = useState({ ...origin });
+function QuotaOriginForm({ origin, options, index, removeOrigin, addEmptyExclusion, removeExclusion, errors }) {
 
     return (
         <div>
@@ -15,7 +13,7 @@ function QuotaOriginForm({ origin, options, index, removeOrigin, errors }) {
                 <DateField
                     input={{
                         onBlur: function noRefCheck() { },
-                        onChange: setData.bind(this, { ...data }),
+                        onChange: function noRefCheck() { },
                         onFocus: function noRefCheck() { }
                     }}
                     inputNames={{
@@ -24,9 +22,9 @@ function QuotaOriginForm({ origin, options, index, removeOrigin, errors }) {
                         year: `origins-${index}-start_date_2`,
                     }}
                     defaultValues={{
-                        day: data.start_date_0,
-                        month: data.start_date_1,
-                        year: data.start_date_2,
+                        day: origin.start_date_0,
+                        month: origin.start_date_1,
+                        year: origin.start_date_2,
                     }}
                     errorText={errors[`origins-${index}-start_date`]}
                 >
@@ -39,7 +37,7 @@ function QuotaOriginForm({ origin, options, index, removeOrigin, errors }) {
                 <DateField
                     input={{
                         onBlur: function noRefCheck() { },
-                        onChange: setData.bind(this, { ...data }),
+                        onChange: function noRefCheck() { },
                         onFocus: function noRefCheck() { }
                     }}
                     inputNames={{
@@ -48,9 +46,9 @@ function QuotaOriginForm({ origin, options, index, removeOrigin, errors }) {
                         year: `origins-${index}-end_date_2`,
                     }}
                     defaultValues={{
-                        day: data.end_date_0,
-                        month: data.end_date_1,
-                        year: data.end_date_2,
+                        day: origin.end_date_0,
+                        month: origin.end_date_1,
+                        year: origin.end_date_2,
                     }}
                     errorText={errors[`origins-${index}-end_date`]}
                     hintText="Leave empty if a quota order number origin is needed for an unlimited time"
@@ -64,11 +62,11 @@ function QuotaOriginForm({ origin, options, index, removeOrigin, errors }) {
                 <Select
                     input={{
                         name: `origins-${index}-geographical_area`,
-                        onChange: setData.bind(this, { ...data }),
-                        defaultValue: data.geographical_area
+                        onChange: function noRefCheck() { },
+                        defaultValue: origin.geographical_area
                     }}
                     label="Geographical area"
-                    defaultValue={data.geographical_area}
+                    defaultValue={origin.geographical_area}
                     meta={{
                         error: errors[`origins-${index}-geographical_area`],
                         touched: Boolean(errors[`origins-${index}-geographical_area`])
@@ -81,9 +79,9 @@ function QuotaOriginForm({ origin, options, index, removeOrigin, errors }) {
             </div>
             <div className="govuk-form-group">
                 <h4 className="govuk-heading-s">Geographical exclusions</h4>
-                <QuotaOriginExclusionFormset data={data.exclusions} options={options} errors={errors} />
+                <QuotaOriginExclusionFormset options={options} origin={origin} errors={errors} addEmptyExclusion={addEmptyExclusion} removeExclusion={removeExclusion} />
             </div>
-            <DeleteButton index={index} name={"origin"} func={removeOrigin} item={origin} />
+            <DeleteButton index={index} name={"origin"} func={removeOrigin} item={origin} parent={null} />
             <hr className="govuk-!-margin-top-3" />
         </div>)
 }

@@ -19,6 +19,10 @@ function QuotaOriginFormset({ data, options, errors }) {
         "end_date_1": "",
         "end_date_2": "",
     }
+    const emptyExclusion = {
+        "id": "",
+        "pk": "",
+    }
 
     const addEmptyOrigin = (e) => {
         e.preventDefault();
@@ -27,7 +31,7 @@ function QuotaOriginFormset({ data, options, errors }) {
         setOrigins([...origins, { ...newEmptyOrigin }]);
     }
 
-    function removeOrigin(origin, e) {
+    function removeOrigin(origin, _, e) {
         e.preventDefault();
         const newOrigins = [...origins]
         const index = origins.indexOf(origin)
@@ -37,10 +41,46 @@ function QuotaOriginFormset({ data, options, errors }) {
         }
     }
 
+    function addEmptyExclusion(origin, e) {
+        e.preventDefault();
+        // find parent origin and update exclusions
+        const updatedOrigin = { ...origin }
+        const newEmptyExclusion = { ...emptyExclusion }
+        newEmptyExclusion.id = Date.now()
+        const newExclusions = [...updatedOrigin.exclusions, newEmptyExclusion]
+        updatedOrigin.exclusions = newExclusions
+
+        // update origins
+        const updatedOrigins = [...origins]
+        const index = origins.findIndex(o => o.id === origin.id)
+        if (index > -1) {
+            updatedOrigins.splice(index, 1, updatedOrigin)
+            setOrigins(updatedOrigins)
+        }
+    }
+
+    function removeExclusion(exclusion, origin, e) {
+        e.preventDefault();
+        // remove the exclusion from its parent origin
+        const newOrigin = { ...origin }
+        const exclusionIndex = newOrigin.exclusions.indexOf(exclusion)
+        if (exclusionIndex > -1) {
+            newOrigin.exclusions.splice(index, 1)
+        }
+
+        // update the origin
+        const newOrigins = [...origins]
+        const index = newOrigins.indexOf(origin)
+        if (index > -1) {
+            newOrigins.splice(index, 1, newOrigin)
+            setOrigins(newOrigins)
+        }
+    }
+
     return (
         <div aria-live="polite">
             {origins.map((origin, i) =>
-                <QuotaOriginForm origin={origin} key={i} options={options} index={i} removeOrigin={removeOrigin} errors={errors} />
+                <QuotaOriginForm origin={origin} key={i} options={options} index={i} addEmptyExclusion={addEmptyExclusion} removeOrigin={removeOrigin} removeExclusion={removeExclusion} errors={errors} />
             )}
             <button onClick={addEmptyOrigin.bind(this)} className="govuk-button govuk-button--secondary">Add another origin</button>
         </div>
