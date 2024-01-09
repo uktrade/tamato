@@ -711,6 +711,47 @@ def test_workbasket_business_rule_status(valid_user_client, session_empty_workba
     assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
 
 
+import datetime
+
+from common.tests.util import date_post_data
+
+
+def test_workbasket_business_rule_status_real_edit(
+    valid_user_client,
+    session_empty_workbasket,
+    use_edit_view,
+    published_footnote_type,
+):
+    """Testing that the live status of a workbasket resets after an item has
+    been updated, created or deleted in the workbasket."""
+
+    with session_empty_workbasket.new_transaction() as transaction:
+        footnote = factories.FootnoteFactory.create(
+            update_type=UpdateType.CREATE,
+            transaction=transaction,
+            footnote_type=published_footnote_type,
+        )
+        check = TrackedModelCheckFactory.create(
+            transaction_check__transaction=transaction,
+            model=footnote,
+            successful=True,
+        )
+
+    url = reverse("workbaskets:workbasket-checks")
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(response.content.decode(response.charset))
+    success_banner = page.find(
+        "div",
+        attrs={"class": "govuk-notification-banner--success"},
+    )
+    assert success_banner
+
+    use_edit_view(footnote, {**date_post_data("start_date", datetime.date.today())})
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(response.content.decode(response.charset))
+    assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
+
+
 @pytest.fixture
 def successful_business_rules_setup(session_workbasket, valid_user_client):
     """Sets up data and runs business rules."""
@@ -745,9 +786,10 @@ def import_batch_with_notification():
         taric_file="goods.xml",
     )
 
-    return factories.GoodsSuccessfulImportNotificationFactory(
+    factories.GoodsSuccessfulImportNotificationFactory(
         notified_object_pk=import_batch.id,
     )
+    return import_batch
 
 
 @pytest.mark.parametrize(

@@ -11,7 +11,6 @@ from common.validators import UpdateType
 @pytest.mark.django_db()
 def test_missing_current_version_fix(migrator):
     migrator.reset()
-
     """Ensures that the initial migration works."""
     new_state = migrator.apply_initial_migration(("common", "0006_auto_20221114_1000"))
     # setup
@@ -75,3 +74,39 @@ def test_missing_current_version_fix(migrator):
     # assert
     assert measurement_unit.version_group.current_version_id == measurement_unit_id
     migrator.reset()
+
+
+from common.tests import factories
+from workbaskets.validators import WorkflowStatus
+
+
+@pytest.mark.django_db()
+def test_timestamp_migration(migrator):
+    migrator.reset()
+    """Ensures that the initial migration works."""
+    migrator.apply_initial_migration(("common", "0008_auto_20231211_1642"))
+    # setup
+    # workbasket_class = old_state.apps.get_model("workbaskets", "WorkBasket")
+    # transaction_class = old_state.apps.get_model("common", "Transaction")
+
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    with factories.TransactionFactory.create(workbasket=workbasket):
+        factories.FootnoteTypeFactory.create_batch(2)
+    transaction = workbasket.transactions.first()
+    tracked_models = workbasket.tracked_models
+
+    # assert transaction.created_at
+    # assert not hasattr(tracked_models.first(),"created_at")
+
+    # inter_state = migrator.apply_initial_migration(("common", "0008_auto_20231211_1642"))
+
+    print(tracked_models.first())
+    assert tracked_models.first().created_at != transaction.created_at
+
+    migrator.apply_initial_migration(("common", "0009_set_tracked_model_datetime"))
+
+    print(tracked_models.first())
+    assert tracked_models.first().created_at == transaction.created_at
+    assert tracked_models.first().updated_at == transaction.updated_at
