@@ -3,23 +3,23 @@ import { Select } from 'govuk-react'
 import { DeleteButton } from './DeleteButton'
 
 
-function QuotaOriginExclusionForm({ exclusion, origin, options, index, removeExclusion, errors }) {
+function QuotaOriginExclusionForm({ exclusion, origin, options, originIndex, index, removeExclusion, errors }) {
 
     return (
         <div>
-            <h3 className="govuk-heading-m">Exclusion {index + 1}</h3>
+            <h5 className="govuk-heading-s">Exclusion {index + 1}</h5>
             <div className="govuk-form-group">
                 <Select
                     input={{
-                        name: `exclusions-${index}-geographical_area`,
+                        name: `origins-${originIndex}-exclusions-${index}-geographical_area`,
                         onChange: function noRefCheck() { },
                         defaultValue: exclusion
                     }}
                     label="Geographical area"
                     defaultValue={exclusion}
                     meta={{
-                        error: errors[`exclusions-${index}-geographical_area`],
-                        touched: Boolean(errors[`exclusions-${index}-geographical_area`])
+                        error: errors[`origins-${originIndex}-exclusions-${index}-geographical_area`],
+                        touched: Boolean(errors[`origins-${originIndex}-exclusions-${index}-geographical_area`])
                     }}
                 >
                     {options.map(geoArea =>

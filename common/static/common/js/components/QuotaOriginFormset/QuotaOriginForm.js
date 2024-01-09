@@ -5,6 +5,9 @@ import { DeleteButton } from './DeleteButton'
 
 
 function QuotaOriginForm({ origin, options, index, removeOrigin, addEmptyExclusion, removeExclusion, errors }) {
+    // If the form is submitted with no exclusions and fails validation
+    // the exclusions key will not exist on the origin so create it here
+    origin.exclusions = origin.exclusions || []
 
     return (
         <div>
@@ -78,8 +81,8 @@ function QuotaOriginForm({ origin, options, index, removeOrigin, addEmptyExclusi
                 </Select>
             </div>
             <div className="govuk-form-group">
-                <h4 className="govuk-heading-s">Geographical exclusions</h4>
-                <QuotaOriginExclusionFormset options={options} origin={origin} errors={errors} addEmptyExclusion={addEmptyExclusion} removeExclusion={removeExclusion} />
+                <h4 className="govuk-heading-m">Geographical exclusions</h4>
+                <QuotaOriginExclusionFormset options={options} origin={origin} originIndex={index} errors={errors} addEmptyExclusion={addEmptyExclusion} removeExclusion={removeExclusion} />
             </div>
             <DeleteButton index={index} name={"origin"} func={removeOrigin} item={origin} parent={null} />
             <hr className="govuk-!-margin-top-3" />
