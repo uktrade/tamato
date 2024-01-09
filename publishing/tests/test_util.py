@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from lxml.etree import DocumentInvalid
 
 from common.tests import factories
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
@@ -10,6 +11,8 @@ from publishing.util import validate_envelope
 from workbaskets.models import WorkBasket
 
 pytestmark = pytest.mark.django_db
+
+TEST_FILES_PATH = os.path.join(os.path.dirname(__file__), "test_files")
 
 
 def test_validate_envelope(queued_workbasket_factory):
@@ -275,29 +278,57 @@ def test_validate_envelope_fails_for_missing_tracked_model(queued_workbasket_fac
         assert "Missing records in XML" in e
 
 
-def test_validate_envelope_records_out_of_order(queued_workbasket):
-    """Test that the checker provides the right error messages for failing
-    envelope checks."""
+def test_validate_envelope_no_declaration(caplog):
+    """Test that validated envelopes containing no XML declaration element
+    correctly log a warning message."""
 
-    approved_transaction = queued_workbasket.transactions.approved().last()
+    with open(f"{TEST_FILES_PATH}/envelope_no_declaration.xml", "rb") as envelope_file:
+        try:
+            import logging
 
-    factories.FootnoteTypeFactory(transaction=approved_transaction)
-    factories.FootnoteDescriptionFactory(transaction=approved_transaction)
-    factories.FootnoteFactory(transaction=approved_transaction)
+            # Ensure logging propagation is enabled else log messages won't
+            # reach this module.
+            logger = logging.getLogger("publishing")
+            logger.propagate = True
 
-    # Make a envelope from the files
-    output_file_constructor = dit_file_generator("/tmp", 230001)
-    serializer = MultiFileEnvelopeTransactionSerializer(
-        output_file_constructor,
-        envelope_id=230001,
-    )
+            with caplog.at_level(logging.WARNING):
+                validate_envelope(
+                    envelope_file,
+                    workbaskets=WorkBasket.objects.none(),
+                    skip_declaration=False,
+                )
+        except (DocumentInvalid, TaricDataAssertionError):
+            # Ignore DocumentInvalid and TaricDataAssertionError exceptions as
+            # this test is only concerned with checking the XML declaration
+            # part of validate_envelope()
+            pass
 
-    workbaskets = WorkBasket.objects.filter(pk=queued_workbasket.pk)
-    transactions = workbaskets.ordered_transactions()
+        assert "Expected XML declaration" in caplog.text
 
-    envelope = list(serializer.split_render_transactions(transactions))[0]
-    envelope_file = envelope.output
-    with pytest.raises(TaricDataAssertionError) as e:
-        envelope_file.seek(0, os.SEEK_SET)
-        validate_envelope(envelope_file, workbaskets=workbaskets)
-        assert "Elements out of order in XML:" in e
+
+def test_validate_envelope_skip_no_declaration_check(caplog):
+    """Test that validated envelopes that contain no XML declaration element
+    correctly skip the declaration check when instructed to do so."""
+
+    with open(f"{TEST_FILES_PATH}/envelope_no_declaration.xml", "rb") as envelope_file:
+        try:
+            import logging
+
+            # Ensure logging propagation is enabled else log messages won't
+            # reach this module.
+            logger = logging.getLogger("publishing")
+            logger.propagate = True
+
+            with caplog.at_level(logging.WARNING):
+                validate_envelope(
+                    envelope_file,
+                    workbaskets=WorkBasket.objects.none(),
+                    skip_declaration=True,
+                )
+        except (DocumentInvalid, TaricDataAssertionError):
+            # Ignore DocumentInvalid and TaricDataAssertionError exceptions as
+            # this test is only concerned with the XML declaration
+            # part of validate_envelope()
+            pass
+
+        assert "Expected XML declaration" not in caplog.text

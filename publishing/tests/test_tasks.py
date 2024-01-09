@@ -8,7 +8,6 @@ from requests import Response
 
 from common.tests import factories
 from common.tests.util import taric_xml_record_codes
-from common.tests.util import validate_taric_xml_record_order
 from publishing.models import CrownDependenciesPublishingTask
 from publishing.models import PackagedWorkBasket
 from publishing.models.state import ApiPublishingState
@@ -57,8 +56,6 @@ def test_create_and_upload_envelope(
     envelope = s3_object["Body"].read()
     xml = etree.XML(envelope)
 
-    validate_taric_xml_record_order(xml)
-
     # tuples of (record_code, subrecord_code).
     expected_codes = [
         ("100", "00"),  # FootnoteType
@@ -76,40 +73,12 @@ def test_create_and_upload_envelope_fails(
     packaged_workbasket_factory,
     envelope_storage,
 ):
-    """Verify EnvelopeStorage is not called as there are validation errors."""
+    """Verify EnvelopeStorage is not created as there are validation errors due
+    to the envelope containing no transactions."""
 
     packaged_work_basket = packaged_workbasket_factory(
         workbasket=queued_workbasket,
     )
-
-    with mock.patch(
-        "publishing.storages.EnvelopeStorage.save",
-        wraps=mock.MagicMock(side_effect=envelope_storage.save),
-    ) as mock_save:
-        create_xml_envelope_file.apply(
-            (packaged_work_basket.pk, True),
-        )
-        # assert not called as it didn't pass validate
-        mock_save.assert_not_called()
-
-
-def test_create_and_upload_envelope_fails_record_order(
-    queued_workbasket,
-    packaged_workbasket_factory,
-    envelope_storage,
-):
-    """Verify EnvelopeStorage is not called as there are validation errors."""
-
-    packaged_work_basket = packaged_workbasket_factory(
-        workbasket=queued_workbasket,
-    )
-
-    approved_transaction = queued_workbasket.transactions.approved().last()
-
-    # out of order
-    factories.FootnoteTypeFactory(transaction=approved_transaction)
-    factories.FootnoteDescriptionFactory(transaction=approved_transaction)
-    factories.FootnoteFactory(transaction=approved_transaction)
 
     with mock.patch(
         "publishing.storages.EnvelopeStorage.save",

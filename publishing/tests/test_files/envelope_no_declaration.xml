@@ -1,0 +1,42 @@
+<env:envelope
+    xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+    xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0" id="230001">
+    <env:transaction id="1">
+        <env:app.message id="1">
+            <oub:transmission
+                xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>100</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:footnote.type>
+                        <oub:footnote.type.id>AA</oub:footnote.type.id>
+                        <oub:validity.start.date>2023-10-26</oub:validity.start.date>
+                        <oub:application.code>2</oub:application.code>
+                    </oub:footnote.type>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="2">
+            <oub:transmission
+                xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>100</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>2</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:footnote.type.description>
+                        <oub:footnote.type.id>AA</oub:footnote.type.id>
+                        <oub:language.id>EN</oub:language.id>
+                        <oub:description>Test description.</oub:description>
+                    </oub:footnote.type.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>

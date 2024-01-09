@@ -47,6 +47,11 @@ ui_patterns = [
         name="edit-workbasket",
     ),
     path(
+        f"current/checks/",
+        ui_views.WorkBasketChecksView.as_view(),
+        name="workbasket-checks",
+    ),
+    path(
         f"<pk>/review-additional-codes/",
         ui_views.WorkBasketReviewAdditionalCodesView.as_view(),
         name="workbasket-ui-review-additional-codes",
@@ -72,6 +77,11 @@ ui_patterns = [
         name="workbasket-ui-review-geo-areas",
     ),
     path(
+        f"<pk>/review-geographical-memberships/",
+        ui_views.WorkBasketReviewGeoMembershipsView.as_view(),
+        name="workbasket-ui-review-geo-memberships",
+    ),
+    path(
         f"<pk>/review-measures/",
         ui_views.WorkBasketReviewMeasuresView.as_view(),
         name="workbasket-ui-review-measures",
@@ -80,6 +90,11 @@ ui_patterns = [
         f"<pk>/review-quotas/",
         ui_views.WorkBasketReviewQuotasView.as_view(),
         name="workbasket-ui-review-quotas",
+    ),
+    path(
+        f"<pk>/review-quota-definitions/",
+        ui_views.WorkBasketReviewQuotaDefinitionsView.as_view(),
+        name="workbasket-ui-review-quota-definitions",
     ),
     path(
         f"<pk>/review-regulations/",
@@ -104,7 +119,7 @@ ui_patterns = [
     path(
         f"compare/",
         ui_views.WorkBasketCompare.as_view(),
-        name="workbasket-ui-compare",
+        name="workbasket-check-ui-compare",
     ),
     path(
         f"<pk>/",

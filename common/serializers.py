@@ -23,7 +23,6 @@ from common.renderers import counter_generator
 from common.util import TaricDateRange
 from common.util import get_taric_template
 from common.util import parse_xml
-from common.xml.namespaces import nsmap
 
 logger = logging.getLogger(__name__)
 
@@ -378,26 +377,6 @@ def validate_envelope(envelope_file, skip_declaration=False):
         except etree.DocumentInvalid as e:
             logger.error("Envelope did not validate against XSD: %s", str(e.error_log))
             raise
-        try:
-            validate_taric_xml_record_order(xml)
-        except TaricDataAssertionError as e:
-            logger.error(e.args[0])
-            raise
-
-
-def validate_taric_xml_record_order(xml):
-    """Raise AssertionError if any record codes are not in order."""
-    for transaction in xml.findall(".//env:transaction", namespaces=nsmap):
-        last_code = "00000"
-        for record in transaction.findall(".//oub:record", namespaces=nsmap):
-            record_code = record.findtext(".//oub:record.code", namespaces=nsmap)
-            subrecord_code = record.findtext(".//oub:subrecord.code", namespaces=nsmap)
-            full_code = record_code + subrecord_code
-            if full_code < last_code:
-                raise TaricDataAssertionError(
-                    f"Elements out of order in XML: {last_code}, {full_code}",
-                )
-            last_code = full_code
 
 
 class AutoCompleteSerializer(serializers.BaseSerializer):

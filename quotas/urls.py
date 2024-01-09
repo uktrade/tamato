@@ -45,6 +45,16 @@ ui_patterns = get_ui_paths(views, "<sid:sid>")
 urlpatterns = [
     path("quotas/", include(ui_patterns)),
     path(
+        f"quotas/create/",
+        views.QuotaCreate.as_view(),
+        name="quota-ui-create",
+    ),
+    path(
+        f"quotas/<sid>/confirm-create/",
+        views.QuotaConfirmCreate.as_view(),
+        name="quota-ui-confirm-create",
+    ),
+    path(
         f"quotas/<sid>/quota-definitions/",
         views.QuotaDefinitionList.as_view(),
         name="quota-definitions",
@@ -75,7 +85,7 @@ urlpatterns = [
         name="quota_order_number_origin-ui-edit-create",
     ),
     path(
-        f"quotas/<sid>/quota_order_number_origins/",
+        f"quotas/<sid>/quota_order_number_origins/create/",
         views.QuotaOrderNumberOriginCreate.as_view(),
         name="quota_order_number_origin-ui-create",
     ),

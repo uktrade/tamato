@@ -1,25 +1,10 @@
 {% extends "layouts/layout.jinja" %}
-{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "components/table/macro.njk" import govukTable %}
 {% from "includes/workbaskets/navigation.jinja" import create_workbasket_detail_navigation with context %}
 {% from "macros/checkbox_item.jinja" import checkbox_item %}
-{% from "workbaskets/macros/load_more_pagination.jinja" import load_more_pagination with context %}
-
-{% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
-
-{% block breadcrumb %}
-  {{ breadcrumbs(request, [
-      {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
-      {"text": page_title}
-    ])
-  }}
-{% endblock %}
-
-{% set checkbox_check_all %}
-  <div id="check-all-checkbox"></div>
-{% endset %}
 
 {% set base_url = url("workbaskets:workbasket-ui-changes", args=[workbasket.pk]) ~ "?page=" ~ page_obj.number %}
 
@@ -35,8 +20,21 @@
   {{ create_sortable_anchor(request, "activity_date", "Activity date", base_url, True) }}
 {% endset %}
 
-{% set current_count = page_obj|length + ((page_obj.number - 1) * view.paginate_by) %}
-{% set total_count = page_obj.paginator.count %}
+{% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
+
+{% set items_name = "changes" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% set checkbox_check_all %}
+  <div id="check-all-checkbox"></div>
+{% endset %}
 
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
@@ -92,7 +90,7 @@
               {"html": checkbox_check_all},
               {"text": "ID"},
               {"text": component},
-              {"text": action },
+              {"text": action},
               {"text": "Description"},
               {"text": activity_date},
             ],
@@ -104,13 +102,13 @@
           <button value="remove-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Remove</button>
           <button value="remove-all" name="form-action" class="govuk-button govuk-button--warning" data-module="govuk-button">Remove all workbasket changes</button>
         </div>
-        
-        {{ load_more_pagination(current_count, total_count) }}
+
+        {% include "includes/common/pagination.jinja" %}
       </form>
 
     {% else %}
       {% set table_rows = [] %}
-      {% for obj in view.get_queryset() %}
+      {% for obj in page_obj.object_list %}
         {% set object_link %}
           <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
             {{ obj.get_described_object() if obj.get_described_object else obj.structure_code }}
@@ -141,8 +139,8 @@
           ],
           "rows": table_rows
         }) }}
-        
-        {{ load_more_pagination(current_count, total_count) }}
+
+        {% include "includes/common/pagination.jinja" %}
 
       </form>
     {% endif %}

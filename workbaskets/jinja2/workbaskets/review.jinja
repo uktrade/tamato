@@ -4,13 +4,15 @@
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 {% from "macros/fake_tabs.jinja" import fake_tabs %}
 
+{% set page_title %} Workbasket {{ workbasket.id }} - {{ tab_page_title }} {% endset %}
+
 {% if workbasket == session_workbasket %}
-  {% set page_title %}Workbasket {{ workbasket.id }} - Review{% endset %}
+  {% set page_heading %} Workbasket {{ workbasket.id }} - Review changes {% endset %}
 {% else %}
-  {% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
+  {% set page_heading %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
 {% endif %}
 
-{% set links = [
+{% set main_tab_links = [
   {
     "text": "Additional codes",
     "href": url("workbaskets:workbasket-ui-review-additional-codes", kwargs={"pk": workbasket.pk}),
@@ -72,7 +74,7 @@
 
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
-    {{ page_title }}
+    {{ page_heading }}
   </h1>
 
   {% if workbasket == session_workbasket %}
@@ -82,13 +84,15 @@
   {% endif %}
 
   <div id="workbasket-review-tabs">
-    {{ fake_tabs(links) }}
+    {% block review_tabs %}
+      {{ fake_tabs(main_tab_links) }}
+    {% endblock %}
   </div>
 
   <div class="govuk-tabs__panel {% block content_class %}{% endblock %}">
     {% block filters %}
       <nav class="workbasket-filters">
-        <p class="govuk-body govuk-!-font-weight-bold">Filter by action:</p>
+        <h2 class="govuk-heading-s">Filter by action:</h2>
         <ul class="govuk-list">
           <li>
             <a href="{{ request.path }}?update_type=" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if not request.GET.update_type %}selected-link{% endif %}">All</a>
@@ -110,7 +114,7 @@
       {% if object_list %}
         {% include tab_template %}
       {% else %}
-        <p class="govuk-body govuk-!-margin-top-5">0 {{ selected_tab|replace("-", " ") }} available to review.</p>
+        <p class="govuk-body govuk-!-margin-top-5">0 {{ view.model._meta.verbose_name_plural }} available to review.</p>
       {% endif %}
       {% include "includes/common/pagination.jinja" %}
     {% endblock %}

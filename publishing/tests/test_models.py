@@ -12,7 +12,6 @@ from publishing.models import CrownDependenciesPublishingOperationalStatus
 from publishing.models import Envelope
 from publishing.models import EnvelopeCurrentlyProccessing
 from publishing.models import EnvelopeInvalidQueuePosition
-from publishing.models import EnvelopeNoTransactions
 from publishing.models import OperationalStatus
 from publishing.models import PackagedWorkBasket
 from publishing.models import PackagedWorkBasketDuplication
@@ -414,14 +413,6 @@ def test_create_invalid_queue_position():
     with pytest.raises(EnvelopeInvalidQueuePosition):
         factories.PublishedEnvelopeFactory(
             packaged_work_basket=packaged_workbasket2,
-        )
-
-
-def test_upload_envelope_no_transactions():
-    packaged_workbasket = factories.PackagedWorkBasketFactory()
-    with pytest.raises(EnvelopeNoTransactions):
-        factories.PublishedEnvelopeFactory(
-            packaged_work_basket=packaged_workbasket,
         )
 
 

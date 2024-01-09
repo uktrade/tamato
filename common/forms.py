@@ -237,11 +237,11 @@ class FormSetField(forms.Field):
 
 class WorkbasketActions(TextChoices):
     CREATE = "CREATE", "Create new workbasket"
-    EDIT = "EDIT", "Select an existing workbasket"
+    EDIT = "EDIT", "Edit workbaskets"
 
 
 class DITTariffManagerActions(TextChoices):
-    PACKAGE_WORKBASKETS = "PACKAGE_WORKBASKETS", "Package Workbaskets"
+    PACKAGE_WORKBASKETS = "PACKAGE_WORKBASKETS", "Package workbaskets"
 
 
 class HMRCCDSManagerActions(TextChoices):
@@ -255,6 +255,10 @@ class CommonUserActions(TextChoices):
 
 class ImportUserActions(TextChoices):
     IMPORT = "IMPORT", "Import EU Taric files"
+
+
+class WorkbasketManagerActions(TextChoices):
+    WORKBASKET_LIST_ALL = "WORKBASKET_LIST_ALL", "Search for workbaskets"
 
 
 class HomeForm(forms.Form):
@@ -276,9 +280,12 @@ class HomeForm(forms.Form):
         choices += CommonUserActions.choices
 
         if self.user.has_perm("common.add_trackedmodel") or self.user.has_perm(
-            "common.change_trackedmodel"
+            "common.change_trackedmodel",
         ):
             choices += ImportUserActions.choices
+
+        if self.user.has_perm("workbaskets.view_workbasket"):
+            choices += WorkbasketManagerActions.choices
 
         self.fields["workbasket_action"] = forms.ChoiceField(
             label="",
@@ -290,14 +297,13 @@ class HomeForm(forms.Form):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Fieldset(
+                HTML.h3("What would you like to do?"),
                 HTML.details(
                     "What is a workbasket?",
                     "A workbasket is used to collect all the changes you make to the UK's Import and Export Tariff data. "
                     "Workbaskets group these changes so they can be checked by Customs Declaration Service (CDS) before going live.",
                 ),
                 "workbasket_action",
-                legend="What would you like to do?",
-                legend_size=Size.LARGE,
             ),
             Submit(
                 "submit",

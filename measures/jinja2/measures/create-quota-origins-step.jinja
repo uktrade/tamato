@@ -1,0 +1,58 @@
+{% extends "measures/create-wizard-step.jinja" %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "macros/checkbox_item.jinja" import checkbox_item %}
+
+{% block form %}
+  {{ govukDetails({
+    "summaryText": "What can I do if the geographical areas are incorrect?",
+    "text": "The geographical areas are determined by the quota you entered on the previous page. If the geographical areas are incorrect, you will need to edit the quota. You will then need to re-enter the quota to reflect the changes."
+  }) }}
+
+  <p class="govuk-body">Select the quota origins that apply to the measure.</p>
+
+  {% set table_rows = [] %}
+  {% for field in form %}
+    {% set checkbox = checkbox_item(field) %}
+    {% set origin = field.field.obj %}
+
+    {% set order_number %}
+      <a href="{{ origin.order_number.get_url() }}" class="govuk-link">{{ origin.order_number.order_number }}</a>
+    {% endset %}
+
+    {% set geographical_area %}
+      {{ origin.geographical_area.area_id }} - {{ origin.geographical_area.get_description().description }}
+    {% endset %}
+
+    {% set exclusions %}
+      {% for exclusion in origin.excluded_areas.current() %}
+        {{ exclusion.area_id }} - {{ exclusion.get_description().description }}{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    {% endset %}
+
+    {{ table_rows.append([
+      {"html": checkbox},
+      {"html": order_number},
+      {"text": geographical_area},
+      {"text": exclusions},
+      {"text": "{:%d %b %Y}".format(origin.valid_between.lower)},
+      {"text": "{:%d %b %Y}".format(origin.valid_between.upper) if origin.valid_between.upper else "-"},
+    ]) or "" }}
+  {% endfor %}
+
+  {{ govukTable({
+    "head": [
+      {"text": "Checkbox", "classes": "govuk-visually-hidden"},
+      {"text": "Quota ID"},
+      {"text": "Geographical area"},
+      {"text": "Geographical area exclusions", "classes": "govuk-!-width-one-third"},
+      {"text": "Start date"},
+      {"text": "End date"},
+    ],
+    "rows": table_rows
+  }) }}
+
+  {{ govukButton({
+    "text": "Continue",
+  }) }}
+{% endblock %}

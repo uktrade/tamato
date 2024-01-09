@@ -2,24 +2,32 @@
   <span class="details">Transaction: {{ transaction.pk }}</span>
 
   <div id="transaction-order-actions">
-    {% if transaction == first_transaction_in_workbasket or not user_can_delete_items %}
-      <span class="govuk-link disabled promote">Move up &#9206;</span>
-    {% else %}
+    {% if not transaction == first_transaction_in_workbasket and user_can_move_transactions %}
+      <button name="form-action"
+        value="promote-transaction-top__{{ transaction.pk }}"
+        class="govuk-link fake-link promote"
+        data-module="govuk-button"
+        >Move to top <span aria-hidden="true">&#9206;</span></button>
+
       <button name="form-action"
         value="promote-transaction__{{ transaction.pk }}"
         class="govuk-link fake-link promote"
         data-module="govuk-button"
-        >Move up &#9206;</button>
+        >Move up <span aria-hidden="true">&#9206;</span></button>
     {% endif %}
 
-    {% if transaction == last_transaction_in_workbasket or not user_can_delete_items %}
-      <span class="govuk-link disabled demote">Move down &#9207;</span>
-    {% else %}
+    {% if not transaction == last_transaction_in_workbasket and user_can_move_transactions %}
       <button name="form-action"
         value="demote-transaction__{{ transaction.pk }}"
         class="govuk-link fake-link demote"
         data-module="govuk-button"
-        >Move down &#9207;</button>
+        >Move down <span aria-hidden="true">&#9207;</span></button>
+
+      <button name="form-action"
+        value="demote-transaction-bottom__{{ transaction.pk }}"
+        class="govuk-link fake-link demote"
+        data-module="govuk-button"
+        >Move to bottom <span aria-hidden="true">&#9207;</span></button>
     {% endif %}
   </div>
 {% endmacro %}

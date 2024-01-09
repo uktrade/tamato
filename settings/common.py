@@ -355,6 +355,10 @@ USE_I18N = False
 # Enable localized formatting of numbers and dates
 USE_L10N = False
 
+# Use a consistent TAP date format throughout.
+DATE_FORMAT = "%d %b %Y"
+DATE_FORMAT_SHORT = "%d-%m-%Y"
+
 # Language code - ignored unless USE_I18N is True
 LANGUAGE_CODE = "en-gb"
 
@@ -414,12 +418,11 @@ S3_ENDPOINT_URL = os.environ.get(
 )
 
 # Packaging automation.
-HMRC_PACKAGING_SEED_ENVELOPE_ID = int(
-    os.environ.get(
-        "HMRC_PACKAGING_SEED_ENVELOPE_ID",
-        "0001",
-    ),
+HMRC_PACKAGING_SEED_ENVELOPE_ID = os.environ.get(
+    "HMRC_PACKAGING_SEED_ENVELOPE_ID",
+    "0001",
 )
+
 HMRC_ENVELOPE_STORAGE_DIRECTORY = os.environ.get(
     "HMRC_ENVELOPE_STORAGE_DIRECTORY",
     "envelope/",

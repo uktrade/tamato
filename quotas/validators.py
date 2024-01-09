@@ -5,7 +5,7 @@ from django.core.validators import MinValueValidator
 from django.core.validators import RegexValidator
 from django.db import models
 
-quota_order_number_validator = RegexValidator(r"^[0-9]{6}$")
+quota_order_number_validator = RegexValidator(r"^05[0-9]{4}$")
 monetary_unit_code_validator = RegexValidator(r"^[A-Z]{3}$")
 measurement_unit_code_validator = RegexValidator(r"^[A-Z]{3}$")
 measurement_unit_qualifier_code_validator = RegexValidator(r"^[A-Z]$")
@@ -90,3 +90,12 @@ def validate_coefficient(value):
         raise ValidationError(
             "Whenever a sub-quota receives a coefficient, this has to be a strictly positive decimal number.",
         )
+
+
+def validate_quota_volume(data):
+    volume = data.get("volume")
+    initial_volume = data.get("initial_volume")
+
+    if volume and initial_volume:
+        if volume > initial_volume:
+            raise ValidationError("Current volume cannot be higher than initial volume")

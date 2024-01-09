@@ -1,6 +1,8 @@
 import logging
 import re
+from datetime import date
 from functools import cached_property
+from urllib.parse import urlencode
 
 import boto3
 from botocore.client import Config
@@ -10,8 +12,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
-from django.db.models import Max
-from django.db.models import Min
+from django.db.models import F
 from django.db.models import ProtectedError
 from django.db.transaction import atomic
 from django.http import Http404
@@ -35,16 +36,20 @@ from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
+from common.util import format_date_string
 from common.views import SortingMixin
 from common.views import WithPaginationListView
+from common.views import build_pagination_list
 from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalMembership
 from importer.goods_report import GoodsReporter
-from importer.goods_report import GoodsReportLine
 from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
+from publishing.models import PackagedWorkBasket
+from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets import forms
@@ -318,15 +323,11 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class CurrentWorkBasket(FormView):
+class CurrentWorkBasket(TemplateView):
     template_name = "workbaskets/summary-workbasket.jinja"
-    form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.
     action_success_url_names = {
-        "submit-for-packaging": "publishing:packaged-workbasket-queue-ui-create",
-        "run-business-rules": "workbaskets:current-workbasket",
-        "terminate-rule-check": "workbaskets:current-workbasket",
         "page-prev": "workbaskets:current-workbasket",
         "page-next": "workbaskets:current-workbasket",
         "compare-data": "workbaskets:current-workbasket",
@@ -375,30 +376,9 @@ class CurrentWorkBasket(FormView):
             page_number = page.next_page_number()
         return f"{url}?page={page_number}"
 
-    @atomic
-    def run_business_rules(self):
-        """Remove old checks, start new checks via a Celery task and save the
-        newly created task's ID on the workbasket."""
-        workbasket = self.workbasket
-        workbasket.delete_checks()
-        task = call_check_workbasket_sync.apply_async(
-            (workbasket.pk,),
-            countdown=1,
-        )
-        logger.info(
-            f"Started rule check against workbasket.id={workbasket.pk} "
-            f"on task.id={task.id}",
-        )
-        workbasket.rule_check_task_id = task.id
-        workbasket.save()
-
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
-        if form_action == "run-business-rules":
-            self.run_business_rules()
-        elif form_action == "terminate-rule-check":
-            self.workbasket.terminate_rule_check()
-        elif form_action in ["remove-selected", "remove-all"]:
+        if form_action in ["remove-selected", "remove-all"]:
             return reverse(
                 "workbaskets:workbasket-ui-changes-delete",
                 kwargs={"pk": self.workbasket.pk},
@@ -412,13 +392,6 @@ class CurrentWorkBasket(FormView):
             )
         except KeyError:
             return reverse("home")
-
-    def get_initial(self):
-        store = SessionStore(
-            self.request,
-            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
-        )
-        return store.data.copy()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -472,30 +445,12 @@ class CurrentWorkBasket(FormView):
 
         return context
 
-    def form_valid(self, form):
-        store = SessionStore(
-            self.request,
-            f"WORKBASKET_SELECTIONS_{self.workbasket.pk}",
-        )
-        form_action = self.request.POST.get("form-action")
-        store.remove_items(form.cleaned_data)
-        if form_action == "remove-all":
-            object_list = {
-                self.form_class.field_name_for_object(obj): True
-                for obj in self.workbasket.tracked_models
-            }
-            store.add_items(object_list)
-        else:
-            to_add = {key: value for key, value in form.cleaned_data.items() if value}
-            store.add_items(to_add)
-        return super().form_valid(form)
-
 
 class WorkBasketList(PermissionRequiredMixin, WithPaginationListView):
     """UI endpoint for viewing and filtering workbaskets."""
 
     template_name = "workbaskets/list.jinja"
-    permission_required = "workbaskets.change_workbasket"
+    permission_required = "workbaskets.view_workbasket"
     filterset_class = WorkBasketFilter
     search_fields = [
         "title",
@@ -514,10 +469,27 @@ class WorkBasketDetailView(PermissionRequiredMixin, DetailView):
     permission_required = "workbaskets.view_workbasket"
 
 
-class WorkBasketChangesMixin(PermissionRequiredMixin, FormView):
+class WorkBasketChangesView(SortingMixin, PermissionRequiredMixin, FormView):
+    """UI endpoint for viewing changes in a workbasket."""
+
     permission_required = "workbaskets.view_workbasket"
+    template_name = "workbaskets/changes.jinja"
     form_class = forms.SelectableObjectsForm
-    paginate_by = 50
+    paginate_by = 100
+
+    form_action_redirect_map = {
+        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
+        "remove-all": "workbaskets:workbasket-ui-changes-delete",
+        "page-prev": "workbaskets:workbasket-ui-changes",
+        "page-next": "workbaskets:workbasket-ui-changes",
+    }
+
+    sort_by_fields = ["component", "action", "activity_date"]
+    custom_sorting = {
+        "component": "polymorphic_ctype",
+        "action": "update_type",
+        "activity_date": "transaction__updated_at",
+    }
 
     @cached_property
     def workbasket(self):
@@ -526,12 +498,23 @@ class WorkBasketChangesMixin(PermissionRequiredMixin, FormView):
     @property
     def paginator(self):
         return Paginator(
+            self.get_queryset(),
+            per_page=self.paginate_by,
+        )
+
+    def get_queryset(self):
+        queryset = (
             self.workbasket.tracked_models.with_transactions_and_models().order_by(
                 "transaction__order",
                 "pk",
-            ),
-            per_page=self.paginate_by,
+            )
         )
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering, "transaction")
+            return queryset.order_by(*ordering)
+        else:
+            return queryset
 
     def get_initial(self):
         store = SessionStore(
@@ -542,12 +525,17 @@ class WorkBasketChangesMixin(PermissionRequiredMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["objects"] = self.get_queryset()
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        kwargs["objects"] = page.object_list
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
         user_can_delete_items = (
             self.request.user.is_superuser
             or self.request.user.has_perm("workbaskets.change_workbasket")
@@ -560,6 +548,8 @@ class WorkBasketChangesMixin(PermissionRequiredMixin, FormView):
             {
                 "workbasket": self.workbasket,
                 "page_obj": page,
+                "page_links": page_links,
+                "paginator": self.paginator,
                 "user_can_delete_items": user_can_delete_items,
                 "user_can_delete_workbasket": user_can_delete_workbasket,
             },
@@ -619,89 +609,125 @@ class WorkBasketChangesMixin(PermissionRequiredMixin, FormView):
             )
 
 
-class WorkBasketChangesView(SortingMixin, WorkBasketChangesMixin):
-    """UI endpoint for viewing changes in a workbasket."""
-
-    template_name = "workbaskets/changes.jinja"
-    sort_by_fields = ["component", "action", "activity_date"]
-    custom_sorting = {
-        "component": "polymorphic_ctype",
-        "action": "update_type",
-        "activity_date": "transaction__updated_at",
-    }
-    form_action_redirect_map = {
-        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
-        "remove-all": "workbaskets:workbasket-ui-changes-delete",
-        "page-prev": "workbaskets:workbasket-ui-changes",
-        "page-next": "workbaskets:workbasket-ui-changes",
-    }
-
-    def get_queryset(self):
-        queryset = self.paginator.object_list
-        page_number = int(self.request.GET.get("page", 1))
-        items_per_page = page_number * self.paginate_by
-
-        ordering = self.get_ordering()
-        if ordering:
-            ordering = (ordering, "transaction")
-            return queryset.order_by(*ordering)[:items_per_page]
-        else:
-            return queryset[:items_per_page]
-
-
-class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
+class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
     """UI endpoint for reordering transactions in a workbasket."""
 
+    permission_required = "workbaskets.view_workbasket"
     template_name = "workbaskets/transaction_order.jinja"
+    form_class = forms.SelectableObjectsForm
+    paginate_by = 100
 
     form_action_redirect_map = {
-        "remove-selected": "workbaskets:workbasket-ui-changes-delete",
         "page-prev": "workbaskets:workbasket-ui-transaction-order",
         "page-next": "workbaskets:workbasket-ui-transaction-order",
         "move-transaction": "workbaskets:workbasket-ui-transaction-order",
     }
 
+    @property
+    def form_action_mapping(self):
+        """A dictionary mapping form actions to transaction reordering
+        functions."""
+        return {
+            # Selected transactions
+            "promote-transactions-top": self.promote_transaction_to_top,
+            "demote-transactions-bottom": self.demote_transaction_to_bottom,
+            "promote-transactions": self.promote_transaction,
+            "demote-transactions": self.demote_transaction,
+            # Individual transaction
+            "promote-transaction-top": self.promote_transaction_to_top,
+            "demote-transaction-bottom": self.demote_transaction_to_bottom,
+            "promote-transaction": self.promote_transaction,
+            "demote-transaction": self.demote_transaction,
+        }
+
+    @cached_property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    @property
+    def paginator(self):
+        return Paginator(
+            self.workbasket.transactions.prefetch_related("tracked_models"),
+            per_page=self.paginate_by,
+        )
+
+    @property
+    def session_store(self):
+        """Get the session store containing form field ids of the transactions
+        selected in the workbasket."""
+        return SessionStore(
+            self.request,
+            f"TRANSACTION_SELECTIONS_{self.workbasket.pk}",
+        )
+
+    def store_transaction_selections(self, form):
+        """Add the selected transactions in the form to the session store."""
+        session_store = self.session_store
+        session_store.remove_items(form.cleaned_data)
+        to_add = {key: value for key, value in form.cleaned_data.items() if value}
+        session_store.add_items(to_add)
+
     def get_queryset(self):
-        queryset = self.paginator.object_list
-        page_number = int(self.request.GET.get("page", 1))
-        items_per_page = page_number * self.paginate_by
-        return queryset[:items_per_page]
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        queryset = page.object_list
+        return queryset
+
+    def get_initial(self):
+        return self.session_store.data.copy()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["objects"] = self.get_queryset()
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
+        user_can_move_transactions = (
+            self.request.user.is_superuser
+            or self.request.user.has_perm("workbaskets.change_workbasket")
+        )
         context.update(
             {
+                "workbasket": self.workbasket,
+                "page_obj": page,
+                "page_links": page_links,
+                "paginator": self.paginator,
+                "user_can_move_transactions": user_can_move_transactions,
                 "first_transaction_in_workbasket": self.first_transaction_in_workbasket,
                 "last_transaction_in_workbasket": self.last_transaction_in_workbasket,
-                "tracked_models_first_in_transactions": self.tracked_models_first_in_transactions,
-                "tracked_models_last_in_transactions": self.tracked_models_last_in_transactions,
             },
         )
         return context
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-        # Handle transaction movement.
-        form_action = form.data.get("form-action", "")
-        if form_action.startswith("promote-transaction"):
-            return self.promote_transaction(form_action)
-        elif form_action.startswith("demote-transaction"):
-            return self.demote_transaction(form_action)
 
-        # Handle TrackedModel removal.
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
+        if not form.is_valid():
             return self.form_invalid(form)
+
+        self.store_transaction_selections(form)
+
+        form_action = form.data.get("form-action", "")
+        if "transactions" in form_action:
+            return self.move_selected_transactions(form_action)
+        elif "transaction" in form_action:
+            return self.move_transaction(form_action)
+        else:
+            return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
         form_action = self.request.POST.get("form-action")
-        if form_action.startswith("promote-transaction") or form_action.startswith(
-            "demote-transaction",
+        if form_action.startswith("promote") or form_action.startswith(
+            "demote",
         ):
             form_action = "move-transaction"
         try:
-            return self._append_url_params(
+            return self._append_page_url_param(
                 reverse(
                     self.form_action_redirect_map[form_action],
                     kwargs={"pk": self.workbasket.pk},
@@ -713,6 +739,16 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
                 "workbaskets:workbasket-ui-detail",
                 kwargs={"pk": self.workbasket.pk},
             )
+
+    def _append_page_url_param(self, url, form_action):
+        """Append a page number parameter to the URL."""
+        page_number = int(self.request.GET.get("page", 1))
+        page = self.paginator.get_page(page_number)
+        if form_action == "page-prev":
+            page_number = page.previous_page_number()
+        elif form_action == "page-next":
+            page_number = page.next_page_number()
+        return f"{url}?page={page_number}"
 
     def workbasket_transactions(self):
         """Returns the current workbasket's transactions ordered by `order`,
@@ -729,7 +765,7 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
 
         See the `regex_pattern` attribute in this function for valid formats.
         """
-        regex_pattern = "(promote-transaction|demote-transaction)__([0-9]+)"
+        regex_pattern = "(promote-transaction-top|promote-transaction|demote-transaction|demote-transaction-bottom)__([0-9]+)"
         try:
             pk = int(re.search(regex_pattern, form_action).group(2))
         except AttributeError:
@@ -756,11 +792,106 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             )
             return None
 
+    def move_selected_transactions(self, form_action):
+        """
+        Reorder the transactions in the session store according to
+        `form_action`.
+
+        Note that transaction reordering necessitates a new business rules
+        check.
+        """
+
+        transaction_pks = [
+            forms.SelectableObjectsForm.object_id_from_field_name(key)
+            for key in self.session_store.data.keys()
+        ]
+        self.session_store.clear()
+
+        if (
+            form_action == "promote-transactions-top"
+            or form_action == "demote-transactions"
+        ):
+            # Reverse to keep the selected transactions in their relative order in the final reordering.
+            transaction_pks.reverse()
+
+        for pk in transaction_pks:
+            selected_transaction = self.workbasket_transactions().filter(pk=pk).last()
+            self.form_action_mapping[form_action](selected_transaction)
+
+        self.workbasket.delete_checks()
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def move_transaction(self, form_action):
+        """
+        Reorder the individual transaction in `form_action` according to
+        `form_action`.
+
+        Note that transaction reordering necessitates a new business rules
+        check.
+        """
+
+        self.session_store.clear()
+        transaction = self._get_transaction_pk_from_form_action(form_action)
+        form_action = form_action.split("__")[0]
+        self.form_action_mapping[form_action](transaction)
+        self.workbasket.delete_checks()
+
+        return HttpResponseRedirect(self.get_success_url())
+
     @atomic
-    def promote_transaction(self, form_action):
-        """Swap the transaction order of the promoted transaction with the
+    def promote_transaction_to_top(self, promoted_transaction):
+        """Set the transaction order of `promoted_transaction` to be first in
+        the workbasket, demoting the transactions that came before it."""
+
+        top_transaction = self.workbasket_transactions().first()
+
+        if (
+            not promoted_transaction
+            or not top_transaction
+            or promoted_transaction == top_transaction
+        ):
+            return
+
+        current_position = promoted_transaction.order
+        top_position = top_transaction.order
+
+        self.workbasket_transactions().filter(order__lt=current_position).update(
+            order=F("order") + 1,
+        )
+
+        promoted_transaction.order = top_position
+        promoted_transaction.save(update_fields=["order"])
+
+    @atomic
+    def demote_transaction_to_bottom(self, demoted_transaction):
+        """Set the transaction order of `demoted_transaction` to be last in the
+        workbasket, promoting the transactions that came after it."""
+
+        bottom_transaction = self.workbasket_transactions().last()
+
+        if (
+            not demoted_transaction
+            or not bottom_transaction
+            or demoted_transaction == bottom_transaction
+        ):
+            return
+
+        current_position = demoted_transaction.order
+        bottom_position = bottom_transaction.order
+
+        self.workbasket_transactions().filter(order__gt=current_position).update(
+            order=F("order") - 1,
+        )
+
+        demoted_transaction.order = bottom_position
+        demoted_transaction.save(update_fields=["order"])
+
+    @atomic
+    def promote_transaction(self, promoted_transaction):
+        """Swap the transaction order of `promoted_transaction` with the
         (demoted) transaction above it."""
-        promoted_transaction = self._get_transaction_pk_from_form_action(form_action)
+
         demoted_transaction = (
             self.workbasket_transactions()
             .filter(
@@ -769,7 +900,7 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             .last()
         )
         if not promoted_transaction or not demoted_transaction:
-            return HttpResponseRedirect(self.get_success_url())
+            return
 
         promoted_transaction.order, demoted_transaction.order = (
             demoted_transaction.order,
@@ -780,13 +911,11 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             ["order"],
         )
 
-        return HttpResponseRedirect(self.get_success_url())
-
     @atomic
-    def demote_transaction(self, form_action):
-        """Swap the transaction order of the demoted transaction with the
+    def demote_transaction(self, demoted_transaction):
+        """Swap the transaction order of `demoted_transaction` with the
         (promoted) transaction below it."""
-        demoted_transaction = self._get_transaction_pk_from_form_action(form_action)
+
         promoted_transaction = (
             self.workbasket_transactions()
             .filter(
@@ -795,7 +924,7 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             .first()
         )
         if not demoted_transaction or not promoted_transaction:
-            return HttpResponseRedirect(self.get_success_url())
+            return
 
         demoted_transaction.order, promoted_transaction.order = (
             promoted_transaction.order,
@@ -806,8 +935,6 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
             ["order"],
         )
 
-        return HttpResponseRedirect(self.get_success_url())
-
     @cached_property
     def first_transaction_in_workbasket(self):
         return self.workbasket_transactions().first()
@@ -815,22 +942,6 @@ class WorkBasketTransactionOrderView(WorkBasketChangesMixin):
     @cached_property
     def last_transaction_in_workbasket(self):
         return self.workbasket_transactions().last()
-
-    @property
-    def tracked_models_first_in_transactions(self):
-        """Returns a list of pks of tracked models that are first in their
-        parent transaction."""
-        return self.workbasket.transactions.annotate(
-            first_tracked_models=Min("tracked_models__pk"),
-        ).values_list("first_tracked_models", flat=True)
-
-    @property
-    def tracked_models_last_in_transactions(self):
-        """Returns a list of pks of tracked models that are last in their parent
-        transaction."""
-        return self.workbasket.transactions.annotate(
-            last_tracked_models=Max("tracked_models__pk"),
-        ).values_list("last_tracked_models", flat=True)
 
 
 class WorkBasketViolations(SortingMixin, WithPaginationListView):
@@ -859,6 +970,13 @@ class WorkBasketViolations(SortingMixin, WithPaginationListView):
             successful=False,
         )
         return super().get_queryset()
+
+    @property
+    def paginator(self):
+        return Paginator(
+            self.get_queryset(),
+            per_page=50,
+        )
 
 
 class WorkBasketViolationDetail(DetailView):
@@ -937,7 +1055,11 @@ class WorkBasketDelete(PermissionRequiredMixin, FormMixin, DeleteView):
             return self.form_invalid(form)
 
     def form_valid(self, form):
-        self.object.delete()
+        if not PackagedWorkBasket.objects.filter(workbasket=self.object).exists():
+            self.object.delete()
+        else:
+            self.object.archive()
+            self.object.save()
         return redirect(self.get_success_url())
 
 
@@ -959,7 +1081,7 @@ class WorkBasketDeleteDone(TemplateView):
 
 
 class WorkBasketCompare(WithCurrentWorkBasket, FormView):
-    success_url = reverse_lazy("workbaskets:workbasket-ui-compare")
+    success_url = reverse_lazy("workbaskets:workbasket-check-ui-compare")
     template_name = "workbaskets/compare.jinja"
     form_class = forms.WorkbasketCompareForm
 
@@ -1028,6 +1150,86 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
         )
 
 
+class WorkBasketChecksView(FormView):
+    template_name = "workbaskets/checks.jinja"
+    form_class = forms.SelectableObjectsForm
+
+    # Form action mappings to URL names.
+    action_success_url_names = {
+        "run-business-rules": "workbaskets:workbasket-checks",
+        "terminate-rule-check": "workbaskets:workbasket-checks",
+        "page-prev": "workbaskets:workbasket-checks",
+        "page-next": "workbaskets:workbasket-checks",
+    }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    @atomic
+    def run_business_rules(self):
+        """Remove old checks, start new checks via a Celery task and save the
+        newly created task's ID on the workbasket."""
+        workbasket = self.workbasket
+        workbasket.delete_checks()
+        task = call_check_workbasket_sync.apply_async(
+            (workbasket.pk,),
+            countdown=1,
+        )
+        logger.info(
+            f"Started rule check against workbasket.id={workbasket.pk} "
+            f"on task.id={task.id}",
+        )
+        workbasket.rule_check_task_id = task.id
+        workbasket.save()
+
+    def get_success_url(self):
+        form_action = self.request.POST.get("form-action")
+        if form_action == "run-business-rules":
+            self.run_business_rules()
+        elif form_action == "terminate-rule-check":
+            self.workbasket.terminate_rule_check()
+        return reverse("workbaskets:workbasket-checks")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # set to true if there is an associated goods import batch with an unsent notification
+        try:
+            import_batch = self.workbasket.importbatch
+            unsent_notifcation = (
+                import_batch
+                and import_batch.goods_import
+                and not Notification.objects.filter(
+                    notified_object_pk=import_batch.pk,
+                    notification_type=NotificationTypeChoices.GOODS_REPORT,
+                ).exists()
+            )
+        except ObjectDoesNotExist:
+            unsent_notifcation = False
+        context.update(
+            {
+                "workbasket": self.workbasket,
+                "rule_check_in_progress": False,
+                "unsent_notification": unsent_notifcation,
+            },
+        )
+        if self.workbasket.rule_check_task_id:
+            result = AsyncResult(self.workbasket.rule_check_task_id)
+            if result.status != "SUCCESS":
+                context.update({"rule_check_in_progress": True})
+            else:
+                self.workbasket.save_to_session(self.request.session)
+
+            num_completed, total = self.workbasket.rule_check_progress()
+            context.update(
+                {
+                    "rule_check_progress": f"Completed {num_completed} out of {total} checks",
+                },
+            )
+
+        return context
+
+
 class WorkBasketReviewView(PermissionRequiredMixin, WithPaginationListView):
     """Base view from which nested workbasket review tab views inherit."""
 
@@ -1059,6 +1261,7 @@ class WorkBasketReviewAdditionalCodesView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review additional codes"
         context["selected_tab"] = "additional-codes"
         context["tab_template"] = "includes/additional_codes/list.jinja"
         return context
@@ -1071,6 +1274,7 @@ class WorkBasketReviewCertificatesView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review certificates"
         context["selected_tab"] = "certificates"
         context["tab_template"] = "includes/certificates/list.jinja"
         return context
@@ -1091,18 +1295,10 @@ class WorkbasketReviewGoodsView(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodities"
         context["selected_tab"] = "commodities"
         context["session_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
-
-        # Default values should there be no ImportBatch instance associated with
-        # the workbasket.
-        context["column_headings"] = [
-            description
-            for description in GoodsReportLine.COLUMN_DESCRIPTIONS
-            if description != "Containing transaction ID"
-            and description != "Containing message ID"
-        ]
         context["report_lines"] = []
         context["import_batch_pk"] = None
 
@@ -1122,17 +1318,46 @@ class WorkbasketReviewGoodsView(
         if taric_file:
             reporter = GoodsReporter(import_batch.taric_file)
             goods_report = reporter.create_report()
+            today = date.today()
 
             context["report_lines"] = [
-                [
-                    line.update_type.title(),
-                    line.record_name.title(),
-                    line.goods_nomenclature_item_id,
-                    line.suffix,
-                    line.validity_start_date,
-                    line.validity_end_date,
-                    line.comments,
-                ]
+                {
+                    "update_type": line.update_type.title() if line.update_type else "",
+                    "record_name": line.record_name.title() if line.record_name else "",
+                    "item_id": line.goods_nomenclature_item_id,
+                    "item_id_search_url": (
+                        reverse("commodity-ui-list")
+                        + "?"
+                        + urlencode({"item_id": line.goods_nomenclature_item_id})
+                        if line.goods_nomenclature_item_id
+                        else ""
+                    ),
+                    "measures_search_url": (
+                        reverse("measure-ui-list")
+                        + "?"
+                        + urlencode(
+                            {
+                                "goods_nomenclature__item_id": line.goods_nomenclature_item_id,
+                                "end_date_modifier": "after",
+                                "end_date_0": today.day,
+                                "end_date_1": today.month,
+                                "end_date_2": today.year,
+                            },
+                        )
+                        if line.goods_nomenclature_item_id
+                        else ""
+                    ),
+                    "suffix": line.suffix,
+                    "start_date": format_date_string(
+                        line.validity_start_date,
+                        short_format=True,
+                    ),
+                    "end_date": format_date_string(
+                        line.validity_end_date,
+                        short_format=True,
+                    ),
+                    "comments": line.comments,
+                }
                 for line in goods_report.report_lines
             ]
             context["import_batch_pk"] = import_batch.pk
@@ -1157,6 +1382,7 @@ class WorkBasketReviewFootnotesView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review footnotes"
         context["selected_tab"] = "footnotes"
         context["tab_template"] = "includes/footnotes/list.jinja"
         return context
@@ -1166,11 +1392,30 @@ class WorkBasketReviewGeoAreasView(WorkBasketReviewView):
     """UI endpoint for reviewing geographical area changes in a workbasket."""
 
     model = GeographicalArea
+    template_name = "workbaskets/review-geo-areas.jinja"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review geographical areas"
         context["selected_tab"] = "geographical-areas"
+        context["selected_nested_tab"] = "geographical-areas"
         context["tab_template"] = "includes/geo_areas/list.jinja"
+        return context
+
+
+class WorkBasketReviewGeoMembershipsView(WorkBasketReviewView):
+    """UI endpoint for reviewing geographical membership changes in a
+    workbasket."""
+
+    model = GeographicalMembership
+    template_name = "workbaskets/review-geo-areas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review geographical area group memberships"
+        context["selected_tab"] = "geographical-areas"
+        context["selected_nested_tab"] = "geographical-memberships"
+        context["tab_template"] = "includes/workbaskets/review-geo-memberships.jinja"
         return context
 
 
@@ -1196,6 +1441,7 @@ class WorkBasketReviewMeasuresView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review measures"
         context["selected_tab"] = "measures"
         context["tab_template"] = "includes/measures/workbasket-measures.jinja"
         return context
@@ -1205,11 +1451,30 @@ class WorkBasketReviewQuotasView(WorkBasketReviewView):
     """UI endpoint for reviewing quota changes in a workbasket."""
 
     model = QuotaOrderNumber
+    template_name = "workbaskets/review-quotas.jinja"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota order numbers"
         context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "quotas"
         context["tab_template"] = "includes/quotas/list.jinja"
+        return context
+
+
+class WorkBasketReviewQuotaDefinitionsView(WorkBasketReviewView):
+    """UI endpoint for reviewing quota definition period changes in a
+    workbasket."""
+
+    model = QuotaDefinition
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota definition periods"
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "quota-definitions"
+        context["tab_template"] = "includes/workbaskets/review-quota-definitions.jinja"
         return context
 
 
@@ -1220,6 +1485,7 @@ class WorkBasketReviewRegulationsView(WorkBasketReviewView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review regulations"
         context["selected_tab"] = "regulations"
         context["tab_template"] = "includes/regulations/list.jinja"
         return context

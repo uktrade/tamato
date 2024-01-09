@@ -73,8 +73,7 @@ class TaricDataAssertionError(AssertionError):
 # These validate functions are extracted from exporter/serializers.py
 # This is due to the fact the serializer is set up to support multiple enevelope renders
 # and the workbaskets checks break such an implementation
-# without a refeactor of the serializer, the calling function and
-# all the tests that use validate_taric_xml_record_order to test xml results
+# without a refeactor of the serializer.
 
 # To support multiple envelopes the functions would have to return the envelope metadata
 # extract the workbaskets check into the function that loops over the list of envelopes
@@ -84,37 +83,47 @@ class TaricDataAssertionError(AssertionError):
 # and would not support the rendering of multiple envelopes
 
 
-def validate_envelope(envelope_file, workbaskets, skip_declaration=False):
+def validate_envelope(
+    envelope_file: bytes,
+    workbaskets,
+    skip_declaration=False,
+) -> None:
     """
     Validate envelope content for XML issues and data missing & order issues.
 
-    raises DocumentInvalid | TaricDataAssertionError
+    Catches and re-raises DocumentInvalid and TaricDataAssertionError
+    exceptions, although other exceptions may be possible.
     """
-    xml_declaration = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    with open(settings.PATH_XSD_TARIC) as xsd_file:
-        if skip_declaration:
-            pos = envelope_file.tell()
-            xml_declaration = envelope_file.read(len(xml_declaration))
-            if xml_declaration != xml_declaration:
-                logger.warning(
-                    "Expected XML declaration first line of envelope to be XML encoding declaration, but found: ",
-                    xml_declaration,
-                )
-                envelope_file.seek(pos, os.SEEK_SET)
 
+    if not skip_declaration:
+        position_before = envelope_file.tell()
+        valid_xml_declaration = b'<?xml version="1.0" encoding="UTF-8"?>'
+        xml_declaration = envelope_file.read(len(valid_xml_declaration))
+
+        if xml_declaration != valid_xml_declaration:
+            logger.warning(
+                f"Expected XML declaration first line of envelope to be "
+                f"XML encoding declaration, but found: {xml_declaration}",
+            )
+
+        envelope_file.seek(position_before, os.SEEK_SET)
+
+    with open(settings.PATH_XSD_TARIC) as xsd_file:
         schema = etree.XMLSchema(parse_xml(xsd_file))
 
-        xml = parse_xml(envelope_file)
-        try:
-            schema.assertValid(xml)
-        except etree.DocumentInvalid as e:
-            logger.error("Envelope did not validate against XSD: %s", str(e.error_log))
-            raise
-        try:
-            validate_taric_xml_record_order(xml, workbaskets)
-        except TaricDataAssertionError as e:
-            logger.error(e.args[0])
-            raise
+    xml = parse_xml(envelope_file)
+
+    try:
+        schema.assertValid(xml)
+    except etree.DocumentInvalid as e:
+        logger.error(f"Envelope did not validate against XSD: {e}")
+        raise
+
+    try:
+        validate_taric_xml_records(xml, workbaskets)
+    except TaricDataAssertionError as e:
+        logger.error(e.args[0])
+        raise
 
 
 def get_expected_model_taric_record_count(tracked_model):
@@ -128,17 +137,15 @@ def get_expected_model_taric_record_count(tracked_model):
     return expected_count
 
 
-def validate_taric_xml_record_order(xml, workbaskets):
+def validate_taric_xml_records(xml, workbaskets):
     """
     Raise AssertionError if:
 
-    - any record codes are not in order
     - missing transactions (non-empty transactions only)
     - missing tracked_models (record)
     """
 
     # only validate against workbasket if workbasket available
-
     expected_record_count = 0
     workbasket_transaction_count = 0
     for transaction in workbaskets.ordered_transactions():
@@ -155,20 +162,11 @@ def validate_taric_xml_record_order(xml, workbaskets):
     envelope_transaction_count = 0
 
     for transaction in xml.findall(".//env:transaction", namespaces=nsmap):
-        last_code = "00000"
         # Count the number of records to compare with the workbasket tracked models
         envelope_transaction_count += 1
-        records = transaction.findall(".//oub:record", namespaces=nsmap)
-        envelope_record_count += len(records)
-        for record in records:
-            record_code = record.findtext(".//oub:record.code", namespaces=nsmap)
-            subrecord_code = record.findtext(".//oub:subrecord.code", namespaces=nsmap)
-            full_code = record_code + subrecord_code
-            if full_code < last_code:
-                raise TaricDataAssertionError(
-                    f"Elements out of order in XML: {last_code}, {full_code}",
-                )
-            last_code = full_code
+        envelope_record_count += len(
+            transaction.findall(".//oub:record", namespaces=nsmap),
+        )
 
     if not envelope_transaction_count:
         raise TaricDataAssertionError(

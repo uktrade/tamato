@@ -9,6 +9,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 
@@ -25,6 +26,13 @@ from measures.models import MeasurementUnit
 from quotas import models
 from quotas import validators
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
+
+CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
+SAFEGUARD_HELP_TEXT = (
+    "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
+)
+START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as this may cause issues with CDS downstream"
+ORDER_NUMBER_HELP_TEXT = "The order number must begin with 05 and be 6 digits long. Licensed quotas must begin 054 and safeguards must begin 058"
 
 
 class QuotaFilterForm(forms.Form):
@@ -115,12 +123,6 @@ class QuotaUpdateForm(
     ValidityPeriodForm,
     forms.ModelForm,
 ):
-    CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
-    SAFEGUARD_HELP_TEXT = (
-        "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
-    )
-    START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as this may cause issues with CDS downstream"
-
     class Meta:
         model = models.QuotaOrderNumber
         fields = [
@@ -149,12 +151,12 @@ class QuotaUpdateForm(
                 attrs={"disabled": True},
                 choices=validators.QuotaCategory.choices,
             )
-            self.fields["category"].help_text = self.SAFEGUARD_HELP_TEXT
+            self.fields["category"].help_text = SAFEGUARD_HELP_TEXT
         else:
             self.fields["category"].choices = validators.QuotaCategoryEditing.choices
-            self.fields["category"].help_text = self.CATEGORY_HELP_TEXT
+            self.fields["category"].help_text = CATEGORY_HELP_TEXT
 
-        self.fields["start_date"].help_text = self.START_DATE_HELP_TEXT
+        self.fields["start_date"].help_text = START_DATE_HELP_TEXT
 
     def init_layout(self):
         self.helper = FormHelper(self)
@@ -197,6 +199,115 @@ class QuotaUpdateForm(
                 data_prevent_double_click="true",
             ),
         )
+
+
+class QuotaOrderNumberCreateForm(
+    ValidityPeriodForm,
+    forms.ModelForm,
+):
+    class Meta:
+        model = models.QuotaOrderNumber
+        fields = [
+            "order_number",
+            "valid_between",
+            "category",
+            "mechanism",
+        ]
+
+    order_number = forms.CharField(
+        help_text=ORDER_NUMBER_HELP_TEXT,
+        validators=[validators.quota_order_number_validator],
+        error_messages={
+            "invalid": "Order number must be six digits long and begin with 05",
+            "required": "Enter the order number",
+        },
+    )
+    category = forms.ChoiceField(
+        choices=validators.QuotaCategory.choices,
+        help_text=CATEGORY_HELP_TEXT,
+        error_messages={
+            "invalid_choice": "Please select a valid category",
+            "required": "Choose the category",
+        },
+    )
+    mechanism = forms.ChoiceField(
+        choices=validators.AdministrationMechanism.choices,
+        error_messages={
+            "invalid_choice": "Please select a valid mechanism",
+            "required": "Choose the mechanism",
+        },
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.init_layout()
+
+    def init_fields(self):
+        self.fields["start_date"].help_text = START_DATE_HELP_TEXT
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Accordion(
+                AccordionSection(
+                    "Order number",
+                    "order_number",
+                ),
+                AccordionSection(
+                    "Validity",
+                    "start_date",
+                    "end_date",
+                ),
+                AccordionSection(
+                    "Category and mechanism",
+                    "category",
+                    "mechanism",
+                ),
+                css_class="govuk-width-!-two-thirds",
+            ),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        category = self.cleaned_data.get("category")
+        mechanism = self.cleaned_data.get("mechanism")
+        order_number = self.cleaned_data.get("order_number", "")
+
+        if (
+            mechanism is not None
+            and int(mechanism) == validators.AdministrationMechanism.LICENSED
+        ):
+            if int(category) == validators.QuotaCategory.SAFEGUARD:
+                raise ValidationError(
+                    "Mechanism cannot be set to licensed for safeguard quotas",
+                )
+            if not order_number.startswith("054"):
+                raise ValidationError(
+                    "The order number for licensed quotas must begin with 054",
+                )
+
+        if (
+            category is not None
+            and int(
+                category,
+            )
+            == validators.QuotaCategory.SAFEGUARD
+            and not order_number.startswith("058")
+        ):
+            raise ValidationError(
+                "The order number for safeguard quotas must begin with 058",
+            )
+
+        return super().clean()
 
 
 class QuotaOrderNumberOriginForm(
@@ -327,6 +438,10 @@ class QuotaDefinitionUpdateForm(
         self.init_layout()
         self.init_fields()
 
+    def clean(self):
+        validators.validate_quota_volume(self.cleaned_data)
+        return super().clean()
+
     def init_fields(self):
         self.fields["measurement_unit"].queryset = self.fields[
             "measurement_unit"
@@ -448,6 +563,10 @@ class QuotaDefinitionCreateForm(
         super().__init__(*args, **kwargs)
         self.init_layout()
         self.init_fields()
+
+    def clean(self):
+        validators.validate_quota_volume(self.cleaned_data)
+        return super().clean()
 
     def init_fields(self):
         # This is always set to 3 for current definitions
