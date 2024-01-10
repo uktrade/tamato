@@ -256,10 +256,13 @@ class TaricImporter:
             if transaction == up_to_transaction:
                 break
 
-    def find_parent_for_parser_object(self, taric_object: BaseTaricParser):
+    def __find_parent_for_parser_object(self, taric_object: BaseTaricParser):
         """
         Finds a parent object within the same import, matching the key identity
         fields to the child object.
+
+        This method should only be used when it has been confirmed that it is a child object. Using this
+        function on an object that is not a child object will result in an exception being raised.
 
         Args:
             taric_object: (required) BaseTaricParser, the child object we want to resolve the parent for.
@@ -321,7 +324,7 @@ class TaricImporter:
             if parsed_message.taric_object.is_child_object():
                 # We only need the parent to be present for creation, if it's an update it can be applied in isolation
                 if parsed_message.update_type != validators.UpdateType.UPDATE:
-                    parent = self.find_parent_for_parser_object(
+                    parent = self.__find_parent_for_parser_object(
                         parsed_message.taric_object,
                     )
                     attributes = parsed_message.taric_object.model_attributes(
