@@ -12,6 +12,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
+from django.utils.safestring import mark_safe
 
 from common.forms import BindNestedFormMixin
 from common.forms import FormSet
@@ -603,6 +604,7 @@ class QuotaDefinitionCreateForm(
                     "Description",
                     "description",
                     "order_number",
+                    summary="Adding a description is optional."
                 ),
                 AccordionSection(
                     "Validity period",
@@ -613,12 +615,14 @@ class QuotaDefinitionCreateForm(
                     "Measurements",
                     Field("measurement_unit", css_class="govuk-!-width-full"),
                     Field("measurement_unit_qualifier", css_class="govuk-!-width-full"),
+                    summary="A measurement unit qualifier is not always required."
                 ),
                 AccordionSection(
                     "Volume",
                     "initial_volume",
                     "volume",
                     "maximum_precision",
+                    summary=mark_safe("The initial volume is the legal balance applied to the definition period.<br><br>The current volume is the starting balance for the quota.")
                 ),
                 AccordionSection(
                     "Criticality",
