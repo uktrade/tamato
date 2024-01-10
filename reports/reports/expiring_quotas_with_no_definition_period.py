@@ -9,10 +9,13 @@ from quotas.models import (
 )
 from measures.models import Measure, MeasureExcludedGeographicalArea
 
+
 class Report(ReportBaseTable):
     name = "Quotas Expiring Soon"
     enabled = True
-    description = "Quotas with definition periods about to expire and no future definition period"
+    description = (
+        "Quotas with definition periods about to expire and no future definition period"
+    )
 
     def headers(self) -> [dict]:
         return [
@@ -62,7 +65,6 @@ class Report(ReportBaseTable):
 
         return list(quotas_expiring_soon)
 
-
     def find_quotas_without_future_definition(self, expiring_quotas):
         matching_data = set()
 
@@ -78,6 +80,8 @@ class Report(ReportBaseTable):
         for quota in matching_data:
             quota.definition_start_date = quota.valid_between.lower
             quota.definition_end_date = quota.valid_between.upper
-            quota.reason = "Definition period about to expire with no future definition period"
+            quota.reason = (
+                "Definition period about to expire with no future definition period"
+            )
 
         return list(matching_data)
