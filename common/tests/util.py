@@ -1,6 +1,7 @@
 import contextlib
 import importlib
 import json
+import os
 from datetime import date
 from datetime import datetime
 from functools import lru_cache
@@ -32,14 +33,18 @@ from pytz import timezone
 
 from commodities.models.orm import GoodsNomenclature
 from common.business_rules import BusinessRule
+from common.models import Transaction
 from common.models.trackedmodel import TrackedModel
-from common.models.transactions import Transaction
 from common.renderers import counter_generator
 from common.tariffs_api import Endpoints
 from common.tests import factories
 from common.util import TaricDateRange
 from common.util import get_accessor
 from common.util import get_field_tuple
+from taric_parsers.importer import TaricImporter
+from taric_parsers.taric_xml_source import TaricXMLFileSource
+from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
 
 INTERDEPENDENT_IMPORT_IMPLEMENTED = True
 UPDATE_IMPORTER_IMPLEMENTED = True
@@ -919,3 +924,61 @@ def wrap_numbers_over_max_digits(number: int, max_digits):
 
     # For negative numbers one digit is reserved for the sign.
     return number % -(10 ** (max_digits - 1))
+
+
+def get_test_xml_file(file_name, from_file):
+    path_to_current_file = os.path.realpath(from_file)
+    current_directory = os.path.split(path_to_current_file)[0]
+    return os.path.join(current_directory, "importer_examples", file_name)
+
+
+def preload_import(file_name, from_file, approve_workbasket=False):
+    file_to_import = get_test_xml_file(
+        file_name,
+        from_file,
+    )
+
+    workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
+    import_batch = factories.ImportBatchFactory.create(workbasket=workbasket)
+    factories.UserFactory.create()
+
+    importer = TaricImporter(
+        import_batch=import_batch,
+        taric_xml_source=TaricXMLFileSource(file_to_import),
+    )
+
+    importer.process_and_save_if_valid(workbasket)
+
+    if importer.can_save() and approve_workbasket:
+        # force publish workbasket
+        queue_workbasket_for_test(workbasket.id)
+    elif not importer.can_save() and approve_workbasket:  # there
+        assert (
+            False
+        ), "Tried to approve workbasket but the import contains issues, check the import"
+
+    return importer
+
+
+def queue_workbasket_for_test(workbasket_id):
+    user = factories.UserFactory.create()
+
+    workbasket = WorkBasket.objects.all().get(id=int(workbasket_id))
+
+    # force publish workbasket
+    workbasket.full_clean()
+    workbasket.approve(int(user.id), "REVISION_ONLY")
+    workbasket.status = WorkflowStatus.QUEUED
+    workbasket.save()
+
+    assert (
+        WorkBasket.objects.all().get(id=int(workbasket_id)).status
+        == WorkflowStatus.QUEUED
+    )
+    assert (
+        WorkBasket.objects.all()
+        .get(id=int(workbasket_id))
+        .transactions.first()
+        .partition
+        == 2
+    )

@@ -1,0 +1,31 @@
+{% set table_rows = [] %}
+{% for object in object_list %}
+{% set details_link -%}
+<a class="govuk-link govuk-!-font-weight-bold" href="{{ url('taric_parser_import_ui_details', kwargs={'pk': object.pk}) }}">{{ object.name }}</a>
+{%- endset %}
+{%- set workbasket_linked_id -%}
+    <a
+      class="govuk-link"
+      href="{{ url("workbaskets:workbasket-ui-changes", kwargs={"pk": object.workbasket_id}) }}"
+    >{{ object.workbasket_id }}</a>
+  {%- endset -%}
+{{ table_rows.append([
+    {"text": object.pk},
+    {"text": details_link},
+    {"text": object.status},
+    {"text": object.import_issues_error_count},
+    {"text": object.import_issues_warning_count},
+    {"text": workbasket_linked_id},
+  ]) or "" }}
+{% endfor %}
+{{ govukTable({
+  "head": [
+    {"text": "ID"},
+    {"text": "Name"},
+    {"text": "Status"},
+    {"text": "Errors"},
+    {"text": "Warnings"},
+    {"text": "workbasket link"},
+  ],
+  "rows": table_rows
+}) }}

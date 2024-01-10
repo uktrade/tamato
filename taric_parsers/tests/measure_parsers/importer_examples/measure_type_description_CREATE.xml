@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope id="000001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+	<env:transaction id="1">
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>140</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measure.type.series>
+                        <oub:measure.type.series.id>A</oub:measure.type.series.id>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2022-01-01</oub:validity.end.date>
+                        <oub:measure.type.combination>6</oub:measure.type.combination>
+                    </oub:measure.type.series>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>140</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measure.type.series.description>
+                        <oub:measure.type.series.id>A</oub:measure.type.series.id>
+                        <oub:language.id>zz</oub:language.id>
+                        <oub:description>Some Description</oub:description>
+                    </oub:measure.type.series.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="2">
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>235</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measure.type>
+                        <oub:measure.type.id>ZZZ</oub:measure.type.id>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2022-01-01</oub:validity.end.date>
+                        <oub:trade.movement.code>1</oub:trade.movement.code>
+                        <oub:priority.code>2</oub:priority.code>
+                        <oub:measure.component.applicable.code>3</oub:measure.component.applicable.code>
+                        <oub:origin.dest.code>4</oub:origin.dest.code>
+                        <oub:order.number.capture.code>5</oub:order.number.capture.code>
+                        <oub:measure.explosion.level>6</oub:measure.explosion.level>
+                        <oub:measure.type.series.id>A</oub:measure.type.series.id>
+                    </oub:measure.type>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>235</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measure.type.description>
+                        <oub:measure.type.id>ZZZ</oub:measure.type.id>
+                        <oub:language.id>ZZ</oub:language.id>
+                        <oub:description>Some Description x</oub:description>
+                    </oub:measure.type.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>
