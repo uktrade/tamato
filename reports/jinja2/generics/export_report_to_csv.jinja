@@ -1,0 +1,6 @@
+{% for row in report.rows() %}
+    {% for column in row %}
+        "{{ column.text }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+    {% if not loop.last %}{{ '\n' }}{% endif %}
+{% endfor %}
