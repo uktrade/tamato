@@ -938,8 +938,6 @@ class MeasureCreateWizard(
     ########################################################################################################################################################################################
     ########################################################################################################################################################################################
     def done(self, form_list, **kwargs):
-        pass
-
         serialized_cleaned_data = self.get_all_serialized_cleaned_data()
 
         # Add the serialized data to the CreateMeasures table
@@ -1144,7 +1142,6 @@ class MeasureCreateWizard(
                 for field in f.fields.values():
                     if hasattr(field, "queryset"):
                         field.queryset = field.queryset.approved_up_to_transaction(tx)
-
         form.is_valid()
         if hasattr(form, "cleaned_data"):
             form.initial = form.cleaned_data

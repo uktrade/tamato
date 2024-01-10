@@ -3,7 +3,13 @@ import json
 import unittest
 from datetime import date
 from decimal import Decimal
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Literal
 from typing import OrderedDict
+from typing import Tuple
+from typing import Union
 from unittest.mock import patch
 from urllib.parse import urlencode
 
@@ -11,11 +17,13 @@ import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.forms.models import model_to_dict
+from django.test.client import RequestFactory
 from django.urls import reverse
 
 from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
+from common.tests.util import Dates
 from common.tests.util import assert_model_view_renders
 from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
@@ -32,11 +40,15 @@ from measures.business_rules import ME70
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
+from measures.forms import MeasureForm
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
+from measures.models import Measurement
+from measures.models import MonetaryUnit
+from measures.parsers import DutySentenceParser
 from measures.validators import MeasureExplosionLevel
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
@@ -68,7 +80,7 @@ def test_measure_footnotes_update_get_delete_key():
     assert delete_key == expected
 
 
-def test_measure_footnotes_update_post_remove(client, valid_user):
+def test_measure_footnotes_update_post_remove(client: Any, valid_user: Any):
     measure = factories.MeasureFactory.create()
     footnote = factories.FootnoteAssociationMeasureFactory.create(
         footnoted_measure=measure,
@@ -85,7 +97,7 @@ def test_measure_footnotes_update_post_remove(client, valid_user):
     assert client.session[f"instance_footnotes_{measure.sid}"] == []
 
 
-def test_measure_footnotes_update_post_without_remove(client, valid_user):
+def test_measure_footnotes_update_post_without_remove(client: Any, valid_user: Any):
     measure = factories.MeasureFactory.create()
     footnote_1 = factories.FootnoteAssociationMeasureFactory.create(
         footnoted_measure=measure,
@@ -106,8 +118,8 @@ def test_measure_footnotes_update_post_without_remove(client, valid_user):
 
 
 def test_measure_footnotes_update_post_without_remove_ignores_delete_keys(
-    client,
-    valid_user,
+    client: Any,
+    valid_user: Any,
 ):
     measure = factories.MeasureFactory.create()
     footnote_1 = factories.FootnoteAssociationMeasureFactory.create(
@@ -131,11 +143,15 @@ def test_measure_footnotes_update_post_without_remove_ignores_delete_keys(
     ]
 
 
-def test_measure_delete(use_delete_form):
+def test_measure_delete(use_delete_form: Callable[..., Any]):
     use_delete_form(factories.MeasureFactory())
 
 
-def test_multiple_measure_delete_functionality(client, valid_user, session_workbasket):
+def test_multiple_measure_delete_functionality(
+    client: Any,
+    valid_user: Any,
+    session_workbasket: WorkBasket,
+):
     """Tests that MeasureMultipleDelete view's Post function takes a list of
     measures, and sets their update type to delete, clearing the session once
     completed."""
@@ -176,7 +192,11 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
         assert measure.update_type == UpdateType.DELETE
 
 
-def test_multiple_measure_delete_template(client, valid_user, session_workbasket):
+def test_multiple_measure_delete_template(
+    client: Any,
+    valid_user: Any,
+    session_workbasket: WorkBasket,
+):
     """Test that valid user receives a 200 on GET for MultipleMeasureDelete and
     correct measures display in html table."""
     # Make a bunch of measures
@@ -255,15 +275,15 @@ def test_multiple_measure_delete_template(client, valid_user, session_workbasket
 def test_measure_detail_views(
     view,
     url_pattern,
-    valid_user_client,
-    session_with_workbasket,
+    valid_user_client: Any,
+    session_with_workbasket: Any,
 ):
     """Verify that measure detail views are under the url measures/ and don't
     return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
 
 
-def test_measure_detail_conditions(client, valid_user):
+def test_measure_detail_conditions(client: Any, valid_user: Any):
     measure = factories.MeasureFactory.create()
     condition_code = factories.MeasureConditionCodeFactory.create()
     certificate_condition = factories.MeasureConditionWithCertificateFactory.create(
@@ -313,7 +333,7 @@ def test_measure_detail_conditions(client, valid_user):
     assert len(rows) == 2
 
 
-def test_measure_detail_no_conditions(client, valid_user):
+def test_measure_detail_no_conditions(client: Any, valid_user: Any):
     measure = factories.MeasureFactory.create()
     url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#conditions"
     client.force_login(valid_user)
@@ -329,7 +349,7 @@ def test_measure_detail_no_conditions(client, valid_user):
     )
 
 
-def test_measure_detail_footnotes(client, valid_user):
+def test_measure_detail_footnotes(client: Any, valid_user: Any):
     measure = factories.MeasureFactory.create()
     footnote1 = factories.FootnoteAssociationMeasureFactory.create(
         footnoted_measure=measure,
@@ -366,7 +386,7 @@ def test_measure_detail_footnotes(client, valid_user):
     }
 
 
-def test_measure_detail_no_footnotes(client, valid_user):
+def test_measure_detail_no_footnotes(client: Any, valid_user: Any):
     measure = factories.MeasureFactory.create()
     url = reverse("measure-ui-detail", kwargs={"sid": measure.sid}) + "#footnotes"
     client.force_login(valid_user)
@@ -382,7 +402,7 @@ def test_measure_detail_no_footnotes(client, valid_user):
     )
 
 
-def test_measure_detail_quota_order_number(client, valid_user):
+def test_measure_detail_quota_order_number(client: Any, valid_user: Any):
     quota_order_number = factories.QuotaOrderNumberFactory.create()
     measure = factories.MeasureFactory.create(order_number=quota_order_number)
     url = reverse("measure-ui-detail", kwargs={"sid": measure.sid})
@@ -396,7 +416,7 @@ def test_measure_detail_quota_order_number(client, valid_user):
     assert str(quota_order_number) in items
 
 
-def test_measure_detail_version_control(valid_user_client):
+def test_measure_detail_version_control(valid_user_client: Any):
     measure = factories.MeasureFactory.create()
     measure.new_version(measure.transaction.workbasket)
     measure.new_version(measure.transaction.workbasket)
@@ -426,7 +446,7 @@ def test_measure_detail_version_control(valid_user_client):
     assert activity_dates == expected_dates
 
 
-def test_measure_detail_core_data_tab_template(valid_user_client):
+def test_measure_detail_core_data_tab_template(valid_user_client: Any):
     """Tests that the details core tab request returns a 200, and renders the
     rows and links the summary table correctly for a measure with multiple
     geographic exclusions."""
@@ -480,7 +500,7 @@ def test_measure_detail_core_data_tab_template(valid_user_client):
     ),
     ids=view_urlpattern_ids,
 )
-def test_measure_list_view(view, url_pattern, valid_user_client):
+def test_measure_list_view(view, url_pattern, valid_user_client: Any):
     """Verify that measure list view is under the url measures/ and doesn't
     return an error."""
     assert_model_view_renders(view, url_pattern, valid_user_client)
@@ -496,8 +516,8 @@ def test_measure_list_view(view, url_pattern, valid_user_client):
 def test_duties_validator(
     duties,
     error_expected,
-    date_ranges,
-    duty_sentence_parser,
+    date_ranges: Dates,
+    duty_sentence_parser: DutySentenceParser,
 ):
     # duty_sentence_parser populates data needed by the DutySentenceParser
     # removing it will cause the test to fail.
@@ -513,11 +533,11 @@ def test_duties_validator(
     ],
 )
 def test_measure_update_duty_sentence(
-    update_data,
-    client,
-    valid_user,
-    measure_form,
-    duty_sentence_parser,
+    update_data: dict[str, str],
+    client: Any,
+    valid_user: Any,
+    measure_form: MeasureForm,
+    duty_sentence_parser: DutySentenceParser,
 ):
     """
     A placeholder test until we find a way of making use_update_form compatible
@@ -557,9 +577,9 @@ def test_measure_update_duty_sentence(
 @patch("measures.forms.MeasureForm.save")
 def test_measure_form_save_called_on_measure_update(
     save,
-    client,
-    valid_user,
-    measure_form,
+    client: Any,
+    valid_user: Any,
+    measure_form: MeasureForm,
 ):
     """Until work is done to make `TrackedModel` call new_version in save() we
     need to check that MeasureUpdate view explicitly calls
@@ -576,7 +596,7 @@ def test_measure_form_save_called_on_measure_update(
     save.assert_called_with(commit=False)
 
 
-def test_measure_update_get_footnotes(session_with_workbasket):
+def test_measure_update_get_footnotes(session_with_workbasket: Any):
     association = factories.FootnoteAssociationMeasureFactory.create()
     view = MeasureUpdate(request=session_with_workbasket)
     footnotes = view.get_footnotes(association.footnoted_measure)
@@ -594,8 +614,8 @@ def test_measure_update_get_footnotes(session_with_workbasket):
 
 
 def test_measure_update_form_creates_footnote_association(
-    measure_form,
-    valid_user_client,
+    measure_form: MeasureForm,
+    valid_user_client: Any,
 ):
     """Test that editing a measure to add a new footnote doesn't require
     pressing "Add another footnote" button before submitting (saving) the
@@ -619,7 +639,11 @@ def test_measure_update_form_creates_footnote_association(
 
 
 # https://uktrade.atlassian.net/browse/TP2000-340
-def test_measure_update_updates_footnote_association(measure_form, client, valid_user):
+def test_measure_update_updates_footnote_association(
+    measure_form: MeasureForm,
+    client: Any,
+    valid_user: Any,
+):
     """Tests that when updating a measure with an existing footnote the
     MeasureFootnoteAssociation linking the measure and footnote is updated to
     point at the new, updated version of the measure."""
@@ -639,7 +663,10 @@ def test_measure_update_updates_footnote_association(measure_form, client, valid
     assert new_assoc.version_group == assoc.version_group
 
 
-def test_measure_update_removes_footnote_association(valid_user_client, measure_form):
+def test_measure_update_removes_footnote_association(
+    valid_user_client: Any,
+    measure_form: MeasureForm,
+):
     """Test that when editing a measure to remove a footnote, the
     MeasureFootnoteAssociation, linking the measure and footnote, is updated to
     reflect this deletion."""
@@ -680,10 +707,10 @@ def test_measure_update_removes_footnote_association(valid_user_client, measure_
 
 
 def test_measure_update_create_conditions(
-    valid_user_client,
-    measure_edit_conditions_data,
-    duty_sentence_parser,
-    erga_omnes,
+    valid_user_client: Any,
+    measure_edit_conditions_data: dict,
+    duty_sentence_parser: DutySentenceParser,
+    erga_omnes: Any,
 ):
     """
     Tests that measure condition and condition component objects are created for
@@ -737,11 +764,11 @@ def test_measure_update_create_conditions(
 
 
 def test_measure_update_edit_conditions(
-    client,
-    valid_user,
-    measure_edit_conditions_data,
-    duty_sentence_parser,
-    erga_omnes,
+    client: Any,
+    valid_user: Any,
+    measure_edit_conditions_data: dict,
+    duty_sentence_parser: DutySentenceParser,
+    erga_omnes: Any,
 ):
     """
     Tests that measure condition and condition component objects are created for
@@ -831,11 +858,11 @@ def test_measure_update_edit_conditions(
 
 
 def test_measure_update_remove_conditions(
-    client,
-    valid_user,
-    measure_edit_conditions_data,
-    duty_sentence_parser,
-    erga_omnes,
+    client: Any,
+    valid_user: Any,
+    measure_edit_conditions_data: dict,
+    duty_sentence_parser: DutySentenceParser,
+    erga_omnes: Any,
 ):
     """
     Tests that a 200 code is returned after posting to the measure edit endpoint
@@ -886,11 +913,11 @@ def test_measure_update_remove_conditions(
 
 
 def test_measure_update_negative_condition(
-    client,
-    valid_user,
-    measure_edit_conditions_and_negative_action_data,
-    duty_sentence_parser,
-    erga_omnes,
+    client: Any,
+    valid_user: Any,
+    measure_edit_conditions_and_negative_action_data: dict,
+    duty_sentence_parser: DutySentenceParser,
+    erga_omnes: Any,
 ):
     """Tests that html contains appropriate form validation errors after posting
     to measure edit endpoint with a valid applicable_duty string for the
@@ -925,11 +952,11 @@ def test_measure_update_negative_condition(
 
 
 def test_measure_update_invalid_conditions(
-    client,
-    valid_user,
-    measure_edit_conditions_and_negative_action_data,
-    duty_sentence_parser,
-    erga_omnes,
+    client: Any,
+    valid_user: Any,
+    measure_edit_conditions_and_negative_action_data: dict,
+    duty_sentence_parser: DutySentenceParser,
+    erga_omnes: Any,
 ):
     """Tests that html contains appropriate form validation errors after posting
     to measure edit endpoint with compound reference_price and an invalid
@@ -979,11 +1006,11 @@ def test_measure_update_invalid_conditions(
 
 
 def test_measure_update_invalid_conditions_invalid_actions(
-    client,
-    valid_user,
-    measure_edit_conditions_and_negative_action_data,
-    duty_sentence_parser,
-    erga_omnes,
+    client: Any,
+    valid_user: Any,
+    measure_edit_conditions_and_negative_action_data: dict,
+    duty_sentence_parser: DutySentenceParser,
+    erga_omnes: Any,
 ):
     # set up invalid action under the same condition code
     single_action = factories.MeasureActionFactory.create()
@@ -1027,7 +1054,7 @@ def test_measure_update_invalid_conditions_invalid_actions(
     )
 
 
-def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
+def test_measure_update_group_exclusion(client: Any, valid_user: Any, erga_omnes: Any):
     """
     Tests that measure edit view handles exclusion of one group from another
     group.
@@ -1083,7 +1110,7 @@ def test_measure_update_group_exclusion(client, valid_user, erga_omnes):
     assert area_2.sid in area_sids
 
 
-def test_measure_edit_update_view(valid_user_client, erga_omnes):
+def test_measure_edit_update_view(valid_user_client: Any, erga_omnes: Any):
     """Test that a measure UPDATE instance can be edited."""
     measure = factories.MeasureFactory.create(
         update_type=UpdateType.UPDATE,
@@ -1117,7 +1144,11 @@ def test_measure_edit_update_view(valid_user_client, erga_omnes):
         assert updated_measure.geographical_area == geo_area
 
 
-def test_measure_edit_create_view(valid_user_client, duty_sentence_parser, erga_omnes):
+def test_measure_edit_create_view(
+    valid_user_client: Any,
+    duty_sentence_parser: DutySentenceParser,
+    erga_omnes: Any,
+):
     """Test that a measure CREATE instance can be edited."""
     measure = factories.MeasureFactory.create(
         update_type=UpdateType.CREATE,
@@ -1154,7 +1185,7 @@ def test_measure_edit_create_view(valid_user_client, duty_sentence_parser, erga_
 
 
 @pytest.mark.django_db
-def test_measure_form_wizard_start(valid_user_client):
+def test_measure_form_wizard_start(valid_user_client: Any):
     url = reverse("measure-ui-create", kwargs={"step": "start"})
     response = valid_user_client.get(url)
     assert response.status_code == 200
@@ -1163,10 +1194,10 @@ def test_measure_form_wizard_start(valid_user_client):
 @unittest.mock.patch("measures.parsers.DutySentenceParser")
 def test_measure_form_wizard_finish(
     mock_duty_sentence_parser,
-    valid_user_client,
-    regulation,
-    duty_sentence_parser,
-    erga_omnes,
+    valid_user_client: Any,
+    regulation: Any,
+    duty_sentence_parser: DutySentenceParser,
+    erga_omnes: Any,
 ):
     measure_type = factories.MeasureTypeFactory.create(
         measure_explosion_level=MeasureExplosionLevel.TARIC,
@@ -1269,16 +1300,16 @@ def test_measure_form_wizard_finish(
 @unittest.mock.patch("workbaskets.models.WorkBasket.current")
 def test_measure_form_wizard_create_measures(
     mock_workbasket,
-    mock_request,
-    duty_sentence_parser,
-    date_ranges,
-    additional_code,
-    measure_type,
-    measurements,
-    monetary_units,
-    regulation,
-    commodity1,
-    commodity2,
+    mock_request: Any,
+    duty_sentence_parser: DutySentenceParser,
+    date_ranges: Dates,
+    additional_code: Any,
+    measure_type: Any,
+    measurements: Dict[Tuple[str, Union[str, None]], Measurement],
+    monetary_units: Dict[str, MonetaryUnit],
+    regulation: Any,
+    commodity1: Any,
+    commodity2: Any,
 ):
     """
     Pass data to the MeasureWizard and verify that the created Measures contain
@@ -1540,16 +1571,148 @@ def test_measure_form_wizard_create_measures(
     )
 
 
+# @pytest.fixture
+# def mock_celery_task():
+#     with unittest.mock.patch("measures.bulk_handling.bulk_create_measures") as task:
+#         yield task
+
+
+# @unittest.mock.patch("workbaskets.models.WorkBasket.current")
+# def test_create_measure_triggers_celery_task(
+#     mock_workbasket,
+#     mock_request: Any,
+#     regulation: Any,
+#     mock_celery_task,
+#     session_request,
+#     erga_omnes,
+#     current_transaction
+# ):
+#     mock_workbasket.return_value = factories.WorkBasketFactory.create()
+#     measure_type = factories.MeasureTypeFactory.create(
+#         valid_between=TaricDateRange(datetime.date(2019, 4, 1), None, "[)")
+#     )
+#     commodity = factories.GoodsNomenclatureFactory.create()
+#     geo_area = factories.GeographicalAreaFactory.create()
+
+#     form_data = [
+#         {
+#             "data": {
+#                 "measure_create_wizard-current_step": "start",
+#             },
+#             "next_step": "measure_details",
+#         },
+#         {
+#             "data": {
+#                 "measure_create_wizard-current_step": "measure_details",
+#                 "measure_details-measure_type": [str(measure_type.pk)],
+#                 "measure_details-start_date_0": [2],
+#                 "measure_details-start_date_1": [4],
+#                 "measure_details-start_date_2": [2021],
+#                 "measure_details-min_commodity_count": [1],
+#             },
+#             "next_step": "regulation_id",
+#         },
+#         {
+#             "data": {
+#                 "measure_create_wizard-current_step": "regulation_id",
+#                 "regulation_id-generating_regulation": regulation,
+#             },
+#             "next_step": "quota_order_number",
+#         },
+#         {
+#             "data": {
+#                 "measure_create_wizard-current_step": "quota_order_number",
+#                 "quota_order_number-order_number": "",
+#             },
+#             "next_step": "geographical_area",
+#         },
+#         {
+#             "data": {
+#                 "measure_create_wizard-current_step": "geographical_area",
+#                 "geographical_area-geo_area": geo_area,
+#                 "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": "",
+#                 "submit": "submit",
+#             },
+#             "next_step": "commodities",
+#         },
+#         {
+#             "data": {
+#                 "measure_create_wizard-current_step": "commodities",
+#                 "measure_commodities_duties_formset-0-commodity": commodity,  # /PS-IGNORE
+#                 "measure_commodities_duties_formset-0-duties": "33 GBP/100kg",  # /PS-IGNORE
+#                 "submit": "submit",
+#             },
+#             "next_step": "additional_code",
+#         },
+#         {
+#             "data": {"measure_create_wizard-current_step": "additional_code"},
+#             "next_step": "conditions",
+#         },
+#         {
+#             "data": {"measure_create_wizard-current_step": "conditions"},
+#             "next_step": "footnotes",
+#         },
+#         {
+#             "data": {"measure_create_wizard-current_step": "footnotes"},
+#             "next_step": "summary",
+#         },
+#     ]
+
+#     with override_current_transaction(Transaction.objects.last()):
+#         storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+#         for step in form_data:
+#             storage._set_current_step(step)
+#             storage.set_step_data(step["data"]["measure_create_wizard-current_step"], step["data"])
+
+#         wizard = MeasureCreateWizard(
+#             request=session_request,
+#             storage=storage,
+#             initial_dict={'start': {}},
+#             instance_dict={'start': None}
+#         )
+#         wizard.form_list = OrderedDict(wizard.form_list)
+
+#         serialized_data = wizard.get_all_serialized_cleaned_data()
+#         assert 0
+#         assert type(serialized_data) is dict
+
+
+# serialized_data = wizard.get_serialized_cleaned_data_for_step(storage.current_step)
+# for step_data in wizard_data:
+#     url = reverse(
+#         "measure-ui-create",
+#         kwargs={"step": step_data["data"]["measure_create_wizard-current_step"]},
+#     )
+#     response = valid_user_client.get(url)
+#     assert response.status_code == 200
+
+#     response = valid_user_client.post(url, step_data["data"])
+#     assert response.status_code == 302
+
+#     assert response.url == reverse(
+#         "measure-ui-create",
+#         kwargs={"step": step_data["next_step"]},
+#     )
+# storage.set_step_data("measure_details", form_data)
+# storage._set_current_step("measure_details")
+# wizard = MeasureCreateWizard(
+#     request=session_request,
+#     storage=storage,
+#     initial_dict={"measure_details": form_data},
+#     instance_dict={"measure_details": None},
+# )
+
+
 @unittest.mock.patch("workbaskets.models.WorkBasket.current")
 def test_measure_form_wizard_create_measures_with_tariff_suspension_action(
     mock_workbasket,
-    mock_request,
-    duty_sentence_parser,
-    date_ranges,
-    measurements,
-    monetary_units,
-    regulation,
-    commodity1,
+    mock_request: Any,
+    duty_sentence_parser: DutySentenceParser,
+    date_ranges: Dates,
+    measurements: Dict[Tuple[str, Union[str, None]], Measurement],
+    monetary_units: Dict[str, MonetaryUnit],
+    regulation: Any,
+    commodity1: Any,
 ):
     """
     Specificly for testing that a negative action code 7 is created for action
@@ -1656,10 +1819,10 @@ def test_measure_form_wizard_create_measures_with_tariff_suspension_action(
 
 @pytest.mark.parametrize("step", ["quota_origins", "commodities", "conditions"])
 def test_measure_create_wizard_get_form_kwargs(
-    step,
-    session_request,
-    measure_type,
-    quota_order_number,
+    step: Literal["quota_origins", "commodities", "conditions"],
+    session_request: RequestFactory,
+    measure_type: Any,
+    quota_order_number: factories.QuotaOrderNumberFactory,
 ):
     details_data = {
         "measure_create_wizard-current_step": "measure_details",
@@ -1700,7 +1863,10 @@ def test_measure_create_wizard_get_form_kwargs(
             assert form_kwargs["form_kwargs"]["measure_type"] == measure_type
 
 
-def test_measure_create_wizard_get_cleaned_data_for_step(session_request, measure_type):
+def test_measure_create_wizard_get_cleaned_data_for_step(
+    session_request: RequestFactory,
+    measure_type: Any,
+):
     details_data = {
         "measure_create_wizard-current_step": "measure_details",
         "measure_details-measure_type": [measure_type.pk],
@@ -1725,31 +1891,26 @@ def test_measure_create_wizard_get_cleaned_data_for_step(session_request, measur
     assert cleaned_data["valid_between"] == TaricDateRange(date(2021, 4, 2), None, "[)")
 
 
-# @pytest.fixture
-# def mock_celery_task():
-#     with unittest.mock.patch("measures.bulk_handling.bulk_create_measures") as task:
-#         yield task
-
-
-def test_measure_create_wizard_get_serialized_cleaned_data_for_step(
-    session_request,
-    measure_type,
+def test_measure_create_wizard_get_serialized_cleaned_data_for_measure_details(
+    session_request: RequestFactory,
+    measure_type: Any,
 ):
     details_data = {
         "measure_create_wizard-current_step": "measure_details",
-        "measure_details-measure_type": [measure_type.pk],
+        "measure_details-measure_type": [measure_type],
         "measure_details-start_date_0": [2],
         "measure_details-start_date_1": [4],
         "measure_details-start_date_2": [2021],
         "measure_details-min_commodity_count": [2],
     }
+
     storage = MeasureCreateSessionStorage(request=session_request, prefix="")
     storage.set_step_data("measure_details", details_data)
     storage._set_current_step("measure_details")
     wizard = MeasureCreateWizard(
         request=session_request,
         storage=storage,
-        initial_dict={"measure_details": {}},
+        initial_dict={"measure_details": details_data},
         instance_dict={"measure_details": None},
     )
     wizard.form_list = OrderedDict(wizard.form_list)
@@ -1761,9 +1922,39 @@ def test_measure_create_wizard_get_serialized_cleaned_data_for_step(
     assert serialized_data["min_commodity_count"] == 2
 
 
+def test_measure_create_wizard_get_serialized_cleaned_data_for_geo_area(
+    session_request: RequestFactory,
+):
+    geo_area = factories.GeographicalAreaFactory.create()
+    details_data = {
+        "measure_create_wizard-current_step": "geographical_area",
+        "geographical_area-geo_area": "COUNTRY",
+        "geographical_area_country_or_region": geo_area.pk,
+    }
+
+    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+    storage.set_step_data("geographical_area", details_data)
+    storage._set_current_step("geographical_area")
+    wizard = MeasureCreateWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"geographical_area": details_data},
+        instance_dict={"geographical_area": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    assert 0
+    with override_current_transaction(Transaction.objects.last()):
+        serialized_data = wizard.get_serialized_cleaned_data_for_step(
+            storage.current_step,
+        )
+        assert type(serialized_data) is dict
+        assert serialized_data["geo_area"] == geo_area.pk
+        assert 0
+
+
 def test_measure_create_wizard_quota_origins_conditional_step(
-    valid_user_client,
-    quota_order_number,
+    valid_user_client: Any,
+    quota_order_number: factories.QuotaOrderNumberFactory,
 ):
     """
     Tests that the next step is quota origins if a quota order number has been
@@ -1816,10 +2007,10 @@ def test_measure_create_wizard_quota_origins_conditional_step(
 
 
 def test_measure_form_creates_exclusions(
-    erga_omnes,
-    session_with_workbasket,
-    valid_user,
-    client,
+    erga_omnes: Any,
+    session_with_workbasket: Any,
+    valid_user: Any,
+    client: Any,
 ):
     excluded_country1 = factories.GeographicalAreaFactory.create()
     excluded_country2 = factories.GeographicalAreaFactory.create()
@@ -1854,7 +2045,7 @@ def test_measure_form_creates_exclusions(
     ).difference({excluded_country1, excluded_country2})
 
 
-def test_measuretype_api_list_view(valid_user_client):
+def test_measuretype_api_list_view(valid_user_client: Any):
     expected_results = [
         factories.MeasureTypeFactory.create(
             description="1 test description",
@@ -1875,8 +2066,8 @@ def test_measuretype_api_list_view(valid_user_client):
 
 
 def test_multiple_measure_start_and_end_date_edit_functionality(
-    valid_user_client,
-    session_workbasket,
+    valid_user_client: Any,
+    session_workbasket: WorkBasket,
     mocked_diff_components,
 ):
     """Tests that MeasureEditWizard takes a list of measures, and sets their
@@ -1997,10 +2188,10 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
     ],
 )
 def test_multiple_measure_edit_single_form_functionality(
-    step,
-    data,
-    valid_user_client,
-    session_workbasket,
+    step: Literal["start_date", "end_date"],
+    data: dict[str, Union[MeasureEditSteps, str]],
+    valid_user_client: Any,
+    session_workbasket: WorkBasket,
     mocked_diff_components,
 ):
     """Tests that MeasureEditWizard takes a list of measures, and sets their
@@ -2072,8 +2263,8 @@ def test_multiple_measure_edit_single_form_functionality(
 
 
 def test_multiple_measure_edit_only_regulation(
-    valid_user_client,
-    session_workbasket,
+    valid_user_client: Any,
+    session_workbasket: WorkBasket,
     mocked_diff_components,
 ):
     """Tests the regulation step in MeasureEditWizard."""
@@ -2147,7 +2338,10 @@ def test_multiple_measure_edit_only_regulation(
         assert measure.generating_regulation == regulation
 
 
-def test_multiple_measure_edit_template(valid_user_client, session_workbasket):
+def test_multiple_measure_edit_template(
+    valid_user_client: Any,
+    session_workbasket: WorkBasket,
+):
     """Test that valid user receives a 200 on GET for MeasureEditWizard and
     correct measures display in html table."""
     # Make a bunch of measures
@@ -2214,9 +2408,9 @@ def test_multiple_measure_edit_template(valid_user_client, session_workbasket):
 
 
 def test_measure_selection_update_view_updates_session(
-    client,
-    valid_user,
-    session_workbasket,
+    client: Any,
+    valid_user: Any,
+    session_workbasket: WorkBasket,
 ):
     # Make a bunch of measures
     measure_1 = factories.MeasureFactory.create()
@@ -2263,7 +2457,16 @@ def test_measure_selection_update_view_updates_session(
         "foo",
     ],
 )
-def test_measure_list_redirect(form_action, valid_user_client, session_workbasket):
+def test_measure_list_redirect(
+    form_action: Literal[
+        "persist-selection",
+        "remove-selected",
+        "edit-selected",
+        "foo",
+    ],
+    valid_user_client: Any,
+    session_workbasket: WorkBasket,
+):
     params = "page=2&start_date_modifier=exact&end_date_modifier=exact"
     url = f"{reverse('measure-ui-list')}?{params}"
     response = valid_user_client.post(url, {"form-action": form_action})
@@ -2279,7 +2482,7 @@ def test_measure_list_redirect(form_action, valid_user_client, session_workbaske
     assert response.url == url_mapping[form_action]
 
 
-def test_measure_list_selected_measures_list(valid_user_client):
+def test_measure_list_selected_measures_list(valid_user_client: Any):
     measures = factories.MeasureFactory.create_batch(3)
 
     session = valid_user_client.session
@@ -2307,8 +2510,8 @@ def test_measure_list_selected_measures_list(valid_user_client):
 
 
 def test_multiple_measure_edit_only_quota_order_number(
-    valid_user_client,
-    session_workbasket,
+    valid_user_client: Any,
+    session_workbasket: WorkBasket,
     mocked_diff_components,
 ):
     """Tests the regulation step in MeasureEditWizard."""
@@ -2383,9 +2586,9 @@ def test_multiple_measure_edit_only_quota_order_number(
 
 
 def test_multiple_measure_edit_only_duties(
-    valid_user_client,
-    session_workbasket,
-    duty_sentence_parser,
+    valid_user_client: Any,
+    session_workbasket: WorkBasket,
+    duty_sentence_parser: DutySentenceParser,
 ):
     """Tests the duties step in MeasureEditWizard."""
     measure_1 = factories.MeasureFactory.create()
@@ -2459,8 +2662,8 @@ def test_multiple_measure_edit_only_duties(
 
 
 def test_multiple_measure_edit_preserves_footnote_associations(
-    valid_user_client,
-    session_workbasket,
+    valid_user_client: Any,
+    session_workbasket: WorkBasket,
     mocked_diff_components,
 ):
     """Tests that footnote associations are preserved in MeasureEditWizard."""
@@ -2540,8 +2743,8 @@ def test_multiple_measure_edit_preserves_footnote_associations(
 
 
 def test_multiple_measure_edit_geographical_area_exclusions(
-    valid_user_client,
-    session_workbasket,
+    valid_user_client: Any,
+    session_workbasket: WorkBasket,
     mocked_diff_components,
 ):
     """Tests that the geographical area exclusions of multiple measures can be
@@ -2617,18 +2820,18 @@ def test_multiple_measure_edit_geographical_area_exclusions(
             )
 
 
-def test_measure_list_redirects_to_search_with_no_params(valid_user_client):
+def test_measure_list_redirects_to_search_with_no_params(valid_user_client: Any):
     response = valid_user_client.get(reverse("measure-ui-list"))
     assert response.status_code == 302
     assert response.url == reverse("measure-ui-search")
 
 
-def test_measure_search_200(valid_user_client):
+def test_measure_search_200(valid_user_client: Any):
     response = valid_user_client.get(reverse("measure-ui-search"))
     assert response.status_code == 200
 
 
-def test_measures_list_sorting(valid_user_client, date_ranges):
+def test_measures_list_sorting(valid_user_client: Any, date_ranges: Dates):
     # make measure types
     type1 = factories.MeasureTypeFactory.create(sid="111")
     type2 = factories.MeasureTypeFactory.create(sid="222")
@@ -2712,7 +2915,10 @@ def test_measures_list_sorting(valid_user_client, date_ranges):
         assert measure_sids == expected_order_list[index]
 
 
-def test_measure_list_results_show_chosen_filters(valid_user_client, date_ranges):
+def test_measure_list_results_show_chosen_filters(
+    valid_user_client: Any,
+    date_ranges: Dates,
+):
     # make measure types
     type1 = factories.MeasureTypeFactory.create(sid="111")
 
