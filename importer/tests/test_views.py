@@ -194,6 +194,7 @@ def test_commodity_importer_import_new_success_redirect(mock_save, valid_user_cl
     assert response.status_code == 200
 
 
+@pytest.mark.importer_v2
 @pytest.mark.parametrize(
     "file_name,error_msg",
     [
