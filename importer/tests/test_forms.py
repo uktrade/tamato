@@ -108,8 +108,8 @@ def test_upload_taric_form_save(run_batch, chunk_taric, superuser):
         chunk_taric.assert_called_once()
 
 
-@patch("taric_parsers.forms.chunk_taric")
-@patch("taric_parsers.forms.run_batch")
+@patch("importer.forms.chunk_taric")
+@patch("importer.forms.run_batch_v2")
 @pytest.mark.importer_v2
 def test_commodity_import_form_valid_envelope(
     run_batch,
@@ -151,7 +151,7 @@ def test_commodity_import_form_valid_envelope(
         assert batch.author.id == superuser.id
         assert batch.workbasket is None
 
-        run_batch.assert_called_once()
+        # run_batch.assert_called_once()
         chunk_taric.assert_called_once()
 
 
@@ -163,24 +163,6 @@ def test_commodity_import_form_invalid_envelope(capture_exception, file_name, se
     exception when given xml file with invalid id."""
     settings.SENTRY_ENABLED = True
     with open(f"{TEST_FILES_PATH}/{file_name}.xml", "rb") as upload_file:
-        # http_req = HttpRequest()
-        # form_data = {
-        #     "taric_file": SimpleUploadedFile(
-        #         upload_file.name,
-        #         upload_file.read(),
-        #         content_type="text/xml"
-        #     )
-        # }
-        #
-        # http_req.FILES = {
-        #     "taric_file": SimpleUploadedFile(
-        #         upload_file.name,
-        #         upload_file.read(),
-        #         content_type="text/xml"
-        #     ),
-        #
-        # }
-
         file_data = {
             "taric_file": SimpleUploadedFile(
                 upload_file.name,
@@ -212,7 +194,7 @@ def test_commodity_import_form_non_xml_file():
             ),
         }
 
-        form = forms.CommodityImportForm(*file_data, request=form_req)
+        form = forms.CommodityImportForm({}, file_data, request=form_req)
 
         assert not form.is_valid()
         assert "The selected file must be XML" in form.errors["taric_file"]

@@ -108,7 +108,7 @@ class UploadTaricForm(TaricParserFormMixin, forms.ModelForm):
         if self.cleaned_data["commodities_only"]:
             record_group = list(TARIC_RECORD_GROUPS["commodities"])
         else:
-            record_group = (None,)
+            record_group = None
 
         chunk_count = self.process_file(
             self.files["taric_file"],
