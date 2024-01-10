@@ -32,6 +32,11 @@ commodity_importer_urlpatterns = [
         name="commodity_importer-ui-create-success",
     ),
     path(
+        "commodity-importer/<pk>/details/",
+        views.CommodityImportDetails.as_view(),
+        name="commodity_importer-ui-details",
+    ),
+    path(
         "download-admin-envelope/<pk>/",
         views.DownloadAdminTaricView.as_view(),
         name="admin-taric-ui-download",

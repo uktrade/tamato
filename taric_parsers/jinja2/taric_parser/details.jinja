@@ -1,0 +1,42 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "Details for batch import" %}
+
+{% block breadcrumb %}
+    {{ breadcrumbs(request, [
+      {"text": "Find and edit import batches", "href": url("taric_parser_import_ui_list")},
+      {"text": page_title}
+    ]) }}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-xl">{{ page_title }} : {{ object.name }}</h1>
+        {% set table_rows = [] %}
+        {% for issue in issues %}
+        {{ table_rows.append([
+            {"text": issue.issue_type},
+            {"text": issue.object_type},
+            {"text": issue.object_update_type_name},
+            {"text": issue.related_object_type},
+            {"text": issue.object_data_to_str},
+            {"text": issue.description},
+          ]) or "" }}
+        {% endfor %}
+        {{ govukTable({
+          "head": [
+            {"text": "Severity"},
+            {"text": "Object"},
+            {"text": "Update Type"},
+            {"text": "Related Object"},
+            {"text": "Object Data"},
+            {"text": "Description"},
+          ],
+          "rows": table_rows
+        }) }}
+
+    </div>
+</div>
+{% endblock %}

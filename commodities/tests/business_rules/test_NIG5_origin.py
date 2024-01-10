@@ -138,3 +138,75 @@ def test_NIG5_origin_does_not_raise_violation_when_origin_still_exists(workbaske
     )
 
     business_rules.NIG5_origin(editable_transaction).validate(origin_delete)
+
+
+def test_NIG5_origin_does_not_raise_violation_when_both_origin_and_goods_nomenclature_are_deleted(
+    workbasket,
+):
+    """
+    When deleting an origin the violation does not trigger if the goods
+    nomenclature is also being deleted in the same transaction.
+
+    This rule is only applicable when origins are deleted.
+    """
+    # Setup data
+    published_workbasket = factories.PublishedWorkBasketFactory()
+
+    approved_transaction = factories.ApprovedTransactionFactory.create(
+        workbasket=published_workbasket,
+        order=1,
+    )
+
+    approved_transaction_2 = factories.ApprovedTransactionFactory.create(
+        workbasket=published_workbasket,
+        order=2,
+    )
+
+    approved_transaction_3 = factories.ApprovedTransactionFactory.create(
+        workbasket=published_workbasket,
+        order=3,
+    )
+
+    goods_chapter = factories.GoodsNomenclatureFactory.create(
+        item_id="2000000000",
+        transaction=approved_transaction,
+    )
+
+    # This is the goods we are going to delete the origin from
+    goods = factories.GoodsNomenclatureFactory.create(
+        item_id="2000000010",
+        origin__derived_from_goods_nomenclature=goods_chapter,
+        indent__indent=1,
+        transaction=approved_transaction_2,
+    )
+
+    editable_workbasket = factories.WorkBasketFactory()
+
+    editable_transaction = factories.TransactionFactory.create(
+        workbasket=editable_workbasket,
+        order=4,
+    )
+
+    origin_delete = (
+        GoodsNomenclatureOrigin.objects.approved_up_to_transaction(
+            approved_transaction_2,
+        )
+        .filter(
+            new_goods_nomenclature=goods,
+            derived_from_goods_nomenclature=goods_chapter,
+        )
+        .first()
+        .new_version(
+            transaction=editable_transaction,
+            update_type=UpdateType.DELETE,
+            workbasket=editable_workbasket,
+        )
+    )
+
+    goods_delete = goods.new_version(
+        transaction=editable_transaction,
+        update_type=UpdateType.DELETE,
+        workbasket=editable_workbasket,
+    )
+
+    business_rules.NIG5_origin(editable_transaction).validate(origin_delete)

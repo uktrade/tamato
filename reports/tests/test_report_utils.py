@@ -4,7 +4,10 @@ import pytest
 from reports.reports.base import ReportBase
 from reports.reports.base_table import ReportBaseTable
 from reports.reports.blank_goods_nomenclature_descriptions import Report
-from reports.utils import *
+from reports.utils import get_child_classes
+from reports.utils import get_report_by_slug
+from reports.utils import get_reports
+from reports.utils import get_template_by_type
 
 
 class TestUtils:

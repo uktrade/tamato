@@ -96,4 +96,6 @@ norecursedirs = [
     "run",
     "venv",
 ]
-addopts = "-n=auto"
+markers = [
+    "importer_v2"
+]
