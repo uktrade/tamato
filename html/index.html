@@ -126,12 +126,21 @@
 <li><a class="reference internal" href="#testing">Testing</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#pre-commit-hooks">Pre-commit hooks</a><ul>
+<li><a class="reference internal" href="#install">Install</a></li>
+<li><a class="reference internal" href="#update">Update</a></li>
+<li><a class="reference internal" href="#uninstall">Uninstall</a></li>
+<li><a class="reference internal" href="#run-the-hooks-without-committing">Run the hooks without committing</a></li>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#dockerisation">Dockerisation</a><ul>
 <li><a class="reference internal" href="#fully-dockerised-service">Fully dockerised service</a></li>
 <li><a class="reference internal" href="#hybrid-host-container-approach">Hybrid host + container approach</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#using-the-importer">Using the importer</a></li>
+<li><a class="reference internal" href="#using-the-taric-parser-currently-referenced-importer-v2">Using the TARIC parser (currently referenced importer v2)</a></li>
 <li><a class="reference internal" href="#using-the-exporter">Using the exporter</a><ul>
 <li><a class="reference internal" href="#running-the-exporter">Running the exporter</a></li>
 <li><a class="reference internal" href="#manually-trigger-the-upload-to-s3">Manually trigger the upload to s3</a></li>
@@ -256,6 +265,66 @@ developement environment, then you may wish to create a
 </pre></div>
 </div>
 <p>For more detailed information on running tests, see <a class="reference internal" href="testing.html"><span class="doc">Testing</span></a></p>
+</section>
+</section>
+<section id="pre-commit-hooks">
+<h2>Pre-commit hooks<a class="headerlink" href="#pre-commit-hooks" title="Permalink to this headline">¶</a></h2>
+<p>This project uses pre-commit hooks to update formatting and identify potential sensitive data before
+it is committed to the public repo.</p>
+<p>note: The python package pre-commit is a requirement within requirements-dev.txt and should be installed
+to meet development requirements</p>
+<section id="install">
+<h3>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h3>
+<p>To initially setup the pre-commit hooks you can run the following command.</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pre-commit<span class="w"> </span>install
+</pre></div>
+</div>
+<p>Once installed, when committing it will first run all the predefined processes to clean up code formatting
+and notify about any detected sensitive strings found that are not in pii exclude files.</p>
+<p>Note: the first commit or run of the pre-commit hooks after installing may take a few minutes for setup the
+dependent packages for the first time. This is normal, and will be faster on subsequent commits.</p>
+</section>
+<section id="update">
+<h3>Update<a class="headerlink" href="#update" title="Permalink to this headline">¶</a></h3>
+<p>The packages used to perform the pre-commit process are regularly updated. Periodically its advised
+you run the following command to keep the dependencies updated.</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pre-commit<span class="w"> </span>autoupdate
+</pre></div>
+</div>
+<p>This will verify that the dependencies are updated based on requirements.</p>
+</section>
+<section id="uninstall">
+<h3>Uninstall<a class="headerlink" href="#uninstall" title="Permalink to this headline">¶</a></h3>
+<p>The pre-commit hooks can be uninstalled with the following command</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pre-commit<span class="w"> </span>uninstall
+</pre></div>
+</div>
+</section>
+<section id="run-the-hooks-without-committing">
+<h3>Run the hooks without committing<a class="headerlink" href="#run-the-hooks-without-committing" title="Permalink to this headline">¶</a></h3>
+<p>You may at times want to run the pre-commit hooks before committing. This can be done with
+the following command. This command will run the hooks on all changed files.</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pre-commit<span class="w"> </span>run
+</pre></div>
+</div>
+<p>If you would like to run the hooks over all files you can run the following command</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pre-commit<span class="w"> </span>run<span class="w"> </span>-a
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+</pre></div>
+</div>
+</section>
+<section id="troubleshooting">
+<h3>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h3>
+<p>If you encounter issues with the pre-commit hooks there are a number of things you can
+clear the cached pre-committed files using this command:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pre-commit<span class="w"> </span>clean
+</pre></div>
+</div>
+<p>If that fails you can try updating the dependencies for the hooks</p>
+<p>If the above fails, uninstall and then install again.</p>
 </section>
 </section>
 <section id="dockerisation">
@@ -402,6 +471,12 @@ This can be run in isolation using the command</p>
 </div>
 </li>
 </ol>
+</section>
+<section id="using-the-taric-parser-currently-referenced-importer-v2">
+<h2>Using the TARIC parser (currently referenced importer v2)<a class="headerlink" href="#using-the-taric-parser-currently-referenced-importer-v2" title="Permalink to this headline">¶</a></h2>
+<p>There are no command line tools available for this tool.</p>
+<p>This tool is available as an importer alternative found within the web front end in the footer menu under “New TARIC parser”.</p>
+<p>This tool addresses several short falls that the current importer has.</p>
 </section>
 <section id="using-the-exporter">
 <h2>Using the exporter<a class="headerlink" href="#using-the-exporter" title="Permalink to this headline">¶</a></h2>

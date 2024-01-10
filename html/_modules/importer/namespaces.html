@@ -155,29 +155,31 @@
     <span class="p">(</span><span class="s2">&quot;env&quot;</span><span class="p">,</span> <span class="n">PATH_XSD_ENVELOPE</span><span class="p">),</span>
     <span class="p">(</span><span class="s2">&quot;oub&quot;</span><span class="p">,</span> <span class="n">PATH_XSD_TARIC</span><span class="p">),</span>
 <span class="p">)</span>
-
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Define additional groups in the below dictionary</span>
-<span class="sd">for use as a `record_group` argument</span>
-<span class="sd">to importer.chunker.chunk_taric.</span>
+<span class="sd">Define additional groups in the below dictionary for use as a `record_group`</span>
+<span class="sd">argument to importer.chunker.chunk_taric.</span>
 
-<span class="sd">Check importer.forms.UploadTaricForm.save</span>
-<span class="sd">for example usage when users check</span>
-<span class="sd">the &#39;Commodities Only&#39; box in /importers/create.</span>
+<span class="sd">Check importer.forms.UploadTaricForm.save for example usage when users check the</span>
+<span class="sd">&#39;Commodities Only&#39; box in /importers/create.</span>
 
-<span class="sd">The only group defined at the moment is commodities,</span>
-<span class="sd">which is easily extensible to additional record groups.</span>
+<span class="sd">The only group defined at the moment is commodities, which is easily extensible</span>
+<span class="sd">to additional record groups.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="n">TARIC_RECORD_GROUPS</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
     <span class="c1"># Record &quot;40020&quot; is excluded from the below record group</span>
     <span class="c1"># because we don&#39;t want to synchronize footnote associations</span>
+    <span class="c1"># with external systems when we align commodity code changes.</span>
+    <span class="c1">#</span>
+    <span class="c1"># Record &quot;40025&quot; is excluded from the below record group</span>
+    <span class="c1"># because we don&#39;t want to synchronize nomenclature group memberships</span>
     <span class="c1"># with external systems when we align commodity code changes.</span>
     <span class="n">commodities</span><span class="o">=</span><span class="p">(</span>
         <span class="s2">&quot;40000&quot;</span><span class="p">,</span>
         <span class="s2">&quot;40005&quot;</span><span class="p">,</span>
         <span class="s2">&quot;40010&quot;</span><span class="p">,</span>
         <span class="s2">&quot;40015&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;40025&quot;</span><span class="p">,</span>
+        <span class="c1"># &quot;40020&quot;, footnote associations</span>
+        <span class="c1"># &quot;40025&quot;, nomenclature group memberships</span>
         <span class="s2">&quot;40035&quot;</span><span class="p">,</span>
         <span class="s2">&quot;40040&quot;</span><span class="p">,</span>
     <span class="p">),</span>

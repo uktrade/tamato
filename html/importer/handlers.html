@@ -263,10 +263,12 @@ intended to go into the data with the same name as that given to the link.</p>
 <dt class="sig sig-object py" id="importer.handlers.BaseHandler.build">
 <span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/importer/handlers.html#BaseHandler.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.handlers.BaseHandler.build" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build up all the data for the object.</p>
-<p>This method co-ordinates the attempts to fetch the dependent data as well as the linked
-data. If at any point one of these steps fails an empty set returns (signifying failure).</p>
-<p>if all steps are deemed successful the object is dispatched to the database automatically.
-On success a set of all the keys for any objects used which may be in the cache is returned.</p>
+<p>This method co-ordinates the attempts to fetch the dependent data as
+well as the linked data. If at any point one of these steps fails an
+empty set returns (signifying failure).</p>
+<p>if all steps are deemed successful the object is dispatched to the
+database automatically. On success a set of all the keys for any objects
+used which may be in the cache is returned.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -290,8 +292,8 @@ given for post-processing.</p>
 <span class="sig-name descname"><span class="pre">get_generic_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/importer/handlers.html#BaseHandler.get_generic_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.handlers.BaseHandler.get_generic_link" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fallback method if no specific method is found for fetching a link.</p>
 <p>Raises DoesNotExist if no kwargs passed.</p>
-<p>First attempts to retrieve the object PK from the cache (saves queries). If this
-is not found a database query is made to find the object.</p>
+<p>First attempts to retrieve the object PK from the cache (saves queries).
+If this is not found a database query is made to find the object.</p>
 <p>returns tuple(Object: model, bool: From Cache)</p>
 </dd></dl>
 
@@ -329,8 +331,8 @@ DoesNotExist error is raised.</p>
 <dt class="sig sig-object py" id="importer.handlers.BaseHandler.pre_save">
 <span class="sig-name descname"><span class="pre">pre_save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">links</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/importer/handlers.html#BaseHandler.pre_save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.handlers.BaseHandler.pre_save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pre-processing before the object is saved to the database.</p>
-<p>Generally this is used for adding the links to the object (as these cannot
-be easily validated against the serializer).</p>
+<p>Generally this is used for adding the links to the object (as these
+cannot be easily validated against the serializer).</p>
 <p>Return the final dataset to be used when saving to the database.</p>
 </dd></dl>
 
@@ -414,36 +416,6 @@ detected.</p>
 </dl>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="importer.handlers.ImportIssueReportItem">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">importer.handlers.</span></span><span class="sig-name descname"><span class="pre">ImportIssueReportItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">object_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">related_object_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">related_object_identity_keys</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">related_cache_key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/importer/handlers.html#ImportIssueReportItem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.handlers.ImportIssueReportItem" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class for in memory representation if an issue detected on import, the
-status may change during the process so this will not be committed until the
-import process is complete or has been found to have errors.</p>
-<dl class="simple">
-<dt>params:</dt><dd><dl class="simple">
-<dt>object_type: str,</dt><dd><p>String representation of the object type, as found in XML e.g. goods.nomenclature</p>
-</dd>
-<dt>related_object_type: str,</dt><dd><p>String representation of the related object type, as found in XML e.g. goods.nomenclature.description</p>
-</dd>
-<dt>related_object_identity_keys: dict,</dt><dd><p>Dictionary of identity names and values used to link the related object</p>
-</dd>
-<dt>related_cache_key: str,</dt><dd><p>The string expected to be used to cache the related object</p>
-</dd>
-<dt>description: str,</dt><dd><p>Description of the detected issue</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="importer.handlers.ImportIssueReportItem.missing_object_method_name">
-<span class="sig-name descname"><span class="pre">missing_object_method_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/importer/handlers.html#ImportIssueReportItem.missing_object_method_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.handlers.ImportIssueReportItem.missing_object_method_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a string representing the related object data type (but
-replaces full stops with underscores for readability.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py exception">
