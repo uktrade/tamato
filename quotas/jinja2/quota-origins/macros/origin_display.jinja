@@ -3,13 +3,13 @@
 
 {% macro origin_display(object) -%}
     {% set exclusions %}
-        {% for exclusion in object.quotaordernumberoriginexclusion_set.current() %}
-            <a href="{{ url('geo_area-ui-detail', args=[exclusion.excluded_geographical_area.sid]) }}" class="govuk-link">{{ exclusion.excluded_geographical_area.area_id }} - {{ exclusion.excluded_geographical_area.get_description().description }}</a>
+        {% for exclusion in object.quotaordernumberoriginexclusion_set.current().with_latest_geo_area_description() %}
+            <a href="{{ url('geo_area-ui-detail', args=[exclusion.excluded_geographical_area.sid]) }}" class="govuk-link">{{ exclusion.excluded_geographical_area.area_id }} - {{ exclusion.geo_area_description }}</a>
             {% if not loop.last %}, {% endif %}
         {% endfor %}
     {% endset %}
   {% set geo_area_name -%}
-      {{ object.geographical_area.area_id  ~ " - " ~ object.geographical_area.get_description().description }}
+      {{ object.geographical_area.area_id  ~ " - " ~ object.geo_area_description }}
   {% endset %}
   {% set geo_area_summary -%}
       {{ geo_area_name }}
