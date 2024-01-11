@@ -5,32 +5,19 @@ from django.core.paginator import Paginator
 from django.db import migrations
 from django.db.transaction import atomic
 
-batch_size = 10000
-
 
 @atomic
 def generate_timestamps(apps, schema_editor):
-    if settings.ENV == "test":
-        return
-
     TrackedModel = apps.get_model("common", "trackedmodel")
     all_models = TrackedModel.objects.select_related("transaction").all()
-    paginator = Paginator(all_models, batch_size)
-    print(f"Tottal: {paginator.num_pages}")
+    paginator = Paginator(all_models, settings.DATA_MIGRATION_BATCH_SIZE)
+    print(f"Total: {paginator.num_pages}")
     for page_num in range(1, paginator.num_pages + 1):
         print(f"number {page_num}")
-        with atomic():
-            for tracked_model in paginator.page(page_num).object_list:
-                tracked_model.created_at = tracked_model.transaction.created_at
-                tracked_model.updated_at = tracked_model.transaction.updated_at
-                tracked_model.save()
-
-
-def reverse_timestamps(apps, schema_editor):
-    # generate_timestamps() generates timestamps,
-    # so reverse_timestamps() should delete them.
-    if settings.ENV == "test":
-        return
+        for tracked_model in paginator.page(page_num).object_list:
+            tracked_model.created_at = tracked_model.transaction.created_at
+            tracked_model.updated_at = tracked_model.transaction.updated_at
+            tracked_model.save()
 
 
 class Migration(migrations.Migration):
@@ -39,5 +26,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(generate_timestamps, reverse_timestamps),
+        migrations.RunPython(generate_timestamps),
     ]

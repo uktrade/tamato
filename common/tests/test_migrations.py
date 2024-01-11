@@ -84,29 +84,54 @@ from workbaskets.validators import WorkflowStatus
 def test_timestamp_migration(migrator):
     migrator.reset()
     """Ensures that the initial migration works."""
-    migrator.apply_initial_migration(("common", "0008_auto_20231211_1642"))
-    # setup
-    # workbasket_class = old_state.apps.get_model("workbaskets", "WorkBasket")
-    # transaction_class = old_state.apps.get_model("common", "Transaction")
+    old_state = migrator.apply_initial_migration(
+        ("common", "0007_auto_20221114_1040_fix_missing_current_versions"),
+    )
 
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    with factories.TransactionFactory.create(workbasket=workbasket):
-        factories.FootnoteTypeFactory.create_batch(2)
-    transaction = workbasket.transactions.first()
-    tracked_models = workbasket.tracked_models
+    FootnoteType = old_state.apps.get_model("footnotes", "FootnoteType")
+    # new_transaction = Transaction.objects.create(
+    #     workbasket=workbasket,
+    #     order=Transaction.objects.order_by("order").last().order + 1,
+    # )
+    # gn_older_version = GoodsNomenclature.objects.create(
+    #     update_type=UpdateType.CREATE,
+    #     transaction=new_transaction,
+    #     version_group=VersionGroup.objects.create(),
+    #     valid_between=TaricDateRange(datetime.date(2020, 1, 6)),
+    #     statistical=False,
+    # ).save()
+    with workbasket.new_transaction() as transaction:
+        print(transaction)
+        trked1 = FootnoteType.objects.create(transaction=transaction)
+        trked2 = FootnoteType.objects.create(transaction=transaction)
+    tracked_models = workbasket.tracked_models.all()
+    # test_migrations.py
 
-    # assert transaction.created_at
-    # assert not hasattr(tracked_models.first(),"created_at")
+    assert transaction.created_at
+    assert not hasattr(trked1, "created_at")
+    assert not hasattr(trked1, "updated_at")
 
-    # inter_state = migrator.apply_initial_migration(("common", "0008_auto_20231211_1642"))
+    inter_state = migrator.apply_initial_migration(
+        ("common", "0008_auto_20231211_1642"),
+    )
 
-    print(tracked_models.first())
-    assert tracked_models.first().created_at != transaction.created_at
+    inter_tracked_model_class = inter_state.apps.get_model("common", "TrackedModel")
+    inter_trked1 = inter_tracked_model_class.objects.get(pk=trked1.pk)
+
+    assert hasattr(inter_trked1, "created_at")
+    assert hasattr(inter_trked1, "updated_at")
+    assert inter_trked1.created_at != transaction.created_at
 
     migrator.apply_initial_migration(("common", "0009_set_tracked_model_datetime"))
 
     print(tracked_models.first())
-    assert tracked_models.first().created_at == transaction.created_at
-    assert tracked_models.first().updated_at == transaction.updated_at
+    new_tracked_model_class = inter_state.apps.get_model("common", "TrackedModel")
+    new_trked1 = new_tracked_model_class.objects.get(pk=trked1.pk)
+    new_trked2 = new_tracked_model_class.objects.get(pk=trked2.pk)
+    assert new_trked1.created_at == transaction.created_at
+    assert new_trked1.updated_at == transaction.updated_at
+    assert new_trked2.created_at == transaction.created_at
+    assert new_trked2.updated_at == transaction.updated_at
