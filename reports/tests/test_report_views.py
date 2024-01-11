@@ -1,8 +1,10 @@
 # Create your tests here.
 import pytest
 from django.urls import reverse
+from django.test import RequestFactory
 
 from reports.utils import get_reports
+from reports.views import export_report_to_csv
 
 pytestmark = pytest.mark.django_db
 
@@ -36,3 +38,19 @@ class TestReportViews:
         for report in reports:
             response = client.get(reverse(f"reports:{report.slug()}"))
             assert response.status_code == http_status
+
+   
+    def test_export_report_to_csv(self, request):
+        request = RequestFactory().get("/")
+        report_slug = (
+            "cds_rejections_in_the_last_12_months"
+        )
+
+        response = export_report_to_csv(request, report_slug)
+
+        assert response.status_code == 200
+        assert response["Content-Type"] == "text/csv"
+        assert (
+            response["Content-Disposition"]
+            == f'attachment; filename="{report_slug}_report.csv"'
+        )
