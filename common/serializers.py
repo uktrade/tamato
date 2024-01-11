@@ -7,8 +7,8 @@ from typing import List
 from typing import Optional
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from drf_extra_fields.fields import DateRangeField
 from lxml import etree
@@ -23,6 +23,8 @@ from common.renderers import counter_generator
 from common.util import TaricDateRange
 from common.util import get_taric_template
 from common.util import parse_xml
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
