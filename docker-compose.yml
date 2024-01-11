@@ -67,6 +67,24 @@ services:
     depends_on:
       - celery-redis
 
+  # Celery worker for bulk creating and editing of objects
+  bulk-create-edit-celery:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
+    volumes:
+      - ./:/app/
+    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "bulk-create-edit"]
+    env_file: 
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stdin_open: true
+    tty: true
+    depends_on:
+      - celery-redis
+
   importer-celery:
     build:
       context: .
