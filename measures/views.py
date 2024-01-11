@@ -965,11 +965,12 @@ class MeasureCreateWizard(
 
     def get_all_serialized_cleaned_data(self):
         """
-        Returns a merged dictionary of all step cleaned_data. If a step contains
+        Returns a merged dictionary of all step cleaned_data.
+
+        If a step contains
         a `FormSet`, the key will be prefixed with 'formset-' and contain a list
         of the formset cleaned_data dictionaries, as expected in
         `create_measures()`.
-
         Note: This patched version of `super().get_all_cleaned_data()` takes advantage of retrieving previously-saved
         cleaned_data by summary page to avoid revalidating forms unnecessarily.
         """
@@ -1010,25 +1011,6 @@ class MeasureCreateWizard(
             else:
                 all_cleaned_data.update(cleaned_data)
         return all_cleaned_data
-
-    def get_serialized_cleaned_data_for_step(self, step):
-        """
-        Returns the serialized cleaned data for a given `step`.
-
-        Before returning the cleaned data, the stored values are revalidated
-        through the form. If the data doesn't validate, None will be returned.
-        """
-        if step in self.form_list:
-            form_obj = self.get_form(
-                step=step,
-                data=self.storage.get_step_data(step),
-                files=self.storage.get_step_files(step),
-            )
-            # if form_obj.is_valid():
-            #    return form_obj.cleaned_data
-            if form_obj.is_valid():
-                return form_obj.serializable_cleaned_data()
-        return None
 
     def get_cleaned_data_for_step(self, step):
         """
