@@ -43,6 +43,7 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
+from measures.bulk_handling import bulk_create_edit
 from measures.conditions import show_step_geographical_area
 from measures.conditions import show_step_quota_origins
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
@@ -934,18 +935,8 @@ class MeasureCreateWizard(
         return created_measures
 
     def done(self, form_list, **kwargs):
-        cleaned_data = self.get_all_cleaned_data()
-
-        created_measures = self.create_measures(cleaned_data)
-        created_measures[0].transaction.workbasket.save_to_session(self.request.session)
-
-        context = self.get_context_data(
-            form=None,
-            created_measures=created_measures,
-            **kwargs,
-        )
-
-        return render(self.request, "measures/confirm-create-multiple.jinja", context)
+        bulk_create_edit.apply_async()
+        # call new celery task here, passing in id of CreateMeasures object
 
     def get_all_cleaned_data(self):
         """
