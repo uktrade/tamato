@@ -603,6 +603,7 @@ class QuotaDefinitionCreateForm(
                     "Description",
                     HTML.p("Adding a description is optional."),
                     "description",
+                    "order_number",
                 ),
                 AccordionSection(
                     "Validity period",
