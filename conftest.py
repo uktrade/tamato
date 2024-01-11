@@ -333,6 +333,19 @@ def client_with_current_workbasket(client, valid_user):
 
 
 @pytest.fixture
+def client_with_current_workbasket_no_permissions(client):
+    """Returns a client with a logged in user who has a current workbasket but
+    no permissions."""
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    workbasket.assign_to_user(user)
+    return client
+
+
+@pytest.fixture
 def superuser():
     user = factories.UserFactory.create(is_superuser=True, is_staff=True)
     return user
@@ -1168,7 +1181,7 @@ def reference_nonexistent_record():
             dependency.delete()
 
         record = factory_instance.create(
-            **{f"{reference_field_name}_id": non_existent_id}
+            **{f"{reference_field_name}_id": non_existent_id},
         )
 
         try:
@@ -1933,7 +1946,8 @@ def packaged_workbasket_factory(queued_workbasket_factory):
             return_value=MagicMock(id=factory.Faker("uuid4")),
         ):
             packaged_workbasket = factories.QueuedPackagedWorkBasketFactory(
-                workbasket=workbasket, **kwargs
+                workbasket=workbasket,
+                **kwargs,
             )
         return packaged_workbasket
 
