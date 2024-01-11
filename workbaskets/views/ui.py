@@ -272,7 +272,7 @@ class WorkBasketChangesConfirmDelete(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["user_workbasket"] = WorkBasket.current(self.request)
         context["view_workbasket"] = WorkBasket.objects.get(pk=self.kwargs["pk"])
         return context
 
@@ -1249,7 +1249,7 @@ class WorkBasketReviewView(PermissionRequiredMixin, WithPaginationListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["user_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
         return context
 
@@ -1297,7 +1297,7 @@ class WorkbasketReviewGoodsView(
         context = super().get_context_data(*args, **kwargs)
         context["tab_page_title"] = "Review commodities"
         context["selected_tab"] = "commodities"
-        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["user_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
         context["report_lines"] = []
         context["import_batch_pk"] = None
@@ -1363,7 +1363,7 @@ class WorkbasketReviewGoodsView(
             context["import_batch_pk"] = import_batch.pk
 
             # notifications only relevant to a goods import
-            if context["workbasket"] == context["session_workbasket"]:
+            if context["workbasket"] == context["user_workbasket"]:
                 context["unsent_notification"] = (
                     import_batch.goods_import
                     and not Notification.objects.filter(

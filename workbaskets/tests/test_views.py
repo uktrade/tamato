@@ -7,7 +7,6 @@ from unittest.mock import patch
 import factory
 import pytest
 from bs4 import BeautifulSoup
-from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.test.client import RequestFactory
 from django.urls import reverse
@@ -15,7 +14,6 @@ from django.utils.timezone import localtime
 
 from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
-from checks.tests.factories import TransactionCheckFactory
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.validators import UpdateType
@@ -1991,47 +1989,19 @@ def test_review_goods_notification_button(
         assert not notify_button
 
 
-def test_deleted_workbasket_notifies_user(
-    valid_user,
-    client,
-):
-    """Test that when a user's active workbasket is deleted, the user is
-    redirected to the error page to say the workbasket is no longer active."""
-    workbasket = factories.WorkBasketFactory.create()
+@pytest.mark.parametrize(
+    "workbasket_factory",
+    [
+        factories.ArchivedWorkBasketFactory,
+        factories.QueuedWorkBasketFactory,
+        factories.PublishedWorkBasketFactory,
+    ],
+)
+def test_require_current_workbasket_redirect(workbasket_factory, client, valid_user):
     client.force_login(valid_user)
+    workbasket = workbasket_factory()
     workbasket.assign_to_user(valid_user)
-    response = client.get(reverse("quota-ui-create"))
-    assert response.status_code == 200
-
-    workbasket.delete()
-    response = client.get(reverse("quota-ui-create"))
-    assert response.status_code == 302
-    assert response.url == reverse("workbaskets:no-active-workbasket")
-    response = client.get(response.url)
-    assert "You need an active workbasket to access this page" in str(response.content)
-
-
-def test_queued_workbasket_notifies_user(
-    valid_user,
-    client,
-):
-    """Test that when a user's active workbasket is queued, the user is
-    redirected to the error page to say the workbasket is no longer active."""
-    client.force_login(valid_user)
-    workbasket = factories.WorkBasketFactory.create()
-    workbasket.assign_to_user(valid_user)
-    with workbasket.new_transaction() as transaction:
-        TransactionCheckFactory.create(
-            transaction=transaction,
-            successful=True,
-            completed=True,
-        )
-
-    response = client.get(reverse("quota-ui-create"))
-    assert response.status_code == 200
-
-    workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
-    workbasket.save()
+    # view that has require_current_workbasket decorator
     response = client.get(reverse("quota-ui-create"))
     assert response.status_code == 302
     assert response.url == reverse("workbaskets:no-active-workbasket")

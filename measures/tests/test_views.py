@@ -135,7 +135,7 @@ def test_measure_delete(use_delete_form):
     use_delete_form(factories.MeasureFactory())
 
 
-def test_multiple_measure_delete_functionality(client, valid_user, session_workbasket):
+def test_multiple_measure_delete_functionality(client, valid_user, user_workbasket):
     """Tests that MeasureMultipleDelete view's Post function takes a list of
     measures, and sets their update type to delete, clearing the session once
     completed."""
@@ -148,11 +148,6 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
     session = client.session
     session.update(
         {
-            "workbasket": {
-                "id": session_workbasket.pk,
-                "status": session_workbasket.status,
-                "title": session_workbasket.title,
-            },
             "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: True,
                 measure_2.pk: True,
@@ -165,7 +160,7 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
     response = client.post(url, data=post_data)
 
     workbasket_measures = Measure.objects.filter(
-        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+        trackedmodel_ptr__transaction__workbasket_id=user_workbasket.id,
     ).order_by("sid")
 
     # on success, the page redirects to the list page
@@ -176,7 +171,7 @@ def test_multiple_measure_delete_functionality(client, valid_user, session_workb
         assert measure.update_type == UpdateType.DELETE
 
 
-def test_multiple_measure_delete_template(client, valid_user, session_workbasket):
+def test_multiple_measure_delete_template(client, valid_user, user_workbasket):
     """Test that valid user receives a 200 on GET for MultipleMeasureDelete and
     correct measures display in html table."""
     # Make a bunch of measures
@@ -192,11 +187,6 @@ def test_multiple_measure_delete_template(client, valid_user, session_workbasket
     # Add a workbasket to the session, and add some selected measures to it.
     session.update(
         {
-            "workbasket": {
-                "id": session_workbasket.pk,
-                "status": session_workbasket.status,
-                "title": session_workbasket.title,
-            },
             "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: True,
                 measure_2.pk: True,
@@ -256,7 +246,7 @@ def test_measure_detail_views(
     view,
     url_pattern,
     valid_user_client,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Verify that measure detail views are under the url measures/ and don't
     return an error."""
@@ -571,15 +561,15 @@ def test_measure_form_save_called_on_measure_update(
     save.assert_called_with(commit=False)
 
 
-def test_measure_update_get_footnotes(session_with_workbasket):
+def test_measure_update_get_footnotes(session_request_with_workbasket):
     association = factories.FootnoteAssociationMeasureFactory.create()
-    view = MeasureUpdate(request=session_with_workbasket)
+    view = MeasureUpdate(request=session_request_with_workbasket)
     footnotes = view.get_footnotes(association.footnoted_measure)
 
     assert len(footnotes) == 1
 
     association.new_version(
-        WorkBasket.current(session_with_workbasket),
+        WorkBasket.current(session_request_with_workbasket),
         update_type=UpdateType.DELETE,
     )
 
@@ -1844,7 +1834,7 @@ def test_measuretype_api_list_view(valid_user_client):
 
 def test_multiple_measure_start_and_end_date_edit_functionality(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     mocked_diff_components,
 ):
     """Tests that MeasureEditWizard takes a list of measures, and sets their
@@ -1864,11 +1854,6 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
     session = valid_user_client.session
     session.update(
         {
-            "workbasket": {
-                "id": session_workbasket.pk,
-                "status": session_workbasket.status,
-                "title": session_workbasket.title,
-            },
             "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: 1,
                 measure_2.pk: 1,
@@ -1927,7 +1912,7 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
         )
 
     workbasket_measures = Measure.objects.filter(
-        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+        trackedmodel_ptr__transaction__workbasket_id=user_workbasket.id,
     ).order_by("sid")
 
     complete_response = valid_user_client.get(response.url)
@@ -1968,7 +1953,7 @@ def test_multiple_measure_edit_single_form_functionality(
     step,
     data,
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     mocked_diff_components,
 ):
     """Tests that MeasureEditWizard takes a list of measures, and sets their
@@ -1982,11 +1967,6 @@ def test_multiple_measure_edit_single_form_functionality(
     session = valid_user_client.session
     session.update(
         {
-            "workbasket": {
-                "id": session_workbasket.pk,
-                "status": session_workbasket.status,
-                "title": session_workbasket.title,
-            },
             "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: 1,
                 measure_2.pk: 1,
@@ -2028,7 +2008,7 @@ def test_multiple_measure_edit_single_form_functionality(
         )
 
     workbasket_measures = Measure.objects.filter(
-        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+        trackedmodel_ptr__transaction__workbasket_id=user_workbasket.id,
     ).order_by("sid")
 
     complete_response = valid_user_client.get(response.url)
@@ -2041,7 +2021,7 @@ def test_multiple_measure_edit_single_form_functionality(
 
 def test_multiple_measure_edit_only_regulation(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     mocked_diff_components,
 ):
     """Tests the regulation step in MeasureEditWizard."""
@@ -2054,11 +2034,6 @@ def test_multiple_measure_edit_only_regulation(
     session = valid_user_client.session
     session.update(
         {
-            "workbasket": {
-                "id": session_workbasket.pk,
-                "status": session_workbasket.status,
-                "title": session_workbasket.title,
-            },
             "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: 1,
                 measure_2.pk: 1,
@@ -2103,7 +2078,7 @@ def test_multiple_measure_edit_only_regulation(
         )
 
     workbasket_measures = Measure.objects.filter(
-        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+        trackedmodel_ptr__transaction__workbasket_id=user_workbasket.id,
     ).order_by("sid")
 
     complete_response = valid_user_client.get(response.url)
@@ -2115,7 +2090,7 @@ def test_multiple_measure_edit_only_regulation(
         assert measure.generating_regulation == regulation
 
 
-def test_multiple_measure_edit_template(valid_user_client, session_workbasket):
+def test_multiple_measure_edit_template(valid_user_client, user_workbasket):
     """Test that valid user receives a 200 on GET for MeasureEditWizard and
     correct measures display in html table."""
     # Make a bunch of measures
@@ -2129,11 +2104,6 @@ def test_multiple_measure_edit_template(valid_user_client, session_workbasket):
     # Add a workbasket to the session, and add some selected measures to it.
     session.update(
         {
-            "workbasket": {
-                "id": session_workbasket.pk,
-                "status": session_workbasket.status,
-                "title": session_workbasket.title,
-            },
             "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: True,
                 measure_2.pk: True,
@@ -2184,7 +2154,7 @@ def test_multiple_measure_edit_template(valid_user_client, session_workbasket):
 def test_measure_selection_update_view_updates_session(
     client,
     valid_user,
-    session_workbasket,
+    user_workbasket,
 ):
     # Make a bunch of measures
     measure_1 = factories.MeasureFactory.create()
@@ -2231,7 +2201,7 @@ def test_measure_selection_update_view_updates_session(
         "foo",
     ],
 )
-def test_measure_list_redirect(form_action, valid_user_client, session_workbasket):
+def test_measure_list_redirect(form_action, valid_user_client, user_workbasket):
     params = "page=2&start_date_modifier=exact&end_date_modifier=exact"
     url = f"{reverse('measure-ui-list')}?{params}"
     response = valid_user_client.post(url, {"form-action": form_action})
@@ -2276,7 +2246,7 @@ def test_measure_list_selected_measures_list(valid_user_client):
 
 def test_multiple_measure_edit_only_quota_order_number(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     mocked_diff_components,
 ):
     """Tests the regulation step in MeasureEditWizard."""
@@ -2289,11 +2259,6 @@ def test_multiple_measure_edit_only_quota_order_number(
     session = valid_user_client.session
     session.update(
         {
-            "workbasket": {
-                "id": session_workbasket.pk,
-                "status": session_workbasket.status,
-                "title": session_workbasket.title,
-            },
             "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: 1,
                 measure_2.pk: 1,
@@ -2338,7 +2303,7 @@ def test_multiple_measure_edit_only_quota_order_number(
         )
 
     workbasket_measures = Measure.objects.filter(
-        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+        trackedmodel_ptr__transaction__workbasket_id=user_workbasket.id,
     ).order_by("sid")
 
     complete_response = valid_user_client.get(response.url)
@@ -2352,7 +2317,7 @@ def test_multiple_measure_edit_only_quota_order_number(
 
 def test_multiple_measure_edit_only_duties(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     duty_sentence_parser,
 ):
     """Tests the duties step in MeasureEditWizard."""
@@ -2365,11 +2330,6 @@ def test_multiple_measure_edit_only_duties(
     session = valid_user_client.session
     session.update(
         {
-            "workbasket": {
-                "id": session_workbasket.pk,
-                "status": session_workbasket.status,
-                "title": session_workbasket.title,
-            },
             "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: 1,
                 measure_2.pk: 1,
@@ -2414,7 +2374,7 @@ def test_multiple_measure_edit_only_duties(
         )
 
     workbasket_measures = Measure.objects.filter(
-        trackedmodel_ptr__transaction__workbasket_id=session_workbasket.id,
+        trackedmodel_ptr__transaction__workbasket_id=user_workbasket.id,
     ).order_by("sid")
 
     complete_response = valid_user_client.get(response.url)
@@ -2428,7 +2388,7 @@ def test_multiple_measure_edit_only_duties(
 
 def test_multiple_measure_edit_preserves_footnote_associations(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     mocked_diff_components,
 ):
     """Tests that footnote associations are preserved in MeasureEditWizard."""
@@ -2444,11 +2404,6 @@ def test_multiple_measure_edit_preserves_footnote_associations(
     session = valid_user_client.session
     session.update(
         {
-            "workbasket": {
-                "id": session_workbasket.pk,
-                "status": session_workbasket.status,
-                "title": session_workbasket.title,
-            },
             "MULTIPLE_MEASURE_SELECTIONS": {
                 measure.pk: 1,
             },
@@ -2493,7 +2448,7 @@ def test_multiple_measure_edit_preserves_footnote_associations(
         )
 
     workbasket_measures = Measure.objects.filter(
-        transaction__workbasket=session_workbasket,
+        transaction__workbasket=user_workbasket,
     ).order_by("sid")
 
     complete_response = valid_user_client.get(response.url)
@@ -2509,7 +2464,7 @@ def test_multiple_measure_edit_preserves_footnote_associations(
 
 def test_multiple_measure_edit_geographical_area_exclusions(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     mocked_diff_components,
 ):
     """Tests that the geographical area exclusions of multiple measures can be
@@ -2522,9 +2477,6 @@ def test_multiple_measure_edit_geographical_area_exclusions(
     session = valid_user_client.session
     session.update(
         {
-            "workbasket": {
-                "id": session_workbasket.pk,
-            },
             "MULTIPLE_MEASURE_SELECTIONS": {
                 measure_1.pk: 1,
                 measure_2.pk: 1,
@@ -2572,7 +2524,7 @@ def test_multiple_measure_edit_geographical_area_exclusions(
     assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
 
     workbasket_measures = Measure.objects.filter(
-        transaction__workbasket=session_workbasket,
+        transaction__workbasket=user_workbasket,
     )
     assert workbasket_measures
 

@@ -93,9 +93,9 @@ def override_current_transaction(transaction=None):
         set_current_transaction(old_transaction)
 
 
-def is_session_workbasket_valid(request):
-    """Returns True if the workbasket in the session is valid (i.e. exists and
-    has status EDITING.)"""
+def is_user_workbasket_valid(request):
+    """Returns True if the user's current workbasket in the session is valid
+    (i.e. exists and has status EDITING.)"""
     from workbaskets.models import WorkBasket
     from workbaskets.validators import WorkflowStatus
 
@@ -130,7 +130,7 @@ class ValidateSessionWorkBasketMiddleware:
         # current transaction (below), so abandon this middleware's action and
         # return early if there is no current editable workbasket in the
         # session.
-        if not is_session_workbasket_valid(request):
+        if not is_user_workbasket_valid(request):
             WorkBasket.remove_users_current_workbasket(request)
         return self.get_response(request)
 
