@@ -1922,34 +1922,115 @@ def test_measure_create_wizard_get_serialized_cleaned_data_for_measure_details(
     assert serialized_data["min_commodity_count"] == 2
 
 
-def test_measure_create_wizard_get_serialized_cleaned_data_for_geo_area(
-    session_request: RequestFactory,
+def test_measure_create_wizard_get_serialized_cleaned_data_for_regulation_id(
+    session_request,
 ):
-    geo_area = factories.GeographicalAreaFactory.create()
+    regulation = factories.RegulationFactory()
     details_data = {
-        "measure_create_wizard-current_step": "geographical_area",
-        "geographical_area-geo_area": "COUNTRY",
-        "geographical_area_country_or_region": geo_area.pk,
+        "measure_create_wizard-current_step": "regulation_id",
+        "regulation_id-generating_regulation": [regulation],
     }
 
     storage = MeasureCreateSessionStorage(request=session_request, prefix="")
-    storage.set_step_data("geographical_area", details_data)
-    storage._set_current_step("geographical_area")
+    storage.set_step_data("regulation_id", details_data)
+    storage._set_current_step("regulation_id")
     wizard = MeasureCreateWizard(
         request=session_request,
         storage=storage,
-        initial_dict={"geographical_area": details_data},
-        instance_dict={"geographical_area": None},
+        initial_dict={"regulation_id": details_data},
+        instance_dict={"regulation_id": None},
     )
     wizard.form_list = OrderedDict(wizard.form_list)
+    serialized_data = wizard.get_serialized_cleaned_data_for_step(storage.current_step)
+
+    assert type(serialized_data) is dict
+    assert serialized_data["generating_regulation"] == regulation.pk
+
+
+def test_measure_create_wizard_get_serialized_cleaned_data_for_quota_order_number(
+    session_request,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory.create()
+
+    details_data = {
+        "measure_create_wizard-current_step": "quota_order_number",
+        "quota_order_number-order_number": [quota_order_number],
+    }
+
+    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+    storage.set_step_data("quota_order_number", details_data)
+    storage._set_current_step("quota_order_number")
+    wizard = MeasureCreateWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"quota_order_number": details_data},
+        instance_dict={"quota_order_number": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    serialized_data = wizard.get_serialized_cleaned_data_for_step(storage.current_step)
+
+    assert type(serialized_data) is dict
+    assert serialized_data["order_number"] == quota_order_number.pk
+
+
+def test_measure_create_wizard_get_serialized_cleaned_data_for_quota_origins(
+    session_request,
+    quota_order_number,
+):
+    origin = quota_order_number.quotaordernumberorigin_set.first()
+    details_data = {
+        "measure_create_wizard-current_step": "quota_origins",
+        f"quota_origins-selectableobject_{origin.pk}": True,
+    }
+    storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+    storage.set_step_data("quota_origins", details_data)
+    storage._set_current_step("quota_origins")
+    wizard = MeasureCreateWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"quota_origins": details_data},
+        instance_dict={"quota_origins": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    serialized_data = wizard.get_serialized_cleaned_data_for_step(storage.current_step)
+
+    assert type(serialized_data) is dict
     assert 0
-    with override_current_transaction(Transaction.objects.last()):
-        serialized_data = wizard.get_serialized_cleaned_data_for_step(
-            storage.current_step,
-        )
-        assert type(serialized_data) is dict
-        assert serialized_data["geo_area"] == geo_area.pk
-        assert 0
+
+
+# def test_measure_create_wizard_get_serialized_cleaned_data_for_geo_area(
+#     session_request: RequestFactory,
+# ):
+#     geo_area = factories.GeographicalAreaFactory.create()
+#     details_data = {
+#         "measure_create_wizard-current_step": "geographical_area",
+#         "geographical_area-geo_area": "COUNTRY",
+#         "country_region-geographical_area_country_or_region": geo_area.pk,
+#     }
+
+#     storage = MeasureCreateSessionStorage(request=session_request, prefix="")
+#     storage.set_step_data("geographical_area", details_data)
+#     storage._set_current_step("geographical_area")
+#     wizard = MeasureCreateWizard(
+#         request=session_request,
+#         storage=storage,
+#         initial_dict={"geographical_area": details_data},
+#         instance_dict={"geographical_area": None},
+#     )
+#     wizard.form_list = OrderedDict(wizard.form_list)
+#     with override_current_transaction(Transaction.objects.last()):
+
+#         serialized_data = wizard.get_serialized_cleaned_data_for_step(
+#             storage.current_step,
+#         )
+#         assert type(serialized_data) is dict
+#         assert serialized_data["geo_area"] == geo_area.pk
+#         assert 0
+# def test_measure_create_wizard_get_serialized_cleaned_data_for_commodities()
+# def test_measure_create_wizard_get_serialized_cleaned_data_for_additional_code()
+# def test_measure_create_wizard_get_serialized_cleaned_data_for_footnotes()
+# def test_measure_create_wizard_get_serialized_cleaned_data_for_conditions()
+# def test_measure_create_wizard_get_serialized_cleaned_data_for_geo_area()
 
 
 def test_measure_create_wizard_quota_origins_conditional_step(
