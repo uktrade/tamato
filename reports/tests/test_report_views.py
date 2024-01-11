@@ -39,12 +39,9 @@ class TestReportViews:
             response = client.get(reverse(f"reports:{report.slug()}"))
             assert response.status_code == http_status
 
-   
     def test_export_report_to_csv(self, request):
         request = RequestFactory().get("/")
-        report_slug = (
-            "cds_rejections_in_the_last_12_months"
-        )
+        report_slug = "cds_rejections_in_the_last_12_months"
 
         response = export_report_to_csv(request, report_slug)
 
