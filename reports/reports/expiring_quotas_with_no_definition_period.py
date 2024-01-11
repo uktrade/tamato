@@ -22,15 +22,13 @@ class Report(ReportBaseTable):
             {"text": "Quota Order Number"},
             {"text": "Definition Start Date"},
             {"text": "Definition End Date"},
-            {"text": "Reason"},
         ]
 
     def row(self, row: QuotaDefinition) -> [dict]:
         return [
             {"text": row.order_number},
-            {"text": row.definition_start_date},
-            {"text": row.definition_end_date},
-            {"text": row.reason},
+            {"text": row.valid_between.lower},
+            {"text": row.valid_between.upper},
         ]
 
     def rows(self) -> [[dict]]:
@@ -80,8 +78,5 @@ class Report(ReportBaseTable):
         for quota in matching_data:
             quota.definition_start_date = quota.valid_between.lower
             quota.definition_end_date = quota.valid_between.upper
-            quota.reason = (
-                "Definition period about to expire with no future definition period"
-            )
 
         return list(matching_data)
