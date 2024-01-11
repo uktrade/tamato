@@ -274,12 +274,12 @@ def measure_edit_conditions_and_negative_action_data(measure_edit_conditions_dat
 
 
 @pytest.fixture
-def measure_form(measure_form_data, session_with_workbasket, erga_omnes):
+def measure_form(measure_form_data, session_request_with_workbasket, erga_omnes):
     with override_current_transaction(Transaction.objects.last()):
         return MeasureForm(
             data=measure_form_data,
             instance=Measure.objects.first(),
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
             initial={},
         )
 

@@ -7,7 +7,7 @@
 {% set page_title = "Remove tariff changes" %}
 
 {% block breadcrumb %}
-  {% if view_workbasket != session_workbasket %}
+  {% if view_workbasket != user_workbasket %}
     {{ breadcrumbs(request, [
         {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
         {
@@ -30,7 +30,7 @@
       "classes": "govuk-!-margin-bottom-7"
     }) }}
 
-    {% if view_workbasket != session_workbasket %}
+    {% if view_workbasket != user_workbasket %}
       {{ govukButton({
         "text": "Return to workbasket",
         "href": url("workbaskets:workbasket-ui-changes", kwargs={"pk": view_workbasket.pk}),

@@ -89,17 +89,13 @@ def test_workbasket_create_without_permission(client):
 
 def test_workbasket_update_view_updates_workbasket_title_and_description(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Test that a workbasket's title and description can be updated."""
 
-    session = valid_user_client.session
-    session["workbasket"] = {"id": session_workbasket.pk}
-    session.save()
-
     url = reverse(
         "workbaskets:workbasket-ui-update",
-        kwargs={"pk": session_workbasket.pk},
+        kwargs={"pk": user_workbasket.pk},
     )
     new_title = "123321"
     new_description = "Newly updated test description"
@@ -107,8 +103,8 @@ def test_workbasket_update_view_updates_workbasket_title_and_description(
         "title": new_title,
         "reason": new_description,
     }
-    assert not session_workbasket.title == new_title
-    assert not session_workbasket.reason == new_description
+    assert not user_workbasket.title == new_title
+    assert not user_workbasket.reason == new_description
 
     response = valid_user_client.get(url)
     assert response.status_code == 200
@@ -117,12 +113,12 @@ def test_workbasket_update_view_updates_workbasket_title_and_description(
     assert response.status_code == 302
     assert response.url == reverse(
         "workbaskets:workbasket-ui-confirm-update",
-        kwargs={"pk": session_workbasket.pk},
+        kwargs={"pk": user_workbasket.pk},
     )
 
-    session_workbasket.refresh_from_db()
-    assert session_workbasket.title == new_title
-    assert session_workbasket.reason == new_description
+    user_workbasket.refresh_from_db()
+    assert user_workbasket.title == new_title
+    assert user_workbasket.reason == new_description
 
 
 def test_download(
@@ -163,12 +159,12 @@ def test_download(
 
 def test_review_workbasket_displays_rule_violation_summary(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Test that the review workbasket page includes an error summary box
     detailing the number of tracked model changes and business rule violations,
     dated to the most recent `TrackedModelCheck`."""
-    with session_workbasket.new_transaction() as transaction:
+    with user_workbasket.new_transaction() as transaction:
         good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
@@ -187,7 +183,7 @@ def test_review_workbasket_displays_rule_violation_summary(
     )
 
     error_headings = page.find_all("h2", attrs={"class": "govuk-body"})
-    tracked_model_count = session_workbasket.tracked_models.count()
+    tracked_model_count = user_workbasket.tracked_models.count()
     local_created_at = localtime(check.created_at)
     created_at = f"{local_created_at:%d %b %Y %H:%M}"
 
@@ -196,18 +192,18 @@ def test_review_workbasket_displays_rule_violation_summary(
     assert f"Number of violations: 1" in error_headings[1].text
 
 
-def test_edit_workbasket_page_sets_workbasket(valid_user_client, session_workbasket):
+def test_edit_workbasket_page_sets_workbasket(valid_user_client, user_workbasket):
     response = valid_user_client.get(
         reverse("workbaskets:edit-workbasket"),
     )
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
-    assert str(session_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
+    assert str(user_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
 
 
 def test_workbasket_detail_page_url_params(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     url = reverse(
         "workbaskets:current-workbasket",
@@ -306,7 +302,7 @@ def test_select_workbasket_redirects_to_tab(
         "workbaskets:edit-workbasket",
     ),
 )
-def test_workbasket_views_without_permission(url_name, client, session_workbasket):
+def test_workbasket_views_without_permission(url_name, client, user_workbasket):
     """Tests that select, list-all, delete, and edit workbasket view endpoints
     return 403 to users without change_workbasket permission."""
     url = reverse(
@@ -314,6 +310,7 @@ def test_workbasket_views_without_permission(url_name, client, session_workbaske
     )
     user = factories.UserFactory.create()
     client.force_login(user)
+    user_workbasket.assign_to_user(user)
     response = client.get(url)
 
     assert response.status_code == 403
@@ -466,13 +463,13 @@ def test_workbasket_review_tabs(
     object_factory,
     num_columns,
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests that workbasket review tabs return 200 and display objects in
     table."""
-    with session_workbasket.new_transaction():
+    with user_workbasket.new_transaction():
         object_factory()
-    url = reverse(url, kwargs={"pk": session_workbasket.pk})
+    url = reverse(url, kwargs={"pk": user_workbasket.pk})
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
@@ -548,21 +545,21 @@ def test_workbasket_review_measures_filters_update_type(
     update_type,
     expected_measure_count,
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests that `WorkBasketReviewMeasuresView` filters measures by
     `update_type`."""
-    with session_workbasket.new_transaction():
+    with user_workbasket.new_transaction():
         created_measures = factories.MeasureFactory.create_batch(2)
-    updated_measure = created_measures[0].new_version(workbasket=session_workbasket)
+    updated_measure = created_measures[0].new_version(workbasket=user_workbasket)
     deleted_measure = created_measures[1].new_version(
         update_type=UpdateType.DELETE,
-        workbasket=session_workbasket,
+        workbasket=user_workbasket,
     )
 
     url = reverse(
         "workbaskets:workbasket-ui-review-measures",
-        kwargs={"pk": session_workbasket.pk},
+        kwargs={"pk": user_workbasket.pk},
     )
     search_filter = f"?update_type={update_type}"
     response = valid_user_client.get(url + search_filter)
@@ -634,15 +631,15 @@ def test_workbasket_review_measures_conditions(valid_user_client):
 
 
 @patch("workbaskets.tasks.call_check_workbasket_sync.apply_async")
-def test_run_business_rules(check_workbasket, valid_user_client, session_workbasket):
+def test_run_business_rules(check_workbasket, valid_user_client, user_workbasket):
     """Test that a GET request to the run-business-rules endpoint returns a 302,
     redirecting to the review workbasket page, runs the `check_workbasket` task,
     saves the task id on the workbasket, and deletes pre-existing
     `TrackedModelCheck` objects associated with the workbasket."""
     check_workbasket.return_value.id = 123
-    assert not session_workbasket.rule_check_task_id
+    assert not user_workbasket.rule_check_task_id
 
-    with session_workbasket.new_transaction() as transaction:
+    with user_workbasket.new_transaction() as transaction:
         good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
@@ -650,13 +647,6 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
             successful=False,
         )
 
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-    }
-    session.save()
     url = reverse(
         "workbaskets:workbasket-checks",
     )
@@ -669,21 +659,21 @@ def test_run_business_rules(check_workbasket, valid_user_client, session_workbas
     # Only compare the response URL up to the query string.
     assert response.url[: len(url)] == url
 
-    session_workbasket.refresh_from_db()
+    user_workbasket.refresh_from_db()
 
     check_workbasket.assert_called_once_with(
-        (session_workbasket.pk,),
+        (user_workbasket.pk,),
         countdown=1,
     )
-    assert session_workbasket.rule_check_task_id
-    assert not session_workbasket.tracked_model_checks.exists()
+    assert user_workbasket.rule_check_task_id
+    assert not user_workbasket.tracked_model_checks.exists()
 
 
-def test_workbasket_business_rule_status(valid_user_client, session_empty_workbasket):
+def test_workbasket_business_rule_status(valid_user_client, user_empty_workbasket):
     """Testing that the live status of a workbasket resets after an item has
     been updated, created or deleted in the workbasket."""
 
-    with session_empty_workbasket.new_transaction() as transaction:
+    with user_empty_workbasket.new_transaction() as transaction:
         footnote = factories.FootnoteFactory.create(
             transaction=transaction,
             footnote_type__transaction=transaction,
@@ -704,7 +694,7 @@ def test_workbasket_business_rule_status(valid_user_client, session_empty_workba
     assert success_banner
 
     factories.FootnoteFactory.create(
-        transaction=session_empty_workbasket.new_transaction(),
+        transaction=user_empty_workbasket.new_transaction(),
     )
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset))
@@ -712,9 +702,9 @@ def test_workbasket_business_rule_status(valid_user_client, session_empty_workba
 
 
 @pytest.fixture
-def successful_business_rules_setup(session_workbasket, valid_user_client):
+def successful_business_rules_setup(user_workbasket, valid_user_client):
     """Sets up data and runs business rules."""
-    with session_workbasket.new_transaction() as transaction:
+    with user_workbasket.new_transaction() as transaction:
         good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         measure = factories.MeasureFactory.create(transaction=transaction)
         geo_area = factories.GeographicalAreaFactory.create(transaction=transaction)
@@ -725,17 +715,9 @@ def successful_business_rules_setup(session_workbasket, valid_user_client):
                 model=obj,
                 successful=True,
             )
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "error_count": session_workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
 
     # run rule checks so unchecked_or_errored_transactions is set
-    check_workbasket_sync(session_workbasket)
+    check_workbasket_sync(user_workbasket)
 
 
 def import_batch_with_notification():
@@ -785,7 +767,7 @@ def import_batch_with_notification():
 def test_submit_for_packaging_disabled(
     successful_business_rules_setup,
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     import_batch_factory,
     disabled,
 ):
@@ -795,7 +777,7 @@ def test_submit_for_packaging_disabled(
     import_batch = import_batch_factory()
 
     if import_batch:
-        import_batch.workbasket_id = session_workbasket.id
+        import_batch.workbasket_id = user_workbasket.id
         if isinstance(import_batch, ImportBatch):
             import_batch.save()
     url = reverse(
@@ -823,7 +805,7 @@ def test_submit_for_packaging_disabled(
 def test_submit_for_packaging(
     successful_business_rules_setup,
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Test that a link to the publishing/create url shows following a
     successful rule check."""
@@ -832,7 +814,7 @@ def test_submit_for_packaging(
         goods_import=True,
     )
 
-    import_batch.workbasket_id = session_workbasket.id
+    import_batch.workbasket_id = user_workbasket.id
     if isinstance(import_batch, ImportBatch):
         import_batch.save()
     url = reverse(
@@ -852,8 +834,8 @@ def test_submit_for_packaging(
     assert soup.find("a", href="/publishing/create/")
 
 
-def test_terminate_rule_check(valid_user_client, session_workbasket):
-    session_workbasket.rule_check_task_id = 123
+def test_terminate_rule_check(valid_user_client, user_workbasket):
+    user_workbasket.rule_check_task_id = 123
 
     url = reverse(
         "workbaskets:workbasket-checks",
@@ -865,33 +847,25 @@ def test_terminate_rule_check(valid_user_client, session_workbasket):
     assert response.status_code == 302
     assert response.url[: len(url)] == url
 
-    session_workbasket.refresh_from_db()
+    user_workbasket.refresh_from_db()
 
-    assert not session_workbasket.rule_check_task_id
+    assert not user_workbasket.rule_check_task_id
 
 
-def test_workbasket_violations(valid_user_client, session_workbasket):
+def test_workbasket_violations(valid_user_client, user_workbasket):
     """Test that a GET request to the violations endpoint returns a 200 and
     displays the correct column values for one unsuccessful
     `TrackedModelCheck`."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
     )
-    with session_workbasket.new_transaction() as transaction:
+    with user_workbasket.new_transaction() as transaction:
         good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
             model=good,
             successful=False,
         )
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "error_count": session_workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
@@ -910,14 +884,14 @@ def test_workbasket_violations(valid_user_client, session_workbasket):
 
 def test_workbasket_violations_summary_pagination(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests that the violations page paginates if there are more than 50
     violations."""
 
     url = reverse("workbaskets:workbasket-ui-violations")
 
-    with session_workbasket.new_transaction() as transaction:
+    with user_workbasket.new_transaction() as transaction:
         measures = factories.MeasureFactory.create_batch(
             59,
             transaction=transaction,
@@ -928,14 +902,6 @@ def test_workbasket_violations_summary_pagination(
                 model=measure,
                 successful=False,
             )
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "error_count": session_workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
@@ -949,8 +915,8 @@ def test_workbasket_violations_summary_pagination(
     assert "Showing 50 of 59" in pagination_div_text
 
 
-def test_violation_detail_page(valid_user_client, session_workbasket):
-    with session_workbasket.new_transaction() as transaction:
+def test_violation_detail_page(valid_user_client, user_workbasket):
+    with user_workbasket.new_transaction() as transaction:
         good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         check = TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
@@ -959,16 +925,8 @@ def test_violation_detail_page(valid_user_client, session_workbasket):
         )
     url = reverse(
         "workbaskets:workbasket-ui-violation-detail",
-        kwargs={"wb_pk": session_workbasket.pk, "pk": check.pk},
+        kwargs={"wb_pk": user_workbasket.pk, "pk": check.pk},
     )
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "error_count": session_workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
@@ -982,26 +940,26 @@ def test_violation_detail_page(valid_user_client, session_workbasket):
 
 
 def test_violation_detail_page_superuser_override_last_violation(
-    superuser_client,
-    session_workbasket,
+    superuser,
+    client,
+    user_workbasket,
 ):
     """Override the last unsuccessful TrackedModelCheck on a
     TransactionCheck."""
-
     model_check = TrackedModelCheckFactory.create(
         successful=False,
         transaction_check__successful=False,
     )
-    model_check.transaction_check.transaction.workbasket.save_to_session(
-        superuser_client.session,
+    client.force_login(superuser)
+    model_check.transaction_check.transaction.workbasket.assign_to_user(
+        superuser,
     )
-    superuser_client.session.save()
 
     url = reverse(
         "workbaskets:workbasket-ui-violation-detail",
-        kwargs={"wb_pk": session_workbasket.pk, "pk": model_check.pk},
+        kwargs={"wb_pk": user_workbasket.pk, "pk": model_check.pk},
     )
-    response = superuser_client.post(url, data={"action": "delete"})
+    response = client.post(url, data={"action": "delete"})
 
     assert response.status_code == 302
     redirect_url = reverse("workbaskets:workbasket-ui-violations")
@@ -1013,8 +971,9 @@ def test_violation_detail_page_superuser_override_last_violation(
 
 
 def test_violation_detail_page_superuser_override_one_of_two_violation(
-    superuser_client,
-    session_workbasket,
+    superuser,
+    client,
+    user_workbasket,
 ):
     """Override an unsuccessful TrackedModelCheck on a TransactionCheck that has
     more TrackedModelCheck."""
@@ -1023,10 +982,10 @@ def test_violation_detail_page_superuser_override_one_of_two_violation(
         successful=False,
         transaction_check__successful=False,
     )
-    model_check.transaction_check.transaction.workbasket.save_to_session(
-        superuser_client.session,
+    client.force_login(superuser)
+    model_check.transaction_check.transaction.workbasket.assign_to_user(
+        superuser,
     )
-    superuser_client.session.save()
 
     TrackedModelCheckFactory.create(
         successful=False,
@@ -1043,9 +1002,9 @@ def test_violation_detail_page_superuser_override_one_of_two_violation(
 
     url = reverse(
         "workbaskets:workbasket-ui-violation-detail",
-        kwargs={"wb_pk": session_workbasket.pk, "pk": model_check.pk},
+        kwargs={"wb_pk": user_workbasket.pk, "pk": model_check.pk},
     )
-    response = superuser_client.post(url, data={"action": "delete"})
+    response = client.post(url, data={"action": "delete"})
 
     assert response.status_code == 302
     redirect_url = reverse("workbaskets:workbasket-ui-violations")
@@ -1064,8 +1023,9 @@ def test_violation_detail_page_superuser_override_one_of_two_violation(
 
 
 def test_violation_detail_page_non_superuser_override_violation(
-    valid_user_client,
-    session_workbasket,
+    valid_user,
+    client,
+    user_workbasket,
 ):
     """Ensure a user without superuser status is unable to override a
     TrackedModelCheck."""
@@ -1074,16 +1034,16 @@ def test_violation_detail_page_non_superuser_override_violation(
         successful=False,
         transaction_check__successful=False,
     )
-    model_check.transaction_check.transaction.workbasket.save_to_session(
-        valid_user_client.session,
+    client.force_login(valid_user)
+    model_check.transaction_check.transaction.workbasket.assign_to_user(
+        valid_user,
     )
-    valid_user_client.session.save()
 
     url = reverse(
         "workbaskets:workbasket-ui-violation-detail",
-        kwargs={"wb_pk": session_workbasket.pk, "pk": model_check.pk},
+        kwargs={"wb_pk": user_workbasket.pk, "pk": model_check.pk},
     )
-    response = valid_user_client.post(url, data={"action": "delete"})
+    response = client.post(url, data={"action": "delete"})
 
     assert response.status_code == 302
     model_check.refresh_from_db()
@@ -1092,8 +1052,8 @@ def test_violation_detail_page_non_superuser_override_violation(
 
 
 @pytest.fixture
-def setup(session_workbasket, valid_user_client):
-    with session_workbasket.new_transaction() as transaction:
+def setup(user_workbasket, valid_user_client):
+    with user_workbasket.new_transaction() as transaction:
         good = factories.GoodsNomenclatureFactory.create(transaction=transaction)
         measure = factories.MeasureFactory.create(transaction=transaction)
         geo_area = factories.GeographicalAreaFactory.create(transaction=transaction)
@@ -1118,17 +1078,9 @@ def setup(session_workbasket, valid_user_client):
                 model=obj,
                 successful=False,
             )
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "error_count": session_workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
 
 
-def test_violation_list_page_sorting_date(setup, valid_user_client, session_workbasket):
+def test_violation_list_page_sorting_date(setup, valid_user_client, user_workbasket):
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
         "workbaskets:workbasket-ui-violations",
@@ -1137,7 +1089,7 @@ def test_violation_list_page_sorting_date(setup, valid_user_client, session_work
 
     assert response.status_code == 200
 
-    checks = session_workbasket.tracked_model_check_errors
+    checks = user_workbasket.tracked_model_check_errors
 
     soup = BeautifulSoup(str(response.content), "html.parser")
     activity_dates = [
@@ -1158,7 +1110,7 @@ def test_violation_list_page_sorting_date(setup, valid_user_client, session_work
 def test_violation_list_page_sorting_model_name(
     setup,
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
@@ -1168,7 +1120,7 @@ def test_violation_list_page_sorting_model_name(
 
     assert response.status_code == 200
 
-    checks = session_workbasket.tracked_model_check_errors
+    checks = user_workbasket.tracked_model_check_errors
 
     soup = BeautifulSoup(str(response.content), "html.parser")
     activity_dates = [
@@ -1189,7 +1141,7 @@ def test_violation_list_page_sorting_model_name(
 def test_violation_list_page_sorting_check_name(
     setup,
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests the sorting of the queryset when GET params are set."""
     url = reverse(
@@ -1199,7 +1151,7 @@ def test_violation_list_page_sorting_check_name(
 
     assert response.status_code == 200
 
-    checks = session_workbasket.tracked_model_check_errors
+    checks = user_workbasket.tracked_model_check_errors
 
     soup = BeautifulSoup(str(response.content), "html.parser")
     rule_codes = [
@@ -1217,7 +1169,7 @@ def test_violation_list_page_sorting_check_name(
 def test_violation_list_page_sorting_ignores_invalid_params(
     setup,
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests that the page doesn't break if invalid params are sent."""
     url = reverse(
@@ -1252,14 +1204,14 @@ def test_workbasket_detail_views_without_view_permission(url_name, client):
 
 def test_workbasket_detail_view_displays_workbasket_details(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests that `WorkBasketDetailView` returns 200 and displays workbasket
     details in table."""
 
     url = reverse(
         "workbaskets:workbasket-ui-detail",
-        kwargs={"pk": session_workbasket.pk},
+        kwargs={"pk": user_workbasket.pk},
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
@@ -1268,23 +1220,23 @@ def test_workbasket_detail_view_displays_workbasket_details(
     table = soup.select("table")[0]
     row_text = [row.text for row in table.findChildren("td")]
 
-    assert session_workbasket.get_status_display().upper() in row_text[0]
-    assert str(session_workbasket.id) in row_text[1]
-    assert session_workbasket.title in row_text[2]
-    assert session_workbasket.reason in row_text[3]
-    assert str(session_workbasket.tracked_models.count()) in row_text[4]
-    assert session_workbasket.created_at.strftime("%d %b %y %H:%M") in row_text[5]
-    assert session_workbasket.updated_at.strftime("%d %b %y %H:%M") in row_text[6]
+    assert user_workbasket.get_status_display().upper() in row_text[0]
+    assert str(user_workbasket.id) in row_text[1]
+    assert user_workbasket.title in row_text[2]
+    assert user_workbasket.reason in row_text[3]
+    assert str(user_workbasket.tracked_models.count()) in row_text[4]
+    assert user_workbasket.created_at.strftime("%d %b %y %H:%M") in row_text[5]
+    assert user_workbasket.updated_at.strftime("%d %b %y %H:%M") in row_text[6]
 
 
-def test_workbasket_changes_view_without_change_permission(client, session_workbasket):
+def test_workbasket_changes_view_without_change_permission(client, user_workbasket):
     """Tests that `WorkBasketChangesView` displays changes in a workbasket
     without the ability to remove items to users without `change_workbasket`
     permission."""
 
     url = reverse(
         "workbaskets:workbasket-ui-changes",
-        kwargs={"pk": session_workbasket.pk},
+        kwargs={"pk": user_workbasket.pk},
     )
     user = factories.UserFactory.create()
     user.user_permissions.add(Permission.objects.get(codename="view_workbasket"))
@@ -1299,21 +1251,21 @@ def test_workbasket_changes_view_without_change_permission(client, session_workb
     remove_button = page.find("button", value="remove-selected")
 
     assert len(columns) == 5
-    assert len(rows) == session_workbasket.tracked_models.count()
+    assert len(rows) == user_workbasket.tracked_models.count()
     assert not checkboxes
     assert not remove_button
 
 
 def test_workbasket_changes_view_with_change_permission(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests that `WorkBasketChangesView` displays changes in a workbasket with
     the ability to remove items to users with `change_workbasket` permission."""
 
     url = reverse(
         "workbaskets:workbasket-ui-changes",
-        kwargs={"pk": session_workbasket.pk},
+        kwargs={"pk": user_workbasket.pk},
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
@@ -1325,7 +1277,7 @@ def test_workbasket_changes_view_with_change_permission(
     remove_button = page.find("button", value="remove-selected")
 
     assert len(columns) == 6
-    assert len(rows) == session_workbasket.tracked_models.count()
+    assert len(rows) == user_workbasket.tracked_models.count()
     assert checkboxes
     assert remove_button
 
@@ -1683,7 +1635,7 @@ def test_workbasket_transaction_order_first_or_last_transaction_in_workbasket():
 def test_successfully_delete_workbasket(
     valid_user_client,
     valid_user,
-    session_empty_workbasket,
+    user_empty_workbasket,
 ):
     """Test that deleting an empty workbasket by a user having the necessary
     `workbasket.can_delete` permssion."""
@@ -1691,7 +1643,7 @@ def test_successfully_delete_workbasket(
     valid_user.user_permissions.add(
         Permission.objects.get(codename="delete_workbasket"),
     )
-    workbasket_pk = session_empty_workbasket.pk
+    workbasket_pk = user_empty_workbasket.pk
     delete_url = reverse(
         "workbaskets:workbasket-ui-delete",
         kwargs={"pk": workbasket_pk},
@@ -1724,12 +1676,12 @@ def test_successfully_delete_workbasket(
 
 def test_delete_workbasket_missing_user_permission(
     valid_user_client,
-    session_empty_workbasket,
+    user_empty_workbasket,
 ):
     """Test that attempts to access the delete workbasket view and delete a
     workbasket fails for a user without the necessary permissions."""
 
-    workbasket_pk = session_empty_workbasket.pk
+    workbasket_pk = user_empty_workbasket.pk
     url = reverse(
         "workbaskets:workbasket-ui-delete",
         kwargs={"pk": workbasket_pk},
@@ -1749,15 +1701,15 @@ def test_delete_workbasket_missing_user_permission(
 def test_delete_nonempty_workbasket(
     valid_user_client,
     valid_user,
-    session_workbasket,
+    user_workbasket,
 ):
     """Test that attempts to delete a non-empty workbasket fails."""
 
     valid_user.user_permissions.add(
         Permission.objects.get(codename="delete_workbasket"),
     )
-    workbasket_pk = session_workbasket.pk
-    workbasket_object_count = session_workbasket.tracked_models.count()
+    workbasket_pk = user_workbasket.pk
+    workbasket_object_count = user_workbasket.tracked_models.count()
     delete_url = reverse(
         "workbaskets:workbasket-ui-delete",
         kwargs={"pk": workbasket_pk},
@@ -1781,7 +1733,7 @@ def test_delete_nonempty_workbasket(
 
 def test_application_access_after_workbasket_delete(
     valid_user_client,
-    session_empty_workbasket,
+    user_empty_workbasket,
 ):
     """
     Test that after deleting a user's 'current' workbasket, the user is still
@@ -1792,13 +1744,13 @@ def test_application_access_after_workbasket_delete(
     ensuring application avoids 500-series errors under the above conditions.
     """
 
-    workbasket_pk = session_empty_workbasket.pk
+    workbasket_pk = user_empty_workbasket.pk
     url = reverse("workbaskets:workbasket-ui-list")
 
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content, "html.parser")
     # A workbasket link should be available in the header nav bar before
-    # session workbasket deletion.
+    # user workbasket deletion.
     assert response.status_code == 200
 
     assert (
@@ -1806,11 +1758,11 @@ def test_application_access_after_workbasket_delete(
         in page.select("header nav a.workbasket-link")[0].text
     )
 
-    session_empty_workbasket.delete()
+    user_empty_workbasket.delete()
 
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content, "html.parser")
-    # No workbasket link should exist in the header nav bar after session
+    # No workbasket link should exist in the header nav bar after user
     # workbasket deletion.
     assert response.status_code == 200
     assert not page.select("header nav a.workbasket-link")
@@ -1852,25 +1804,25 @@ def test_workbasket_delete_previously_queued_workbasket(
     assert workbasket.status == WorkflowStatus.ARCHIVED
 
 
-def test_workbasket_compare_200(valid_user_client, session_workbasket):
+def test_workbasket_compare_200(valid_user_client, user_workbasket):
     url = reverse("workbaskets:workbasket-check-ui-compare")
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
 
-def test_workbasket_compare_prev_uploaded(valid_user_client, session_workbasket):
+def test_workbasket_compare_prev_uploaded(valid_user_client, user_workbasket):
     factories.GoodsNomenclatureFactory()
     factories.GoodsNomenclatureFactory()
-    factories.DataUploadFactory(workbasket=session_workbasket)
+    factories.DataUploadFactory(workbasket=user_workbasket)
     url = reverse("workbaskets:workbasket-check-ui-compare")
     response = valid_user_client.get(url)
     assert "Worksheet data" in response.content.decode(response.charset)
 
 
-def test_workbasket_update_prev_uploaded(valid_user_client, session_workbasket):
+def test_workbasket_update_prev_uploaded(valid_user_client, user_workbasket):
     factories.GoodsNomenclatureFactory()
     factories.GoodsNomenclatureFactory()
-    data_upload = factories.DataUploadFactory(workbasket=session_workbasket)
+    data_upload = factories.DataUploadFactory(workbasket=user_workbasket)
     url = reverse("workbaskets:workbasket-check-ui-compare")
     data = {
         "data": (
@@ -1884,7 +1836,7 @@ def test_workbasket_update_prev_uploaded(valid_user_client, session_workbasket):
     assert data_upload.raw_data == data["data"]
 
 
-def test_workbasket_compare_form_submit_302(valid_user_client, session_workbasket):
+def test_workbasket_compare_form_submit_302(valid_user_client, user_workbasket):
     url = reverse("workbaskets:workbasket-check-ui-compare")
     data = {
         "data": (
@@ -1899,14 +1851,14 @@ def test_workbasket_compare_form_submit_302(valid_user_client, session_workbaske
 
 def test_workbasket_compare_found_measures(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     date_ranges,
     duty_sentence_parser,
     percent_or_amount,
 ):
     commodity = factories.GoodsNomenclatureFactory()
 
-    with session_workbasket.new_transaction():
+    with user_workbasket.new_transaction():
         measure = factories.MeasureFactory(
             valid_between=date_ranges.normal,
             goods_nomenclature=commodity,
@@ -1993,7 +1945,7 @@ def make_goods_import_batch(importer_storage, **kwargs):
 def test_review_goods_notification_button(
     successful_business_rules_setup,
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     import_batch_factory,
     visable,
 ):
@@ -2003,7 +1955,7 @@ def test_review_goods_notification_button(
     import_batch = import_batch_factory()
 
     if import_batch:
-        import_batch.workbasket_id = session_workbasket.id
+        import_batch.workbasket_id = user_workbasket.id
         if isinstance(import_batch, ImportBatch):
             import_batch.save()
 
@@ -2035,3 +1987,23 @@ def test_review_goods_notification_button(
         assert notify_button
     else:
         assert not notify_button
+
+
+@pytest.mark.parametrize(
+    "workbasket_factory",
+    [
+        factories.ArchivedWorkBasketFactory,
+        factories.QueuedWorkBasketFactory,
+        factories.PublishedWorkBasketFactory,
+    ],
+)
+def test_require_current_workbasket_redirect(workbasket_factory, client, valid_user):
+    client.force_login(valid_user)
+    workbasket = workbasket_factory()
+    workbasket.assign_to_user(valid_user)
+    # view that has require_current_workbasket decorator
+    response = client.get(reverse("quota-ui-create"))
+    assert response.status_code == 302
+    assert response.url == reverse("workbaskets:no-active-workbasket")
+    response = client.get(response.url)
+    assert "You need an active workbasket to access this page" in str(response.content)

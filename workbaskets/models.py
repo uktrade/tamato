@@ -495,14 +495,10 @@ class WorkBasket(TimestampedMixin):
         """WorkBasket is ready to be worked on again after being rejected by
         CDS."""
 
-    def save_to_session(self, session):
-        session["workbasket"] = {
-            "id": self.pk,
-            "status": self.status,
-            "title": self.title,
-            "error_count": self.tracked_model_check_errors.count(),
-            "measure_count": self.measures.count(),
-        }
+    def assign_to_user(self, current_user):
+        """Assigns the workbasket to the current user passed in."""
+        current_user.current_workbasket = self
+        current_user.save()
 
     @property
     def tracked_models(self) -> TrackedModelQuerySet:
@@ -513,25 +509,27 @@ class WorkBasket(TimestampedMixin):
         return Measure.objects.filter(transaction__workbasket=self)
 
     @classmethod
-    def load_from_session(cls, session):
-        if "workbasket" not in session:
-            raise KeyError("WorkBasket not in session")
-        return WorkBasket.objects.get(pk=session["workbasket"]["id"])
-
-    @classmethod
-    def remove_current_from_session(cls, session):
-        """Remove the current workbasket from the user's session."""
-        if "workbasket" in session:
-            del session["workbasket"]
+    def remove_users_current_workbasket(cls, request):
+        """Remove the user's assigned current workbasket."""
+        try:
+            current_user = User.objects.get(pk=request.user.id)
+            current_user.current_workbasket = None
+            current_user.save()
+        except User.DoesNotExist:
+            pass
 
     @classmethod
     def current(cls, request):
-        """Get the current workbasket in the session."""
-        if "workbasket" in request.session:
-            workbasket = cls.load_from_session(request.session)
+        """Get the user's current workbasket."""
+        try:
+            current_user = User.objects.get(id=request.user.id)
+            workbasket = current_user.current_workbasket
+        except User.DoesNotExist:
+            return None
 
+        if workbasket is not None:
             if workbasket.status != WorkflowStatus.EDITING:
-                cls.remove_current_from_session(request.session)
+                cls.remove_users_current_workbasket(request)
                 return None
 
             return workbasket
