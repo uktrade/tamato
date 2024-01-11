@@ -42,6 +42,7 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
+from measures.bulk_handling import bulk_create_edit
 from measures.conditions import show_step_geographical_area
 from measures.conditions import show_step_quota_origins
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
@@ -934,7 +935,8 @@ class MeasureCreateWizard(
 
     def done(self, form_list, **kwargs):
         serialized_cleaned_data = self.get_all_serialized_cleaned_data()
-
+        bulk_create_edit.apply_async()
+        # call new celery task here, passing in id of CreateMeasures object
         import json
 
         print()
