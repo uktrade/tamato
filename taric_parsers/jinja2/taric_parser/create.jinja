@@ -1,0 +1,25 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "Create a new import batch" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit import batches", "href": url("taric_parser_import_ui_list")},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+    {{ crispy(form, context={"csrf_token": csrf_token, "request": request}) }}
+  </div>
+</div>
+{% endblock %}

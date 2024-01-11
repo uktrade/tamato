@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import patch
 
 import factory
@@ -69,7 +70,7 @@ def test_create_packaging_notification(ready_for_packaging_notification):
 
     content = notification.get_personalisation()
     assert content == {
-        "envelope_id": "230001",
+        "envelope_id": f"{str(date.today().year)[2:]}0001",
         "description": "",
         "download_url": "http://localhost/publishing/envelope-queue/",
         "theme": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -100,7 +101,10 @@ def test_create_accepted_envelope(accepted_packaging_notification):
     )
 
     content = notification.get_personalisation()
-    assert "envelope_id" in content and content["envelope_id"] == "230001"
+    assert (
+        "envelope_id" in content
+        and content["envelope_id"] == f"{str(date.today().year)[2:]}0001"
+    )
     assert "transaction_count" in content and content["transaction_count"] == 1
     assert (
         "loading_report_message" in content
@@ -131,7 +135,10 @@ def test_create_rejected_envelope(rejected_packaging_notification):
     )
 
     content = notification.get_personalisation()
-    assert "envelope_id" in content and content["envelope_id"] == "230001"
+    assert (
+        "envelope_id" in content
+        and content["envelope_id"] == f"{str(date.today().year)[2:]}0001"
+    )
     assert "transaction_count" in content and content["transaction_count"] == 1
     assert (
         "loading_report_message" in content
@@ -162,7 +169,7 @@ def test_create_successful_publishing_notification(successful_publishing_notific
     )
 
     content = notification.get_personalisation()
-    assert content == {"envelope_id": "230001"}
+    assert content == {"envelope_id": f"{str(date.today().year)[2:]}0001"}
 
 
 def test_create_failed_publishing_notification(failed_publishing_notification):
@@ -186,7 +193,7 @@ def test_create_failed_publishing_notification(failed_publishing_notification):
     )
 
     content = notification.get_personalisation()
-    assert content == {"envelope_id": "230001"}
+    assert content == {"envelope_id": f"{str(date.today().year)[2:]}0001"}
 
 
 def test_send_notification_emails(ready_for_packaging_notification):

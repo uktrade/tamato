@@ -114,6 +114,7 @@ DOMAIN_APPS = [
     "quotas.apps.QuotasConfig",
     "reports.apps.ReportsConfig",
     "regulations.apps.RegulationsConfig",
+    "taric_parsers.apps.TaricParsersConfig",
 ]
 
 TAMATO_APPS = [
@@ -324,10 +325,18 @@ CACHES = {
     },
 }
 
+# Importer settings
 NURSERY_CACHE_ENGINE = os.getenv(
     "NURSERY_CACHE_ENGINE",
     "importer.cache.memory.MemoryCacheEngine",
 )
+
+# Maximum import file size (50mb) in bytes. This is an arbitrary value extracted from the importer
+# HMRC have stipulated that exported envelopes should not exceed 40mb.
+# A typical import of 40mb may result in an envelope of 20mb or less due to
+# the selective process of which changes the UK tariff needs. This value provides a significant margin of
+# distance from hitting the export limit in these instances.
+MAX_IMPORT_FILE_SIZE = 1024 * 1024 * 50
 
 # Settings about retrying uploads if the bucket or endpoint cannot be contacted.
 # Names correspond to celery settings for retrying tasks:
@@ -420,12 +429,11 @@ S3_ENDPOINT_URL = os.environ.get(
 )
 
 # Packaging automation.
-HMRC_PACKAGING_SEED_ENVELOPE_ID = int(
-    os.environ.get(
-        "HMRC_PACKAGING_SEED_ENVELOPE_ID",
-        "0001",
-    ),
+HMRC_PACKAGING_SEED_ENVELOPE_ID = os.environ.get(
+    "HMRC_PACKAGING_SEED_ENVELOPE_ID",
+    "0001",
 )
+
 HMRC_ENVELOPE_STORAGE_DIRECTORY = os.environ.get(
     "HMRC_ENVELOPE_STORAGE_DIRECTORY",
     "envelope/",
@@ -553,6 +561,9 @@ CELERY_ROUTES = {
         "queue": "rule-check",
     },
     re.compile(r"(importer)\.tasks\..*"): {
+        "queue": "importer",
+    },
+    re.compile(r"(taric_parsers)\.tasks\..*"): {
         "queue": "importer",
     },
     re.compile(r"(exporter|notifications|publishing)\.tasks\..*"): {

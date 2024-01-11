@@ -164,18 +164,81 @@ class NIG5(BusinessRule):
 
         from commodities.models.orm import GoodsNomenclatureOrigin
 
-        if not (
-            good.code.is_chapter
-            or GoodsNomenclatureOrigin.objects.filter(
-                new_goods_nomenclature__sid=good.sid,
-            )
-            .approved_up_to_transaction(good.transaction)
+        if good.code.is_chapter:
+            return
+
+        if (
+            GoodsNomenclatureOrigin.objects.filter(new_goods_nomenclature__sid=good.sid)
+            .approved_up_to_transaction(self.transaction)
             .exists()
         ):
-            raise self.violation(
-                model=good,
-                message="Non top-level goods must have an origin specified.",
+            return
+
+        raise self.violation(
+            model=good,
+            message="Non top-level goods must have an origin specified.",
+        )
+
+
+@skip_when_not_deleted
+class NIG5_origin(BusinessRule):
+    """
+    related to NIG5:
+
+    MIG5 text:
+        When creating a goods nomenclature code, an origin must exist.
+        This rule is only applicable to update extractions.
+
+    When an origin is deleted, the goods nomenclature should be validated, if it has not been deleted
+    then it should have an origin, provided it's not a chapter and was created after 1/1/2010
+    """
+
+    def validate(self, origin):
+        """
+        Only used when deleting an origin.
+
+        Verify:
+            * It has an origin after deletion of this origin
+            * or that the goods code is a chapter
+            * or it was created before 1/1/2010
+            * or the code was deleted in same or previous transaction
+
+        If it does not meet these criteria it's a validation fail
+        """
+
+        from commodities.models.orm import GoodsNomenclature
+        from commodities.models.orm import GoodsNomenclatureOrigin
+
+        if origin.new_goods_nomenclature.valid_between.lower < date(2021, 1, 1):
+            return
+
+        # is it a chapter?
+        if origin.new_goods_nomenclature.code.is_chapter:
+            return
+
+        if (
+            GoodsNomenclatureOrigin.objects.approved_up_to_transaction(
+                origin.transaction,
             )
+            .filter(new_goods_nomenclature__sid=origin.new_goods_nomenclature.sid)
+            .exists()
+        ):
+            return
+
+        # verify the goods nomenclature exists in the same transaction, it will not if it has been deleted
+        if not (
+            GoodsNomenclature.objects.approved_up_to_transaction(
+                origin.transaction,
+            )
+            .filter(sid=origin.new_goods_nomenclature.sid)
+            .exists()
+        ):
+            return
+
+        raise self.violation(
+            model=origin,
+            message="Non top-level goods must have an origin specified. None remain if this origin is deleted",
+        )
 
 
 class NIG7(BusinessRule):
@@ -236,6 +299,7 @@ class NIG10(BusinessRule):
             )
 
 
+@skip_when_deleted
 class NIG11(ValidityStartDateRules):
     """
     At least one indent record is mandatory.
