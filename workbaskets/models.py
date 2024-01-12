@@ -673,6 +673,7 @@ class User(AbstractUser):
         WorkBasket,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
     )
 
     class Meta:
