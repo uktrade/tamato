@@ -123,7 +123,7 @@ ui_patterns = [
     ),
     path(
         "no-active-workbasket/",
-        ui_views.NoActiveWorkbasket.as_view(),
+        ui_views.NoActiveWorkBasket.as_view(),
         name="no-active-workbasket",
     ),
     path(

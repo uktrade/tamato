@@ -1491,5 +1491,8 @@ class WorkBasketReviewRegulationsView(WorkBasketReviewView):
         return context
 
 
-class NoActiveWorkbasket(TemplateView):
-    template_name = "common/no_active_workbasket.jinja"
+class NoActiveWorkBasket(TemplateView):
+    """Redirect endpoint for users without an active workbasket and views that
+    require one."""
+
+    template_name = "workbaskets/no_active_workbasket.jinja"
