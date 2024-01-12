@@ -26,6 +26,7 @@ from geo_areas.models import GeographicalArea
 from measures.models import MeasurementUnit
 from quotas import models
 from quotas import validators
+from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
 
@@ -167,7 +168,8 @@ class QuotaUpdateForm(
     def get_origins_initial(self):
         initial = [
             {
-                "id": o.pk,
+                "id": o.pk,  # unique identifier used by react
+                "pk": o.pk,
                 "exclusions": [
                     {"id": e.excluded_geographical_area.pk}
                     for e in o.quotaordernumberoriginexclusion_set.current()
@@ -229,7 +231,19 @@ class QuotaUpdateForm(
                 del self.cleaned_data[field]
 
     def clean(self):
-        submitted_data = unprefix_formset_data(QUOTA_ORIGINS_FORMSET_PREFIX, self.data)
+        # unprefix origins formset
+        submitted_data = unprefix_formset_data(
+            QUOTA_ORIGINS_FORMSET_PREFIX,
+            self.data.copy(),
+        )
+        # for each origin, unprefix exclusions formset
+        for i, origin_data in enumerate(submitted_data):
+            exclusions = unprefix_formset_data(
+                QUOTA_EXCLUSIONS_FORMSET_PREFIX,
+                origin_data.copy(),
+            )
+            submitted_data[i]["exclusions"] = exclusions
+
         self.cleaned_data["origins"] = []
 
         for i, origin_data in enumerate(submitted_data):

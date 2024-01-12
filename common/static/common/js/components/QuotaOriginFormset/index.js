@@ -8,6 +8,7 @@ function QuotaOriginFormset({ data, options, errors }) {
     const [origins, setOrigins] = useState([...data]);
     const emptyOrigin = {
         "id": "",
+        "pk": "",
         "exclusions": [
         ],
         "geo_area_name": "",
