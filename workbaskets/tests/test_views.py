@@ -1989,21 +1989,45 @@ def test_review_goods_notification_button(
         assert not notify_button
 
 
+def test_no_active_workbasket_view(valid_user_client):
+    """Test that NoActiveWorkBasket view returns 200 and displays headings and
+    buttons."""
+    response = valid_user_client.get(reverse("workbaskets:no-active-workbasket"))
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    message = soup.find("h1", text="You need an active workbasket to access this page")
+    select_a_new_workbasket = soup.find(
+        "a",
+        href=reverse("workbaskets:workbasket-ui-list"),
+    )
+    return_to_homepage = soup.find("a", href=reverse("home"))
+
+    assert response.status_code == 200
+    assert message
+    assert select_a_new_workbasket
+    assert return_to_homepage
+
+
 @pytest.mark.parametrize(
     "workbasket_factory",
     [
+        lambda: None,
         factories.ArchivedWorkBasketFactory,
         factories.QueuedWorkBasketFactory,
         factories.PublishedWorkBasketFactory,
     ],
 )
 def test_require_current_workbasket_redirect(workbasket_factory, client, valid_user):
+    """Test that view's using require_current_workbasket decorator redirect to
+    NoActiveWorkBasket view if the user's current workbasket is no longer in
+    editing state."""
     client.force_login(valid_user)
-    workbasket = workbasket_factory()
-    workbasket.assign_to_user(valid_user)
+
+    valid_user.current_workbasket == workbasket_factory()
+    valid_user.save()
+
     # view that has require_current_workbasket decorator
-    response = client.get(reverse("quota-ui-create"))
+    response = client.get(reverse("workbaskets:current-workbasket"))
+
     assert response.status_code == 302
     assert response.url == reverse("workbaskets:no-active-workbasket")
-    response = client.get(response.url)
-    assert "You need an active workbasket to access this page" in str(response.content)
