@@ -1,6 +1,8 @@
 import datetime
 import logging
 from itertools import groupby
+from typing import Dict
+from typing import Optional
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -878,7 +880,63 @@ class MeasureCreateStartForm(forms.Form):
     pass
 
 
+class SerializableFormMixin:
+    """
+    Subclasses must implement serialize_cleaned_data() and
+    create_from_serialized_cleaned_data().
+
+    serialize_cleaned_data() accepts validated cleaned form data and returns a
+    serialized (actually, serializable) version of the data that may be stored
+    to JSON format.
+    """
+
+    # Date format when in a string representation.
+    DATE_STRING_FORMAT = "%Y-%m-%d"
+
+    def serialize_cleaned_data(self) -> Dict:
+        """
+        Return a serializable version of cleaned_data that may be rendered to
+        JSON format.
+
+        The caller is responsible for ensuring that cleaned_data is valid.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def create_from_serialized_cleaned_data(
+        cls,
+        serialized_cleaned_data: Dict,
+    ) -> forms.Form:
+        """Given a serialized representation of this Form's cleaned data, create
+        a new Form instance and return it."""
+        raise NotImplementedError
+
+    def serialize_date(self, date: Optional[datetime.date]) -> Optional[str]:
+        """
+        Serialize a date instance, which may be None, to a string representation
+        whose format DATE_STRING_FORMAT.
+
+        If `date` is None, then None is returned.
+        """
+        if isinstance(date, datetime.date):
+            return date.strftime(self.DATE_STRING_FORMAT)
+        return None
+
+    def deserialize_date(self, str_date: str) -> Optional[datetime.date]:
+        """
+        Deserialize a string representation of a date with format
+        DATE_STRING_FORMAT.
+
+        If `str_date` is falsy, then a value of None is returned.
+        """
+        if not str_date:
+            return None
+        # TODO: Invalid formats raise a ValueError. Decide how to handle them.
+        return datetime.datetime.strftime(self.date, self.DATE_STRING_FORMAT).date()
+
+
 class MeasureDetailsForm(
+    SerializableFormMixin,
     ValidityPeriodForm,
     forms.Form,
 ):
@@ -948,6 +1006,18 @@ class MeasureDetailsForm(
                 )
 
         return cleaned_data
+
+    def serialize_cleaned_data(self) -> Dict:
+        """TODO."""
+        return {}
+
+    @classmethod
+    def create_from_serialized_cleaned_data(
+        cls,
+        serialized_cleaned_data: Dict,
+    ) -> forms.Form:
+        """TODO."""
+        return cls(initial=serialized_cleaned_data)
 
 
 class MeasureRegulationIdForm(forms.Form):

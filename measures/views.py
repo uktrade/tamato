@@ -3,6 +3,7 @@ import json
 from itertools import groupby
 from operator import attrgetter
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Type
 from urllib.parse import urlencode
@@ -42,7 +43,6 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
-from measures.bulk_handling import bulk_create_edit
 from measures.conditions import show_step_geographical_area
 from measures.conditions import show_step_quota_origins
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
@@ -55,10 +55,12 @@ from measures.models import Measure
 from measures.models import MeasureActionPair
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
+from measures.models import MeasuresBulkCreator
 from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
+from measures.tasks import bulk_create_measures
 from measures.util import diff_components
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -934,36 +936,21 @@ class MeasureCreateWizard(
         return created_measures
 
     def done(self, form_list, **kwargs):
-        bulk_create_edit.apply_async()
+        serialized_cleaned_data = self.get_all_serialized_cleaned_data()
+        measures_bulk_creator = MeasuresBulkCreator.objects.create(
+            cleaned_data=serialized_cleaned_data,
+        )
+        bulk_create_measures.delay(measures_bulk_creator.pk)
+        # TODO: redirect from summary page to done page.
 
-    def get_all_serialized_cleaned_data(self):
-        """
-        Returns a merged dictionary of all step cleaned_data.
-
-        If a step contains
-        a `FormSet`, the key will be prefixed with 'formset-' and contain a list
-        of the formset cleaned_data dictionaries, as expected in
-        `create_measures()`.
-        Note: This patched version of `super().get_all_cleaned_data()` takes advantage of retrieving previously-saved
-        cleaned_data by summary page to avoid revalidating forms unnecessarily.
-        """
-
-        # TODO: not currently used, but will be used once the form-based
-        # serialisation is in place.
-
+    def get_all_serialized_cleaned_data(self) -> Dict:
+        """Returns a serialized version of all step cleaned_data."""
         all_cleaned_data = {}
+
         # for form_key in self.get_form_list():
-        # cleaned_data = self.get_cleaned_data_for_step(form_key)
-        for form_key in [self.MEASURE_DETAILS]:
-            cleaned_data = self.get_serialized_cleaned_data_for_step(form_key)
-            if isinstance(cleaned_data, (tuple, list)):
-                all_cleaned_data.update(
-                    {
-                        f"formset-{form_key}": cleaned_data,
-                    },
-                )
-            else:
-                all_cleaned_data.update(cleaned_data)
+        #   As per self.get_all_cleaned_data() but using
+        #   self.get_serialized_cleaned_data_for_step()
+
         return all_cleaned_data
 
     def get_all_cleaned_data(self):

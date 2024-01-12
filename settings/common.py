@@ -567,8 +567,8 @@ CELERY_ROUTES = {
     re.compile(r"(exporter|notifications|publishing)\.tasks\..*"): {
         "queue": "standard",
     },
-    "measures.bulk_handling.bulk_create_edit": {
-        "queue": "bulk-create-edit",
+    "measures.tasks.bulk_create_measures": {
+        "queue": "bulk-create",
     },
 }
 

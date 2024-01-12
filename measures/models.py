@@ -1,8 +1,11 @@
 from datetime import date
+from typing import Iterable
+from typing import Optional
 from typing import Set
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.transaction import atomic
 
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
@@ -969,19 +972,18 @@ class FootnoteAssociationMeasure(TrackedModel):
     )
 
 
-class CreateMeasures(models.Model):
+class MeasuresBulkCreator(models.Model):
+    """
+    Model class used to bulk create Measures instances from serialized form
+    data.
+
+    The stored form data is serialized and deserialized by Forms that subclass
+    SerializableFormMixin.
+    """
+
     cleaned_data = models.JSONField()
-    # Each sub-form in the CreateMeasuresWizard should have a function called
-    # create_from_serialized_cleaned_data()
-    # Loop through these sub-forms and call this function, passing in self.cleaned_data.
 
-    def create_measures(self):
-        pass
-        # NOTE: import must be here to avoid circular import errors
-        # from measures import forms
-
-        # for form in [
-        #     forms.MeasureDetailsForm,
-        # ]:
-        #     form = form.create_from_serialized_cleaned_data(self.cleaned_data)
-        # TODO: ensure each form returns correct form object
+    @atomic
+    def create_measures(self) -> Optional[Iterable[Measure]]:
+        # TODO
+        return []
