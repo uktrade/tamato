@@ -10,14 +10,14 @@
 
 {% block content %}
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
-        Report: {{ report.name }}
+        Report: {{ report.name }}        
     </h1>
+                    <a class="govuk-button" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug()}) }}">Export to CSV</a>
     <span class="govuk-caption-xl govuk-!-margin-bottom-9">Table</span>
     <h2 class="govuk-body">
     {{ report.description|safe }}
     </h2>
     <div>
         {% include "generics/table.jinja" %}
-
     </div>
 {% endblock %}
