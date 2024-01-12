@@ -24,18 +24,4 @@ class Migration(migrations.Migration):
                 to="workbaskets.workbasket",
             ),
         ),
-        migrations.AlterField(
-            model_name="user",
-            name="id",
-            field=models.AutoField(
-                auto_created=True,
-                primary_key=True,
-                serialize=False,
-                verbose_name="ID",
-            ),
-        ),
-        migrations.AlterModelTable(
-            name="user",
-            table=None,
-        ),
     ]

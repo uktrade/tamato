@@ -674,3 +674,6 @@ class User(AbstractUser):
         on_delete=models.SET_NULL,
         null=True,
     )
+
+    class Meta:
+        db_table = "auth_user"
