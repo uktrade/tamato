@@ -934,34 +934,7 @@ class MeasureCreateWizard(
         return created_measures
 
     def done(self, form_list, **kwargs):
-        serialized_cleaned_data = self.get_all_serialized_cleaned_data()
         bulk_create_edit.apply_async()
-        # call new celery task here, passing in id of CreateMeasures object
-        import json
-
-        print()
-        print("*** serialized_cleaned_data:")
-        print(json.dumps(serialized_cleaned_data, indent=4))
-        print()
-        raise Exception("Go no further!")
-
-    # def done(self, form_list, **kwargs):
-    #    created_measures = self.create_measures(cleaned_data)
-    #    created_measures[0].transaction.workbasket.save_to_session(self.request.session)
-    #
-    #    context = self.get_context_data(
-    #        form=None,
-    #        created_measures=created_measures,
-    #        **kwargs,
-    #    )
-    #
-    #    # TODO: this should probably be a redirect to the summary page.
-    #    return render(self.request, "measures/confirm-create-multiple.jinja", context)
-    #    # Something like so:
-    #    #return redirect(
-    #    #    "confirm-queued-create-measures",
-    #    #    kwargs={"create_measures_pk": create_measures_pk},
-    #    #)
 
     def get_all_serialized_cleaned_data(self):
         """
@@ -974,6 +947,10 @@ class MeasureCreateWizard(
         Note: This patched version of `super().get_all_cleaned_data()` takes advantage of retrieving previously-saved
         cleaned_data by summary page to avoid revalidating forms unnecessarily.
         """
+
+        # TODO: not currently used, but will be used once the form-based
+        # serialisation is in place.
+
         all_cleaned_data = {}
         # for form_key in self.get_form_list():
         # cleaned_data = self.get_cleaned_data_for_step(form_key)
