@@ -967,3 +967,21 @@ class FootnoteAssociationMeasure(TrackedModel):
         business_rules.ME73,
         UpdateValidity,
     )
+
+
+class CreateMeasures(models.Model):
+    cleaned_data = models.JSONField()
+    # Each sub-form in the CreateMeasuresWizard should have a function called
+    # create_from_serialized_cleaned_data()
+    # Loop through these sub-forms and call this function, passing in self.cleaned_data.
+
+    def create_measures(self):
+        pass
+        # NOTE: import must be here to avoid circular import errors
+        # from measures import forms
+
+        # for form in [
+        #     forms.MeasureDetailsForm,
+        # ]:
+        #     form = form.create_from_serialized_cleaned_data(self.cleaned_data)
+        # TODO: ensure each form returns correct form object
