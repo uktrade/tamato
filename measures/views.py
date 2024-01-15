@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 
 from crispy_forms.helper import FormHelper
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
@@ -945,13 +946,55 @@ class MeasureCreateWizard(
 
     def get_all_serialized_cleaned_data(self) -> Dict:
         """Returns a serialized version of all step cleaned_data."""
-        all_cleaned_data = {}
+
+        all_serialized_cleaned_data = {}
 
         # for form_key in self.get_form_list():
         #   As per self.get_all_cleaned_data() but using
         #   self.get_serialized_cleaned_data_for_step()
 
-        return all_cleaned_data
+        for form_key in [
+            # TODO:
+            # - Note that details, regs, geo areas and commodities are a first
+            #   pass to get to fully created Measure instances.
+            # - Replace this list with self.get_form_list() on completing all
+            #   form serialization work.
+            self.MEASURE_DETAILS,
+            # self.REGULATION_ID,
+            # self.GEOGRAPHICAL_AREA,
+            # self.COMMODITIES,
+        ]:
+            # TODO:
+            # - Decide upon approach: continue with the current hybrid approach
+            #   of breaking out keys for formsets only, flattening all other
+            #   forms, or break out all forms so that they each key into a dict
+            #   of their attributes.
+
+            serialized_cleaned_data = self.get_serialized_cleaned_data_for_step(
+                form_key,
+            )
+            all_serialized_cleaned_data.update({form_key: serialized_cleaned_data})
+
+        return all_serialized_cleaned_data
+
+    def get_serialized_cleaned_data_for_step(self, step) -> Dict:
+        """
+        Returns serialized cleaned data for a given `step`.
+
+        This is a re-implementation of WizardView.get_cleaned_data_for_step(),
+        returning the serialized version of cleaned_data in place of the form's
+        regular cleaned_data.
+        """
+
+        form_obj = super().get_form(
+            step=step,
+            data=self.storage.get_step_data(step),
+            files=self.storage.get_step_files(step),
+        )
+        if form_obj.is_valid():
+            return form_obj.serialize_cleaned_data()
+
+        raise ValidationError
 
     def get_all_cleaned_data(self):
         """
