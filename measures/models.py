@@ -985,5 +985,8 @@ class MeasuresBulkCreator(models.Model):
 
     @atomic
     def create_measures(self) -> Optional[Iterable[Measure]]:
+        """Create measures using the instance's `cleaned_data`, returning the
+        results as an iterable."""
+
         # TODO
         return []
