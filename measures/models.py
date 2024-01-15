@@ -1,6 +1,5 @@
 from datetime import date
 from typing import Iterable
-from typing import Optional
 from typing import Set
 
 from django.core.exceptions import ValidationError
@@ -984,9 +983,10 @@ class MeasuresBulkCreator(models.Model):
     cleaned_data = models.JSONField()
 
     @atomic
-    def create_measures(self) -> Optional[Iterable[Measure]]:
+    def create_measures(self) -> Iterable[Measure]:
         """Create measures using the instance's `cleaned_data`, returning the
         results as an iterable."""
+        created_measures = []
 
         # TODO
-        return []
+        return created_measures
