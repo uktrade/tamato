@@ -37,5 +37,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(generate_timestamps),
+        migrations.RunPython(
+            generate_timestamps,
+            reverse_code=migrations.RunPython.noop,
+        ),
     ]

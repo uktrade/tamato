@@ -16,7 +16,6 @@ def generate_timestamps(apps, schema_editor):
         print(f"number {page_num}")
         for tracked_model in paginator.page(page_num).object_list:
             tracked_model.created_at = tracked_model.transaction.created_at
-            tracked_model.updated_at = tracked_model.transaction.updated_at
             tracked_model.save()
 
 
@@ -26,5 +25,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(generate_timestamps),
+        migrations.RunPython(
+            generate_timestamps,
+            reverse_code=migrations.RunPython.noop,
+        ),
     ]
