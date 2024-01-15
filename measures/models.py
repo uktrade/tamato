@@ -988,5 +988,10 @@ class MeasuresBulkCreator(models.Model):
         results as an iterable."""
         created_measures = []
 
+        import json
+
+        print(f"*** cleaned_data:")
+        print(json.dumps(self.cleaned_data, indent=4))
+
         # TODO
         return created_measures

@@ -886,7 +886,7 @@ class DateRangeDict(TypedDict):
     """Typing useful for serialized DateRange type annotations."""
 
     start_date: str
-    end_date: Optional(str)
+    end_date: str
 
 
 class SerializableFormMixin:
