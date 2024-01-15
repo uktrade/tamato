@@ -3,6 +3,7 @@ import logging
 from itertools import groupby
 from typing import Dict
 from typing import Optional
+from typing import TypedDict
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -20,6 +21,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from parsec import ParseError
+from psycopg2.extras import DateRange
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -880,6 +882,13 @@ class MeasureCreateStartForm(forms.Form):
     pass
 
 
+class DateRangeDict(TypedDict):
+    """Typing useful for serialized DateRange type annotations."""
+
+    start_date: str
+    end_date: Optional(str)
+
+
 class SerializableFormMixin:
     """
     Subclasses must implement serialize_cleaned_data() and
@@ -911,28 +920,73 @@ class SerializableFormMixin:
         a new Form instance and return it."""
         raise NotImplementedError
 
-    def serialize_date(self, date: Optional[datetime.date]) -> Optional[str]:
+    ###########
+    # Field serializers.
+
+    @classmethod
+    def serialize_date_range(
+        cls,
+        date_range: Optional[DateRange],
+    ) -> Optional[DateRangeDict]:
+        """
+        Serialize a DateRange, which may be None, to a dictionary representation
+        with keys `start_date` and `end_date`, each of which is a (possibly
+        None) serialized date.
+
+        If `date_range` is None, then None is returned.
+        """
+
+        if not date_range:
+            return None
+
+        return {
+            "start_date": cls.serialize_date(date_range.start_date),
+            "end_date": cls.serialize_date(date_range.end_date),
+        }
+
+    @classmethod
+    def deserialize_date_range(
+        cls,
+        date_range: Optional[DateRangeDict],
+    ) -> Optional[DateRange]:
+        """
+        Deserialize a serialized DateRange representation back to a DateRange.
+
+        If `date_range` is none, then None is returned.
+        """
+
+        if not date_range:
+            return None
+
+        return DateRange(date_range["start_date"], date_range["end_date"])
+
+    @classmethod
+    def serialize_date(cls, date: Optional[datetime.date]) -> Optional[str]:
         """
         Serialize a date instance, which may be None, to a string representation
         whose format DATE_STRING_FORMAT.
 
         If `date` is None, then None is returned.
         """
+
         if isinstance(date, datetime.date):
-            return date.strftime(self.DATE_STRING_FORMAT)
+            return date.strftime(cls.DATE_STRING_FORMAT)
+
         return None
 
-    def deserialize_date(self, str_date: str) -> Optional[datetime.date]:
+    @classmethod
+    def deserialize_date(cls, str_date: Optional[str]) -> Optional[datetime.date]:
         """
         Deserialize a string representation of a date with format
         DATE_STRING_FORMAT.
 
         If `str_date` is falsy, then a value of None is returned.
         """
+
         if not str_date:
             return None
-        # TODO: Invalid formats raise a ValueError. Decide how to handle them.
-        return datetime.datetime.strftime(self.date, self.DATE_STRING_FORMAT).date()
+
+        return datetime.datetime.strftime(str_date, cls.DATE_STRING_FORMAT).date()
 
 
 class MeasureDetailsForm(
@@ -1008,16 +1062,30 @@ class MeasureDetailsForm(
         return cleaned_data
 
     def serialize_cleaned_data(self) -> Dict:
-        """TODO."""
-        return {}
+        serialized = {
+            "measure_type": self.measure_type.pk if self.measure_type else None,
+            "valid_between": self.serialize_date_range(self.valid_between),
+        }
+        return serialized
 
     @classmethod
     def create_from_serialized_cleaned_data(
         cls,
         serialized_cleaned_data: Dict,
     ) -> forms.Form:
-        """TODO."""
-        return cls(initial=serialized_cleaned_data)
+        initial = {
+            "measure_type": (
+                models.MeasureType.objects.get(
+                    pk=serialized_cleaned_data["measure_type"],
+                )
+                if serialized_cleaned_data.get("measure_type")
+                else None
+            ),
+            "valid_between": cls.deserialize_date_range(
+                serialized_cleaned_data["valid_between"],
+            ),
+        }
+        return cls(initial=initial)
 
 
 class MeasureRegulationIdForm(forms.Form):
