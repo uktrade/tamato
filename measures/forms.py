@@ -940,8 +940,8 @@ class SerializableFormMixin:
             return None
 
         return {
-            "start_date": cls.serialize_date(date_range.start_date),
-            "end_date": cls.serialize_date(date_range.end_date),
+            "lower": cls.serialize_date(date_range.lower),
+            "upper": cls.serialize_date(date_range.upper),
         }
 
     @classmethod
@@ -958,7 +958,7 @@ class SerializableFormMixin:
         if not date_range:
             return None
 
-        return DateRange(date_range["start_date"], date_range["end_date"])
+        return DateRange(date_range["lower"], date_range["upper"])
 
     @classmethod
     def serialize_date(cls, date: Optional[datetime.date]) -> Optional[str]:
@@ -1063,8 +1063,14 @@ class MeasureDetailsForm(
 
     def serialize_cleaned_data(self) -> Dict:
         serialized = {
-            "measure_type": self.measure_type.pk if self.measure_type else None,
-            "valid_between": self.serialize_date_range(self.valid_between),
+            "measure_type": self.cleaned_data["measure_type"].pk
+            if self.cleaned_data.get("measure_type")
+            else None,
+            "valid_between": self.serialize_date_range(
+                self.cleaned_data["valid_between"],
+            )
+            if self.cleaned_data.get("valid_between")
+            else None,
         }
         return serialized
 
