@@ -206,6 +206,7 @@ class NIG5_origin(BusinessRule):
         If it does not meet these criteria it's a validation fail
         """
 
+        from commodities.models.orm import GoodsNomenclature
         from commodities.models.orm import GoodsNomenclatureOrigin
 
         if origin.new_goods_nomenclature.valid_between.lower < date(2021, 1, 1):
@@ -220,6 +221,16 @@ class NIG5_origin(BusinessRule):
                 origin.transaction,
             )
             .filter(new_goods_nomenclature__sid=origin.new_goods_nomenclature.sid)
+            .exists()
+        ):
+            return
+
+        # verify the goods nomenclature exists in the same transaction, it will not if it has been deleted
+        if not (
+            GoodsNomenclature.objects.approved_up_to_transaction(
+                origin.transaction,
+            )
+            .filter(sid=origin.new_goods_nomenclature.sid)
             .exists()
         ):
             return

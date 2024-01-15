@@ -13,7 +13,6 @@ from commodities.models.orm import GoodsNomenclature
 from common.tests import factories
 from common.tests.util import generate_test_import_xml
 from importer import chunker
-from importer.chunker import MAX_FILE_SIZE
 from importer.chunker import chunk_taric
 from importer.chunker import filter_transaction_records
 from importer.chunker import get_chapter_heading
@@ -24,6 +23,7 @@ from importer.chunker import write_transaction_to_chunk
 from importer.models import ImporterXMLChunk
 from importer.namespaces import TTags
 from importer.namespaces import nsmap
+from settings import MAX_IMPORT_FILE_SIZE
 
 from .test_namespaces import get_snippet_transaction
 
@@ -241,7 +241,7 @@ def test_write_transaction_to_chunk_exceed_max_file_size(
     )
     chunks_in_progress = {}
     chunk = BytesIO()
-    chunk.seek(MAX_FILE_SIZE + 1)
+    chunk.seek(MAX_IMPORT_FILE_SIZE + 1)
     record_code = get_record_code(transaction)
     chapter_heading = get_chapter_heading(transaction)
     key = (record_code, chapter_heading)

@@ -8,8 +8,11 @@ from django_chunk_upload_handlers.clam_av import validate_virus_check_result
 from django_fsm import FSMField
 from django_fsm import transition
 
+from common import validators
 from common.models import TimestampedMixin
 from importer.storages import CommodityImporterStorage
+from importer.validators import ImportIssueType
+from taric_parsers.importer_issue import ImportIssueReportItem
 from workbaskets.util import clear_workbasket
 from workbaskets.validators import WorkflowStatus
 
@@ -54,6 +57,9 @@ class ImportBatchStatus(models.TextChoices):
     FAILED = "FAILED", "Failed"
     """The import process completed / terminated but finished in some error
     state."""
+    FAILED_EMPTY = "FAILED_EMPTY", "Failed Empty"
+    """The import was not able to complete, because there were no changes to
+    import."""
 
 
 class ImportBatch(TimestampedMixin):
@@ -121,17 +127,22 @@ class ImportBatch(TimestampedMixin):
         """The import process completed and was successful."""
         logger.info(f"Transitioning status of import pk={self.pk} to SUCCEEDED.")
 
-        if (
-            not self.workbasket.tracked_models.exists()
-            and self.workbasket.status == WorkflowStatus.EDITING
-        ):
-            # Successful imports with an empty workbasket are archived.
+        if self.workbasket:
+            if (
+                not self.workbasket.tracked_models.exists()
+                and self.workbasket.status == WorkflowStatus.EDITING
+            ):
+                # Successful imports with an empty workbasket are archived.
+                logger.info(
+                    f"Archiving empty workbasket pk={self.workbasket.pk} "
+                    f"associated with SUCCEEDED import pk={self.pk}.",
+                )
+                self.workbasket.archive()
+                self.workbasket.save()
+        else:
             logger.info(
-                f"Archiving empty workbasket pk={self.workbasket.pk} "
-                f"associated with SUCCEEDED import pk={self.pk}.",
+                f"No workbasket associated with import pk={self.pk}.",
             )
-            self.workbasket.archive()
-            self.workbasket.save()
 
     @transition(
         field=status,
@@ -142,21 +153,57 @@ class ImportBatch(TimestampedMixin):
     def failed(self):
         """The import process completed with an error condition."""
         logger.info(f"Transitioning status of import pk={self.pk} to FAILED.")
+        if self.workbasket:
+            if self.workbasket.tracked_models.exists():
+                logger.info(
+                    f"Clearing workbasket pk={self.workbasket.pk} contents "
+                    f"associated with FAILED import pk={self.pk}.",
+                )
+                clear_workbasket(self.workbasket)
 
-        if self.workbasket.tracked_models.exists():
+            if self.workbasket.status == WorkflowStatus.EDITING:
+                logger.info(
+                    f"Archiving workbasket pk={self.workbasket.pk} "
+                    f"associated with FAILED import pk={self.pk}.",
+                )
+                self.workbasket.archive()
+                self.workbasket.save()
+        else:
             logger.info(
-                f"Clearing workbasket pk={self.workbasket.pk} contents "
-                f"associated with FAILED import pk={self.pk}.",
+                f"FAILED import pk={self.pk}.",
             )
-            clear_workbasket(self.workbasket)
 
-        if self.workbasket.status == WorkflowStatus.EDITING:
-            logger.info(
-                f"Archiving workbasket pk={self.workbasket.pk} "
-                f"associated with FAILED import pk={self.pk}.",
-            )
-            self.workbasket.archive()
-            self.workbasket.save()
+    def can_transition_to_failed_empty(self):
+        """
+        This check is used in the transition to failed empty, which should only
+        be used before a workbasket is created.
+
+        This is in support of the importerV2 which runs validation before
+        committing anything to the database can can be used to indicate the
+        import did not error but failed due to lack of content. The importerV1
+        does not have this same behaviour, and will create a workbasket
+        regardless, so use the failed transition in this case.
+        """
+
+        if self.workbasket:
+            return False
+        return True
+
+    @transition(
+        field=status,
+        source=ImportBatchStatus.IMPORTING,
+        target=ImportBatchStatus.FAILED_EMPTY,
+        on_error=ImportBatchStatus.FAILED,
+        conditions=[can_transition_to_failed_empty],
+        custom={"label": "Failed Empty"},
+    )
+    def failed_empty(self):
+        """The import process did not find any changes to import."""
+        logger.info(f"Transitioning status of import pk={self.pk} to FAILED_EMPTY.")
+
+        logger.info(
+            f"FAILED_EMPTY import pk={self.pk}.",
+        )
 
     @property
     def ready_chunks(self):
@@ -176,6 +223,113 @@ class ImportBatch(TimestampedMixin):
         return (
             f"ImportBatch(pk={self.pk}, name={self.name}, "
             f"author={self.author}, status={self.status})"
+        )
+
+
+class BatchImportError(TimestampedMixin):
+    """
+    Batch Import Error.
+
+    This class is used to represent an error on import, and should be used to
+    inform and assist to the import process when things go wrong.
+
+    Most of the fields are populated with data read from the XML on import
+    attempt, and are populated when a record cant be created or has issues.
+
+    This class has a *-1 relationship with ImportBatch
+
+    This object is used at the end of an import to iterate through found issues
+    and persist them, there are other examples of issues being created outside
+    the TARIC parsing process, a bad file for example but the main use is to
+    persist detailed information for the user to review.
+    """
+
+    # the XML tag of an object, if required. Could be empty if an issue is related to a more generic error or the object type cant be determined
+    object_type = models.CharField(max_length=250)
+
+    # the XML tag of a related object, if required. Could be empty if an issue is related to a more generic error or the object
+    # type cant be determined or there is no related object to the object type
+    related_object_type = models.CharField(max_length=250)
+
+    # A dictionary containing identity fields and values for an object related to the object being imported. This field will be populated typically if
+    # an issue was identified where the related object expected by the import does not exist.
+    related_object_identity_keys = models.JSONField(default=None, null=True)
+
+    # Text description of the encountered issue
+    description = models.CharField(max_length=2000)
+
+    # Issue type, either ERROR, WARNING or INFO (from ImportIssueType choices)
+    issue_type = models.CharField(
+        max_length=50,
+        choices=ImportIssueType.choices,
+    )
+
+    # The BatchImport the BatchImportError relates to
+    batch = models.ForeignKey(
+        ImportBatch,
+        on_delete=models.PROTECT,
+        related_name="issues",
+    )
+
+    # A dictionary of the values for the object where applicable. This field will be blank for generic errors not related to an object.
+    object_data = models.JSONField(default=None, null=True)
+
+    # Update type in the TARIC entry that the issue relates to, this can be null for issues relating to the import and not a specific
+    # record but typically will be populated with the numeric value relating to the update type
+    object_update_type: validators.UpdateType = models.PositiveSmallIntegerField(
+        choices=validators.UpdateType.choices,
+        db_index=True,
+        blank=True,
+        null=True,
+    )
+
+    # If this is related to a transaction, the transaction ID will be recorded here. This will be the ID in the XML.
+    transaction_id = models.CharField(max_length=50, default=None)
+
+    @property
+    def object_update_type_name(self):
+        if self.object_update_type:
+            for update_type, update_type_name in validators.UpdateType.choices:
+                if update_type == self.object_update_type:
+                    return update_type_name
+        return ""
+
+    @property
+    def object_data_to_str(self):
+        str = ""
+        if self.object_data:
+            for key, value in self.object_data.items():
+                str += f"{key}: {value}\n"
+
+        return str
+
+    @classmethod
+    def create_from_import_issue_report_item(
+        cls,
+        issue: ImportIssueReportItem,
+        import_batch: ImportBatch,
+    ) -> None:
+        """
+        Creates a BatchImportError instance from the provided information,
+        committed to the database.
+
+        Args:
+            issue: ImportIssueReportItem, An object containing information to report within BatchImportError
+            import_batch: BatchImport, the batch object that the issue will be linked to
+
+        Returns:
+            None
+        """
+        cls.objects.create(
+            batch=import_batch,
+            object_type=issue.object_type,
+            related_object_type=issue.related_object_type,
+            related_object_identity_keys=issue.related_object_identity_keys,
+            description=issue.description,
+            issue_type=issue.issue_type,
+            object_update_type=issue.object_update_type,
+            object_data=issue.object_data,
+            transaction_id=issue.transaction_id,
         )
 
 

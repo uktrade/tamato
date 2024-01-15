@@ -7,6 +7,10 @@
     {{ create_status_tag(object, status_tag_generator) }}
   {%- endset -%}
 
+  {%- set details_link -%}
+    <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity_importer-ui-details', kwargs={'pk': object.pk}) }}">{{ object.name }}</a>
+  {%- endset %}
+
 
   {%- set goods_status_cell -%}
     {% if goods_status(object) == "editable_goods" %}
@@ -38,7 +42,7 @@
   {%- endset -%}
 
   {{ table_rows.append([
-    {"text": object.name},
+    {"text": details_link},
     {"text": "{:%d %b %Y}".format(object.created_at)},
     {"text": author},
     {"text": import_status_cell},

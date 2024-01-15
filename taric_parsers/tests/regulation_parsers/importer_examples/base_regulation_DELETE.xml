@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope id="000001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+    <env:transaction id="1">
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>285</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>2</oub:update.type>
+                    <oub:base.regulation>
+                        <oub:base.regulation.role>1</oub:base.regulation.role>
+                        <oub:base.regulation.id>Z0000001</oub:base.regulation.id>
+                        <oub:published.date>2023-01-11</oub:published.date>
+                        <oub:officialjournal.number>ABCDE</oub:officialjournal.number>
+                        <oub:officialjournal.page>7</oub:officialjournal.page>
+                        <oub:effective.end.date>2023-01-11</oub:effective.end.date>
+                        <oub:community.code>1</oub:community.code>
+                        <oub:replacement.indicator>7</oub:replacement.indicator>
+                        <oub:stopped.flag>0</oub:stopped.flag>
+                        <oub:information.text>Some Info Text with changes</oub:information.text>
+                        <oub:approved.flag>1</oub:approved.flag>
+                        <oub:regulation.group.id>ABC</oub:regulation.group.id>
+                        <oub:validity.start.date>2021-01-11</oub:validity.start.date>
+                        <oub:validity.end.date>2022-01-11</oub:validity.end.date>
+                    </oub:base.regulation>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>

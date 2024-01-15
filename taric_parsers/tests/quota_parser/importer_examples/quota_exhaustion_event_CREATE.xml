@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope id="000001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+	<env:transaction id="1">
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>225</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:monetary.unit>
+                        <oub:monetary.unit.code>ZZZ</oub:monetary.unit.code>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2022-01-01</oub:validity.end.date>
+                    </oub:monetary.unit>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>225</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:monetary.unit.description>
+                        <oub:monetary.unit.code>ZZZ</oub:monetary.unit.code>
+                        <oub:language.id>zz</oub:language.id>
+                        <oub:description>Some Description</oub:description>
+                    </oub:monetary.unit.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="1">
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>215</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit.qualifier>
+                        <oub:measurement.unit.qualifier.code>A</oub:measurement.unit.qualifier.code>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2022-01-01</oub:validity.end.date>
+                    </oub:measurement.unit.qualifier>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>215</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit.qualifier.description>
+                        <oub:measurement.unit.qualifier.code>A</oub:measurement.unit.qualifier.code>
+                        <oub:language.id>ZZ</oub:language.id>
+                        <oub:description>Some description</oub:description>
+                    </oub:measurement.unit.qualifier.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="1">
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>210</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit>
+                        <oub:measurement.unit.code>XXX</oub:measurement.unit.code>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2022-01-01</oub:validity.end.date>
+                    </oub:measurement.unit>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="3">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>210</oub:record.code>
+                    <oub:subrecord.code>05</oub:subrecord.code>
+                    <oub:record.sequence.number>3</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:measurement.unit.description>
+                        <oub:measurement.unit.code>XXX</oub:measurement.unit.code>
+                        <oub:language.id>zz</oub:language.id>
+                        <oub:description>Some Description</oub:description>
+                    </oub:measurement.unit.description>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="1">
+        <env:app.message id="7">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19971104</oub:transaction.id>
+                    <oub:record.code>360</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:quota.order.number>
+                        <oub:quota.order.number.sid>7</oub:quota.order.number.sid>
+                        <oub:quota.order.number.id>054515</oub:quota.order.number.id>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                    </oub:quota.order.number>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="1">
+        <env:app.message id="7">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19971104</oub:transaction.id>
+                    <oub:record.code>370</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:quota.definition>
+                        <oub:quota.definition.sid>99</oub:quota.definition.sid>
+                        <oub:quota.order.number.id>054515</oub:quota.order.number.id>
+                        <oub:quota.order.number.sid>7</oub:quota.order.number.sid>
+                        <oub:validity.start.date>2021-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2022-01-01</oub:validity.end.date>
+                        <oub:volume>1200</oub:volume>
+                        <oub:initial.volume>200</oub:initial.volume>
+                        <oub:measurement.unit.code>XXX</oub:measurement.unit.code>
+                        <oub:measurement.unit.qualifier.code>A</oub:measurement.unit.qualifier.code>
+                        <oub:maximum.precision>3</oub:maximum.precision>
+                        <oub:critical.state>0</oub:critical.state>
+                        <oub:critical.threshold>75</oub:critical.threshold>
+                        <oub:description>Some Description</oub:description>
+                    </oub:quota.definition>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+        <env:app.message id="7">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19971104</oub:transaction.id>
+                    <oub:record.code>370</oub:record.code>
+                    <oub:subrecord.code>00</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:quota.definition>
+                        <oub:quota.definition.sid>100</oub:quota.definition.sid>
+                        <oub:quota.order.number.id>054515</oub:quota.order.number.id>
+                        <oub:quota.order.number.sid>7</oub:quota.order.number.sid>
+                        <oub:validity.start.date>2023-01-01</oub:validity.start.date>
+                        <oub:validity.end.date>2024-01-01</oub:validity.end.date>
+                        <oub:volume>1200</oub:volume>
+                        <oub:initial.volume>200</oub:initial.volume>
+                        <oub:monetary.unit.code>ZZZ</oub:monetary.unit.code>
+                        <oub:maximum.precision>3</oub:maximum.precision>
+                        <oub:critical.state>0</oub:critical.state>
+                        <oub:critical.threshold>75</oub:critical.threshold>
+                        <oub:description>Some Description</oub:description>
+                    </oub:quota.definition>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+    <env:transaction id="1">
+        <env:app.message id="1">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0" xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>1</oub:transaction.id>
+                    <oub:record.code>375</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>3</oub:update.type>
+                    <oub:quota.exhaustion.event>
+                        <oub:quota.definition.sid>100</oub:quota.definition.sid>
+                        <oub:occurrence.timestamp>2020-09-25T14:58:58</oub:occurrence.timestamp>
+                        <oub:exhaustion.date>2021-01-01</oub:exhaustion.date>
+                    </oub:quota.exhaustion.event>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>

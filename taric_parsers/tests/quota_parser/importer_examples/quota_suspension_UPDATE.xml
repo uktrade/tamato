@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope id="000001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+    <env:transaction id="1">
+        <env:app.message id="7">
+            <oub:transmission xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+                              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+                <oub:record>
+                    <oub:transaction.id>19971104</oub:transaction.id>
+                    <oub:record.code>370</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>1</oub:record.sequence.number>
+                    <oub:update.type>1</oub:update.type>
+                    <oub:quota.suspension.period>
+                        <oub:quota_suspension_period_sid>123</oub:quota_suspension_period_sid>
+                        <oub:quota.definition.sid>99</oub:quota.definition.sid>
+                        <oub:suspension.start.date>2021-01-11</oub:suspension.start.date>
+                        <oub:suspension.end.date>2022-01-01</oub:suspension.end.date>
+                        <oub:description>Some Description with changes</oub:description>
+                    </oub:quota.suspension.period>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>

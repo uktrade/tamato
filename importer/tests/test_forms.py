@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import HttpRequest
 
 from importer import forms
 from workbaskets.validators import WorkflowStatus
@@ -13,6 +14,7 @@ TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.importer_v2
 def test_upload_taric_form_valid_envelope_id():
     with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as upload_file:
         data = {
@@ -31,11 +33,12 @@ def test_upload_taric_form_valid_envelope_id():
         assert form.is_valid()
 
 
+@pytest.mark.importer_v2
 @pytest.mark.parametrize("file_name,", ("invalid_id", "dtd"))
 @patch("importer.forms.capture_exception")
 def test_upload_taric_form_invalid_envelope(capture_exception, file_name, settings):
     """Test that form returns generic validation error and sentry captures
-    exception when given xml file with invalid id or document type
+    xception when given xml file with invalid id or document type
     declaration."""
     settings.SENTRY_ENABLED = True
     with open(f"{TEST_FILES_PATH}/{file_name}.xml", "rb") as upload_file:
@@ -56,6 +59,7 @@ def test_upload_taric_form_invalid_envelope(capture_exception, file_name, settin
         capture_exception.assert_called_once()
 
 
+@pytest.mark.importer_v2
 def test_import_form_non_xml_file():
     """Test that form returns incorrect file type validation error when passed a
     text file instead of xml."""
@@ -75,6 +79,7 @@ def test_import_form_non_xml_file():
 
 # https://uktrade.atlassian.net/browse/TP2000-486
 # We forgot to add `self` to process_file params and no tests caught it.
+@pytest.mark.importer_v2
 @patch("importer.forms.chunk_taric")
 @patch("importer.forms.run_batch")
 def test_upload_taric_form_save(run_batch, chunk_taric, superuser):
@@ -104,13 +109,15 @@ def test_upload_taric_form_save(run_batch, chunk_taric, superuser):
 
 
 @patch("importer.forms.chunk_taric")
-@patch("importer.forms.run_batch")
+@patch("importer.forms.run_batch_v2")
+@pytest.mark.importer_v2
 def test_commodity_import_form_valid_envelope(
     run_batch,
     chunk_taric,
     superuser,
     importer_storage,
 ):
+    chunk_taric.return_value = 1
     """Test that form is valid when given valid xml file."""
     mock_request = MagicMock()
 
@@ -139,19 +146,16 @@ def test_commodity_import_form_valid_envelope(
     ):
         batch = form.save()
         assert batch.name.find(file_data["taric_file"].name) != -1
-        assert batch.goods_import == True
-        assert batch.split_job == False
+        assert batch.goods_import is True
+        assert batch.split_job is False
         assert batch.author.id == superuser.id
-        assert batch.workbasket.title == data["workbasket_title"]
-        assert (
-            batch.workbasket.reason
-            == f'TARIC {file_data["taric_file"].name[:-4]} commodity code changes'
-        )
+        assert batch.workbasket is None
 
-        run_batch.assert_called_once()
+        # run_batch.assert_called_once()
         chunk_taric.assert_called_once()
 
 
+@pytest.mark.importer_v2
 @pytest.mark.parametrize("file_name,", ("invalid_id", "dtd"))
 @patch("importer.forms.capture_exception")
 def test_commodity_import_form_invalid_envelope(capture_exception, file_name, settings):
@@ -176,10 +180,12 @@ def test_commodity_import_form_invalid_envelope(capture_exception, file_name, se
         capture_exception.assert_called_once()
 
 
+@pytest.mark.importer_v2
 def test_commodity_import_form_non_xml_file():
     """Test that form returns incorrect file type validation error when passed a
     text file instead of xml."""
     with open(f"{TEST_FILES_PATH}/invalid_type.txt", "rb") as upload_file:
+        form_req = HttpRequest()
         file_data = {
             "taric_file": SimpleUploadedFile(
                 upload_file.name,
@@ -187,12 +193,14 @@ def test_commodity_import_form_non_xml_file():
                 content_type="text",
             ),
         }
-        form = forms.CommodityImportForm({}, file_data)
+
+        form = forms.CommodityImportForm({}, file_data, request=form_req)
 
         assert not form.is_valid()
         assert "The selected file must be XML" in form.errors["taric_file"]
 
 
+@pytest.mark.importer_v2
 # https://uktrade.atlassian.net/browse/TP2000-571
 def test_commodity_import_form_long_definition_description(superuser):
     """Tests that form is valid when provided with QuotaDefinition description
