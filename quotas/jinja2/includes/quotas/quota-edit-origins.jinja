@@ -24,7 +24,7 @@
     {"name": "", "value": ""},
     {% for geo_area in geo_area_options %}
     {
-      "name": "{{ geo_area.area_id  ~ " - " ~ geo_area.get_description().description }}",
+      "name": "{{ geo_area.area_id  ~ " - " ~ geo_area.description }}",
       "value": {{ geo_area.pk }},
     },
     {% endfor %}
