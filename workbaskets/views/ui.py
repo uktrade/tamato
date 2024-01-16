@@ -53,6 +53,7 @@ from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaSuspension
 from regulations.models import Regulation
 from workbaskets import forms
 from workbaskets.models import DataRow
@@ -1511,6 +1512,24 @@ class WorkBasketReviewQuotaBlockingView(WorkBasketReviewView):
         context[
             "tab_template"
         ] = "includes/workbaskets/review-quota-blocking-periods.jinja"
+        return context
+
+
+class WorkBasketReviewQuotaSuspensionView(WorkBasketReviewView):
+    """UI endpoint for reviewing quota suspension period changes in a
+    workbasket."""
+
+    model = QuotaSuspension
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota suspension periods"
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "suspension-periods"
+        context[
+            "tab_template"
+        ] = "includes/workbaskets/review-quota-suspension-periods.jinja"
         return context
 
 

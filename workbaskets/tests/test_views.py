@@ -465,6 +465,11 @@ def test_workbasket_review_tabs_without_permission(url, client):
             6,
         ),
         (
+            "workbaskets:workbasket-ui-review-quota-suspension-periods",
+            lambda: factories.QuotaSuspensionFactory.create(),
+            5,
+        ),
+        (
             "workbaskets:workbasket-ui-review-regulations",
             lambda: factories.RegulationFactory.create(),
             6,

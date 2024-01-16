@@ -21,6 +21,11 @@
     "href": url("workbaskets:workbasket-ui-review-quota-blocking-periods", kwargs={"pk": workbasket.pk}),
     "selected": selected_nested_tab == "blocking-periods",
   },
+  {
+    "text": "Suspension periods",
+    "href": url("workbaskets:workbasket-ui-review-quota-suspension-periods", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "suspension-periods",
+  },
   ]
 %}
 
