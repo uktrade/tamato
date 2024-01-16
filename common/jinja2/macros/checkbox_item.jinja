@@ -1,6 +1,6 @@
 {% macro checkbox_item(field) %}
   {% set id = field.id_for_label %}
-  {% set name = field.name %}
+  {% set name = field.html_name %}
   {% set checked = "checked" if field.value() else "" %}
   <div class="govuk-form-group">
     <fieldset class="govuk-fieldset">

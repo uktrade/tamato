@@ -425,7 +425,7 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         super().__post_init__()
 
     def get_potential_parents(self, commodity: Commodity) -> List[Commodity]:
-        """gets possible parents, for queries where a parent may be end-dated,
+        """Gets possible parents, for queries where a parent may be end-dated,
         and another parent could potentially be present to inherit the child."""
 
         parent = self.get_parent(commodity)
@@ -686,10 +686,11 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         """
         Returns a snapshot diff for a given relation on a sinlge commodity.
 
-        For detailed overview on snapshot diffs, see the docs for the SnapshotDiff class.
+        For detailed overview on snapshot diffs, see the docs for the
+        SnapshotDiff class.
 
-        You can get one diff per commodity and relation type
-        (e.g. diff the children of '9999.20.00.00' or diff the siblings of '9999.30.20.10')
+        You can get one diff per commodity and relation type (e.g. diff the
+        children of '9999.20.00.00' or diff the siblings of '9999.30.20.10')
         """
         if snapshot.moment.clock_type != self.moment.clock_type:
             raise ValueError("Cannot diff snapshots with different clock types.")
@@ -838,19 +839,17 @@ class CommodityCollection(CommodityTreeBase):
         """
         Returns the list of commodities than belong to a snapshot.
 
-        This method needs to be very efficient -
-        In particular, it should require the same number
-        of database round trips regardless of the level
+        This method needs to be very efficient - In particular, it should
+        require the same number of database round trips regardless of the level
         of the root commodity in the tree.
 
-        The solution is fetch all goods matching the snapshot moment
-        (incl. potentially multiple versions of each)
-        and then call a new util method get_latest_version,
-        which efficiently yields only the latest version
-        of each good from within the returned queryset.
+        The solution is fetch all goods matching the snapshot moment (incl.
+        potentially multiple versions of each) and then call a new util method
+        get_latest_version, which efficiently yields only the latest version of
+        each good from within the returned queryset.
 
-        We then efficiently find the commodities in our collection
-        that match the latest_version goods.
+        We then efficiently find the commodities in our collection that match
+        the latest_version goods.
         """
         item_ids = {c.item_id for c in self.commodities if c.obj}
         goods = GoodsNomenclature.objects.approved_up_to_transaction(
@@ -1338,10 +1337,8 @@ class CommodityChange(BaseModel):
         """
         Updates or deletes a clashing ME32 measure.
 
-        If either measure validity period
-        is fully contained in the other's,
-        the only option is to delete one,
-        favoring the one with lower-level code.
+        If either measure validity period is fully contained in the other's, the
+        only option is to delete one, favoring the one with lower-level code.
 
         Otherwise we have an opportunity to cap the earlier measure.
         """
@@ -1526,13 +1523,12 @@ class CommodityChange(BaseModel):
         """
         Returns the threshold date for the commodity code change.
 
-        Dependent measures (or other dependent models with validity spans)
-        would be exclude those with effective end date before this date.
+        Dependent measures (or other dependent models with validity spans) would
+        be exclude those with effective end date before this date.
 
-        In the case of a commodity UPDATE or DELETE,
-        the threshold is the commodity's validity end date.
-        In the case of a commodity CREATE,
-        the threshold is the commodity's validity start date.
+        In the case of a commodity UPDATE or DELETE, the threshold is the
+        commodity's validity end date. In the case of a commodity CREATE, the
+        threshold is the commodity's validity start date.
         """
         if self.update_type == UpdateType.UPDATE:
             return self.current.valid_between.upper

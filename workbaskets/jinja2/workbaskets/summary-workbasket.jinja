@@ -10,6 +10,9 @@
 
 {% set change_workbasket_details_link = url("workbaskets:workbasket-ui-update", kwargs={"pk": workbasket.pk}) %}
 
+{% set workbasket_changes_link = url("workbaskets:workbasket-ui-changes", kwargs={"pk": workbasket.pk}) %}
+{% set transaction_order_link = url("workbaskets:workbasket-ui-transaction-order", kwargs={"pk": workbasket.pk}) %}
+
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
       "items": [
@@ -54,7 +57,31 @@
         </a>
       </dd>
     </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">
+        View and remove items from the workbasket
+      </dt>
+      <dd class="govuk-summary-list__value">
+        View all items as they would generate in an envelope and remove items where needed.
+      </dd>
+      <dd class="govuk-summary-list__actions">
+        <a class="govuk-link" href={{ workbasket_changes_link }}>
+          Workbasket changes
+        </a>
+      </dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">
+        View and reorder workbasket transactions 
+      </dt>
+      <dd class="govuk-summary-list__value">
+        View the proposed transaction order for the envelope and rearrange item where needed.
+      </dd>
+      <dd class="govuk-summary-list__actions">
+        <a class="govuk-link" href={{ transaction_order_link }}>
+          Workbasket transactions
+        </a>
+      </dd>
+    </div>
   </dl>
-
-  {% include "includes/workbaskets/workbasket-selectable-items.jinja" %}
 {% endblock %}

@@ -30,7 +30,7 @@ def test_footnote_association_measure_xml(xml):
     assert xml.find(".//oub:footnote.association.measure", nsmap) is not None
 
 
-@validate_taric_xml(factories.MeasureWithQuotaFactory, check_order=False)
+@validate_taric_xml(factories.MeasureWithQuotaFactory)
 def test_measure_xml(xml):
     assert xml.find(".//oub:measure", nsmap) is not None
 

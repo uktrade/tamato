@@ -371,6 +371,7 @@ class QuotaOrderNumberOriginForm(
             GeographicalArea.objects.current()
             .with_latest_description()
             .as_at_today_and_beyond()
+            .prefetch_related("descriptions")
             .order_by("description")
         )
         self.fields[
@@ -600,6 +601,7 @@ class QuotaDefinitionCreateForm(
             Accordion(
                 AccordionSection(
                     "Description",
+                    HTML.p("Adding a description is optional."),
                     "description",
                     "order_number",
                 ),
@@ -610,11 +612,15 @@ class QuotaDefinitionCreateForm(
                 ),
                 AccordionSection(
                     "Measurements",
+                    HTML.p("A measurement unit qualifier is not always required."),
                     Field("measurement_unit", css_class="govuk-!-width-full"),
                     Field("measurement_unit_qualifier", css_class="govuk-!-width-full"),
                 ),
                 AccordionSection(
                     "Volume",
+                    HTML.p(
+                        "The initial volume is the legal balance applied to the definition period.<br><br>The current volume is the starting balance for the quota."
+                    ),
                     "initial_volume",
                     "volume",
                     "maximum_precision",

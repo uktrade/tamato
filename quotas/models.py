@@ -5,6 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.urls import NoReverseMatch
 from django.urls import reverse
+from polymorphic.managers import PolymorphicManager
 
 from common import validators
 from common.business_rules import UniqueIdentifyingFields
@@ -143,6 +144,10 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
     url_suffix = ""
     url_relation_field = "order_number"
 
+    objects = PolymorphicManager.from_queryset(
+        querysets.QuotaOrderNumberOriginQuerySet,
+    )()
+
     sid = SignedIntSID(db_index=True)
     order_number = models.ForeignKey(QuotaOrderNumber, on_delete=models.PROTECT)
     geographical_area = models.ForeignKey(
@@ -187,8 +192,8 @@ class QuotaOrderNumberOrigin(TrackedModel, ValidityMixin):
         Callers should handle the case where no URL is returned.
 
         :param action str: The view type to generate a URL for (default
-            "detail"), eg: "list" or "edit"
-        :rtype Optional[str]: The generated URL
+            "detail"), eg: "list" or "edit" :rtype Optional[str]: The generated
+            URL
         """
         kwargs = {}
         if action not in ["list", "create"]:
@@ -234,6 +239,11 @@ class QuotaOrderNumberOriginExclusion(GetTabURLMixin, TrackedModel):
 
     record_code = "360"
     subrecord_code = "15"
+
+    objects = PolymorphicManager.from_queryset(
+        querysets.QuotaOrderNumberOriginExclusionQuerySet,
+    )()
+
     origin = models.ForeignKey(QuotaOrderNumberOrigin, on_delete=models.PROTECT)
     excluded_geographical_area = models.ForeignKey(
         "geo_areas.GeographicalArea",
@@ -371,8 +381,8 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         Callers should handle the case where no URL is returned.
 
         :param action str: The view type to generate a URL for (default
-            "detail"), eg: "list" or "edit"
-        :rtype Optional[str]: The generated URL
+            "detail"), eg: "list" or "edit" :rtype Optional[str]: The generated
+            URL
         """
         kwargs = {}
         if action not in ["list", "create"]:

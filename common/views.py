@@ -51,26 +51,26 @@ class HomeView(FormView, View):
     template_name = "common/workbasket_action.jinja"
     form_class = forms.HomeForm
 
+    REDIRECT_MAPPING = {
+        "EDIT": "workbaskets:workbasket-ui-list",
+        "CREATE": "workbaskets:workbasket-ui-create",
+        "PACKAGE_WORKBASKETS": "publishing:packaged-workbasket-queue-ui-list",
+        "PROCESS_ENVELOPES": "publishing:envelope-queue-ui-list",
+        "SEARCH": "search-page",
+        "IMPORT": "commodity_importer-ui-list",
+        "VIEW_REF_DOCS": "reference_documents-ui-list",
+        "WORKBASKET_LIST_ALL": "workbaskets:workbasket-ui-list-all",
+    }
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
 
     def form_valid(self, form):
-        if form.cleaned_data["workbasket_action"] == "EDIT":
-            return redirect(reverse("workbaskets:workbasket-ui-list"))
-        elif form.cleaned_data["workbasket_action"] == "CREATE":
-            return redirect(reverse("workbaskets:workbasket-ui-create"))
-        elif form.cleaned_data["workbasket_action"] == "PACKAGE_WORKBASKETS":
-            return redirect(reverse("publishing:packaged-workbasket-queue-ui-list"))
-        elif form.cleaned_data["workbasket_action"] == "PROCESS_ENVELOPES":
-            return redirect(reverse("publishing:envelope-queue-ui-list"))
-        elif form.cleaned_data["workbasket_action"] == "SEARCH":
-            return redirect(reverse("search-page"))
-        elif form.cleaned_data["workbasket_action"] == "IMPORT":
-            return redirect(reverse("commodity_importer-ui-list"))
-        elif form.cleaned_data["workbasket_action"] == "VIEW_REF_DOCS":
-            return redirect(reverse("reference_documents-ui-list"))
+        return redirect(
+            reverse(self.REDIRECT_MAPPING[form.cleaned_data["workbasket_action"]]),
+        )
 
 
 class SearchPageView(TemplateView):

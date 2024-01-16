@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:envelope id="000001" xmlns="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0"
+              xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0">
+    <env:transaction id="2">
+        <env:app.message id="6">
+            <oub:transmission xmlns:env="urn:publicid:-:DGTAXUD:GENERAL:ENVELOPE:1.0"
+                              xmlns:oub="urn:publicid:-:DGTAXUD:TARIC:MESSAGE:1.0">
+                <oub:record>
+                    <oub:transaction.id>2</oub:transaction.id>
+                    <oub:record.code>245</oub:record.code>
+                    <oub:subrecord.code>15</oub:subrecord.code>
+                    <oub:record.sequence.number>6</oub:record.sequence.number>z
+                    <oub:update.type>1</oub:update.type>
+                    <oub:footnote.association.additional.code>
+                        <oub:additional.code.sid>1</oub:additional.code.sid>
+                        <oub:footnote.type.id>7</oub:footnote.type.id>
+                        <oub:footnote.id>4</oub:footnote.id>
+                        <oub:validity.start.date>2021-01-11</oub:validity.start.date>
+                        <oub:validity.end.date>2022-01-01</oub:validity.end.date>
+                        <oub:additional.code.type.id>4</oub:additional.code.type.id>
+                        <oub:additional.code>7</oub:additional.code>
+                    </oub:footnote.association.additional.code>
+                </oub:record>
+            </oub:transmission>
+        </env:app.message>
+    </env:transaction>
+</env:envelope>

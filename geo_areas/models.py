@@ -165,8 +165,8 @@ class GeographicalMembership(GetTabURLMixin, TrackedModel, ValidityMixin):
 
     Only a region or a country may be a member, and only a group can be a group.
 
-    The validity ranges of all memberships must also fit completely within the validity
-    ranges of the groups.
+    The validity ranges of all memberships must also fit completely within the
+    validity ranges of the groups.
     """
 
     url_pattern_name_prefix = "geo_area"
@@ -241,6 +241,7 @@ class GeographicalAreaDescription(DescriptionMixin, TrackedModel):
         GeographicalArea,
         on_delete=models.CASCADE,
         related_name="descriptions",
+        db_index=True,
     )
     description = ShortDescription()
     sid = SignedIntSID(db_index=True)
