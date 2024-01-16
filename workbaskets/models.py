@@ -620,6 +620,17 @@ class WorkBasket(TimestampedMixin):
 
     @property
     def unchecked_or_errored_transactions(self):
+        """
+        Returns unchecked, errored or out of date transactions from the
+        workbaskets.
+
+        The query excludes transactions which have a corresponding transaction
+        check which has been completed, successful and was created after the
+        latest updated_at in the transactions tracked models. Lasted is
+        retrieved by annotating all the transactions for the workbasket with the
+        latest updated for its containing tracked models then we aggregate the
+        latest time from all the transactions.
+        """
         latest = (
             self.transactions.all()
             .annotate(latest_updated_in_transaction=Max("tracked_models__updated_at"))
