@@ -28,10 +28,6 @@ class ReportBaseTable(ReportBase):
         pass
 
     @abstractmethod
-    def query2(self):
-        pass
-
-    @abstractmethod
     def headers2(self) -> [dict]:
         pass
 

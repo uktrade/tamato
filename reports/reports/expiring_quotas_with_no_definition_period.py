@@ -4,6 +4,8 @@ from reports.reports.base_table import ReportBaseTable
 from quotas.models import (
     QuotaOrderNumber,
     QuotaDefinition,
+    QuotaBlocking,
+    QuotaSuspension,
 )
 
 
@@ -11,13 +13,15 @@ class Report(ReportBaseTable):
     name = "Quotas Expiring Soon"
     enabled = True
     description = (
-        "Quotas with definition periods about to expire and no future definition period"
+        "Quotas with definition/sub-quota/blocking/suspension periods about to expire and no future definition period"
     )
     tabular_reports = True
     tab_name = "Definitions"
     tab_name2 = "Sub-quota associations"
     tab_name3 = "Blocking periods"
     tab_name4 = "Suspension periods"
+    current_time = datetime.datetime.now()
+    future_time = current_time + datetime.timedelta(weeks=5)
 
     def headers(self) -> [dict]:
         return [
@@ -26,7 +30,7 @@ class Report(ReportBaseTable):
             {"text": "Definition End Date"},
         ]
 
-    def row(self, row: QuotaDefinition) -> [dict]:
+    def row(self, row) -> [dict]:
         return [
             {"text": row.order_number},
             {"text": row.valid_between.lower},
@@ -41,26 +45,22 @@ class Report(ReportBaseTable):
         return table_rows
 
     def query(self):
-        expiring_quotas = self.find_quotas_expiring_soon()
+        expiring_quotas = self.find_quota_definitions_expiring_soon()
         quotas_without_future_definition = self.find_quotas_without_future_definition(
             expiring_quotas
         )
         return quotas_without_future_definition
 
-    def find_quotas_expiring_soon(self):
-        current_time = datetime.datetime.now()
-        future_time = current_time + datetime.timedelta(weeks=5)
-
+    def find_quota_definitions_expiring_soon(self):
         filter_query = Q(
             valid_between__isnull=False,
-            valid_between__endswith__lte=future_time,
-        ) & Q(valid_between__endswith__gte=current_time) | Q(valid_between__endswith=None)
+            valid_between__endswith__lte=self.future_time,
+        ) & Q(valid_between__endswith__gte=self.current_time) | Q(valid_between__endswith=None)
         
 
         quotas_expiring_soon = QuotaDefinition.objects.latest_approved().filter(
             filter_query
         )
-        print(quotas_expiring_soon.filter(sid=23816))
 
         return list(quotas_expiring_soon)
 
@@ -83,84 +83,125 @@ class Report(ReportBaseTable):
 
     def headers2(self) -> [dict]:
         return [
-            {"text": "1234"},
-            {"text": "Definition Start Date"},
-            {"text": "Definition End Date"},
+            {"text": "Quota Order Number"},
+            {"text": "Sub-quota associations SID"},
+            {"text": "Sub-quota associations Start Date"},
+            {"text": "Sub-quota associations End Date"},
+            {"text": "Definition Period SID"},
         ]
 
-    def row2(self, row: QuotaDefinition) -> [dict]:
-        return [
-            {"text": row.order_number},
-            {"text": row.valid_between.lower},
-            {"text": row.valid_between.upper},
-        ]
+    def row2(self, row) -> [dict]:
+        sub_quotas_array = []
+        for sub_quotas in row.sub_quotas.all():
+            sub_quotas_array.append(
+                {"text": row.order_number},
+                {"text": sub_quotas.sid},
+                {"text": sub_quotas.valid_between.lower},
+                {"text": sub_quotas.valid_between.upper},
+                {"text": row.sid},
+            )
+        return sub_quotas_array
 
     def rows2(self) -> [[dict]]:
         table_rows = []
         for row in self.query():
-            table_rows.append(self.row(row))
+            table_rows.append(self.row2(row))
 
         return table_rows
+    
+    def find_quota_blocking_without_future_definition(self, expiring_quotas):
+        matching_data = set()
 
-    def query2(self):
-        expiring_quotas = self.find_quotas_expiring_soon()
-        quotas_without_future_definition = self.find_quotas_without_future_definition(
-            expiring_quotas
-        )
-        return quotas_without_future_definition
+        for quota_definition in expiring_quotas:
+            associated_blocking_definitions = QuotaBlocking.objects.latest_approved().filter(
+                quota_definition=quota_definition,
+            )
+
+            if associated_blocking_definitions.exists():
+                quota_definition.definition_start_date = quota_definition.valid_between.lower
+                quota_definition.definition_end_date = quota_definition.valid_between.upper
+                matching_data.add(quota_definition)
+
+        return list(matching_data)
     
     def headers3(self) -> [dict]:
         return [
-            {"text": "1234"},
-            {"text": "Definition Start Date"},
-            {"text": "Definition End Date"},
+            {"text": "Quota Order Number"},
+            {"text": "Blocking Period SIDs"},
+            {"text": "Blocking Period Start Date"},
+            {"text": "Blocking Period End Date"},
+            {"text": "Definition Period SID"},
         ]
 
-    def row3(self, row: QuotaDefinition) -> [dict]:
+    def row3(self, row) -> [dict]:
         return [
             {"text": row.order_number},
-            {"text": row.valid_between.lower},
-            {"text": row.valid_between.upper},
+            {"text": blocking.sid for blocking in row.quotablocking_set.all()},
+            {"text": blocking.valid_between.lower for blocking in row.quotablocking_set.all()},
+            {"text": blocking.valid_between.upper for blocking in row.quotablocking_set.all()},
+            {"text": row.sid},
         ]
 
     def rows3(self) -> [[dict]]:
         table_rows = []
-        for row in self.query():
-            table_rows.append(self.row(row))
+        if self.query3():
+            for row in self.query3():
+                table_rows.append(self.row3(row))
 
         return table_rows
 
     def query3(self):
-        expiring_quotas = self.find_quotas_expiring_soon()
-        quotas_without_future_definition = self.find_quotas_without_future_definition(
+        expiring_quotas = self.find_quota_definitions_expiring_soon()
+        quota_blocking_without_future_definition = self.find_quota_blocking_without_future_definition(
             expiring_quotas
         )
-        return quotas_without_future_definition
+        return quota_blocking_without_future_definition
+    
+    def find_quota_suspension_without_future_definition(self, expiring_quotas):
+        matching_data = set()
+
+        for quota_definition in expiring_quotas:
+            future_definitions = QuotaSuspension.objects.latest_approved().filter(
+                quota_definition=quota_definition,
+                # valid_between__startswith__gt=quota_definition.valid_between.upper,
+            )
+
+            if future_definitions.exists():
+                quota_definition.definition_start_date = quota_definition.valid_between.lower
+                quota_definition.definition_end_date = quota_definition.valid_between.upper
+                matching_data.add(quota_definition)
+
+        return list(matching_data)
     
     def headers4(self) -> [dict]:
         return [
-            {"text": "1234"},
-            {"text": "Definition Start Date"},
-            {"text": "Definition End Date"},
+            {"text": "Quota Order Number"},
+            {"text": "Suspension Period SIDs"},
+            {"text": "Suspension Period Start Date"},
+            {"text": "Suspension Period End Date"},
+            {"text": "Definition Period SID"},
         ]
 
-    def row4(self, row: QuotaDefinition) -> [dict]:
+    def row4(self, row) -> [dict]:
         return [
             {"text": row.order_number},
-            {"text": row.valid_between.lower},
-            {"text": row.valid_between.upper},
+            {"text": suspension.sid for suspension in row.quotasuspension_set.all()},
+            {"text": suspension.valid_between.lower for suspension in row.quotasuspension_set.all()},
+            {"text": suspension.valid_between.upper for suspension in row.quotasuspension_set.all()},
+            {"text": row.sid},
         ]
 
     def rows4(self) -> [[dict]]:
         table_rows = []
-        for row in self.query():
-            table_rows.append(self.row(row))
+        if self.query4():
+            for row in self.query4():
+                table_rows.append(self.row4(row))
 
         return table_rows
 
     def query4(self):
-        expiring_quotas = self.find_quotas_expiring_soon()
-        quotas_without_future_definition = self.find_quotas_without_future_definition(
+        expiring_quotas = self.find_quota_definitions_expiring_soon()
+        quota_suspension_without_future_definition = self.find_quota_suspension_without_future_definition(
             expiring_quotas
         )
-        return quotas_without_future_definition
+        return quota_suspension_without_future_definition

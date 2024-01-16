@@ -5,48 +5,48 @@
     <div class="govuk-tabs" data-module="govuk-tabs">
     <ul class="govuk-tabs__list">
         <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
-        <a class="govuk-tabs__tab" href="#{{ report.tab_name }}">
+        <a class="govuk-tabs__tab" href="#{{ report.tab_name | replace(' ', '_') | lower }}">
             {{ report.tab_name}}
         </a>
         </li>
         <li class="govuk-tabs__list-item">
-        <a class="govuk-tabs__tab" href="#{{ report.tab_name2 }}">
+        <a class="govuk-tabs__tab" href="#{{ report.tab_name2 | replace(' ', '_') | lower }}">
             {{ report.tab_name2 }}
         </a>
         </li>
         <li class="govuk-tabs__list-item">
-        <a class="govuk-tabs__tab" href="#{{ report.tab_name3 }}">
+        <a class="govuk-tabs__tab" href="#{{ report.tab_name3 | replace(' ', '_') | lower }}">
             {{ report.tab_name3 }}
         </a>
         </li>
         <li class="govuk-tabs__list-item">
-        <a class="govuk-tabs__tab" href="#{{ report.tab_name4 }}">
+        <a class="govuk-tabs__tab" href="#{{ report.tab_name4 | replace(' ', '_') | lower }}">
             {{ report.tab_name4 }}
         </a>
         </li>
     </ul>
-    <div class="govuk-tabs__panel" id="{{ report.tab_name }}">
+    <div class="govuk-tabs__panel" id="{{ report.tab_name | replace(' ', '_') | lower }}">
         <h2 class="govuk-heading-l">{{ report.tab_name }}</h2>
         {{ govukTable({
         "head": report.headers(),
         "rows": report.rows()
     }) }}
     </div>
-    <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name2 }}">
+    <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name2 | replace(' ', '_') | lower }}">
         <h2 class="govuk-heading-l">{{ report.tab_name2 }}</h2>
         {{ govukTable({
         "head": report.headers2(),
         "rows": report.rows2()
     }) }}
     </div>
-    <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name3 }}">
+    <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name3 | replace(' ', '_') | lower }}">
         <h2 class="govuk-heading-l">{{ report.tab_name3 }}</h2>
         {{ govukTable({
         "head": report.headers3(),
         "rows": report.rows3()
     }) }}
     </div>
-    <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name4 }}">
+    <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name4 | replace(' ', '_') | lower }}">
         <h2 class="govuk-heading-l">{{ report.tab_name4 }}</h2>
         {{ govukTable({
         "head": report.headers4(),
