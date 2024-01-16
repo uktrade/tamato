@@ -988,10 +988,26 @@ class MeasuresBulkCreator(models.Model):
         results as an iterable."""
         created_measures = []
 
+        # Debug.
         import json
 
-        print(f"*** cleaned_data:")
-        print(json.dumps(self.cleaned_data, indent=4))
+        print(f"*** MeasuresBulkCreator.cleaned_data:")
+        print(f"\n{json.dumps(self.cleaned_data, indent=4)}")
+
+        from measures import forms
+
+        form = forms.MeasureDetailsForm.create_from_serialized_cleaned_data(
+            self.cleaned_data["measure_details"],
+        )
+
+        # Debug.
+        print(f"*** form.is_valid(): {form.is_valid()}")
+        if form.errors:
+            print(f"*** form.errors:")
+            for k, v in form.errors.items():
+                print(f"    {k}: {v}")
+        if form.non_field_errors():
+            print(f"*** form.non_field_errors(): {form.non_field_errors()}")
 
         # TODO
         return created_measures
