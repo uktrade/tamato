@@ -121,7 +121,8 @@ class QuotaCreate(QuotaOrderNumberMixin, CreateTaricCreateView):
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(
-            page_title="Create a new quota order number", **kwargs
+            page_title="Create a new quota order number",
+            **kwargs,
         )
 
 
@@ -306,30 +307,42 @@ class QuotaUpdateMixin(
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        kwargs["existing_origins"] = self.object.quotaordernumberorigin_set.current()
+        kwargs[
+            "existing_origins"
+        ] = self.object.quotaordernumberorigin_set.with_latest_geo_area_description()
         return kwargs
 
-    @transaction.atomic
-    def get_result_object(self, form):
-        instance = super().get_result_object(form)
+    def update_origins(self, instance, form_origins):
+        existing_origin_pks = {
+            o.pk for o in instance.quotaordernumberorigin_set.current()
+        }
+        submitted_origin_pks = {o["pk"] for o in form_origins}
+        deleted_origin_pks = existing_origin_pks.difference(submitted_origin_pks)
 
-        form_origins = form.cleaned_data["origins"]
-
-        for origin in form_origins:
-            existing_origin = (
-                instance.quotaordernumberorigin_set.filter(
-                    geographical_area__pk=origin["geographical_area"],
-                )
-                .current()
-                .first()
+        for origin_pk in deleted_origin_pks:
+            origin = models.QuotaOrderNumberOrigin.objects.get(
+                pk=origin_pk,
+            )
+            origin.new_version(
+                update_type=UpdateType.DELETE,
+                workbasket=WorkBasket.current(self.request),
+                transaction=instance.transaction,
             )
 
-            if existing_origin:
+        # TODO: update exclusions on each origin
+        for origin in form_origins:
+            if origin.get("pk"):
+                existing_origin = models.QuotaOrderNumberOrigin.objects.get(
+                    pk=origin.get("pk"),
+                )
                 existing_origin.new_version(
                     workbasket=WorkBasket.current(self.request),
                     transaction=instance.transaction,
                     order_number=instance,
+                    valid_between=origin["valid_between"],
+                    geographical_area=origin["geographical_area"],
                 )
+
             else:
                 models.QuotaOrderNumberOrigin.objects.create(
                     order_number=instance,
@@ -339,26 +352,15 @@ class QuotaUpdateMixin(
                     transaction=instance.transaction,
                 )
 
-        form_geo_areas = {o["geographical_area"] for o in form_origins}
+    @transaction.atomic
+    def get_result_object(self, form):
+        instance = super().get_result_object(form)
 
-        removed_geo_areas = {
-            existing_origin.geographical_area
-            for existing_origin in instance.quotaordernumberorigin_set.current()
-        }.difference(form_geo_areas)
+        # if JS is enabled we get data from the React form which includes origins and exclusions
+        form_origins = form.cleaned_data["origins"]
 
-        removed_origins = [
-            instance.quotaordernumberorigin_set.current().get(
-                geographical_area=geo_area,
-            )
-            for geo_area in removed_geo_areas
-        ]
-
-        for removed in removed_origins:
-            removed.new_version(
-                update_type=UpdateType.DELETE,
-                workbasket=WorkBasket.current(self.request),
-                transaction=instance.transaction,
-            )
+        if form_origins:
+            self.update_origins(instance, form_origins)
 
         return instance
 

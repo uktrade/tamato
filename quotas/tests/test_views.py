@@ -1352,16 +1352,24 @@ def test_quota_order_number_create_success(
     )
 
 
-def test_quota_update_origins(valid_user_client, date_ranges):
+def test_quota_update_existing_origins(valid_user_client, date_ranges):
     quota = factories.QuotaOrderNumberFactory.create(
         category=0,
         valid_between=date_ranges.big_no_end,
     )
+    factories.QuotaOrderNumberOriginFactory.create(order_number=quota)
+    factories.QuotaOrderNumberOriginFactory.create(order_number=quota)
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_area2 = factories.GeographicalAreaFactory.create()
+    tx = geo_area2.transaction
+    (
+        origin1,
+        origin2,
+        origin3,
+    ) = quota.quotaordernumberorigin_set.approved_up_to_transaction(tx)
 
     # sanity check
-    assert quota.origins.count() == 1
+    assert quota.quotaordernumberorigin_set.count() == 3
 
     data = {
         "start_date_0": date_ranges.big_no_end.lower.day,
@@ -1372,25 +1380,38 @@ def test_quota_update_origins(valid_user_client, date_ranges):
         "end_date_2": "",
         "category": "1",  # update category
         # keep first origin data the same
+        "origins-0-pk": origin1.pk,
         "origins-0-start_date_0": date_ranges.big_no_end.lower.day,
         "origins-0-start_date_1": date_ranges.big_no_end.lower.month,
         "origins-0-start_date_2": date_ranges.big_no_end.lower.year,
         "origins-0-end_date_0": "",
         "origins-0-end_date_1": "",
         "origins-0-end_date_2": "",
-        "origins-0-geographical_area": geo_area1.pk,
-        # add a new origin
+        "origins-0-geographical_area": origin1.geographical_area.pk,
+        # omit subform for origin2 to delete it
+        # change origin3 geo area
+        "origins-1-pk": origin3.pk,
         "origins-1-start_date_0": date_ranges.big_no_end.lower.day,
         "origins-1-start_date_1": date_ranges.big_no_end.lower.month,
         "origins-1-start_date_2": date_ranges.big_no_end.lower.year,
         "origins-1-end_date_0": "",
         "origins-1-end_date_1": "",
         "origins-1-end_date_2": "",
-        "origins-1-geographical_area": geo_area2.pk,
+        "origins-1-geographical_area": geo_area1.pk,
+        # add a new origin
+        "origins-2-pk": "",
+        "origins-2-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-2-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-2-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-2-end_date_0": "",
+        "origins-2-end_date_1": "",
+        "origins-2-end_date_2": "",
+        "origins-2-geographical_area": geo_area2.pk,
         "submit": "Save",
     }
     url = reverse("quota-ui-edit", kwargs={"sid": quota.sid})
     response = valid_user_client.post(url, data)
+
     assert response.status_code == 302
     assert response.url == reverse("quota-ui-confirm-update", kwargs={"sid": quota.sid})
 
@@ -1401,9 +1422,11 @@ def test_quota_update_origins(valid_user_client, date_ranges):
         .first()
     )
     assert updated_quota.category == 1
+    assert updated_quota.valid_between == date_ranges.big_no_end
 
-    assert updated_quota.origins.approved_up_to_transaction(tx).count() == 2
+    assert updated_quota.origins.approved_up_to_transaction(tx).count() == 3
     assert {o.sid for o in updated_quota.origins.approved_up_to_transaction(tx)} == {
         geo_area1.sid,
         geo_area2.sid,
+        origin1.geographical_area.sid,
     }

@@ -248,7 +248,7 @@ class QuotaUpdateForm(
 
         for i, origin_data in enumerate(submitted_data):
             # instantiate a form per origin data to do validation
-            form = QuotaOrderNumberOriginUpdateForm(
+            form = QuotaOrderNumberOriginUpdateReactForm(
                 data=origin_data,
                 initial=origin_data,
             )
@@ -726,7 +726,7 @@ class QuotaDefinitionCreateForm(
                 AccordionSection(
                     "Volume",
                     HTML.p(
-                        "The initial volume is the legal balance applied to the definition period.<br><br>The current volume is the starting balance for the quota."
+                        "The initial volume is the legal balance applied to the definition period.<br><br>The current volume is the starting balance for the quota.",
                     ),
                     "initial_volume",
                     "volume",
@@ -780,3 +780,9 @@ class QuotaOrderNumberOriginUpdateForm(
         initial[QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX] = initial_exclusions
 
         return initial
+
+
+class QuotaOrderNumberOriginUpdateReactForm(QuotaOrderNumberOriginUpdateForm):
+    """Used only to validate data sent from the quota edit React form."""
+
+    pk = forms.IntegerField(required=False)
