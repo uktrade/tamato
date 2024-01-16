@@ -986,7 +986,7 @@ class SerializableFormMixin:
         if not str_date:
             return None
 
-        return datetime.datetime.strftime(str_date, cls.DATE_STRING_FORMAT).date()
+        return datetime.datetime.strptime(str_date, cls.DATE_STRING_FORMAT).date()
 
 
 class MeasureDetailsForm(
@@ -994,6 +994,8 @@ class MeasureDetailsForm(
     ValidityPeriodForm,
     forms.Form,
 ):
+    MAX_COMMODITY_COUNT = 99
+
     class Meta:
         model = models.Measure
         fields = [
@@ -1017,7 +1019,7 @@ class MeasureDetailsForm(
             "Enter how many commodity codes you intend to apply to the measure. You can add more later, up to 99 in total."
         ),
         min_value=1,
-        max_value=99,
+        max_value=MAX_COMMODITY_COUNT,
         required=True,
         error_messages={
             "required": "Enter a number between 1 and 99",
@@ -1079,19 +1081,55 @@ class MeasureDetailsForm(
         cls,
         serialized_cleaned_data: Dict,
     ) -> forms.Form:
-        initial = {
+        """Create a form instance from this form's serialized data."""
+
+        measure_type_pk = serialized_cleaned_data.get("measure_type")
+
+        # TODO: Tidy up validity periods and date handling.
+        valid_between = cls.deserialize_date_range(
+            serialized_cleaned_data.get("valid_between"),
+        )
+        start_date = (
+            cls.deserialize_date(valid_between.lower) if valid_between else None
+        )
+        (start_date_0, start_date_1, start_date_2) = (
+            (start_date.day, start_date.month, start_date.year)
+            if start_date
+            else (None, None, None)
+        )
+        end_date = cls.deserialize_date(valid_between.upper) if valid_between else None
+        (end_date_0, end_date_1, end_date_2) = (
+            (end_date.day, end_date.month, end_date.year)
+            if end_date
+            else (None, None, None)
+        )
+
+        data = {
             "measure_type": (
                 models.MeasureType.objects.get(
-                    pk=serialized_cleaned_data["measure_type"],
+                    pk=measure_type_pk,
                 )
-                if serialized_cleaned_data.get("measure_type")
+                if measure_type_pk
                 else None
             ),
-            "valid_between": cls.deserialize_date_range(
-                serialized_cleaned_data["valid_between"],
-            ),
+            # NOTE: valid_between is constructed by
+            #   ValidityPeriodForm.clean_validity_period() when the form's
+            #   clean() method is called, so doesn't really need to
+            #   be populated into the form's valid_between field at this point.
+            # "valid_between": valid_between,
+            # start_date
+            "start_date_0": start_date_0,
+            "start_date_1": start_date_1,
+            "start_date_2": start_date_2,
+            # end_date
+            "end_date_0": end_date_0,
+            "end_date_1": end_date_1,
+            "end_date_2": end_date_2,
+            # NOTE: any value will do here, but because it is a required field
+            #   we have to populate it with something.
+            "min_commodity_count": cls.MAX_COMMODITY_COUNT,
         }
-        return cls(initial=initial)
+        return cls(data=data)
 
 
 class MeasureRegulationIdForm(forms.Form):
