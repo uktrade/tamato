@@ -24,11 +24,6 @@ def test_timestamp_migration(migrator):
         transaction_check__successful=True,
         successful=True,
     )
-    from common.models import TrackedModel
-
-    tracked_models = TrackedModel.objects.all()
-    for tracked_model in tracked_models:
-        print(tracked_model.name)
 
     transaction_check = TransactionCheck.objects.get(
         pk=tracked_model_check_1.transaction_check.transaction.pk,
