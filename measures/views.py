@@ -936,6 +936,7 @@ class MeasureCreateWizard(
 
         return created_measures
 
+    # !!!!!!!!!!!!
     def done(self, form_list, **kwargs):
         serialized_cleaned_data = self.get_all_serialized_cleaned_data()
         measures_bulk_creator = MeasuresBulkCreator.objects.create(
@@ -960,7 +961,7 @@ class MeasureCreateWizard(
             # - Replace this list with self.get_form_list() on completing all
             #   form serialization work.
             self.MEASURE_DETAILS,
-            # self.REGULATION_ID,
+            self.REGULATION_ID,
             # self.GEOGRAPHICAL_AREA,
             # self.COMMODITIES,
         ]:

@@ -1094,7 +1094,10 @@ class MeasureDetailsForm(
         return cls(initial=initial)
 
 
-class MeasureRegulationIdForm(forms.Form):
+class MeasureRegulationIdForm(
+    forms.Form,
+    SerializableFormMixin,
+):
     class Meta:
         model = models.Measure
         fields = [
@@ -1126,6 +1129,30 @@ class MeasureRegulationIdForm(forms.Form):
                 data_prevent_double_click="true",
             ),
         )
+
+    def serialize_cleaned_data(self) -> Dict:
+        serialized = {
+            "generating_regulation": self.cleaned_data["generating_regulation"].pk
+            if self.cleaned_data.get("generating_regulation")
+            else None,
+        }
+        return serialized
+
+    @classmethod
+    def create_from_serialized_cleaned_data(
+        cls,
+        serialized_cleaned_data: Dict,
+    ) -> forms.Form:
+        initial = {
+            "generating_regulation": (
+                Regulation.objects.get(
+                    pk=serialized_cleaned_data["generating_regulation"],
+                )
+                if serialized_cleaned_data.get("generating_regulation")
+                else None
+            ),
+        }
+        return cls(initial=initial)
 
 
 class MeasureQuotaOrderNumberForm(forms.Form):
