@@ -102,6 +102,11 @@ ui_patterns = [
         name="workbasket-ui-review-sub-quotas",
     ),
     path(
+        f"<pk>/review-quota-blocking-periods/",
+        ui_views.WorkBasketReviewQuotaBlockingView.as_view(),
+        name="workbasket-ui-review-quota-blocking-periods",
+    ),
+    path(
         f"<pk>/review-regulations/",
         ui_views.WorkBasketReviewRegulationsView.as_view(),
         name="workbasket-ui-review-regulations",
