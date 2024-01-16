@@ -49,6 +49,7 @@ from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
 from publishing.models import PackagedWorkBasket
+from quotas.models import QuotaAssociation
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -1475,6 +1476,22 @@ class WorkBasketReviewQuotaDefinitionsView(WorkBasketReviewView):
         context["selected_tab"] = "quotas"
         context["selected_nested_tab"] = "quota-definitions"
         context["tab_template"] = "includes/workbaskets/review-quota-definitions.jinja"
+        return context
+
+
+class WorkBasketReviewSubQuotasView(WorkBasketReviewView):
+    """UI endpoint for reviewing sub-quota association changes in a
+    workbasket."""
+
+    model = QuotaAssociation
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review sub-quota associations"
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "sub-quotas"
+        context["tab_template"] = "includes/workbaskets/review-sub-quotas.jinja"
         return context
 
 

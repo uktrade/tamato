@@ -11,6 +11,11 @@
     "href": url("workbaskets:workbasket-ui-review-quota-definitions", kwargs={"pk": workbasket.pk}),
     "selected": selected_nested_tab == "quota-definitions",
   },
+  {
+    "text": "Sub-quota associations",
+    "href": url("workbaskets:workbasket-ui-review-sub-quotas", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "sub-quotas",
+  },
   ]
 %}
 
