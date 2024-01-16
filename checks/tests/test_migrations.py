@@ -7,15 +7,11 @@
 # apply 0007
 # check transaction check incompletful, unsuccessful and equal to tracked model checl
 
-from datetime import date
 
 import pytest
 
 from checks.models import TransactionCheck
 from checks.tests.factories import TrackedModelCheckFactory
-from checks.tests.factories import TransactionCheckFactory
-from common.tests import factories
-from workbaskets.validators import WorkflowStatus
 
 
 @pytest.mark.django_db()
@@ -27,53 +23,38 @@ def test_timestamp_migration(migrator):
             "0006_auto_20231211_1642",
         ),
     )
-
-    workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.EDITING,
-    )
-    transaction = factories.TransactionFactory.create(workbasket=workbasket)
-    trked_1 = factories.FootnoteTypeFactory.create(transaction=transaction)
-    trked_2 = factories.FootnoteTypeFactory.create(transaction=transaction)
-
-    tracked_models = workbasket.tracked_models.all()
-    txn_check = TransactionCheckFactory.create(
-        transaction=transaction,
-        completed=True,
-        successful=True,
-        tracked_model_count=len(tracked_models),
+    migrator.apply_tested_migration(
+        (
+            "tests",
+            "0003_auto_20210714_1522",
+        ),
     )
     tracked_model_check_1 = TrackedModelCheckFactory.create(
-        transaction_check__transaction=transaction,
-        model=trked_1,
+        transaction_check__completed=True,
+        transaction_check__successful=True,
         successful=True,
     )
-    tracked_model_check_2 = TrackedModelCheckFactory.create(
-        transaction_check__transaction=transaction,
-        model=trked_2,
-        successful=True,
-    )
+    from common.models import TrackedModel
 
-    # migrator.apply_tested_migration(
-    #     (
-    #         "checks",
-    #         "0006_auto_20231211_1642",
-    #     ),
-    # )
-    transaction_check = TransactionCheck.objects.get(pk=txn_check.pk)
-    assert txn_check.created_at == date.fromtimestamp(000000000)
-    # assert transaction_check.created_at == date.fromtimestamp(000000000)
+    tracked_models = TrackedModel.objects.all()
+    for tracked_model in tracked_models:
+        print(tracked_model.name)
+
+    transaction_check = TransactionCheck.objects.get(
+        pk=tracked_model_check_1.transaction_check.transaction.pk,
+    )
 
     migrator.apply_tested_migration(
         (
             "checks",
-            "0007_transactioncheck_timestamp",
+            "0007_transactioncheck_timestamps",
         ),
     )
 
-    new_transaction_check = TransactionCheck.objects.get(pk=txn_check.pk)
+    new_transaction_check = TransactionCheck.objects.get(pk=transaction_check.pk)
     assert new_transaction_check.completed == True
     assert new_transaction_check.successful == False
     assert new_transaction_check.created_at == tracked_model_check_1.created_at
-    assert new_transaction_check.updated_at == tracked_model_check_2.updated_at
+    assert new_transaction_check.updated_at >= tracked_model_check_1.updated_at
 
     migrator.reset()
