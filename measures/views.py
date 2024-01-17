@@ -715,6 +715,19 @@ class MeasureCreateWizard(
         (SUMMARY, forms.MeasureReviewForm),
     ]
 
+    # TODO: remove after testing.
+    test_form_list = [
+        (MEASURE_DETAILS, forms.MeasureDetailsForm),
+        (REGULATION_ID, forms.MeasureRegulationIdForm),
+        # (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
+        # (QUOTA_ORIGINS, forms.MeasureQuotaOriginsForm),
+        # (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
+        # (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
+        # (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
+        # (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
+        # (FOOTNOTES, forms.MeasureFootnotesFormSet),
+    ]
+
     templates = {
         START: "measures/create-start.jinja",
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
@@ -937,52 +950,33 @@ class MeasureCreateWizard(
         return created_measures
 
     def done(self, form_list, **kwargs):
-        serialized_cleaned_data = self.get_all_serialized_cleaned_data()
+        serializable_data = self.all_serializable_data()
         measures_bulk_creator = MeasuresBulkCreator.objects.create(
-            cleaned_data=serialized_cleaned_data,
+            cleaned_data=serializable_data,
         )
         bulk_create_measures.delay(measures_bulk_creator.pk)
         # TODO: redirect from summary page to done page.
 
-    def get_all_serialized_cleaned_data(self) -> Dict:
-        """Returns a serialized version of all step cleaned_data."""
+    def all_serializable_data(self) -> Dict:
+        """Returns serializable data for all wizard steps."""
 
-        all_serialized_cleaned_data = {}
+        all_data = {}
 
+        # TODO:
         # for form_key in self.get_form_list():
         #   As per self.get_all_cleaned_data() but using
-        #   self.get_serialized_cleaned_data_for_step()
+        #   self.serializable_data_for_step()
+        for form_key, _ in self.test_form_list:
+            all_data[form_key] = self.serializable_data_for_step(form_key)
 
-        for form_key in [
-            # TODO:
-            # - Note that details, regs, geo areas and commodities are a first
-            #   pass to get to fully created Measure instances.
-            # - Replace this list with self.get_form_list() on completing all
-            #   form serialization work.
-            self.MEASURE_DETAILS,
-            # self.REGULATION_ID,
-            # self.GEOGRAPHICAL_AREA,
-            # self.COMMODITIES,
-        ]:
-            # TODO:
-            # - Decide upon approach: continue with the current hybrid approach
-            #   of breaking out keys for formsets only, flattening all other
-            #   forms, or break out all forms so that they each key into a dict
-            #   of their attributes.
+        return all_data
 
-            serialized_cleaned_data = self.get_serialized_cleaned_data_for_step(
-                form_key,
-            )
-            all_serialized_cleaned_data.update({form_key: serialized_cleaned_data})
-
-        return all_serialized_cleaned_data
-
-    def get_serialized_cleaned_data_for_step(self, step) -> Dict:
+    def serializable_data_for_step(self, step) -> Dict:
         """
-        Returns serialized cleaned data for a given `step`.
+        Returns serializable data for a specific wizard step.
 
         This is a re-implementation of WizardView.get_cleaned_data_for_step(),
-        returning the serialized version of cleaned_data in place of the form's
+        returning the serializable version of data in place of the form's
         regular cleaned_data.
         """
 
@@ -992,7 +986,9 @@ class MeasureCreateWizard(
             files=self.storage.get_step_files(step),
         )
         if form_obj.is_valid():
-            return form_obj.serialize_cleaned_data()
+            # TODO: with_prefix=True once all forms done and tested.
+            # return form_obj.serializable()
+            return form_obj.serializable(with_prefix=False)
 
         raise ValidationError
 
