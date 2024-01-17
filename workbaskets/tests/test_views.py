@@ -462,12 +462,12 @@ def test_workbasket_review_tabs_without_permission(url, client):
         (
             "workbaskets:workbasket-ui-review-quota-blocking-periods",
             lambda: factories.QuotaBlockingFactory.create(),
-            6,
+            7,
         ),
         (
             "workbaskets:workbasket-ui-review-quota-suspension-periods",
             lambda: factories.QuotaSuspensionFactory.create(),
-            5,
+            6,
         ),
         (
             "workbaskets:workbasket-ui-review-regulations",

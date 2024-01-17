@@ -13,6 +13,7 @@
   {% endset %}
 
   {{ table_rows.append([
+    {"text": obj.sid},
     {"html": quota_link},
     {"html": quota_definition_link},
     {"text": "{:%d %b %Y}".format(obj.valid_between.lower)},
@@ -23,6 +24,7 @@
 
 {{ govukTable({
   "head": [
+    {"text": "Suspension period SID"},
     {"text": "Order number"},
     {"text": "Quota definition SID"},
     {"text": "Start date"},
