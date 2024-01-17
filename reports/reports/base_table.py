@@ -20,53 +20,42 @@ class ReportBaseTable(ReportBase):
         pass
 
     @abstractmethod
-    def rows(self) -> [[dict]]:
+    def rows(self) -> [dict]:
         pass
 
     @abstractmethod
     def row(self, row) -> [dict]:
         pass
 
-    @abstractmethod
     def headers2(self) -> [dict]:
-        pass
+        return []
 
-    @abstractmethod
-    def rows2(self) -> [[dict]]:
-        pass
+    def rows2(self) -> [dict]:
+        return []
 
-    @abstractmethod
     def row2(self, row) -> [dict]:
-        pass
+        return []
 
-    @abstractmethod
-    def query3(self):
-        pass
-
-    @abstractmethod
     def headers3(self) -> [dict]:
-        pass
+        return []
 
-    @abstractmethod
-    def rows3(self) -> [[dict]]:
-        pass
+    def rows3(self) -> [dict]:
+        return []
 
-    @abstractmethod
     def row3(self, row) -> [dict]:
-        pass
+        return []
 
-    @abstractmethod
-    def query4(self):
-        pass
-
-    @abstractmethod
     def headers4(self) -> [dict]:
-        pass
+        return []
 
-    @abstractmethod
-    def rows4(self) -> [[dict]]:
-        pass
+    def rows4(self) -> [dict]:
+        return []
 
-    @abstractmethod
     def row4(self, row) -> [dict]:
-        pass
+        return []
+
+    def query3(self):
+        return []
+
+    def query4(self):
+        return []

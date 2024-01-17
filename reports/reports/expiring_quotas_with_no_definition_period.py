@@ -36,9 +36,13 @@ class Report(ReportBaseTable):
         ]
 
     def rows(self) -> [[dict]]:
-        table_rows = []
-        for row in self.query():
-            table_rows.append(self.row(row))
+        table_rows = [self.row(row) for row in self.query()]
+
+        if not any(table_rows):
+            return [
+                [{"text": "There is no data for this report at present"}]
+                + [{"text": " "} for _ in range(len(self.headers()) - 1)]
+            ]
 
         return table_rows
 
@@ -90,6 +94,7 @@ class Report(ReportBaseTable):
 
     def row2(self, row) -> [dict]:
         sub_quotas_array = []
+
         for sub_quotas in row.sub_quotas.all():
             sub_quotas_array.append(
                 {"text": row.order_number},
@@ -98,12 +103,17 @@ class Report(ReportBaseTable):
                 {"text": sub_quotas.valid_between.upper},
                 {"text": row.sid},
             )
+
         return sub_quotas_array
 
     def rows2(self) -> [[dict]]:
-        table_rows = []
-        for row in self.query():
-            table_rows.append(self.row2(row))
+        table_rows = [self.row2(row) for row in self.query()]
+
+        if not any(table_rows):
+            return [
+                [{"text": "There is no data for this report at present"}]
+                + [{"text": " "} for _ in range(len(self.headers2()) - 1)]
+            ]
 
         return table_rows
 
@@ -153,10 +163,13 @@ class Report(ReportBaseTable):
         ]
 
     def rows3(self) -> [[dict]]:
-        table_rows = []
-        if self.query3():
-            for row in self.query3():
-                table_rows.append(self.row3(row))
+        table_rows = [self.row3(row) for row in self.query3()]
+
+        if not any(table_rows):
+            return [
+                [{"text": "There is no data for this report at present"}]
+                + [{"text": " "} for _ in range(len(self.headers3()) - 1)]
+            ]
 
         return table_rows
 
@@ -212,10 +225,13 @@ class Report(ReportBaseTable):
         ]
 
     def rows4(self) -> [[dict]]:
-        table_rows = []
-        if self.query4():
-            for row in self.query4():
-                table_rows.append(self.row4(row))
+        table_rows = [self.row4(row) for row in self.query4()]
+
+        if not any(table_rows):
+            return [
+                [{"text": "There is no data for this report at present"}]
+                + [{"text": " "} for _ in range(len(self.headers4()) - 1)]
+            ]
 
         return table_rows
 

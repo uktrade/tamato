@@ -1,11 +1,9 @@
 import pytest
 import datetime
-from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from common.tests import factories
 from common.util import TaricDateRange
 from reports.reports.expiring_quotas_with_no_definition_period import Report
-from quotas.models import QuotaDefinition, QuotaBlocking, QuotaSuspension
 
 
 @pytest.mark.django_db
@@ -79,3 +77,13 @@ class TestQuotasExpiringSoonReport:
 
         assert expiring_quota_definition in result
         assert suspension in expiring_quota_definition.quotasuspension_set.all()
+
+    def test_rows2_no_data(self, quota_order_number):
+        report = Report()
+
+        # Assuming there are no expiring quota definitions
+        result = report.rows2()
+
+        # Check that the result contains the "no data" message
+        assert len(result) == 1
+        assert result[0][0]["text"] == "There is no data for this report at present"
