@@ -12,7 +12,7 @@ from quotas.models import (
 class Report(ReportBaseTable):
     name = "Quotas Expiring Soon"
     enabled = True
-    description = "Quotas with definition/sub-quota/blocking/suspension periods about to expire and no future definition period"
+    description = "Quotas with definition, sub-quota, blocking or suspension periods about to expire and no future definition period."
     tabular_reports = True
     tab_name = "Definitions"
     tab_name2 = "Sub-quota associations"
@@ -240,4 +240,5 @@ class Report(ReportBaseTable):
         quota_suspension_without_future_definition = (
             self.find_quota_suspension_without_future_definition(expiring_quotas)
         )
+
         return quota_suspension_without_future_definition
