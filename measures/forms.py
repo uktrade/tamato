@@ -2,7 +2,6 @@ import datetime
 import logging
 from itertools import groupby
 from typing import Dict
-from typing import Optional
 from typing import TypedDict
 
 from crispy_forms_gds.helper import FormHelper
@@ -21,7 +20,6 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from parsec import ParseError
-from psycopg2.extras import DateRange
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -890,103 +888,38 @@ class DateRangeDict(TypedDict):
 
 
 class SerializableFormMixin:
-    """
-    Subclasses must implement serialize_cleaned_data() and
-    create_from_serialized_cleaned_data().
+    """Provides a default implementation of serializable() that can be used to
+    obtain form data that can be serialized, or more specifically, stored to a
+    forms.JSONField."""
 
-    serialize_cleaned_data() accepts validated cleaned form data and returns a
-    serialized (actually, serializable) version of the data that may be stored
-    to JSON format.
-    """
-
-    # Date format when in a string representation.
-    DATE_STRING_FORMAT = "%Y-%m-%d"
-
-    def serialize_cleaned_data(self) -> Dict:
+    def serializable(self, with_prefix=True) -> Dict:
         """
-        Return a serializable version of cleaned_data that may be rendered to
-        JSON format.
+        Return serializable form data that can be stored in a
+        django.db.models.JSONField and used to recreate a valid form.
 
-        The caller is responsible for ensuring that cleaned_data is valid.
+        Note that this method should probably only be used immediately after a
+        successful call to the Form's is_valid() if the data that it returns is
+        to be used to recreate a valid form.
         """
-        raise NotImplementedError
+        serialized_data = {}
+        data_keys = [k for k in self.data if k.startswith(self.prefix)]
 
-    @classmethod
-    def create_from_serialized_cleaned_data(
-        cls,
-        serialized_cleaned_data: Dict,
-    ) -> forms.Form:
-        """Given a serialized representation of this Form's cleaned data, create
-        a new Form instance and return it."""
-        raise NotImplementedError
+        # Debug.
+        import json
 
-    ###########
-    # Field serializers.
+        print(json.dumps(self.data, indent=4))
 
-    @classmethod
-    def serialize_date_range(
-        cls,
-        date_range: Optional[DateRange],
-    ) -> Optional[DateRangeDict]:
-        """
-        Serialize a DateRange, which may be None, to a dictionary representation
-        with keys `start_date` and `end_date`, each of which is a (possibly
-        None) serialized date.
+        # WizardView uses prefixes its forms, so for now use that as a way of
+        # getting required data. This could, and probably should, be replaced by
+        # the same logic used by the base Form to apply prefixes.
 
-        If `date_range` is None, then None is returned.
-        """
+        for data_key in data_keys:
+            serialized_key = data_key
+            if not with_prefix and self.prefix:
+                serialized_key = data_key[len(self.prefix) + 1 :]
+            serialized_data[serialized_key] = self.data[data_key]
 
-        if not date_range:
-            return None
-
-        return {
-            "lower": cls.serialize_date(date_range.lower),
-            "upper": cls.serialize_date(date_range.upper),
-        }
-
-    @classmethod
-    def deserialize_date_range(
-        cls,
-        date_range: Optional[DateRangeDict],
-    ) -> Optional[DateRange]:
-        """
-        Deserialize a serialized DateRange representation back to a DateRange.
-
-        If `date_range` is none, then None is returned.
-        """
-
-        if not date_range:
-            return None
-
-        return DateRange(date_range["lower"], date_range["upper"])
-
-    @classmethod
-    def serialize_date(cls, date: Optional[datetime.date]) -> Optional[str]:
-        """
-        Serialize a date instance, which may be None, to a string representation
-        whose format DATE_STRING_FORMAT.
-
-        If `date` is None, then None is returned.
-        """
-
-        if isinstance(date, datetime.date):
-            return date.strftime(cls.DATE_STRING_FORMAT)
-
-        return None
-
-    @classmethod
-    def deserialize_date(cls, str_date: Optional[str]) -> Optional[datetime.date]:
-        """
-        Deserialize a string representation of a date with format
-        DATE_STRING_FORMAT.
-
-        If `str_date` is falsy, then a value of None is returned.
-        """
-
-        if not str_date:
-            return None
-
-        return datetime.datetime.strptime(str_date, cls.DATE_STRING_FORMAT).date()
+        return serialized_data
 
 
 class MeasureDetailsForm(
@@ -1063,76 +996,11 @@ class MeasureDetailsForm(
 
         return cleaned_data
 
-    def serialize_cleaned_data(self) -> Dict:
-        serialized = {
-            "measure_type": self.cleaned_data["measure_type"].pk
-            if self.cleaned_data.get("measure_type")
-            else None,
-            "valid_between": self.serialize_date_range(
-                self.cleaned_data["valid_between"],
-            )
-            if self.cleaned_data.get("valid_between")
-            else None,
-        }
-        return serialized
 
-    @classmethod
-    def create_from_serialized_cleaned_data(
-        cls,
-        serialized_cleaned_data: Dict,
-    ) -> forms.Form:
-        """Create a form instance from this form's serialized data."""
-
-        measure_type_pk = serialized_cleaned_data.get("measure_type")
-
-        # TODO: Tidy up validity periods and date handling.
-        valid_between = cls.deserialize_date_range(
-            serialized_cleaned_data.get("valid_between"),
-        )
-        start_date = (
-            cls.deserialize_date(valid_between.lower) if valid_between else None
-        )
-        (start_date_0, start_date_1, start_date_2) = (
-            (start_date.day, start_date.month, start_date.year)
-            if start_date
-            else (None, None, None)
-        )
-        end_date = cls.deserialize_date(valid_between.upper) if valid_between else None
-        (end_date_0, end_date_1, end_date_2) = (
-            (end_date.day, end_date.month, end_date.year)
-            if end_date
-            else (None, None, None)
-        )
-
-        data = {
-            "measure_type": (
-                models.MeasureType.objects.get(
-                    pk=measure_type_pk,
-                )
-                if measure_type_pk
-                else None
-            ),
-            # NOTE: valid_between is constructed by
-            #   ValidityPeriodForm.clean_validity_period() when the form's
-            #   clean() method is called, so doesn't really need to
-            #   be populated into the form's valid_between field at this point.
-            # "valid_between": valid_between,
-            # start_date
-            "start_date_0": start_date_0,
-            "start_date_1": start_date_1,
-            "start_date_2": start_date_2,
-            # end_date
-            "end_date_0": end_date_0,
-            "end_date_1": end_date_1,
-            "end_date_2": end_date_2,
-            # NOTE: any value will do here, but because it is a required field
-            #   we have to populate it with something.
-            "min_commodity_count": cls.MAX_COMMODITY_COUNT,
-        }
-        return cls(data=data)
-
-
-class MeasureRegulationIdForm(forms.Form):
+class MeasureRegulationIdForm(
+    SerializableFormMixin,
+    forms.Form,
+):
     class Meta:
         model = models.Measure
         fields = [
