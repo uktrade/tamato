@@ -993,21 +993,13 @@ class MeasuresBulkCreator(models.Model):
 
         print(f"*** MeasuresBulkCreator.cleaned_data:")
         print(f"\n{json.dumps(self.cleaned_data, indent=4)}")
+        from measures.views import MeasureCreateWizard
 
-        from measures import forms
+        for form_key, form_class in MeasureCreateWizard.test_form_list:
+            form = form_class(self.cleaned_data[form_key])
+            print(f"*** {form_class.__name__}.is_valid(): {form.is_valid()}")
+            print()
 
-        form = forms.MeasureDetailsForm.create_from_serialized_cleaned_data(
-            self.cleaned_data["measure_details"],
-        )
+        # TODO: Create the measures.
 
-        # Debug.
-        print(f"*** form.is_valid(): {form.is_valid()}")
-        if form.errors:
-            print(f"*** form.errors:")
-            for k, v in form.errors.items():
-                print(f"    {k}: {v}")
-        if form.non_field_errors():
-            print(f"*** form.non_field_errors(): {form.non_field_errors()}")
-
-        # TODO
         return created_measures
