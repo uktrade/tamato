@@ -38,7 +38,7 @@ class ReportBaseTable(ReportBase):
     @abstractmethod
     def row2(self, row) -> [dict]:
         pass
-    
+
     @abstractmethod
     def query3(self):
         pass
