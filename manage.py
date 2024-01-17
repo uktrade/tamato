@@ -28,5 +28,5 @@ def main():
 if __name__ == "__main__":
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        dotenv.load_dotenv()
+        dotenv.read_dotenv()
     main()
