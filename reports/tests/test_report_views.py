@@ -41,7 +41,9 @@ class TestReportViews:
 
     def test_export_report_to_csv(self, request):
         request = RequestFactory().get("/")
-        report_slug = "cds_rejections_in_the_last_12_months"
+        report_slug = "blank_goods_nomenclature_descriptions"
+        print("heleloo")
+        print(get_reports())
 
         response = export_report_to_csv(request, report_slug)
 
