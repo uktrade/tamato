@@ -9,6 +9,11 @@ function QuotaOriginExclusionForm({ exclusion, origin, options, originIndex, ind
         <div>
             <h5 className="govuk-heading-s">Exclusion {index + 1}</h5>
             <div className="govuk-form-group">
+                <input
+                    type="hidden"
+                    name={`origins-${originIndex}-exclusions-${index}-pk`}
+                    value={exclusion.pk}
+                />
                 <Select
                     input={{
                         name: `origins-${originIndex}-exclusions-${index}-geographical_area`,

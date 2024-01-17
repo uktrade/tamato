@@ -309,7 +309,9 @@ class QuotaUpdateMixin(
         )
         kwargs[
             "existing_origins"
-        ] = self.object.quotaordernumberorigin_set.with_latest_geo_area_description()
+        ] = (
+            self.object.quotaordernumberorigin_set.current().with_latest_geo_area_description()
+        )
         return kwargs
 
     def update_origins(self, instance, form_origins):
@@ -329,19 +331,24 @@ class QuotaUpdateMixin(
                 transaction=instance.transaction,
             )
 
-        # TODO: update exclusions on each origin
         for origin in form_origins:
             if origin.get("pk"):
                 existing_origin = models.QuotaOrderNumberOrigin.objects.get(
                     pk=origin.get("pk"),
                 )
-                existing_origin.new_version(
+                updated_origin = existing_origin.new_version(
                     workbasket=WorkBasket.current(self.request),
                     transaction=instance.transaction,
                     order_number=instance,
                     valid_between=origin["valid_between"],
                     geographical_area=origin["geographical_area"],
                 )
+                if origin.get("exclusions"):
+                    self.update_exclusions(
+                        instance,
+                        updated_origin,
+                        origin.get("exclusions"),
+                    )
 
             else:
                 models.QuotaOrderNumberOrigin.objects.create(
@@ -350,6 +357,46 @@ class QuotaUpdateMixin(
                     geographical_area=origin["geographical_area"],
                     update_type=UpdateType.CREATE,
                     transaction=instance.transaction,
+                )
+
+    def update_exclusions(self, quota, updated_origin, exclusions):
+        existing_exclusion_pks = {
+            e.pk for e in updated_origin.quotaordernumberoriginexclusion_set.current()
+        }
+        submitted_exclusion_pks = {e["pk"] for e in exclusions}
+        deleted_exclusion_pks = existing_exclusion_pks.difference(
+            submitted_exclusion_pks,
+        )
+
+        for exclusion_pk in deleted_exclusion_pks:
+            exclusion = models.QuotaOrderNumberOriginExclusion.objects.get(
+                pk=exclusion_pk,
+            )
+            exclusion.new_version(
+                update_type=UpdateType.DELETE,
+                workbasket=WorkBasket.current(self.request),
+                transaction=quota.transaction,
+            )
+
+        for exclusion in exclusions:
+            geo_area = GeographicalArea.objects.get(pk=exclusion["geographical_area"])
+            if exclusion.get("pk"):
+                existing_exclusion = models.QuotaOrderNumberOriginExclusion.objects.get(
+                    pk=exclusion.get("pk"),
+                )
+                existing_exclusion.new_version(
+                    workbasket=WorkBasket.current(self.request),
+                    transaction=quota.transaction,
+                    origin=updated_origin,
+                    excluded_geographical_area=geo_area,
+                )
+
+            else:
+                models.QuotaOrderNumberOriginExclusion.objects.create(
+                    origin=updated_origin,
+                    excluded_geographical_area=geo_area,
+                    update_type=UpdateType.CREATE,
+                    transaction=quota.transaction,
                 )
 
     @transaction.atomic

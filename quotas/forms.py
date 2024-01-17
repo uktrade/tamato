@@ -96,6 +96,7 @@ class QuotaOriginExclusionsForm(forms.Form):
         help_text="Select a country to be excluded:",
         required=False,
     )
+    pk = forms.IntegerField(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -171,7 +172,7 @@ class QuotaUpdateForm(
                 "id": o.pk,  # unique identifier used by react
                 "pk": o.pk,
                 "exclusions": [
-                    {"id": e.excluded_geographical_area.pk}
+                    {"pk": e.pk, "id": e.excluded_geographical_area.pk}
                     for e in o.quotaordernumberoriginexclusion_set.current()
                 ],
                 "geographical_area": o.geographical_area.pk,

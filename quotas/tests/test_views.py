@@ -1430,3 +1430,84 @@ def test_quota_update_existing_origins(valid_user_client, date_ranges):
         geo_area2.sid,
         origin1.geographical_area.sid,
     }
+
+
+def test_quota_update_existing_origin_exclusions(valid_user_client, date_ranges):
+    # make a geo group with 3 member countries
+    country1 = factories.CountryFactory.create()
+    country2 = factories.CountryFactory.create()
+    country3 = factories.CountryFactory.create()
+    geo_group = factories.GeoGroupFactory.create()
+    membership1 = factories.GeographicalMembershipFactory.create(
+        member=country1,
+        geo_group=geo_group,
+    )
+    membership2 = factories.GeographicalMembershipFactory.create(
+        member=country2,
+        geo_group=geo_group,
+    )
+    membership3 = factories.GeographicalMembershipFactory.create(
+        member=country3,
+        geo_group=geo_group,
+    )
+
+    exclusion = factories.QuotaOrderNumberOriginExclusionFactory.create(
+        excluded_geographical_area=membership1.member,
+    )
+    origin = exclusion.origin
+    quota = origin.order_number
+
+    # sanity check
+    assert quota.quotaordernumberorigin_set.count() == 1
+
+    data = {
+        "start_date_0": date_ranges.big_no_end.lower.day,
+        "start_date_1": date_ranges.big_no_end.lower.month,
+        "start_date_2": date_ranges.big_no_end.lower.year,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
+        "category": "1",  # update category
+        "origins-0-pk": origin.pk,
+        "origins-0-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-0-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-0-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-0-end_date_0": "",
+        "origins-0-end_date_1": "",
+        "origins-0-end_date_2": "",
+        "origins-0-geographical_area": geo_group.pk,
+        # update existing
+        "origins-0-exclusions-0-pk": exclusion.pk,
+        "origins-0-exclusions-0-geographical_area": membership2.member.pk,
+        # add new
+        "origins-0-exclusions-1-pk": "",
+        "origins-0-exclusions-1-geographical_area": membership3.member.pk,
+        "submit": "Save",
+    }
+    url = reverse("quota-ui-edit", kwargs={"sid": quota.sid})
+    response = valid_user_client.post(url, data)
+
+    assert response.status_code == 302
+    assert response.url == reverse("quota-ui-confirm-update", kwargs={"sid": quota.sid})
+
+    tx = Transaction.objects.last()
+
+    updated_quota = (
+        models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        .filter(sid=quota.sid)
+        .first()
+    )
+
+    assert updated_quota.origins.approved_up_to_transaction(tx).count() == 1
+    updated_origin = (
+        updated_quota.quotaordernumberorigin_set.approved_up_to_transaction(tx).first()
+    )
+    assert {
+        e.excluded_geographical_area.sid
+        for e in updated_origin.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+            tx,
+        )
+    } == {
+        membership2.member.sid,
+        membership3.member.sid,
+    }
