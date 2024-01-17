@@ -18,10 +18,10 @@ function QuotaOriginExclusionForm({ exclusion, origin, options, originIndex, ind
                     input={{
                         name: `origins-${originIndex}-exclusions-${index}-geographical_area`,
                         onChange: function noRefCheck() { },
-                        defaultValue: exclusion
+                        defaultValue: exclusion.id
                     }}
                     label="Geographical area"
-                    defaultValue={exclusion}
+                    defaultValue={exclusion.id}
                     meta={{
                         error: errors[`origins-${originIndex}-exclusions-${index}-geographical_area`],
                         touched: Boolean(errors[`origins-${originIndex}-exclusions-${index}-geographical_area`])
