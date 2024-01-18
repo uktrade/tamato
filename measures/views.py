@@ -958,7 +958,13 @@ class MeasureCreateWizard(
         # TODO: redirect from summary page to done page.
 
     def all_serializable_data(self) -> Dict:
-        """Returns serializable data for all wizard steps."""
+        """
+        Returns serializable data for all wizard steps.
+
+        This is a re-implementation of
+        MeasureCreateWizard.get_all_cleaned_data(), but using self.data after
+        is_valid() has been successfully run.
+        """
 
         all_data = {}
 
