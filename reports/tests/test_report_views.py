@@ -5,6 +5,7 @@ from django.test import RequestFactory
 
 from reports.utils import get_reports
 from reports.views import export_report_to_csv
+from reports.reports.expiring_quotas_with_no_definition_period import Report
 
 pytestmark = pytest.mark.django_db
 
@@ -41,7 +42,7 @@ class TestReportViews:
 
     def test_export_report_to_csv(self, request):
         request = RequestFactory().get("/")
-        report_slug = "cds_rejections_in_the_last_12_months"
+        report_slug = "blank_goods_nomenclature_descriptions"
 
         response = export_report_to_csv(request, report_slug)
 
@@ -51,3 +52,13 @@ class TestReportViews:
             response["Content-Disposition"]
             == f'attachment; filename="{report_slug}_report.csv"'
         )
+
+    def test_export_report_invalid_tab(self):
+        request = RequestFactory().get("/")
+        report_slug = Report.slug()
+        invalid_tab = "Invalid tab"
+
+        with pytest.raises(
+            ValueError, match=f"Invalid current_tab value: {invalid_tab}"
+        ):
+            export_report_to_csv(request, report_slug, current_tab=invalid_tab)

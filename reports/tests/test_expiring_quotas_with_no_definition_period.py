@@ -78,6 +78,14 @@ class TestQuotasExpiringSoonReport:
         assert expiring_quota_definition in result
         assert suspension in expiring_quota_definition.quotasuspension_set.all()
 
+    def test_rows_no_data(self):
+        report = Report()
+
+        result = report.rows()
+
+        assert len(result) == 1
+        assert result[0][0]["text"] == "There is no data for this report at present"
+
     def test_rows2_no_data(self, quota_order_number):
         report = Report()
 
