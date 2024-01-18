@@ -97,6 +97,21 @@ ui_patterns = [
         name="workbasket-ui-review-quota-definitions",
     ),
     path(
+        f"<pk>/review-sub-quotas/",
+        ui_views.WorkBasketReviewSubQuotasView.as_view(),
+        name="workbasket-ui-review-sub-quotas",
+    ),
+    path(
+        f"<pk>/review-quota-blocking-periods/",
+        ui_views.WorkBasketReviewQuotaBlockingView.as_view(),
+        name="workbasket-ui-review-quota-blocking-periods",
+    ),
+    path(
+        f"<pk>/review-quota-suspension-periods/",
+        ui_views.WorkBasketReviewQuotaSuspensionView.as_view(),
+        name="workbasket-ui-review-quota-suspension-periods",
+    ),
+    path(
         f"<pk>/review-regulations/",
         ui_views.WorkBasketReviewRegulationsView.as_view(),
         name="workbasket-ui-review-regulations",

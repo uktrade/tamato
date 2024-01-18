@@ -1,0 +1,37 @@
+{% set table_rows = [] %}
+{% for obj in object_list %}
+  {% set quota_link %}
+    <a class="govuk-link" href="{{ obj.quota_definition.order_number.get_url() or "#" }}">
+      {{ obj.quota_definition.order_number.order_number }}
+    </a>
+  {% endset %}
+
+  {% set quota_definition_link %}
+    <a class="govuk-link" href="{{ obj.quota_definition.get_url() or "#" }}">
+      {{ obj.quota_definition.sid }}
+    </a>
+  {% endset %}
+
+  {{ table_rows.append([
+    {"text": obj.sid},
+    {"html": quota_link},
+    {"html": quota_definition_link},
+    {"text": "{:%d %b %Y}".format(obj.valid_between.lower)},
+    {"text": "{:%d %b %Y}".format(obj.valid_between.upper) if obj.valid_between.upper else "-"},
+    {"text": obj.blocking_period_type},
+    {"text": obj.description if obj.description else "-", "classes": "govuk-!-width-one-quarter"},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "Blocking period SID"},
+    {"text": "Order number"},
+    {"text": "Quota definition SID"},
+    {"text": "Start date"},
+    {"text": "End date"},
+    {"text": "Blocking period type"},
+    {"text": "Description"},
+  ],
+  "rows": table_rows
+}) }}

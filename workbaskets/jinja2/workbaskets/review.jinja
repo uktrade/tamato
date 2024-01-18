@@ -114,7 +114,7 @@
       {% if object_list %}
         {% include tab_template %}
       {% else %}
-        <p class="govuk-body govuk-!-margin-top-5">0 {{ view.model._meta.verbose_name_plural }} available to review.</p>
+        <p class="govuk-body govuk-!-margin-top-5">0 {{ selected_nested_tab.replace("-", " ") if selected_nested_tab else selected_tab }} available to review.</p>
       {% endif %}
       {% include "includes/common/pagination.jinja" %}
     {% endblock %}

@@ -49,8 +49,11 @@ from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
 from publishing.models import PackagedWorkBasket
+from quotas.models import QuotaAssociation
+from quotas.models import QuotaBlocking
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaSuspension
 from regulations.models import Regulation
 from workbaskets import forms
 from workbaskets.models import DataRow
@@ -1475,6 +1478,58 @@ class WorkBasketReviewQuotaDefinitionsView(WorkBasketReviewView):
         context["selected_tab"] = "quotas"
         context["selected_nested_tab"] = "quota-definitions"
         context["tab_template"] = "includes/workbaskets/review-quota-definitions.jinja"
+        return context
+
+
+class WorkBasketReviewSubQuotasView(WorkBasketReviewView):
+    """UI endpoint for reviewing sub-quota association changes in a
+    workbasket."""
+
+    model = QuotaAssociation
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review sub-quota associations"
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "sub-quotas"
+        context["tab_template"] = "includes/workbaskets/review-sub-quotas.jinja"
+        return context
+
+
+class WorkBasketReviewQuotaBlockingView(WorkBasketReviewView):
+    """UI endpoint for reviewing quota blocking period changes in a
+    workbasket."""
+
+    model = QuotaBlocking
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota blocking periods"
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "blocking-periods"
+        context[
+            "tab_template"
+        ] = "includes/workbaskets/review-quota-blocking-periods.jinja"
+        return context
+
+
+class WorkBasketReviewQuotaSuspensionView(WorkBasketReviewView):
+    """UI endpoint for reviewing quota suspension period changes in a
+    workbasket."""
+
+    model = QuotaSuspension
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota suspension periods"
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "suspension-periods"
+        context[
+            "tab_template"
+        ] = "includes/workbaskets/review-quota-suspension-periods.jinja"
         return context
 
 
