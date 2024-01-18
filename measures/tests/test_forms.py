@@ -1,4 +1,5 @@
 import datetime
+from typing import Dict
 from unittest.mock import patch
 
 import pytest
@@ -18,6 +19,7 @@ from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.forms import MeasureConditionsFormSet
 from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
+from measures.forms import MeasureRegulationIdForm
 from measures.forms import MeasureStartDateForm
 from measures.models import Measure
 from measures.validators import MeasureExplosionLevel
@@ -1656,3 +1658,38 @@ def test_measure_geographical_area_exclusions_form_invalid_choice():
     assert form.errors["excluded_area"] == [
         "Select a valid choice. That choice is not one of the available choices.",
     ]
+
+
+def regulation():
+    injected_regulation = regulation
+    return injected_regulation
+
+
+@pytest.mark.parametrize(
+    "form, form_data"[
+        (forms.MeasureRegulationIdForm, {"generating_regulation": regulation().pk}),
+    ],
+)
+def test_measure_forms_serialize_clean_data(form, form_data, regulation):
+    form = form(form_data)
+    assert form.is_valid()
+    serialized_data = form.serialize_cleaned_data()
+    assert isinstance(serialized_data, Dict)
+
+
+# look for lambdas that run the fixtures.
+#
+
+
+def test_measure_forms_create_from_serialized_cleaned_data(regulation):
+    data = {
+        "generating_regulation": regulation.pk,
+    }
+    form = forms.MeasureRegulationIdForm(data)
+    assert form.is_valid()
+    serialized = form.serialize_cleaned_data()
+
+    rehydrated_form = form.create_from_serialized_cleaned_data(serialized)
+    assert type(rehydrated_form) == MeasureRegulationIdForm
+    assert rehydrated_form.is_valid()
+    assert rehydrated_form.initial == data
