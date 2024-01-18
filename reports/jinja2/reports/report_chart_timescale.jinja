@@ -85,6 +85,8 @@
     <h2 class="govuk-body">
     {{ report.description|safe }}
     </h2>
+    <a id="exportToCSVLink" class="govuk-button" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug() }) }}">Export to CSV</a>
+    <a id="exportToExcelLink" class="govuk-button" href="{{ url("reports:export_report_to_excel", kwargs={"report_slug": report.slug() }) }}">Export to Excel</a>
     <div>
         <div id="container" style="width: 75%;">
             <canvas id="chart"></canvas>
