@@ -7,7 +7,7 @@ from django.db import models
 
 def change_user_content_type(apps, schema_editor):
     """
-    The addition of the new curent_workbasket field marks the move to a custom
+    The addition of the new current_workbasket field marks the move to a custom
     user model from this point in migration history onwards.
 
     As a result, the auth.User content type must be updated to reflect

@@ -2033,7 +2033,7 @@ def test_no_active_workbasket_view(valid_user_client):
     ],
 )
 def test_require_current_workbasket_redirect(workbasket_factory, client, valid_user):
-    """Test that view's using require_current_workbasket decorator redirect to
+    """Test that views using require_current_workbasket decorator redirect to
     NoActiveWorkBasket view if the user's current workbasket is no longer in
     editing state."""
     client.force_login(valid_user)
