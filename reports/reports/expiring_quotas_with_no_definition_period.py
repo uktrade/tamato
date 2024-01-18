@@ -30,7 +30,7 @@ class Report(ReportBaseTable):
 
     def row(self, row) -> [dict]:
         return [
-            {"text": row.order_number},
+            {"text": self.link_renderer_for_quotas(row.order_number, row.order_number)},
             {"text": row.valid_between.lower},
             {"text": row.valid_between.upper},
         ]
@@ -106,11 +106,23 @@ class Report(ReportBaseTable):
 
         for sub_quotas in row.sub_quotas.all():
             sub_quotas_array.append(
-                {"text": row.order_number},
-                {"text": sub_quotas.sid},
+                {
+                    "text": self.link_renderer_for_quotas(
+                        row.order_number, row.order_number
+                    )
+                },
+                {
+                    "text": self.link_renderer_for_quotas(
+                        row.order_number, sub_quotas.sid, "#sub-quotas"
+                    )
+                },
                 {"text": sub_quotas.valid_between.lower},
                 {"text": sub_quotas.valid_between.upper},
-                {"text": row.sid},
+                {
+                    "text": self.link_renderer_for_quotas(
+                        row.order_number, row.sid, "#definition-details"
+                    )
+                },
             )
 
         return sub_quotas_array
@@ -158,8 +170,13 @@ class Report(ReportBaseTable):
 
     def row3(self, row) -> [dict]:
         return [
-            {"text": row.order_number},
-            {"text": blocking.sid for blocking in row.quotablocking_set.all()},
+            {"text": self.link_renderer_for_quotas(row.order_number, row.order_number)},
+            {
+                "text": self.link_renderer_for_quotas(
+                    row.order_number, blocking.sid, "#blocking-periods"
+                )
+                for blocking in row.quotablocking_set.all()
+            },
             {
                 "text": blocking.valid_between.lower
                 for blocking in row.quotablocking_set.all()
@@ -168,7 +185,11 @@ class Report(ReportBaseTable):
                 "text": blocking.valid_between.upper
                 for blocking in row.quotablocking_set.all()
             },
-            {"text": row.sid},
+            {
+                "text": self.link_renderer_for_quotas(
+                    row.order_number, row.sid, "#definition-details"
+                )
+            },
         ]
 
     def rows3(self) -> [[dict]]:
@@ -219,8 +240,13 @@ class Report(ReportBaseTable):
 
     def row4(self, row) -> [dict]:
         return [
-            {"text": row.order_number},
-            {"text": suspension.sid for suspension in row.quotasuspension_set.all()},
+            {"text": self.link_renderer_for_quotas(row.order_number, row.order_number)},
+            {
+                "text": self.link_renderer_for_quotas(
+                    row.order_number, suspension.sid, "#blocking-periods"
+                )
+                for suspension in row.quotasuspension_set.all()
+            },
             {
                 "text": suspension.valid_between.lower
                 for suspension in row.quotasuspension_set.all()
@@ -229,7 +255,11 @@ class Report(ReportBaseTable):
                 "text": suspension.valid_between.upper
                 for suspension in row.quotasuspension_set.all()
             },
-            {"text": row.sid},
+            {
+                "text": self.link_renderer_for_quotas(
+                    row.order_number, row.sid, "#definition-details"
+                )
+            },
         ]
 
     def rows4(self) -> [[dict]]:
