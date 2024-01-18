@@ -1,10 +1,7 @@
 # Create your tests here.
-import os
 import pytest
-import tempfile
 from django.urls import reverse
 from django.test import RequestFactory
-from openpyxl import load_workbook
 
 from reports.utils import get_reports
 from reports.views import export_report_to_csv, export_report_to_excel
