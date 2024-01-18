@@ -509,7 +509,7 @@ class WorkBasket(TimestampedMixin):
         return Measure.objects.filter(transaction__workbasket=self)
 
     @classmethod
-    def remove_users_current_workbasket(cls, request):
+    def remove_current_from_user(cls, request):
         """Remove the user's assigned current workbasket."""
         try:
             current_user = User.objects.get(pk=request.user.id)
@@ -529,7 +529,7 @@ class WorkBasket(TimestampedMixin):
 
         if workbasket is not None:
             if workbasket.status != WorkflowStatus.EDITING:
-                cls.remove_users_current_workbasket(request)
+                cls.remove_current_from_user(request)
                 return None
 
             return workbasket
