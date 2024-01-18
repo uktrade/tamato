@@ -5,12 +5,32 @@ from django.db import migrations
 from django.db import models
 
 
+def change_user_content_type(apps, schema_editor):
+    """
+    The addition of the new curent_workbasket field marks the move to a custom
+    user model from this point in migration history onwards.
+
+    As a result, the auth.User content type must be updated to reflect
+    workbaskets.User (custom User model) to preserve existing references.
+    """
+
+    ContentType = apps.get_model("contenttypes", "ContentType")
+    ct = ContentType.objects.filter(
+        app_label="auth",
+        model="user",
+    ).first()
+    if ct:
+        ct.app_label = "workbaskets"
+        ct.save()
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("workbaskets", "0008_datarow_dataupload"),
     ]
 
     operations = [
+        migrations.RunPython(change_user_content_type),
         migrations.AddField(
             model_name="user",
             name="current_workbasket",

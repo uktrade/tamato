@@ -6,19 +6,6 @@ from django.db import migrations
 from django.db import models
 
 
-def change_user_content_type(apps, schema_editor):
-    """Update auth.User content type to workbaskets.User (custom User model) to
-    preserve existing references."""
-    ContentType = apps.get_model("contenttypes", "ContentType")
-    ct = ContentType.objects.filter(
-        app_label="auth",
-        model="user",
-    ).first()
-    if ct:
-        ct.app_label = "workbaskets"
-        ct.save()
-
-
 class Migration(migrations.Migration):
     initial = True
 
@@ -27,6 +14,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # The initial migration for Django's default auth user model has been added here so that it can be substituted for a custom user model without having to truncate the django_migrations table.
         migrations.CreateModel(
             name="User",
             fields=[
@@ -148,7 +136,6 @@ class Migration(migrations.Migration):
                 ("objects", django.contrib.auth.models.UserManager()),
             ],
         ),
-        migrations.RunPython(change_user_content_type),
         migrations.CreateModel(
             name="WorkBasket",
             fields=[
