@@ -1034,7 +1034,10 @@ class MeasureRegulationIdForm(
         )
 
 
-class MeasureQuotaOrderNumberForm(forms.Form):
+class MeasureQuotaOrderNumberForm(
+    SerializableFormMixin,
+    forms.Form,
+):
     class Meta:
         model = models.Measure
         fields = [
@@ -1251,7 +1254,10 @@ class MeasureGeographicalAreaForm(
         return cleaned_data
 
 
-class MeasureAdditionalCodeForm(forms.ModelForm):
+class MeasureAdditionalCodeForm(
+    SerializableFormMixin,
+    forms.ModelForm,
+):
     class Meta:
         model = models.Measure
         fields = [

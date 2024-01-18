@@ -719,11 +719,11 @@ class MeasureCreateWizard(
     test_form_list = [
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
         (REGULATION_ID, forms.MeasureRegulationIdForm),
-        # (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
+        (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
         # (QUOTA_ORIGINS, forms.MeasureQuotaOriginsForm),
         # (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
         # (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
-        # (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
+        (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
         # (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
         # (FOOTNOTES, forms.MeasureFootnotesFormSet),
     ]
