@@ -27,13 +27,17 @@
     </ul>
     <div class="govuk-tabs__panel" id="{{ report.tab_name | replace(' ', '_') | lower }}">
         <h2 class="govuk-heading-l">{{ report.tab_name }}</h2>
+            <a id="exportToCSVLink" class="govuk-button" style="float:right; margin-top:-70px" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug() }) }}">Export to CSV</a>
         {{ govukTable({
         "head": report.headers(),
         "rows": report.rows()
     }) }}
     </div>
     <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name2 | replace(' ', '_') | lower }}">
+    <div>
         <h2 class="govuk-heading-l">{{ report.tab_name2 }}</h2>
+            <a id="exportToCSVLink" class="govuk-button" style="float:right; margin-top:-70px" href="{{ url("reports:export_report_with_tabs_to_csv", kwargs={"report_slug": report.slug(), "current_tab": report.tab_name2 | replace(' ', '_') | lower }) }}">Export to CSV</a>
+            </div>
         {{ govukTable({
         "head": report.headers2(),
         "rows": report.rows2()
@@ -41,6 +45,7 @@
     </div>
     <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name3 | replace(' ', '_') | lower }}">
         <h2 class="govuk-heading-l">{{ report.tab_name3 }}</h2>
+            <a id="exportToCSVLink" class="govuk-button" style="float:right; margin-top:-70px" href="{{ url("reports:export_report_with_tabs_to_csv", kwargs={"report_slug": report.slug(), "current_tab": report.tab_name3 | replace(' ', '_') | lower }) }}">Export to CSV</a>
         {{ govukTable({
         "head": report.headers3(),
         "rows": report.rows3()
@@ -48,6 +53,7 @@
     </div>
     <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name4 | replace(' ', '_') | lower }}">
         <h2 class="govuk-heading-l">{{ report.tab_name4 }}</h2>
+        <a id="exportToCSVLink" class="govuk-button" style="float:right; margin-top:-70px" href="{{ url("reports:export_report_with_tabs_to_csv", kwargs={"report_slug": report.slug(), "current_tab": report.tab_name4 | replace(' ', '_') | lower }) }}">Export to CSV</a>
         {{ govukTable({
         "head": report.headers4(),
         "rows": report.rows4()

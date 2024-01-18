@@ -9,38 +9,12 @@
 {% endblock %}
 
 {% block content %}
-<script nonce="{{ request.csp_nonce }}">
-function initialisePage() {
-  var hashValue = window.location.hash.split('#')[1];
-  if (hashValue) {
-    var encodedHashValue = encodeURIComponent(hashValue);
-    var exportURL = '/reports/quotas_expiring_soon/' + encodedHashValue + '/export-csv/';
-    document.getElementById('exportToCSVLink').setAttribute('href', exportURL);
-  }
-}
-
-window.onload = initialisePage;
-
-var exportLink = document.getElementById('exportToCSVLink');
-
-if (exportLink) {
-  exportLink.addEventListener('click', function(event) {
-    initialisePage();
-    event.preventDefault(); // Prevent the default behavior of the link
-    window.location.href = event.target.getAttribute('href'); // Manually navigate to the link
-  });
-}
-
-// Handle hash changes
-window.onhashchange = initialisePage;
-</script>
-
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
         Report: {{ report.name }}        
     </h1>
-
-    <a id="exportToCSVLink" class="govuk-button govuk-!-margin-bottom-0" style="float:right" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug()}) }}">Export to CSV</a>
-    
+    {% if not report.tab_name2 %}
+                <a id="exportToCSVLink" class="govuk-button" style="float:right;" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug()}) }}">Export to CSV</a>
+    {% endif %}
     <h2 class="govuk-body">
     {{ report.description|safe }}
     </h2>
