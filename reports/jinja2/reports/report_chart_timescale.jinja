@@ -85,7 +85,7 @@
     <h2 class="govuk-body">
     {{ report.description|safe }}
     </h2>
-    <div style="float:right" class="govuk-!-margin-left-1">
+    <div class="float-elements-right govuk-!-margin-left-1">
     <a id="exportToCSVLink" class="govuk-button govuk-!-margin-right-3" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug() }) }}">Export to CSV</a>
     <a id="exportToExcelLink" class="govuk-button" href="{{ url("reports:export_report_to_excel", kwargs={"report_slug": report.slug() }) }}">Export to Excel</a>
     </div>

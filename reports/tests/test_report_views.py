@@ -43,7 +43,6 @@ class TestReportViews:
             assert response.status_code == http_status
 
     def test_export_report_to_csv(self, request):
-        request = RequestFactory().get("/")
         report_slug = "blank_goods_nomenclature_descriptions"
 
         response = export_report_to_csv(request, report_slug)
@@ -55,8 +54,7 @@ class TestReportViews:
             == f'attachment; filename="{report_slug}_report.csv"'
         )
 
-    def test_export_report_invalid_tab(self):
-        request = RequestFactory().get("/")
+    def test_export_report_invalid_tab(self, request):
         report_slug = Report.slug()
         invalid_tab = "Invalid tab"
 
@@ -66,7 +64,6 @@ class TestReportViews:
             export_report_to_csv(request, report_slug, current_tab=invalid_tab)
 
     def test_export_report_to_excel(self, request):
-        request = RequestFactory().get("/")
         report_slug = ChartReport.slug()
 
         response = export_report_to_excel(request, report_slug)
