@@ -23,6 +23,8 @@ SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "true"))
 VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
 VCAP_APPLICATION = json.loads(os.environ.get("VCAP_APPLICATION", "{}"))
 
+MAINTENANCE_MODE = is_truthy(os.environ.get("MAINTENANCE_MODE", "False"))
+
 # -- Debug
 
 # Activates debugging
@@ -140,19 +142,33 @@ INSTALLED_APPS = [
     *APPS_THAT_MUST_COME_LAST,
 ]
 
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "common.models.utils.ValidateSessionWorkBasketMiddleware",
-    "common.models.utils.TransactionMiddleware",
-    "csp.middleware.CSPMiddleware",
-]
+if not MAINTENANCE_MODE:
+    MIDDLEWARE = [
+        "django.middleware.security.SecurityMiddleware",
+        "whitenoise.middleware.WhiteNoiseMiddleware",
+        "django.contrib.sessions.middleware.SessionMiddleware",
+        "django.middleware.common.CommonMiddleware",
+        "django.middleware.csrf.CsrfViewMiddleware",
+        "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "django.contrib.messages.middleware.MessageMiddleware",
+        "django.middleware.clickjacking.XFrameOptionsMiddleware",
+        "common.models.utils.ValidateSessionWorkBasketMiddleware",
+        "common.models.utils.TransactionMiddleware",
+        "csp.middleware.CSPMiddleware",
+    ]
+else:
+    MIDDLEWARE = [
+        "django.middleware.security.SecurityMiddleware",
+        "whitenoise.middleware.WhiteNoiseMiddleware",
+        "django.middleware.common.CommonMiddleware",
+        "django.middleware.csrf.CsrfViewMiddleware",
+        "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "django.contrib.messages.middleware.MessageMiddleware",
+        "django.middleware.clickjacking.XFrameOptionsMiddleware",
+        "csp.middleware.CSPMiddleware",
+        "common.middleware.MaintenanceModeMiddleware",
+    ]
+
 if SSO_ENABLED:
     MIDDLEWARE += [
         "authbroker_client.middleware.ProtectAllViewsMiddleware",
