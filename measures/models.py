@@ -988,10 +988,18 @@ class MeasuresBulkCreator(models.Model):
         results as an iterable."""
         created_measures = []
 
+        # Debug.
         import json
 
-        print(f"*** cleaned_data:")
-        print(json.dumps(self.cleaned_data, indent=4))
+        print(f"*** MeasuresBulkCreator.cleaned_data:")
+        print(f"\n{json.dumps(self.cleaned_data, indent=4)}")
+        from measures.views import MeasureCreateWizard
 
-        # TODO
+        for form_key, form_class in MeasureCreateWizard.test_form_list:
+            form = form_class(self.cleaned_data[form_key])
+            print(f"*** {form_class.__name__}.is_valid(): {form.is_valid()}")
+            print()
+
+        # TODO: Create the measures.
+
         return created_measures
