@@ -142,37 +142,35 @@ INSTALLED_APPS = [
     *APPS_THAT_MUST_COME_LAST,
 ]
 
-if not MAINTENANCE_MODE:
-    MIDDLEWARE = [
-        "django.middleware.security.SecurityMiddleware",
-        "whitenoise.middleware.WhiteNoiseMiddleware",
-        "django.contrib.sessions.middleware.SessionMiddleware",
-        "django.middleware.common.CommonMiddleware",
-        "django.middleware.csrf.CsrfViewMiddleware",
-        "django.contrib.auth.middleware.AuthenticationMiddleware",
-        "django.contrib.messages.middleware.MessageMiddleware",
-        "django.middleware.clickjacking.XFrameOptionsMiddleware",
-        "common.models.utils.ValidateSessionWorkBasketMiddleware",
-        "common.models.utils.TransactionMiddleware",
-        "csp.middleware.CSPMiddleware",
-    ]
-else:
-    MIDDLEWARE = [
-        "django.middleware.security.SecurityMiddleware",
-        "whitenoise.middleware.WhiteNoiseMiddleware",
-        "django.middleware.common.CommonMiddleware",
-        "django.middleware.csrf.CsrfViewMiddleware",
-        "django.contrib.auth.middleware.AuthenticationMiddleware",
-        "django.contrib.messages.middleware.MessageMiddleware",
-        "django.middleware.clickjacking.XFrameOptionsMiddleware",
-        "csp.middleware.CSPMiddleware",
-        "common.middleware.MaintenanceModeMiddleware",
-    ]
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "common.models.utils.ValidateSessionWorkBasketMiddleware",
+    "common.models.utils.TransactionMiddleware",
+    "csp.middleware.CSPMiddleware",
+]
 
 if SSO_ENABLED:
     MIDDLEWARE += [
         "authbroker_client.middleware.ProtectAllViewsMiddleware",
     ]
+
+if MAINTENANCE_MODE:
+    INSTALLED_APPS.remove("django.contrib.admin")
+
+    MIDDLEWARE.remove("django.contrib.sessions.middleware.SessionMiddleware")
+    MIDDLEWARE.remove("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.remove("django.contrib.messages.middleware.MessageMiddleware")
+    MIDDLEWARE.remove("common.models.utils.ValidateSessionWorkBasketMiddleware")
+    MIDDLEWARE.remove("common.models.utils.TransactionMiddleware")
+
+    MIDDLEWARE.append("common.middleware.MaintenanceModeMiddleware")
 
 TEMPLATES = [
     {

@@ -11,8 +11,8 @@ class MaintenanceModeMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if settings.MAINTENANCE_MODE:
-            return redirect(reverse("middleware"))
+        if settings.MAINTENANCE_MODE and request.path_info != reverse("maintenance"):
+            return redirect(reverse("maintenance"))
 
         response = self.get_response(request)
         return response
