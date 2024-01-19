@@ -34,7 +34,7 @@ def component_applicability():
                 **{
                     applicability_field: ApplicabilityCode.MANDATORY,
                     field_name: None,
-                }
+                },
             )
 
         with pytest.raises(ValidationError):
@@ -42,7 +42,7 @@ def component_applicability():
                 **{
                     applicability_field: ApplicabilityCode.NOT_PERMITTED,
                     field_name: value,
-                }
+                },
             )
 
         return True
@@ -318,3 +318,40 @@ def mock_request(rf, valid_user, valid_user_client):
     request.session = valid_user_client.session
     request.requests_session = requests.Session()
     return request
+
+
+@pytest.fixture()
+def measure_regulation_id_form_data():
+    return {"generating_regulation": factories.RegulationFactory.create().pk}
+
+
+@pytest.fixture()
+def measure_details_form_data(date_ranges):
+    return {
+        "measure_type": factories.MeasureTypeFactory.create(
+            valid_between=date_ranges.normal,
+        ).pk,
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "min_commodity_count": 1,
+    }
+
+
+@pytest.fixture()
+def measure_details_form_data(date_ranges):
+    return {
+        "measure_type": factories.MeasureTypeFactory.create(
+            valid_between=date_ranges.normal,
+        ).pk,
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "min_commodity_count": 1,
+    }

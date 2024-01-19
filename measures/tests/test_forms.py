@@ -1660,28 +1660,33 @@ def test_measure_geographical_area_exclusions_form_invalid_choice():
     ]
 
 
-def regulation():
-    injected_regulation = regulation
-    return injected_regulation
-
-
 @pytest.mark.parametrize(
-    "form, form_data"[
-        (forms.MeasureRegulationIdForm, {"generating_regulation": regulation().pk}),
+    "form, form_data",
+    [
+        (
+            forms.MeasureDetailsForm,
+            "measure_details_form_data",
+        ),
+        (
+            forms.MeasureRegulationIdForm,
+            "measure_regulation_id_form_data",
+        ),
+    ],
+    ids=[
+        "measure_details_form",
+        "regulation_id_form",
     ],
 )
-def test_measure_forms_serialize_clean_data(form, form_data, regulation):
+def test_measure_forms_serialize_clean_data(form, form_data, request):
+    form_data = request.getfixturevalue(form_data)
     form = form(form_data)
     assert form.is_valid()
     serialized_data = form.serialize_cleaned_data()
     assert isinstance(serialized_data, Dict)
 
 
-# look for lambdas that run the fixtures.
-#
-
-
 def test_measure_forms_create_from_serialized_cleaned_data(regulation):
+    # Serialize a form
     data = {
         "generating_regulation": regulation.pk,
     }
@@ -1689,6 +1694,7 @@ def test_measure_forms_create_from_serialized_cleaned_data(regulation):
     assert form.is_valid()
     serialized = form.serialize_cleaned_data()
 
+    # Make a form from serialized data
     rehydrated_form = form.create_from_serialized_cleaned_data(serialized)
     assert type(rehydrated_form) == MeasureRegulationIdForm
     assert rehydrated_form.is_valid()
