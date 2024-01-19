@@ -3,10 +3,11 @@ import csv
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from django.shortcuts import render
+from openpyxl import Workbook
+from openpyxl.chart import BarChart, Reference
 
 import reports.reports.index as index_model
 
-# Create your views here.
 import reports.utils as utils
 
 
@@ -79,8 +80,10 @@ def export_report_to_csv(request, report_slug, current_tab=None):
         response[
             "Content-Disposition"
         ] = f'attachment; filename="{report_slug}_report.csv"'
-        headers = report_instance.headers()
-        rows = report_instance.rows()
+        headers = (
+            report_instance.headers() if hasattr(report_instance, "headers") else None
+        )
+        rows = report_instance.rows() if hasattr(report_instance, "rows") else None
 
     writer = csv.writer(response)
 
@@ -91,9 +94,54 @@ def export_report_to_csv(request, report_slug, current_tab=None):
         for row in rows:
             writer.writerow([column["text"] for column in row])
     else:
-        # For chart reports
-        writer.writerow(["Label", "Data"])
-        for label, data in zip(report_instance.labels(), report_instance.data()):
-            writer.writerow([label, data])
+        writer.writerow(["Date", "Data"])
+
+        for item in report_instance.data():
+            writer.writerow([item["x"], item["y"]])
+
+            # Add an additional row with empty values because Excel needs this for data recognition
+            writer.writerow(["", ""])
+
+    return response
+
+
+def export_report_to_excel(request, report_slug):
+    report_class = utils.get_report_by_slug(report_slug)
+    report_instance = report_class()
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    response[
+        "Content-Disposition"
+    ] = f'attachment; filename="{report_slug}_report.xlsx"'
+
+    workbook = Workbook()
+    sheet = workbook.active
+
+    sheet.append(["Date", "Data"])
+
+    for item in report_instance.data():
+        sheet.append([item["x"], item["y"]])
+
+        # Add an additional row with empty values because Excel needs this for data recognition
+        sheet.append(["", ""])
+
+    chart = BarChart()
+    data = Reference(sheet, min_col=2, min_row=1, max_col=2, max_row=sheet.max_row)
+    categories = Reference(sheet, min_col=1, min_row=2, max_row=sheet.max_row)
+    chart.add_data(data, titles_from_data=True)
+    chart.set_categories(categories)
+    chart.title = report_instance.name
+    chart.x_axis.title = "Date"
+    chart.y_axis.title = "Data"
+
+    chart.width = 40
+    chart.height = 20
+
+    sheet.add_chart(chart, "E5")
+
+    workbook.save(response)
 
     return response
