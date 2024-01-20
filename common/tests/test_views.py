@@ -4,6 +4,8 @@ import pytest
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth.models import Permission
+from django.test import modify_settings
+from django.test import override_settings
 from django.urls import reverse
 
 from common.tests import factories
@@ -241,3 +243,21 @@ def test_accessibility_statement_view_returns_200(valid_user_client):
         "Accessibility statement for the Tariff application platform"
         in page.select("h1")[0].text
     )
+
+
+@override_settings(MAINTENANCE_MODE=True)
+@modify_settings(
+    MIDDLEWARE={
+        "append": "common.middleware.MaintenanceModeMiddleware",
+    },
+)
+def test_maintenance_mode_view_returns_503(valid_user_client):
+    response = valid_user_client.get(reverse("home"))
+    assert response.status_code == 302
+    assert response.url == reverse("maintenance")
+
+
+def test_maintenance_mode_page_content(valid_user_client):
+    response = valid_user_client.get(reverse("maintenance"))
+    assert response.status_code == 503
+    assert "Sorry, the service is unavailable" in str(response.content)
