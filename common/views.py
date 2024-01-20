@@ -464,5 +464,9 @@ def handler500(request, *args, **kwargs):
     return TemplateResponse(request=request, template="common/500.jinja", status=500)
 
 
+def maintenance(request, *args, **kwargs):
+    return TemplateResponse(request=request, template="common/503.jinja", status=503)
+
+
 class AccessibilityStatementView(TemplateView):
     template_name = "common/accessibility.jinja"
