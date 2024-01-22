@@ -1,7 +1,9 @@
 import io
+import os
 import random
 
 import pytest
+from bs4 import BeautifulSoup
 from lxml import etree
 from pytest_django.asserts import assertQuerysetEqual  # noqa
 
@@ -13,7 +15,9 @@ from common.tests.factories import QueuedWorkBasketFactory
 from common.tests.util import taric_xml_record_codes
 from exporter.serializers import MultiFileEnvelopeTransactionSerializer
 from exporter.serializers import RenderedTransactions
+from exporter.util import dit_file_generator
 from taric.models import Envelope
+from workbaskets.models import WorkBasket
 
 pytestmark = pytest.mark.django_db
 
@@ -165,3 +169,105 @@ def test_transaction_envelope_serializer_splits_output():
         # TODO - it would be good to check the output more thoroughly than just the record code.
         # Some record codes are generated in the template, making issuperset required in this assertion.
         assert output_record_codes.issuperset(expected_record_codes[i])
+
+
+def test_transaction_envelope_serializer_counters(queued_workbasket):
+    """Test that the envelope serializer sets the counters in an envelope
+    correctly that the message id always starts from one in each envelope and
+    that the record sequence number increments."""
+    approved_transaction = queued_workbasket.transactions.approved().last()
+    # add a tracked_models to the workbasket
+
+    factories.AdditionalCodeTypeFactory(transaction=approved_transaction)
+    factories.AdditionalCodeDescriptionFactory(transaction=approved_transaction)
+    factories.RegulationFactory(
+        transaction=approved_transaction,
+        regulation_group=factories.RegulationGroupFactory(
+            transaction=approved_transaction,
+        ),
+    )
+    factories.CertificateFactory(
+        transaction=approved_transaction,
+        certificate_type=factories.CertificateTypeFactory(
+            transaction=approved_transaction,
+        ),
+        description=factories.CertificateDescriptionFactory(
+            transaction=approved_transaction,
+        ),
+    )
+    factories.FootnoteFactory(
+        transaction=approved_transaction,
+        description=factories.FootnoteDescriptionFactory(
+            transaction=approved_transaction,
+        ),
+        footnote_type=factories.FootnoteTypeFactory(transaction=approved_transaction),
+    )
+
+    # Make a envelope from the files
+    output_file_constructor = dit_file_generator("/tmp", 230001)
+    serializer = MultiFileEnvelopeTransactionSerializer(
+        output_file_constructor,
+        envelope_id=230001,
+    )
+
+    workbaskets = WorkBasket.objects.filter(pk=queued_workbasket.pk)
+    transactions = workbaskets.ordered_transactions()
+
+    envelope = list(serializer.split_render_transactions(transactions))[0]
+
+    assert len(envelope.transactions) > 0
+
+    envelope_file = envelope.output
+    envelope_file.seek(0, os.SEEK_SET)
+    soup = BeautifulSoup(envelope_file, "xml")
+    record_sequence_numbers = soup.find_all("oub:record.sequence.number")
+    message_id_numbers = soup.find_all("env:app.message")
+
+    expected_value = 1
+    for element in record_sequence_numbers:
+        actual_value = int(element.text)
+        assert actual_value == expected_value
+        expected_value += 1
+
+    expected_id = 1
+    for element in message_id_numbers:
+        actual_value = int(element["id"])
+        assert actual_value == expected_id
+        expected_id += 1
+
+    workbasket = factories.QueuedWorkBasketFactory.create()
+    approved_transaction2 = workbasket.transactions.approved().last()
+    factories.AdditionalCodeTypeFactory(transaction=approved_transaction2)
+    factories.AdditionalCodeDescriptionFactory(transaction=approved_transaction2)
+    factories.FootnoteFactory(
+        transaction=approved_transaction2,
+        description=factories.FootnoteDescriptionFactory(
+            transaction=approved_transaction2,
+        ),
+        footnote_type=factories.FootnoteTypeFactory(transaction=approved_transaction2),
+    )
+
+    # Make a envelope from the files
+    output_file_constructor = dit_file_generator("/tmp", 230002)
+    serializer = MultiFileEnvelopeTransactionSerializer(
+        output_file_constructor,
+        envelope_id=230002,
+    )
+
+    workbaskets = WorkBasket.objects.filter(pk=workbasket.pk)
+    transactions = workbaskets.ordered_transactions()
+
+    envelope_2 = list(serializer.split_render_transactions(transactions))[0]
+
+    assert len(envelope.transactions) > 0
+
+    envelope_file_2 = envelope_2.output
+    envelope_file_2.seek(0, os.SEEK_SET)
+    soup_2 = BeautifulSoup(envelope_file_2, "xml")
+    message_id_numbers_2 = soup_2.find_all("env:app.message")
+
+    expected_id_2 = 1
+    for element in message_id_numbers_2:
+        actual_value = int(element.get("id"))
+        assert actual_value == expected_id_2
+        expected_id_2 += 1
