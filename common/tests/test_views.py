@@ -251,7 +251,7 @@ def test_accessibility_statement_view_returns_200(valid_user_client):
         "append": "common.middleware.MaintenanceModeMiddleware",
     },
 )
-def test_maintenance_mode_view_returns_503(valid_user_client):
+def test_user_redirect_during_maintenance_mode(valid_user_client):
     response = valid_user_client.get(reverse("home"))
     assert response.status_code == 302
     assert response.url == reverse("maintenance")
