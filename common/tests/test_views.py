@@ -259,5 +259,5 @@ def test_user_redirect_during_maintenance_mode(valid_user_client):
 
 def test_maintenance_mode_page_content(valid_user_client):
     response = valid_user_client.get(reverse("maintenance"))
-    assert response.status_code == 503
+    assert response.status_code == 200
     assert "Sorry, the service is unavailable" in str(response.content)
