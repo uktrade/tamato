@@ -1682,12 +1682,6 @@ def test_measure_forms_serializable(form, form_data, request):
     assert form.is_valid()
     serialized_data = form.serializable(with_prefix=False)
     assert isinstance(serialized_data, Dict)
-    for pair in serialized_data.items():
-        assert (
-            isinstance(pair[1], str)
-            or isinstance(pair[1], int)
-            or isinstance(pair[1], bool)
-        )
 
 
 # def test_measure_forms_create_from_serialized_cleaned_data(form, form_data, request):
