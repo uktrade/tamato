@@ -344,3 +344,8 @@ def measure_details_form_data(date_ranges):
 @pytest.fixture()
 def measure_additional_code_form_data():
     return {"additional_code": factories.AdditionalCodeFactory.create().pk}
+
+
+@pytest.fixture()
+def measure_quota_order_number_form_data():
+    return {"order_number": factories.QuotaOrderNumberFactory.create().pk}

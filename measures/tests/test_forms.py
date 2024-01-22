@@ -1674,11 +1674,16 @@ def test_measure_geographical_area_exclusions_form_invalid_choice():
             forms.MeasureAdditionalCodeForm,
             "measure_additional_code_form_data",
         ),
+        (
+            forms.MeasureQuotaOrderNumberForm,
+            "measure_quota_order_number_form_data",
+        ),
     ],
     ids=[
         "measure_details_form",
         "regulation_id_form",
         "additional_code_form",
+        "quota_order_number_form",
     ],
 )
 def test_measure_forms_serializable(form, form_data, request):
@@ -1686,7 +1691,6 @@ def test_measure_forms_serializable(form, form_data, request):
     form = form(form_data)
     assert form.is_valid()
     serialized_data = form.serializable(with_prefix=False)
-    assert 0
     assert isinstance(serialized_data, Dict)
 
 
