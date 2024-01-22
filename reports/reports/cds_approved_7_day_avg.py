@@ -12,7 +12,7 @@ from workbaskets.validators import WorkflowStatus
 class Report(ReportBaseChart):
     name = "CDS approvals (7 day average) in the last 12 months"
     description = (
-        "This report shows the 7 day average of approved (published) "
+        "This chart shows the 7 day average of approved (published) "
         "workbaskets in the last 12 months per day"
     )
     chart_type = "line"

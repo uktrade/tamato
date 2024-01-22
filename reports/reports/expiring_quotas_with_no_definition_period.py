@@ -12,7 +12,7 @@ from quotas.models import (
 class Report(ReportBaseTable):
     name = "Quotas Expiring Soon"
     enabled = True
-    description = "Quotas with definition/sub-quota/blocking/suspension periods about to expire and no future definition period"
+    description = "Quotas with definition, sub-quota, blocking or suspension periods about to expire and no future definition period."
     tabular_reports = True
     tab_name = "Definitions"
     tab_name2 = "Sub-quota associations"
@@ -54,18 +54,27 @@ class Report(ReportBaseTable):
         return quotas_without_future_definition
 
     def find_quota_definitions_expiring_soon(self):
-        filter_query = Q(
-            valid_between__isnull=False,
-            valid_between__endswith__lte=self.future_time,
-        ) & Q(valid_between__endswith__gte=self.current_time) | Q(
-            valid_between__endswith=None
+        expiring_quotas = QuotaDefinition.objects.latest_approved().filter(
+            Q(
+                valid_between__isnull=False,
+                valid_between__endswith__lte=self.future_time,
+            )
+            & Q(valid_between__endswith__gte=self.current_time)
+            | Q(valid_between__endswith=None)
         )
 
-        quotas_expiring_soon = QuotaDefinition.objects.latest_approved().filter(
-            filter_query
-        )
+        # Filter out quota definitions with associated future definitions
+        filtered_quotas = []
+        for quota in expiring_quotas:
+            future_definitions = QuotaDefinition.objects.latest_approved().filter(
+                order_number__order_number=quota.order_number,
+                valid_between__startswith__gt=quota.valid_between.upper,
+            )
 
-        return list(quotas_expiring_soon)
+            if not future_definitions.exists():
+                filtered_quotas.append(quota)
+
+        return filtered_quotas
 
     def find_quotas_without_future_definition(self, expiring_quotas):
         matching_data = set()
@@ -186,7 +195,6 @@ class Report(ReportBaseTable):
         for quota_definition in expiring_quotas:
             future_definitions = QuotaSuspension.objects.latest_approved().filter(
                 quota_definition=quota_definition,
-                # valid_between__startswith__gt=quota_definition.valid_between.upper,
             )
 
             if future_definitions.exists():
@@ -240,4 +248,5 @@ class Report(ReportBaseTable):
         quota_suspension_without_future_definition = (
             self.find_quota_suspension_without_future_definition(expiring_quotas)
         )
+
         return quota_suspension_without_future_definition
