@@ -37,8 +37,12 @@ urlpatterns = [
     path("", include("reports.urls")),
     path("", include("taric_parsers.urls")),
     path("", include("workbaskets.urls", namespace="workbaskets")),
-    path("admin/", admin.site.urls),
 ]
+
+if not settings.MAINTENANCE_MODE:
+    urlpatterns += {
+        path("admin/", admin.site.urls),
+    }
 
 handler403 = "common.views.handler403"
 handler500 = "common.views.handler500"
