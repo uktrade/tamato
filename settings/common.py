@@ -23,6 +23,8 @@ SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "true"))
 VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
 VCAP_APPLICATION = json.loads(os.environ.get("VCAP_APPLICATION", "{}"))
 
+MAINTENANCE_MODE = is_truthy(os.environ.get("MAINTENANCE_MODE", "False"))
+
 # -- Debug
 
 # Activates debugging
@@ -154,10 +156,22 @@ MIDDLEWARE = [
     "common.models.utils.TransactionMiddleware",
     "csp.middleware.CSPMiddleware",
 ]
+
 if SSO_ENABLED:
     MIDDLEWARE += [
         "authbroker_client.middleware.ProtectAllViewsMiddleware",
     ]
+
+if MAINTENANCE_MODE:
+    INSTALLED_APPS.remove("django.contrib.admin")
+
+    MIDDLEWARE.remove("django.contrib.sessions.middleware.SessionMiddleware")
+    MIDDLEWARE.remove("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.remove("django.contrib.messages.middleware.MessageMiddleware")
+    MIDDLEWARE.remove("common.models.utils.ValidateSessionWorkBasketMiddleware")
+    MIDDLEWARE.remove("common.models.utils.TransactionMiddleware")
+
+    MIDDLEWARE.append("common.middleware.MaintenanceModeMiddleware")
 
 TEMPLATES = [
     {
@@ -295,9 +309,12 @@ if VCAP_SERVICES.get("postgres"):
 else:
     DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
 
-DATABASES = {
-    "default": dj_database_url.parse(DB_URL),
-}
+if not MAINTENANCE_MODE:
+    DATABASES = {
+        "default": dj_database_url.parse(DB_URL),
+    }
+else:
+    DATABASES = {}
 
 SQLITE = DB_URL.startswith("sqlite")
 
