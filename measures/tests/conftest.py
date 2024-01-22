@@ -342,16 +342,5 @@ def measure_details_form_data(date_ranges):
 
 
 @pytest.fixture()
-def measure_details_form_data(date_ranges):
-    return {
-        "measure_type": factories.MeasureTypeFactory.create(
-            valid_between=date_ranges.normal,
-        ).pk,
-        "start_date_0": date_ranges.normal.lower.day,
-        "start_date_1": date_ranges.normal.lower.month,
-        "start_date_2": date_ranges.normal.lower.year,
-        "end_date_0": date_ranges.normal.upper.day,
-        "end_date_1": date_ranges.normal.upper.month,
-        "end_date_2": date_ranges.normal.upper.year,
-        "min_commodity_count": 1,
-    }
+def measure_additional_code_form_data():
+    return {"additional_code": factories.AdditionalCodeFactory.create().pk}
