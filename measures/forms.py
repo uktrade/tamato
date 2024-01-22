@@ -902,7 +902,10 @@ class SerializableFormMixin:
         to be used to recreate a valid form.
         """
         serialized_data = {}
-        data_keys = [k for k in self.data if k.startswith(self.prefix)]
+        if with_prefix is False:
+            data_keys = [k for k in self.data]
+        else:
+            data_keys = [k for k in self.data if k.startswith(self.prefix)]
 
         # Debug.
         import json
