@@ -66,8 +66,8 @@ class Report(ReportBaseTable):
         # Filter out quota definitions with associated future definitions
         filtered_quotas = []
         for quota in expiring_quotas:
-            future_definitions = QuotaOrderNumber.objects.latest_approved().filter(
-                order_number=quota.order_number,
+            future_definitions = QuotaDefinition.objects.latest_approved().filter(
+                order_number__order_number=quota.order_number,
                 valid_between__startswith__gt=quota.valid_between.upper,
             )
 
