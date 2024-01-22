@@ -166,7 +166,6 @@ if MAINTENANCE_MODE:
     MIDDLEWARE.remove("django.contrib.sessions.middleware.SessionMiddleware")
     MIDDLEWARE.remove("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.remove("django.contrib.messages.middleware.MessageMiddleware")
-    MIDDLEWARE.remove("common.models.utils.ValidateSessionWorkBasketMiddleware")
     MIDDLEWARE.remove("common.models.utils.TransactionMiddleware")
 
     MIDDLEWARE.append("common.middleware.MaintenanceModeMiddleware")
