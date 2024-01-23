@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders empty formset when no initial data 1`] = `
+exports[`QuotaOriginFormset renders empty formset when no initial data 1`] = `
 <div
   aria-live="polite"
 >
@@ -13,7 +13,7 @@ exports[`renders empty formset when no initial data 1`] = `
 </div>
 `;
 
-exports[`renders formset with props 1`] = `
+exports[`QuotaOriginFormset renders formset with props 1`] = `
 <div
   aria-live="polite"
 >
@@ -326,7 +326,15 @@ exports[`renders formset with props 1`] = `
           </div>
           <div
             className="govuk-form-group"
-          />
+          >
+            <button
+              className="govuk-button govuk-button--secondary"
+              onClick={[Function]}
+            >
+              Delete this 
+              exclusion
+            </button>
+          </div>
         </div>
         <div>
           <h5
@@ -721,7 +729,15 @@ exports[`renders formset with props 1`] = `
           </div>
           <div
             className="govuk-form-group"
-          />
+          >
+            <button
+              className="govuk-button govuk-button--secondary"
+              onClick={[Function]}
+            >
+              Delete this 
+              exclusion
+            </button>
+          </div>
         </div>
         <button
           className="govuk-button govuk-button--secondary"
@@ -751,7 +767,7 @@ exports[`renders formset with props 1`] = `
 </div>
 `;
 
-exports[`renders with formset errors 1`] = `
+exports[`QuotaOriginFormset renders with formset errors 1`] = `
 <div
   aria-live="polite"
 >
@@ -1070,7 +1086,15 @@ exports[`renders with formset errors 1`] = `
           </div>
           <div
             className="govuk-form-group"
-          />
+          >
+            <button
+              className="govuk-button govuk-button--secondary"
+              onClick={[Function]}
+            >
+              Delete this 
+              exclusion
+            </button>
+          </div>
         </div>
         <div>
           <h5
@@ -1465,7 +1489,15 @@ exports[`renders with formset errors 1`] = `
           </div>
           <div
             className="govuk-form-group"
-          />
+          >
+            <button
+              className="govuk-button govuk-button--secondary"
+              onClick={[Function]}
+            >
+              Delete this 
+              exclusion
+            </button>
+          </div>
         </div>
         <button
           className="govuk-button govuk-button--secondary"

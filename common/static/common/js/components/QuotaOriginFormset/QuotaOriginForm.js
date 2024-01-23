@@ -89,7 +89,7 @@ function QuotaOriginForm({ origin, options, index, removeOrigin, addEmptyExclusi
                 <h4 className="govuk-heading-m">Geographical exclusions</h4>
                 <QuotaOriginExclusionFormset options={options} origin={origin} originIndex={index} errors={errors} addEmptyExclusion={addEmptyExclusion} removeExclusion={removeExclusion} />
             </div>
-            <DeleteButton index={index} name={"origin"} func={removeOrigin} item={origin} parent={null} />
+            <DeleteButton renderCondition={index > 0} name={"origin"} func={removeOrigin} item={origin} parent={null} />
             <hr className="govuk-!-margin-top-3" />
         </div>)
 }

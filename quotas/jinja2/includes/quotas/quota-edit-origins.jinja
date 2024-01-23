@@ -11,7 +11,11 @@
     </div>
     {% endfor %}
   </div>
+  <a href="{{ url('quota_order_number_origin-ui-create', args=[object.sid])}}" class="govuk-button govuk-button--secondary">
+    Create new origin
+  </a>
 </div>
+
 <script nonce="{{ request.csp_nonce }}">
   {# data used by react form component: common/static/common/js/components/QuotaOriginFormset/index.js #}
   const originsErrors = {
@@ -30,7 +34,3 @@
     {% endfor %}
   ]
 </script>
-
-<a href="{{ url('quota_order_number_origin-ui-create', args=[object.sid])}}" class="govuk-button govuk-button--secondary">
-  Create new origin
-</a>

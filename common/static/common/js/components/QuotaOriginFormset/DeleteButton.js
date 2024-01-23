@@ -1,8 +1,8 @@
 import React from 'react';
 
 
-function DeleteButton({ index, name, func, item, parent }) {
-    if (index > 0) {
+function DeleteButton({ renderCondition, name, func, item, parent }) {
+    if (renderCondition) {
         return (
             <button onClick={func.bind(this, item, parent)} className="govuk-button govuk-button--secondary">Delete this {name}</button>
         )

@@ -33,7 +33,7 @@ function QuotaOriginExclusionForm({ exclusion, origin, options, originIndex, ind
                 </Select>
             </div>
             <div className="govuk-form-group">
-                <DeleteButton index={index} name={"exclusion"} func={removeExclusion} item={exclusion} parent={origin} />
+                <DeleteButton renderCondition={true} name={"exclusion"} func={removeExclusion} item={exclusion} parent={origin} />
             </div>
         </div>)
 }
