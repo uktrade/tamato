@@ -1,0 +1,1496 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders empty formset when no initial data 1`] = `
+<div
+  aria-live="polite"
+>
+  <button
+    className="govuk-button govuk-button--secondary"
+    onClick={[Function]}
+  >
+    Add another origin
+  </button>
+</div>
+`;
+
+exports[`renders formset with props 1`] = `
+<div
+  aria-live="polite"
+>
+  <div>
+    <h3
+      className="govuk-heading-m"
+    >
+      Origin 
+      1
+    </h3>
+    <input
+      name="origins-0-pk"
+      type="hidden"
+      value={1}
+    />
+    <div
+      className="govuk-form-group"
+    >
+      <div
+        className="src__StyledContainer-sc-1l2t4xv-0 gnsHwu"
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          <legend
+            className="legend__StyledLegend-sc-12rap65-0 ihoBZu"
+            size="S"
+          >
+            Start date
+          </legend>
+        </span>
+        <div
+          className="input__StyledList-sc-una33r-1 eRKNGn"
+        >
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Day
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-0-start_date_0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Month
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-0-start_date_1"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD hvwSJF"
+            error={false}
+            year={true}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Year
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={2000}
+              error={false}
+              name="origins-0-start_date_2"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <div
+        className="src__StyledContainer-sc-1l2t4xv-0 gnsHwu"
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          <legend
+            className="legend__StyledLegend-sc-12rap65-0 ihoBZu"
+            size="S"
+          >
+            End date
+          </legend>
+        </span>
+        <span
+          className="src__HintText-sc-tq1z5r-0 bhNFpD"
+        >
+          Leave empty if a quota order number origin is needed for an unlimited time
+        </span>
+        <div
+          className="input__StyledList-sc-una33r-1 eRKNGn"
+        >
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Day
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-0-end_date_0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Month
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-0-end_date_1"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD hvwSJF"
+            error={false}
+            year={true}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Year
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={2010}
+              error={false}
+              name="origins-0-end_date_2"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <label
+        className="src__Label-sc-iqzvxn-0 kmVpuD"
+        defaultValue={1}
+        error={false}
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          Geographical area
+        </span>
+        <select
+          className="src__StyledSelect-sc-sgud4a-0 kAtYDs"
+          defaultValue={1}
+          error={false}
+          name="origins-0-geographical_area"
+          onChange={[Function]}
+        >
+          <option
+            value={1}
+          >
+            All countries
+          </option>
+          <option
+            value={2}
+          >
+            EU
+          </option>
+          <option
+            value={3}
+          >
+            China
+          </option>
+          <option
+            value={4}
+          >
+            South Korea
+          </option>
+          <option
+            value={5}
+          >
+            Switzerland
+          </option>
+        </select>
+      </label>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <h4
+        className="govuk-heading-m"
+      >
+        Geographical exclusions
+      </h4>
+      <div
+        aria-live="polite"
+        className="govuk-inset-text"
+      >
+        <div>
+          <h5
+            className="govuk-heading-s"
+          >
+            Exclusion 
+            1
+          </h5>
+          <div
+            className="govuk-form-group"
+          >
+            <input
+              name="origins-0-exclusions-0-pk"
+              type="hidden"
+              value={1}
+            />
+            <label
+              className="src__Label-sc-iqzvxn-0 kmVpuD"
+              defaultValue={3}
+              error={false}
+            >
+              <span
+                className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+              >
+                Geographical area
+              </span>
+              <select
+                className="src__StyledSelect-sc-sgud4a-0 kAtYDs"
+                defaultValue={3}
+                error={false}
+                name="origins-0-exclusions-0-geographical_area"
+                onChange={[Function]}
+              >
+                <option
+                  value={1}
+                >
+                  All countries
+                </option>
+                <option
+                  value={2}
+                >
+                  EU
+                </option>
+                <option
+                  value={3}
+                >
+                  China
+                </option>
+                <option
+                  value={4}
+                >
+                  South Korea
+                </option>
+                <option
+                  value={5}
+                >
+                  Switzerland
+                </option>
+              </select>
+            </label>
+          </div>
+          <div
+            className="govuk-form-group"
+          />
+        </div>
+        <div>
+          <h5
+            className="govuk-heading-s"
+          >
+            Exclusion 
+            2
+          </h5>
+          <div
+            className="govuk-form-group"
+          >
+            <input
+              name="origins-0-exclusions-1-pk"
+              type="hidden"
+              value={2}
+            />
+            <label
+              className="src__Label-sc-iqzvxn-0 kmVpuD"
+              defaultValue={4}
+              error={false}
+            >
+              <span
+                className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+              >
+                Geographical area
+              </span>
+              <select
+                className="src__StyledSelect-sc-sgud4a-0 kAtYDs"
+                defaultValue={4}
+                error={false}
+                name="origins-0-exclusions-1-geographical_area"
+                onChange={[Function]}
+              >
+                <option
+                  value={1}
+                >
+                  All countries
+                </option>
+                <option
+                  value={2}
+                >
+                  EU
+                </option>
+                <option
+                  value={3}
+                >
+                  China
+                </option>
+                <option
+                  value={4}
+                >
+                  South Korea
+                </option>
+                <option
+                  value={5}
+                >
+                  Switzerland
+                </option>
+              </select>
+            </label>
+          </div>
+          <div
+            className="govuk-form-group"
+          >
+            <button
+              className="govuk-button govuk-button--secondary"
+              onClick={[Function]}
+            >
+              Delete this 
+              exclusion
+            </button>
+          </div>
+        </div>
+        <button
+          className="govuk-button govuk-button--secondary"
+          onClick={[Function]}
+        >
+          Add an exclusion
+        </button>
+      </div>
+    </div>
+    <hr
+      className="govuk-!-margin-top-3"
+    />
+  </div>
+  <div>
+    <h3
+      className="govuk-heading-m"
+    >
+      Origin 
+      2
+    </h3>
+    <input
+      name="origins-1-pk"
+      type="hidden"
+      value={2}
+    />
+    <div
+      className="govuk-form-group"
+    >
+      <div
+        className="src__StyledContainer-sc-1l2t4xv-0 gnsHwu"
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          <legend
+            className="legend__StyledLegend-sc-12rap65-0 ihoBZu"
+            size="S"
+          >
+            Start date
+          </legend>
+        </span>
+        <div
+          className="input__StyledList-sc-una33r-1 eRKNGn"
+        >
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Day
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-1-start_date_0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Month
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-1-start_date_1"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD hvwSJF"
+            error={false}
+            year={true}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Year
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={2000}
+              error={false}
+              name="origins-1-start_date_2"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <div
+        className="src__StyledContainer-sc-1l2t4xv-0 gnsHwu"
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          <legend
+            className="legend__StyledLegend-sc-12rap65-0 ihoBZu"
+            size="S"
+          >
+            End date
+          </legend>
+        </span>
+        <span
+          className="src__HintText-sc-tq1z5r-0 bhNFpD"
+        >
+          Leave empty if a quota order number origin is needed for an unlimited time
+        </span>
+        <div
+          className="input__StyledList-sc-una33r-1 eRKNGn"
+        >
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Day
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-1-end_date_0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Month
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-1-end_date_1"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD hvwSJF"
+            error={false}
+            year={true}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Year
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={2010}
+              error={false}
+              name="origins-1-end_date_2"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <label
+        className="src__Label-sc-iqzvxn-0 kmVpuD"
+        defaultValue={2}
+        error={false}
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          Geographical area
+        </span>
+        <select
+          className="src__StyledSelect-sc-sgud4a-0 kAtYDs"
+          defaultValue={2}
+          error={false}
+          name="origins-1-geographical_area"
+          onChange={[Function]}
+        >
+          <option
+            value={1}
+          >
+            All countries
+          </option>
+          <option
+            value={2}
+          >
+            EU
+          </option>
+          <option
+            value={3}
+          >
+            China
+          </option>
+          <option
+            value={4}
+          >
+            South Korea
+          </option>
+          <option
+            value={5}
+          >
+            Switzerland
+          </option>
+        </select>
+      </label>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <h4
+        className="govuk-heading-m"
+      >
+        Geographical exclusions
+      </h4>
+      <div
+        aria-live="polite"
+        className="govuk-inset-text"
+      >
+        <div>
+          <h5
+            className="govuk-heading-s"
+          >
+            Exclusion 
+            1
+          </h5>
+          <div
+            className="govuk-form-group"
+          >
+            <input
+              name="origins-1-exclusions-0-pk"
+              type="hidden"
+              value={3}
+            />
+            <label
+              className="src__Label-sc-iqzvxn-0 kmVpuD"
+              defaultValue={5}
+              error={false}
+            >
+              <span
+                className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+              >
+                Geographical area
+              </span>
+              <select
+                className="src__StyledSelect-sc-sgud4a-0 kAtYDs"
+                defaultValue={5}
+                error={false}
+                name="origins-1-exclusions-0-geographical_area"
+                onChange={[Function]}
+              >
+                <option
+                  value={1}
+                >
+                  All countries
+                </option>
+                <option
+                  value={2}
+                >
+                  EU
+                </option>
+                <option
+                  value={3}
+                >
+                  China
+                </option>
+                <option
+                  value={4}
+                >
+                  South Korea
+                </option>
+                <option
+                  value={5}
+                >
+                  Switzerland
+                </option>
+              </select>
+            </label>
+          </div>
+          <div
+            className="govuk-form-group"
+          />
+        </div>
+        <button
+          className="govuk-button govuk-button--secondary"
+          onClick={[Function]}
+        >
+          Add an exclusion
+        </button>
+      </div>
+    </div>
+    <button
+      className="govuk-button govuk-button--secondary"
+      onClick={[Function]}
+    >
+      Delete this 
+      origin
+    </button>
+    <hr
+      className="govuk-!-margin-top-3"
+    />
+  </div>
+  <button
+    className="govuk-button govuk-button--secondary"
+    onClick={[Function]}
+  >
+    Add another origin
+  </button>
+</div>
+`;
+
+exports[`renders with formset errors 1`] = `
+<div
+  aria-live="polite"
+>
+  <div>
+    <h3
+      className="govuk-heading-m"
+    >
+      Origin 
+      1
+    </h3>
+    <input
+      name="origins-0-pk"
+      type="hidden"
+      value={1}
+    />
+    <div
+      className="govuk-form-group"
+    >
+      <div
+        className="src__StyledContainer-sc-1l2t4xv-0 gnsHwu"
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          <legend
+            className="legend__StyledLegend-sc-12rap65-0 ihoBZu"
+            size="S"
+          >
+            Start date
+          </legend>
+        </span>
+        <div
+          className="input__StyledList-sc-una33r-1 eRKNGn"
+        >
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Day
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-0-start_date_0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Month
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-0-start_date_1"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD hvwSJF"
+            error={false}
+            year={true}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Year
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={2000}
+              error={false}
+              name="origins-0-start_date_2"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <div
+        className="src__StyledContainer-sc-1l2t4xv-0 jHYcgy"
+        errorText="The end date must be the same as or after the start date."
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          <legend
+            className="legend__StyledLegend-sc-12rap65-0 ihoBZu"
+            size="S"
+          >
+            End date
+          </legend>
+        </span>
+        <span
+          className="src__HintText-sc-tq1z5r-0 bhNFpD"
+        >
+          Leave empty if a quota order number origin is needed for an unlimited time
+        </span>
+        <span
+          className="src__ErrorText-sc-kkeaok-0 fkpbLJ"
+        >
+          The end date must be the same as or after the start date.
+        </span>
+        <div
+          className="input__StyledList-sc-una33r-1 eRKNGn"
+        >
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Day
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 kwWOXX"
+              defaultValue={1}
+              error={true}
+              name="origins-0-end_date_0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Month
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 kwWOXX"
+              defaultValue={1}
+              error={true}
+              name="origins-0-end_date_1"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD hvwSJF"
+            error={false}
+            year={true}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Year
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 kwWOXX"
+              defaultValue={2010}
+              error={true}
+              name="origins-0-end_date_2"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <label
+        className="src__Label-sc-iqzvxn-0 kmVpuD"
+        defaultValue={1}
+        error={false}
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          Geographical area
+        </span>
+        <select
+          className="src__StyledSelect-sc-sgud4a-0 kAtYDs"
+          defaultValue={1}
+          error={false}
+          name="origins-0-geographical_area"
+          onChange={[Function]}
+        >
+          <option
+            value={1}
+          >
+            All countries
+          </option>
+          <option
+            value={2}
+          >
+            EU
+          </option>
+          <option
+            value={3}
+          >
+            China
+          </option>
+          <option
+            value={4}
+          >
+            South Korea
+          </option>
+          <option
+            value={5}
+          >
+            Switzerland
+          </option>
+        </select>
+      </label>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <h4
+        className="govuk-heading-m"
+      >
+        Geographical exclusions
+      </h4>
+      <div
+        aria-live="polite"
+        className="govuk-inset-text"
+      >
+        <div>
+          <h5
+            className="govuk-heading-s"
+          >
+            Exclusion 
+            1
+          </h5>
+          <div
+            className="govuk-form-group"
+          >
+            <input
+              name="origins-0-exclusions-0-pk"
+              type="hidden"
+              value={1}
+            />
+            <label
+              className="src__Label-sc-iqzvxn-0 kmVpuD"
+              defaultValue={3}
+              error={false}
+            >
+              <span
+                className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+              >
+                Geographical area
+              </span>
+              <select
+                className="src__StyledSelect-sc-sgud4a-0 kAtYDs"
+                defaultValue={3}
+                error={false}
+                name="origins-0-exclusions-0-geographical_area"
+                onChange={[Function]}
+              >
+                <option
+                  value={1}
+                >
+                  All countries
+                </option>
+                <option
+                  value={2}
+                >
+                  EU
+                </option>
+                <option
+                  value={3}
+                >
+                  China
+                </option>
+                <option
+                  value={4}
+                >
+                  South Korea
+                </option>
+                <option
+                  value={5}
+                >
+                  Switzerland
+                </option>
+              </select>
+            </label>
+          </div>
+          <div
+            className="govuk-form-group"
+          />
+        </div>
+        <div>
+          <h5
+            className="govuk-heading-s"
+          >
+            Exclusion 
+            2
+          </h5>
+          <div
+            className="govuk-form-group"
+          >
+            <input
+              name="origins-0-exclusions-1-pk"
+              type="hidden"
+              value={2}
+            />
+            <label
+              className="src__Label-sc-iqzvxn-0 kmVpuD"
+              defaultValue={4}
+              error={false}
+            >
+              <span
+                className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+              >
+                Geographical area
+              </span>
+              <select
+                className="src__StyledSelect-sc-sgud4a-0 kAtYDs"
+                defaultValue={4}
+                error={false}
+                name="origins-0-exclusions-1-geographical_area"
+                onChange={[Function]}
+              >
+                <option
+                  value={1}
+                >
+                  All countries
+                </option>
+                <option
+                  value={2}
+                >
+                  EU
+                </option>
+                <option
+                  value={3}
+                >
+                  China
+                </option>
+                <option
+                  value={4}
+                >
+                  South Korea
+                </option>
+                <option
+                  value={5}
+                >
+                  Switzerland
+                </option>
+              </select>
+            </label>
+          </div>
+          <div
+            className="govuk-form-group"
+          >
+            <button
+              className="govuk-button govuk-button--secondary"
+              onClick={[Function]}
+            >
+              Delete this 
+              exclusion
+            </button>
+          </div>
+        </div>
+        <button
+          className="govuk-button govuk-button--secondary"
+          onClick={[Function]}
+        >
+          Add an exclusion
+        </button>
+      </div>
+    </div>
+    <hr
+      className="govuk-!-margin-top-3"
+    />
+  </div>
+  <div>
+    <h3
+      className="govuk-heading-m"
+    >
+      Origin 
+      2
+    </h3>
+    <input
+      name="origins-1-pk"
+      type="hidden"
+      value={2}
+    />
+    <div
+      className="govuk-form-group"
+    >
+      <div
+        className="src__StyledContainer-sc-1l2t4xv-0 gnsHwu"
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          <legend
+            className="legend__StyledLegend-sc-12rap65-0 ihoBZu"
+            size="S"
+          >
+            Start date
+          </legend>
+        </span>
+        <div
+          className="input__StyledList-sc-una33r-1 eRKNGn"
+        >
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Day
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-1-start_date_0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Month
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-1-start_date_1"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD hvwSJF"
+            error={false}
+            year={true}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Year
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={2000}
+              error={false}
+              name="origins-1-start_date_2"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <div
+        className="src__StyledContainer-sc-1l2t4xv-0 gnsHwu"
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          <legend
+            className="legend__StyledLegend-sc-12rap65-0 ihoBZu"
+            size="S"
+          >
+            End date
+          </legend>
+        </span>
+        <span
+          className="src__HintText-sc-tq1z5r-0 bhNFpD"
+        >
+          Leave empty if a quota order number origin is needed for an unlimited time
+        </span>
+        <div
+          className="input__StyledList-sc-una33r-1 eRKNGn"
+        >
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Day
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-1-end_date_0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD jiIZZT"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Month
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={1}
+              error={false}
+              name="origins-1-end_date_1"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 kmVpuD hvwSJF"
+            error={false}
+            year={true}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+            >
+              Year
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 hIjkQg"
+              defaultValue={2010}
+              error={false}
+              name="origins-1-end_date_2"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <label
+        className="src__Label-sc-iqzvxn-0 kmVpuD"
+        defaultValue={2}
+        error={false}
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+        >
+          Geographical area
+        </span>
+        <select
+          className="src__StyledSelect-sc-sgud4a-0 kAtYDs"
+          defaultValue={2}
+          error={false}
+          name="origins-1-geographical_area"
+          onChange={[Function]}
+        >
+          <option
+            value={1}
+          >
+            All countries
+          </option>
+          <option
+            value={2}
+          >
+            EU
+          </option>
+          <option
+            value={3}
+          >
+            China
+          </option>
+          <option
+            value={4}
+          >
+            South Korea
+          </option>
+          <option
+            value={5}
+          >
+            Switzerland
+          </option>
+        </select>
+      </label>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <h4
+        className="govuk-heading-m"
+      >
+        Geographical exclusions
+      </h4>
+      <div
+        aria-live="polite"
+        className="govuk-inset-text"
+      >
+        <div>
+          <h5
+            className="govuk-heading-s"
+          >
+            Exclusion 
+            1
+          </h5>
+          <div
+            className="govuk-form-group"
+          >
+            <input
+              name="origins-1-exclusions-0-pk"
+              type="hidden"
+              value={3}
+            />
+            <label
+              className="src__Label-sc-iqzvxn-0 kmVpuD"
+              defaultValue={5}
+              error={false}
+            >
+              <span
+                className="src__LabelText-sc-1lbxenh-0 eNhOiC"
+              >
+                Geographical area
+              </span>
+              <select
+                className="src__StyledSelect-sc-sgud4a-0 kAtYDs"
+                defaultValue={5}
+                error={false}
+                name="origins-1-exclusions-0-geographical_area"
+                onChange={[Function]}
+              >
+                <option
+                  value={1}
+                >
+                  All countries
+                </option>
+                <option
+                  value={2}
+                >
+                  EU
+                </option>
+                <option
+                  value={3}
+                >
+                  China
+                </option>
+                <option
+                  value={4}
+                >
+                  South Korea
+                </option>
+                <option
+                  value={5}
+                >
+                  Switzerland
+                </option>
+              </select>
+            </label>
+          </div>
+          <div
+            className="govuk-form-group"
+          />
+        </div>
+        <button
+          className="govuk-button govuk-button--secondary"
+          onClick={[Function]}
+        >
+          Add an exclusion
+        </button>
+      </div>
+    </div>
+    <button
+      className="govuk-button govuk-button--secondary"
+      onClick={[Function]}
+    >
+      Delete this 
+      origin
+    </button>
+    <hr
+      className="govuk-!-margin-top-3"
+    />
+  </div>
+  <button
+    className="govuk-button govuk-button--secondary"
+    onClick={[Function]}
+  >
+    Add another origin
+  </button>
+</div>
+`;
