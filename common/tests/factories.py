@@ -28,6 +28,7 @@ from measures.validators import MeasureTypeCombination
 from measures.validators import OrderNumberCaptureCode
 from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
+from tasks.models import UserAssignment
 from workbaskets.validators import WorkflowStatus
 
 
@@ -1482,3 +1483,22 @@ class CrownDependenciesEnvelopeFailedNotificationFactory(
 
     class Meta:
         model = "notifications.CrownDependenciesEnvelopeFailedNotification"
+
+
+class TaskFactory(factory.django.DjangoModelFactory):
+    title = factory.Faker("sentence")
+    description = factory.Faker("sentence")
+    workbasket = factory.SubFactory(WorkBasketFactory)
+
+    class Meta:
+        model = "tasks.Task"
+
+
+class UserAssignmentFactory(factory.django.DjangoModelFactory):
+    user = factory.SubFactory(UserFactory)
+    assigned_by = factory.SubFactory(UserFactory)
+    assignment_type = FuzzyChoice(UserAssignment.AssignmentType.values)
+    task = factory.SubFactory(TaskFactory)
+
+    class Meta:
+        model = "tasks.UserAssignment"
