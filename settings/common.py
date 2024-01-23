@@ -126,6 +126,7 @@ TAMATO_APPS = [
     # XXX need to keep this for migrations. delete later.
     "publishing",
     "taric",
+    "tasks",
     "workbaskets",
     "exporter.apps.ExporterConfig",
     "crispy_forms",
