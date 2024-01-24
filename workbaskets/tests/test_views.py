@@ -455,6 +455,21 @@ def test_workbasket_review_tabs_without_permission(url, client):
             11,
         ),
         (
+            "workbaskets:workbasket-ui-review-sub-quotas",
+            lambda: factories.QuotaAssociationFactory.create(),
+            6,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-quota-blocking-periods",
+            lambda: factories.QuotaBlockingFactory.create(),
+            7,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-quota-suspension-periods",
+            lambda: factories.QuotaSuspensionFactory.create(),
+            6,
+        ),
+        (
             "workbaskets:workbasket-ui-review-regulations",
             lambda: factories.RegulationFactory.create(),
             6,
