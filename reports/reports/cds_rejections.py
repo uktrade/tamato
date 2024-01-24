@@ -12,9 +12,9 @@ from workbaskets.validators import WorkflowStatus
 class Report(ReportBaseChart):
     name = "CDS rejections in the last 12 months"
     description = (
-        "This report shows the count of rejected (errored) workbaskets in the last 12 months per day. "
+        "This chart shows the count of rejected (errored) workbaskets in the last 12 months per day. "
         "<br><br>"
-        "Note: workbaskets that are rejected, tend to be removed, so this report is for demonstration "
+        "Note: workbaskets that are rejected, tend to be removed, so this chart is for demonstration "
         "purposes only at this point. there remains some work to do to confidently track and collect "
         "rejection information in TAP suitable for reporting purposes."
     )

@@ -4,7 +4,10 @@ from django.urls import reverse
 from django.test import RequestFactory
 
 from reports.utils import get_reports
-from reports.views import export_report_to_csv
+from reports.views import export_report_to_csv, export_report_to_excel
+from reports.reports.expiring_quotas_with_no_definition_period import Report
+from reports.reports.cds_approved import Report as ChartReport
+
 
 pytestmark = pytest.mark.django_db
 
@@ -40,8 +43,7 @@ class TestReportViews:
             assert response.status_code == http_status
 
     def test_export_report_to_csv(self, request):
-        request = RequestFactory().get("/")
-        report_slug = "cds_rejections_in_the_last_12_months"
+        report_slug = "blank_goods_nomenclature_descriptions"
 
         response = export_report_to_csv(request, report_slug)
 
@@ -50,4 +52,28 @@ class TestReportViews:
         assert (
             response["Content-Disposition"]
             == f'attachment; filename="{report_slug}_report.csv"'
+        )
+
+    def test_export_report_invalid_tab(self, request):
+        report_slug = Report.slug()
+        invalid_tab = "Invalid tab"
+
+        with pytest.raises(
+            ValueError, match=f"Invalid current_tab value: {invalid_tab}"
+        ):
+            export_report_to_csv(request, report_slug, current_tab=invalid_tab)
+
+    def test_export_report_to_excel(self, request):
+        report_slug = ChartReport.slug()
+
+        response = export_report_to_excel(request, report_slug)
+
+        assert response.status_code == 200
+        assert (
+            response["Content-Type"]
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        assert (
+            response["Content-Disposition"]
+            == f'attachment; filename="{report_slug}_report.xlsx"'
         )
