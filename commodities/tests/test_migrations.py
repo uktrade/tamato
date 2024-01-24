@@ -27,7 +27,7 @@ def test_main_migration_works(migrator, setup_content_types):
     Transaction = old_state.apps.get_model("common", "Transaction")
     Workbasket = old_state.apps.get_model("workbaskets", "WorkBasket")
     VersionGroup = old_state.apps.get_model("common", "VersionGroup")
-    User = old_state.apps.get_model("workbaskets", "User")
+    User = old_state.apps.get_model("common", "User")
 
     user = User.objects.create()
     workbasket = Workbasket.objects.create(id=target_workbasket_id, author=user)

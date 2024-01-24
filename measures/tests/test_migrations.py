@@ -38,7 +38,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
     Regulation = old_state.apps.get_model("regulations", "Regulation")
     Group = old_state.apps.get_model("regulations", "Group")
     Transaction = old_state.apps.get_model("common", "Transaction")
-    User = old_state.apps.get_model("workbaskets", "User")
+    User = old_state.apps.get_model("common", "User")
     WorkBasket = old_state.apps.get_model("workbaskets", "WorkBasket")
     VersionGroup = old_state.apps.get_model("common", "VersionGroup")
 

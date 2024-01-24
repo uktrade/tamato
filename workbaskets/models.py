@@ -8,7 +8,7 @@ from typing import Tuple
 
 from celery.result import AsyncResult
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -32,6 +32,8 @@ from workbaskets.util import serialize_uploaded_data
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
+
+User = get_user_model()
 
 
 class TransactionPartitionScheme:
@@ -657,25 +659,3 @@ class DataRow(ValidityMixin, models.Model):
         null=True,
         blank=True,
     )
-
-
-class User(AbstractUser):
-    """Custom user model."""
-
-    current_workbasket = models.ForeignKey(
-        WorkBasket,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-    )
-
-    class Meta:
-        db_table = "auth_user"
-
-    def remove_current_workbasket(self):
-        """Remove the user's assigned current workbasket."""
-        try:
-            self.current_workbasket = None
-            self.save()
-        except User.DoesNotExist:
-            pass

@@ -12,7 +12,7 @@ def test_add_packaged_workbasket_to_loading_report(migrator):
         ("publishing", "0007_crowndependenciespublishingtask_error"),
     )
 
-    User = old_state.apps.get_model("workbaskets", "User")
+    User = old_state.apps.get_model("common", "User")
     WorkBasket = old_state.apps.get_model("workbaskets", "WorkBasket")
     PackagedWorkBasket = old_state.apps.get_model("publishing", "PackagedWorkBasket")
     LoadingReport = old_state.apps.get_model("publishing", "LoadingReport")
