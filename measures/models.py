@@ -15,6 +15,7 @@ from common.models import TrackedModel
 from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
 from common.models.utils import GetTabURLMixin
+from common.models.utils import set_current_transaction
 from common.util import TaricDateRange
 from common.util import classproperty
 from footnotes import validators as footnote_validators
@@ -980,23 +981,66 @@ class MeasuresBulkCreator(models.Model):
     SerializableFormMixin.
     """
 
-    cleaned_data = models.JSONField()
+    form_data = models.JSONField()
+    """Dictionary of all Form.data, used to reconstruct bound Form instances as
+    if the form data had been sumbitted by the user within the measure wizard
+    process."""
+
+    form_kwargs = models.JSONField()
+    """Dictionary of all form init data, excluding a form's `data` param (which
+    is preserved via this class's `form_data` attribute)."""
+
+    current_transaction = models.ForeignKey(
+        "common.Transaction",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="measures_bulk_creators",
+        editable=False,
+    )
+    """
+    The 'current' Transaction instance at the time `form_data` was constructed.
+
+    This is normally be set by
+    `common.models.utils.TransactionMiddleware` when processing a HTTP request
+    and can be obtained from `common.models.utils.get_current_transaction()`
+    to capture its value.
+    """
+
+    # TODO:
+    # - Is it preferable to save the Workbasket rather than the current
+    #   transaction in the workbasket?
+    #   The current transaction can change if more transactions are created
+    #   before create_meassures() has chance to run. That could be good (we
+    #   want objects at the time the user performed the create measures action)
+    #   or bad (the current transaction may get deleted).
+    #   However if workbasket immutability is guarenteed until create_measures()
+    #   has completed, then this is moot. It'd need a 'protected' attribute, or
+    #   something like that, on the WorkBasket class that freezes it, say, in
+    #   the save() and update() methods.
 
     @atomic
     def create_measures(self) -> Iterable[Measure]:
         """Create measures using the instance's `cleaned_data`, returning the
         results as an iterable."""
+
         created_measures = []
+
+        # Construction and / or validation of some Form instances require
+        # access to a 'current' Transaction.
+        set_current_transaction(self.current_transaction)
 
         # Debug.
         import json
 
-        print(f"*** MeasuresBulkCreator.cleaned_data:")
-        print(f"\n{json.dumps(self.cleaned_data, indent=4)}")
+        print(f"*** MeasuresBulkCreator.form_data:")
+        print(f"\n{json.dumps(self.form_data, indent=4)}")
         from measures.views import MeasureCreateWizard
 
         for form_key, form_class in MeasureCreateWizard.test_form_list:
-            form = form_class(self.cleaned_data[form_key])
+            data = self.form_data[form_key]
+            kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
+            form = form_class(data=data, **kwargs)
+
             print(f"*** {form_class.__name__}.is_valid(): {form.is_valid()}")
             print()
 
