@@ -897,21 +897,18 @@ class SerializableFormMixin:
         Return serializable form data that can be stored in a
         django.db.models.JSONField and used to recreate a valid form.
 
-        Note that this method should probably only be used immediately after a
-        successful call to the Form's is_valid() if the data that it returns is
-        to be used to recreate a valid form.
+        Note that this method should only be used immediately after a successful
+        call to the Form's is_valid() if the data that it returns is to be used
+        to recreate a valid form.
         """
         serialized_data = {}
         data_keys = [k for k in self.data if k.startswith(self.prefix)]
 
-        # Debug.
-        import json
-
-        print(json.dumps(self.data, indent=4))
-
-        # WizardView uses prefixes its forms, so for now use that as a way of
-        # getting required data. This could, and probably should, be replaced by
-        # the same logic used by the base Form to apply prefixes.
+        # TODO:
+        # - WizardView applies a prefix to each form that it creates at each
+        #   step in for namespacing reasons.
+        #   This should probably be replaced by data element filtering (e.g.
+        #   remove csrf and submit button element values).
 
         for data_key in data_keys:
             serialized_key = data_key
@@ -920,6 +917,31 @@ class SerializableFormMixin:
             serialized_data[serialized_key] = self.data[data_key]
 
         return serialized_data
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        """
+        Get a serializable dictionary of arguments that can be used to
+        initialise the form. The `kwargs` parameter is the Python version of
+        kwargs that are used to initialise the form and is normally provided by
+        the same caller as would init the form (i.e. the view).
+
+        For instance, a SelectableObjectsForm subclass
+        requires a valid `objects` parameter to correctly construct and
+        validate the form, so we'd expect `kwargs` dictionary containing
+        an `objects` element.
+        """
+        return {}
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        """
+        Get a dictionary of arguments for use in initialising the form.
+
+        The 'form_kwargs` parameter is the serialized version of the form's
+        kwargs that require deserializing to their Python representation.
+        """
+        return {}
 
 
 class MeasureDetailsForm(
@@ -1076,7 +1098,10 @@ class MeasureQuotaOrderNumberForm(
         )
 
 
-class MeasureQuotaOriginsForm(SelectableObjectsForm):
+class MeasureQuotaOriginsForm(
+    SerializableFormMixin,
+    SelectableObjectsForm,
+):
     def clean(self):
         cleaned_data = super().clean()
 
@@ -1095,6 +1120,20 @@ class MeasureQuotaOriginsForm(SelectableObjectsForm):
             for origin in origins
         ]
         return cleaned_data
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        return {
+            "quota_order_number_origin_pks": [o.pk for o in kwargs["objects"]],
+        }
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        return {
+            "objects": QuotaOrderNumberOrigin.objects.filter(
+                pk__in=form_kwargs.get("quota_order_number_origin_pks", []),
+            ),
+        }
 
 
 class MeasureGeographicalAreaForm(
