@@ -495,10 +495,10 @@ class WorkBasket(TimestampedMixin):
         """WorkBasket is ready to be worked on again after being rejected by
         CDS."""
 
-    def assign_to_user(self, current_user):
-        """Assigns the workbasket to the current user passed in."""
-        current_user.current_workbasket = self
-        current_user.save()
+    def assign_to_user(self, user) -> None:
+        """Assigns this instance as `user`'s current workbasket."""
+        user.current_workbasket = self
+        user.save()
 
     @property
     def tracked_models(self) -> TrackedModelQuerySet:
@@ -509,27 +509,20 @@ class WorkBasket(TimestampedMixin):
         return Measure.objects.filter(transaction__workbasket=self)
 
     @classmethod
-    def remove_current_from_user(cls, request):
-        """Remove the user's assigned current workbasket."""
-        try:
-            current_user = User.objects.get(pk=request.user.id)
-            current_user.current_workbasket = None
-            current_user.save()
-        except User.DoesNotExist:
-            pass
-
-    @classmethod
     def current(cls, request):
         """Get the user's current workbasket."""
-        try:
-            current_user = User.objects.get(id=request.user.id)
-            workbasket = current_user.current_workbasket
-        except User.DoesNotExist:
+        if request.user.is_authenticated:
+            try:
+                user = request.user
+                workbasket = user.current_workbasket
+            except User.DoesNotExist:
+                return None
+        else:
             return None
 
         if workbasket is not None:
             if workbasket.status != WorkflowStatus.EDITING:
-                cls.remove_current_from_user(request)
+                request.user.remove_current_workbasket()
                 return None
 
             return workbasket
@@ -678,3 +671,11 @@ class User(AbstractUser):
 
     class Meta:
         db_table = "auth_user"
+
+    def remove_current_workbasket(self):
+        """Remove the user's assigned current workbasket."""
+        try:
+            self.current_workbasket = None
+            self.save()
+        except User.DoesNotExist:
+            pass
