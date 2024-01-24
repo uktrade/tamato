@@ -4,6 +4,7 @@ from typing import FrozenSet
 
 import wrapt
 from django.db.models import Value
+from django.shortcuts import redirect
 from django.urls import reverse
 
 _thread_locals = threading.local()
@@ -91,6 +92,43 @@ def override_current_transaction(transaction=None):
         yield transaction
     finally:
         set_current_transaction(old_transaction)
+
+
+def is_session_workbasket_valid(request):
+    """Returns True if a user's current workbasket is valid (i.e. exists and has
+    status EDITING.)"""
+    from workbaskets.models import WorkBasket
+    from workbaskets.validators import WorkflowStatus
+
+    try:
+        workbasket = WorkBasket.current(request)
+        if not workbasket:
+            return False
+        return workbasket.status == WorkflowStatus.EDITING
+    except WorkBasket.DoesNotExist:
+        return False
+
+
+class ValidateUserWorkBasketMiddleware:
+    """
+    WorkBasket middleware that:
+        - Validates that a user's assigned current workbasket is valid.
+        - Removes invalid workbaskets from the user.
+    This middleware should always be placed before any other middleware in
+    settings.MIDDLEWARE that references workbaskets (for instance,
+    TransactionMiddleware).
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # If a user has an invalid workbasket then redirect them to the notice page
+        # letting them know it has been removed, otherwise continue.
+
+        if not is_session_workbasket_valid(request):
+            redirect("workbaskets:no-active-workbasket")
+        return self.get_response(request)
 
 
 class TransactionMiddleware:

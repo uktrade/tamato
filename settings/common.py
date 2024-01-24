@@ -151,6 +151,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "common.models.utils.ValidateUserWorkBasketMiddleware",
     "common.models.utils.TransactionMiddleware",
     "csp.middleware.CSPMiddleware",
 ]
@@ -167,7 +168,7 @@ if MAINTENANCE_MODE:
     MIDDLEWARE.remove("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.remove("django.contrib.messages.middleware.MessageMiddleware")
     MIDDLEWARE.remove("common.models.utils.TransactionMiddleware")
-
+    MIDDLEWARE.remove("common.models.utils.ValidateUserWorkBasketMiddleware")
     MIDDLEWARE.append("common.middleware.MaintenanceModeMiddleware")
 
 TEMPLATES = [
