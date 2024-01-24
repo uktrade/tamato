@@ -349,3 +349,30 @@ def measure_additional_code_form_data():
 @pytest.fixture()
 def measure_quota_order_number_form_data():
     return {"order_number": factories.QuotaOrderNumberFactory.create().pk}
+
+
+@pytest.fixture()
+def measure_quota_order_number_origin_form_data(date_ranges):
+    old_origin = factories.QuotaOrderNumberOriginFactory.create(
+        valid_between=date_ranges.earlier,
+    )
+
+    order_number = old_origin.order_number
+
+    active_origin = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=order_number,
+        valid_between=date_ranges.normal,
+    )
+
+    future_origin = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=order_number,
+        valid_between=date_ranges.later,
+    )
+
+    data = {
+        f"selectableobject_{old_origin.pk}": False,
+        f"selectableobject_{active_origin.pk}": True,
+        f"selectableobject_{future_origin.pk}": True,
+    }
+
+    return {"data": data, "objects": [old_origin, active_origin, future_origin]}

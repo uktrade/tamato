@@ -1694,6 +1694,35 @@ def test_measure_forms_serializable(form, form_data, request):
     assert isinstance(serialized_data, Dict)
 
 
+@pytest.mark.parametrize(
+    "form, form_data",
+    [
+        (
+            forms.MeasureQuotaOriginsForm,
+            "measure_quota_order_number_origin_form_data",
+        ),
+    ],
+    ids=[
+        "quota_order_number_origin_form",
+    ],
+)
+def test_measure_forms_complex_serializable(form, form_data, request):
+    form_data = request.getfixturevalue(form_data)
+    objects = form_data["objects"]
+    data = form_data["data"]
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureQuotaOriginsForm(
+            initial={},
+            objects=objects,
+            data=data,
+        )
+        assert form.is_valid()
+
+        serialized_data = form.serializable(with_prefix=False)
+        assert isinstance(serialized_data, Dict)
+
+
 # def test_measure_forms_create_from_serialized_cleaned_data(form, form_data, request):
 #     # Serialize a form
 #     form_data = request.getfixturevalue(form_data)
