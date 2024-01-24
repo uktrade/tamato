@@ -1,6 +1,69 @@
 {% from "components/table/macro.njk" import govukTable -%}
 
-{{ govukTable({
-    "head": report.headers(),
-    "rows": report.rows()
-}) }}
+{% if report.tabular_reports -%}
+
+    <div class="govuk-tabs" data-module="govuk-tabs">
+    <ul class="govuk-tabs__list">
+        <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+        <a class="govuk-tabs__tab" href="#{{ report.tab_name | replace(' ', '_') | lower }}">
+            {{ report.tab_name}}
+        </a>
+        </li>
+        <li class="govuk-tabs__list-item">
+        <a class="govuk-tabs__tab" href="#{{ report.tab_name2 | replace(' ', '_') | lower }}">
+            {{ report.tab_name2 }}
+        </a>
+        </li>
+        <li class="govuk-tabs__list-item">
+        <a class="govuk-tabs__tab" href="#{{ report.tab_name3 | replace(' ', '_') | lower }}">
+            {{ report.tab_name3 }}
+        </a>
+        </li>
+        <li class="govuk-tabs__list-item">
+        <a class="govuk-tabs__tab" href="#{{ report.tab_name4 | replace(' ', '_') | lower }}">
+            {{ report.tab_name4 }}
+        </a>
+        </li>
+    </ul>
+    <div class="govuk-tabs__panel" id="{{ report.tab_name | replace(' ', '_') | lower }}">
+        <h2 class="govuk-heading-l">{{ report.tab_name }}</h2>
+            <a id="exportToCSVLink{{report.tab_name | replace(' ', '_') | lower}}" class="govuk-button report-button-inline" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug() }) }}">Export to CSV</a>
+        {{ govukTable({
+        "head": report.headers(),
+        "rows": report.rows()
+    }) }}
+    </div>
+    <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name2 | replace(' ', '_') | lower }}">
+    <div>
+        <h2 class="govuk-heading-l">{{ report.tab_name2 }}</h2>
+            <a id="exportToCSVLink{{report.tab_name2 | replace(' ', '_') | lower}}" class="govuk-button report-button-inline" href="{{ url("reports:export_report_with_tabs_to_csv", kwargs={"report_slug": report.slug(), "current_tab": report.tab_name2 | replace(' ', '_') | lower }) }}">Export to CSV</a>
+            </div>
+        {{ govukTable({
+        "head": report.headers2(),
+        "rows": report.rows2()
+    }) }}
+    </div>
+    <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name3 | replace(' ', '_') | lower }}">
+        <h2 class="govuk-heading-l">{{ report.tab_name3 }}</h2>
+            <a id="exportToCSVLink{{report.tab_name3 | replace(' ', '_') | lower}}" class="govuk-button report-button-inline" href="{{ url("reports:export_report_with_tabs_to_csv", kwargs={"report_slug": report.slug(), "current_tab": report.tab_name3 | replace(' ', '_') | lower }) }}">Export to CSV</a>
+        {{ govukTable({
+        "head": report.headers3(),
+        "rows": report.rows3()
+    }) }}
+    </div>
+    <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="{{ report.tab_name4 | replace(' ', '_') | lower }}">
+        <h2 class="govuk-heading-l">{{ report.tab_name4 }}</h2>
+        <a id="exportToCSVLink{{report.tab_name4 | replace(' ', '_') | lower}}" class="govuk-button report-button-inline" href="{{ url("reports:export_report_with_tabs_to_csv", kwargs={"report_slug": report.slug(), "current_tab": report.tab_name4 | replace(' ', '_') | lower }) }}">Export to CSV</a>
+        {{ govukTable({
+        "head": report.headers4(),
+        "rows": report.rows4()
+    }) }}
+    </div>
+    </div>
+
+{% else -%}
+    {{ govukTable({
+        "head": report.headers(),
+        "rows": report.rows()
+    }) }}
+{% endif -%}

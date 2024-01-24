@@ -1,0 +1,31 @@
+{% extends "layouts/layout.jinja" %}
+
+{% set page_title = "Sorry, the service is unavailable" %}
+
+{% block header %}
+
+{{ govukHeader({
+  "homepageUrl": "https://gov.uk/",
+  "serviceName": service_name,
+  "serviceUrl": "/",
+}) }}
+{% endblock %}
+
+{% block breadcrumb %}{% endblock %}
+
+{% block content %}
+<div class="govuk-width-container">
+  <main class="govuk-main-wrapper govuk-main-wrapper--l" id="main-content" role="main">
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l">Sorry, the service is unavailable</h1>
+        <p class="govuk-body">You will be able to use the service later.</p>
+        <p class="govuk-body">
+          <a class="govuk-link" href="https://forms.office.com/Pages/ResponsePage.aspx?id=7Beij6oz-0atlt_mgAa7husF7H2qg6ZMi_-_m4b1eedUMjBNRllURlk0R0dFS1FHQkVBMFhNWjROViQlQCN0PWcu">Contact the Tariff Application Platform (TAP) team</a> if you have any queries. {# /PS-IGNORE #}
+        </p>
+        <p class="govuk-body">The team will reply to you within 2 working days.</p>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
