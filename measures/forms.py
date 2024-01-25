@@ -2,7 +2,6 @@ import datetime
 import logging
 from itertools import groupby
 from typing import Dict
-from typing import TypedDict
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -878,13 +877,6 @@ class MeasureFilterForm(forms.Form):
 
 class MeasureCreateStartForm(forms.Form):
     pass
-
-
-class DateRangeDict(TypedDict):
-    """Typing useful for serialized DateRange type annotations."""
-
-    start_date: str
-    end_date: str
 
 
 class SerializableFormMixin:
