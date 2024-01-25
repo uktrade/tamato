@@ -27,7 +27,7 @@
     </ul>
     <div class="govuk-tabs__panel" id="{{ report.tab_name | replace(' ', '_') | lower }}">
         <h2 class="govuk-heading-l">{{ report.tab_name }}</h2>
-            <a id="exportToCSVLink{{report.tab_name | replace(' ', '_') | lower}}" class="govuk-button report-button-inline" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug(), "current_page": current_page_data.number }) }}">Export to CSV</a>
+            <a id="exportToCSVLink{{report.tab_name | replace(' ', '_') | lower}}" class="govuk-button report-button-inline" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug() }) }}">Export to CSV</a>
         {{ govukTable({
         "head": report.headers(),
         "rows": report.rows()

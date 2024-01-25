@@ -136,7 +136,6 @@ class Report(ReportBaseTable):
 
         return list(matching_data)
 
-
     def get_paginated_data(self, page=1, items_per_page=25):
         report_data = self.query()
 

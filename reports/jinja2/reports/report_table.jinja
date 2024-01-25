@@ -13,12 +13,16 @@
         Report: {{ report.name }}        
     </h1>
     {% if not report.tab_name2 %}
-      <a id="exportToCSVLink{{report.slug()}}" class="govuk-button" style="float:right;" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug(), "current_page": current_page_data.number}) }}">Export to CSV</a>
+      {% if current_page_data %}
+      <a id="exportToCSVLink{{report.slug()}}" class="govuk-button" style="float:right;" href="{{ url("reports:export_report_with_page_to_csv", kwargs={"report_slug": report.slug(), "current_page": current_page_data.number}) }}">Export to CSV</a>
+    {% else %}
+          <a id="exportToCSVLink{{report.slug()}}" class="govuk-button" style="float:right;" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug()}) }}">Export to CSV</a>
+    {% endif %}
     {% endif %}
     <h2 class="govuk-body">
     {{ report.description|safe }}
     </h2>
-    <div class="govuk-!-margin-top-9" style="margin-left: -150px">
+    <div class="govuk-!-margin-top-9" {% if report.slug() == 'table_report_of_eu_data' %}style="margin-left: -10rem"{% endif %}>
         {% include "generics/table.jinja" %}
     </div>
 {% endblock %}

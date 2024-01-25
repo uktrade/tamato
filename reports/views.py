@@ -98,10 +98,20 @@ def export_report_to_csv(request, report_slug, current_tab=None, current_page=No
             report_instance.headers() if hasattr(report_instance, "headers") else None
         )
         if current_page:
-            current_page_data = Paginator(report_instance.query(), 25).page(current_page)
-            rows = report_instance.rows(current_page_data=current_page_data) if hasattr(report_instance, "rows") else None
+            current_page_data = Paginator(report_instance.query(), 25).page(
+                current_page
+            )
+            rows = (
+                report_instance.rows(current_page_data=current_page_data)
+                if hasattr(report_instance, "rows")
+                else None
+            )
         else:
-            rows = report_instance.rows() if hasattr(report_instance, "rows") else None
+            rows = (
+                report_instance.rows(current_page_data=None)
+                if hasattr(report_instance, "rows")
+                else None
+            )
 
     writer = csv.writer(response)
 
@@ -121,6 +131,7 @@ def export_report_to_csv(request, report_slug, current_tab=None, current_page=No
             writer.writerow(["", ""])
 
     return response
+
 
 def export_report_to_excel(request, report_slug):
     report_class = utils.get_report_by_slug(report_slug)

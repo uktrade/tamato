@@ -6,6 +6,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 class Report(ReportBaseTable):
     name = "Table report of EU data"
+    description = "Imported data from the EU tariff using the upload CSV feature"
     enabled = True
 
     headers_list = [
@@ -44,7 +45,7 @@ class Report(ReportBaseTable):
         return table_rows
 
     def query(self):
-        return EUDataModel.objects.all()
+        return EUDataModel.objects.all().order_by("goods_code")
 
     def get_paginated_data(self, page=1, items_per_page=25):
         report_data = self.query()
