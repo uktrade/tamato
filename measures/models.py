@@ -1,3 +1,4 @@
+import logging
 from datetime import date
 from typing import Iterable
 from typing import Set
@@ -26,6 +27,8 @@ from measures.querysets import MeasureConditionQuerySet
 from measures.querysets import MeasuresQuerySet
 from quotas import business_rules as quotas_business_rules
 from quotas.validators import quota_order_number_validator
+
+logger = logging.getLogger(__name__)
 
 
 class MeasureTypeSeries(TrackedModel, ValidityMixin):
@@ -1034,15 +1037,27 @@ class MeasuresBulkCreator(models.Model):
 
         print(f"*** MeasuresBulkCreator.form_data:")
         print(f"\n{json.dumps(self.form_data, indent=4)}")
+
+        # Avoid circular import.
         from measures.views import MeasureCreateWizard
 
+        # TODO: Revert to using MeasureCreateWizard.form_list.
+        # for form_key, form_class in MeasureCreateWizard.form_list:
         for form_key, form_class in MeasureCreateWizard.test_form_list:
+            if form_key not in self.form_data:
+                # Some forms / steps are only conditionally included when
+                # creating measures - see `MeasureCreateWizard.condition_dict`
+                # and `MeasureCreateWizard.show_step()` for details.
+                continue
+
             data = self.form_data[form_key]
             kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
             form = form_class(data=data, **kwargs)
 
-            print(f"*** {form_class.__name__}.is_valid(): {form.is_valid()}")
-            print()
+            logger.info(
+                f"MeasuresBulkCreator.create_measures() - "
+                f"{form_class.__name__}.is_valid(): {form.is_valid()}",
+            )
 
         # TODO: Create the measures.
 
