@@ -13,12 +13,11 @@
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
         Reports Index
     </h1>
+            <a class="govuk-link" href="{{ url('reports:upload_report_csv' )}}">Upload CSV report</a>
     <span class="govuk-caption-xl govuk-!-margin-bottom-9">You will find a list of reports below that can be viewed.</span>
 
     <div>
         {{ govukTable({ "head": report.headers(), "rows": report.rows() }) }}
     </div>
+    
 {% endblock %}
-
-
-

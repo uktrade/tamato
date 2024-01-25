@@ -64,6 +64,25 @@
 {% else -%}
     {{ govukTable({
         "head": report.headers(),
-        "rows": report.rows()
+        "rows": report.rows(current_page_data),
+        "pagination": current_page_data.paginator
     }) }}
+
+<div class="pagination">
+    <span class="step-links">
+        {% if current_page_data.has_previous -%}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ current_page_data.previous_page_number }}">previous</a>
+        {% endif -%}
+
+        <span class="current">
+            Page {{ current_page_data.number }} of {{ current_page_data.paginator.num_pages }}.
+        </span>
+
+        {% if current_page_data.has_next %}
+            <a href="?page={{ current_page_data.next_page_number() }}">next</a>
+            <a href="?page={{ current_page_data.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
 {% endif -%}

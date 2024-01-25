@@ -22,6 +22,11 @@ urlpatterns = [
         views.export_report_to_csv,
         name="export_report_with_tabs_to_csv",
     ),
+    path(
+        "reports/upload_csv",
+        views.upload_report_csv,
+        name="upload_report_csv",
+    ),
 ]
 
 for report in utils.get_reports():

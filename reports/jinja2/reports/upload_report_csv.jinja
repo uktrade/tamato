@@ -1,0 +1,23 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = 'Upload CSV' %}
+
+{% block breadcrumb %}
+    {{ breadcrumbs(request, [
+      {'text': "Upload CSV"}
+    ]) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        Upload CSV
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">Select the type of file to upload.</span>
+
+    <form action="{{ url('reports:upload_report_csv') }}" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        {{ form.as_p() }}
+        <button type="submit">Upload</button>
+    </form>
+{% endblock %}
