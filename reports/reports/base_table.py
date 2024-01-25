@@ -29,7 +29,7 @@ class ReportBaseTable(ReportBase):
         pass
 
     @abstractmethod
-    def rows(self) -> [dict]:
+    def rows(self, current_page_data=None) -> [dict]:
         pass
 
     @abstractmethod

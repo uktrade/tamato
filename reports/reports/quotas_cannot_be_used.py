@@ -1,5 +1,6 @@
 import datetime
 
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Exists, Q
 
 from reports.reports.base_table import ReportBaseTable
@@ -34,9 +35,9 @@ class Report(ReportBaseTable):
             {"text": row.reason},
         ]
 
-    def rows(self) -> [[dict]]:
+    def rows(self, current_page_data) -> [[dict]]:
         table_rows = []
-        for row in self.query():
+        for row in current_page_data:
             table_rows.append(self.row(row))
 
         return table_rows
@@ -134,3 +135,18 @@ class Report(ReportBaseTable):
                 quota_order_number.reason = "Definition period has not been set"
 
         return list(matching_data)
+
+
+    def get_paginated_data(self, page=1, items_per_page=25):
+        report_data = self.query()
+
+        paginator = Paginator(report_data, items_per_page)
+
+        try:
+            current_page_data = paginator.page(page)
+        except PageNotAnInteger:
+            current_page_data = paginator.page(1)
+        except EmptyPage:
+            current_page_data = paginator.page(paginator.num_pages)
+
+        return current_page_data

@@ -27,7 +27,7 @@
     </ul>
     <div class="govuk-tabs__panel" id="{{ report.tab_name | replace(' ', '_') | lower }}">
         <h2 class="govuk-heading-l">{{ report.tab_name }}</h2>
-            <a id="exportToCSVLink{{report.tab_name | replace(' ', '_') | lower}}" class="govuk-button report-button-inline" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug() }) }}">Export to CSV</a>
+            <a id="exportToCSVLink{{report.tab_name | replace(' ', '_') | lower}}" class="govuk-button report-button-inline" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug(), "current_page": current_page_data.number }) }}">Export to CSV</a>
         {{ govukTable({
         "head": report.headers(),
         "rows": report.rows()
@@ -65,24 +65,93 @@
     {{ govukTable({
         "head": report.headers(),
         "rows": report.rows(current_page_data),
-        "pagination": current_page_data.paginator
     }) }}
 
-<div class="pagination">
-    <span class="step-links">
-        {% if current_page_data.has_previous -%}
-            <a href="?page=1">&laquo; first</a>
-            <a href="?page={{ current_page_data.previous_page_number }}">previous</a>
-        {% endif -%}
-
-        <span class="current">
-            Page {{ current_page_data.number }} of {{ current_page_data.paginator.num_pages }}.
-        </span>
-
-        {% if current_page_data.has_next %}
-            <a href="?page={{ current_page_data.next_page_number() }}">next</a>
-            <a href="?page={{ current_page_data.paginator.num_pages }}">last &raquo;</a>
+    {% if current_page_data -%}
+        <nav class="pagination tamato-clearfix" role="navigation" aria-label="Pagination Navigation"><nav class="pagination tamato-clearfix" role="navigation" aria-label="Pagination Navigation">
+    <div class="govuk-body">
+        Showing {{ current_page_data|length }} of {{ current_page_data.paginator.count }}
+        {# Polymorphic TrackedModelsQuerySet instances don't have a valid `model`. #}
+        {% if items_name %}
+            {{items_name}}
+        {% elif current_page_data.object_list.model %}
+            {{ current_page_data.object_list.model._meta.verbose_name_plural if current_page_data.paginator.count > 1 else current_page_data.object_list.model._meta.verbose_name }}
+        {% else %}
+            "items"
         {% endif %}
-    </span>
-</div>
+    </div>
+    <div class="govuk-body align-left">
+        Page {{ current_page_data.number }} of {{ current_page_data.paginator.num_pages }}
+    </div>
+    <ul class="govuk-list align-right">
+        {% if current_page_data.has_previous %}
+            <li>
+                <a
+                    class="govuk-link govuk-!-margin-right-1"
+                    href="?{{ query_transform(request, page=1)}}"
+                    rel="prev"
+                    aria-label="Go to First Page"
+                >
+                    First
+                </a>
+            </li>
+            <li>
+                <a
+                    class="govuk-link govuk-!-margin-right-1"
+                    href="?{{ query_transform(request, page=current_page_data.previous_page_number)}}"
+                    rel="prev"
+                    aria-label="Go to Previous Page"
+                >
+                    Prev
+                </a>
+            </li>
+        {% endif %}
+        {% for page_link in current_page_data.paginator.page_range %}
+            {% set isCurrent = page_link == current_page_data.number %}
+            {% if page_link >= current_page_data.number - 5 and page_link <= current_page_data.number + 5 %}
+
+            <li
+                class="{{ 'govuk-!-margin-left-2 govuk-!-margin-right-2' if isCurrent else 'govuk-!-margin-right-1'}}"
+                {% if isCurrent %}aria-current="true"{% endif %}
+            >
+                {% if page_link == '...' or page_link == current_page_data.number|string %}
+                    {{ page_link }}
+                {% else %}
+                    <a
+                        class="govuk-link"
+                        href="?{{ query_transform(request, page=page_link) }}"
+                        aria-label="Go to Page {{ page_link }}"
+                    >{{ '{0:,}'.format(page_link|int) }}</a>
+                {% endif %}
+            </li>
+            {% endif %}
+        {% endfor %}
+        {% if current_page_data.paginator.limit_breached %}
+            <li class="govuk-!-margin-right-1" >...</li>
+        {% endif %}
+        {% if current_page_data.has_next %}
+            <li>
+                <a
+                    class="govuk-link"
+                    href="?{{ query_transform(request, page=current_page_data.next_page_number()) }}"
+                    rel="next"
+                    aria-label="Go to Next Page"
+                >
+                    Next
+                </a>
+            </li>
+            <li>
+                <a
+                    class="govuk-link"
+                    href="?{{ query_transform(request, page=current_page_data.paginator.num_pages) }}"
+                    rel="next"
+                    aria-label="Go to Last Page"
+                >
+                    Last
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+    {% endif -%}
 {% endif -%}

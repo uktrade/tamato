@@ -3,6 +3,7 @@ import pandas as pd
 
 from datetime import datetime
 from django.contrib.auth.decorators import permission_required
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from io import StringIO
@@ -49,7 +50,7 @@ def report(request):
     )
 
 
-def export_report_to_csv(request, report_slug, current_tab=None):
+def export_report_to_csv(request, report_slug, current_tab=None, current_page=None):
     report_class = utils.get_report_by_slug(report_slug)
     report_instance = report_class()
 
@@ -65,7 +66,7 @@ def export_report_to_csv(request, report_slug, current_tab=None):
         tab_mapping = {
             report_instance.tab_name: (
                 report_instance.headers(),
-                report_instance.rows(),
+                report_instance.rows(current_page_data=current_page),
             ),
             report_instance.tab_name2: (
                 report_instance.headers2(),
@@ -96,7 +97,11 @@ def export_report_to_csv(request, report_slug, current_tab=None):
         headers = (
             report_instance.headers() if hasattr(report_instance, "headers") else None
         )
-        rows = report_instance.rows() if hasattr(report_instance, "rows") else None
+        if current_page:
+            current_page_data = Paginator(report_instance.query(), 25).page(current_page)
+            rows = report_instance.rows(current_page_data=current_page_data) if hasattr(report_instance, "rows") else None
+        else:
+            rows = report_instance.rows() if hasattr(report_instance, "rows") else None
 
     writer = csv.writer(response)
 
@@ -116,7 +121,6 @@ def export_report_to_csv(request, report_slug, current_tab=None):
             writer.writerow(["", ""])
 
     return response
-
 
 def export_report_to_excel(request, report_slug):
     report_class = utils.get_report_by_slug(report_slug)
@@ -168,6 +172,10 @@ def upload_report_csv(request):
 
             if is_eu_data_file(uploaded_file):
                 content = read_excel_as_csv(uploaded_file)
+
+                # Clear existing data in EUDataTable
+                EUDataModel.objects.all().delete()
+
                 save_eu_data(content)
                 return redirect("reports:table_report_of_eu_data")
 
@@ -233,11 +241,11 @@ def save_eu_data(content):
                     end_date=end_date,
                     red_ind=row.get("RED_IND", None),
                     origin=row.get("Origin", None),
-                    measure_type=row.get("Measure type", None),
+                    measure_type=row.get(" Measure type", None),
                     legal_base=row.get("Legal base", None),
                     duty=row.get("Duty", None),
                     origin_code=row.get("Origin code", None),
-                    meas_type_code=row.get("Meas. type code", None),
+                    meas_type_code=row.get(" Meas. type code", None),
                     goods_nomenclature_exists=row.get(
                         "Goods Nomenclature Exists in TAP", None
                     ),

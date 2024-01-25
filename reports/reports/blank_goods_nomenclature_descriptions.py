@@ -39,7 +39,7 @@ class Report(ReportBaseTable):
             {"text": live_description},
         ]
 
-    def rows(self) -> [[dict]]:
+    def rows(self, current_page_data) -> [[dict]]:
         table_rows = []
         for row in self.query():
             table_rows.append(self.row(row))

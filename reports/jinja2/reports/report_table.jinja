@@ -13,12 +13,12 @@
         Report: {{ report.name }}        
     </h1>
     {% if not report.tab_name2 %}
-      <a id="exportToCSVLink{{report.slug()}}" class="govuk-button" style="float:right;" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug()}) }}">Export to CSV</a>
+      <a id="exportToCSVLink{{report.slug()}}" class="govuk-button" style="float:right;" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug(), "current_page": current_page_data.number}) }}">Export to CSV</a>
     {% endif %}
     <h2 class="govuk-body">
     {{ report.description|safe }}
     </h2>
-    <div class="govuk-!-margin-top-9">
+    <div class="govuk-!-margin-top-9" style="margin-left: -150px">
         {% include "generics/table.jinja" %}
     </div>
 {% endblock %}

@@ -8,7 +8,7 @@ app_name = "reports"
 urlpatterns = [
     path("reports/", views.index, name="index"),
     path(
-        "reports/<str:report_slug>/export-to-csv",
+        "reports/<str:report_slug>/<str:current_page>/export-to-csv",
         views.export_report_to_csv,
         name="export_report_to_csv",
     ),
