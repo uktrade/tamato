@@ -1053,11 +1053,20 @@ class MeasuresBulkCreator(models.Model):
             data = self.form_data[form_key]
             kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
             form = form_class(data=data, **kwargs)
+            is_valid = form.is_valid()
 
             logger.info(
                 f"MeasuresBulkCreator.create_measures() - "
-                f"{form_class.__name__}.is_valid(): {form.is_valid()}",
+                f"{form_class.__name__}.is_valid(): {is_valid}",
             )
+            if not is_valid:
+                logger.error(
+                    f"MeasuresBulkCreator.create_measures() - "
+                    f"{form_class.__name__} has {len(form.errors)} unexpected "
+                    f"errors.",
+                )
+                for error in form.errors:
+                    logger.error(f"{error}")
 
         # TODO: Create the measures.
 
