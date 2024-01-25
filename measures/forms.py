@@ -884,6 +884,21 @@ class SerializableFormMixin:
     obtain form data that can be serialized, or more specifically, stored to a
     forms.JSONField."""
 
+    data_key_ignores = [
+        "csrfmiddlewaretoken",
+        "measure_create_wizard-current_step",
+        "submit",
+    ]
+    """
+    Keys that may appear in a Form's `data` attribute and which should be
+    ignored when creating a serializable version of `data`.
+
+    Override this on a per form basis if there are other, redundant keys that
+    should be ignored. See the default implementation of
+    SerializableFormMixin.serializeable() to see how this class attribute is
+    used.
+    """
+
     def serializable(self, with_prefix=True) -> Dict:
         """
         Return serializable form data that can be stored in a
@@ -894,13 +909,7 @@ class SerializableFormMixin:
         to recreate a valid form.
         """
         serialized_data = {}
-        data_keys = [k for k in self.data if k.startswith(self.prefix)]
-
-        # TODO:
-        # - WizardView applies a prefix to each form that it creates at each
-        #   step in for namespacing reasons.
-        #   This should probably be replaced by data element filtering (e.g.
-        #   remove csrf and submit button element values).
+        data_keys = [k for k in self.data if k not in self.data_key_ignores]
 
         for data_key in data_keys:
             serialized_key = data_key
@@ -1410,7 +1419,9 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
 )
 
 
-class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
+class MeasureCommodityAndDutiesFormSet(
+    MeasureCommodityAndDutiesBaseFormSet,
+):
     def __init__(self, *args, **kwargs):
         min_commodity_count = kwargs.pop("min_commodity_count", 2)
         self.measure_start_date = kwargs.pop("measure_start_date", None)
