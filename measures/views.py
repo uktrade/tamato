@@ -802,6 +802,17 @@ class MeasureCreateWizard(
         QUOTA_ORIGINS: show_step_quota_origins,
         GEOGRAPHICAL_AREA: show_step_geographical_area,
     }
+    """Override of dictionary that maps steps to either callables that return a
+    boolean or boolean values that indicate whether a wizard step should be
+    shown."""
+
+    def show_step(self, step) -> bool:
+        """Convenience function to check whether a wizard step should be shown
+        and therefore has data."""
+        condition = self.condition_dict.get(step, True)
+        if callable(condition):
+            condition = condition(self)
+        return condition
 
     @property
     def workbasket(self) -> WorkBasket:
@@ -985,7 +996,8 @@ class MeasureCreateWizard(
         #   As per self.get_all_cleaned_data() but using
         #   self.serializable_form_data_for_step()
         for form_key, _ in self.test_form_list:
-            all_data[form_key] = self.serializable_form_data_for_step(form_key)
+            if self.show_step(form_key):
+                all_data[form_key] = self.serializable_form_data_for_step(form_key)
 
         return all_data
 
@@ -1022,7 +1034,8 @@ class MeasureCreateWizard(
         # TODO:
         # for form_key in self.get_form_list():
         for form_key, _ in self.test_form_list:
-            all_kwargs[form_key] = self.serializable_form_kwargs_for_step(form_key)
+            if self.show_step(form_key):
+                all_kwargs[form_key] = self.serializable_form_kwargs_for_step(form_key)
 
         return all_kwargs
 
