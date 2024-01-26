@@ -3,12 +3,14 @@ import json
 from itertools import groupby
 from operator import attrgetter
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Type
 from urllib.parse import urlencode
 
 from crispy_forms.helper import FormHelper
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
@@ -30,6 +32,7 @@ from certificates.models import Certificate
 from commodities.models.orm import GoodsNomenclature
 from common.forms import unprefix_formset_data
 from common.models import TrackedModel
+from common.models.utils import get_current_transaction
 from common.pagination import build_pagination_list
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
@@ -42,7 +45,6 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
-from measures.bulk_handling import bulk_create_edit
 from measures.conditions import show_step_geographical_area
 from measures.conditions import show_step_quota_origins
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
@@ -55,10 +57,12 @@ from measures.models import Measure
 from measures.models import MeasureActionPair
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
+from measures.models import MeasuresBulkCreator
 from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
+from measures.tasks import bulk_create_measures
 from measures.util import diff_components
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -712,6 +716,19 @@ class MeasureCreateWizard(
         (SUMMARY, forms.MeasureReviewForm),
     ]
 
+    # TODO: remove after testing.
+    test_form_list = [
+        (MEASURE_DETAILS, forms.MeasureDetailsForm),
+        (REGULATION_ID, forms.MeasureRegulationIdForm),
+        (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
+        (QUOTA_ORIGINS, forms.MeasureQuotaOriginsForm),
+        # (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
+        # (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
+        (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
+        # (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
+        # (FOOTNOTES, forms.MeasureFootnotesFormSet),
+    ]
+
     templates = {
         START: "measures/create-start.jinja",
         MEASURE_DETAILS: "measures/create-wizard-step.jinja",
@@ -785,6 +802,17 @@ class MeasureCreateWizard(
         QUOTA_ORIGINS: show_step_quota_origins,
         GEOGRAPHICAL_AREA: show_step_geographical_area,
     }
+    """Override of dictionary that maps steps to either callables that return a
+    boolean or boolean values that indicate whether a wizard step should be
+    shown."""
+
+    def show_step(self, step) -> bool:
+        """Convenience function to check whether a wizard step should be shown
+        and therefore has data."""
+        condition = self.condition_dict.get(step, True)
+        if callable(condition):
+            condition = condition(self)
+        return condition
 
     @property
     def workbasket(self) -> WorkBasket:
@@ -934,37 +962,90 @@ class MeasureCreateWizard(
         return created_measures
 
     def done(self, form_list, **kwargs):
-        bulk_create_edit.apply_async()
+        print(f"*** MeasureCreateWizard.done()")
 
-    def get_all_serialized_cleaned_data(self):
+        serializable_data = self.all_serializable_form_data()
+        serializable_form_kwargs = self.all_serializable_form_kwargs()
+
+        print(f"*** serializable_data:")
+        print(json.dumps(serializable_data, indent=4))
+        print(f"*** serializable_form_kwargs:")
+        print(json.dumps(serializable_form_kwargs, indent=4))
+
+        measures_bulk_creator = MeasuresBulkCreator.objects.create(
+            form_data=serializable_data,
+            form_kwargs=serializable_form_kwargs,
+            current_transaction=get_current_transaction(),
+        )
+        bulk_create_measures.delay(measures_bulk_creator.pk)
+        # TODO: redirect from summary page to done page.
+
+    def all_serializable_form_data(self) -> Dict:
         """
-        Returns a merged dictionary of all step cleaned_data.
+        Returns serializable data for all wizard steps.
 
-        If a step contains
-        a `FormSet`, the key will be prefixed with 'formset-' and contain a list
-        of the formset cleaned_data dictionaries, as expected in
-        `create_measures()`.
-        Note: This patched version of `super().get_all_cleaned_data()` takes advantage of retrieving previously-saved
-        cleaned_data by summary page to avoid revalidating forms unnecessarily.
+        This is a re-implementation of
+        MeasureCreateWizard.get_all_cleaned_data(), but using self.data after
+        is_valid() has been successfully run.
         """
 
-        # TODO: not currently used, but will be used once the form-based
-        # serialisation is in place.
+        all_data = {}
 
-        all_cleaned_data = {}
+        # TODO:
         # for form_key in self.get_form_list():
-        # cleaned_data = self.get_cleaned_data_for_step(form_key)
-        for form_key in [self.MEASURE_DETAILS]:
-            cleaned_data = self.get_serialized_cleaned_data_for_step(form_key)
-            if isinstance(cleaned_data, (tuple, list)):
-                all_cleaned_data.update(
-                    {
-                        f"formset-{form_key}": cleaned_data,
-                    },
-                )
-            else:
-                all_cleaned_data.update(cleaned_data)
-        return all_cleaned_data
+        #   As per self.get_all_cleaned_data() but using
+        #   self.serializable_form_data_for_step()
+        for form_key, _ in self.test_form_list:
+            if self.show_step(form_key):
+                all_data[form_key] = self.serializable_form_data_for_step(form_key)
+
+        return all_data
+
+    def serializable_form_data_for_step(self, step) -> Dict:
+        """
+        Returns serializable data for a wizard step.
+
+        This is a re-implementation of WizardView.get_cleaned_data_for_step(),
+        returning the serializable version of data in place of the form's
+        regular cleaned_data.
+        """
+
+        form_obj = super().get_form(
+            step=step,
+            data=self.storage.get_step_data(step),
+            files=self.storage.get_step_files(step),
+        )
+        # TODO:
+        # - Set to True for now, since form_obj.is_valid() failing on
+        #   QUOTA_ORIGINS due to form optionality.
+        # if form_obj.is_valid():
+        if True or form_obj.is_valid():
+            # TODO: with_prefix=True once all forms done and tested.
+            # return form_obj.serializable()
+            return form_obj.serializable(with_prefix=False)
+
+        raise ValidationError
+
+    def all_serializable_form_kwargs(self) -> Dict:
+        """Returns serializable kwargs for all wizard steps."""
+
+        all_kwargs = {}
+
+        # TODO:
+        # for form_key in self.get_form_list():
+        for form_key, _ in self.test_form_list:
+            if self.show_step(form_key):
+                all_kwargs[form_key] = self.serializable_form_kwargs_for_step(form_key)
+
+        return all_kwargs
+
+    def serializable_form_kwargs_for_step(self, step) -> Dict:
+        """Returns serializable kwargs for a wizard step."""
+
+        form_kwargs = self.get_form_kwargs(step)
+        form_class = self.form_list[step]
+
+        return form_class.serializable_init_kwargs(form_kwargs)
 
     def get_all_cleaned_data(self):
         """

@@ -1,6 +1,7 @@
 import datetime
 import logging
 from itertools import groupby
+from typing import Dict
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -878,10 +879,79 @@ class MeasureCreateStartForm(forms.Form):
     pass
 
 
+class SerializableFormMixin:
+    """Provides a default implementation of serializable() that can be used to
+    obtain form data that can be serialized, or more specifically, stored to a
+    forms.JSONField."""
+
+    data_key_ignores = [
+        "csrfmiddlewaretoken",
+        "measure_create_wizard-current_step",
+        "submit",
+    ]
+    """
+    Keys that may appear in a Form's `data` attribute and which should be
+    ignored when creating a serializable version of `data`.
+
+    Override this on a per form basis if there are other, redundant keys that
+    should be ignored. See the default implementation of
+    SerializableFormMixin.serializeable() to see how this class attribute is
+    used.
+    """
+
+    def serializable(self, with_prefix=True) -> Dict:
+        """
+        Return serializable form data that can be stored in a
+        django.db.models.JSONField and used to recreate a valid form.
+
+        Note that this method should only be used immediately after a successful
+        call to the Form's is_valid() if the data that it returns is to be used
+        to recreate a valid form.
+        """
+        serialized_data = {}
+        data_keys = [k for k in self.data if k not in self.data_key_ignores]
+
+        for data_key in data_keys:
+            serialized_key = data_key
+            if not with_prefix and self.prefix:
+                serialized_key = data_key[len(self.prefix) + 1 :]
+            serialized_data[serialized_key] = self.data[data_key]
+
+        return serialized_data
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        """
+        Get a serializable dictionary of arguments that can be used to
+        initialise the form. The `kwargs` parameter is the Python version of
+        kwargs that are used to initialise the form and is normally provided by
+        the same caller as would init the form (i.e. the view).
+
+        For instance, a SelectableObjectsForm subclass
+        requires a valid `objects` parameter to correctly construct and
+        validate the form, so we'd expect `kwargs` dictionary containing
+        an `objects` element.
+        """
+        return {}
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        """
+        Get a dictionary of arguments for use in initialising the form.
+
+        The 'form_kwargs` parameter is the serialized version of the form's
+        kwargs that require deserializing to their Python representation.
+        """
+        return {}
+
+
 class MeasureDetailsForm(
+    SerializableFormMixin,
     ValidityPeriodForm,
     forms.Form,
 ):
+    MAX_COMMODITY_COUNT = 99
+
     class Meta:
         model = models.Measure
         fields = [
@@ -905,7 +975,7 @@ class MeasureDetailsForm(
             "Enter how many commodity codes you intend to apply to the measure. You can add more later, up to 99 in total."
         ),
         min_value=1,
-        max_value=99,
+        max_value=MAX_COMMODITY_COUNT,
         required=True,
         error_messages={
             "required": "Enter a number between 1 and 99",
@@ -950,7 +1020,10 @@ class MeasureDetailsForm(
         return cleaned_data
 
 
-class MeasureRegulationIdForm(forms.Form):
+class MeasureRegulationIdForm(
+    SerializableFormMixin,
+    forms.Form,
+):
     class Meta:
         model = models.Measure
         fields = [
@@ -984,7 +1057,10 @@ class MeasureRegulationIdForm(forms.Form):
         )
 
 
-class MeasureQuotaOrderNumberForm(forms.Form):
+class MeasureQuotaOrderNumberForm(
+    SerializableFormMixin,
+    forms.Form,
+):
     class Meta:
         model = models.Measure
         fields = [
@@ -1023,7 +1099,10 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         )
 
 
-class MeasureQuotaOriginsForm(SelectableObjectsForm):
+class MeasureQuotaOriginsForm(
+    SerializableFormMixin,
+    SelectableObjectsForm,
+):
     def clean(self):
         cleaned_data = super().clean()
 
@@ -1042,6 +1121,20 @@ class MeasureQuotaOriginsForm(SelectableObjectsForm):
             for origin in origins
         ]
         return cleaned_data
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        return {
+            "quota_order_number_origin_pks": [o.pk for o in kwargs["objects"]],
+        }
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        return {
+            "objects": QuotaOrderNumberOrigin.objects.filter(
+                pk__in=form_kwargs.get("quota_order_number_origin_pks", []),
+            ),
+        }
 
 
 class MeasureGeographicalAreaForm(
@@ -1201,7 +1294,10 @@ class MeasureGeographicalAreaForm(
         return cleaned_data
 
 
-class MeasureAdditionalCodeForm(forms.ModelForm):
+class MeasureAdditionalCodeForm(
+    SerializableFormMixin,
+    forms.ModelForm,
+):
     class Meta:
         model = models.Measure
         fields = [
@@ -1323,7 +1419,9 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
 )
 
 
-class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
+class MeasureCommodityAndDutiesFormSet(
+    MeasureCommodityAndDutiesBaseFormSet,
+):
     def __init__(self, *args, **kwargs):
         min_commodity_count = kwargs.pop("min_commodity_count", 2)
         self.measure_start_date = kwargs.pop("measure_start_date", None)
