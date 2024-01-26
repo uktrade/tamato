@@ -1,3 +1,4 @@
+import logging
 from datetime import date
 from typing import Iterable
 from typing import Set
@@ -15,6 +16,7 @@ from common.models import TrackedModel
 from common.models.managers import TrackedModelManager
 from common.models.mixins.validity import ValidityMixin
 from common.models.utils import GetTabURLMixin
+from common.models.utils import set_current_transaction
 from common.util import TaricDateRange
 from common.util import classproperty
 from footnotes import validators as footnote_validators
@@ -25,6 +27,8 @@ from measures.querysets import MeasureConditionQuerySet
 from measures.querysets import MeasuresQuerySet
 from quotas import business_rules as quotas_business_rules
 from quotas.validators import quota_order_number_validator
+
+logger = logging.getLogger(__name__)
 
 
 class MeasureTypeSeries(TrackedModel, ValidityMixin):
@@ -980,25 +984,89 @@ class MeasuresBulkCreator(models.Model):
     SerializableFormMixin.
     """
 
-    cleaned_data = models.JSONField()
+    form_data = models.JSONField()
+    """Dictionary of all Form.data, used to reconstruct bound Form instances as
+    if the form data had been sumbitted by the user within the measure wizard
+    process."""
+
+    form_kwargs = models.JSONField()
+    """Dictionary of all form init data, excluding a form's `data` param (which
+    is preserved via this class's `form_data` attribute)."""
+
+    current_transaction = models.ForeignKey(
+        "common.Transaction",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="measures_bulk_creators",
+        editable=False,
+    )
+    """
+    The 'current' Transaction instance at the time `form_data` was constructed.
+
+    This is normally be set by
+    `common.models.utils.TransactionMiddleware` when processing a HTTP request
+    and can be obtained from `common.models.utils.get_current_transaction()`
+    to capture its value.
+    """
+
+    # TODO:
+    # - Is it preferable to save the Workbasket rather than the current
+    #   transaction in the workbasket?
+    #   The current transaction can change if more transactions are created
+    #   before create_meassures() has chance to run. That could be good (we
+    #   want objects at the time the user performed the create measures action)
+    #   or bad (the current transaction may get deleted).
+    #   However if workbasket immutability is guarenteed until create_measures()
+    #   has completed, then this is moot. It'd need a 'protected' attribute, or
+    #   something like that, on the WorkBasket class that freezes it, say, in
+    #   the save() and update() methods.
 
     @atomic
     def create_measures(self) -> Iterable[Measure]:
         """Create measures using the instance's `cleaned_data`, returning the
         results as an iterable."""
+
         created_measures = []
+
+        # Construction and / or validation of some Form instances require
+        # access to a 'current' Transaction.
+        set_current_transaction(self.current_transaction)
 
         # Debug.
         import json
 
-        print(f"*** MeasuresBulkCreator.cleaned_data:")
-        print(f"\n{json.dumps(self.cleaned_data, indent=4)}")
+        print(f"*** MeasuresBulkCreator.form_data:")
+        print(f"\n{json.dumps(self.form_data, indent=4)}")
+
+        # Avoid circular import.
         from measures.views import MeasureCreateWizard
 
+        # TODO: Revert to using MeasureCreateWizard.form_list.
+        # for form_key, form_class in MeasureCreateWizard.form_list:
         for form_key, form_class in MeasureCreateWizard.test_form_list:
-            form = form_class(self.cleaned_data[form_key])
-            print(f"*** {form_class.__name__}.is_valid(): {form.is_valid()}")
-            print()
+            if form_key not in self.form_data:
+                # Some forms / steps are only conditionally included when
+                # creating measures - see `MeasureCreateWizard.condition_dict`
+                # and `MeasureCreateWizard.show_step()` for details.
+                continue
+
+            data = self.form_data[form_key]
+            kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
+            form = form_class(data=data, **kwargs)
+            is_valid = form.is_valid()
+
+            logger.info(
+                f"MeasuresBulkCreator.create_measures() - "
+                f"{form_class.__name__}.is_valid(): {is_valid}",
+            )
+            if not is_valid:
+                logger.error(
+                    f"MeasuresBulkCreator.create_measures() - "
+                    f"{form_class.__name__} has {len(form.errors)} unexpected "
+                    f"errors.",
+                )
+                for error in form.errors:
+                    logger.error(f"{error}")
 
         # TODO: Create the measures.
 
