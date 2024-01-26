@@ -497,6 +497,32 @@ We use a shared service accross the department for virus scanning to run locally
 3. add CLAM_AV_DOMAIN without http(s):// 
 4. set CLAM_AV_USERNAME,CLAM_AV_PASSWORD as the username and password found in the config.py in the dit-clamav-rest project
 
+
+Application maintenance mode
+----------------------------
+
+The application can be put into a "maintenance mode" type of operation. By doing
+so, all user web access is routed to a maintenance view and the default database 
+route removes the application's access to the database. This prevents
+inadvertent changes by users, via the application UI, to application data while
+in maintenance mode. Note, however, that this would not restrict other forms of
+data update, such as active Celery tasks - Celery and other similar processes
+need to be scaled down separately.
+
+The process for transitioning the application into and back out of maintenance
+mode is as follows:
+
+1. Set the application’s `MAINTENANCE_MODE` environment variable to `True`.
+
+2. Restart the application so that it picks up the new value of `MAINTENANCE_MODE`.
+
+3. Complete maintenance activities.
+
+4. Set the value of the `MAINTENANCE_MODE` environment variable to `False`.
+
+5. Restart the application.
+
+
 How to contribute
 -----------------
 
