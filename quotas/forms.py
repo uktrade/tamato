@@ -140,6 +140,18 @@ class QuotaUpdateForm(
         error_messages={"invalid_choice": "Please select a valid category"},
     )
 
+    def clean_category(self):
+        value = self.cleaned_data.get("category")
+        # the widget is disabled and data is not submitted. fall back to instance value
+        if not value:
+            return self.instance.category
+        if (
+            self.instance.category == validators.QuotaCategory.SAFEGUARD
+            and value != validators.QuotaCategory.SAFEGUARD
+        ):
+            raise ValidationError(SAFEGUARD_HELP_TEXT)
+        return value
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request")
         self.geo_area_options = kwargs.pop("geo_area_options")
@@ -154,10 +166,15 @@ class QuotaUpdateForm(
 
     def init_fields(self):
         if self.instance.category == validators.QuotaCategory.SAFEGUARD:
+            self.fields["category"].required = False
             self.fields["category"].widget = forms.Select(
-                # TODO: disabled inputs don't get submitted. FIX
-                # attrs={"disabled": True},
-                choices=validators.QuotaCategory.choices,
+                choices=[
+                    (
+                        validators.QuotaCategory.SAFEGUARD.value,
+                        validators.QuotaCategory.SAFEGUARD.label,
+                    ),
+                ],
+                attrs={"disabled": True},
             )
             self.fields["category"].help_text = SAFEGUARD_HELP_TEXT
         else:

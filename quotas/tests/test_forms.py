@@ -15,7 +15,7 @@ from quotas import validators
 pytestmark = pytest.mark.django_db
 
 
-def test_update_quota_form_safeguard_invalid():
+def test_update_quota_form_safeguard_invalid(session_with_workbasket):
     """When a QuotaOrderNumber with the category safeguard is edited the
     category cannot be changed."""
     quota = factories.QuotaOrderNumberFactory.create(
@@ -28,9 +28,41 @@ def test_update_quota_form_safeguard_invalid():
         "start_date_2": 2000,
     }
     with override_current_transaction(quota.transaction):
-        form = forms.QuotaUpdateForm(data=data, instance=quota, initial={})
+        form = forms.QuotaUpdateForm(
+            data=data,
+            instance=quota,
+            request=session_with_workbasket,
+            initial={},
+            geo_area_options=[],
+            existing_origins=[],
+        )
         assert not form.is_valid()
-        assert "Please select a valid category" in form.errors["category"]
+        assert forms.SAFEGUARD_HELP_TEXT in form.errors["category"]
+
+
+def test_update_quota_form_safeguard_disabled(session_with_workbasket):
+    """When a QuotaOrderNumber with the category safeguard is edited the
+    category cannot be changed."""
+    quota = factories.QuotaOrderNumberFactory.create(
+        category=validators.QuotaCategory.SAFEGUARD,
+    )
+    data = {
+        # if the widget is disabled the data is not submitted
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2000,
+    }
+    with override_current_transaction(quota.transaction):
+        form = forms.QuotaUpdateForm(
+            data=data,
+            instance=quota,
+            request=session_with_workbasket,
+            initial={},
+            geo_area_options=[],
+            existing_origins=[],
+        )
+        assert form.is_valid()
+        assert quota.category == validators.QuotaCategory.SAFEGUARD
 
 
 def test_update_quota_form_safeguard_disabled(valid_user_client):
