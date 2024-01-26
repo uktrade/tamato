@@ -725,7 +725,7 @@ class MeasureCreateWizard(
         # (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
         # (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
-        # (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
+        (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
         (FOOTNOTES, forms.MeasureFootnotesFormSet),
     ]
 
