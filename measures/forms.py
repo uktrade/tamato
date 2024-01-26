@@ -2,6 +2,7 @@ import datetime
 import logging
 from itertools import groupby
 from typing import Dict
+from typing import List
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -884,7 +885,7 @@ class SerializableFormMixin:
     obtain form data that can be serialized, or more specifically, stored to a
     forms.JSONField."""
 
-    data_key_ignores = [
+    data_keys_ignored = [
         "csrfmiddlewaretoken",
         "measure_create_wizard-current_step",
         "submit",
@@ -899,6 +900,17 @@ class SerializableFormMixin:
     used.
     """
 
+    def get_serializable_data_keys(self) -> List[str]:
+        """
+        Default implementation returning a list of the `Form.data` attribute's
+        keys used when serializing `data`.
+
+        Override this function if neither `data_keys_ignored` or this default
+        implementation is sufficient for identifying which of `Form.data`'s keys
+        should be used during a call to this mixin's `serializable()` method.
+        """
+        return [k for k in self.data if k not in self.data_keys_ignored]
+
     def serializable(self, with_prefix=True) -> Dict:
         """
         Return serializable form data that can be stored in a
@@ -909,7 +921,7 @@ class SerializableFormMixin:
         to recreate a valid form.
         """
         serialized_data = {}
-        data_keys = [k for k in self.data if k not in self.data_key_ignores]
+        data_keys = self.get_serializable_data_keys()
 
         for data_key in data_keys:
             serialized_key = data_key
@@ -1490,7 +1502,10 @@ class MeasureFootnotesForm(forms.Form):
         )
 
 
-class MeasureFootnotesFormSet(FormSet):
+class MeasureFootnotesFormSet(
+    SerializableFormMixin,
+    FormSet,
+):
     form = MeasureFootnotesForm
 
     def clean(self):
@@ -1507,6 +1522,11 @@ class MeasureFootnotesFormSet(FormSet):
         if len(footnotes) != num_unique:
             raise ValidationError("The same footnote cannot be added more than once")
         return cleaned_data
+
+    def get_serializable_data_keys(self) -> List[str]:
+        keys = super().get_serializable_data_keys()
+        # Additionally filter out unused auto-complete data.
+        return [k for k in keys if not k.endswith("footnote_autocomplete")]
 
 
 class MeasureUpdateFootnotesForm(MeasureFootnotesForm):

@@ -726,7 +726,7 @@ class MeasureCreateWizard(
         # (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
         # (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
-        # (FOOTNOTES, forms.MeasureFootnotesFormSet),
+        (FOOTNOTES, forms.MeasureFootnotesFormSet),
     ]
 
     templates = {
