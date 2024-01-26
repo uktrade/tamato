@@ -149,6 +149,7 @@
 <li><a class="reference internal" href="#virus-scan-and-running-locally">Virus Scan and running locally</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#application-maintenance-mode">Application maintenance mode</a></li>
 <li><a class="reference internal" href="#how-to-contribute">How to contribute</a></li>
 <li><a class="reference internal" href="#how-to-deploy">How to deploy</a><ul>
 <li><a class="reference internal" href="#accessing-databases-in-gov-uk-paas">Accessing databases in GOV.UK PaaS</a></li>
@@ -559,6 +560,25 @@ SQLITE_S3_ENDPOINT_URL, and SQLITE_STORAGE_DIRECTORY), setting s3 endpoint url t
 3. add CLAM_AV_DOMAIN without http(s)://
 4. set CLAM_AV_USERNAME,CLAM_AV_PASSWORD as the username and password found in the config.py in the dit-clamav-rest project</p>
 </section>
+</section>
+<section id="application-maintenance-mode">
+<h2>Application maintenance mode<a class="headerlink" href="#application-maintenance-mode" title="Permalink to this headline">¶</a></h2>
+<p>The application can be put into a “maintenance mode” type of operation. By doing
+so, all user web access is routed to a maintenance view and the default database
+route removes the application’s access to the database. This prevents
+inadvertent changes by users, via the application UI, to application data while
+in maintenance mode. Note, however, that this would not restrict other forms of
+data update, such as active Celery tasks - Celery and other similar processes
+need to be scaled down separately.</p>
+<p>The process for transitioning the application into and back out of maintenance
+mode is as follows:</p>
+<ol class="arabic simple">
+<li><p>Set the application’s <cite>MAINTENANCE_MODE</cite> environment variable to <cite>True</cite>.</p></li>
+<li><p>Restart the application so that it picks up the new value of <cite>MAINTENANCE_MODE</cite>.</p></li>
+<li><p>Complete maintenance activities.</p></li>
+<li><p>Set the value of the <cite>MAINTENANCE_MODE</cite> environment variable to <cite>False</cite>.</p></li>
+<li><p>Restart the application.</p></li>
+</ol>
 </section>
 <section id="how-to-contribute">
 <h2>How to contribute<a class="headerlink" href="#how-to-contribute" title="Permalink to this headline">¶</a></h2>
