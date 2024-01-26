@@ -7,15 +7,13 @@ from common.validators import UpdateType
 
 
 @pytest.mark.django_db()
-def test_main_migration_works(migrator, setup_content_types):
+def test_main_migration_works(migrator):
     """Ensures that the description date fix for TOPS-745 migration works."""
 
     # before migration
     old_state = migrator.apply_initial_migration(
         ("commodities", "0011_TOPS_745_migration_dependencies"),
     )
-
-    setup_content_types(old_state.apps)
 
     target_workbasket_id = 238
 
@@ -88,13 +86,11 @@ def test_main_migration_works(migrator, setup_content_types):
 
 
 @pytest.mark.django_db()
-def test_main_migration_ignores_if_no_data(migrator, setup_content_types):
+def test_main_migration_ignores_if_no_data(migrator):
     # before migration
     old_state = migrator.apply_initial_migration(
         ("commodities", "0011_TOPS_745_migration_dependencies"),
     )
-
-    setup_content_types(old_state.apps)
 
     GoodsNomenclatureDescription = old_state.apps.get_model(
         "commodities",

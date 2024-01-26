@@ -14,7 +14,7 @@ from workbaskets.validators import WorkflowStatus
 
 
 @pytest.mark.django_db()
-def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
+def test_add_back_deleted_measures(migrator, date_ranges):
     from common.models.transactions import TransactionPartition
 
     """Ensures that the initial migration works."""
@@ -24,8 +24,6 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
             "0011_pre_migration_dependencies",
         ),
     )
-
-    setup_content_types(old_state.apps)
 
     # setup
     DutyExpression = old_state.apps.get_model("measures", "DutyExpression")
@@ -243,7 +241,6 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
 @pytest.mark.django_db()
 def test_add_back_deleted_measures_fails_silently_if_data_not_present(
     migrator,
-    setup_content_types,
 ):
     """Ensures that the initial migration works when no data to create measures
     are present, for local dev etc."""
@@ -254,8 +251,6 @@ def test_add_back_deleted_measures_fails_silently_if_data_not_present(
             "0011_pre_migration_dependencies",
         ),
     )
-
-    setup_content_types(old_state.apps)
 
     measurement_class = old_state.apps.get_model("measures", "Measure")
 
