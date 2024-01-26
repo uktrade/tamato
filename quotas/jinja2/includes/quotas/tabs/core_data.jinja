@@ -18,7 +18,7 @@
             },
             {
                 "key": {"text": "Origins"},
-                "value": {"text": origins if object.quotaordernumberorigin_set.current() else "-"},
+                "value": {"text": origins if object.quotaordernumberorigin_set.current().with_latest_geo_area_description() else "-"},
                 "actions": {"items": []}
             },
             {
