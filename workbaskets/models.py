@@ -513,20 +513,15 @@ class WorkBasket(TimestampedMixin):
     @classmethod
     def current(cls, request):
         """Get the user's current workbasket."""
-        if request.user.is_authenticated:
-            try:
-                user = request.user
-                workbasket = user.current_workbasket
-            except User.DoesNotExist:
-                return None
-        else:
+        try:
+            workbasket = request.user.current_workbasket
+        except AttributeError:
             return None
 
         if workbasket is not None:
             if workbasket.status != WorkflowStatus.EDITING:
                 request.user.remove_current_workbasket()
                 return None
-
             return workbasket
         else:
             return None

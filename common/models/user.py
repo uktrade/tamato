@@ -17,8 +17,5 @@ class User(AbstractUser):
 
     def remove_current_workbasket(self):
         """Remove the user's assigned current workbasket."""
-        try:
-            self.current_workbasket = None
-            self.save()
-        except User.DoesNotExist:
-            pass
+        self.current_workbasket = None
+        self.save()
