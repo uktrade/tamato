@@ -28,7 +28,7 @@ class Report(ReportBaseTable):
 
     def row(self, row: QuotaDefinition) -> [dict]:
         return [
-            {"text": row.order_number},
+            {"text": self.link_renderer_for_quotas(row, row.order_number)},
             {"text": row.valid_between.lower},
             {"text": row.valid_between.upper},
             {"text": row.reason},
@@ -118,20 +118,19 @@ class Report(ReportBaseTable):
                                     break
                                 else:
                                     matching_data.add(quota.order_number)
-
-        for quota in matching_data:
+        for quota_order_number in matching_data:
             matching_definition = next(
                 (
                     quota_definition
                     for quota_definition in quotas_with_definition_periods
-                    if quota_definition.order_number == quota
+                    if quota_definition.order_number == quota_order_number
                 ),
                 None,
             )
 
             if matching_definition:
-                quota.reason = "Geographical area/exclusions data does not have any measures with matching data"
+                quota_order_number.reason = "Geographical area/exclusions data does not have any measures with matching data"
             else:
-                quota.reason = "Definition period has not been set"
+                quota_order_number.reason = "Definition period has not been set"
 
         return list(matching_data)
