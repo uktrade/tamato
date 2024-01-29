@@ -10,6 +10,7 @@ from common.models.mixins.validity import ValidityStartMixin
 from common.models.trackedmodel import TrackedModel
 from common.models.trackedmodel import VersionGroup
 from common.models.transactions import Transaction
+from common.models.user import User
 
 __all__ = [
     "ApplicabilityCode",
@@ -19,6 +20,7 @@ __all__ = [
     "TimestampedMixin",
     "TrackedModel",
     "Transaction",
+    "User",
     "ValidityMixin",
     "ValidityStartMixin",
     "DescriptionMixin",
