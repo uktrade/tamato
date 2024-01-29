@@ -1065,8 +1065,21 @@ class MeasuresBulkCreator(models.Model):
                     f"{form_class.__name__} has {len(form.errors)} unexpected "
                     f"errors.",
                 )
-                for error in form.errors:
-                    logger.error(f"{error}")
+
+                # Form.errors is a dictionary of errors, but FormSet.errors is a
+                # list of dictionaries of Form.errors. Access their errors in
+                # a uniform manner.
+                errors = []
+                from django.forms.formsets import BaseFormSet
+
+                if isinstance(form, BaseFormSet):
+                    errors = [{"formset_errors": form.non_form_errors()}] + form.errors
+                else:
+                    errors = [form.errors]
+
+                for form_errors in errors:
+                    for error_key, error_values in form_errors.items():
+                        logger.error(f"{error_key}: {error_values}")
 
         # TODO: Create the measures.
 
