@@ -54,18 +54,10 @@ def test_packaged_workbasket_create_without_permission(client):
 
 def test_packaged_workbasket_create_form_no_rule_check(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests that Packaged WorkBasket Create returns 302 and redirects work
     basket summary when no rule check has been executed."""
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": session_workbasket.pk,
-        "status": session_workbasket.status,
-        "title": session_workbasket.title,
-        "error_count": session_workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
 
     form_data = {
@@ -78,7 +70,7 @@ def test_packaged_workbasket_create_form_no_rule_check(
     assert (
         not PackagedWorkBasket.objects.all_queued()
         .filter(
-            workbasket=session_workbasket,
+            workbasket=user_workbasket,
         )
         .exists()
     )
@@ -89,12 +81,14 @@ def test_packaged_workbasket_create_form_no_rule_check(
     assert response.url[: len(response_url)] == response_url
 
 
-def test_packaged_workbasket_create_form(valid_user_client):
+def test_packaged_workbasket_create_form(client, valid_user):
     """Tests that Packaged WorkBasket Create returns 302 and redirects to
     confirm create page on success."""
+    client.force_login(valid_user)
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
+    workbasket.assign_to_user(valid_user)
     with workbasket.new_transaction() as transaction:
         TransactionCheckFactory.create(
             transaction=transaction,
@@ -102,14 +96,6 @@ def test_packaged_workbasket_create_form(valid_user_client):
             completed=True,
         )
 
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": workbasket.pk,
-        "status": workbasket.status,
-        "title": workbasket.title,
-        "error_count": workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
     # creating a packaged workbasket in the queue
     first_packaged_work_basket = factories.PackagedWorkBasketFactory()
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
@@ -119,7 +105,7 @@ def test_packaged_workbasket_create_form(valid_user_client):
         "jira_url": "www.fakejiraticket.com",
     }
 
-    response = valid_user_client.post(create_url, form_data)
+    response = client.post(create_url, form_data)
 
     assert response.status_code == 302
     assert "/confirm-create/" in response.url
@@ -136,19 +122,21 @@ def test_packaged_workbasket_create_form(valid_user_client):
     # Only compare the response URL up to the query string.
     assert response.url[: len(response_url)] == response_url
     assert second_packaged_work_basket.theme == form_data["theme"]
-    # Check in, form field may not contain full URL contianed within URLField object
+    # Check in, form field may not contain full URL contained within URLField object
     assert form_data["jira_url"] in second_packaged_work_basket.jira_url
     assert first_packaged_work_basket.position > 0
     assert first_packaged_work_basket.position < second_packaged_work_basket.position
 
 
-def test_packaged_workbasket_create_form_rule_check_violations(valid_user_client):
+def test_packaged_workbasket_create_form_rule_check_violations(client, valid_user):
     """Tests that Packaged WorkBasket Create returns 302 and redirects to
     workbasket detail page when there are rule check violations on
     workbasket."""
+    client.force_login(valid_user)
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
+    workbasket.assign_to_user(valid_user)
     with workbasket.new_transaction() as transaction:
         TransactionCheckFactory.create(
             transaction=transaction,
@@ -156,14 +144,6 @@ def test_packaged_workbasket_create_form_rule_check_violations(valid_user_client
             completed=True,
         )
 
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": workbasket.pk,
-        "status": workbasket.status,
-        "title": workbasket.title,
-        "error_count": workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
 
     form_data = {
@@ -171,7 +151,7 @@ def test_packaged_workbasket_create_form_rule_check_violations(valid_user_client
         "jira_url": "www.fakejiraticket.com",
     }
 
-    response = valid_user_client.post(create_url, form_data)
+    response = client.post(create_url, form_data)
     #  assert the packaged workbasket does not exist
     assert (
         not PackagedWorkBasket.objects.all_queued()
@@ -187,28 +167,21 @@ def test_packaged_workbasket_create_form_rule_check_violations(valid_user_client
     assert response.url[: len(response_url)] == response_url
 
 
-def test_create_duplicate_awaiting_instances(valid_user_client, valid_user):
+def test_create_duplicate_awaiting_instances(client, valid_user):
     """Tests that Packaged WorkBasket Create returns 302 and redirects to
     packaged workbasket queue page when trying to package a workbasket that is
     already on the queue."""
+    client.force_login(valid_user)
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
+    workbasket.assign_to_user(valid_user)
     with workbasket.new_transaction() as transaction:
         TransactionCheckFactory.create(
             transaction=transaction,
             successful=True,
             completed=True,
         )
-
-    session = valid_user_client.session
-    session["workbasket"] = {
-        "id": workbasket.pk,
-        "status": workbasket.status,
-        "title": workbasket.title,
-        "error_count": workbasket.tracked_model_check_errors.count(),
-    }
-    session.save()
 
     workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
     workbasket.save()
@@ -218,7 +191,6 @@ def test_create_duplicate_awaiting_instances(valid_user_client, valid_user):
 
     workbasket.dequeue()
     workbasket.save()
-
     """Test that a WorkBasket cannot enter the packaging queue more than
     once."""
     create_url = reverse("publishing:packaged-workbasket-queue-ui-create")
@@ -228,7 +200,7 @@ def test_create_duplicate_awaiting_instances(valid_user_client, valid_user):
         "jira_url": "www.fakejiraticket.com",
     }
 
-    response = valid_user_client.post(create_url, form_data)
+    response = client.post(create_url, form_data)
 
     assert response.status_code == 302
     response_url = reverse("publishing:packaged-workbasket-queue-ui-list")

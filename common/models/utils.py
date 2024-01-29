@@ -4,6 +4,7 @@ from typing import FrozenSet
 
 import wrapt
 from django.db.models import Value
+from django.shortcuts import redirect
 from django.urls import reverse
 
 _thread_locals = threading.local()
@@ -93,9 +94,9 @@ def override_current_transaction(transaction=None):
         set_current_transaction(old_transaction)
 
 
-def is_session_workbasket_valid(request):
-    """Returns True if the workbasket in the session is valid (i.e. exists and
-    has status EDITING.)"""
+def is_current_workbasket_valid(request):
+    """Returns True if a user's current workbasket is valid (i.e. exists and has
+    status EDITING.)"""
     from workbaskets.models import WorkBasket
     from workbaskets.validators import WorkflowStatus
 
@@ -108,15 +109,13 @@ def is_session_workbasket_valid(request):
         return False
 
 
-class ValidateSessionWorkBasketMiddleware:
+class ValidateUserWorkBasketMiddleware:
     """
     WorkBasket middleware that:
-
-        - Validates that any workbasket in the user's session is valid.
-        - Removes invalid workbaskets from the user's session.
-
+        - Validates that a user's assigned current workbasket is valid.
+        - Removes invalid workbaskets from the user.
     This middleware should always be placed before any other middleware in
-    settings.MIDDLEWARE that references session workbaskets (for instance,
+    settings.MIDDLEWARE that references workbaskets (for instance,
     TransactionMiddleware).
     """
 
@@ -124,14 +123,11 @@ class ValidateSessionWorkBasketMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        from workbaskets.models import WorkBasket
+        # If a user has an invalid workbasket then redirect them to the notice page
+        # letting them know it has been removed, otherwise continue.
 
-        # A current, editable workbasket is necessary in order to set the
-        # current transaction (below), so abandon this middleware's action and
-        # return early if there is no current editable workbasket in the
-        # session.
-        if not is_session_workbasket_valid(request):
-            WorkBasket.remove_current_from_session(request.session)
+        if not is_current_workbasket_valid(request):
+            redirect("workbaskets:no-active-workbasket")
         return self.get_response(request)
 
 

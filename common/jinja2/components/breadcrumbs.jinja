@@ -5,9 +5,9 @@
     <li class="govuk-breadcrumbs__list-item">
       <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
     </li>
-    {% if request.session.workbasket %}
+    {% if request.user.current_workbasket %}
       <li class="govuk-breadcrumbs__list-item">
-        <a class="govuk-breadcrumbs__link" href="{{ url('workbaskets:edit-workbasket') }}">Workbasket {{ request.session.workbasket.id }}</a>
+        <a class="govuk-breadcrumbs__link" href="{{ url('workbaskets:edit-workbasket') }}">Workbasket {{ request.user.current_workbasket.id }}</a>
       </li>
     {% endif %}
     {% for crumb in breadcrumbs_list %}

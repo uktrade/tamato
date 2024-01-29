@@ -197,7 +197,7 @@ def test_geographical_membership_add_form_invalid_selection(date_ranges):
 
 def test_geographical_membership_edit_form_valid_deletion(
     date_ranges,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     country = factories.CountryFactory.create()
     area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
@@ -215,14 +215,14 @@ def test_geographical_membership_edit_form_valid_deletion(
         form = forms.GeographicalAreaEditForm(
             data=form_data,
             instance=area_group,
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
         )
         assert form.is_valid()
 
 
 def test_geographical_membership_edit_form_invalid_deletion(
     date_ranges,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     country = factories.CountryFactory.create()
     area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
@@ -243,7 +243,7 @@ def test_geographical_membership_edit_form_invalid_deletion(
         form = forms.GeographicalAreaEditForm(
             data=form_data,
             instance=area_group,
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
         )
         assert not form.is_valid()
         assert (
@@ -254,7 +254,7 @@ def test_geographical_membership_edit_form_invalid_deletion(
 
 def test_geographical_membership_edit_form_valid_end_date(
     date_ranges,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     country = factories.CountryFactory.create()
     area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
@@ -275,14 +275,14 @@ def test_geographical_membership_edit_form_valid_end_date(
         form = forms.GeographicalAreaEditForm(
             data=form_data,
             instance=area_group,
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
         )
         assert form.is_valid()
 
 
 def test_geographical_membership_edit_form_invalid_end_date(
     date_ranges,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     country = factories.CountryFactory.create()
     area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
@@ -310,7 +310,7 @@ def test_geographical_membership_edit_form_invalid_end_date(
         form = forms.GeographicalAreaEditForm(
             data=invalid_end_date_1,
             instance=area_group,
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
         )
         assert not form.is_valid()
         assert (
@@ -321,7 +321,7 @@ def test_geographical_membership_edit_form_invalid_end_date(
         form = forms.GeographicalAreaEditForm(
             data=invalid_end_date_2,
             instance=area_group,
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
         )
         assert not form.is_valid()
         assert (

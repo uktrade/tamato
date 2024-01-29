@@ -20,11 +20,11 @@
 {% block header %}
 
 {% set workbasket_html %}
-  {% if request.session.workbasket %}
+  {% if request.user.current_workbasket %}
     <a
       href="{{ url('workbaskets:current-workbasket') }}"
       class="govuk-header__link workbasket-link"
-    >Workbasket {{ request.session.workbasket.id }} {{ workbasket_svg }}</a>
+    >Workbasket {{ request.user.current_workbasket.id }} {{ workbasket_svg }}</a>
   {% endif %}
 {% endset %}
 

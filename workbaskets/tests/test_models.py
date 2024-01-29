@@ -432,3 +432,10 @@ def test_invalid_workbasket_purge_transactions(workbasket_status):
         workbasket.purge_empty_transactions()
 
     assert workbasket.transactions.count() == 2
+
+
+def test_workbasket_assign_to_user(valid_user, workbasket):
+    """Test assign_to_user() sets the user's current workbasket."""
+    assert not valid_user.current_workbasket
+    workbasket.assign_to_user(valid_user)
+    assert valid_user.current_workbasket == workbasket
