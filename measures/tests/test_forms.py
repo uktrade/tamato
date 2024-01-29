@@ -1656,3 +1656,26 @@ def test_measure_geographical_area_exclusions_form_invalid_choice():
     assert form.errors["excluded_area"] == [
         "Select a valid choice. That choice is not one of the available choices.",
     ]
+
+
+def test_get_serializable_data_keys():
+    from measures.forms import SerializableFormMixin
+
+    class TestSerializableForm(SerializableFormMixin):
+        def __init__(self, data):
+            self.data = data
+
+    serializable_data = {
+        "valid_key": "",
+        "another_valid_key": "",
+    }
+    ignorable_data = {
+        "csrfmiddlewaretoken": "",
+        "measure_create_wizard-current_step": "",
+        "submit": "",
+        "some_kind_of_autocomplete": "",
+    }
+    form_data = {**ignorable_data, **serializable_data}
+    test_form = TestSerializableForm(data=form_data)
+
+    assert test_form.get_serializable_data_keys() == list(serializable_data.keys())

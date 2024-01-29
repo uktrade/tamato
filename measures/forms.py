@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 from itertools import groupby
 from typing import Dict
 from typing import List
@@ -70,19 +71,20 @@ class SerializableFormMixin:
     obtain form data that can be serialized, or more specifically, stored to a
     forms.JSONField."""
 
-    data_keys_ignored = [
-        "csrfmiddlewaretoken",
-        "measure_create_wizard-current_step",
-        "submit",
+    ignored_data_key_regexs = [
+        "^csrfmiddlewaretoken$",
+        "^measure_create_wizard-current_step$",
+        "^submit$",
+        "^.*_autocomplete$",
     ]
     """
-    Keys that may appear in a Form's `data` attribute and which should be
-    ignored when creating a serializable version of `data`.
+    Regexs of keys that may appear in a Form's `data` attribute and which should
+    be ignored when creating a serializable version of `data`.
 
     Override this on a per form basis if there are other, redundant keys that
     should be ignored. See the default implementation of
-    SerializableFormMixin.serializeable() to see how this class attribute is
-    used.
+    `SerializableFormMixin.get_serializable_data_keys()` to see how this class
+    attribute is used.
     """
 
     def get_serializable_data_keys(self) -> List[str]:
@@ -90,11 +92,12 @@ class SerializableFormMixin:
         Default implementation returning a list of the `Form.data` attribute's
         keys used when serializing `data`.
 
-        Override this function if neither `data_keys_ignored` or this default
+        Override this function if neither `ignored_data_key_regexs` or this default
         implementation is sufficient for identifying which of `Form.data`'s keys
         should be used during a call to this mixin's `serializable()` method.
         """
-        return [k for k in self.data if k not in self.data_keys_ignored]
+        combined_regexs = "(" + ")|(".join(self.ignored_data_key_regexs) + ")"
+        return [k for k in self.data.keys() if not re.search(combined_regexs, k)]
 
     def serializable(self, with_prefix=True) -> Dict:
         """
@@ -526,11 +529,6 @@ class MeasureConditionsWizardStepFormSet(
     MeasureConditionsBaseFormSet,
 ):
     form = MeasureConditionsWizardStepForm
-
-    def get_serializable_data_keys(self) -> List[str]:
-        keys = super().get_serializable_data_keys()
-        # Additionally filter out unused auto-complete data.
-        return [k for k in keys if not k.endswith("certificate_autocomplete")]
 
 
 class MeasureForm(
@@ -1530,11 +1528,6 @@ class MeasureFootnotesFormSet(
         if len(footnotes) != num_unique:
             raise ValidationError("The same footnote cannot be added more than once")
         return cleaned_data
-
-    def get_serializable_data_keys(self) -> List[str]:
-        keys = super().get_serializable_data_keys()
-        # Additionally filter out unused auto-complete data.
-        return [k for k in keys if not k.endswith("footnote_autocomplete")]
 
 
 class MeasureUpdateFootnotesForm(MeasureFootnotesForm):
