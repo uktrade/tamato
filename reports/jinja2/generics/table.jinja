@@ -1,17 +1,21 @@
 {% from "components/table/macro.njk" import govukTable -%}
-<script nonce= "{{request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+<script nonce="{{ request.csp_nonce }}" src="{{ static('common/js/ag-grid-community.min.js') }}" async></script>
 <script nonce="{{ request.csp_nonce }}">
+
+
+    document.addEventListener('DOMContentLoaded', function () {
     const gridOptions = {
-        {{ report.headers() | tojson }}
+        columnDefs: {{ report.headers() | tojson }},
         rowData: {{ report.rows(current_page_data) | tojson }},
-        columnDefs: {{ report.headers() | tojson }}
+        filter: true
     };
 
-    const myGridElement = document.querySelector('#myGrid');
-    window.onload = function () {
-        alert('this is working')
-        agGrid.createGrid(myGridElement, gridOptions);
-    }
+    agGrid.createGrid(document.querySelector('#myGrid'), gridOptions, {
+        onFirstDataRendered: function (params) {
+            alert('hello')
+        }
+    });
+});
 </script>
 {% if report.tabular_reports -%}
 
@@ -75,7 +79,7 @@
     </div>
 
 {% else -%}
-<div id="myGrid"></div>
+<div id="myGrid" class="ag-theme-quartz" style="height: 500px"></div>
     
 
     {% if current_page_data -%}
@@ -91,7 +95,7 @@
             "items"
         {% endif %}
     </div>
-    <div class="govuk-body align-left">
+    <div class="govuk-body">
         Page {{ current_page_data.number }} of {{ current_page_data.paginator.num_pages }}
     </div>
     <ul class="govuk-list align-right">

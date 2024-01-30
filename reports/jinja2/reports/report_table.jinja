@@ -22,7 +22,7 @@
     <h2 class="govuk-body">
     {{ report.description|safe }}
     </h2>
-    <div class="govuk-!-margin-top-9" {% if report.slug() == 'table_report_of_eu_data' %}style="margin-left: -10rem"{% endif %}>
+    <div class="govuk-!-margin-top-9">
         {% include "generics/table.jinja" %}
     </div>
 {% endblock %}

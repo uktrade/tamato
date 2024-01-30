@@ -32,9 +32,7 @@ class Report(ReportBaseTable):
 
     def headers(self) -> [dict]:
         return [
-            {"field":
-            header.replace("_", " ").capitalize()
-            }
+            {"field": header.replace("_", " ").capitalize(), "filter": 'agTextColumnFilter'}
             for header in self.headers_list
         ]
 
