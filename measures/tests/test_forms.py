@@ -19,6 +19,7 @@ from measures.forms import MeasureConditionsFormSet
 from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
 from measures.forms import MeasureStartDateForm
+from measures.forms import SerializableFormMixin
 from measures.models import Measure
 from measures.validators import MeasureExplosionLevel
 
@@ -1659,7 +1660,8 @@ def test_measure_geographical_area_exclusions_form_invalid_choice():
 
 
 def test_get_serializable_data_keys():
-    from measures.forms import SerializableFormMixin
+    """Test that the SerializableFormMixin.get_serializable_data_keys() behaves
+    correctly and as expected."""
 
     class TestSerializableForm(SerializableFormMixin):
         def __init__(self, data):
