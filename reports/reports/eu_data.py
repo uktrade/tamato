@@ -32,12 +32,18 @@ class Report(ReportBaseTable):
 
     def headers(self) -> [dict]:
         return [
-            {"field": header.replace("_", " ").capitalize(), "filter": 'agTextColumnFilter'}
+            {
+                "field": header.replace("_", " ").capitalize(),
+                "filter": "agTextColumnFilter",
+            }
             for header in self.headers_list
         ]
 
     def row(self, row) -> [dict]:
-        return {field.replace("_", " ").capitalize(): str(getattr(row, field, None)) for field in self.headers_list}
+        return {
+            field.replace("_", " ").capitalize(): str(getattr(row, field, None))
+            for field in self.headers_list
+        }
 
     def rows(self, current_page_data) -> [dict]:
         table_rows = []
