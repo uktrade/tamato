@@ -35,6 +35,8 @@ from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
+from common.serializers import deserialize_date
+from common.serializers import serialize_date
 from common.util import validity_range_contains_range
 from common.validators import SymbolValidator
 from common.validators import UpdateType
@@ -529,6 +531,41 @@ class MeasureConditionsWizardStepFormSet(
     MeasureConditionsBaseFormSet,
 ):
     form = MeasureConditionsWizardStepForm
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        measure_start_date = kwargs.get("form_kwargs", {}).get("measure_start_date")
+        measure_type = kwargs.get("form_kwargs", {}).get("measure_type")
+
+        serializable_kwargs = {
+            "form_kwargs": {
+                "measure_start_date": serialize_date(measure_start_date),
+                "measure_type_pk": measure_type.pk if measure_type else None,
+            },
+        }
+
+        return serializable_kwargs
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        measure_start_date = form_kwargs.get("form_kwargs", {}).get(
+            "measure_start_date",
+        )
+        measure_type_pk = form_kwargs.get("form_kwargs", {}).get("measure_type_pk")
+        measure_type = (
+            models.MeasureType.objects.get(pk=measure_type_pk)
+            if measure_type_pk
+            else None
+        )
+
+        kwargs = {
+            "form_kwargs": {
+                "measure_start_date": measure_start_date,
+                "measure_type": measure_type,
+            },
+        }
+
+        return kwargs
 
 
 class MeasureForm(
@@ -1438,6 +1475,7 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
 
 
 class MeasureCommodityAndDutiesFormSet(
+    SerializableFormMixin,
     MeasureCommodityAndDutiesBaseFormSet,
 ):
     def __init__(self, *args, **kwargs):
@@ -1478,6 +1516,42 @@ class MeasureCommodityAndDutiesFormSet(
                 )
 
         return cleaned_data
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        measure_type = kwargs.get("form_kwargs", {}).get("measure_type")
+        measure_type_pk = measure_type.pk if measure_type else None
+
+        serializable_kwargs = {
+            "min_commodity_count": kwargs.get("min_commodity_count"),
+            "measure_start_date": serialize_date(kwargs.get("measure_start_date")),
+            "form_kwargs": {
+                "measure_type_pk": measure_type_pk,
+            },
+        }
+
+        return serializable_kwargs
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        measure_type_pk = form_kwargs.get("form_kwargs", {}).get("measure_type_pk")
+        measure_type = (
+            models.MeasureType.objects.get(pk=measure_type_pk)
+            if measure_type_pk
+            else None
+        )
+
+        kwargs = {
+            "min_commodity_count": form_kwargs.get("min_commodity_count"),
+            "measure_start_date": deserialize_date(
+                form_kwargs.get("measure_start_date"),
+            ),
+            "form_kwargs": {
+                "measure_type": measure_type,
+            },
+        }
+
+        return kwargs
 
 
 class MeasureFootnotesForm(forms.Form):

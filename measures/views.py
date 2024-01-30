@@ -723,7 +723,7 @@ class MeasureCreateWizard(
         (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
         (QUOTA_ORIGINS, forms.MeasureQuotaOriginsForm),
         # (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
-        # (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
+        (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
         (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
         (FOOTNOTES, forms.MeasureFootnotesFormSet),
