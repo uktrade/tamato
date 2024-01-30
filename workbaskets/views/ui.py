@@ -55,6 +55,8 @@ from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaSuspension
 from regulations.models import Regulation
+from tasks.models import Task
+from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
@@ -409,6 +411,21 @@ class CurrentWorkBasket(TemplateView):
             self.request.user.is_superuser
             or self.request.user.has_perm("workbaskets.delete_workbasket")
         )
+        assigned_workers = (
+            UserAssignment.objects.filter(
+                task__workbasket=self.workbasket,
+            )
+            .assigned()
+            .workbasket_workers()
+        )
+        assigned_reviewers = (
+            UserAssignment.objects.filter(
+                task__workbasket=self.workbasket,
+            )
+            .assigned()
+            .workbasket_reviewers()
+        )
+
         # set to true if there is an associated goods import batch with an unsent notification
         try:
             import_batch = self.workbasket.importbatch
@@ -422,6 +439,7 @@ class CurrentWorkBasket(TemplateView):
             )
         except ObjectDoesNotExist:
             unsent_notifcation = False
+
         context.update(
             {
                 "workbasket": self.workbasket,
@@ -430,6 +448,8 @@ class CurrentWorkBasket(TemplateView):
                 "rule_check_in_progress": False,
                 "user_can_delete_workbasket": user_can_delete_workbasket,
                 "unsent_notification": unsent_notifcation,
+                "assigned_workers": assigned_workers,
+                "assigned_reviewers": assigned_reviewers,
             },
         )
         if self.workbasket.rule_check_task_id:
@@ -1551,3 +1571,76 @@ class NoActiveWorkBasket(TemplateView):
     require one."""
 
     template_name = "workbaskets/no_active_workbasket.jinja"
+
+
+class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
+    permission_required = "tasks.add_userassignment"
+    template_name = "workbaskets/assign_users.jinja"
+    form_class = forms.WorkBasketAssignUsersForm
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = "Assign users to workbasket"
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "request": self.request,
+                "workbasket": self.workbasket,
+            },
+        )
+        return kwargs
+
+    @atomic
+    def form_valid(self, form):
+        task, _ = Task.objects.get_or_create(
+            workbasket=self.workbasket,
+            defaults={
+                "title": self.workbasket.title,
+                "description": self.workbasket.reason,
+            },
+        )
+        form.assign_users(task=task)
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse("workbaskets:current-workbasket")
+
+
+class WorkBasketUnassignUsersView(PermissionRequiredMixin, FormView):
+    permission_required = "tasks.change_userassignment"
+    template_name = "workbaskets/assign_users.jinja"
+    form_class = forms.WorkBasketUnassignUsersForm
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = "Unassign users from workbasket"
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "request": self.request,
+                "workbasket": self.workbasket,
+            },
+        )
+        return kwargs
+
+    @atomic
+    def form_valid(self, form):
+        form.unassign_users()
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse("workbaskets:current-workbasket")
