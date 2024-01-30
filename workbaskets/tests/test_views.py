@@ -2046,3 +2046,42 @@ def test_require_current_workbasket_redirect(workbasket_factory, client, valid_u
 
     assert response.status_code == 302
     assert response.url == reverse("workbaskets:no-active-workbasket")
+
+
+def test_disabled_packaging_for_unassigned_workbasket(
+    valid_user_client,
+    user_empty_workbasket,
+):
+    """Tests that if a workbasket has not been fully assigned then the send to
+    packaging queue button is disabled."""
+    with user_empty_workbasket.new_transaction() as transaction:
+        footnote = factories.FootnoteFactory.create(
+            transaction=transaction,
+            footnote_type__transaction=transaction,
+        )
+        TrackedModelCheckFactory.create(
+            transaction_check__transaction=transaction,
+            model=footnote,
+            successful=True,
+        )
+
+    url = reverse("workbaskets:workbasket-checks")
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    assert soup.find("button", {"id": "send-to-packaging", "aria-disabled": "true"})
+
+    # Assign the workbasket so it can now be packaged
+    task = factories.TaskFactory.create(workbasket=user_empty_workbasket)
+    factories.UserAssignmentFactory.create(
+        assignment_type="WORKBASKET_WORKER",
+        task=task,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type="WORKBASKET_REVIEWER",
+        task=task,
+    )
+
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    packaging_button = soup.find("a", href="/publishing/create/")
+    assert not packaging_button.has_attr("disabled")
