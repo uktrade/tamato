@@ -399,6 +399,24 @@ class WorkBasket(TimestampedMixin):
         """Django FSM condition: workbasket must be empty (no tracked models and no transactions) to transition to ARCHIVED status."""
         return not self.tracked_models.exists() and not self.transactions.exists()
 
+    def fully_assigned(self) -> bool:
+        """Returns True if a workbasket has been assigned to both a worker and a
+        reviewer, otherwise False."""
+        from tasks.models import UserAssignment
+
+        worker_assignments = (
+            UserAssignment.objects.workbasket_workers()
+            .assigned()
+            .filter(task__workbasket=self)
+        )
+        reviewer_assignments = (
+            UserAssignment.objects.workbasket_reviewers()
+            .assigned()
+            .filter(task__workbasket=self)
+        )
+
+        return worker_assignments and reviewer_assignments
+
     @transition(
         field=status,
         source=WorkflowStatus.EDITING,
@@ -435,6 +453,7 @@ class WorkBasket(TimestampedMixin):
         field=status,
         source=WorkflowStatus.EDITING,
         target=WorkflowStatus.QUEUED,
+        conditions=[fully_assigned],
         custom={"label": "Add to packaging queue."},
     )
     def queue(self, user: int, scheme_name: str):

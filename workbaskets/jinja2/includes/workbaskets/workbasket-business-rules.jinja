@@ -86,7 +86,14 @@
       aria-labelledby="summary-title" role="region" data-module="govuk-notification-banner">
       <div class="govuk-notification-banner__content">
         {{ rule_check_result_content() }}
-        {% if unsent_notification %}
+        {% if not workbasket.fully_assigned() %}
+        <div class="govuk-hint">
+            A workbasket must have an assigned worker and reviewer before packaging.
+          </div>
+          <button type="submit" disabled aria-disabled="true" class="govuk-button" data-module="govuk-button" id="send-to-packaging">
+            Send to packaging queue
+          </button>
+        {% elif unsent_notification %}
           <div class="govuk-hint"> 
             For commodity code imports a channel islands notification must be sent from the review goods tab before packaging.
           </div>
