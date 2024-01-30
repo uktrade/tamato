@@ -65,13 +65,13 @@ def test_update_quota_form_safeguard_disabled(session_with_workbasket):
         assert quota.category == validators.QuotaCategory.SAFEGUARD
 
 
-def test_update_quota_form_safeguard_disabled(valid_user_client):
+def test_update_quota_form_safeguard_disabled(client_with_current_workbasket):
     """When a QuotaOrderNumber with the category safeguard is edited the
     category cannot be changed and the form field is disabled."""
     quota = factories.QuotaOrderNumberFactory.create(
         category=validators.QuotaCategory.SAFEGUARD,
     )
-    response = valid_user_client.get(
+    response = client_with_current_workbasket.get(
         reverse("quota-ui-edit", kwargs={"sid": quota.sid}),
     )
     html = response.content.decode(response.charset)

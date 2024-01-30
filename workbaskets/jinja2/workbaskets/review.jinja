@@ -6,7 +6,7 @@
 
 {% set page_title %} Workbasket {{ workbasket.id }} - {{ tab_page_title }} {% endset %}
 
-{% if workbasket == session_workbasket %}
+{% if workbasket == user_workbasket %}
   {% set page_heading %} Workbasket {{ workbasket.id }} - Review changes {% endset %}
 {% else %}
   {% set page_heading %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
@@ -57,7 +57,7 @@
 %}
 
 {% block breadcrumb %}
-  {% if workbasket != session_workbasket %}
+  {% if workbasket != user_workbasket %}
     {{ breadcrumbs(request, [
         {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
         {
@@ -77,7 +77,7 @@
     {{ page_heading }}
   </h1>
 
-  {% if workbasket == session_workbasket %}
+  {% if workbasket == user_workbasket %}
     {{ navigation(request, "review") }}
   {% else %}
     {{ create_workbasket_detail_navigation(active_tab="review") }}

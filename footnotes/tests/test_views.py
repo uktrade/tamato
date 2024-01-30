@@ -129,7 +129,7 @@ def test_footnote_detail_views(
     view,
     url_pattern,
     valid_user_client,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Verify that measure detail views are under the url footnotes/ and don't
     return an error."""
@@ -228,7 +228,7 @@ def test_footnote_type_api_list_view(valid_user_client):
     )
 
 
-def test_footnote_description_create(valid_user_client):
+def test_footnote_description_create(client_with_current_workbasket):
     """Tests that `FootnoteDescriptionCreate` view returns 200 and creates a
     description for the current version of an footnote."""
     footnote = factories.FootnoteFactory.create(description=None)
@@ -251,10 +251,10 @@ def test_footnote_description_create(valid_user_client):
     }
 
     with override_current_transaction(Transaction.objects.last()):
-        get_response = valid_user_client.get(url)
+        get_response = client_with_current_workbasket.get(url)
         assert get_response.status_code == 200
 
-        post_response = valid_user_client.post(url, data)
+        post_response = client_with_current_workbasket.post(url, data)
         assert post_response.status_code == 302
 
     assert FootnoteDescription.objects.filter(described_footnote=new_version).exists()
