@@ -2,6 +2,7 @@
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
 {% set page_title %}
@@ -12,6 +13,20 @@
 
 {% set workbasket_changes_link = url("workbaskets:workbasket-ui-changes", kwargs={"pk": workbasket.pk}) %}
 {% set transaction_order_link = url("workbaskets:workbasket-ui-transaction-order", kwargs={"pk": workbasket.pk}) %}
+{% set assign_users_link = url("workbaskets:workbasket-ui-assign-users", kwargs={"pk": workbasket.pk}) %}
+{% set unassign_users_link = url("workbaskets:workbasket-ui-unassign-users", kwargs={"pk": workbasket.pk}) %}
+
+{% macro display_assigned_users(assigned_users, assignment_type) %}
+  {% if not assigned_users and assignment_type == "workers" %}
+    No users have been assigned to this workbasket yet.
+  {% elif not assigned_users and assignment_type == "reviewers" %}
+    No users have been assigned to review this workbasket yet.
+  {% else %}
+    {% for user in assigned_users %}
+      {{ user.user.get_full_name() }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endmacro %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -30,58 +45,116 @@
 
   {{ navigation(request, "summary") }}
 
-  <dl class="govuk-summary-list">
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        TOPS/Jira number
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ workbasket.title }}
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href={{ change_workbasket_details_link }}>
-          Change<span class="govuk-visually-hidden">TOPS/Jira number</span>
-        </a>
-      </dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        Description
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ workbasket.reason }}
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href={{ change_workbasket_details_link }}>
-          Change<span class="govuk-visually-hidden">description</span>
-        </a>
-      </dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        View and remove items from the workbasket
-      </dt>
-      <dd class="govuk-summary-list__value">
-        View all items as they would generate in an envelope and remove items where needed.
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href={{ workbasket_changes_link }}>
-          Workbasket changes
-        </a>
-      </dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        View and reorder workbasket transactions 
-      </dt>
-      <dd class="govuk-summary-list__value">
-        View the proposed transaction order for the envelope and rearrange item where needed.
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href={{ transaction_order_link }}>
-          Workbasket transactions
-        </a>
-      </dd>
-    </div>
-  </dl>
+  {{ govukSummaryList({
+    "rows": [
+      {
+        "key": {"text": "TOPS/Jira number"},
+        "value": {"text": workbasket.title},
+        "actions": {
+          "items": [
+            {
+              "href": change_workbasket_details_link,
+              "text": "Change",
+              "visuallyHiddenText": "TOPS/Jira number",
+              "attributes": {},
+            },
+          ]
+        },
+      },
+      {
+        "key": {"text": "Description"},
+        "value": {"text": workbasket.reason},
+        "actions": {
+          "items": [
+            {
+              "href": change_workbasket_details_link,
+              "text": "Change",
+              "visuallyHiddenText": "description",
+              "attributes": {},
+            },
+          ]
+        },
+      },
+      {
+        "key": {"text": "View and remove items from the workbasket"},
+        "value": {"text": "View all items as they would generate in an envelope and remove items where needed."},
+        "actions": {
+          "items": [
+            {
+              "href": workbasket_changes_link,
+              "text": "Workbasket changes",
+              "attributes": {},
+            },
+          ]
+        },
+      },
+      {
+        "key": {"text": "View and reorder workbasket transactions"},
+        "value": {"text": "View the proposed transaction order for the envelope and rearrange item where needed."},
+        "actions": {
+          "items": [
+            {
+              "href": transaction_order_link,
+              "text": "Workbasket transactions",
+              "attributes": {},
+            },
+          ]
+        },
+      },
+      {
+        "key": {"text": "Assigned to"},
+        "value": {"text": display_assigned_users(assigned_workers, "workers")},
+        "actions": {
+          "items": [
+            {
+              "href": assign_users_link,
+              "text": "Assign",
+              "visuallyHiddenText": "users",
+              "attributes": {},
+            },
+          ] if not assigned_workers else [
+            {
+              "href": assign_users_link,
+              "text": "Assign",
+              "visuallyHiddenText": "users",
+              "attributes": {},
+            },
+            {
+              "href": unassign_users_link,
+              "text": "Unassign",
+              "visuallyHiddenText": "users",
+              "attributes": {},
+            },
+          ]
+        },
+      },
+      {
+        "key": {"text": "Assigned to review"},
+        "value": {"text": display_assigned_users(assigned_reviewers, "reviewers")},
+        "actions": {
+          "items": [
+            {
+              "href": assign_users_link,
+              "text": "Assign",
+              "visuallyHiddenText": "users",
+              "attributes": {},
+            },
+          ] if not assigned_reviewers else [
+            {
+              "href": assign_users_link,
+              "text": "Assign",
+              "visuallyHiddenText": "users",
+              "attributes": {},
+            },
+            {
+              "href": unassign_users_link,
+              "text": "Unassign",
+              "visuallyHiddenText": "users",
+              "attributes": {},
+            },
+          ]
+        },
+      },
+		]
+  })}}
 {% endblock %}
