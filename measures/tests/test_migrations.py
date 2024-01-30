@@ -4,17 +4,17 @@ from datetime import timedelta
 import pytest
 from psycopg2._range import DateTimeTZRange
 
-from common.tests.factories import DutyExpressionFactory
-from common.tests.factories import GeographicalAreaFactory
-from common.tests.factories import GoodsNomenclatureFactory
-from common.tests.factories import MeasureTypeFactory
-from common.tests.factories import QueuedWorkBasketFactory
-from common.tests.factories import RegulationFactory
-from common.tests.factories import RegulationGroupFactory
+from common.validators import ApplicabilityCode
+from common.validators import UpdateType
+from measures.validators import ImportExportCode
+from measures.validators import MeasureExplosionLevel
+from measures.validators import MeasureTypeCombination
+from measures.validators import OrderNumberCaptureCode
+from workbaskets.validators import WorkflowStatus
 
 
 @pytest.mark.django_db()
-def test_add_back_deleted_measures(migrator, setup_content_types):
+def test_add_back_deleted_measures(migrator, date_ranges):
     from common.models.transactions import TransactionPartition
 
     """Ensures that the initial migration works."""
@@ -25,60 +25,190 @@ def test_add_back_deleted_measures(migrator, setup_content_types):
         ),
     )
 
-    setup_content_types(old_state.apps)
-
     # setup
-    target_workbasket_id = 545
+    DutyExpression = old_state.apps.get_model("measures", "DutyExpression")
+    ContentType = old_state.apps.get_model("contenttypes", "ContentType")
+    GeographicalArea = old_state.apps.get_model("geo_areas", "GeographicalArea")
+    GoodsNomenclature = old_state.apps.get_model("commodities", "GoodsNomenclature")
+    Measure = old_state.apps.get_model("measures", "Measure")
+    MeasureType = old_state.apps.get_model("measures", "MeasureType")
+    MeasureTypeSeries = old_state.apps.get_model("measures", "MeasureTypeSeries")
+    Regulation = old_state.apps.get_model("regulations", "Regulation")
+    Group = old_state.apps.get_model("regulations", "Group")
+    Transaction = old_state.apps.get_model("common", "Transaction")
+    User = old_state.apps.get_model("common", "User")
+    WorkBasket = old_state.apps.get_model("workbaskets", "WorkBasket")
+    VersionGroup = old_state.apps.get_model("common", "VersionGroup")
 
-    measurement_class = old_state.apps.get_model("measures", "Measure")
+    goods_content_type = ContentType.objects.get(model="goodsnomenclature")
+    geo_area_content_type = ContentType.objects.get(model="geographicalarea")
+    regulation_group_content_type = ContentType.objects.get(model="group")
+    regulation_content_type = ContentType.objects.get(model="regulation")
+    measure_series_content_type = ContentType.objects.get(model="measuretypeseries")
+    measure_type_content_type = ContentType.objects.get(model="measuretype")
+    duty_expression_content_type = ContentType.objects.get(model="dutyexpression")
 
-    assert measurement_class.objects.filter(sid=20194965).exists() is False
-    assert measurement_class.objects.filter(sid=20194966).exists() is False
-    assert measurement_class.objects.filter(sid=20194967).exists() is False
+    assert not Measure.objects.filter(sid=20194965).exists()
+    assert not Measure.objects.filter(sid=20194966).exists()
+    assert not Measure.objects.filter(sid=20194967).exists()
 
     # mock up workbasket
-    new_work_basket = QueuedWorkBasketFactory.create(id=target_workbasket_id).save()
+    user = User.objects.create()
+    target_workbasket_id = 545
+    workbasket = WorkBasket.objects.create(
+        id=target_workbasket_id,
+        author=user,
+        approver=user,
+        status=WorkflowStatus.QUEUED,
+    )
+    transaction = Transaction.objects.create(
+        workbasket=workbasket,
+        order=1,
+        partition=TransactionPartition.REVISION,
+        composite_key=str(workbasket.id)
+        + "-"
+        + "1"
+        + "-"
+        + str(TransactionPartition.REVISION),
+    )
 
     # create the three goods
-    goods_1 = GoodsNomenclatureFactory.create(item_id="0306920000").save(
-        force_write=True,
+    goods_1 = GoodsNomenclature.objects.create(
+        item_id="0306920000",
+        update_type=UpdateType.CREATE,
+        transaction=transaction,
+        version_group=VersionGroup.objects.create(),
+        valid_between=date_ranges.no_end,
+        statistical=False,
+        polymorphic_ctype=goods_content_type,
     )
-    goods_2 = GoodsNomenclatureFactory.create(item_id="0307190000").save(
-        force_write=True,
+    version_group = goods_1.version_group
+    version_group.current_version_id = goods_1.id
+    version_group.save()
+
+    goods_2 = GoodsNomenclature.objects.create(
+        item_id="0307190000",
+        update_type=UpdateType.CREATE,
+        transaction=transaction,
+        version_group=VersionGroup.objects.create(),
+        valid_between=date_ranges.no_end,
+        statistical=False,
+        polymorphic_ctype=goods_content_type,
     )
-    goods_3 = GoodsNomenclatureFactory.create(item_id="0307490000").save(
-        force_write=True,
+    version_group = goods_2.version_group
+    version_group.current_version_id = goods_2.id
+    version_group.save()
+
+    goods_3 = GoodsNomenclature.objects.create(
+        item_id="0307490000",
+        update_type=UpdateType.CREATE,
+        transaction=transaction,
+        version_group=VersionGroup.objects.create(),
+        valid_between=date_ranges.no_end,
+        statistical=False,
+        polymorphic_ctype=goods_content_type,
     )
+    version_group = goods_3.version_group
+    version_group.current_version_id = goods_3.id
+    version_group.save()
 
     # create the geo area
-    new_geographical_area = GeographicalAreaFactory.create(sid=146).save(
-        force_write=True,
+    new_geographical_area = GeographicalArea.objects.create(
+        sid=146,
+        area_id="CA",
+        area_code=0,
+        update_type=UpdateType.CREATE,
+        transaction=transaction,
+        version_group=VersionGroup.objects.create(),
+        valid_between=date_ranges.no_end,
+        polymorphic_ctype=geo_area_content_type,
     )
+    version_group = new_geographical_area.version_group
+    version_group.current_version_id = new_geographical_area.id
+    version_group.save()
 
     # create the regulation group
-    new_regulation_group = RegulationGroupFactory.create(
+    new_regulation_group = Group.objects.create(
+        update_type=UpdateType.CREATE,
+        transaction=transaction,
+        version_group=VersionGroup.objects.create(),
         valid_between=DateTimeTZRange(
             date.today() + timedelta(days=-1000),
             date.today() + timedelta(days=1000),
         ),
-    ).save(force_write=True)
+        polymorphic_ctype=regulation_group_content_type,
+    )
+    version_group = new_regulation_group.version_group
+    version_group.current_version_id = new_regulation_group.id
+    version_group.save()
 
     # create the regulation
-    new_regulation = RegulationFactory.create(
-        valid_between=DateTimeTZRange(
-            date.today() + timedelta(days=-1000),
-            date.today() + timedelta(days=1000),
-        ),
+    new_regulation = Regulation.objects.create(
         regulation_group=new_regulation_group,
         regulation_id="C2100006",
         approved=True,
-    ).save(force_write=True)
+        valid_between=DateTimeTZRange(
+            date.today() + timedelta(days=-1000),
+            date.today() + timedelta(days=1000),
+        ),
+        update_type=UpdateType.CREATE,
+        transaction=transaction,
+        version_group=VersionGroup.objects.create(),
+        polymorphic_ctype=regulation_content_type,
+    )
+    version_group = new_regulation.version_group
+    version_group.current_version_id = new_regulation.id
+    version_group.save()
 
     # create the measure type
-    new_measure_type = MeasureTypeFactory.create(sid=142).save(force_write=True)
+    new_measure_type_series = MeasureTypeSeries.objects.create(
+        id=157,
+        sid="C",
+        measure_type_combination=MeasureTypeCombination.SINGLE_MEASURE,
+        valid_between=date_ranges.no_end,
+        update_type=UpdateType.CREATE,
+        transaction=transaction,
+        version_group=VersionGroup.objects.create(),
+        polymorphic_ctype=measure_series_content_type,
+    )
+    version_group = new_measure_type_series.version_group
+    version_group.current_version_id = new_measure_type_series.id
+    version_group.save()
+
+    new_measure_type = MeasureType.objects.create(
+        sid=142,
+        trade_movement_code=ImportExportCode.IMPORT,
+        priority_code=1,
+        measure_component_applicability_code=ApplicabilityCode.MANDATORY,
+        origin_destination_code=ImportExportCode.IMPORT,
+        order_number_capture_code=OrderNumberCaptureCode.NOT_PERMITTED,
+        measure_explosion_level=MeasureExplosionLevel.HARMONISED_SYSTEM_CHAPTER,
+        measure_type_series=new_measure_type_series,
+        valid_between=date_ranges.no_end,
+        update_type=UpdateType.CREATE,
+        transaction=transaction,
+        version_group=VersionGroup.objects.create(),
+        polymorphic_ctype=measure_type_content_type,
+    )
+    version_group = new_measure_type.version_group
+    version_group.current_version_id = new_measure_type.id
+    version_group.save()
 
     # create the duty expression
-    new_duty_expression = DutyExpressionFactory.create(sid=1).save(force_write=True)
+    new_duty_expression = DutyExpression.objects.create(
+        sid=1,
+        duty_amount_applicability_code=ApplicabilityCode.PERMITTED,
+        measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
+        monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
+        valid_between=date_ranges.no_end,
+        update_type=UpdateType.CREATE,
+        transaction=transaction,
+        version_group=VersionGroup.objects.create(),
+        polymorphic_ctype=duty_expression_content_type,
+    )
+    version_group = new_duty_expression.version_group
+    version_group.current_version_id = new_duty_expression.id
+    version_group.save()
 
     # at this point all the appropriate elements are available within the database for the migration to create the
     # measures and conditions
@@ -88,17 +218,15 @@ def test_add_back_deleted_measures(migrator, setup_content_types):
         ("measures", "0012_add_back_three_missing_measures_already_published"),
     )
 
-    measurement_class = new_state.apps.get_model("measures", "Measure")
+    Measure = new_state.apps.get_model("measures", "Measure")
 
     measures_ids_to_check = [20194965, 20194966, 20194967]
 
     for measure_id_to_check in measures_ids_to_check:
-        # we should be able to get the measurements from the database now
-        assert (
-            measurement_class.objects.filter(sid=measure_id_to_check).exists() is True
-        )
-        assert measurement_class.objects.filter(sid=measure_id_to_check).count() == 1
-        measure_to_check = measurement_class.objects.get(sid=measure_id_to_check)
+        # we should be able to get the measures from the database now
+        assert Measure.objects.filter(sid=measure_id_to_check).exists() is True
+        assert Measure.objects.filter(sid=measure_id_to_check).count() == 1
+        measure_to_check = Measure.objects.get(sid=measure_id_to_check)
         # verify the transactions are on the correct partition
         assert measure_to_check.transaction.partition == TransactionPartition.REVISION
         # verify that the current version is as expected
@@ -107,15 +235,12 @@ def test_add_back_deleted_measures(migrator, setup_content_types):
             == measure_to_check.trackedmodel_ptr_id
         )
 
-    # verify that the current version is correct
-
     migrator.reset()
 
 
 @pytest.mark.django_db()
 def test_add_back_deleted_measures_fails_silently_if_data_not_present(
     migrator,
-    setup_content_types,
 ):
     """Ensures that the initial migration works when no data to create measures
     are present, for local dev etc."""
@@ -126,8 +251,6 @@ def test_add_back_deleted_measures_fails_silently_if_data_not_present(
             "0011_pre_migration_dependencies",
         ),
     )
-
-    setup_content_types(old_state.apps)
 
     measurement_class = old_state.apps.get_model("measures", "Measure")
 

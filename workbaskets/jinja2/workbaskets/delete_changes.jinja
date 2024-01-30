@@ -6,7 +6,7 @@
 {% set page_title = "Remove tariff changes" %}
 
 {% block breadcrumb %}
-  {% if request.session.workbasket.id != view.workbasket.pk %}
+  {% if request.user.current_workbasket.id != view.workbasket.pk %}
     {{ breadcrumbs(request, [
         {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
         {

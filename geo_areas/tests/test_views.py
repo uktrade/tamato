@@ -49,7 +49,10 @@ def test_geo_area_description_delete_form(use_delete_form):
         )
 
 
-def test_geographical_area_description_create(valid_user_client, date_ranges):
+def test_geographical_area_description_create(
+    client_with_current_workbasket,
+    date_ranges,
+):
     """Tests that a geographical area description can be created."""
 
     geo_area = factories.GeographicalAreaFactory.create(
@@ -71,13 +74,13 @@ def test_geographical_area_description_create(valid_user_client, date_ranges):
         "geo_area-ui-description-create",
         kwargs={"sid": current_geo_area.sid},
     )
-    response = valid_user_client.post(url, form_data)
+    response = client_with_current_workbasket.post(url, form_data)
     assert response.status_code == 302
 
     with override_current_transaction(Transaction.objects.last()):
-        new_desciption = current_geo_area.get_description()
-        assert new_desciption.description == form_data["description"]
-        assert new_desciption.validity_start == date_ranges.future.lower
+        new_description = current_geo_area.get_description()
+        assert new_description.description == form_data["description"]
+        assert new_description.validity_start == date_ranges.future.lower
 
 
 @pytest.mark.parametrize(
@@ -92,7 +95,7 @@ def test_geographical_area_detail_views(
     view,
     url_pattern,
     valid_user_client,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Verify that geographical detail views are under the url geographical-
     areas and don't return an error."""
@@ -173,29 +176,29 @@ def test_geo_area_api_list_view(valid_user_client):
     )
 
 
-def test_geo_area_update_view_200(valid_user_client):
+def test_geo_area_update_view_200(client_with_current_workbasket):
     geo_area = factories.GeographicalAreaFactory.create()
     url = reverse(
         "geo_area-ui-edit",
         kwargs={"sid": geo_area.sid},
     )
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
     assert response.status_code == 200
 
 
-def test_geo_area_edit_update_view_200(valid_user_client):
+def test_geo_area_edit_update_view_200(client_with_current_workbasket):
     geo_area = factories.GeographicalAreaFactory.create()
     url = reverse(
         "geo_area-ui-edit-update",
         kwargs={"sid": geo_area.sid},
     )
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
     assert response.status_code == 200
 
 
 def test_geo_area_update_view_edit_end_date(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     date_ranges,
 ):
     """Tests that a geographical area's end date can be edited."""
@@ -224,7 +227,7 @@ def test_geo_area_update_view_edit_end_date(
     assert response.url == redirect_url
 
     geo_areas = GeographicalArea.objects.filter(
-        transaction__workbasket=session_workbasket,
+        transaction__workbasket=user_workbasket,
     )
     for geo_area in geo_areas:
         assert geo_area.valid_between.upper == new_end_date
@@ -233,7 +236,7 @@ def test_geo_area_update_view_edit_end_date(
 
 def test_geo_area_update_view_membership_add_country_or_region(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests that a country or region can be added as a member of the area group
     being edited."""
@@ -269,7 +272,7 @@ def test_geo_area_update_view_membership_add_country_or_region(
     assert response.url == redirect_url
 
     workbasket = GeographicalMembership.objects.filter(
-        transaction__workbasket=session_workbasket,
+        transaction__workbasket=user_workbasket,
     )
     for membership in workbasket:
         assert membership.valid_between == expected_valid_between
@@ -278,7 +281,7 @@ def test_geo_area_update_view_membership_add_country_or_region(
 
 def test_geo_area_update_view_membership_add_to_group(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
 ):
     """Tests that the country or region being edited can be added as a member of
     an area group."""
@@ -313,7 +316,7 @@ def test_geo_area_update_view_membership_add_to_group(
     assert response.url == redirect_url
 
     workbasket = GeographicalMembership.objects.filter(
-        transaction__workbasket=session_workbasket,
+        transaction__workbasket=user_workbasket,
     )
     for membership in workbasket:
         assert membership.valid_between == expected_valid_between
@@ -322,7 +325,7 @@ def test_geo_area_update_view_membership_add_to_group(
 
 def test_geo_area_update_view_membership_edit_end_date(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     date_ranges,
 ):
     """Tests that an end date for a geographical membership can be edited."""
@@ -357,7 +360,7 @@ def test_geo_area_update_view_membership_edit_end_date(
     assert response.url == redirect_url
 
     workbasket = GeographicalMembership.objects.filter(
-        transaction__workbasket=session_workbasket,
+        transaction__workbasket=user_workbasket,
     )
     for membership in workbasket:
         assert membership.valid_between.upper == expected_end_date
@@ -366,7 +369,7 @@ def test_geo_area_update_view_membership_edit_end_date(
 
 def test_geo_area_update_view_membership_deletion(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     date_ranges,
 ):
     """Tests that a country or region can be deleted as a member of an area
@@ -397,13 +400,13 @@ def test_geo_area_update_view_membership_deletion(
     assert response.url == redirect_url
 
     workbasket = GeographicalMembership.objects.filter(
-        transaction__workbasket=session_workbasket,
+        transaction__workbasket=user_workbasket,
     )
     for membership in workbasket:
         assert membership.update_type == UpdateType.DELETE
 
 
-def test_geo_area_create_view(valid_user_client, session_workbasket, date_ranges):
+def test_geo_area_create_view(valid_user_client, user_workbasket, date_ranges):
     """Tests that a geographical area can be created."""
     form_data = {
         "area_code": AreaCode.COUNTRY,
@@ -424,7 +427,7 @@ def test_geo_area_create_view(valid_user_client, session_workbasket, date_ranges
 
     with override_current_transaction(Transaction.objects.last()):
         geo_area = GeographicalArea.objects.get(
-            transaction__workbasket=session_workbasket,
+            transaction__workbasket=user_workbasket,
         )
         assert geo_area.update_type == UpdateType.CREATE
         assert geo_area.area_code == form_data["area_code"]
@@ -434,17 +437,16 @@ def test_geo_area_create_view(valid_user_client, session_workbasket, date_ranges
 
 
 def test_geo_area_edit_create_view(
-    valid_user_client,
-    session_workbasket,
-    date_ranges,
     use_edit_view,
+    workbasket,
+    date_ranges,
 ):
     """Tests that geographical area CREATE instances can be edited."""
     geo_area = factories.GeographicalAreaFactory.create(
         area_code=AreaCode.REGION,
         area_id="TR",
         valid_between=date_ranges.no_end,
-        transaction=session_workbasket.new_transaction(),
+        transaction=workbasket.new_transaction(),
     )
 
     data_changes = {**date_post_data("end_date", date_ranges.normal.upper)}
@@ -454,7 +456,7 @@ def test_geo_area_edit_create_view(
 
 def test_geographical_membership_create_view(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     date_ranges,
 ):
     """Tests that multiple geographical memberships can be created."""
@@ -486,7 +488,7 @@ def test_geographical_membership_create_view(
     assert response.url == redirect_url
 
     memberships = GeographicalMembership.objects.filter(
-        transaction__workbasket=session_workbasket,
+        transaction__workbasket=user_workbasket,
     )
     for i, membership in enumerate(memberships):
         assert membership.update_type == UpdateType.CREATE

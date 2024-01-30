@@ -7,7 +7,7 @@ pytestmark = pytest.mark.django_db
 
 
 # https://uktrade.atlassian.net/browse/TP2000-296
-def test_additional_code_create_sid(session_with_workbasket, date_ranges):
+def test_additional_code_create_sid(session_request_with_workbasket, date_ranges):
     """Tests that additional code type is NOT considered when generating a new
     sid."""
     type_1 = factories.AdditionalCodeTypeFactory.create()
@@ -21,7 +21,10 @@ def test_additional_code_create_sid(session_with_workbasket, date_ranges):
         "start_date_1": date_ranges.normal.lower.month,
         "start_date_2": date_ranges.normal.lower.year,
     }
-    form = forms.AdditionalCodeCreateForm(data=data, request=session_with_workbasket)
+    form = forms.AdditionalCodeCreateForm(
+        data=data,
+        request=session_request_with_workbasket,
+    )
 
     assert form.is_valid()
 
@@ -30,7 +33,10 @@ def test_additional_code_create_sid(session_with_workbasket, date_ranges):
     assert new_additional_code.sid != additional_code.sid
 
 
-def test_additional_code_create_valid_data(session_with_workbasket, date_ranges):
+def test_additional_code_create_valid_data(
+    session_request_with_workbasket,
+    date_ranges,
+):
     """Tests that AdditionalCodeCreateForm.is_valid() returns True when passed
     required fields and additional_code_description values in cleaned data."""
     code_type = factories.AdditionalCodeTypeFactory.create()
@@ -42,7 +48,10 @@ def test_additional_code_create_valid_data(session_with_workbasket, date_ranges)
         "start_date_1": date_ranges.normal.lower.month,
         "start_date_2": date_ranges.normal.lower.year,
     }
-    form = forms.AdditionalCodeCreateForm(data=data, request=session_with_workbasket)
+    form = forms.AdditionalCodeCreateForm(
+        data=data,
+        request=session_request_with_workbasket,
+    )
 
     assert form.is_valid()
     assert form.cleaned_data["additional_code_description"].description == "description"

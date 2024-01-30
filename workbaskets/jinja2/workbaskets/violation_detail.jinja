@@ -6,7 +6,7 @@
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
-{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Rule violation
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Rule violation
 details
 {% endset %}
 

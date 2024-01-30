@@ -67,7 +67,7 @@
           "name": "action",
           "value": "delete"
         }) }}
-        {% if object.pk == request.session.workbasket["id"] %}
+        {% if object.pk == request.user.current_workbasket.id %}
           {{ govukButton({
             "text": "Cancel",
             "href": url("workbaskets:current-workbasket"),

@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_form_save_creates_new_certificate(
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Tests that the certificate create form creates a new certificate, and
     that two certificates of the same type are created with different sid's."""
@@ -35,7 +35,7 @@ def test_form_save_creates_new_certificate(
     }
     form = forms.CertificateCreateForm(
         data=certificate_b_data,
-        request=session_with_workbasket,
+        request=session_request_with_workbasket,
     )
     certificate_b = form.save(commit=False)
 
@@ -45,7 +45,7 @@ def test_form_save_creates_new_certificate(
 
 
 def test_certificate_type_does_not_increment_id(
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Tests that when two certificates are made with different types, the sids
     are not incremented."""
@@ -74,7 +74,7 @@ def test_certificate_type_does_not_increment_id(
     for certificate in certificates:
         form = forms.CertificateCreateForm(
             data=certificate,
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
         )
         saved_certificate = form.save(commit=False)
         completed_certificates.append(saved_certificate)
@@ -87,7 +87,7 @@ def test_certificate_type_does_not_increment_id(
     assert completed_certificates[1].sid == "001"
 
 
-def test_certificate_create_form_validates_data(session_with_workbasket):
+def test_certificate_create_form_validates_data(session_request_with_workbasket):
     """A test to check that the create form validates data and ciphers out
     incorrect submissions."""
 
@@ -101,7 +101,7 @@ def test_certificate_create_form_validates_data(session_with_workbasket):
     }
     form = forms.CertificateCreateForm(
         data=certificate_data,
-        request=session_with_workbasket,
+        request=session_request_with_workbasket,
     )
     error_string = [
         "Select a valid choice. That choice is not one of the available choices.",
@@ -119,7 +119,7 @@ def test_certificate_create_form_validates_data(session_with_workbasket):
     assert not form.is_valid()
 
 
-def test_certificate_create_with_custom_sid(session_with_workbasket):
+def test_certificate_create_with_custom_sid(session_request_with_workbasket):
     """Tests that a certificate can be created with a custom sid inputted by the
     user."""
     certificate_type = factories.CertificateTypeFactory.create()
@@ -133,14 +133,14 @@ def test_certificate_create_with_custom_sid(session_with_workbasket):
     }
     form = forms.CertificateCreateForm(
         data=data,
-        request=session_with_workbasket,
+        request=session_request_with_workbasket,
     )
     certificate = form.save(commit=False)
 
     assert certificate.sid == "A01"
 
 
-def test_certificate_create_ignores_non_numeric_sid(session_with_workbasket):
+def test_certificate_create_ignores_non_numeric_sid(session_request_with_workbasket):
     """Tests that a certificate is created with a numeric sid when a certificate
     of the same type with a non-numeric sid already exists."""
     certificate_type = factories.CertificateTypeFactory.create()
@@ -154,14 +154,14 @@ def test_certificate_create_ignores_non_numeric_sid(session_with_workbasket):
     }
     form = forms.CertificateCreateForm(
         data=data,
-        request=session_with_workbasket,
+        request=session_request_with_workbasket,
     )
     certificate = form.save(commit=False)
 
     assert certificate.sid == "001"
 
 
-def test_validation_error_raised_for_duplicate_sid(session_with_workbasket):
+def test_validation_error_raised_for_duplicate_sid(session_request_with_workbasket):
     """Tests that a validation error is raised on create when a certificate of
     the same type with the same sid already exists."""
     certificate_type = factories.CertificateTypeFactory.create()
@@ -176,7 +176,7 @@ def test_validation_error_raised_for_duplicate_sid(session_with_workbasket):
     }
     form = forms.CertificateCreateForm(
         data=data,
-        request=session_with_workbasket,
+        request=session_request_with_workbasket,
     )
 
     assert not form.is_valid()
