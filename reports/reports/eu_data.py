@@ -28,16 +28,20 @@ class Report(ReportBaseTable):
         "measure_exists",
     ]
 
+    headers_list = sorted(headers_list)
+
     def headers(self) -> [dict]:
         return [
-            {"text": header.replace("_", " ").capitalize()}
+            {"field":
+            header.replace("_", " ").capitalize()
+            }
             for header in self.headers_list
         ]
 
     def row(self, row) -> [dict]:
-        return [{"text": str(getattr(row, field, None))} for field in self.headers_list]
+        return {field.replace("_", " ").capitalize(): str(getattr(row, field, None)) for field in self.headers_list}
 
-    def rows(self, current_page_data) -> [[dict]]:
+    def rows(self, current_page_data) -> [dict]:
         table_rows = []
         for row in current_page_data:
             table_rows.append(self.row(row))

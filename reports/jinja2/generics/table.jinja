@@ -1,5 +1,18 @@
 {% from "components/table/macro.njk" import govukTable -%}
+<script nonce= "{{request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+<script nonce="{{ request.csp_nonce }}">
+    const gridOptions = {
+        {{ report.headers() | tojson }}
+        rowData: {{ report.rows(current_page_data) | tojson }},
+        columnDefs: {{ report.headers() | tojson }}
+    };
 
+    const myGridElement = document.querySelector('#myGrid');
+    window.onload = function () {
+        alert('this is working')
+        agGrid.createGrid(myGridElement, gridOptions);
+    }
+</script>
 {% if report.tabular_reports -%}
 
     <div class="govuk-tabs" data-module="govuk-tabs">
@@ -62,10 +75,8 @@
     </div>
 
 {% else -%}
-    {{ govukTable({
-        "head": report.headers(),
-        "rows": report.rows(current_page_data),
-    }) }}
+<div id="myGrid"></div>
+    
 
     {% if current_page_data -%}
         <nav class="pagination tamato-clearfix" role="navigation" aria-label="Pagination Navigation"><nav class="pagination tamato-clearfix" role="navigation" aria-label="Pagination Navigation">
