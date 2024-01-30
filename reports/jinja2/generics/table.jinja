@@ -1,5 +1,5 @@
 {% from "components/table/macro.njk" import govukTable -%}
-{% if current_page_data -%} 
+{% if report.slug() == "table_report_of_eu_data" -%} 
 <script nonce="{{ request.csp_nonce }}" src="{{ static('common/js/ag-grid-community.min.js') }}" async></script>
 <script nonce="{{ request.csp_nonce }}">
 
@@ -82,7 +82,14 @@
 
 {% else -%}
     {% if current_page_data -%}
-<div id="myGrid" class="ag-theme-quartz" style="height: 500px"></div>
+    {% if report.slug() == "table_report_of_eu_data" -%}
+    <div id="myGrid" class="ag-theme-quartz" style="height: 500px"></div>
+    {% else -%}
+        {{ govukTable({
+        "head": report.headers(),
+        "rows": report.rows(current_page_data)
+    }) }}
+    {% endif -%}
     
 
         <nav class="pagination tamato-clearfix" role="navigation" aria-label="Pagination Navigation"><nav class="pagination tamato-clearfix" role="navigation" aria-label="Pagination Navigation">
