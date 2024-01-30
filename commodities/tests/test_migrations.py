@@ -2,13 +2,12 @@ import datetime
 
 import pytest
 
-from common.tests.factories import QueuedWorkBasketFactory
 from common.util import TaricDateRange
 from common.validators import UpdateType
 
 
 @pytest.mark.django_db()
-def test_main_migration_works(migrator, setup_content_types):
+def test_main_migration_works(migrator):
     """Ensures that the description date fix for TOPS-745 migration works."""
 
     # before migration
@@ -16,7 +15,7 @@ def test_main_migration_works(migrator, setup_content_types):
         ("commodities", "0011_TOPS_745_migration_dependencies"),
     )
 
-    setup_content_types(old_state.apps)
+    target_workbasket_id = 238
 
     GoodsNomenclatureDescription = old_state.apps.get_model(
         "commodities",
@@ -26,12 +25,13 @@ def test_main_migration_works(migrator, setup_content_types):
     Transaction = old_state.apps.get_model("common", "Transaction")
     Workbasket = old_state.apps.get_model("workbaskets", "WorkBasket")
     VersionGroup = old_state.apps.get_model("common", "VersionGroup")
+    User = old_state.apps.get_model("common", "User")
 
-    QueuedWorkBasketFactory.create().save()
-    workbasket = Workbasket.objects.create(id=238, author_id=1)
+    user = User.objects.create()
+    workbasket = Workbasket.objects.create(id=target_workbasket_id, author=user)
     new_transaction = Transaction.objects.create(
         workbasket=workbasket,
-        order=Transaction.objects.order_by("order").last().order + 1,
+        order=1,
     )
 
     gn_older_version = GoodsNomenclature.objects.create(
@@ -86,13 +86,11 @@ def test_main_migration_works(migrator, setup_content_types):
 
 
 @pytest.mark.django_db()
-def test_main_migration_ignores_if_no_data(migrator, setup_content_types):
+def test_main_migration_ignores_if_no_data(migrator):
     # before migration
     old_state = migrator.apply_initial_migration(
         ("commodities", "0011_TOPS_745_migration_dependencies"),
     )
-
-    setup_content_types(old_state.apps)
 
     GoodsNomenclatureDescription = old_state.apps.get_model(
         "commodities",

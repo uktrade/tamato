@@ -5,6 +5,7 @@ from itertools import cycle
 from itertools import product
 
 import factory
+from django.contrib.auth import get_user_model
 from factory.fuzzy import FuzzyChoice
 from factory.fuzzy import FuzzyText
 from faker import Faker
@@ -30,6 +31,8 @@ from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
 from tasks.models import UserAssignment
 from workbaskets.validators import WorkflowStatus
+
+User = get_user_model()
 
 
 def short_description():
@@ -103,7 +106,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     """User factory."""
 
     class Meta:
-        model = "auth.User"
+        model = User
 
     username = factory.sequence(lambda n: f"{factory.Faker('name')}{n}")
     email = factory.Faker("email")

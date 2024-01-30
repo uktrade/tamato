@@ -1,7 +1,7 @@
 from logging import getLogger
 from typing import Sequence
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 import taric_parsers.importer
 from common.celery import app
@@ -13,6 +13,8 @@ from importer.models import ImportIssueType
 from taric_parsers.taric_xml_source import TaricXMLStringSource
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
+
+User = get_user_model()
 
 logger = getLogger(__name__)
 

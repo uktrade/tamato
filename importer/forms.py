@@ -9,7 +9,7 @@ from crispy_forms_gds.layout import Submit
 from defusedxml.common import DTDForbidden
 from django import forms
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -26,6 +26,8 @@ from taric_parsers.importer import run_batch as run_batch_v2
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 from workbaskets.validators import tops_jira_number_validator
+
+User = get_user_model()
 
 
 class ImporterV2FormMixin:

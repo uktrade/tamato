@@ -5,7 +5,7 @@
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
-{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Rule violations {% endset %}
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Rule violations {% endset %}
 
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>

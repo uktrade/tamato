@@ -17,8 +17,19 @@ scenarios("features/edit-footnote.feature")
 
 @pytest.fixture
 @when("I edit footnote NC000")
-def footnote_edit_screen(client, footnote_NC000):
-    return client.get(footnote_NC000.get_url("edit"))
+def footnote_edit_screen(client_with_current_workbasket, footnote_NC000):
+    return client_with_current_workbasket.get(footnote_NC000.get_url("edit"))
+
+
+@pytest.fixture
+@when("I edit footnote NC000")
+def footnote_edit_screen_invalid_user(
+    client_with_current_workbasket_no_permissions,
+    footnote_NC000,
+):
+    return client_with_current_workbasket_no_permissions.get(
+        footnote_NC000.get_url("edit"),
+    )
 
 
 @then("I see an edit form")
@@ -28,8 +39,8 @@ def edit_permission_granted(footnote_edit_screen):
 
 @pytest.fixture
 @when("I set the end date before the start date on footnote NC000")
-def end_date_before_start(client, response, footnote_NC000):
-    response["response"] = client.post(
+def end_date_before_start(client_with_current_workbasket, response, footnote_NC000):
+    response["response"] = client_with_current_workbasket.post(
         footnote_NC000.get_url("edit"),
         validity_period_post_data(
             start=date(2021, 1, 1),
@@ -39,8 +50,8 @@ def end_date_before_start(client, response, footnote_NC000):
 
 
 @when("I set the start date of footnote NC000 to predate the footnote type")
-def submit_predating(client, response, footnote_NC000):
-    response["response"] = client.post(
+def submit_predating(client_with_current_workbasket, response, footnote_NC000):
+    response["response"] = client_with_current_workbasket.post(
         footnote_NC000.get_url("edit"),
         validity_period_post_data(
             start=footnote_NC000.footnote_type.valid_between.lower - timedelta(days=1),

@@ -3,7 +3,7 @@
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
 {% set page_title %}
-  Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Checks
+  Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Checks
 {% endset %}
 
 {% block content %}

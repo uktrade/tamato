@@ -102,7 +102,7 @@ class WorkBasketCreate(PermissionRequiredMixin, CreateView):
         self.object = form.save(commit=False)
         self.object.author = user
         self.object.save()
-        self.object.save_to_session(self.request.session)
+        self.object.assign_to_user(self.request.user)
         return redirect(
             reverse(
                 "workbaskets:workbasket-ui-confirm-create",
@@ -187,7 +187,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
                 workbasket.restore()
                 workbasket.save()
 
-            workbasket.save_to_session(request.session)
+            workbasket.assign_to_user(request.user)
 
             if workbasket_tab:
                 view = workbasket_tab_map[workbasket_tab]
@@ -275,7 +275,7 @@ class WorkBasketChangesConfirmDelete(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["user_workbasket"] = WorkBasket.current(self.request)
         context["view_workbasket"] = WorkBasket.objects.get(pk=self.kwargs["pk"])
         return context
 
@@ -437,7 +437,7 @@ class CurrentWorkBasket(TemplateView):
             if result.status != "SUCCESS":
                 context.update({"rule_check_in_progress": True})
             else:
-                self.workbasket.save_to_session(self.request.session)
+                self.workbasket.assign_to_user(self.request.user)
 
             num_completed, total = self.workbasket.rule_check_progress()
             context.update(
@@ -1221,7 +1221,7 @@ class WorkBasketChecksView(FormView):
             if result.status != "SUCCESS":
                 context.update({"rule_check_in_progress": True})
             else:
-                self.workbasket.save_to_session(self.request.session)
+                self.workbasket.assign_to_user(self.request.user)
 
             num_completed, total = self.workbasket.rule_check_progress()
             context.update(
@@ -1252,7 +1252,7 @@ class WorkBasketReviewView(PermissionRequiredMixin, WithPaginationListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["user_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
         return context
 
@@ -1300,7 +1300,7 @@ class WorkbasketReviewGoodsView(
         context = super().get_context_data(*args, **kwargs)
         context["tab_page_title"] = "Review commodities"
         context["selected_tab"] = "commodities"
-        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["user_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
         context["report_lines"] = []
         context["import_batch_pk"] = None
@@ -1366,7 +1366,7 @@ class WorkbasketReviewGoodsView(
             context["import_batch_pk"] = import_batch.pk
 
             # notifications only relevant to a goods import
-            if context["workbasket"] == context["session_workbasket"]:
+            if context["workbasket"] == context["user_workbasket"]:
                 context["unsent_notification"] = (
                     import_batch.goods_import
                     and not Notification.objects.filter(
@@ -1544,3 +1544,10 @@ class WorkBasketReviewRegulationsView(WorkBasketReviewView):
         context["selected_tab"] = "regulations"
         context["tab_template"] = "includes/regulations/list.jinja"
         return context
+
+
+class NoActiveWorkBasket(TemplateView):
+    """Redirect endpoint for users without an active workbasket and views that
+    require one."""
+
+    template_name = "workbaskets/no_active_workbasket.jinja"
