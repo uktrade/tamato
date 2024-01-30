@@ -376,6 +376,15 @@ def test_queue(valid_user, unapproved_checked_transaction):
     """Test that approve transitions workbasket from EDITING to QUEUED, setting
     approver and shifting transaction from DRAFT to REVISION partition."""
     wb = unapproved_checked_transaction.workbasket
+    task = factories.TaskFactory.create(workbasket=wb)
+    factories.UserAssignmentFactory.create(
+        assignment_type="WORKBASKET_WORKER",
+        task=task,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type="WORKBASKET_REVIEWER",
+        task=task,
+    )
     wb.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
 
     assert wb.status == WorkflowStatus.QUEUED

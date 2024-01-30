@@ -155,6 +155,15 @@ def test_workbasket_empty_rule_check_task_id_value(client, superadmin):
         status=WorkflowStatus.EDITING,
         rule_check_task_id=None,
     )
+    task = factories.TaskFactory.create(workbasket=workbasket)
+    factories.UserAssignmentFactory.create(
+        assignment_type="WORKBASKET_WORKER",
+        task=task,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type="WORKBASKET_REVIEWER",
+        task=task,
+    )
     change_url = reverse(
         "admin:workbaskets_workbasket_change",
         args=[workbasket.id],
