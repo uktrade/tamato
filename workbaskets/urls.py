@@ -186,6 +186,11 @@ ui_patterns = [
         ui_views.WorkBasketAssignUsersView.as_view(),
         name="workbasket-ui-assign-users",
     ),
+    path(
+        f"<pk>/unassign-users/",
+        ui_views.WorkBasketUnassignUsersView.as_view(),
+        name="workbasket-ui-unassign-users",
+    ),
 ]
 
 urlpatterns = [

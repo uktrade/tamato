@@ -1592,3 +1592,36 @@ class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse("workbaskets:current-workbasket")
+
+
+class WorkBasketUnassignUsersView(PermissionRequiredMixin, FormView):
+    permission_required = "tasks.change_userassignment"
+    template_name = "workbaskets/assign_users.jinja"
+    form_class = forms.WorkBasketUnassignUsersForm
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = "Unassign users from workbasket"
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "request": self.request,
+                "workbasket": self.workbasket,
+            },
+        )
+        return kwargs
+
+    @atomic
+    def form_valid(self, form):
+        form.unassign_users()
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse("workbaskets:current-workbasket")

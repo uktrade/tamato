@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
@@ -246,4 +248,61 @@ class WorkBasketAssignUsersForm(forms.Form):
         ]
         user_assignments = UserAssignment.objects.bulk_create(objs)
 
+        return user_assignments
+
+
+class WorkBasketUnassignUsersForm(forms.Form):
+    assignments = forms.ModelMultipleChoiceField(
+        label="Users",
+        help_text="Select users to unassign",
+        widget=forms.CheckboxSelectMultiple,
+        queryset=UserAssignment.objects.all(),
+        error_messages={"required": "Select one or more users to unassign"},
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        self.workbasket = kwargs.pop("workbasket", None)
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.init_layout()
+
+    def init_fields(self):
+        self.fields["assignments"].queryset = (
+            UserAssignment.objects.filter(
+                task__workbasket=self.workbasket,
+            )
+            .assigned()
+            .order_by("user__first_name", "user__last_name")
+        )
+
+        self.fields[
+            "assignments"
+        ].label_from_instance = (
+            lambda obj: f"{obj.user.get_full_name()} ({obj.get_assignment_type_display()})"
+        )
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "assignments",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def unassign_users(self):
+        assignments = self.cleaned_data["assignments"]
+        for assignment in assignments:
+            assignment.unassigned_at = datetime.now()
+
+        user_assignments = UserAssignment.objects.bulk_update(
+            assignments,
+            fields=["unassigned_at"],
+        )
         return user_assignments
