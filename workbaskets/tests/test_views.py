@@ -21,6 +21,7 @@ from exporter.tasks import upload_workbaskets
 from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from measures.models import Measure
+from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets.tasks import check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
@@ -2073,11 +2074,11 @@ def test_disabled_packaging_for_unassigned_workbasket(
     # Assign the workbasket so it can now be packaged
     task = factories.TaskFactory.create(workbasket=user_empty_workbasket)
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_WORKER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_REVIEWER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
 

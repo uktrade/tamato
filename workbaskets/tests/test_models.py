@@ -379,11 +379,11 @@ def test_queue(valid_user, unapproved_checked_transaction):
     wb = unapproved_checked_transaction.workbasket
     task = factories.TaskFactory.create(workbasket=wb)
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_WORKER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_REVIEWER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     wb.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
@@ -465,11 +465,11 @@ def test_unassigned_workbasket_cannot_be_queued():
 
     factories.UserAssignmentFactory.create(
         user=worker,
-        assignment_type="WORKBASKET_WORKER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_REVIEWER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     assert workbasket.fully_assigned()

@@ -8,6 +8,7 @@ from django.test.html import parse_html
 from django.urls import reverse
 
 from common.tests import factories
+from tasks.models import UserAssignment
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -157,11 +158,11 @@ def test_workbasket_empty_rule_check_task_id_value(client, superadmin):
     )
     task = factories.TaskFactory.create(workbasket=workbasket)
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_WORKER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_REVIEWER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     change_url = reverse(

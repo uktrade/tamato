@@ -69,6 +69,7 @@ from measures.models import MeasurementUnitQualifier
 from measures.models import MonetaryUnit
 from measures.parsers import DutySentenceParser
 from publishing.models import PackagedWorkBasket
+from tasks.models import UserAssignment
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
@@ -407,11 +408,11 @@ def new_workbasket() -> WorkBasket:
     )
     task = factories.TaskFactory.create(workbasket=workbasket)
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_WORKER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_REVIEWER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     with factories.TransactionFactory.create(workbasket=workbasket):
@@ -533,11 +534,11 @@ def workbasket():
 
     task = factories.TaskFactory.create(workbasket=workbasket)
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_WORKER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type="WORKBASKET_REVIEWER",
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     return workbasket
@@ -1234,11 +1235,11 @@ def in_use_check_respects_deletes(valid_user):
 
         task = factories.TaskFactory.create(workbasket=workbasket)
         factories.UserAssignmentFactory.create(
-            assignment_type="WORKBASKET_WORKER",
+            assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
             task=task,
         )
         factories.UserAssignmentFactory.create(
-            assignment_type="WORKBASKET_REVIEWER",
+            assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
             task=task,
         )
         with workbasket.new_transaction():
