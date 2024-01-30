@@ -4,12 +4,17 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
+from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets import validators
 from workbaskets.util import serialize_uploaded_data
+
+User = get_user_model()
 
 
 class WorkbasketCreateForm(forms.ModelForm):
@@ -182,3 +187,63 @@ class WorkbasketCompareForm(forms.Form):
                 data_prevent_double_click="true",
             ),
         )
+
+
+class WorkBasketAssignUsersForm(forms.Form):
+    users = forms.ModelMultipleChoiceField(
+        help_text="Select users to assign",
+        widget=forms.CheckboxSelectMultiple,
+        queryset=User.objects.all(),
+        error_messages={"required": "Select one or more users to assign"},
+    )
+    assignment_type = forms.ChoiceField(
+        choices=UserAssignment.AssignmentType.choices,
+        widget=forms.RadioSelect,
+        error_messages={"required": "Select an assignment type"},
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        self.workbasket = kwargs.pop("workbasket", None)
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.init_layout()
+
+    def init_fields(self):
+        self.fields["users"].queryset = User.objects.filter(
+            Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
+            | Q(is_superuser=True),
+        ).order_by("first_name", "last_name")
+
+        self.fields["users"].label_from_instance = lambda obj: obj.get_full_name()
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "users",
+            Field.radios("assignment_type", inline=True),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def assign_users(self, task):
+        assignment_type = self.cleaned_data["assignment_type"]
+
+        objs = [
+            UserAssignment(
+                user=user,
+                assigned_by=self.request.user,
+                assignment_type=assignment_type,
+                task=task,
+            )
+            for user in self.cleaned_data["users"]
+        ]
+        user_assignments = UserAssignment.objects.bulk_create(objs)
+
+        return user_assignments

@@ -55,6 +55,7 @@ from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaSuspension
 from regulations.models import Regulation
+from tasks.models import Task
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
@@ -1551,3 +1552,43 @@ class NoActiveWorkBasket(TemplateView):
     require one."""
 
     template_name = "workbaskets/no_active_workbasket.jinja"
+
+
+class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
+    permission_required = "tasks.add_userassignment"
+    template_name = "workbaskets/assign_users.jinja"
+    form_class = forms.WorkBasketAssignUsersForm
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = "Assign users to workbasket"
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "request": self.request,
+                "workbasket": self.workbasket,
+            },
+        )
+        return kwargs
+
+    @atomic
+    def form_valid(self, form):
+        task, _ = Task.objects.get_or_create(
+            workbasket=self.workbasket,
+            defaults={
+                "title": self.workbasket.title,
+                "description": self.workbasket.reason,
+            },
+        )
+        form.assign_users(task=task)
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse("workbaskets:current-workbasket")
