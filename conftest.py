@@ -403,18 +403,7 @@ def taric_schema(settings) -> etree.XMLSchema:
 
 @pytest.fixture
 def new_workbasket() -> WorkBasket:
-    workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.EDITING,
-    )
-    task = factories.TaskFactory.create(workbasket=workbasket)
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
-        task=task,
-    )
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
-        task=task,
-    )
+    workbasket = factories.AssignedWorkBasketFactory.create()
     with factories.TransactionFactory.create(workbasket=workbasket):
         factories.FootnoteTypeFactory.create_batch(2)
 
@@ -1231,17 +1220,7 @@ def in_use_check_respects_deletes(valid_user):
         in_use = getattr(instance, in_use_check)
         assert not in_use(instance.transaction), f"New {instance!r} already in use"
 
-        workbasket = factories.WorkBasketFactory.create()
-
-        task = factories.TaskFactory.create(workbasket=workbasket)
-        factories.UserAssignmentFactory.create(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
-            task=task,
-        )
-        factories.UserAssignmentFactory.create(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
-            task=task,
-        )
+        workbasket = factories.AssignedWorkBasketFactory.create()
         with workbasket.new_transaction():
             create_kwargs = {relation: instance}
             if through:

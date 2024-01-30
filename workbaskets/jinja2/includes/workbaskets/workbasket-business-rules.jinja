@@ -86,7 +86,7 @@
       aria-labelledby="summary-title" role="region" data-module="govuk-notification-banner">
       <div class="govuk-notification-banner__content">
         {{ rule_check_result_content() }}
-        {% if not workbasket.fully_assigned() %}
+        {% if not workbasket.is_fully_assigned() %}
         <div class="govuk-hint">
             A workbasket must have an assigned worker and reviewer before packaging.
           </div>

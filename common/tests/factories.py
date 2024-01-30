@@ -1505,3 +1505,22 @@ class UserAssignmentFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = "tasks.UserAssignment"
+
+
+class AssignedWorkBasketFactory(WorkBasketFactory):
+    """Creates a workbasket which has an assigned worker and reviewer."""
+
+    @factory.post_generation
+    def user_assignments(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        task = TaskFactory.create(workbasket=self)
+        UserAssignmentFactory.create(
+            assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+            task=task,
+        )
+        UserAssignmentFactory.create(
+            assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+            task=task,
+        )

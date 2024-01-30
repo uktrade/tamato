@@ -455,7 +455,7 @@ def test_unassigned_workbasket_cannot_be_queued():
     """Tests that an unassigned workbasket is marked as not fully assigned and
     cannot be queued."""
     workbasket = factories.WorkBasketFactory.create()
-    assert not workbasket.fully_assigned()
+    assert not workbasket.is_fully_assigned()
 
     worker = factories.UserFactory.create()
     task = factories.TaskFactory.create(workbasket=workbasket)
@@ -472,7 +472,7 @@ def test_unassigned_workbasket_cannot_be_queued():
         assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
-    assert workbasket.fully_assigned()
+    assert workbasket.is_fully_assigned()
 
     UserAssignment.unassign_user(user=worker, task=task)
-    assert not workbasket.fully_assigned()
+    assert not workbasket.is_fully_assigned()
