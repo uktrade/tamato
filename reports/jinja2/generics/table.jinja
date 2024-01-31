@@ -81,14 +81,14 @@
 
 {% else -%}
     {% if current_page_data -%}
-    {% if report.slug() == "table_report_of_eu_data" -%}
-    <div id="myGrid" class="ag-theme-quartz" style="height: 500px"></div>
-    {% else -%}
-        {{ govukTable({
-        "head": report.headers(),
-        "rows": report.rows(current_page_data)
-    }) }}
-    {% endif -%}
+        {% if report.slug() == "table_report_of_eu_data" -%}
+            <div id="myGrid" class="ag-theme-quartz" style="height: 500px"></div>
+        {% else -%}
+            {{ govukTable({
+            "head": report.headers(),
+            "rows": report.rows(current_page_data)
+        }) }}
+        {% endif -%}
     
 
         <nav class="pagination tamato-clearfix" role="navigation" aria-label="Pagination Navigation"><nav class="pagination tamato-clearfix" role="navigation" aria-label="Pagination Navigation">

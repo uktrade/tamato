@@ -45,7 +45,7 @@ class Report(ReportBaseTable):
             for field in self.headers_list
         }
 
-    def rows(self, current_page_data) -> [dict]:
+    def rows(self, current_page_data=None) -> [dict]:
         table_rows = []
         for row in current_page_data:
             table_rows.append(self.row(row))
