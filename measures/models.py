@@ -1041,12 +1041,10 @@ class MeasuresBulkCreator(models.Model):
         # Avoid circular import.
         from measures.views import MeasureCreateWizard
 
-        # TODO: Revert to using MeasureCreateWizard.form_list.
-        # for form_key, form_class in MeasureCreateWizard.form_list:
-        for form_key, form_class in MeasureCreateWizard.test_form_list:
+        for form_key, form_class in MeasureCreateWizard.data_form_list:
             if form_key not in self.form_data:
-                # Some forms / steps are only conditionally included when
-                # creating measures - see `MeasureCreateWizard.condition_dict`
+                # Not all forms / steps are used to create measures. Some are
+                # only conditionally included - see `MeasureCreateWizard.condition_dict`
                 # and `MeasureCreateWizard.show_step()` for details.
                 continue
 
@@ -1065,6 +1063,14 @@ class MeasuresBulkCreator(models.Model):
                     f"{form_class.__name__} has {len(form.errors)} unexpected "
                     f"errors.",
                 )
+
+                # Debug.
+                import json
+
+                print(f"*** data:")
+                print(f"{json.dumps(data, indent=4, default=str)}")
+                print(f"*** kwargs:")
+                print(f"{json.dumps(kwargs, indent=4, default=str)}")
 
                 # Form.errors is a dictionary of errors, but FormSet.errors is a
                 # list of dictionaries of Form.errors. Access their errors in
