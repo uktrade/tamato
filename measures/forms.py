@@ -84,8 +84,8 @@ class SerializableFormMixin:
         "MAX_NUM_FORMS$",
     ]
     """
-    Regexs of keys that may appear in a Form's `data` attribute and which should
-    be ignored when creating a serializable version of `data`.
+    Regexs of keys that may appear in a Form's `data` dictionary attribute and
+    which should be ignored when creating a serializable version of `data`.
 
     Override this on a per form basis if there are other, redundant keys that
     should be ignored. See the default implementation of
