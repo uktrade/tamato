@@ -151,7 +151,7 @@ def test_workbasket_empty_rule_check_task_id_value(client, superadmin):
     value, rather than an empty string, avoiding duplicate value errors."""
 
     factories.WorkBasketFactory.create(rule_check_task_id="")
-    workbasket = factories.WorkBasketFactory.create(
+    workbasket = factories.AssignedWorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
         rule_check_task_id=None,
     )

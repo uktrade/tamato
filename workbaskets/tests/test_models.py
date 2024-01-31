@@ -18,6 +18,7 @@ from common.tests.util import TestRule
 from common.tests.util import add_business_rules
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
+from tasks.models import UserAssignment
 from workbaskets import tasks
 from workbaskets.models import REVISION_ONLY
 from workbaskets.models import SEED_FIRST
@@ -376,6 +377,15 @@ def test_queue(valid_user, unapproved_checked_transaction):
     """Test that approve transitions workbasket from EDITING to QUEUED, setting
     approver and shifting transaction from DRAFT to REVISION partition."""
     wb = unapproved_checked_transaction.workbasket
+    task = factories.TaskFactory.create(workbasket=wb)
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=task,
+    )
     wb.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
 
     assert wb.status == WorkflowStatus.QUEUED
@@ -439,3 +449,30 @@ def test_workbasket_assign_to_user(valid_user, workbasket):
     assert not valid_user.current_workbasket
     workbasket.assign_to_user(valid_user)
     assert valid_user.current_workbasket == workbasket
+
+
+def test_unassigned_workbasket_cannot_be_queued():
+    """Tests that an unassigned workbasket is marked as not fully assigned and
+    cannot be queued."""
+    workbasket = factories.WorkBasketFactory.create()
+    assert not workbasket.is_fully_assigned()
+
+    worker = factories.UserFactory.create()
+    task = factories.TaskFactory.create(workbasket=workbasket)
+
+    with pytest.raises(TransitionNotAllowed):
+        workbasket.queue(user=worker.id, scheme_name=settings.TRANSACTION_SCHEMA)
+
+    factories.UserAssignmentFactory.create(
+        user=worker,
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=task,
+    )
+    assert workbasket.is_fully_assigned()
+
+    UserAssignment.unassign_user(user=worker, task=task)
+    assert not workbasket.is_fully_assigned()
