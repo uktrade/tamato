@@ -1361,7 +1361,7 @@ def test_quota_order_number_create_success(
     )
 
 
-def test_quota_update_existing_origins(valid_user_client, date_ranges):
+def test_quota_update_existing_origins(client_with_current_workbasket, date_ranges):
     quota = factories.QuotaOrderNumberFactory.create(
         category=0,
         valid_between=date_ranges.big_no_end,
@@ -1419,7 +1419,7 @@ def test_quota_update_existing_origins(valid_user_client, date_ranges):
         "submit": "Save",
     }
     url = reverse("quota-ui-edit", kwargs={"sid": quota.sid})
-    response = valid_user_client.post(url, data)
+    response = client_with_current_workbasket.post(url, data)
 
     assert response.status_code == 302
     assert response.url == reverse("quota-ui-confirm-update", kwargs={"sid": quota.sid})
@@ -1441,7 +1441,10 @@ def test_quota_update_existing_origins(valid_user_client, date_ranges):
     }
 
 
-def test_quota_update_existing_origin_exclusions(valid_user_client, date_ranges):
+def test_quota_update_existing_origin_exclusions(
+    client_with_current_workbasket,
+    date_ranges,
+):
     # make a geo group with 3 member countries
     country1 = factories.CountryFactory.create()
     country2 = factories.CountryFactory.create()
@@ -1494,7 +1497,7 @@ def test_quota_update_existing_origin_exclusions(valid_user_client, date_ranges)
         "submit": "Save",
     }
     url = reverse("quota-ui-edit", kwargs={"sid": quota.sid})
-    response = valid_user_client.post(url, data)
+    response = client_with_current_workbasket.post(url, data)
 
     assert response.status_code == 302
     assert response.url == reverse("quota-ui-confirm-update", kwargs={"sid": quota.sid})

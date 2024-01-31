@@ -15,7 +15,7 @@ from quotas import validators
 pytestmark = pytest.mark.django_db
 
 
-def test_update_quota_form_safeguard_invalid(session_with_workbasket):
+def test_update_quota_form_safeguard_invalid(session_request_with_workbasket):
     """When a QuotaOrderNumber with the category safeguard is edited the
     category cannot be changed."""
     quota = factories.QuotaOrderNumberFactory.create(
@@ -31,7 +31,7 @@ def test_update_quota_form_safeguard_invalid(session_with_workbasket):
         form = forms.QuotaUpdateForm(
             data=data,
             instance=quota,
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
             initial={},
             geo_area_options=[],
             existing_origins=[],
@@ -40,7 +40,7 @@ def test_update_quota_form_safeguard_invalid(session_with_workbasket):
         assert forms.SAFEGUARD_HELP_TEXT in form.errors["category"]
 
 
-def test_update_quota_form_safeguard_disabled(session_with_workbasket):
+def test_update_quota_form_safeguard_disabled(session_request_with_workbasket):
     """When a QuotaOrderNumber with the category safeguard is edited the
     category cannot be changed."""
     quota = factories.QuotaOrderNumberFactory.create(
@@ -56,7 +56,7 @@ def test_update_quota_form_safeguard_disabled(session_with_workbasket):
         form = forms.QuotaUpdateForm(
             data=data,
             instance=quota,
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
             initial={},
             geo_area_options=[],
             existing_origins=[],
@@ -163,7 +163,7 @@ def test_quota_definition_volume_validation(date_ranges):
         )
 
 
-def test_quota_update_react_form_cleaned_data(session_with_workbasket):
+def test_quota_update_react_form_cleaned_data(session_request_with_workbasket):
     quota = factories.QuotaOrderNumberFactory.create()
     geo_group = factories.GeoGroupFactory.create()
     area_1 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
@@ -204,7 +204,7 @@ def test_quota_update_react_form_cleaned_data(session_with_workbasket):
             data=data,
             instance=quota,
             initial={},
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
             geo_area_options=geo_area_options,
             existing_origins=existing_origins,
         )
