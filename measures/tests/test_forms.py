@@ -1681,3 +1681,46 @@ def test_get_serializable_data_keys():
     test_form = TestSerializableForm(data=form_data)
 
     assert test_form.get_serializable_data_keys() == list(serializable_data.keys())
+
+
+def test_measure_commodities_and_duties_form_set_serialization(
+    duty_sentence_parser,
+):
+    commodity_1 = factories.GoodsNomenclatureFactory.create()
+    commodity_2 = factories.GoodsNomenclatureFactory.create()
+
+    form_data = {
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity_1.pk,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": "4.0%",
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-commodity": commodity_2.pk,
+        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-duties": "40 GBP/100kg",
+    }
+    form_kwargs = {
+        "min_commodity_count": 1,
+        "measure_start_date": datetime.date(2025, 1, 1),
+        "form_kwargs": {
+            "measure_type": None,
+        },
+    }
+
+    # Form validation as would be performed via a POST submission from the web.
+    form_set = forms.MeasureCommodityAndDutiesFormSet(
+        data=form_data,
+        **form_kwargs,
+    )
+    assert form_set.is_valid()
+
+    serializable_form_data = form_set.serializable(form_data)
+    serializable_form_kwargs = form_set.serializable_init_kwargs(form_kwargs)
+
+    # Form validation as would be performed after form data has been serialized
+    # and then deserialized - for instance, when creating a bound for instance
+    # within a Celery task.
+    deserialized_form_kwargs = form_set.deserialize_init_kwargs(
+        serializable_form_kwargs,
+    )
+    form_set = forms.MeasureCommodityAndDutiesFormSet(
+        data=serializable_form_data,
+        **deserialized_form_kwargs,
+    )
+    assert form_set.is_valid()
