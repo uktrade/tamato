@@ -77,7 +77,11 @@ class SerializableFormMixin:
         "^csrfmiddlewaretoken$",
         "^measure_create_wizard-current_step$",
         "^submit$",
-        "^.*_autocomplete$",
+        "_autocomplete$",
+        "TOTAL_FORMS$",
+        "INITIAL_FORMS$",
+        "MIN_NUM_FORMS$",
+        "MAX_NUM_FORMS$",
     ]
     """
     Regexs of keys that may appear in a Form's `data` attribute and which should
@@ -101,10 +105,14 @@ class SerializableFormMixin:
         combined_regexs = "(" + ")|(".join(self.ignored_data_key_regexs) + ")"
         return [k for k in self.data.keys() if not re.search(combined_regexs, k)]
 
-    def serializable(self, with_prefix=True) -> Dict:
+    def serializable(self, remove_key_prefix: str = "") -> Dict:
         """
-        Return serializable form data that can be stored in a
-        django.db.models.JSONField and used to recreate a valid form.
+        Return serializable form data that can be serialized / stored as, say,
+        django.db.models.JSONField which can be used to recreate a valid form.
+
+        if `remove_key_prefix` is a non-empty string, then the keys in the
+        returned dictionary will be stripped of that string where it appears as
+        a key prefix in the origin `data` dictionary.
 
         Note that this method should only be used immediately after a successful
         call to the Form's is_valid() if the data that it returns is to be used
@@ -115,8 +123,14 @@ class SerializableFormMixin:
 
         for data_key in data_keys:
             serialized_key = data_key
-            if not with_prefix and self.prefix:
-                serialized_key = data_key[len(self.prefix) + 1 :]
+
+            if (
+                remove_key_prefix
+                and len(remove_key_prefix) < len(data_key)
+                and data_key.startswith(remove_key_prefix)
+            ):
+                serialized_key = data_key[len(remove_key_prefix) + 1 :]
+
             serialized_data[serialized_key] = self.data[data_key]
 
         return serialized_data

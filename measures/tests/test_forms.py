@@ -1676,6 +1676,10 @@ def test_get_serializable_data_keys():
         "measure_create_wizard-current_step": "",
         "submit": "",
         "some_kind_of_autocomplete": "",
+        "test-formset-TOTAL_FORMS": 1,
+        "test-formset-INITIAL_FORMS": 1,
+        "test-formset-MIN_NUM_FORMS": "0",
+        "test-formset-MAX_NUM_FORMS": "1000",
     }
     form_data = {**ignorable_data, **serializable_data}
     test_form = TestSerializableForm(data=form_data)
