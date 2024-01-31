@@ -43,6 +43,7 @@ from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import forms
+from measures import models
 from measures.conditions import show_step_geographical_area
 from measures.conditions import show_step_quota_origins
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
@@ -50,12 +51,6 @@ from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
-from measures.models import FootnoteAssociationMeasure
-from measures.models import Measure
-from measures.models import MeasureActionPair
-from measures.models import MeasureConditionComponent
-from measures.models import MeasureExcludedGeographicalArea
-from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
@@ -78,18 +73,18 @@ class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
-        return MeasureType.objects.approved_up_to_transaction(tx).order_by(
+        return models.MeasureType.objects.approved_up_to_transaction(tx).order_by(
             "description",
         )
 
 
 class MeasureMixin:
-    model: Type[TrackedModel] = Measure
+    model: Type[TrackedModel] = models.Measure
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
 
-        return Measure.objects.approved_up_to_transaction(tx)
+        return models.Measure.objects.approved_up_to_transaction(tx)
 
 
 class MeasureSessionStoreMixin:
@@ -125,7 +120,7 @@ class MeasureSelectionQuerysetMixin(MeasureSelectionMixin):
     def get_queryset(self):
         """Get the queryset for measures that are candidates for
         editing/deletion."""
-        return Measure.objects.filter(pk__in=self.measure_selections)
+        return models.Measure.objects.filter(pk__in=self.measure_selections)
 
 
 class MeasureSearch(FilterView):
@@ -230,7 +225,7 @@ class MeasureList(
             )
 
         if "sid" in selected_filters:
-            measure = Measure.objects.current().get(sid=selected_filters["sid"])
+            measure = models.Measure.objects.current().get(sid=selected_filters["sid"])
             selected_filters_strings.append(f"ID {measure.sid}")
 
         if "additional_code" in selected_filters:
@@ -254,7 +249,7 @@ class MeasureList(
             )
 
         if "measure_type" in selected_filters:
-            measure_type = MeasureType.objects.current().get(
+            measure_type = models.MeasureType.objects.current().get(
                 id=selected_filters["measure_type"],
             )
             selected_filters_strings.append(
@@ -345,7 +340,7 @@ class MeasureList(
             SelectableObjectsForm.object_id_from_field_name(name)
             for name in self.measure_selections
         ]
-        context["measure_selections"] = Measure.objects.filter(
+        context["measure_selections"] = models.Measure.objects.filter(
             pk__in=measure_selections,
         )
         context["query_params"] = True
@@ -381,9 +376,9 @@ class MeasureList(
 
 
 class MeasureDetail(MeasureMixin, TrackedModelDetailView):
-    model = Measure
+    model = models.Measure
     template_name = "measures/detail.jinja"
-    queryset = Measure.objects.latest_approved()
+    queryset = models.Measure.objects.latest_approved()
 
     def get_context_data(self, **kwargs: Any):
         conditions = (
@@ -503,7 +498,7 @@ class MeasureEditWizard(
 
     def update_measure_components(
         self,
-        measure: Measure,
+        measure: models.Measure,
         duties: str,
         workbasket: WorkBasket,
     ):
@@ -518,7 +513,7 @@ class MeasureEditWizard(
 
     def update_measure_condition_components(
         self,
-        measure: Measure,
+        measure: models.Measure,
         workbasket: WorkBasket,
     ):
         """Updates the measure condition components associated to the
@@ -533,7 +528,7 @@ class MeasureEditWizard(
     def update_measure_excluded_geographical_areas(
         self,
         edited: bool,
-        measure: Measure,
+        measure: models.Measure,
         exclusions: List[GeographicalArea],
         workbasket: WorkBasket,
     ):
@@ -564,7 +559,7 @@ class MeasureEditWizard(
                     workbasket=workbasket,
                 )
             else:
-                MeasureExcludedGeographicalArea.objects.create(
+                models.MeasureExcludedGeographicalArea.objects.create(
                     modified_measure=measure,
                     excluded_geographical_area=geo_area,
                     update_type=UpdateType.CREATE,
@@ -589,8 +584,10 @@ class MeasureEditWizard(
 
     def update_measure_footnote_associations(self, measure, workbasket):
         """Updates the footnotes associated to the measure."""
-        footnote_associations = FootnoteAssociationMeasure.objects.current().filter(
-            footnoted_measure__sid=measure.sid,
+        footnote_associations = (
+            models.FootnoteAssociationMeasure.objects.current().filter(
+                footnoted_measure__sid=measure.sid,
+            )
         )
         for fa in footnote_associations:
             fa.new_version(
@@ -793,7 +790,7 @@ class MeasureCreateWizard(
     def create_measure_conditions(
         self,
         data,
-        measure: Measure,
+        measure: models.Measure,
         measure_creation_pattern: MeasureCreationPattern,
         parser: DutySentenceParser,
     ):
@@ -830,7 +827,7 @@ class MeasureCreateWizard(
                     else None
                 )
                 # corresponding negative action to the postive one. None if the action code has no pair
-                action_pair = MeasureActionPair.objects.filter(
+                action_pair = models.MeasureActionPair.objects.filter(
                     positive_action__code=condition_data.get("action").code,
                 ).first()
 
@@ -914,7 +911,7 @@ class MeasureCreateWizard(
 
         parser = DutySentenceParser.create(
             measure_start_date,
-            component_output=MeasureConditionComponent,
+            component_output=models.MeasureConditionComponent,
         )
 
         created_measures = []
@@ -1091,7 +1088,7 @@ class MeasureUpdateBase(
 ):
     form_class = forms.MeasureForm
     permission_required = "common.change_trackedmodel"
-    queryset = Measure.objects.all()
+    queryset = models.Measure.objects.all()
 
     def get_template_names(self):
         return "measures/edit.jinja"
@@ -1114,10 +1111,12 @@ class MeasureUpdateBase(
 
     def get_footnotes(self, measure):
         tx = WorkBasket.get_current_transaction(self.request)
-        associations = FootnoteAssociationMeasure.objects.approved_up_to_transaction(
-            tx,
-        ).filter(
-            footnoted_measure__sid=measure.sid,
+        associations = (
+            models.FootnoteAssociationMeasure.objects.approved_up_to_transaction(
+                tx,
+            ).filter(
+                footnoted_measure__sid=measure.sid,
+            )
         )
 
         return [a.associated_footnote for a in associations]
@@ -1236,7 +1235,7 @@ class MeasureUpdateBase(
             )
             parser = DutySentenceParser.create(
                 obj.valid_between.lower,
-                component_output=MeasureConditionComponent,
+                component_output=models.MeasureConditionComponent,
             )
 
             # Loop over conditions_data, starting at 1 because component_sequence_number has to start at 1
@@ -1374,3 +1373,40 @@ class MeasureSelectionUpdate(MeasureSessionStoreMixin, View):
         selected_objects = {k: v for k, v in cleaned_data.items() if v == 1}
         self.session_store.add_items(selected_objects)
         return JsonResponse(self.session_store.data)
+
+
+class DutySentenceReference(TemplateView):
+    template_name = "duties/duty_sentence_guide.jinja"
+
+    @property
+    def tx(self):
+        return WorkBasket.get_current_transaction(self.request)
+
+    def measurement_units(self):
+        return models.MeasurementUnit.objects.approved_up_to_transaction(
+            self.tx,
+        ).order_by("code")
+
+    def measurement_unit_qualifiers(self):
+        return models.MeasurementUnitQualifier.objects.approved_up_to_transaction(
+            self.tx,
+        ).order_by("code")
+
+    def monetary_units(self):
+        return models.MonetaryUnit.objects.approved_up_to_transaction(self.tx).order_by(
+            "code",
+        )
+
+    def duty_expressions(self):
+        return models.DutyExpression.objects.approved_up_to_transaction(
+            self.tx,
+        ).order_by("sid")
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        return super().get_context_data(
+            duty_expressions=self.duty_expressions(),
+            measurement_units=self.measurement_units(),
+            measurement_unit_qualifiers=self.measurement_unit_qualifiers(),
+            monetary_units=self.monetary_units(),
+            **kwargs,
+        )

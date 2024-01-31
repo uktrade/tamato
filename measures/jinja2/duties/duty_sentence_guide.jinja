@@ -1,0 +1,78 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
+{% from "components/tabs/macro.njk" import govukTabs %}
+
+{% set page_title = "Duty sentence reference" %}
+
+{% block breadcrumb %}
+  <div class="govuk-breadcrumbs">
+    <ol class="govuk-breadcrumbs__list">
+      <li class="govuk-breadcrumbs__list-item">
+        <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
+      </li>
+      <li class="govuk-breadcrumbs__list-item">
+        {{ page_title }}
+      </li>
+    </ol>
+  </div>
+{% endblock %}
+
+{% set syntax_help_tab_html %}{% include "duties/tabs/syntax_help.jinja" %}{% endset %}
+{% set duty_expressions_tab_html %}{% include "duties/tabs/duty_expressions.jinja" %}{% endset %}
+{% set measurement_units_tab_html %}{% include "duties/tabs/measurement_units.jinja" %}{% endset %}
+{% set measurement_unit_qualifiers_tab_html %}{% include "duties/tabs/measurement_unit_qualifiers.jinja" %}{% endset %}
+{% set monetary_units_tab_html %}{% include "duties/tabs/monetary_units.jinja" %}{% endset %}
+
+{% set tabs = {
+    "items": [
+      {
+        "label": "Syntax help",
+        "id": "syntax-help",
+        "panel": {
+          "html": syntax_help_tab_html
+        }
+      },
+      {
+        "label": "Duty expressions",
+        "id": "duty-expressions",
+        "panel": {
+          "html": duty_expressions_tab_html
+        }
+      },
+      {
+        "label": "Monetary units",
+        "id": "monetary-units",
+        "panel": {
+          "html": monetary_units_tab_html
+        }
+      },
+      {
+        "label": "Measurement units",
+        "id": "measurement-units",
+        "panel": {
+          "html": measurement_units_tab_html
+        }
+      },
+      {
+        "label": "Measurement unit qualifiers",
+        "id": "measurement-unit-qualifiers",
+        "panel": {
+          "html": measurement_unit_qualifiers_tab_html
+        }
+      },
+    ]
+  }%}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+    </div>
+  </div>
+  {{ govukTabs(tabs) }}
+{% endblock %}

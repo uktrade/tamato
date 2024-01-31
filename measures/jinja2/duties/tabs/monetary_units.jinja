@@ -1,0 +1,33 @@
+
+{% for object in monetary_units %}
+
+  {% set end_date -%}
+    {{" - {:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else " —"}}
+  {% endset %}
+  {% set validity -%}
+    {{"{:%d %b %Y}".format(object.valid_between.lower) ~ end_date }}
+  {% endset %}
+
+  <h3 class="govuk-heading-l">{{ object.description }}</h3>
+
+  {{ govukSummaryList({
+    "rows": [
+      {
+        "key": { "text": "Code" },
+        "value": { "html": '<code>' ~ object.code ~ "</code>" if object.code else "N/A" },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "Validity" },
+        "value": { "text": validity },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "Description" },
+        "value": { "text": object.description },
+        "actions": {"items": []}
+      },
+    ]})
+  }}
+
+{% endfor %}
