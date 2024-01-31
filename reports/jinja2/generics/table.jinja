@@ -8,12 +8,11 @@
     const gridOptions = {
         columnDefs: {{ report.headers() | tojson }},
         rowData: {{ report.rows(current_page_data) | tojson }},
-        filter: true
     };
 
     agGrid.createGrid(document.querySelector('#myGrid'), gridOptions, {
         onFirstDataRendered: function (params) {
-            alert('hello')
+            // todo - add any features requested by UI designer
         }
     });
 });
