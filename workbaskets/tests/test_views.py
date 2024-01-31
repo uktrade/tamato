@@ -2046,3 +2046,55 @@ def test_require_current_workbasket_redirect(workbasket_factory, client, valid_u
 
     assert response.status_code == 302
     assert response.url == reverse("workbaskets:no-active-workbasket")
+
+
+def test_workbasket_assign_users_view(valid_user, valid_user_client, user_workbasket):
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="add_userassignment"),
+    )
+    response = valid_user_client.get(
+        reverse(
+            "workbaskets:workbasket-ui-assign-users",
+            kwargs={"pk": user_workbasket.pk},
+        ),
+    )
+    assert response.status_code == 200
+    assert "Assign users to workbasket" in str(response.content)
+
+
+def test_workbasket_assign_users_view_without_permission(client, user_workbasket):
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(
+        reverse(
+            "workbaskets:workbasket-ui-assign-users",
+            kwargs={"pk": user_workbasket.pk},
+        ),
+    )
+    assert response.status_code == 403
+
+
+def test_workbasket_unassign_users_view(valid_user, valid_user_client, user_workbasket):
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="change_userassignment"),
+    )
+    response = valid_user_client.get(
+        reverse(
+            "workbaskets:workbasket-ui-unassign-users",
+            kwargs={"pk": user_workbasket.pk},
+        ),
+    )
+    assert response.status_code == 200
+    assert "Unassign users from workbasket" in str(response.content)
+
+
+def test_workbasket_unassign_users_view_without_permission(client, user_workbasket):
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(
+        reverse(
+            "workbaskets:workbasket-ui-unassign-users",
+            kwargs={"pk": user_workbasket.pk},
+        ),
+    )
+    assert response.status_code == 403
