@@ -1,5 +1,4 @@
 import datetime
-from typing import Dict
 from unittest.mock import patch
 
 import pytest
@@ -1659,8 +1658,9 @@ def test_measure_geographical_area_exclusions_form_invalid_choice():
     ]
 
 
+# Test the simple Measure create forms serialize and deserialize
 @pytest.mark.parametrize(
-    "form, form_data",
+    "form_class, form_data",
     [
         (
             forms.MeasureDetailsForm,
@@ -1686,16 +1686,27 @@ def test_measure_geographical_area_exclusions_form_invalid_choice():
         "quota_order_number_form",
     ],
 )
-def test_measure_forms_serializable(form, form_data, request):
+def test_simple_measure_forms_serialize_deserialize(form_class, form_data, request):
+    # Check the forms are valid on data submission
     form_data = request.getfixturevalue(form_data)
-    form = form(form_data)
+    form = form_class(form_data)
     assert form.is_valid()
+
+    # Create the serialized data
     serialized_data = form.serializable(with_prefix=False)
-    assert isinstance(serialized_data, Dict)
+
+    # Make a form from serialized data
+    rehydrated_form = form_class(data=serialized_data)
+
+    # Check the form is the right type, valid, and the data that went in is the same that comes out
+    assert type(rehydrated_form) == form_class
+    assert rehydrated_form.is_valid()
+    assert rehydrated_form.data == form_data
 
 
+# Test the SelectableObjects Measure create forms serialize and deserialize
 @pytest.mark.parametrize(
-    "form, form_data",
+    "form_class, form_data",
     [
         (
             forms.MeasureQuotaOriginsForm,
@@ -1706,32 +1717,37 @@ def test_measure_forms_serializable(form, form_data, request):
         "quota_order_number_origin_form",
     ],
 )
-def test_measure_forms_complex_serializable(form, form_data, request):
+def test_selectableobjects_measure_forms_serialize_deserialize(
+    form_class,
+    form_data,
+    request,
+):
     form_data = request.getfixturevalue(form_data)
     objects = form_data["objects"]
     data = form_data["data"]
 
+    form_kwargs = {"objects": objects}
+
     with override_current_transaction(Transaction.objects.last()):
-        form = forms.MeasureQuotaOriginsForm(
+        # Check the forms are valid on data submission
+        form = form_class(
             initial={},
             objects=objects,
             data=data,
         )
         assert form.is_valid()
 
+        # Create the serialized data
         serialized_data = form.serializable(with_prefix=False)
-        assert isinstance(serialized_data, Dict)
+        serialized_form_kwargs = form.serializable_init_kwargs(form_kwargs)
 
+        # Deserialize the kwargs
+        deserialized_form_kwargs = form.deserialize_init_kwargs(serialized_form_kwargs)
 
-# def test_measure_forms_create_from_serialized_cleaned_data(form, form_data, request):
-#     # Serialize a form
-#     form_data = request.getfixturevalue(form_data)
-#     form = form(form_data)
-#     assert form.is_valid()
-#     serialized_data = form.serializable(with_prefix=False)
+        # Make a form from serialized data
+        rehydrated_form = form_class(data=serialized_data, **deserialized_form_kwargs)
 
-#     # Make a form from serialized data
-#     rehydrated_form = form.create_from_serialized_cleaned_data(serialized)
-#     assert type(rehydrated_form) == MeasureRegulationIdForm
-#     assert rehydrated_form.is_valid()
-#     assert rehydrated_form.initial == data
+        # Check the form is the right type, valid, and the data that went in is the same that comes out
+        assert type(rehydrated_form) == form_class
+        assert rehydrated_form.is_valid()
+        assert rehydrated_form.data == data
