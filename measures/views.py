@@ -714,15 +714,11 @@ class MeasureCreateWizard(
     ]
     """Forms in this wizard's steps that collect user data."""
 
-    form_list = (
-        [
-            (START, forms.MeasureCreateStartForm),
-        ]
-        + data_form_list
-        + [
-            (SUMMARY, forms.MeasureReviewForm),
-        ]
-    )
+    form_list = [
+        (START, forms.MeasureCreateStartForm),
+        *data_form_list,
+        (SUMMARY, forms.MeasureReviewForm),
+    ]
     """All Forms in this wizard's steps, including both those that collect user
     data and those that don't."""
 
@@ -1000,9 +996,6 @@ class MeasureCreateWizard(
         all_data = {}
 
         for form_key in self.get_data_form_list().keys():
-            # TODO: remove once geo area form is done.
-            if form_key == self.GEOGRAPHICAL_AREA:
-                continue
             all_data[form_key] = self.serializable_form_data_for_step(form_key)
 
         return all_data
@@ -1030,9 +1023,6 @@ class MeasureCreateWizard(
         all_kwargs = {}
 
         for form_key in self.get_data_form_list().keys():
-            # TODO: remove once geo area form is done.
-            if form_key == self.GEOGRAPHICAL_AREA:
-                continue
             all_kwargs[form_key] = self.serializable_form_kwargs_for_step(form_key)
 
         return all_kwargs
