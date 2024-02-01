@@ -69,9 +69,9 @@ logger = logging.getLogger(__name__)
 
 
 class SerializableFormMixin:
-    """Provides a default implementation of serializable() that can be used to
-    obtain form data that can be serialized, or more specifically, stored to a
-    forms.JSONField."""
+    """Provides a default implementation of `serializable_data()` that can be
+    used to obtain form data that can be serialized, or more specifically,
+    stored to a `JSONField` field."""
 
     ignored_data_key_regexs = [
         "^csrfmiddlewaretoken$",
@@ -98,17 +98,18 @@ class SerializableFormMixin:
         Default implementation returning a list of the `Form.data` attribute's
         keys used when serializing `data`.
 
-        Override this function if neither `ignored_data_key_regexs` or this default
-        implementation is sufficient for identifying which of `Form.data`'s keys
-        should be used during a call to this mixin's `serializable()` method.
+        Override this function if neither `ignored_data_key_regexs` or this
+        default implementation is sufficient for identifying which of
+        `Form.data`'s keys should be used during a call to this mixin's
+        `serializable_data()` method.
         """
         combined_regexs = "(" + ")|(".join(self.ignored_data_key_regexs) + ")"
         return [k for k in self.data.keys() if not re.search(combined_regexs, k)]
 
-    def serializable(self, remove_key_prefix: str = "") -> Dict:
+    def serializable_data(self, remove_key_prefix: str = "") -> Dict:
         """
         Return serializable form data that can be serialized / stored as, say,
-        django.db.models.JSONField which can be used to recreate a valid form.
+        `django.db.models.JSONField` which can be used to recreate a valid form.
 
         if `remove_key_prefix` is a non-empty string, then the keys in the
         returned dictionary will be stripped of that string where it appears as
@@ -155,8 +156,9 @@ class SerializableFormMixin:
         """
         Get a dictionary of arguments for use in initialising the form.
 
-        The 'form_kwargs` parameter is the serialized version of the form's
-        kwargs that require deserializing to their Python representation.
+        The 'form_kwargs` parameter is the serialized (actually, serializable)
+        version of the form's kwargs that require deserializing to their Python
+        representation.
         """
         return {}
 

@@ -1015,7 +1015,7 @@ class MeasureCreateWizard(
             files=self.storage.get_step_files(step),
         )
 
-        return form_obj.serializable(remove_key_prefix=step)
+        return form_obj.serializable_data(remove_key_prefix=step)
 
     def all_serializable_form_kwargs(self) -> Dict:
         """Returns serializable kwargs for all wizard steps."""

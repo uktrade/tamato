@@ -1714,7 +1714,7 @@ def test_measure_commodities_and_duties_form_set_serialization(
     )
     assert form_set.is_valid()
 
-    serializable_form_data = form_set.serializable()
+    serializable_form_data = form_set.serializable_data()
     serializable_form_kwargs = form_set.serializable_init_kwargs(form_kwargs)
 
     # Form validation as would be performed after form data has been serialized
