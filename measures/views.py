@@ -977,25 +977,8 @@ class MeasureCreateWizard(
         return created_measures
 
     def done(self, form_list, **kwargs):
-        # DEBUG
-        print()
-        print(f"*** MeasureCreateWizard.done()")
-        print(f"*** All form data:")
-        for form_key, form_class in self.form_list.items():
-            data = self.storage.get_step_data(form_key)
-            print(f"{form_key=}")
-            print(f"{json.dumps(data, indent=4, default=str)}")
-            print()
-
         serializable_data = self.all_serializable_form_data()
         serializable_form_kwargs = self.all_serializable_form_kwargs()
-
-        # DEBUG
-        print(f"*** serializable_data:")
-        print(json.dumps(serializable_data, indent=4))
-        print(f"*** serializable_form_kwargs:")
-        print(json.dumps(serializable_form_kwargs, indent=4))
-        print()
 
         measures_bulk_creator = MeasuresBulkCreator.objects.create(
             form_data=serializable_data,
