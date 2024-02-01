@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 from itertools import groupby
 from typing import Dict
 from typing import List
@@ -34,6 +35,8 @@ from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
+from common.serializers import deserialize_date
+from common.serializers import serialize_date
 from common.util import validity_range_contains_range
 from common.validators import SymbolValidator
 from common.validators import UpdateType
@@ -66,23 +69,28 @@ logger = logging.getLogger(__name__)
 
 
 class SerializableFormMixin:
-    """Provides a default implementation of serializable() that can be used to
-    obtain form data that can be serialized, or more specifically, stored to a
-    forms.JSONField."""
+    """Provides a default implementation of `serializable_data()` that can be
+    used to obtain form data that can be serialized, or more specifically,
+    stored to a `JSONField` field."""
 
-    data_keys_ignored = [
-        "csrfmiddlewaretoken",
-        "measure_create_wizard-current_step",
-        "submit",
+    ignored_data_key_regexs = [
+        "^csrfmiddlewaretoken$",
+        "^measure_create_wizard-current_step$",
+        "^submit$",
+        "_autocomplete$",
+        "TOTAL_FORMS$",
+        "INITIAL_FORMS$",
+        "MIN_NUM_FORMS$",
+        "MAX_NUM_FORMS$",
     ]
     """
-    Keys that may appear in a Form's `data` attribute and which should be
-    ignored when creating a serializable version of `data`.
+    Regexs of keys that may appear in a Form's `data` dictionary attribute and
+    which should be ignored when creating a serializable version of `data`.
 
     Override this on a per form basis if there are other, redundant keys that
     should be ignored. See the default implementation of
-    SerializableFormMixin.serializeable() to see how this class attribute is
-    used.
+    `SerializableFormMixin.get_serializable_data_keys()` to see how this class
+    attribute is used.
     """
 
     def get_serializable_data_keys(self) -> List[str]:
@@ -90,16 +98,22 @@ class SerializableFormMixin:
         Default implementation returning a list of the `Form.data` attribute's
         keys used when serializing `data`.
 
-        Override this function if neither `data_keys_ignored` or this default
-        implementation is sufficient for identifying which of `Form.data`'s keys
-        should be used during a call to this mixin's `serializable()` method.
+        Override this function if neither `ignored_data_key_regexs` or this
+        default implementation is sufficient for identifying which of
+        `Form.data`'s keys should be used during a call to this mixin's
+        `serializable_data()` method.
         """
-        return [k for k in self.data if k not in self.data_keys_ignored]
+        combined_regexs = "(" + ")|(".join(self.ignored_data_key_regexs) + ")"
+        return [k for k in self.data.keys() if not re.search(combined_regexs, k)]
 
-    def serializable(self, with_prefix=True) -> Dict:
+    def serializable_data(self, remove_key_prefix: str = "") -> Dict:
         """
-        Return serializable form data that can be stored in a
-        django.db.models.JSONField and used to recreate a valid form.
+        Return serializable form data that can be serialized / stored as, say,
+        `django.db.models.JSONField` which can be used to recreate a valid form.
+
+        If `remove_key_prefix` is a non-empty string, then the keys in the
+        returned dictionary will be stripped of that string where it appears as
+        a key prefix in the origin `data` dictionary.
 
         Note that this method should only be used immediately after a successful
         call to the Form's is_valid() if the data that it returns is to be used
@@ -110,8 +124,14 @@ class SerializableFormMixin:
 
         for data_key in data_keys:
             serialized_key = data_key
-            if not with_prefix and self.prefix:
-                serialized_key = data_key[len(self.prefix) + 1 :]
+
+            if (
+                remove_key_prefix
+                and len(remove_key_prefix) < len(data_key)
+                and data_key.startswith(remove_key_prefix)
+            ):
+                serialized_key = data_key[len(remove_key_prefix) + 1 :]
+
             serialized_data[serialized_key] = self.data[data_key]
 
         return serialized_data
@@ -136,8 +156,9 @@ class SerializableFormMixin:
         """
         Get a dictionary of arguments for use in initialising the form.
 
-        The 'form_kwargs` parameter is the serialized version of the form's
-        kwargs that require deserializing to their Python representation.
+        The 'form_kwargs` parameter is the serialized (actually, serializable)
+        version of the form's kwargs that require deserializing to their Python
+        representation.
         """
         return {}
 
@@ -527,10 +548,40 @@ class MeasureConditionsWizardStepFormSet(
 ):
     form = MeasureConditionsWizardStepForm
 
-    def get_serializable_data_keys(self) -> List[str]:
-        keys = super().get_serializable_data_keys()
-        # Additionally filter out unused auto-complete data.
-        return [k for k in keys if not k.endswith("certificate_autocomplete")]
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        measure_start_date = kwargs.get("form_kwargs", {}).get("measure_start_date")
+        measure_type = kwargs.get("form_kwargs", {}).get("measure_type")
+
+        serializable_kwargs = {
+            "form_kwargs": {
+                "measure_start_date": serialize_date(measure_start_date),
+                "measure_type_pk": measure_type.pk if measure_type else None,
+            },
+        }
+
+        return serializable_kwargs
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        measure_start_date = form_kwargs.get("form_kwargs", {}).get(
+            "measure_start_date",
+        )
+        measure_type_pk = form_kwargs.get("form_kwargs", {}).get("measure_type_pk")
+        measure_type = (
+            models.MeasureType.objects.get(pk=measure_type_pk)
+            if measure_type_pk
+            else None
+        )
+
+        kwargs = {
+            "form_kwargs": {
+                "measure_start_date": measure_start_date,
+                "measure_type": measure_type,
+            },
+        }
+
+        return kwargs
 
 
 class MeasureForm(
@@ -1158,6 +1209,7 @@ class MeasureQuotaOriginsForm(
 
 
 class MeasureGeographicalAreaForm(
+    SerializableFormMixin,
     MeasureGeoAreaInitialDataMixin,
     BindNestedFormMixin,
     forms.Form,
@@ -1440,6 +1492,7 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
 
 
 class MeasureCommodityAndDutiesFormSet(
+    SerializableFormMixin,
     MeasureCommodityAndDutiesBaseFormSet,
 ):
     def __init__(self, *args, **kwargs):
@@ -1480,6 +1533,42 @@ class MeasureCommodityAndDutiesFormSet(
                 )
 
         return cleaned_data
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        measure_type = kwargs.get("form_kwargs", {}).get("measure_type")
+        measure_type_pk = measure_type.pk if measure_type else None
+
+        serializable_kwargs = {
+            "min_commodity_count": kwargs.get("min_commodity_count"),
+            "measure_start_date": serialize_date(kwargs.get("measure_start_date")),
+            "form_kwargs": {
+                "measure_type_pk": measure_type_pk,
+            },
+        }
+
+        return serializable_kwargs
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        measure_type_pk = form_kwargs.get("form_kwargs", {}).get("measure_type_pk")
+        measure_type = (
+            models.MeasureType.objects.get(pk=measure_type_pk)
+            if measure_type_pk
+            else None
+        )
+
+        kwargs = {
+            "min_commodity_count": form_kwargs.get("min_commodity_count"),
+            "measure_start_date": deserialize_date(
+                form_kwargs.get("measure_start_date"),
+            ),
+            "form_kwargs": {
+                "measure_type": measure_type,
+            },
+        }
+
+        return kwargs
 
 
 class MeasureFootnotesForm(forms.Form):
@@ -1530,11 +1619,6 @@ class MeasureFootnotesFormSet(
         if len(footnotes) != num_unique:
             raise ValidationError("The same footnote cannot be added more than once")
         return cleaned_data
-
-    def get_serializable_data_keys(self) -> List[str]:
-        keys = super().get_serializable_data_keys()
-        # Additionally filter out unused auto-complete data.
-        return [k for k in keys if not k.endswith("footnote_autocomplete")]
 
 
 class MeasureUpdateFootnotesForm(MeasureFootnotesForm):

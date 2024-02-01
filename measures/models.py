@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import date
 from typing import Iterable
@@ -6,6 +7,7 @@ from typing import Set
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.transaction import atomic
+from django.forms.formsets import BaseFormSet
 
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
@@ -1032,21 +1034,22 @@ class MeasuresBulkCreator(models.Model):
         # access to a 'current' Transaction.
         set_current_transaction(self.current_transaction)
 
-        # Debug.
-        import json
-
-        print(f"*** MeasuresBulkCreator.form_data:")
-        print(f"\n{json.dumps(self.form_data, indent=4)}")
+        logger.info(
+            f"MeasuresBulkCreator.create_measures() - form_data:\n"
+            f"{json.dumps(self.form_data, indent=4, default=str)}",
+        )
+        logger.info(
+            f"MeasuresBulkCreator.create_measures() - form_kwargs:\n"
+            f"{json.dumps(self.form_kwargs, indent=4, default=str)}",
+        )
 
         # Avoid circular import.
         from measures.views import MeasureCreateWizard
 
-        # TODO: Revert to using MeasureCreateWizard.form_list.
-        # for form_key, form_class in MeasureCreateWizard.form_list:
-        for form_key, form_class in MeasureCreateWizard.test_form_list:
+        for form_key, form_class in MeasureCreateWizard.data_form_list:
             if form_key not in self.form_data:
-                # Some forms / steps are only conditionally included when
-                # creating measures - see `MeasureCreateWizard.condition_dict`
+                # Not all forms / steps are used to create measures. Some are
+                # only conditionally included - see `MeasureCreateWizard.condition_dict`
                 # and `MeasureCreateWizard.show_step()` for details.
                 continue
 
@@ -1060,14 +1063,34 @@ class MeasuresBulkCreator(models.Model):
                 f"{form_class.__name__}.is_valid(): {is_valid}",
             )
             if not is_valid:
-                logger.error(
-                    f"MeasuresBulkCreator.create_measures() - "
-                    f"{form_class.__name__} has {len(form.errors)} unexpected "
-                    f"errors.",
-                )
-                for error in form.errors:
-                    logger.error(f"{error}")
+                self._log_form_errors(form_class=form_class, form_or_formset=form)
 
         # TODO: Create the measures.
 
         return created_measures
+
+    def _log_form_errors(self, form_class, form_or_formset) -> None:
+        """Output errors associated with a Form or Formset instance, handling
+        output for each instance type in a uniform manner."""
+
+        logger.error(
+            f"MeasuresBulkCreator.create_measures() - "
+            f"{form_class.__name__} has {len(form_or_formset.errors)} unexpected "
+            f"errors.",
+        )
+
+        # Form.errors is a dictionary of errors, but FormSet.errors is a
+        # list of dictionaries of Form.errors. Access their errors in
+        # a uniform manner.
+        errors = []
+
+        if isinstance(form_or_formset, BaseFormSet):
+            errors = [
+                {"formset_errors": form_or_formset.non_form_errors()},
+            ] + form_or_formset.errors
+        else:
+            errors = [form_or_formset.errors]
+
+        for form_errors in errors:
+            for error_key, error_values in form_errors.items():
+                logger.error(f"{error_key}: {error_values}")
