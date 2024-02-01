@@ -811,7 +811,8 @@ class MeasureCreateWizard(
         The list is generated dynamically because conditions in condition_list
         may be dynamic.
 
-        This is essentially a filtered version of WizardView.get_form_list().
+        Essentially, version of `WizardView.get_form_list()` filtering in only
+        those list items appearing in `data_form_list`.
         """
         data_form_keys = [key for key, form in self.data_form_list]
         return {
