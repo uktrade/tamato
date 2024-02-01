@@ -982,7 +982,11 @@ class MeasureCreateWizard(
             current_transaction=get_current_transaction(),
         )
         bulk_create_measures.delay(measures_bulk_creator.pk)
-        # TODO: redirect from summary page to done page.
+        # TODO:
+        # - check whether there are actions on the master branch to apply at
+        #   this point, or on the Celery side of measure creation. (The current
+        #   user is assigned to the measures workbasket, but is that redundant?)
+        # - Redirect from summary page to done page.
 
     def all_serializable_form_data(self) -> Dict:
         """

@@ -12,8 +12,8 @@
     "items": [
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Review goods", 
-      "href": url("workbaskets:workbasket-ui-review-goods", kwargs={"pk": request.session.workbasket.id})},
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Review goods",
+      "href": url("workbaskets:workbasket-ui-review-goods", kwargs={"pk": request.user.current_workbasket.id})},
       {"text": page_title}
     ]
   }) }}
@@ -30,7 +30,7 @@
       }) }}
 
     <div class="govuk-button-group">
-      <a class="govuk-link" href="{{ url('workbaskets:workbasket-ui-review-goods', kwargs={"pk": request.session.workbasket.id}) }}">
+      <a class="govuk-link" href="{{ url('workbaskets:workbasket-ui-review-goods', kwargs={"pk": request.user.current_workbasket.id}) }}">
         Back to Review goods list
       </a>
     </div>

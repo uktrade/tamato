@@ -86,7 +86,7 @@ def test_measure_conditions_formset_invalid(
 
 def test_measure_form_invalid_conditions_data(
     measure_form_data,
-    session_with_workbasket,
+    session_request_with_workbasket,
     date_ranges,
     erga_omnes,
     duty_sentence_parser,
@@ -110,7 +110,7 @@ def test_measure_form_invalid_conditions_data(
             data=form_data,
             initial=form_data,
             instance=measure,
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
         )
 
         assert not measure_form.is_valid()
@@ -1193,7 +1193,7 @@ def test_measure_forms_conditions_wizard_clears_unneeded_certificate(date_ranges
         assert form_expects_no_certificate.cleaned_data["required_certificate"] is None
 
 
-def test_measure_form_valid_data(erga_omnes, session_with_workbasket):
+def test_measure_form_valid_data(erga_omnes, session_request_with_workbasket):
     """Test that MeasureForm.is_valid returns True when passed required fields
     and geographical_area and sid fields in cleaned data."""
     measure = factories.MeasureFactory.create()
@@ -1213,7 +1213,7 @@ def test_measure_form_valid_data(erga_omnes, session_with_workbasket):
             data=data,
             initial={},
             instance=Measure.objects.first(),
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
         )
         assert form.is_valid()
         assert (
@@ -1227,7 +1227,7 @@ def test_measure_form_valid_data(erga_omnes, session_with_workbasket):
 def test_measure_form_initial_data_geo_area(
     initial_option,
     erga_omnes,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
     country = factories.GeographicalAreaFactory.create()
@@ -1251,14 +1251,14 @@ def test_measure_form_initial_data_geo_area(
         data=data,
         initial={},
         instance=Measure.objects.first(),
-        request=session_with_workbasket,
+        request=session_request_with_workbasket,
     )
     assert form.initial["geo_area"] == geo_area_to_choice[measure.geographical_area]
 
 
 def test_measure_form_cleaned_data_geo_exclusions_group(
     erga_omnes,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Test that MeasureForm accepts geo_area form group data and returns
     excluded countries in cleaned data."""
@@ -1286,7 +1286,7 @@ def test_measure_form_cleaned_data_geo_exclusions_group(
             data=data,
             initial=data,
             instance=Measure.objects.first(),
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
         )
         assert form.is_valid()
         assert form.cleaned_data["exclusions"] == [excluded_country1, excluded_country2]
@@ -1294,7 +1294,7 @@ def test_measure_form_cleaned_data_geo_exclusions_group(
 
 def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
     erga_omnes,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Test that MeasureForm accepts geo_area form erga omnes data and returns
     excluded countries in cleaned data."""
@@ -1321,7 +1321,7 @@ def test_measure_form_cleaned_data_geo_exclusions_erga_omnes(
             data=data,
             initial=data,
             instance=Measure.objects.first(),
-            request=session_with_workbasket,
+            request=session_request_with_workbasket,
         )
         assert form.is_valid()
         assert form.cleaned_data["exclusions"] == [excluded_country1, excluded_country2]

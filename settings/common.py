@@ -151,7 +151,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "common.models.utils.ValidateSessionWorkBasketMiddleware",
+    "common.models.utils.ValidateUserWorkBasketMiddleware",
     "common.models.utils.TransactionMiddleware",
     "csp.middleware.CSPMiddleware",
 ]
@@ -167,9 +167,8 @@ if MAINTENANCE_MODE:
     MIDDLEWARE.remove("django.contrib.sessions.middleware.SessionMiddleware")
     MIDDLEWARE.remove("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.remove("django.contrib.messages.middleware.MessageMiddleware")
-    MIDDLEWARE.remove("common.models.utils.ValidateSessionWorkBasketMiddleware")
     MIDDLEWARE.remove("common.models.utils.TransactionMiddleware")
-
+    MIDDLEWARE.remove("common.models.utils.ValidateUserWorkBasketMiddleware")
     MIDDLEWARE.append("common.middleware.MaintenanceModeMiddleware")
 
 TEMPLATES = [
@@ -256,6 +255,8 @@ if SSO_ENABLED:
     AUTHENTICATION_BACKENDS += [
         "authbroker_client.backends.AuthbrokerBackend",
     ]
+
+AUTH_USER_MODEL = "common.User"
 
 # -- Security
 SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")

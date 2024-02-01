@@ -1,12 +1,14 @@
 from typing import List
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand
 
 from importer import models
 from importer.chunker import chunk_taric
 from importer.management.util import ImporterCommandMixin
 from importer.namespaces import TARIC_RECORD_GROUPS
+
+User = get_user_model()
 
 
 def setup_batch(
