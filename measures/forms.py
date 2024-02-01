@@ -1207,6 +1207,7 @@ class MeasureQuotaOriginsForm(
 
 
 class MeasureGeographicalAreaForm(
+    SerializableFormMixin,
     MeasureGeoAreaInitialDataMixin,
     BindNestedFormMixin,
     forms.Form,
