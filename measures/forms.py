@@ -111,7 +111,7 @@ class SerializableFormMixin:
         Return serializable form data that can be serialized / stored as, say,
         `django.db.models.JSONField` which can be used to recreate a valid form.
 
-        if `remove_key_prefix` is a non-empty string, then the keys in the
+        If `remove_key_prefix` is a non-empty string, then the keys in the
         returned dictionary will be stripped of that string where it appears as
         a key prefix in the origin `data` dictionary.
 
