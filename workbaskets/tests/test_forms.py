@@ -145,6 +145,41 @@ def test_workbasket_assign_users_form_assigns_users(rf, valid_user, user_workbas
         assert UserAssignment.objects.get(user=user, task=task, assigned_by=valid_user)
 
 
+def test_workbasket_assign_users_form_required_fields(rf, valid_user, user_workbasket):
+    request = rf.request()
+    request.user = valid_user
+
+    form = forms.WorkBasketAssignUsersForm(
+        request=request,
+        workbasket=user_workbasket,
+        data={},
+    )
+    assert not form.is_valid()
+    assert f"Select one or more users to assign" in form.errors["users"]
+    assert f"Select an assignment type" in form.errors["assignment_type"]
+
+
+def test_workbasket_assign_users_form_already_assigned_error(rf, valid_user):
+    request = rf.request()
+    request.user = valid_user
+    assignment = factories.UserAssignmentFactory.create(user__is_superuser=True)
+    user = assignment.user
+    assignment_type = assignment.assignment_type
+    workbasket = assignment.task.workbasket
+    data = {
+        "users": [user],
+        "assignment_type": assignment_type,
+    }
+
+    form = forms.WorkBasketAssignUsersForm(
+        request=request,
+        workbasket=workbasket,
+        data=data,
+    )
+    assert not form.is_valid()
+    assert f"{user.get_full_name()} has already been assigned" in form.errors["users"]
+
+
 def test_workbasket_unassign_users_form_unassigns_users(
     rf,
     valid_user,
@@ -172,3 +207,20 @@ def test_workbasket_unassign_users_form_unassigns_users(
     for assignment in assignments:
         assignment.refresh_from_db()
         assert not assignment.is_assigned
+
+
+def test_workbasket_unassign_users_form_required_fields(
+    rf,
+    valid_user,
+    user_workbasket,
+):
+    request = rf.request()
+    request.user = valid_user
+
+    form = forms.WorkBasketUnassignUsersForm(
+        request=request,
+        workbasket=user_workbasket,
+        data={},
+    )
+    assert not form.is_valid()
+    assert f"Select one or more users to unassign" in form.errors["assignments"]

@@ -234,6 +234,25 @@ class WorkBasketAssignUsersForm(forms.Form):
             ),
         )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get("users") and cleaned_data.get("assignment_type"):
+            for user in cleaned_data["users"]:
+                if (
+                    UserAssignment.objects.filter(
+                        user=user,
+                        assignment_type=cleaned_data["assignment_type"],
+                        task__workbasket=self.workbasket,
+                    )
+                    .assigned()
+                    .exists()
+                ):
+                    self.add_error(
+                        "users",
+                        f"{user.get_full_name()} has already been assigned",
+                    )
+        return cleaned_data
+
     def assign_users(self, task):
         assignment_type = self.cleaned_data["assignment_type"]
 
@@ -279,7 +298,7 @@ class WorkBasketUnassignUsersForm(forms.Form):
         self.fields[
             "assignments"
         ].label_from_instance = (
-            lambda obj: f"{obj.user.get_full_name()} ({obj.get_assignment_type_display()})"
+            lambda obj: f"{obj.user.get_full_name()} ({obj.get_assignment_type_display().lower()})"
         )
 
     def init_layout(self):
