@@ -2,6 +2,7 @@ import datetime
 import logging
 from itertools import groupby
 from typing import Dict
+from typing import List
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -62,6 +63,83 @@ from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
+
+
+class SerializableFormMixin:
+    """Provides a default implementation of serializable() that can be used to
+    obtain form data that can be serialized, or more specifically, stored to a
+    forms.JSONField."""
+
+    data_keys_ignored = [
+        "csrfmiddlewaretoken",
+        "measure_create_wizard-current_step",
+        "submit",
+    ]
+    """
+    Keys that may appear in a Form's `data` attribute and which should be
+    ignored when creating a serializable version of `data`.
+
+    Override this on a per form basis if there are other, redundant keys that
+    should be ignored. See the default implementation of
+    SerializableFormMixin.serializeable() to see how this class attribute is
+    used.
+    """
+
+    def get_serializable_data_keys(self) -> List[str]:
+        """
+        Default implementation returning a list of the `Form.data` attribute's
+        keys used when serializing `data`.
+
+        Override this function if neither `data_keys_ignored` or this default
+        implementation is sufficient for identifying which of `Form.data`'s keys
+        should be used during a call to this mixin's `serializable()` method.
+        """
+        return [k for k in self.data if k not in self.data_keys_ignored]
+
+    def serializable(self, with_prefix=True) -> Dict:
+        """
+        Return serializable form data that can be stored in a
+        django.db.models.JSONField and used to recreate a valid form.
+
+        Note that this method should only be used immediately after a successful
+        call to the Form's is_valid() if the data that it returns is to be used
+        to recreate a valid form.
+        """
+        serialized_data = {}
+        data_keys = self.get_serializable_data_keys()
+
+        for data_key in data_keys:
+            serialized_key = data_key
+            if not with_prefix and self.prefix:
+                serialized_key = data_key[len(self.prefix) + 1 :]
+            serialized_data[serialized_key] = self.data[data_key]
+
+        return serialized_data
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        """
+        Get a serializable dictionary of arguments that can be used to
+        initialise the form. The `kwargs` parameter is the Python version of
+        kwargs that are used to initialise the form and is normally provided by
+        the same caller as would init the form (i.e. the view).
+
+        For instance, a SelectableObjectsForm subclass
+        requires a valid `objects` parameter to correctly construct and
+        validate the form, so we'd expect `kwargs` dictionary containing
+        an `objects` element.
+        """
+        return {}
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        """
+        Get a dictionary of arguments for use in initialising the form.
+
+        The 'form_kwargs` parameter is the serialized version of the form's
+        kwargs that require deserializing to their Python representation.
+        """
+        return {}
 
 
 class MeasureGeoAreaInitialDataMixin(FormSetSubmitMixin):
@@ -443,8 +521,16 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         return self.conditions_clean(cleaned_data, self.measure_start_date)
 
 
-class MeasureConditionsWizardStepFormSet(MeasureConditionsBaseFormSet):
+class MeasureConditionsWizardStepFormSet(
+    SerializableFormMixin,
+    MeasureConditionsBaseFormSet,
+):
     form = MeasureConditionsWizardStepForm
+
+    def get_serializable_data_keys(self) -> List[str]:
+        keys = super().get_serializable_data_keys()
+        # Additionally filter out unused auto-complete data.
+        return [k for k in keys if not k.endswith("certificate_autocomplete")]
 
 
 class MeasureForm(
@@ -877,72 +963,6 @@ class MeasureFilterForm(forms.Form):
 
 class MeasureCreateStartForm(forms.Form):
     pass
-
-
-class SerializableFormMixin:
-    """Provides a default implementation of serializable() that can be used to
-    obtain form data that can be serialized, or more specifically, stored to a
-    forms.JSONField."""
-
-    data_key_ignores = [
-        "csrfmiddlewaretoken",
-        "measure_create_wizard-current_step",
-        "submit",
-    ]
-    """
-    Keys that may appear in a Form's `data` attribute and which should be
-    ignored when creating a serializable version of `data`.
-
-    Override this on a per form basis if there are other, redundant keys that
-    should be ignored. See the default implementation of
-    SerializableFormMixin.serializeable() to see how this class attribute is
-    used.
-    """
-
-    def serializable(self, with_prefix=True) -> Dict:
-        """
-        Return serializable form data that can be stored in a
-        django.db.models.JSONField and used to recreate a valid form.
-
-        Note that this method should only be used immediately after a successful
-        call to the Form's is_valid() if the data that it returns is to be used
-        to recreate a valid form.
-        """
-        serialized_data = {}
-        data_keys = [k for k in self.data if k not in self.data_key_ignores]
-
-        for data_key in data_keys:
-            serialized_key = data_key
-            if not with_prefix and self.prefix:
-                serialized_key = data_key[len(self.prefix) + 1 :]
-            serialized_data[serialized_key] = self.data[data_key]
-
-        return serialized_data
-
-    @classmethod
-    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
-        """
-        Get a serializable dictionary of arguments that can be used to
-        initialise the form. The `kwargs` parameter is the Python version of
-        kwargs that are used to initialise the form and is normally provided by
-        the same caller as would init the form (i.e. the view).
-
-        For instance, a SelectableObjectsForm subclass
-        requires a valid `objects` parameter to correctly construct and
-        validate the form, so we'd expect `kwargs` dictionary containing
-        an `objects` element.
-        """
-        return {}
-
-    @classmethod
-    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
-        """
-        Get a dictionary of arguments for use in initialising the form.
-
-        The 'form_kwargs` parameter is the serialized version of the form's
-        kwargs that require deserializing to their Python representation.
-        """
-        return {}
 
 
 class MeasureDetailsForm(
@@ -1490,7 +1510,10 @@ class MeasureFootnotesForm(forms.Form):
         )
 
 
-class MeasureFootnotesFormSet(FormSet):
+class MeasureFootnotesFormSet(
+    SerializableFormMixin,
+    FormSet,
+):
     form = MeasureFootnotesForm
 
     def clean(self):
@@ -1507,6 +1530,11 @@ class MeasureFootnotesFormSet(FormSet):
         if len(footnotes) != num_unique:
             raise ValidationError("The same footnote cannot be added more than once")
         return cleaned_data
+
+    def get_serializable_data_keys(self) -> List[str]:
+        keys = super().get_serializable_data_keys()
+        # Additionally filter out unused auto-complete data.
+        return [k for k in keys if not k.endswith("footnote_autocomplete")]
 
 
 class MeasureUpdateFootnotesForm(MeasureFootnotesForm):
